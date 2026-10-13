@@ -321,10 +321,11 @@ class SensorClockMap {
     last_host_ = host_us;
     ++reads_;
 
-    // Slope over the whole run once it spans 1.3 s. The line is re-anchored
+    // Slope over the whole run once it spans 160 ms (a BMI270 clock can be
+    // 1 % off nominal), refined as the span grows. The line is re-anchored
     // at the current tick when the slope changes, so frame times stay
     // continuous; the offset then follows the read-time jitter slowly.
-    if (st_ - st0_ >= (1u << 15)) {
+    if (st_ - st0_ >= (1u << 12)) {
       const double s = double(host_ - host0_) / double(st_ - st0_);
       offset_ += (us_per_tick_ - s) * double(st_);
       us_per_tick_ = s;

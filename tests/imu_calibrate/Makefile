@@ -44,7 +44,7 @@ imu_accuracy-test.o: ../../src/imu_calibrate/ImuAccuracy.h
 FIFO_SKETCH_FILE := $(REPO_ROOT)/sensors/imu_basic/atomS3R_imu_fifo_diagnostics/atomS3R_imu_fifo_diagnostics.ino
 FIFO_SKETCH_FLAGS := -O2 -std=c++20 -fno-finite-math-only \
 	-I$(REPO_ROOT)/tests/common/ins_sketch_stubs -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) \
-	'-DFIFO_SKETCH_FILE="$(FIFO_SKETCH_FILE)"'
+	'-DFIFO_SKETCH_FILE="$(FIFO_SKETCH_FILE)"' -DFIFO_DIAG_RAW_LINES=1
 fifo_diagnostics_sketch-test.o: $(REPO_ROOT)/tests/common/FifoDiagnosticsSketch.cpp $(FIFO_SKETCH_FILE) \
 		$(wildcard $(REPO_ROOT)/tests/common/ins_sketch_stubs/*.h $(REPO_ROOT)/tests/common/ins_sketch_stubs/AtomS3R/*.h)
 	$(CC) $(FIFO_SKETCH_FLAGS) -MMD -MP -MF $@.d -MT $@ -c -o $@ $(REPO_ROOT)/tests/common/FifoDiagnosticsSketch.cpp

@@ -1,7 +1,8 @@
 // Host run of sensors/imu_basic/atomS3R_imu_fifo_diagnostics against a
 // simulated BMI270: a 6 kB header-mode FIFO filled at 200 Hz on a sensor clock
-// that runs 0.2 % fast, and a forced-mode BMM150 whose readout every 40 ms
-// carries the field of a fixed time before it. The simulated sensors have
+// that runs 0.8 % slow (as measured on an AtomS3R), read over 400 kHz I2C
+// (each register byte sampled as it is clocked out), and a forced-mode BMM150
+// whose readout every 40 ms carries the field of a fixed time before it. The simulated sensors have
 // known errors (accelerometer and gyro scale, gyro bias, field strength).
 // The board rests in seven poses (8 s each, 2.5 s turns between them,
 // including a turn about the vertical and a flip), then rocks like a hand
@@ -13,7 +14,8 @@
 // good: small errors, every timing and accuracy criterion must pass and each
 //       error must be measured at its size.
 // bad:  errors beyond the sketch's limits, each accuracy criterion must fail;
-//       the place is moved over serial ("L ...") first.
+//       the place is moved over serial ("L ...") and the gyro noise mode
+//       toggled ("n") first.
 //
 // Built against tests/common/ins_sketch_stubs by tests/imu_calibrate/Makefile.
 #include <cmath>
@@ -35,7 +37,7 @@ namespace {
 using V3 = Eigen::Vector3f;
 using Q = Eigen::Quaternionf;
 constexpr double kPi = 3.14159265358979323846;
-constexpr double kPpm = 2000.0;
+constexpr double kPpm = 8000.0;  // the AtomS3R measured about +8000 (frames every 5.04 ms)
 constexpr double kTickUs = 39.0625 * (1.0 + kPpm * 1e-6);
 constexpr double kMagDelayUs = 26000.0;  // readout time minus the time the field belongs to
 constexpr double kStillS = 8.0, kTurnS = 2.5, kTourStartS = 3.0, kRockS = 110.0;
@@ -152,7 +154,7 @@ struct SimBmi270 : m5::IMU_Base {
   }
   bool manual() const { return (reg[0x4C] & 0x80) && !(reg[0x7D] & 0x01); }
   bool streaming() const {
-    return reg[0x49] == 0xF0 && (reg[0x7D] & 0x07) == 0x07 && reg[0x40] == 0xA9 && reg[0x42] == 0xA9;
+    return reg[0x49] == 0xF0 && (reg[0x7D] & 0x07) == 0x07 && reg[0x40] == 0xA9 && (reg[0x42] | 0x40) == 0xE9;
   }
   double ticksNow() const { return double(ins_sketch_host::clock_us() - start_us) / kTickUs; }
 
@@ -200,27 +202,52 @@ struct SimBmi270 : m5::IMU_Base {
     }
   }
 
+  // I2C at 400 kHz: a transaction costs its addressing plus 9 bit times per
+  // byte, and every register byte is sampled when it is clocked out, so a
+  // burst latches sensortime before the FIFO length.
+  double bus_frac_us = 0;
+  void bus(double us) {
+    bus_frac_us += us;
+    const double whole = std::floor(bus_frac_us);
+    ins_sketch_host::clock_us() += uint64_t(whole);
+    bus_frac_us -= whole;
+  }
+  static constexpr double kByteUs = 22.5, kAddressUs = 60.0;
+
   bool readRegister(uint8_t r, uint8_t* b, size_t len) override {
-    advance();
-    if (r == 0x26) {
-      for (size_t i = 0; i < len; ++i) {
-        if (fifo.empty()) { b[i] = 0x80; continue; }
-        b[i] = fifo.front();
-        fifo.pop_front();
-        if (!frame_sizes.empty() && --frame_sizes.front() == 0) frame_sizes.pop_front();
+    bus(kAddressUs);
+    for (size_t i = 0; i < len; ++i) {
+      advance();
+      const uint8_t a = uint8_t(r == 0x26 ? 0x26 : r + i);
+      if (a == 0x26) {
+        if (fifo.empty()) {
+          b[i] = 0x80;
+        } else {
+          b[i] = fifo.front();
+          fifo.pop_front();
+          if (!frame_sizes.empty() && --frame_sizes.front() == 0) frame_sizes.pop_front();
+        }
+      } else {
+        if (a == 0x18) {
+          const uint32_t st = uint32_t(uint64_t(ticksNow()) & 0xFFFFFF);
+          reg[0x18] = uint8_t(st); reg[0x19] = uint8_t(st >> 8); reg[0x1A] = uint8_t(st >> 16);
+        }
+        if (a == 0x22) {
+          const int16_t temp = int16_t((30.0f - 23.0f) * 512.0f);
+          reg[0x22] = uint8_t(uint16_t(temp) & 0xff); reg[0x23] = uint8_t(uint16_t(temp) >> 8);
+        }
+        if (a == 0x24) { reg[0x24] = uint8_t(fifo.size() & 0xff); reg[0x25] = uint8_t((fifo.size() >> 8) & 0x3f); }
+        b[i] = reg[a];
       }
-      return true;
+      bus(kByteUs);
     }
-    const uint32_t st = uint32_t(uint64_t(ticksNow()) & 0xFFFFFF);
-    reg[0x18] = uint8_t(st); reg[0x19] = uint8_t(st >> 8); reg[0x1A] = uint8_t(st >> 16);
-    const int16_t temp = int16_t((30.0f - 23.0f) * 512.0f);
-    reg[0x22] = uint8_t(uint16_t(temp) & 0xff); reg[0x23] = uint8_t(uint16_t(temp) >> 8);
-    reg[0x24] = uint8_t(fifo.size() & 0xff); reg[0x25] = uint8_t((fifo.size() >> 8) & 0x3f);
-    for (size_t i = 0; i < len; ++i) b[i] = reg[r + i];
     return true;
   }
   bool writeRegister8(uint8_t r, uint8_t v) override {
+    bus(kAddressUs + kByteUs);
     advance();
+    // A configuration change while streaming is marked in the FIFO.
+    if (r == 0x42 && streaming() && reg[r] != v) push({0x48, 0x00});
     reg[r] = v;
     if (r == 0x4E && manual()) bmm[v] = reg[0x4F];
     if (r == 0x4D && manual()) reg[0x04] = bmm[v];
@@ -277,12 +304,16 @@ int main(int argc, char** argv) {
   setup();
   const uint64_t start_us = ins_sketch_host::clock_us();
   const uint64_t end_us = start_us + uint64_t(kDurationS * 1e6);
-  bool tapped = false, moved = false;
+  bool tapped = false, moved = false, toggled = false;
   while (ins_sketch_host::clock_us() < end_us) {
     const double t_s = double(ins_sketch_host::clock_us() - start_us) * 1e-6;
     if (bad && !moved && t_s > 1.0) {
       HardwareSerial::input() = "L 64.1 -21.9 50\n";  // Reykjavik
       moved = true;
+    }
+    if (bad && !toggled && t_s > 2.0) {
+      HardwareSerial::input() = "n\n";  // gyro noise-performance mode on
+      toggled = true;
     }
     if (!tapped && t_s > 31.0) {
       atoms3r_ical::Input::tap() = true;  // next screen page
@@ -293,7 +324,7 @@ int main(int argc, char** argv) {
   for (int i = 0; i < 400; ++i) loop();  // let the R-line queue drain
   HardwareSerial::capture() = nullptr;
 
-  Fields last_t, last_a, f_line, h_line, g_line;
+  Fields last_t, last_a, f_line, last_f, h_line, g_line, last_d;
   std::vector<Fields> poses_out, rotations;
   std::vector<double> fits;
   long r_lines = 0, r_gaps = 0, expected_seq = 0;
@@ -309,7 +340,8 @@ int main(int argc, char** argv) {
     switch (line[0]) {
       case 'T': last_t = fields(line); break;
       case 'A': last_a = fields(line); break;
-      case 'F': if (f_line.empty()) f_line = fields(line); break;
+      case 'F': if (f_line.empty()) f_line = fields(line); last_f = fields(line); break;
+      case 'D': last_d = fields(line); break;
       case 'H': if (h_line.empty()) h_line = fields(line); break;
       case 'G': g_line = fields(line); break;
       case 'S': poses_out.push_back(fields(line)); break;
@@ -345,6 +377,15 @@ int main(int argc, char** argv) {
   check(str(last_t, "rate_ok") == "1", "rate_ok", num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
   check(std::fabs(num(last_t, "rate_hz") - 200.0 / (1.0 + kPpm * 1e-6)) < 0.05, "host-clock rate is the sensor clock",
         num(last_t, "rate_hz"), 200.0 / (1.0 + kPpm * 1e-6));
+  check(std::fabs(num(last_t, "sensor_rate_hz") - 200.0) < 0.2, "200 Hz on the sensor clock",
+        num(last_t, "sensor_rate_hz"), 200.0);
+  check(num(last_d, "lost") == 0 && num(last_d, "grid_breaks") == 0, "no frame counted lost, warm-up included",
+        num(last_d, "lost"), 0);
+  check(str(h_line, "gyr_T0_c") != "missing" && str(h_line, "mag_cal_field_uT") != "missing",
+        "H line carries the saved calibration's context", str(h_line, "mag_cal_field_uT") != "missing", 1);
+  if (bad)
+    check(str(last_f, "gyr_conf_now") == "0xe9" && num(last_d, "config_frames") >= 1,
+          "'n' switched the gyro to noise-performance mode", num(last_d, "config_frames"), 1);
   check(str(last_t, "no_loss_ok") == "1" && num(last_t, "lost") == 0, "no_loss_ok through display bursts",
         num(last_t, "lost"), 0);
   check(num(last_t, "stall_max_ms") >= 1500, "a 1.5 s display burst ran", num(last_t, "stall_max_ms"), 1500);

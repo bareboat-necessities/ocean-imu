@@ -309,23 +309,23 @@ not counted. Its T line reports rate, loss under display bursts, spacing
 **Host evidence only.** In the host run against a simulated BMI270
 (`tests/common/FifoDiagnosticsSketch.cpp`):
 
-- simulation: sensor clock +2000 ppm, a forced-mode BMM150 whose field lags
-  its readout by 26 ms, 1.5 s and 400 ms display stalls;
-- spacing: every delivered spacing was 4.990–5.020 ms;
-- rate: 199.60 Hz on the host clock;
-- loss: no frame lost;
-- clock: +2000 ppm recovered;
+- simulation: sensor clock 0.8 % slow (as one AtomS3R measured), 400 kHz I2C
+  with each register byte sampled as it is clocked out, a forced-mode BMM150
+  whose field lags its readout by 26 ms, 1.5 s and 400 ms display stalls;
+- spacing: every delivered spacing was 4.99–5.06 ms around the 5.04 ms period;
+- rate: 200.00 Hz on the sensor clock, 198.42 Hz on the host clock;
+- loss: no frame lost, warm-up included;
+- clock: +8000 ppm recovered;
 - magnetometer: 25.00 Hz;
-- delay: 28.6 ms mean, spread 2 ms. In the convention above, 29 ms is
+- delay: about 29 ms, spread 2 ms. In the convention above, 29 ms is
   expected (26 ms, half a frame, and the simulated gyro's 0.5 ms forward
   difference).
 
-No AtomS3R measurement exists yet. Four things remain open:
-
-- that the FIFO, AUX and FCU behave on the device as configured;
-- the device delay;
-- the sensor-clock error;
-- FIFO capacity under real stalls.
+On one AtomS3R the setup read back as configured, the magnetometer read out
+every 8 frames on the sensor clock, and in the first second of output frames
+arrived about every 5.04 ms on the ESP32 clock: the BMI270 oscillator ran
+about 0.8 % slow (the T line's `clock_ppm` measures it over a whole run).
+Still open: the device delay, and FIFO capacity under real stalls.
 
 A 5.0 ms sensor-clock spacing would be inside the ≤ 6 ms IMU interval that
 `ou3-sampling-fidelity.md` admits. The deployed INS sketches stay outside it
