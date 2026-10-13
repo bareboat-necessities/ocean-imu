@@ -226,10 +226,13 @@ void QuaternionMEKF<T, with_bias>::initialize_from_acc(T const acc[3]) {
  */
 template <typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::time_update(Vector3 const& gyr, T Ts) {
-  Vector3 rate = gyr;
-  if constexpr (with_bias) {
-    rate -= x.template tail<3>();
-  }
+  const Vector3 rate = [&]() -> Vector3 {
+    if constexpr (with_bias) {
+      return gyr - x.template tail<3>();
+    } else {
+      return gyr;
+    }
+  }();
   set_transition_matrix(rate, Ts);
 
   // Quaternionf.coeffs() get the components in [x,y,z,w] order
