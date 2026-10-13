@@ -278,9 +278,9 @@ register is read back and checked, as is `ERR_REG`.
 (25.6 kHz).
 
 - **Pinning the grid:** each loop reads sensortime and the FIFO length in one
-  burst, then exactly that many bytes. That bounds `T0` from both sides, and
-  dithered read times tighten the bounds. Frames are delivered only after
-  `T0` is pinned to within 4 ticks (a counted warm-up).
+  burst, then exactly that many bytes in one read. That bounds `T0` from both
+  sides, and dithered read times tighten the bounds. Frames are delivered
+  only after `T0` is pinned to within 4 ticks (a counted warm-up).
 - **Mapping to host time:** a line fitted between sensortime and `micros()`
   over the whole run, re-anchored continuously.
 - **Lost frames:** skip frames, and frames lost without one (more elapsed
@@ -288,6 +288,12 @@ register is read back and checked, as is `ERR_REG`.
   place on the grid.
 - **Result:** delivered sample spacing is the sensor-clock period, not loop
   timing. A host stall delays frames but does not move their times.
+- **Capacity:** the FIFO holds 2 kB, about 146 frames or 0.73 s at 200 Hz. A
+  longer stall drops the oldest frames, reported by a skip frame. The
+  sketch's display bursts (400 and 600 ms) stay inside it.
+- **One read:** a FIFO read split inside a frame breaks the frame stream on
+  the BMI270 (unknown headers, frames counted lost), so the FIFO is read in
+  one burst of the length just read.
 
 **Magnetometer time.** An AUX payload in a combined frame takes that frame's
 time; an AUX-only frame takes the midpoint to the previous frame. That is the
@@ -309,23 +315,27 @@ not counted. Its T line reports rate, loss under display bursts, spacing
 **Host evidence only.** In the host run against a simulated BMI270
 (`tests/common/FifoDiagnosticsSketch.cpp`):
 
-- simulation: sensor clock 0.8 % slow (as one AtomS3R measured), 400 kHz I2C
-  with each register byte sampled as it is clocked out, a forced-mode BMM150
-  whose field lags its readout by 26 ms, 1.5 s and 400 ms display stalls;
-- spacing: every delivered spacing was 4.99–5.06 ms around the 5.04 ms period;
-- rate: 200.00 Hz on the sensor clock, 198.42 Hz on the host clock;
-- loss: no frame lost, warm-up included;
-- clock: +8000 ppm recovered;
+- simulation: sensor clock 0.6 % slow (as one AtomS3R measured), a 2 kB FIFO
+  that drops its oldest frames behind a skip frame and consumes only frames
+  read whole, 400 kHz I2C with each register byte sampled as it is clocked
+  out, a forced-mode BMM150 whose field lags its readout by 26 ms, 600 ms
+  and 400 ms display stalls;
+- spacing: every delivered spacing was 5.00–5.06 ms around the 5.03 ms period;
+- rate: 200.01 Hz on the sensor clock, 198.78 Hz on the host clock;
+- loss: no frame lost, warm-up included. A 1.5 s stall dropped 153 frames,
+  each reported by the skip frame, none counted lost by the sensor clock;
+- clock: +6150 ppm recovered;
 - magnetometer: 25.00 Hz;
 - delay: about 29 ms, spread 2 ms. In the convention above, 29 ms is
   expected (26 ms, half a frame, and the simulated gyro's 0.5 ms forward
   difference).
 
-On one AtomS3R the setup read back as configured, the magnetometer read out
-every 8 frames on the sensor clock, and in the first second of output frames
-arrived about every 5.04 ms on the ESP32 clock: the BMI270 oscillator ran
-about 0.8 % slow (the T line's `clock_ppm` measures it over a whole run).
-Still open: the device delay, and FIFO capacity under real stalls.
+On one AtomS3R the setup read back as configured and the magnetometer read
+out every 8 frames on the sensor clock. Frames arrived every 5.031 ms on the
+ESP32 clock: the BMI270 oscillator ran 0.6 % slow (`clock_ppm` +6145 over
+80 s). The FIFO filled to at most 2005 bytes, and a 1.5 s stall dropped
+about 160 frames, reported by skip frames. Still open: the device delay,
+measured with the FIFO read in one burst.
 
 A 5.0 ms sensor-clock spacing would be inside the ≤ 6 ms IMU interval that
 `ou3-sampling-fidelity.md` admits. The deployed INS sketches stay outside it
