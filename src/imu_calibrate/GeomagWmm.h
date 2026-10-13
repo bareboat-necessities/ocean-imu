@@ -139,10 +139,10 @@ struct Wmm2025 {
     if (!std::isfinite(lat_deg) || !std::isfinite(lon_deg) || !std::isfinite(height_m) || !std::isfinite(year) ||
         std::fabs(lat_deg) > 90.0)
       return out;
-    constexpr double PI = 3.14159265358979323846, D2R = PI / 180.0;
+    constexpr double PI_ = 3.14159265358979323846, D2R_ = PI_ / 180.0;
     constexpr double A = 6378.137, F = 1.0 / 298.257223563, E2 = F * (2.0 - F), RE = 6371.2;
     const double dt = year - EPOCH;
-    const double phi = lat_deg * D2R, lam = lon_deg * D2R, h = height_m * 1e-3;
+    const double phi = lat_deg * D2R_, lam = lon_deg * D2R_, h = height_m * 1e-3;
 
     // Geodetic to geocentric spherical (km).
     const double sp = std::sin(phi), cp = std::cos(phi);
@@ -190,8 +190,8 @@ struct Wmm2025 {
     out.z_nT = bx * std::sin(psi) + bz * std::cos(psi);
     out.h_nT = std::hypot(out.x_nT, out.y_nT);
     out.f_nT = std::hypot(out.h_nT, out.z_nT);
-    out.inclination_deg = std::atan2(out.z_nT, out.h_nT) / D2R;
-    out.declination_deg = std::atan2(out.y_nT, out.x_nT) / D2R;
+    out.inclination_deg = std::atan2(out.z_nT, out.h_nT) / D2R_;
+    out.declination_deg = std::atan2(out.y_nT, out.x_nT) / D2R_;
     out.in_validity = year >= EPOCH && year <= VALID_UNTIL;
     return out;
   }
