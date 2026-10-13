@@ -10,6 +10,7 @@
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
 #include "AtomS3R/AtomS3R_InsDiag.h"
+#include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 
 #define ATOMS3R_IMU_MASK_ACCEL (1u << 0)
 #define ATOMS3R_IMU_MASK_GYRO (1u << 1)
@@ -58,6 +59,9 @@ struct MemoryKv {
 class ImuCalStoreNvs : public ImuCalStoreT<MemoryKv> {};
 
 inline void clearM5UnifiedImuCalibration() {}
+// The BMM150 trim a sketch compensates with; a test sets it.
+struct AtomS3RMagSource { Bmm150Trim trim{}; };
+inline AtomS3RMagSource& atoms3rMagSource() { static AtomS3RMagSource source; return source; }
 inline ImuTimingRegisters readImuTimingRegisters(bool) { return {}; }
 inline bool configureAtomS3RMag(Print&, bool = true) { return true; }
 inline void printBlobSummary(Print&, const ImuCalBlobV5&) {}

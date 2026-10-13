@@ -9,6 +9,11 @@ make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
 ./ins_sketch_heave-test
 make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_replay-test
 ./ins_sketch_replay-test
+make -f Makefile -f ../common/FifoTimingSketch.mk fifo_timing_sketch-test
+fifo_capture=$(mktemp)
+./fifo_timing_sketch-test --write-capture "$fifo_capture"
+./ins_sketch_replay-test "$fifo_capture" --expect-ready > /dev/null
+rm -f "$fifo_capture"
 make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 ./local_gravity-test
 sim_status=0

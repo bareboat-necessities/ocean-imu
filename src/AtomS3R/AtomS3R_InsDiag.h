@@ -375,6 +375,7 @@ class InsDiagStream {
       line_.reset('H').printf(",sketch=%s", sketch_);
       line_.kv("format", kInsDiagFrameFormat).kv("loop_hz", loop_hz_, 1)
            .kv("seq", static_cast<unsigned long>(health_.frame_seq));
+      if (header_extra_) line_.printf(",%s", header_extra_);
       emit(port, line_);
       timingRegistersLine(line_, regs_, mag_source_);
       emit(port, line_);
@@ -397,9 +398,14 @@ class InsDiagStream {
   }
 
   const InsLoopHealth& health() const { return health_; }
+  // For a sketch that delivers frames itself instead of through poll().
+  InsLoopHealth& health() { return health_; }
+  // Extra key=value text for the H line, e.g. "acquisition=fifo".
+  void setHeaderExtra(const char* extra) { header_extra_ = extra; }
 
  private:
   const char* sketch_;
+  const char* header_extra_ = nullptr;
   float loop_hz_;
   InsLoopHealth health_{};
   DiagLine line_{};  // the one line buffer, reused for every line

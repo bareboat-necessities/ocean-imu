@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "cedb3827a6cb1cac74d1192259030277a20b8b0dced63f923126734132005059",
+  "replay_fingerprint": "d299127e962c611b5a28fe1fddf457ee5f48f03d2111a5354fb86f7f543a3c07",
   "results_file_count": 485,
   "results_files": [
     {
@@ -951,7 +951,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "sha256": "ee334dfb340c2716f85931baae7ab11cda6ab46d4ae3daa9a9f22427aaa19ec8"
+      "sha256": "5ed20d68ad871e1fd5f8603ce066a606ba309d77875261282b9d5aaf5346ec4b"
     },
     {
       "kind": "file",
@@ -1046,7 +1046,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "0bb6c7bb07a80ed742ec94b78f8c061f4277af56cc3e2fd469e8acfd1851662b"
+      "sha256": "63ef44c1995785cbd29e1c72275a9597c4ccf48dd3993e88b1e2c0923bc6c63b"
     },
     {
       "kind": "file",
@@ -1091,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "8e3d86961e7fb6339e0c39d984837498e8696318255147309a94815903b14811"
+      "sha256": "d184e52bd4463f9981042773c4e7b3ce4974d6cb15b41e2009b1c32cca7f0ae5"
     },
     {
       "kind": "file",
@@ -1191,7 +1191,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "040823e9dff523f87599cccb1f2d6de75b778919fb9159b50da71bedc25628cd"
+      "sha256": "f08f9955e6e14c184c6f2572fc0817abb0ab4746e3ae14b4ccbe408ec1ec75d6"
     },
     {
       "kind": "file",
@@ -1261,62 +1261,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "358e7923c66ef1d209c3439c1d298f25c3fd590c595d380735778d167a20bdc2"
+      "sha256": "141c3c1db45f1fb637d5ad25ddff9cdf6b16da7cec240e1933538efbc10e8fba"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "96afde32c3fc93889b432042ce1ed11d48472cffeb6c43d205e9f13cbf627e9a"
+      "sha256": "5945d5f86070103fb62b7038fad92e2641b5ea5c6020e74f8ce51a919c8e7bc7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "b4d2ea48e879a034c4e2e6047acb059b5556839e5197cda9d4f37a38a2e84b50"
+      "sha256": "832f334099f6c7e6d72ec176efe0e986eb4d42c88a7c1b8bec2df87937be8d02"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "53ec200b8c41631e1f4db811930e050681b67a1a7b81334c3a8724f2c9c619c0"
+      "sha256": "c7de55b83651de999043de67f02c16e13f7a80ea18412f05fb9cb5fca07bda72"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ccef13f38ff378301afd228fc62bc755b941c78a2163accdfab909dd2028c533"
+      "sha256": "a1caf91d614d1b38401206649aa9865bf0af67a6c45af28beb8b1aa2edf52353"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "12d7131b5f7c9246b9a0f6968fd6ef1b7dc6de274bbe5f34f33a1f6e69b1f12f"
+      "sha256": "8b1e732a6b83c2b5880f4ef0e066bef1202d57642160fe343908926d32cdbf1e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "a4b70d8f3f55b3a51047321c529eea949cd3fe44f1e2a0090d9bcbbd4032ef99"
+      "sha256": "9a5dc598326e7e7a9a65247430cc8693c0ac9b3a033fb3deda95d9a770c574d7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "bffb430b9bedbd16b4946bdc888a6131cf2e5b867f0e93db7af12d92117f4314"
+      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "1c741fc61751da9f5d5befccf6c98c4fe49e1d2da303150a32a44f9f924b0d5b"
+      "sha256": "285232ff211fa354d62d67ecbc82944db830c419d8c2d2bfacebb2a94f57b6bc"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "75e8c899f423e6c6a1002e21c295ea99894bfd664d59df4c985e3302c5f8fa6a"
+      "sha256": "f0d5ff0b61fdb913df1940c5ef12398244b6442cb3108e2e789842d658ed6055"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "e71956783ad23aa0ace082e5b343d3fe270f9a7d3107a3d35629b62675e386a8"
+      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
+      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
     },
     {
       "kind": "file",
@@ -1331,7 +1331,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "3576683b443bdb3ce5b240e2d57f70da48499db0284d514a0c94ae4987469d39"
+      "sha256": "618c2130c9e7e28f737fb62f6f7c9a088666a61277da9a6b4b52094a863c153f"
     },
     {
       "kind": "file",
@@ -2429,13 +2429,13 @@
       "sha256": "bc1cb0425e6464e7891562b44738e083cb81734196a325b33ef0fbd263bff132"
     }
   ],
-  "results_fingerprint": "4ffd116639e738dca28f6fe8cf8fa9b6275be3a00199ef38f891b842f9a0f789",
+  "results_fingerprint": "478d860a002f87d720323987a7f5fbce200ea938317e3a86739dc6fcfbbdbeb4",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 812,
+  "tracked_replay_file_count": 817,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2450,7 +2450,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/arduino-ide-build.yml",
-      "sha256": "5db65d406fa4e37db1b998c0cad95fe3efc5465d52f3e166f8494a66d20a0882"
+      "sha256": "940a6e2d961347efab7c4f7b73f1e29eb24fe0bcc7e1b31867d93cb249f0cf8d"
     },
     {
       "mode": "100644",
@@ -2769,6 +2769,11 @@
     },
     {
       "mode": "100644",
+      "path": "sensors/imu_basic/atomS3R_imu_fifo_timing/atomS3R_imu_fifo_timing.ino",
+      "sha256": "6774b7cd7444f36800713533adf9bcca5c2de9306badfb01dafcbbbfab4412e2"
+    },
+    {
+      "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino",
       "sha256": "82912521d1b8266f9878027a51783875ab8b49f1ba1e9c58aacf5805f0ed2e08"
     },
@@ -2781,6 +2786,11 @@
       "mode": "100644",
       "path": "src/ArduinoOceanImu.h",
       "sha256": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_Bmi270Fifo.h",
+      "sha256": "503158089abfdccd19f855cc6d0bdb41b268349c70ba64134c99aa504055c195"
     },
     {
       "mode": "100644",
@@ -2840,7 +2850,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_InsDiag.h",
-      "sha256": "41abe13bccce24b23914e91f2ca703964d06e1b191d40cefa87da4f91c66cb1e"
+      "sha256": "a9f8946b3bc0e78ae2a6508923254f60f3ad9b11854a4a1486f4d900612ac3fa"
     },
     {
       "mode": "100644",
@@ -3299,6 +3309,16 @@
     },
     {
       "mode": "100644",
+      "path": "tests/common/FifoTimingSketch.cpp",
+      "sha256": "95d6a0971c2f2cc1c72bd23c1d7d6d66feed03c6ee26589cd3460055cbc2142d"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/FifoTimingSketch.mk",
+      "sha256": "4ca2aa297afd48c37443daa1396c4b24a9cba3828dd18da5509aee607933a312"
+    },
+    {
+      "mode": "100644",
       "path": "tests/common/GravityChain.h",
       "sha256": "cf058dfdfb0678c38e76aae683df82289323f2e773ec7264a03f55e6bcdbe84f"
     },
@@ -3325,7 +3345,7 @@
     {
       "mode": "100644",
       "path": "tests/common/InsSketchReplay.cpp",
-      "sha256": "91c9a928142e243ded9d346045844b30c7fa0f284bd644dce76df070036fdd89"
+      "sha256": "20ea01dd53efe7fcbe185b11fa153f2f7c3901ccca214b809de0c5e2b85882e6"
     },
     {
       "mode": "100644",
@@ -3375,7 +3395,7 @@
     {
       "mode": "100644",
       "path": "tests/common/ins_sketch_stubs/Arduino.h",
-      "sha256": "9e7d7b3cd35226bf5ca78bef02092846693345809724c7bf497bd50aebf24706"
+      "sha256": "519c161d9be15f790417176f8a0e81a08f1c92b9560473b65a8986fd2c6f866b"
     },
     {
       "mode": "100644",
@@ -3390,17 +3410,17 @@
     {
       "mode": "100644",
       "path": "tests/common/ins_sketch_stubs/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "b36e76378cab55eb0fa652e4906494fcd59e1167c81d62bde3e89fb19e62b49a"
+      "sha256": "468c0626a260b42c76bf15598c199a251e3398b9a05a0e34e315119c1f77d2cf"
     },
     {
       "mode": "100644",
       "path": "tests/common/ins_sketch_stubs/AtomS3R/AtomS3R_M5Ui.h",
-      "sha256": "f11b1f72dfc0e35cb6b8b5c2bbadf39cc6bf24e89eb85dbe596be9c5310556dd"
+      "sha256": "144c525c105697994231db0cd8d47d3f842fc050423debfffb23d5b93206ffd6"
     },
     {
       "mode": "100644",
       "path": "tests/common/ins_sketch_stubs/M5Unified.h",
-      "sha256": "0397da3362362b98a5f1ce42428d4ba081f8ef75dcefd8c5c2e8ba31135eae69"
+      "sha256": "1a2994091afa3833dd089b60e6b78513788a58bfd75577dbfd79a82ecec849a3"
     },
     {
       "mode": "100644",
@@ -3510,7 +3530,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "55c27050bea293dcfe957c4c4ec0f08f56b48597935c2b07b47e4cf0d704663d"
+      "sha256": "c014d7d1b429a12c03d6753919dfe46768dde5b06264ccf0da4c5759d63d4993"
     },
     {
       "mode": "100644",
@@ -3536,6 +3556,11 @@
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal_sim.h",
       "sha256": "0e601a0b549401a8f1b44af09134cbccdda9b75bf3055c523a902a74436b41b6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/imu_calibrate/bmi270_fifo-test.cpp",
+      "sha256": "9bd4edf79e5879a800b3704d2c5c5fd7cabcfd951b8a2da4d0d90e2d607654a2"
     },
     {
       "mode": "100644",
@@ -3600,7 +3625,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/run_tests.sh",
-      "sha256": "5c00f5c0098cc861e8791e803afcc9469bfe908bfa0a77c92d8dc160c96af277"
+      "sha256": "e872313eb18a86fafe9e60d387a0ce650b3914f0b6e6773331af7448b0494e9b"
     },
     {
       "mode": "100644",
@@ -3610,7 +3635,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/test_sketch_temperature.py",
-      "sha256": "b75d7cad84701282a7165051987430b24cbff4456b873a5383ec1fa0d9d7c034"
+      "sha256": "69c996a86fbe5f1aaf244a52cea1151b1dbfe4cbbfdef79deacf6bce851aae1c"
     },
     {
       "mode": "100644",
@@ -3775,7 +3800,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_ou_iii/run_tests.sh",
-      "sha256": "88631058a86655fed1f3a36ba9fa347c605eb5de6ac32c87f87a45c837c30cef"
+      "sha256": "066c58553304e4e201635cc2765796d37fbac93acc0ba03adcf58e3cf4de07b0"
     },
     {
       "mode": "100644",
@@ -4095,7 +4120,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ins_diag_report.py",
-      "sha256": "a6baa6157293c7e7af76039d334ecbc2dd9cda80e6318cab67940c62ea873dee"
+      "sha256": "c975c711955053abf202090ccc7b20d3e81af1bbc1e68e13e774e5b7499e6b12"
     },
     {
       "mode": "100644",
@@ -5130,7 +5155,7 @@
     {
       "mode": "100644",
       "path": "tools/ins_diag_report.py",
-      "sha256": "6d4f04a1da53a1a773829eaab06eac0345cb665503c593cd40e200b8ee362f16"
+      "sha256": "9f65bd56bdbd86016eb905f4be74de1dcb9887fc4c5acf176ae71be651d96ba2"
     },
     {
       "mode": "100644",
@@ -5235,7 +5260,7 @@
     {
       "mode": "100755",
       "path": "tools/quality_gates.sh",
-      "sha256": "d516e95dbb6c1577cca644b34898cac7f641be8e21222a631fe5d173004229f2"
+      "sha256": "31a0fbf460eceab55d7e2e620b6d33cf4680edbdbcb8efdae0580d61a8b9e884"
     },
     {
       "mode": "100644",

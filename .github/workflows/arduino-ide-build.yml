@@ -17,7 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    # Windows links each sketch in 2-6 min; eleven sketches plus the
+    # toolchain install run close to 45 min there.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
       - uses: arduino/setup-arduino-cli@v2

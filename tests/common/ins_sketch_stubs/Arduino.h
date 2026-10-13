@@ -48,6 +48,8 @@ struct HardwareSerial : Print {
     return n;
   }
   size_t write(uint8_t c) { return write(&c, 1); }
+  int available() { return 0; }
+  int read() { return -1; }
   explicit operator bool() const { return true; }
 };
 inline HardwareSerial Serial;
