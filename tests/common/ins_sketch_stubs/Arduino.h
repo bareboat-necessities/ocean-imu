@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 namespace ins_sketch_host {
 inline uint64_t& clock_us() { static uint64_t now = 1000000; return now; }
@@ -35,10 +36,28 @@ struct Print {
   int availableForWrite() { return 4096; }
   void flush() {}
 };
+// Bytes written with write() go to capture() when a test installs one;
+// printf() output is formatted and discarded as before.
 struct HardwareSerial : Print {
+  using Sink = void (*)(const char* data, size_t n);
+  static Sink& capture() { static Sink sink = nullptr; return sink; }
   void begin(unsigned long) {}
   void setTxBufferSize(size_t) {}
   void setTxTimeoutMs(uint32_t) {}
+  size_t write(const uint8_t* data, size_t n) {
+    if (capture()) capture()(reinterpret_cast<const char*>(data), n);
+    return n;
+  }
+  size_t write(uint8_t c) { return write(&c, 1); }
+  // A test queues serial commands with input().
+  static std::string& input() { static std::string pending; return pending; }
+  int available() { return int(input().size()); }
+  int read() {
+    if (input().empty()) return -1;
+    const int c = static_cast<unsigned char>(input().front());
+    input().erase(0, 1);
+    return c;
+  }
   explicit operator bool() const { return true; }
 };
 inline HardwareSerial Serial;
