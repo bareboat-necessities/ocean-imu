@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "44c8415f12ce0dfee4c57ee7338e417c5f4131647ed6658ff5816fa9230bbfc0",
+  "replay_fingerprint": "d078518252462dccb5e59c38510b4d8127970158d821a199ab652b1d2301c4d4",
   "results_file_count": 485,
   "results_files": [
     {
@@ -951,7 +951,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "sha256": "24760c5b6ccf532389d49d9f1f454741191529c17b2022161ab344959c4709fe"
+      "sha256": "6317816aaeb521b71d9415ebf3aa1c0ee7f13c56d699213deb7f2c656f0d3345"
     },
     {
       "kind": "file",
@@ -1046,7 +1046,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "4738f56595741db0723490ab8125c2b21f960621f1b513bf035215d6899cb75a"
+      "sha256": "cd7d96849bac01c4d67ea6be15fa3fc24559d5172e822597906f3147df979f2d"
     },
     {
       "kind": "file",
@@ -1091,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "fb1bca2ddfcfcc599616d244e344cf076cb60be3adfefebe0e2c4c43742a3f6c"
+      "sha256": "87f78412cfb241f2d3c9d3436ca03eac95ad27eb9e624aa3921aa0acd7fa09ac"
     },
     {
       "kind": "file",
@@ -1191,7 +1191,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "f7dc1812421381dd608b2a52c955c8a3dcc302951aa426a474f07e43fe5d86ea"
+      "sha256": "c9d680fbf9feaacc1a61e5ef45649978a3599a655b8e29f795890b087bb9ee35"
     },
     {
       "kind": "file",
@@ -1261,57 +1261,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "4dae6080d89a9b240a0d2fb60708e80a8e159177c2a6eee704e3deed81cf0534"
+      "sha256": "67fee3238d911901301e272d5997d243a5198231ec81a74983311f2a2c74bce1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "5661254e88c4daecee41ddc6f781bc6b90b9bddbabffefea0435c284ac13c2fc"
+      "sha256": "124ba0125b7f8f620a537693e7e5c5dbd459f4d5953529e82cf6265148c9c369"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "fa54e46d5a6b3fd87e75c980c3f4ab82ca99920295419e81beddc28b55de4d02"
+      "sha256": "4cb376a2843e5389623cf0d2064912330964a6a7683c8692b1953edf9e52c68b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "27dccfd3b69647311df0db5d6bca5745071186a01f9ba16cc9389f53279e5dfd"
+      "sha256": "dfbafb63e73f36f75f7119f923294d96ea1a541cc96717143d76e477f6703441"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "a7bef16cf902c53088be6e2827eb9ab63b5c57d1a14f4e7fc0952f4bb70b3ec5"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "0a963cca928d6a4fdcc859a68446d98288d8eb27a8d28c46fcf82fb849234635"
+      "sha256": "9e5f0df3153a6b7a0fc9f115eead15057be6cacf11fc58f61468285824951054"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "3f4038ce06e1f334b08119f4b4fcc1834a2777f7f156c5f9c00de8d5bc95f8bf"
+      "sha256": "e33ceb882f0d159b1f60649484ee5171cd932306b6d9fa2066e88b6c713f59cb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "900185c74529f5e5b1d373fa65858d5987f230806757a08eb6876e3e379d8db2"
+      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "bba276bc7abc6f39f37eca7e8fd8c0a7b29df5bc9bde9d09a08c9dd0d4335786"
+      "sha256": "c57f9d7518d2d7ce340cd9aa00f96db7d891102957455eaac21a22de19fa836c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "145557166126b1ed270672695a12e1d7af947a5fe43c993b2253970eb3a27a20"
+      "sha256": "0a0328a886866ecbd83a37e25c7d2c9e0207354321fa2c710f1b2adadf0bfe1e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "599b8b59c4c338b39f5bb8c6c3ff6c30e506d8823d6bb0ac57a3731d72ab03e6"
+      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
     },
     {
       "kind": "file",
@@ -1331,7 +1331,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "599d1c36dc5ea3ba8837afc72008a4317f7839144a4025566e7a654e6f8d609e"
+      "sha256": "ce193cf908cf3f86e3a4590d4f4a98fb01f83d1cd0556fe27df4d27229aa10c8"
     },
     {
       "kind": "file",
@@ -2429,7 +2429,7 @@
       "sha256": "bc1cb0425e6464e7891562b44738e083cb81734196a325b33ef0fbd263bff132"
     }
   ],
-  "results_fingerprint": "8ee9dcd4bd5199c51783f8d83fbcb66cef18a17f66863bef6055325c527b3247",
+  "results_fingerprint": "9c3f01f71f001841722e5a5b70d6e75b1f5d469f349e406d5bf9ac4d7a9f9cb2",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -3105,12 +3105,12 @@
     {
       "mode": "100644",
       "path": "src/nlo/TimeVarGainNLO_Adapter.h",
-      "sha256": "71690fea474a32f99debe13b890c355aa780dad64bfbab9be7b8ba37e011de8a"
+      "sha256": "43dce34ec01b6abd3afd84f0387cfc711cd060bc9e00d35f743c2649b748925a"
     },
     {
       "mode": "100644",
       "path": "src/nlo/TimeVaryingGainNLO.h",
-      "sha256": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a"
+      "sha256": "17bd0a98e281304a3778b9579556da8bc8303bb0c398c571c8ebf3c244d24d57"
     },
     {
       "mode": "100644",
@@ -3990,7 +3990,7 @@
     {
       "mode": "100644",
       "path": "tests/nlo/mag_turns-test.cpp",
-      "sha256": "167cf42c994da8294de37e902c7eb7c3acb9efc64a2c90c869eaa4fe03ce9d20"
+      "sha256": "db659914079f4cfc4948f629e155c1a34eab2c07e1e6c15e80a7e35986117a7e"
     },
     {
       "mode": "100644",
