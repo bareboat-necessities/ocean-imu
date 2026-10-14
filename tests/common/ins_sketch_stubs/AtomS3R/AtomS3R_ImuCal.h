@@ -58,7 +58,7 @@ inline void clearM5UnifiedImuCalibration() {}
 // The BMM150 trim a sketch compensates with; a test sets it.
 struct AtomS3RMagSource { Bmm150Trim trim{}; };
 inline AtomS3RMagSource& atoms3rMagSource() { static AtomS3RMagSource source; return source; }
-inline bool configureAtomS3RMag(Print&, bool = true) { return true; }
+inline bool configureAtomS3RImu(Print&, bool = true) { return true; }
 inline void printBlobSummary(Print&, const ImuCalBlobV5&) {}
 inline void printBlobDetail(Print&, const ImuCalBlobV5&) {}
 }  // namespace atoms3r_ical

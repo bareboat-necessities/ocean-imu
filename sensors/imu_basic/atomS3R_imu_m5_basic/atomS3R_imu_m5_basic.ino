@@ -43,7 +43,7 @@ void setup()
   M5.Imu.begin();
 
   clearM5UnifiedImuCalibration();
-  configureAtomS3RMag(Serial);
+  configureAtomS3RImu(Serial);
   delay(250);
 
   hasSavedCalibration = calStore.load(calBlob);

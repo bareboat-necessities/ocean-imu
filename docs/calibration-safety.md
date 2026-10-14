@@ -107,7 +107,7 @@ calibration. Short captures normally remain bias-only.
 
 On AtomS3R the BMM150 sits behind the BMI270 AUX interface only. M5Unified 0.2.13
 soft-resets it, selects 30 Hz output and leaves one XY and one Z repetition, its
-noisiest setting. Every sketch therefore calls `configureAtomS3RMag()`
+noisiest setting. Every sketch therefore calls `configureAtomS3RImu()`
 after initialisation, and the wizard calls it again before magnetic capture, so
 calibration and runtime use the same setting: 47 XY / 41 Z repetitions at 30 Hz
 (28.3 ms per measurement, [Bosch BMM150 datasheet, sections 5.6/5.8](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm150-ds001.pdf)).
@@ -118,8 +118,15 @@ the result. Other IMU types keep their driver settings. The 45-second capture
 minimum and all magnetic quality limits are unchanged; independent verification
 still needs at least 56 seconds and 140 independent averaged observations.
 
+The same call sets the BMI270 accelerometer filter to OSR4 in performance mode
+(`ACC_CONF=0x88`: M5Unified's 100 Hz rate, -3 dB near 10 Hz instead of 40 Hz;
+`AtomS3R_Bmi270AccFilter.h`) and reports it in an `[ACCCFG]` line, so
+accelerometer calibration and runtime see the same filter. ACC_CONF is part of
+the magnetic timing configuration, so a saved magnetic timing fitted with
+another accelerometer filter is not loaded.
+
 The BMM150 data registers hold uncompensated Hall readings; M5Unified 0.2.13
-discards RHALL and never reads the factory trim registers. `configureAtomS3RMag()`
+discards RHALL and never reads the factory trim registers. `configureAtomS3RImu()`
 also reads the trim block (0x5D..0x71) once, and every new reading is re-read
 from the BMI270 AUX data mirror together with its RHALL value and compensated
 with Bosch's formulas (BMM150 datasheet section 4.3, Sensor API
