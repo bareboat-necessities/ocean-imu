@@ -3,7 +3,7 @@
 [ocean-imu](../README.md) / **sensors**
 
 <p align="center">
-  <img src="../img/devices/AtomS3R_device.svg" width="360" alt="M5Stack AtomS3R">
+  <img src="../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 This directory contains the hardware-facing Arduino examples for `ocean-imu`. The current examples target the **M5Stack AtomS3R** and build upward from direct IMU access to tilt-compensated compass/AHRS applications and complete marine motion estimators.

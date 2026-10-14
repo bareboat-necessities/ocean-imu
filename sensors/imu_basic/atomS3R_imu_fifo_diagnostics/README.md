@@ -3,7 +3,7 @@
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [imu_basic](../README.md) / **atomS3R_imu_fifo_diagnostics**
 
 <p align="center">
-  <img src="../../../img/devices/AtomS3R_device.svg" width="240" alt="M5Stack AtomS3R">
+  <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 This sketch measures, on the device, how good the IMU data is. It covers two things:

@@ -3,7 +3,7 @@
 [ocean-imu](../../README.md) / [sensors](../README.md) / **compass_ahrs**
 
 <p align="center">
-  <img src="../../img/devices/AtomS3R_device.svg" width="300" alt="M5Stack AtomS3R">
+  <img src="../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 These examples turn the AtomS3R into a **tilt-compensated electronic compass / AHRS**. Both applications share the same AtomS3R calibration, sensor conditioning, display, and compass application framework; the attitude estimator is the part that changes.

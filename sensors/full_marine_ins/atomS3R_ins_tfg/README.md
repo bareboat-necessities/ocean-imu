@@ -6,7 +6,7 @@
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_tfg**
 
 <p align="center">
-  <img src="../../../img/devices/AtomS3R_device.svg" width="240" alt="M5Stack AtomS3R">
+  <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 This sketch runs the **right-invariant two-frame Lie-group** estimator, `SeaStateFusionFilter_TFG`, on the M5Stack AtomS3R. It carries the same 21-dimensional state and the same OU wave model as OU-III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.

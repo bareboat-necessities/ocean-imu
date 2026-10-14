@@ -3,7 +3,7 @@
 [ocean-imu](../../README.md) / [sensors](../README.md) / **imu_basic**
 
 <p align="center">
-  <img src="../../img/devices/AtomS3R_device.svg" width="300" alt="M5Stack AtomS3R">
+  <img src="../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 Use this directory for **first hardware bring-up**. These sketches stay close to the M5Unified sensor API and the AtomS3R calibration/mapping helpers so you can verify the device before adding an AHRS or marine motion filter.

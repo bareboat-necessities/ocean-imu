@@ -3,7 +3,7 @@
 [ocean-imu](../../README.md) / [sensors](../README.md) / **full_marine_ins**
 
 <p align="center">
-  <img src="../../img/devices/AtomS3R_device.svg" width="300" alt="M5Stack AtomS3R">
+  <img src="../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
 These are the most complete AtomS3R applications in the repository. They combine calibrated IMU input, attitude/heading estimation, marine-motion processing, on-device UI, and serial/NMEA output.
