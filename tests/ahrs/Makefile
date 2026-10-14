@@ -25,6 +25,11 @@ TARGETS = ahrs-qmekf-sim
 
 all: build test
 
+TARGETS += qmekf_geometry-test
+qmekf_geometry-test: qmekf_geometry-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+qmekf_geometry-test.o: ../../src/ahrs/KalmanQMEKF.h
+
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)
@@ -35,6 +40,7 @@ ensure-sim-data:
 
 ahrs-qmekf-sim: ahrs-qmekf-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+ahrs-qmekf-sim.o: ../../src/ahrs/KalmanQMEKF.h
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
