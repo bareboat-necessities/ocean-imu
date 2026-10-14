@@ -1,5 +1,4 @@
-> [!CAUTION] 
-> Experimental
+> [!WARNING] Experimental
 
 # AtomS3R marine INS — time-varying-gain NLO
 
