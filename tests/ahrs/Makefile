@@ -25,20 +25,6 @@ TARGETS = ahrs-qmekf-sim
 
 all: build test
 
-TARGETS += qmekf_geometry-test
-qmekf_geometry-test: qmekf_geometry-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-qmekf_geometry-test.o: ../../src/ahrs/KalmanQMEKF.h
-
-TARGETS += mag_continuous-test
-TARGETS += mag_timing-test
-mag_timing-test: mag_timing-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-mag_timing-test.o: ../common/MagneticTimingReplay.h ../common/MagneticMotion.h ../../src/ahrs/KalmanQMEKF.h ../../src/util/MeasurementCovariance.h ../../src/util/MagneticRotation.h
-mag_continuous-test: mag_continuous-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-mag_continuous-test.o: ../common/MagneticContinuousReplay.h ../common/MagneticMotion.h ../../src/util/MagneticInput.h ../../src/util/MagneticRotation.h
-
 build: $(TARGETS)
 
 test: ensure-sim-data $(TARGETS)
@@ -49,7 +35,6 @@ ensure-sim-data:
 
 ahrs-qmekf-sim: ahrs-qmekf-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-ahrs-qmekf-sim.o: ../../src/ahrs/KalmanQMEKF.h
 
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -c $< -o $@

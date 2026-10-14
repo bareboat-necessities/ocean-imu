@@ -265,7 +265,7 @@ and read-back coefficients are rebuilt through the runtime path and checked
 again against this independent sweep, including its retained covariances.
 Stored matrix plausibility and RMS are
 also checked on ordinary load. The optional dynamic timing stage follows this
-sweep; see [magnetic timing](magnetic-timing.md#dynamic-timing-calibration-and-persistence).
+sweep; see [magnetic timing](magnetic-timing.md#dynamic-timing-calibration).
 
 ## Persistence and failure reporting
 

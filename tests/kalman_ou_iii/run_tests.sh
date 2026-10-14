@@ -1,12 +1,9 @@
 #!/bin/bash -e
 set -e
-./live_aiding-test
 make -f Makefile -f ../common/GyroBiasProjectionRegression.mk gyro_bias_projection-test
 ./gyro_bias_projection-test
 make -f Makefile -f ../common/StationaryDeviceRegression.mk stationary_device-test
 ./stationary_device-test
-make -f Makefile -f ../common/InsSketchHeaveDrift.mk ins_sketch_heave-test
-./ins_sketch_heave-test
 make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 ./local_gravity-test
 sim_status=0
@@ -21,7 +18,6 @@ W3D_COLLECT_ALL_GATES=1 ./kalman_ou_iii-sim || sim_status=$?
 ./wave_period-test
 ./mag_hard_iron-test
 ./continuous_mag_hard_iron-test
-./mag_timing-test
 ./tuner_coupling-test
 ./tuner_schedule-test
 ./wave_band_sigma-test

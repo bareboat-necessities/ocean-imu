@@ -62,9 +62,6 @@ class MahonyBackend : public IAttitudeBackend {
   }
 
   bool isValid() const override { return valid_; }
-  Vector3f gyroBiasBody() const override {
-    return Vector3f(-mahony_.integralFBx, -mahony_.integralFBy, -mahony_.integralFBz);
-  }
 
  private:
   Mahony_AHRS_Vars mahony_{};

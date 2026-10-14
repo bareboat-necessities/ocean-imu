@@ -36,8 +36,6 @@
 #include <ArduinoEigenDense.h>
 #endif
 
-#include "util/MeasurementCovariance.h"
-
 using Eigen::Matrix;
 using Eigen::Map;
 
@@ -81,11 +79,6 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     void measurement_update_acc_only(Vector3 const& acc);
     void measurement_update_acc_only(T const acc[3]);
     void measurement_update_mag_only(Vector3 const& mag);
-    bool measurement_update_mag_only(Vector3 const& mag, Matrix3 const& covariance_body) {
-        if (!mag.allFinite() || !(mag.norm() > T(1e-9)) ||
-            !ocean_imu::validMeasurementCovariance(covariance_body)) return false;
-        return measurement_update_partial(mag, magnetometer_measurement_func(), covariance_body);
-    }
     void measurement_update_mag_only(T const mag[3]);
     Vector4 const& quaternion() const;
     MatrixN const& covariance() const;
@@ -110,10 +103,9 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     const MatrixM R;
     const MatrixN Q;
 
-    bool measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
+    void measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
     void set_transition_matrix(const Eigen::Ref<const Vector3>& gyr, T Ts);
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
-    Matrix3 right_jacobian(const Vector3& angle) const;
     void applyQuaternionCorrectionFromErrorState();
     Vector3 accelerometer_measurement_func() const;
     Vector3 magnetometer_measurement_func() const;
@@ -221,38 +213,27 @@ void QuaternionMEKF<T, with_bias>::initialize_from_acc(T const acc[3]) {
   initialize_from_acc(Map<Matrix<T, 3, 1>>(acc));
 }
 
-/** @brief Propagate attitude and right-error covariance using body gyro rates in rad/s.
- * Ts is elapsed seconds; the bias-enabled layout subtracts its learned gyro bias.
- */
 template <typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::time_update(Vector3 const& gyr, T Ts) {
-  const Vector3 rate = [&]() -> Vector3 {
-    if constexpr (with_bias) {
-      return gyr - x.template tail<3>();
-    } else {
-      return gyr;
-    }
-  }();
-  set_transition_matrix(rate, Ts);
+  if constexpr (with_bias) {
+    set_transition_matrix(gyr - x.tail(3), Ts);
+  }
+  else {
+    set_transition_matrix(gyr, Ts);
+  }
 
   // Quaternionf.coeffs() get the components in [x,y,z,w] order
   qref = F * qref.coeffs();
   qref.normalize();
 
-  // q_true = qref * Exp(delta_theta): the three-dimensional error rotates
-  // through the FULL body rotation. A block of the four-dimensional quaternion
-  // propagator uses the half angle and spuriously contracts axial variance.
-  const Vector3 angle = rate * Ts;
-  const Matrix3 Jr = right_jacobian(angle);
-  const Matrix3 rotation = Matrix3::Identity() - skew_symmetric_matrix(angle) * Jr;
   MatrixN F_a;
+  // Slice 3x3 block from F
   if constexpr (with_bias) {
-    // Integral of Exp(-[rate]x s), for a constant body gyro-bias error.
-    F_a << rotation, (-Ts * Jr),
+    F_a << F.block(0, 0, 3, 3), (-Matrix3::Identity()*Ts),
            Matrix3::Zero(), Matrix3::Identity();
   }
   else {
-    F_a = rotation;
+    F_a = F.block(0, 0, 3, 3);
   }
   P = F_a * P * F_a.transpose() + Q;
 }
@@ -320,7 +301,7 @@ void QuaternionMEKF<T, with_bias>::measurement_update(T const acc[3], T const ma
 }
 
 template<typename T, bool with_bias>
-bool QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm) {
+void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm) {
   Matrix3 const C1 = skew_symmetric_matrix(vhat);
 
   Matrix<T, 3, N> C;
@@ -356,9 +337,7 @@ bool QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
     x(0) = 0;
     x(1) = 0;
     x(2) = 0;
-    return true;
   }
-  return false;
 }
 
 template<typename T, bool with_bias>
@@ -419,32 +398,8 @@ Matrix<T, 3, 3> QuaternionMEKF<T, with_bias>::skew_symmetric_matrix(const Eigen:
   return M;
 }
 
-/** @brief Return the SO(3) right Jacobian for a rotation vector in radians.
- * Use a series near zero to avoid cancellation.
- */
-template <typename T, bool with_bias>
-typename QuaternionMEKF<T, with_bias>::Matrix3
-QuaternionMEKF<T, with_bias>::right_jacobian(const Vector3& angle) const {
-    const T theta2 = angle.squaredNorm();
-    T a, b;
-    if (theta2 < T(1e-4)) {
-        // Avoid cancellation in 1-cos(theta) and theta-sin(theta).
-        a = T(0.5) - theta2/T(24) + theta2*theta2/T(720);
-        b = T(1)/T(6) - theta2/T(120) + theta2*theta2/T(5040);
-    } else {
-        const T theta = std::sqrt(theta2);
-        a = (T(1)-std::cos(theta))/theta2;
-        b = (theta-std::sin(theta))/(theta2*theta);
-    }
-    const Matrix3 A = skew_symmetric_matrix(angle);
-    return Matrix3::Identity() - a*A + b*A*A;
-}
-
 // Apply full exponential-map quaternion correction from current error-state x(0..2).
 // Safe for both small and large |δθ|.
-/** @brief Inject the attitude error into the quaternion and transport its covariance.
- * Clear the attitude error coordinates after changing the local error chart.
- */
 template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::applyQuaternionCorrectionFromErrorState() {
     Eigen::Matrix<T,3,1> dtheta = x.template head<3>();
@@ -467,13 +422,6 @@ void QuaternionMEKF<T, with_bias>::applyQuaternionCorrectionFromErrorState() {
 
     qref = qref * corr;
     qref.normalize();
-
-    // Injection changes the error chart. The derivative of
-    // Log(Exp(-dtheta) Exp(dtheta + epsilon)) at epsilon=0 is Jr(dtheta).
-    // Transport attitude/bias cross-covariance as well as the attitude block.
-    MatrixN reset = MatrixN::Identity();
-    reset.template topLeftCorner<3,3>() = right_jacobian(dtheta);
-    P = reset * P * reset.transpose();
 
     // Reset attitude error part of the state
     x.template head<3>().setZero();

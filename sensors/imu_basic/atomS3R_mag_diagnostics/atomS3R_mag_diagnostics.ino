@@ -32,7 +32,6 @@
 #include <M5Unified.h>
 #include <ArduinoOceanImu.h>
 
-#include "util/ImuLoopHelpers.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
@@ -73,13 +72,12 @@ static GyroMagPair pairs[MAX_PAIRS];
 static int n_pairs = 0, pair_slot = 0;
 
 static Phase phase = Phase::WAIT_STILL;
-static uint32_t phase_ms = 0, next_tick_us = 0, last_print_ms = 0, last_draw_ms = 0;
-static ocean_imu::ins::SampleDtTracker sample_dt{1.0f / LOOP_HZ};
+static uint32_t phase_ms = 0, next_tick_us = 0, last_sample_us = 0, last_print_ms = 0, last_draw_ms = 0;
 
 // Latest calibrated sample and magnetometer freshness tracking.
 static Vector3f a_cal = Vector3f::Zero(), w_cal = Vector3f::Zero(), m_raw = Vector3f::Zero();
 static float last_temp_c = NAN;
-static uint32_t last_m_sequence = 0;
+static Vector3f last_distinct_m = Vector3f::Zero();
 static bool have_m = false;
 static uint32_t last_m_change_us = 0;
 // Gyro-integrated attitude and the last few distinct readings with it, so each
@@ -467,26 +465,22 @@ static void analyzeTask(void*) {
   vTaskDelete(nullptr);
 }
 
-/** @brief Integrate calibrated gyro motion and record fresh magnetic observations for diagnostics. */
 static void onSample(const ImuSample& s) {
-  const float dt = sample_dt.update(s.sample_us);
+  const float dt = last_sample_us ? (s.sample_us - last_sample_us) * 1e-6f : 1.0f / LOOP_HZ;
+  last_sample_us = s.sample_us;
   const float tempC = s.tempC;
   last_temp_c = tempC;
   a_cal = cals.applyAccel(s.a, tempC);
   w_cal = cals.applyGyro(s.w, tempC);
-  // Keep elapsed rotation, but never diagnose sensor axes from a pair that
-  // spans an unobserved scheduling gap. Subsequent relative pairs remain valid.
-  if (dt > 0.05f || !w_cal.allFinite()) ring_n = ring_head = 0;
-  if (dt > 0.0f && std::isfinite(dt) && w_cal.allFinite()) {
+  if (dt > 0.0f && dt < 0.05f) {
     const V3 dth = w_cal * dt;
     const float ang = dth.norm();
     if (ang > 1e-9f) q_gyro = (q_gyro * Eigen::Quaternionf(Eigen::AngleAxisf(ang, dth / ang))).normalized();
   }
 
-  // Use the same acquisition epoch as the delivered field. An invalid first
-  // sample must not poison the freshness baseline with NaNs.
-  const bool fresh_m = s.m.allFinite() && s.m.norm() > 1.0f &&
-      (!have_m || s.mag_timing.sequence != last_m_sequence);
+  // M5Unified returns the cached AUX value between real updates; a changed
+  // raw value is a new magnetometer reading.
+  const bool fresh_m = !have_m || (s.m - last_distinct_m).norm() > 0.0f;
   if (fresh_m) {
     if (have_m && phase == Phase::STILL) {
       const uint32_t di = s.sample_us - last_m_change_us;
@@ -508,7 +502,7 @@ static void onSample(const ImuSample& s) {
         n_pairs = n_pairs < MAX_PAIRS ? n_pairs + 1 : MAX_PAIRS;
       }
     }
-    last_m_sequence = s.mag_timing.sequence;
+    last_distinct_m = s.m;
     last_m_change_us = s.sample_us;
     have_m = true;
   }

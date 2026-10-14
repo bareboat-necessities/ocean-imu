@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "d078518252462dccb5e59c38510b4d8127970158d821a199ab652b1d2301c4d4",
-  "results_file_count": 485,
+  "replay_fingerprint": "aeb2b2eafdae55960fbe93ff396532c1610af5dede103e66cc5d1631d1f16813",
+  "results_file_count": 465,
   "results_files": [
     {
       "kind": "file",
@@ -580,66 +580,6 @@
     },
     {
       "kind": "file",
-      "path": "reports/results/heave_only/heave_only_jonswap_high.svg",
-      "sha256": "5b89f83227e69df9ccc5561a9689d8a35a9137506b6eae79fb00ee3bbf38abea"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_jonswap_low.svg",
-      "sha256": "2bed4b0bdc61a0f50202c93a8f0fcfd26adee856a438237d81277b043717e936"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_jonswap_medium.svg",
-      "sha256": "1ba1a2113ae7ce4623dd2f24b869e33b3aca53c685c4ce96255fbc6fdc0ed737"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_pmstokes_high.svg",
-      "sha256": "3f46032fc3f740e9724c030b35f4d83e594900e6b71df16efcab4e639d3de15d"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_pmstokes_low.svg",
-      "sha256": "091d4c64127405dc6a232987df99618fec31046f5bd29208de5f0beedf3289df"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_pmstokes_medium.svg",
-      "sha256": "f17cfa2029ab7f7eab2c97bdf0248b5e793110e02c342043d35c7842ec443333"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_jonswap_high.svg",
-      "sha256": "c904026701e2c5c1ae3b9308fe84b5809145d277765e5d20f1d19df63d7d2fe5"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_jonswap_low.svg",
-      "sha256": "ac98e196d92bf8cf6509e2ea5ac2d802edd7e11cf5019f114c45f8e017d151d6"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_jonswap_medium.svg",
-      "sha256": "59086a19bd0a984ab61152b1045d49387121ac07f64fdb718dfd2134dcfd414f"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_pmstokes_high.svg",
-      "sha256": "8cf725e412ac7003cbf47690a5acb467c760c44abab80d1b52cff378ea6e1f88"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_pmstokes_low.svg",
-      "sha256": "d8e7fb43e58004e189aca67fc0449269cb1508841f3dac8c0565f4d06a47684f"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/heave_only/heave_only_proxy_pmstokes_medium.svg",
-      "sha256": "338853db6e2b4f333f441022c24db0ee0927f2e34482393c8e9a51b77c09ffed"
-    },
-    {
-      "kind": "file",
       "path": "reports/results/low_wave_noise/acceleration-error-spectra.png",
       "sha256": "00f0c6a97c75c0c3c45df172ed1bc20251eeac2dd234ddf55bc2c638049aaa8d"
     },
@@ -692,41 +632,6 @@
       "kind": "file",
       "path": "reports/results/low_wave_noise/study.md",
       "sha256": "15e37f0882a56a5592d3dc2e6a561ad5643fd837441b2b30663c6ac61ec03aae"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/mahony-replay.csv",
-      "sha256": "7bc6ce0b2744f06c09e2557a5b865e9c03f4d60ff158c0583c9978aa46f1ec71"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/nlo-replay.csv",
-      "sha256": "91dfe0c9fc71d1d4775542fa650a73b25d700a107758fb611456271a9783bc0a"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/ou2-replay.csv",
-      "sha256": "6cf22848e2d627de2bb0a7284a86baae4d7d5b9ff303d19bb8abb2ac0d87dc2f"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/paired-replay.csv",
-      "sha256": "901c19fbb965245a261bd9e98af5f30a8fd54dde62d0909eab546368e4d0ceb9"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/pii-replay.csv",
-      "sha256": "42089bf734d1e71e7f3ac06f2c9fabc1ce1e37673f88b5027d85808cfb1160f1"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/qmekf-replay.csv",
-      "sha256": "b9601921a63307ce63e9855e42ca475f6582c0ad32c51746bbd299851957f98c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/magnetic_timing/tfg-replay.csv",
-      "sha256": "1cf7c3a2d16c9512bc1f91a3b01ed304533f4cdad31fdd7b0d759c6fe1b0c1c9"
     },
     {
       "kind": "file",
@@ -876,7 +781,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "sha256": "3cd3db9fce9cd6a5c80d9c241a3fc38e1821f37e97def05c1529bc555dd1edd5"
+      "sha256": "ab82c71d184fb7e7c04f395a0b8d6715645325c5227487a06f7ffe38590412f1"
     },
     {
       "kind": "file",
@@ -891,7 +796,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "sha256": "9cc9ae68ca9a3e70f48a300d738f9ef79dd01ce6ad22b5a20f3af624dba0d912"
+      "sha256": "7887f034d5c6798eb0d00a477e655d658cd99566e402da36848f8cd1affcb561"
     },
     {
       "kind": "file",
@@ -921,7 +826,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "sha256": "83306068ef5aed717f88fc5d97f8df6dff9338417312b77a33f3d57451e2dd34"
+      "sha256": "5457857de39f6bf8b999f6672037f8bed9f7effa7abd1a2a01a3d78014802552"
     },
     {
       "kind": "file",
@@ -936,7 +841,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/lemma-manifest.json",
-      "sha256": "7a3ed0d29cc2de9552eb15310c0aa262de9f52a420064d2ba13f8d749720c04d"
+      "sha256": "bb263a23f26e2962b0b4446fa81d0a40e8bd79fb235a31340bff38b6cdf91c9c"
     },
     {
       "kind": "file",
@@ -947,11 +852,6 @@
       "kind": "file",
       "path": "reports/results/ou3_stability/linked-finite-supply-feasibility.json",
       "sha256": "acd3955ee8998642bac52b73d8f6cf1bff23ba69ef3cee822523c801c0a1d5c5"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/ou3_stability/magnetic-timing-legacy-binding.json",
-      "sha256": "6317816aaeb521b71d9415ebf3aa1c0ee7f13c56d699213deb7f2c656f0d3345"
     },
     {
       "kind": "file",
@@ -966,12 +866,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried-1200s.json",
-      "sha256": "8d6f3f9b05c920fa92ef74a3ef45c21bb0c966513d50f7cfc6ec3b052d8b42f2"
+      "sha256": "8509ba43adb248c3393f56be79f32b2886bd0e3a77c9d9712864b059e01aa372"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried.json",
-      "sha256": "50373412f1aac3b6391df1f91d08ca07a93b475e52b2c7c1dbf90f5271bdc465"
+      "sha256": "6af6de2433bf1ca08834351211c6aab883401e2fbe1a344c88383666a340f5ae"
     },
     {
       "kind": "file",
@@ -981,12 +881,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json",
-      "sha256": "26ca3cc5c6148bbd2a7b7aef06664c203184dd1174d05a61f74e02c7ac01d80b"
+      "sha256": "22e054e9c5512b465b61d0f522b080f581336ecf2993496dba1fc1395abd6ffe"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "sha256": "2d2fe4484557390a07b3f9ca47acb9f9c62075ca2939196558d8b8166a3665cb"
+      "sha256": "b81271e0e07ca9f2f1cc793fa94d795755a1291ee26a173d14c2529d051ac31d"
     },
     {
       "kind": "file",
@@ -1016,7 +916,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "sha256": "b9af64061e8a2cb626ca282b4c23d920bbd88c583c189916ae745ccd14e68dfe"
+      "sha256": "548135682427c08e6ccb402d1e537d5b5183a33f1c84b5c2b38e63c152629a0c"
     },
     {
       "kind": "file",
@@ -1046,7 +946,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "cd7d96849bac01c4d67ea6be15fa3fc24559d5172e822597906f3147df979f2d"
+      "sha256": "63f9122af5e636796ecbbfdd7ee34f89803695fd47e3789022c7033e0d64af9a"
     },
     {
       "kind": "file",
@@ -1066,7 +966,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-frontend-binding.json",
-      "sha256": "2a8bea166322258ff4c8fd15d0cc92d8729908fab9e4d4fc440d8d350078db21"
+      "sha256": "65867843ab9ab9523bbdd857f091b53de9f6fcab996ad831fbe566783f672168"
     },
     {
       "kind": "file",
@@ -1086,12 +986,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "sha256": "445c717372c0f0e7b91825680373117576733e6d1de285460aebfd707561c0ca"
+      "sha256": "ece891c5ac78b8983c039977e8a13082bf042206851e64b9d9639a2caf3f2718"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "87f78412cfb241f2d3c9d3436ca03eac95ad27eb9e624aa3921aa0acd7fa09ac"
+      "sha256": "4f624678f6c5cd974bf81e64d385a7865e171c2707c3dd46d0a6b2e1aec8ac0c"
     },
     {
       "kind": "file",
@@ -1126,12 +1026,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "sha256": "5b963120002c129baa04865bd6f0f1da39cc44c12e0d0ffc66ff6189428c8642"
+      "sha256": "1563ec231e566705e966c1733852dd30c0e96dde934759122fed79bd234dc342"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "sha256": "6ca7211cc6b53089e3af0370fb9fa153dbe08b89159d054fc607f9b9651404b8"
+      "sha256": "8e44c0312440cff352aa86bd6ff4e551def727e3200f8beec76435fa867fa4f0"
     },
     {
       "kind": "file",
@@ -1151,7 +1051,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "sha256": "9f1b0df1458453413226644f47ca7f9cf07e0ab1e191881c7654694e94c05596"
+      "sha256": "7f6de8446aaf90b42867b8117ee9e8a00d5efea2aadfee43dc4cdd872d722db8"
     },
     {
       "kind": "file",
@@ -1171,7 +1071,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "sha256": "e63395df445dec206b4152c1424e9147d9cb9c772c954adb9b1244d5948ed436"
+      "sha256": "7f4c6865b21cb47ae4d76ef1e86fd2a7a653da7a5a4960996f251c28bd9b6af4"
     },
     {
       "kind": "file",
@@ -1191,7 +1091,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "a7f8f2545148cd9b643b81dbe28c656176985a65c7ee31a9c2a998fac176ad84"
+      "sha256": "c71c0ac754a44329f343e3730759f223ec532b62d46f1eff2279cbe2bed7d432"
     },
     {
       "kind": "file",
@@ -1261,37 +1161,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "33d8f6e3336974afd1b8bbcba024744206f3ae64ed093cf843e198879505c18c"
+      "sha256": "7de6b59e936a811bd0b68960c334b0ee7470d991c6cfac46663e2773592b05e7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "df037d8078d9c421e91e327c23e8ad75214f3a5cd361713c16a59d7f6ff6d714"
+      "sha256": "087119c9e065925bbf44cba28b7c71ab257c3dd983b7099a54636bd667445362"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "374b95d13a9dc3af8fc2be018c70726d911f717d73bc68862f0606ab779ce1ce"
+      "sha256": "302e329eefe7510355b8290a28d91d9b2a35a075132496509e0432788a326ccc"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "4b8873c982c49b3beb6f2aeb4f65dcd60b6ba2de2b102fa7632906ccb9aa07a4"
+      "sha256": "93462ca21244a5da65f85d90906e4f78e41358ba93568ca5f5e27a27f447ea79"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
+      "sha256": "09083ce02583c6ca3457b94b51bf3857b1b288ce2268e211e5e4e5b35d308d65"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "b14d01b6cdc882f4c9c6e98e6ee939c3a95869c04d8b98c2dc4ea3798a94532d"
+      "sha256": "f2a5a4a336621605381099ef267734153e41e09a7846e4dcf5b967985a8c7246"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "5266acfd1f4703ae8cdc2b565bfbe6f00c0b0fa3bd74471704b9e0ac50a0de52"
+      "sha256": "d1b1cbc95afb9ca68efdf00b27ab411050bf0fd878ef9201e23c42f440931694"
     },
     {
       "kind": "file",
@@ -1301,17 +1201,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "6ce9378c6f90f22fee5748151187e5c0fd312ad5d053fb76c6b68874d55229cd"
+      "sha256": "d906fce6dfbd2308d7c4cf5da3c9b0600fb346e7fe6ecd73645fd1141b349efa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "7dd1bbc00f53418177c1d57c6a4f2a7b92802e42ca71a416b1fb42055128346b"
+      "sha256": "4b0d24f01a8012f11967823ba4f055223962ca2a157958ec7cb5317346b67984"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "4c460750846e3bae89ad0ce9ab6fc0f104723516efc1c48a1c32c9bcb78f3f17"
+      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
     },
     {
       "kind": "file",
@@ -1331,7 +1231,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "3afc0a3261f8ef8b9fd70b58b818a24716507aa3896917a82dd8c56f9baa9f25"
+      "sha256": "6d06a7ebd76222121c8e57dd30168a94298a37203ae02d248c11c5f67c6cec19"
     },
     {
       "kind": "file",
@@ -2401,46 +2301,46 @@
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/comparison.tex",
-      "sha256": "78752df4472edc50cfc22118b6defa58668c7f9a35dbac0a82ae9c436f253144"
+      "sha256": "54ce0d359b57fbee288fa87e8545655dbb326eb9102adce6b27ef075d313adfc"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/gate_diagnostics.json",
-      "sha256": "1afc82442f84a8d2651e5e5a0b3492a6bce3b1c5ef5e1bc9359928b2b796aaa8"
+      "sha256": "c4fda3f250132db7967a1349758683604fc0f87b45005ed041a3d50b8b51261f"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/manifest.json",
-      "sha256": "1ec85875d108db19026aafd6a5da198357ec89c4310a98af4139fcbcd34625bb"
+      "sha256": "6eefb9fd4c56d8df37e9ace74c0da3f418334c6a2aea618a832de010fdcea164"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/paired_summary.json",
-      "sha256": "4d4d5c428a6f0b32af1733fb0f1ceba810dbef9d7aae5f843cefa8a28835291e"
+      "sha256": "19d0c7a84504aee59ca493ed9e65959ba913315cfa3ef0a2ec4b0f2632dbb8e6"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/raw_runs.csv",
-      "sha256": "2e2157abe7ac624fbfe2a41e7094d9326a9bf63a22bc9ec2a295729d6f9a9d39"
+      "sha256": "c1c9bbfddbf0dedabc0fadb46b116f1093d97c743d1da68e7dd9b6c56c95a9a0"
     },
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/raw_runs.json",
-      "sha256": "bc1cb0425e6464e7891562b44738e083cb81734196a325b33ef0fbd263bff132"
+      "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "4defe69dc143cba3f50dcccc581fbb020ccdd6e0aaa556089924e84000c1dd28",
+  "results_fingerprint": "96add4eb54e70b4c902181f58497f5037f670102e55ef2f451fee3ac864d3575",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 815,
+  "tracked_replay_file_count": 759,
   "tracked_replay_files": [
     {
       "mode": "100755",
       "path": ".github/scripts/actions_history_cleanup.py",
-      "sha256": "e41c34513a0bb0b86c8afef3d13635e0d0c9e86072f8369ba1296b789c223756"
+      "sha256": "4fed3275f280e12881a53824e63b742ff0ea0b354b3d13e2ee19cfcd86beea54"
     },
     {
       "mode": "100644",
@@ -2449,13 +2349,8 @@
     },
     {
       "mode": "100644",
-      "path": ".github/workflows/arduino-ide-build.yml",
-      "sha256": "c1c2fea74e11efdd2d7c00ba1c7854d7d01da59bbfa23fd3fbd201e46d3ac7f3"
-    },
-    {
-      "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "d0ac7299187733b2311f3d7576bfc4d330ac1b8dd24ab67ee034585ba4ca5436"
+      "sha256": "bc3b25452e1f644b54c8ede6fc6a6507ffa32e2376c54ff4754adea2b7244bdd"
     },
     {
       "mode": "100644",
@@ -2466,11 +2361,6 @@
       "mode": "100644",
       "path": ".github/workflows/evidence-contract.yml",
       "sha256": "6cbbeaceeba76c1a5edf23f2a68079566ee4c241ad0a1d0f9f52ee93016f2780"
-    },
-    {
-      "mode": "100644",
-      "path": ".github/workflows/heave-only.yml",
-      "sha256": "c82ebdff4f532657b6d4ed9aaa3d45e39014710d82dc457b7f166c710dd191dd"
     },
     {
       "mode": "100644",
@@ -2495,7 +2385,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/quality-gates.yml",
-      "sha256": "cb511510373d0ee4748b7ace1cbd951025b4808247ba708b423cc9d4d0e592cb"
+      "sha256": "1f52e443ee3b67aeb05e8f18e73abbc3040f63fb9b574618a5faea7b1b102b11"
     },
     {
       "mode": "100644",
@@ -2545,7 +2435,7 @@
     {
       "mode": "100644",
       "path": "Makefile",
-      "sha256": "e801d72f11aa60b878eccf22b51942cc545835499b0d7921e18b1a29632eb9a7"
+      "sha256": "c1a2ba53ade4a5be81acbed2eed92e3873aa34754396b199af6c509f056f5e36"
     },
     {
       "mode": "100644",
@@ -2593,16 +2483,6 @@
       "sha256": "28f8b5752119a97c424590619eee859824ed6d8cba252b11211a3364a6fee184"
     },
     {
-      "mode": "100755",
-      "path": "plots/heave_only/draw_plots.sh",
-      "sha256": "14c7f637bbeb8ab8dab55818adc90941971f16ab721260ffe57eab4bdb22058a"
-    },
-    {
-      "mode": "100755",
-      "path": "plots/heave_only/heave_only-plots.py",
-      "sha256": "6c5df02f43111631764880c750b353ab79c5174f8bae6f8c6da02dcfbf254fe5"
-    },
-    {
       "mode": "100644",
       "path": "plots/imu_calibrate/draw_plots.sh",
       "sha256": "9445ce9d0c2527549075921bbb150bbb4c81487e43c583108cf7adf4afc1269d"
@@ -2630,7 +2510,7 @@
     {
       "mode": "100644",
       "path": "plots/kalman_ou_iii/draw_plots.sh",
-      "sha256": "be07b66fa58558bcf5a8bb3eb1056b495fb12b6dfc2b3a92d6f78b9d1a485d89"
+      "sha256": "271194ab157a332969c3a55abc2f449b9f9b90af35f4bf8248f9260a6d1918cc"
     },
     {
       "mode": "100644",
@@ -2735,52 +2615,47 @@
     {
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_mahony/atomS3R_compass_mahony.ino",
-      "sha256": "8cff5cd56eb6d2ff84da24142b1cc06421700c38c49b9da03cae0ed977862fe2"
+      "sha256": "1da7a46a5816e9aa28af712e7ceadff322e4b06d5b9b378526bdb67e0f5f8b8c"
     },
     {
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
-      "sha256": "8b6ffcfb3397aad59c5de24e6a15a8c1ec64f4113200e108c9aa8da0fd714d78"
+      "sha256": "4c267a0e9b9a0758d7e252de7d1e799e34e89b3eaf97d0f6874f97c887ee0c78"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "0cc616ebf5c422f6e67f3f38b29a920e7680e59b0e1dfad89919db19f7ed27d0"
+      "sha256": "326bc4f9d0c825844da40648226cc5349a90186da5a88e1a834ed476c8ca6966"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "df8abe8d739b86c8799c2dccca13e7f2d165b385e59716f45a597c9256129f1a"
+      "sha256": "70901de42c51f6c694c234a559bb2f05a8ad2dea9661b9d7f380d83f2cbf174e"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-      "sha256": "324a6348723642a71814be7aae25abceb0c6d83194da5c581165f33399e14d24"
+      "sha256": "41553799fb92b61bc42693dab5434c3f8aedbfa56d4176ead50198fe772ad3ab"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
-      "sha256": "67be9c6f18f9cdca47d853a6ec54ecc82011fdb7ed6f7aea0f9ad2e916728efe"
+      "sha256": "11c34129de52c8b1d641b7544df69eeadb349bce9b1f77af35a1d1e6f1151e83"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "664693d03ef4b95d4ca318649c3e4d748380d0f7cfab17b542f5f0875363e914"
-    },
-    {
-      "mode": "100644",
-      "path": "sensors/imu_basic/atomS3R_imu_fifo_diagnostics/atomS3R_imu_fifo_diagnostics.ino",
-      "sha256": "c045c980b94fe30709ce3f260fb59176b706850377a264a670c37a47e14ec923"
+      "sha256": "6a3524265b5e2fb7ef030a947b7c503f99e3303d869090abc81b075a70cba2c3"
     },
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino",
-      "sha256": "82912521d1b8266f9878027a51783875ab8b49f1ba1e9c58aacf5805f0ed2e08"
+      "sha256": "f170b7386260627f279a79f92661ccf98bedf9a5ad41550b35f2ae1c801712a3"
     },
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_mag_diagnostics/atomS3R_mag_diagnostics.ino",
-      "sha256": "f2cb8575d69a21908b15471e74a89e695e1ae6c67e2f16862d91c4f494db950d"
+      "sha256": "08a42d85290c91614555810024631adb7a9dd16d7c01efe9bf2fc20c558c54b0"
     },
     {
       "mode": "100644",
@@ -2789,13 +2664,8 @@
     },
     {
       "mode": "100644",
-      "path": "src/AtomS3R/AtomS3R_Bmi270Fifo.h",
-      "sha256": "bf52d4546792575ccd01b3ca2c8f64a8cd9a4974d8eeedb97da1c0729d7fce86"
-    },
-    {
-      "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_Bmm150AuxPreset.h",
-      "sha256": "2acfbfe9945b7dd3d665c592ea74b7293dbf5393171cb3f39885ddc4e3ee2cb5"
+      "sha256": "5c7ea177d9ac74c12d0012683619c12dfad892008fd97ba295da1d175100c9ce"
     },
     {
       "mode": "100644",
@@ -2810,12 +2680,12 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
-      "sha256": "5a17777b5d485e5e30cedd2b44dd4a675c76bec1c1bb539b284f174d70d15517"
+      "sha256": "f97d32de10265ff91987aec5bde8b3960cc76920bed30c3d8d960260fcb343ca"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassUI.h",
-      "sha256": "6f397141dfea7c00ef0111115f3cda0ad5d78580f0edb034800751c50aad0d23"
+      "sha256": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08"
     },
     {
       "mode": "100644",
@@ -2825,17 +2695,17 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "cdb20fcacbb15a224cf3df4fed93e1941194bf0e7be1d91fd5cfe82a82ce78ca"
+      "sha256": "7a924c4785ce98ee2716ebd6cf03154c817ad70a693ff46d05a8b8dac051cc3d"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalBlob.h",
-      "sha256": "45f5488d181f8f5fa672dc2c333cfda18a893f499bcfde1e3759029f7317464f"
+      "sha256": "41bc96a4240a3297ddf1b583c7eb39ca0438331539903973e264a3ef49ace334"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalWizard.h",
-      "sha256": "5b29114e1cf139fbba1364e6004d64428c87e9bf3d47431baf5e507920b7f65d"
+      "sha256": "01ac194bb7cf5f75c7e7902a9f6a6fcf06349a25b0d29ca22c50b4f74585ce87"
     },
     {
       "mode": "100644",
@@ -2845,17 +2715,12 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuUnits.h",
-      "sha256": "1bfb9c7da12fbdb682122840c786f06ed5e650ca6b2c279736b33e23d877086d"
+      "sha256": "6c5c8c5c07afd5aeba66042f460702b634ce1994a40d37b71f07b77baa4ff29f"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_M5Ui.h",
-      "sha256": "7886c94109ff62bd960766e9a50b006b18782c16226dec9180790e6bcc8fa630"
-    },
-    {
-      "mode": "100644",
-      "path": "src/AtomS3R/AtomS3R_MagAcquisition.h",
-      "sha256": "337751a4b436219b8634282fc27ac686e0ecb2b2bb8f4e08830b49ea12983fdf"
+      "sha256": "9840fc37dae82f6fe889a46eda23fbba58aa4148019667ffeeb70eb1ea6e3c09"
     },
     {
       "mode": "100644",
@@ -2870,7 +2735,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/ImuCalWizardRunner.h",
-      "sha256": "535d6ac06154acc355faa1d9adabb6fc26bd1b4e27f309c6726d9f05f8e6a30b"
+      "sha256": "be9f11dc9028380a383a2920fb5ae29abacc70b138fb203574d77a35e0910b7d"
     },
     {
       "mode": "100644",
@@ -2880,12 +2745,7 @@
     {
       "mode": "100644",
       "path": "src/ahrs/KalmanQMEKF.h",
-      "sha256": "5619e1a816247ff57d802c931d11abd527c4480b51b85b786b1ea08c0a3fd904"
-    },
-    {
-      "mode": "100644",
-      "path": "src/ahrs/MahonyHeadingMag.h",
-      "sha256": "3e6221a95615135044278f09bf53e03f5386adff567c5619db2985ddae5ea9b4"
+      "sha256": "f0108e104cb5779fca965ce083287a9658e9d2cf40646ff5bbeebcf36a5dae90"
     },
     {
       "mode": "100644",
@@ -2980,12 +2840,7 @@
     {
       "mode": "100644",
       "path": "src/imu_calibrate/CalibrateIMU.h",
-      "sha256": "3b1be2ace8e00d58aafb1701c8c19c1fcf25f214ae3b0c6f002bbb83c11d0188"
-    },
-    {
-      "mode": "100644",
-      "path": "src/imu_calibrate/GeomagWmm.h",
-      "sha256": "89f75fc1d57dca7395101cc6e1952edf1f79e9595388e8bc1a3740eda6febe2c"
+      "sha256": "a647665ad8ab876c97a2428d1cc81f97fb7a6351f6eaf4e71f9822e8fcc9b4f4"
     },
     {
       "mode": "100644",
@@ -2994,28 +2849,18 @@
     },
     {
       "mode": "100644",
-      "path": "src/imu_calibrate/ImuAccuracy.h",
-      "sha256": "c7a6fe926275746958e5298467395b3eb43522545c2956eba9f07cb3b1754e1e"
-    },
-    {
-      "mode": "100644",
       "path": "src/imu_calibrate/MagCalCapture.h",
-      "sha256": "547fcdcccbe28123c4a36aa83e29f09945c912ec5f6d4563c6a5cef0112a373b"
+      "sha256": "8aaef96ec2ee5616289118615adc064cc7eaa7e4129141e8e28fa97b71257860"
     },
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalFit.h",
-      "sha256": "0bcb9855bafa9c7b5c6e998e82572653f6bcc5d16089729673e4d4f261b41e2f"
+      "sha256": "a2ec040e828f712fc9c2be1a972257c0ac948739043b7c469225145250944898"
     },
     {
       "mode": "100644",
       "path": "src/imu_calibrate/MagCalSampling.h",
       "sha256": "5b78bd82ad98f201379da4893986fe362d713081955fc7f58e0868c6401d7e02"
-    },
-    {
-      "mode": "100644",
-      "path": "src/imu_calibrate/MagTimingCal.h",
-      "sha256": "4ab05a07f70febfa8f6e240a145aa958342fb5316fb15a10787dcf673fc15245"
     },
     {
       "mode": "100644",
@@ -3035,7 +2880,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "sha256": "d7bc77901adfbe788617222ed7ab1f281c679c0d20a5abab8a799acd10370a87"
+      "sha256": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba"
     },
     {
       "mode": "100644",
@@ -3065,32 +2910,32 @@
     {
       "mode": "100644",
       "path": "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h",
-      "sha256": "f10c1a5e151ba1915963d712f9fdc3a9335e2dcf7fb3df385034effcab64aced"
+      "sha256": "8762c6a8891cb5ba5f3d0757d3f467b0ec3a5faba6009b826bd23d89e5dbfa47"
     },
     {
       "mode": "100644",
       "path": "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h",
-      "sha256": "48a172de3bceb8a06fcf52d4779df5e52e9a5361a3e2468c38f6ddcf90be3a05"
+      "sha256": "c8a6d1914f8cf50362bdefbe43daa45eeb1672f5e0087a01b06e3d0a79e4cbe2"
     },
     {
       "mode": "100644",
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "sha256": "f90dee6614fba879c2470c67d6f186fb7eef08012366e7110463c40a182988e0"
+      "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
     },
     {
       "mode": "100644",
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "sha256": "64d5419f9b4018ab165fda234eaf7282dbd271b60bdb30c4e05d3940ebccdb32"
+      "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d"
     },
     {
       "mode": "100644",
       "path": "src/kalman_tfg/Kalman3D_Wave_TFG.h",
-      "sha256": "1e109ab58914002955731de7aec2fe1d290cfdbb4b638b9234362138ebf325f9"
+      "sha256": "4e6f1cafa61bf4d3442cba1ab5196699fae76cb0fc962ace8a0d45c9106e557d"
     },
     {
       "mode": "100644",
       "path": "src/kalman_tfg/SeaStateFusionFilter_TFG.h",
-      "sha256": "d72c90936d2bca99075044d035c011edb73e3738b21c46e90c79a259d07c448e"
+      "sha256": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255"
     },
     {
       "mode": "100644",
@@ -3105,12 +2950,12 @@
     {
       "mode": "100644",
       "path": "src/nlo/TimeVarGainNLO_Adapter.h",
-      "sha256": "43dce34ec01b6abd3afd84f0387cfc711cd060bc9e00d35f743c2649b748925a"
+      "sha256": "2b4724ac195e85581e3034153352ffc84ad1cb61c20bccae0e2831813f58bbe4"
     },
     {
       "mode": "100644",
       "path": "src/nlo/TimeVaryingGainNLO.h",
-      "sha256": "17bd0a98e281304a3778b9579556da8bc8303bb0c398c571c8ebf3c244d24d57"
+      "sha256": "fe5610a5e6ae762a6b0fc612eed5344f8703526625e49f67f0b282db9f46ae5a"
     },
     {
       "mode": "100644",
@@ -3135,7 +2980,7 @@
     {
       "mode": "100644",
       "path": "src/pii_observer/AdaptiveVerticalPIIMahony.h",
-      "sha256": "fc08242e0af657ea6e320b23ab677e4494e33a0df988c9c62b954cc5fd1a0692"
+      "sha256": "16e6d79b6d3391a03551e38471ff4dff334a61c4b3680ee3152b4c88dda5f1e3"
     },
     {
       "mode": "100644",
@@ -3209,21 +3054,6 @@
     },
     {
       "mode": "100644",
-      "path": "src/util/MagneticInput.h",
-      "sha256": "bf0a0b65a29474143f62dc6c9d138fa034b3609b9a4ad60ec8c08d5cd1d3b1f1"
-    },
-    {
-      "mode": "100644",
-      "path": "src/util/MagneticRotation.h",
-      "sha256": "8e29130fff1aa9abeda19d4b9bb00b336176e545bb02d839c0515a93d6fffb3a"
-    },
-    {
-      "mode": "100644",
-      "path": "src/util/MeasurementCovariance.h",
-      "sha256": "829634df89a5c32a5cad90beccc3a706590e659423179f87f9788dbf7431aad1"
-    },
-    {
-      "mode": "100644",
       "path": "src/util/QuaternionUtils.h",
       "sha256": "83ddaa7468c99e12f77cbd539db1544134c009fa7ca8cee156b89d940cd7e298"
     },
@@ -3285,7 +3115,7 @@
     {
       "mode": "100644",
       "path": "tests/ahrs/Makefile",
-      "sha256": "06747d1b93f213f3c692d605ac5a151b8e9950c2f3b60789a5d3b18002f5245b"
+      "sha256": "3ecf9ee348f6551e5c3709bfe0133a07b5747eeee71df7f830652ff47cb1d58c"
     },
     {
       "mode": "100644",
@@ -3294,33 +3124,13 @@
     },
     {
       "mode": "100644",
-      "path": "tests/ahrs/mag_continuous-test.cpp",
-      "sha256": "043af164e9089f70ab917f856fc21f92200249070b9b42a777a2128ac575a848"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/ahrs/mag_timing-test.cpp",
-      "sha256": "5a41dd20d671065d7e1e0071202698a6c1b2f4d1b85716fa615519c47d8eb1d4"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/ahrs/qmekf_geometry-test.cpp",
-      "sha256": "98f85486f8243fc8b27f35c0ec139f065492649765ad3a3689b64ae11c7d64ae"
-    },
-    {
-      "mode": "100644",
       "path": "tests/ahrs/run_tests.sh",
-      "sha256": "11c43ec509c2ef18e97414654d598ef4f8c9a47ac456a6f3b1444aab2d92cb37"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/FifoDiagnosticsSketch.cpp",
-      "sha256": "a73683c5f2dc03c68dae83366030ea0e89043592ffc79dd2ad93b1a3fccba969"
+      "sha256": "62bb6cf606524165ff7774bd9836c4268e900caa42324b4ec3f26b4b185e9fd0"
     },
     {
       "mode": "100644",
       "path": "tests/common/GravityChain.h",
-      "sha256": "cf058dfdfb0678c38e76aae683df82289323f2e773ec7264a03f55e6bcdbe84f"
+      "sha256": "be60c6f586be5fdf1ff018102f161a03dcba97fe8fd0e62eb28d10513888f9ba"
     },
     {
       "mode": "100644",
@@ -3334,16 +3144,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/common/InsSketchHeaveDrift.cpp",
-      "sha256": "d4b6cd966e2a6ed2b3aabffe828aeeb7b458a9dd267bb4a9a97cfd769360546c"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/InsSketchHeaveDrift.mk",
-      "sha256": "0a43185a7064757708ed0c2e8d7547ca95bed185d67290cfdbbd60f49bd398a4"
-    },
-    {
-      "mode": "100644",
       "path": "tests/common/LocalGravityRegression.h",
       "sha256": "ad33cd62ab0a863446126ae9b21aeed5ee831e59bc8674540833a42ad3e7668c"
     },
@@ -3354,31 +3154,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/common/MagTimingFixture.h",
-      "sha256": "d594f9f2578f52192307c3fa89e76352caa39ee674f0626817e9e5dce6940857"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/MagneticContinuousReplay.h",
-      "sha256": "a8fffcf30ed54e38070a5b856bf5994a775976345bf7cbb142b90c8a88617071"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/MagneticFacadeIdentity.h",
-      "sha256": "c99167e619e4f6658532777ea23d515f97d7ec5d1e76e7db398b2e705e4e524c"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/MagneticMotion.h",
-      "sha256": "4cddc4e86312bc35028d9d7e1128829350635355bb97ef2571ee497554fda48c"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/MagneticTimingReplay.h",
-      "sha256": "02f852ba93cb9d4274129f9fc0c3079cf462129ebf21f02c916fc909d6c02cf0"
-    },
-    {
-      "mode": "100644",
       "path": "tests/common/StationaryDeviceRegression.h",
       "sha256": "9d51bc1bf8fd1e830e72753c9a687de0f5c5757c1ddc979dce3ad9dd3d7e9ecc"
     },
@@ -3386,36 +3161,6 @@
       "mode": "100644",
       "path": "tests/common/StationaryDeviceRegression.mk",
       "sha256": "5a2e0278a89c19844cca4cfd4aa9f06672f7ec59e35fa9469314cb690dd3cd82"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/Arduino.h",
-      "sha256": "a37ea5c33889754bae5a3061bc27c20f55ac0d719ace9d4940c71e8d6b17ed29"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/ArduinoEigenDense.h",
-      "sha256": "faca63de866631ab21ff25d414d4477e1cdd6af401574b6ddbf1705a354b020d"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/AtomS3R/AtomS3R_CompassUI.h",
-      "sha256": "c91c94f585f0cfe8406294ede00cb0801f8e91e534486ff988c09f188ceb1099"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "466d9107e944e9b6cf151d0e164960a6459ad3f799b48a1d10757ef53792c441"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/AtomS3R/AtomS3R_M5Ui.h",
-      "sha256": "144c525c105697994231db0cd8d47d3f842fc050423debfffb23d5b93206ffd6"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/common/ins_sketch_stubs/M5Unified.h",
-      "sha256": "1a2994091afa3833dd089b60e6b78513788a58bfd75577dbfd79a82ecec849a3"
     },
     {
       "mode": "100644",
@@ -3479,53 +3224,8 @@
     },
     {
       "mode": "100644",
-      "path": "tests/heave_only/AccelSpectrum.h",
-      "sha256": "35e56be60b04504c1ea63a567cc8a31845cb30c94d04f80ffd294777dde3545c"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/AdaptiveHeaveFilter.h",
-      "sha256": "efb3c9b0c48356876c8c32a6dff0cca8c6477f1dcf23e89583a27e72a3873c3f"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/GodhavnHeaveFilter.h",
-      "sha256": "db676d9bc180fe8c0783c3e83d466a96bdf659db1417dd206cf711935c2fcef8"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/KuchlerHeaveEKF.h",
-      "sha256": "3cde2cc877167e8f581de98f13de2bfbb524ac128763e5cd20bb8cbcb6509806"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/Makefile",
-      "sha256": "ad695d44588eb4436c1c781a705b52c080c95dd6b99c151822a66485c3ec8b87"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/RichterHeaveFilter.h",
-      "sha256": "252e83f0fe56451680692a4b2af06818679b30bec0f514b85d1128681abcc9d8"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/heave_only-sim.cpp",
-      "sha256": "75070919b906250e75e56ce79b22af11495ec402724d9f98987b8b485ffd2eb5"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/heave_only/heave_only-test.cpp",
-      "sha256": "f304eea90150ddf9b232af565769a07a485e040791f9dc012e58d6bcf50d1f6c"
-    },
-    {
-      "mode": "100755",
-      "path": "tests/heave_only/run_tests.sh",
-      "sha256": "109d975c91591eceb83fef48fe1a62c8d837bce3e3baa5f71276107a57bb4c55"
-    },
-    {
-      "mode": "100644",
       "path": "tests/imu_calibrate/Makefile",
-      "sha256": "e8556fdf8e531c7719cf24c0c5a7941e027928e82e6806219437939d9ff10f3d"
+      "sha256": "a33421a6fe013f52b32ef16441c53e82c43d977eaafe609a19e1b8bd4af15c5d"
     },
     {
       "mode": "100644",
@@ -3535,7 +3235,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal-test.cpp",
-      "sha256": "7178dfc1d0d7b16532ebe33f7fa07bd591dcfdfb8e247c629a8efc9fb74014bc"
+      "sha256": "0afb6e7860372d39a3180b96f521b3fe7b698cb7b7ed205f8d2231e9ef978cbb"
     },
     {
       "mode": "100644",
@@ -3554,11 +3254,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/imu_calibrate/bmi270_fifo-test.cpp",
-      "sha256": "9bd4edf79e5879a800b3704d2c5c5fd7cabcfd951b8a2da4d0d90e2d607654a2"
-    },
-    {
-      "mode": "100644",
       "path": "tests/imu_calibrate/calibrate_v232_accel_reference.csv",
       "sha256": "d525c65060b79d1a4d52fdc36fa72411fcb48d9c71776d23161a0c09667ef75e"
     },
@@ -3570,27 +3265,17 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/calibration_safety-test.cpp",
-      "sha256": "a4b039d0e3cdd710878c2b7993d50422be51f5a3936c4ffa824f42a0b6fa2d04"
+      "sha256": "c1a7d0564d506fce9437b5a42d5312f73db7b950c51e873594d5bc792e91e7bb"
     },
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/calibration_workflow-test.cpp",
-      "sha256": "2761960ff2ad4c42126dc0b196583eb8c3f853affdbdc2a8bec0a32217ab9f9b"
+      "sha256": "97fbb7a5e59f1506c777f7f28656c3ec2f5c18146bd54b918a9605ed87d18f5c"
     },
     {
       "mode": "100755",
       "path": "tests/imu_calibrate/compare_release.sh",
       "sha256": "2c3828fe0b71f5b4dee32d78a6ba4b70d08365d87b5f08a245566c4bd423e8ac"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/imu_calibrate/geomag_wmm-test.cpp",
-      "sha256": "c6b51f3d90f87c070d03e13aefdfacc797a5b08125d20a59f0c01ad4b6709162"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/imu_calibrate/imu_accuracy-test.cpp",
-      "sha256": "ba4f5699b38679c11c7bcb20d18cb33992ad24afb0218609447ddbe3f2c9fcb7"
     },
     {
       "mode": "100644",
@@ -3600,7 +3285,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/mag_diagnostics-test.cpp",
-      "sha256": "17379ff4d74a76c4ba577c42f4df83db0e6bca2ffdcc19f04a2927d14565408f"
+      "sha256": "ac1fa741923c736296d95095463edb0c467fa8c048b8c7b8452a0a45e08c60a1"
     },
     {
       "mode": "100644",
@@ -3610,27 +3295,12 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/mag_hand_motion-test.cpp",
-      "sha256": "9a66cd500b1b54c12faf6f32aacb74481083f81ce8fbdd750306c9a8f9635b4d"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/imu_calibrate/mag_input-test.cpp",
-      "sha256": "8ff847534186e87d1c6a882eb38aeb120d1c87c2806af4e41808c8966c576a03"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/imu_calibrate/mag_rotation-test.cpp",
-      "sha256": "e8b1e461fac728f0ae9e57cfb0e8709bb8bcf5989782fb161bdf5ee1f98c68fa"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/imu_calibrate/mag_timing_cal-test.cpp",
-      "sha256": "4421ab3b85a770b7642ec3f828ff743e065bc5c965d5101212e5afb4ab870ab7"
+      "sha256": "7a83027baa07d1dc8af5fe0bd5c0fb10b447d45f21b044d85a1fd148e2001bc1"
     },
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/run_tests.sh",
-      "sha256": "382ac310949129d367383a00d92cd273cd06641e96c472063f26d926d97b1134"
+      "sha256": "2e98f105963f9ab0e8da41f911a6d7e0b05e0bcaa001049b119dab9136bd4571"
     },
     {
       "mode": "100644",
@@ -3640,7 +3310,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/test_sketch_temperature.py",
-      "sha256": "69c996a86fbe5f1aaf244a52cea1151b1dbfe4cbbfdef79deacf6bce851aae1c"
+      "sha256": "b75d7cad84701282a7165051987430b24cbff4456b873a5383ec1fa0d9d7c034"
     },
     {
       "mode": "100644",
@@ -3650,7 +3320,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_ii/Makefile",
-      "sha256": "903b7908c0e76c8f975cdce30e86f0c8b67a305f4e982a40043942662c87cdfb"
+      "sha256": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d"
     },
     {
       "mode": "100644",
@@ -3674,11 +3344,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/kalman_ou_ii/mag_timing-test.cpp",
-      "sha256": "e062bb8479a6854106bed45404b01a5c87a9a59774054e369e4b5b3caf24db39"
-    },
-    {
-      "mode": "100644",
       "path": "tests/kalman_ou_ii/pseudo_law-test.cpp",
       "sha256": "1e88876df59bf54787afb1aa1d689d0db9cb46c4e1364c9ff04672e7afa22264"
     },
@@ -3690,7 +3355,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_ii/run_tests.sh",
-      "sha256": "37f0c694e775dd6447e00acfc7448f3c93af38924b92a1eb2f0170440a8def3a"
+      "sha256": "6c3558b51261871af47e518de630eabd56d7ac253cfba5323d72dd55fb56c6af"
     },
     {
       "mode": "100644",
@@ -3710,7 +3375,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_ou_iii/Makefile",
-      "sha256": "86bdcbada887050703424b78270cb8f5f9152e0c26dc5c1627b32e3e201f181f"
+      "sha256": "45832334387f7fda2f93f1695d12b9ca0f25049d7062a0040a23effd1a970363"
     },
     {
       "mode": "100644",
@@ -3764,11 +3429,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/kalman_ou_iii/live_aiding-test.cpp",
-      "sha256": "e1c75f1b461fa52da69603e25ba65ebff5c3477394c273328fa8bde456b4e49f"
-    },
-    {
-      "mode": "100644",
       "path": "tests/kalman_ou_iii/local_gravity-test.cpp",
       "sha256": "695f9b6159d7690c30b8aba4497860e0c282b7c3d845b48c4b03a5cf33bd822b"
     },
@@ -3776,11 +3436,6 @@
       "mode": "100644",
       "path": "tests/kalman_ou_iii/mag_hard_iron-test.cpp",
       "sha256": "4e2845c579d3a273316ab24b6b552f983a90785ae5f36c04f4df8b4ea6eb9110"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_ou_iii/mag_timing-test.cpp",
-      "sha256": "f85668f460e0fcead855e57e1c453ec15907ead477e42efd42ad53bdb46815e1"
     },
     {
       "mode": "100644",
@@ -3805,7 +3460,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_ou_iii/run_tests.sh",
-      "sha256": "39eb2fd3aa3ddbfa50c02f47b8375432dac00b74beb67c799cc8f4929f3abff6"
+      "sha256": "3f46fea4ef3efbd8533968e1f93c2fa20037da82a6f4c20acc6756c7cddc8fa6"
     },
     {
       "mode": "100644",
@@ -3855,7 +3510,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_tfg/Makefile",
-      "sha256": "309c5b7e2c6136eba32d53a112df493f83af8fe057d83fd24944e94e35965d0c"
+      "sha256": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae"
     },
     {
       "mode": "100644",
@@ -3889,11 +3544,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/kalman_tfg/mag_timing-test.cpp",
-      "sha256": "6cd1a73baad138bc418ff20128a1ab016438986db550a0d91cf15a23e6ac2bed"
-    },
-    {
-      "mode": "100644",
       "path": "tests/kalman_tfg/ou_chain_identity-test.cpp",
       "sha256": "0a9a3c4774775a6ab5c1fa7c6cf6034bf1802da69044673edf601464cb3c8a10"
     },
@@ -3910,7 +3560,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_tfg/run_tests.sh",
-      "sha256": "eb25a775cf68ef477e1bb9aa7349bcd45abc98196288eb89af35ba90b3f8e064"
+      "sha256": "1e7b9de05ad68193347bb7c96d80f1a2bc626c938a231de2fb9cbb5a90bc3669"
     },
     {
       "mode": "100644",
@@ -3970,7 +3620,7 @@
     {
       "mode": "100644",
       "path": "tests/nlo/Makefile",
-      "sha256": "8c6c3d710c0eb2d8f1fb9f487847c4444dd48cff3b90867a9c5337597c5ddbfc"
+      "sha256": "4eb1e68aef0a5b72e1e708d46b20441f4e6bbd3f93bf10904d1899619fd880aa"
     },
     {
       "mode": "100644",
@@ -3984,13 +3634,8 @@
     },
     {
       "mode": "100644",
-      "path": "tests/nlo/mag_continuous-test.cpp",
-      "sha256": "b3c7f295185e89cfd5f5e48113703cbdc827ef7398390df667c2bbe093a7ea86"
-    },
-    {
-      "mode": "100644",
       "path": "tests/nlo/mag_turns-test.cpp",
-      "sha256": "db659914079f4cfc4948f629e155c1a34eab2c07e1e6c15e80a7e35986117a7e"
+      "sha256": "ee26cbb8161551eb405509f9fdc7be55dfb305852340288e8c859124c967fdd9"
     },
     {
       "mode": "100644",
@@ -4000,12 +3645,12 @@
     {
       "mode": "100644",
       "path": "tests/nlo/run_tests.sh",
-      "sha256": "ddc7daa0ec46c7fbff94fdd1d6911c969c39dafd5338620375009ff081191889"
+      "sha256": "ac94c47b6c5acf8de1643c3f833d8b611dd42ecd19d9b6ec2cae3ff2b5b013f1"
     },
     {
       "mode": "100644",
       "path": "tests/pii_observer/Makefile",
-      "sha256": "6f9a151c293961ea9176ebdb74de94c8be19f37a9b6700deb4a41829e9ca4d97"
+      "sha256": "5a24bb8049b382f89a4f2fb87d7c119b710071634d43a99193b1f140e02591ad"
     },
     {
       "mode": "100644",
@@ -4014,18 +3659,13 @@
     },
     {
       "mode": "100644",
-      "path": "tests/pii_observer/mag_continuous-test.cpp",
-      "sha256": "eb425a9c8250dd975e1770c67195da904f2c6bcc50ef556f07ee1f5569150ae2"
-    },
-    {
-      "mode": "100644",
       "path": "tests/pii_observer/pii_observer-adaptive.cpp",
-      "sha256": "7120f9dfb8ed7ac9a36d681b13070e99aef71c1ca2164bbebbefa7e5cd04d479"
+      "sha256": "caa757f6b9245e7bd4b311aacae61470e5f92c5e8489b7be6f43ef3feda31dc2"
     },
     {
       "mode": "100644",
       "path": "tests/pii_observer/run_tests.sh",
-      "sha256": "5e71c094dc45d82a6f06f27c57dc5f16c6ee89a4575e5315ee617dd3dff163b0"
+      "sha256": "381e4ac0237e4226e9cb1062e0cf88b4cb538d507f3af5b9d5a34d5fe5942713"
     },
     {
       "mode": "100644",
@@ -4080,7 +3720,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_actions_history_cleanup.py",
-      "sha256": "093f657ddf0005b50e1fedb939428e73d58f780e5fb426f8b564120eba19274d"
+      "sha256": "62305df6edcbd80dbb9628f1cad9b4aea48f7e7b64e0221140507c037563e20e"
     },
     {
       "mode": "100644",
@@ -4115,7 +3755,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_device_compass_startup.py",
-      "sha256": "36f6bc7c98b34eea561d1732154b9595298edd2ad35521f7de0f03e9722f73d4"
+      "sha256": "aec8696dfdd894bccca66e57b5e2fc02eb74c3a780c29dbae135a429ca1e7e49"
     },
     {
       "mode": "100644",
@@ -4126,11 +3766,6 @@
       "mode": "100644",
       "path": "tests/validation/test_ins_startup_paper.py",
       "sha256": "5f754a438939b727b2494782d7e1120390d05edb28a1942ec356dd9abbcebc0d"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_magnetic_timing_binding.py",
-      "sha256": "804880fba705ba91c761137c228b17564d3c737324be02744a52b2c5872ee2bd"
     },
     {
       "mode": "100644",
@@ -4890,7 +4525,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou_paper_code_parity.py",
-      "sha256": "a1a5aa9d03b41c8fd16c1691568a5f9b1d9da643ab53b499062289f1725a212a"
+      "sha256": "fa223748e3a840110170cc2dbc8133396b7e184604f39fd2bb06913f6859f8be"
     },
     {
       "mode": "100644",
@@ -4929,11 +4564,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/validation/test_pii_device_heading.py",
-      "sha256": "08ba86b6fabd34a160f5a558b8c933a34f3f90edb1cbc51d83bc56c7addc0b65"
-    },
-    {
-      "mode": "100644",
       "path": "tests/validation/test_pseudo_measurement_stability_paper.py",
       "sha256": "56920fbf90efe98acba5af31a7568614d53f3392fd7df9ad9bc73dcd964fefb7"
     },
@@ -4961,11 +4591,6 @@
       "mode": "100644",
       "path": "tests/validation/test_sea_state_wrapper_defaults.py",
       "sha256": "03bbd4a6ddc0f20c56de1475a5790cdcee740db6e365c12b1e491e2c7046c98d"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/validation/test_sensor_delivery.py",
-      "sha256": "b827af7fe302d8e03a1a84082477370e988dc52bdafa2c4e0e9126755753a221"
     },
     {
       "mode": "100644",
@@ -5250,7 +4875,7 @@
     {
       "mode": "100755",
       "path": "tools/quality_gates.sh",
-      "sha256": "69a7f66faf0766160089f83266a5c55a5ffbbd96b89293fc4322d6592d9d4798"
+      "sha256": "2c62794b418af979e3075ee78c9fb11a6df410d4708ca0f5661b78c9bf7bd51b"
     },
     {
       "mode": "100644",
@@ -5859,11 +5484,6 @@
     },
     {
       "mode": "100644",
-      "path": "tools/stability/ou3_theorem/magnetic_timing_legacy_binding.py",
-      "sha256": "4a6d8b232e2def8f433cb23182b5663fcda529c39c9158e5965ce568911aa96d"
-    },
-    {
-      "mode": "100644",
       "path": "tools/stability/ou3_theorem/mahony_raw_normalization.py",
       "sha256": "84004555f1f10c212d9c1233fe95896c23c16fbcc4a9e48fa6b7107cac976cb5"
     },
@@ -6050,7 +5670,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "sha256": "4139384c13c81ffd4e7e7cefca52249030a41c62972f2e96388437509bed1fff"
+      "sha256": "9d470b20459a3352543ce19c330f0bba2f7ad758a4042d0adfdf84ea5cfd0ae8"
     },
     {
       "mode": "100644",
@@ -6435,7 +6055,7 @@
     {
       "mode": "100644",
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "sha256": "71ddea60b41679192922485f5d78cf3e84d0625565849e9e39a4ed947e42a008"
+      "sha256": "9fe8274af8e12c86e1011013a9b5ba7d6c5ded7f2c4c2d84fb15ec39930ccbe4"
     },
     {
       "mode": "100644",
