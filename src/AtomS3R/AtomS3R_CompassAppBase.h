@@ -10,6 +10,7 @@
 #include <new>
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
+#include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
@@ -424,15 +425,12 @@ class CompassAppBase {
     outputs_ = CompassOutputs{};
     sample_ = CalibratedSample{};
     last_update_us_ = 0;
+    imu_spike_.reset();
   }
 
 CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   CalibratedSample out{};
   out.a_raw_norm = s.a.norm();
-
-  out.a_cal = runtime_.applyAccel(s.a, s.tempC);
-  out.w_cal = runtime_.applyGyro(s.w, s.tempC);
-  out.m_cal = runtime_.applyMag(s.m);
 
   if (last_update_us_ == 0) {
     out.dt = 1.0f / LOOP_HZ;
@@ -441,6 +439,14 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   }
   last_update_us_ = s.sample_us;
   out.dt = clampf_(out.dt, 0.0010f, 0.0200f);
+
+  Vector3f a_raw = s.a;
+  Vector3f w_raw = s.w;
+  imu_spike_.apply(a_raw, w_raw, out.dt);
+
+  out.a_cal = runtime_.applyAccel(a_raw, s.tempC);
+  out.w_cal = runtime_.applyGyro(w_raw, s.tempC);
+  out.m_cal = runtime_.applyMag(s.m);
 
   out.mag_norm_uT = out.m_cal.norm();
   out.mag_ok = (out.mag_norm_uT > 5.0f && out.mag_norm_uT < 200.0f);
@@ -551,6 +557,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   std::unique_ptr<IAttitudeBackend> backend_;
   MagGate mag_gate_;
   RotEstimator rot_;
+  ImuSpikeFilter imu_spike_;
 
   bool have_blob_ = false;
   ImuCalBlobV5 blob_{};

@@ -64,6 +64,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
+#include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
   #include "AtomS3R/ImuCalWizardRunner.h"
@@ -298,6 +299,7 @@ private:
 
   uint16_t stale_frame_count_ = 0;
   ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  ImuSpikeFilter imu_spike_{};
   ins::SampleRateMeter rates_{};
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
@@ -389,6 +391,7 @@ private:
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
+    imu_spike_.reset();
   }
 
   void resetFusion_() {
@@ -481,6 +484,7 @@ private:
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
+    imu_spike_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
     heave_baseline_m_    = 0.0f;
@@ -610,10 +614,11 @@ private:
     imu_temp_c_ = tempC;
     rates_.countImu();
 
-    const Vector3f a_raw = s.a;
-    const Vector3f w_raw = s.w;
+    Vector3f a_raw = s.a;
+    Vector3f w_raw = s.w;
 
     a_raw_norm_ = a_raw.norm();
+    imu_spike_.apply(a_raw, w_raw, dt_);
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro(w_raw, tempC);

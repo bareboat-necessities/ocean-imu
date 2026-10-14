@@ -24,7 +24,7 @@ test: $(TARGETS)
 
 spike-filter-test: spike-filter-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
-spike-filter-3d-test: spike-filter-3d-test.cpp
+spike-filter-3d-test: spike-filter-3d-test.cpp $(REPO_ROOT)/src/avg/TimeAwareSpikeFilter3D.h $(REPO_ROOT)/src/AtomS3R/AtomS3R_ImuSpikeFilter.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:

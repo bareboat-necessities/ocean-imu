@@ -4,6 +4,7 @@
 #include <string>
 #include <type_traits>
 
+#include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 #include "avg/TimeAwareSpikeFilter3D.h"
 
 namespace {
@@ -147,6 +148,75 @@ void test_slow_roll_passes_with_vertical_check() {
   }
 }
 
+// The gyro read of a rejected accelerometer sample is replaced by the gyro of
+// the same observed window sample; passed-through samples keep their gyro.
+void test_companion_gyro_follows_replacement() {
+  constexpr int spike_index = 30;
+  TimeAwareSpikeFilter3D filter(5, kThreshold, 2, kThreshold);
+  for (int k = 0; k < 60; k++) {
+    float x = 0.1f, y = -0.2f, z = kG;
+    float gx = 0.01f, gy = -0.02f, gz = 0.03f;
+    if (k == spike_index) { z += 40.0f; gx = 5.0f; gy = -5.0f; gz = 5.0f; }
+    const float gx0 = gx, gy0 = gy, gz0 = gz;
+    const bool spike = filter.filterWithDelta(x, y, z, gx, gy, gz, kDt);
+    if (k == spike_index) {
+      require(spike, "spike with companion gyro was not flagged");
+      require(z == kG, "accel spike was not replaced");
+      require(gx == 0.01f && gy == -0.02f && gz == 0.03f,
+              "companion gyro was not replaced with the chosen sample's gyro");
+    } else if (!spike) {
+      require(gx == gx0 && gy == gy0 && gz == gz0, "passed-through gyro altered");
+    }
+    if (k < spike_index || k > spike_index + 5) {
+      require(!spike, "clean sample flagged at " + std::to_string(k));
+    }
+  }
+
+  // A non-finite gyro read is passed through and not stored.
+  float x = 0.1f, y = -0.2f, z = kG, gx = NAN, gy = 0.0f, gz = 0.0f;
+  require(!filter.filterWithDelta(x, y, z, gx, gy, gz, kDt), "NaN gyro flagged");
+  require(std::isnan(gx), "NaN gyro was altered");
+}
+
+// Even windows average the gyro of the same two middle samples as the accel.
+void test_companion_gyro_even_window() {
+  TimeAwareSpikeFilter3D filter(4, kThreshold);
+  const float zs[] = {9.0f, 9.5f, 10.0f, 10.5f};
+  const float gs[] = {1.0f, 2.0f, 3.0f, 4.0f};
+  float x = 0.0f, y = 0.0f, z = zs[0], gx = gs[0], gy = 0.0f, gz = 0.0f;
+  filter.filterWithDelta(x, y, z, gx, gy, gz, 1.0f);  // initializes window
+  for (int k = 1; k < 4; k++) {
+    x = 0.0f; y = 0.0f; z = zs[k]; gx = gs[k]; gy = 0.0f; gz = 0.0f;
+    require(!filter.filterWithDelta(x, y, z, gx, gy, gz, 1.0f), "ramp flagged");
+  }
+  x = 0.0f; y = 0.0f; z = 500.0f; gx = 100.0f; gy = 0.0f; gz = 0.0f;
+  require(filter.filterWithDelta(x, y, z, gx, gy, gz, 1.0f), "even-window spike not flagged");
+  // Window magnitudes {9.5, 10, 10.5, 500}: middle pair 10 and 10.5.
+  require(z == 10.25f && gx == 3.5f, "even-window gyro does not match accel pair");
+}
+
+// The shared AtomS3R wrapper replaces accel and gyro together.
+void test_atoms3r_wrapper() {
+  struct Vec3 {
+    float v[3];
+    float& x() { return v[0]; }
+    float& y() { return v[1]; }
+    float& z() { return v[2]; }
+  };
+  atoms3r_ical::ImuSpikeFilter filter;
+  for (int k = 0; k < 20; k++) {
+    Vec3 a{{0.0f, 0.0f, kG}}, w{{0.0f, 0.0f, 0.1f}};
+    if (k == 10) { a.v[2] = -kG; w.v[2] = 9.0f; }
+    const bool spike = filter.apply(a, w, kDt);
+    if (k == 10) {
+      require(spike == atoms3r_ical::ImuSpikeCfg::enabled, "wrapper spike mismatch");
+      if (spike) require(a.v[2] == kG && w.v[2] == 0.1f, "wrapper did not replace accel+gyro");
+    } else if (k < 10 || k > 10 + atoms3r_ical::ImuSpikeCfg::window) {
+      require(!spike, "wrapper flagged a clean sample");
+    }
+  }
+}
+
 void test_filter_is_not_copyable() {
   static_assert(!std::is_copy_constructible<TimeAwareSpikeFilter3D>::value,
                 "TimeAwareSpikeFilter3D must not be copy constructible");
@@ -166,6 +236,9 @@ int main() {
   test_vertical_flip_is_rejected();
   test_horizontal_rotation_passes_with_vertical_check();
   test_slow_roll_passes_with_vertical_check();
+  test_companion_gyro_follows_replacement();
+  test_companion_gyro_even_window();
+  test_atoms3r_wrapper();
   test_filter_is_not_copyable();
   std::cout << "All time-aware 3D spike filter tests passed.\n";
   return 0;

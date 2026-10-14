@@ -24,6 +24,12 @@
  * component is the median. Only the chosen axis is checked, so ordinary
  * rotation that moves gravity between the horizontal axes is not flagged.
  *
+ * Each sample may carry a companion gyroscope vector captured with the same
+ * IMU read. It plays no part in detection, but when a sample is replaced its
+ * gyro vector is replaced together with the accelerometer vector by the gyro
+ * of the same chosen window sample(s): a corrupted accelerometer read is
+ * evidence that the gyro read of that instant is suspect too.
+ *
  * Non-finite inputs are passed through unchanged and are not stored, so a
  * single invalid sample cannot poison the window.
  */
@@ -31,6 +37,7 @@ class TimeAwareSpikeFilter3D {
   private:
     struct Sample {
       float x, y, z;
+      float gx, gy, gz;    // Companion gyro, carried along with the vector
       float magnitude;
       float vertical;
       float deltaTime; // Time since previous sample
@@ -95,7 +102,22 @@ class TimeAwareSpikeFilter3D {
        @return true if the sample was flagged as a spike and replaced
     */
     bool filterWithDelta(float &x, float &y, float &z, float deltaT) {
-      if (!isfinite(x) || !isfinite(y) || !isfinite(z) || !(deltaT > 0.0f)) {
+      float gx = 0.0f, gy = 0.0f, gz = 0.0f;
+      return filterWithDelta(x, y, z, gx, gy, gz, deltaT);
+    }
+
+    /**
+       @brief Filtering of a vector together with its companion gyro sample
+       @param x,y,z Raw input vector (detection), overwritten with the output
+       @param gx,gy,gz Gyro sample of the same read, overwritten with the gyro
+              of the window sample(s) chosen to replace a spike
+       @param deltaT Time since last sample
+       @return true if the sample was flagged as a spike and replaced
+    */
+    bool filterWithDelta(float &x, float &y, float &z,
+                         float &gx, float &gy, float &gz, float deltaT) {
+      if (!isfinite(x) || !isfinite(y) || !isfinite(z) ||
+          !isfinite(gx) || !isfinite(gy) || !isfinite(gz) || !(deltaT > 0.0f)) {
         return false;
       }
       const float magnitude = sqrtf(x * x + y * y + z * z);
@@ -104,7 +126,7 @@ class TimeAwareSpikeFilter3D {
       if (!initialized) {
         // Initialize the window with the first vector
         for (int i = 0; i < windowSize; i++) {
-          window[i] = Sample{x, y, z, magnitude, vertical, deltaT};
+          window[i] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, deltaT};
         }
         initialized = true;
         return false;
@@ -114,15 +136,15 @@ class TimeAwareSpikeFilter3D {
       // After the advance currentIndex points at the oldest sample, which is
       // the slot the next call overwrites.
       int newestIndex = currentIndex;
-      window[newestIndex] = Sample{x, y, z, magnitude, vertical, deltaT};
+      window[newestIndex] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, deltaT};
       currentIndex = (currentIndex + 1) % windowSize;
 
       if (isSpike(&Sample::magnitude, newestIndex, threshold)) {
-        replaceWithMedian(&Sample::magnitude, x, y, z);
+        replaceWithMedian(&Sample::magnitude, x, y, z, gx, gy, gz);
         return true;
       }
       if (verticalAxis >= 0 && isSpike(&Sample::vertical, newestIndex, verticalThreshold)) {
-        replaceWithMedian(&Sample::vertical, x, y, z);
+        replaceWithMedian(&Sample::vertical, x, y, z, gx, gy, gz);
         return true;
       }
 
@@ -153,19 +175,27 @@ class TimeAwareSpikeFilter3D {
     }
 
     // Replace with the window vector whose key is the median (mean of the two
-    // middle vectors for an even window).
-    void replaceWithMedian(float Sample::*key, float &x, float &y, float &z) {
+    // middle vectors for an even window). The companion gyro comes from the
+    // same sample(s).
+    void replaceWithMedian(float Sample::*key, float &x, float &y, float &z,
+                           float &gx, float &gy, float &gz) {
       sortIndicesBy(key);
       const Sample &lo = window[order[(windowSize - 1) / 2]];
       if (windowSize % 2 == 1) {
         x = lo.x;
         y = lo.y;
         z = lo.z;
+        gx = lo.gx;
+        gy = lo.gy;
+        gz = lo.gz;
       } else {
         const Sample &hi = window[order[windowSize / 2]];
         x = 0.5f * (lo.x + hi.x);
         y = 0.5f * (lo.y + hi.y);
         z = 0.5f * (lo.z + hi.z);
+        gx = 0.5f * (lo.gx + hi.gx);
+        gy = 0.5f * (lo.gy + hi.gy);
+        gz = 0.5f * (lo.gz + hi.gz);
       }
     }
 

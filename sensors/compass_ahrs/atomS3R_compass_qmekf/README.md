@@ -17,7 +17,8 @@ Open the sketch: [`atomS3R_compass_qmekf.ino`](atomS3R_compass_qmekf.ino).
 - accelerometer correction each filter cycle and fresh-magnetometer updates when available; as in the Mahony compass, the magnetic reference is rebuilt from each reading (its own dip, pointing to magnetic north), so a disturbed or moving first reading cannot tilt the attitude or bend headings later;
 - graphical compass UI by default;
 - NMEA 0183 serial output by default through the shared compass application;
-- the common AtomS3R IMU calibration workflow.
+- the common AtomS3R IMU calibration workflow;
+- rejection of sporadic single-sample IMU spikes before calibration and fusion by the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h): detection runs on |a| plus the vertical (body z) accelerometer component, which also catches vertical sign flips, and a rejected read has its accelerometer and gyro replaced together from the same observed window sample (settings in `ImuSpikeCfg`; disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`).
 
 Use this version when you want the attitude solution to be expressed as a probabilistic error-state filter rather than the lighter Mahony feedback filter.
 
