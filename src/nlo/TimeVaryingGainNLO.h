@@ -222,6 +222,37 @@ public:
         */
         R virtual_horizontal_theta_min = R(0.7);
 
+        /*
+          Horizontal theta during the startup attitude-gain interval.
+
+          Linearized about a still device, the attitude injection does not
+          move f_hat at all: the force feedback of (9d) cancels it. A gyro
+          bias error db instead drives d(f_hat)/dt = g*db, which only the
+          translational loop removes, and the tilt follows f_hat/g. Its
+          steady state is
+
+              tilt = (K_vz_p0z / K_xiz_p0z) * db / theta_h = 12.6 s * db / theta_h,
+
+          independent of vartheta, and the integral loop removes db at kI.
+          At theta_h = 0.7 and kI = 0.01 a 0.5 deg/s residual is 9 deg of
+          tilt, decaying with an 80 s time constant (slowest closed-loop pole
+          0.0126/s); the tilt leaks gravity into heave and the field
+          inclination into heading. A larger kI does not help at that theta:
+          the same linear loop is unstable for kI >= 0.2 at theta_h <= 1,
+          which is the divergence seen with the paper's kI = 1 without GNSS.
+
+          The paper avoids the transient with fast GNSS position aiding. Here
+          theta_h is raised to virtual_horizontal_theta_startup while the
+          attitude gains are at their initial values and returns to
+          virtual_horizontal_theta_min on the same schedule (see
+          startup_weight_). With kI_initial = 0.1 and theta_h = 3 the slowest
+          pole is 0.177/s and the loop's damping stays at or above 0.70 along
+          the whole return to the nominal gains. The horizontal corner is then
+          1.2 rad/s, so horizontal acceleration slower than about 5 s reads as
+          tilt during startup only. 0 disables.
+        */
+        R virtual_horizontal_theta_startup = R(0);
+
         bool use_time_varying_tmo_gain = true;
         R vartheta0 = R(0.5);
         R vartheta1_a = R(2.0);
@@ -266,6 +297,7 @@ public:
         k1_ = cfg_.use_time_varying_attitude_gains ? cfg_.k1_initial : cfg_.k1_nominal;
         k2_ = cfg_.use_time_varying_attitude_gains ? cfg_.k2_initial : cfg_.k2_nominal;
         kI_ = cfg_.use_time_varying_attitude_gains ? cfg_.kI_initial : cfg_.kI_nominal;
+        startup_weight_ = cfg_.use_time_varying_attitude_gains ? R(1) : R(0);
 
         gnss_rms_lpf_ = R(1);
         vartheta2_ = R(1);
@@ -650,6 +682,8 @@ private:
     R k1_ = R(0.55);
     R k2_ = R(1.0);
     R kI_ = R(0.01);  // NOLINT(misc-confusable-identifiers): integral gain, not k1
+    // 1 at the initial attitude gains, 0 at the nominal ones, on their lag.
+    R startup_weight_ = R(0);
 
     R gnss_rms_lpf_ = R(1);
     R vartheta2_ = R(1);
@@ -668,8 +702,12 @@ private:
     Vec3 axisTheta_() const {
         Vec3 t = Vec3::Constant(cfg_.theta);
         if (cfg_.use_virtual_horizontal_position) {
-            t.x() = std::max(t.x(), cfg_.virtual_horizontal_theta_min);
-            t.y() = std::max(t.y(), cfg_.virtual_horizontal_theta_min);
+            R floor = cfg_.virtual_horizontal_theta_min;
+            if (cfg_.virtual_horizontal_theta_startup > floor) {
+                floor += startup_weight_ * (cfg_.virtual_horizontal_theta_startup - floor);
+            }
+            t.x() = std::max(t.x(), floor);
+            t.y() = std::max(t.y(), floor);
         }
         return t;
     }
@@ -861,10 +899,13 @@ private:
             k1_ += a * (target.x() - k1_);
             k2_ += a * (target.y() - k2_);
             kI_ += a * (target.z() - kI_);
+            const R startup_target = t_s_ <= cfg_.attitude_gain_switch_s ? R(1) : R(0);
+            startup_weight_ += a * (startup_target - startup_weight_);
         } else {
             k1_ = cfg_.k1_nominal;
             k2_ = cfg_.k2_nominal;
             kI_ = cfg_.kI_nominal;
+            startup_weight_ = R(0);
         }
 
         if (!cfg_.use_time_varying_tmo_gain) {
