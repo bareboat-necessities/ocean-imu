@@ -14,6 +14,7 @@ Open the sketch: [`atomS3R_ins_kalman_ou3.ino`](atomS3R_ins_kalman_ou3.ino).
 
 - reads and calibrates the AtomS3R IMU using the shared device layer;
 - runs the estimator at 200 Hz;
+- rejects sporadic single-sample accelerometer spikes before calibration and fusion with a magnitude-based time-aware spike filter (`TimeAwareSpikeFilter3D`, 7-sample window; disable with `-DSEA_STATE_ACC_SPIKE_FILTER=0`);
 - learns tilt during startup while the vessel may already be moving;
 - performs a one-shot magnetic north lock inside the sea-state fusion filter;
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
