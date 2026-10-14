@@ -24,6 +24,10 @@
 //   slow roll boot: a 0.5 deg roll at an 8 s period, which over the
 //                bootstrap is close to a constant rate. It must not be seeded
 //                as a gyro bias.
+//   unseeded learning: the still boot with the AtomS3R gyro and the seed
+//                switched off, so the observer has to learn the 0.47 deg/s
+//                residual itself. Tilt and heave must hold from the handoff
+//                on, through the whole startup-gain interval.
 //
 // Before the horizontal theta floor and the bias seeds, the still-boot history
 // reached 11 deg of tilt, 24 deg of heading error and 23 m of heave, with a
@@ -172,6 +176,48 @@ static bool runHandled(float phase) {
   return ok;
 }
 
+// At the nominal theta_h = 0.7 and kI = 0.01 the residual is held as about
+// 12.6 s * 0.47 deg/s / 0.7 = 8.5 deg of tilt and unlearned over ~100 s.
+static bool runUnseededLearning() {
+  Fusion f;
+  f.config().filter.expected_mag_norm = 0.0f;
+  f.config().boot_bias_seed_min_still_s = 0.0f;
+  f.reset();
+
+  std::mt19937 rng(19);
+  std::normal_distribution<float> n01(0.0f, 1.0f);
+  auto noise = [&](float s) { return Vec3(s * n01(rng), s * n01(rng), s * n01(rng)); };
+
+  const float dt = 0.005f;
+  const float deg = float(M_PI / 180.0);
+  const Vec3 f_n(0.0f, 0.0f, -g_std);
+  const Vec3 mag_n(20.0f, 0.0f, 45.0f);
+  const Vec3 gyro_bias(0.47f * deg, 0.0f, 0.0f);
+  const Mat3 R_nb = Eigen::AngleAxisf(1.0f, Vec3::UnitZ()).toRotationMatrix();
+
+  float max_tilt = 0.0f, max_hdg_err = 0.0f, max_heave = 0.0f;
+  bool saw_handoff = false;
+  for (int k = 0; k < 200 * 300; ++k) {
+    const float w = 2.0f * float(M_PI) * k * dt;
+    const Vec3 gyro_noise = noise(0.2f * deg) +
+        0.3f * deg * Vec3(std::sin(10.0f * w), std::sin(10.3f * w + 1.0f), std::sin(9.7f * w + 2.0f));
+    f.setMagBody(R_nb.transpose() * mag_n + noise(0.4f), true);
+    f.update(dt, gyro_bias + gyro_noise, R_nb.transpose() * f_n + noise(0.015f));
+    const auto s = f.snapshot();
+    if (!s.initialized) continue;
+    saw_handoff = true;
+    max_tilt = std::max(max_tilt, std::hypot(s.euler_rad.x(), s.euler_rad.y()) / deg);
+    max_hdg_err = std::max(max_hdg_err,
+        std::fabs(wrap180((s.euler_rad.z() - std::atan2(R_nb(1, 0), R_nb(0, 0))) / deg)));
+    max_heave = std::max(max_heave, std::fabs(s.disp_zu.z()));
+  }
+  const bool ok = saw_handoff && std::isfinite(max_tilt) && max_tilt < 3.0f &&
+                  max_hdg_err < 6.0f && max_heave < 2.5f;
+  std::printf("NLO mag turns unseeded learning max|tilt|=%.2f deg max|hdg err|=%.2f deg "
+              "max|heave|=%.3f m %s\n", max_tilt, max_hdg_err, max_heave, ok ? "OK" : "FAIL");
+  return ok;
+}
+
 // A seed taken from this roll is wrong by about 0.26 deg/s, more than half
 // the residual it is meant to remove.
 static bool runSlowRollBoot() {
@@ -220,8 +266,9 @@ int main() {
   const bool a = run("still boot", true, {2.0f, 5.0f, 0.5f, 0.3f});
   const bool a_device = run("still boot, AtomS3R gyro", true, {2.0f, 5.0f, 0.5f, 0.3f}, true);
   const bool a_roll = runSlowRollBoot();
+  const bool a_learn = runUnseededLearning();
   const bool b = run("moving boot", false, {8.0f, 20.0f, 5.0f, 1e9f});
   bool c = true;
   for (float phase : {0.0f, 1.3f, 2.6f, 3.9f, 5.2f}) c = runHandled(phase) && c;
-  return (a && a_device && a_roll && b && c) ? 0 : 1;
+  return (a && a_device && a_roll && a_learn && b && c) ? 0 : 1;
 }

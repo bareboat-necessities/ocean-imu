@@ -506,10 +506,20 @@ public:
           parameter projection does not stop this because the admissible ball
           used here is two orders of magnitude wider than the true biases.
 
+          Holding kI at its nominal 0.01 instead leaves a residual gyro bias
+          to be learned over about 100 s, while it holds a tilt of 12.6 s
+          times the residual over theta_h; see
+          Filter::Config::virtual_horizontal_theta_startup. So the startup
+          interval runs the horizontal axes at theta_h = 3 and kI = 0.1, a
+          pair whose linearized tilt/bias loop is stable and damped (>= 0.70)
+          from the start through the return to the nominal gains, with a
+          5.7 s instead of an 80 s time constant.
+
           The proportional part of the ramp, k1 and k2 = 20, is harmless and
           is kept: it converges attitude quickly and is measurably fine.
         */
-        f.kI_initial = WithGNSS ? R(1.0) : f.kI_nominal;
+        f.kI_initial = WithGNSS ? R(1.0) : R(0.1);
+        f.virtual_horizontal_theta_startup = WithGNSS ? R(0) : R(3.0);
 
         // K0 = P*C', P from the ARE (12) with tau = 1/2 and
         // Q = blkdiag{50, 0.5*I3, 0.08*I3, 0.0025*I3}.
