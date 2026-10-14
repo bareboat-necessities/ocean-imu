@@ -302,7 +302,7 @@ struct ImuSample {
 
 static constexpr uint32_t kImuMaskAccelGyro = (ATOMS3R_IMU_MASK_ACCEL | ATOMS3R_IMU_MASK_GYRO);
 
-// Bosch-compensated magnetometer source (see configureAtomS3RMag()).
+// Bosch-compensated magnetometer source (see configureAtomS3RImu()).
 struct AtomS3RMagSource {
   uint8_t last_aux[8]{};
   bool compensated = false;      // deliver Bosch trim/RHALL compensated uT
@@ -412,7 +412,9 @@ static inline void clearM5UnifiedImuCalibration() {
 //    rate instead of the 1/1 reset value (AtomS3R_Bmm150AuxPreset.h);
 //  - Bosch compensation: reads the factory trim registers once, then every
 //    reading is compensated with its RHALL value (AtomS3R_Bmm150Compensation.h).
-// Both go through the BMI270 AUX interface with read-back. Other IMUs, or a
+// The magnetometer steps go through the BMI270 AUX interface with read-back.
+// Returns true when the BMM150 low-noise setting is applied (a failed
+// accelerometer filter is only logged). Other IMUs, or a
 // failed trim read, keep M5Unified's uncompensated values. activeMagSource()
 // records which units the runtime delivers. Loading a saved magnetometer
 // calibration (RuntimeCals::rebuildFromBlob) switches to the source it was
@@ -461,7 +463,7 @@ static inline void loadMagTiming_(const ImuCalBlobV5& b) {
       double(t.fit_width_s+t.residual_time_s)*1000);
 }
 
-static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
+static inline bool configureAtomS3RImu(Print& log, bool compensate = true) {
   auto& src = atoms3rMagSource();
   src = AtomS3RMagSource{};
   activeMagTiming() = {};

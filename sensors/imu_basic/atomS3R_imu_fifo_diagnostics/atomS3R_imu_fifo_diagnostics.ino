@@ -891,7 +891,7 @@ void setup() {
   cfg.internal_imu = true;
   M5.begin(cfg);
   clearM5UnifiedImuCalibration();
-  configureAtomS3RMag(Serial);
+  configureAtomS3RImu(Serial);
   ui.begin();
 
   have_blob = store.load(blob);

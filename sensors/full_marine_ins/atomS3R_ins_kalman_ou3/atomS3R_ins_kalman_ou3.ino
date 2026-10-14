@@ -157,7 +157,7 @@ public:
     cfg.internal_imu = true;
     M5.begin(cfg);
     clearM5UnifiedImuCalibration();
-    configureAtomS3RMag(Serial);
+    configureAtomS3RImu(Serial);
     delay(250);
 
     ui_.begin();

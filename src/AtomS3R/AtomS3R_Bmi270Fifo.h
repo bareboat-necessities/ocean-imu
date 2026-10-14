@@ -94,7 +94,7 @@ struct FifoAcquisitionReadback {
 };
 
 // Configures the BMI270 for FIFO acquisition with a forced-mode BMM150.
-// Call once after M5Unified's IMU initialisation and configureAtomS3RMag()
+// Call once after M5Unified's IMU initialisation and configureAtomS3RImu()
 // (which sets the BMM150 repetitions and reads its trim registers). The
 // shipping polling path (M5.Imu.update()) must not be used afterwards.
 template <class Device>

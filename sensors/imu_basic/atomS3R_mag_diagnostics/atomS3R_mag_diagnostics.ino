@@ -5,7 +5,7 @@
 
   Never writes the saved calibration. Like every sketch, it starts the BMM150
   in the low-noise setting with Bosch trim/RHALL compensation
-  (configureAtomS3RMag). Serial commands: 'q' reads the BMM150 configuration,
+  (configureAtomS3RImu). Serial commands: 'q' reads the BMM150 configuration,
   'o' switches to the M5Unified driver default (1/1 repetitions, until
   reboot) for comparison, 'p' restores the low-noise setting, 'c' toggles
   Bosch compensation, and 'd' monitors the untouched board (field and
@@ -182,7 +182,7 @@ static void magCommand(char cmd) {
 // source it was fitted on; the choice here is kept, not switched back to it.
 static void toggleCompensation() {
   const bool on = !atoms3rMagSource().compensated;
-  if (configureAtomS3RMag(Serial, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  if (configureAtomS3RImu(Serial, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
   magSourceFollower() = nullptr;
   cals.rebuildFromBlob(blob);
   saved_ok = cals.mag.ok;
@@ -599,7 +599,7 @@ void setup() {
   auto cfg = M5.config();
   M5.begin(cfg);
   clearM5UnifiedImuCalibration();
-  if (configureAtomS3RMag(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  if (configureAtomS3RImu(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
   Serial.printf("[DIAG] magnetometer: %s\n", magLabel());
   delay(250);
   ui.begin();

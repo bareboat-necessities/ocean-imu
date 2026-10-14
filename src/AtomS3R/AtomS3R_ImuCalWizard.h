@@ -460,7 +460,7 @@ private:
     // Calibrate in the same BMM150 setting and units every sketch runs with.
     // Re-applying is idempotent; on failure the driver values are used, as at
     // runtime, and the saved calibration records which source it was fitted on.
-    configureAtomS3RMag(Serial);
+    configureAtomS3RImu(Serial);
     return runMagCaptureStage_(redo_all);
   }
 
