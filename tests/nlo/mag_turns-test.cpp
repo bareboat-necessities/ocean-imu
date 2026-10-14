@@ -16,11 +16,22 @@
 //                acceleration, so the first accelerometer sample is not
 //                gravity and the bootstrap's gyro-rate gate keeps its tilt
 //                correction off. Heading must hold from the handoff on.
+//   still boot, AtomS3R gyro: the still boot with the gyro noise measured on
+//                the device at rest, 0.2 deg/s white plus a 10 Hz wobble of
+//                0.3 deg/s. Its per-sample spread is above the still seed's
+//                gate, which used to reject the seed and leave the residual
+//                to be integrated into tilt.
+//   slow roll boot: a 0.5 deg roll at an 8 s period, which over the
+//                bootstrap is close to a constant rate. It must not be seeded
+//                as a gyro bias.
 //
 // Before the horizontal theta floor and the bias seeds, the still-boot history
 // reached 11 deg of tilt, 24 deg of heading error and 23 m of heave, with a
 // startup heave swing of several metres, and the moving-boot history 30 deg,
-// 180 deg and 200 m, within ten minutes.
+// 180 deg and 200 m, within ten minutes. While the still seed's spread was
+// taken over single samples, the AtomS3R gyro noise rejected it: the still
+// boot then swung heave by 8.8 m, and the slow roll was seeded as a bias
+// 0.24 deg/s wrong.
 #include "nlo/TimeVarGainNLO_Adapter.h"
 #include <cmath>
 #include <cstdio>
@@ -37,7 +48,7 @@ struct Limits {
   float tilt_deg, hdg_deg, heave_m, startup_heave_m;
 };
 
-static bool run(const char* name, bool still_boot, Limits lim) {
+static bool run(const char* name, bool still_boot, Limits lim, bool atoms3r_gyro = false) {
   Fusion f;
   auto& cfg = f.config();
   cfg.filter.expected_mag_norm = 0.0f;
@@ -69,7 +80,13 @@ static bool run(const char* name, bool still_boot, Limits lim) {
     R_nb = R_nb * Eigen::AngleAxisf(yaw_rate * dt, Vec3::UnitZ()).toRotationMatrix();
 
     f.setMagBody(R_nb.transpose() * mag_n + noise(0.4f), true);
-    f.update(dt, Vec3(0.0f, 0.0f, yaw_rate) + gyro_bias + noise(0.0016f),
+    Vec3 gyro_noise = noise(0.0016f);
+    if (atoms3r_gyro) {
+      const float w = 2.0f * float(M_PI) * t;
+      gyro_noise = noise(0.2f * deg) + 0.3f * deg * Vec3(std::sin(10.0f * w), std::sin(10.3f * w + 1.0f),
+                                                          std::sin(9.7f * w + 2.0f));
+    }
+    f.update(dt, Vec3(0.0f, 0.0f, yaw_rate) + gyro_bias + gyro_noise,
              R_nb.transpose() * f_n + acc_bias + noise(0.015f));
 
     const auto s = f.snapshot();
@@ -155,10 +172,56 @@ static bool runHandled(float phase) {
   return ok;
 }
 
+// A seed taken from this roll is wrong by about 0.26 deg/s, more than half
+// the residual it is meant to remove.
+static bool runSlowRollBoot() {
+  Fusion f;
+  f.config().filter.expected_mag_norm = 0.0f;
+  f.reset();
+
+  std::mt19937 rng(17);
+  std::normal_distribution<float> n01(0.0f, 1.0f);
+  auto noise = [&](float s) { return Vec3(s * n01(rng), s * n01(rng), s * n01(rng)); };
+
+  const float dt = 0.005f;
+  const float deg = float(M_PI / 180.0);
+  const float w = 2.0f * float(M_PI) / 8.0f;
+  const Vec3 f_n(0.0f, 0.0f, -g_std);
+  const Vec3 mag_n(20.0f, 0.0f, 45.0f);
+  const Vec3 gyro_bias(0.47f * deg, 0.0f, 0.0f);
+  auto attitude = [&](float t) {
+    return Mat3(Eigen::AngleAxisf(1.0f, Vec3::UnitZ()) *
+                Eigen::AngleAxisf(0.5f * deg * std::sin(w * t), Vec3::UnitX()));
+  };
+
+  for (int k = 0; k < 200 * 10; ++k) {
+    const float t = k * dt;
+    const Mat3 R_nb = attitude(t);
+    const Vec3 rate(0.5f * deg * w * std::cos(w * t), 0.0f, 0.0f);
+    f.setMagBody(R_nb.transpose() * mag_n + noise(0.4f), true);
+    f.update(dt, rate + gyro_bias + noise(0.0016f), R_nb.transpose() * f_n + noise(0.015f));
+    const auto s = f.snapshot();
+    if (!s.initialized) continue;
+    // A seed is taken when the handed-over bias is not the bootstrap's own,
+    // which is still near zero.
+    const Vec3 b = s.tvg.gyro_bias_b;
+    const float seed_error = (b - gyro_bias).norm() / deg;
+    const bool seeded = b.norm() > 0.05f * deg;
+    const bool ok = !seeded || seed_error < 0.1f;
+    std::printf("NLO mag turns slow roll boot seeded=%d seed error=%.3f deg/s %s\n",
+                int(seeded), seed_error, ok ? "OK" : "FAIL");
+    return ok;
+  }
+  std::printf("NLO mag turns slow roll boot never initialized FAIL\n");
+  return false;
+}
+
 int main() {
   const bool a = run("still boot", true, {2.0f, 5.0f, 0.5f, 0.3f});
+  const bool a_device = run("still boot, AtomS3R gyro", true, {2.0f, 5.0f, 0.5f, 0.3f}, true);
+  const bool a_roll = runSlowRollBoot();
   const bool b = run("moving boot", false, {8.0f, 20.0f, 5.0f, 1e9f});
   bool c = true;
   for (float phase : {0.0f, 1.3f, 2.6f, 3.9f, 5.2f}) c = runHandled(phase) && c;
-  return (a && b && c) ? 0 : 1;
+  return (a && a_device && a_roll && b && c) ? 0 : 1;
 }

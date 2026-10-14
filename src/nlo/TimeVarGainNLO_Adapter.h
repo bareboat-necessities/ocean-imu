@@ -201,10 +201,41 @@ public:
           well above white gyro noise. A startup that fails either test
           leaves the seed at the bootstrap's own estimate. Set
           boot_bias_seed_min_still_s <= 0 to disable.
+
+          The spread is taken over the means of consecutive
+          boot_bias_seed_block_s blocks of still samples, not over single
+          samples. Sensor noise does not bias the seed, it averages out of
+          it, but atomS3R_imu_fifo_diagnostics measured the AtomS3R gyro at
+          rest with 0.1-0.2 deg/s of white noise plus a 10 Hz wobble, about
+          0.3 deg/s of per-sample standard deviation in all, above the
+          0.23 deg/s of the gate, and a 0.47 deg/s residual bias. With that
+          noise a per-sample gate rejects the seed of a device lying still,
+          and the residual is integrated into tilt and heading within
+          seconds (tests/nlo/mag_turns-test.cpp). A 0.25 s block mean keeps over 97 % of
+          wave-band rotation (0.05-0.5 Hz) and leaves about 0.05 deg/s of
+          that noise. boot_bias_seed_block_s <= 0 takes the spread over
+          single samples.
+
+          Over the second or two the bootstrap runs, slow wave rotation is
+          close to a constant rate and has almost no spread, so the rate
+          spread alone cannot tell it from a bias: a 1 deg roll at an 8 s
+          period passes it and would seed a bias 0.5 deg/s wrong. A bias,
+          however, leaves gravity fixed in the body, and a rotation moves
+          it. So the direction of the specific force, averaged over the same
+          blocks, must also spread by less than
+          boot_bias_seed_max_down_spread_rad beyond what the accelerometer
+          noise, measured from the scatter inside each block, gives on its
+          own. A 0.3 deg, 8 s roll spreads them by 0.0018 rad and gives a
+          seed 0.16 deg/s wrong; 0.5 deg by 0.0029 rad, 0.26 deg/s wrong.
+          So accelerometer noise by itself does not fail the test; with a
+          noisy accelerometer the allowance widens the gate, and slow
+          rotation passes as it did before the test.
         */
         R boot_bias_seed_gyro_max_rad_s = R(0.03);
         R boot_bias_seed_min_still_s = R(1.0);
         R boot_bias_seed_max_std_rad_s = R(0.004);
+        R boot_bias_seed_block_s = R(0.25);
+        R boot_bias_seed_max_down_spread_rad = R(0.002);
 
         /*
           Accelerometer-bias seed from the same still startup.
@@ -219,8 +250,9 @@ public:
 
           The component of the bias along gravity is observable from a still
           device: it is |f| - g along the measured direction of f. If the
-          gyro seed above is accepted and the specific-force norm has a
-          standard deviation below boot_accel_bias_seed_max_std_mps2, that
+          gyro seed above is accepted and the specific-force norm, averaged
+          over the same blocks, has a standard deviation below
+          boot_accel_bias_seed_max_std_mps2, that
           component is written into the observer's fixed body-frame
           accelerometer bias. The horizontal components are indistinguishable
           from tilt and are left to the observer. A seed larger than
@@ -582,7 +614,6 @@ public:
         boot_good_time_s_ = R(0);
 
         boot_still_gyro_sum_.setZero();
-        boot_still_gyro_sq_sum_.setZero();
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
@@ -590,6 +621,7 @@ public:
         boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
+        resetStillBlocks_();
     }
 
     bool initialized() const { return initialized_; }
@@ -896,7 +928,6 @@ private:
     R boot_good_time_s_ = R(0);
 
     Vec3 boot_still_gyro_sum_ = Vec3::Zero();
-    Vec3 boot_still_gyro_sq_sum_ = Vec3::Zero();
     Vec3 boot_still_acc_sum_ = Vec3::Zero();
     R boot_still_acc_norm_sum_ = R(0);
     R boot_still_acc_norm_sq_sum_ = R(0);
@@ -904,6 +935,21 @@ private:
     R boot_still_acc_norm_last_ = R(0);
     int boot_still_count_ = 0;
     R boot_still_time_s_ = R(0);
+
+    // The still block being filled, and sums over the means of completed
+    // blocks; see Config::boot_bias_seed_block_s.
+    Vec3 boot_block_gyro_sum_ = Vec3::Zero();
+    Vec3 boot_block_down_sum_ = Vec3::Zero();
+    R boot_block_acc_norm_sum_ = R(0);
+    int boot_block_count_ = 0;
+    R boot_block_time_s_ = R(0);
+    Vec3 boot_still_block_gyro_sum_ = Vec3::Zero();
+    Vec3 boot_still_block_gyro_sq_sum_ = Vec3::Zero();
+    R boot_still_block_acc_norm_sum_ = R(0);
+    R boot_still_block_acc_norm_sq_sum_ = R(0);
+    Vec3 boot_still_block_down_sum_ = Vec3::Zero();
+    R boot_still_block_down_noise_sum_ = R(0);
+    int boot_still_blocks_ = 0;
 
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
@@ -1331,7 +1377,6 @@ private:
         boot_good_time_s_ = R(0);
 
         boot_still_gyro_sum_.setZero();
-        boot_still_gyro_sq_sum_.setZero();
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
@@ -1339,6 +1384,7 @@ private:
         boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
+        resetStillBlocks_();
 
         return true;
     }
@@ -1426,7 +1472,6 @@ private:
 
             if (gyroOk_(gyro_b_rad_s, cfg_.boot_bias_seed_gyro_max_rad_s)) {
                 boot_still_gyro_sum_ += gyro_b_rad_s;
-                boot_still_gyro_sq_sum_ += gyro_b_rad_s.cwiseProduct(gyro_b_rad_s);
                 const R fn_still = specific_force_b_mps2.norm();
                 boot_still_acc_sum_ += specific_force_b_mps2;
                 boot_still_acc_norm_sum_ += fn_still;
@@ -1438,6 +1483,7 @@ private:
                 boot_still_acc_norm_last_ = fn_still;
                 ++boot_still_count_;
                 boot_still_time_s_ += dt;
+                accumulateStillBlock_(dt, gyro_b_rad_s, specific_force_b_mps2, fn_still);
             }
         }
 
@@ -1498,15 +1544,86 @@ private:
             return false;
         }
 
-        const R n = static_cast<R>(boot_still_count_);
-        mean = boot_still_gyro_sum_ / n;
+        if (boot_still_blocks_ < 2) {
+            return false;
+        }
+
+        mean = boot_still_gyro_sum_ / static_cast<R>(boot_still_count_);
+
+        // Spread of the block means; see Config::boot_bias_seed_block_s.
+        const R nb = static_cast<R>(boot_still_blocks_);
+        const Vec3 block_mean = boot_still_block_gyro_sum_ / nb;
         const Vec3 var =
-            (boot_still_gyro_sq_sum_ / n - mean.cwiseProduct(mean))
+            (boot_still_block_gyro_sq_sum_ / nb - block_mean.cwiseProduct(block_mean))
                 .cwiseMax(R(0));
         const R max_std = std::sqrt(var.maxCoeff());
 
-        return isFinite_(max_std) &&
-               max_std <= cfg_.boot_bias_seed_max_std_rad_s;
+        // Spread of the block directions, against the gate plus what the
+        // accelerometer noise alone gives, with the finite-sample allowance
+        // of stationaryAccelResidual_().
+        const R down_var = std::max(
+            R(1) - (boot_still_block_down_sum_ / nb).squaredNorm(), R(0));
+        const R down_noise_var = boot_still_block_down_noise_sum_ / nb;
+        const R down_gate = cfg_.boot_bias_seed_max_down_spread_rad;
+
+        return isFinite_(max_std) && isFinite_(down_var) && isFinite_(down_noise_var) &&
+               max_std <= cfg_.boot_bias_seed_max_std_rad_s &&
+               down_var <= down_gate * down_gate +
+                               down_noise_var * (R(1) + R(4) / std::sqrt(nb));
+    }
+
+    void resetStillBlocks_() {
+        boot_block_gyro_sum_.setZero();
+        boot_block_down_sum_.setZero();
+        boot_block_acc_norm_sum_ = R(0);
+        boot_block_count_ = 0;
+        boot_block_time_s_ = R(0);
+        boot_still_block_down_sum_.setZero();
+        boot_still_block_down_noise_sum_ = R(0);
+        boot_still_block_gyro_sum_.setZero();
+        boot_still_block_gyro_sq_sum_.setZero();
+        boot_still_block_acc_norm_sum_ = R(0);
+        boot_still_block_acc_norm_sq_sum_ = R(0);
+        boot_still_blocks_ = 0;
+    }
+
+    void accumulateStillBlock_(R dt, const Vec3& gyro_b_rad_s,
+                               const Vec3& specific_force_b_mps2, R acc_norm) {
+        boot_block_gyro_sum_ += gyro_b_rad_s;
+        boot_block_down_sum_ += -specific_force_b_mps2 / acc_norm;
+        boot_block_acc_norm_sum_ += acc_norm;
+        ++boot_block_count_;
+        boot_block_time_s_ += dt;
+        if (boot_block_time_s_ < cfg_.boot_bias_seed_block_s) {
+            return;
+        }
+
+        const R m = static_cast<R>(boot_block_count_);
+        const Vec3 gyro_mean = boot_block_gyro_sum_ / m;
+        const R acc_norm_mean = boot_block_acc_norm_sum_ / m;
+        boot_still_block_gyro_sum_ += gyro_mean;
+        boot_still_block_gyro_sq_sum_ += gyro_mean.cwiseProduct(gyro_mean);
+        boot_still_block_acc_norm_sum_ += acc_norm_mean;
+        boot_still_block_acc_norm_sq_sum_ += acc_norm_mean * acc_norm_mean;
+        // Mean resultant length r of the block's unit directions: their
+        // scatter about the mean is 1 - r^2, and that over m - 1 is the
+        // noise variance of the block's mean direction.
+        const Vec3 down_mean = boot_block_down_sum_ / m;
+        const R r = down_mean.norm();
+        if (r > R(1e-6) && isFinite_(r)) {
+            boot_still_block_down_sum_ += down_mean / r;
+            if (boot_block_count_ > 1) {
+                boot_still_block_down_noise_sum_ +=
+                    std::max(R(1) - r * r, R(0)) / (m - R(1));
+            }
+        }
+        ++boot_still_blocks_;
+
+        boot_block_gyro_sum_.setZero();
+        boot_block_down_sum_.setZero();
+        boot_block_acc_norm_sum_ = R(0);
+        boot_block_count_ = 0;
+        boot_block_time_s_ = R(0);
     }
 
     // Compare force-norm variation with the noise estimated from adjacent
@@ -1532,15 +1649,18 @@ private:
     // See Config::boot_accel_bias_seed_enabled. Call only after
     // stillGyroBiasSeed_() accepted the same still window.
     bool stillAccelBiasSeed_(Vec3& bias) const {
-        if (!cfg_.boot_accel_bias_seed_enabled || boot_still_count_ <= 0) {
+        if (!cfg_.boot_accel_bias_seed_enabled || boot_still_count_ <= 0 ||
+            boot_still_blocks_ < 2) {
             return false;
         }
 
         const R n = static_cast<R>(boot_still_count_);
         const Vec3 f_mean = boot_still_acc_sum_ / n;
-        const R norm_mean = boot_still_acc_norm_sum_ / n;
+        // Spread of the block means; see Config::boot_bias_seed_block_s.
+        const R nb = static_cast<R>(boot_still_blocks_);
+        const R norm_mean = boot_still_block_acc_norm_sum_ / nb;
         const R norm_std = std::sqrt(std::max(
-            boot_still_acc_norm_sq_sum_ / n - norm_mean * norm_mean, R(0)));
+            boot_still_block_acc_norm_sq_sum_ / nb - norm_mean * norm_mean, R(0)));
         const R fn = f_mean.norm();
 
         if (!isFinite_(norm_std) || !isFinite_(fn) || !(fn > R(1e-6)) ||
