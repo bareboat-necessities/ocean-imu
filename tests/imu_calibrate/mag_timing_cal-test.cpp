@@ -3,7 +3,7 @@
 #include "imu_calibrate/MagTimingCal.h"
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
-#include "util/MagneticInput.h"
+#include "util/MagneticRotation.h"
 #include "../common/MagTimingFixture.h"
 #include <cstdio>
 #include <cstdlib>

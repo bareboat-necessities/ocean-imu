@@ -147,8 +147,7 @@ It scores vertical displacement over the same trailing 900 s window. The
 heave-only filters need a vertical reference (`--frontend`):
 
 - **`mahony` (default).** The PII observer's Mahony AHRS as shipped: its
-  adaptive gains, the heading-only magnetometer correction
-  (`ahrs/MahonyHeadingMag.h`), and the firmware's sensor mapping, with
+  adaptive gains, the magnetometer, and the firmware's sensor mapping, with
   gyro, accelerometer and magnetometer all mapped `[N, -E, -D]`.
 - **`proxy`.** The same Mahony core, IMU-only, at the gains of the private
   Mahony observer that OU-II, OU-III and TFG share
@@ -178,7 +177,7 @@ the estimated and true gravity directions:
 
 | Mean (worst) % of Hs | Tilt error, mean (worst) | PII | Richter zero-displacement | Godhavn ext | Küchler | Godhavn published law |
 |---|---|---|---|---|---|---|
-| `mahony`: PII Mahony as shipped | 1.53° (3.36°) | 5.64 (7.81) | 9.08 (18.46) | 11.88 (21.99) | 12.51 (19.88) | 203 (422) |
+| `mahony`: PII Mahony as shipped | 1.25° (2.75°) | 5.96 (8.75) | 11.08 (24.56) | 14.09 (28.63) | 12.27 (18.87) | 195 (386) |
 | `proxy`: shared IMU-only Mahony | 0.58° (1.18°) | 5.08 (5.99) | 5.11 (5.75) | 8.45 (10.64) | 12.15 (18.59) | 217 (507) |
 | `truth`: true vertical | 0.00° (0.00°) | – | 5.00 (5.33) | 8.23 (9.65) | 12.61 (20.12) | 215 (492) |
 
@@ -242,12 +241,11 @@ averaged over the eight records.
     5.82 % to about 5.0 % and its worst case by a third.
   - With the magnetometer in the right frame it costs at most 0.03 points.
     Restricting it to heading makes it free, while keeping a 2.7° heading.
-  - The PII rows come from its own simulator with the sensor mapping
-    corrected to the firmware's (next section). That simulator runs its own
+  - The PII rows come from its own simulator, run with the firmware's sensor
+    mapping (`[N, -E, -D]` for all three sensors). That simulator runs its own
     noise model (5 mg accelerometer bias, 20 Hz magnetometer), so its numbers
     differ slightly from the `heave_only` table.
   - The shipped PII defaults are not changed here.
-
 
 ### Where the error comes from
 
@@ -258,7 +256,7 @@ vertical acceleration, then adding one corruption at a time.
   - *What goes wrong.* The shipped Mahony settings are tuned for a fast AHRS.
     A ~1 s time constant lets every wave's horizontal acceleration tilt the
     vertical.
-  - *The result.* Tilt error reaches 3.36°. Leaked horizontal acceleration
+  - *The result.* Tilt error reaches 2.75°. Leaked horizontal acceleration
     leaves a low-frequency vertical error. The heave filters' gain there
     (about 235 m per m/s² at 0.01 Hz for Godhavn) turns it into metres of
     drift.
@@ -266,7 +264,7 @@ vertical acceleration, then adding one corruption at a time.
     Hs 8.5 m). Using the OU filters' own private Mahony settings instead
     (IMU-only, corner below the wave band) brings tilt to 0.58°. That is as
     good as a true vertical for every heave filter here. The PII observer
-    also improves, from 5.64 % to 5.08 % of Hs.
+    also improves, from 5.96 % to 5.08 % of Hs.
   - *Why OU-III differs.* OU-III estimates attitude and wave motion jointly.
 - **Bias instability (the published Godhavn law).**
   - On exact acceleration the law gives under 2 % of Hs.

@@ -14,13 +14,6 @@
     - runtime_.apply* already includes temperature compensation.
 */
 
-// Set to 0 to reproduce Stage A observation-only behavior. This transports
-// host-cache delay only; no BMM150 conversion epoch is guessed.
-// Keep this before all includes so the shared input sees the selected value.
-#ifndef SEA_STATE_MAG_HOST_ALIGNMENT
-#define SEA_STATE_MAG_HOST_ALIGNMENT 1
-#endif
-
 #include <Arduino.h>
 
 #ifndef SEA_STATE_ENABLE_WIZARD
@@ -84,8 +77,6 @@ constexpr float FREQ_GUESS = 0.3f;
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
-#include "util/MagneticInput.h"
-
 #include "util/QuaternionUtils.h"
 #include "wave_dir/WaveDirectionReport.h"
 
@@ -103,10 +94,10 @@ static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
-static constexpr int   ACC_SPIKE_WINDOW      = 7;       // moving window size
-static constexpr float ACC_SPIKE_JERK_MPS3   = 200.0f;  // |a| derivative threshold
+static constexpr int   ACC_SPIKE_WINDOW      = 5;       // moving window size
+static constexpr float ACC_SPIKE_JERK_MPS3   = 1000.0f; // |a| derivative threshold
 static constexpr int   ACC_SPIKE_VERT_AXIS   = 2;       // body-NED z also checked alone
-static constexpr float ACC_SPIKE_VERT_MPS3   = 200.0f;  // a_z derivative threshold
+static constexpr float ACC_SPIKE_VERT_MPS3   = 1000.0f; // a_z derivative threshold
 
 // ---------------------------------------------------------------------------
 // IMU installation lever arm (IMU position relative to the vessel centre of
@@ -273,7 +264,6 @@ private:
   Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{};
-  ocean_imu::magnetic::Input mag_input_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
@@ -406,7 +396,6 @@ private:
     fcfg.sigma_a = sigma_a;
     fcfg.sigma_g = sigma_g;
     fcfg.sigma_m = sigma_m;
-    mag_input_.reset(sigma_g.maxCoeff(), sigma_m.array().square().matrix().asDiagonal());
 
     fcfg.mag_delay_sec = 0.0f;
     fcfg.mag_init_min_mag_norm = 5.0f;
@@ -562,19 +551,15 @@ private:
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
 
-    const auto& core = fusion_.raw().mekf();
-    mag_input_.advance(s.sample_us, w_cal_ - core.gyroscope_bias_body(),
-        ocean_imu::magnetic::covarianceBound(core.gyroscope_bias_covariance_body()),
-        s.mag_timing, m_cal_, fusion_.magHardIronBodyUT());
-
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = mag_input_.due(mag_gate_, mag_ok_, millis());
+    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);
-    mag_input_.capture(fusion_.raw().startupProxyQuat(), fusion_.attitudeQuat(), a_cal_, w_cal_);
-    if (mag_ok_ && mag_fresh_) mag_input_.correct(fusion_, micros());
+    if (mag_ok_ && mag_fresh_) {
+      fusion_.updateMag(m_cal_);
+    }
 
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
@@ -781,7 +766,6 @@ private:
       static_cast<double>(m_cal_.x()),
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
-    mag_input_.print(Serial);
   #endif
 #endif
   }

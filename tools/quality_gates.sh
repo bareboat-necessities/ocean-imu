@@ -54,15 +54,8 @@ ok()    { printf '\033[32mok\033[0m   %s\n' "$*"; }
 # src/AtomS3R/ is excluded because it includes <Wire.h> and the M5Unified
 # headers, which exist only in the Arduino core. Those files are covered by the
 # build-MCU matrix in build.yml, which compiles them for the real target.
-# tests/common/InsSketchHeaveDrift.cpp and FifoDiagnosticsSketch.cpp compile a
-# shipped .ino through the host stand-ins in tests/common/ins_sketch_stubs and
-# the defines from their make rules (InsSketchHeaveDrift.mk,
-# tests/imu_calibrate/Makefile); they cannot build standalone. The sketches
-# they include are covered by build-MCU and the Arduino IDE workflow.
-SKETCH_HARNESS_TUS='^tests/common/(InsSketchHeaveDrift|FifoDiagnosticsSketch)\.cpp$'
 tu_list() {
-  git ls-files 'tests/*.cpp' 'src/*.cpp' | grep -v '^src/AtomS3R/' |
-    grep -Ev "$SKETCH_HARNESS_TUS"
+  git ls-files 'tests/*.cpp' 'src/*.cpp' | grep -v '^src/AtomS3R/'
 }
 
 gate_warnings() {
@@ -132,10 +125,8 @@ gate_clang_tidy() {
   # drivers take many minutes each because of their Eigen instantiations, so the
   # gate covers the unit-test TUs and lets the sims be covered by the compiler
   # warnings gate instead.
-  # The sketch harnesses need their make rule's stub include path (see tu_list).
   git ls-files 'tests/*.cpp' \
     | grep -Ev '(-sim|certificate-sim|neighborhood-sim)\.cpp$' \
-    | grep -Ev "$SKETCH_HARNESS_TUS" \
     | xargs -P "$JOBS" -I TU bash -c '
         clang-tidy --quiet "$1" -- -std=c++20 -I src '"$EIGEN_INC"' '"$LIEPP_INC"' 2>/dev/null
       ' _ TU > "$log" 2>&1
