@@ -25,8 +25,10 @@ Identical quantized conversions are indistinguishable in the existing API.
 `sample_us` is host **read-start**, before `M5.Imu.update()`, not sensor sample
 time. Gyro and accelerometer values have the same host timestamp, with no
 BMI270 sensor-time/FIFO timestamp read. `readImuMapped` accepts only frames
-whose accel **and** gyro ready bits are set. The pinned driver does not
-override `ACC_CONF=0xA8` (100 Hz reset) or `GYR_CONF=0xA9` (200 Hz reset).
+whose accel **and** gyro ready bits are set. The pinned driver leaves
+`ACC_CONF=0xA8` (100 Hz, normal filter) and `GYR_CONF=0xA9` (200 Hz reset);
+`configureAtomS3RMag()` then sets `ACC_CONF=0x88` (100 Hz, OSR4 filter,
+performance mode; `AtomS3R_Bmi270AccFilter.h`) and leaves the rate unchanged.
 Thus 200 Hz is the host loop target, not evidence of 200 accepted estimator
 frames per second; source/default inspection suggests about 100 Hz accepted
 frames pending register readback and hardware measurement. The history uses

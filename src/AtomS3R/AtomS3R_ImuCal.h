@@ -93,6 +93,7 @@
 // Blob layout, CRC, runtime application and the generic store
 // (host-testable, no Arduino dependency).
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#include "AtomS3R/AtomS3R_Bmi270AccFilter.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
 #include "AtomS3R/AtomS3R_Bmm150Compensation.h"
@@ -403,8 +404,10 @@ static inline void clearM5UnifiedImuCalibration() {
   M5.Imu.clearOffsetData();
 }
 
-// AtomS3R magnetometer setup used for both calibration and runtime. Call after
+// AtomS3R sensor setup used for both calibration and runtime. Call after
 // every M5Unified IMU initialisation (M5Unified soft-resets the BMM150):
+//  - accelerometer: BMI270 OSR4 filter at M5Unified's output rate
+//    (AtomS3R_Bmi270AccFilter.h);
 //  - low-noise setting: 47 XY / 41 Z repetitions at M5Unified's 30 Hz output
 //    rate instead of the 1/1 reset value (AtomS3R_Bmm150AuxPreset.h);
 //  - Bosch compensation: reads the factory trim registers once, then every
@@ -468,6 +471,13 @@ static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   magSourceFollower() = nullptr;
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
+  uint8_t acc_before, acc_after;
+  if (Bmi270AccFilter::apply(imu0, acc_before, acc_after)) {
+    log.printf("[ACCCFG] BMI270 accelerometer OSR4 filter: ACC_CONF 0x%02X (was 0x%02X)\n", acc_after, acc_before);
+  } else {
+    log.printf("[ACCCFG] BMI270 accelerometer OSR4 filter FAILED: ACC_CONF 0x%02X (was 0x%02X)\n",
+               acc_after, acc_before);
+  }
   using Preset = Bmm150AuxPreset<m5::IMU_Base>;
   Preset aux(imu0, [](uint32_t ms) { delay(ms); });
   Bmm150RegState before, after;

@@ -31,7 +31,7 @@ TARGETS += mag_rotation-test mag_input-test mag_timing_cal-test bmi270_fifo-test
 TARGETS += fifo_diagnostics_sketch-test
 bmi270_fifo-test: bmi270_fifo-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-bmi270_fifo-test.o: ../../src/AtomS3R/AtomS3R_Bmi270Fifo.h ../../src/AtomS3R/AtomS3R_ImuUnits.h
+bmi270_fifo-test.o: ../../src/AtomS3R/AtomS3R_Bmi270Fifo.h ../../src/AtomS3R/AtomS3R_Bmi270AccFilter.h ../../src/AtomS3R/AtomS3R_ImuUnits.h
 geomag_wmm-test: geomag_wmm-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 geomag_wmm-test.o: ../../src/imu_calibrate/GeomagWmm.h
