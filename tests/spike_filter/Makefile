@@ -15,7 +15,7 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 
-TARGETS = spike-filter-test
+TARGETS = spike-filter-test spike-filter-3d-test
 
 all: build test
 build: $(TARGETS)
@@ -23,6 +23,8 @@ test: $(TARGETS)
 	bash ./run_tests.sh
 
 spike-filter-test: spike-filter-test.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
+spike-filter-3d-test: spike-filter-3d-test.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:

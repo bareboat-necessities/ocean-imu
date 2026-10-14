@@ -61,6 +61,13 @@
   #define SEA_STATE_NMEA_TALKER "II"
 #endif
 
+// Reject sporadic single-sample BMI270 acceleration spikes before any other
+// processing (calibration, fusion, gyro-bias EMA). Detection is on |a| and,
+// to catch sign flips that keep |a|, on the vertical (body z) component.
+#ifndef SEA_STATE_ACC_SPIKE_FILTER
+  #define SEA_STATE_ACC_SPIKE_FILTER 1
+#endif
+
 // Nominal-g unit (also the generic default the filter headers declare as
 // extern g_std). Physical gravity is g_local: the calibration target, and the
 // gravity the fusion filter removes (Fusion::Config::gravity_magnitude).
@@ -73,6 +80,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+#include "avg/TimeAwareSpikeFilter3D.h"
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
@@ -94,6 +102,11 @@ static constexpr uint32_t NMEA_TEMP_MS    = 500;
 static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
+
+static constexpr int   ACC_SPIKE_WINDOW      = 7;       // moving window size
+static constexpr float ACC_SPIKE_JERK_MPS3   = 200.0f;  // |a| derivative threshold
+static constexpr int   ACC_SPIKE_VERT_AXIS   = 2;       // body-NED z also checked alone
+static constexpr float ACC_SPIKE_VERT_MPS3   = 200.0f;  // a_z derivative threshold
 
 // ---------------------------------------------------------------------------
 // IMU installation lever arm (IMU position relative to the vessel centre of
@@ -295,6 +308,11 @@ private:
   uint16_t stale_frame_count_ = 0;
   ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
   ins::SampleRateMeter rates_{};
+
+#if SEA_STATE_ACC_SPIKE_FILTER
+  TimeAwareSpikeFilter3D acc_spike_{ACC_SPIKE_WINDOW, ACC_SPIKE_JERK_MPS3,
+                                    ACC_SPIKE_VERT_AXIS, ACC_SPIKE_VERT_MPS3};
+#endif
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
   ins::RateOfTurnFilter rot_{};
@@ -532,10 +550,13 @@ private:
     imu_temp_c_ = tempC;
     rates_.countImu();
 
-    const Vector3f a_raw = s.a;
+    Vector3f a_raw = s.a;
     const Vector3f w_raw = s.w;
 
     a_raw_norm_ = a_raw.norm();
+#if SEA_STATE_ACC_SPIKE_FILTER
+    acc_spike_.filterWithDelta(a_raw.x(), a_raw.y(), a_raw.z(), dt_);
+#endif
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
