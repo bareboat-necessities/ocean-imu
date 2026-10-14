@@ -289,7 +289,7 @@ class CompassAppBase {
     M5.begin(cfg);
 
     clearM5UnifiedImuCalibration();
-    configureAtomS3RImu(Serial);
+    configureAtomS3RMag(Serial);
     delay(250);
 
     ui_.begin();

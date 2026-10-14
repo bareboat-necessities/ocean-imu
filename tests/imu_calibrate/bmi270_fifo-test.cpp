@@ -1,5 +1,4 @@
-// BMI270 FIFO acquisition (src/AtomS3R/AtomS3R_Bmi270Fifo.h) and the shipping
-// accelerometer filter (AtomS3R_Bmi270AccFilter.h): register setup on
+// BMI270 FIFO acquisition (src/AtomS3R/AtomS3R_Bmi270Fifo.h): register setup on
 // a simulated BMI270 with a BMM150 behind its AUX interface, header-mode FIFO
 // parsing, unit equivalence with the M5Unified path, and the sensortime clock
 // map under stalls, clock error, lost frames and counter wrap.
@@ -13,7 +12,6 @@
 #include <vector>
 
 #include "AtomS3R/AtomS3R_Bmi270Fifo.h"
-#include "AtomS3R/AtomS3R_Bmi270AccFilter.h"
 
 namespace {
 
@@ -296,26 +294,8 @@ void testClock() {
 
 }  // namespace
 
-void testAccFilter() {
-  std::printf("accelerometer filter\n");
-  using F = atoms3r_ical::Bmi270AccFilter;
-  FakeBmi270 dev;
-  uint8_t before = 0, after = 0;
-  require(F::apply(&dev, before, after), "OSR4 applies and reads back");
-  require(before == 0xA8 && after == 0x88 && dev.reg[0x40] == 0x88,
-          "M5Unified 0xA8 -> 0x88: performance mode, OSR4, 100 Hz kept");
-  require(dev.reg[0x42] == 0xA9 && dev.writes.size() == 1, "only ACC_CONF written");
-  require(F::apply(&dev, before, after) && after == 0x88, "re-applying is idempotent");
-  require(F::osr4(0xA9) == 0x89 && F::osr4(0x28) == 0x88, "output rate bits kept, power mode left");
-  FakeBmi270 stuck;
-  stuck.stuck_reg = 0x40;
-  require(!F::apply(&stuck, before, after) && after == 0xA8, "ignored write is reported");
-  require(!F::apply(static_cast<FakeBmi270*>(nullptr), before, after), "no device is reported");
-}
-
 int main() {
   testSetup();
-  testAccFilter();
   testParser();
   testUnits();
   testClock();

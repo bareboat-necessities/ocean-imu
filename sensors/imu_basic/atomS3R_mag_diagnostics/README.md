@@ -55,7 +55,6 @@ Copy the whole serial log, from the `[DIAG]` header through the `[VERDICT]` bloc
 ## Example Calibration Report
 
 ```
-[ACCCFG] BMI270 accelerometer OSR4 filter: ACC_CONF 0x88 (was 0xA8)
 [MAGCFG] BMM150 low-noise: 47/41 repetitions (was 1/1), mode=0x38
 [MAGCFG] BMM150 Bosch compensation on: x1=0 y1=0 x2=26 y2=26 xy1=29 xy2=-3 z1=23337 z2=722 z3=0 z4=0 xyz1=6574
 [DIAG] magnetometer: low-noise (47/41 reps, 30 Hz), Bosch-compensated

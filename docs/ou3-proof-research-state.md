@@ -218,7 +218,7 @@ The exact-profile compiler include closure still has 34 shipping files,
 all byte-identical to immutable `108ce145`; the eight source paths changed
 since that original are outside the closure. Refresh only the provenance
 binding, preserving the previous audit and all finite diagnostic results.
-The literal OU-III sketch now calls `configureAtomS3RImu`, as main requires;
+The literal OU-III sketch now calls `configureAtomS3RMag`, as main requires;
 update that audited sketch binding separately. No replay or gate change.
 This is an infrastructure/provenance failure, not a shipping counterexample.
 No mathematical premise or proof flag changes; the AW and complete-gap
