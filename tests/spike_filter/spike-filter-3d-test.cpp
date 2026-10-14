@@ -105,6 +105,48 @@ void test_even_window_and_degenerate_size() {
   }
 }
 
+// A vertical sign flip keeps |a| but must be caught when the vertical check
+// is enabled, and must pass through (magnitude-only) when it is not.
+void test_vertical_flip_is_rejected() {
+  for (bool vertical_on : {true, false}) {
+    TimeAwareSpikeFilter3D filter(7, kThreshold, vertical_on ? 2 : -1, kThreshold);
+    for (int k = 0; k < 40; k++) {
+      float x = 0.3f, y = -0.4f, z = (k == 20) ? -kG : kG;
+      const bool spike = filter.filterWithDelta(x, y, z, kDt);
+      if (k == 20) {
+        require(spike == vertical_on, "vertical flip detection mismatch");
+        if (vertical_on) require(z == kG, "vertical flip was not replaced");
+      } else if (k > 27) {
+        require(!spike, "filter did not recover after vertical flip");
+      }
+    }
+  }
+}
+
+// Gravity moving between the horizontal axes (yaw-like rotation of a tilted
+// sensor) does not change the vertical component and is never flagged.
+void test_horizontal_rotation_passes_with_vertical_check() {
+  TimeAwareSpikeFilter3D filter(7, kThreshold, 2, kThreshold);
+  for (int k = 0; k < 400; k++) {
+    const float ang = 0.2f * static_cast<float>(k);
+    float x = 3.0f * std::cos(ang), y = 3.0f * std::sin(ang), z = 9.34f;
+    require(!filter.filterWithDelta(x, y, z, kDt),
+            "horizontal rotation flagged at sample " + std::to_string(k));
+  }
+}
+
+// Slow roll moves gravity through the vertical axis well below the threshold.
+void test_slow_roll_passes_with_vertical_check() {
+  TimeAwareSpikeFilter3D filter(7, kThreshold, 2, kThreshold);
+  for (int k = 0; k < 2000; k++) {
+    const float t = kDt * static_cast<float>(k);
+    const float roll = 0.5f * std::sin(2.0f * 3.14159265f * 0.3f * t);
+    float x = 0.0f, y = kG * std::sin(roll), z = kG * std::cos(roll);
+    require(!filter.filterWithDelta(x, y, z, kDt),
+            "slow roll flagged at sample " + std::to_string(k));
+  }
+}
+
 void test_filter_is_not_copyable() {
   static_assert(!std::is_copy_constructible<TimeAwareSpikeFilter3D>::value,
                 "TimeAwareSpikeFilter3D must not be copy constructible");
@@ -121,6 +163,9 @@ int main() {
   test_dropout_spike_is_rejected();
   test_non_finite_input_is_ignored();
   test_even_window_and_degenerate_size();
+  test_vertical_flip_is_rejected();
+  test_horizontal_rotation_passes_with_vertical_check();
+  test_slow_roll_passes_with_vertical_check();
   test_filter_is_not_copyable();
   std::cout << "All time-aware 3D spike filter tests passed.\n";
   return 0;

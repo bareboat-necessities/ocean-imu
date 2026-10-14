@@ -56,7 +56,8 @@
 #endif
 
 // Reject sporadic single-sample BMI270 acceleration spikes before any other
-// processing (calibration, fusion, gyro-bias EMA). Detection is on |a|.
+// processing (calibration, fusion, gyro-bias EMA). Detection is on |a| and,
+// to catch sign flips that keep |a|, on the vertical (body z) component.
 #ifndef SEA_STATE_ACC_SPIKE_FILTER
   #define SEA_STATE_ACC_SPIKE_FILTER 1
 #endif
@@ -96,6 +97,8 @@ static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
 static constexpr int   ACC_SPIKE_WINDOW      = 7;       // moving window size
 static constexpr float ACC_SPIKE_JERK_MPS3   = 200.0f;  // |a| derivative threshold
+static constexpr int   ACC_SPIKE_VERT_AXIS   = 2;       // body-NED z also checked alone
+static constexpr float ACC_SPIKE_VERT_MPS3   = 200.0f;  // a_z derivative threshold
 
 // ---------------------------------------------------------------------------
 // IMU installation lever arm (IMU position relative to the vessel centre of
@@ -299,7 +302,8 @@ private:
   ins::SampleRateMeter rates_{};
 
 #if SEA_STATE_ACC_SPIKE_FILTER
-  TimeAwareSpikeFilter3D acc_spike_{ACC_SPIKE_WINDOW, ACC_SPIKE_JERK_MPS3};
+  TimeAwareSpikeFilter3D acc_spike_{ACC_SPIKE_WINDOW, ACC_SPIKE_JERK_MPS3,
+                                    ACC_SPIKE_VERT_AXIS, ACC_SPIKE_VERT_MPS3};
 #endif
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
