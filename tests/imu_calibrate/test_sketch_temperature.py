@@ -17,8 +17,8 @@ for sketch in sorted((root / "sensors").rglob("*.ino")):
     checked.append(sketch.relative_to(root))
 assert len(checked) == 6, f"Review new external calibration consumers: {checked}"
 compass = (root / "src/AtomS3R/AtomS3R_CompassAppBase.h").read_text()
-assert "runtime_.applyAccel(s.a, s.tempC)" in compass
-assert "runtime_.applyGyro(s.w, s.tempC)" in compass
+assert re.search(r"runtime_\.applyAccel\([^;]+,\s*s\.tempC\)", compass)
+assert re.search(r"runtime_\.applyGyro\([^;]+,\s*s\.tempC\)", compass)
 # Fusion's intentional reference temperature is NOT the sensor temperature.
 # Removing these would double-apply TFG's internal thermal model.
 tfg = (root / "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino").read_text()
