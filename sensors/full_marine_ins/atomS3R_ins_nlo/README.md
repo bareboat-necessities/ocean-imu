@@ -17,6 +17,7 @@ Open the sketch: [`atomS3R_ins_nlo.ino`](atomS3R_ins_nlo.ino).
 
 - reads and calibrates the AtomS3R IMU using the shared device layer;
 - runs the observer at 200 Hz through [`TimeVarGainNloAdapter`](../../../src/nlo/TimeVarGainNLO_Adapter.h);
+- rejects sporadic single-sample IMU spikes before calibration and fusion with the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h): detection runs on |a| plus the vertical (body z) accelerometer component, which also catches vertical sign flips, and a rejected read has its accelerometer and gyro replaced together from the same observed window sample (settings in `ImuSpikeCfg`; disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`);
 - bootstraps attitude with the adapter's Mahony startup stage, then seeds and hands over to the observer;
 - uses the calibrated 3-D magnetometer as a yaw-only magnetic reference, so heading is observable;
 - aids all three translational axes with the paper's virtual zero-mean integrated-position measurement, since the device carries no position reference;

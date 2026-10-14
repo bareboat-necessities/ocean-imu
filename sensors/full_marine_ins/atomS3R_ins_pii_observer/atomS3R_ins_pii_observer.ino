@@ -64,6 +64,7 @@
 
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
+#include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #if SEA_STATE_ENABLE_WIZARD
   #include "AtomS3R/ImuCalWizardRunner.h"
@@ -290,6 +291,7 @@ class FusionApp {
 
   uint16_t stale_frame_count_ = 0;
   ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ, 0.05f};
+  ImuSpikeFilter imu_spike_{};
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
   ins::RateOfTurnFilter rot_{};
@@ -410,6 +412,7 @@ class FusionApp {
     last_mag_correction_ms_ = 0;
     rates_.reset(millis());
     sample_dt_.reset();
+    imu_spike_.reset();
   }
 
   void resetFusion_() {
@@ -474,6 +477,7 @@ class FusionApp {
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
+    imu_spike_.reset();
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
@@ -536,10 +540,14 @@ class FusionApp {
     imu_temp_c_ = tempC;
     rates_.countImu();
 
-    a_raw_norm_ = s.a.norm();
+    Vector3f a_raw = s.a;
+    Vector3f w_raw = s.w;
 
-    a_cal_ = runtime_.applyAccel(s.a, tempC);
-    w_cal_ = runtime_.applyGyro(s.w, tempC);
+    a_raw_norm_ = a_raw.norm();
+    imu_spike_.apply(a_raw, w_raw, dt_);
+
+    a_cal_ = runtime_.applyAccel(a_raw, tempC);
+    w_cal_ = runtime_.applyGyro(w_raw, tempC);
     m_cal_ = runtime_.applyMag(s.m);
 
     mag_norm_uT_ = m_cal_.norm();
