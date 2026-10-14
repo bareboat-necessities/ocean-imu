@@ -1,4 +1,5 @@
-> [!WARNING] Experimental
+> [!WARNING]
+> EXPERIMENTAL
 
 # AtomS3R marine INS — Two-Frame Lie-Group (TFG)
 

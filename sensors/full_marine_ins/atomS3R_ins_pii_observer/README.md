@@ -1,4 +1,5 @@
-> [!WARNING] Experimental
+> [!WARNING]
+> EXPERIMENTAL
 
 # AtomS3R marine motion estimator — PII observer
 
