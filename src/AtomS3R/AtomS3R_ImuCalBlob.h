@@ -45,14 +45,14 @@ static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
 static constexpr uint8_t MAG_SOURCE_M5_RAW = 0;               // M5Unified uncompensated values
 static constexpr uint8_t MAG_SOURCE_BMM150_COMPENSATED = 1;   // Bosch trim/RHALL compensated uT
 
-// Source the running firmware delivers; set by configureAtomS3RImu().
+// Source the running firmware delivers; set by configureAtomS3RMag().
 inline uint8_t& activeMagSource() {
   static uint8_t source = MAG_SOURCE_M5_RAW;
   return source;
 }
 
 // Switches the running source to the one a saved calibration was fitted on
-// (installed by configureAtomS3RImu(); returns true when it now matches), so
+// (installed by configureAtomS3RMag(); returns true when it now matches), so
 // a calibration made before compensation keeps applying until the
 // magnetometer is recalibrated. Null: the source is fixed.
 using MagSourceFollower = bool (*)(uint8_t source);
