@@ -42,62 +42,6 @@ latency) must be charged to the stated magnetic residual envelopes; that fit is
 not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
-## Magnetic-input timing scope
-
-The AtomS3R OU-III frontend now transports known host-cache delay and suppresses
-repeated host observations. It applies no calibrated relative lag and no
-historical snapshot interpolation; the optional v5 timing record is
-calibration evidence only. The BMM150 conversion epoch/aperture is not known;
-physical timestamp qualification remains OPEN. The 21-state core, Jacobian,
-OU/S/SpectralMSE/tuner/BA dynamics and injection/reset are retained. Reference
-and hard-iron accumulation use saved exogenous proxy snapshots. Timed MEKF
-input and covariance depend on carried gyro-bias estimates/covariances: LR1's
-zero corrected-input reverse port applies to the legacy API only. The timed
-ports, physical latency envelopes and source-uniform actually applied service
-must enter the same finite-error supply inequality before transferring the
-local result. No theorem, entry or service-completion flag is promoted.
-
-The legacy API's complete operation source reduces token-for-token to main
-`2c534feb423a627c40f475daed40b4274d3dd2b8`; see
-`magnetic_timing_legacy_binding.py`. Independently compiled baseline/current
-240 s native executions produced the identical complete 40 s tail stream
-(also identical to the previously committed stream) with both untapped controls.
-Binding refreshes preserve every older finite numerical payload and scope flag;
-the receipt records old/new bindings and unchanged-payload hashes. This does
-not transfer those finite diagnostics to the timed-input API.
-
-**E — magnetic-input audit and configuration defects.** The original
-operation digest erased whitespace/comment-looking text inside C++ literals:
-`tokens('return "a b";') == tokens('return "ab";')`. It could not establish the
-claimed lexical identity. The audit now preserves literal contents and token
-boundaries; all three legacy projections match the baseline under that stronger
-comparison, and literal/comment/operator regressions reject those collisions.
-The sketch's A/B definition also followed the header's default, so editing it
-to zero still selected one. Its definition now precedes all includes. Default
-shipping behavior and compiler-provided overrides are unchanged.
-
-**Retained validation scope.** All seven magnetic frontends share the bounded
-history and diagnostics. Continuous observers retain every-tick feedback and
-make no normalized-confidence claim without bias covariance. The finite TFG
-interference result does not satisfy OU-III's two-degree recovery criterion;
-standalone qMEKF interference and some quiet-motion results also worsen. The
-paired metrics remain unchanged and no tuning or recovery gate is relaxed.
-Prior class E harness, dependency, compiler-profile, workspace, publication
-and source-binding failures and their exact commands/results are recorded in
-PR #670. They establish no mathematical or shipping counterexample. The
-legacy operation identity and retained numerical payloads apply only to the
-legacy API, not the endogenous timed-input ports.
-
-**Current limiter and next falsifiable check.** Physical BMM150 conversion
-phase/aperture, AtomS3R timing/stack use, and the same-history transport-port
-and actually applied service bounds remain unqualified. Capture DRDY/AUX/read
-phases and applied service, then charge the resulting timing and correlated
-transport uncertainties in the existing finite-error supply inequality.
-Structures preserved: 21 states, shipping correction/reset chronology,
-OU/S/tuner/bias equations, calibration, reference gates and proof premises.
-Relaxations introduced: none in these review repairs; the previously documented
-first-order transport approximation remains. No theorem or entry claim changes.
-
 ## Evidence
 
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
@@ -1003,30 +947,6 @@ its reference rate with fixed S and differing settings. No profile transfer.
 Physical S is never reset by the estimator pseudo-measurement.
 
 ## Failed approaches / DEAD_ENDS
-
-* **E, device motion gate removed (runtime engineering, not mathematics):**
-  the 2.4.3 shared attitude protection held force-derived attitude and bias
-  corrections whenever |omega| > 1.5 rad/s, filtered angular acceleration
-  > 2 rad/s^2, | ||f||/g - 1 | > 0.20 or a 20 ms sample gap occurred, latched
-  for 0.5 s plus 2 s, while accelerometer updates still drove the navigation
-  states. Failed quantities: on the shipping `Protection` code, synthetic
-  hand rocking (20 deg, 2 s) held aiding 100% of the time and a rough
-  small-boat sea 10.4% with 28.1 s holds; through the unchanged INS sketches
-  OU-II/OU-III/TFG/NLO never reached Live in short chop or hand rocking
-  (heave RMS error / truth RMS = 1.00) and PII heave ran to its 20 m clamp.
-  Invalidated hypothesis: fixed-threshold gating of accelerometer aiding
-  protects the shipping estimators during ordinary marine motion. The offline
-  OU validation was bit-identical before and after because it bypasses the
-  sketch layer. The gate, recapture/bias repair, gyro-only frame delivery and
-  the runtime application of the magnetic timing fit are removed; v2.4.2
-  runtime behaviour is restored, and the qMEKF right-Jacobian covariance
-  propagation/reset correction is retained (docs/qmekf-error-geometry.md).
-  Retained facts: the shipping
-  OU-III estimator equations are unchanged from v2.4.2, and the timing record
-  is calibration evidence only. Current limiter: AtomS3R bench and on-water
-  confirmation. Next falsifiable experiment: `ins_sketch_heave-test` in each
-  INS family, plus device logs of `[RATE]`, magnetic service and heave under
-  hand rocking and a short-chop sea.
 
 * **D, receipt-corner decision using qualitative linked action:** the
   requested sign of CR41's `S_c` was NOT established. The integrated

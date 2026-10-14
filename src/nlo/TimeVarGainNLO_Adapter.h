@@ -31,10 +31,7 @@
     - optional Mahony-like bootstrap is ON by default
     - it initializes q from accel/mag/compass if available
     - it then gyro-propagates during startup and uses gated accel correction
-    - after bootstrap, it seeds TimeVaryingGainNLO with the attitude given by
-      the force and magnetic directions averaged in a gyro-only frame over
-      the bootstrap, so a startup in waves or in the hand is handed over
-      level and on heading, and stops
+    - after bootstrap, it seeds TimeVaryingGainNLO and stops
 
   Important:
     Wave-time accelerometer tilt trim is OFF by default because it can chase
@@ -201,41 +198,10 @@ public:
           well above white gyro noise. A startup that fails either test
           leaves the seed at the bootstrap's own estimate. Set
           boot_bias_seed_min_still_s <= 0 to disable.
-
-          The spread is taken over the means of consecutive
-          boot_bias_seed_block_s blocks of still samples, not over single
-          samples. Sensor noise does not bias the seed, it averages out of
-          it, but atomS3R_imu_fifo_diagnostics measured the AtomS3R gyro at
-          rest with 0.1-0.2 deg/s of white noise plus a 10 Hz wobble, about
-          0.3 deg/s of per-sample standard deviation in all, above the
-          0.23 deg/s of the gate, and a 0.47 deg/s residual bias. With that
-          noise a per-sample gate rejects the seed of a device lying still,
-          and the residual is integrated into tilt and heading within
-          seconds (tests/nlo/mag_turns-test.cpp). A 0.25 s block mean keeps over 97 % of
-          wave-band rotation (0.05-0.5 Hz) and leaves about 0.05 deg/s of
-          that noise. boot_bias_seed_block_s <= 0 takes the spread over
-          single samples.
-
-          Over the second or two the bootstrap runs, slow wave rotation is
-          close to a constant rate and has almost no spread, so the rate
-          spread alone cannot tell it from a bias: a 1 deg roll at an 8 s
-          period passes it and would seed a bias 0.5 deg/s wrong. A bias,
-          however, leaves gravity fixed in the body, and a rotation moves
-          it. So the direction of the specific force, averaged over the same
-          blocks, must also spread by less than
-          boot_bias_seed_max_down_spread_rad beyond what the accelerometer
-          noise, measured from the scatter inside each block, gives on its
-          own. A 0.3 deg, 8 s roll spreads them by 0.0018 rad and gives a
-          seed 0.16 deg/s wrong; 0.5 deg by 0.0029 rad, 0.26 deg/s wrong.
-          So accelerometer noise by itself does not fail the test; with a
-          noisy accelerometer the allowance widens the gate, and slow
-          rotation passes as it did before the test.
         */
         R boot_bias_seed_gyro_max_rad_s = R(0.03);
         R boot_bias_seed_min_still_s = R(1.0);
         R boot_bias_seed_max_std_rad_s = R(0.004);
-        R boot_bias_seed_block_s = R(0.25);
-        R boot_bias_seed_max_down_spread_rad = R(0.002);
 
         /*
           Accelerometer-bias seed from the same still startup.
@@ -250,9 +216,8 @@ public:
 
           The component of the bias along gravity is observable from a still
           device: it is |f| - g along the measured direction of f. If the
-          gyro seed above is accepted and the specific-force norm, averaged
-          over the same blocks, has a standard deviation below
-          boot_accel_bias_seed_max_std_mps2, that
+          gyro seed above is accepted and the specific-force norm has a
+          standard deviation below boot_accel_bias_seed_max_std_mps2, that
           component is written into the observer's fixed body-frame
           accelerometer bias. The horizontal components are indistinguishable
           from tilt and are left to the observer. A seed larger than
@@ -506,20 +471,10 @@ public:
           parameter projection does not stop this because the admissible ball
           used here is two orders of magnitude wider than the true biases.
 
-          Holding kI at its nominal 0.01 instead leaves a residual gyro bias
-          to be learned over about 100 s, while it holds a tilt of 12.6 s
-          times the residual over theta_h; see
-          Filter::Config::virtual_horizontal_theta_startup. So the startup
-          interval runs the horizontal axes at theta_h = 3 and kI = 0.1, a
-          pair whose linearized tilt/bias loop is stable and damped (>= 0.70)
-          from the start through the return to the nominal gains, with a
-          5.7 s instead of an 80 s time constant.
-
           The proportional part of the ramp, k1 and k2 = 20, is harmless and
           is kept: it converges attitude quickly and is measurably fine.
         */
-        f.kI_initial = WithGNSS ? R(1.0) : R(0.1);
-        f.virtual_horizontal_theta_startup = WithGNSS ? R(0) : R(3.0);
+        f.kI_initial = WithGNSS ? R(1.0) : f.kI_nominal;
 
         // K0 = P*C', P from the ARE (12) with tau = 1/2 and
         // Q = blkdiag{50, 0.5*I3, 0.08*I3, 0.0025*I3}.
@@ -624,6 +579,7 @@ public:
         boot_good_time_s_ = R(0);
 
         boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
@@ -631,7 +587,6 @@ public:
         boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
-        resetStillBlocks_();
     }
 
     bool initialized() const { return initialized_; }
@@ -667,9 +622,6 @@ public:
             aux_.compass_valid = false;
         }
     }
-
-    // Same body-rate bias used by the active observer, including bootstrap.
-    Vec3 gyroscopeBiasBody() const { return initialized_ ? filter_.gyroBiasBody() : boot_bias_b_; }
 
     void setMagBody(const Vec3& mag_b, bool valid = true) {
         if constexpr (Mag == NloMagType::Magnetometer) {
@@ -921,14 +873,6 @@ private:
     R last_tilt_correction_norm_ = R(0);
 
     Quat boot_q_nb_ = Quat::Identity();
-
-    // Gyro-only startup attitude and the force/magnetic directions averaged
-    // in its frame; see bootFrameAlignedQuat_().
-    Quat boot_gyro_q_nb_ = Quat::Identity();
-    Vec3 boot_force_sum_n_ = Vec3::Zero();
-    Vec3 boot_mag_sum_n_ = Vec3::Zero();
-    R boot_force_time_s_ = R(0);
-    int boot_mag_count_ = 0;
     Vec3 boot_bias_b_ = Vec3::Zero();
     Vec3 boot_down_lpf_b_ = Vec3::Zero();
 
@@ -938,6 +882,7 @@ private:
     R boot_good_time_s_ = R(0);
 
     Vec3 boot_still_gyro_sum_ = Vec3::Zero();
+    Vec3 boot_still_gyro_sq_sum_ = Vec3::Zero();
     Vec3 boot_still_acc_sum_ = Vec3::Zero();
     R boot_still_acc_norm_sum_ = R(0);
     R boot_still_acc_norm_sq_sum_ = R(0);
@@ -945,21 +890,6 @@ private:
     R boot_still_acc_norm_last_ = R(0);
     int boot_still_count_ = 0;
     R boot_still_time_s_ = R(0);
-
-    // The still block being filled, and sums over the means of completed
-    // blocks; see Config::boot_bias_seed_block_s.
-    Vec3 boot_block_gyro_sum_ = Vec3::Zero();
-    Vec3 boot_block_down_sum_ = Vec3::Zero();
-    R boot_block_acc_norm_sum_ = R(0);
-    int boot_block_count_ = 0;
-    R boot_block_time_s_ = R(0);
-    Vec3 boot_still_block_gyro_sum_ = Vec3::Zero();
-    Vec3 boot_still_block_gyro_sq_sum_ = Vec3::Zero();
-    R boot_still_block_acc_norm_sum_ = R(0);
-    R boot_still_block_acc_norm_sq_sum_ = R(0);
-    Vec3 boot_still_block_down_sum_ = Vec3::Zero();
-    R boot_still_block_down_noise_sum_ = R(0);
-    int boot_still_blocks_ = 0;
 
     void resetAuxValidity_() {
         if constexpr (Mag == NloMagType::Compass) {
@@ -1370,12 +1300,6 @@ private:
         boot_q_nb_ = tmp.quaternionBodyToNED();
         boot_q_nb_.normalize();
 
-        boot_gyro_q_nb_ = boot_q_nb_;
-        boot_force_sum_n_.setZero();
-        boot_mag_sum_n_.setZero();
-        boot_force_time_s_ = R(0);
-        boot_mag_count_ = 0;
-
         boot_bias_b_.setZero();
         if constexpr (Mag == NloMagType::None) {
             boot_bias_b_.z() = R(0);
@@ -1387,6 +1311,7 @@ private:
         boot_good_time_s_ = R(0);
 
         boot_still_gyro_sum_.setZero();
+        boot_still_gyro_sq_sum_.setZero();
         boot_still_acc_sum_.setZero();
         boot_still_acc_norm_sum_ = R(0);
         boot_still_acc_norm_sq_sum_ = R(0);
@@ -1394,7 +1319,6 @@ private:
         boot_still_acc_norm_last_ = R(0);
         boot_still_count_ = 0;
         boot_still_time_s_ = R(0);
-        resetStillBlocks_();
 
         return true;
     }
@@ -1482,6 +1406,7 @@ private:
 
             if (gyroOk_(gyro_b_rad_s, cfg_.boot_bias_seed_gyro_max_rad_s)) {
                 boot_still_gyro_sum_ += gyro_b_rad_s;
+                boot_still_gyro_sq_sum_ += gyro_b_rad_s.cwiseProduct(gyro_b_rad_s);
                 const R fn_still = specific_force_b_mps2.norm();
                 boot_still_acc_sum_ += specific_force_b_mps2;
                 boot_still_acc_norm_sum_ += fn_still;
@@ -1493,7 +1418,6 @@ private:
                 boot_still_acc_norm_last_ = fn_still;
                 ++boot_still_count_;
                 boot_still_time_s_ += dt;
-                accumulateStillBlock_(dt, gyro_b_rad_s, specific_force_b_mps2, fn_still);
             }
         }
 
@@ -1504,7 +1428,6 @@ private:
         }
 
         integrateBootQuatRight_(dt, omega_b);
-        accumulateBootFrame_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
 
         const bool enough_good =
             boot_good_time_s_ >= cfg_.mahony_bootstrap_min_time_s;
@@ -1516,7 +1439,6 @@ private:
             filter_ = Filter(cfg_.filter);
             filter_.reset();
 
-            boot_q_nb_ = bootFrameAlignedQuat_();
             filter_.setQuaternionBodyToNED(boot_q_nb_);
 
             Vec3 b0 = boot_bias_b_;
@@ -1554,86 +1476,15 @@ private:
             return false;
         }
 
-        if (boot_still_blocks_ < 2) {
-            return false;
-        }
-
-        mean = boot_still_gyro_sum_ / static_cast<R>(boot_still_count_);
-
-        // Spread of the block means; see Config::boot_bias_seed_block_s.
-        const R nb = static_cast<R>(boot_still_blocks_);
-        const Vec3 block_mean = boot_still_block_gyro_sum_ / nb;
+        const R n = static_cast<R>(boot_still_count_);
+        mean = boot_still_gyro_sum_ / n;
         const Vec3 var =
-            (boot_still_block_gyro_sq_sum_ / nb - block_mean.cwiseProduct(block_mean))
+            (boot_still_gyro_sq_sum_ / n - mean.cwiseProduct(mean))
                 .cwiseMax(R(0));
         const R max_std = std::sqrt(var.maxCoeff());
 
-        // Spread of the block directions, against the gate plus what the
-        // accelerometer noise alone gives, with the finite-sample allowance
-        // of stationaryAccelResidual_().
-        const R down_var = std::max(
-            R(1) - (boot_still_block_down_sum_ / nb).squaredNorm(), R(0));
-        const R down_noise_var = boot_still_block_down_noise_sum_ / nb;
-        const R down_gate = cfg_.boot_bias_seed_max_down_spread_rad;
-
-        return isFinite_(max_std) && isFinite_(down_var) && isFinite_(down_noise_var) &&
-               max_std <= cfg_.boot_bias_seed_max_std_rad_s &&
-               down_var <= down_gate * down_gate +
-                               down_noise_var * (R(1) + R(4) / std::sqrt(nb));
-    }
-
-    void resetStillBlocks_() {
-        boot_block_gyro_sum_.setZero();
-        boot_block_down_sum_.setZero();
-        boot_block_acc_norm_sum_ = R(0);
-        boot_block_count_ = 0;
-        boot_block_time_s_ = R(0);
-        boot_still_block_down_sum_.setZero();
-        boot_still_block_down_noise_sum_ = R(0);
-        boot_still_block_gyro_sum_.setZero();
-        boot_still_block_gyro_sq_sum_.setZero();
-        boot_still_block_acc_norm_sum_ = R(0);
-        boot_still_block_acc_norm_sq_sum_ = R(0);
-        boot_still_blocks_ = 0;
-    }
-
-    void accumulateStillBlock_(R dt, const Vec3& gyro_b_rad_s,
-                               const Vec3& specific_force_b_mps2, R acc_norm) {
-        boot_block_gyro_sum_ += gyro_b_rad_s;
-        boot_block_down_sum_ += -specific_force_b_mps2 / acc_norm;
-        boot_block_acc_norm_sum_ += acc_norm;
-        ++boot_block_count_;
-        boot_block_time_s_ += dt;
-        if (boot_block_time_s_ < cfg_.boot_bias_seed_block_s) {
-            return;
-        }
-
-        const R m = static_cast<R>(boot_block_count_);
-        const Vec3 gyro_mean = boot_block_gyro_sum_ / m;
-        const R acc_norm_mean = boot_block_acc_norm_sum_ / m;
-        boot_still_block_gyro_sum_ += gyro_mean;
-        boot_still_block_gyro_sq_sum_ += gyro_mean.cwiseProduct(gyro_mean);
-        boot_still_block_acc_norm_sum_ += acc_norm_mean;
-        boot_still_block_acc_norm_sq_sum_ += acc_norm_mean * acc_norm_mean;
-        // Mean resultant length r of the block's unit directions: their
-        // scatter about the mean is 1 - r^2, and that over m - 1 is the
-        // noise variance of the block's mean direction.
-        const Vec3 down_mean = boot_block_down_sum_ / m;
-        const R r = down_mean.norm();
-        if (r > R(1e-6) && isFinite_(r)) {
-            boot_still_block_down_sum_ += down_mean / r;
-            if (boot_block_count_ > 1) {
-                boot_still_block_down_noise_sum_ +=
-                    std::max(R(1) - r * r, R(0)) / (m - R(1));
-            }
-        }
-        ++boot_still_blocks_;
-
-        boot_block_gyro_sum_.setZero();
-        boot_block_down_sum_.setZero();
-        boot_block_acc_norm_sum_ = R(0);
-        boot_block_count_ = 0;
-        boot_block_time_s_ = R(0);
+        return isFinite_(max_std) &&
+               max_std <= cfg_.boot_bias_seed_max_std_rad_s;
     }
 
     // Compare force-norm variation with the noise estimated from adjacent
@@ -1659,18 +1510,15 @@ private:
     // See Config::boot_accel_bias_seed_enabled. Call only after
     // stillGyroBiasSeed_() accepted the same still window.
     bool stillAccelBiasSeed_(Vec3& bias) const {
-        if (!cfg_.boot_accel_bias_seed_enabled || boot_still_count_ <= 0 ||
-            boot_still_blocks_ < 2) {
+        if (!cfg_.boot_accel_bias_seed_enabled || boot_still_count_ <= 0) {
             return false;
         }
 
         const R n = static_cast<R>(boot_still_count_);
         const Vec3 f_mean = boot_still_acc_sum_ / n;
-        // Spread of the block means; see Config::boot_bias_seed_block_s.
-        const R nb = static_cast<R>(boot_still_blocks_);
-        const R norm_mean = boot_still_block_acc_norm_sum_ / nb;
+        const R norm_mean = boot_still_acc_norm_sum_ / n;
         const R norm_std = std::sqrt(std::max(
-            boot_still_block_acc_norm_sq_sum_ / nb - norm_mean * norm_mean, R(0)));
+            boot_still_acc_norm_sq_sum_ / n - norm_mean * norm_mean, R(0)));
         const R fn = f_mean.norm();
 
         if (!isFinite_(norm_std) || !isFinite_(fn) || !(fn > R(1e-6)) ||
@@ -1685,126 +1533,6 @@ private:
 
         bias = (along / fn) * f_mean;
         return true;
-    }
-
-    /*
-      Motion-tolerant startup attitude.
-
-      The bootstrap seeds tilt and heading from its first accelerometer and
-      magnetometer sample, and its accelerometer correction is gated off
-      while the gyro rate exceeds mahony_gyro_max_rad_s. Switched on in waves
-      or in the hand, the first sample includes linear acceleration and the
-      gate keeps the correction off, so boot_q_nb_ can carry a tilt error of
-      tens of degrees. The observer corrects tilt only through its slow
-      translational loop, while its startup heading gain is k2 = 20 rad/s;
-      handed such a tilt error, the vertical magnetic field leaks into the
-      horizontal heading reference and the attitude tumbles, with the
-      heading spinning.
-
-      In a gyro-only frame the mean specific force over the bootstrap is
-      gravity (wave and handling acceleration are zero-mean), and the mean
-      magnetic direction is the local field. At handoff the gyro frame is
-      rotated so that the mean force points up and the horizontal mean
-      field points to magnetic north. A still startup gives the first-sample
-      attitude unchanged.
-    */
-    void accumulateBootFrame_(R dt,
-                              const Vec3& gyro_b_rad_s,
-                              const Vec3& specific_force_b_mps2,
-                              const Aux& aux)
-    {
-        integrateQuatRight_(boot_gyro_q_nb_, dt, gyro_b_rad_s - boot_bias_b_);
-        const Mat3 R_nb = boot_gyro_q_nb_.toRotationMatrix();
-
-        if (specific_force_b_mps2.allFinite()) {
-            boot_force_sum_n_ += dt * (R_nb * specific_force_b_mps2);
-            boot_force_time_s_ += dt;
-        }
-
-        if constexpr (Mag == NloMagType::Magnetometer) {
-            const R mn = aux.mag_b.norm();
-            if (aux.mag_valid && isFinite_(mn) && mn > R(1e-9)) {
-                boot_mag_sum_n_ += R_nb * (aux.mag_b / mn);
-                ++boot_mag_count_;
-            }
-        } else {
-            (void)aux;
-        }
-    }
-
-    Quat bootFrameAlignedQuat_() const {
-        if (!(boot_force_time_s_ > R(0))) {
-            return boot_q_nb_;
-        }
-
-        const Vec3 f_mean = boot_force_sum_n_ / boot_force_time_s_;
-        const R fn = f_mean.norm();
-        if (!isFinite_(fn) || fn < R(0.5) * cfg_.gravity_mps2) {
-            return boot_q_nb_;
-        }
-
-        // Rotation C of the gyro frame: C * (-f_mean) = down, C * h = north.
-        const Vec3 down_g = -f_mean / fn;
-
-        Vec3 h_g;
-        Vec3 h_ref = nedNorthMagnetic_();
-        bool have_h = false;
-        if constexpr (Mag == NloMagType::Magnetometer) {
-            if (boot_mag_count_ > 0) {
-                h_g = boot_mag_sum_n_ - down_g * down_g.dot(boot_mag_sum_n_);
-                have_h = h_g.norm() > R(1e-3) * static_cast<R>(boot_mag_count_);
-            }
-        }
-        if (!have_h) {
-            // Keep the gyro frame's own heading: its north, made horizontal.
-            h_ref << R(1), R(0), R(0);
-            h_g = h_ref - down_g * down_g.dot(h_ref);
-            if (h_g.norm() < R(1e-3)) {
-                return boot_q_nb_;
-            }
-        }
-        h_g.normalize();
-
-        const Vec3 e_g = down_g.cross(h_g).normalized();
-        Mat3 T_g;
-        T_g.col(0) = h_g;
-        T_g.col(1) = e_g;
-        T_g.col(2) = down_g;
-
-        const Vec3 down_n = nedDown_();
-        const Vec3 h_n = (h_ref - down_n * down_n.dot(h_ref)).normalized();
-        Mat3 T_n;
-        T_n.col(0) = h_n;
-        T_n.col(1) = down_n.cross(h_n).normalized();
-        T_n.col(2) = down_n;
-
-        const Mat3 C = T_n * T_g.transpose();
-        Quat q(C * boot_gyro_q_nb_.toRotationMatrix());
-        q.normalize();
-        return q.coeffs().allFinite() ? q : boot_q_nb_;
-    }
-
-    Vec3 nedNorthMagnetic_() const {
-        const R d = cfg_.filter.magnetic_declination_rad;
-        Vec3 v;
-        v << std::cos(d), std::sin(d), R(0);
-        return v;
-    }
-
-    static void integrateQuatRight_(Quat& q, R dt, const Vec3& omega_b) {
-        const R angle = omega_b.norm() * dt;
-        if (!isFinite_(angle)) {
-            return;
-        }
-        Quat dq;
-        if (angle < R(1e-8)) {
-            const Vec3 half = R(0.5) * dt * omega_b;
-            dq = Quat(R(1), half.x(), half.y(), half.z());
-        } else {
-            dq = Quat(Eigen::AngleAxis<R>(angle, omega_b.normalized()));
-        }
-        q = q * dq;
-        q.normalize();
     }
 
     void integrateBootQuatRight_(R dt, const Vec3& omega_b)

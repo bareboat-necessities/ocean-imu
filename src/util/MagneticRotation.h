@@ -2,7 +2,7 @@
 
 // Copyright 2026, Mikhail Grushinskiy
 // Relative gyro rotations only: no attitude/reference/correction state.
-// See docs/magnetic-timing.md for clocks, covariance and correlation limits.
+// See docs/magnetic-timing.md for clocks and history limits.
 #ifdef EIGEN_NON_ARDUINO
 #include <Eigen/Dense>
 #else
@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include "MeasurementCovariance.h"
 
 namespace ocean_imu::magnetic {
 using V3 = Eigen::Vector3f;
@@ -126,147 +125,4 @@ private:
     bool have_time_ = false;
 };
 
-struct Uncertainty {
-    // Scalar upper bounds on eigenvalues, not per-sample gyro standard deviation.
-    float gyro_density = 0;          // rad/sqrt(s)
-    float bias_variance = 0;         // (rad/s)^2, held/common over the interval
-    float from_time_sigma = 0, to_time_sigma = 0; // seconds; may be conservative bounds
-    bool correlated = true;          // gyro-bias estimate can depend on magnetic samples
-    bool valid() const {
-        return std::isfinite(gyro_density) && gyro_density >= 0 &&
-            std::isfinite(bias_variance) && bias_variance >= 0 &&
-            std::isfinite(from_time_sigma) && from_time_sigma >= 0 &&
-            std::isfinite(to_time_sigma) && to_time_sigma >= 0;
-    }
-};
-
-inline float covarianceBound(const M3& p) {
-    return p.cwiseAbs().rowwise().sum().maxCoeff(); // Gershgorin/spectral upper bound
-}
-
-template <class Rotation>
-inline M3 rotationNoise(const V3& transported, const Rotation& r, const Uncertainty& u) {
-    const float time_angle = r.start_speed * u.from_time_sigma + r.end_speed * u.to_time_sigma;
-    const float gyro_sd = std::sqrt(u.gyro_density * u.gyro_density * r.seconds + r.gyro_angle_variance);
-    const float bias_sd = std::sqrt(std::max(u.bias_variance, r.bias_variance)) * r.seconds;
-    const float variance = u.correlated ? (gyro_sd + bias_sd + time_angle) * (gyro_sd + bias_sd + time_angle)
-        : gyro_sd * gyro_sd + bias_sd * bias_sd + time_angle * time_angle;
-    return variance * (transported.squaredNorm() * M3::Identity() - transported * transported.transpose());
-}
-
-inline bool covarianceValid(const M3& r) {
-    return ocean_imu::validMeasurementCovariance(r);
-}
-
-template <class Rotation>
-inline bool align(const V3& calibrated, const V3& body_hard_iron, const M3& sample_covariance,
-                  const Rotation& r, const Uncertainty& u, V3& field, M3& covariance) {
-    if (!calibrated.allFinite() || !body_hard_iron.allFinite() || !u.valid() ||
-        !covarianceValid(sample_covariance) || !r.q.coeffs().allFinite() ||
-        !std::isfinite(r.seconds) || r.seconds < 0 || r.seconds > .120001f ||
-        !std::isfinite(r.start_speed) || r.start_speed < 0 ||
-        !std::isfinite(r.end_speed) || r.end_speed < 0 ||
-        !std::isfinite(r.bias_variance) || r.bias_variance < 0 ||
-        !std::isfinite(r.gyro_angle_variance) || r.gyro_angle_variance < 0 ||
-        std::abs(r.q.squaredNorm() - 1.0f) > 1e-3f) return false;
-    field = r.q * (calibrated - body_hard_iron); // subtract body-fixed offset FIRST
-    const M3 d = r.q.toRotationMatrix();
-    covariance = d * sample_covariance * d.transpose() + rotationNoise(field, r, u);
-    // Cov(x+y) <= 2 Cov(x)+2 Cov(y) for unknown cross-correlation.
-    if (u.correlated && (r.seconds > 0 || u.from_time_sigma > 0 || u.to_time_sigma > 0)) covariance *= 2.0f;
-    return field.allFinite() && covarianceValid(covariance);
-}
-
-struct Consistency {
-    Status status = Status::First;
-    float residual_uT = NAN, nis = NAN;
-    float predicted_angle_rad = NAN, observed_angle_rad = NAN;
-    float rotation_signal_to_noise = NAN;
-    bool unexplained = false; // advisory ONLY, never estimator acceptance
-};
-
-// Attitude/IMU snapshots belong to the observation epoch. In particular the
-// proxy snapshot must be exogenous: never rewind it with MEKF bias estimates.
-struct Observation {
-    RotationHistory<>::Rotation rotation{};
-    Uncertainty uncertainty{};
-    M3 covariance = M3::Identity();
-    Q proxy_bw = Q::Identity(), attitude_bw = Q::Identity();
-    V3 accel = V3::Zero(), gyro = V3::Zero();
-    bool valid() const {
-        return uncertainty.valid() && covarianceValid(covariance) &&
-            proxy_bw.coeffs().allFinite() && attitude_bw.coeffs().allFinite() &&
-            std::abs(proxy_bw.squaredNorm()-1.0f)<1e-3f &&
-            std::abs(attitude_bw.squaredNorm()-1.0f)<1e-3f &&
-            accel.allFinite() && gyro.allFinite() &&
-            std::isfinite(rotation.seconds) && rotation.seconds>=0 && rotation.seconds<=.120001f &&
-            std::isfinite(rotation.start_speed) && rotation.start_speed>=0 &&
-            std::isfinite(rotation.end_speed) && rotation.end_speed>=0 &&
-            std::isfinite(rotation.bias_variance) && rotation.bias_variance>=0 &&
-            std::isfinite(rotation.gyro_angle_variance) && rotation.gyro_angle_variance>=0 &&
-            rotation.q.coeffs().allFinite() && std::abs(rotation.q.squaredNorm()-1.0f)<1e-3f;
-    }
-};
-
-inline float angle(const V3& a, const V3& b) {
-    const float n = a.norm() * b.norm();
-    return n > 1e-12f ? std::acos(std::clamp(a.dot(b) / n, -1.0f, 1.0f)) : NAN;
-}
-
-class RotationConsistency {
-public:
-    void reset() { have_ = false; }
-    template <unsigned N>
-    Consistency observe(const RotationHistory<N>& history, uint32_t sequence, uint32_t time,
-                        const V3& calibrated, const V3& body_hard_iron,
-                        const M3& covariance, const Uncertainty& u) {
-        Consistency c;
-        if (!calibrated.allFinite() || calibrated.norm() < 1e-6f ||
-            !body_hard_iron.allFinite() || !u.valid() || !covarianceValid(covariance)) {
-            c.status = Status::Invalid; return c;
-        }
-        if (have_ && sequence == sequence_) { c.status = Status::Duplicate; return c; }
-        if (have_ && (static_cast<int32_t>(sequence - sequence_) < 0 ||
-                      static_cast<int32_t>(time - time_) <= 0)) {
-            c.status = Status::OutOfOrder; return c;
-        }
-        if (have_) {
-            typename RotationHistory<N>::Rotation r;
-            c.status = history.between(time_, time, r);
-            if (c.status == Status::Ready) {
-                // Evaluate BOTH samples at the current applied offset. Do not
-                // mistake a changed calibration parameter for field motion.
-                const V3 previous = previous_ - body_hard_iron;
-                const V3 current = calibrated - body_hard_iron;
-                const V3 prediction = r.q * previous;
-                const V3 residual = current - prediction;
-                const M3 d = r.q.toRotationMatrix();
-                M3 sigma = covariance + d * covariance_ * d.transpose() + rotationNoise(prediction, r, u);
-                // Three possibly correlated terms: current mag, previous mag,
-                // and gyro transport. This is a marginal upper bound; adjacent
-                // residuals still share samples and must NOT be pooled as iid.
-                if (u.correlated) sigma *= 3.0f;
-                const Eigen::LLT<M3> llt(sigma);
-                if (llt.info() == Eigen::Success) {
-                    c.residual_uT = residual.norm();
-                    c.nis = residual.dot(llt.solve(residual));
-                    c.predicted_angle_rad = angle(previous, prediction);
-                    c.observed_angle_rad = angle(previous, current);
-                    c.rotation_signal_to_noise = (prediction - previous).norm() / std::sqrt(sigma.trace());
-                    // chi-square(3), 0.999. A reference level, not a calibrated
-                    // false-alarm probability for bounded/timestamp/model errors.
-                    c.unexplained = c.nis > 16.266236f;
-                } else c.status = Status::Invalid;
-            }
-        }
-        previous_ = calibrated; covariance_ = covariance;
-        time_ = time; sequence_ = sequence; have_ = true;
-        return c;
-    }
-private:
-    V3 previous_ = V3::Zero();
-    M3 covariance_ = M3::Identity();
-    uint32_t time_ = 0, sequence_ = 0;
-    bool have_ = false;
-};
 } // namespace ocean_imu::magnetic
