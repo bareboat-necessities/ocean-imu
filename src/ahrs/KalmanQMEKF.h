@@ -80,6 +80,12 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     void measurement_update_acc_only(T const acc[3]);
     void measurement_update_mag_only(Vector3 const& mag);
     void measurement_update_mag_only(T const mag[3]);
+    // Scalar heading update for a reference rebuilt from each reading (its own
+    // dip, pointing to magnetic north). Such a reference absorbs the reading's
+    // dip, so the only information left is psi = atan2(w_y, w_x), w = qref * mag;
+    // a three-axis update against that reference would also shrink the tilt
+    // covariance the reading never constrained.
+    void measurement_update_mag_heading(Vector3 const& mag);
     Vector4 const& quaternion() const;
     MatrixN const& covariance() const;
     Vector3 gyroscope_bias() const;
@@ -369,6 +375,33 @@ void QuaternionMEKF<T, with_bias>::measurement_update_mag_only(Vector3 const& ma
 template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::measurement_update_mag_only(T const mag[3]) {
   measurement_update_mag_only(Map<Matrix<T, 3, 1>>(mag));
+}
+
+template<typename T, bool with_bias>
+void QuaternionMEKF<T, with_bias>::measurement_update_mag_heading(Vector3 const& mag) {
+  Vector3 const w = qref * mag;
+  T const h2 = w.x() * w.x() + w.y() * w.y();
+  if (!w.allFinite() || !(h2 > std::numeric_limits<T>::epsilon() * w.squaredNorm())) return;
+
+  // d(psi)/dw; truth = qref * Exp(dtheta) gives dw = [w]x qref dtheta.
+  Matrix<T, 1, 3> const dpsi_dw(-w.y() / h2, w.x() / h2, T(0));
+  Matrix3 const Rot = qref.toRotationMatrix();
+  Matrix<T, 1, 3> const Jm = dpsi_dw * Rot;
+  Matrix<T, 1, N> C = Matrix<T, 1, N>::Zero();
+  C.template head<3>() = dpsi_dw * skew_symmetric_matrix(w) * Rot;
+  T const Rpsi = (Jm * Rmag * Jm.transpose())(0, 0);
+
+  T const s = (C * P * C.transpose())(0, 0) + Rpsi;
+  if (!(s > T(0))) return;
+  Matrix<T, N, 1> const K = P * C.transpose() / s;
+  // Predicted heading is zero: the reference points to magnetic north.
+  x += K * std::atan2(w.y(), w.x());
+
+  MatrixN const temp = MatrixN::Identity() - K * C;
+  P = temp * P * temp.transpose() + K * Rpsi * K.transpose();
+
+  applyQuaternionCorrectionFromErrorState();
+  x.template head<3>().setZero();
 }
 
 template<typename T, bool with_bias>
