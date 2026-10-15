@@ -98,6 +98,87 @@ static void reset(bool joint) {
           2e-9,"right-error covariance reset");
 }
 
+/** @brief Return the heading in radians of the horizontal part of v. */
+static double heading(const Vec& v) { return std::atan2(v.y(),v.x()); }
+
+/** @brief Differentiate the compass backend's per-reading magnetic operation. */
+static void heading_update() {
+    using Matrix = Eigen::Matrix<double,6,6>;
+    using Row = Eigen::Matrix<double,1,6>;
+    const double dip = M_PI/3, sigma = .02;
+    const Vec b(std::cos(dip),0,std::sin(dip));
+    const Quat estimate = expq(Vec(.2,-.15,.7));
+    QuaternionMEKF<double,true> f(Vec::Constant(.2),Vec::Zero(),Vec::Constant(sigma),.1,.4,0);
+    f.initialize_from_acc_mag(estimate.conjugate()*Vec(0,0,-1),estimate.conjugate()*b);
+    check(Quat(f.quaternion()).angularDistance(estimate),1e-12,"heading test attitude");
+    // Build attitude/bias cross-covariance.
+    f.time_update(Vec::Zero(),.3);
+    const Matrix prior = f.covariance();
+    // A reference rebuilt from the reading itself (own dip, pointing north)
+    // leaves only heading: the residual m - q^-1 ref(q m) has rank one, and
+    // finite world-pitch errors of the estimate leave it exactly zero.
+    const auto rebuilt_residual = [&](const Quat& q, const Vec& m) -> Vec {
+        const Vec w = q*m;
+        return m-q.conjugate()*Vec(std::hypot(w.x(),w.y()),0,w.z());
+    };
+    const Vec level = estimate.conjugate()*b;
+    Mat rebuilt; Eigen::RowVector3d psi_row;
+    for (int j=0; j<3; ++j) {
+        const Quat plus = estimate*expq(1e-6*Vec::Unit(j)), minus = estimate*expq(-1e-6*Vec::Unit(j));
+        rebuilt.col(j) = (rebuilt_residual(plus,level)-rebuilt_residual(minus,level))/2e-6;
+        psi_row(j) = (heading(plus*level)-heading(minus*level))/2e-6;
+    }
+    const Eigen::Vector3d sv = Eigen::JacobiSVD<Mat>(rebuilt).singularValues();
+    check(sv(1)/sv(0),1e-8,"rebuilt-reference residual has rank one");
+    check((rebuilt-rebuilt*psi_row.transpose()*psi_row/psi_row.squaredNorm()).norm(),1e-8,
+          "rebuilt-reference residual carries heading only");
+    for (const double degrees : {1.,5.,10.}) {
+        const Quat pitched = expq(Vec(0,degrees*M_PI/180,0))*estimate;
+        check(rebuilt_residual(pitched,level).norm(),1e-12,"world pitch leaves residual zero");
+        check(std::abs(heading(pitched*level)),1e-12,"world pitch leaves heading zero");
+    }
+
+    // Finite update: Joseph posterior from finite-differenced heading
+    // Jacobians, then the right-error chart reset.
+    const Quat truth = estimate*expq(Vec(.03,-.02,.05));
+    const Vec mag = truth.conjugate()*b;
+    Row H = Row::Zero(); Eigen::RowVector3d Jm;
+    for (int j=0; j<3; ++j) {
+        const Vec d = 1e-6*Vec::Unit(j);
+        // Error is truth relative to estimate, so it moves opposite to the estimate.
+        H(j) = -(heading(estimate*expq(d)*mag)-heading(estimate*expq(-d)*mag))/2e-6;
+        Jm(j) = (heading(estimate*Vec(mag+d))-heading(estimate*Vec(mag-d)))/2e-6;
+    }
+    const double R = sigma*sigma*Jm.squaredNorm();
+    const Eigen::Matrix<double,6,1> gain = prior*H.transpose()/((H*prior*H.transpose())(0,0)+R);
+    const Vec correction = (gain*heading(estimate*mag)).head<3>();
+    const Matrix a = Matrix::Identity()-gain*H;
+    const Matrix posterior = a*prior*a.transpose()+R*gain*gain.transpose();
+    Matrix reset_jacobian = Matrix::Identity();
+    for (int j=0; j<3; ++j) {
+        const Vec delta = 1e-6*Vec::Unit(j);
+        reset_jacobian.block<3,1>(0,j) =
+            (logq(expq(-correction)*expq(Vec(correction+delta)))-
+             logq(expq(-correction)*expq(Vec(correction-delta))))/2e-6;
+    }
+    QuaternionMEKF<double,true> g = f;
+    g.measurement_update_mag_heading(mag);
+    check(Quat(g.quaternion()).angularDistance(estimate*expq(correction)),1e-9,"heading injection");
+    check((g.covariance()-reset_jacobian*posterior*reset_jacobian.transpose()).norm(),1e-8,
+          "heading covariance update");
+
+    // No heading error: world-pitch variance is untouched; the measured
+    // combination (yaw coupled to world roll through the dip) is informed.
+    QuaternionMEKF<double,true> z = f;
+    z.measurement_update_mag_heading(level);
+    const Vec pitch_axis = estimate.conjugate()*Vec::UnitY();
+    const Mat before = prior.topLeftCorner<3,3>(), after = z.covariance().topLeftCorner<3,3>();
+    check(std::abs(pitch_axis.dot(after*pitch_axis)-pitch_axis.dot(before*pitch_axis)),1e-12,
+          "heading update leaves world-pitch variance");
+    const Vec measured = estimate.conjugate()*Vec(std::tan(dip),0,-1);
+    check(measured.dot(after*measured)/measured.dot(before*measured),.01,"heading update informs heading");
+}
+
 /** @brief Run qMEKF propagation, spin-axis covariance, and finite-injection geometry checks. */
 int main() {
     for (const Vec& rate : {Vec::Zero().eval(),Vec(1e-9,-2e-9,3e-9),Vec(0,0,4*M_PI),Vec(7,-9,4)})
@@ -108,7 +189,8 @@ int main() {
     for (int i=0; i<1000; ++i) f.time_update(Vec(0,0,4*M_PI),.005);
     check((f.covariance()-Mat::Identity()).norm(),1e-10,"rotation cannot create information");
     reset(false); reset(true);
+    heading_update();
     if (failures) return EXIT_FAILURE;
-    std::puts("qMEKF prediction and reset agree with finite-differenced right-error geometry");
+    std::puts("qMEKF prediction, reset and heading update agree with finite-differenced right-error geometry");
     return EXIT_SUCCESS;
 }
