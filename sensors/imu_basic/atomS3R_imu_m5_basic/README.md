@@ -2,11 +2,11 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [imu_basic](../README.md) / **atomS3R_imu_m5_basic**
 
+This is the recommended **first sketch to run on an AtomS3R**. It exercises the M5Unified IMU path and the shared `ocean-imu` AtomS3R helpers without adding an attitude or navigation estimator.
+
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This is the recommended **first sketch to run on an AtomS3R**. It exercises the M5Unified IMU path and the shared `ocean-imu` AtomS3R helpers without adding an attitude or navigation estimator.
 
 ## What it does
 

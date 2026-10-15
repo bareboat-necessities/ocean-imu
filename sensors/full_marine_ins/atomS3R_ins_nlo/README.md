@@ -5,11 +5,11 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_nlo**
 
+This sketch runs the **time-varying-gain nonlinear observer** of Bryne, Fossen and Johansen on the M5Stack AtomS3R. It is the hardware application of the repository's observer-based (non-Kalman) full 3-D estimator: attitude and translational states are driven by explicit injection terms with scheduled gains instead of by a propagated covariance.
+
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This sketch runs the **time-varying-gain nonlinear observer** of Bryne, Fossen and Johansen on the M5Stack AtomS3R. It is the hardware application of the repository's observer-based (non-Kalman) full 3-D estimator: attitude and translational states are driven by explicit injection terms with scheduled gains instead of by a propagated covariance.
 
 Open the sketch: [`atomS3R_ins_nlo.ino`](atomS3R_ins_nlo.ino).
 

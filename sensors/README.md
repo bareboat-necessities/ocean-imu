@@ -2,11 +2,11 @@
 
 [ocean-imu](../README.md) / **sensors**
 
+This directory contains the hardware-facing Arduino examples for `ocean-imu`. The current examples target the **M5Stack AtomS3R** and build upward from direct IMU access to tilt-compensated compass/AHRS applications and complete marine motion estimators.
+
 <p align="center">
   <img src="../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This directory contains the hardware-facing Arduino examples for `ocean-imu`. The current examples target the **M5Stack AtomS3R** and build upward from direct IMU access to tilt-compensated compass/AHRS applications and complete marine motion estimators.
 
 The examples intentionally form a progression. Start with the basic IMU sketch to verify the board, coordinate mapping, serial connection, and saved calibration. Move to the compass/AHRS examples once raw sensing is healthy, then use a full marine INS example when you want attitude, heading, and wave-motion estimation together.
 

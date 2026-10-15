@@ -2,11 +2,11 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [compass_ahrs](../README.md) / **atomS3R_compass_qmekf**
 
+This sketch implements a tilt-compensated AtomS3R compass using the project’s **Quaternion MEKF (qMEKF)** attitude estimator and the same shared AtomS3R application/calibration framework as the Mahony example.
+
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This sketch implements a tilt-compensated AtomS3R compass using the project’s **Quaternion MEKF (qMEKF)** attitude estimator and the same shared AtomS3R application/calibration framework as the Mahony example.
 
 Open the sketch: [`atomS3R_compass_qmekf.ino`](atomS3R_compass_qmekf.ino).
 

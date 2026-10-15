@@ -2,11 +2,11 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_kalman_ou2**
 
+This sketch runs the adaptive **SeaStateFusion OU-II** marine estimator on the M5Stack AtomS3R.
+
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This sketch runs the adaptive **SeaStateFusion OU-II** marine estimator on the M5Stack AtomS3R.
 
 Open the sketch: [`atomS3R_ins_kalman_ou2.ino`](atomS3R_ins_kalman_ou2.ino).
 

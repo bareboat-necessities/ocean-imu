@@ -5,11 +5,11 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_pii_observer**
 
+This sketch combines the project’s **Mahony attitude solution** with the adaptive **vertical PII observer** for a lower-cost marine motion estimator on the M5Stack AtomS3R.
+
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
-
-This sketch combines the project’s **Mahony attitude solution** with the adaptive **vertical PII observer** for a lower-cost marine motion estimator on the M5Stack AtomS3R.
 
 Open the sketch: [`atomS3R_ins_pii_observer.ino`](atomS3R_ins_pii_observer.ino).
 
