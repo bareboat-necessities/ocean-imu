@@ -1,5 +1,5 @@
 > [!WARNING]
-> EXPERIMENTAL. Do not use the current implementation of this filter.
+> EXPERIMENTAL. It takes minutes for this filter to stabilize. Do not use the current implementation of this filter.
 
 # AtomS3R marine INS — time-varying-gain NLO
 
