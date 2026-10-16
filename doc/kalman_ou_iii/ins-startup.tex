@@ -600,6 +600,11 @@ sufficiently short interval, define the physically constrained unknowns
 \label{eq:joint-reduced-parameters}
 \end{equation}
 Thus $\vct d$ has two independent coordinates; $\vct B_F$ has three.
+These are dimensions of the \emph{physical parameters}, not rank
+restrictions on three-axis measurement covariances or on uncertainty
+distributions over the sphere.  An intrinsic $\mathbb S^2$
+parameterization and a constrained three-component optimization are
+equally admissible ways to enforce the fixed gravity magnitude.
 No prior local magnetic magnitude, magnetic inclination, or geographic
 field direction is required to form the startup problem.  The field is
 the constant \emph{local} field seen by the sensor, which need not be
@@ -739,10 +744,10 @@ not impose bounded displacement.
 One candidate finite-window maximum-likelihood/MAP estimator seeks
 $\{\mat R_k\},\vct d\in\mathbb S^2,\vct B_F\in\R^3,
 \vct b_g,\vct b_a,\vct b_m$ and a low-dimensional
-wave-parameter vector $\vct\theta_w$.  The gravity search is
-\emph{intrinsically two-dimensional}, with no radial gravity
-parameter or gravity-magnitude covariance.  Given the
-gyro-transported stack $\vct z$ of the observations in
+wave-parameter vector $\vct\theta_w$.  The physical gravity
+direction has two independent parameters, but the accelerometer
+measurements and physical wave acceleration remain three-dimensional.
+Given the gyro-transported stack $\vct z$ of the observations in
 \cref{eq:joint-transport-acc}, consider the zero-mean colored
 acceleration model with covariance
 \begin{equation}
@@ -750,7 +755,11 @@ acceleration model with covariance
                   +\mat\Sigma_{a,\mathrm{rot}},
 \label{eq:joint-wave-cov}
 \end{equation}
-where $\mat K_w$ contains \emph{cross-time} wave covariances.  A
+For $N$ three-axis samples, both covariance terms act on
+$\R^{3N}$: $\mat K_w$ may contain \emph{cross-time and cross-axis}
+wave covariances, with full $3\times3$ instantaneous acceleration
+blocks.  Known gravity magnitude is no reason to project these
+measurement residuals or their covariances onto a tangent plane.  A
 conditional Gaussian gravity likelihood is
 \begin{align}
 J_a={}&
@@ -835,15 +844,43 @@ observations; applying it as another independent measurement would
 double-count information.
 
 A proposed handoff must carry uncertainty shared by attitude,
-magnetic field, biases, and fitted wave variables.  Gravity
-uncertainty lives in a \emph{two-dimensional tangent plane} to
-$\mathbb S^2$ (with tangent basis $\mat U\in\R^{3\times2}$,
-$\mat U\T\vct d=\vct 0$); there is no physical radial gravity
-uncertainty to hand off.  The magnetic reference retains three
-uncertain components including its magnitude, without an
-artificial magnetic-field-strength constraint.  Locally, if
-alignment variables $\vct x$ and nuisance variables $\vct\eta$ have
-joint information $\mat{\mathcal I}$, eliminating identifiable
+magnetic field, biases, and fitted wave variables.  Known gravity
+magnitude restricts \emph{every physical direction sample}, but does
+not require a single two-dimensional Gaussian throughout startup.
+When the cold-start direction posterior is broad or multimodal, it
+can be maintained as a distribution on $\mathbb S^2$, several
+direction hypotheses, or a constrained three-component
+representation rather than being collapsed into one local covariance.
+
+Only \emph{after concentration} is a tangent-plane linearization
+justified.  With $\hat{\vct d}\in\mathbb S^2$, choose
+$\mat U\in\R^{3\times2}$ with
+$\mat U\T\mat U=\mat I_2$ and
+$\mat U\T\hat{\vct d}=\vct 0$.  For local directional error
+$\delta\vct\alpha\in\R^2$ and its covariance $\mat P_\alpha$,
+\begin{equation}
+\delta\vct g\simeq g_0\mat U\delta\vct\alpha,\qquad
+\mat P_{g,\mathrm{lin}}
+ =g_0^2\mat U\mat P_\alpha\mat U\T.
+\label{eq:joint-local-gravity-cov}
+\end{equation}
+This is an ambient $3\times3$ covariance of rank at most two
+\emph{to first order}, not a global covariance-rank theorem.
+Even with $\norm{\vct g}=g_0$ exactly, a broad direction
+distribution can have a full-rank Euclidean covariance; for
+a uniform direction,
+$\operatorname{Cov}(g_0\vct d)=(g_0^2/3)\mat I_3$.
+
+The magnetic reference retains three-dimensional uncertainty
+including field magnitude; the physical wave acceleration and
+measurement residuals retain their full three-axis and temporal
+covariances.  The handoff attitude retains all three rotational
+error directions, including yaw, plus its correlations with the
+magnetic reference, sensor biases, and fitted wave variables.
+The two-dimensional \emph{parameterization} of gravity direction
+does not justify deleting any of these correlations.  Locally, if
+alignment variables $\vct x$ and nuisance variables $\vct\eta$
+have joint information $\mat{\mathcal I}$, eliminating identifiable
 nuisances yields the Schur information
 \begin{equation}
 \mat{\mathcal I}_{\rm eff}
@@ -860,7 +897,9 @@ then be used to replay that same window as independent evidence.
 
 A practical readiness rule would compare \emph{actual current-epoch}
 tilt/heading information, magnetic quality, and model sensitivity,
-not merely RMS residual or elapsed time.  In an uninformative
+not merely RMS residual or elapsed time.  Broad spherical
+uncertainty must not be reported as a narrow local-Gaussian
+confidence region without verified concentration and coverage.  In an uninformative
 window a conservative fallback is preferable to false certainty.
 All sensor data require physically consistent acquisition epochs;
 refining gyro bias requires consistent historical repropagation.
