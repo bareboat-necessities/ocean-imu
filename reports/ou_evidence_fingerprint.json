@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "8ccb7d381b9f7bc0910b9f2e287230b06981fe00b69336a8579b41ba5669f9ab",
+  "replay_fingerprint": "5232f2710bd0732cd3d13853c49aa39a2b0c758abe92dd34a53e7cfb55148030",
   "results_file_count": 477,
   "results_files": [
     {
@@ -1151,7 +1151,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "909b108c037ac2d288b4bb6a60ab3bbbd04fc7fb1f704052a27360c660fffd18"
+      "sha256": "225d38f095f7e4a7fa81feb5693aa7af858b602ae416ff070fc58c1cfb0cd83a"
     },
     {
       "kind": "file",
@@ -1221,62 +1221,62 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "b7b0d765e090810fbe117072851bb76f53d796bdb82f6d9f6db0140f1f251939"
+      "sha256": "167cd3ed99a7f467d686cbe1b30383f732f52de246abd7774c204f210166ca7e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "ccbed690a9a9e049655066d5fb68ace0b73aadb6fb4228776e2f721166ea1734"
+      "sha256": "38b047835abd226286cfceac6d6a92958587650d06df8d0dfc7e87aa6e6557e0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "74cac7aa296f52ea5a0586d8927c58a31c62cb3d4a0dc114bb5bded2a92b62b4"
+      "sha256": "4494939127970b1289612e1451ba691a7cdbe2a768e5347a03c0302ad3efe2b3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "0b1adab778f76a4506f52fe68882127e15dfa63a860dac31a86064d0ca01da66"
+      "sha256": "92c883d0b333e73e7c245edb4d7e00a7989e06a8a87171b7058ecf84470fa488"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
+      "sha256": "400563d547e55de68ad4c594a9d5625c2b6f72d6014b6e1a51ba7215a2e236aa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "7c9f9776fece7d92a63729b4f43ea18c128f45ab0087a2764c6b1319d14b64cd"
+      "sha256": "e91547bb8f8658917f47045bfd1decfd64e6f85e9835621fb666adaa96923001"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "28f7baf56407e35de83290db3f21c25d634cfc7daddf89670e726d56092e1372"
+      "sha256": "7a55f42945e4d10a0064efb3f487d5a5f58d31bb878af8571d0d2e3fbb4f0b04"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
+      "sha256": "900185c74529f5e5b1d373fa65858d5987f230806757a08eb6876e3e379d8db2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "819f2c1b9828bb884df35a00af1b77336c3eb528e88b7cdc475aad8a47644db7"
+      "sha256": "356fb82bd8a15cb0bedf5bcba581b84b0c6c9b13fbf6cc3025d5dcb4baf2a23e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "c09a8738c773956c39f70e6d1b5426585922d78af683cacf8bc260e43a5c1696"
+      "sha256": "0b9199aec0ae3475651fffa9cdf579190088a1cba4bd79afe8f140482f6166f6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
+      "sha256": "19c70908c50d9e2a2b57729f114025b4d12a44bf03256b45d09473e2e2888db4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
+      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
     },
     {
       "kind": "file",
@@ -1291,7 +1291,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "6da1d29e72accbdf8f38c0ed76263d7f2e1afb548ae08ef3b66e185961f5d4ee"
+      "sha256": "257aa43dc41d8e18d5f2b128fc75bfa5294e4f8c1f2bb1e54962d81a5bb55ebc"
     },
     {
       "kind": "file",
@@ -2389,13 +2389,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "fcbaaa7373a2766829dbce38610654ac316ede463ba775a7eec743b673a499da",
+  "results_fingerprint": "47af6e5fa6505a268160d28d402b4546bbef38972347f674a36d69406fd2435d",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 782,
+  "tracked_replay_file_count": 783,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2506,6 +2506,11 @@
       "mode": "100644",
       "path": "Makefile",
       "sha256": "e801d72f11aa60b878eccf22b51942cc545835499b0d7921e18b1a29632eb9a7"
+    },
+    {
+      "mode": "100644",
+      "path": "doc/kalman_ou_iii/stochastic-marine-motion-generate.py",
+      "sha256": "1190dd7180745523fe7f4113b593981fb07391bce1f45426cd03fcfe47dc5a73"
     },
     {
       "mode": "100644",
