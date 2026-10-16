@@ -566,6 +566,246 @@ from claiming a precise offset.  This is preferable to inverting an unobservable
 problem.  The long memory allows later motion to contribute information without
 requiring the device to restart calibration.
 
+
+\section{Prospective Joint Constant-Vector Startup in Waves}
+\label{sec:joint-startup-proposal}
+
+The preceding sections document the \emph{deployed} Mahony-proxy and two-stage
+magnetic-reference policy.  This section instead specifies a \emph{research
+proposal}, not a shipping algorithm or a validated performance claim.  Cold
+start on an already-moving vessel can be viewed as joint identification of
+two approximately constant vectors---gravity and the local magnetic field---
+from one changing attitude and an explicitly modeled wave-acceleration
+nuisance process.  The ingredients are related to inertial-frame marine
+alignment \cite{Zhao2016MarineAlignment}, gyro-aided magnetic identification
+\cite{Wu2018DynamicMagCalibration}, and almost-inertial-frame acceleration
+filtering \cite{Laidig2023VQF}.  None of those references alone establishes
+this combined marine MEMS initializer.
+
+\subsection{Frozen startup frame and complementary information}
+
+Let $\mathcal F$ be a coordinate frame frozen at power-on, with
+$\mat R_k=\mat R_{\mathcal F\leftarrow\mathcal B}(t_k)$ and
+$\mat R_0=\mat I$.  This fixes coordinates, not an initially level or
+north-aligned attitude.  On a sufficiently short window, approximate
+gravity $\vct g_F$ and the undisturbed local field $\vct B_F$ as
+constant in $\mathcal F$.  With the existing sensor-axis and
+soft-iron calibration already applied, write
+\begin{align}
+\vct m_{m,k}
+ &=\mat R_k\T\vct B_F+\vct b_m+\vct d_{m,k}+\vct n_{m,k},
+ \label{eq:joint-mag}\\
+\vct f_{m,k}
+ &=\mat R_k\T(\vct a_{s,k}^{F}-\vct g_F)
+   +\vct b_a+\vct n_{a,k},
+ \label{eq:joint-acc}\\
+\mat R_{k+1}
+ &\simeq\mat R_k\exp\!\left(
+ \Delta t_k\Skew{\vct\omega_{m,k}-\vct b_g-\vct n_{g,k}}\right).
+ \label{eq:joint-gyro}
+\end{align}
+Here $\vct a_{s,k}^{F}$ is the actual acceleration of the sensor
+location.  Bias uncertainties differ from their calibrated estimates.
+The disturbance $\vct d_{m,k}$ represents magnetic model mismatch;
+a time-varying or spatially distorted field need not obey the
+constant-field model.
+
+The magnetic observations, transported using gyros, should satisfy
+\begin{equation}
+\mat R_k(\vct m_{m,k}-\vct b_m)\simeq\vct B_F,
+\label{eq:joint-transport-mag}
+\end{equation}
+regardless of wave translation.  Magnetic-reference learning and
+gyro-bias refinement can therefore start before gravity-based leveling.
+Magnetometer plus gyro does \emph{not} supply complete initial
+orientation: one magnetic vector alone leaves a rotation about its axis
+unmeasured.  Rotational excitation helps estimate some biases, but
+does not automatically make every bias direction identifiable.
+
+For example, if $\mat R_k$ is known exactly and magnetic hard iron is
+a constant additive offset, elimination of the unknown field from
+an equal-weight least-squares fit gives the offset information
+\begin{equation}
+\mat G_m=\sum_k(\mat R_k-\bar{\mat R})\T
+                   (\mat R_k-\bar{\mat R}).
+\label{eq:joint-mag-information}
+\end{equation}
+Full rank is the identification condition for this \emph{ideal
+linear fixed-rotation} problem.  Slight rocking may leave $\mat G_m$
+ill-conditioned even with many samples.  A fast initializer should
+therefore use the existing calibration and refine only bias directions
+supported by actual magnetic excitation, rather than require a new
+full hard/soft-iron calibration on each power cycle.
+
+\subsection{Gravity is the constant part of contaminated acceleration}
+
+Gyro-transported, bias-corrected specific force gives
+\begin{equation}
+\vct z_{a,k}:=\mat R_k(\vct f_{m,k}-\vct b_a)
+ =-\vct g_F+\vct a_{s,k}^F+\mat R_k\vct n_{a,k}.
+\label{eq:joint-transport-acc}
+\end{equation}
+The principal difficulty is the separation of a constant gravity
+vector from near-zero-frequency \emph{physical acceleration}, not
+the algebra of TRIAD or quaternion initialization.  Without a
+motion assumption, for every $\vct g'_F$ having the allowed
+gravity magnitude, the history
+\begin{equation}
+\vct a_{s,k}^{F\prime}
+ =\vct a_{s,k}^F+\vct g'_F-\vct g_F
+\label{eq:joint-gravity-gauge}
+\end{equation}
+produces the same accelerometer data.  If inclination and field
+direction are also learned from the same measurements, the
+magnetometer does not independently remove this ambiguity.
+Accelerometer bias is a further weakly separable constant.
+
+The proposed nuisance model should learn both \emph{strength and
+temporal structure} of wave contamination.  Equal acceleration RMS
+can correspond to a fast oscillation, which averages away, or a
+nearly constant acceleration, which is indistinguishable from tilt
+on a short window.  Candidate models include bounded displacement
+about an affine trajectory, uncertain sine/cosine wave modes, and
+colored Gauss--Markov or stochastic oscillator acceleration.  These
+carry different physical assumptions and are not proofs that wave
+acceleration has zero mean over any particular startup interval.
+Frequency estimates must carry their own cold-start uncertainty.
+
+A useful deterministic comparison follows when
+$\vct a_s^F(t)=\ddot{\vct\xi}(t)$ with
+$\norm{\vct\xi(t)}\le A$ over the complete interval.  For exact
+gyro transport and acceleration calibration, fitting the quadratic
+coefficient of twice-integrated force is equivalent to
+\begin{equation}
+\hat{\vct g}_F=-\int_0^T w_T(t)\vct z_a(t)\,dt,\qquad
+w_T(t)=\frac{30t^2(T-t)^2}{T^5}.
+\label{eq:joint-acc-weights}
+\end{equation}
+Because $w_T$ and its first derivative vanish at both endpoints,
+integration by parts twice gives
+\begin{equation}
+\norm{\hat{\vct g}_F-\vct g_F}
+ \le \frac{40}{\sqrt{3}}\frac{A}{T^2}.
+\label{eq:joint-wave-bound}
+\end{equation}
+This \emph{conditional wave-only bound} excludes gyro/bias/timing
+error; a small fit residual does not establish a small displacement
+bound $A$.  A stationary acceleration OU model, by itself, does
+not impose bounded displacement.
+
+\subsection{Joint likelihood and contamination estimation}
+
+One candidate finite-window maximum-likelihood/MAP estimator seeks
+$\{\mat R_k\},\vct g_F,\vct B_F,\vct b_g,\vct b_a,\vct b_m$ and a
+low-dimensional wave-parameter vector $\vct\theta_w$.  Given the
+gyro-transported stack $\vct z$ of the observations in
+\cref{eq:joint-transport-acc}, consider the zero-mean colored
+acceleration model with covariance
+\begin{equation}
+\mat S(\vct\theta_w)=\mat K_w(\vct\theta_w)
+                  +\mat\Sigma_{a,\mathrm{rot}},
+\label{eq:joint-wave-cov}
+\end{equation}
+where $\mat K_w$ contains \emph{cross-time} wave covariances.  A
+conditional Gaussian gravity likelihood is
+\begin{align}
+J_a={}&
+(\vct z+\vct 1\otimes\vct g_F)\T
+ \mat S^{-1}(\vct z+\vct 1\otimes\vct g_F)
+\nonumber\\
+&+\log\det\mat S.
+\label{eq:joint-wave-ml}
+\end{align}
+The normalization term matters if contamination parameters are
+learned: without it an arbitrarily large fitted wave variance can
+remove the incentive to identify gravity.  The complete objective
+also includes gyro-preintegration and magnetic residuals, qualified
+calibration priors, and the magnitude constraint
+$\norm{\vct g_F}=g_{\rm cal}$.  A physically coupled stochastic-oscillator
+state model can replace the marginal wave covariance.
+
+This is only the \emph{conditional} form.  Errors in the shared gyro
+history correlate magnetic and transported acceleration observations;
+a true joint estimator must account for that dependence.  Likelihood
+normalization cannot protect against a wrong low-frequency wave model
+or coherent magnetic disturbance.  The shipping OU--III $a_w$ state
+and tuner are not automatically a valid cold-start wave prior and must
+not be declared physical ground truth.
+
+\subsection{Reference construction, information and handoff}
+
+Once the joint fit has identified $\hat{\vct g}_F$ and
+$\hat{\vct B}_F$, define
+\begin{align}
+\vct d&=\hat{\vct g}_F/\norm{\hat{\vct g}_F},&
+\vct B_H&=\hat{\vct B}_F-(\vct d\T\hat{\vct B}_F)\vct d,\\
+\vct n&=\vct B_H/\norm{\vct B_H},&
+\vct e&=\vct d\times\vct n.
+\end{align}
+For $\norm{\vct B_H}>0$, the magnetic-NED attitude and inclination
+at the \emph{current handoff epoch} follow algebraically:
+\begin{equation}
+\mat R_{\mathcal N_m\leftarrow\mathcal B,k}
+ =\begin{bmatrix}\vct n\T\\\vct e\T\\\vct d\T\end{bmatrix}
+  \mat R_k,\qquad
+\sin I=\frac{\vct d\T\hat{\vct B}_F}{\norm{\hat{\vct B}_F}}.
+\label{eq:joint-magnetic-ned}
+\end{equation}
+The frame gives magnetic north only; true north requires declination
+information.  Heading becomes poorly conditioned as the horizontal
+field vanishes, and uncertainty in gravity can also bias heading.
+
+At matched physical sensor epochs, a useful ideal consistency identity is
+\begin{equation}
+(\vct f_m-\vct b_a)\T(\vct m_m-\vct b_m)
+ =(\vct a_s^F-\vct g_F)\T\vct B_F.
+\label{eq:joint-scalar-dip}
+\end{equation}
+This is a rotation-free route to a gravity--field inner-product
+statistic after wave contamination is treated.  It is \emph{not
+independent statistical evidence}, because it reuses the same sensor
+observations; applying it as another independent measurement would
+double-count information.
+
+A proposed handoff must carry uncertainty shared by attitude,
+magnetic field, biases, and fitted wave variables.  Locally, if
+alignment variables $\vct x$ and nuisance variables $\vct\eta$ have
+joint information $\mat{\mathcal I}$, eliminating identifiable
+nuisances yields the Schur information
+\begin{equation}
+\mat{\mathcal I}_{\rm eff}
+ =\mat{\mathcal I}_{xx}
+  -\mat{\mathcal I}_{x\eta}
+   \mat{\mathcal I}_{\eta\eta}^{-1}
+   \mat{\mathcal I}_{\eta x}.
+\label{eq:joint-schur}
+\end{equation}
+Unobservable nuisance directions cannot be inverted away, and
+local covariance does not establish nonlinear confidence coverage
+under model mismatch.  A posterior from the startup window cannot
+then be used to replay that same window as independent evidence.
+
+A practical readiness rule would compare \emph{actual current-epoch}
+tilt/heading information, magnetic quality, and model sensitivity,
+not merely RMS residual or elapsed time.  In an uninformative
+window a conservative fallback is preferable to false certainty.
+All sensor data require physically consistent acquisition epochs;
+refining gyro bias requires consistent historical repropagation.
+A lever-arm model must retain both
+$\dot{\vct\omega}\times\vct r$ and
+$\vct\omega\times(\vct\omega\times\vct r)$ when wave motion is
+referenced to a different point on the vessel.
+
+The decisive comparison would use identical raw power-on records:
+the deployed \texttt{MahonyProxy}, simple gyro-transported
+averaging, the bounded-displacement baseline, and the proposed
+joint estimator.  Test partial cycles, irregular waves, low-frequency
+accelerations, near-stillness, limited heading/tilt excitation,
+residual calibration errors, magnetic interference, and asynchronous
+sampling.  Report time-to-verified accuracy, actual tilt and heading
+at handoff, covariance coverage, and false-readiness rate.  Such
+implementation and validation remain future work.
+
 \section{Recommended Validation Contract}
 \label{sec:validation}
 
