@@ -1,0 +1,587 @@
+\documentclass[10pt,journal]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\usepackage{booktabs,array}
+\usepackage{graphicx}
+\usepackage{pgfplots}
+\usepackage{cite}
+\usepackage[final]{microtype}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\interdisplaylinepenalty=2500
+\emergencystretch=2em
+\allowdisplaybreaks
+\pgfplotsset{compat=1.18}
+\definecolor{oublue}{HTML}{1F77B4}
+\definecolor{shoorange}{HTML}{FF7F0E}
+\definecolor{colgreen}{HTML}{2CA02C}
+\definecolor{carmared}{HTML}{D62728}
+\newcommand{\E}{\mathbb E}
+\newcommand{\R}{\mathbb R}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\PSD}{S_x}
+\newcommand{\Hz}{\,\mathrm{Hz}}
+
+\title{Spectrally Shaped Linear Stochastic Displacement Priors for Marine Heave Estimation:\\
+Ornstein--Uhlenbeck, Damped Oscillators, and CARMA Models (Research Proposal)}
+
+\author{Mikhail S. Grushinskiy%
+\thanks{Independent researcher, Bareboat Necessities project, Fair Lawn, NJ, USA.
+Correspondence: mgrouch@users.github.com.}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A low-cost marine inertial measurement unit senses specific force, not
+displacement. Twice integrating corrected acceleration is vulnerable to
+low-frequency noise, attitude error, and accelerometer bias. In a broad-banded
+sea state with one dominant encounter frequency, a stationary stochastic
+displacement prior may give an appropriate alternative to unrestrained
+integration. This research note develops a hierarchy of \emph{linear}
+continuous-time stochastic differential equations: an ordinary
+Ornstein--Uhlenbeck (OU) displacement, a white-noise-forced damped oscillator,
+an oscillator driven by colored OU forcing, and spectrally shaped continuous-time
+autoregressive moving-average (CARMA) processes. We derive power spectra,
+acceleration regularity requirements, and exact Kalman state-space
+realizations. Two reproducible comparison figures illustrate time traces and
+spectral shapes. Particular attention is paid to CARMA(3,0), (4,1), and (5,2),
+which permit mean-square acceleration, in contrast to CARMA(2,0) and (4,2).
+These are \emph{candidate models}, not implemented Ocean-IMU methods or claims
+of improved heave accuracy. The note ends with a controlled experimental
+program for model selection, adaptation, and possible integration.
+\end{abstract}
+
+\begin{IEEEkeywords}
+marine heave, Kalman filtering, continuous-time stochastic processes,
+CARMA, Ornstein--Uhlenbeck process, spectral factorization, inertial navigation
+\end{IEEEkeywords}
+
+\section{The Reconstruction Problem}
+Let \(x(t)\) denote the vessel's vertical displacement relative to a
+local equilibrium (not absolute Earth-fixed height), with velocity \(v=\dot x\)
+and acceleration \(a=\ddot x\). The idealized measurement made after rotating
+specific force into a level frame and compensating gravity is
+\begin{equation}
+y_a(t)=a(t)+b_a(t)+n_a(t)+\epsilon_R(t),
+\label{eq:measurement}
+\end{equation}
+where \(b_a\) denotes residual accelerometer bias, \(n_a\) finite-bandwidth
+measurement noise, and \(\epsilon_R\) projection error due to imperfect
+attitude and other unmodeled dynamics. The actual body-frame relationship is
+\begin{equation}
+\mathbf f_m^B=R_{WB}^{\mathsf T}
+  (\mathbf a^W-\mathbf g^W)+\mathbf b_a^B+\mathbf n_a^B.
+\label{eq:body-meas}
+\end{equation}
+Thus (\ref{eq:measurement}) is a useful \emph{conditional} vertical subproblem,
+not a substitute for the coupled attitude--translation measurement model.
+
+We seek a stationary displacement process with a broad power spectrum but
+one prominent frequency \(f_d>0\), changing amplitudes and phases, and
+sensible suppression of poorly observed very-low-frequency modes.
+For a vessel, the appropriate target is the \emph{vessel heave response}
+spectrum. The incident JONSWAP/PM elevation spectrum is not generally identical
+to it: encounter kinematics, directional spread, and the vessel response
+amplitude operator modify the heave spectrum.
+
+\section{A Common Linear SDE Description}
+All candidates admit an augmented Markov state \(z\in\R^p\):
+\begin{equation}
+dz=A z\,dt+G\,dW_t,\qquad x=Cz,
+\label{eq:linear-sde}
+\end{equation}
+where \(A\) and \(G\) are constant during one identified sea-state interval
+and \(W_t\) is standard Brownian motion. A Hurwitz \(A\), stationary initial
+state, and Gaussian driving noise define a stationary Gaussian output.
+Its state covariance satisfies
+\begin{equation}
+A P_\infty+P_\infty A\T+GG\T=0.
+\label{eq:lyapunov}
+\end{equation}
+The two-sided displacement spectral density, with
+\(\mathrm{Var}(x)=(2\pi)^{-1}\int_{\R}\PSD(\omega)\,d\omega\), is
+\begin{equation}
+\PSD(\omega)=
+C(i\omega I-A)^{-1}GG\T
+(-i\omega I-A\T)^{-1}C\T.
+\label{eq:state-psd}
+\end{equation}
+A finite-dimensional \emph{state} can be Markov even when the scalar
+displacement output is not.
+
+\section{The First Three Models}
+\subsection{OU Displacement: CARMA(1,0)}
+The ordinary OU process,
+\begin{equation}
+dx=-\lambda x\,dt+\sigma\,dW_t,\quad
+\PSD(\omega)=\frac{\sigma^2}{\lambda^2+\omega^2},
+\label{eq:ou}
+\end{equation}
+has maximum power at zero frequency; it has no resonant band or
+mean-square derivative. It is a useful model for a slowly correlated
+\emph{disturbance}, but not a good standalone prior for oscillatory
+heave displacement.
+
+\subsection{White-Noise-Driven Oscillator: CARMA(2,0)}
+For natural frequency \(\omega_0\) and damping ratio \(\zeta>0\),
+\begin{align}
+dx &= v\,dt,\nonumber\\
+dv &=(-\omega_0^2x-2\zeta\omega_0v)\,dt+\sigma\,dW_t,
+\label{eq:sho}
+\end{align}
+with spectrum
+\begin{equation}
+\PSD(\omega)=
+\frac{\sigma^2}
+{(\omega_0^2-\omega^2)^2+
+ (2\zeta\omega_0\omega)^2}.
+\label{eq:sho-psd}
+\end{equation}
+For \(0<\zeta<1/\sqrt2\) its nonzero-frequency peak is at
+\(\omega_{\rm peak}=\omega_0\sqrt{1-2\zeta^2}\).
+It produces random-amplitude and random-phase oscillations; however,
+the formal acceleration has a white-noise component. Velocity is
+mean-square differentiable only if the idealized forcing is additionally
+smoothed. A real accelerometer is finite-bandwidth, but this distinction
+matters when acceleration is itself the continuous-time observation.
+
+\subsection{Colored-Forcing Oscillator: CARMA(3,0)}
+Drive the same oscillator through an OU force \(u\):
+\begin{equation}
+\begin{aligned}
+dx&=v\,dt,\\
+dv&=(-\omega_0^2x-2\zeta\omega_0v+u)\,dt,\\
+du&=-\lambda u\,dt+\sigma_u\,dW_t .
+\end{aligned}
+\label{eq:colored}
+\end{equation}
+For \(z=[x,v,u]\T\), this is (\ref{eq:linear-sde}) with
+\begin{equation}
+A=\begin{bmatrix}
+0&1&0\\
+-\omega_0^2&-2\zeta\omega_0&1\\
+0&0&-\lambda
+\end{bmatrix},\quad
+G=\begin{bmatrix}0\\0\\\sigma_u\end{bmatrix}.
+\label{eq:colored-matrix}
+\end{equation}
+Its acceleration,
+\(a=-\omega_0^2x-2\zeta\omega_0v+u\), is a
+finite-variance, continuous stochastic process. Eliminating \(u\)
+gives a third-order linear stochastic operator:
+\begin{equation}
+(D+\lambda)(D^2+2\zeta\omega_0D+\omega_0^2)x
+=\sigma_u\,\xi,\quad D=d/dt,
+\label{eq:colored-carma}
+\end{equation}
+where \(\xi\) is formal Gaussian white noise. The
+spectrum is (\ref{eq:sho-psd}) multiplied by
+\((\lambda^2+\omega^2)^{-1}\) with the appropriate driving
+intensity. Relative to the white-forced oscillator, it attenuates
+high-frequency displacement and allows an ordinary linear
+acceleration measurement map.
+
+\section{The CARMA Generalization}
+A Gaussian CARMA(\(p,q\)) model \cite{brockwell01,brockwell04} has
+transfer function \(H(s)=\sigma b(s)/a(s)\), where
+\begin{align}
+a(s)&=s^p+a_1s^{p-1}+\cdots+a_p,\nonumber\\
+b(s)&=b_0+b_1s+\cdots+b_qs^q,\qquad 0\le q<p,
+\label{eq:carma-poly}
+\end{align}
+with no cancellation of leading polynomial degree. In symbolic
+stochastic-operator notation,
+\begin{equation}
+a(D)x=\sigma b(D)\xi,\qquad
+\PSD(\omega)=\sigma^2\frac{|b(i\omega)|^2}{|a(i\omega)|^2}.
+\label{eq:carma-psd}
+\end{equation}
+All roots of \(a\) must have negative real parts for a causal,
+stationary state solution. Its poles set damping and resonances;
+the numerator provides frequency-dependent shaping. A real-rational
+nonnegative target spectrum can be approximated by a stable
+spectral factor over a chosen band, but a fixed finite-order
+CARMA model cannot reproduce an arbitrary spectrum exactly.
+CARMA descriptions of random seas have precedents, including
+JONSWAP spectral approximations \cite{dostal11}; those
+examples do not establish accuracy for vessel heave inferred
+from an IMU.
+
+\subsection{The Acceleration-Regularity Test}
+If the numerator has degree \(q\) and the denominator degree \(p\),
+\begin{equation}
+\PSD(\omega)=O(|\omega|^{-2(p-q)}),
+\qquad |\omega|\rightarrow\infty.
+\label{eq:tail}
+\end{equation}
+A mean-square second derivative requires
+\(\int_{\R}\omega^4\PSD(\omega)d\omega<\infty\).
+For ordinary finite-degree CARMA spectra without leading-degree
+cancellation, this is equivalent to
+\begin{equation}
+\boxed{p-q\ge 3.}
+\label{eq:acc-criterion}
+\end{equation}
+It is a \emph{continuous-time, ideal acceleration} criterion.
+A finite-bandwidth accelerometer can still observe a filtered
+CARMA(2,0) or CARMA(4,2) signal, provided the measurement filtering
+is explicitly modeled.
+
+\begin{table}[t]
+\centering
+\caption{CARMA displacement candidates: finite-variance ideal
+acceleration means \(\E|\ddot x|^2<\infty\).}
+\label{tab:regularity}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Displacement prior & High-frequency \(\PSD\) & Accel.\ exists?\\
+\midrule
+CARMA(1,0) -- ordinary OU & \(\omega^{-2}\) & \textbf{No}\\
+CARMA(2,0) -- white oscillator & \(\omega^{-4}\) & \textbf{No}\\
+CARMA(3,0) -- colored oscillator & \(\omega^{-6}\) & \textbf{Yes}\\
+CARMA(4,2) -- spectral example & \(\omega^{-4}\) & \textbf{No}\\
+CARMA(4,1) -- candidate & \(\omega^{-6}\) & \textbf{Yes}\\
+CARMA(5,2) -- candidate & \(\omega^{-6}\) & \textbf{Yes}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fourth- and Fifth-Order Candidates}
+Consider two stable damped-oscillator factors
+\begin{equation}
+L_j(s)=s^2+2\zeta_j\omega_js+\omega_j^2,\qquad j=1,2.
+\end{equation}
+A four-state acceleration-compatible candidate is
+\begin{equation}
+H_{4,1}(s)=\frac{\sigma\kappa s}{L_1(s)L_2(s)}.
+\label{eq:41}
+\end{equation}
+This has \(\PSD\propto\omega^2\) near zero and
+\(\PSD\propto\omega^{-6}\) at high frequency. The first
+pole pair can govern the dominant encounter resonance; the second
+changes the shoulder and bandwidth.
+
+Adding another stable real pole while raising the numerator degree
+gives the five-state proposal
+\begin{equation}
+H_{5,2}(s)=
+\frac{\sigma\kappa s^2}{(s+\lambda)L_1(s)L_2(s)},
+\label{eq:52}
+\end{equation}
+with \(\PSD\propto\omega^4\) at low frequency and
+\(\PSD\propto\omega^{-6}\) at high frequency.
+This stronger low-frequency rejection is an \emph{assumption},
+not a free improvement: it risks filtering out true long-period
+heave.
+
+For comparison, the plotted four-state CARMA(4,2) example is
+\begin{equation}
+H_{4,2}(s)=\frac{\sigma\kappa s^2}{L_1(s)L_2(s)},
+\label{eq:42}
+\end{equation}
+which can fit a broad high-frequency shoulder but has
+\(\PSD=O(\omega^{-4})\); it therefore fails
+(\ref{eq:acc-criterion}). Its inclusion in the figures is
+illustrative, not an endorsement as the ideal-acceleration model.
+
+\section{Illustrative Time Traces and Spectra}
+Figures~\ref{fig:time} and \ref{fig:spectra} reproduce the
+four-model comparisons motivating this note. They use illustrative
+model parameters, not identified vessel data:
+\(f_0=0.29\Hz\), \(\zeta=0.22\), OU displacement
+\(\lambda=2\pi(0.12\Hz)\), forcing OU
+\(\lambda_u=2\pi(0.40\Hz)\). For CARMA(4,2), the
+oscillator pairs are \((f_1,\zeta_1)=(0.27\Hz,0.20)\)
+and \((f_2,\zeta_2)=(0.56\Hz,0.60)\).
+Original linear-SDE simulations were exactly discretized
+using matrix exponentials and stationary Gaussian initial conditions.
+The plot table is sampled at \(5\Hz\) from a \(25\Hz\)
+realization, with each displayed signal divided by its
+theoretical stationary standard deviation. The spectral
+figure uses analytic spectra, each normalized to its own peak;
+the values below \(-70\) dB are clipped for display.
+A single realization does not establish estimation performance.
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+ width=.90\textwidth,height=6.0cm,
+ xmin=0,xmax=65,ymin=-3.0,ymax=12.8,
+ xlabel={Time (s)},
+ ylabel={Normalized displacement (stacked)},
+ ytick={0,3,6,9},
+ yticklabels={CARMA 4/2,Colored force,White force,Ordinary OU},
+ y tick label style={font=\scriptsize},
+ tick label style={font=\scriptsize},
+ grid=major,grid style={gray!17},
+ axis x line*=bottom,axis y line*=left,
+ every axis plot/.append style={thin,no marks},
+]
+\addplot[oublue] table [col sep=comma,x=t,y=ou]
+  {carma-heave-time.csv};
+\addplot[shoorange] table [col sep=comma,x=t,y=sho]
+  {carma-heave-time.csv};
+\addplot[colgreen] table [col sep=comma,x=t,y=colored]
+  {carma-heave-time.csv};
+\addplot[carmared] table [col sep=comma,x=t,y=carma42]
+  {carma-heave-time.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{Representative displacement traces, stacked at offsets
+9, 6, 3, and 0 (in dimensionless RMS units) respectively.
+The OU process is irregular but non-oscillatory; oscillator and
+CARMA realizations fluctuate in amplitude and phase around
+a dominant period. The four traces are \emph{different} realizations,
+not the result of a shared physical forcing.}
+\label{fig:time}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+ width=.90\textwidth,height=6.0cm,
+ xmin=0,xmax=1.3,ymin=-70,ymax=4,
+ xlabel={Frequency (Hz)}, ylabel={Displacement PSD (dB re.\ own peak)},
+ xtick={0,0.2,...,1.2},
+ ytick={-70,-60,...,0},
+ tick label style={font=\scriptsize},
+ legend style={font=\scriptsize,at={(.98,.98)},anchor=north east,
+   fill=white,draw=gray!40},
+ grid=major,grid style={gray!17},
+ every axis plot/.append style={thick,no marks},
+]
+\addplot[oublue] table [col sep=comma,x=f,y=ou]
+  {carma-heave-spectra.csv};
+\addlegendentry{Ordinary OU}
+\addplot[shoorange] table [col sep=comma,x=f,y=sho]
+  {carma-heave-spectra.csv};
+\addlegendentry{White-forced oscillator}
+\addplot[colgreen] table [col sep=comma,x=f,y=colored]
+  {carma-heave-spectra.csv};
+\addlegendentry{Colored-forced oscillator}
+\addplot[carmared] table [col sep=comma,x=f,y=carma42]
+  {carma-heave-spectra.csv};
+\addlegendentry{CARMA(4,2)}
+\end{axis}
+\end{tikzpicture}
+\caption{Analytic continuous-time spectral shapes for the same
+four models. A resonant peak around \(0.28\Hz\) is absent
+from the OU displacement. Colored forcing gives a steeper
+high-frequency tail. The CARMA(4,2) red curve displays
+strong low-frequency suppression, but has only an
+\(\omega^{-4}\) asymptotic tail and thus no finite-variance
+ideal acceleration. Normalization removes absolute power information.}
+\label{fig:spectra}
+\end{figure*}
+
+\section{Exact Kalman-Compatible State-Space Form}
+For the polynomial convention in (\ref{eq:carma-poly}), define
+the controllable companion realization
+\begin{equation}
+A_c=\begin{bmatrix}
+0&1&0&\cdots&0\\
+0&0&1&\cdots&0\\
+\vdots&&&\ddots&\vdots\\
+0&0&0&\cdots&1\\
+-a_p&-a_{p-1}&-a_{p-2}&\cdots&-a_1
+\end{bmatrix},
+\label{eq:companion}
+\end{equation}
+\begin{equation}
+G_c=\sigma e_p,\quad
+C_c=\begin{bmatrix}b_0&b_1&\cdots&b_q&0&\cdots&0\end{bmatrix}.
+\label{eq:companion-out}
+\end{equation}
+Then \(d z=A_cz\,dt+G_c\,dW_t\), \(x=C_cz\)
+is a linear It\^o SDE with the intended transfer function.
+For \(p-q\ge3\), \(C_cG_c=C_cA_cG_c=0\) and
+\begin{equation}
+\boxed{x=C_cz,\qquad v=C_cA_cz,\qquad
+a=C_cA_c^2z.}
+\label{eq:xva}
+\end{equation}
+Those are state outputs, not numerical derivatives of noisy
+displacement samples.
+
+At sampling interval \(\Delta t\), the exact discrete
+model is
+\begin{align}
+z_{k+1}&=Fz_k+w_k,\qquad F=e^{A_c\Delta t},\nonumber\\
+Q&=\E[w_kw_k\T]
+ =\int_0^{\Delta t}e^{A_c\tau}G_cG_c\T
+                  e^{A_c\T\tau}\,d\tau.
+\label{eq:exact-discrete}
+\end{align}
+For stationary coefficients and covariance (\ref{eq:lyapunov}),
+\begin{equation}
+Q=P_\infty-FP_\infty F\T
+\label{eq:stationary-Q}
+\end{equation}
+is an equivalent exact formula. Matrix-exponential/Van Loan
+discretization avoids Euler sampling errors
+\cite{sarkka23}.
+
+A reduced vertical filter may augment \(z\) with a bias \(b\):
+\begin{align}
+\begin{bmatrix}z\\b\end{bmatrix}_{k+1}
+&=\begin{bmatrix}F&0\\0&F_b\end{bmatrix}
+  \begin{bmatrix}z\\b\end{bmatrix}_k+w_k^+,\nonumber\\
+y_{a,k}&=\begin{bmatrix}C_cA_c^2&1\end{bmatrix}
+\begin{bmatrix}z\\b\end{bmatrix}_k+n_k^+ .
+\label{eq:kalman-y}
+\end{align}
+The choice \(F_b=1\) denotes a random-walk residual bias;
+other bias priors can be examined without claiming they match
+the deployed bias law. The \(n_k^+\) covariance must account
+for projected accelerometer noise, attitude uncertainty,
+anti-aliasing, and any process/measurement correlation caused
+by sampling or preprocessing.
+
+In a coupled quaternion MEKF, the vertical force residual
+also depends on attitude error and body-frame bias.
+Its Jacobian must retain those cross terms; inserting
+(\ref{eq:kalman-y}) unchanged into a full nonlinear
+attitude filter would be incorrect. Conditional on a fixed
+or externally supplied orientation and fixed CARMA
+parameters, however, the translational subproblem is linear
+Gaussian and has the ordinary Kalman recursion.
+
+\subsection{Bias, Identifiability, and Adaptation}
+Acceleration has frequency response
+\(A(\omega)=-\omega^2 X(\omega)\). Near zero frequency it
+therefore carries little displacement information, and a
+constant or slowly varying accelerometer bias can be
+confounded with low-frequency motion. A stationary prior
+regularizes the estimate but cannot manufacture missing
+measurement information. Strong zero-frequency suppression
+can improve apparent drift while hiding real long-period
+heave. Innovation whiteness and small estimated covariance
+alone do not prove accuracy.
+
+Stable coefficients \(\theta=(\omega_j,\zeta_j,\lambda,
+b_j,\sigma)\) may be estimated from a windowed spectral fit
+or a predictive innovations likelihood, then held fixed
+over short intervals. The \emph{conditional} state estimator
+remains linear between coefficient changes; jointly
+estimating random or state-dependent frequencies is a
+nonlinear estimation problem. A parameter-switch policy
+needs explicit covariance continuity, initial-condition
+handling, and validation under changing seas; blindly
+restarting a stationary filter at each frequency update
+would erase information.
+
+\section{Research Program for Ocean-IMU}
+The following constitutes a \emph{proposed} study, not
+experimental results or a deployment change.
+
+\subsection{Model Identification}
+Estimate target \emph{vessel heave} power spectra using
+truth displacement when available, or a carefully
+characterized external reference. Fit CARMA(3,0), (4,1),
+and (5,2) over a relevant encounter-frequency band with
+stable pole constraints and nonnegative driving intensity.
+A log-spectral residual can weight weakly energized bands,
+but fitting only spectral shape can obscure physical
+amplitude; validate both PSD shape and integrated variance.
+Compare held-out likelihood, bias/variance, pole sensitivity,
+and parameter identifiability. CARMA(2,0) and (4,2)
+remain useful finite-bandwidth baselines with explicit
+sensor filtering, not ideal-acceleration candidates.
+
+\subsection{Matched Heave Reconstruction Ablation}
+Use the \emph{same} synthetic or recorded IMU force,
+attitude history, temperature, bias history, anti-alias
+filter, timestamps, and ground-truth heave for every
+candidate. Include quiet water; narrow and broad JONSWAP,
+PM and nonlinear/Stokes-like responses; varying encounter
+frequency; crossing seas; long-period swell; and
+high-frequency vibration. Compare a controlled OU-driven
+baseline, CARMA(3,0), (4,1), (5,2), and the deployed
+OU--III estimator \emph{as actually implemented}, with no
+silent changes to its gates, pseudo-measurements, tuning,
+or magnetic-service behavior.
+
+Quantify displacement RMS and bias, normalized heave
+error where significant wave height is defined,
+frequency-dependent gain/phase, low-frequency spectral
+leakage, innovation consistency, false heave at rest,
+transient recovery, numerical condition, and embedded
+memory/runtime. Include held-out vessel responses rather
+than merely simulating data from the same CARMA model
+being evaluated. A controlled stress test must assess
+whether more aggressive low-frequency regularization
+simply suppresses true long-period displacement.
+
+\subsection{Relation to the Shipping OU--III Stability Study}
+The statistical displacement prior in this proposal is
+\emph{not a law for the actual vessel trajectory}.
+In particular, a nondegenerate stationary Gaussian
+CARMA realization is not almost surely globally bounded
+over an infinite horizon. Even when \(p-q=3\) gives
+finite-variance continuous acceleration, its sample-path
+jerk is not subject to the shipping proof's deterministic
+bounded-jerk premise. A stochastic simulation does not
+establish admissibility, finite capture, or regional
+practical stability of OU--III. Future replacements would
+require their own process-model mismatch, observability,
+covariance, and full estimator stability analyses.
+Nothing in this article revises the shipping estimator
+or its proof assumptions.
+
+\section{Conclusion}
+A plain OU displacement prior misses resonant marine
+heave; a white-forced second-order oscillator represents
+the resonance but not finite-variance ideal acceleration.
+Colored forcing yields a CARMA(3,0) baseline, while
+CARMA(4,1) and (5,2) allow additional low-/high-frequency
+spectral shaping with ordinary acceleration outputs and
+exact discrete-time Kalman transitions. CARMA(4,2)
+illustrates that greater spectral flexibility alone
+does not guarantee physically appropriate derivatives.
+The next step is not to declare a new best filter, but
+to test whether spectral fit improvements survive
+bias-contaminated, vessel-response-aware, held-out
+heave reconstruction at realistic IMU sampling rates.
+
+\section*{Acknowledgment and Status}
+This is a supervised AI-assisted research proposal
+for future evaluation. The author retains responsibility
+for mathematical and experimental verification.
+No CARMA-based Ocean-IMU runtime results are claimed.
+
+\begin{thebibliography}{9}
+\bibitem{brockwell01}
+P. J. Brockwell, ``Continuous-time ARMA processes,''
+in \emph{Handbook of Statistics}, vol. 19,
+Elsevier, 2001, pp. 249--276,
+doi: 10.1016/S0169-7161(01)19011-5.
+\bibitem{brockwell04}
+P. J. Brockwell, ``Representations of continuous-time
+ARMA processes,'' \emph{J. Appl. Probab.},
+vol. 41, no. A, pp. 375--382, 2004,
+doi: 10.1239/jap/1082552212.
+\bibitem{dostal11}
+L. Dostal and E. Kreuzer,
+``Probabilistic approach to large amplitude ship rolling in
+random seas,'' \emph{Proc. IMechE, Part C: J. Mechanical
+Engineering Science}, vol. 225, no. 10,
+pp. 2464--2476, 2011,
+doi: 10.1177/0954406211414523.
+\bibitem{sarkka23}
+S. S\"arkk\"a and L. Svensson,
+\emph{Bayesian Filtering and Smoothing}, 2nd ed.,
+Cambridge University Press, 2023,
+doi: 10.1017/9781108917407.
+\end{thebibliography}
+\end{document}
