@@ -28,7 +28,7 @@
 \newcommand{\PSD}{S_x}
 \newcommand{\Hz}{\,\mathrm{Hz}}
 
-\title{Other Stochastic Models for Marine Motion in Kalman Filters}
+\title{Other Stochastic Models for Marine Motion in Kalman Filters (draft)}
 
 \author{Mikhail S. Grushinskiy%
 \thanks{Independent researcher, Bareboat Necessities project, Fair Lawn, NJ, USA.
@@ -327,13 +327,13 @@ A single realization does not establish estimation performance.
  every axis plot/.append style={thin,no marks},
 ]
 \addplot[oublue] table [col sep=comma,x=t,y=ou]
-  {carma-heave-time.csv};
+  {stochastic-marine-motion-time.csv};
 \addplot[shoorange] table [col sep=comma,x=t,y=sho]
-  {carma-heave-time.csv};
+  {stochastic-marine-motion-time.csv};
 \addplot[colgreen] table [col sep=comma,x=t,y=colored]
-  {carma-heave-time.csv};
+  {stochastic-marine-motion-time.csv};
 \addplot[carmared] table [col sep=comma,x=t,y=carma42]
-  {carma-heave-time.csv};
+  {stochastic-marine-motion-time.csv};
 \end{axis}
 \end{tikzpicture}
 \caption{Representative displacement traces, stacked at offsets
@@ -361,16 +361,16 @@ not the result of a shared physical forcing.}
  every axis plot/.append style={thick,no marks},
 ]
 \addplot[oublue] table [col sep=comma,x=f,y=ou]
-  {carma-heave-spectra.csv};
+  {stochastic-marine-motion-spectra.csv};
 \addlegendentry{Ordinary OU}
 \addplot[shoorange] table [col sep=comma,x=f,y=sho]
-  {carma-heave-spectra.csv};
+  {stochastic-marine-motion-spectra.csv};
 \addlegendentry{White-forced oscillator}
 \addplot[colgreen] table [col sep=comma,x=f,y=colored]
-  {carma-heave-spectra.csv};
+  {stochastic-marine-motion-spectra.csv};
 \addlegendentry{Colored-forced oscillator}
 \addplot[carmared] table [col sep=comma,x=f,y=carma42]
-  {carma-heave-spectra.csv};
+  {stochastic-marine-motion-spectra.csv};
 \addlegendentry{CARMA(4,2)}
 \end{axis}
 \end{tikzpicture}

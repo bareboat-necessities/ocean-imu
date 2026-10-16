@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Regenerate the deterministic example chart tables used by carma-heave.tex.
+"""Regenerate the deterministic example chart tables used by stochastic-marine-motion.tex.
 
 The time traces are exact-discretization samples of stationary, linear,
 Gaussian SDEs; the spectral curves are theoretical continuous-time PSDs.
 The figures are illustrative, not marine data or filter error measurements.
 
 Requires NumPy and SciPy. Run from any directory:
-    python3 doc/kalman_ou_iii/carma-heave-generate.py
+    python3 doc/kalman_ou_iii/stochastic-marine-motion-generate.py
 """
 from pathlib import Path
 import numpy as np
@@ -79,7 +79,7 @@ for name, (A, G, C) in models.items():
     spectra[name] = 10 * np.log10(np.maximum(power / power.max(), 1e-12))
 
 columns = ["ou", "sho", "colored", "carma42"]
-with (OUTPUT / "carma-heave-time.csv").open("w") as file:
+with (OUTPUT / "stochastic-marine-motion-time.csv").open("w") as file:
     file.write("t," + ",".join(columns) + "\n")
     offsets = dict(ou=9.0, sho=6.0, colored=3.0, carma42=0.0)
     for i in range(0, len(T), 5):
@@ -89,7 +89,7 @@ with (OUTPUT / "carma-heave-time.csv").open("w") as file:
         file.write(",".join([f"{T[i]:.2f}"] +
                             [f"{v:.5f}" for v in values]) + "\n")
 
-with (OUTPUT / "carma-heave-spectra.csv").open("w") as file:
+with (OUTPUT / "stochastic-marine-motion-spectra.csv").open("w") as file:
     file.write("f," + ",".join(columns) + "\n")
     for j in range(131):
         f = j / 100.0
