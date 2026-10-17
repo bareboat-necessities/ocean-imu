@@ -575,11 +575,14 @@ handoff and staged magnetic acquisition.  This section gives a
 \emph{research proposal}, not an implemented replacement or a
 validated convergence claim.  The primary method uses calibrated
 gyro, magnetometer, accelerometer, and the already available
-low-bandwidth Mahony tilt proxy.  It does \emph{not} estimate wave
-displacement, wave frequency, a stochastic acceleration process,
-or sea-state model parameters during initialization.  Its purpose is
-to learn the fixed gravity--magnetic geometry directly from a short
-history of measurements while the vessel may already be moving.
+low-bandwidth Mahony tilt proxy.  Its physical premise is
+\emph{oscillatory marine motion}: after gyro transport the true
+gravity direction stays fixed, while wave-induced displacement
+oscillates about a local reference.  The algorithm does \emph{not}
+fit wave frequencies, displacement trajectories, stochastic
+acceleration processes, or sea-state parameters.  It exploits
+the distinct constant and oscillatory contributions directly
+from the same short sensor record.
 
 \subsection{A frozen startup frame and two physical constants}
 
@@ -727,6 +730,78 @@ For quadratic fixed-weight fitting the closed-form answer is
 independent of the initial guess, a useful baseline against
 which to judge any more elaborate refinement.
 
+\subsection{Oscillatory motion provides cancellation without a wave model}
+
+The physically relevant motion is oscillatory rather than an
+arbitrary free acceleration history.  On the startup interval,
+write the sensor position in $\mathcal F$ as a locally affine
+reference motion plus an oscillatory displacement:
+\begin{equation}
+\vct p_s^F(t)=\vct p_0+\vct v_0t+\vct\xi(t),
+\qquad \norm{\vct\xi(t)}\le A.
+\label{eq:joint-oscillatory-displacement}
+\end{equation}
+Then $\vct a_s^F(t)=\ddot{\vct\xi}(t)$ and gyro-transported
+specific force is
+$\vct z_a(t)=-g_0\vct d+\ddot{\vct\xi}(t)$
+in the ideal calibrated case.  Neither the waveform nor its
+frequencies are estimated.  The affine term may represent steady
+vessel translation, but sustained translational acceleration
+does \emph{not} satisfy this assumption.
+
+For an ordinary time average,
+\begin{equation}
+-\frac1T\int_0^T\vct z_a(t)\,dt
+=g_0\vct d-\frac{\dot{\vct\xi}(T)
+                 -\dot{\vct\xi}(0)}{T}.
+\label{eq:joint-mean-cancellation}
+\end{equation}
+When a window spans complete cycles with matching endpoint
+velocities, its wave term vanishes.  On a short partial cycle
+the endpoint term need not be small, even though motion is
+oscillatory.  Thus time averaging is a useful baseline rather
+than an unconditional finite-time gravity certificate.
+
+A waveform-independent alternative weights the interior
+of the window and suppresses the endpoint contribution:
+\begin{equation}
+w_T(t)=\frac{30t^2(T-t)^2}{T^5},\qquad
+\vct c_T=-\int_0^T w_T(t)\vct z_a(t)\,dt.
+\label{eq:joint-endpoint-weight}
+\end{equation}
+Since $\int_0^T w_T(t)\,dt=1$ and both $w_T$ and
+its first derivative vanish at the endpoints, integration
+by parts twice gives the deterministic identity
+\begin{equation}
+\vct c_T-g_0\vct d
+=-\int_0^T w_T''(t)\vct\xi(t)\,dt.
+\label{eq:joint-endpoint-identity}
+\end{equation}
+For the stated displacement envelope,
+\begin{equation}
+\norm{\vct c_T-g_0\vct d}
+\le\frac{40}{\sqrt3}\frac{A}{T^2}.
+\label{eq:joint-endpoint-bound}
+\end{equation}
+The candidate direction is simply
+$\hat{\vct d}_T=\vct c_T/\norm{\vct c_T}$
+whenever $\vct c_T\neq\vct0$.  The bound concerns
+\emph{only} wave translation under exact gyro transport
+and calibration.  Unknown $A$, gyro drift, sensor bias, and
+partial-cycle effects can still limit short-window accuracy.
+This deterministic cancellation is not a fitted dynamic
+or probabilistic wave model.
+
+For sampled data, use actual acquisition timestamps and
+consistent discrete quadrature.  Compare the plain constant
+fit \cref{eq:joint-direction-ls} with the endpoint-weighted
+statistic on the \emph{same} record; neither statistic is
+independent evidence when combined with the Mahony proxy.
+The endpoint weighting can reduce contamination from
+bounded displacement but may increase sensor-noise variance,
+so it is a candidate to evaluate rather than a guaranteed
+improvement at every window length.
+
 For the final candidate, fit the two fixed vectors and
 observable gyro-bias components against the \emph{same}
 gyro, magnetic, and raw acceleration history:
@@ -788,14 +863,14 @@ history
 \label{eq:joint-gravity-gauge}
 \end{equation}
 leaves accelerometer measurements unchanged, while magnetic
-measurements are unaffected.  The proposed model-free fit is
-useful when the unmodeled acceleration contribution cancels
-sufficiently over the selected interval or the proxy supplies
-a sufficiently accurate approximation.  These conditions are
-\emph{not} guaranteed for arbitrary partial wave cycles or
-sustained horizontal acceleration.  No elaborate wave model is
-required to \emph{run} the method; neither does omitting one
-make that unobservable component disappear.
+measurements are unaffected.  The proposed constant-vector fit exploits the physical
+oscillation by using a low-bandwidth proxy and deterministic
+time-window cancellation.  Its limits on a short partial cycle
+are explicit in \cref{eq:joint-mean-cancellation,eq:joint-endpoint-bound}.
+No fitted wave model is required, but neither the property
+of oscillatory motion alone nor the goodness of the magnetic fit
+guarantees that the residual acceleration contribution has
+canceled over the chosen finite window.
 
 \subsection{Magnetic-NED handoff and evaluation}
 
@@ -840,8 +915,9 @@ residual scale or window-to-window agreement alone is not a
 certified attitude-error covariance.
 
 The first comparison should run this proposal against the
-deployed Mahony-only handoff and unassisted constant-vector
-averaging at identical 3, 5, 10, and 20 s startup cutoffs.
+deployed Mahony-only handoff, unassisted constant-vector
+averaging, and the deterministic endpoint-weighted estimator
+at identical 3, 5, 10, and 20 s startup cutoffs.
 Include quiet starts, partial wave cycles, irregular seas,
 turning, limited magnetic excitation, time-alignment error,
 calibration residuals, and magnetic interference.  Report
