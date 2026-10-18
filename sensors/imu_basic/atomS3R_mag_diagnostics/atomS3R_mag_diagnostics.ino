@@ -828,7 +828,7 @@ void loop() {
     case Phase::POSES:
       // The screen is the button: setting the board down on it presses it. A tap
       // finishes only while the board lies still screen up; 'n' always does.
-      if (tapped && !(a_cal.z() < -0.9f * ImuCalCfg::g_cal_local && w_cal.norm() < QPOSE_STILL_RAD_S)) {
+      if (tapped && !(a_cal.z() < -0.9f * ImuCalCfg::g_cal_local && w_cal.norm() < QPOSE_MOVED_RAD_S)) {
         advance = false;
         Serial.println("[POSE] press ignored (not lying still screen up); tap screen up, or send 'n', to finish");
       }
