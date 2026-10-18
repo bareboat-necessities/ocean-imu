@@ -17,8 +17,9 @@
                       field and gravity against the local reference
     3. POSES          calibrated accel/mag quality from still poses: set the
                       board down on each face and some tilts, 3 s each; tap
-                      to finish. Noise, |a|-g and |m|-F, per-axis scale error
-                      and residual bias with standard errors
+                      screen up (or send 'n') to finish. Noise, |a|-g and
+                      |m|-F, per-axis scale error and residual bias with
+                      standard errors
     4. ROTATE         turn and tilt through every direction, as in the wizard
     5. Analysis       fresh fit with the wizard's code, saved-vs-fresh field
                       checks, axis-sign test against the gyro, mag/accel
@@ -413,9 +414,10 @@ static void enter(Phase p) {
       ui.line("Do not touch");
       break;
     case Phase::WAIT_POSES:
-      drawWait("POSES", "Set down still 3 s", "on each face + tilts", "tap when done");
+      drawWait("POSES", "Set down still 3 s", "on each face + tilts", "done: tap screen up");
       Serial.println("[DIAG] next: POSES. Tap, then set the board down still for 3 s on each of its 6 faces and a few tilts,");
-      Serial.println("[DIAG] at different headings, away from metal. Each pose prints [POSE]; tap to finish with [QUAL].");
+      Serial.println("[DIAG] at different headings, away from metal. Each pose prints [POSE]; finish with [QUAL] by a tap");
+      Serial.println("[DIAG] while the board lies still screen up (screen-down presses are ignored), or send 'n'.");
       break;
     case Phase::POSES:
       n_qposes = 0;
@@ -785,7 +787,8 @@ void loop() {
   if ((int32_t)(micros() - next_tick_us) > (int32_t)(4 * LOOP_PERIOD_US)) next_tick_us = micros() + LOOP_PERIOD_US;
 
   Input::update();
-  bool advance = Input::tapPressed();
+  const bool tapped = Input::tapPressed();
+  bool advance = tapped;
   while (Serial.available()) {
     const int c = Serial.read();
     if (c == 'n' || c == 'N') advance = true;
@@ -823,6 +826,12 @@ void loop() {
       if (advance) enter(Phase::POSES);
       break;
     case Phase::POSES:
+      // The screen is the button: setting the board down on it presses it. A tap
+      // finishes only while the board lies still screen up; 'n' always does.
+      if (tapped && !(a_cal.z() < -0.9f * ImuCalCfg::g_cal_local && w_cal.norm() < QPOSE_MOVED_RAD_S)) {
+        advance = false;
+        Serial.println("[POSE] press ignored (not lying still screen up); tap screen up, or send 'n', to finish");
+      }
       if (advance) { finishPoses(); enter(Phase::WAIT_ROTATE); }
       break;
     case Phase::WAIT_ROTATE:
