@@ -342,6 +342,49 @@ static void testCompensation() {
   require(total > 50 && agree == total, "compensated body axes have M5Unified's AtomS3R signs");
 }
 
+// Still poses on all six faces plus tilted ones, with Z reading 9% low and a
+// residual bias: the fit recovers both, magnitude-only and with the vertical.
+static void testScaleBiasFit() {
+  std::mt19937 rng(7);
+  std::normal_distribution<float> n(0.0f, 1.0f);
+  const V3 field(20.9f, -4.5f, 46.4f);
+  const float F = field.norm(), V = field.z();
+  const V3 k_true(0.02f, -0.01f, -0.09f), b_true(0.8f, -0.5f, 1.2f);
+  constexpr int N = 14;
+  V3 mag[N], acc[N];
+  for (int i = 0; i < N; ++i) {
+    M3 Rbw;
+    if (i < 6) {
+      const V3 axes[6] = {V3::UnitX(), -V3::UnitX(), V3::UnitY(), -V3::UnitY(), V3::UnitZ(), -V3::UnitZ()};
+      Rbw = Eigen::Quaternionf::FromTwoVectors(axes[i], V3::UnitZ()).toRotationMatrix();
+      Rbw = Eigen::AngleAxisf(0.7f * i, V3::UnitZ()).toRotationMatrix() * Rbw;
+    } else {
+      Rbw = randomAttitude(rng);
+    }
+    const V3 tm = Rbw.transpose() * field, ta = Rbw.transpose() * V3(0, 0, -9.8025605f);
+    mag[i] = (V3::Ones() + k_true).asDiagonal() * tm + b_true + 0.05f * V3(n(rng), n(rng), n(rng));
+    acc[i] = (V3::Ones() + 0.1f * k_true).asDiagonal() * ta + 0.1f * b_true + 0.0005f * V3(n(rng), n(rng), n(rng));
+  }
+  for (int vert = 0; vert < 2; ++vert) {
+    const ScaleBiasFit f = scaleBiasFit(mag, acc, N, F, V, vert == 1);
+    require(f.ok && f.equations == N * (1 + vert), "magnetometer pose fit runs");
+    require((f.k - k_true).cwiseAbs().maxCoeff() < 0.01f, "fit recovers the per-axis magnetometer scale error");
+    require((f.b - b_true).cwiseAbs().maxCoeff() < 0.3f, "fit recovers the residual magnetometer bias");
+    require(f.rms < 0.2f && f.k_sd.maxCoeff() < 0.01f && f.b_sd.maxCoeff() < 0.3f, "fit residual and standard errors are small");
+  }
+  const ScaleBiasFit fa = scaleBiasFit(acc, acc, N, 9.8025605f, 0.0f, false);
+  require(fa.ok && (fa.k - 0.1f * k_true).cwiseAbs().maxCoeff() < 2e-4f &&
+              (fa.b - 0.1f * b_true).cwiseAbs().maxCoeff() < 2e-3f, "fit recovers accelerometer scale and bias");
+  // Only screen-up/down poses cannot separate x and y scale from their bias.
+  V3 flat[4], flat_a[4];
+  for (int i = 0; i < 4; ++i) {
+    const M3 R = Eigen::AngleAxisf(1.5f * i, V3::UnitZ()).toRotationMatrix();
+    flat[i] = R.transpose() * field;
+    flat_a[i] = V3(0, 0, -9.8f);
+  }
+  require(!scaleBiasFit(flat, flat_a, 4, F, V, false).ok, "an unexcited axis is reported, not fitted");
+}
+
 int main() {
   testCompensation();
   testAuxPreset();
@@ -350,6 +393,7 @@ int main() {
   testAxisConsistency();
   testAlignment();
   testHeadingError();
+  testScaleBiasFit();
   if (failures) return 1;
   std::puts("mag_diagnostics-test: OK");
   return 0;

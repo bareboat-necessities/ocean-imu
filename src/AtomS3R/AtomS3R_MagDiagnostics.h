@@ -17,6 +17,9 @@
     frames that makes the dip angle constant. An ellipsoid fit cannot see it.
   - headingErrorDeg: tilt-compensated heading error that a given magnetometer
     frame rotation and dip produce at chosen headings and tilts.
+  - scaleBiasFit: per-axis scale error and residual bias of calibrated
+    accelerometer or magnetometer output from still poses against the local
+    gravity or field (magnitude and, for the field, its vertical component).
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -278,6 +281,89 @@ static inline float headingErrorDeg(const M3& Rerr, float dip_deg, float tilt_de
     }
   }
   return worst;
+}
+
+// Residual calibration error seen in still poses against a known reference:
+// cal = (I + diag(k)) * truth + b, k the per-axis scale error (fraction, positive
+// reads too large) and b the residual bias. Each pose gives |truth| = F and,
+// when use_vertical, truth.down = V with down from the pose's specific force.
+// Gauss-Newton on those residuals; standard errors from the post-fit residual.
+struct ScaleBiasFit {
+  bool ok = false;
+  int poses = 0, equations = 0;
+  V3 k = V3::Zero(), b = V3::Zero();
+  V3 k_sd = V3::Constant(NAN), b_sd = V3::Constant(NAN);  // need more equations than 6
+  float rms = NAN;                                         // post-fit residual rms
+  float norm_err_mean = NAN, norm_err_sd = NAN;            // |cal| - F over poses
+  float vert_err_mean = NAN, vert_err_sd = NAN;            // cal.down - V over poses
+};
+
+static inline ScaleBiasFit scaleBiasFit(const V3* cal, const V3* accel, int n, float F, float V,
+                                        bool use_vertical) {
+  using V6 = Eigen::Matrix<double, 6, 1>;
+  using M6 = Eigen::Matrix<double, 6, 6>;
+  ScaleBiasFit out;
+  double sn = 0, snn = 0, sv = 0, svv = 0;
+  for (int i = 0; i < n; ++i) {
+    const double e = double(cal[i].norm()) - F;
+    sn += e; snn += e * e;
+    if (use_vertical) {
+      const double v = double(cal[i].dot(-accel[i].normalized())) - V;
+      sv += v; svv += v * v;
+    }
+  }
+  out.poses = n;
+  out.equations = n * (use_vertical ? 2 : 1);
+  if (n > 0) {
+    out.norm_err_mean = float(sn / n);
+    out.norm_err_sd = n > 1 ? float(std::sqrt(std::fmax(0.0, (snn - sn * sn / n) / (n - 1)))) : NAN;
+    if (use_vertical) {
+      out.vert_err_mean = float(sv / n);
+      out.vert_err_sd = n > 1 ? float(std::sqrt(std::fmax(0.0, (svv - sv * sv / n) / (n - 1)))) : NAN;
+    }
+  }
+  if (out.equations < 6) return out;
+  V6 x = V6::Zero();
+  M6 H;
+  double sse = 0;
+  for (int it = 0; it < 10; ++it) {
+    H.setZero();
+    V6 g = V6::Zero();
+    sse = 0;
+    auto add = [&](const V6& j, double f) { H += j * j.transpose(); g += j * f; sse += f * f; };
+    for (int i = 0; i < n; ++i) {
+      Eigen::Vector3d s, t;
+      for (int a = 0; a < 3; ++a) { s(a) = 1.0 + x(a); t(a) = (double(cal[i](a)) - x(3 + a)) / s(a); }
+      const double tn = t.norm();
+      if (!(tn > 1e-9)) continue;
+      V6 j;
+      for (int a = 0; a < 3; ++a) { j(a) = -t(a) * t(a) / (s(a) * tn); j(3 + a) = -t(a) / (s(a) * tn); }
+      add(j, tn - F);
+      if (use_vertical) {
+        const Eigen::Vector3d d = -accel[i].cast<double>().normalized();
+        for (int a = 0; a < 3; ++a) { j(a) = -t(a) * d(a) / s(a); j(3 + a) = -d(a) / s(a); }
+        add(j, t.dot(d) - V);
+      }
+    }
+    // A pose set that leaves an axis direction or sign unvisited cannot separate it.
+    const Eigen::SelfAdjointEigenSolver<M6> es(H);
+    if (!(es.eigenvalues()(0) > 1e-9 * es.eigenvalues()(5))) return out;
+    const V6 dx = H.ldlt().solve(-g);
+    if (!dx.allFinite()) return out;
+    x += dx;
+    if (dx.cwiseAbs().maxCoeff() < 1e-7) break;
+  }
+  out.ok = x.allFinite();
+  out.k = x.head<3>().cast<float>();
+  out.b = x.tail<3>().cast<float>();
+  out.rms = float(std::sqrt(sse / out.equations));
+  const int dof = out.equations - 6;
+  if (dof > 0) {
+    const V6 var = H.inverse().diagonal() * (sse / dof);
+    out.k_sd = var.head<3>().cwiseSqrt().cast<float>();
+    out.b_sd = var.tail<3>().cwiseSqrt().cast<float>();
+  }
+  return out;
 }
 
 // Per-axis running mean/variance.

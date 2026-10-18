@@ -15,16 +15,21 @@ Open the sketch: [`atomS3R_mag_diagnostics.ino`](atomS3R_mag_diagnostics.ino).
 Open Serial Monitor at **115200 baud**. Tap the screen, or send `n`, to advance.
 
 1. **Boot report** (`[DIAG]`): whether the BMM150 answers on the main I2C bus or only behind the BMI270 AUX bus, the BMI270 AUX polling rate, the magnetometer setting, and the saved calibration.
-2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the heading and dip scatter of single readings, the IMU temperature and update mask counts, and the dip angle with the saved calibration.
-3. **ROTATE** (`[ROT]`): turn and tilt slowly (under about 45°/s) through every direction, including upside down and on each edge. This uses the calibration wizard's capture and fit code, and also records slow-motion poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
-4. **Analysis** (`[FIT]`, `[FIELD]`, `[AXIS]`, `[ALIGN]`, `[VERDICT]`):
+2. **STILL**, 10 s (`[STILL]`): lay the board flat, screen up, away from metal and do not touch it. Reports the magnetometer update interval, raw and calibrated noise, the heading and dip scatter of single readings, the IMU temperature and update mask counts, and the dip angle with the saved calibration. It also compares the calibrated accelerometer noise and `|a|` with local gravity, and the calibrated field `|m|` and its vertical and horizontal parts with the local field.
+3. **POSES** (`[POSE]`, `[QUAL]`): quality of the calibrated accelerometer and magnetometer from still poses. Tap, then set the board down on each of its six faces and a few tilts, at different headings, away from metal; every 3 s of stillness after a turn records one pose (`[POSE]`: face, `|a|-g`, calibrated field, `|m|-F`, vertical and horizontal field against the reference, noise). Tap to finish. `[QUAL]` reports:
+   - single-sample noise standard deviation per axis of both sensors;
+   - `|a|-g` and `|m|-F` mean and standard deviation over the poses, and the vertical field error;
+   - a fit of `cal = (1 + k) * truth + b` per axis against the local gravity (accelerometer) and the local field magnitude, with and without its vertical component (magnetometer): scale error `k` and residual bias `b` with their standard errors. It needs both signs of every axis (all six faces); otherwise it says NOT DETERMINED;
+   - the magnetometer common scale (the calibration's field strength against the local field, also shifted by indoor disturbances) and each axis' scale against the median axis, marked `SCALE MISMATCH` when it differs by more than 3% and three standard errors.
+4. **ROTATE** (`[ROT]`): turn and tilt slowly (under about 45°/s) through every direction, including upside down and on each edge. This uses the calibration wizard's capture and fit code, and also records slow-motion poses and gyro-measured rotations. It ends by itself when the capture is complete (or tap to stop, or after 3 minutes).
+5. **Analysis** (`[FIT]`, `[FIELD]`, `[AXIS]`, `[ALIGN]`, `[VERDICT]`):
    - a fresh calibration fitted here, compared with the saved one (and with the previous run's fit, so a second run at the same place measures calibration repeatability);
    - field-strength spread and dip angle across those poses for both calibrations (a calibration that fits keeps both nearly constant);
    - an axis test that checks every signed axis permutation of the magnetometer against the rotation the gyro measured;
    - the rotation between the magnetometer and accelerometer frames that an ellipsoid fit cannot see, and the heading error it causes.
-5. **LIVE** (`[LIVE]`): headings from the saved, fresh, and fresh-plus-alignment models. Hold the board level, then tilt it about ±20° at each cardinal direction; a correct model keeps the heading steady. Tap to run again.
+6. **LIVE** (`[LIVE]`): headings from the saved, fresh, and fresh-plus-alignment models. Hold the board level, then tilt it about ±20° at each cardinal direction; a correct model keeps the heading steady. Tap to run again.
 
-The verdicts compare the dip with `DIAG_EXPECTED_DIP_DEG` (default 66.5°, Fair Lawn NJ). Look up your local inclination (NOAA magnetic field calculator) and build with `-DDIAG_EXPECTED_DIP_DEG=<deg>`; use a negative value in the southern hemisphere.
+The checks use the local field `DIAG_EXPECTED_FIELD_UT` and dip `DIAG_EXPECTED_DIP_DEG` (defaults 50.9 µT and 65.7°: WMM2025 at Fair Lawn NJ, late 2026) and the calibration gravity `ImuCalCfg::g_cal_local` (9.80256 m/s², Fair Lawn NJ). Look up your local field (NOAA magnetic field calculator) and build with `-DDIAG_EXPECTED_FIELD_UT=<uT> -DDIAG_EXPECTED_DIP_DEG=<deg>`; use a negative dip in the southern hemisphere.
 
 ## Magnetometer setting and drift
 

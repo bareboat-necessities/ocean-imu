@@ -13,22 +13,28 @@
   (or send 'n' over serial) to advance:
 
     1. Boot report    sensor wiring, BMI270 AUX settings, saved calibration
-    2. STILL (10 s)   board flat and untouched: update rate, noise, dip
-    3. ROTATE         turn and tilt through every direction, as in the wizard
-    4. Analysis       fresh fit with the wizard's code, saved-vs-fresh field
+    2. STILL (10 s)   board flat and untouched: update rate, noise, dip,
+                      field and gravity against the local reference
+    3. POSES          calibrated accel/mag quality from still poses: set the
+                      board down on each face and some tilts, 3 s each; tap
+                      to finish. Noise, |a|-g and |m|-F, per-axis scale error
+                      and residual bias with standard errors
+    4. ROTATE         turn and tilt through every direction, as in the wizard
+    5. Analysis       fresh fit with the wizard's code, saved-vs-fresh field
                       checks, axis-sign test against the gyro, mag/accel
                       frame alignment, VERDICT lines
-    5. LIVE           headings with saved, fresh and aligned-fresh models for
+    6. LIVE           headings with saved, fresh and aligned-fresh models for
                       the tilt test; tap to run again
 
   Compare runs in both settings: noise in [STILL], and the fits of two
   consecutive runs in [FIT] previous-run-vs-fresh.
 
-  All results are printed on USB serial (115200) as [DIAG], [MAGCFG], [STILL], [ROT],
+  All results are printed on USB serial (115200) as [DIAG], [MAGCFG], [STILL], [POSE], [QUAL], [ROT],
   [FIT], [FIELD], [AXIS], [ALIGN], [VERDICT] and [LIVE] lines.
 */
 
 #include <Arduino.h>
+#include <algorithm>
 #include <M5Unified.h>
 #include <ArduinoOceanImu.h>
 
@@ -38,10 +44,15 @@
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
 #include "imu_calibrate/MagCalSampling.h"
 
-// Local field dip used only for the verdicts. Fair Lawn NJ is about +66.5;
-// look up yours (NOAA/WMM) and rebuild with -DDIAG_EXPECTED_DIP_DEG=<deg>.
+// Local field used only for the checks and verdicts: WMM2025 at Fair Lawn NJ
+// (40.936 N, 74.118 W), late 2026: total 50.9 uT, dip +65.7 deg. Look up yours
+// (NOAA/WMM) and rebuild with -DDIAG_EXPECTED_DIP_DEG=<deg> and
+// -DDIAG_EXPECTED_FIELD_UT=<uT>. Gravity is ImuCalCfg::g_cal_local.
 #ifndef DIAG_EXPECTED_DIP_DEG
-#define DIAG_EXPECTED_DIP_DEG 66.5f
+#define DIAG_EXPECTED_DIP_DEG 65.7f
+#endif
+#ifndef DIAG_EXPECTED_FIELD_UT
+#define DIAG_EXPECTED_FIELD_UT 50.9f
 #endif
 
 using namespace atoms3r_ical;
@@ -55,7 +66,7 @@ static constexpr uint32_t POSE_WINDOW_MS = 200;
 static constexpr int MAX_POSES = 400;
 static constexpr int MAX_PAIRS = 1000;
 
-enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_ROTATE, ROTATE, ANALYZE, LIVE, DRIFT };
+enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_POSES, POSES, WAIT_ROTATE, ROTATE, ANALYZE, LIVE, DRIFT };
 
 static M5Ui ui;
 static ImuCalStoreNvs store;
@@ -96,6 +107,17 @@ static Stats3 st_dip;
 static uint32_t st_intervals = 0, st_int_min = 0, st_int_max = 0;
 static uint64_t st_int_sum = 0;
 static uint32_t mask_ag = 0, mask_g_only = 0, mask_a_only = 0, mask_none = 0, mask_mag = 0;
+
+// POSES: still windows of calibrated data, one per placement.
+static constexpr int MAX_QPOSES = 24;
+static constexpr uint32_t QPOSE_MS = 3000;
+static constexpr float QPOSE_STILL_RAD_S = 0.05f, QPOSE_MOVED_RAD_S = 0.3f;
+struct QPose { V3 a, a_sd, m, m_sd; };
+static QPose qposes[MAX_QPOSES];
+static int n_qposes = 0;
+static Stats3 qw_acc, qw_mag;
+static uint32_t qw_start_ms = 0;
+static bool qw_moved = true;
 
 // ROTATE: wizard capture plus our own still-pose windows.
 static imu_cal::MagCaptureCfg cap_cfg;
@@ -250,6 +272,118 @@ static void bootReport() {
   Serial.printf("[DIAG] saved mag calibration applied at runtime: %s\n", cals.mag.ok ? "YES" : "NO");
 }
 
+static double expectedVertical() { return DIAG_EXPECTED_FIELD_UT * sin(DIAG_EXPECTED_DIP_DEG / kRadToDeg); }
+static double expectedHorizontal() { return DIAG_EXPECTED_FIELD_UT * cos(DIAG_EXPECTED_DIP_DEG / kRadToDeg); }
+
+// Calibrated field split along and across gravity, against the local reference.
+static void fieldVsReference(const V3& m, const V3& a, double& vert, double& horiz) {
+  const V3 down = -a.normalized();
+  vert = m.dot(down);
+  horiz = (m - down * float(vert)).norm();
+}
+
+// Body axis pointing up ("+z up" is screen down), or "tilt".
+static const char* poseFace(const V3& a) {
+  static const char* names[6] = {"+x up", "-x up", "+y up", "-y up", "+z up", "-z up"};
+  for (int j = 0; j < 3; ++j) {
+    const float c = a(j) / a.norm();
+    if (c > 0.9f) return names[2 * j];
+    if (c < -0.9f) return names[2 * j + 1];
+  }
+  return "tilt";
+}
+
+static void poseSample(const V3& a, const V3* m_cal, float gyro_rad_s, uint32_t now) {
+  if (gyro_rad_s > QPOSE_MOVED_RAD_S) qw_moved = true;
+  if (gyro_rad_s > QPOSE_STILL_RAD_S || !qw_moved || n_qposes >= MAX_QPOSES) {
+    qw_acc = Stats3{}; qw_mag = Stats3{}; qw_start_ms = now;
+    return;
+  }
+  qw_acc.add(a);
+  if (m_cal) qw_mag.add(*m_cal);
+  if (uint32_t(now - qw_start_ms) < QPOSE_MS || qw_mag.n < 20) return;
+  QPose& p = qposes[n_qposes++];
+  p.a = qw_acc.avg(); p.a_sd = qw_acc.sd(); p.m = qw_mag.avg(); p.m_sd = qw_mag.sd();
+  double vert = 0, horiz = 0;
+  fieldVsReference(p.m, p.a, vert, horiz);
+  Serial.printf("[POSE] %2d %-5s |a|-g=%+.4f m/s^2 a_sd=[%.4f %.4f %.4f] | m=[%6.2f %6.2f %6.2f] |m|-F=%+5.2f "
+                "V=%5.2f (%+5.2f) H=%5.2f (%+5.2f) dip=%.1f m_sd=[%.2f %.2f %.2f] n=%d\n",
+                n_qposes, poseFace(p.a), p.a.norm() - ImuCalCfg::g_cal_local, p.a_sd.x(), p.a_sd.y(), p.a_sd.z(),
+                p.m.x(), p.m.y(), p.m.z(), p.m.norm() - DIAG_EXPECTED_FIELD_UT, vert, vert - expectedVertical(),
+                horiz, horiz - expectedHorizontal(), dipDeg(p.m, p.a), p.m_sd.x(), p.m_sd.y(), p.m_sd.z(), qw_mag.n);
+  ui.title("POSES");
+  M5.Display.printf("pose %d %s\n|a|-g %+.3f\n|m|-F %+.1f\n\nmove to next\ntap: done\n", n_qposes, poseFace(p.a),
+                    p.a.norm() - ImuCalCfg::g_cal_local, p.m.norm() - DIAG_EXPECTED_FIELD_UT);
+  qw_acc = Stats3{}; qw_mag = Stats3{}; qw_start_ms = now; qw_moved = false;
+}
+
+static void printPoseFit(const char* tag, const ScaleBiasFit& f, const char* unit, double k_mul, const char* k_unit) {
+  if (!f.ok) {
+    Serial.printf("[QUAL] %s fit: NOT DETERMINED (%d equations; visit every face, both signs of each axis)\n", tag,
+                  f.equations);
+    return;
+  }
+  Serial.printf("[QUAL] %s scale error [%+.3f %+.3f %+.3f] +- [%.3f %.3f %.3f] %s, residual bias [%+.4f %+.4f %+.4f] "
+                "+- [%.4f %.4f %.4f] %s, rms %.4f %s\n", tag,
+                f.k.x() * k_mul, f.k.y() * k_mul, f.k.z() * k_mul, f.k_sd.x() * k_mul, f.k_sd.y() * k_mul,
+                f.k_sd.z() * k_mul, k_unit, f.b.x(), f.b.y(), f.b.z(), f.b_sd.x(), f.b_sd.y(), f.b_sd.z(), unit,
+                f.rms, unit);
+}
+
+static void finishPoses() {
+  Serial.println("[QUAL] ------------------------------------------------");
+  Serial.printf("[QUAL] still poses: %d; magnetometer: %s\n", n_qposes, magLabel());
+  if (n_qposes == 0) {
+    Serial.println("[QUAL] no poses captured (hold each still 3 s, turn between them)");
+    Serial.println("[QUAL] ------------------------------------------------");
+    return;
+  }
+  V3 a[MAX_QPOSES], m[MAX_QPOSES];
+  Eigen::Vector3d a_var = Eigen::Vector3d::Zero(), m_var = Eigen::Vector3d::Zero();
+  char faces[64] = "";
+  for (int i = 0; i < n_qposes; ++i) {
+    a[i] = qposes[i].a; m[i] = qposes[i].m;
+    a_var += qposes[i].a_sd.cast<double>().cwiseAbs2();
+    m_var += qposes[i].m_sd.cast<double>().cwiseAbs2();
+    const char* f = poseFace(a[i]);
+    if (strcmp(f, "tilt") && !strstr(faces, f)) { strcat(faces, f); strcat(faces, " "); }
+  }
+  const V3 a_sd = (a_var / n_qposes).cwiseSqrt().cast<float>(), m_sd = (m_var / n_qposes).cwiseSqrt().cast<float>();
+  Serial.printf("[QUAL] faces visited: %s\n", faces[0] ? faces : "none");
+  const float g = ImuCalCfg::g_cal_local;
+  const ScaleBiasFit fa = scaleBiasFit(a, a, n_qposes, g, 0.0f, false);
+  Serial.printf("[QUAL] accel noise sd [%.4f %.4f %.4f] m/s^2 (single sample); |a|-g mean %+.4f sd %.4f m/s^2 over poses "
+                "(g=%.5f)\n", a_sd.x(), a_sd.y(), a_sd.z(), fa.norm_err_mean, fa.norm_err_sd, (double)g);
+  printPoseFit("accel", fa, "m/s^2", 1000.0, "ppt");
+  const float F = DIAG_EXPECTED_FIELD_UT, V = float(expectedVertical());
+  const ScaleBiasFit fm = scaleBiasFit(m, a, n_qposes, F, V, false);
+  const ScaleBiasFit fmv = scaleBiasFit(m, a, n_qposes, F, V, true);
+  Serial.printf("[QUAL] mag noise sd [%.3f %.3f %.3f] uT (single reading); |m|-F mean %+.2f sd %.2f uT over poses "
+                "(F=%.1f); vertical-V mean %+.2f sd %.2f uT (V=%.2f)\n", m_sd.x(), m_sd.y(), m_sd.z(), fm.norm_err_mean,
+                fm.norm_err_sd, (double)F, fmv.vert_err_mean, fmv.vert_err_sd, (double)V);
+  printPoseFit("mag |m|", fm, "uT", 100.0, "%");
+  printPoseFit("mag |m|+vertical", fmv, "uT", 100.0, "%");
+  // Common scale is the calibration's field strength against the local field
+  // (or a disturbed field indoors); a difference between axes is a scale error.
+  const ScaleBiasFit& fb = fmv.ok ? fmv : fm;
+  if (fb.ok) {
+    const float common = fb.k.mean();
+    Serial.printf("[QUAL] mag common scale %+.1f%% (calibrated field %.1f uT vs local %.1f uT)\n", 100.0f * common,
+                  (double)(F * (1.0f + common)), (double)F);
+    // Against the median axis, so one wrong axis does not mark the other two.
+    int order[3] = {0, 1, 2};
+    std::sort(order, order + 3, [&](int i, int j) { return fb.k(i) < fb.k(j); });
+    const int med = order[1];
+    for (int j = 0; j < 3; ++j) {
+      const float rel = fb.k(j) - fb.k(med);
+      const float sd = j == med ? 0.0f : std::hypot(fb.k_sd(j), fb.k_sd(med));
+      Serial.printf("[QUAL] mag %c scale vs median axis %+.1f%% +- %.1f%%%s\n", "xyz"[j], 100.0f * rel, 100.0f * sd,
+                    fabsf(rel) > 0.03f && !(fabsf(rel) < 3.0f * sd) ? " (SCALE MISMATCH)" : "");
+    }
+  }
+  Serial.println("[QUAL] ------------------------------------------------");
+}
+
 static void drawWait(const char* t, const char* a, const char* b, const char* c) {
   ui.setReadRotation();
   ui.title(t);
@@ -277,6 +411,20 @@ static void enter(Phase p) {
       mask_ag = mask_g_only = mask_a_only = mask_none = mask_mag = 0;
       ui.title("STILL");
       ui.line("Do not touch");
+      break;
+    case Phase::WAIT_POSES:
+      drawWait("POSES", "Set down still 3 s", "on each face + tilts", "tap when done");
+      Serial.println("[DIAG] next: POSES. Tap, then set the board down still for 3 s on each of its 6 faces and a few tilts,");
+      Serial.println("[DIAG] at different headings, away from metal. Each pose prints [POSE]; tap to finish with [QUAL].");
+      break;
+    case Phase::POSES:
+      n_qposes = 0;
+      qw_acc = Stats3{}; qw_mag = Stats3{}; qw_start_ms = millis(); qw_moved = true;
+      Serial.printf("[POSE] reference: g=%.5f m/s^2, field %.1f uT, dip %.1f deg (H %.2f, V %.2f uT); mag mode: %s\n",
+                    (double)ImuCalCfg::g_cal_local, (double)DIAG_EXPECTED_FIELD_UT, (double)DIAG_EXPECTED_DIP_DEG,
+                    expectedHorizontal(), expectedVertical(), magLabel());
+      ui.title("POSES");
+      ui.line("Hold each still 3 s");
       break;
     case Phase::WAIT_ROTATE:
       drawWait("ROTATE", "Tap, then SLOWLY", "turn + tilt ALL ways:", "upside down, edges");
@@ -527,6 +675,11 @@ static void onSample(const ImuSample& s) {
     }
   }
 
+  if (phase == Phase::POSES) {
+    const Vector3f mc = cals.applyMag(s.m);
+    poseSample(a_cal, fresh_m ? &mc : nullptr, w_cal.norm(), millis());
+  }
+
   if (phase == Phase::ROTATE) {
     const uint32_t now = millis();
     Vector3f mean;
@@ -576,6 +729,16 @@ static void finishStill() {
                 acosf(fminf(1.0f, fabsf(am.z()) / fmaxf(am.norm(), 1e-6f))) * kRadToDeg,
                 st_gyr.avg().x() * kRadToDeg, st_gyr.avg().y() * kRadToDeg, st_gyr.avg().z() * kRadToDeg);
   const double R = st_raw.n ? sqrt(st_hdg_c * st_hdg_c + st_hdg_s * st_hdg_s) / st_raw.n : 0.0;
+  double vert = 0, horiz = 0;
+  fieldVsReference(mc, am, vert, horiz);
+  const V3 na = st_acc.sd();
+  Serial.printf("[STILL] accel noise sd [%.4f %.4f %.4f] m/s^2, |a|-g=%+.4f m/s^2 (g=%.5f)\n", na.x(), na.y(), na.z(),
+                am.norm() - ImuCalCfg::g_cal_local, (double)ImuCalCfg::g_cal_local);
+  Serial.printf("[STILL] cal field vs local: |m|=%.2f (F %.1f, %+.1f%%) vertical=%.2f (%.2f, %+.1f%%) "
+                "horizontal=%.2f (%.2f, %+.1f%%)\n", mc.norm(), (double)DIAG_EXPECTED_FIELD_UT,
+                100.0 * (mc.norm() / DIAG_EXPECTED_FIELD_UT - 1.0), vert, expectedVertical(),
+                100.0 * (vert / expectedVertical() - 1.0), horiz, expectedHorizontal(),
+                100.0 * (horiz / expectedHorizontal() - 1.0));
   Serial.printf("[STILL] single-reading scatter with saved cal: heading sd=%.1f deg, dip sd=%.1f deg; temp=%.1f C\n",
                 R > 0 ? sqrt(-2.0 * log(R)) * kRadToDeg : NAN, st_dip.sd().x(), (double)last_temp_c);
   Serial.printf("[STILL] dip with saved cal=%.1f (expected %.1f), heading=%.1f; accel D is %s (screen %s)\n",
@@ -654,7 +817,13 @@ void loop() {
       break;
     case Phase::STILL:
       if (now - last_draw_ms >= 250) { ui.bar01((now - phase_ms) / (float)STILL_MS); last_draw_ms = now; }
-      if (now - phase_ms >= STILL_MS) { finishStill(); enter(Phase::WAIT_ROTATE); }
+      if (now - phase_ms >= STILL_MS) { finishStill(); enter(Phase::WAIT_POSES); }
+      break;
+    case Phase::WAIT_POSES:
+      if (advance) enter(Phase::POSES);
+      break;
+    case Phase::POSES:
+      if (advance) { finishPoses(); enter(Phase::WAIT_ROTATE); }
       break;
     case Phase::WAIT_ROTATE:
       if (advance) enter(Phase::ROTATE);
