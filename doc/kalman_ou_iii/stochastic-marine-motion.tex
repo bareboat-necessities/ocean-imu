@@ -52,7 +52,7 @@ acceleration regularity requirements, and exact Kalman state-space
 realizations. Two reproducible comparison figures illustrate time traces and
 spectral shapes. Particular attention is paid to CARMA(3,0), (4,1), and (5,2),
 which permit mean-square acceleration, in contrast to CARMA(2,0) and (4,2).
-These are \emph{candidate models}, not implemented Ocean-IMU methods or claims
+These are \emph{candidate models}, not shipping Ocean-IMU methods or claims
 of improved heave accuracy. The note ends with a controlled experimental
 program for model selection, adaptation, and possible integration.
 \end{abstract}
@@ -522,6 +522,14 @@ being evaluated. A controlled stress test must assess
 whether more aggressive low-frequency regularization
 simply suppresses true long-period displacement.
 
+\subsection{Experimental Implementation}
+An experimental CARMA(3,0), (4,1) and (5,2) vertical prior inside the
+INS, and the benchmark of this program against the unchanged OU--III,
+are documented in \texttt{docs/carma-heave-filter.md}. Its CARMA(5,2)
+numerator is \(s^2+2\zeta_z\omega_z s+\omega_z^2\), with a nonzero DC
+level, rather than the \(\kappa s^2\) of (\ref{eq:52}). It is not a
+shipping estimator.
+
 \subsection{Relation to the Shipping OU--III Stability Study}
 The statistical displacement prior in this proposal is
 \emph{not a law for the actual vessel trajectory}.
@@ -557,7 +565,9 @@ heave reconstruction at realistic IMU sampling rates.
 This is a supervised AI-assisted research proposal
 for future evaluation. The author retains responsibility
 for mathematical and experimental verification.
-No CARMA-based Ocean-IMU runtime results are claimed.
+Results of the experimental CARMA implementation are reported
+separately in \texttt{docs/carma-heave-filter.md}; no shipping
+claim is made.
 
 \begin{thebibliography}{9}
 \bibitem{brockwell01}
