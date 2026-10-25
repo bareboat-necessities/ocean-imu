@@ -67,6 +67,7 @@
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA.h"
 #include "CarmaBenchTruth.h"
+#include "CarmaBenchLevel1.h"
 
 using namespace carma_bench;
 using Eigen::Vector3f;
@@ -78,13 +79,6 @@ namespace {
 // ---------------------------------------------------------------------------
 // Scenarios
 // ---------------------------------------------------------------------------
-
-SpectrumPart jonswap(double hs, double fp, double gamma, double dir = 30.0, double s = 4.0) {
-    SpectrumPart p;
-    p.type = SpectrumType::Jonswap;
-    p.hs_m = hs; p.fp_hz = fp; p.gamma = gamma; p.mean_dir_deg = dir; p.spread_s = s;
-    return p;
-}
 
 // Scenario name without the modifier suffixes handled by the caller.
 std::string scenario_base(const std::string& name) {
@@ -102,60 +96,7 @@ Scenario make_scenario(const std::string& full_name) {
     Scenario sc;
     sc.name = full_name;
     const std::string name = scenario_base(full_name);
-    auto num = [&](const std::string& key, double def) {
-        // name fragments like _fp0.29_ _hs2_ _g3.3_
-        const auto pos = name.find(key);
-        if (pos == std::string::npos) return def;
-        return std::atof(name.c_str() + pos + key.size());
-    };
-    if (name.rfind("jonswap", 0) == 0) {
-        sc.parts = {jonswap(num("_hs", 2.0), num("_fp", 0.29), num("_g", 3.3))};
-    } else if (name.rfind("pm", 0) == 0) {
-        sc.parts = {jonswap(num("_hs", 2.0), num("_fp", 0.25), 1.0)};
-    } else if (name == "mixed_swell_wind") {
-        sc.parts = {jonswap(1.0, 0.09, 5.0, 10.0, 12.0), jonswap(0.8, 0.30, 3.3, 60.0, 4.0)};
-    } else if (name == "bimodal") {
-        sc.parts = {jonswap(1.2, 0.13, 3.3, 0.0, 8.0), jonswap(0.4, 0.42, 3.3, 70.0, 4.0)};
-    } else if (name == "broadband") {
-        SpectrumPart p;
-        p.type = SpectrumType::Band;
-        p.hs_m = 1.0; p.f_lo_hz = 0.10; p.f_hi_hz = 0.70; p.mean_dir_deg = 30.0; p.spread_s = 2.0;
-        sc.parts = {p};
-    } else if (name == "changing_fp") {
-        // Dominant frequency rises smoothly 0.22 -> 0.36 Hz over 300..900 s.
-        sc.parts = {jonswap(0.7, 0.22, 3.3)};
-        sc.warp.enabled = true;
-        sc.warp.t0 = 300.0; sc.warp.t1 = 900.0; sc.warp.s_end = 0.36 / 0.22;
-    } else if (name == "abrupt_change") {
-        // Short wind sea replaced by a long, higher sea over 10 s at 600 s.
-        sc.parts = {jonswap(0.5, 0.35, 3.3, 30.0)};
-        sc.parts_b = {jonswap(2.0, 0.18, 3.3, 60.0)};
-        sc.fade.enabled = true;
-        sc.fade.t_c = 600.0; sc.fade.width = 10.0;
-    } else if (name == "small_amplitude") {
-        sc.parts = {jonswap(0.05, 0.40, 3.3)};
-    } else if (name == "stationary") {
-        sc.stationary = true;
-    } else if (name == "bias_drift") {
-        sc.parts = {jonswap(0.8, 0.29, 3.3)};
-        // ~5 mg ramp on body z and ~3 mg on x, y over 1200 s, plus a slow
-        // 2 mg oscillation: beyond the shared random-walk model.
-        sc.bias.ramp_mps2_per_s = Eigen::Vector3d(0.03, -0.03, 0.05) / 1200.0;
-        sc.bias.sin_amp_mps2 = Eigen::Vector3d(0.0, 0.0, 0.02);
-        sc.bias.sin_period_s = 600.0;
-    } else if (name == "tilted") {
-        sc.parts = {jonswap(0.8, 0.29, 3.3)};
-        sc.att.heel_deg = 15.0;
-        sc.att.trim_deg = 5.0;
-    } else if (name == "large_rotation") {
-        sc.parts = {jonswap(0.8, 0.29, 3.3)};
-        sc.att.roll_gain = 2.0;
-        sc.att.pitch_gain = 2.0;
-        sc.att.yaw_osc_deg = 15.0;
-        sc.att.yaw_osc_hz = 0.05;
-    } else {
-        throw std::invalid_argument("unknown scenario " + name);
-    }
+    if (!base_scenario(name, sc)) throw std::invalid_argument("unknown scenario " + name);
     if (full_name.find("_norao") != std::string::npos) sc.heave_rao = false;
     {
         const auto pos = full_name.find("_T");
@@ -299,125 +240,6 @@ private:
 // ---------------------------------------------------------------------------
 // Level 1: shared measurement-only operating point and reduced filters
 // ---------------------------------------------------------------------------
-
-// The shipping adaptation mechanics on the vertical channel alone: the same
-// WavePeriodEstimator, sigma band, SeaStateAutoTuner, operating-point targets,
-// EMA and r_S schedule as SeaStateFusionFilter_OU_III, minus the Mahony
-// levelling (the attitude is prescribed) and the stillness detector.
-class VerticalTuner : public seastate::common::SeaStateAdaptationCommon {
-public:
-    VerticalTuner()
-        : SeaStateAdaptationCommon(EstimatorBounds{
-              ou3::MAX_TUNE_FREQ_HZ, ou3::MIN_TAU_S, ou3::MAX_TAU_S, ou3::MAX_SIGMA_A,
-              ou3::PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT}) {
-        setOnlineTuneWarmupSec(seastate::common::defaults::STARTUP_ONLINE_TUNE_WARMUP_SEC);
-    }
-
-    void step(float dt, float a_up) {
-        time_ += dt;
-        startup_stage_t_ += dt;
-        if (pending_) {
-            committed_tau_ = tau_applied_;
-            committed_sigma_ = sigma_applied_;
-            committed_RS_ = RS_applied_;
-            pending_ = false;
-        }
-        wave_period_.update(dt, a_up);
-        const float wave_hz = wave_period_.getFrequencyHz();
-        const float f_tune = (wave_period_.hasUsablePeriod() && std::isfinite(wave_hz) && wave_hz > 0.0f)
-                             ? wave_hz : seastate::common::defaults::TUNE_FREQ_PRIOR_HZ;
-        stepVarianceChannel_(dt, a_up, f_tune);
-        if (!advanceStartupStage_(wave_period_.hasUsablePeriod())) return;
-        const float sea_time = measureOperatingPoint_(false, 0.0f, 1.0f, 1.0f, 0.9f);
-        const float rs_t = std::min(std::max(rs_target_(tau_target_, sigma_target_), ou3::MIN_R_S), ou3::MAX_R_S);
-        if (!std::isfinite(tau_applied_)) {
-            tau_applied_ = tau_target_; sigma_applied_ = sigma_target_; RS_applied_ = rs_t;
-        }
-        const float alpha = tauSigmaSmoothingAlpha_(dt, sea_time);
-        const float rs_sec = seastate::common::adaptiveSmoothingHorizonSec(
-            ou3::ADAPT_RS_MULT, tau_target_, rs_t, RS_applied_, ou3::ADAPT_RS_SLEW_LOG, dt);
-        tau_applied_ += alpha * (tau_target_ - tau_applied_);
-        sigma_applied_ += alpha * (sigma_target_ - sigma_applied_);
-        RS_applied_ += (1.0f - std::exp(-dt / rs_sec)) * (rs_t - RS_applied_);
-        stageOnlineTuneCommit_();
-        if (online_tune_apply_pending_) { pending_ = true; online_tune_apply_pending_ = false; }
-        if (startup_stage_ == StartupStage::TunerReady && std::isfinite(committed_tau_)) ready_ = true;
-    }
-
-    bool ready() const { return ready_; }
-    float tau() const { return committed_tau_; }
-    float sigma() const { return committed_sigma_; }
-    float rs() const { return committed_RS_; }
-    float ts() const { return pseudo_update_period_for_(committed_tau_); }
-    float sigma_floor() const { return std::max(0.05f, band_noise_floor_sigma_()); }
-    float noise_floor() const { return band_noise_floor_sigma_(); }
-
-    static float rs_target_(float tau, float sigma) {
-        // SpectralMSE law of SeaStateFusionFilter_OU_III with its constants.
-        const float TS = std::min(std::max(seastate::common::defaults::PSEUDO_UPDATE_TAU_RATIO * tau,
-                                           seastate::common::defaults::PSEUDO_UPDATE_PERIOD_MIN_S),
-                                  ou3::PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT);
-        const float sigma_aB = std::max(sigma / 0.9f, 1e-6f);
-        const float qpow = std::pow(2.0f * ou3::R_S_ACCEL_NOISE_DENSITY_DEFAULT, 1.0f / 14.0f);
-        const float tau2 = tau * tau;
-        return ou3::R_S_MSE_COEFF_DEFAULT * qpow * std::pow(sigma_aB * tau2 * tau2, 6.0f / 7.0f) / std::sqrt(TS);
-    }
-
-private:
-    WavePeriodEstimator wave_period_;
-    float tau_applied_ = NAN, sigma_applied_ = NAN, RS_applied_ = NAN;
-    float committed_tau_ = NAN, committed_sigma_ = NAN, committed_RS_ = NAN;
-    bool pending_ = false;
-    bool ready_ = false;
-};
-
-struct OperatingPoint {
-    bool valid = false;
-    float tau = NAN, sigma_aw = NAN, rs = NAN, ts = NAN, sigma_floor = 0.05f, noise_floor = 0.0f;
-};
-
-// Residual accelerometer-bias OU, the shipping prior.
-struct BiasPrior {
-    float tau = 5000.0f, q = 2.5e-7f, sigma0 = 0.004f;
-};
-
-// Plain float Kalman filter with scalar updates in Joseph form.
-template<int NS>
-struct LinearKF {
-    using Vec = Eigen::Matrix<float,NS,1>;
-    using Mat = Eigen::Matrix<float,NS,NS>;
-    Vec x = Vec::Zero();
-    Mat P = Mat::Zero();
-    float last_nis = NAN;
-
-    void predict(const Mat& F, const Mat& Q) {
-        x = (F * x).eval();
-        P = (F * P * F.transpose() + Q).eval();
-        P = 0.5f * (P + P.transpose()).eval();
-    }
-    // z = h^T x + n with h having entries at the given indices.
-    template<int M>
-    void update(const int (&idx)[M], const float (&coef)[M], float z, float R) {
-        Vec Ph = Vec::Zero();
-        float pred = 0.0f;
-        for (int k = 0; k < M; ++k) {
-            Ph += P.col(idx[k]) * coef[k];
-            pred += coef[k] * x(idx[k]);
-        }
-        float S = R;
-        for (int k = 0; k < M; ++k) S += coef[k] * Ph(idx[k]);
-        if (!(S > 0.0f) || !std::isfinite(S)) return;
-        const Vec K = Ph / S;
-        const float r = z - pred;
-        last_nis = r * r / S;
-        x += K * r;
-        // Joseph: (I - K h^T) P (I - K h^T)^T + K R K^T
-        Mat IKH = Mat::Identity();
-        for (int k = 0; k < M; ++k) IKH.col(idx[k]) -= K * coef[k];
-        P = (IKH * P * IKH.transpose() + K * R * K.transpose()).eval();
-        P = 0.5f * (P + P.transpose()).eval();
-    }
-};
 
 class IVertical : public IEstimator {
 public:
@@ -652,16 +474,23 @@ WindowStats window_stats(const Series& s, const std::vector<double>& h_true_all,
 
 double convergence_time(const Series& s, double t_live, double rms_ref, double dt) {
     // First time after which the 30 s rolling RMS heave error stays within
-    // 1.5 x the scored-window RMS for the rest of the record.
+    // 1.5 x the scored-window RMS for the rest of the record.  The window
+    // starts at Live: the error is NaN before it, and a NaN in the running
+    // sum would make every later window NaN, which std::max(0.0, NaN) used to
+    // turn into a rolling RMS of 0 and a convergence time of 0 for every
+    // tuner-driven run.
     if (!std::isfinite(t_live) || !(rms_ref > 0)) return NAN;
     const int L = static_cast<int>(std::lround(30.0 / dt));
     const size_t N = s.t.size();
     std::vector<double> roll(N, NAN);
     double acc = 0;
+    size_t n = 0;
     for (size_t i = 0; i < N; ++i) {
+        if (!std::isfinite(s.eh[i])) { acc = 0; n = 0; continue; }
         acc += double(s.eh[i]) * s.eh[i];
-        if (i >= static_cast<size_t>(L)) acc -= double(s.eh[i - L]) * s.eh[i - L];
-        if (i + 1 >= static_cast<size_t>(L)) roll[i] = std::sqrt(std::max(0.0, acc / L));
+        ++n;
+        if (n > static_cast<size_t>(L)) acc -= double(s.eh[i - L]) * s.eh[i - L];
+        if (n >= static_cast<size_t>(L)) roll[i] = std::sqrt(std::max(0.0, acc / L));
     }
     double t_conv = NAN;
     for (size_t i = N; i-- > 0;) {

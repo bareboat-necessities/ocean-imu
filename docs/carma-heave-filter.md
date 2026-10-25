@@ -328,7 +328,8 @@ records.
 **Metrics.**  Scored on `t >= 300 s` of 1200 s records (and the last 60 s):
 heave RMS, RMS/`H_s`, mean, peak; velocity and acceleration RMS; low-frequency
 error (RMS of the 60 s moving average); linear drift trend; convergence time
-(after Live, the 30 s rolling RMS stays below 1.5x the scored RMS); mean NIS
+(after Live, the 30 s rolling RMS stays below 1.5x the scored RMS; see 7.5
+on the committed values); mean NIS
 of the accelerometer innovation and the fraction inside its 95 % chi-square
 interval; NEES of `[p_z, v_z]` (expected 2); failures (non-finite,
 negative variance, `|e| > 10 H_s`); host update time and object size.
@@ -481,9 +482,14 @@ NEES of `[p_z, v_z]` (expected 2): single-peaked seas 1.0-1.3 for OU-III,
 shape the CARMA covariance is far too small and nothing in the filter
 detects it.  The accelerometer NIS is below its expected value for every
 filter (mean 0.2-0.3 against 3) because the shipping measurement variance is
-deliberately conservative; CARMA's is lower than OU-III's.  Convergence time
-does not separate the filters: all are within 1.5x their scored RMS when
-Live is declared.
+deliberately conservative; CARMA's is lower than OU-III's.  The `conv_s`
+column of `raw_runs.csv` is not a measurement: the rolling window of
+`convergence_time()` started before Live, a NaN error entered its running sum
+and `std::max(0.0, NaN)` turned every later window into 0, so every
+tuner-driven run reported 0 s.  The routine is fixed in `carma_bench.cpp`
+(the window restarts at Live); corrected convergence and startup errors are
+reported in `docs/carma-three-axis.md`.  Every other column is unaffected
+(re-runs are bit identical).
 
 ### 7.6 Example trajectories and spectra
 

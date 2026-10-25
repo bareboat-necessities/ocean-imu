@@ -467,8 +467,8 @@ def cmd_report(args):
         # Drift and consistency table for this level.
         lines.append(f"\n### Drift, final minute and consistency ({level}, {params})\n")
         lines.append("| Scenario | Filter | RMS h (m) | mean h (m) | peak h (m) | LF RMS h (m) | final-60 s RMS h (m) |"
-                     " final-60 s mean h (m) | RMS v (m/s) | RMS a (m/s^2) | NEES [p,v] (2) | NIS | conv (s) | failures |")
-        lines.append("|" + "---|" * 14)
+                     " final-60 s mean h (m) | RMS v (m/s) | RMS a (m/s^2) | NEES [p,v] (2) | NIS | failures |")
+        lines.append("|" + "---|" * 13)
         for sc in [s for s in PRIMARY + QUIET + ["bias_drift"] + LONG if (level, params, s) in S]:
             g = S[(level, params, sc)]
             for f in [base] + [c if level == "full" else c + "v" for c in cands]:
@@ -481,7 +481,7 @@ def cmd_report(args):
                     f"{np.nanmean(a['f60_rms_h']):.4f} | {np.nanmean(a['f60_mean_h']):+.4f} | "
                     f"{np.nanmean(a['rms_v']):.4f} | {np.nanmean(a['rms_a']):.4f} | "
                     f"{np.nanmean(a['nees2']):.2f} | {np.nanmean(a['nis']):.3f} | "
-                    f"{np.nanmedian(a['conv_s']):.0f} | {int(np.nansum(a['failed']))} |")
+                    f"{int(np.nansum(a['failed']))} |")
 
     # Oracle-shape diagnostic.
     mrows = read_rows(MATCHED_RAW)
