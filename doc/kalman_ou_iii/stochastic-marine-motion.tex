@@ -655,7 +655,14 @@ velocity (6 if consistent). Experimental; no hardware.}
 \multicolumn{2}{c}{Swell + wind sea} & \multicolumn{2}{c}{Still IMU (mm)} & NEES\\
 Prior (x/y; z) & States & H & Z & H & Z & H & Z & H & Z & JONSWAP / mixed\\
 \midrule
-TEX_ROWS
+OU--III; OU--III & 21 & 5.18 & 3.12 & 5.58 & 3.26 & 18.26 & 10.27 & 53 & 27 & 7.7 / 31\\
+OU--III; C41 & 21 & 5.18 & 1.82 & 5.58 & 2.10 & 18.27 & 11.64 & 53 & 53 & 7.7 / 52\\
+OU--III; C52 & 22 & 5.18 & 2.03 & 5.58 & 2.68 & 18.31 & 27.27 & 53 & 46 & 7.9 / 173\\
+C41; C41 & 21 & 2.66 & 1.83 & 2.91 & 2.10 & 15.14 & 11.65 & 84 & 53 & 5.4 / 64\\
+C52; C52 & 24 & 2.05 & 2.04 & 2.68 & 2.68 & 31.67 & 27.23 & 87 & 46 & 4.4 / 324\\
+C52; C41 & 23 & 2.05 & 1.83 & 2.67 & 2.10 & 31.08 & 11.65 & 87 & 53 & 4.1 / 190\\
+C41; C52 & 22 & 2.66 & 2.04 & 2.91 & 2.69 & 15.31 & 27.27 & 84 & 46 & 5.7 / 186\\
+C52+\(S\); C52 & 26 & 2.02 & 2.04 & 2.77 & 2.68 & 31.76 & 27.23 & 80 & 46 & 4.5 / 336\\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -664,14 +671,18 @@ CARMA(4,1) on the horizontal axes was better than OU--III on every one of
 31 simulated conditions (by 43--73\,\%, by 17\,\% on the swell + wind sea),
 at the same state dimension and lower arithmetic cost. CARMA(5,2) was better
 still on most single-peaked seas but collapsed on the swell + wind sea: its
-numerator zeros sit at \(0.151\,\kappa\)\,Hz, and the frequency mapping
-(\(\kappa\approx0.62\)) places that notch on the 0.09\,Hz swell, which then
-cannot be represented at all; the error is signal distortion, not noise,
-and leaks into the tilt estimate. Carrying OU--III's \(S=0\) onto a DC-zero
+numerator zeros sit at \(0.151\,\kappa\)\,Hz, and the operating frequency
+that the tuner measures on that sea (median 0.22\,Hz, \(\kappa\approx0.59\))
+places the notch at 0.089\,Hz, on the 0.09\,Hz swell, which then cannot be
+represented at all; the error is signal distortion, not noise, and leaks
+into the tilt estimate. Carrying OU--III's \(S=0\) onto a DC-zero
 CARMA(4,1) lowered low-frequency errors but is invalid by Proposition~1;
 the derived \(S\) law on CARMA(5,2) changed little. Every CARMA prior showed
-more phantom displacement on a still IMU than OU--III and, on the two-peaked
-sea, a covariance that is not an error bound.
+more phantom displacement on a still IMU than OU--III (at the 20\,s periods
+where the tuner parks the prior in still water) and, on the two-peaked sea, a
+covariance that is not an error bound. On an independent replay dataset
+(another hull, single-peaked seas) the horizontal and heave gains of
+CARMA(4,1) were 52\,\% and 37\,\%.
 
 On this evidence CARMA(4,1) on all three axes is the research candidate,
 with explicit obstacles: still-water phantom displacement, the swell + wind

@@ -48,6 +48,9 @@ public:
     virtual Estimate3 estimate() const = 0;
     virtual size_t memory_bytes() const = 0;
     virtual int states() const = 0;
+    // CARMA operating frequency kappa * f_z,base (the tuner's f_tune); NaN
+    // for OU-III, which has no CARMA model.  Diagnostic output only.
+    virtual double op_fz_hz() const { return NAN; }
 };
 
 // Shipping simulator configuration (as carma_bench).

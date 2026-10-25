@@ -316,6 +316,7 @@ def report():
             lines.append("")
 
     lines += band_tables()
+    lines += operating_point_table()
 
     # Dataset.
     ds = load(OUT / "dataset_runs.csv")
@@ -374,6 +375,31 @@ def band_tables():
                 vals = [1000 * np.sqrt(P[(fr >= lo) & (fr < hi)].sum() * dfr) for lo, hi in BANDS]
                 out.append(f"| {a} | {LABEL[f]} | {1000 * np.std(e):.1f} | " + " | ".join(f"{v:.1f}" for v in vals) + " |")
         out.append("")
+    return out
+
+
+def operating_point_table():
+    """The tuner-driven CARMA operating frequency (kappa * f_z,base) in the seed-1 traces."""
+    import carma3_benchmark as cb
+    out = ["### CARMA operating frequency f_z = kappa * f_z,base, seed 1, complete INS (t >= 300 s)", "",
+           "| Scenario | filter | median (Hz) | 5-95 % (Hz) | C52 notch 0.151 kappa at the median (Hz) |",
+           "|---|---|---|---|---|"]
+    for level, sc, _, filters in cb.TRACES:
+        p = cb.trace_path(level, sc, 1)
+        if level != "full" or not p.exists():
+            continue
+        d = load_trace(p)
+        s = d["t"] >= 300
+        for f in filters.split(","):
+            k = f"fz_{f}"
+            if k not in d or not np.any(np.isfinite(d[k][s])):
+                continue
+            v = d[k][s]
+            med = np.nanmedian(v)
+            notch = f"{0.151 * med / 0.3704:.3f}" if f.endswith("52") else ""
+            out.append(f"| {sc_label(sc)} | {LABEL[f]} | {med:.3f} | {np.nanpercentile(v, 5):.3f}-"
+                       f"{np.nanpercentile(v, 95):.3f} | {notch} |")
+    out.append("")
     return out
 
 
@@ -572,7 +598,7 @@ def traces(plt, svgd):
         plt.close(fig)
 
     for sc, fname, title, win in (
-            ("stationary", "stationary_xyz.svg", "Still IMU: phantom displacement", (0, 1200)),
+            ("stationary", "stationary_xyz.svg", "Still IMU: phantom displacement after the startup", (300, 1200)),
             (f"{J29}+maneuver", "maneuver_xyz.svg", "Manoeuvring (speed changes, turns): wave-coordinate error",
              (300, 1100)),
             ("mixed_swell_wind", "mixed_xyz.svg", "Mixed swell + wind sea: truth and estimates", (700, 820))):
@@ -625,7 +651,8 @@ def dataset_figure(plt, svgd, ds):
         ax.set_xticklabels([i.replace("wave_data_", "").split("_L")[0] for i in inputs], fontsize=6, rotation=30)
         ax.set_ylabel(("horizontal" if key == "h" else "heave") + " RMS (% H_s)")
         style(ax)
-    axes[0].legend(fontsize=6, ncol=2)
+    h, lab = axes[0].get_legend_handles_labels()
+    fig.legend(h, lab, fontsize=7, ncol=5, loc="lower center", bbox_to_anchor=(0.5, -0.12), frameon=False)
     fig.tight_layout()
     svgd.save_svg(fig, OUT / "dataset_comparison.svg", bbox_inches="tight")
     plt.close(fig)

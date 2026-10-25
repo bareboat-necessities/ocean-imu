@@ -12,24 +12,26 @@ a stability, admissibility or hardware statement.
 
 **Result (simulation only; no hardware).**  CARMA(4,1) on all three axes
 (21 states, the same as OU-III, 25 % fewer multiply-adds per sample) is the
-only configuration that beats OU-III horizontally on every simulated
-condition.  In the paired complete-INS benchmark (100 seeds on the principal
-seas, 30 on 27 further conditions) its horizontal RMS error is 43-73 % lower
-on single-peaked, bimodal, broadband, underway, anchored, drifting and
-manoeuvring cases and 17 % lower on the mixed swell + wind sea.  Its heave is
-PR #704's CARMA(4,1): 27-46 % better, 13 % worse on the mixed sea.
-CARMA(5,2) horizontally is better still on most single-peaked seas but 71 %
-worse than OU-III on the mixed sea, because its spectral notch lands on the
-swell; mixed orders inherit that failure.  A DC-zero CARMA needs no
-horizontal `S` state, and OU-III's `S = 0` cannot be carried over to one (no
-stabilizing Riccati solution); on CARMA(5,2), the derived `S` law changes
-little.  Correlated x-y driving noise is free and gained 5 % with the
-oracle correlation, untested with an estimated one.  Against this, every
-CARMA variant is worse than OU-III on a still IMU (horizontal phantom 84
-against 53 mm RMS, heave 53 against 27 mm) and more overconfident on the
-mixed sea.  The models are re-discretized on every sample whose interval
-changes.  **Recommendation: B, CARMA(4,1) on X/Y and Z, as the research
-candidate; not shippable** (section 12).
+only configuration that beats OU-III horizontally on every simulated sea.
+In the paired complete-INS benchmark (100 seeds on the four principal seas,
+30 or 20 on 27 further sea conditions) its horizontal RMS error is 43-73 %
+lower on single-peaked, bimodal, broadband, underway, anchored, drifting and
+manoeuvring cases and 17 % lower on the mixed swell + wind sea; on an
+independent replay hull it is 52 % lower.  Its heave is PR #704's
+CARMA(4,1): 27-46 % better, 13 % worse on the mixed sea.  CARMA(5,2)
+horizontally is better still on most single-peaked seas but 73 % worse than
+OU-III on the mixed sea, because its spectral notch lands on the swell;
+mixed orders inherit that failure.  A DC-zero CARMA needs no horizontal `S`
+state, and OU-III's `S = 0` cannot be carried over to one (no stabilizing
+Riccati solution); on CARMA(5,2), the derived `S` law changes little.
+Correlated x-y driving noise is free and gained 5 % with the oracle
+correlation, untested with an estimated one.  Against this, every CARMA
+variant is worse than OU-III on a still IMU (horizontal phantom 84 against
+53 mm RMS, heave 53 against 27 mm, a heave startup transient 2-3 times
+larger) and more overconfident on the mixed sea, and the models are
+re-discretized on every sample whose interval changes.  **Recommendation:
+B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
+(section 12).
 
 ## 1. Starting point
 
@@ -426,14 +428,14 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
 | Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed / jittered dt (us) |
 |---|---|---|---|---|---|---|---|---|---|
-| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | TIMING_OU3 |
-| OU-III x/y + C41 z (PR #704) | Z41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4760 | 150 766 | 1344 | TIMING_Z41 |
-| OU-III x/y + C52 z (PR #704) | Z52 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5224 | 153 358 | 2000 | TIMING_Z52 |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 5144 | 136 799 | 1344 | TIMING_A41 |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6448 | 141 055 | 2000 | TIMING_A52 |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5608 | 147 121 | 2000 | TIMING_M45 |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5952 | 148 058 | 2000 | TIMING_M54 |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7296 | 145 999 | 2032 | TIMING_A52S |
+| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | 8.94 / 9.55 |
+| OU-III x/y + C41 z (PR #704) | Z41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4760 | 150 766 | 1344 | 7.03 / 7.78 |
+| OU-III x/y + C52 z (PR #704) | Z52 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5224 | 153 358 | 2000 | 7.37 / 8.74 |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 5144 | 136 799 | 1344 | 5.83 / 6.89 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6448 | 141 055 | 2000 | 6.72 / 8.94 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5608 | 147 121 | 2000 | 6.15 / 7.80 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5952 | 148 058 | 2000 | 6.39 / 8.05 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7296 | 145 999 | 2032 | 7.97 / 13.28 |
 | C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5880 | 143 966 | 1536 | -- |
 | C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | as A41 | as A41 | as A41 | -- |
 | shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 9315 | not implemented in C++ | | | |
@@ -461,15 +463,19 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 * **Host time** (x86-64, `-O3`, one process on an idle host, mean update
   after Live over three JONSWAP seeds) ranks the variants; it is not an
   ESP32-S3 time.  An absolute target estimate would need a measured
-  host/target ratio for this code, which does not exist; the defensible
-  statement is relative: every C41 variant costs less per sample than the
-  OU-III filter that the AtomS3R runs today.
+  host/target ratio for this code, which does not exist.  The defensible
+  statement is relative: on this host every C41 variant costs less per
+  sample than the OU-III filter that the AtomS3R runs today; that the
+  ordering holds on the target is plausible (similar operation counts and
+  code paths) but not measured.
 * **Discretization.**  `F`, `Q` are recomputed only when the sample interval
   or the committed operating point changes (one horizontal model serves x and
   y through the Kronecker structure).  The library compares the interval
   exactly, so a jittered sample clock re-runs the scaled Taylor/doubling
-  exponential of every CARMA block on every sample (the "jittered" column);
-  OU-III's closed-form transition has no such cost.  A dt quantized to the
+  exponential of every CARMA block on every sample (the "jittered" column:
+  C41 x/y/z 5.83 -> 6.89 us, C52 x/y/z 6.72 -> 8.94 us, C52 + S 7.97 ->
+  13.28 us, against OU-III 8.94 -> 9.55 us); OU-III's closed-form transition
+  has no such cost.  A dt quantized to the
   nominal rate, or a cached table, would remove it at a controlled error;
   this is not implemented (PR #704's vertical model behaves the same way).
 * **Conditioning** is section 3: correlation-scaled `cond(P_inf)` 5.5 (C41)
@@ -530,14 +536,25 @@ truth enters any estimator or tuner.  Two levels:
 
 100 paired seeds on the four principal seas at both levels; 30 on 27
 secondary complete-INS conditions and 5 level-1 ones; 20 seeds of 3600 s on
-JONSWAP and the mixed sea; RUNS_TOTAL filter runs in `raw_runs.csv`.  All
+JONSWAP and the mixed sea; 18490 filter runs in `raw_runs.csv`.  All
 tables, per-axis metrics, confidence intervals and Wilcoxon tests are in the
 generated `reports/results/carma3_benchmark/summary.md` and
 `paired_stats.json`; the tables below are excerpts.
 
 ### 9.1 Principal seas (complete INS, 100 paired seeds)
 
-HEADLINE_TABLE
+| Sea | | OU-III | OU-III x/y + C41 z | C41 x/y/z | C52 x/y/z | C52 x/y + C41 z |
+|---|---|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m (n=100) | horizontal | 5.18 | 5.18 (-0.0 % [-0.1, +0.0], win 45 %) | 2.66 (+48.7 % [+48.4, +48.9]) | 2.05 (+60.5 % [+60.1, +60.8]) | 2.05 (+60.4 % [+60.1, +60.8]) |
+|  | heave | 3.12 | 1.82 (+41.6 % [+41.2, +41.9]) | 1.83 (+41.4 % [+41.0, +41.7]) | 2.04 (+34.5 % [+34.0, +35.1]) | 1.83 (+41.4 % [+41.1, +41.7]) |
+| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 5.58 (-0.0 % [-0.1, +0.0], win 46 %) | 2.91 (+47.8 % [+47.6, +48.0]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
+|  | heave | 3.26 | 2.10 (+35.7 % [+35.3, +36.2]) | 2.10 (+35.5 % [+35.0, +36.0]) | 2.68 (+17.7 % [+16.3, +19.0], win 98 %) | 2.10 (+35.5 % [+35.1, +36.0]) |
+| mixed swell + wind (n=100) | horizontal | 18.26 | 18.27 (-0.0 % [-0.0, -0.0], win 18 %) | 15.14 (+17.1 % [+16.8, +17.5]) | 31.67 (-73.4 % [-74.5, -72.2], win 0 %) | 31.08 (-70.2 % [-71.2, -69.1], win 0 %) |
+|  | heave | 10.27 | 11.64 (-13.3 % [-13.8, -12.8], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) | 27.23 (-165.2 % [-166.8, -163.5], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) |
+| changing f_p (n=100) | horizontal | 5.70 | 5.70 (-0.0 % [-0.1, +0.0], win 42 %) | 2.88 (+49.4 % [+49.0, +49.7]) | 2.47 (+56.7 % [+56.2, +57.1]) | 2.47 (+56.7 % [+56.2, +57.1]) |
+|  | heave | 3.26 | 1.99 (+38.9 % [+38.5, +39.4]) | 2.00 (+38.7 % [+38.2, +39.1]) | 2.36 (+27.6 % [+26.8, +28.3]) | 2.00 (+38.7 % [+38.2, +39.1]) |
+
+RMS error in % of incident H_s; in brackets the paired change against OU-III with its 95 % bootstrap interval; every candidate is better (or worse) than OU-III on every seed unless a win rate is given.
 
 ![Paired improvement, horizontal](../reports/results/carma3_benchmark/paired_improvement_horizontal.svg)
 ![Paired improvement, heave](../reports/results/carma3_benchmark/paired_improvement_heave.svg)
@@ -545,32 +562,79 @@ HEADLINE_TABLE
 
 ### 9.2 All conditions
 
-ALL_CONDITIONS_TABLE
+| Condition | n | horizontal: OU-III / C41 / C52 / C52 x/y + C41 z | heave: OU-III / C41 / C52 |
+|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m, following | 30 | 5.15 / 2.67 / 2.02 / 2.02 | 3.15 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, beam | 30 | 5.31 / 2.81 / 2.23 / 2.23 | 3.16 / 1.84 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, head | 30 | 5.11 / 2.65 / 2.00 / 2.00 | 3.15 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, bow-quartering | 30 | 5.24 / 2.77 / 2.18 / 2.18 | 3.16 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, head, underway 2.5 m/s | 30 | 3.65 / 2.06 / 1.91 / 1.91 | 2.46 / 1.79 / 2.41 |
+| JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 / 4.03 / 4.04 / 4.04 | 8.43 / 4.72 / 5.25 |
+| JONSWAP 0.29 Hz, 0.8 m, beam, underway 2.5 m/s | 30 | 5.47 / 3.00 / 2.86 / 2.86 | 3.31 / 2.15 / 2.83 |
+| JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 / 3.64 / 2.64 / 2.64 | 3.16 / 1.82 / 2.04 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 / 5.39 / 3.40 / 3.40 | 3.14 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 / 14.11 / 8.01 / 8.01 | 3.20 / 1.83 / 2.04 |
+| bimodal | 30 | 11.10 / 6.22 / 9.18 / 9.17 | 5.90 / 4.18 / 7.89 |
+| broadband | 30 | 16.85 / 7.34 / 7.60 / 7.60 | 8.32 / 5.39 / 5.79 |
+| abrupt change | 30 | 5.58 / 2.86 / 2.83 / 2.83 | 2.83 / 1.79 / 2.43 |
+| JONSWAP 0.20 Hz, 1 m | 30 | 7.65 / 3.75 / 3.08 / 3.08 | 4.15 / 2.35 / 2.52 |
+| JONSWAP 0.45 Hz, 0.4 m | 30 | 4.03 / 2.04 / 1.51 / 1.51 | 2.67 / 1.68 / 1.92 |
+| PM 0.15 Hz, 2.5 m | 30 | 7.42 / 3.90 / 4.32 / 4.32 | 3.68 / 2.40 / 3.57 |
+| JONSWAP 0.10 Hz, 4 m | 30 | 10.26 / 4.77 / 4.34 / 4.34 | 4.69 / 2.60 / 2.83 |
+| extra accel bias drift | 30 | 5.22 / 2.70 / 2.09 / 2.09 | 3.91 / 2.11 / 2.18 |
+| 15/5 deg heel/trim | 30 | 5.25 / 2.72 / 2.10 / 2.10 | 3.15 / 1.84 / 2.05 |
+| large rotation | 30 | 5.37 / 2.85 / 2.26 / 2.26 | 3.14 / 1.83 / 2.05 |
+| 5 cm sea | 30 | 32.66 / 8.92 / 8.13 / 8.13 | 17.14 / 9.58 / 9.73 |
+| JONSWAP 0.29 Hz, 0.8 m, 300 s magnetometer gap | 30 | 5.27 / 2.71 / 2.10 / 2.10 | 3.14 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, +-25 % dt jitter | 30 | 5.26 / 2.71 / 2.10 / 2.10 | 3.15 / 1.84 / 2.07 |
+| JONSWAP 0.29 Hz, 0.8 m, legacy horizontal truth | 30 | 5.52 / 2.97 / 2.45 / 2.45 | 3.14 / 1.83 / 2.05 |
+| mixed swell + wind, legacy horizontal truth | 30 | 15.62 / 12.82 / 26.25 / 25.86 | 10.27 / 11.65 / 27.03 |
+| JONSWAP 0.29 Hz, 0.8 m, 3600 s | 20 | 5.18 / 2.64 / 2.03 / 2.03 | 3.12 / 1.82 / 2.03 |
+| mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.71 / 30.89 | 10.25 / 11.61 / 27.06 |
+
+RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C41's; of OU-III x/y + C41 z also (within 0.02 % H_s).
 
 * **CARMA(4,1) horizontally is better than OU-III on every condition**: 43-73 %
   on every single-peaked, bimodal, broadband, directional, underway, anchored,
   drifting, manoeuvring, low-amplitude, sensor-fault and long case, 17-18 % on
   the mixed sea (also with the legacy horizontal truth and over 3600 s).
-  Heading changes it by a few per cent; the following sea at 2.5 m/s, whose
-  encounter frequencies fold towards zero, is where OU-III is weakest
-  (10.5 % H_s) and C41 gains most (4.0 %).
+  Heading changes it by a few per cent.  The following sea at 2.5 m/s, whose
+  encounter frequencies fold towards zero, doubles OU-III's error (10.5 %
+  H_s) and C41 holds 4.0 %; the 5 cm sea, where noise dominates, is where
+  C41 gains most (32.7 -> 8.9 %).
 * **CARMA(5,2) horizontally** is better than C41 on single-peaked seas
   (JONSWAP 2.05 against 2.66 % H_s) and much better under low-frequency
   translation (manoeuvring 8.0 against 14.1, drifting 3.4 against 5.4), level
   with it on broadband and abrupt-change seas, worse on bimodal (9.2 against
-  6.2) and PM 0.15 Hz, and **71 % worse than OU-III on the mixed sea**.
+  6.2) and PM 0.15 Hz, and **73 % worse than OU-III on the mixed sea**.
 * **Heave** depends only on the vertical model: the horizontal model changes
   heave by at most 0.02 % H_s (Z41 against A41).  C41 z is better than C52 z
   on every wave condition (the PR #704 result, here with 30-100 seeds per
-  condition); both lose to OU-III on the mixed sea (-13 %, -163 %) and C52 z
+  condition); both lose to OU-III on the mixed sea (-13 %, -165 %) and C52 z
   also on the bimodal sea (-34 %).
 * **Mixed orders.**  C52 x/y + C41 z (M54) combines the best single-peaked
   horizontal and heave results and inherits C52's horizontal failure on the
-  mixed sea (M54_MIXED); C41 x/y + C52 z (M45) is dominated by C41 x/y/z.
+  mixed sea (horizontal 31.08 % H_s, -70.2 % [-71.2, -69.1] against OU-III);
+  C41 x/y + C52 z (M45) is dominated by C41 x/y/z.
 
 ### 9.3 Horizontal S and shape variants
 
-S_TABLE
+| Sea | n | OU-III | C41 | C41 + S (OU-III r_S) | C41, sway-fitted | C52 | C52 + S (derived law) |
+|---|---|---|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m | 100 | 5.18 | 2.66 | 2.56 | 2.42 | 2.05 | 2.02 |
+| PM 0.25 Hz, 1 m | 100 | 5.58 | 2.91 | 3.10 | 2.75 | 2.68 | 2.77 |
+| mixed swell + wind | 100 | 18.26 | 15.14 | 17.46 | 16.37 | 31.67 | 31.76 |
+| changing f_p | 100 | 5.70 | 2.88 | 2.91 | 2.64 | 2.47 | 2.47 |
+| JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 | 4.03 | 3.59 | 2.78 | 4.04 | 3.81 |
+| JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 | 3.64 | 3.41 | 3.19 | 2.64 | 2.62 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 | 5.39 | 4.92 | 4.79 | 3.40 | 3.36 |
+| JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 | 14.11 | 12.72 | 12.72 | 8.01 | 7.98 |
+| bimodal | 30 | 11.10 | 6.22 | 6.91 | 6.43 | 9.18 | 9.40 |
+| broadband | 30 | 16.85 | 7.34 | 8.27 | 7.77 | 7.60 | 7.87 |
+| PM 0.15 Hz, 2.5 m | 30 | 7.42 | 3.90 | 4.41 | 3.75 | 4.32 | 4.46 |
+| JONSWAP 0.10 Hz, 4 m | 30 | 10.26 | 4.77 | 5.18 | 4.52 | 4.34 | 4.40 |
+
+Horizontal RMS, % of incident H_s, complete INS.
 
 * **CARMA(5,2) + S (derived law, A52S)** is within a few per cent of
   CARMA(5,2) everywhere (JONSWAP 2.02 against 2.05, PM 2.77 against 2.68,
@@ -596,34 +660,132 @@ S_TABLE
 
 ### 9.4 Still IMU
 
-STILL_TABLE
+| Filter | horizontal RMS (mm) | of which 60 s mean (mm) | heave RMS (mm) | horizontal, calibrated bias (mm) |
+|---|---|---|---|---|
+| OU-III (shipping) | 52.6 | 16.5 | 27.0 | 52.6 |
+| OU-III x/y + C41 z | 52.6 | 16.5 | 52.6 | 52.6 |
+| OU-III x/y + C52 z | 52.6 | 16.5 | 46.3 | 52.6 |
+| C41 x/y/z | 84.3 | 28.7 | 52.6 | 84.3 |
+| C52 x/y/z | 86.7 | 26.2 | 46.3 | 86.7 |
+| C52 x/y + C41 z | 86.7 | 26.2 | 52.6 | 86.7 |
+| C52 x/y/z + S_x,S_y | 80.5 | 24.7 | 46.3 | 80.5 |
+| C41 x/y/z + S_x,S_y (OU-III r_S) | 42.4 | 13.0 | 52.6 | 42.4 |
+| C41 x/y/z, sway-fitted x/y shape | 76.2 | 22.7 | 52.6 | 76.2 |
+
+30 seeds, 1200 s, scored from 300 s.
 
 Every CARMA variant is worse than OU-III on a still IMU, horizontally
-(84-87 mm against 53 mm) and vertically (46-53 mm against 27 mm, the PR #704
+(76-87 mm against 53 mm) and vertically (46-53 mm against 27 mm, the PR #704
 result).  Calibrating the turn-on bias changes nothing (`still IMU,
-calibrated bias` rows), and only 20 mm of C41's 84 mm is below 1/60 Hz: the
-phantom is mostly an oscillation in the prior's own band (band table below),
-not a drift.  The only variant below OU-III is the invalid A41S.
+calibrated bias` column).  The phantom lies below the wave band, nearly all
+of it at 0-0.05 Hz (periods of 20 s and longer; band table below), and only
+29 of C41's 84 mm is in the 60 s running mean.  That is where the prior is: with no
+waves the tuner pins its operating frequency at its bound, f_z = 0.050 Hz,
+and the amplitude at its floor, 0.05 m/s^2, so the CARMA prior expects
+decimetres of displacement at 20 s periods and lets sensor noise and slow
+tilt/bias leakage through there.  OU-III sits at the same operating point
+with the same floor; its `S = 0` updates hold the integral, which at 0.05 Hz
+is a strong constraint.  The only variant below OU-III is the invalid A41S.
 
 ### 9.5 Level 1 (prescribed attitude) and where the error lives
 
-L1_TABLE
+| Sea | n | horizontal: OU-III / C41 / C52 / C52 x/y + C41 z / C30 | heave: OU-III / C41 / C52 / C30 |
+|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m | 100 | 3.70 / 1.99 / 1.64 / 1.64 / 3.54 | 3.12 / 1.81 / 2.03 / 4.88 |
+| PM 0.25 Hz, 1 m | 100 | 3.94 / 2.19 / 2.21 / 2.21 / 4.12 | 3.26 / 2.09 / 2.68 / 5.43 |
+| mixed swell + wind | 100 | 12.17 / 11.54 / 25.79 / 25.79 / 10.99 | 10.16 / 11.53 / 27.14 / 11.71 |
+| changing f_p | 100 | 4.07 / 2.16 / 1.99 / 1.99 / 4.36 | 3.26 / 1.97 / 2.34 / 5.52 |
+| bimodal | 30 | 7.40 / 4.60 / 7.34 / 7.34 / 6.69 | 5.88 / 4.12 / 7.81 / 7.50 |
+| JONSWAP 0.29 Hz, 0.8 m, beam | 30 | 3.72 / 2.02 / 1.72 / 1.72 / 3.79 | 3.15 / 1.83 / 2.05 / 4.92 |
+| JONSWAP 0.29 Hz, 0.8 m, head | 30 | 3.55 / 1.92 / 1.56 / 1.56 / 3.36 | 3.16 / 1.82 / 2.05 / 4.93 |
+| JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 15.77 / 9.10 / 5.78 / 5.78 / 9.17 | 3.16 / 1.82 / 2.05 / 4.93 |
+| JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 38.07 / 21.44 / 11.91 / 11.91 / 17.20 | 3.15 / 1.82 / 2.04 / 4.92 |
 
-With the attitude prescribed, every filter's horizontal error drops (OU-III
-5.18 -> 3.70 % H_s on JONSWAP) and the ranking stays: the CARMA advantage is
-not an artifact of the attitude coupling.  CARMA(3,0) is no better than
-OU-III horizontally and 56-66 % worse in heave; it is not considered further.
+RMS error, % of incident H_s, prescribed attitude.
+
+With the attitude prescribed, every filter's horizontal error drops on seas
+without translation (OU-III 5.18 -> 3.70 % H_s on JONSWAP; with translation
+it rises: the complete INS can absorb part of that low-frequency acceleration
+as tilt or body-frame bias, the level-1 filters only as a per-axis bias; not
+analysed further) and the ranking stays: the CARMA advantage is
+not an artifact of the attitude coupling.  CARMA(3,0) is within 7 % of
+OU-III horizontally on single-peaked seas (better on the mixed and bimodal
+seas and under translation) and 15-69 % worse in heave; it is not
+considered further.
 The error by frequency band (seed 1, Welch over t >= 300 s) shows the
 mechanism:
 
-BAND_TABLES
+**Error by frequency band, JONSWAP 0.29 Hz, 0.8 m, seed 1, complete INS (mm RMS)**
+
+| Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
+|---|---|---|---|---|---|---|---|---|---|
+| x | OU-III (shipping) | 34.7 | 11.1 | 18.3 | 12.0 | 3.7 | 21.7 | 2.3 | 0.2 |
+| x | OU-III x/y + C41 z | 34.8 | 11.1 | 18.4 | 12.0 | 3.7 | 21.7 | 2.3 | 0.2 |
+| x | C41 x/y/z | 15.4 | 5.6 | 8.4 | 6.9 | 2.5 | 6.8 | 2.3 | 0.2 |
+| x | C52 x/y/z | 11.6 | 3.8 | 4.6 | 3.4 | 4.1 | 7.6 | 2.4 | 0.2 |
+| z | OU-III (shipping) | 25.6 | 8.6 | 11.2 | 6.4 | 2.9 | 19.1 | 2.5 | 0.2 |
+| z | OU-III x/y + C41 z | 15.4 | 3.5 | 4.1 | 3.8 | 2.7 | 11.3 | 7.1 | 0.4 |
+| z | C41 x/y/z | 15.4 | 3.5 | 4.1 | 3.8 | 2.8 | 11.3 | 7.1 | 0.4 |
+| z | C52 x/y/z | 16.9 | 2.2 | 2.0 | 2.1 | 4.8 | 13.4 | 7.8 | 0.6 |
+
+**Error by frequency band, JONSWAP 0.29 Hz, 0.8 m, seed 1, level 1 (prescribed attitude) (mm RMS)**
+
+| Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
+|---|---|---|---|---|---|---|---|---|---|
+| x | OU-III (shipping) | 28.1 | 19.7 | 14.7 | 5.7 | 2.4 | 14.1 | 1.1 | 0.1 |
+| x | C41 x/y/z | 14.2 | 10.8 | 6.8 | 3.8 | 1.8 | 5.7 | 2.2 | 0.1 |
+| x | C52 x/y/z | 11.0 | 7.1 | 3.5 | 2.0 | 3.3 | 6.9 | 2.4 | 0.1 |
+| z | OU-III (shipping) | 25.6 | 8.8 | 11.5 | 6.4 | 2.8 | 18.9 | 2.4 | 0.2 |
+| z | C41 x/y/z | 15.4 | 3.6 | 4.2 | 3.8 | 2.6 | 11.3 | 7.1 | 0.4 |
+| z | C52 x/y/z | 16.9 | 2.3 | 2.0 | 1.9 | 4.8 | 13.4 | 8.0 | 0.5 |
+
+**Error by frequency band, mixed swell + wind, seed 1, complete INS (mm RMS)**
+
+| Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
+|---|---|---|---|---|---|---|---|---|---|
+| x | OU-III (shipping) | 214.3 | 31.5 | 53.1 | 184.5 | 78.0 | 11.4 | 2.1 | 0.3 |
+| x | OU-III x/y + C41 z | 214.5 | 31.7 | 53.7 | 184.5 | 78.0 | 11.5 | 2.1 | 0.3 |
+| x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.6 | 3.7 | 0.6 |
+| x | C52 x/y/z | 351.7 | 11.0 | 35.7 | 322.8 | 104.9 | 10.4 | 3.9 | 0.5 |
+| z | OU-III (shipping) | 122.4 | 20.6 | 26.8 | 106.7 | 44.9 | 8.8 | 1.3 | 0.2 |
+| z | OU-III x/y + C41 z | 129.3 | 9.5 | 21.1 | 121.7 | 40.3 | 16.2 | 10.1 | 1.2 |
+| z | C41 x/y/z | 129.4 | 9.5 | 21.2 | 121.9 | 40.4 | 15.9 | 10.0 | 1.2 |
+| z | C52 x/y/z | 304.1 | 10.0 | 25.5 | 279.1 | 91.6 | 18.1 | 11.4 | 1.1 |
+
+**Error by frequency band, still IMU, seed 1, complete INS (mm RMS)**
+
+| Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
+|---|---|---|---|---|---|---|---|---|---|
+| x | OU-III (shipping) | 41.5 | 17.5 | 32.3 | 12.6 | 1.6 | 0.3 | 0.1 | 0.1 |
+| x | C41 x/y/z | 61.6 | 28.5 | 45.7 | 5.3 | 1.9 | 1.6 | 1.9 | 4.5 |
+| x | C52 x/y/z | 64.5 | 24.5 | 52.3 | 5.0 | 1.8 | 1.1 | 1.0 | 2.5 |
+| z | OU-III (shipping) | 24.9 | 14.7 | 17.9 | 6.7 | 0.9 | 0.2 | 0.1 | 0.1 |
+| z | C41 x/y/z | 47.7 | 35.7 | 26.4 | 3.1 | 1.1 | 0.9 | 1.3 | 3.3 |
+| z | C52 x/y/z | 41.1 | 27.3 | 26.9 | 2.9 | 1.0 | 0.6 | 0.7 | 1.8 |
+
+**CARMA operating frequency f_z = kappa * f_z,base, seed 1, complete INS (t >= 300 s)**
+
+| Scenario | filter | median (Hz) | 5-95 % (Hz) | C52 notch 0.151 kappa at the median (Hz) |
+|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m | OU-III x/y + C41 z | 0.327 | 0.307-0.352 |  |
+| JONSWAP 0.29 Hz, 0.8 m | C41 x/y/z | 0.327 | 0.307-0.352 |  |
+| JONSWAP 0.29 Hz, 0.8 m | C52 x/y/z | 0.327 | 0.307-0.352 | 0.133 |
+| mixed swell + wind | OU-III x/y + C41 z | 0.218 | 0.176-0.278 |  |
+| mixed swell + wind | C41 x/y/z | 0.218 | 0.176-0.278 |  |
+| mixed swell + wind | C52 x/y/z | 0.218 | 0.176-0.278 | 0.089 |
+| JONSWAP 0.29 Hz, 0.8 m, manoeuvring | C41 x/y/z | 0.326 | 0.307-0.352 |  |
+| JONSWAP 0.29 Hz, 0.8 m, manoeuvring | C52 x/y/z | 0.326 | 0.307-0.352 | 0.133 |
+| still IMU | C41 x/y/z | 0.050 | 0.050-0.050 |  |
+| still IMU | C52 x/y/z | 0.050 | 0.050-0.050 | 0.020 |
+| JONSWAP 0.29 Hz, 0.8 m, beam | C41 x/y/z | 0.327 | 0.307-0.352 |  |
+| JONSWAP 0.29 Hz, 0.8 m, beam | C52 x/y/z | 0.327 | 0.307-0.352 | 0.133 |
 
 Horizontally, OU-III's error is spread from 0 to 0.4 Hz; C41 cuts it in the
 wave band (0.2-0.4 Hz) and below it, C52 cuts it most below the wave band
 (0-0.05 Hz: bias, tilt and rotation leakage, which `g dtheta` makes larger
 horizontally than vertically) at a slightly higher in-band error.  On the
-mixed sea, C52's error sits at the swell (BAND_MIXED); on the still IMU the
-CARMA error sits in the prior's band (BAND_STILL).
+mixed sea, every filter's error sits mostly at the swell, C52's most (on x, 322.8 of 351.7 mm in 0.05-0.1 Hz, seed 1; the INS tuner's operating frequency has a median of 0.218 Hz there, which puts the C52 notch at 0.089 Hz); on the still IMU the
+CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; the tuner is pinned at its bound, f_z = 0.050 Hz, with the 0.05 m/s^2 amplitude floor).
 
 ![Time series, JONSWAP](../reports/results/carma3_benchmark/timeseries_xyz_jonswap.svg)
 ![Error PSD, JONSWAP](../reports/results/carma3_benchmark/error_psd_xyz_jonswap.svg)
@@ -633,26 +795,45 @@ CARMA error sits in the prior's band (BAND_STILL).
 
 ### 9.6 Consistency, startup, convergence, attitude
 
-CONSISTENCY_TABLE
+| Sea | Filter | NEES x / z / 6-dof | pred. std / RMS, x / z | startup RMS x / z (mm) | startup peak x / z (mm) | conv. x / z (s, median) | roll / pitch / yaw RMS (deg) |
+|---|---|---|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m | OU-III (shipping) | 3.19 / 1.11 / 7.7 | 1.01 / 1.27 | 51 / 696 | 266 / 1121 | 692 / 126 | 0.23 / 0.21 / 1.72 |
+|  | OU-III x/y + C41 z | 3.18 / 1.11 / 7.7 | 1.01 / 1.26 | 52 / 263 | 267 / 469 | 713 / 96 | 0.24 / 0.21 / 1.73 |
+|  | C41 x/y/z | 2.19 / 1.07 / 5.4 | 1.38 / 1.26 | 20 / 263 | 95 / 469 | 740 / 96 | 0.20 / 0.22 / 1.67 |
+|  | C52 x/y/z | 1.53 / 1.36 / 4.4 | 1.47 / 1.02 | 18 / 138 | 100 / 297 | 85 / 92 | 0.21 / 0.23 / 1.67 |
+|  | C52 x/y + C41 z | 1.52 / 1.09 / 4.1 | 1.47 / 1.26 | 18 / 263 | 100 / 469 | 90 / 96 | 0.21 / 0.23 / 1.67 |
+| mixed swell + wind | OU-III (shipping) | 18.34 / 7.13 / 30.9 | 0.33 / 0.50 | 301 / 1482 | 985 / 2411 | 912 / 853 | 0.29 / 0.22 / 1.89 |
+|  | OU-III x/y + C41 z | 18.36 / 28.31 / 52.2 | 0.33 / 0.25 | 301 / 621 | 982 / 1133 | 909 / 921 | 0.30 / 0.22 / 1.90 |
+|  | C41 x/y/z | 32.01 / 28.20 / 63.7 | 0.24 / 0.25 | 208 / 621 | 599 / 1133 | 953 / 921 | 0.20 / 0.24 / 1.55 |
+|  | C52 x/y/z | 161.31 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
+|  | C52 x/y + C41 z | 153.40 / 28.26 / 190.2 | 0.09 / 0.25 | 357 / 621 | 877 / 1133 | 959 / 922 | 0.21 / 0.32 / 2.02 |
+
+Means over 100 paired seeds (convergence: median).
 
 * **NEES** (6-dof position-velocity, 6 if consistent): on single-peaked seas
   CARMA is closer to consistent than OU-III, whose horizontal axes are
   overconfident (NEES 3.2-4.6 per horizontal axis); on the mixed sea every filter is
   overconfident and CARMA much more (C41 64, C52 324, OU-III 31).  The
-  accelerometer NIS (3-dof, 3 if consistent) is 0.06-0.56 for every filter:
+  accelerometer NIS (3-dof, 3 if consistent) is 0.06-0.57 for every filter:
   the wrapper's accelerometer noise (with its inflation) far exceeds the
   realized innovations, more so with CARMA's better acceleration prediction,
   so NIS does not test the motion prior here.
-* **Startup** (first 120 s after Live, JONSWAP): heave RMS OU-III 696 mm,
-  C41 263 mm, C52 138 mm; horizontal x 51 / 20 / 18 mm (peaks 266 / 95 /
-  100 mm), against 15-25 mm in steady state.  Every filter has a startup
-  transient; CARMA's is smaller because it starts from its stationary
-  covariance, OU-III from a large non-stationary one.
+* **Startup** (first 120 s after Live).  In waves CARMA's transient is
+  smaller: JONSWAP heave RMS OU-III 696 mm, C41 263 mm, C52 138 mm;
+  horizontal x 51 / 20 / 18 mm (peaks 266 / 95 / 100 mm), against 15-25 mm
+  in steady state; CARMA starts from a stationary covariance that matches the
+  sea, OU-III from a large non-stationary one.  On a still IMU it is the
+  other way round: heave RMS 0.97 m (OU-III) against 2.96 m (C41) and 2.12 m
+  (C52), peaks up to 2.5 / 8.4 / 6.0 m over 30 seeds; 0.14 / 0.42 / 0.30 m
+  with the turn-on bias calibrated.  The uncalibrated turn-on accelerometer
+  bias meets a prior parked at 0.05 Hz with the amplitude floor (section
+  9.4).  This is the heave model (the hybrids show it too) and reproduces the
+  PR #704 concern in quiet water.
 * **Convergence** (corrected metric: time after Live from which the 30 s
   rolling RMS stays within 1.5x the steady value; median): heave 126 / 96 /
   92 s; x 692 / 740 / 85 s.  The long x values are late low-frequency
   excursions crossing the threshold, which C52 suppresses; on the mixed sea
-  the medians are 860-1030 s (or never) for every filter.
+  the medians are 850-970 s for every filter.
 * **Attitude.**  Roll and pitch errors are similar for every filter
   (0.14-0.39 deg RMS over the conditions, CARMA slightly lower in roll),
   except C52 on all axes on the mixed sea (pitch 1.60 deg, roll 0.48 deg: the
@@ -664,7 +845,7 @@ CONSISTENCY_TABLE
 
 ### 9.7 Coupled x-y prior with the oracle correlation
 
-COUPLED_PARAGRAPH  This exceeds the 0.7-1.6 % noncausal bound of
+C41 x/y/z with the x-y driving-noise correlation r = 0.795 of the true directional spectrum (JONSWAP 0.29 Hz, 0.8 m, 30 paired seeds): horizontal RMS 20.53 mm against 21.68 mm for independent axes, +5.3 % [+4.5, +6.2], better on 100 % of seeds.  This exceeds the 0.7-1.6 % noncausal bound of
 section 5, which assumed the true spectrum; with a mismatched prior the
 correlation is an additional constraint.  The correlation came from the true
 directional spectrum; no estimator of it was implemented or tested, so this
@@ -672,7 +853,26 @@ is an upper-bound diagnostic, not a candidate.
 
 ### 9.8 Pinned vessel-RAO dataset
 
-DATASET_SECTION
+The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the PR #704 hybrids `carma-sim`, the three-axis variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The OU-III and hybrid rows are bit-identical to PR #704's `dataset_runs.csv`.  The hull differs from the synthetic benchmark's.
+
+| Filter | horizontal % H_s (change) | heave % H_s (change) | roll / pitch / yaw RMS (deg) |
+|---|---|---|---|
+| OU-III (shipping) | 6.36 | 3.98 | 0.30 / 0.26 / 2.43 |
+| OU-III x/y + C41 z | 6.37 (-0.0 % [-0.0, -0.0], better on 34 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.26 / 2.43 |
+| OU-III x/y + C52 z | 6.37 (-0.0 % [-0.1, -0.0], better on 38 %) | 2.83 (+29.0 % [+26.0, +31.8], better on 100 %) | 0.30 / 0.26 / 2.43 |
+| C41 x/y/z | 3.04 (+52.2 % [+50.8, +53.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.24 / 2.29 |
+| C52 x/y/z | 2.76 (+56.7 % [+54.5, +58.8], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.24 / 2.33 |
+| C52 x/y + C41 z | 2.76 (+56.7 % [+54.5, +58.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.29 / 0.24 / 2.33 |
+| C41 x/y + C52 z | 3.04 (+52.2 % [+50.8, +53.8], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.24 / 2.29 |
+| C52 x/y/z + S_x,S_y | 2.81 (+55.8 % [+53.5, +58.0], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.25 / 2.36 |
+| C41 x/y/z, sway-fitted x/y shape | 2.80 (+56.0 % [+54.4, +57.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.29 / 0.24 / 2.29 |
+| Q41 (three-axis class with OU-III x/y; equivalence check) | 6.37 (-0.0 % [-0.0, -0.0], better on 34 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.26 / 2.43 |
+
+10 seeds x 8 records, paired per (record, seed); final 900 s of each record.
+
+Improvement pools the per-record RMS in % H_s, which weights every record equally; PR #704's +40.9 % for C41 heave pools RMS in metres, which weights the large records (same rows).  On this hull and these single-peaked seas the synthetic results carry over: C41 x/y/z is 52 % better than OU-III horizontally and 37 % in heave on every one of the 80 pairs; C52 x/y/z is better horizontally (57 %) and worse in heave (29 %, PR #704's result); the sway-fitted C41 shape, fitted to the *synthetic* hull, is also better here (56 %).  Q41 (the three-axis class with OU-III's horizontal chain) agrees with Z41 to 1.3e-4 % H_s (different simulator adapters).  The dataset has no mixed sea, no still water and no low-frequency translation, so it cannot test the obstacles of section 12.
+
+![Pinned dataset](../reports/results/carma3_benchmark/dataset_comparison.svg)
 
 ## 10. The known CARMA problems
 
@@ -686,10 +886,10 @@ dynamics.
 | Problem | Reproduced? | Evidence | Causes |
 |---|---|---|---|
 | C41 better than C52 in the complete INS | Heave: yes, on every wave condition.  Horizontal: **reversed** on single-peaked seas | Heave JONSWAP 1.83 / 2.04, PM 2.10 / 2.68 % H_s; identical at level 1 and in the white-noise steady state (10.2 / 13.7 mm): not attitude, bias or adaptation.  Horizontally C52 rejects sub-band error better (section 9.5) | 1, 2, 10 (heave); 2, 4 (horizontal reversal) |
-| C52 collapse on the mixed sea | Yes, worse, and on all axes | Heave -163 %, horizontal -71 % against OU-III; 3600 s and legacy truth the same.  White-noise steady state at the oracle operating point (x): 284 mm signal distortion against 3.8 mm noise, so it is the prior's shape.  C52's numerator zeros sit at 0.151 Hz x kappa (zeta 0.2); the frequency mapping puts the mixed sea at f_z = 0.23 Hz (section 6), kappa = 0.62, so the notch falls at 0.094 Hz, on the swell peak (0.09 Hz) that carries about 60 % of the elevation variance.  The filter cannot represent the swell; the unexplained swell acceleration leaks into tilt (pitch 1.6 deg) | 1, 2, 5, 10; consequence 7 |
-| Still-water phantom | Yes, vertical (C41 53, C52 46 mm against 27) and **also horizontal** (84-87 against 53 mm) | Unchanged by turn-on bias calibration; 20 of C41's 84 mm below 1/60 Hz, the rest in the prior's band.  In still water the wrapper keeps a nonzero operating point (amplitude floor 0.05 m/s^2, as for OU-III; the tuner's frequency bounds), and the resonant CARMA prior turns noise and slow tilt/bias leakage into motion at its resonance; OU-III's S = 0 is a broad, low-Q DC-zero prior (section 4) and a double-counted S (A41S) halves the CARMA phantom | 5, 6, 3, 10 |
+| C52 collapse on the mixed sea | Yes, worse, and on all axes | Heave -165 %, horizontal -73 % against OU-III; 3600 s and legacy truth the same.  White-noise steady state at the oracle operating point (x): 284 mm signal distortion against 3.8 mm noise, so it is the prior's shape.  C52's numerator zeros sit at 0.151 Hz x kappa (zeta 0.2); the INS tuner's operating frequency on this sea has a median of 0.218 Hz (5-95 %: 0.176-0.278 Hz, seed 1), kappa = 0.59, so the notch falls at 0.089 Hz (0.072-0.113 Hz), on the swell peak (0.09 Hz) that carries about 60 % of the elevation variance; 323 of C52's 352 mm x error (seed 1) is in 0.05-0.1 Hz.  The filter cannot represent the swell; the unexplained swell acceleration leaks into tilt (pitch 1.6 deg) | 1, 2, 5, 10; consequence 7 |
+| Still-water phantom | Yes, vertical (C41 53, C52 46 mm against 27) and **also horizontal** (76-87 against 53 mm) | Unchanged by turn-on bias calibration; nearly all below 0.05 Hz.  In still water the tuner pins the operating frequency at its bound (f_z = 0.050 Hz) and the amplitude at its floor (0.05 m/s^2), as for OU-III, so the CARMA prior expects decimetres of displacement at 20 s periods and turns noise and slow tilt/bias leakage into motion there; OU-III's S = 0 is a broad, low-Q DC-zero prior (section 4) and a double-counted S (A41S) halves the CARMA phantom | 5, 6, 3, 10 |
 | Overconfidence under mismatch | Yes on multi-peaked seas; **not** on single-peaked ones | NEES 6-dof mixed: OU-III 31, C41 64, C52 324; JONSWAP 7.7 / 5.4 / 4.4 (6 = consistent).  The Kalman covariance is conditional on the prior; with a prior outside the true family it is not an error bound, and the narrower the prior the larger the miss | 7 (as a consequence of 10); no model-error term is carried |
-| Large startup transients | Present for every filter, **smaller** for CARMA than for OU-III | First 120 s after Live, JONSWAP: heave 696 (OU-III) / 263 (C41) / 138 (C52) mm RMS, against 15-25 mm in steady state; horizontal 51 / 20 / 18 mm.  CARMA starts at its stationary covariance; the remaining transient is the shared startup (proxy, magnetic acquisition, tuner commits) | 5 (operating point still settling) |
+| Large startup transients | In waves **no** (CARMA's is smaller than OU-III's); **yes on a still IMU** (2-3 times OU-III's) | First 120 s after Live, heave RMS OU-III / C41 / C52: JONSWAP 0.70 / 0.26 / 0.14 m; still IMU 0.97 / 2.96 / 2.12 m (peaks up to 2.5 / 8.4 / 6.0 m); still IMU with the turn-on bias calibrated 0.14 / 0.42 / 0.30 m.  In waves CARMA starts at a stationary covariance that matches the sea; on a still IMU the not-yet-estimated turn-on accelerometer bias (up to 8 mg) meets a prior parked at f_z = 0.05 Hz with the amplitude floor, which expects metres of displacement at 20 s periods | 5, 3, 10 |
 | `conv_s = 0` in PR #704 | Yes: metric defect | NaN before Live poisoned the rolling sum; fixed in `carma_bench.cpp` and in `carma3_bench` (section 1) | 9 (in the benchmark, not the filter) |
 | Inconsistent frequency ranges | Yes, documented | Amplitude mapping matches total model variance to an in-band RMS; process-validation PSD compares acceleration on the displacement band (section 1) | 1 (mapping), not limiting |
 
@@ -748,7 +948,7 @@ invariance and the bit-exact OU-III-horizontal equivalence are tested.
 6. **Is CARMA(4,1) preferable to CARMA(5,2) for horizontal axes?**  As a
    fixed choice, yes.  C52 is 8-26 % better than C41 on most single-peaked
    seas (worse on PM 0.15 Hz) and 27-43 % better under translation.  C41 is far better on the mixed sea
-   (+17 % against -71 % relative to OU-III) and on the bimodal sea.  The sea
+   (+17 % against -73 % relative to OU-III) and on the bimodal sea.  The sea
    state is not known in advance, C52's failure is catastrophic and C41's
    shortfall moderate.  Mathematically, C41 has the DC zero that the physics
    and the bounded-primitive premise ask for; C52's integral is a random
@@ -796,7 +996,7 @@ invariance and the bit-exact OU-III-horizontal equivalence are tested.
   mixed sea 17 %), at level 1 and under translation, with no extra states or
   cost; heave is the same as A.
 * Against **C** (CARMA(5,2) everywhere): the mixed-sea collapse (horizontal
-  -71 %, heave -163 %) and the bimodal heave loss.  Its mechanism (a notch
+  -73 %, heave -165 %) and the bimodal heave loss.  Its mechanism (a notch
   that the frequency mapping can place on a swell) is structural, not a
   tuning issue.
 * Against **D** (different orders or parameters per axis): the per-axis
@@ -806,14 +1006,18 @@ invariance and the bit-exact OU-III-horizontal equivalence are tested.
   coupled x-z prior with oracle coupling lost to independent axes, and no
   estimator of the coupling exists.
 * Against **F** (OU-III everywhere): the paired gains are large, consistent
-  over 31 conditions and two levels, with tight intervals, at lower cost.
+  over 31 sea conditions, two levels and an independent replay hull, with
+  tight intervals, at lower cost.  F remains the right choice for still
+  water (obstacle 1).
 
 **Remaining obstacles before B could be considered for deployment**
 
 1. Still water and very quiet seas: horizontal phantom 84 against 53 mm,
-   heave 53 against 27 mm.  The cause is the resonant prior at a floored
-   operating point; a valid low-frequency or "no waves" mechanism in the
-   prior is needed (A41S shows the size of the effect, not a valid fix).
+   heave 53 against 27 mm, and a heave startup transient 2-3 times OU-III's
+   (metres before the turn-on bias is learned).  The cause is the resonant
+   prior at a floored operating point (0.05 Hz, 0.05 m/s^2); a valid
+   low-frequency or "no waves" mechanism in the prior is needed (A41S shows
+   the size of the effect on the steady phantom, not a valid fix).
 2. Mixed swell and wind sea: heave 13 % worse than OU-III (PR #704) and
    NEES twice OU-III's; a single fixed shape scaled by one frequency cannot
    represent two peaks.

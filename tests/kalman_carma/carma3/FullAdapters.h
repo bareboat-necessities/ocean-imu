@@ -93,6 +93,10 @@ public:
         e.q_bw = m.quaternion_boat().template cast<double>();
         return e;
     }
+    double op_fz_hz() const override {
+        const auto& f = fusion_.raw();
+        return static_cast<double>(f.getVerticalKappa()) * f.mekf().vertical_model().base_zero_crossing_hz();
+    }
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
     int states() const override { return Fusion::Impl::Mekf::NX; }
 
@@ -141,6 +145,10 @@ public:
         e.has_att = true;
         e.q_bw = m.quaternion_boat().template cast<double>();
         return e;
+    }
+    double op_fz_hz() const override {
+        const auto& f = fusion_.raw();
+        return static_cast<double>(f.getVerticalKappa()) * f.mekf().vertical_model().base_zero_crossing_hz();
     }
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
     int states() const override { return M::NX; }

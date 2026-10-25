@@ -591,6 +591,7 @@ int main(int argc, char** argv) {
         ts_out.open(args.timeseries);
         ts_out << "t,x_true,y_true,z_true,x_total,y_total";
         for (const auto& e : est) ts_out << ",x_" << e->name() << ",y_" << e->name() << ",z_" << e->name();
+        for (const auto& e : est) ts_out << ",fz_" << e->name();
         ts_out << "\n";
     }
 
@@ -709,6 +710,10 @@ int main(int argc, char** argv) {
                 const size_t j = se.t.size() - 1;
                 std::snprintf(buf, sizeof buf, ",%.5f,%.5f,%.5f",
                               se.e[0][j] + ts.p_wave.x(), se.e[1][j] + ts.p_wave.y(), se.e[2][j] + ts.p_wave.z());
+                ts_out << buf;
+            }
+            for (const auto& e : est) {
+                std::snprintf(buf, sizeof buf, ",%.4f", e->op_fz_hz());
                 ts_out << buf;
             }
             ts_out << "\n";
