@@ -779,8 +779,9 @@ COST_CONFIGS = {
     "CARMA(4,1) XYZ": (21, [4, 4, 4], 9),
     "CARMA(5,2) XYZ": (24, [5, 5, 5], 9),
     "CARMA(4,1) XY + CARMA(5,2) Z": (22, [4, 4, 5], 9),
+    "CARMA(5,2) XY + CARMA(4,1) Z": (23, [5, 5, 4], 9),
     "CARMA(5,2) XYZ + S_x,S_y": (26, [6, 6, 5], 9),
-    "CARMA(4,1) XYZ + S_x,S_y,S_z": (24, [5, 5, 5], 9),
+    "CARMA(4,1) XYZ + S_x,S_y": (23, [5, 5, 4], 9),
     "coupled CARMA(4,1) XY (shared A, correlated W) + Z": (21, [4, 4, 4], 9),
 }
 
@@ -1028,7 +1029,7 @@ def make_plots(out, curves, outdir):
         ax.set_title(title, fontsize=8)
         style(ax)
     axes[0].set_ylabel("Squared coherence")
-    axes[0].legend(fontsize=7, loc="upper right")
+    axes[0].legend(fontsize=7, loc="lower left")
     fig.tight_layout()
     svgd.save_svg(fig, outdir / "coherence.svg", bbox_inches="tight")
     plt.close(fig)

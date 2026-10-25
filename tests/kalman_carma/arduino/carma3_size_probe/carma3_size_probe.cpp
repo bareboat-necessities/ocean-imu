@@ -18,6 +18,8 @@
     4  SeaStateFusion_CARMA3<KALMANF, 5,F, 5,F>    CARMA(5,2) x/y/z
     5  SeaStateFusion_CARMA3<KALMANF, 4,F, 5,F>    CARMA(4,1) x/y + CARMA(5,2) z
     6  SeaStateFusion_CARMA3<KALMANF, 5,T, 5,F>    CARMA(5,2) x/y/z + S_x, S_y
+    7  SeaStateFusion_CARMA3<KALMANF, 5,F, 4,F>    CARMA(5,2) x/y + CARMA(4,1) z
+    8  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
 */
 
 #define EIGEN_NON_ARDUINO
@@ -41,8 +43,12 @@ using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, 
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 5, false>;
 #elif CARMA3_PROBE_VARIANT == 5
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 5, false>;
-#else
+#elif CARMA3_PROBE_VARIANT == 6
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, true, 5, false>;
+#elif CARMA3_PROBE_VARIANT == 7
+using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 4, false>;
+#else
+using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, true, 4, false>;
 #endif
 
 const float g_std = 9.80665f;

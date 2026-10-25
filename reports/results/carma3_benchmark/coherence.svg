@@ -1080,27 +1080,27 @@ z
    </g>
    <g id="legend_1">
     <g id="patch_5">
-     <path d="M 265.421667 198.900781 
-L 298.639948 198.900781 
-Q 300.039948 198.900781 300.039948 197.500781 
-L 300.039948 162.291602 
-Q 300.039948 160.891602 298.639948 160.891602 
-L 265.421667 160.891602 
-Q 264.021667 160.891602 264.021667 162.291602 
-L 264.021667 197.500781 
-Q 264.021667 198.900781 265.421667 198.900781 
+     <path d="M 50.596484 198.900781 
+L 83.814766 198.900781 
+Q 85.214766 198.900781 85.214766 197.500781 
+L 85.214766 162.291602 
+Q 85.214766 160.891602 83.814766 160.891602 
+L 50.596484 160.891602 
+Q 49.196484 160.891602 49.196484 162.291602 
+L 49.196484 197.500781 
+Q 49.196484 198.900781 50.596484 198.900781 
 z
 " style="fill: #ffffff; opacity: 0.8; stroke: #cccccc; stroke-linejoin: miter"/>
     </g>
     <g id="line2d_26">
-     <path d="M 266.821667 168.022852 
-L 273.821667 168.022852 
-L 280.821667 168.022852 
+     <path d="M 51.996484 168.022852 
+L 58.996484 168.022852 
+L 65.996484 168.022852 
 " style="fill: none; stroke: #0b0b0b; stroke-width: 1.5; stroke-linecap: square"/>
     </g>
     <g id="text_15">
      <!-- x-y -->
-     <g transform="translate(286.421667 170.472852) scale(0.07 -0.07)">
+     <g transform="translate(71.596484 170.472852) scale(0.07 -0.07)">
       <defs>
        <path id="Inter-Regular-3e3" d="M 203 0 
 L 853 0 
@@ -1135,28 +1135,28 @@ z
      </g>
     </g>
     <g id="line2d_27">
-     <path d="M 266.821667 179.992578 
-L 273.821667 179.992578 
-L 280.821667 179.992578 
+     <path d="M 51.996484 179.992578 
+L 58.996484 179.992578 
+L 65.996484 179.992578 
 " style="fill: none; stroke-dasharray: 5.55,2.4; stroke-dashoffset: 0; stroke: #52514e; stroke-width: 1.5"/>
     </g>
     <g id="text_16">
      <!-- x-z -->
-     <g transform="translate(286.421667 182.442578) scale(0.07 -0.07)">
+     <g transform="translate(71.596484 182.442578) scale(0.07 -0.07)">
       <use xlink:href="#Inter-Regular-3e3"/>
       <use xlink:href="#Inter-Regular-5b5" transform="translate(52.34375 0)"/>
       <use xlink:href="#Inter-Regular-400" transform="translate(98.34375 0)"/>
      </g>
     </g>
     <g id="line2d_28">
-     <path d="M 266.821667 191.962305 
-L 273.821667 191.962305 
-L 280.821667 191.962305 
+     <path d="M 51.996484 191.962305 
+L 58.996484 191.962305 
+L 65.996484 191.962305 
 " style="fill: none; stroke-dasharray: 1.5,2.475; stroke-dashoffset: 0; stroke: #8a8a86; stroke-width: 1.5"/>
     </g>
     <g id="text_17">
      <!-- y-z -->
-     <g transform="translate(286.421667 194.412305) scale(0.07 -0.07)">
+     <g transform="translate(71.596484 194.412305) scale(0.07 -0.07)">
       <use xlink:href="#Inter-Regular-3e8"/>
       <use xlink:href="#Inter-Regular-5b5" transform="translate(52.25 0)"/>
       <use xlink:href="#Inter-Regular-400" transform="translate(98.25 0)"/>

@@ -6,3 +6,5 @@ A41,136799,798,0,20,2992,5144,1344,"bool ocean_imu::kalman::carma::discretize_lt
 A52,141055,798,0,20,2992,6448,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
 M45,147121,854,0,20,2992,5608,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
 A52S,145999,798,0,20,2992,7296,2032,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"
+M54,148058,854,0,20,2992,5952,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A41S,143966,798,0,20,2992,5880,1536,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"

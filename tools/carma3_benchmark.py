@@ -236,6 +236,7 @@ def cmd_dataset(args):
 
 TRACES = [
     ("full", J29, 1, "OU3,Z41,A41,A52"),
+    ("l1", J29, 1, "OU3,A41,A52"),
     ("full", "mixed_swell_wind", 1, "OU3,Z41,A41,A52"),
     ("full", f"{J29}+maneuver", 1, "OU3,A41,A52"),
     ("full", "stationary", 1, "OU3,A41,A52"),

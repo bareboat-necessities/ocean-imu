@@ -144,13 +144,21 @@
    "states": 21,
    "total_madds_per_sample": 9315
   },
-  "CARMA(4,1) XYZ + S_x,S_y,S_z": {
-   "P_bytes_float": 2304,
-   "P_floats": 576,
-   "acc_update_madds": 8361,
-   "predict_madds": 4221,
-   "states": 24,
-   "total_madds_per_sample": 12582
+  "CARMA(4,1) XYZ + S_x,S_y": {
+   "P_bytes_float": 2116,
+   "P_floats": 529,
+   "acc_update_madds": 7740,
+   "predict_madds": 3693,
+   "states": 23,
+   "total_madds_per_sample": 11433
+  },
+  "CARMA(5,2) XY + CARMA(4,1) Z": {
+   "P_bytes_float": 2116,
+   "P_floats": 529,
+   "acc_update_madds": 7740,
+   "predict_madds": 3693,
+   "states": 23,
+   "total_madds_per_sample": 11433
   },
   "CARMA(5,2) XYZ": {
    "P_bytes_float": 2304,

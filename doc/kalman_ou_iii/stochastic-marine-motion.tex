@@ -632,7 +632,53 @@ shared-latent model, even with oracle coupling coefficients, is worse than
 independent axes there because the errors are dominated by spectral
 mismatch, which the narrow-band quadrature adds to.
 
-%THREE_AXIS_RESULTS
+\subsection{Complete-INS Benchmark (Experimental)}
+A prototype three-axis filter (CARMA on each axis in place of OU--III's
+\([v,p,S,a_w]\) chains; attitude, bias, magnetometer, startup and tuner
+schedule as in the heave-only CARMA study) was compared with the unchanged
+OU--III on a synthetic directional sea through the hull responses of
+(\ref{eq:horiz-rao}), with paired seeds and errors taken against the wave
+coordinate (Table~\ref{tab:three-axis}). The truth contains no CARMA model.
+
+\begin{table*}[t]
+\centering
+\caption{Three-axis prototype, complete INS (simulation): RMS error in
+\% of incident \(H_s\), horizontal \(\sqrt{x^2+y^2}\) (H) and heave (Z);
+100 paired seeds per sea; still IMU in mm (30 seeds); NEES of position and
+velocity (6 if consistent). Experimental; no hardware.}
+\label{tab:three-axis}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccccccc@{}}
+\toprule
+& & \multicolumn{2}{c}{JONSWAP 0.29\,Hz} & \multicolumn{2}{c}{PM 0.25\,Hz} &
+\multicolumn{2}{c}{Swell + wind sea} & \multicolumn{2}{c}{Still IMU (mm)} & NEES\\
+Prior (x/y; z) & States & H & Z & H & Z & H & Z & H & Z & JONSWAP / mixed\\
+\midrule
+TEX_ROWS
+\bottomrule
+\end{tabular}
+\end{table*}
+
+CARMA(4,1) on the horizontal axes was better than OU--III on every one of
+31 simulated conditions (by 43--73\,\%, by 17\,\% on the swell + wind sea),
+at the same state dimension and lower arithmetic cost. CARMA(5,2) was better
+still on most single-peaked seas but collapsed on the swell + wind sea: its
+numerator zeros sit at \(0.151\,\kappa\)\,Hz, and the frequency mapping
+(\(\kappa\approx0.62\)) places that notch on the 0.09\,Hz swell, which then
+cannot be represented at all; the error is signal distortion, not noise,
+and leaks into the tilt estimate. Carrying OU--III's \(S=0\) onto a DC-zero
+CARMA(4,1) lowered low-frequency errors but is invalid by Proposition~1;
+the derived \(S\) law on CARMA(5,2) changed little. Every CARMA prior showed
+more phantom displacement on a still IMU than OU--III and, on the two-peaked
+sea, a covariance that is not an error bound.
+
+On this evidence CARMA(4,1) on all three axes is the research candidate,
+with explicit obstacles: still-water phantom displacement, the swell + wind
+sea in heave, model-error-free covariance, per-sample re-discretization
+under timestamp jitter, hull dependence, and the absence of hardware and
+stability evidence. It is not a shipping estimator, and no result of this
+section bears on the OU--III stability study.
 
 \section{Conclusion}
 A plain OU displacement prior misses resonant marine

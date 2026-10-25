@@ -165,18 +165,22 @@ def report():
     for metric, name in (("rms_h", "horizontal"), ("rms_z", "heave")):
         lines.append(f"### {name.capitalize()} RMS error, % of incident H_s; improvement over OU-III [95 % CI], win rate")
         lines.append("")
-        lines.append("| Sea | OU-III | " + " | ".join(LABEL[f] for f in main_f[1:] + ["A52S", "H41"]) + " |")
-        lines.append("|" + "---|" * (len(main_f) + 2))
+        head_f = main_f[1:] + ["A52S", "H41"]
+        lines.append("| Sea | OU-III | " + " | ".join(LABEL[f] for f in head_f) + " |")
+        lines.append("|" + "---|" * (len(head_f) + 2))
         for sc in cb.PRIMARY:
             d = g.get(("full", sc))
             if not d:
                 continue
-            fs = [f for f in main_f + ["A52S", "H41"] if f in d]
+            fs = [f for f in ["OU3"] + head_f if f in d]
             seeds = sorted(set.intersection(*[set(d[f].keys()) for f in fs]))
             hs = fnum(d["OU3"][seeds[0]], "hs_incident")
             base = series(d, "OU3", seeds, metric)
             cells = [f"{pct(base.mean(), hs):.2f}"]
-            for f in main_f[1:] + ["A52S", "H41"]:
+            for f in head_f:
+                if f not in d:
+                    cells.append("")
+                    continue
                 x = series(d, f, seeds, metric)
                 ps = paired(x, base)
                 stats.setdefault("full", {}).setdefault(sc, {}).setdefault(metric, {})[f] = ps
@@ -311,6 +315,8 @@ def report():
                          f"true directional spectrum), change {fmt_imp(ps)}, win {100 * ps['win_rate']:.0f} %.")
             lines.append("")
 
+    lines += band_tables()
+
     # Dataset.
     ds = load(OUT / "dataset_runs.csv")
     if ds:
@@ -334,6 +340,41 @@ def report():
                                                       default=float) + "\n")
     figures(g, ds)
     print("wrote", (OUT / "summary.md").relative_to(ROOT))
+
+
+BANDS = [(0.0, 0.017), (0.017, 0.05), (0.05, 0.1), (0.1, 0.2), (0.2, 0.4), (0.4, 0.8), (0.8, 5.0)]
+
+
+def band_tables():
+    """Error RMS per frequency band from the seed-1 traces (Welch, t >= 300 s)."""
+    import carma3_benchmark as cb
+    from scipy.signal import welch
+    out = []
+    for level, sc in (("full", J29), ("l1", J29), ("full", "mixed_swell_wind"), ("full", "stationary")):
+        p = cb.trace_path(level, sc, 1)
+        if not p.exists():
+            continue
+        d = load_trace(p)
+        t = d["t"]
+        s = t >= 300
+        fs = 1.0 / np.nanmedian(np.diff(t))
+        out.append(f"### Error by frequency band, {sc_label(sc)}, seed 1, "
+                   f"{'complete INS' if level == 'full' else 'level 1 (prescribed attitude)'} (mm RMS)")
+        out.append("")
+        out.append("| Axis | Filter | total | " + " | ".join(f"{a}-{b} Hz" for a, b in BANDS) + " |")
+        out.append("|" + "---|" * (len(BANDS) + 3))
+        for a in "xz":
+            for f in ORDER:
+                k = f"{a}_{f}"
+                if k not in d:
+                    continue
+                e = (d[k] - d[f"{a}_true"])[s]
+                fr, P = welch(e, fs=fs, nperseg=min(len(e), 1 << 14))
+                dfr = fr[1] - fr[0]
+                vals = [1000 * np.sqrt(P[(fr >= lo) & (fr < hi)].sum() * dfr) for lo, hi in BANDS]
+                out.append(f"| {a} | {LABEL[f]} | {1000 * np.std(e):.1f} | " + " | ".join(f"{v:.1f}" for v in vals) + " |")
+        out.append("")
+    return out
 
 
 def dataset_tables(ds, stats):
@@ -434,7 +475,7 @@ def figures(g, ds):
         ax.set_yticks(ypos)
         ax.set_yticklabels([sc_label(s) for s in rows], fontsize=7)
         ax.set_xlabel(f"{title.capitalize()} RMS improvement over OU-III (%), 95 % CI")
-        ax.set_xlim(-200, 100)
+        ax.set_xlim(-200 if metric == "rms_z" else -100, 100)
         style(ax)
         ax.legend(fontsize=7, loc="lower left")
         fig.tight_layout()
@@ -453,6 +494,8 @@ def figures(g, ds):
         for row, metric in enumerate(("rms_h", "rms_z")):
             ax = axes[row, col]
             for j, f in enumerate(fl):
+                if f not in d:
+                    continue
                 x = 100 * series(d, f, seeds, metric) / hs
                 ax.boxplot([x], positions=[j], widths=0.55, showfliers=False, patch_artist=True,
                            boxprops=dict(facecolor=COL[f], edgecolor=COL[f], alpha=0.35),
