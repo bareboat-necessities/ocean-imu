@@ -1,8 +1,123 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "80aff8f676259cc332af9abeffd639072cfcbd06510cb6b81d125ece4e726e20",
-  "results_file_count": 477,
+  "replay_fingerprint": "052a5eb24b09b078411546ca6007289c08b8510860fcb3844db39f69ec8540b0",
+  "results_file_count": 500,
   "results_files": [
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/carma52_process_psd.svg",
+      "sha256": "1e3ece1999fd7680f8e8575a3e995d32df6d3ad4451b1e91232d44c2c18b09f4"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/carma_fit.json",
+      "sha256": "09bc6eda764815add332365921ac0ef4ccc33db69bb0ebc79265750b872a1a47"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/carma_psd_overlay.svg",
+      "sha256": "f597f7fa89f0d6c50959a78566018256e2a79b872c38cb70db32889e890a966f"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/dataset_comparison.svg",
+      "sha256": "07dfd11ec83358801ab998e0bd033e51c2ff0fe52c2801a48b669cbce392c311"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/dataset_runs.csv",
+      "sha256": "aa94fd60a4bd4c266a17e6b662bff45e55c7faa5dff8da194fdf9e4fc6383d2d"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/deterministic_runs.csv",
+      "sha256": "205c6006bb73a88941c2970fe4087d8621235b05f1931687f27d12ea78dfd796"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/error_timeseries_jonswap.svg",
+      "sha256": "a079d2817033322efe04def285756d019291df74e41a5d0a33d9166d078ddcfb"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/matched_runs.csv",
+      "sha256": "89dc3bd02a3ae908d3f716441f2da4425115457b1761f26c27971b04c8c7d72a"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/mismatch_analysis.json",
+      "sha256": "8bf3dfea7eb7bb68de8c1323a526ac35436e710a577b9fb6b9a36226e6984853"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/mismatch_error_psd.svg",
+      "sha256": "ec9a61ff3256c26b0590950ce7cd534fa17917842f2a37aae75ccab7ad573dec"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/paired_improvement_full.svg",
+      "sha256": "60f68ef6884d64edfc94c82f8f5e66066b70bf0b9fdb5c0e6063374434362111"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/paired_stats.json",
+      "sha256": "310e042f507f39e8fe5528d07305beecadc21af658ea27d14a05cfc090c8dc00"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/process_validation.json",
+      "sha256": "e017a0dca908e572900c2f2452b121efe38b50daa7bc881b0254f181b9bece08"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/psd_jonswap.svg",
+      "sha256": "5a4385fbf7eb41d760b5c1c36e29daa6eb44df1d7ce57e1f0f4b162a0beb7994"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/raw_runs.csv",
+      "sha256": "d7f20abeefbbe719167f50ac7c59bf11cc7bd4f858961d103a9cccd360b9f7fa"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/rms_distribution_full.svg",
+      "sha256": "e382892654751b05d8674ae6b3559b7b50c1a61013bb596a51169033b20c19f3"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/rms_distribution_vertical.svg",
+      "sha256": "d22b723a59b46d8bc104fdc61bd7847f5196c97f8087051ed59aa264bb770676"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/runtime_memory.svg",
+      "sha256": "3051ecd41c20540e100221dbee293111b61421de2e5506254b5d1c520c11fd89"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/stationary_timeseries.svg",
+      "sha256": "a25733df41346ffda340eb9779150f411f1bfb8b50a30fbc5159855363d8bd45"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/summary.md",
+      "sha256": "5e107b0472ed74bdf85221b46e6eea6c05ef5e3a0c2fddc4e1bf4f691333ecfc"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/timeseries_jonswap.svg",
+      "sha256": "6fc791b798a64b94f8cea3436ea4d441398ae57e1f45c2b8abaf7abc9c496e49"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/timing_runs.csv",
+      "sha256": "24433f7afc752227fa52c21f288f391b55bec5e011a6d48ef8190e39c5668a96"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_benchmark/truth_motion.csv",
+      "sha256": "04f913bc870b6e6aeed9b54f777fc59b2bd92ba877213653978111c5a285f6a9"
+    },
     {
       "kind": "file",
       "path": "reports/results/comparator_rao_retuning/README.md",
@@ -1151,7 +1266,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "0324973aae4ec7452e2dae233899cef8f34e718c40ae7a03ef8d719502402397"
+      "sha256": "6ca0913dc820148041cd9eed31a85d6e98265218a254335423b365baf9927eaa"
     },
     {
       "kind": "file",
@@ -1221,37 +1336,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "167cd3ed99a7f467d686cbe1b30383f732f52de246abd7774c204f210166ca7e"
+      "sha256": "3ba7dbad0371ee3b71fc34ca89bc136eabca4f6952db8cf86af554c7f655efa1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "38b047835abd226286cfceac6d6a92958587650d06df8d0dfc7e87aa6e6557e0"
+      "sha256": "89929c1efde7bc7842bf144d3ff962732bbe002de2f58329a9163982d32b66f3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "4494939127970b1289612e1451ba691a7cdbe2a768e5347a03c0302ad3efe2b3"
+      "sha256": "2dfb4dc689f863ced8346a485b8c547b8f8deeb2a3bb47ab264811680ba03a0a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "92c883d0b333e73e7c245edb4d7e00a7989e06a8a87171b7058ecf84470fa488"
+      "sha256": "810c40f0d24ebe9793d5a1bb0a0a9d766ceafcc0f5a77bb49e75db8e3622154f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "400563d547e55de68ad4c594a9d5625c2b6f72d6014b6e1a51ba7215a2e236aa"
+      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "32a312cabb9254a8fc9d7ccd58305294f320d33fb36655674b66fa7f02d79bff"
+      "sha256": "6f23b2157c67adbc5fba0ba854be28f2e0b764918f7f5d30a6e56f9ff493c586"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "7a55f42945e4d10a0064efb3f487d5a5f58d31bb878af8571d0d2e3fbb4f0b04"
+      "sha256": "6d740c3f770eaca8276dce3ff7cd1d66997f44e353618c5740dc52aa301e14cf"
     },
     {
       "kind": "file",
@@ -1261,22 +1376,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "356fb82bd8a15cb0bedf5bcba581b84b0c6c9b13fbf6cc3025d5dcb4baf2a23e"
+      "sha256": "7cfa7ba1400c7c9d47677b6fadd6188d01abe50c5cf46638165f8c98b5a634fd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "0b9199aec0ae3475651fffa9cdf579190088a1cba4bd79afe8f140482f6166f6"
+      "sha256": "53cfc73a145b95f68bc2c9b0012e87fe2667f53ea6c325fce76044e4c35c15ac"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "19c70908c50d9e2a2b57729f114025b4d12a44bf03256b45d09473e2e2888db4"
+      "sha256": "4c460750846e3bae89ad0ce9ab6fc0f104723516efc1c48a1c32c9bcb78f3f17"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
+      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
     },
     {
       "kind": "file",
@@ -1291,7 +1406,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "257aa43dc41d8e18d5f2b128fc75bfa5294e4f8c1f2bb1e54962d81a5bb55ebc"
+      "sha256": "97ed11f8bad2e2bf1587ac38caab319f75882e7dde60d4dd67be6cef11d05d66"
     },
     {
       "kind": "file",
@@ -2389,13 +2504,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "a18b2d8ca49e7f24be244a489d4a67c9f49c0639d47871d2bab12eb9dc975e5f",
+  "results_fingerprint": "230dd57018e8fc67507c21f54fb9fa4175b5561fb80292fa680088775bc920eb",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 783,
+  "tracked_replay_file_count": 800,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2505,7 +2620,7 @@
     {
       "mode": "100644",
       "path": "Makefile",
-      "sha256": "e801d72f11aa60b878eccf22b51942cc545835499b0d7921e18b1a29632eb9a7"
+      "sha256": "5d503085a4ebcaa3e50744203fe64a3c9e78ecbf99fd16874dec9fb92c96690f"
     },
     {
       "mode": "100644",
@@ -3491,6 +3606,71 @@
       "mode": "100644",
       "path": "tests/imu_calibrate/test_wizard_config.py",
       "sha256": "19f91c22345e93e4aaf701d45cacd822461d69ed2d6507c1cdae383275338b57"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/CarmaBenchTruth.h",
+      "sha256": "c03d04461c27eb0494c22d2bc048a9d2b52afdbf728c23670d2c8e8510db09d8"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/Makefile",
+      "sha256": "e605c1a9246552a9793734c7134fc22b4436f3cfdfb1bb49cc6eccc97a373ca0"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/arduino/carma_compile_check/carma_compile_check.ino",
+      "sha256": "0036795c646cabef0717b58bd4680c5f98ae7caf1b677aa4c85f5f3947d2584b"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/arduino/carma_compile_check/carma_compile_check_main.cpp",
+      "sha256": "48253631b4ce397d8816675ee463f4bbf0f9ae830ec577d8a292aca3d9d007eb"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma-sim.cpp",
+      "sha256": "12dddafc0d7c6208ca90bb3a43828b21c6028c8aea13d5e26a87f4875c06b264"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma_bench.cpp",
+      "sha256": "d6bbca74ca4d8eab047a93fe86184788fb7d775e92634f8a03590563460dc229"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma_filter-test.cpp",
+      "sha256": "76e209450f67dd87b2f7b9c42204f0899014f1c3d5c5aef318a9cca89e6266a7"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma_model-test.cpp",
+      "sha256": "42b3ccc79b2254ceadd7ad20275f5d78082495b9a4c6618a9b4db036993705e6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma_process-sim.cpp",
+      "sha256": "afd839111422cb0630b4ddd77c33e1da8db7e6fe8f945c81c8c668e6b7b6264a"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/include/kalman_carma/CarmaVerticalModel.h",
+      "sha256": "99ec94494552b5f81d6079e5429267448b8a1f833a868b9172e430eea577e54c"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/include/kalman_carma/Kalman3D_Wave_CARMA.h",
+      "sha256": "7eb87757af4e0958a3363bec54712966007b011776314ce7a9a861566a29c4c6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/include/kalman_carma/SeaStateFusionFilter_CARMA.h",
+      "sha256": "d9453d058c55d9a7f547401ff608430c6df731180ed95044daaa0f60196f6052"
+    },
+    {
+      "mode": "100755",
+      "path": "tests/kalman_carma/run_tests.sh",
+      "sha256": "15b8f9ef707e5ce4a132304ce97307ff2e001c1cdbc4d61c0ec14cea838b28ac"
     },
     {
       "mode": "100644",
@@ -4921,6 +5101,26 @@
       "mode": "100644",
       "path": "third_party/Lie-plusplus/include/groups/SO3.hpp",
       "sha256": "7263e66158a268cad212c79b0cba8b6ed78c43e3e6feda7dad02310a6513acb9"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_benchmark.py",
+      "sha256": "fc32b4bca65b8945f8c741373bd09e51b370733c73637d5baf3413c8374ce6ec"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_fit.py",
+      "sha256": "82f4769f4d434026c044dd77bdff875403008ea30cb81c8d993a40e96668bceb"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_mismatch_analysis.py",
+      "sha256": "acc199453496503a9ad251a7fc9ca9a207bd47b326b1042b51ae505f9278e0bf"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_process_validation.py",
+      "sha256": "6db9dee392651ff61a93d8066972a2b2c7cefad17cb56b5ed00c6c79f39eda45"
     },
     {
       "mode": "100644",
