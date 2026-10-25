@@ -71,7 +71,7 @@ SECONDARY = [
     "jonswap_fp0.29_hs0.8_g1.5", "jonswap_fp0.29_hs0.8_g7",
     "jonswap_fp0.10_hs4_g3.3",
     "pm_fp0.15_hs2.5", "pm_fp0.40_hs0.4",
-    "broadband", "bimodal", "abrupt_change", "small_amplitude",
+    "broadband", "bimodal", "abrupt_change",
     "bias_drift",
 ]
 QUIET = ["stationary", "stationary_calbias", "small_amplitude"]
