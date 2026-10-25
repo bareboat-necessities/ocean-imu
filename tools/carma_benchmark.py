@@ -7,6 +7,9 @@ run       Execute the paired synthetic grid with tests/kalman_carma/carma_bench
           (resumable: rows already in raw_runs.csv are skipped).
 dataset   Replay the pinned vessel-RAO dataset with the unchanged
           kalman_ou_iii-sim and with carma-sim, over several W3D_SEED values.
+deterministic
+          The repository's deterministic OU-III table protocol (default seeds,
+          final 900 s, the eight scored records) for OU-III and CARMA.
 matched   Level 1 oracle-shape diagnostic: CARMA(5,2) refitted to each case's
           true vessel-heave spectrum (needs mismatch_analysis.json).
 timing    Serial full-INS runs on an otherwise idle host for the runtime table
@@ -54,6 +57,7 @@ OUT = ROOT / "reports" / "results" / "carma_benchmark"
 RAW = OUT / "raw_runs.csv"
 DATASET_RAW = OUT / "dataset_runs.csv"
 MATCHED_RAW = OUT / "matched_runs.csv"
+DETERMINISTIC_RAW = OUT / "deterministic_runs.csv"
 TIMING_RAW = OUT / "timing_runs.csv"
 TRUTH_STATS = OUT / "truth_motion.csv"
 TRACE_DIR = OUT / "traces"
@@ -194,12 +198,48 @@ def cmd_timing(args):
     run_bench(cmds, TIMING_RAW, 1)
 
 
-def cmd_dataset(args):
-    """Pinned vessel-RAO records: unchanged OU-III simulator vs carma-sim."""
+DATASET_FIELDS = ["family", "seed", "input", "disp_z_rms_m", "disp_z_pct_hs", "disp_x_rms_m", "disp_y_rms_m",
+                  "roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg", "accel_z_rms_mps2"]
+
+
+def dataset_invocation(cmd, extra, seed):
+    """One simulator run over the eight scored records; seed None = the simulators' default seeds."""
     data_dir = ROOT / "tests" / "kalman_carma"
     files = sorted(str(p) for p in data_dir.glob("wave_data_*.csv"))
     if not files:
         sys.exit("no dataset in tests/kalman_carma: make ensure-sim-data")
+    # W3D_COLLECT_ALL_GATES: the OU-III simulator otherwise stops at its first
+    # failed regression gate (as in CI, every record is processed).
+    env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
+    env.update(W3D_VALIDATION_WINDOW_SEC="900", W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1", **extra)
+    if seed is not None:
+        env["W3D_SEED"] = str(seed)
+    argv = cmd + sum((["--input", f] for f in files), [])
+    p = subprocess.run(argv, capture_output=True, text=True, env=env, cwd=str(data_dir))
+    return p, parse_metrics(p.stdout)
+
+
+def cmd_deterministic(args):
+    families = [("OU_III", [str(OU3_SIM)], {})] + [
+        (f"CARMA_{v}", [str(CARMA_SIM)], {"W3D_CARMA_VARIANT": v}) for v in args.variants.split(",")]
+    with DETERMINISTIC_RAW.open("w") as out:
+        wr = csv.DictWriter(out, fieldnames=DATASET_FIELDS, extrasaction="ignore")
+        wr.writeheader()
+        with ThreadPoolExecutor(max_workers=args.jobs) as ex:
+            futs = {ex.submit(dataset_invocation, cmd, extra, None): fam for fam, cmd, extra in families}
+            for fut in as_completed(futs):
+                fam = futs[fut]
+                p, metrics = fut.result()
+                if p.returncode not in (0, 1) or not metrics:
+                    sys.exit(f"{fam}: rc={p.returncode} {p.stderr[-300:]}")
+                for m in metrics:
+                    m.update(family=fam, seed="default", input=Path(m.get("input", "")).name)
+                    wr.writerow(m)
+                print(f"  {fam}: {len(metrics)} records", flush=True)
+
+
+def cmd_dataset(args):
+    """Pinned vessel-RAO records: unchanged OU-III simulator vs carma-sim."""
     rows_done = read_rows(DATASET_RAW)
     done = {(r["family"], r["seed"]) for r in rows_done}
     work = []
@@ -212,16 +252,9 @@ def cmd_dataset(args):
 
     def run(w):
         family, seed, cmd, extra = w
-        # W3D_COLLECT_ALL_GATES: the OU-III simulator otherwise stops at its first
-        # failed regression gate (as in CI, every record is processed).
-        env = dict(os.environ, W3D_SEED=str(seed), W3D_VALIDATION_WINDOW_SEC="900",
-                   W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1", **extra)
-        argv = cmd + sum((["--input", f] for f in files), [])
-        p = subprocess.run(argv, capture_output=True, text=True, env=env, cwd=str(data_dir))
-        return w, p
+        return w, dataset_invocation(cmd, extra, seed)
 
-    fields = ["family", "seed", "input", "disp_z_rms_m", "disp_z_pct_hs", "disp_x_rms_m", "disp_y_rms_m",
-              "roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg", "accel_z_rms_mps2"]
+    fields = DATASET_FIELDS
     new_file = not DATASET_RAW.exists()
     with DATASET_RAW.open("a") as out:
         wr = csv.DictWriter(out, fieldnames=fields, extrasaction="ignore")
@@ -229,8 +262,7 @@ def cmd_dataset(args):
             wr.writeheader()
         with ThreadPoolExecutor(max_workers=args.jobs) as ex:
             for fut in as_completed([ex.submit(run, w) for w in work]):
-                (family, seed, _, _), p = fut.result()
-                metrics = parse_metrics(p.stdout)
+                (family, seed, _, _), (p, metrics) = fut.result()
                 if p.returncode not in (0, 1) or not metrics:
                     print(f"ERROR {family} seed {seed}: rc={p.returncode} {p.stderr[-300:]}", flush=True)
                     continue
@@ -511,6 +543,28 @@ def cmd_report(args):
                      f" (jittered dt: {np.mean([fnum(r, 'runtime_ns') for r in rj]) / 1000 if rj else float('nan'):.2f})"
                      f" | {rr[0]['memory_bytes']} |")
 
+    # Deterministic protocol of the repository's OU-III table.
+    det = read_rows(DETERMINISTIC_RAW)
+    if det:
+        T = {(r["input"], r["family"]): r for r in det}
+        fams = sorted({r["family"] for r in det}, key=lambda f: (f != "OU_III", f))
+        recs = sorted({r["input"] for r in det},
+                      key=lambda x: ("pmstokes" in x, float(x.split("_H")[1].split("_")[0])))
+        lines.append("\n## Pinned dataset, deterministic protocol of the OU-III results table\n")
+        lines.append("`tools/ou_sim_table.py` protocol: default seeds, one realization, final 900 s of each 1200 s"
+                     " record, every record scored. The OU-III column is the unchanged `kalman_ou_iii-sim` and"
+                     " reproduces `doc/kalman_ou_iii/w3d-sim-results-generated.tex-part`. Heave RMS error in m"
+                     " (% of Hs); roll/pitch/yaw RMS error in degrees.\n")
+        lines.append("| Record | " + " | ".join(f.replace("CARMA_", "") + " heave" for f in fams) + " | "
+                     + " | ".join(f.replace("CARMA_", "") + " R/P/Y" for f in fams) + " |")
+        lines.append("|" + "---|" * (1 + 2 * len(fams)))
+        for rec in recs:
+            cells = [rec.replace("wave_data_", "").replace(".csv", "")]
+            cells += [f"{float(T[(rec, f)]['disp_z_rms_m']):.4f} ({float(T[(rec, f)]['disp_z_pct_hs']):.2f})" for f in fams]
+            cells += [f"{float(T[(rec, f)]['roll_rms_deg']):.2f}/{float(T[(rec, f)]['pitch_rms_deg']):.2f}/"
+                      f"{float(T[(rec, f)]['yaw_rms_deg']):.2f}" for f in fams]
+            lines.append("| " + " | ".join(cells) + " |")
+
     # Dataset replay.
     drows = read_rows(DATASET_RAW)
     if drows:
@@ -656,7 +710,43 @@ def figures(S, rows):
     svgd.save_svg(fig, OUT / "runtime_memory.svg", bbox_inches="tight")
     plt.close(fig)
 
+    dataset_figure(plt, svgd)
     trace_figures(plt, svgd)
+
+
+def dataset_figure(plt, svgd):
+    """Pinned dataset: heave RMS (% Hs) per record, mean and range over the W3D seeds."""
+    drows = read_rows(DATASET_RAW)
+    if not drows:
+        return
+    fams = [f for f in ("OU_III", "CARMA_C41", "CARMA_C52", "CARMA_C30") if any(r["family"] == f for r in drows)]
+    recs = sorted({r["input"] for r in drows},
+                  key=lambda x: ("pmstokes" in x, float(x.split("_H")[1].split("_")[0])))
+    color = {"OU_III": COLORS["OU3"], "CARMA_C41": COLORS["C41"], "CARMA_C52": COLORS["C52"], "CARMA_C30": COLORS["C30"]}
+    fig, ax = plt.subplots(figsize=(10.0, 3.6))
+    w = 0.8 / len(fams)
+    for j, f in enumerate(fams):
+        mean, lo, hi = [], [], []
+        for rec in recs:
+            v = np.array([fnum(r, "disp_z_pct_hs") for r in drows if r["family"] == f and r["input"] == rec])
+            mean.append(v.mean()); lo.append(v.mean() - v.min()); hi.append(v.max() - v.mean())
+        x = np.arange(len(recs)) + (j - (len(fams) - 1) / 2) * w
+        ax.bar(x, mean, w, yerr=[lo, hi], color=color[f], alpha=0.85, capsize=2, ecolor="#333333",
+               label=f.replace("OU_III", "OU-III (shipping)").replace("CARMA_", "CARMA ").replace("C41", "(4,1)")
+               .replace("C52", "(5,2)").replace("C30", "(3,0)"))
+    ax.set_xticks(np.arange(len(recs)))
+    ax.set_xticklabels([r.replace("wave_data_", "").split("_L")[0].replace("pmstokes", "PM").replace("jonswap", "JONSWAP")
+                        .replace("_H", " Hs ") for r in recs], fontsize=8)
+    ax.set_ylabel("Heave RMS error (% of Hs)")
+    n = len({r["seed"] for r in drows})
+    ax.set_title(f"Pinned vessel-RAO dataset, shared W3dSimulationRunner, final 900 s: mean and range over {n} seeds",
+                 fontsize=9)
+    ax.grid(True, axis="y", color="#e5e5e5", lw=0.6)
+    ax.legend(fontsize=8, ncol=4, loc="upper right")
+    ax.set_ylim(0, 1.3 * ax.get_ylim()[1])
+    fig.tight_layout()
+    svgd.save_svg(fig, OUT / "dataset_comparison.svg", bbox_inches="tight")
+    plt.close(fig)
 
 
 def trace_figures(plt, svgd):
@@ -753,6 +843,9 @@ def main(argv=None):
     d.add_argument("--jobs", type=int, default=os.cpu_count() or 2)
     d.add_argument("--seeds", type=int, default=10)
     d.add_argument("--variants", default="C52,C41,C30")
+    dt_ = sub.add_parser("deterministic")
+    dt_.add_argument("--jobs", type=int, default=os.cpu_count() or 2)
+    dt_.add_argument("--variants", default="C52,C41,C30,C52S")
     mt = sub.add_parser("matched")
     mt.add_argument("--jobs", type=int, default=os.cpu_count() or 2)
     mt.add_argument("--seeds", type=int, default=30)
@@ -763,7 +856,7 @@ def main(argv=None):
     rp = sub.add_parser("report")
     rp.add_argument("--no-plots", action="store_true")
     args = ap.parse_args(argv)
-    {"run": cmd_run, "dataset": cmd_dataset, "matched": cmd_matched, "timing": cmd_timing,
+    {"run": cmd_run, "dataset": cmd_dataset, "deterministic": cmd_deterministic, "matched": cmd_matched, "timing": cmd_timing,
      "traces": cmd_traces, "truth": cmd_truth, "report": cmd_report}[args.cmd](args)
 
 
