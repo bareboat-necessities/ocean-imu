@@ -5,7 +5,8 @@ Reads the long realizations written by tests/kalman_carma/carma_process-sim
 (the C++ library model at kappa = 1 and unit stationary acceleration std) and
 checks them against quantities computed here independently of the C++ code:
 
-* the spectral shapes are parsed from src/kalman_carma/CarmaVerticalModel.h
+* the spectral shapes are parsed from
+  tests/kalman_carma/include/kalman_carma/CarmaVerticalModel.h
   and must match reports/results/carma_benchmark/carma_fit.json;
 * stability: every root of P(s) strictly in the left half plane;
 * the driving gain for unit acceleration std and the stationary variances
@@ -37,7 +38,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = ROOT / "src" / "kalman_carma" / "CarmaVerticalModel.h"
+HEADER = ROOT / "tests" / "kalman_carma" / "include" / "kalman_carma" / "CarmaVerticalModel.h"
 FIT = ROOT / "reports" / "results" / "carma_benchmark" / "carma_fit.json"
 TWO_PI = 2.0 * np.pi
 

@@ -4,7 +4,8 @@
 shipping OU-III estimator, its tuning, gates, magnetic handling or the OU-III
 stability study.  `Kalman3D_Wave_OU_III` and `SeaStateFusionFilter_OU_III`
 remain the deployed, authoritative implementation; the CARMA code lives in
-`src/kalman_carma/` and is used only by tests and the benchmark.  The
+`tests/kalman_carma/include/kalman_carma/`, outside the shipped library tree
+`src/`, and is used only by tests and the benchmark.  The
 CARMA prior is a statistical model, not a law imposed on the vessel's
 physical history, and no result below is a stability or admissibility
 statement (see the last section of
@@ -82,7 +83,7 @@ request is not in the repository and is not plotted.
 
 ## 2. State-space realization
 
-`src/kalman_carma/CarmaVerticalModel.h` writes every model in the
+`tests/kalman_carma/include/kalman_carma/CarmaVerticalModel.h` writes every model in the
 coordinates
 
     x = [h, v, a, l_1 .. l_{N-3}],    dx = A x dt + g e_a dW,
@@ -713,5 +714,6 @@ run on hardware.
 
 ESP32-S3 build: `tests/kalman_carma/arduino/carma_compile_check/` with
 `-DCARMA_CHECK_VARIANT=0..3` (OU-III, CARMA(5,2), CARMA(4,1), CARMA(5,2)+`S_z`)
-for `esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc`.  It is under
+and `-I<repo>/tests/kalman_carma/include` in `compiler.cpp.extra_flags`, for
+`esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc`.  It is under
 `tests/`, so the shipped-sketch CI jobs do not compile it.

@@ -11,6 +11,9 @@
 
   On hardware it feeds a synthetic 0.3 Hz heave at 200 Hz with a jittered
   sample interval and prints the mean and maximum micros() per update.
+
+  The CARMA headers are not part of the ocean_imu library: build with
+  -I<repo>/tests/kalman_carma/include in compiler.cpp.extra_flags.
 */
 
 #include <Arduino.h>
