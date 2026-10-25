@@ -466,7 +466,7 @@ void print_header() {
     for (const char* ax : {"x", "y", "z"})
         std::printf(",rms_%s,pct_%s,mean_%s,peak_%s,lf_%s,trend_%s,rmsv_%s,nees_%s,predstd_%s,conv_%s,"
                     "su_rms_%s,su_peak_%s,f60_%s", ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax);
-    std::printf(",rms_h,nees_p3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg\n");
+    std::printf(",rms_h,nees_pos3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg\n");
 }
 
 int truth_stats(const ScenarioX& sx, const Args& args, double dt, long steps) {
@@ -671,8 +671,8 @@ int main(int argc, char** argv) {
                     const double det = M.determinant();
                     se.nees[a].push_back(det > 0 ? static_cast<float>(x.dot(M.inverse() * x)) : NAN);
                 }
-                const Eigen::Matrix3d P3 = P.topLeftCorner<3,3>();
-                Eigen::LDLT<Eigen::Matrix3d> l3(P3);
+                const Eigen::Matrix3d P_pos = P.topLeftCorner<3,3>();
+                Eigen::LDLT<Eigen::Matrix3d> l3(P_pos);
                 se.nees3.push_back(l3.info() == Eigen::Success && l3.isPositive() ? static_cast<float>(ep.dot(l3.solve(ep))) : NAN);
                 Eigen::Matrix<double,6,1> x6; x6 << ep, ev;
                 Eigen::LDLT<Eigen::Matrix<double,6,6>> l6(P);
