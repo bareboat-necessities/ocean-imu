@@ -8,6 +8,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/freq \
 	$(REPO_ROOT)/tests/heave_only \
 	$(REPO_ROOT)/tests/imu_calibrate \
+	$(REPO_ROOT)/tests/kalman_carma \
 	$(REPO_ROOT)/tests/kalman_ou_ii \
 	$(REPO_ROOT)/tests/kalman_ou_iii \
 	$(REPO_ROOT)/tests/kalman_tfg \

@@ -117,3 +117,9 @@ reports/coverage/
 *.gcov
 
 .sim-data/
+
+# Experimental CARMA benchmark build and run outputs
+tests/kalman_carma/carma_bench
+tests/kalman_carma/process/
+tests/kalman_carma/smoke_*.csv
+reports/results/carma_benchmark/traces/

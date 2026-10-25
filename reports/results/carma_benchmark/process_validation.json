@@ -1,0 +1,131 @@
+{
+  "30": {
+    "a_increment_ratio_to_g2dt": 0.9837287838038183,
+    "a_increment_scaling_exponent": 0.9784421869379977,
+    "band_hz": [
+      0.01220703125,
+      2.0
+    ],
+    "dh_dt_minus_v_rel": 0.0001530105396777834,
+    "dv_dt_minus_a_over_brownian": 0.9982591804889873,
+    "dv_dt_minus_a_rel": 0.06912919432270866,
+    "finite": true,
+    "max_abs_h_over_sigma": 4.581517328371172,
+    "max_real_pole": -0.6475764323857093,
+    "order": "CARMA(3,0)",
+    "psd_a_max_abs_db": 0.3114872560304833,
+    "psd_a_mean_abs_db": 0.1155617596223943,
+    "psd_h_max_abs_db": 0.5116862051224782,
+    "psd_h_mean_abs_db": 0.09870734964412638,
+    "psd_v_max_abs_db": 0.5028533909276203,
+    "psd_v_mean_abs_db": 0.10213240354333872,
+    "ratio_a_h_over_w4_db": [
+      0.030842225192376522,
+      0.05813056225932248
+    ],
+    "ratio_band_a_hz": [
+      0.3753662109375,
+      0.47607421875
+    ],
+    "ratio_band_v_hz": [
+      0.01220703125,
+      1.9989013671875
+    ],
+    "ratio_v_h_over_w2_db": [
+      0.004699170626195507,
+      0.022368527656479734
+    ],
+    "sample_var_ratio_h_v_a": [
+      0.9921464117463011,
+      0.9933789001460965,
+      0.9993922676188634
+    ],
+    "v_increment_scaling_exponent": 1.9863199941999599
+  },
+  "41": {
+    "a_increment_ratio_to_g2dt": 1.0002045542302573,
+    "a_increment_scaling_exponent": 1.0025662803224236,
+    "band_hz": [
+      0.018310546875,
+      1.66015625
+    ],
+    "dh_dt_minus_v_rel": 2.714498469413577e-05,
+    "dv_dt_minus_a_over_brownian": 1.0010629555847075,
+    "dv_dt_minus_a_rel": 0.023558154060250233,
+    "finite": true,
+    "max_abs_h_over_sigma": 4.3274735674572735,
+    "max_real_pole": -0.20094196179966806,
+    "order": "CARMA(4,1)",
+    "psd_a_max_abs_db": 0.36187056936333006,
+    "psd_a_mean_abs_db": 0.08722223404413039,
+    "psd_h_max_abs_db": 0.30854703611473916,
+    "psd_h_mean_abs_db": 0.09769669310694241,
+    "psd_v_max_abs_db": 0.4249234049188303,
+    "psd_v_mean_abs_db": 0.10754475331033088,
+    "ratio_a_h_over_w4_db": [
+      0.005415085236444493,
+      0.021587322238237856
+    ],
+    "ratio_band_a_hz": [
+      0.2227783203125,
+      1.66015625
+    ],
+    "ratio_band_v_hz": [
+      0.0213623046875,
+      1.66015625
+    ],
+    "ratio_v_h_over_w2_db": [
+      0.01725095617030715,
+      0.09983910577150687
+    ],
+    "sample_var_ratio_h_v_a": [
+      1.0060959821151596,
+      1.0025604829240644,
+      0.9991497990324127
+    ],
+    "v_increment_scaling_exponent": 1.9984011198706173
+  },
+  "52": {
+    "a_increment_ratio_to_g2dt": 0.9943690838977514,
+    "a_increment_scaling_exponent": 0.9919465263640918,
+    "band_hz": [
+      0.01220703125,
+      1.84326171875
+    ],
+    "dh_dt_minus_v_rel": 6.120027552477905e-05,
+    "dv_dt_minus_a_over_brownian": 1.000276728941542,
+    "dv_dt_minus_a_rel": 0.04151428019099031,
+    "finite": true,
+    "max_abs_h_over_sigma": 4.485327936290872,
+    "max_real_pole": -0.16976763319502589,
+    "order": "CARMA(5,2)",
+    "psd_a_max_abs_db": 0.24429590036943033,
+    "psd_a_mean_abs_db": 0.07337542270807602,
+    "psd_h_max_abs_db": 0.48283659377283766,
+    "psd_h_mean_abs_db": 0.12677800551853832,
+    "psd_v_max_abs_db": 0.41934481011742786,
+    "psd_v_mean_abs_db": 0.12741089607048045,
+    "ratio_a_h_over_w4_db": [
+      0.017153368652384936,
+      0.035200032025401
+    ],
+    "ratio_band_a_hz": [
+      0.250244140625,
+      1.84326171875
+    ],
+    "ratio_band_v_hz": [
+      0.01220703125,
+      1.84326171875
+    ],
+    "ratio_v_h_over_w2_db": [
+      0.014712536747714564,
+      0.10436877620226064
+    ],
+    "sample_var_ratio_h_v_a": [
+      1.009231195388372,
+      1.0063323312546577,
+      1.0017229622692876
+    ],
+    "v_increment_scaling_exponent": 1.9950435808952223
+  }
+}
