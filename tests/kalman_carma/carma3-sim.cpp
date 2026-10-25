@@ -16,7 +16,7 @@
     W3D_SEED for the paired results.
 
     W3D_CARMA3_VARIANT selects A41 (default; CARMA(4,1) on all axes), A52,
-    M45 (CARMA(4,1) x/y, (5,2) z), A52S (with S_x, S_y), A41S (OU-III r_S
+    M45 (CARMA(4,1) x/y, (5,2) z), M54 (CARMA(5,2) x/y, (4,1) z), A52S (with S_x, S_y), A41S (OU-III r_S
     carried over, negative control), H41 (horizontal shape fitted to the
     carma3_bench sway RAO) or Q41 (OU-III x/y chain in the three-axis class,
     equivalence control with carma-sim C41).
@@ -143,6 +143,7 @@ private:
 CARMA_ADAPTER(Adapter_A41, 4, false, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_A52, 5, false, 5, false, nullptr)
 CARMA_ADAPTER(Adapter_M45, 4, false, 5, false, nullptr)
+CARMA_ADAPTER(Adapter_M54, 5, false, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_A52S, 5, true, 5, false, nullptr)
 CARMA_ADAPTER(Adapter_A41S, 4, true, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_H41, 4, false, 4, false, &carma3_bench::CARMA41_SWAY_SHAPE)
@@ -195,11 +196,12 @@ int main(int argc, char* argv[]) {
             if (variant == "A41") run_file<Adapter_A41>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "A52") run_file<Adapter_A52>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "M45") run_file<Adapter_M45>(f, dt, with_mag, seeds, write_timeseries, window, family);
+            else if (variant == "M54") run_file<Adapter_M54>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "A52S") run_file<Adapter_A52S>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "A41S") run_file<Adapter_A41S>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "H41") run_file<Adapter_H41>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "Q41") run_file<Adapter_Q41>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, A52S, A41S, H41 or Q41");
+            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S, H41 or Q41");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

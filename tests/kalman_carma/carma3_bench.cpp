@@ -18,6 +18,7 @@
                      Z41 Z52      PR #704 hybrids: OU-III x/y, CARMA(4,1)/(5,2) z
                      A41 A52 A30  CARMA on all three axes
                      M45          CARMA(4,1) x/y, CARMA(5,2) z
+                     M54          CARMA(5,2) x/y, CARMA(4,1) z
                      A52S         CARMA(5,2) all axes + S_x, S_y (pole law)
                      A41S         CARMA(4,1) all axes + S_x, S_y with OU-III's
                                   r_S carried over (negative control)
@@ -337,6 +338,7 @@ std::unique_ptr<Level1Set> make_level1(const std::string& n, float R, BiasPrior 
     if (n == "A52S") return std::make_unique<Level1Set>(n, c(5, true, fx, c52), c(5, true, fy, c52), c(5, false, 1, c52));
     if (n == "A41S") return std::make_unique<Level1Set>(n, c(4, true, fx, c41), c(4, true, fy, c41), c(4, false, 1, c41));
     if (n == "M45") return std::make_unique<Level1Set>(n, c(4, false, fx, c41), c(4, false, fy, c41), c(5, false, 1, c52));
+    if (n == "M54") return std::make_unique<Level1Set>(n, c(5, false, fx, c52), c(5, false, fy, c52), c(4, false, 1, c41));
     if (n == "H41") return std::make_unique<Level1Set>(n, c(4, false, fx, h41), c(4, false, fy, h41), c(4, false, 1, c41));
     return nullptr;
 }

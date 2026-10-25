@@ -26,15 +26,16 @@ J29 = "jonswap_fp0.29_hs0.8_g3.3"
 
 LABEL = {
     "OU3": "OU-III (shipping)", "Z41": "OU-III x/y + C41 z", "Z52": "OU-III x/y + C52 z",
-    "A41": "C41 x/y/z", "A52": "C52 x/y/z", "M45": "C41 x/y + C52 z", "A52S": "C52 x/y/z + S_x,S_y",
+    "A41": "C41 x/y/z", "A52": "C52 x/y/z", "M45": "C41 x/y + C52 z", "M54": "C52 x/y + C41 z", "A52S": "C52 x/y/z + S_x,S_y",
     "A41S": "C41 x/y/z + S_x,S_y (OU-III r_S)", "H41": "C41 x/y/z, sway-fitted x/y shape", "A30": "C30 x/y/z",
 }
-ORDER = ["OU3", "Z41", "Z52", "A41", "A52", "M45", "A52S", "A41S", "H41", "A30"]
-# One fixed colour per filter in every figure (reference palette, fixed slot
-# order; H41 and A30 never share a figure with the slot they would need).
+ORDER = ["OU3", "Z41", "Z52", "A41", "A52", "M54", "M45", "A52S", "A41S", "H41", "A30"]
+# One fixed colour per filter in every figure: the eight reference-palette
+# slots in their fixed order for the filters that appear in figures; the
+# dominated mixed order M45 and C30 appear in tables only (neutral greys).
 COL = {"OU3": "#2a78d6", "Z41": "#eb6834", "Z52": "#1baf7a", "A41": "#eda100", "A52": "#e87ba4",
-       "M45": "#008300", "A52S": "#6250d6", "A41S": "#e34948", "H41": "#52514e", "A30": "#8a8a86",
-       "truth": "#0b0b0b"}
+       "M54": "#008300", "A52S": "#6250d6", "A41S": "#e34948", "H41": "#52514e", "M45": "#b4b4ae",
+       "A30": "#8a8a86", "truth": "#0b0b0b"}
 
 SC_LABEL = {
     J29: "JONSWAP 0.29 Hz, 0.8 m", "pm_fp0.25_hs1": "PM 0.25 Hz, 1 m", "mixed_swell_wind": "mixed swell + wind",
@@ -155,7 +156,7 @@ def report():
         lines.append("")
 
     import carma3_benchmark as cb
-    main_f = ["OU3", "Z41", "Z52", "A41", "A52", "M45"]
+    main_f = ["OU3", "Z41", "Z52", "A41", "A52", "M54", "M45"]
     s_f = ["OU3", "A41", "A52", "A52S", "A41S", "H41"]
 
     # Headline: principal seas, complete INS, horizontal and heave with CIs.
@@ -258,9 +259,40 @@ def report():
             cost[f] = {"states": int(meta[f][0]), "bytes": int(meta[f][1]), "update_us": float(np.median(rt[f])) / 1000}
             lines.append(f"| {LABEL[f]} | {meta[f][0]} | {cost[f]['update_us']:.2f} | {meta[f][1]} |")
     lines.append("")
-    lines.append("Runtimes are medians over runs that shared the 4-core host with other benchmark processes; "
-                 "they rank the filters but are not timing-grade (see the idle-host timing table if present).")
+    lines.append("Medians over runs that shared the 4-core host with other benchmark processes: they rank the "
+                 "filters but are not timing-grade.")
     lines.append("")
+    tr = load(OUT / "timing_runs.csv")
+    if tr:
+        lines.append("### Idle host (one process; three JONSWAP seeds, fixed and +-25 % jittered dt)")
+        lines.append("")
+        lines.append("| Filter | states | mean update fixed dt (us) | mean update jittered dt (us) | ratio to OU-III (fixed) |")
+        lines.append("|---|---|---|---|---|")
+        tt = collections.defaultdict(lambda: collections.defaultdict(list))
+        for r in tr:
+            tt[r["filter"]]["jit" if r["scenario"].endswith("+jit") else "fix"].append(fnum(r, "runtime_ns") / 1000)
+        base = np.mean(tt["OU3"]["fix"]) if tt.get("OU3") else np.nan
+        for f in ORDER:
+            if f in tt:
+                a, b = np.mean(tt[f]["fix"]), np.mean(tt[f]["jit"])
+                cost.setdefault(f, {}).update(idle_update_us=float(a), idle_update_us_jitter=float(b))
+                lines.append(f"| {LABEL[f]} | {meta.get(f, ('', ''))[0]} | {a:.2f} | {b:.2f} | {a / base:.2f} |")
+        lines.append("")
+    es = load(OUT / "esp32s3_size.csv")
+    if es:
+        lines.append("### ESP32-S3 build probe (Xtensa GCC 14.2.0, -Os; `tests/kalman_carma/arduino/carma3_size_probe`)")
+        lines.append("")
+        lines.append("Object-level numbers of one translation unit per variant holding the complete fusion wrapper's "
+                     "sample path (not a linked firmware image); `sizeof` evaluated by the target compiler.  No "
+                     "hardware: on-target time and float behaviour are not measured.")
+        lines.append("")
+        lines.append("| Filter | code bytes (object) | sizeof filter (bytes) | sizeof wrapper (bytes) | largest stack frame (bytes) |")
+        lines.append("|---|---|---|---|---|")
+        for r in es:
+            f = r["variant"]
+            lines.append(f"| {LABEL.get(f, f)} | {r['code_bytes']} | {r['sizeof_filter']} | {r['sizeof_fusion']} | "
+                         f"{r['max_stack_frame']} |")
+        lines.append("")
 
     # Coupled-xy oracle diagnostic.
     d = g.get(("full", J29))
@@ -382,7 +414,7 @@ def figures(g, ds):
     sec = cb.PRIMARY + [s for s in cb.SECONDARY if not s.startswith("stationary")]
     for metric, fname, title in (("rms_h", "paired_improvement_horizontal.svg", "horizontal"),
                                  ("rms_z", "paired_improvement_heave.svg", "heave")):
-        fl = ["Z41", "Z52", "A41", "A52", "M45"] if metric == "rms_z" else ["A41", "A52", "M45", "A52S", "H41"]
+        fl = ["Z41", "Z52", "A41", "A52", "M54"] if metric == "rms_z" else ["A41", "A52", "M54", "A52S", "H41"]
         rows = [sc for sc in sec if ("full", sc) in g]
         fig, ax = plt.subplots(figsize=(8.6, 0.32 * len(rows) + 1.4))
         ypos = np.arange(len(rows))[::-1]
@@ -411,7 +443,7 @@ def figures(g, ds):
 
     # Distribution over seeds, principal seas.
     fig, axes = plt.subplots(2, 4, figsize=(13, 5.8), sharey=False)
-    fl = ["OU3", "Z41", "Z52", "A41", "A52", "M45"]
+    fl = ["OU3", "Z41", "Z52", "A41", "A52", "M54"]
     for col, sc in enumerate(cb.PRIMARY):
         d = g.get(("full", sc))
         if not d:

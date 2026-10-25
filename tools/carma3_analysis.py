@@ -1028,7 +1028,7 @@ def make_plots(out, curves, outdir):
         ax.set_title(title, fontsize=8)
         style(ax)
     axes[0].set_ylabel("Squared coherence")
-    axes[0].legend(fontsize=7, loc="lower right")
+    axes[0].legend(fontsize=7, loc="upper right")
     fig.tight_layout()
     svgd.save_svg(fig, outdir / "coherence.svg", bbox_inches="tight")
     plt.close(fig)

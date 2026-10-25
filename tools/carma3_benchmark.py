@@ -12,6 +12,7 @@ skipped.
                  carma-sim (PR #704 hybrids), carma3-sim
     traces       time series for the figures
     truth        realized motion levels of every scenario (seed 1)
+    timing       host update time on an otherwise idle machine (one job)
     report       tables (summary.md), paired statistics (paired_stats.json)
                  and figures
 
@@ -43,13 +44,14 @@ OUT = ROOT / "reports" / "results" / "carma3_benchmark"
 RAW = OUT / "raw_runs.csv"
 DATASET_RAW = OUT / "dataset_runs.csv"
 TRUTH_RAW = OUT / "truth_motion.csv"
+TIMING_RAW = OUT / "timing_runs.csv"
 TRACE_DIR = OUT / "traces"
 OU3_SIM = ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
 CARMA_SIM = TDIR / "carma-sim"
 CARMA3_SIM = TDIR / "carma3-sim"
 
-FULL_FILTERS = "OU3,Z41,Z52,A41,A52,M45,A52S,A41S,H41"
-L1_FILTERS = "OU3,Z41,Z52,A41,A52,M45,A52S,A41S,H41,A30"
+FULL_FILTERS = "OU3,Z41,Z52,A41,A52,M45,M54,A52S,A41S,H41"
+L1_FILTERS = "OU3,Z41,Z52,A41,A52,M45,M54,A52S,A41S,H41,A30"
 J29 = "jonswap_fp0.29_hs0.8_g3.3"
 
 # Principal seas: 100 paired seeds at both levels.
@@ -127,7 +129,7 @@ def grid(args):
             work.append(("l1", sc, seed, L1_FILTERS))
     for sc in LONG:
         for seed in range(1, args.long_seeds + 1):
-            work.append(("full", sc, seed, "OU3,Z41,A41,A52,M45,A52S"))
+            work.append(("full", sc, seed, "OU3,Z41,A41,A52,M45,M54,A52S"))
     # Coupled x-y prior with the ORACLE horizontal acceleration correlation of
     # the default sea (tools/carma3_analysis.py coupled_xy_r): a diagnostic
     # upper bound, not a candidate (the estimator does not measure r).
@@ -271,6 +273,15 @@ def cmd_truth(args):
     print("wrote", TRUTH_RAW.relative_to(ROOT))
 
 
+def cmd_timing(args):
+    """Serial runs on an idle host: fixed and +-25 % jittered sample interval."""
+    if TIMING_RAW.exists():
+        TIMING_RAW.unlink()
+    cmds = [["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", "OU3,Z41,Z52,A41,A52,M45,M54,A52S"]
+            for sc in (J29, f"{J29}+jit") for seed in range(1, args.seeds + 1)]
+    run_bench(cmds, TIMING_RAW, 1)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -283,12 +294,15 @@ def main(argv=None):
     p = sub.add_parser("dataset")
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--seeds", type=int, default=10)
-    p.add_argument("--variants", default="A41,A52,M45,A52S,H41,Q41")
+    p.add_argument("--variants", default="A41,A52,M45,M54,A52S,H41,Q41")
     p.set_defaults(fn=cmd_dataset)
     p = sub.add_parser("traces")
     p.set_defaults(fn=cmd_traces)
     p = sub.add_parser("truth")
     p.set_defaults(fn=cmd_truth)
+    p = sub.add_parser("timing")
+    p.add_argument("--seeds", type=int, default=3)
+    p.set_defaults(fn=cmd_timing)
     p = sub.add_parser("report")
     p.set_defaults(fn=lambda a: __import__("carma3_report").report())
     args = ap.parse_args(argv)
