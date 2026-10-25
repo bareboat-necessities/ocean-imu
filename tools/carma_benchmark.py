@@ -12,6 +12,7 @@ matched   Level 1 oracle-shape diagnostic: CARMA(5,2) refitted to each case's
 timing    Serial full-INS runs on an otherwise idle host for the runtime table
           (the grid's per-update times are taken under parallel load).
 traces    Write the example time series used by the figures.
+truth     Realized motion levels of every scenario (truth_motion.csv).
 report    Aggregate, compute paired statistics, write summary tables, the
           Markdown report and the SVG figures.
 
@@ -28,6 +29,7 @@ Usage:
   python3 tools/carma_benchmark.py matched [--seeds 30]
   python3 tools/carma_benchmark.py timing
   python3 tools/carma_benchmark.py traces
+  python3 tools/carma_benchmark.py truth
   python3 tools/carma_benchmark.py report
 """
 from __future__ import annotations
@@ -53,26 +55,27 @@ RAW = OUT / "raw_runs.csv"
 DATASET_RAW = OUT / "dataset_runs.csv"
 MATCHED_RAW = OUT / "matched_runs.csv"
 TIMING_RAW = OUT / "timing_runs.csv"
+TRUTH_STATS = OUT / "truth_motion.csv"
 TRACE_DIR = OUT / "traces"
 
-PRIMARY = ["jonswap_fp0.29_hs2_g3.3", "pm_fp0.25_hs2", "mixed_swell_wind", "changing_fp"]
+PRIMARY = ["jonswap_fp0.29_hs0.8_g3.3", "pm_fp0.25_hs1", "mixed_swell_wind", "changing_fp"]
 SECONDARY = [
-    "jonswap_fp0.29_hs2_g3.3_norao",
-    "jonswap_fp0.20_hs1_g3.3", "jonswap_fp0.20_hs4_g3.3",
-    "jonswap_fp0.45_hs0.5_g3.3", "jonswap_fp0.45_hs1.5_g3.3",
-    "jonswap_fp0.29_hs0.5_g3.3", "jonswap_fp0.29_hs4_g3.3",
-    "jonswap_fp0.29_hs2_g1.5", "jonswap_fp0.29_hs2_g7",
-    "pm_fp0.15_hs3", "pm_fp0.40_hs1",
+    "jonswap_fp0.29_hs0.8_g3.3_norao",
+    "jonswap_fp0.20_hs1_g3.3", "jonswap_fp0.20_hs2_g3.3",
+    "jonswap_fp0.45_hs0.2_g3.3", "jonswap_fp0.45_hs0.4_g3.3",
+    "jonswap_fp0.29_hs0.4_g3.3", "jonswap_fp0.29_hs1.1_g3.3",
+    "jonswap_fp0.29_hs0.8_g1.5", "jonswap_fp0.29_hs0.8_g7",
+    "jonswap_fp0.10_hs4_g3.3",
+    "pm_fp0.15_hs2.5", "pm_fp0.40_hs0.4",
     "broadband", "bimodal", "abrupt_change", "small_amplitude",
     "bias_drift",
 ]
 QUIET = ["stationary", "stationary_calbias", "small_amplitude"]
-FULL_ONLY = ["tilted", "large_rotation", "jonswap_fp0.29_hs2_g3.3_jit"]
-LONG = ["jonswap_fp0.29_hs2_g3.3_T3600", "mixed_swell_wind_T3600"]
-ORACLE = ["jonswap_fp0.29_hs2_g3.3", "pm_fp0.25_hs2", "mixed_swell_wind",
-          "jonswap_fp0.20_hs1_g3.3", "jonswap_fp0.45_hs1.5_g3.3", "jonswap_fp0.29_hs2_g3.3_norao"]
-
-MATCHED_CASES = ["jonswap_fp0.29_hs2_g3.3", "pm_fp0.25_hs2", "mixed_swell_wind", "bimodal"]
+FULL_ONLY = ["tilted", "large_rotation", "jonswap_fp0.29_hs0.8_g3.3_jit"]
+LONG = ["jonswap_fp0.29_hs0.8_g3.3_T3600", "mixed_swell_wind_T3600"]
+ORACLE = ["jonswap_fp0.29_hs0.8_g3.3", "pm_fp0.25_hs1", "mixed_swell_wind",
+          "jonswap_fp0.20_hs1_g3.3", "jonswap_fp0.45_hs0.4_g3.3", "jonswap_fp0.29_hs0.8_g3.3_norao"]
+MATCHED_CASES = ["jonswap_fp0.29_hs0.8_g3.3", "pm_fp0.25_hs1", "mixed_swell_wind", "bimodal"]
 MATCHED_FILTERS = "OU3v,C41v,C52v,C52Mv"
 
 FULL_FILTERS = "OU3,C30,C41,C52,C52S,C52F"
@@ -187,7 +190,7 @@ def cmd_timing(args):
     if TIMING_RAW.exists():
         TIMING_RAW.unlink()
     cmds = [["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", FULL_FILTERS]
-            for sc in ("jonswap_fp0.29_hs2_g3.3", "jonswap_fp0.29_hs2_g3.3_jit") for seed in range(1, args.seeds + 1)]
+            for sc in ("jonswap_fp0.29_hs0.8_g3.3", "jonswap_fp0.29_hs0.8_g3.3_jit") for seed in range(1, args.seeds + 1)]
     run_bench(cmds, TIMING_RAW, 1)
 
 
@@ -243,16 +246,32 @@ def cmd_dataset(args):
 def cmd_traces(args):
     TRACE_DIR.mkdir(parents=True, exist_ok=True)
     for level, sc, seed, filters in [
-        ("full", "jonswap_fp0.29_hs2_g3.3", 1, "OU3,C41,C52"),
+        ("full", "jonswap_fp0.29_hs0.8_g3.3", 1, "OU3,C41,C52"),
         ("full", "mixed_swell_wind", 1, "OU3,C41,C52"),
         ("full", "stationary_calbias", 1, "OU3,C52,C52N"),
-        ("vertical", "jonswap_fp0.29_hs2_g3.3", 1, "OU3v,C41v,C52v"),
+        ("vertical", "jonswap_fp0.29_hs0.8_g3.3", 1, "OU3v,C41v,C52v"),
     ]:
         path = TRACE_DIR / f"{level}_{sc}_s{seed}.csv"
         subprocess.run([str(BENCH), "--level", level, "--scenario", sc, "--seed", str(seed),
                         "--filters", filters, "--timeseries", str(path), "--decimate", "4"],
                        check=True, capture_output=True)
         print("wrote", path.relative_to(ROOT))
+
+
+def cmd_truth(args):
+    """Motion levels of each scenario's realization (seed 1), for the plausibility table."""
+    require_bench()
+    scenarios = list(dict.fromkeys(PRIMARY + SECONDARY + QUIET + FULL_ONLY))
+    rows = []
+    for sc in scenarios:
+        out = subprocess.run([str(BENCH), "--level", "truth", "--scenario", sc, "--seed", "1"],
+                             capture_output=True, text=True, check=True).stdout
+        rows.append(dict(kv.split("=", 1) for kv in out.split()))
+    with TRUTH_STATS.open("w") as f:
+        wr = csv.DictWriter(f, fieldnames=list(rows[0]))
+        wr.writeheader()
+        wr.writerows(rows)
+    print("wrote", TRUTH_STATS.relative_to(ROOT))
 
 
 # --------------------------------------------------------------------------
@@ -459,6 +478,21 @@ def cmd_report(args):
             cells.append(" / ".join(f"{np.nanmean(g[c]['nees2']):.2f}" for c in ("OU3v", "C41v", "C52v", "C52Mv")))
             lines.append("| " + " | ".join(cells) + " |")
 
+    trows = read_rows(TRUTH_STATS)
+    if trows:
+        lines.append("\n## Realized motion levels (seed 1)\n")
+        lines.append("Truth only (`carma_bench --level truth`): vessel significant heave, vertical acceleration,"
+                     " roll and pitch about the mean attitude, peak body rate and specific force, and the incident"
+                     " steepness H_s / L_p of the steepest spectral part.\n")
+        lines.append("| Scenario | H_s heave (m) | a RMS / max (m/s^2) | roll RMS / max (deg) | pitch RMS / max (deg) |"
+                     " max rate (rad/s) | max |f| (m/s^2) | H_s/L_p |")
+        lines.append("|" + "---|" * 8)
+        for r in trows:
+            lines.append(f"| {r['scenario']} | {float(r['hs_heave_m']):.2f} | {float(r['a_rms']):.2f} / {float(r['a_max']):.2f} | "
+                         f"{float(r['roll_rms_deg']):.1f} / {float(r['roll_max_deg']):.1f} | "
+                         f"{float(r['pitch_rms_deg']):.1f} / {float(r['pitch_max_deg']):.1f} | "
+                         f"{float(r['rate_max_rad_s']):.2f} | {float(r['f_max_mps2']):.1f} | {float(r['steepness']):.3f} |")
+
     # Runtime / memory (host).
     trows = read_rows(TIMING_RAW)
     lines.append("\n## Host runtime and memory (full INS, x86-64, -O3)\n")
@@ -628,7 +662,7 @@ def figures(S, rows):
 def trace_figures(plt, svgd):
     from scipy.signal import welch
 
-    path = TRACE_DIR / "full_jonswap_fp0.29_hs2_g3.3_s1.csv"
+    path = TRACE_DIR / "full_jonswap_fp0.29_hs0.8_g3.3_s1.csv"
     if not path.exists():
         return
     d = np.genfromtxt(path, delimiter=",", names=True)
@@ -646,7 +680,7 @@ def trace_figures(plt, svgd):
     a1.legend(fontsize=7, ncol=5, loc="upper right")
     a2.set_ylabel("Estimate - truth (m)")
     a2.set_xlabel("Time (s)")
-    a1.set_title("JONSWAP fp 0.29 Hz, Hs 2 m, seed 1, complete INS", fontsize=10)
+    a1.set_title("JONSWAP fp 0.29 Hz, Hs 0.8 m, seed 1, complete INS", fontsize=10)
     for a in (a1, a2):
         a.grid(True, color="#e5e5e5", lw=0.6)
     fig.tight_layout()
@@ -725,11 +759,12 @@ def main(argv=None):
     tm = sub.add_parser("timing")
     tm.add_argument("--seeds", type=int, default=3)
     sub.add_parser("traces")
+    sub.add_parser("truth")
     rp = sub.add_parser("report")
     rp.add_argument("--no-plots", action="store_true")
     args = ap.parse_args(argv)
     {"run": cmd_run, "dataset": cmd_dataset, "matched": cmd_matched, "timing": cmd_timing,
-     "traces": cmd_traces, "report": cmd_report}[args.cmd](args)
+     "traces": cmd_traces, "truth": cmd_truth, "report": cmd_report}[args.cmd](args)
 
 
 if __name__ == "__main__":

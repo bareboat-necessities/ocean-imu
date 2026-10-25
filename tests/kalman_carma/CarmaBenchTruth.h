@@ -10,9 +10,15 @@
   tapered broadband spectrum, or sums of them), converted to vessel motion
   through explicit response-amplitude operators (RAOs).  Incident elevation
   and vessel heave are kept separate: heave is the incident elevation through
-  a second-order heave RAO (natural frequency f_n, damping zeta_n); roll and
-  pitch are the wave slopes along the beam and the bow through their own
-  RAOs; surge and sway follow the orbital motion.  Every channel is a finite
+  a rigid-body heave RAO; roll and pitch are the wave slopes along the beam
+  and the bow through their own RAOs; surge and sway follow the orbital
+  motion.  Each RAO is a second-order mass-spring-damper response
+  wn^2 / (wn^2 - w^2 + 2 zeta wn i w) to the wave excitation, times the
+  hull-averaging factor exp(-k l) with which a hull of finite draft and size
+  filters waves of wavenumber k (l is an effective averaging depth/length).
+  Short waves therefore move the vessel little, as on a real small craft;
+  the motion levels are calibrated against the pinned 28 ft vessel-RAO
+  dataset (see docs/carma-heave-filter.md).  Every channel is a finite
   sum of harmonics with analytically differentiated phases, so position,
   velocity, acceleration, attitude and angular rate come from one continuous
   history and the specific force is consistent with the displacement to
@@ -71,10 +77,10 @@ struct Crossfade {
 };
 
 struct AttitudeModel {
-    double roll_gain = 0.5;          // roll per unit beam slope at low frequency
-    double pitch_gain = 0.4;
-    double roll_fn_hz = 0.40, roll_zeta = 0.15;
-    double pitch_fn_hz = 0.60, pitch_zeta = 0.30;
+    double roll_gain = 0.8;          // roll per unit beam slope at low frequency
+    double pitch_gain = 1.0;
+    double roll_fn_hz = 0.40, roll_zeta = 0.15, roll_avg_m = 1.0;
+    double pitch_fn_hz = 0.60, pitch_zeta = 0.30, pitch_avg_m = 1.5;
     double heel_deg = 0.0, trim_deg = 0.0;
     double heading_deg = 0.0;
     double yaw_wander_deg = 3.0;     // slow heading wander amplitude
@@ -98,7 +104,7 @@ struct Scenario {
     FrequencyWarp warp;
     Crossfade fade;
     bool heave_rao = true;
-    double heave_fn_hz = 0.55, heave_zeta = 0.35;
+    double heave_fn_hz = 0.55, heave_zeta = 0.35, heave_avg_m = 0.5;
     double horizontal_gain = 0.8;
     AttitudeModel att;
     BiasDrift bias;
@@ -136,13 +142,15 @@ inline double band_shape(double f, double lo, double hi) {
     return taper * std::pow(f, -4.0);
 }
 
-// (wn^2 + 2 zeta wn i w) / (wn^2 - w^2 + 2 zeta wn i w): unity at low
-// frequency, resonant near wn, falling as wn/w above it.
-inline std::complex<double> second_order_rao(double omega, double fn_hz, double zeta) {
+// Rigid-body response to a wave of angular frequency w and wavenumber k:
+// wn^2 / (wn^2 - w^2 + 2 zeta wn i w) exp(-k l).  Unity for long waves,
+// resonant near wn, and falling off quickly once the wave is short against
+// the hull (l).
+inline std::complex<double> vessel_rao(double omega, double fn_hz, double zeta, double avg_m) {
     const double wn = TWO_PI * fn_hz;
-    const std::complex<double> num(wn * wn, 2.0 * zeta * wn * omega);
+    const double k = omega * omega / G;
     const std::complex<double> den(wn * wn - omega * omega, 2.0 * zeta * wn * omega);
-    return num / den;
+    return (wn * wn * std::exp(-k * avg_m)) / den;
 }
 
 // One sea: phasors and per-channel complex coefficients (structure of arrays).
@@ -180,10 +188,10 @@ public:
                 const double omega = TWO_PI * fs[i];
                 const double k = omega * omega / G;
                 const std::complex<double> Hh = sc.heave_rao
-                    ? second_order_rao(omega, sc.heave_fn_hz, sc.heave_zeta)
+                    ? vessel_rao(omega, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
                     : std::complex<double>(1.0, 0.0);
-                const std::complex<double> Hr = second_order_rao(omega, sc.att.roll_fn_hz, sc.att.roll_zeta);
-                const std::complex<double> Hp = second_order_rao(omega, sc.att.pitch_fn_hz, sc.att.pitch_zeta);
+                const std::complex<double> Hr = vessel_rao(omega, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
+                const std::complex<double> Hp = vessel_rao(omega, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
                 for (int j = 0; j < ND; ++j) {
                     const double amp = std::sqrt(2.0 * ss[i] * scale * df * dwt[j] / wsum);
                     const double dir = p.mean_dir_deg * PI / 180.0 + th[j];

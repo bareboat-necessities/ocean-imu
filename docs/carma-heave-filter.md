@@ -240,16 +240,30 @@ holds the full output.
 ## 6. Benchmark protocol
 
 **Truth.**  `tests/kalman_carma/CarmaBenchTruth.h`: random-phase synthesis
-(160 jittered frequencies x 5 directions, cos^2s spreading) of the incident
-sea; vessel heave is the incident elevation through a second-order heave RAO
-(`f_n` = 0.55 Hz, `zeta` = 0.35); roll and pitch are the beam and bow slopes
-through their own RAOs (0.40 Hz / 0.15, 0.60 Hz / 0.30, gains 0.5 / 0.4),
-plus heel/trim and a slow yaw wander; surge and sway follow the orbital
-motion.  All channels are analytic harmonic sums, so position, velocity,
-acceleration, attitude and rate come from one history.  No CARMA model is
-used.  Incident elevation and vessel heave are reported separately; errors
-are against vessel heave, normalized by the incident `H_s` (the
-repository's convention).
+(160 jittered frequencies over 0.55-4.5 `f_p` x 5 directions, cos^2s
+spreading) of the incident sea.  Vessel motion is the response of a small
+rigid hull: each RAO is a second-order mass-spring-damper response
+`wn^2 / (wn^2 - w^2 + 2 zeta wn i w)` to the wave excitation times the
+hull-averaging factor `exp(-k l)` (wavenumber `k`, effective averaging
+length `l`) with which a hull of finite draft and size filters short waves.
+Heave: 0.55 Hz, `zeta` 0.35, `l` 0.5 m.  Roll and pitch are driven by the
+beam and bow slopes: 0.40 Hz / 0.15 / 1.0 m and 0.60 Hz / 0.30 / 1.5 m, gains
+0.8 and 1.0, plus heel/trim and a slow yaw wander; surge and sway follow the
+orbital motion.  All channels are analytic harmonic sums, so position,
+velocity, acceleration, attitude and rate come from one history.  No CARMA
+model is used.  Incident elevation and vessel heave are reported
+separately; errors are against vessel heave, normalized by the incident
+`H_s` (the repository's convention).
+
+The motion levels were calibrated against the pinned 28 ft vessel-RAO
+dataset, before any filter was run on the new truth: vertical acceleration
+0.3-1.5 m/s^2 RMS with peaks below 6.5 m/s^2, roll 3-5 deg and pitch 2-5 deg
+RMS with peaks up to about 20 deg (30 deg in the large-rotation case), body
+rates below 0.8 rad/s (1.3 rad/s), against 0.24-1.72 m/s^2, peaks up to
+6.6 m/s^2, roll 1-8 deg RMS and rates up to 0.9 rad/s in the dataset.  Every
+sea respects a realistic steepness, `H_s/L_p` <= 0.06 (deep-water peak
+wavelength `L_p`).  The generated table "Realized motion levels" lists every
+scenario (`carma_bench --level truth`).
 
 **Sensors.**  The shared harness models (`make_imu_noise_model`,
 `make_mag_noise_model`, the parameters of `process_wave_file_for_tracker`):
@@ -280,17 +294,20 @@ design, amplitude adaptive), C52N (amplitude floor = noise floor, quiet
 scenarios only, post-hoc mechanism ablation), C52Mv (Level 1 oracle-shape
 diagnostic, see section 8).
 
-**Scenarios.**  JONSWAP `f_p` 0.20/0.29/0.45 Hz with several `H_s` and
-`gamma` 1.5/3.3/7; Pierson-Moskowitz 0.15/0.25/0.40 Hz; tapered broadband
-0.10-0.70 Hz; mixed swell (0.09 Hz, 1 m) and wind sea (0.30 Hz, 1.5 m);
-bimodal (0.13 + 0.42 Hz, 70 deg apart); `f_p` rising 0.22 -> 0.36 Hz over
-300-900 s; a 10 s change from 0.35 Hz/1 m to 0.18 Hz/3 m at 600 s; 5 cm
-`H_s`; still IMU (shared bias model and post-calibration +-0.01 m/s^2);
-extra accelerometer drift (5 mg ramp plus 2 mg oscillation); 15 deg heel and
-5 deg trim; large rotation (roll gain x2.8, pitch x2, +-15 deg yaw
-oscillation); +-25 % sample-interval jitter; a no-RAO control; 3600 s
-records.  100 seeds for the four primary cases at both levels, 30 for the
-rest, 20 for the 3600 s records.
+**Scenarios.**  JONSWAP `f_p` 0.20 Hz (`H_s` 1, 2 m), 0.29 Hz (0.4, 0.8,
+1.1 m; `gamma` 1.5/3.3/7 at 0.8 m), 0.45 Hz (0.2, 0.4 m) and a long 0.10 Hz,
+4 m sea; Pierson-Moskowitz 0.15 Hz/2.5 m, 0.25 Hz/1 m, 0.40 Hz/0.4 m; tapered
+broadband 0.10-0.70 Hz, 1 m; mixed swell (0.09 Hz, 1 m) and wind sea
+(0.30 Hz, 0.8 m); bimodal (0.13 Hz/1.2 m + 0.42 Hz/0.4 m, 70 deg apart);
+`f_p` rising 0.22 -> 0.36 Hz over 300-900 s (0.7 m); a 10 s change from
+0.35 Hz/0.5 m to 0.18 Hz/2 m at 600 s; 5 cm `H_s`; still IMU (shared bias
+model and post-calibration +-0.01 m/s^2); extra accelerometer drift (5 mg
+ramp plus 2 mg oscillation); 15 deg heel and 5 deg trim; large rotation
+(roll and pitch gains 2.0, +-15 deg yaw oscillation); +-25 % sample-interval
+jitter; a no-RAO control (heave = incident elevation); 3600 s records.  100
+seeds for the four primary cases (JONSWAP 0.29 Hz/0.8 m, PM 0.25 Hz/1 m,
+mixed, changing `f_p`) at both levels, 30 for the rest, 20 for the 3600 s
+records.
 
 **Metrics.**  Scored on `t >= 300 s` of 1200 s records (and the last 60 s):
 heave RMS, RMS/`H_s`, mean, peak; velocity and acceleration RMS; low-frequency
@@ -303,63 +320,45 @@ Paired statistics over seeds as described in the generated tables.
 
 @@RESULTS_GRID@@
 
-## 8. Why the fixed-shape CARMA filters lose: spectral mismatch
+## 8. Mechanism: spectral shape, not observability
 
 `tools/carma_mismatch_analysis.py` computes, for the true vessel-heave
-spectrum of a case (incident spectrum times the benchmark's heave RAO) and
-the oracle operating point, the exact steady-state transfer `T(f)` from the
-accelerometer to `h_hat` of each filter (scipy DARE on the 200 Hz discrete
-model; OU-III's `S = 0` update included at its information-rate-equivalent
-variance) and splits the error variance into signal distortion
-`int |1 + w^2 T|^2 S_h df` (what the prior does with the true spectrum) and
-noise propagation `int |T|^2 N df` (measurement observability):
+spectrum of a case (the band-limited incident spectrum times the truth's
+heave RAO) and the oracle operating point, the exact steady-state transfer
+`T(f)` from the accelerometer to `h_hat` of each filter (scipy DARE on the
+200 Hz discrete model; OU-III's `S = 0` update included at its
+information-rate-equivalent variance) and splits the error variance into
+signal distortion `int |1 + w^2 T|^2 S_h df` (what the prior does with the
+true spectrum) and noise propagation `int |T|^2 N df` (measurement
+observability):
 
 | case | OU-III | CARMA(3,0) | CARMA(4,1) | CARMA(5,2), JONSWAP shape | CARMA(5,2), shape refitted to the truth |
 |---|---|---|---|---|---|
-| JONSWAP 0.29 Hz, `H_s` 2 m | 39.5 (38.9 / 6.9) | 146.7 | 37.6 (37.5 / 2.8) | 56.4 (56.4 / 1.5) | 25.8 (25.5 / 3.6) |
-| PM 0.25 Hz, 2 m | 43.7 (43.1 / 7.4) | 157.3 | 48.7 (48.7 / 3.0) | 93.5 (93.4 / 1.6) | 31.6 (31.4 / 4.2) |
-| JONSWAP 0.20 Hz, 1 m | 21.9 (18.9 / 11.1) | 63.9 | 18.2 (17.5 / 5.0) | 27.8 (27.7 / 2.7) | 16.0 (15.2 / 5.0) |
-| JONSWAP 0.45 Hz, 1.5 m | 34.5 (34.3 / 3.8) | 120.9 | 32.5 (32.5 / 1.5) | 48.9 (48.9 / 0.8) | 18.7 (18.6 / 1.9) |
-| mixed swell + wind sea | 136.4 (136.1 / 8.0) | 251.5 | 257.6 (257.6 / 3.3) | 372.7 (372.7 / 1.7) | 106.2 (105.7 / 9.5) |
-| bimodal | 106.0 (105.8 / 6.4) | 239.6 | 202.6 (202.6 / 2.6) | 455.6 (455.6 / 1.4) | 66.1 (66.0 / 3.8) |
+| JONSWAP 0.29 Hz, 0.8 m | 13.4 (11.2 / 7.4) | 36.1 | 10.2 (9.7 / 3.2) | 13.7 (13.5 / 1.8) | 8.6 (7.4 / 4.4) |
+| PM 0.25 Hz, 1 m | 17.3 (15.1 / 8.4) | 49.6 | 14.8 (14.3 / 3.7) | 21.3 (21.2 / 2.0) | 11.0 (9.9 / 5.0) |
+| JONSWAP 0.20 Hz, 1 m | 19.6 (15.8 / 11.6) | 44.6 | 13.3 (12.1 / 5.6) | 16.6 (16.3 / 3.3) | 12.5 (11.1 / 5.6) |
+| JONSWAP 0.45 Hz, 0.4 m | 6.6 (5.4 / 3.8) | 15.9 | 5.2 (4.9 / 1.6) | 7.0 (6.9 / 0.9) | 3.0 (2.5 / 1.7) |
+| mixed swell + wind sea | 60.7 (59.0 / 14.4) | 128.0 | 93.7 (93.4 / 6.8) | 302.1 (302.0 / 3.8) | 129.8 (129.8 / 2.1) |
+| bimodal | 31.6 (26.6 / 17.1) | 74.3 | 26.9 (25.6 / 8.4) | 51.3 (51.1 / 4.8) | 18.9 (17.3 / 7.6) |
 
 Steady-state heave RMS error in mm (signal distortion / noise propagation).
-In every case and for every prior the noise term is a few mm and the error is
-signal distortion.  CARMA's noise propagation is smaller than OU-III's (its
-stationary prior trusts integrated acceleration less at very low
-frequency), but it buys that with distortion: the fixed JONSWAP-fitted shape,
-scaled to the measured zero-crossing frequency, does not have the shape of the
-vessel's heave spectrum, and the filter attenuates or mis-phases the true
-motion wherever the prior is wrong.  The band split (in the JSON) puts the
-CARMA(5,2) excess over OU-III above the peak (0.4-0.8 Hz: 33 mm against
-8.5 mm for JONSWAP 0.29 Hz) and at 0.1-0.2 Hz, around its numerator zero
-(16 mm against 4 mm); for the mixed sea the band below 0.1 Hz alone
-contributes 0.30 m RMS of the 0.37 m (two thirds of the error variance):
-that is where the swell is, and where the fitted zero and the single scale
-`kappa` put almost no prior variance.  The Monte Carlo error PSDs show the
-same split (`psd_jonswap.svg`).
+Two effects compete.  OU-III's prior is nearly shape-free above its corner
+`1/tau`, so its signal distortion is moderate everywhere, but it lets
+accelerometer noise through at low frequency (7-17 mm, mostly below
+0.1 Hz).  A stationary CARMA prior propagates two to four times less noise,
+and wins whenever its shape is close enough to the vessel's heave spectrum;
+when it is not, the filter attenuates or mis-phases the true motion wherever
+the prior is wrong, and signal distortion dominates.  CARMA(4,1) (one zero
+at DC, two resonances) sits on the right side of that balance for every
+single-peaked sea and the bimodal case; the fixed JONSWAP-fitted CARMA(5,2)
+is level with OU-III on JONSWAP and worse on PM, whose broader peak its
+narrow first resonance (`zeta_1` = 0.097) does not cover.  For the mixed sea
+the 0.09 Hz swell falls near CARMA(5,2)'s numerator zero once `kappa` scales
+the shape to the wind sea: 289 mm RMS of its 302 mm error is below 0.1 Hz.
+The constrained refit (last column) cannot represent two well-separated
+peaks either and is still worse than OU-III there.
 
-The last column is CARMA(5,2) refitted to each true spectrum: 22-46 % lower
-error than OU-III.  The Monte Carlo confirms it with the refitted shape
-(C52M, Level 1, oracle operating point, 30 seeds; generated table
-"oracle-shape diagnostic"):
-
-| case | OU-III | C41 | C52 (JONSWAP shape) | C52M (refitted, uses the truth) |
-|---|---|---|---|---|
-| JONSWAP 0.29 Hz | 2.73 % | 2.07 % (+24.1 % [22.8, 25.3]) | 2.90 % (-6.5 % [-9.9, -3.7]) | 1.62 % (+40.7 % [40.0, 41.4]) |
-| PM 0.25 Hz | 3.03 % | 2.65 % (+12.7 % [11.4, 14.0]) | 4.71 % (-55.5 % [-61.6, -49.9]) | 1.98 % (+34.6 % [33.9, 35.3]) |
-| mixed swell + wind | 9.75 % | 15.27 % (-56.6 % [-56.9, -56.3]) | 21.16 % (-117.0 % [-119.9, -114.0]) | 7.65 % (+21.6 % [20.5, 22.6]) |
-| bimodal | 8.22 % | 13.41 % (-63.1 % [-64.0, -62.2]) | 29.62 % (-260.4 % [-265.9, -254.8]) | 4.61 % (+43.9 % [42.8, 44.9]) |
-
-(heave RMS in % of incident `H_s`, improvement over OU-III with 95 % interval;
-C52M wins on every seed in every case, with NEES 0.3-0.9 against 0.7-7.3 for
-OU-III.)  C52M is not an independent result: its shape comes from the true
-spectrum.  It shows that the limitation is spectral mismatch, not
-measurement observability, bias coupling, initialization or numerical
-conditioning, and that the CARMA(5,2) class can beat OU-III substantially
-*if* its shape is right.  Obtaining that shape online (a spectral
-identification of seven parameters from the accelerometer, with its own
-stability and consistency questions) is not part of this work.
+@@MATCHED@@
 
 ## 9. Does CARMA replace `S_z`?
 

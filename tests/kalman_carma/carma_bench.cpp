@@ -34,6 +34,9 @@
                      (unchanged) and SeaStateFusion_CARMA variants, behind
                      the same proxy startup and magnetic acquisition.
                        OU3 C30 C41 C52 C52S C52F C52N
+  --level truth      No estimator: prints the realized motion levels of the
+                     scenario (heave, vertical acceleration, roll, pitch,
+                     body rate, incident steepness H_s / L_p).
 
   Scenario suffixes: _T<s> duration, _norao unit heave RAO, _calbias
   post-calibration accelerometer turn-on bias (+-0.01 m/s^2 instead of the
@@ -110,23 +113,23 @@ Scenario make_scenario(const std::string& full_name) {
     } else if (name.rfind("pm", 0) == 0) {
         sc.parts = {jonswap(num("_hs", 2.0), num("_fp", 0.25), 1.0)};
     } else if (name == "mixed_swell_wind") {
-        sc.parts = {jonswap(1.0, 0.09, 5.0, 10.0, 12.0), jonswap(1.5, 0.30, 3.3, 60.0, 4.0)};
+        sc.parts = {jonswap(1.0, 0.09, 5.0, 10.0, 12.0), jonswap(0.8, 0.30, 3.3, 60.0, 4.0)};
     } else if (name == "bimodal") {
-        sc.parts = {jonswap(1.2, 0.13, 3.3, 0.0, 8.0), jonswap(1.0, 0.42, 3.3, 70.0, 4.0)};
+        sc.parts = {jonswap(1.2, 0.13, 3.3, 0.0, 8.0), jonswap(0.4, 0.42, 3.3, 70.0, 4.0)};
     } else if (name == "broadband") {
         SpectrumPart p;
         p.type = SpectrumType::Band;
-        p.hs_m = 1.5; p.f_lo_hz = 0.10; p.f_hi_hz = 0.70; p.mean_dir_deg = 30.0; p.spread_s = 2.0;
+        p.hs_m = 1.0; p.f_lo_hz = 0.10; p.f_hi_hz = 0.70; p.mean_dir_deg = 30.0; p.spread_s = 2.0;
         sc.parts = {p};
     } else if (name == "changing_fp") {
         // Dominant frequency rises smoothly 0.22 -> 0.36 Hz over 300..900 s.
-        sc.parts = {jonswap(2.0, 0.22, 3.3)};
+        sc.parts = {jonswap(0.7, 0.22, 3.3)};
         sc.warp.enabled = true;
         sc.warp.t0 = 300.0; sc.warp.t1 = 900.0; sc.warp.s_end = 0.36 / 0.22;
     } else if (name == "abrupt_change") {
         // Short wind sea replaced by a long, higher sea over 10 s at 600 s.
-        sc.parts = {jonswap(1.0, 0.35, 3.3, 30.0)};
-        sc.parts_b = {jonswap(3.0, 0.18, 3.3, 60.0)};
+        sc.parts = {jonswap(0.5, 0.35, 3.3, 30.0)};
+        sc.parts_b = {jonswap(2.0, 0.18, 3.3, 60.0)};
         sc.fade.enabled = true;
         sc.fade.t_c = 600.0; sc.fade.width = 10.0;
     } else if (name == "small_amplitude") {
@@ -134,20 +137,20 @@ Scenario make_scenario(const std::string& full_name) {
     } else if (name == "stationary") {
         sc.stationary = true;
     } else if (name == "bias_drift") {
-        sc.parts = {jonswap(2.0, 0.29, 3.3)};
+        sc.parts = {jonswap(0.8, 0.29, 3.3)};
         // ~5 mg ramp on body z and ~3 mg on x, y over 1200 s, plus a slow
         // 2 mg oscillation: beyond the shared random-walk model.
         sc.bias.ramp_mps2_per_s = Eigen::Vector3d(0.03, -0.03, 0.05) / 1200.0;
         sc.bias.sin_amp_mps2 = Eigen::Vector3d(0.0, 0.0, 0.02);
         sc.bias.sin_period_s = 600.0;
     } else if (name == "tilted") {
-        sc.parts = {jonswap(2.0, 0.29, 3.3)};
+        sc.parts = {jonswap(0.8, 0.29, 3.3)};
         sc.att.heel_deg = 15.0;
         sc.att.trim_deg = 5.0;
     } else if (name == "large_rotation") {
-        sc.parts = {jonswap(2.0, 0.29, 3.3)};
-        sc.att.roll_gain = 1.4;
-        sc.att.pitch_gain = 0.8;
+        sc.parts = {jonswap(0.8, 0.29, 3.3)};
+        sc.att.roll_gain = 2.0;
+        sc.att.pitch_gain = 2.0;
         sc.att.yaw_osc_deg = 15.0;
         sc.att.yaw_osc_hz = 0.05;
     } else {
@@ -672,7 +675,7 @@ double convergence_time(const Series& s, double t_live, double rms_ref, double d
 // ---------------------------------------------------------------------------
 
 struct Args {
-    std::string scenario = "jonswap_fp0.29_hs2_g3.3";
+    std::string scenario = "jonswap_fp0.29_hs0.8_g3.3";
     unsigned seed = 1;
     std::string level = "vertical";
     std::string params = "tuner";
@@ -721,6 +724,36 @@ const char* HEADER =
     "rms_h,rms_h_pct_hs,mean_h,peak_h,rms_v,rms_a,lf_rms_h,trend_m_per_hr,nees2,nees1,nis,nis_in95,"
     "f60_rms_h,f60_mean_h,f60_peak_h,f60_rms_v,f60_rms_a,f60_nees2,f60_nis";
 
+// Motion levels of one realization, for checking that a scenario is
+// physically plausible.  Steepness uses the deep-water peak wavelength of the
+// steepest spectral part.
+int truth_stats(const Scenario& sc, const Args& args, double dt, long steps) {
+    WaveTruth truth(sc, w3d_expand_seed(args.seed, 21u), dt);
+    double sh = 0, sa = 0, sr = 0, sp = 0, amax = 0, rmax = 0, pmax = 0, wmax = 0, fmax = 0;
+    for (long k = 0; k < steps; ++k) {
+        const TruthSample ts = truth.next();
+        const double r = (ts.roll - sc.att.heel_deg * PI / 180.0) * 180.0 / PI;
+        const double q = (ts.pitch - sc.att.trim_deg * PI / 180.0) * 180.0 / PI;
+        sh += ts.h_up * ts.h_up; sa += ts.a_up * ts.a_up; sr += r * r; sp += q * q;
+        amax = std::max(amax, std::abs(ts.a_up));
+        rmax = std::max(rmax, std::abs(r)); pmax = std::max(pmax, std::abs(q));
+        wmax = std::max(wmax, ts.omega_b.norm());
+        fmax = std::max(fmax, ts.f_b.norm());
+    }
+    double steep = 0.0;
+    for (const auto* parts : {&sc.parts, &sc.parts_b})
+        for (const auto& pt : *parts) {
+            const double fp = pt.type == SpectrumType::Jonswap ? pt.fp_hz : pt.f_lo_hz;
+            steep = std::max(steep, pt.hs_m / (G / (TWO_PI * fp * fp)));
+        }
+    const double n = static_cast<double>(steps);
+    std::printf("scenario=%s seed=%u hs_heave_m=%.3f a_rms=%.3f a_max=%.3f roll_rms_deg=%.2f roll_max_deg=%.2f "
+                "pitch_rms_deg=%.2f pitch_max_deg=%.2f rate_max_rad_s=%.3f f_max_mps2=%.2f steepness=%.4f\n",
+                args.scenario.c_str(), args.seed, 4.0 * std::sqrt(sh / n), std::sqrt(sa / n), amax,
+                std::sqrt(sr / n), rmax, std::sqrt(sp / n), pmax, wmax, fmax, steep);
+    return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -740,8 +773,9 @@ int main(int argc, char** argv) {
     const double dt = 1.0 / 200.0;
     const long steps = static_cast<long>(std::lround(sc.duration_s / dt));
     const bool full = args.level == "full";
+    if (args.level == "truth") return truth_stats(sc, args, dt, steps);
     if (!full && args.level != "vertical") {
-        std::cerr << "ERROR: --level must be vertical or full\n";
+        std::cerr << "ERROR: --level must be vertical, full or truth\n";
         return 2;
     }
 

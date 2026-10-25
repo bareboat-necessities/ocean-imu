@@ -2,7 +2,7 @@
 """Steady-state error decomposition of the vertical heave filters.
 
 For a stationary true vessel-heave spectrum S_h(f) (incident spectrum times
-the benchmark's heave RAO), accelerometer white noise of variance sigma_n^2 at
+the benchmark truth's heave RAO, CarmaBenchTruth.h), accelerometer white noise of variance sigma_n^2 at
 fs = 200 Hz and a filter that assumes measurement variance R, the error of a
 linear time-invariant estimator h_hat = T(f) y_a, y_a = a + n, a = -w^2 h, is
 
@@ -55,25 +55,30 @@ TS_MIN, TS_MAX = 0.005, 0.15
 RS_MIN, RS_MAX = 0.15, 100.0
 
 
-def rao2(f, fn=0.55, z=0.35):
+def rao2(f, fn=0.55, z=0.35, avg_m=0.5):
+    """|heave RAO|^2 of the benchmark truth (CarmaBenchTruth.h vessel_rao)."""
     wn, w = TWO_PI * fn, TWO_PI * f
-    return np.abs((wn ** 2 + 2j * z * wn * w) / (wn ** 2 - w ** 2 + 2j * z * wn * w)) ** 2
+    k = w ** 2 / 9.80665
+    return np.abs(wn ** 2 * np.exp(-k * avg_m) / (wn ** 2 - w ** 2 + 2j * z * wn * w)) ** 2
+
+
+CASES = {
+    "jonswap_fp0.29_hs0.8_g3.3": [(0.8, 0.29, 3.3)],
+    "pm_fp0.25_hs1": [(1.0, 0.25, 1.0)],
+    "jonswap_fp0.20_hs1_g3.3": [(1.0, 0.20, 3.3)],
+    "jonswap_fp0.45_hs0.4_g3.3": [(0.4, 0.45, 3.3)],
+    "mixed_swell_wind": [(1.0, 0.09, 5.0), (0.8, 0.30, 3.3)],
+    "bimodal": [(1.2, 0.13, 3.3), (0.4, 0.42, 3.3)],
+}
 
 
 def true_spectrum(case, f):
-    """One-sided vessel heave PSD per Hz, scaled to the case's Hs."""
-    parts = {
-        "jonswap_fp0.29_hs2_g3.3": [(2.0, 0.29, 3.3)],
-        "pm_fp0.25_hs2": [(2.0, 0.25, 1.0)],
-        "jonswap_fp0.20_hs1_g3.3": [(1.0, 0.20, 3.3)],
-        "jonswap_fp0.45_hs1.5_g3.3": [(1.5, 0.45, 3.3)],
-        "mixed_swell_wind": [(1.0, 0.09, 5.0), (1.5, 0.30, 3.3)],
-        "bimodal": [(1.2, 0.13, 3.3), (1.0, 0.42, 3.3)],
-    }[case]
+    """One-sided vessel heave PSD per Hz, scaled to the case's Hs.  Each part
+    is band-limited to 0.55-4.5 f_p as in the benchmark's synthesis."""
     S = np.zeros_like(f)
     df = f[1] - f[0]
-    for hs, fp, g in parts:
-        s = pv.jonswap(f, fp, g)
+    for hs, fp, g in CASES[case]:
+        s = np.where((f >= 0.55 * fp) & (f <= 4.5 * fp), pv.jonswap(f, fp, g), 0.0)
         S += s * (hs / 4) ** 2 / (s.sum() * df)
     return S * rao2(f)
 
@@ -249,8 +254,7 @@ def main(argv=None):
     ap.add_argument("--no-plots", action="store_true")
     args = ap.parse_args(argv)
     shapes = pv.header_shapes()
-    results = [analyse(c, shapes) for c in ("jonswap_fp0.29_hs2_g3.3", "pm_fp0.25_hs2", "jonswap_fp0.20_hs1_g3.3",
-                                            "jonswap_fp0.45_hs1.5_g3.3", "mixed_swell_wind", "bimodal")]
+    results = [analyse(c, shapes) for c in CASES]
     clean = [{k: v for k, v in r.items() if not k.startswith("_")} for r in results]
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "mismatch_analysis.json").write_text(json.dumps(clean, indent=2, sort_keys=True) + "\n")
@@ -272,7 +276,7 @@ def plot(results, out):
     svgd = importlib.util.module_from_spec(spec); spec.loader.exec_module(svgd)
     svgd.configure_svg(matplotlib)
     colors = {"OU3": "#1f77b4", "C30": "#2ca02c", "C41": "#ff7f0e", "C52": "#d62728", "C52_matched": "#9467bd"}
-    picks = [r for r in results if r["case"] in ("jonswap_fp0.29_hs2_g3.3", "pm_fp0.25_hs2", "mixed_swell_wind")]
+    picks = [r for r in results if r["case"] in ("jonswap_fp0.29_hs0.8_g3.3", "pm_fp0.25_hs1", "mixed_swell_wind")]
     fig, axes = plt.subplots(1, len(picks), figsize=(12.0, 3.6))
     for ax, r in zip(axes, picks):
         fe = r["_fe"]

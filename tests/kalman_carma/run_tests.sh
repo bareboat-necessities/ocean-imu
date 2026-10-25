@@ -8,9 +8,9 @@ set -e
 mkdir -p process
 ./carma_process-sim process
 python3 ../../tools/carma_process_validation.py --input process --check
-./carma_bench --header --level vertical --scenario jonswap_fp0.29_hs2_g3.3_T600 --seed 1 \
+./carma_bench --header --level vertical --scenario jonswap_fp0.29_hs0.8_g3.3_T600 --seed 1 \
     --filters OU3v,C52v --score-start 200 > smoke_vertical.csv
-./carma_bench --header --level full --scenario jonswap_fp0.29_hs2_g3.3_T600 --seed 1 \
+./carma_bench --header --level full --scenario jonswap_fp0.29_hs0.8_g3.3_T600 --seed 1 \
     --filters OU3,C52 --score-start 200 > smoke_full.csv
 python3 - <<'PY'
 import csv
