@@ -8,9 +8,8 @@
 
   Kalman3D_Wave_CARMA3 -- EXPERIMENTAL three-axis research filter.  Not a
   shipping estimator: Kalman3D_Wave_OU_III remains the deployed, authoritative
-  implementation.  It lives under tests/ so that the OU-III shipping source
-  tree (src/, hashed by the OU-III stability provenance) is untouched; see
-  docs/carma-three-axis.md.
+  implementation, and nothing in the deployed configuration includes this
+  header; see docs/carma-three-axis.md.
 
   It generalizes src/kalman_carma/Kalman3D_Wave_CARMA.h (OU-III horizontal
   chain + CARMA heave), which stays as it is, by choosing the translational

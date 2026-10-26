@@ -22,6 +22,11 @@
     8  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
 */
 
+// Built only by the Xtensa target compiler (build.sh); host compilers (the
+// repository's warnings and clang-tidy gates compile every tests/*.cpp) see
+// an empty translation unit.
+#if defined(__XTENSA__)
+
 #define EIGEN_NON_ARDUINO
 #define EIGEN_NO_DEBUG
 
@@ -29,7 +34,7 @@
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA.h"
-#include "../../carma3/SeaStateFusionFilter_CARMA3.h"
+#include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 #if CARMA3_PROBE_VARIANT == 0
 using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
@@ -78,3 +83,5 @@ extern "C" float carma3_probe_step(Fusion* f, float dt, const float* gyr, const 
     if (mag) f->updateMag(Eigen::Vector3f(mag[0], mag[1], mag[2]));
     return f->raw().mekf().get_position().z();
 }
+
+#endif  // __XTENSA__

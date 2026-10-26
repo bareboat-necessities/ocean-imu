@@ -14,7 +14,7 @@
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA.h"
-#include "SeaStateFusionFilter_CARMA3.h"
+#include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 namespace carma3_bench {
 

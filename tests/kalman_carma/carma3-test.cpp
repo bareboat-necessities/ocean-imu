@@ -36,7 +36,7 @@
 
 #include "util/WaveFilesSupport.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA.h"
-#include "carma3/SeaStateFusionFilter_CARMA3.h"
+#include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 const float g_std = 9.80665f;
 

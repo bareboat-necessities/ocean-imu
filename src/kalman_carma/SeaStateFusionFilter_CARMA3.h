@@ -46,7 +46,7 @@
 #include <memory>
 #include <numbers>
 
-#include "Kalman3D_Wave_CARMA3.h"
+#include "kalman_carma/Kalman3D_Wave_CARMA3.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 
 namespace ocean_imu::carma {

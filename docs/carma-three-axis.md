@@ -3,10 +3,11 @@
 **Status: experimental research.**  Nothing here changes the shipping OU-III
 estimator, its tuning, gates, magnetic handling or the OU-III stability study.
 `Kalman3D_Wave_OU_III` / `SeaStateFusionFilter_OU_III` remain the deployed,
-authoritative implementation.  The three-axis prototype lives under
-`tests/kalman_carma/carma3/` so that the shipping source tree `src/` (hashed by
-the OU-III stability provenance) is untouched; the PR #704 heave-only CARMA
-code in `src/kalman_carma/` is used unchanged.  A CARMA prior is a statistical
+authoritative implementation.  The three-axis prototype filter and wrapper
+live in `src/kalman_carma/` (`Kalman3D_Wave_CARMA3.h`,
+`SeaStateFusionFilter_CARMA3.h`) next to the PR #704 heave-only CARMA code,
+which is used unchanged; nothing in the deployed configuration includes them
+and no OU-III source changes.  A CARMA prior is a statistical
 model, not a law imposed on the vessel's physical history; no result below is
 a stability, admissibility or hardware statement.
 
@@ -41,8 +42,8 @@ B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
   change): the CARMA code is the one that produced the PR #704 benchmarks.
 * **Reproduction.**  `make -C tests/kalman_carma build test` passes (801
   model checks, 30 filter checks, process validation, smoke replays).  Rows of
-  `reports/results/carma_benchmark/raw_runs.csv` re-run on this host are bit
-  identical (e.g. complete INS, JONSWAP 0.29 Hz and mixed sea, seed 4, OU-III,
+  `reports/results/carma_benchmark/raw_runs.csv` re-run with `main`'s
+  `carma_bench` on this host are bit identical (e.g. complete INS, JONSWAP 0.29 Hz and mixed sea, seed 4, OU-III,
   C41, C52: heave RMS and NEES identical to every printed digit).
 * **Existing design.**  OU-III carries per axis the integrated OU chain
   `[v, p, S, a_w]`, `a_w` an OU process with time constant `tau` and
@@ -63,9 +64,15 @@ B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
   the complete INS gives OU-III 101 s, C41 95 s, C52 90 s on JONSWAP and
   OU-III 106 s, C41 1108 s, C52 never on the mixed sea.  The committed
   `conv_s` column of the PR #704 results is invalid; the three-axis benchmark
-  reports the corrected metric.  No other committed PR #704 number changes
-  (the fix and the refactors below are verified bit identical on every other
-  field).
+  reports the corrected metric.  The fix touches no other column.  Sharing
+  the base seas and level-1 blocks between the two benches moved code
+  between translation units, which changes where GCC contracts multiply-adds
+  into FMAs (`-march=native`): re-run with this branch's `carma_bench`,
+  OU-III rows stay bit identical and CARMA rows can differ in the fifth or
+  sixth significant digit (complete INS, JONSWAP 3600 s, seed 1, C41: heave
+  mean 1.05078 against 1.05081 mm).  Built with `-ffp-contract=off`, this
+  branch's and PR #704's `carma_bench` agree bit for bit, so no logic
+  changed.  The committed PR #704 numbers are left as published.
 * **Frequency-range consistency.**  The CARMA amplitude mapping sets the
   model's *total* (0 to infinity) acceleration variance equal to an RMS
   measured in the adaptive band [0.5 f, 4 f] of the shipping sigma channel;
@@ -485,7 +492,7 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
 ## 8. Implementation
 
-* `tests/kalman_carma/carma3/Kalman3D_Wave_CARMA3.h`:
+* `src/kalman_carma/Kalman3D_Wave_CARMA3.h`:
   `Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ>`; `NHC = 0` is OU-III's
   horizontal chain exactly as in `Kalman3D_Wave_CARMA` (bit-for-bit
   equivalent on a tilted, rotating, noisy stream: every state and covariance
@@ -496,12 +503,15 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   Joseph updates and resets are those of `Kalman3D_Wave_CARMA` (OU-III's
   mathematics).  Not carried over: wind heel, lever arm, the commanded-parameter
   random walk (none enabled by the deployed wrapper).
-* `tests/kalman_carma/carma3/SeaStateFusionFilter_CARMA3.h`: the PR #704
+* `src/kalman_carma/SeaStateFusionFilter_CARMA3.h`: the PR #704
   wrapper schedule (shared front end, proxy startup, staged commit, watchdog,
   magnetometer-service bias gate, Racc inflation) plus the horizontal mapping
   `kappa_h = f_tune / f_z,h`, `sigma_h = S_factor sigma_a,B` (no horizontal
   statistic is measured), the horizontal S laws of section 4.  Mappings fixed
-  before any Monte Carlo run.
+  before any Monte Carlo run.  Not included by `ArduinoOceanImu.h` or any
+  shipped sketch.
+* `tests/kalman_carma/carma3/`: benchmark adapters only (`Bench3.h`,
+  `FullAdapters.h`), shared by `carma3_bench` and `carma3-sim`.
 * `tests/kalman_carma/carma3-test.cpp` (36 checks): layouts; bit equivalence
   with the PR #704 hybrid; Kronecker discretization; stationary covariance
   invariant over 100 s of float prediction (<= 1.5e-4); S growth = `S_p(0)`
