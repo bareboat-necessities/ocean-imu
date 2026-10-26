@@ -15,7 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 SKETCHES = tuple(ROOT / "sensors/full_marine_ins" / name / (name + ".ino") for name in (
-    "atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_tfg",
+    "atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_carma3", "atomS3R_ins_tfg",
 ))
 
 
@@ -59,7 +59,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 self.assertIn("if (!have_blob_)", function(source, "begin"))
                 self.assertNotIn("while (!have_blob_)", function(source, "begin"))
                 self.assertNotIn("if (!have_blob_) return;", update)
-                if "kalman_ou" in path.name:
+                if "kalman_ou" in path.name or "carma3" in path.name:
                     self.assertIn("fusion_.attitudeQuat()", update)
                     self.assertIn("startupProxyQuat()", update)
                     self.assertIn("startupProxyTiltQuat()", update)
