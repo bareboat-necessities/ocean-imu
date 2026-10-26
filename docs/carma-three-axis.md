@@ -512,6 +512,11 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   shipped sketch.
 * `tests/kalman_carma/carma3/`: benchmark adapters only (`Bench3.h`,
   `FullAdapters.h`), shared by `carma3_bench` and `carma3-sim`.
+* The OU-III native-secant diagnostic hashes the whole `src/` tree, so adding
+  these headers rebinds its `shipping_source_tree_sha256` (as PR #704 did):
+  regenerated with clang 18.1.3, every other field of
+  `reports/results/ou3_stability/planar-native-secants-diagnostic.json` is
+  reproduced exactly.
 * `tests/kalman_carma/carma3-test.cpp` (36 checks): layouts; bit equivalence
   with the PR #704 hybrid; Kronecker discretization; stationary covariance
   invariant over 100 s of float prediction (<= 1.5e-4); S growth = `S_p(0)`
