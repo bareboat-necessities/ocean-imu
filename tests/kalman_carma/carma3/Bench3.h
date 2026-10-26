@@ -53,7 +53,7 @@ public:
     virtual double op_fz_hz() const { return NAN; }
 };
 
-// Shipping simulator configuration (as carma_bench).
+// Shipping simulator configuration (as kalman_ou_iii-sim).
 constexpr float SIGMA_A_RESCALE = 0.71f;
 constexpr float SIGMA_G_RESCALE = 0.01f;
 constexpr float SIGMA_M_RESCALE = 8.0f;

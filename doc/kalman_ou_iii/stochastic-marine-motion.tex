@@ -523,13 +523,12 @@ whether more aggressive low-frequency regularization
 simply suppresses true long-period displacement.
 
 \subsection{Experimental Implementation}
-An experimental CARMA(3,0), (4,1) and (5,2) vertical prior inside the
-INS, and the benchmark of this program against the unchanged OU--III,
-are documented in \texttt{docs/carma-heave-filter.md}. Its CARMA(5,2)
-numerator is \(s^2+2\zeta_z\omega_z s+\omega_z^2\), with a nonzero DC
-level, rather than the \(\kappa s^2\) of (\ref{eq:52}). It is not a
-shipping estimator. Section~\ref{sec:three-axis} extends the study to the
-horizontal axes.
+An experimental INS with CARMA(3,0), (4,1) or (5,2) priors on its
+translational axes, and the benchmark of this program against the
+unchanged OU--III, are described in Section~\ref{sec:three-axis} and
+\texttt{docs/carma-three-axis.md}. Its fitted CARMA(5,2) numerator is
+\(s^2+2\zeta_z\omega_z s+\omega_z^2\), with a nonzero DC level, rather than
+the \(\kappa s^2\) of (\ref{eq:52}). It is not a shipping estimator.
 
 \subsection{Relation to the Shipping OU--III Stability Study}
 The statistical displacement prior in this proposal is
@@ -636,7 +635,7 @@ mismatch, which the narrow-band quadrature adds to.
 \subsection{Complete-INS Benchmark (Experimental)}
 A prototype three-axis filter (CARMA on each axis in place of OU--III's
 \([v,p,S,a_w]\) chains; attitude, bias, magnetometer, startup and tuner
-schedule as in the heave-only CARMA study) was compared with the unchanged
+schedule as in OU--III) was compared with the unchanged
 OU--III on a synthetic directional sea through the hull responses of
 (\ref{eq:horiz-rao}), with paired seeds and errors taken against the wave
 coordinate (Table~\ref{tab:three-axis}). The truth contains no CARMA model.
@@ -657,8 +656,6 @@ velocity (6 if consistent). Experimental; no hardware.}
 Prior (x/y; z) & States & H & Z & H & Z & H & Z & H & Z & JONSWAP / mixed\\
 \midrule
 OU--III; OU--III & 21 & 5.18 & 3.12 & 5.58 & 3.26 & 18.26 & 10.27 & 53 & 27 & 7.7 / 31\\
-OU--III; C41 & 21 & 5.18 & 1.82 & 5.58 & 2.10 & 18.27 & 11.64 & 53 & 53 & 7.7 / 52\\
-OU--III; C52 & 22 & 5.18 & 2.03 & 5.58 & 2.68 & 18.31 & 27.27 & 53 & 46 & 7.9 / 173\\
 C41; C41 & 21 & 2.66 & 1.83 & 2.91 & 2.10 & 15.14 & 11.65 & 84 & 53 & 5.4 / 64\\
 C52; C52 & 24 & 2.05 & 2.04 & 2.68 & 2.68 & 31.67 & 27.23 & 87 & 46 & 4.4 / 324\\
 C52; C41 & 23 & 2.05 & 1.83 & 2.67 & 2.10 & 31.08 & 11.65 & 87 & 53 & 4.1 / 190\\
@@ -711,9 +708,8 @@ heave reconstruction at realistic IMU sampling rates.
 This is a supervised AI-assisted research proposal
 for future evaluation. The author retains responsibility
 for mathematical and experimental verification.
-Results of the experimental CARMA implementations are reported
-separately in \texttt{docs/carma-heave-filter.md} (heave) and
-\texttt{docs/carma-three-axis.md} (three axes); no shipping claim is
+Results of the experimental CARMA implementation are reported
+separately in \texttt{docs/carma-three-axis.md}; no shipping claim is
 made.
 
 \begin{thebibliography}{9}

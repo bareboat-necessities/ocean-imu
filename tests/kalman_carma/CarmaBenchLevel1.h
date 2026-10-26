@@ -3,8 +3,8 @@
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
 
-  Level-1 (prescribed-attitude) building blocks shared by carma_bench and
-  carma3_bench: the shipping adaptation mechanics on the vertical channel, the
+  Level-1 (prescribed-attitude) building blocks of carma3_bench: the
+  shipping adaptation mechanics on the vertical channel, the
   operating point they produce, the shipping residual-bias prior and a plain
   float Kalman filter with Joseph scalar updates.
 */

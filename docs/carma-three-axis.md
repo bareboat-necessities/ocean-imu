@@ -3,13 +3,13 @@
 **Status: experimental research.**  Nothing here changes the shipping OU-III
 estimator, its tuning, gates, magnetic handling or the OU-III stability study.
 `Kalman3D_Wave_OU_III` / `SeaStateFusionFilter_OU_III` remain the deployed,
-authoritative implementation.  The three-axis prototype filter and wrapper
-live in `src/kalman_carma/` (`Kalman3D_Wave_CARMA3.h`,
-`SeaStateFusionFilter_CARMA3.h`) next to the PR #704 heave-only CARMA code,
-which is used unchanged; nothing in the deployed configuration includes them
-and no OU-III source changes.  A CARMA prior is a statistical
-model, not a law imposed on the vessel's physical history; no result below is
-a stability, admissibility or hardware statement.
+authoritative implementation.  The three-axis prototype filter, its wrapper
+and the CARMA model library live in `src/kalman_carma/`
+(`Kalman3D_Wave_CARMA3.h`, `SeaStateFusionFilter_CARMA3.h`,
+`CarmaVerticalModel.h`); nothing in the deployed configuration includes them.
+A CARMA prior is a statistical model, not a law imposed on the vessel's
+physical history; no result below is a stability, admissibility or hardware
+statement.
 
 **Result (simulation only; no hardware).**  CARMA(4,1) on all three axes
 (21 states, the same as OU-III, 25 % fewer multiply-adds per sample) is the
@@ -18,8 +18,8 @@ In the paired complete-INS benchmark (100 seeds on the four principal seas,
 30 or 20 on 27 further sea conditions) its horizontal RMS error is 43-73 %
 lower on single-peaked, bimodal, broadband, underway, anchored, drifting and
 manoeuvring cases and 17 % lower on the mixed swell + wind sea; on an
-independent replay hull it is 52 % lower.  Its heave is PR #704's
-CARMA(4,1): 27-46 % better, 13 % worse on the mixed sea.  CARMA(5,2)
+independent replay hull it is 52 % lower.  Its CARMA(4,1) heave is 27-46 %
+better than OU-III's and 13 % worse on the mixed sea.  CARMA(5,2)
 horizontally is better still on most single-peaked seas but 73 % worse than
 OU-III on the mixed sea, because its spectral notch lands on the swell;
 mixed orders inherit that failure.  A DC-zero CARMA needs no horizontal `S`
@@ -34,45 +34,16 @@ re-discretized on every sample whose interval changes.  **Recommendation:
 B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
 (section 12).
 
-## 1. Starting point
+## 1. Baseline
 
-* **Commit.**  `main` at `1f9fa8c` (merge of PR #704, head `8b519ba`).  The
-  PR #704 branch `claude/carma52-heave-filter` has one later commit,
-  `ad740fb`, a CI bot regeneration of the OU validation evidence (no source
-  change): the CARMA code is the one that produced the PR #704 benchmarks.
-* **Reproduction.**  `make -C tests/kalman_carma build test` passes (801
-  model checks, 30 filter checks, process validation, smoke replays).  Rows of
-  `reports/results/carma_benchmark/raw_runs.csv` re-run with `main`'s
-  `carma_bench` on this host are bit identical (e.g. complete INS, JONSWAP 0.29 Hz and mixed sea, seed 4, OU-III,
-  C41, C52: heave RMS and NEES identical to every printed digit).
-* **Existing design.**  OU-III carries per axis the integrated OU chain
+* **OU-III.**  OU-III carries per axis the integrated OU chain
   `[v, p, S, a_w]`, `a_w` an OU process with time constant `tau` and
   stationary std `sigma_aw` (isotropic: `sigma_aw,H = S_factor sigma_aw,Z`,
   `S_factor = 1`), `S' = p`, and the pseudo-measurement `S = 0` every `T_S`
-  with the SpectralMSE `r_S` (horizontal factors 0.72, 0.50).  PR #704 replaced
-  only the vertical chain by CARMA(p, p-3) in `[h, v, a, latent]` coordinates
-  (22 states for CARMA(5,2), no `S_z`), keeping OU-III's horizontal chain,
-  attitude, bias, magnetometer, startup and adaptation.
-* **Defect found: convergence time.**  `convergence_time()` of
-  `carma_bench` summed squared errors over a rolling window that starts at the
-  first sample, where the error is NaN before Live; once a NaN entered the sum
-  every later window was NaN, and `std::max(0.0, NaN)` returned `0.0`.  Every
-  tuner-driven run (all 6610 complete-INS rows and all level-1 tuner rows of
-  `raw_runs.csv`) therefore reported `conv_s = 0`, and the PR #704 sentence
-  "convergence time does not separate the filters" was an artifact.  Fixed in
-  `carma_bench.cpp` (the window restarts after a NaN); with the fix, seed 4 of
-  the complete INS gives OU-III 101 s, C41 95 s, C52 90 s on JONSWAP and
-  OU-III 106 s, C41 1108 s, C52 never on the mixed sea.  The committed
-  `conv_s` column of the PR #704 results is invalid; the three-axis benchmark
-  reports the corrected metric.  The fix touches no other column.  Sharing
-  the base seas and level-1 blocks between the two benches moved code
-  between translation units, which changes where GCC contracts multiply-adds
-  into FMAs (`-march=native`): re-run with this branch's `carma_bench`,
-  OU-III rows stay bit identical and CARMA rows can differ in the fifth or
-  sixth significant digit (complete INS, JONSWAP 3600 s, seed 1, C41: heave
-  mean 1.05078 against 1.05081 mm).  Built with `-ffp-contract=off`, this
-  branch's and PR #704's `carma_bench` agree bit for bit, so no logic
-  changed.  The committed PR #704 numbers are left as published.
+  with the SpectralMSE `r_S` (horizontal factors 0.72, 0.50).  The CARMA
+  filter replaces the three chains by CARMA(p, p-3) priors in
+  `[p, v, a, latent]` coordinates and keeps OU-III's attitude, bias,
+  magnetometer, startup and adaptation.
 * **Frequency-range consistency.**  The CARMA amplitude mapping sets the
   model's *total* (0 to infinity) acceleration variance equal to an RMS
   measured in the adaptive band [0.5 f, 4 f] of the shipping sigma channel;
@@ -111,9 +82,9 @@ heave, roll and pitch, `l` = 0.09-0.14 L matches `sinc(kL/2)` at
     d = 0.5 m, l_L = 0.75 m, l_B = 0.28 m,  b = propagation direction re bow.
 
 So the horizontal spectra are the incident spectrum times `cos^2 b` /
-`sin^2 b`, low-passed by the hull, with **no resonance** (the PR #704 truth
-used 0.8 x the heave RAO, whose 0.55 Hz resonance is not physical for surge
-and sway; it is kept as the `hlegacy` control).  Horizontal displacement is
+`sin^2 b`, low-passed by the hull, with **no resonance** (the `hlegacy`
+control instead uses 0.8 x the heave RAO, whose 0.55 Hz resonance is not
+physical for surge and sway).  Horizontal displacement is
 about half the heave in these seas (JONSWAP 0.29 Hz, 0.8 m: std x/y/z
 0.103/0.080/0.202 m) and its zero-crossing frequency is lower than heave's
 (0.31 against 0.33 Hz), because heave's resonance lifts its shoulder.
@@ -205,6 +176,107 @@ coordinates of the cascade realization (CARMA(4,1): the input `r` of `L2`;
 CARMA(5,2): `(r, r')`); `w_z = 0` in the CARMA(5,2) branch gives `B = s^2`
 exactly, so the double-DC-zero model needs no new code.
 
+**Shape fits.**  `tools/carma_fit.py` minimizes the RMS log-spectral error
+`sqrt(mean_f [d(f) - mean_f d]^2)`, `d = 10 log10(S_C/S_J)`, against JONSWAP
+(`f_p` = 0.29 Hz, `gamma` = 3.3) on a 1 mHz grid over 0.17-1.30 Hz, i.e. shape
+only (the driving intensity is set at run time).  Constraints: every pole
+damping in [0.05, 1]; CARMA(5,2) `zeta_z >= 0.20`; CARMA(4,1) `f_z0 >= 0`.
+Results are in `reports/results/carma_model/carma_fit.json`; the library
+shapes (`CARMA*_JONSWAP_SHAPE` in `CarmaVerticalModel.h`) are:
+
+| Model | parameters (Hz, damping) | RMS dB, 0.17-1.30 Hz | max dB | DC level re peak | `T_z f_p` |
+|---|---|---|---|---|---|
+| CARMA(5,2) (C52J) | f1 0.27812/0.09715, f2 0.44274/0.52299, f_lambda 1.86402, f_z 0.15105/0.20 | 0.84 | 9.7 | -23.2 dB | 0.783 |
+| CARMA(4,1) (C41J) | f1 0.306945/0.104191, f2 0.815318/0.478188, f_z0 0 | 1.86 | 17.5 | zero at DC | 0.782 |
+| CARMA(3,0) (C30J) | f1 0.386457/0.266692, f_lambda 5.0 (on bound) | 2.93 | 24.0 | -5.8 dB | 0.766 |
+| JONSWAP | | | | | 0.779 |
+
+The CARMA(5,2) shape is a preliminary constrained fit; a refit under the same
+constraints gains 0.006 dB and is not used.  Without the `zeta_z` bound the
+optimizer places a narrow notch (`zeta_z` = 0.027) at 0.17 Hz on the band
+edge and a 0.069 Hz real pole that puts 23 % of the displacement variance
+below 0.1 Hz; that fit is reported in the JSON, not used.  The CARMA(4,1)
+optimum places its zero at DC; the CARMA(3,0) optimum sits on the 5 Hz
+real-pole bound (an oscillator-like `f^-4` slope across the band).
+
+![PSD overlay](../reports/results/carma_model/carma_psd_overlay.svg)
+
+**Realization.**  The first two rows of `A` are `p' = v`, `v' = a`; the
+latent coordinates are those of the factored (cascade) realization after the
+observability change of basis.  For CARMA(5,2) the cascade is
+
+    u' = -lambda u + g xi,     r'' + 2 zeta2 w2 r' + w2^2 r = u,
+    p'' + 2 zeta1 w1 p' + w1^2 p = u + beta1 r' + beta0 r,
+    beta1 = 2 zeta_z w_z - 2 zeta2 w2,  beta0 = w_z^2 - w2^2,
+
+and eliminating `u` gives, with `gamma = beta1 - lambda` and latent
+`(l1, l2) = (r, r')`,
+
+    a'  = gamma w1^2 p + (2 gamma zeta1 w1 - w1^2) v + (gamma - 2 zeta1 w1) a
+          + (-beta1 w2^2 - gamma beta0) l1 + (beta0 - 2 beta1 zeta2 w2 - gamma beta1) l2 + g xi
+    l1' = l2
+    l2' = w1^2 p + 2 zeta1 w1 v + a - w_z^2 l1 - 2 zeta_z w_z l2.
+
+The latent pair obeys the numerator ("zero") dynamics driven by the input of
+the first oscillator.  CARMA(4,1) has one latent state `r` (the input of
+`L2`): `r' = w1^2 p + 2 zeta1 w1 v + a - w_z0 r` and
+`a' = d w1^2 p + (2 d zeta1 w1 - w1^2) v + (d - 2 zeta1 w1) a + (-w2^2 - d w_z0) r + g xi`,
+`d = w_z0 - 2 zeta2 w2`.  CARMA(3,0) is the companion form in `[p, v, a]`.
+In these coordinates OU-III's chain is the special case `a' = -a/tau + noise`
+with no `p`, `v` feedback; CARMA feeds displacement and velocity back into
+the jerk equation, which is what makes its displacement stationary.
+
+**Scaling.**  A fixed shape is moved by one frequency scale `kappa` (every
+pole and zero times `kappa`).  With unit gain, `Var_kappa(a) = Var_1(a)/kappa`
+and `Var_kappa(p) = Var_1(p)/kappa^5`, so a requested stationary acceleration
+standard deviation `sigma_a` is met with `g^2 = sigma_a^2 kappa / Var_1(a)`;
+the displacement zero-crossing frequency is `kappa` times its base value
+(0.3787, 0.3708 and 0.3704 Hz for CARMA(3,0), (4,1), (5,2)).
+
+**Exact discretization.**  `discretize_lti()` evaluates the Taylor series of
+`F = exp(A h)` and `Q = int_0^h exp(A t) W exp(A' t) dt` at `h_s = h/2^s` with
+`||A h_s||_inf <= 1/4`, in the diagonally scaled coordinates `x = D z`,
+`D = diag(h_s^{d_i})` (`d_i` the coupling distance of state `i` from the
+noise input), followed by `s` exact doublings `Q(2h) = Q(h) + F Q F'`,
+`F(2h) = F^2`.  The scaling keeps the small entries (`Q_pp ~ h^5`) at full
+relative precision; every series term is a product, never the difference
+`P - F P F'` of stationary covariances, which cancels catastrophically in
+float at 5 ms.  The stationary covariance is the same doubling carried until
+`F` has decayed.  `tests/kalman_carma/carma_model-test.cpp` (801 checks)
+verifies, for all three orders and several `kappa`: the realization against
+`g^2 |B|^2/|P|^2` from the polynomial factors (< 1e-9 relative, 5 mHz-20 Hz),
+`C G = C A G = 0`, `C A^2 G = g`, poles equal to the factor poles; `F`, `Q`
+against a double-precision Van Loan exponential for steps of 0.1 ms-50 ms and
+against `P - F P F'` for 0.4-40 s (< 1e-9), float within 1e-5 (F) and 1e-4
+(Q) at IMU-rate steps; `Q` positive semidefinite and the semigroup law
+`Q(h1 + h2) = F(h2) Q(h1) F(h2)' + Q(h2)` for non-uniform steps; the stationary
+covariance against a Kronecker Lyapunov solve and against quadrature of
+`S_p`, `w^2 S_p`, `w^4 S_p`; the `kappa` scaling law; a bounded 10 000 s
+simulation.
+
+**Stochastic-process validation.**  `carma_process-sim` generates 11.6 h
+(20 ms) and 400 s (1 ms) realizations with the library's float model;
+`tools/carma_process_validation.py` checks them against quantities derived
+independently in Python (companion realization, scipy Lyapunov, polynomial
+PSDs; `reports/results/carma_model/process_validation.json`):
+
+| check (11.6 h at 20 ms, 400 s at 1 ms) | CARMA(3,0) | CARMA(4,1) | CARMA(5,2) | pass if |
+|---|---|---|---|---|
+| largest pole real part (rad/s) | -0.648 | -0.201 | -0.170 | < 0 |
+| sample / Lyapunov variance, `p`, `v`, `a` | 0.992, 0.993, 0.999 | 1.006, 1.003, 0.999 | 1.009, 1.006, 1.002 | within 8 % |
+| Welch vs analytic PSD, mean abs dB, `p`, `v`, `a` | 0.10, 0.10, 0.12 | 0.10, 0.11, 0.09 | 0.13, 0.13, 0.07 | < 0.35 dB |
+| `S_v/S_p` vs `w^2`, `S_a/S_p` vs `w^4`, mean abs dB | 0.005, 0.031 | 0.017, 0.005 | 0.015, 0.017 | < 0.3 dB |
+| `(dv/dt - a)` residual / Brownian prediction `g sqrt(dt/12)` | 0.998 | 1.001 | 1.000 | within 5 % |
+| `E[da^2] / (g^2 dt)` | 0.984 | 1.000 | 0.994 | within 5 % |
+| increment scaling exponent, `a` (1 = Brownian), `v` (2 = differentiable) | 0.98, 1.99 | 1.00, 2.00 | 0.99, 2.00 | within 0.1 |
+| max `|p| / sigma_p` over 11.6 h | 4.58 | 4.33 | 4.49 | finite |
+
+So `p` and `v` are differentiable, `a` is continuous with Brownian
+increments, the spectra and variances are the designed ones, and long runs
+stay bounded.
+
+![CARMA(5,2) realization against analytic spectra](../reports/results/carma_model/carma52_process_psd.svg)
+
 Values at the JONSWAP operating point (`f_z` = 0.37 Hz, `sigma_a`
 = 0.5 m/s^2; `tools/carma3_analysis.py`, `carma3_analysis.json` holds A, G,
 the output rows, W, F, Q at 200 Hz and P_inf of every model):
@@ -219,7 +291,7 @@ the output rows, W, F, Q at 200 Hz and P_inf of every model):
 | cond(P_inf), correlation-scaled / raw | 2.1 / 274 | 5.5 / 144 | 12 / 534 | 8.3 / 1426 | 17 / 181 |
 | `Q_pp / Q_aa` at 200 Hz | 3.3e-11 | 3.2e-11 | 3.2e-11 | 3.4e-11 | 3.1e-11 |
 
-C41J/C52J/C30J are the PR #704 JONSWAP fits; C52D is CARMA(5,2) with `B = s^2`
+C41J/C52J/C30J are the JONSWAP fits above; C52D is CARMA(5,2) with `B = s^2`
 refitted to JONSWAP (1.12 dB, real pole on its 5 Hz bound); C41H is CARMA(4,1)
 fitted to the benchmark's beam-sea sway spectrum (JONSWAP times its own
 horizontal RAO, energetic band; **hull-dependent**).  Every model is strictly
@@ -277,8 +349,8 @@ DC is set by the prior's DC level and the bias/tilt confounding, not by S.
   with variance `r^2` is an information-rate-`1/(r^2 T_S)` regularizer that
   closes a first-order loop at `w_R = sqrt(S_p(0)/(r^2 T_S))`; placing
   `w_R tau = kappa_R` (OU-III's pole constant 0.3627) gives
-  `r_S = sqrt(S_p(0)) tau / (kappa_R sqrt(T_S))` per axis (the PR #704 `S_z`
-  law, used for A52S).  It is a regularizer, not a measurement: under the
+  `r_S = sqrt(S_p(0)) tau / (kappa_R sqrt(T_S))` per axis (used for A52S;
+  the wrapper applies the same law to an optional vertical `S_z`).  It is a regularizer, not a measurement: under the
   prior `S` is unbounded, so `S = 0` asserts the physical premise the prior
   lacks.  The augmented pair is detectable (`[C_a; e_S]` observes the zero
   mode) and the steady-state filter exists.
@@ -331,6 +403,13 @@ without a DC zero is kept, its `S` needs the derived pole-placement law
 (Option B, A52S), and it remains a regularizer of a mis-specified DC level.
 The benchmark tests A (A41, A52), B (A52S; A41S as the negative control) and
 C (A41's DC zero).
+
+**Vertical.**  The same analysis holds for `S_z = int h dt`.  No benchmarked
+variant carries `S_z` or any vertical pseudo-measurement: the stationary
+prior bounds the heave by itself, and CARMA(4,1)'s DC zero bounds `S_z` too.
+The filter supports `S_z` (template flag `SZ`, pole-placement `r_Sz`) for a
+vertical model with a DC level; it is covered by `carma3-test`, not
+benchmarked.
 
 ## 5. Multivariate (coupled) CARMA
 
@@ -426,6 +505,35 @@ choice).
 * This analysis has no bias, no tilt coupling and no adaptation; the Monte
   Carlo below has all three, and its ranking of C41 and C52 differs.
 
+**Heave.**  `tools/carma_mismatch_analysis.py` applies the same construction
+to the vertical channel with the true vessel-heave spectrum (incident
+spectrum times the truth's heave RAO; OU-III's `S = 0` update included at its
+information-rate-equivalent variance; `reports/results/carma_model/mismatch_analysis.json`):
+
+| heave, mm RMS (signal / noise) | OU-III | C30J | C41J | C52J | C52, shape refitted to the truth |
+|---|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m | 13.4 (11.2 / 7.4) | 36.1 | 10.2 (9.7 / 3.2) | 13.7 (13.5 / 1.8) | 8.6 (7.4 / 4.4) |
+| PM 0.25 Hz, 1 m | 17.3 (15.1 / 8.4) | 49.6 | 14.8 (14.3 / 3.7) | 21.3 (21.2 / 2.0) | 11.0 (9.9 / 5.0) |
+| JONSWAP 0.20 Hz, 1 m | 19.6 (15.8 / 11.6) | 44.6 | 13.3 (12.1 / 5.6) | 16.6 (16.3 / 3.3) | 12.5 (11.1 / 5.6) |
+| JONSWAP 0.45 Hz, 0.4 m | 6.6 (5.4 / 3.8) | 15.9 | 5.2 (4.9 / 1.6) | 7.0 (6.9 / 0.9) | 3.0 (2.5 / 1.7) |
+| mixed swell + wind | 60.7 (59.0 / 14.4) | 128.0 | 93.7 (93.4 / 6.8) | 302.1 (302.0 / 3.8) | 129.8 (129.8 / 2.1) |
+| bimodal | 31.6 (26.6 / 17.1) | 74.3 | 26.9 (25.6 / 8.4) | 51.3 (51.1 / 4.8) | 18.9 (17.3 / 7.6) |
+
+OU-III's prior is nearly shape-free above its corner `1/tau`, so its signal
+distortion is moderate everywhere, but it lets accelerometer noise through at
+low frequency.  A stationary CARMA prior propagates two to four times less
+noise and wins whenever its shape is close enough to the vessel's spectrum;
+when it is not, signal distortion dominates.  CARMA(4,1) is on the right side
+of that balance for every single-peaked sea and the bimodal case; the fixed
+CARMA(5,2) is level with OU-III on JONSWAP and worse on PM, whose broader peak
+its narrow first resonance (`zeta_1` = 0.097) does not cover.  On the mixed
+sea the 0.09 Hz swell falls near CARMA(5,2)'s numerator zero once `kappa`
+scales the shape to the wind sea (289 of its 302 mm are below 0.1 Hz); even
+the refitted shape (which uses the truth) cannot represent two well-separated
+peaks.
+
+![Heave steady-state error PSDs](../reports/results/carma_model/mismatch_error_psd.svg)
+
 ## 7. State dimension and cost
 
 Every configuration shares nine states: attitude error (3), gyro bias (3) and
@@ -436,14 +544,12 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 | Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed / jittered dt (us) |
 |---|---|---|---|---|---|---|---|---|---|
 | OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | 8.94 / 9.55 |
-| OU-III x/y + C41 z (PR #704) | Z41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4760 | 150 766 | 1344 | 7.03 / 7.78 |
-| OU-III x/y + C52 z (PR #704) | Z52 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5224 | 153 358 | 2000 | 7.37 / 8.74 |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 5144 | 136 799 | 1344 | 5.83 / 6.89 |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6448 | 141 055 | 2000 | 6.72 / 8.94 |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5608 | 147 121 | 2000 | 6.15 / 7.80 |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5952 | 148 058 | 2000 | 6.39 / 8.05 |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7296 | 145 999 | 2032 | 7.97 / 13.28 |
-| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5880 | 143 966 | 1536 | -- |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4928 | 136 507 | 1344 | 5.83 / 6.89 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6232 | 140 806 | 2000 | 6.72 / 8.94 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5392 | 146 803 | 2000 | 6.15 / 7.80 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5736 | 147 782 | 2000 | 6.39 / 8.05 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7080 | 145 745 | 2032 | 7.97 / 13.28 |
+| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5664 | 143 703 | 1536 | -- |
 | C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | as A41 | as A41 | as A41 | -- |
 | shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 9315 | not implemented in C++ | | | |
 
@@ -484,7 +590,7 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   13.28 us, against OU-III 8.94 -> 9.55 us); OU-III's closed-form transition
   has no such cost.  A dt quantized to the
   nominal rate, or a cached table, would remove it at a controlled error;
-  this is not implemented (PR #704's vertical model behaves the same way).
+  this is not implemented.
 * **Conditioning** is section 3: correlation-scaled `cond(P_inf)` 5.5 (C41)
   to 12 (C52), raw up to 1426; float `F`, `Q` within 1.5e-6 of double over
   f_z 0.05-1 Hz; 100 s of float prediction keeps the stationary covariance
@@ -493,38 +599,46 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 ## 8. Implementation
 
 * `src/kalman_carma/Kalman3D_Wave_CARMA3.h`:
-  `Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ>`; `NHC = 0` is OU-III's
-  horizontal chain exactly as in `Kalman3D_Wave_CARMA` (bit-for-bit
-  equivalent on a tilted, rotating, noisy stream: every state and covariance
-  difference 0; and in the complete-INS benchmark, Q41 = Z41 on every metric),
-  `NHC = 3, 4, 5` a CARMA block per horizontal axis `[p, v, a, latent (, S)]`
-  sharing `A_h`, with the Kronecker `Q`.  Attitude, gyro bias, accelerometer
-  and magnetometer models, the residual accelerometer-bias OU and its freeze,
-  Joseph updates and resets are those of `Kalman3D_Wave_CARMA` (OU-III's
-  mathematics).  Not carried over: wind heel, lever arm, the commanded-parameter
-  random walk (none enabled by the deployed wrapper).
-* `src/kalman_carma/SeaStateFusionFilter_CARMA3.h`: the PR #704
-  wrapper schedule (shared front end, proxy startup, staged commit, watchdog,
-  magnetometer-service bias gate, Racc inflation) plus the horizontal mapping
-  `kappa_h = f_tune / f_z,h`, `sigma_h = S_factor sigma_a,B` (no horizontal
-  statistic is measured), the horizontal S laws of section 4.  Mappings fixed
-  before any Monte Carlo run.  Not included by `ArduinoOceanImu.h` or any
-  shipped sketch.
+  `Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ>`, `NHC, NZC` in 3..5: a CARMA
+  block per horizontal axis `[p, v, a, latent (, S)]` sharing `A_h`, with the
+  Kronecker `Q`, and a vertical CARMA block `[h, v, a, latent (, S_z)]`.
+  Attitude, gyro bias, accelerometer and magnetometer models, the residual
+  accelerometer-bias OU and its freeze, Joseph updates and resets are
+  OU-III's mathematics.  Not carried over: wind heel, lever arm, the
+  commanded-parameter random walk (none enabled by the deployed wrapper).
+* `src/kalman_carma/SeaStateFusionFilter_CARMA3.h`: OU-III's per-sample
+  schedule (shared front end, proxy startup, staged commit, watchdog,
+  magnetometer-service bias gate, Racc inflation) with the operating-point
+  mappings `kappa = f_tune / f_z,model`, `f_tune = c_tau / (2 tau)`, for
+  every axis (the model's displacement zero-crossing frequency is placed on
+  the measured one), `sigma_z = max(0.05 m/s^2, noise floor, sigma_aw /
+  c_sigma)` (the measured band acceleration RMS, with OU-III's floor),
+  `sigma_h = S_factor sigma_z` (no horizontal statistic is measured), and the
+  `S` laws of section 4.  Mappings fixed before any Monte Carlo run.  Not
+  included by `ArduinoOceanImu.h` or any shipped sketch.
+* `src/kalman_carma/CarmaVerticalModel.h`: the CARMA model library of
+  section 3 (shapes, realization, scaling, exact discretization), one
+  instance per axis model.
 * `tests/kalman_carma/carma3/`: benchmark adapters only (`Bench3.h`,
   `FullAdapters.h`), shared by `carma3_bench` and `carma3-sim`.
-* The OU-III native-secant diagnostic hashes the whole `src/` tree, so adding
-  these headers rebinds its `shipping_source_tree_sha256` (as PR #704 did):
-  regenerated with clang 18.1.3, every other field of
-  `reports/results/ou3_stability/planar-native-secants-diagnostic.json` is
-  reproduced exactly.
-* `tests/kalman_carma/carma3-test.cpp` (36 checks): layouts; bit equivalence
-  with the PR #704 hybrid; Kronecker discretization; stationary covariance
-  invariant over 100 s of float prediction (<= 1.5e-4); S growth = `S_p(0)`
-  per second with a DC level, bounded with a DC zero; float vs double
-  discretization over f_z 0.05-1 Hz; noiseless three-axis sinusoid recovered
-  within 10 % on every axis with PSD covariance; correlated prior; wrapper on
-  a still IMU.  Wired into `make all` through `run_tests.sh`, with paired
-  smoke runs of `carma3_bench` at both levels.
+* The OU-III native-secant diagnostic hashes the whole `src/` tree, so a
+  change under `src/kalman_carma/` rebinds its
+  `shipping_source_tree_sha256`: regenerated with clang 18.1.3, every other
+  field of `reports/results/ou3_stability/planar-native-secants-diagnostic.json`
+  is reproduced exactly.
+* `tests/kalman_carma/carma3-test.cpp` (54 checks): layouts; the CARMA
+  accelerations in the attitude-aware accelerometer model (vertical
+  acceleration / bias and attitude / horizontal acceleration
+  cross-covariances) and the position and velocity pseudo-measurements on
+  every axis; non-uniform steps with and without `S_x, S_y, S_z` (finite,
+  symmetric, PSD covariance; bounded `S`); Kronecker discretization;
+  stationary covariance invariant over 100 s of float prediction
+  (<= 1.5e-4); S growth = `S_p(0)` per second with a DC level, bounded with a
+  DC zero; float vs double discretization over f_z 0.05-1 Hz; noiseless
+  three-axis sinusoid recovered within 10 % on every axis with PSD
+  covariance; correlated prior; wrapper on a still IMU.  Wired into
+  `make all` through `run_tests.sh` with `carma_model-test`, the process
+  validation and paired smoke runs of `carma3_bench` at both levels.
 
 ## 9. Benchmark
 
@@ -539,12 +653,17 @@ identically to every filter: every comparison is paired.  Errors are taken
 against the wave coordinate in the geographic frame (the INS is magnetic;
 estimates are rotated by the declination before scoring) over t >= 300 s of
 a 1200 s run; startup metrics use the first 120 s after Live.  No ground
-truth enters any estimator or tuner.  Two levels:
+truth enters any estimator or tuner.  The truth's motion levels were
+calibrated against the pinned 28 ft vessel-RAO dataset from truth statistics
+alone, before any estimator was run on it: vertical acceleration
+0.3-1.5 m/s^2 RMS with peaks below 6.5 m/s^2, roll 3-5 deg and pitch 2-5 deg
+RMS, body rates below 0.8 rad/s (1.3 rad/s in the large-rotation case),
+against 0.24-1.72 m/s^2, peaks up to 6.6 m/s^2, roll 1-8 deg RMS and rates up
+to 0.9 rad/s in the dataset; every sea has `H_s/L_p <= 0.06`.  Two levels:
 
-* **complete INS** (`full`): OU3 is `SeaStateFusion_OU_III` unchanged, Z41 and
-  Z52 are PR #704's `SeaStateFusion_CARMA`, the three-axis variants
-  `SeaStateFusion_CARMA3` (same schedule, startup, magnetic acquisition,
-  tuner, bias handling);
+* **complete INS** (`full`): OU3 is `SeaStateFusion_OU_III` unchanged, the
+  CARMA variants `SeaStateFusion_CARMA3` (same schedule, startup, magnetic
+  acquisition, tuner, bias handling);
 * **level 1** (`l1`): prescribed attitude: per-axis reduced filters on
   `y = R_nb f + g e_z` with the true `R_nb` and the same tuner, which removes
   attitude and gyro coupling and isolates the motion prior.
@@ -624,7 +743,7 @@ RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C4
   6.2) and PM 0.15 Hz, and **73 % worse than OU-III on the mixed sea**.
 * **Heave** depends only on the vertical model: the horizontal model changes
   heave by at most 0.02 % H_s (Z41 against A41).  C41 z is better than C52 z
-  on every wave condition (the PR #704 result, here with 30-100 seeds per
+  on every wave condition (30-100 seeds per
   condition); both lose to OU-III on the mixed sea (-13 %, -165 %) and C52 z
   also on the bimodal sea (-34 %).
 * **Mixed orders.**  C52 x/y + C41 z (M54) combines the best single-peaked
@@ -690,8 +809,7 @@ Horizontal RMS, % of incident H_s, complete INS.
 30 seeds, 1200 s, scored from 300 s.
 
 Every CARMA variant is worse than OU-III on a still IMU, horizontally
-(76-87 mm against 53 mm) and vertically (46-53 mm against 27 mm, the PR #704
-result).  Calibrating the turn-on bias changes nothing (`still IMU,
+(76-87 mm against 53 mm) and vertically (46-53 mm against 27 mm).  Calibrating the turn-on bias changes nothing (`still IMU,
 calibrated bias` column).  The phantom lies below the wave band, nearly all
 of it at 0-0.05 Hz (periods of 20 s and longer; band table below), and only
 29 of C41's 84 mm is in the 60 s running mean.  That is where the prior is: with no
@@ -842,8 +960,8 @@ Means over 100 paired seeds (convergence: median).
   (C52), peaks up to 2.5 / 8.4 / 6.0 m over 30 seeds; 0.14 / 0.42 / 0.30 m
   with the turn-on bias calibrated.  The uncalibrated turn-on accelerometer
   bias meets a prior parked at 0.05 Hz with the amplitude floor (section
-  9.4).  This is the heave model (the hybrids show it too) and reproduces the
-  PR #704 concern in quiet water.
+  9.4).  It is set by the heave model: variants with the same vertical model
+  have the same vertical transient.
 * **Convergence** (corrected metric: time after Live from which the 30 s
   rolling RMS stays within 1.5x the steady value; median): heave 126 / 96 /
   92 s; x 692 / 740 / 85 s.  The long x values are late low-frequency
@@ -868,7 +986,7 @@ is an upper-bound diagnostic, not a candidate.
 
 ### 9.8 Pinned vessel-RAO dataset
 
-The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the PR #704 hybrids `carma-sim`, the three-axis variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The OU-III and hybrid rows are bit-identical to PR #704's `dataset_runs.csv`.  The hull differs from the synthetic benchmark's.
+The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the CARMA variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The hull differs from the synthetic benchmark's.
 
 | Filter | horizontal % H_s (change) | heave % H_s (change) | roll / pitch / yaw RMS (deg) |
 |---|---|---|---|
@@ -881,11 +999,10 @@ The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSW
 | C41 x/y + C52 z | 3.04 (+52.2 % [+50.8, +53.8], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.24 / 2.29 |
 | C52 x/y/z + S_x,S_y | 2.81 (+55.8 % [+53.5, +58.0], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.25 / 2.36 |
 | C41 x/y/z, sway-fitted x/y shape | 2.80 (+56.0 % [+54.4, +57.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.29 / 0.24 / 2.29 |
-| Q41 (three-axis class with OU-III x/y; equivalence check) | 6.37 (-0.0 % [-0.0, -0.0], better on 34 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.26 / 2.43 |
 
 10 seeds x 8 records, paired per (record, seed); final 900 s of each record.
 
-Improvement pools the per-record RMS in % H_s, which weights every record equally; PR #704's +40.9 % for C41 heave pools RMS in metres, which weights the large records (same rows).  On this hull and these single-peaked seas the synthetic results carry over: C41 x/y/z is 52 % better than OU-III horizontally and 37 % in heave on every one of the 80 pairs; C52 x/y/z is better horizontally (57 %) and worse in heave (29 %, PR #704's result); the sway-fitted C41 shape, fitted to the *synthetic* hull, is also better here (56 %).  Q41 (the three-axis class with OU-III's horizontal chain) agrees with Z41 to 1.3e-4 % H_s (different simulator adapters).  The dataset has no mixed sea, no still water and no low-frequency translation, so it cannot test the obstacles of section 12.
+Improvement pools the per-record RMS in % H_s, which weights every record equally.  On this hull and these single-peaked seas the synthetic results carry over: C41 x/y/z is 52 % better than OU-III horizontally and 37 % in heave on every one of the 80 pairs; C52 x/y/z is better horizontally (57 %) and worse in heave than C41 (29 % better than OU-III); the sway-fitted C41 shape, fitted to the *synthetic* hull, is also better here (56 %).  The dataset has no mixed sea, no still water and no low-frequency translation, so it cannot test the obstacles of section 12.
 
 ![Pinned dataset](../reports/results/carma3_benchmark/dataset_comparison.svg)
 
@@ -905,14 +1022,13 @@ dynamics.
 | Still-water phantom | Yes, vertical (C41 53, C52 46 mm against 27) and **also horizontal** (76-87 against 53 mm) | Unchanged by turn-on bias calibration; nearly all below 0.05 Hz.  In still water the tuner pins the operating frequency at its bound (f_z = 0.050 Hz) and the amplitude at its floor (0.05 m/s^2), as for OU-III, so the CARMA prior expects decimetres of displacement at 20 s periods and turns noise and slow tilt/bias leakage into motion there; OU-III's S = 0 is a broad, low-Q DC-zero prior (section 4) and a double-counted S (A41S) halves the CARMA phantom | 5, 6, 3, 10 |
 | Overconfidence under mismatch | Yes on multi-peaked seas; **not** on single-peaked ones | NEES 6-dof mixed: OU-III 31, C41 64, C52 324; JONSWAP 7.7 / 5.4 / 4.4 (6 = consistent).  The Kalman covariance is conditional on the prior; with a prior outside the true family it is not an error bound, and the narrower the prior the larger the miss | 7 (as a consequence of 10); no model-error term is carried |
 | Large startup transients | In waves **no** (CARMA's is smaller than OU-III's); **yes on a still IMU** (2-3 times OU-III's) | First 120 s after Live, heave RMS OU-III / C41 / C52: JONSWAP 0.70 / 0.26 / 0.14 m; still IMU 0.97 / 2.96 / 2.12 m (peaks up to 2.5 / 8.4 / 6.0 m); still IMU with the turn-on bias calibrated 0.14 / 0.42 / 0.30 m.  In waves CARMA starts at a stationary covariance that matches the sea; on a still IMU the not-yet-estimated turn-on accelerometer bias (up to 8 mg) meets a prior parked at f_z = 0.05 Hz with the amplitude floor, which expects metres of displacement at 20 s periods | 5, 3, 10 |
-| `conv_s = 0` in PR #704 | Yes: metric defect | NaN before Live poisoned the rolling sum; fixed in `carma_bench.cpp` and in `carma3_bench` (section 1) | 9 (in the benchmark, not the filter) |
 | Inconsistent frequency ranges | Yes, documented | Amplitude mapping matches total model variance to an in-band RMS; process-validation PSD compares acceleration on the displacement band (section 1) | 1 (mapping), not limiting |
 
 Observability (8) is not a cause of any of them: every CARMA prior is
 observable from acceleration alone, and the one non-stabilizable construction
 (S on a DC-zero model) is not a candidate.  Numerical implementation (9) of
-the filters is not a cause: float discretization, stationary-covariance
-invariance and the bit-exact OU-III-horizontal equivalence are tested.
+the filters is not a cause: exact discretization, float against double,
+stationary-covariance invariance and non-uniform steps are tested.
 
 ## 11. The fundamental tradeoff
 
@@ -1007,9 +1123,10 @@ invariance and the bit-exact OU-III-horizontal equivalence are tested.
 **Not shippable.**
 
 * Against **A** (OU-III horizontal, CARMA z): horizontal CARMA(4,1) is better
-  than OU-III on every one of the 31 complete-INS sea conditions (43-73 %;
-  mixed sea 17 %), at level 1 and under translation, with no extra states or
-  cost; heave is the same as A.
+  than OU-III's horizontal chain on every one of the 31 complete-INS sea
+  conditions (43-73 %; mixed sea 17 %), at level 1 and under translation,
+  with no extra states or cost; heave does not depend on the horizontal
+  prior (section 9.2), so A's heave is B's.
 * Against **C** (CARMA(5,2) everywhere): the mixed-sea collapse (horizontal
   -73 %, heave -165 %) and the bimodal heave loss.  Its mechanism (a notch
   that the frequency mapping can place on a swell) is structural, not a
@@ -1033,7 +1150,7 @@ invariance and the bit-exact OU-III-horizontal equivalence are tested.
    prior at a floored operating point (0.05 Hz, 0.05 m/s^2); a valid
    low-frequency or "no waves" mechanism in the prior is needed (A41S shows
    the size of the effect on the steady phantom, not a valid fix).
-2. Mixed swell and wind sea: heave 13 % worse than OU-III (PR #704) and
+2. Mixed swell and wind sea: heave 13 % worse than OU-III and
    NEES twice OU-III's; a single fixed shape scaled by one frequency cannot
    represent two peaks.
 3. Covariance under mismatch: no model-error term; the covariance is not an
@@ -1061,6 +1178,11 @@ benchmark's hull only.
 ## Reproduction
 
     make -C tests/kalman_carma build test
+    python3 tools/carma_fit.py                        # spectral fits (section 3)
+    (cd tests/kalman_carma && ./carma_process-sim process)
+    python3 tools/carma_process_validation.py --input tests/kalman_carma/process \
+        --check --out reports/results/carma_model
+    python3 tools/carma_mismatch_analysis.py          # heave steady state (section 6)
     python3 tools/carma3_analysis.py                  # sections 2-7, figures
     python3 tools/carma3_benchmark.py run --jobs 4    # synthetic grid (resumable)
     make ensure-sim-data && make -C tests/kalman_ou_iii kalman_ou_iii-sim
@@ -1070,10 +1192,13 @@ benchmark's hull only.
     python3 tools/carma3_benchmark.py timing           # on an idle host
     python3 tools/carma3_benchmark.py report           # summary.md, figures
 
-The rows of `raw_runs.csv` reproduce bit for bit (apart from `runtime_ns`)
-with this tree's `carma3_bench` on the host that produced them (x86-64, GCC
-`-O3 -march=native`): every A52, A52S and level-1 row was re-run with it,
-and a random sample of the other rows is identical.  The benches build without `-ffp-contract=off`, so a
-different compiler, CPU or translation-unit layout can move CARMA results
-in the fifth significant digit through FMA contraction; no table or
-conclusion depends on that digit.
+ESP32-S3 sizes: `tests/kalman_carma/arduino/carma3_size_probe/build.sh
+<xtensa toolchain bin dir>` (Espressif `esp-14.2.0_20241119`), written to
+`esp32s3_size.csv`.
+
+The rows of `raw_runs.csv` and `dataset_runs.csv` reproduce bit for bit
+(apart from `runtime_ns`) with this tree's `carma3_bench` and `carma3-sim` on
+the host that produced them (x86-64, GCC `-O3 -march=native`).  The benches
+build without `-ffp-contract=off`, so a different compiler, CPU or
+translation-unit layout can move results in the fifth significant digit
+through FMA contraction; no table or conclusion depends on that digit.

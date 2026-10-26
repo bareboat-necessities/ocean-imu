@@ -8,18 +8,17 @@
     the horizontal priors.
 
     The adapter configuration is the one tests/kalman_ou_iii/kalman_ou_iii-sim.cpp
-    gives the shipping OU-III (sensor-sigma rescales, magnetometer delay,
-    periodic a_w covariance maintenance, the dataset hull's direction RAO and
-    low-wave Racc weighting, tuner and clamps), so the two simulators differ
-    only in the translational motion model.  Run the unchanged
-    kalman_ou_iii-sim (and carma-sim for the PR #704 hybrids) with the same
-    W3D_SEED for the paired results.
+    gives the shipping OU-III (sensor-sigma rescales, magnetometer delay, the
+    dataset hull's direction RAO and low-wave Racc weighting, tuner and
+    clamps; OU-III's periodic a_w covariance maintenance has no CARMA
+    counterpart), so the two simulators differ only in the translational
+    motion model.  Run the unchanged kalman_ou_iii-sim with the same W3D_SEED
+    for the paired results.
 
     W3D_CARMA3_VARIANT selects A41 (default; CARMA(4,1) on all axes), A52,
-    M45 (CARMA(4,1) x/y, (5,2) z), M54 (CARMA(5,2) x/y, (4,1) z), A52S (with S_x, S_y), A41S (OU-III r_S
-    carried over, negative control), H41 (horizontal shape fitted to the
-    carma3_bench sway RAO) or Q41 (OU-III x/y chain in the three-axis class,
-    equivalence control with carma-sim C41).
+    M45 (CARMA(4,1) x/y, (5,2) z), M54 (CARMA(5,2) x/y, (4,1) z), A52S (with
+    S_x, S_y), A41S (OU-III r_S carried over, negative control) or H41
+    (horizontal shape fitted to the carma3_bench sway RAO).
 */
 
 #define EIGEN_NON_ARDUINO
@@ -57,7 +56,6 @@ public:
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
-        filter.setPeriodicAwCovarianceSync(true);
         wave_direction::VesselRaoEqualizer::Config direction_rao;
         direction_rao.enabled = true;
         direction_rao.horizontal_x_tau_s = 1.0;
@@ -147,7 +145,6 @@ CARMA_ADAPTER(Adapter_M54, 5, false, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_A52S, 5, true, 5, false, nullptr)
 CARMA_ADAPTER(Adapter_A41S, 4, true, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_H41, 4, false, 4, false, &carma3_bench::CARMA41_SWAY_SHAPE)
-CARMA_ADAPTER(Adapter_Q41, 0, false, 4, false, nullptr)
 
 template<class A>
 void run_file(const std::string& filename, float dt, bool with_mag, const W3dRandomSeeds& seeds,
@@ -200,8 +197,7 @@ int main(int argc, char* argv[]) {
             else if (variant == "A52S") run_file<Adapter_A52S>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "A41S") run_file<Adapter_A41S>(f, dt, with_mag, seeds, write_timeseries, window, family);
             else if (variant == "H41") run_file<Adapter_H41>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "Q41") run_file<Adapter_Q41>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S, H41 or Q41");
+            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S or H41");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

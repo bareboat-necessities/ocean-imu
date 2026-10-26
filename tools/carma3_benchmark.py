@@ -8,15 +8,15 @@ the report.  Every subcommand is resumable: rows already in the raw CSV are
 skipped.
 
     run          synthetic grid (complete INS and level 1)
-    dataset      pinned 28 ft vessel-RAO records, 10 seeds: kalman_ou_iii-sim,
-                 carma-sim (PR #704 hybrids), carma3-sim
+    dataset      pinned 28 ft vessel-RAO records, 10 seeds: kalman_ou_iii-sim
+                 and carma3-sim
     traces       time series for the figures
     truth        realized motion levels of every scenario (seed 1)
     timing       host update time on an otherwise idle machine (one job)
     report       tables (summary.md), paired statistics (paired_stats.json)
                  and figures
 
-Paired statistics as tools/carma_benchmark.py: improvement = 1 - mean RMS
+Paired statistics (tools/carma3_report.py): improvement = 1 - mean RMS
 (candidate) / mean RMS (OU-III) with a 95 % bootstrap interval over seeds
 (10 000 resamples, fixed seed), win rate and Wilcoxon signed-rank p.
 
@@ -46,11 +46,10 @@ TRUTH_RAW = OUT / "truth_motion.csv"
 TIMING_RAW = OUT / "timing_runs.csv"
 TRACE_DIR = OUT / "traces"
 OU3_SIM = ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
-CARMA_SIM = TDIR / "carma-sim"
 CARMA3_SIM = TDIR / "carma3-sim"
 
-FULL_FILTERS = "OU3,Z41,Z52,A41,A52,M45,M54,A52S,A41S,H41"
-L1_FILTERS = "OU3,Z41,Z52,A41,A52,M45,M54,A52S,A41S,H41,A30"
+FULL_FILTERS = "OU3,A41,A52,M45,M54,A52S,A41S,H41"
+L1_FILTERS = "OU3,A41,A52,M45,M54,A52S,A41S,H41,A30"
 J29 = "jonswap_fp0.29_hs0.8_g3.3"
 
 # Principal seas: 100 paired seeds at both levels.
@@ -128,7 +127,7 @@ def grid(args):
             work.append(("l1", sc, seed, L1_FILTERS))
     for sc in LONG:
         for seed in range(1, args.long_seeds + 1):
-            work.append(("full", sc, seed, "OU3,Z41,A41,A52,M45,M54,A52S"))
+            work.append(("full", sc, seed, "OU3,A41,A52,M45,M54,A52S"))
     # Coupled x-y prior with the ORACLE horizontal acceleration correlation of
     # the default sea (tools/carma3_analysis.py coupled_xy_r): a diagnostic
     # upper bound, not a candidate (the estimator does not measure r).
@@ -194,14 +193,12 @@ def dataset_invocation(cmd, extra, seed):
 
 
 def cmd_dataset(args):
-    for s in (OU3_SIM, CARMA_SIM, CARMA3_SIM):
+    for s in (OU3_SIM, CARMA3_SIM):
         require(s)
     done = {(r["family"], r["seed"]) for r in read_rows(DATASET_RAW)}
     work = []
     for seed in range(1, args.seeds + 1):
         work.append(("OU3", seed, [str(OU3_SIM)], {}))
-        for fam, var in (("Z41", "C41"), ("Z52", "C52")):
-            work.append((fam, seed, [str(CARMA_SIM)], {"W3D_CARMA_VARIANT": var}))
         for v in args.variants.split(","):
             work.append((v, seed, [str(CARMA3_SIM)], {"W3D_CARMA3_VARIANT": v}))
     work = [w for w in work if (w[0], str(w[1])) not in done]
@@ -234,9 +231,9 @@ def cmd_dataset(args):
 # ---------------------------------------------------------------------------
 
 TRACES = [
-    ("full", J29, 1, "OU3,Z41,A41,A52"),
+    ("full", J29, 1, "OU3,A41,A52"),
     ("l1", J29, 1, "OU3,A41,A52"),
-    ("full", "mixed_swell_wind", 1, "OU3,Z41,A41,A52"),
+    ("full", "mixed_swell_wind", 1, "OU3,A41,A52"),
     ("full", f"{J29}+maneuver", 1, "OU3,A41,A52"),
     ("full", "stationary", 1, "OU3,A41,A52"),
     ("full", f"{J29}+rel90", 1, "OU3,A41,A52"),
@@ -277,7 +274,7 @@ def cmd_timing(args):
     """Serial runs on an idle host: fixed and +-25 % jittered sample interval."""
     if TIMING_RAW.exists():
         TIMING_RAW.unlink()
-    cmds = [["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", "OU3,Z41,Z52,A41,A52,M45,M54,A52S"]
+    cmds = [["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", "OU3,A41,A52,M45,M54,A52S"]
             for sc in (J29, f"{J29}+jit") for seed in range(1, args.seeds + 1)]
     run_bench(cmds, TIMING_RAW, 1)
 
@@ -294,7 +291,7 @@ def main(argv=None):
     p = sub.add_parser("dataset")
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--seeds", type=int, default=10)
-    p.add_argument("--variants", default="A41,A52,M45,M54,A52S,H41,Q41")
+    p.add_argument("--variants", default="A41,A52,M45,M54,A52S,H41")
     p.set_defaults(fn=cmd_dataset)
     p = sub.add_parser("traces")
     p.set_defaults(fn=cmd_traces)

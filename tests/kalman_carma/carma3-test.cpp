@@ -5,9 +5,13 @@
   wrapper (tests/kalman_carma/carma3/):
 
     * state layouts of every benchmarked configuration;
-    * with the OU-III horizontal chain (NHC = 0) the class reproduces
-      Kalman3D_Wave_CARMA (PR #704 hybrid) bit for bit on a tilted, rotating,
-      noisy stream (state and covariance);
+    * the CARMA accelerations enter the attitude-aware accelerometer model
+      (vertical acceleration / accelerometer-bias and attitude / horizontal
+      acceleration cross-covariances), and the position and velocity
+      pseudo-measurement APIs act on the CARMA p and v of every axis;
+    * non-uniform steps keep the covariance symmetric positive semidefinite,
+      with and without the S_x, S_y and S_z augmentations, and every S state
+      stays bounded by its zero pseudo-measurement;
     * horizontal Kronecker discretization: blockdiag(F1, F1) and
       Sigma_h (x) Q1 equal the exact discretization of the joint two-axis
       system with correlated driving noise (double, Van Loan-free doubling
@@ -35,7 +39,6 @@
 #include <Eigen/Eigenvalues>
 
 #include "util/WaveFilesSupport.h"
-#include "kalman_carma/SeaStateFusionFilter_CARMA.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 const float g_std = 9.80665f;
@@ -68,65 +71,114 @@ void test_layout() {
     check(Kalman3D_Wave_CARMA3<float, 5, true, 5, false>::NX == 26, "CARMA(5,2) x3 + S_x,S_y has 26 states");
     check(Kalman3D_Wave_CARMA3<float, 4, true, 4, false>::NX == 23, "CARMA(4,1) x3 + S_x,S_y has 23 states");
     check(Kalman3D_Wave_CARMA3<float, 3, false, 3, false>::NX == 18, "CARMA(3,0) x3 has 18 states");
-    check(Kalman3D_Wave_CARMA3<float, 0, false, 4, false>::NX == 21, "OU-III xy + CARMA(4,1) z has 21 states");
     using F = Kalman3D_Wave_CARMA3<float, 5, true, 4, true>;
     check(F::idx_p(0) == 6 && F::idx_v(0) == 7 && F::idx_a(0) == 8 && F::idx_S(0) == 11, "x block layout");
     check(F::idx_p(1) == 12 && F::idx_S(1) == 17 && F::OFF_Z == 18 && F::OFF_SZ == 22 && F::OFF_BA == 23,
           "y, z, S_z, b_a offsets");
 }
 
-// A deterministic tilted, rotating, noisy stream driving two filters.
-template<class FA, class FB>
-void drive_pair(FA& a, FB& b, int steps, unsigned seed) {
-    std::mt19937 rng(seed);
-    std::normal_distribution<float> n(0.0f, 1.0f);
-    const float dt = 0.005f;
-    for (int k = 0; k < steps; ++k) {
-        const float t = static_cast<float>(k) * dt;
-        const Vec3 gyr(0.05f * std::sin(0.7f * t) + 1e-3f * n(rng), 0.03f * std::cos(0.5f * t) + 1e-3f * n(rng),
-                       0.01f + 1e-3f * n(rng));
-        const float az = 0.6f * std::sin(2.0f * float(M_PI) * 0.3f * t);
-        const Vec3 acc(0.2f * std::sin(1.1f * t) + 0.02f * n(rng), 0.15f * std::cos(1.3f * t) + 0.02f * n(rng),
-                       az - 9.80665f + 0.02f * n(rng));
-        a.time_update(gyr, dt); b.time_update(gyr, dt);
-        a.measurement_update_acc_only(acc); b.measurement_update_acc_only(acc);
-        if (k % 8 == 0) {
-            const Vec3 mag(20.0f + n(rng), -5.0f + n(rng), 45.0f + n(rng));
-            a.measurement_update_mag_only(mag); b.measurement_update_mag_only(mag);
-        }
-        if (k == steps / 2) { a.set_acc_bias_updates_enabled(true); b.set_acc_bias_updates_enabled(true); }
+template<class F>
+F make_filter() {
+    const Vec3 sa = Vec3::Constant(0.03f), sg = Vec3::Constant(3e-5f), sm = Vec3::Constant(8.0f);
+    F f(sa, sg, sm);
+    f.set_horizontal_carma(0.31f / 0.37f, 0.5f, 0.45f, 0.0f);
+    f.set_vertical_carma(0.31f / 0.37f, 0.6f);
+    f.reset_aw_covariance_to_stationary();
+    f.set_RS_noise(Vec3(0.7f, 0.7f, 0.7f));
+    f.set_pseudo_update_period_s(0.03f);
+    f.initialize_from_attitude(Eigen::Quaternionf::Identity(), 0.01f, 0.05f);
+    return f;
+}
+
+void test_cross_coupling_and_api() {
+    using F = Kalman3D_Wave_CARMA3<float, 4, false, 4, false>;
+    F f = make_filter<F>();
+    // Tilted attitude: the vertical acceleration enters every body axis.
+    const Eigen::Quaternionf q(Eigen::AngleAxisf(0.3f, Vec3::UnitX()));
+    f.initialize_from_attitude(q, 0.02f, 0.05f);
+    for (int k = 0; k < 400; ++k) {
+        f.time_update(Vec3::Zero(), 0.005f);
+        const Vec3 fb = q.conjugate() * Vec3(0.0f, 0.0f, -9.80665f);
+        f.measurement_update_acc_only(fb);
     }
+    // a_z and the accelerometer bias both act along gravity, so the update
+    // must correlate them; the horizontal accelerations act orthogonally to
+    // gravity, so they couple to attitude through -[f_b]x.
+    const auto& P = f.covariance_full();
+    double c_ab = 0.0;
+    for (int k = 0; k < 3; ++k) c_ab = std::max(c_ab, std::abs(double(P(F::OFF_Z + 2, F::OFF_BA + k))));
+    const double norm = std::sqrt(double(P(F::OFF_Z + 2, F::OFF_Z + 2)) * double(P(F::OFF_BA + 2, F::OFF_BA + 2)));
+    check(c_ab > 1e-3 * norm, "vertical acceleration / accelerometer-bias cross-covariance retained",
+          c_ab / norm, 1e-3);
+    double c_ah = 0.0;
+    for (int k = 0; k < 3; ++k) c_ah = std::max(c_ah, std::abs(double(P(k, F::idx_a(1)))));
+    check(c_ah > 0.0, "attitude / horizontal acceleration cross-covariance retained", c_ah, 0.0);
+
+    // Pseudo-measurement APIs act on the CARMA displacement and velocity of
+    // every axis.
+    const Vec3 p_meas(0.11f, -0.07f, 0.37f), v_meas(-0.02f, 0.03f, 0.05f);
+    f.measurement_update_position_pseudo(p_meas, Vec3::Constant(1e-4f));
+    check((f.get_position() - p_meas).cwiseAbs().maxCoeff() < 1e-3f, "position pseudo-measurement maps to p_x, p_y, h",
+          (f.get_position() - p_meas).cwiseAbs().maxCoeff(), 1e-3);
+    f.measurement_update_velocity_pseudo(v_meas, Vec3::Constant(1e-4f));
+    check((f.get_velocity() - v_meas).cwiseAbs().maxCoeff() < 1e-3f, "velocity pseudo-measurement maps to v_x, v_y, v_z",
+          (f.get_velocity() - v_meas).cwiseAbs().maxCoeff(), 1e-3);
+    // A second, equally precise measurement averages with the first.
+    const float v_prior = f.get_velocity().z();
+    const float var_prior = f.covariance_full()(F::OFF_Z + 1, F::OFF_Z + 1);
+    const float r_v = 1e-3f;
+    f.measurement_update_vert_velocity_pseudo(-0.21f, r_v);
+    const float expect = v_prior + var_prior / (var_prior + r_v * r_v) * (-0.21f - v_prior);
+    check(std::abs(f.get_velocity().z() - expect) < 1e-4f, "vertical velocity pseudo-measurement is the Kalman update",
+          f.get_velocity().z(), expect);
+    check(min_eig_normalized(f) > -1e-5, "covariance PSD after pseudo-measurements", min_eig_normalized(f), -1e-5);
 }
 
 template<class F>
-void configure_hybrid(F& f) {
-    f.set_aw_time_constant(1.7f);
-    f.set_aw_stationary_std(Vec3(0.5f, 0.45f, 0.6f));
-    f.set_vertical_carma(0.31f / 0.37f, 0.6f);
-    f.reset_aw_covariance_to_stationary();
-    f.set_RS_noise(Vec3(0.7f, 0.5f, 0.9f));
-    f.set_pseudo_update_period_s(0.03f);
-    f.set_acc_bias_updates_enabled(false);
-    f.initialize_from_attitude(Eigen::Quaternionf(Eigen::AngleAxisf(0.2f, Vec3(0.3f, 1.0f, 0.1f).normalized())),
-                               0.02f, 0.3f);
-    f.synchronize_aw_covariance_to_stationary();
-}
-
-void test_hybrid_equivalence() {
-    const Vec3 sa = Vec3::Constant(0.03f), sg = Vec3::Constant(3e-5f), sm = Vec3::Constant(8.0f);
-    ocean_imu::kalman::Kalman3D_Wave_CARMA<float, 4, false> ref(sa, sg, sm);
-    Kalman3D_Wave_CARMA3<float, 0, false, 4, false> f3(sa, sg, sm);
-    configure_hybrid(ref);
-    configure_hybrid(f3);
-    drive_pair(ref, f3, 6000, 7u);
-    const double dP = (ref.covariance_full() - f3.covariance_full()).cwiseAbs().maxCoeff();
-    const double dp = (ref.get_position() - f3.get_position()).cwiseAbs().maxCoeff();
-    const double dv = (ref.get_velocity() - f3.get_velocity()).cwiseAbs().maxCoeff();
-    const double dq = (ref.quaternion().coeffs() - f3.quaternion().coeffs()).cwiseAbs().maxCoeff();
-    check(dP == 0.0 && dp == 0.0 && dv == 0.0 && dq == 0.0,
-          "NHC = 0 reproduces Kalman3D_Wave_CARMA bit for bit", std::max({dP, dp, dv, dq}), 0.0);
-    std::printf("[equivalence] OU-III xy + CARMA(4,1) z: max |dP| %.3g |dp| %.3g |dv| %.3g |dq| %.3g\n",
-                dP, dp, dv, dq);
+void test_nonuniform_and_integral(const char* name) {
+    F f = make_filter<F>();
+    std::mt19937 rng(7u);
+    std::uniform_real_distribution<float> jit(0.6f, 1.6f);
+    std::normal_distribution<float> n01(0.0f, 1.0f);
+    double t = 0.0, max_p = 0.0;
+    bool finite = true;
+    for (int k = 0; k < 200 * 300; ++k) {
+        const float dt = 0.005f * jit(rng);
+        t += dt;
+        const double w = 2.0 * M_PI * 0.27 * t;
+        const Vec3 aw(static_cast<float>(0.4 * std::sin(w + 0.4)), static_cast<float>(0.3 * std::cos(w)),
+                      static_cast<float>(1.2 * std::sin(w)));
+        f.time_update(Vec3(1e-3f * n01(rng), 1e-3f * n01(rng), 1e-3f * n01(rng)), dt);
+        f.measurement_update_acc_only(Vec3(aw.x() + 0.02f * n01(rng), aw.y() + 0.02f * n01(rng),
+                                           aw.z() - 9.80665f + 0.02f * n01(rng)));
+        if (k % 8 == 0) f.measurement_update_mag_only(Vec3(20.0f, -4.0f, 45.0f));
+        finite = finite && f.get_position().allFinite() && f.covariance_full().allFinite();
+        max_p = std::max(max_p, double(f.get_position().cwiseAbs().maxCoeff()));
+    }
+    char buf[128];
+    std::snprintf(buf, sizeof buf, "%s, non-uniform steps: finite state and covariance", name);
+    check(finite, buf);
+    std::snprintf(buf, sizeof buf, "%s, non-uniform steps: bounded displacement", name);
+    check(max_p < 2.0, buf, max_p, 2.0);
+    const double me = min_eig_normalized(f);
+    std::snprintf(buf, sizeof buf, "%s, non-uniform steps: covariance PSD", name);
+    check(me > -1e-5, buf, me, -1e-5);
+    const auto P = f.covariance_full();
+    std::snprintf(buf, sizeof buf, "%s: covariance exactly symmetric", name);
+    check((P - P.transpose()).cwiseAbs().maxCoeff() == 0.0f, buf);
+    const Vec3 S = f.get_integral_displacement();
+    double max_s = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        const bool has = i < 2 ? F::idx_S(i) >= 0 : F::OFF_SZ >= 0;
+        std::snprintf(buf, sizeof buf, "%s: S axis %d %s", name, i, has ? "bounded by its pseudo-measurement" : "absent");
+        if (has) {
+            check(std::isfinite(S(i)) && std::abs(S(i)) < 5.0f, buf, S(i), 5.0);
+            max_s = std::max(max_s, double(std::abs(S(i))));
+        } else {
+            check(std::isnan(S(i)), buf);
+        }
+    }
+    std::printf("[%s] non-uniform steps: max|p| %.3f m, max|S| %.3f m s, min corr eig %.2e\n", name, max_p, max_s, me);
 }
 
 // Exact discretization of the joint two-axis system by the library routine at
@@ -328,7 +380,6 @@ void test_wrapper_still(const char* label) {
     cfg.sigma_g = Vec3::Constant(2.0f * 0.00157f * 0.01f);
     cfg.sigma_m = Vec3::Constant(1.2f * 0.8f * 8.0f);
     fusion.begin(cfg);
-    fusion.raw().setPeriodicAwCovarianceSync(true);
     fusion.raw().enableTuner(true);
     fusion.raw().enableClamp(true);
     std::mt19937 rng(3);
@@ -359,7 +410,9 @@ void test_wrapper_still(const char* label) {
 
 int main() {
     test_layout();
-    test_hybrid_equivalence();
+    test_cross_coupling_and_api();
+    test_nonuniform_and_integral<Kalman3D_Wave_CARMA3<float, 4, false, 4, false>>("CARMA(4,1) x3");
+    test_nonuniform_and_integral<Kalman3D_Wave_CARMA3<float, 5, true, 5, true>>("CARMA(5,2) x3 + S_x,S_y,S_z");
     test_kronecker<4, false>(kc::CARMA41_JONSWAP_SHAPE, "CARMA(4,1)");
     test_kronecker<5, false>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)");
     test_kronecker<5, true>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)+S");

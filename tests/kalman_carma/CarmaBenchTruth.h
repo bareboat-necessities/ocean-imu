@@ -18,7 +18,7 @@
   filters waves of wavenumber k (l is an effective averaging depth/length).
   Short waves therefore move the vessel little, as on a real small craft;
   the motion levels are calibrated against the pinned 28 ft vessel-RAO
-  dataset (see docs/carma-heave-filter.md).  Every channel is a finite
+  dataset (see docs/carma-three-axis.md).  Every channel is a finite
   sum of harmonics with analytically differentiated phases, so position,
   velocity, acceleration, attitude and angular rate come from one continuous
   history and the specific force is consistent with the displacement to
@@ -27,8 +27,9 @@
   Frequencies are jittered inside their bins, so the record does not repeat
   with period 1/df.  All randomness comes from the scenario seed.
 
-  Three-axis extensions (docs/carma-three-axis.md), all off by default so the
-  heave benchmark's scenarios are reproduced bit for bit:
+  Three-axis extensions (docs/carma-three-axis.md), all off in the scenario
+  defaults (carma3_bench enables the physical horizontal model unless the
+  scenario has the hlegacy modifier):
   * HorizontalModel::physical -- surge and sway through their own RAOs: a
     free-floating hull follows the orbital motion in long waves (no
     hydrostatic restoring, so no resonance) with hull averaging over draft,
@@ -170,7 +171,7 @@ struct TruthSample {
     Eigen::Vector3d a_wave = Eigen::Vector3d::Zero();
 };
 
-// Base seas shared by carma_bench and carma3_bench.  Name fragments such as
+// Base seas of carma3_bench.  Name fragments such as
 // _fp0.29_ _hs2_ _g3.3_ set the JONSWAP/PM parameters.  Returns false for an
 // unknown name.
 inline SpectrumPart jonswap_part(double hs, double fp, double gamma, double dir = 30.0, double s = 4.0) {

@@ -11,19 +11,13 @@
   implementation, and nothing in the deployed configuration includes this
   header; see docs/carma-three-axis.md.
 
-  It generalizes src/kalman_carma/Kalman3D_Wave_CARMA.h (OU-III horizontal
-  chain + CARMA heave), which stays as it is, by choosing the translational
-  prior of each horizontal axis:
+  Every translational axis has a CARMA prior in the library coordinates
+  [p, v, a, latent...] of CarmaVerticalModel.h:
 
-     NHC = 0       OU-III integrated chain [v, p, S, a] per horizontal axis with
-                   its S = 0 pseudo-measurement, interleaved exactly as in
-                   Kalman3D_Wave_CARMA (equivalence-tested against it);
-     NHC = 3,4,5   CARMA(NHC, NHC-3) per horizontal axis in the library
-                   coordinates [p, v, a, latent...] of CarmaVerticalModel.h,
-                   optionally augmented with S = int p dt (SH) and its zero
-                   pseudo-measurement.
-
-  The vertical axis is CARMA(NZC, NZC-3) [h, v, a, latent...] (+ S_z with SZ).
+     horizontal    CARMA(NHC, NHC-3) per axis, NHC = 3, 4, 5, optionally
+                   augmented with S = int p dt (SH) and its zero
+                   pseudo-measurement;
+     vertical      CARMA(NZC, NZC-3) [h, v, a, latent...] (+ S_z with SZ).
 
   State (NED, z down): [dtheta(3), b_g(3), x block, y block, z block, b_a(3)].
 
@@ -37,10 +31,10 @@
   both axes and a correlated (r != 0) prior costs nothing extra.  r = 0 is
   independent axes; the coupled variant uses r != 0.
 
-  Retained from OU-III and Kalman3D_Wave_CARMA line for line in their
-  mathematics: attitude and gyro-bias prediction, accelerometer and
-  magnetometer models and Jacobians, error-state reset, residual
-  accelerometer-bias OU and its freeze, Joseph updates, input guards.
+  Retained from OU-III line for line in its mathematics: attitude and
+  gyro-bias prediction, accelerometer and magnetometer models and Jacobians,
+  error-state reset, residual accelerometer-bias OU and its freeze, Joseph
+  updates, input guards.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -64,18 +58,15 @@ namespace ocean_imu::kalman {
 template <typename T = float, int NHC = 4, bool SH = false, int NZC = 4, bool SZ = false,
           bool with_gyro_bias = true, bool with_accel_bias = true>
 class Kalman3D_Wave_CARMA3 {
-    static_assert(NHC == 0 || (NHC >= 3 && NHC <= 5), "horizontal: 0 (OU-III chain) or CARMA order 3..5");
+    static_assert(NHC >= 3 && NHC <= 5, "horizontal CARMA order 3..5");
     static_assert(NZC >= 3 && NZC <= 5, "vertical CARMA order 3..5");
-    static_assert(!(NHC == 0 && SH), "the OU-III chain already carries S");
 public:
-    static constexpr bool H_OU = (NHC == 0);
     static constexpr int BASE_N = with_gyro_bias ? 6 : 3;
-    static constexpr int NHA = H_OU ? 4 : NHC + (SH ? 1 : 0);   // states per horizontal axis
+    static constexpr int NHA = NHC + (SH ? 1 : 0);   // states per horizontal axis
     static constexpr int NH = 2 * NHA;
     static constexpr int NZ = NZC + (SZ ? 1 : 0);
     static constexpr int NL = NH + NZ;
     static constexpr int NX = BASE_N + NL + (with_accel_bias ? 3 : 0);
-    static constexpr bool HAS_S_H = H_OU || SH;
 
     static constexpr int OFF_L = BASE_N;
     static constexpr int OFF_Z = BASE_N + NH;
@@ -83,10 +74,10 @@ public:
     static constexpr int OFF_BA = with_accel_bias ? (BASE_N + NL) : -1;
 
     // Per-axis indices of the horizontal block.
-    static constexpr int idx_p(int ax) { return H_OU ? BASE_N + 2 + ax : BASE_N + ax * NHA + 0; }
-    static constexpr int idx_v(int ax) { return H_OU ? BASE_N + 0 + ax : BASE_N + ax * NHA + 1; }
-    static constexpr int idx_a(int ax) { return H_OU ? BASE_N + 6 + ax : BASE_N + ax * NHA + 2; }
-    static constexpr int idx_S(int ax) { return H_OU ? BASE_N + 4 + ax : (SH ? BASE_N + ax * NHA + NHC : -1); }
+    static constexpr int idx_p(int ax) { return BASE_N + ax * NHA + 0; }
+    static constexpr int idx_v(int ax) { return BASE_N + ax * NHA + 1; }
+    static constexpr int idx_a(int ax) { return BASE_N + ax * NHA + 2; }
+    static constexpr int idx_S(int ax) { return SH ? BASE_N + ax * NHA + NHC : -1; }
     static constexpr int pos_index(int ax) { return ax < 2 ? idx_p(ax) : OFF_Z; }
     static constexpr int vel_index(int ax) { return ax < 2 ? idx_v(ax) : OFF_Z + 1; }
 
@@ -98,11 +89,10 @@ public:
     using MatrixLL = Eigen::Matrix<T,NL,NL>;
     using MatrixZZ = Eigen::Matrix<T,NZ,NZ>;
     using MatrixCZ = Eigen::Matrix<T,NZC,NZC>;
-    static constexpr int NHC_ = H_OU ? 3 : NHC;                 // model order for the type below
     using MatrixHA = Eigen::Matrix<T,NHA,NHA>;
-    using MatrixCH = Eigen::Matrix<T,NHC_,NHC_>;
+    using MatrixCH = Eigen::Matrix<T,NHC,NHC>;
     using VerticalModel = carma::CarmaVerticalModel<T,NZC>;
-    using HorizontalModel = carma::CarmaVerticalModel<T,NHC_>;
+    using HorizontalModel = carma::CarmaVerticalModel<T,NHC>;
 
     static constexpr T STD_GRAVITY = T(9.80665);
     static constexpr T tempC_ref = T(35.0);
@@ -124,7 +114,7 @@ public:
                          T Pq0 = T(5e-4), T Pb0 = T(1e-6), T b0 = T(1e-11), T R_S_noise_var = T(1.5),
                          T gravity_magnitude = T(STD_GRAVITY),
                          const carma::CarmaShape& vshape = carma::CarmaDefaultShape<NZC>::value,
-                         const carma::CarmaShape& hshape = carma::CarmaDefaultShape<NHC_>::value);
+                         const carma::CarmaShape& hshape = carma::CarmaDefaultShape<NHC>::value);
 
     bool initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     bool initialize_from_acc(Vector3 const& acc);
@@ -182,7 +172,7 @@ public:
     [[nodiscard]] Vector3 get_integral_displacement() const {
         const T nan = std::numeric_limits<T>::quiet_NaN();
         T sx = nan, sy = nan, sz = nan;
-        if constexpr (HAS_S_H) { sx = xext(idx_S(0)); sy = xext(idx_S(1)); }
+        if constexpr (SH) { sx = xext(idx_S(0)); sy = xext(idx_S(1)); }
         if constexpr (SZ) sz = xext(OFF_SZ);
         return Vector3(sx, sy, sz);
     }
@@ -202,14 +192,12 @@ public:
     }
     [[nodiscard]] Eigen::Matrix<T,NZ,1> vertical_state() const { return xext.template segment<NZ>(OFF_Z); }
 
+    // Committed operating-point time constant (reported by the wrapper; the
+    // CARMA priors are scaled through kappa, not through tau).
     [[nodiscard]] T get_aw_time_constant() const { return tau_aw; }
     [[nodiscard]] Vector3 get_aw_stationary_std() const {
-        if constexpr (H_OU)
-            return Vector3(std::sqrt(std::max(T(0), Sigma_aw_h(0))), std::sqrt(std::max(T(0), Sigma_aw_h(1))),
-                           vmodel_.accel_std());
-        else
-            return Vector3(std::sqrt(std::max(T(0), Sigma_h_(0,0))), std::sqrt(std::max(T(0), Sigma_h_(1,1))),
-                           vmodel_.accel_std());
+        return Vector3(std::sqrt(std::max(T(0), Sigma_h_(0,0))), std::sqrt(std::max(T(0), Sigma_h_(1,1))),
+                       vmodel_.accel_std());
     }
     [[nodiscard]] Vector3 get_RS_noise_std() const { return R_S.diagonal().cwiseMax(T(0)).cwiseSqrt(); }
 
@@ -223,38 +211,12 @@ public:
     }
     [[nodiscard]] T get_pseudo_update_period_s() const { return pseudo_update_period_s_; }
 
-    // Horizontal OU stationary std (OU-III chain only; z ignored).
-    void set_aw_stationary_std(const Vector3& std_aw) {
-        Sigma_aw_h(0) = std_aw.x() * std_aw.x();
-        Sigma_aw_h(1) = std_aw.y() * std_aw.y();
-    }
-
+    // Stationary prior covariance of every CARMA block (the name is the
+    // shared wrapper interface).
     void reset_aw_covariance_to_stationary() {
-        if constexpr (H_OU) {
-            for (int k = 0; k < 2; ++k) {
-                const int a = idx_a(k);
-                for (int i = 0; i < NX; ++i) {
-                    if (i == a) continue;
-                    Pext(a, i) = T(0);
-                    Pext(i, a) = T(0);
-                }
-                Pext(a, a) = Sigma_aw_h(k);
-            }
-            aw_covariance_floor_pending_ = false;
-        } else {
-            reset_horizontal_covariance_to_stationary();
-        }
+        reset_horizontal_covariance_to_stationary();
         reset_vertical_covariance_to_stationary();
         symmetrize_Pext_();
-    }
-
-    // Queued PSD a_w floor of the OU-III horizontal chain; no CARMA block has
-    // such an operation.
-    void synchronize_aw_covariance_to_stationary() {
-        if constexpr (H_OU) {
-            aw_covariance_floor_target_ = Sigma_aw_h;
-            aw_covariance_floor_pending_ = true;
-        }
     }
 
     bool set_vertical_carma(T kappa, T accel_std) { return vmodel_.configure(kappa, accel_std); }
@@ -263,19 +225,13 @@ public:
     // Horizontal CARMA prior: frequency scale kappa (both axes) and the
     // directional acceleration covariance [[sx^2, r sx sy], [r sx sy, sy^2]].
     bool set_horizontal_carma(T kappa, T sx, T sy, T r = T(0)) {
-        if constexpr (H_OU) { (void)kappa; (void)sx; (void)sy; (void)r; return false; }
-        else {
-            if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
-            if (!(std::abs(r) <= T(1))) return false;
-            if (!hmodel_.configure(kappa, T(1))) return false;   // unit-variance A_h, W_1
-            Sigma_h_ << sx * sx, r * sx * sy, r * sx * sy, sy * sy;
-            return true;
-        }
+        if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
+        if (!(std::abs(r) <= T(1))) return false;
+        if (!hmodel_.configure(kappa, T(1))) return false;   // unit-variance A_h, W_1
+        Sigma_h_ << sx * sx, r * sx * sy, r * sx * sy, sy * sy;
+        return true;
     }
-    bool set_horizontal_shape(const carma::CarmaShape& shape) {
-        if constexpr (H_OU) { (void)shape; return false; }
-        else return hmodel_.set_shape(shape);
-    }
+    bool set_horizontal_shape(const carma::CarmaShape& shape) { return hmodel_.set_shape(shape); }
     bool set_vertical_shape(const carma::CarmaShape& shape) { return vmodel_.set_shape(shape); }
     [[nodiscard]] const HorizontalModel& horizontal_model() const noexcept { return hmodel_; }
     [[nodiscard]] Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_h_; }
@@ -297,24 +253,22 @@ public:
     }
 
     void reset_horizontal_covariance_to_stationary() {
-        if constexpr (!H_OU) {
-            MatrixCH P1;
-            if (!hmodel_.stationary_covariance(P1)) return;
-            for (int i = 0; i < NX; ++i) {
-                if (i >= OFF_L && i < OFF_L + NH) continue;
-                for (int j = 0; j < NH; ++j) {
-                    Pext(i, OFF_L + j) = T(0);
-                    Pext(OFF_L + j, i) = T(0);
-                }
+        MatrixCH P1;
+        if (!hmodel_.stationary_covariance(P1)) return;
+        for (int i = 0; i < NX; ++i) {
+            if (i >= OFF_L && i < OFF_L + NH) continue;
+            for (int j = 0; j < NH; ++j) {
+                Pext(i, OFF_L + j) = T(0);
+                Pext(OFF_L + j, i) = T(0);
             }
-            Pext.template block<NH,NH>(OFF_L, OFF_L).setZero();
-            for (int a = 0; a < 2; ++a)
-                for (int b = 0; b < 2; ++b)
-                    Pext.template block<NHC,NHC>(OFF_L + a * NHA, OFF_L + b * NHA) = Sigma_h_(a,b) * P1;
-            if constexpr (SH)
-                for (int a = 0; a < 2; ++a) Pext(idx_S(a), idx_S(a)) = sigma_S0_ * sigma_S0_;
-            symmetrize_Pext_();
         }
+        Pext.template block<NH,NH>(OFF_L, OFF_L).setZero();
+        for (int a = 0; a < 2; ++a)
+            for (int b = 0; b < 2; ++b)
+                Pext.template block<NHC,NHC>(OFF_L + a * NHA, OFF_L + b * NHA) = Sigma_h_(a,b) * P1;
+        if constexpr (SH)
+            for (int a = 0; a < 2; ++a) Pext(idx_S(a), idx_S(a)) = sigma_S0_ * sigma_S0_;
+        symmetrize_Pext_();
     }
 
     // R_S per axis as a standard deviation [m s].
@@ -375,13 +329,7 @@ private:
     Matrix3 Racc;
     Matrix3 R_S;
 
-    // Horizontal OU-III chain parameters (H_OU).
     T tau_aw = T(2.1);
-    Eigen::Matrix<T,2,1> Sigma_aw_h = Eigen::Matrix<T,2,1>::Constant(T(2.2 * 2.2));
-    bool aw_covariance_floor_pending_ = false;
-    Eigen::Matrix<T,2,1> aw_covariance_floor_target_ = Eigen::Matrix<T,2,1>::Zero();
-    Eigen::Matrix<T,4,4> Phi_h_ = Eigen::Matrix<T,4,4>::Identity();
-    Eigen::Matrix<T,4,4> Qd_h_[2];
 
     // Horizontal CARMA prior (unit acceleration variance) and its cached exact
     // discretization; Sigma_h_ scales Q and the stationary covariance.
@@ -425,48 +373,6 @@ private:
                 Pext(i,j) = v;
                 Pext(j,i) = v;
             }
-    }
-
-    void apply_pending_aw_covariance_inflation_() {
-        if constexpr (H_OU) {
-            if (!aw_covariance_floor_pending_) return;
-            aw_covariance_floor_pending_ = false;
-            const int a0 = idx_a(0), a1 = idx_a(1);
-            Eigen::Matrix<T,2,2> P_aw;
-            P_aw << Pext(a0, a0), Pext(a0, a1), Pext(a1, a0), Pext(a1, a1);
-            P_aw = T(0.5) * (P_aw + P_aw.transpose()).eval();
-            const T a = aw_covariance_floor_target_(0) - P_aw(0,0);
-            const T c = aw_covariance_floor_target_(1) - P_aw(1,1);
-            const T b = -P_aw(0,1);
-            const T mean = T(0.5) * (a + c);
-            const T rad = std::sqrt(T(0.25) * (a - c) * (a - c) + b * b);
-            const T l_max = mean + rad, l_min = mean - rad;
-            T d00 = a, d01 = b, d11 = c;
-            if (!(l_max > T(0))) {
-                d00 = d01 = d11 = T(0);
-            } else if (l_min < T(0)) {
-                T ux = b, uy = l_max - a;
-                if (std::abs(ux) + std::abs(uy) < std::abs(l_max - c) + std::abs(b)) {
-                    ux = l_max - c;
-                    uy = b;
-                }
-                const T n2 = ux * ux + uy * uy;
-                if (n2 > T(0)) {
-                    d00 = l_max * ux * ux / n2;
-                    d01 = l_max * ux * uy / n2;
-                    d11 = l_max * uy * uy / n2;
-                } else {
-                    d00 = std::max(a, T(0));
-                    d01 = T(0);
-                    d11 = std::max(c, T(0));
-                }
-            }
-            if (!(std::isfinite(d00) && std::isfinite(d01) && std::isfinite(d11))) return;
-            Pext(a0, a0) += d00;
-            Pext(a0, a1) += d01;
-            Pext(a1, a0) = Pext(a0, a1);
-            Pext(a1, a1) += d11;
-        }
     }
 
     Matrix3 R_wb() const { return qref.toRotationMatrix(); }
@@ -563,21 +469,12 @@ private:
 
     // out = F_LL in.
     void apply_F_LL_(const T (&in)[NL], T (&out)[NL]) const {
-        if constexpr (H_OU) {
-            for (int ax = 0; ax < 2; ++ax)
-                for (int i = 0; i < 4; ++i) {
-                    T acc = T(0);
-                    for (int j = 0; j < 4; ++j) acc += Phi_h_(i,j) * in[2 * j + ax];
-                    out[2 * i + ax] = acc;
-                }
-        } else {
-            for (int ax = 0; ax < 2; ++ax)
-                for (int i = 0; i < NHA; ++i) {
-                    T acc = T(0);
-                    for (int j = 0; j < NHA; ++j) acc += F_H_(i,j) * in[ax * NHA + j];
-                    out[ax * NHA + i] = acc;
-                }
-        }
+        for (int ax = 0; ax < 2; ++ax)
+            for (int i = 0; i < NHA; ++i) {
+                T acc = T(0);
+                for (int j = 0; j < NHA; ++j) acc += F_H_(i,j) * in[ax * NHA + j];
+                out[ax * NHA + i] = acc;
+            }
         for (int i = 0; i < NZ; ++i) {
             T acc = T(0);
             for (int j = 0; j < NZ; ++j) acc += F_Z_cache_(i,j) * in[NH + j];
@@ -619,17 +516,8 @@ CARMA3_CLS::Kalman3D_Wave_CARMA3(
     Pext.template topLeftCorner<3,3>() = Matrix3::Identity() * Pq0;
     if constexpr (GB) Pext.template block<3,3>(3,3) = Matrix3::Identity() * Pb0;
 
-    if constexpr (H_OU) {
-        for (int k = 0; k < 2; ++k) {
-            Pext(idx_v(k), idx_v(k)) = T(1.0);
-            Pext(idx_p(k), idx_p(k)) = T(20.0 * 20.0);
-            Pext(idx_S(k), idx_S(k)) = sigma_S0_ * sigma_S0_;
-            Pext(idx_a(k), idx_a(k)) = Sigma_aw_h(k);
-        }
-    } else {
-        set_horizontal_carma(T(1), T(1), T(1), T(0));
-        reset_horizontal_covariance_to_stationary();
-    }
+    set_horizontal_carma(T(1), T(1), T(1), T(0));
+    reset_horizontal_covariance_to_stationary();
     if constexpr (AB) {
         Pext.template block<3,3>(OFF_BA, OFF_BA) = Matrix3::Identity() * sigma_bacc0_ * sigma_bacc0_;
     }
@@ -793,23 +681,19 @@ void CARMA3_CLS::refresh_vertical_discretization_(T Ts) {
 
 CARMA3_TPL
 void CARMA3_CLS::refresh_horizontal_discretization_(T Ts) {
-    if constexpr (!H_OU) {
-        if (Ts == cache_dt_h_ && hmodel_.generation() == cache_generation_h_) return;
-        if constexpr (SH) {
-            MatrixHA A = MatrixHA::Zero();
-            MatrixHA W = MatrixHA::Zero();
-            A.template topLeftCorner<NHC,NHC>() = hmodel_.A();
-            A(NHC, 0) = T(1);   // S' = p
-            W.template topLeftCorner<NHC,NHC>() = hmodel_.W();
-            carma::discretize_lti<T,NHA>(A, W, Ts, F_H_, Q_H1_);
-        } else {
-            carma::discretize_lti<T,NHA>(hmodel_.A(), hmodel_.W(), Ts, F_H_, Q_H1_);
-        }
-        cache_dt_h_ = Ts;
-        cache_generation_h_ = hmodel_.generation();
+    if (Ts == cache_dt_h_ && hmodel_.generation() == cache_generation_h_) return;
+    if constexpr (SH) {
+        MatrixHA A = MatrixHA::Zero();
+        MatrixHA W = MatrixHA::Zero();
+        A.template topLeftCorner<NHC,NHC>() = hmodel_.A();
+        A(NHC, 0) = T(1);   // S' = p
+        W.template topLeftCorner<NHC,NHC>() = hmodel_.W();
+        carma::discretize_lti<T,NHA>(A, W, Ts, F_H_, Q_H1_);
     } else {
-        (void)Ts;
+        carma::discretize_lti<T,NHA>(hmodel_.A(), hmodel_.W(), Ts, F_H_, Q_H1_);
     }
+    cache_dt_h_ = Ts;
+    cache_generation_h_ = hmodel_.generation();
 }
 
 CARMA3_TPL
@@ -879,14 +763,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     }
 
     // Linear block: block-diagonal F_LL applied structurally.
-    if constexpr (H_OU) {
-        const T tau = std::max(T(1e-6), tau_aw);
-        ou_detail::IntegratedOUChain<T,3>::transition(tau, Ts, Phi_h_);
-        for (int ax = 0; ax < 2; ++ax)
-            ou_detail::IntegratedOUChain<T,3>::process_covariance(tau, Ts, Sigma_aw_h(ax), Qd_h_[ax]);
-    } else {
-        refresh_horizontal_discretization_(Ts);
-    }
+    refresh_horizontal_discretization_(Ts);
     refresh_vertical_discretization_(Ts);
 
     T in[NL], out[NL];
@@ -906,22 +783,15 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         apply_F_LL_(in, out);
         for (int j = 0; j < NL; ++j) Pext(OFF_L + i, OFF_L + j) = out[j];
     }
-    if constexpr (H_OU) {
-        for (int ax = 0; ax < 2; ++ax)
-            for (int a = 0; a < 4; ++a)
-                for (int b = 0; b < 4; ++b)
-                    Pext(OFF_L + 2 * a + ax, OFF_L + 2 * b + ax) += Qd_h_[ax](a, b);
-    } else {
-        // Q_H = Sigma_h (x) Q_1.
-        for (int ax = 0; ax < 2; ++ax)
-            for (int bx = 0; bx < 2; ++bx) {
-                const T s = Sigma_h_(ax, bx);
-                if (s == T(0)) continue;
-                for (int a = 0; a < NHA; ++a)
-                    for (int b = 0; b < NHA; ++b)
-                        Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1_(a, b);
-            }
-    }
+    // Q_H = Sigma_h (x) Q_1.
+    for (int ax = 0; ax < 2; ++ax)
+        for (int bx = 0; bx < 2; ++bx) {
+            const T s = Sigma_h_(ax, bx);
+            if (s == T(0)) continue;
+            for (int a = 0; a < NHA; ++a)
+                for (int b = 0; b < NHA; ++b)
+                    Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1_(a, b);
+        }
     for (int a = 0; a < NZ; ++a)
         for (int b = 0; b < NZ; ++b)
             Pext(OFF_Z + a, OFF_Z + b) += Q_Z_cache_(a, b);
@@ -974,10 +844,9 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         }
     }
 
-    apply_pending_aw_covariance_inflation_();
     symmetrize_Pext_();
 
-    if constexpr (HAS_S_H || SZ) {
+    if constexpr (SH || SZ) {
         if (ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
             applyIntegralZeroPseudoMeas();
         }
@@ -1118,11 +987,11 @@ void CARMA3_CLS::select_update_(const int (&idx)[M], const Vector3& r, const Mat
 CARMA3_TPL
 void CARMA3_CLS::applyIntegralZeroPseudoMeas() {
     const bool freeze = AB && !acc_bias_updates_enabled_;
-    if constexpr (HAS_S_H && SZ) {
+    if constexpr (SH && SZ) {
         const int idx[3] = {idx_S(0), idx_S(1), OFF_SZ};
         const Vector3 r(-xext(idx[0]), -xext(idx[1]), -xext(idx[2]));
         select_update_<3>(idx, r, R_S, freeze);
-    } else if constexpr (HAS_S_H) {
+    } else if constexpr (SH) {
         const int idx[2] = {idx_S(0), idx_S(1)};
         const Vector3 r(-xext(idx[0]), -xext(idx[1]), T(0));
         select_update_<2>(idx, r, R_S, freeze);

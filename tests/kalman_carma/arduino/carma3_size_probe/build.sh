@@ -9,7 +9,7 @@ OUT=${2:-$(mktemp -d)}
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../../../.." && pwd)
 EIGEN=${EIGEN_DIR:-/usr/include/eigen3}
-for v in 0 1 2 3 4 5 6 7 8; do
+for v in 0 1 2 3 4 5 6; do
   (cd "$OUT" && "$TC/xtensa-esp32s3-elf-g++" -std=gnu++2a -Os -mlongcalls -ffunction-sections -fdata-sections \
       -fexceptions -fno-rtti -fstack-usage -DCARMA3_PROBE_VARIANT=$v -I"$ROOT/src" -isystem "$EIGEN" \
       -c "$HERE/carma3_size_probe.cpp" -o "$OUT/v$v.o")
@@ -22,7 +22,7 @@ python3 - "$OUT" <<'PY'
 import csv, re, sys
 from pathlib import Path
 out = Path(sys.argv[1])
-names = ["OU3", "Z41", "Z52", "A41", "A52", "M45", "A52S", "M54", "A41S"]
+names = ["OU3", "A41", "A52", "M45", "A52S", "M54", "A41S"]
 wr = csv.writer(sys.stdout, lineterminator="\n")
 wr.writerow(["variant", "code_bytes", "rodata_bytes", "data_bytes", "bss_bytes", "sizeof_fusion", "sizeof_filter",
              "max_stack_frame", "max_stack_function"])

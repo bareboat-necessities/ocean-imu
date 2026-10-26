@@ -755,7 +755,7 @@ def _coupled_eval(mz, N, sh, kappa, res_std, alpha, wz, c, S, f, noise_scale_h):
 
 def cost_model(nx, blocks, ncol_acc):
     """Multiply-adds of one predict + accelerometer update for the structured
-    implementation of Kalman3D_Wave_CARMA(3) (dense counts, symmetric P)."""
+    implementation of Kalman3D_Wave_CARMA3 (dense counts, symmetric P)."""
     base = 6
     nl = nx - base - 3
     apply_fll = sum(b * b for b in blocks)                 # one structured F_LL application
@@ -774,8 +774,6 @@ def cost_model(nx, blocks, ncol_acc):
 COST_CONFIGS = {
     # name: (NX, linear-block sizes applied by F_LL, accelerometer Jacobian columns)
     "OU3 (shipping, dense 12x12 linear block)": (21, [12], 9),
-    "OU3-XY + CARMA(4,1)-Z": (21, [4, 4, 4], 9),
-    "OU3-XY + CARMA(5,2)-Z": (22, [4, 4, 5], 9),
     "CARMA(4,1) XYZ": (21, [4, 4, 4], 9),
     "CARMA(5,2) XYZ": (24, [5, 5, 5], 9),
     "CARMA(4,1) XY + CARMA(5,2) Z": (22, [4, 4, 5], 9),

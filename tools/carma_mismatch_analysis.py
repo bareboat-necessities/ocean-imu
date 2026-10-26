@@ -30,7 +30,7 @@ The bias state is omitted (it acts below 1e-3 Hz); the operating point is the
 oracle one (tau = T_z/2, sigma_aw = 0.9 sigma_a, CARMA kappa from T_z and
 sigma_a from Var a), as in the benchmark's --params oracle runs.
 
-Run: python3 tools/carma_mismatch_analysis.py [--out reports/results/carma_benchmark]
+Run: python3 tools/carma_mismatch_analysis.py [--out reports/results/carma_model]
 """
 from __future__ import annotations
 
@@ -250,7 +250,7 @@ def analyse(case, shapes):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1]
-                    / "reports" / "results" / "carma_benchmark")
+                    / "reports" / "results" / "carma_model")
     ap.add_argument("--no-plots", action="store_true")
     args = ap.parse_args(argv)
     shapes = pv.header_shapes()

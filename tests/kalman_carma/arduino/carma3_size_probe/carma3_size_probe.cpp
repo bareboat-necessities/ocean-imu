@@ -12,14 +12,12 @@
   not on-target timing.
 
     0  SeaStateFusion_OU_III                       (shipping baseline)
-    1  SeaStateFusion_CARMA<KALMANF, 4>            OU-III x/y + CARMA(4,1) z (PR #704)
-    2  SeaStateFusion_CARMA<KALMANF, 5>            OU-III x/y + CARMA(5,2) z (PR #704)
-    3  SeaStateFusion_CARMA3<KALMANF, 4,F, 4,F>    CARMA(4,1) x/y/z
-    4  SeaStateFusion_CARMA3<KALMANF, 5,F, 5,F>    CARMA(5,2) x/y/z
-    5  SeaStateFusion_CARMA3<KALMANF, 4,F, 5,F>    CARMA(4,1) x/y + CARMA(5,2) z
-    6  SeaStateFusion_CARMA3<KALMANF, 5,T, 5,F>    CARMA(5,2) x/y/z + S_x, S_y
-    7  SeaStateFusion_CARMA3<KALMANF, 5,F, 4,F>    CARMA(5,2) x/y + CARMA(4,1) z
-    8  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
+    1  SeaStateFusion_CARMA3<KALMANF, 4,F, 4,F>    CARMA(4,1) x/y/z
+    2  SeaStateFusion_CARMA3<KALMANF, 5,F, 5,F>    CARMA(5,2) x/y/z
+    3  SeaStateFusion_CARMA3<KALMANF, 4,F, 5,F>    CARMA(4,1) x/y + CARMA(5,2) z
+    4  SeaStateFusion_CARMA3<KALMANF, 5,T, 5,F>    CARMA(5,2) x/y/z + S_x, S_y
+    5  SeaStateFusion_CARMA3<KALMANF, 5,F, 4,F>    CARMA(5,2) x/y + CARMA(4,1) z
+    6  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
 */
 
 // Built only by the Xtensa target compiler (build.sh); host compilers (the
@@ -33,24 +31,19 @@
 #include <Eigen/Dense>
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
-#include "kalman_carma/SeaStateFusionFilter_CARMA.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 #if CARMA3_PROBE_VARIANT == 0
 using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
 #elif CARMA3_PROBE_VARIANT == 1
-using Fusion = ocean_imu::carma::SeaStateFusion_CARMA<TrackerType::KALMANF, 4>;
-#elif CARMA3_PROBE_VARIANT == 2
-using Fusion = ocean_imu::carma::SeaStateFusion_CARMA<TrackerType::KALMANF, 5>;
-#elif CARMA3_PROBE_VARIANT == 3
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false>;
-#elif CARMA3_PROBE_VARIANT == 4
+#elif CARMA3_PROBE_VARIANT == 2
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 5, false>;
-#elif CARMA3_PROBE_VARIANT == 5
+#elif CARMA3_PROBE_VARIANT == 3
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 5, false>;
-#elif CARMA3_PROBE_VARIANT == 6
+#elif CARMA3_PROBE_VARIANT == 4
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, true, 5, false>;
-#elif CARMA3_PROBE_VARIANT == 7
+#elif CARMA3_PROBE_VARIANT == 5
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 4, false>;
 #else
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, true, 4, false>;

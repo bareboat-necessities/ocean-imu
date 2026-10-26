@@ -5,15 +5,14 @@
 
   Complete-INS adapters of carma3_bench.  Every adapter runs the estimator
   behind the same proxy startup and magnetic acquisition, with the shipping
-  simulator configuration (Bench3.h), the periodic a_w covariance sync, the
-  tuner and its clamps -- the configuration carma_bench uses.
+  simulator configuration (Bench3.h), the tuner and its clamps, and for
+  OU-III its periodic a_w covariance sync.
 */
 
 #include "Bench3.h"
 
 #include "util/W3dSimCommon.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
-#include "kalman_carma/SeaStateFusionFilter_CARMA.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 
 namespace carma3_bench {
@@ -59,53 +58,6 @@ private:
     SeaStateFusion_OU_III<TrackerType::KALMANF> fusion_;
 };
 
-// The PR #704 hybrid (OU-III horizontal chain + CARMA heave), unchanged.
-template<int N, bool VI>
-class FullHybrid final : public IEstimator3 {
-public:
-    explicit FullHybrid(std::string label) : label_(std::move(label)) {
-        ocean_imu::carma::SeaStateFusionConfig_CARMA cfg;
-        fill_config(cfg, MAG_DELAY_SEC);
-        fusion_.begin(cfg);
-        auto& f = fusion_.raw();
-        f.setPeriodicAwCovarianceSync(true);
-        f.enableTuner(true);
-        f.enableClamp(true);
-    }
-    std::string name() const override { return label_; }
-    void step(const Sensors& s) override {
-        fusion_.update(s.dt, s.gyr_ned, s.acc_ned, 35.0f);
-        if (s.mag_tick) fusion_.updateMag(s.mag_ned);
-    }
-    Estimate3 estimate() const override {
-        Estimate3 e;
-        const auto& m = fusion_.raw().mekf();
-        using M = typename Fusion::Impl::Mekf;
-        e.live = fusion_.isLive();
-        e.p = m.get_position().template cast<double>();
-        e.v = m.get_velocity().template cast<double>();
-        e.a = m.get_world_accel().template cast<double>();
-        constexpr int ip[3] = {M::OFF_PH, M::OFF_PH + 1, M::OFF_Z};
-        constexpr int iv[3] = {M::OFF_VH, M::OFF_VH + 1, M::OFF_Z + 1};
-        e.Ppv = extract_pv(m.covariance_full(), ip, iv);
-        e.nis = m.lastAccDiag().nis;
-        e.has_att = true;
-        e.q_bw = m.quaternion_boat().template cast<double>();
-        return e;
-    }
-    double op_fz_hz() const override {
-        const auto& f = fusion_.raw();
-        return static_cast<double>(f.getVerticalKappa()) * f.mekf().vertical_model().base_zero_crossing_hz();
-    }
-    size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
-    int states() const override { return Fusion::Impl::Mekf::NX; }
-
-private:
-    using Fusion = ocean_imu::carma::SeaStateFusion_CARMA<TrackerType::KALMANF, N, VI>;
-    std::string label_;
-    Fusion fusion_;
-};
-
 // Three-axis CARMA (Kalman3D_Wave_CARMA3).
 template<int NHC, bool SH, int NZC, bool SZ>
 class FullCARMA3 final : public IEstimator3 {
@@ -120,7 +72,6 @@ public:
         fill_config(cfg, MAG_DELAY_SEC);
         fusion_.begin(cfg);
         auto& f = fusion_.raw();
-        f.setPeriodicAwCovarianceSync(true);
         f.enableTuner(true);
         f.enableClamp(true);
         if (hshape) f.setHorizontalShape(*hshape);

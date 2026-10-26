@@ -18,24 +18,22 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from carma_benchmark import paired  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "reports" / "results" / "carma3_benchmark"
 J29 = "jonswap_fp0.29_hs0.8_g3.3"
 
 LABEL = {
-    "OU3": "OU-III (shipping)", "Z41": "OU-III x/y + C41 z", "Z52": "OU-III x/y + C52 z",
+    "OU3": "OU-III (shipping)",
     "A41": "C41 x/y/z", "A52": "C52 x/y/z", "M45": "C41 x/y + C52 z", "M54": "C52 x/y + C41 z", "A52S": "C52 x/y/z + S_x,S_y",
     "A41S": "C41 x/y/z + S_x,S_y (OU-III r_S)", "H41": "C41 x/y/z, sway-fitted x/y shape", "A30": "C30 x/y/z",
 }
-ORDER = ["OU3", "Z41", "Z52", "A41", "A52", "M54", "M45", "A52S", "A41S", "H41", "A30"]
-# One fixed colour per filter in every figure: the eight reference-palette
-# slots in their fixed order for the filters that appear in figures; the
-# dominated mixed order M45 and C30 appear in tables only (neutral greys).
-COL = {"OU3": "#2a78d6", "Z41": "#eb6834", "Z52": "#1baf7a", "A41": "#eda100", "A52": "#e87ba4",
-       "M54": "#008300", "A52S": "#6250d6", "A41S": "#e34948", "H41": "#52514e", "M45": "#b4b4ae",
-       "A30": "#8a8a86", "truth": "#0b0b0b"}
+ORDER = ["OU3", "A41", "A52", "M54", "M45", "A52S", "A41S", "H41", "A30"]
+# One fixed colour per filter in every figure: the reference-palette slots in
+# their fixed order for the filters that appear in figures; the dominated
+# mixed order M45 and C30 appear in tables only (neutral greys).
+COL = {"OU3": "#2a78d6", "A41": "#eb6834", "A52": "#1baf7a", "M54": "#eda100", "A52S": "#e87ba4",
+       "A41S": "#008300", "H41": "#6250d6", "M45": "#b4b4ae", "A30": "#8a8a86", "truth": "#0b0b0b"}
 
 SC_LABEL = {
     J29: "JONSWAP 0.29 Hz, 0.8 m", "pm_fp0.25_hs1": "PM 0.25 Hz, 1 m", "mixed_swell_wind": "mixed swell + wind",
@@ -63,6 +61,45 @@ def fnum(r, k):
         return float(r[k])
     except (KeyError, ValueError, TypeError):
         return np.nan
+
+
+def bootstrap_ci(x, stat=np.mean, n=10000, seed=20261025):
+    x = np.asarray(x, dtype=float)
+    x = x[np.isfinite(x)]
+    if len(x) < 2:
+        return (np.nan, np.nan)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(x), size=(n, len(x)))
+    s = stat(x[idx], axis=1)
+    return (float(np.percentile(s, 2.5)), float(np.percentile(s, 97.5)))
+
+
+def paired(a, b):
+    """Candidate a vs baseline b on the same seeds (lower is better)."""
+    from scipy.stats import wilcoxon
+
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    m = np.isfinite(a) & np.isfinite(b)
+    a, b = a[m], b[m]
+    d = a - b
+    rel = 1.0 - a.mean() / b.mean() if b.mean() > 0 else np.nan
+    rng = np.random.default_rng(20261025)
+    idx = rng.integers(0, len(a), size=(10000, len(a)))
+    rel_bs = 1.0 - a[idx].mean(axis=1) / b[idx].mean(axis=1)
+    try:
+        p = float(wilcoxon(a, b).pvalue) if len(a) >= 6 and np.any(d != 0) else np.nan
+    except ValueError:
+        p = np.nan
+    return {
+        "n": int(len(a)),
+        "mean_diff": float(d.mean()),
+        "diff_ci": bootstrap_ci(d),
+        "improvement": float(rel),
+        "improvement_ci": (float(np.percentile(rel_bs, 2.5)), float(np.percentile(rel_bs, 97.5))),
+        "win_rate": float(np.mean(d < 0)),
+        "wilcoxon_p": p,
+    }
 
 
 def load(path):
@@ -156,7 +193,7 @@ def report():
         lines.append("")
 
     import carma3_benchmark as cb
-    main_f = ["OU3", "Z41", "Z52", "A41", "A52", "M54", "M45"]
+    main_f = ["OU3", "A41", "A52", "M54", "M45"]
     s_f = ["OU3", "A41", "A52", "A52S", "A41S", "H41"]
 
     # Headline: principal seas, complete INS, horizontal and heave with CIs.
@@ -481,7 +518,7 @@ def figures(g, ds):
     sec = cb.PRIMARY + [s for s in cb.SECONDARY if not s.startswith("stationary")]
     for metric, fname, title in (("rms_h", "paired_improvement_horizontal.svg", "horizontal"),
                                  ("rms_z", "paired_improvement_heave.svg", "heave")):
-        fl = ["Z41", "Z52", "A41", "A52", "M54"] if metric == "rms_z" else ["A41", "A52", "M54", "A52S", "H41"]
+        fl = ["A41", "A52", "M54"] if metric == "rms_z" else ["A41", "A52", "M54", "A52S", "H41"]
         rows = [sc for sc in sec if ("full", sc) in g]
         fig, ax = plt.subplots(figsize=(8.6, 0.32 * len(rows) + 1.4))
         ypos = np.arange(len(rows))[::-1]
@@ -510,7 +547,7 @@ def figures(g, ds):
 
     # Distribution over seeds, principal seas.
     fig, axes = plt.subplots(2, 4, figsize=(13, 5.8), sharey=False)
-    fl = ["OU3", "Z41", "Z52", "A41", "A52", "M54"]
+    fl = ["OU3", "A41", "A52", "M54"]
     for col, sc in enumerate(cb.PRIMARY):
         d = g.get(("full", sc))
         if not d:
@@ -560,7 +597,7 @@ def traces(plt, svgd):
         fig, axes = plt.subplots(3, 1, figsize=(10, 7.2), sharex=True)
         for ax, a, name in zip(axes, "xyz", ("surge-direction x (north)", "sway-direction y (east)", "heave z (down)")):
             ax.plot(t[m], d[f"{a}_true"][m], color=COL["truth"], lw=1.6, label="truth (wave coordinate)")
-            for f in ("OU3", "Z41", "A41", "A52"):
+            for f in ("OU3", "A41", "A52"):
                 if f"{a}_{f}" in d:
                     ax.plot(t[m], d[f"{a}_{f}"][m], color=COL[f], lw=1.0, label=LABEL[f])
             ax.set_ylabel(f"{name} (m)", fontsize=8)
@@ -580,7 +617,7 @@ def traces(plt, svgd):
         for ax, a in zip(axes, "xyz"):
             f0, Pt = welch(d[f"{a}_true"][s], fs=fs, nperseg=4096)
             ax.semilogy(f0, Pt, color=COL["truth"], lw=1.4, label="truth")
-            for fl in ("OU3", "Z41", "A41", "A52"):
+            for fl in ("OU3", "A41", "A52"):
                 k = f"{a}_{fl}"
                 if k in d:
                     _, Pe = welch((d[k] - d[f"{a}_true"])[s], fs=fs, nperseg=4096)
@@ -611,7 +648,7 @@ def traces(plt, svgd):
         for ax, a in zip(axes, "xyz"):
             if sc != "stationary":
                 ax.plot(t[m], d[f"{a}_true"][m], color=COL["truth"], lw=1.4, label="truth")
-            for f in ("OU3", "Z41", "A41", "A52"):
+            for f in ("OU3", "A41", "A52"):
                 k = f"{a}_{f}"
                 if k in d:
                     y = d[k][m] - (d[f"{a}_true"][m] if sc == f"{J29}+maneuver" else 0.0)

@@ -15,21 +15,14 @@ else
 endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = carma_model-test carma_filter-test carma_process-sim carma_bench carma-sim \
-	carma3-test carma3_bench carma3-sim
+TARGETS = carma_model-test carma_process-sim carma3-test carma3_bench carma3-sim
 all: build test
 build: $(TARGETS)
 test: $(TARGETS)
 	bash ./run_tests.sh
 carma_model-test: carma_model-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma_filter-test: carma_filter-test.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_process-sim: carma_process-sim.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma_bench: carma_bench.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma-sim: carma-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma3-test: carma3-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

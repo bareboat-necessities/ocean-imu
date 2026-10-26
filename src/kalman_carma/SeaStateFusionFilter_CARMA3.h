@@ -6,12 +6,17 @@
 
   SeaStateFusionFilter_CARMA3 -- EXPERIMENTAL research wrapper around
   Kalman3D_Wave_CARMA3 (three-axis CARMA translational prior).  Not a deployed
-  estimator; SeaStateFusionFilter_OU_III stays the shipping filter.  It is the
-  schedule of src/kalman_carma/SeaStateFusionFilter_CARMA.h (itself OU-III's
-  per-sample schedule: shared front end, proxy startup, staged tune commit,
-  tilt watchdog, magnetometer-service bias gate, vibration Racc inflation)
-  with one addition, the horizontal operating point:
+  estimator; SeaStateFusionFilter_OU_III stays the shipping filter.  It keeps
+  OU-III's per-sample schedule (shared front end, proxy startup, staged tune
+  commit, tilt watchdog, magnetometer-service bias gate, vibration Racc
+  inflation) and maps the measured operating point (tau, sigma_aw) onto the
+  CARMA priors:
 
+    kappa_z  = f_tune / f_z,z-model,      f_tune = c_tau / (2 tau)
+               (the model's displacement zero-crossing frequency is placed
+               on the measured one)
+    sigma_z  = c_carma * max(sigma_floor, sigma_aw / c_sigma)
+               (the measured band acceleration RMS)
     kappa_h  = f_tune / f_z,h-model       (the same measured wave frequency
                                            that scales the vertical shape)
     sigma_h  = S_factor * c_carma * max(sigma_floor, sigma_aw / c_sigma)
@@ -26,8 +31,8 @@
     * if the shape has a nonzero DC level c0 = S_p(0) (e.g. CARMA(5,2) as
       fitted), S is a random walk under the prior and S = 0 every T_S closes a
       first-order loop at omega_R = sqrt(c0/(r^2 T_S)); omega_R tau = kappa_R
-      gives r_S = sqrt(c0) tau / (kappa_R sqrt(T_S)) per axis (the S_z law of
-      SeaStateFusionFilter_CARMA);
+      (OU-III's pole constant) gives r_S = sqrt(c0) tau / (kappa_R sqrt(T_S))
+      per axis, and the same law sets r_Sz for S_z (SZ);
     * if the shape has a zero at DC (c0 = 0), the S mode is uncontrollable
       and no pole-placement law exists; the OU-III SpectralMSE r_S and its
       x/y factors are then carried over unchanged.  This is the negative
@@ -90,7 +95,7 @@ public:
                     const Eigen::Vector3f& sigma_m) {
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
-            mekf_, [this]() { enterCold_(); }, [this]() { apply_ou_tune_(true); });
+            mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });
     }
 
     void initialize_ext(const Eigen::Vector3f& sigma_a, const Eigen::Vector3f& sigma_g,
@@ -100,7 +105,7 @@ public:
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,
                                        gravity_magnitude);
         seastate::common::finalizeInitialization(
-            mekf_, [this]() { enterCold_(); }, [this]() { apply_ou_tune_(true); });
+            mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });
     }
 
     bool initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
@@ -152,7 +157,6 @@ private:
         }
         const float a_vert_measurement = trackAccelBandFrequency_(dt);
         if (enable_tuner_) update_tuner(dt, a_vert_measurement, tuner_frequency_hz_());
-        if (drive_mekf) periodic_aw_cov_sync_tick_();
         if (drive_mekf) {
             const Eigen::Vector3f acc_bias = mekf_->get_acc_bias_body_at_temperature(tempC);
             updateWavePeriodAndDirection_(dt, mekf_->quaternion_boat(), acc_in, &acc_bias);
@@ -191,13 +195,13 @@ public:
     void setHorizontalCorrelation(float r) { if (std::isfinite(r) && std::abs(r) < 1.0f) h_corr_ = r; }
     bool setHorizontalShape(const kalman::carma::CarmaShape& shape) {
         if (!mekf_ || !mekf_->set_horizontal_shape(shape)) return false;
-        apply_ou_tune_(false);
+        apply_tune_();
         if (startup_stage_ != StartupStage::Live) mekf_->reset_aw_covariance_to_stationary();
         return true;
     }
     bool setVerticalShape(const kalman::carma::CarmaShape& shape) {
         if (!mekf_ || !mekf_->set_vertical_shape(shape)) return false;
-        apply_ou_tune_(false);
+        apply_tune_();
         if (startup_stage_ != StartupStage::Live) mekf_->reset_aw_covariance_to_stationary();
         return true;
     }
@@ -241,7 +245,7 @@ public:
 private:
     void apply_pending_online_tune_() {
         if (!online_tune_apply_pending_ || !mekf_) return;
-        apply_ou_tune_(false);
+        apply_tune_();
         if (startup_stage_ == StartupStage::Live) apply_RS_tune_();
         online_tune_apply_pending_ = false;
     }
@@ -253,19 +257,11 @@ private:
         return carma_sigma_gain_ * sigma_aB;
     }
 
-    void apply_ou_tune_(bool sync_covariance) {
+    void apply_tune_() {
         if (!mekf_) return;
         mekf_->set_aw_time_constant(tune_.tau_applied);
         apply_pseudo_update_cadence_(mekf_.get(), tune_.tau_applied);
-        const float sigma_floor = std::max(0.05f, band_noise_floor_sigma_());
-        const float sZ = std::max(sigma_floor, tune_.sigma_applied);
-        const float sH = sZ * S_factor_;
-        mekf_->set_aw_stationary_std(Eigen::Vector3f(sH, sH, sZ));
         apply_carma_tune_();
-        if (sync_covariance) {
-            mekf_->synchronize_aw_covariance_to_stationary();
-            last_aw_cov_sync_sec_ = time_;
-        }
     }
 
     // Vertical and horizontal CARMA scales and amplitudes from the measured
@@ -278,17 +274,9 @@ private:
         const float accel_std = carma_accel_std_();
         const double fz_v = mekf_->vertical_model().base_zero_crossing_hz();
         mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), accel_std);
-        if constexpr (NHC > 0) {
-            const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();
-            const float sh = accel_std * S_factor_;
-            mekf_->set_horizontal_carma(static_cast<float>(f_tune / fz_h), sh, sh, h_corr_);
-        }
-    }
-
-    void periodic_aw_cov_sync_tick_() {
-        if (!mekf_ || !periodicAwCovSyncDue_()) return;
-        mekf_->synchronize_aw_covariance_to_stationary();
-        last_aw_cov_sync_sec_ = time_;
+        const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();
+        const float sh = accel_std * S_factor_;
+        mekf_->set_horizontal_carma(static_cast<float>(f_tune / fz_h), sh, sh, h_corr_);
     }
 
     float rs_spectral_mse_target_(float tau, float sigma) const noexcept {
@@ -317,12 +305,12 @@ private:
         if (!mekf_) return;
         const float rs = std::min(std::max(tune_.RS_applied, min_R_S_), max_R_S_);
         float rx = rs * R_S_x_factor_, ry = rs * R_S_y_factor_, rz = rs;
-        if constexpr (NHC > 0 && SH) {
+        if constexpr (SH) {
             const auto& hm = mekf_->horizontal_model();
             const auto Sg = mekf_->horizontal_sigma();
             const float g2 = hm.noise_gain2();            // unit-variance model gain
-            const float vx = rs_pole_law_<Mekf::NHC_>(hm, g2 * Sg(0,0));
-            const float vy = rs_pole_law_<Mekf::NHC_>(hm, g2 * Sg(1,1));
+            const float vx = rs_pole_law_<NHC>(hm, g2 * Sg(0,0));
+            const float vy = rs_pole_law_<NHC>(hm, g2 * Sg(1,1));
             if (std::isfinite(vx) && vx > 0.0f) rx = vx;
             if (std::isfinite(vy) && vy > 0.0f) ry = vy;
         }
@@ -390,7 +378,7 @@ private:
         startup_stage_ = StartupStage::Live;
         startup_stage_t_ = 0.0f;
         if (!mekf_) return;
-        apply_ou_tune_(true);
+        apply_tune_();
         mekf_->reset_aw_covariance_to_stationary();
         mekf_->set_acc_bias_updates_enabled(!accel_bias_locked_ && !acc_bias_hold_);
         apply_RS_tune_();

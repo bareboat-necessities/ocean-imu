@@ -14,8 +14,7 @@
 
   --level full     complete INS behind the shared proxy startup and magnetic
                    acquisition (carma3/FullAdapters.h):
-                     OU3   shipping OU-III (unchanged)
-                     Z41 Z52      PR #704 hybrids: OU-III x/y, CARMA(4,1)/(5,2) z
+                     OU3          shipping OU-III (unchanged)
                      A41 A52 A30  CARMA on all three axes
                      M45          CARMA(4,1) x/y, CARMA(5,2) z
                      M54          CARMA(5,2) x/y, CARMA(4,1) z
@@ -25,16 +24,14 @@
                      H41          CARMA(4,1) all axes, horizontal shape fitted
                                   to the benchmark's own sway RAO (hull-dependent)
                      A41C:<r>     A41 with horizontal noise correlation r
-                     Q41 Q52      the three-axis class with the OU-III
-                                  horizontal chain (equivalence with Z41, Z52)
   --level l1       prescribed attitude, per-axis reduced filters on
                    y = R_nb f + g e_z = a + R_nb b + n, one shared
                    measurement-only operating point (the vertical channel's
                    shipping tuner, as the INS); same filter names.
   --level truth    realized motion levels of the scenario.
 
-  Scenario: <base>[+modifier...], base as carma_bench (CarmaBenchTruth.h
-  base_scenario).  Modifiers: T<s> duration, rel<deg> wave propagation
+  Scenario: <base>[+modifier...], base from CarmaBenchTruth.h
+  base_scenario.  Modifiers: T<s> duration, rel<deg> wave propagation
   direction relative to the bow (0 following, 90 beam, 180 head; default 30),
   U<m/s> steady forward speed (encounter-frequency Doppler), anchor, drift,
   maneuver (low-frequency translation), maggap (no magnetometer for 300 s from
@@ -330,8 +327,6 @@ std::unique_ptr<Level1Set> make_level1(const std::string& n, float R, BiasPrior 
                   : std::unique_ptr<IAxis>(std::make_unique<AxisCARMA<5,false>>(R, bp, f, sh));
     };
     if (n == "OU3") return std::make_unique<Level1Set>(n, ou(fx), ou(fy), ou(1.0f));
-    if (n == "Z41") return std::make_unique<Level1Set>(n, ou(fx), ou(fy), c(4, false, 1, c41));
-    if (n == "Z52") return std::make_unique<Level1Set>(n, ou(fx), ou(fy), c(5, false, 1, c52));
     if (n == "A30") return std::make_unique<Level1Set>(n, c(3, false, fx, c30), c(3, false, fy, c30), c(3, false, 1, c30));
     if (n == "A41") return std::make_unique<Level1Set>(n, c(4, false, fx, c41), c(4, false, fy, c41), c(4, false, 1, c41));
     if (n == "A52") return std::make_unique<Level1Set>(n, c(5, false, fx, c52), c(5, false, fy, c52), c(5, false, 1, c52));
@@ -561,7 +556,7 @@ int main(int argc, char** argv) {
     std::vector<Level1Set*> l1;
     const float R_acc = std::pow(2.8f * ACC_SIGMA * SIGMA_A_RESCALE, 2.0f);
     std::vector<std::string> names = split(args.filters, ',');
-    if (names.empty()) names = {"OU3", "Z41", "Z52", "A41", "A52", "M45", "A52S", "A41S", "H41"};
+    if (names.empty()) names = {"OU3", "A41", "A52", "M45", "A52S", "A41S", "H41"};
     for (const auto& n : names) {
         if (full) {
             auto e = make_full(n);

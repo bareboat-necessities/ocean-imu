@@ -6,7 +6,7 @@ Reads the long realizations written by tests/kalman_carma/carma_process-sim
 checks them against quantities computed here independently of the C++ code:
 
 * the spectral shapes are parsed from src/kalman_carma/CarmaVerticalModel.h
-  and must match reports/results/carma_benchmark/carma_fit.json;
+  and must match reports/results/carma_model/carma_fit.json;
 * stability: every root of P(s) strictly in the left half plane;
 * the driving gain for unit acceleration std and the stationary variances
   come from a companion-form realization built here from the polynomial
@@ -38,7 +38,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 HEADER = ROOT / "src" / "kalman_carma" / "CarmaVerticalModel.h"
-FIT = ROOT / "reports" / "results" / "carma_benchmark" / "carma_fit.json"
+FIT = ROOT / "reports" / "results" / "carma_model" / "carma_fit.json"
 TWO_PI = 2.0 * np.pi
 
 FIELDS = ["f1", "z1", "f2", "z2", "fl", "fz", "zz"]

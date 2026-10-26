@@ -29,7 +29,7 @@ model here is asymptotically equivalent to it.
 
 Bounded trust-region least squares from a fixed seeded set of starts makes
 the result deterministic.
-Run:  python3 tools/carma_fit.py [--out reports/results/carma_benchmark/carma_fit.json]
+Run:  python3 tools/carma_fit.py [--out reports/results/carma_model/carma_fit.json]
 """
 from __future__ import annotations
 
@@ -181,7 +181,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path,
                     default=Path(__file__).resolve().parents[1]
-                    / "reports" / "results" / "carma_benchmark" / "carma_fit.json")
+                    / "reports" / "results" / "carma_model" / "carma_fit.json")
     args = ap.parse_args(argv)
 
     result = {
