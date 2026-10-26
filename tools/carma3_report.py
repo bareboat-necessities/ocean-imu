@@ -1,0 +1,698 @@
+#!/usr/bin/env python3
+"""Tables and figures of the three-axis CARMA benchmark (EXPERIMENTAL).
+
+Reads reports/results/carma3_benchmark/{raw_runs,dataset_runs,truth_motion}.csv
+and the traces written by tools/carma3_benchmark.py, writes summary.md,
+paired_stats.json and the SVG figures next to them.  Called by
+`python3 tools/carma3_benchmark.py report`.
+"""
+from __future__ import annotations
+
+import collections
+import csv
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "reports" / "results" / "carma3_benchmark"
+J29 = "jonswap_fp0.29_hs0.8_g3.3"
+
+LABEL = {
+    "OU3": "OU-III (shipping)",
+    "A41": "C41 x/y/z", "A52": "C52 x/y/z", "M45": "C41 x/y + C52 z", "M54": "C52 x/y + C41 z", "A52S": "C52 x/y/z + S_x,S_y",
+    "A41S": "C41 x/y/z + S_x,S_y (OU-III r_S)", "H41": "C41 x/y/z, sway-fitted x/y shape", "A30": "C30 x/y/z",
+}
+ORDER = ["OU3", "A41", "A52", "M54", "M45", "A52S", "A41S", "H41", "A30"]
+# One fixed colour per filter in every figure: the reference-palette slots in
+# their fixed order for the filters that appear in figures; the dominated
+# mixed order M45 and C30 appear in tables only (neutral greys).
+COL = {"OU3": "#2a78d6", "A41": "#eb6834", "A52": "#1baf7a", "M54": "#eda100", "A52S": "#e87ba4",
+       "A41S": "#008300", "H41": "#6250d6", "M45": "#b4b4ae", "A30": "#8a8a86", "truth": "#0b0b0b"}
+
+SC_LABEL = {
+    J29: "JONSWAP 0.29 Hz, 0.8 m", "pm_fp0.25_hs1": "PM 0.25 Hz, 1 m", "mixed_swell_wind": "mixed swell + wind",
+    "changing_fp": "changing f_p", "bimodal": "bimodal", "broadband": "broadband", "abrupt_change": "abrupt change",
+    "jonswap_fp0.20_hs1_g3.3": "JONSWAP 0.20 Hz, 1 m", "jonswap_fp0.45_hs0.4_g3.3": "JONSWAP 0.45 Hz, 0.4 m",
+    "pm_fp0.15_hs2.5": "PM 0.15 Hz, 2.5 m", "jonswap_fp0.10_hs4_g3.3": "JONSWAP 0.10 Hz, 4 m",
+    "bias_drift": "extra accel bias drift", "tilted": "15/5 deg heel/trim", "large_rotation": "large rotation",
+    "small_amplitude": "5 cm sea", "stationary": "still IMU", "stationary+calbias": "still IMU, calibrated bias",
+}
+
+
+def sc_label(sc):
+    if sc in SC_LABEL:
+        return SC_LABEL[sc]
+    base, *mods = sc.split("+")
+    words = {"rel0": "following", "rel90": "beam", "rel180": "head", "rel135": "bow-quartering",
+             "U2.5": "underway 2.5 m/s", "anchor": "anchored slow drift", "drift": "drifting",
+             "maneuver": "manoeuvring", "maggap": "300 s magnetometer gap", "jit": "+-25 % dt jitter",
+             "hlegacy": "legacy horizontal truth", "T3600": "3600 s"}
+    return SC_LABEL.get(base, base) + ", " + ", ".join(words.get(m, m) for m in mods)
+
+
+def fnum(r, k):
+    try:
+        return float(r[k])
+    except (KeyError, ValueError, TypeError):
+        return np.nan
+
+
+def bootstrap_ci(x, stat=np.mean, n=10000, seed=20261025):
+    x = np.asarray(x, dtype=float)
+    x = x[np.isfinite(x)]
+    if len(x) < 2:
+        return (np.nan, np.nan)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, len(x), size=(n, len(x)))
+    s = stat(x[idx], axis=1)
+    return (float(np.percentile(s, 2.5)), float(np.percentile(s, 97.5)))
+
+
+def paired(a, b):
+    """Candidate a vs baseline b on the same seeds (lower is better)."""
+    from scipy.stats import wilcoxon
+
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    m = np.isfinite(a) & np.isfinite(b)
+    a, b = a[m], b[m]
+    d = a - b
+    rel = 1.0 - a.mean() / b.mean() if b.mean() > 0 else np.nan
+    rng = np.random.default_rng(20261025)
+    idx = rng.integers(0, len(a), size=(10000, len(a)))
+    rel_bs = 1.0 - a[idx].mean(axis=1) / b[idx].mean(axis=1)
+    try:
+        p = float(wilcoxon(a, b).pvalue) if len(a) >= 6 and np.any(d != 0) else np.nan
+    except ValueError:
+        p = np.nan
+    return {
+        "n": int(len(a)),
+        "mean_diff": float(d.mean()),
+        "diff_ci": bootstrap_ci(d),
+        "improvement": float(rel),
+        "improvement_ci": (float(np.percentile(rel_bs, 2.5)), float(np.percentile(rel_bs, 97.5))),
+        "win_rate": float(np.mean(d < 0)),
+        "wilcoxon_p": p,
+    }
+
+
+def load(path):
+    if not path.exists():
+        return []
+    with path.open() as f:
+        return list(csv.DictReader(f))
+
+
+def group(rows):
+    """{(level, scenario): {filter: {seed: row}}}"""
+    g = collections.defaultdict(lambda: collections.defaultdict(dict))
+    for r in rows:
+        g[(r["level"], r["scenario"])][r["filter"]][int(r["seed"])] = r
+    return g
+
+
+def aligned(d, filters, key):
+    seeds = sorted(set.intersection(*[set(d[f].keys()) for f in filters if f in d])) if all(f in d for f in filters) else []
+    return seeds, {f: np.array([fnum(d[f][s], key) for s in seeds]) for f in filters}
+
+
+def rms_h(r):
+    return float(np.hypot(fnum(r, "rms_x"), fnum(r, "rms_y")))
+
+
+def series(d, f, seeds, key):
+    if key == "rms_h":
+        return np.array([rms_h(d[f][s]) for s in seeds])
+    return np.array([fnum(d[f][s], key) for s in seeds])
+
+
+def pct(x, hs):
+    return 100.0 * x / hs if hs > 0 else np.nan
+
+
+def fmt_imp(ps):
+    if not ps or not np.isfinite(ps["improvement"]):
+        return ""
+    lo, hi = ps["improvement_ci"]
+    return f"{100 * ps['improvement']:+.1f} % [{100 * lo:+.1f}, {100 * hi:+.1f}]"
+
+
+# ---------------------------------------------------------------------------
+
+def report():
+    rows = load(OUT / "raw_runs.csv")
+    if not rows:
+        sys.exit("no raw_runs.csv: run tools/carma3_benchmark.py run first")
+    g = group(rows)
+    stats = {}
+    lines = ["# Three-axis CARMA benchmark: generated tables", "",
+             "Generated by `tools/carma3_benchmark.py report` from `raw_runs.csv` "
+             f"({len(rows)} filter runs).  Synthetic truth: `tests/kalman_carma/CarmaBenchTruth.h` with the physical "
+             "horizontal RAO (no CARMA model in the truth).  Errors are against the wave coordinate.  "
+             "Improvement = 1 - mean RMS(candidate) / mean RMS(OU-III) over the same seeds, 95 % bootstrap interval "
+             "(10 000 resamples); win = fraction of seeds on which the candidate is better; complete INS unless "
+             "stated.  Horizontal RMS is sqrt(RMS_x^2 + RMS_y^2).", ""]
+
+    def table(level, scenarios, filters, metric, title, unit_pct=True):
+        lines.append(f"### {title}")
+        lines.append("")
+        hdr = "| Scenario | n | " + " | ".join(LABEL[f] for f in filters) + " |"
+        lines.append(hdr)
+        lines.append("|" + "---|" * (len(filters) + 2))
+        for sc in scenarios:
+            d = g.get((level, sc))
+            if not d or "OU3" not in d:
+                continue
+            fs = [f for f in filters if f in d]
+            seeds = sorted(set.intersection(*[set(d[f].keys()) for f in fs]))
+            if not seeds:
+                continue
+            hs = fnum(d["OU3"][seeds[0]], "hs_incident")
+            base = series(d, "OU3", seeds, metric)
+            cells = []
+            for f in filters:
+                if f not in d:
+                    cells.append("")
+                    continue
+                x = series(d, f, seeds, metric)
+                v = pct(x.mean(), hs) if unit_pct and hs > 0 else 1000 * x.mean()
+                unit = "" if unit_pct and hs > 0 else " mm"
+                if f == "OU3":
+                    cells.append(f"{v:.2f}{unit}")
+                    continue
+                ps = paired(x, base)
+                stats.setdefault(level, {}).setdefault(sc, {}).setdefault(metric, {})[f] = ps
+                cells.append(f"{v:.2f}{unit} ({100 * ps['improvement']:+.0f} %)")
+            lines.append(f"| {sc_label(sc)} | {len(seeds)} | " + " | ".join(cells) + " |")
+        lines.append("")
+
+    import carma3_benchmark as cb
+    main_f = ["OU3", "A41", "A52", "M54", "M45"]
+    s_f = ["OU3", "A41", "A52", "A52S", "A41S", "H41"]
+
+    # Headline: principal seas, complete INS, horizontal and heave with CIs.
+    lines.append("## Headline: complete INS, principal seas (100 paired seeds)")
+    lines.append("")
+    for metric, name in (("rms_h", "horizontal"), ("rms_z", "heave")):
+        lines.append(f"### {name.capitalize()} RMS error, % of incident H_s; improvement over OU-III [95 % CI], win rate")
+        lines.append("")
+        head_f = main_f[1:] + ["A52S", "H41"]
+        lines.append("| Sea | OU-III | " + " | ".join(LABEL[f] for f in head_f) + " |")
+        lines.append("|" + "---|" * (len(head_f) + 2))
+        for sc in cb.PRIMARY:
+            d = g.get(("full", sc))
+            if not d:
+                continue
+            fs = [f for f in ["OU3"] + head_f if f in d]
+            seeds = sorted(set.intersection(*[set(d[f].keys()) for f in fs]))
+            hs = fnum(d["OU3"][seeds[0]], "hs_incident")
+            base = series(d, "OU3", seeds, metric)
+            cells = [f"{pct(base.mean(), hs):.2f}"]
+            for f in head_f:
+                if f not in d:
+                    cells.append("")
+                    continue
+                x = series(d, f, seeds, metric)
+                ps = paired(x, base)
+                stats.setdefault("full", {}).setdefault(sc, {}).setdefault(metric, {})[f] = ps
+                cells.append(f"{pct(x.mean(), hs):.2f} ({fmt_imp(ps)}, win {100 * ps['win_rate']:.0f} %)")
+            lines.append(f"| {sc_label(sc)} (n={len(seeds)}) | " + " | ".join(cells) + " |")
+        lines.append("")
+
+    sec = cb.PRIMARY + [s for s in cb.SECONDARY if not s.startswith("stationary")] + cb.LONG
+    table("full", sec, main_f, "rms_h", "All seas: horizontal RMS, % H_s (change vs OU-III)")
+    table("full", sec, main_f, "rms_z", "All seas: heave RMS, % H_s (change vs OU-III)")
+    table("full", sec, s_f, "rms_h", "S and shape variants: horizontal RMS, % H_s (change vs OU-III)")
+    table("full", ["stationary", "stationary+calbias"], main_f + ["A52S", "A41S"], "rms_h",
+          "Still IMU: horizontal phantom displacement RMS", unit_pct=False)
+    table("full", ["stationary", "stationary+calbias"], main_f + ["A52S", "A41S"], "rms_z",
+          "Still IMU: vertical phantom displacement RMS", unit_pct=False)
+    l1 = cb.PRIMARY + cb.L1_SECONDARY
+    table("l1", l1, main_f + ["A30"], "rms_h", "Level 1 (prescribed attitude): horizontal RMS, % H_s")
+    table("l1", l1, main_f + ["A30"], "rms_z", "Level 1 (prescribed attitude): heave RMS, % H_s")
+
+    # Per-axis, consistency, drift, startup, attitude, runtime on the principal seas.
+    lines.append("## Per-axis metrics, principal seas, complete INS (means over seeds)")
+    lines.append("")
+    cols = [("rms_x", "x RMS mm", 1000), ("rms_y", "y RMS mm", 1000), ("rms_z", "z RMS mm", 1000),
+            ("rmsv_x", "v_x RMS mm/s", 1000), ("rmsv_y", "v_y RMS mm/s", 1000), ("rmsv_z", "v_z RMS mm/s", 1000),
+            ("mean_x", "x bias mm", 1000), ("mean_z", "z bias mm", 1000),
+            ("peak_x", "x peak mm", 1000), ("peak_z", "z peak mm", 1000),
+            ("lf_x", "x LF mm", 1000), ("lf_y", "y LF mm", 1000), ("lf_z", "z LF mm", 1000)]
+    cons = [("nees_x", "NEES x"), ("nees_y", "NEES y"), ("nees_z", "NEES z"), ("nees_pv6", "NEES 6-dof"),
+            ("nis", "NIS"), ("nis_in95", "NIS in 95 %")]
+    for sc in cb.PRIMARY:
+        d = g.get(("full", sc))
+        if not d:
+            continue
+        fs = [f for f in ORDER if f in d]
+        seeds = sorted(set.intersection(*[set(d[f].keys()) for f in fs]))
+        lines.append(f"### {sc_label(sc)} (n={len(seeds)})")
+        lines.append("")
+        lines.append("| Filter | " + " | ".join(c[1] for c in cols) + " |")
+        lines.append("|" + "---|" * (len(cols) + 1))
+        for f in fs:
+            lines.append(f"| {LABEL[f]} | " + " | ".join(f"{s * np.nanmean(series(d, f, seeds, k)):.1f}"
+                                                        for k, _, s in cols) + " |")
+        lines.append("")
+        lines.append("| Filter | " + " | ".join(c[1] for c in cons) +
+                     " | pred std / RMS x | pred std / RMS z | roll RMS deg | pitch RMS deg | yaw RMS deg |"
+                     " startup RMS x mm | startup peak x mm | startup RMS z mm | startup peak z mm |"
+                     " conv x s (median) | conv z s (median) | final 60 s x mm | final 60 s z mm |")
+        lines.append("|" + "---|" * (len(cons) + 14))
+        for f in fs:
+            row = [f"{np.nanmean(series(d, f, seeds, k)):.2f}" for k, _ in cons]
+            for a in ("x", "z"):
+                row.append(f"{np.nanmean(series(d, f, seeds, 'predstd_' + a)) / np.nanmean(series(d, f, seeds, 'rms_' + a)):.2f}")
+            for k in ("roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg"):
+                row.append(f"{np.nanmean(series(d, f, seeds, k)):.3f}")
+            for k in ("su_rms_x", "su_peak_x", "su_rms_z", "su_peak_z"):
+                row.append(f"{1000 * np.nanmean(series(d, f, seeds, k)):.1f}")
+            for k in ("conv_x", "conv_z"):
+                v = series(d, f, seeds, k)
+                nn = int(np.sum(~np.isfinite(v)))
+                row.append(f"{np.nanmedian(v):.0f}" + (f" ({nn} never)" if nn else ""))
+            for k in ("f60_x", "f60_z"):
+                row.append(f"{1000 * np.nanmean(series(d, f, seeds, k)):.1f}")
+            lines.append(f"| {LABEL[f]} | " + " | ".join(row) + " |")
+        lines.append("")
+
+    # Runtime / memory.
+    lines.append("## Host cost (x86-64, -O3; mean update after Live over the principal complete-INS runs)")
+    lines.append("")
+    lines.append("| Filter | states | mean update (us) | object bytes (host) |")
+    lines.append("|---|---|---|---|")
+    rt = collections.defaultdict(list)
+    meta = {}
+    for r in rows:
+        if r["level"] == "full" and r["scenario"] in cb.PRIMARY:
+            rt[r["filter"]].append(fnum(r, "runtime_ns"))
+            meta[r["filter"]] = (r["states"], r["memory_bytes"])
+    cost = {}
+    for f in ORDER:
+        if f in rt:
+            cost[f] = {"states": int(meta[f][0]), "bytes": int(meta[f][1]), "update_us": float(np.median(rt[f])) / 1000}
+            lines.append(f"| {LABEL[f]} | {meta[f][0]} | {cost[f]['update_us']:.2f} | {meta[f][1]} |")
+    lines.append("")
+    lines.append("Medians over runs that shared the 4-core host with other benchmark processes: they rank the "
+                 "filters but are not timing-grade.")
+    lines.append("")
+    tr = load(OUT / "timing_runs.csv")
+    if tr:
+        lines.append("### Idle host (one process; three JONSWAP seeds, fixed and +-25 % jittered dt)")
+        lines.append("")
+        lines.append("| Filter | states | mean update fixed dt (us) | mean update jittered dt (us) | ratio to OU-III (fixed) |")
+        lines.append("|---|---|---|---|---|")
+        tt = collections.defaultdict(lambda: collections.defaultdict(list))
+        for r in tr:
+            tt[r["filter"]]["jit" if r["scenario"].endswith("+jit") else "fix"].append(fnum(r, "runtime_ns") / 1000)
+        base = np.mean(tt["OU3"]["fix"]) if tt.get("OU3") else np.nan
+        for f in ORDER:
+            if f in tt:
+                a, b = np.mean(tt[f]["fix"]), np.mean(tt[f]["jit"])
+                cost.setdefault(f, {}).update(idle_update_us=float(a), idle_update_us_jitter=float(b))
+                lines.append(f"| {LABEL[f]} | {meta.get(f, ('', ''))[0]} | {a:.2f} | {b:.2f} | {a / base:.2f} |")
+        lines.append("")
+    es = load(OUT / "esp32s3_size.csv")
+    if es:
+        lines.append("### ESP32-S3 build probe (Xtensa GCC 14.2.0, -Os; `tests/kalman_carma/arduino/carma3_size_probe`)")
+        lines.append("")
+        lines.append("Object-level numbers of one translation unit per variant holding the complete fusion wrapper's "
+                     "sample path (not a linked firmware image); `sizeof` evaluated by the target compiler.  No "
+                     "hardware: on-target time and float behaviour are not measured.")
+        lines.append("")
+        lines.append("| Filter | code bytes (object) | sizeof filter (bytes) | sizeof wrapper (bytes) | largest stack frame (bytes) |")
+        lines.append("|---|---|---|---|---|")
+        for r in es:
+            f = r["variant"]
+            lines.append(f"| {LABEL.get(f, f)} | {r['code_bytes']} | {r['sizeof_filter']} | {r['sizeof_fusion']} | "
+                         f"{r['max_stack_frame']} |")
+        lines.append("")
+
+    # Coupled-xy oracle diagnostic.
+    d = g.get(("full", J29))
+    if d:
+        cf = [f for f in d if f.startswith("A41C:")]
+        if cf:
+            seeds = sorted(set(d["A41"].keys()) & set(d[cf[0]].keys()))
+            a = series(d, "A41", seeds, "rms_h")
+            c = series(d, cf[0], seeds, "rms_h")
+            ps = paired(c, a)
+            stats.setdefault("full", {}).setdefault(J29, {}).setdefault("rms_h_coupled_vs_A41", {})[cf[0]] = ps
+            lines.append("## Coupled x-y prior (oracle correlation) against independent axes")
+            lines.append("")
+            lines.append(f"{sc_label(J29)}, n={len(seeds)}: horizontal RMS {1000 * a.mean():.2f} mm (C41 x/y/z, "
+                         f"independent) against {1000 * c.mean():.2f} mm ({cf[0]}: driving-noise correlation from the "
+                         f"true directional spectrum), change {fmt_imp(ps)}, win {100 * ps['win_rate']:.0f} %.")
+            lines.append("")
+
+    lines += band_tables()
+    lines += operating_point_table()
+
+    # Dataset.
+    ds = load(OUT / "dataset_runs.csv")
+    if ds:
+        lines += dataset_tables(ds, stats)
+
+    # Truth motion.
+    tm = load(OUT / "truth_motion.csv")
+    if tm:
+        lines.append("## Realized motion levels (seed 1)")
+        lines.append("")
+        lines.append("| Scenario | wave std x/y/z (m) | wave accel RMS x/y/z (m/s^2) | LF translation RMS x/y (m) |"
+                     " LF accel RMS x/y (m/s^2) | roll/pitch RMS (deg) | yaw deviation RMS (deg) |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for r in tm:
+            lines.append(f"| {sc_label(r['scenario'])} | {r['std_wave_m']} | {r['accel_wave_rms']} | {r['lf_disp_rms_m']} "
+                         f"| {r['lf_accel_rms']} | {r['roll_rms_deg']}/{r['pitch_rms_deg']} | {r['yaw_dev_rms_deg']} |")
+        lines.append("")
+
+    (OUT / "summary.md").write_text("\n".join(lines) + "\n")
+    (OUT / "paired_stats.json").write_text(json.dumps({"cost": cost, "paired": stats}, indent=1, sort_keys=True,
+                                                      default=float) + "\n")
+    figures(g, ds)
+    print("wrote", (OUT / "summary.md").relative_to(ROOT))
+
+
+BANDS = [(0.0, 0.017), (0.017, 0.05), (0.05, 0.1), (0.1, 0.2), (0.2, 0.4), (0.4, 0.8), (0.8, 5.0)]
+
+
+def band_tables():
+    """Error RMS per frequency band from the seed-1 traces (Welch, t >= 300 s)."""
+    import carma3_benchmark as cb
+    from scipy.signal import welch
+    out = []
+    for level, sc in (("full", J29), ("l1", J29), ("full", "mixed_swell_wind"), ("full", "stationary")):
+        p = cb.trace_path(level, sc, 1)
+        if not p.exists():
+            continue
+        d = load_trace(p)
+        t = d["t"]
+        s = t >= 300
+        fs = 1.0 / np.nanmedian(np.diff(t))
+        out.append(f"### Error by frequency band, {sc_label(sc)}, seed 1, "
+                   f"{'complete INS' if level == 'full' else 'level 1 (prescribed attitude)'} (mm RMS)")
+        out.append("")
+        out.append("| Axis | Filter | total | " + " | ".join(f"{a}-{b} Hz" for a, b in BANDS) + " |")
+        out.append("|" + "---|" * (len(BANDS) + 3))
+        for a in "xz":
+            for f in ORDER:
+                k = f"{a}_{f}"
+                if k not in d:
+                    continue
+                e = (d[k] - d[f"{a}_true"])[s]
+                fr, P = welch(e, fs=fs, nperseg=min(len(e), 1 << 14))
+                dfr = fr[1] - fr[0]
+                vals = [1000 * np.sqrt(P[(fr >= lo) & (fr < hi)].sum() * dfr) for lo, hi in BANDS]
+                out.append(f"| {a} | {LABEL[f]} | {1000 * np.std(e):.1f} | " + " | ".join(f"{v:.1f}" for v in vals) + " |")
+        out.append("")
+    return out
+
+
+def operating_point_table():
+    """The tuner-driven CARMA operating frequency (kappa * f_z,base) in the seed-1 traces."""
+    import carma3_benchmark as cb
+    out = ["### CARMA operating frequency f_z = kappa * f_z,base, seed 1, complete INS (t >= 300 s)", "",
+           "| Scenario | filter | median (Hz) | 5-95 % (Hz) | C52 notch 0.151 kappa at the median (Hz) |",
+           "|---|---|---|---|---|"]
+    for level, sc, _, filters in cb.TRACES:
+        p = cb.trace_path(level, sc, 1)
+        if level != "full" or not p.exists():
+            continue
+        d = load_trace(p)
+        s = d["t"] >= 300
+        for f in filters.split(","):
+            k = f"fz_{f}"
+            if k not in d or not np.any(np.isfinite(d[k][s])):
+                continue
+            v = d[k][s]
+            med = np.nanmedian(v)
+            notch = f"{0.151 * med / 0.3704:.3f}" if f.endswith("52") else ""
+            out.append(f"| {sc_label(sc)} | {LABEL[f]} | {med:.3f} | {np.nanpercentile(v, 5):.3f}-"
+                       f"{np.nanpercentile(v, 95):.3f} | {notch} |")
+    out.append("")
+    return out
+
+
+def dataset_tables(ds, stats):
+    lines = ["## Pinned vessel-RAO dataset (oceanography-waves-lib v1.2.3, 28 ft hull RAO; independent of the "
+             "synthetic truth)", ""]
+    by = collections.defaultdict(dict)
+    for r in ds:
+        by[(r["family"], r["seed"])][r["input"]] = r
+    fams = [f for f in ORDER if any(k[0] == f for k in by)] + sorted({k[0] for k in by if k[0] not in ORDER})
+    inputs = sorted({r["input"] for r in ds})
+    seeds = sorted({k[1] for k in by if k[0] == "OU3"}, key=int)
+    lines.append("Mean over seeds of the per-record RMS error, % of the record's H_s, final 900 s of each record; "
+                 f"{len(seeds)} seeds.  Horizontal = sqrt(x^2 + y^2).")
+    lines.append("")
+    lines.append("| Record | " + " | ".join(f"{LABEL.get(f, f)} horiz / heave" for f in fams) + " |")
+    lines.append("|" + "---|" * (len(fams) + 1))
+
+    def val(f, s, inp, key):
+        r = by.get((f, s), {}).get(inp)
+        return fnum(r, key) if r else np.nan
+
+    for inp in inputs:
+        cells = []
+        for f in fams:
+            h = np.nanmean([np.hypot(val(f, s, inp, "disp_x_pct_hs"), val(f, s, inp, "disp_y_pct_hs")) for s in seeds])
+            z = np.nanmean([val(f, s, inp, "disp_z_pct_hs") for s in seeds])
+            cells.append(f"{h:.2f} / {z:.2f}")
+        lines.append(f"| {inp.replace('wave_data_', '').replace('.csv', '')} | " + " | ".join(cells) + " |")
+    lines.append("")
+    lines.append("Paired over every (record, seed) pair, against OU-III:")
+    lines.append("")
+    for f in fams:
+        if f == "OU3":
+            continue
+        for key, name in (("h", "horizontal"), ("disp_z_pct_hs", "heave")):
+            a, b = [], []
+            for s in seeds:
+                for inp in inputs:
+                    if key == "h":
+                        a.append(np.hypot(val(f, s, inp, "disp_x_pct_hs"), val(f, s, inp, "disp_y_pct_hs")))
+                        b.append(np.hypot(val("OU3", s, inp, "disp_x_pct_hs"), val("OU3", s, inp, "disp_y_pct_hs")))
+                    else:
+                        a.append(val(f, s, inp, key)); b.append(val("OU3", s, inp, key))
+            ps = paired(np.array(a), np.array(b))
+            stats.setdefault("dataset", {}).setdefault(f, {})[name] = ps
+            lines.append(f"* {LABEL.get(f, f)}, {name}: {fmt_imp(ps)}, better on {100 * ps['win_rate']:.0f} % of "
+                         f"{ps['n']} pairs, Wilcoxon p = {ps['wilcoxon_p']:.2g}")
+    lines.append("")
+    return lines
+
+
+# ---------------------------------------------------------------------------
+# Figures
+# ---------------------------------------------------------------------------
+
+def mpl():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    spec = importlib.util.spec_from_file_location("svg_determinism", ROOT / "plots" / "svg_determinism.py")
+    svgd = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(svgd)
+    svgd.configure_svg(matplotlib)
+    return plt, svgd
+
+
+def style(ax):
+    ax.grid(True, which="both", color="#e6e6e3", lw=0.5)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+
+
+def figures(g, ds):
+    import carma3_benchmark as cb
+    plt, svgd = mpl()
+
+    # Paired improvement over OU-III, horizontal and heave, every sea.
+    sec = cb.PRIMARY + [s for s in cb.SECONDARY if not s.startswith("stationary")]
+    for metric, fname, title in (("rms_h", "paired_improvement_horizontal.svg", "horizontal"),
+                                 ("rms_z", "paired_improvement_heave.svg", "heave")):
+        fl = ["A41", "A52", "M54"] if metric == "rms_z" else ["A41", "A52", "M54", "A52S", "H41"]
+        rows = [sc for sc in sec if ("full", sc) in g]
+        fig, ax = plt.subplots(figsize=(8.6, 0.32 * len(rows) + 1.4))
+        ypos = np.arange(len(rows))[::-1]
+        for j, f in enumerate(fl):
+            for i, sc in enumerate(rows):
+                d = g[("full", sc)]
+                if f not in d:
+                    continue
+                seeds = sorted(set(d[f].keys()) & set(d["OU3"].keys()))
+                ps = paired(series(d, f, seeds, metric), series(d, "OU3", seeds, metric))
+                y = ypos[i] + (j - (len(fl) - 1) / 2) * 0.15
+                lo, hi = ps["improvement_ci"]
+                ax.plot([100 * lo, 100 * hi], [y, y], color=COL[f], lw=1.2)
+                ax.plot(100 * ps["improvement"], y, "o", color=COL[f], ms=4.5, mec="#fcfcfb", mew=0.8,
+                        label=LABEL[f] if i == 0 else None)
+        ax.axvline(0, color="#52514e", lw=0.8)
+        ax.set_yticks(ypos)
+        ax.set_yticklabels([sc_label(s) for s in rows], fontsize=7)
+        ax.set_xlabel(f"{title.capitalize()} RMS improvement over OU-III (%), 95 % CI")
+        ax.set_xlim(-200 if metric == "rms_z" else -100, 100)
+        style(ax)
+        ax.legend(fontsize=7, loc="lower left")
+        fig.tight_layout()
+        svgd.save_svg(fig, OUT / fname, bbox_inches="tight")
+        plt.close(fig)
+
+    # Distribution over seeds, principal seas.
+    fig, axes = plt.subplots(2, 4, figsize=(13, 5.8), sharey=False)
+    fl = ["OU3", "A41", "A52", "M54"]
+    for col, sc in enumerate(cb.PRIMARY):
+        d = g.get(("full", sc))
+        if not d:
+            continue
+        seeds = sorted(set.intersection(*[set(d[f].keys()) for f in fl if f in d]))
+        hs = fnum(d["OU3"][seeds[0]], "hs_incident")
+        for row, metric in enumerate(("rms_h", "rms_z")):
+            ax = axes[row, col]
+            for j, f in enumerate(fl):
+                if f not in d:
+                    continue
+                x = 100 * series(d, f, seeds, metric) / hs
+                ax.boxplot([x], positions=[j], widths=0.55, showfliers=False, patch_artist=True,
+                           boxprops=dict(facecolor=COL[f], edgecolor=COL[f], alpha=0.35),
+                           medianprops=dict(color=COL[f], lw=1.6), whiskerprops=dict(color=COL[f]),
+                           capprops=dict(color=COL[f]))
+            ax.set_xticks(range(len(fl)))
+            ax.set_xticklabels(fl, fontsize=7)
+            ax.set_title(f"{sc_label(sc)}: {'horizontal' if metric == 'rms_h' else 'heave'}", fontsize=8)
+            style(ax)
+            if col == 0:
+                ax.set_ylabel("RMS error (% H_s)")
+    fig.tight_layout()
+    svgd.save_svg(fig, OUT / "rms_distribution_full.svg", bbox_inches="tight")
+    plt.close(fig)
+
+    traces(plt, svgd)
+    if ds:
+        dataset_figure(plt, svgd, ds)
+
+
+def load_trace(path):
+    with path.open() as f:
+        r = csv.reader(f)
+        hdr = next(r)
+        data = np.array([[float(x) if x not in ("", "nan") else np.nan for x in row] for row in r])
+    return {h: data[:, i] for i, h in enumerate(hdr)}
+
+
+def traces(plt, svgd):
+    import carma3_benchmark as cb
+    p = cb.trace_path("full", J29, 1)
+    if p.exists():
+        d = load_trace(p)
+        t = d["t"]
+        m = (t >= 700) & (t <= 760)
+        fig, axes = plt.subplots(3, 1, figsize=(10, 7.2), sharex=True)
+        for ax, a, name in zip(axes, "xyz", ("surge-direction x (north)", "sway-direction y (east)", "heave z (down)")):
+            ax.plot(t[m], d[f"{a}_true"][m], color=COL["truth"], lw=1.6, label="truth (wave coordinate)")
+            for f in ("OU3", "A41", "A52"):
+                if f"{a}_{f}" in d:
+                    ax.plot(t[m], d[f"{a}_{f}"][m], color=COL[f], lw=1.0, label=LABEL[f])
+            ax.set_ylabel(f"{name} (m)", fontsize=8)
+            style(ax)
+        axes[0].legend(fontsize=7, ncol=3, loc="upper right")
+        axes[-1].set_xlabel("Time (s)")
+        axes[0].set_title("JONSWAP 0.29 Hz, 0.8 m, seed 1, complete INS: truth and estimates", fontsize=9)
+        fig.tight_layout()
+        svgd.save_svg(fig, OUT / "timeseries_xyz_jonswap.svg", bbox_inches="tight")
+        plt.close(fig)
+
+        # Error PSD per axis.
+        from scipy.signal import welch
+        fs = 1.0 / np.nanmedian(np.diff(t))
+        s = t >= 300
+        fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.6))
+        for ax, a in zip(axes, "xyz"):
+            f0, Pt = welch(d[f"{a}_true"][s], fs=fs, nperseg=4096)
+            ax.semilogy(f0, Pt, color=COL["truth"], lw=1.4, label="truth")
+            for fl in ("OU3", "A41", "A52"):
+                k = f"{a}_{fl}"
+                if k in d:
+                    _, Pe = welch((d[k] - d[f"{a}_true"])[s], fs=fs, nperseg=4096)
+                    ax.semilogy(f0, Pe, color=COL[fl], lw=1.0, label=f"{LABEL[fl]} error")
+            ax.set_xlim(0, 1.2)
+            ax.set_ylim(1e-8, 1)
+            ax.set_xlabel("Frequency (Hz)")
+            ax.set_title(f"{a} axis", fontsize=8)
+            style(ax)
+        axes[0].set_ylabel("PSD (m^2/Hz)")
+        axes[0].legend(fontsize=6, loc="upper right")
+        fig.tight_layout()
+        svgd.save_svg(fig, OUT / "error_psd_xyz_jonswap.svg", bbox_inches="tight")
+        plt.close(fig)
+
+    for sc, fname, title, win in (
+            ("stationary", "stationary_xyz.svg", "Still IMU: phantom displacement after the startup", (300, 1200)),
+            (f"{J29}+maneuver", "maneuver_xyz.svg", "Manoeuvring (speed changes, turns): wave-coordinate error",
+             (300, 1100)),
+            ("mixed_swell_wind", "mixed_xyz.svg", "Mixed swell + wind sea: truth and estimates", (700, 820))):
+        p = cb.trace_path("full", sc, 1)
+        if not p.exists():
+            continue
+        d = load_trace(p)
+        t = d["t"]
+        m = (t >= win[0]) & (t <= win[1])
+        fig, axes = plt.subplots(3, 1, figsize=(10, 6.6), sharex=True)
+        for ax, a in zip(axes, "xyz"):
+            if sc != "stationary":
+                ax.plot(t[m], d[f"{a}_true"][m], color=COL["truth"], lw=1.4, label="truth")
+            for f in ("OU3", "A41", "A52"):
+                k = f"{a}_{f}"
+                if k in d:
+                    y = d[k][m] - (d[f"{a}_true"][m] if sc == f"{J29}+maneuver" else 0.0)
+                    ax.plot(t[m], y, color=COL[f], lw=1.0, label=LABEL[f])
+            ax.set_ylabel(f"{a} (m)", fontsize=8)
+            style(ax)
+        axes[0].legend(fontsize=7, ncol=4, loc="upper right")
+        axes[0].set_title(title + " (seed 1, complete INS)", fontsize=9)
+        axes[-1].set_xlabel("Time (s)")
+        fig.tight_layout()
+        svgd.save_svg(fig, OUT / fname, bbox_inches="tight")
+        plt.close(fig)
+
+
+def dataset_figure(plt, svgd, ds):
+    by = collections.defaultdict(list)
+    for r in ds:
+        by[(r["family"], r["input"])].append(r)
+    inputs = sorted({r["input"] for r in ds})
+    fams = [f for f in ORDER if any(k[0] == f for k in by)]
+    fig, axes = plt.subplots(1, 2, figsize=(12, 3.8))
+    w = 0.8 / len(fams)
+    for ax, key in zip(axes, ("h", "z")):
+        for j, f in enumerate(fams):
+            vals = []
+            for inp in inputs:
+                rr = by.get((f, inp), [])
+                if key == "h":
+                    vals.append(np.mean([np.hypot(fnum(r, "disp_x_pct_hs"), fnum(r, "disp_y_pct_hs")) for r in rr])
+                                if rr else np.nan)
+                else:
+                    vals.append(np.mean([fnum(r, "disp_z_pct_hs") for r in rr]) if rr else np.nan)
+            ax.bar(np.arange(len(inputs)) + (j - (len(fams) - 1) / 2) * w, vals, width=w * 0.9, color=COL.get(f, "#999"),
+                   label=LABEL.get(f, f))
+        ax.set_xticks(range(len(inputs)))
+        ax.set_xticklabels([i.replace("wave_data_", "").split("_L")[0] for i in inputs], fontsize=6, rotation=30)
+        ax.set_ylabel(("horizontal" if key == "h" else "heave") + " RMS (% H_s)")
+        style(ax)
+    h, lab = axes[0].get_legend_handles_labels()
+    fig.legend(h, lab, fontsize=7, ncol=5, loc="lower center", bbox_to_anchor=(0.5, -0.12), frameon=False)
+    fig.tight_layout()
+    svgd.save_svg(fig, OUT / "dataset_comparison.svg", bbox_inches="tight")
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    report()

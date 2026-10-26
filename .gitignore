@@ -119,7 +119,7 @@ reports/coverage/
 .sim-data/
 
 # Experimental CARMA benchmark build and run outputs
-tests/kalman_carma/carma_bench
+tests/kalman_carma/carma3_bench
 tests/kalman_carma/process/
-tests/kalman_carma/smoke_*.csv
-reports/results/carma_benchmark/traces/
+tests/kalman_carma/smoke3_*.csv
+reports/results/carma3_benchmark/traces/

@@ -115,9 +115,9 @@ MatD<N> lyapunov_kron(const MatD<N>& A, const MatD<N>& W) {
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
             for (int k = 0; k < N; ++k)
-                for (int l = 0; l < N; ++l)
+                for (int q = 0; q < N; ++q)
                     // vec column-major: (I (x) A + A (x) I) vec(P)
-                    K(i + N * j, k + N * l) = I(j,l) * A(i,k) + A(j,l) * I(i,k);
+                    K(i + N * j, k + N * q) = I(j,q) * A(i,k) + A(j,q) * I(i,k);
     Eigen::Matrix<double,N*N,1> w;
     for (int j = 0; j < N; ++j)
         for (int i = 0; i < N; ++i) w(i + N * j) = -W(i,j);

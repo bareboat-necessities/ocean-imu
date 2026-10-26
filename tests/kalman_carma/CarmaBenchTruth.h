@@ -18,7 +18,7 @@
   filters waves of wavenumber k (l is an effective averaging depth/length).
   Short waves therefore move the vessel little, as on a real small craft;
   the motion levels are calibrated against the pinned 28 ft vessel-RAO
-  dataset (see docs/carma-heave-filter.md).  Every channel is a finite
+  dataset (see docs/carma-three-axis.md).  Every channel is a finite
   sum of harmonics with analytically differentiated phases, so position,
   velocity, acceleration, attitude and angular rate come from one continuous
   history and the specific force is consistent with the displacement to
@@ -26,6 +26,24 @@
 
   Frequencies are jittered inside their bins, so the record does not repeat
   with period 1/df.  All randomness comes from the scenario seed.
+
+  Three-axis extensions (docs/carma-three-axis.md), all off in the scenario
+  defaults (carma3_bench enables the physical horizontal model unless the
+  scenario has the hlegacy modifier):
+  * HorizontalModel::physical -- surge and sway through their own RAOs: a
+    free-floating hull follows the orbital motion in long waves (no
+    hydrostatic restoring, so no resonance) with hull averaging over draft,
+    length and beam, e^{-k (d + l_L |cos b|)} cos b along the bow and
+    e^{-k (d + l_B |sin b|)} sin b along the beam (b = propagation direction
+    relative to the bow), instead of 0.8 x the heave RAO;
+  * speed_mps -- steady forward speed U along the heading: every component
+    is encountered at w_e = w - k U cos b (Doppler; negative w_e fold, and
+    the causal RAOs are evaluated at w_e, H(-w) = conj H(w)); the constant
+    velocity itself produces no acceleration;
+  * Translation -- low-frequency horizontal translation of the local
+    equilibrium (anchored slow drift with yaw sheer, wind drift, or speed and
+    heading manoeuvres), added to the total motion the IMU sees but kept out
+    of the wave coordinate p_wave that the estimators are scored against.
 
   Each channel is Re(sum_i c_i z_i(t)) with z_i = exp(i phi_i(t)) and a
   precomputed complex coefficient c_i that folds in amplitude, RAO gain and
@@ -35,8 +53,10 @@
 */
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 #include <cstdint>
 #include <random>
 #include <string>
@@ -96,6 +116,24 @@ struct BiasDrift {
     double sin_period_s = 900.0;
 };
 
+struct HorizontalModel {
+    bool physical = false;      // false: legacy 0.8 x heave RAO x orbital motion
+    double depth_m = 0.5;       // effective averaging depth (as the heave RAO)
+    double length_m = 0.75;     // effective averaging length along the bow
+    double beam_m = 0.28;       // effective averaging length across the beam
+};
+
+// Low-frequency horizontal translation of the local equilibrium.
+struct Translation {
+    enum class Kind { None, Anchor, Drift, Maneuver };
+    Kind kind = Kind::None;
+    double amp_m = 2.5;         // anchor: slow-drift std along the wave axis
+    double f_hz = 1.0 / 90.0;   // anchor: slow-drift natural frequency
+    double yaw_sheer_deg = 15.0;// anchor: yaw per unit (cross-axis / amp)
+    double drift_speed_mps = 0.3;   // drift: mean (unobservable) drift speed
+    double drift_vel_std_mps = 0.08;// drift: velocity fluctuation std per axis
+};
+
 struct Scenario {
     std::string name;
     double duration_s = 1200.0;
@@ -109,6 +147,9 @@ struct Scenario {
     AttitudeModel att;
     BiasDrift bias;
     bool stationary = false;              // no motion at all
+    HorizontalModel hmodel;
+    double speed_mps = 0.0;               // steady forward speed (Doppler)
+    Translation lf;
 };
 
 struct TruthSample {
@@ -123,7 +164,79 @@ struct TruthSample {
     Eigen::Vector3d omega_b = Eigen::Vector3d::Zero();   // body rate, rad/s
     Eigen::Vector3d f_b = Eigen::Vector3d::Zero();       // specific force, body
     Eigen::Vector3d extra_acc_bias_b = Eigen::Vector3d::Zero();
+    // Wave coordinate (oscillatory, about the local equilibrium); p/v/a_ned
+    // above are the total motion, wave plus low-frequency translation.
+    Eigen::Vector3d p_wave = Eigen::Vector3d::Zero();
+    Eigen::Vector3d v_wave = Eigen::Vector3d::Zero();
+    Eigen::Vector3d a_wave = Eigen::Vector3d::Zero();
 };
+
+// Base seas of carma3_bench.  Name fragments such as
+// _fp0.29_ _hs2_ _g3.3_ set the JONSWAP/PM parameters.  Returns false for an
+// unknown name.
+inline SpectrumPart jonswap_part(double hs, double fp, double gamma, double dir = 30.0, double s = 4.0) {
+    SpectrumPart p;
+    p.type = SpectrumType::Jonswap;
+    p.hs_m = hs; p.fp_hz = fp; p.gamma = gamma; p.mean_dir_deg = dir; p.spread_s = s;
+    return p;
+}
+
+inline bool base_scenario(const std::string& name, Scenario& sc) {
+    auto num = [&](const std::string& key, double def) {
+        const auto pos = name.find(key);
+        if (pos == std::string::npos) return def;
+        return std::strtod(name.c_str() + pos + key.size(), nullptr);
+    };
+    if (name.rfind("jonswap", 0) == 0) {
+        sc.parts = {jonswap_part(num("_hs", 2.0), num("_fp", 0.29), num("_g", 3.3))};
+    } else if (name.rfind("pm", 0) == 0) {
+        sc.parts = {jonswap_part(num("_hs", 2.0), num("_fp", 0.25), 1.0)};
+    } else if (name == "mixed_swell_wind") {
+        sc.parts = {jonswap_part(1.0, 0.09, 5.0, 10.0, 12.0), jonswap_part(0.8, 0.30, 3.3, 60.0, 4.0)};
+    } else if (name == "bimodal") {
+        sc.parts = {jonswap_part(1.2, 0.13, 3.3, 0.0, 8.0), jonswap_part(0.4, 0.42, 3.3, 70.0, 4.0)};
+    } else if (name == "broadband") {
+        SpectrumPart p;
+        p.type = SpectrumType::Band;
+        p.hs_m = 1.0; p.f_lo_hz = 0.10; p.f_hi_hz = 0.70; p.mean_dir_deg = 30.0; p.spread_s = 2.0;
+        sc.parts = {p};
+    } else if (name == "changing_fp") {
+        // Dominant frequency rises smoothly 0.22 -> 0.36 Hz over 300..900 s.
+        sc.parts = {jonswap_part(0.7, 0.22, 3.3)};
+        sc.warp.enabled = true;
+        sc.warp.t0 = 300.0; sc.warp.t1 = 900.0; sc.warp.s_end = 0.36 / 0.22;
+    } else if (name == "abrupt_change") {
+        // Short wind sea replaced by a long, higher sea over 10 s at 600 s.
+        sc.parts = {jonswap_part(0.5, 0.35, 3.3, 30.0)};
+        sc.parts_b = {jonswap_part(2.0, 0.18, 3.3, 60.0)};
+        sc.fade.enabled = true;
+        sc.fade.t_c = 600.0; sc.fade.width = 10.0;
+    } else if (name == "small_amplitude") {
+        sc.parts = {jonswap_part(0.05, 0.40, 3.3)};
+    } else if (name == "stationary") {
+        sc.stationary = true;
+    } else if (name == "bias_drift") {
+        sc.parts = {jonswap_part(0.8, 0.29, 3.3)};
+        // ~5 mg ramp on body z and ~3 mg on x, y over 1200 s, plus a slow
+        // 2 mg oscillation: beyond the shared random-walk model.
+        sc.bias.ramp_mps2_per_s = Eigen::Vector3d(0.03, -0.03, 0.05) / 1200.0;
+        sc.bias.sin_amp_mps2 = Eigen::Vector3d(0.0, 0.0, 0.02);
+        sc.bias.sin_period_s = 600.0;
+    } else if (name == "tilted") {
+        sc.parts = {jonswap_part(0.8, 0.29, 3.3)};
+        sc.att.heel_deg = 15.0;
+        sc.att.trim_deg = 5.0;
+    } else if (name == "large_rotation") {
+        sc.parts = {jonswap_part(0.8, 0.29, 3.3)};
+        sc.att.roll_gain = 2.0;
+        sc.att.pitch_gain = 2.0;
+        sc.att.yaw_osc_deg = 15.0;
+        sc.att.yaw_osc_hz = 0.05;
+    } else {
+        return false;
+    }
+    return true;
+}
 
 inline double jonswap_shape(double f, double fp, double gamma) {
     if (!(f > 0.0)) return 0.0;
@@ -150,6 +263,14 @@ inline std::complex<double> vessel_rao(double omega, double fn_hz, double zeta, 
     const double wn = TWO_PI * fn_hz;
     const double k = omega * omega / G;
     const std::complex<double> den(wn * wn - omega * omega, 2.0 * zeta * wn * omega);
+    return (wn * wn * std::exp(-k * avg_m)) / den;
+}
+
+// The same response at encounter frequency we (any sign) and wavenumber k:
+// the dynamic part is evaluated at we (H(-w) = conj H(w)), the averaging at k.
+inline std::complex<double> vessel_rao_ek(double we, double k, double fn_hz, double zeta, double avg_m) {
+    const double wn = TWO_PI * fn_hz;
+    const std::complex<double> den(wn * wn - we * we, 2.0 * zeta * wn * we);
     return (wn * wn * std::exp(-k * avg_m)) / den;
 }
 
@@ -187,23 +308,40 @@ public:
             for (int i = 0; i < NF; ++i) {
                 const double omega = TWO_PI * fs[i];
                 const double k = omega * omega / G;
-                const std::complex<double> Hh = sc.heave_rao
+                std::complex<double> Hh = sc.heave_rao
                     ? vessel_rao(omega, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
                     : std::complex<double>(1.0, 0.0);
-                const std::complex<double> Hr = vessel_rao(omega, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
-                const std::complex<double> Hp = vessel_rao(omega, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
+                std::complex<double> Hr = vessel_rao(omega, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
+                std::complex<double> Hp = vessel_rao(omega, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
                 for (int j = 0; j < ND; ++j) {
                     const double amp = std::sqrt(2.0 * ss[i] * scale * df * dwt[j] / wsum);
                     const double dir = p.mean_dir_deg * PI / 180.0 + th[j];
                     const double rel = dir - psi_bow;
                     const std::complex<double> lag(0.0, -1.0);   // quarter period: sin from cos
-                    omega_.push_back(omega);
+                    // Encounter frequency of this component (U = 0: omega).
+                    const double we = (sc.speed_mps != 0.0) ? omega - k * sc.speed_mps * std::cos(rel) : omega;
+                    if (sc.speed_mps != 0.0) {
+                        Hh = sc.heave_rao ? vessel_rao_ek(we, k, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
+                                          : std::complex<double>(1.0, 0.0);
+                        Hr = vessel_rao_ek(we, k, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
+                        Hp = vessel_rao_ek(we, k, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
+                    }
+                    omega_.push_back(we);
                     phase0_.push_back(TWO_PI * u01(rng));
                     std::complex<double> c[NCH];
                     c[ETA] = amp;
                     c[HEAVE] = amp * Hh;
-                    c[NORTH] = sc.horizontal_gain * amp * Hh * lag * std::cos(dir);
-                    c[EAST] = sc.horizontal_gain * amp * Hh * lag * std::sin(dir);
+                    if (sc.hmodel.physical) {
+                        // Surge along the bow, sway along the beam, rotated to NED.
+                        const double cb = std::cos(rel), sb = std::sin(rel);
+                        const double surge = std::exp(-k * (sc.hmodel.depth_m + sc.hmodel.length_m * std::abs(cb))) * cb;
+                        const double sway = std::exp(-k * (sc.hmodel.depth_m + sc.hmodel.beam_m * std::abs(sb))) * sb;
+                        c[NORTH] = amp * lag * (surge * std::cos(psi_bow) - sway * std::sin(psi_bow));
+                        c[EAST] = amp * lag * (surge * std::sin(psi_bow) + sway * std::cos(psi_bow));
+                    } else {
+                        c[NORTH] = sc.horizontal_gain * amp * Hh * lag * std::cos(dir);
+                        c[EAST] = sc.horizontal_gain * amp * Hh * lag * std::sin(dir);
+                    }
                     c[SLOPE_BOW] = k * amp * std::cos(rel) * Hp * lag;
                     c[SLOPE_BEAM] = k * amp * std::sin(rel) * Hr * lag;
                     for (int ch = 0; ch < NCH; ++ch) {
@@ -267,6 +405,135 @@ private:
     std::vector<double> cr_[NCH], ci_[NCH];
 };
 
+// Low-frequency horizontal translation of the local equilibrium (not part
+// of the wave coordinate).  Every history is analytic in v and a; p of the
+// manoeuvre is integrated once on a 0.05 s grid (it is not scored).
+class LowFrequencyTranslation {
+public:
+    void build(const Scenario& sc, std::mt19937_64& rng) {
+        kind_ = sc.lf.kind;
+        const double dir = sc.parts.empty() ? 0.0 : sc.parts[0].mean_dir_deg * PI / 180.0;
+        const double psi0 = sc.att.heading_deg * PI / 180.0;
+        if (sc.speed_mps != 0.0) {           // steady way along the heading
+            ux_ += sc.speed_mps * std::cos(psi0);
+            uy_ += sc.speed_mps * std::sin(psi0);
+        }
+        std::uniform_real_distribution<double> u01(0.0, 1.0);
+        auto harmonics = [&](int ax, int n, double f_lo, double f_hi, double std_quantity, bool velocity) {
+            // n components, frequencies jittered in log-spaced bins; equal
+            // amplitudes giving the requested std of displacement (or of
+            // velocity when velocity is set).
+            for (int i = 0; i < n; ++i) {
+                const double x = (i + u01(rng)) / n;
+                const double f = f_lo * std::pow(f_hi / f_lo, x);
+                const double w = TWO_PI * f;
+                const double b = std_quantity * std::sqrt(2.0 / n);
+                w_[ax].push_back(w);
+                amp_[ax].push_back(velocity ? b / w : b);
+                ph_[ax].push_back(TWO_PI * u01(rng));
+            }
+        };
+        if (kind_ == Translation::Kind::Anchor) {
+            // Slow drift along the wave axis (rode stretched by the mean and
+            // slowly varying drift force), smaller across it, and the yaw
+            // sheer that goes with the cross-axis excursion.
+            axis_[0] = std::cos(dir); axis_[1] = std::sin(dir);
+            harmonics(0, 24, 0.7 * sc.lf.f_hz, 1.3 * sc.lf.f_hz, sc.lf.amp_m, false);
+            harmonics(1, 24, 0.7 * sc.lf.f_hz, 1.3 * sc.lf.f_hz, 0.4 * sc.lf.amp_m, false);
+            yaw_gain_ = sc.lf.yaw_sheer_deg * PI / 180.0 / (0.4 * sc.lf.amp_m);
+        } else if (kind_ == Translation::Kind::Drift) {
+            axis_[0] = 1.0; axis_[1] = 0.0;
+            ux_ += sc.lf.drift_speed_mps * std::cos(dir);
+            uy_ += sc.lf.drift_speed_mps * std::sin(dir);
+            harmonics(0, 30, 0.003, 0.03, sc.lf.drift_vel_std_mps, true);
+            harmonics(1, 30, 0.003, 0.03, sc.lf.drift_vel_std_mps, true);
+        } else if (kind_ == Translation::Kind::Maneuver) {
+            U0_ = 2.0; psi0_ = psi0;
+            steps_ = {{350.0, 25.0, 1.5, 0.0}, {500.0, 35.0, 0.0, 70.0 * PI / 180.0},
+                      {700.0, 25.0, -1.5, 0.0}, {850.0, 35.0, 0.0, -70.0 * PI / 180.0},
+                      {1000.0, 30.0, 0.0, 45.0 * PI / 180.0}};
+            const double h = 0.05, T = sc.duration_s + 1.0;
+            double px = 0, py = 0, t = 0;
+            tab_.push_back({0.0, 0.0});
+            while (t < T) {
+                // Simpson over [t, t + h].
+                double v0[2], vm[2], v1[2], a[2], y, dy;
+                maneuver(t, v0, a, y, dy); maneuver(t + 0.5 * h, vm, a, y, dy); maneuver(t + h, v1, a, y, dy);
+                px += h / 6.0 * (v0[0] + 4 * vm[0] + v1[0]);
+                py += h / 6.0 * (v0[1] + 4 * vm[1] + v1[1]);
+                t += h;
+                tab_.push_back({px, py});
+            }
+            tab_h_ = h;
+        }
+    }
+
+    bool active() const { return kind_ != Translation::Kind::None || ux_ != 0.0 || uy_ != 0.0; }
+
+    void eval(double t, double p[2], double v[2], double a[2], double& yaw, double& dyaw) const {
+        p[0] = ux_ * t; p[1] = uy_ * t; v[0] = ux_; v[1] = uy_; a[0] = a[1] = 0.0;
+        yaw = 0.0; dyaw = 0.0;
+        if (kind_ == Translation::Kind::Maneuver) {
+            double vm[2], am[2];
+            maneuver(t, vm, am, yaw, dyaw);
+            const double x = t / tab_h_;
+            const size_t i = std::min(static_cast<size_t>(x), tab_.size() - 2);
+            const double fr = x - static_cast<double>(i);
+            p[0] += (1 - fr) * tab_[i][0] + fr * tab_[i + 1][0];
+            p[1] += (1 - fr) * tab_[i][1] + fr * tab_[i + 1][1];
+            v[0] += vm[0]; v[1] += vm[1]; a[0] += am[0]; a[1] += am[1];
+            return;
+        }
+        double q[2][3] = {};
+        for (int ax = 0; ax < 2; ++ax)
+            for (size_t i = 0; i < w_[ax].size(); ++i) {
+                const double w = w_[ax][i], ph = w * t + ph_[ax][i], c = std::cos(ph), sn = std::sin(ph);
+                q[ax][0] += amp_[ax][i] * sn;
+                q[ax][1] += amp_[ax][i] * w * c;
+                q[ax][2] += -amp_[ax][i] * w * w * sn;
+            }
+        // q[0] along axis_, q[1] across it.
+        const double ex = axis_[0], ey = axis_[1];
+        for (int d = 0; d < 3; ++d) {
+            const double xn = ex * q[0][d] - ey * q[1][d];
+            const double ye = ey * q[0][d] + ex * q[1][d];
+            if (d == 0) { p[0] += xn; p[1] += ye; }
+            if (d == 1) { v[0] += xn; v[1] += ye; }
+            if (d == 2) { a[0] += xn; a[1] += ye; }
+        }
+        if (kind_ == Translation::Kind::Anchor) { yaw = yaw_gain_ * q[1][0]; dyaw = yaw_gain_ * q[1][1]; }
+    }
+
+private:
+    struct Step { double t0, L, dU, dpsi; };
+
+    // Speed U(t) and heading psi(t) with smootherstep changes; v and a of the
+    // way made good, the extra heading and its rate.
+    void maneuver(double t, double v[2], double a[2], double& yaw, double& dyaw) const {
+        double U = U0_, dU = 0.0, psi = 0.0, dpsi = 0.0;
+        for (const auto& st : steps_) {
+            const double x = (t - st.t0) / st.L;
+            if (x <= 0.0) continue;
+            if (x >= 1.0) { U += st.dU; psi += st.dpsi; continue; }
+            const double S = x * x * x * (10.0 + x * (-15.0 + 6.0 * x));
+            const double dS = 30.0 * x * x * (1.0 - x) * (1.0 - x) / st.L;
+            U += st.dU * S; dU += st.dU * dS; psi += st.dpsi * S; dpsi += st.dpsi * dS;
+        }
+        const double h = psi0_ + psi, c = std::cos(h), s = std::sin(h);
+        v[0] = U * c; v[1] = U * s;
+        a[0] = dU * c - U * dpsi * s; a[1] = dU * s + U * dpsi * c;
+        yaw = psi; dyaw = dpsi;
+    }
+
+    Translation::Kind kind_ = Translation::Kind::None;
+    std::vector<double> w_[2], amp_[2], ph_[2];
+    double axis_[2] = {1.0, 0.0};
+    double ux_ = 0.0, uy_ = 0.0, yaw_gain_ = 0.0;
+    double U0_ = 0.0, psi0_ = 0.0, tab_h_ = 0.05;
+    std::vector<Step> steps_;
+    std::vector<std::array<double, 2>> tab_;
+};
+
 class WaveTruth {
 public:
     WaveTruth(const Scenario& sc, uint64_t seed, double dt) : sc_(sc), dt_(dt) {
@@ -278,6 +545,10 @@ public:
         std::uniform_real_distribution<double> uph(0.0, TWO_PI);
         for (int i = 0; i < 3; ++i) yaw_phase_[i] = uph(rng);
         yaw_osc_phase_ = uph(rng);
+        // Separate stream: the wave realization is the same with or without
+        // a translation.
+        std::mt19937_64 rng_lf(seed * 0xD1B54A32D192ED03ull + 0x632BE59BD9B4E019ull);
+        if (!sc_.stationary) lf_.build(sc_, rng_lf);
     }
 
     static double incident_hs(const std::vector<SpectrumPart>& parts) {
@@ -371,6 +642,13 @@ private:
         s.p_ned = Eigen::Vector3d(m[S::NORTH][0], m[S::EAST][0], -m[S::HEAVE][0]);
         s.v_ned = Eigen::Vector3d(m[S::NORTH][1], m[S::EAST][1], -m[S::HEAVE][1]);
         s.a_ned = Eigen::Vector3d(m[S::NORTH][2], m[S::EAST][2], -m[S::HEAVE][2]);
+        s.p_wave = s.p_ned; s.v_wave = s.v_ned; s.a_wave = s.a_ned;
+        double lf_yaw = 0.0, lf_dyaw = 0.0;
+        if (lf_.active()) {
+            double lp[2], lv[2], la[2];
+            lf_.eval(t, lp, lv, la, lf_yaw, lf_dyaw);
+            for (int i = 0; i < 2; ++i) { s.p_ned(i) += lp[i]; s.v_ned(i) += lv[i]; s.a_ned(i) += la[i]; }
+        }
 
         // Bow-down pitch follows the bow slope, starboard-down roll the beam
         // slope (aerospace signs), plus mean heel and trim.
@@ -394,6 +672,8 @@ private:
                 yaw += at.yaw_osc_deg * d2r * std::sin(om * t + yaw_osc_phase_);
                 dyaw += at.yaw_osc_deg * d2r * om * std::cos(om * t + yaw_osc_phase_);
             }
+            yaw += lf_yaw;
+            dyaw += lf_dyaw;
         }
         s.roll = roll; s.pitch = pitch; s.yaw = yaw;
         const Eigen::Matrix3d R =
@@ -414,6 +694,7 @@ private:
     double dt_;
     uint64_t k_ = 0;
     SeaSynthesis sea_a_, sea_b_;
+    LowFrequencyTranslation lf_;
     double yaw_phase_[3] = {0, 0, 0};
     double yaw_osc_phase_ = 0.0;
 };

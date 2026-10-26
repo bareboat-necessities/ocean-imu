@@ -4,10 +4,12 @@
   Copyright (c) 2026 Mikhail Grushinskiy
   Released under the MIT License
 
-  CarmaVerticalModel -- EXPERIMENTAL CARMA(p,q) vertical marine-motion prior.
+  CarmaVerticalModel -- EXPERIMENTAL CARMA(p,q) marine-motion prior of one
+  translational axis (the vertical axis and, with a horizontal shape, each
+  horizontal axis of Kalman3D_Wave_CARMA3).
 
-  Research alternative to the OU-III vertical chain [v, p, S, a_w].  It is not
-  a shipping estimator component; see docs/carma-heave-filter.md for the
+  Research alternative to the OU-III chain [v, p, S, a_w].  It is not a
+  shipping estimator component; see docs/carma-three-axis.md for the
   derivation, the benchmark protocol and the measured results.
 
   Model
@@ -90,7 +92,7 @@ struct CarmaShape {
 
 // Constrained log-spectral fits to JONSWAP (f_p = 0.29 Hz, gamma = 3.3) over
 // 0.17..1.30 Hz; objective and constraints in tools/carma_fit.py, results in
-// reports/results/carma_benchmark/carma_fit.json.  These are research
+// reports/results/carma_model/carma_fit.json.  These are research
 // starting points, not validated universal tuning constants.
 //
 // CARMA(5,2): the preliminary constrained fit (zeta_z >= 0.20) supplied with
@@ -303,7 +305,7 @@ inline bool stationary_covariance_doubling(const Eigen::Matrix<T,M,M>& A,
 
 // Continuous dynamics in [h, v, a, latent] coordinates for unit noise gain
 // (G = e_a), frequencies multiplied by kappa.  Derivation in the file header
-// and docs/carma-heave-filter.md.
+// and docs/carma-three-axis.md.
 template<int N>
 inline void carma_dynamics(const CarmaShape& sh, double kappa,
                            Eigen::Matrix<double,N,N>& A)
