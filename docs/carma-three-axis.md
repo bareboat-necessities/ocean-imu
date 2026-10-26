@@ -1070,9 +1070,10 @@ benchmark's hull only.
     python3 tools/carma3_benchmark.py timing           # on an idle host
     python3 tools/carma3_benchmark.py report           # summary.md, figures
 
-Every row of `raw_runs.csv` reproduces bit for bit (apart from `runtime_ns`)
-with this tree's `carma3_bench` on the host that produced it (x86-64, GCC
-`-O3 -march=native`).  The benches build without `-ffp-contract=off`, so a
+The rows of `raw_runs.csv` reproduce bit for bit (apart from `runtime_ns`)
+with this tree's `carma3_bench` on the host that produced them (x86-64, GCC
+`-O3 -march=native`): every A52, A52S and level-1 row was re-run with it,
+and a random sample of the other rows is identical.  The benches build without `-ffp-contract=off`, so a
 different compiler, CPU or translation-unit layout can move CARMA results
 in the fifth significant digit through FMA contraction; no table or
 conclusion depends on that digit.
