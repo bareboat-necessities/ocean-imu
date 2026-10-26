@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "06fe4ca552e1a9e37e1a0f26bedd881dd5a09d87fa973e646e24197e86c4bc02",
-  "results_file_count": 523,
+  "replay_fingerprint": "bb52c2fb3ca7eaa91132129c8b51298829a52318d9b1c8fe7332447814201cc9",
+  "results_file_count": 506,
   "results_files": [
     {
       "kind": "file",
@@ -11,7 +11,7 @@
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/carma3_analysis.json",
-      "sha256": "cc785438eb574843d3c78e5d074c45acba40c85765951ca0ddbf3990cf673976"
+      "sha256": "efd69b97dabddf81acc3a4206e82bee28fb8dac61e355476c0675c121f092d1f"
     },
     {
       "kind": "file",
@@ -26,22 +26,22 @@
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/dataset_comparison.svg",
-      "sha256": "1a06203cd128b83ef8d82ea90dfdb047647d4b9e66557bbbb481f1b40104d2da"
+      "sha256": "cbb009f5f2f11e7e574b0acfc93255371a8e4fc22953c28c66d98055c946361d"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/dataset_runs.csv",
-      "sha256": "6be0ffa20873bbb85b43a0f6ff07d6544a683bbf519b2274623a446af5962d21"
+      "sha256": "e8e67b9391c05552878de584f6649377dfb6495ac21197163c9a4e22d7f09a42"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/error_psd_xyz_jonswap.svg",
-      "sha256": "6a7022e60fd19baf850d047f517ab0cc43583e812caa302809ead3b48488cb62"
+      "sha256": "7f8834e54a302674c2f36db3c3702f6154aff60724156a4ad39e78753f3b33f5"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/esp32s3_size.csv",
-      "sha256": "47db99afd6903d6566c8a2c779833aaa55453f166c67668778fcc547e0db3ef8"
+      "sha256": "f428153cbe119a220e055e2f8531dc31b42db8e894c806888212c534059770fc"
     },
     {
       "kind": "file",
@@ -51,12 +51,12 @@
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/maneuver_xyz.svg",
-      "sha256": "708bdf73d8593da5e2370146f61ee1853b5fca4d49535caeb649f8ffa2ef9db7"
+      "sha256": "a36c0843d694bf2f8f9625138fa67dfe68a53dfca7fc1435937b1d1d4a25ae97"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/mixed_xyz.svg",
-      "sha256": "5aa5e57fbbbc74524808111e3c5d26ca50c5b36dec9bc6da2f9db418e927a2bb"
+      "sha256": "0e85502a4d76c4c5b149d3ad14fb7b0e1f7a772d4686d78715a4e77a519aaad2"
     },
     {
       "kind": "file",
@@ -66,27 +66,27 @@
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/paired_improvement_heave.svg",
-      "sha256": "2cd84f09e8d7d0951c2a790e5e8cee42634c2aaf69e6eafd677e164cdbd6661c"
+      "sha256": "bc1419dba416f496b1facc5734c0b2620fe7f1547a9d26d8471e9224fec82fe0"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/paired_improvement_horizontal.svg",
-      "sha256": "ba4646ecb1c9c20421bb0d9936756feb8f29605cb04fed2ca0e6710489fbe575"
+      "sha256": "282108ddc37cdefd773b037eef5d8a0a3c4ace800ec053a5856d672e2b7fa6df"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/paired_stats.json",
-      "sha256": "205b312423611c2f1b6550e209dcce7ecaf8e0ce29a6e6625d30c855dc3f0bf2"
+      "sha256": "aa7eba7a60d4f9d368516d001b7b134a20774ab4bf41cded1cddddc0648c6e1f"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/raw_runs.csv",
-      "sha256": "83f443d6066db5cd53cab55e11f39dd93321f41faab9c2207897971c5f3b2cc0"
+      "sha256": "54c8d4e29f67e8761e7ab0b19a133374375fa5ddb7623456ff67349225942857"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/rms_distribution_full.svg",
-      "sha256": "ec25304e226d0a17cdb16a38b05e28693350e93f0b3b8a720a315e3153b4a8a3"
+      "sha256": "8de2e164c995a6ee4ee3c81e9969afece0ad65748d59e5f82a9664310881a435"
     },
     {
       "kind": "file",
@@ -96,22 +96,22 @@
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/stationary_xyz.svg",
-      "sha256": "964f2c8907575e9800f1fcb24db26900d18cad7ce6da32ba32bb9f8da9dabd1b"
+      "sha256": "06d324df10b0e6221ac5bd05aa1cc83682811f7b9753368c076755b139ad6d6d"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/summary.md",
-      "sha256": "7c4dadc03e6bc143a18e749f80f0f3c8d1dfd7b010abbcf080824142eb752834"
+      "sha256": "90e916376e386ca0e8442151e1a6235435b08384c8e315f5633e886a0fe0a107"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/timeseries_xyz_jonswap.svg",
-      "sha256": "33b7a6c5e0fecf425e39a4ec8e413efd94e139ae6a6b12fd5ec6579736ec467c"
+      "sha256": "8ba5d143c5c42e52af8024c8c245dc8836d7d380532c30c56c31f3accfb78f7c"
     },
     {
       "kind": "file",
       "path": "reports/results/carma3_benchmark/timing_runs.csv",
-      "sha256": "37b06fdae395a4d44cb99fc293062ead48442ec67c3f0d4515c73004a097640b"
+      "sha256": "46869e58e71524e27fc629c94824ebc9afe1e46b12e5dbb12b05e9e8737c3992"
     },
     {
       "kind": "file",
@@ -120,118 +120,33 @@
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/carma52_process_psd.svg",
+      "path": "reports/results/carma_model/carma52_process_psd.svg",
       "sha256": "1e3ece1999fd7680f8e8575a3e995d32df6d3ad4451b1e91232d44c2c18b09f4"
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/carma_fit.json",
+      "path": "reports/results/carma_model/carma_fit.json",
       "sha256": "09bc6eda764815add332365921ac0ef4ccc33db69bb0ebc79265750b872a1a47"
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/carma_psd_overlay.svg",
+      "path": "reports/results/carma_model/carma_psd_overlay.svg",
       "sha256": "f597f7fa89f0d6c50959a78566018256e2a79b872c38cb70db32889e890a966f"
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/dataset_comparison.svg",
-      "sha256": "07dfd11ec83358801ab998e0bd033e51c2ff0fe52c2801a48b669cbce392c311"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/dataset_runs.csv",
-      "sha256": "aa94fd60a4bd4c266a17e6b662bff45e55c7faa5dff8da194fdf9e4fc6383d2d"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/deterministic_runs.csv",
-      "sha256": "205c6006bb73a88941c2970fe4087d8621235b05f1931687f27d12ea78dfd796"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/error_timeseries_jonswap.svg",
-      "sha256": "a079d2817033322efe04def285756d019291df74e41a5d0a33d9166d078ddcfb"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/matched_runs.csv",
-      "sha256": "89dc3bd02a3ae908d3f716441f2da4425115457b1761f26c27971b04c8c7d72a"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/mismatch_analysis.json",
+      "path": "reports/results/carma_model/mismatch_analysis.json",
       "sha256": "8bf3dfea7eb7bb68de8c1323a526ac35436e710a577b9fb6b9a36226e6984853"
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/mismatch_error_psd.svg",
+      "path": "reports/results/carma_model/mismatch_error_psd.svg",
       "sha256": "ec9a61ff3256c26b0590950ce7cd534fa17917842f2a37aae75ccab7ad573dec"
     },
     {
       "kind": "file",
-      "path": "reports/results/carma_benchmark/paired_improvement_full.svg",
-      "sha256": "60f68ef6884d64edfc94c82f8f5e66066b70bf0b9fdb5c0e6063374434362111"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/paired_stats.json",
-      "sha256": "310e042f507f39e8fe5528d07305beecadc21af658ea27d14a05cfc090c8dc00"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/process_validation.json",
+      "path": "reports/results/carma_model/process_validation.json",
       "sha256": "e017a0dca908e572900c2f2452b121efe38b50daa7bc881b0254f181b9bece08"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/psd_jonswap.svg",
-      "sha256": "5a4385fbf7eb41d760b5c1c36e29daa6eb44df1d7ce57e1f0f4b162a0beb7994"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/raw_runs.csv",
-      "sha256": "d7f20abeefbbe719167f50ac7c59bf11cc7bd4f858961d103a9cccd360b9f7fa"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/rms_distribution_full.svg",
-      "sha256": "e382892654751b05d8674ae6b3559b7b50c1a61013bb596a51169033b20c19f3"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/rms_distribution_vertical.svg",
-      "sha256": "d22b723a59b46d8bc104fdc61bd7847f5196c97f8087051ed59aa264bb770676"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/runtime_memory.svg",
-      "sha256": "3051ecd41c20540e100221dbee293111b61421de2e5506254b5d1c520c11fd89"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/stationary_timeseries.svg",
-      "sha256": "a25733df41346ffda340eb9779150f411f1bfb8b50a30fbc5159855363d8bd45"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/summary.md",
-      "sha256": "47056ccb43a8c1d369c2216ffec4c6b705cb6b4b91d1a1ea96fd419614d86679"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/timeseries_jonswap.svg",
-      "sha256": "6fc791b798a64b94f8cea3436ea4d441398ae57e1f45c2b8abaf7abc9c496e49"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/timing_runs.csv",
-      "sha256": "24433f7afc752227fa52c21f288f391b55bec5e011a6d48ef8190e39c5668a96"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/carma_benchmark/truth_motion.csv",
-      "sha256": "04f913bc870b6e6aeed9b54f777fc59b2bd92ba877213653978111c5a285f6a9"
     },
     {
       "kind": "file",
@@ -1236,7 +1151,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "3d9827e55adf4ab2c74e054d7ac7e206c3371c1989935e90c66cf808a2e89056"
+      "sha256": "439ef031cd63cdda0786f1510becfb478bcc310d4f39509db1fbf15435a4dfe3"
     },
     {
       "kind": "file",
@@ -1281,7 +1196,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "81be17663912c02735d79c1b5071624935fffb0f60fcaf8cf4e4d53c3f426371"
+      "sha256": "acb96206a96f47462a4db18c27fbfe8a118c7940bc9f6400d430577705332a87"
     },
     {
       "kind": "file",
@@ -1381,7 +1296,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "cda96568317ebbdb580667754277d98be39ec89337a4993f72bdfef1f1029d5c"
+      "sha256": "d11e98a89b0b0201492e6bd028334446816de9444c66fbe1c9078ef2f27dc04e"
     },
     {
       "kind": "file",
@@ -1451,37 +1366,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "7de6b59e936a811bd0b68960c334b0ee7470d991c6cfac46663e2773592b05e7"
+      "sha256": "76cdaddfd0e21700ed73af3e3627c3e70b15aa6d2e7f8cca9f01976040b3d66c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "087119c9e065925bbf44cba28b7c71ab257c3dd983b7099a54636bd667445362"
+      "sha256": "c2a29a86625a48cf3f76daa3fb811a2ee8b909b4d589c71dabab33bebf4543a1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "302e329eefe7510355b8290a28d91d9b2a35a075132496509e0432788a326ccc"
+      "sha256": "26abf670c6eaa448672c87d9e05bf8a0af26097a8ea501b619d8a57a336fc4ab"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "93462ca21244a5da65f85d90906e4f78e41358ba93568ca5f5e27a27f447ea79"
+      "sha256": "a7e606ccc86bb532cf0cbac09975b2bfa370a504e91e317edb6d0d215fd73067"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "09083ce02583c6ca3457b94b51bf3857b1b288ce2268e211e5e4e5b35d308d65"
+      "sha256": "49fac3d17349eb620f7b8dfcc2bcf46db58929a73314c5d120588095d3affffa"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "33c4c2c5200fbf8756c569c4414210dd52128bf595ace5d835948c19b59b8d61"
+      "sha256": "7e248f773f7235850ab20ec1e99ab75cb75068e24d01e56a43a59c09d27cd2eb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "d1b1cbc95afb9ca68efdf00b27ab411050bf0fd878ef9201e23c42f440931694"
+      "sha256": "24b537485e822f710b642350f19a50e361dc75b7f91b5e1f59b7b17ec8183d28"
     },
     {
       "kind": "file",
@@ -1491,17 +1406,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "d906fce6dfbd2308d7c4cf5da3c9b0600fb346e7fe6ecd73645fd1141b349efa"
+      "sha256": "543d615429212ce2a47b17fcb6329dcc4b7e3a595f499f44781054435fea0087"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "4b0d24f01a8012f11967823ba4f055223962ca2a157958ec7cb5317346b67984"
+      "sha256": "c26271cae4936db4db43e5fb91caf6524bf6a94c36b874a197b51a9905ceebec"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
+      "sha256": "e71956783ad23aa0ace082e5b343d3fe270f9a7d3107a3d35629b62675e386a8"
     },
     {
       "kind": "file",
@@ -1521,7 +1436,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "6d06a7ebd76222121c8e57dd30168a94298a37203ae02d248c11c5f67c6cec19"
+      "sha256": "d048edd51c4da620a9005a52a313aaf9c8fd2f0697639912f0a3f238bff1ee89"
     },
     {
       "kind": "file",
@@ -2619,13 +2534,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "d2ea883113a0373357a7b2171c71bcc344e516edec9f587b0894aaf8e90116df",
+  "results_fingerprint": "887cd07839c349d67c7aa05d5d5ab77303413b12d950ccf815580e10efbdb24b",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 816,
+  "tracked_replay_file_count": 811,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2645,7 +2560,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "d0ac7299187733b2311f3d7576bfc4d330ac1b8dd24ab67ee034585ba4ca5436"
+      "sha256": "36c735ee9001a803f2bdf4524227053b1dde24cf8d473de9a5fa93754e87b914"
     },
     {
       "mode": "100644",
@@ -2806,6 +2721,16 @@
       "mode": "100644",
       "path": "plots/imu_calibrate/imu_calibrate-plots.py",
       "sha256": "8427d83b4cf21f79583a52065b0168a7f12365b54b11eb1140090971d24116d8"
+    },
+    {
+      "mode": "100755",
+      "path": "plots/kalman_carma/draw_plots.sh",
+      "sha256": "a5bbc888f625ab9f05b1adbbcc6f9a7bd8dae3b5431f56a4d8ee7c311f241563"
+    },
+    {
+      "mode": "100644",
+      "path": "plots/kalman_carma/kalman_carma-plots.py",
+      "sha256": "6dc27b7fb47e57802d407832d26c1ff924f38427f1cb7e91ad7a1c578875db16"
     },
     {
       "mode": "100644",
@@ -3200,27 +3125,17 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/CarmaVerticalModel.h",
-      "sha256": "99ec94494552b5f81d6079e5429267448b8a1f833a868b9172e430eea577e54c"
-    },
-    {
-      "mode": "100644",
-      "path": "src/kalman_carma/Kalman3D_Wave_CARMA.h",
-      "sha256": "7eb87757af4e0958a3363bec54712966007b011776314ce7a9a861566a29c4c6"
+      "sha256": "fab6b2e0a5b4135fdb2e146d8d5d0ace74196074e2ba030ed1186f9a0e906ba7"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_CARMA3.h",
-      "sha256": "a40c83295af48a49fd4233c08f026d0f796da24cdd40c2723c28da07c0f99dc8"
-    },
-    {
-      "mode": "100644",
-      "path": "src/kalman_carma/SeaStateFusionFilter_CARMA.h",
-      "sha256": "d9453d058c55d9a7f547401ff608430c6df731180ed95044daaa0f60196f6052"
+      "sha256": "5008ce17aa340da2ed190d0d2a5d0b2ce545e6847fcaa51dd4a43afed363470e"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
-      "sha256": "a79d1e4be703db1ea305afc89006f002fb8502a17d394eb4bee07cb6bbfc27ce"
+      "sha256": "d604d59cb98e43863427cdd6813e46970ffd02edcd2953cb0797e415e74a3a6e"
     },
     {
       "mode": "100644",
@@ -3750,67 +3665,52 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/CarmaBenchLevel1.h",
-      "sha256": "61906d41967a9b48c53a1e476a926b8416eb3f95f9b1ba27e35058dde3c55f27"
+      "sha256": "51f8fcedb0b25ac3241781799ec2ad37c119586cb46f2f0717a220026a6e1ff0"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/CarmaBenchTruth.h",
-      "sha256": "47009ba6d59a5a9a9af090486dff278397a58c5f380805e8e79e0713c539918b"
+      "sha256": "f98fc95f2395418d4bea2628157b843e78b807e86e987b0af65d3b866028d5eb"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/Makefile",
-      "sha256": "3c94542e3173fc6cce1bbd98333c81fcb3631119dfe321eff3546d8966d9b478"
+      "sha256": "afb8dfdd17a7cfd636e2d540790d8a47f8d47c809317a8f594cc648648a9dfea"
     },
     {
       "mode": "100755",
       "path": "tests/kalman_carma/arduino/carma3_size_probe/build.sh",
-      "sha256": "2ca628685d0581dc5c505e70e4edfd07471db021c30bc92b5256aaba37269f1a"
+      "sha256": "1fbb7aba05609c5d32c3f5324f78b5172a4947eec1547fb4960983496128c7c8"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/arduino/carma3_size_probe/carma3_size_probe.cpp",
-      "sha256": "815b8b71412c1efbb3e7c3cc55d8f95dab663937818a9786690f06eef2a4f5ed"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_carma/arduino/carma_compile_check/carma_compile_check.ino",
-      "sha256": "0036795c646cabef0717b58bd4680c5f98ae7caf1b677aa4c85f5f3947d2584b"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_carma/arduino/carma_compile_check/carma_compile_check_main.cpp",
-      "sha256": "49801b6f3d0eadb9a6b23c3f201311642946a4d55324e611cf040fa50b769f84"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_carma/carma-sim.cpp",
-      "sha256": "12dddafc0d7c6208ca90bb3a43828b21c6028c8aea13d5e26a87f4875c06b264"
+      "sha256": "b8baf00b896c5ee97b74ff98b6e2c02d25470d4191717ef28694c7d418691b42"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3-sim.cpp",
-      "sha256": "294fb5ebd53f2bc241ac4bb02ca4052d331e3888e97fd70a028869f35eff5475"
+      "sha256": "6bf4d8613b7c6287d6202c31ab633d0c7c97ca581571b3750c3ebf3d4860202f"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3-test.cpp",
-      "sha256": "0ec4f50f1c19d5538acf3a720c129d17b7f629ef8e99ab8dcda582ef6f3bcc06"
+      "sha256": "c2e2aaf2619b14fe74913078015090131270945fe71e95fa7c754ee2c4fc64c5"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3/Bench3.h",
-      "sha256": "f34cacff1d42357fb858f539f17b9a91e853d0281852e5578f4899f343621948"
+      "sha256": "4533da997f67ff44382cbbe66f9fdddbfcb3cd4f0f830ca79e4f9226de7d9818"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3/FullAdapters.h",
-      "sha256": "fd408d9fb50f6498efb5f28a7b2b253a016a3768c8103ccf2f3b5ae6693f2c3c"
+      "sha256": "6be5531ad178f45dbcb4d459d2d96f65d5ff1cf3b1b6fd702091f769d9b8969b"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3_bench.cpp",
-      "sha256": "34dec9fa241edcfc13b5548794b23f83a4001ed403f633a33f2ff0fafa05c07e"
+      "sha256": "b51e269f0f3b225152017b45c2fd0bb07c61e2ec185954552429aae60b19c32a"
     },
     {
       "mode": "100644",
@@ -3825,17 +3725,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3_filters_ou.cpp",
-      "sha256": "fc35d2e9c97c6776654f67d178bc26431bad9a15cf66c7b6a2b6c800137f1c6e"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_carma/carma_bench.cpp",
-      "sha256": "196546aa919e5f502cb4016bf2918386ae7e665ec10e81b213c9dc364da6c6eb"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/kalman_carma/carma_filter-test.cpp",
-      "sha256": "f9c08ca26aec483b6fee079de7ce92fc8a90ad7c6f237fb6d2e2c4f9dc7d9adc"
+      "sha256": "f4a2d1caceea6ab224a6302a9da19e036dd6ba0083c69862de7ef554c8697e24"
     },
     {
       "mode": "100644",
@@ -3850,7 +3740,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_carma/run_tests.sh",
-      "sha256": "9443ec4a3884a16c6e0ef8110147069343aff21409c7c91e2ec294458a82f32e"
+      "sha256": "c05571c5702f3b4d1a80102201b243e890404c8868ccd4088663137196f35388"
     },
     {
       "mode": "100644",
@@ -5285,37 +5175,37 @@
     {
       "mode": "100644",
       "path": "tools/carma3_analysis.py",
-      "sha256": "19fa0478d09afa17b8b228084990758e7fd7c3dfc4efd7fa1f4142c44b583974"
+      "sha256": "ac88d3aad72f76f3d5b12bb1ef1352e2e5bcef7f0f2120de216e6f82e9908ba8"
     },
     {
       "mode": "100644",
       "path": "tools/carma3_benchmark.py",
-      "sha256": "7b75039538edcdb1bb9a0de450c5ceb9fe84e31c16f3dbb2ebb6939ee0499c1e"
+      "sha256": "3daaca017dc39b43e027ec22810b7fa56209f7cb55d90fbadb2f0e460518a451"
     },
     {
       "mode": "100644",
       "path": "tools/carma3_report.py",
-      "sha256": "8477e6fa85bbf0d6a81a2b9ac8b89366d52846bd330dc7e00cbe0fce5f8c8137"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/carma_benchmark.py",
-      "sha256": "c7aad72e18c480faa57055d4e459b691521c18b3cbb18089c5f9f66723071085"
+      "sha256": "b849d4b2de0dfb3b5de7664409e2fbb0b8a5ec0a71b7339cca9b269eb5d453ee"
     },
     {
       "mode": "100644",
       "path": "tools/carma_fit.py",
-      "sha256": "82f4769f4d434026c044dd77bdff875403008ea30cb81c8d993a40e96668bceb"
+      "sha256": "d04a9b2d2c0b23a1f192cfd60a4313b87673f2b767be386c07e28d3473bd7438"
     },
     {
       "mode": "100644",
       "path": "tools/carma_mismatch_analysis.py",
-      "sha256": "acc199453496503a9ad251a7fc9ca9a207bd47b326b1042b51ae505f9278e0bf"
+      "sha256": "7a34725d0ed4490a98cf4168d0b4b0a4adb3af4bcd380a184e3464183760fc4c"
     },
     {
       "mode": "100644",
       "path": "tools/carma_process_validation.py",
-      "sha256": "6556c4f36003460e3193b5ad140ffd961038a4c2389d892782d640806ac7a8f5"
+      "sha256": "f73902365eac996f65c6b908b341403c82e1eb2b4afda4deab278c60aa26d957"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_sim_table.py",
+      "sha256": "e83b5b08b9bc532255c8f402bae8bc153db8f63678eea064640a65e817994539"
     },
     {
       "mode": "100644",
