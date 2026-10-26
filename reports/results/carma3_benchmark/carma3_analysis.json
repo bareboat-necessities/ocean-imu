@@ -184,22 +184,6 @@
    "states": 21,
    "total_madds_per_sample": 12483
   },
-  "OU3-XY + CARMA(4,1)-Z": {
-   "P_bytes_float": 1764,
-   "P_floats": 441,
-   "acc_update_madds": 6570,
-   "predict_madds": 2745,
-   "states": 21,
-   "total_madds_per_sample": 9315
-  },
-  "OU3-XY + CARMA(5,2)-Z": {
-   "P_bytes_float": 1936,
-   "P_floats": 484,
-   "acc_update_madds": 7143,
-   "predict_madds": 3201,
-   "states": 22,
-   "total_madds_per_sample": 10344
-  },
   "coupled CARMA(4,1) XY (shared A, correlated W) + Z": {
    "P_bytes_float": 1764,
    "P_floats": 441,

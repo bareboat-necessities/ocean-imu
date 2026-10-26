@@ -543,12 +543,12 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
 | Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed / jittered dt (us) |
 |---|---|---|---|---|---|---|---|---|---|
-| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | 8.94 / 9.55 |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4928 | 136 507 | 1344 | 5.83 / 6.89 |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6232 | 140 806 | 2000 | 6.72 / 8.94 |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5392 | 146 803 | 2000 | 6.15 / 7.80 |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5736 | 147 782 | 2000 | 6.39 / 8.05 |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7080 | 145 745 | 2032 | 7.97 / 13.28 |
+| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | 11.26 / 12.41 |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4928 | 136 507 | 1344 | 5.65 / 7.07 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6232 | 140 806 | 2000 | 6.51 / 9.04 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5392 | 146 803 | 2000 | 5.94 / 7.94 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5736 | 147 782 | 2000 | 6.17 / 8.18 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7080 | 145 745 | 2032 | 7.78 / 13.59 |
 | C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5664 | 143 703 | 1536 | -- |
 | C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | as A41 | as A41 | as A41 | -- |
 | shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 9315 | not implemented in C++ | | | |
@@ -580,14 +580,19 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   statement is relative: on this host every C41 variant costs less per
   sample than the OU-III filter that the AtomS3R runs today; that the
   ordering holds on the target is plausible (similar operation counts and
-  code paths) but not measured.
+  code paths) but not measured.  The size of the gap is not robust: the
+  unchanged OU-III filter's host time depends on how GCC compiles the
+  benchmark adapter's translation unit (with other filter adapters in the
+  same unit it measured 8.9-10.3 us per update against 11.9 us here,
+  interleaved on one host, while the CARMA times did not move), so the
+  multiply-add counts are the layout-independent comparison.
 * **Discretization.**  `F`, `Q` are recomputed only when the sample interval
   or the committed operating point changes (one horizontal model serves x and
   y through the Kronecker structure).  The library compares the interval
   exactly, so a jittered sample clock re-runs the scaled Taylor/doubling
   exponential of every CARMA block on every sample (the "jittered" column:
-  C41 x/y/z 5.83 -> 6.89 us, C52 x/y/z 6.72 -> 8.94 us, C52 + S 7.97 ->
-  13.28 us, against OU-III 8.94 -> 9.55 us); OU-III's closed-form transition
+  C41 x/y/z 5.65 -> 7.07 us, C52 x/y/z 6.51 -> 9.04 us, C52 + S 7.78 ->
+  13.59 us, against OU-III 11.26 -> 12.41 us); OU-III's closed-form transition
   has no such cost.  A dt quantized to the
   nominal rate, or a cached table, would remove it at a controlled error;
   this is not implemented.
@@ -677,16 +682,16 @@ generated `reports/results/carma3_benchmark/summary.md` and
 
 ### 9.1 Principal seas (complete INS, 100 paired seeds)
 
-| Sea | | OU-III | OU-III x/y + C41 z | C41 x/y/z | C52 x/y/z | C52 x/y + C41 z |
-|---|---|---|---|---|---|---|
-| JONSWAP 0.29 Hz, 0.8 m (n=100) | horizontal | 5.18 | 5.18 (-0.0 % [-0.1, +0.0], win 45 %) | 2.66 (+48.7 % [+48.4, +48.9]) | 2.05 (+60.5 % [+60.1, +60.8]) | 2.05 (+60.4 % [+60.1, +60.8]) |
-|  | heave | 3.12 | 1.82 (+41.6 % [+41.2, +41.9]) | 1.83 (+41.4 % [+41.0, +41.7]) | 2.04 (+34.5 % [+34.0, +35.1]) | 1.83 (+41.4 % [+41.1, +41.7]) |
-| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 5.58 (-0.0 % [-0.1, +0.0], win 46 %) | 2.91 (+47.8 % [+47.6, +48.0]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
-|  | heave | 3.26 | 2.10 (+35.7 % [+35.3, +36.2]) | 2.10 (+35.5 % [+35.0, +36.0]) | 2.68 (+17.7 % [+16.3, +19.0], win 98 %) | 2.10 (+35.5 % [+35.1, +36.0]) |
-| mixed swell + wind (n=100) | horizontal | 18.26 | 18.27 (-0.0 % [-0.0, -0.0], win 18 %) | 15.14 (+17.1 % [+16.8, +17.5]) | 31.67 (-73.4 % [-74.5, -72.2], win 0 %) | 31.08 (-70.2 % [-71.2, -69.1], win 0 %) |
-|  | heave | 10.27 | 11.64 (-13.3 % [-13.8, -12.8], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) | 27.23 (-165.2 % [-166.8, -163.5], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) |
-| changing f_p (n=100) | horizontal | 5.70 | 5.70 (-0.0 % [-0.1, +0.0], win 42 %) | 2.88 (+49.4 % [+49.0, +49.7]) | 2.47 (+56.7 % [+56.2, +57.1]) | 2.47 (+56.7 % [+56.2, +57.1]) |
-|  | heave | 3.26 | 1.99 (+38.9 % [+38.5, +39.4]) | 2.00 (+38.7 % [+38.2, +39.1]) | 2.36 (+27.6 % [+26.8, +28.3]) | 2.00 (+38.7 % [+38.2, +39.1]) |
+| Sea | | OU-III | C41 x/y/z | C52 x/y/z | C52 x/y + C41 z |
+|---|---|---|---|---|---|
+| JONSWAP 0.29 Hz, 0.8 m (n=100) | horizontal | 5.18 | 2.66 (+48.7 % [+48.4, +48.9]) | 2.05 (+60.5 % [+60.1, +60.8]) | 2.05 (+60.4 % [+60.1, +60.8]) |
+|  | heave | 3.12 | 1.83 (+41.4 % [+41.0, +41.7]) | 2.04 (+34.5 % [+34.0, +35.1]) | 1.83 (+41.4 % [+41.1, +41.7]) |
+| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 2.91 (+47.8 % [+47.6, +48.0]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
+|  | heave | 3.26 | 2.10 (+35.5 % [+35.0, +36.0]) | 2.68 (+17.7 % [+16.3, +19.0], win 98 %) | 2.10 (+35.5 % [+35.1, +36.0]) |
+| mixed swell + wind (n=100) | horizontal | 18.26 | 15.14 (+17.1 % [+16.8, +17.5]) | 31.67 (-73.4 % [-74.5, -72.2], win 0 %) | 31.08 (-70.2 % [-71.2, -69.1], win 0 %) |
+|  | heave | 10.27 | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) | 27.23 (-165.2 % [-166.8, -163.5], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) |
+| changing f_p (n=100) | horizontal | 5.70 | 2.88 (+49.4 % [+49.0, +49.7]) | 2.47 (+56.7 % [+56.2, +57.1]) | 2.47 (+56.7 % [+56.2, +57.1]) |
+|  | heave | 3.26 | 2.00 (+38.7 % [+38.2, +39.1]) | 2.36 (+27.6 % [+26.8, +28.3]) | 2.00 (+38.7 % [+38.2, +39.1]) |
 
 RMS error in % of incident H_s; in brackets the paired change against OU-III with its 95 % bootstrap interval; every candidate is better (or worse) than OU-III on every seed unless a win rate is given.
 
@@ -726,7 +731,7 @@ RMS error in % of incident H_s; in brackets the paired change against OU-III wit
 | JONSWAP 0.29 Hz, 0.8 m, 3600 s | 20 | 5.18 / 2.64 / 2.03 / 2.03 | 3.12 / 1.82 / 2.03 |
 | mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.71 / 30.89 | 10.25 / 11.61 / 27.06 |
 
-RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C41's; of OU-III x/y + C41 z also (within 0.02 % H_s).
+RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C41's.
 
 * **CARMA(4,1) horizontally is better than OU-III on every condition**: 43-73 %
   on every single-peaked, bimodal, broadband, directional, underway, anchored,
@@ -741,10 +746,10 @@ RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C4
   translation (manoeuvring 8.0 against 14.1, drifting 3.4 against 5.4), level
   with it on broadband and abrupt-change seas, worse on bimodal (9.2 against
   6.2) and PM 0.15 Hz, and **73 % worse than OU-III on the mixed sea**.
-* **Heave** depends only on the vertical model: the horizontal model changes
-  heave by at most 0.02 % H_s (Z41 against A41).  C41 z is better than C52 z
-  on every wave condition (30-100 seeds per
-  condition); both lose to OU-III on the mixed sea (-13 %, -165 %) and C52 z
+* **Heave** depends only on the vertical model: variants with the same
+  vertical model (A41, M54, H41; A52, M45) differ in heave by at most
+  0.04 % H_s on any condition.  C41 z is better than C52 z on every wave
+  condition (30-100 seeds per condition); both lose to OU-III on the mixed sea (-13 %, -165 %) and C52 z
   also on the bimodal sea (-34 %).
 * **Mixed orders.**  C52 x/y + C41 z (M54) combines the best single-peaked
   horizontal and heave results and inherits C52's horizontal failure on the
@@ -797,8 +802,6 @@ Horizontal RMS, % of incident H_s, complete INS.
 | Filter | horizontal RMS (mm) | of which 60 s mean (mm) | heave RMS (mm) | horizontal, calibrated bias (mm) |
 |---|---|---|---|---|
 | OU-III (shipping) | 52.6 | 16.5 | 27.0 | 52.6 |
-| OU-III x/y + C41 z | 52.6 | 16.5 | 52.6 | 52.6 |
-| OU-III x/y + C52 z | 52.6 | 16.5 | 46.3 | 52.6 |
 | C41 x/y/z | 84.3 | 28.7 | 52.6 | 84.3 |
 | C52 x/y/z | 86.7 | 26.2 | 46.3 | 86.7 |
 | C52 x/y + C41 z | 86.7 | 26.2 | 52.6 | 86.7 |
@@ -853,11 +856,9 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 34.7 | 11.1 | 18.3 | 12.0 | 3.7 | 21.7 | 2.3 | 0.2 |
-| x | OU-III x/y + C41 z | 34.8 | 11.1 | 18.4 | 12.0 | 3.7 | 21.7 | 2.3 | 0.2 |
 | x | C41 x/y/z | 15.4 | 5.6 | 8.4 | 6.9 | 2.5 | 6.8 | 2.3 | 0.2 |
 | x | C52 x/y/z | 11.6 | 3.8 | 4.6 | 3.4 | 4.1 | 7.6 | 2.4 | 0.2 |
 | z | OU-III (shipping) | 25.6 | 8.6 | 11.2 | 6.4 | 2.9 | 19.1 | 2.5 | 0.2 |
-| z | OU-III x/y + C41 z | 15.4 | 3.5 | 4.1 | 3.8 | 2.7 | 11.3 | 7.1 | 0.4 |
 | z | C41 x/y/z | 15.4 | 3.5 | 4.1 | 3.8 | 2.8 | 11.3 | 7.1 | 0.4 |
 | z | C52 x/y/z | 16.9 | 2.2 | 2.0 | 2.1 | 4.8 | 13.4 | 7.8 | 0.6 |
 
@@ -877,11 +878,9 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 214.3 | 31.5 | 53.1 | 184.5 | 78.0 | 11.4 | 2.1 | 0.3 |
-| x | OU-III x/y + C41 z | 214.5 | 31.7 | 53.7 | 184.5 | 78.0 | 11.5 | 2.1 | 0.3 |
 | x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.6 | 3.7 | 0.6 |
 | x | C52 x/y/z | 351.7 | 11.0 | 35.7 | 322.8 | 104.9 | 10.4 | 3.9 | 0.5 |
 | z | OU-III (shipping) | 122.4 | 20.6 | 26.8 | 106.7 | 44.9 | 8.8 | 1.3 | 0.2 |
-| z | OU-III x/y + C41 z | 129.3 | 9.5 | 21.1 | 121.7 | 40.3 | 16.2 | 10.1 | 1.2 |
 | z | C41 x/y/z | 129.4 | 9.5 | 21.2 | 121.9 | 40.4 | 15.9 | 10.0 | 1.2 |
 | z | C52 x/y/z | 304.1 | 10.0 | 25.5 | 279.1 | 91.6 | 18.1 | 11.4 | 1.1 |
 
@@ -900,10 +899,8 @@ mechanism:
 
 | Scenario | filter | median (Hz) | 5-95 % (Hz) | C52 notch 0.151 kappa at the median (Hz) |
 |---|---|---|---|---|
-| JONSWAP 0.29 Hz, 0.8 m | OU-III x/y + C41 z | 0.327 | 0.307-0.352 |  |
 | JONSWAP 0.29 Hz, 0.8 m | C41 x/y/z | 0.327 | 0.307-0.352 |  |
 | JONSWAP 0.29 Hz, 0.8 m | C52 x/y/z | 0.327 | 0.307-0.352 | 0.133 |
-| mixed swell + wind | OU-III x/y + C41 z | 0.218 | 0.176-0.278 |  |
 | mixed swell + wind | C41 x/y/z | 0.218 | 0.176-0.278 |  |
 | mixed swell + wind | C52 x/y/z | 0.218 | 0.176-0.278 | 0.089 |
 | JONSWAP 0.29 Hz, 0.8 m, manoeuvring | C41 x/y/z | 0.326 | 0.307-0.352 |  |
@@ -931,12 +928,10 @@ CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; t
 | Sea | Filter | NEES x / z / 6-dof | pred. std / RMS, x / z | startup RMS x / z (mm) | startup peak x / z (mm) | conv. x / z (s, median) | roll / pitch / yaw RMS (deg) |
 |---|---|---|---|---|---|---|---|
 | JONSWAP 0.29 Hz, 0.8 m | OU-III (shipping) | 3.19 / 1.11 / 7.7 | 1.01 / 1.27 | 51 / 696 | 266 / 1121 | 692 / 126 | 0.23 / 0.21 / 1.72 |
-|  | OU-III x/y + C41 z | 3.18 / 1.11 / 7.7 | 1.01 / 1.26 | 52 / 263 | 267 / 469 | 713 / 96 | 0.24 / 0.21 / 1.73 |
 |  | C41 x/y/z | 2.19 / 1.07 / 5.4 | 1.38 / 1.26 | 20 / 263 | 95 / 469 | 740 / 96 | 0.20 / 0.22 / 1.67 |
 |  | C52 x/y/z | 1.53 / 1.36 / 4.4 | 1.47 / 1.02 | 18 / 138 | 100 / 297 | 85 / 92 | 0.21 / 0.23 / 1.67 |
 |  | C52 x/y + C41 z | 1.52 / 1.09 / 4.1 | 1.47 / 1.26 | 18 / 263 | 100 / 469 | 90 / 96 | 0.21 / 0.23 / 1.67 |
 | mixed swell + wind | OU-III (shipping) | 18.34 / 7.13 / 30.9 | 0.33 / 0.50 | 301 / 1482 | 985 / 2411 | 912 / 853 | 0.29 / 0.22 / 1.89 |
-|  | OU-III x/y + C41 z | 18.36 / 28.31 / 52.2 | 0.33 / 0.25 | 301 / 621 | 982 / 1133 | 909 / 921 | 0.30 / 0.22 / 1.90 |
 |  | C41 x/y/z | 32.01 / 28.20 / 63.7 | 0.24 / 0.25 | 208 / 621 | 599 / 1133 | 953 / 921 | 0.20 / 0.24 / 1.55 |
 |  | C52 x/y/z | 161.31 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
 |  | C52 x/y + C41 z | 153.40 / 28.26 / 190.2 | 0.09 / 0.25 | 357 / 621 | 877 / 1133 | 959 / 922 | 0.21 / 0.32 / 2.02 |
@@ -991,8 +986,6 @@ The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSW
 | Filter | horizontal % H_s (change) | heave % H_s (change) | roll / pitch / yaw RMS (deg) |
 |---|---|---|---|
 | OU-III (shipping) | 6.36 | 3.98 | 0.30 / 0.26 / 2.43 |
-| OU-III x/y + C41 z | 6.37 (-0.0 % [-0.0, -0.0], better on 34 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.26 / 2.43 |
-| OU-III x/y + C52 z | 6.37 (-0.0 % [-0.1, -0.0], better on 38 %) | 2.83 (+29.0 % [+26.0, +31.8], better on 100 %) | 0.30 / 0.26 / 2.43 |
 | C41 x/y/z | 3.04 (+52.2 % [+50.8, +53.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.30 / 0.24 / 2.29 |
 | C52 x/y/z | 2.76 (+56.7 % [+54.5, +58.8], better on 100 %) | 2.83 (+28.9 % [+26.0, +31.7], better on 100 %) | 0.30 / 0.24 / 2.33 |
 | C52 x/y + C41 z | 2.76 (+56.7 % [+54.5, +58.8], better on 100 %) | 2.50 (+37.2 % [+35.3, +39.1], better on 100 %) | 0.29 / 0.24 / 2.33 |
