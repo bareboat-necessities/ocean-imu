@@ -1,7 +1,8 @@
 #!/bin/bash -e
 # Experimental CARMA priors: model checks, the spectral validation of the
-# stochastic process, the three-axis filter checks and short paired smoke
-# replays.  The full Monte Carlo benchmark is tools/carma3_benchmark.py.
+# stochastic process, the three-axis filter checks, short paired smoke
+# replays and the gated replay of the scored dataset records.  The full Monte
+# Carlo benchmark is tools/carma3_benchmark.py.
 set -e
 ./carma_model-test
 mkdir -p process
@@ -25,3 +26,11 @@ for path, rows in (("smoke3_full.csv", full), ("smoke3_l1.csv", l1)):
         print(f"{path}: {f:4s} RMS x {float(r['rms_x']):.4f} y {float(r['rms_y']):.4f} "
               f"z {float(r['rms_z']):.4f} m")
 PY
+
+# Deterministic replay of the eight scored dataset records with the default
+# variant A41.  doc/kalman_carma's charts and results table are built from
+# these replays; a record above its regression bar fails the run after all
+# eight are scored.
+sim_status=0
+W3D_COLLECT_ALL_GATES=1 ./carma3-sim || sim_status=$?
+exit "$sim_status"

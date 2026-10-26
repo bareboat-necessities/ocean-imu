@@ -1,0 +1,668 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array,booktabs,makecell,adjustbox}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage{pgf}
+
+% Keep this --- needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+% Generated figures live beside this file only after plots/kalman_carma has
+% run. Wrap every include so the manuscript still compiles from a clean
+% checkout.
+\newcommand{\IncludePGF}[1]{%
+  \IfFileExists{#1}{\resizebox{\linewidth}{!}{\input{#1}}}%
+                   {\fbox{\parbox{0.92\linewidth}{\centering\small
+                     Figure \texttt{\detokenize{#1}} not generated.\\
+                     Run \texttt{plots/kalman\_carma/draw\_plots.sh}.}}}%
+}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\title{Three-Axis CARMA Motion Priors for Marine Inertial Wave Estimation:
+An Experimental Comparison with the OU-III Filter (draft)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This experimental paper replaces the three integrated Ornstein--Uhlenbeck
+(OU) translational chains of the shipping OU-III marine inertial estimator by
+stationary continuous-time ARMA (CARMA) displacement priors on all three
+axes, keeping its attitude, bias, magnetometer, startup and adaptation
+unchanged. The priors are CARMA($p$,$p-3$) models with a fitted JONSWAP shape,
+moved by one measured frequency scale and discretized exactly. A numerator
+zero at DC makes the integral of the displacement stationary, and we show
+that OU-III's recurring $S=0$ pseudo-measurement is itself equivalent, for
+the smoothing posterior, to a broad DC-zero CARMA(4,1) prior. In a paired
+complete-INS simulation benchmark (31 sea conditions, 20--100 seeds each)
+CARMA(4,1) on all three axes, at OU-III's 21 states and 25\,\% fewer
+multiply-adds per sample, reduced the horizontal RMS error by 43--73\,\% on
+single-peaked, bimodal, broadband, underway and translating seas and by
+17\,\% on a mixed swell and wind sea, and the heave error by 27--46\,\%
+except on the mixed sea, where it is 13\,\% worse. CARMA(5,2) collapses on
+the mixed sea because the frequency mapping places its spectral notch on the
+swell. All CARMA priors show more phantom displacement on a still IMU than
+OU-III. The results are simulation only; nothing here changes the shipping
+estimator or bears on its stability study.
+\end{abstract}
+\input{../simulation-dataset.tex-part}
+
+\begin{IEEEkeywords}
+CARMA process, Kalman filter, inertial navigation, marine heave, horizontal
+wave motion, Ornstein--Uhlenbeck process, embedded estimation
+\end{IEEEkeywords}
+
+\section{Introduction and Status}
+\label{sec:intro}
+A strapdown IMU on a small vessel senses the wave-induced acceleration of the
+hull together with gravity, sensor bias and attitude error. Displacement is
+recovered by double integration, which only a motion prior keeps bounded. The
+shipping OU-III filter (\texttt{src/kalman\_ou\_iii}) gives each axis an
+integrated OU chain $[v,p,S,a_w]$: the wave acceleration $a_w$ is an OU
+process with time constant $\tau$ and stationary standard deviation
+$\sigma_{aw}$, $S'=p$, and a pseudo-measurement $S=0$ every $T_S$ with the
+SpectralMSE standard deviation $r_S$ bounds the integral of the
+displacement. The prior is nearly shape-free above its corner $1/\tau$.
+
+A CARMA prior gives the displacement a rational spectrum with resonant
+poles~\cite{brockwell01,brockwell04}. For heave, which a hydrostatic restoring
+force makes resonant, that is a natural model; this paper asks whether it is
+also a better prior for surge and sway, which have no restoring force, and
+what the three-axis filter costs. The contribution is an experimental filter
+(\texttt{src/kalman\_carma}), the analysis of the auxiliary state $S$ under a
+CARMA prior, and a paired benchmark against the unchanged OU-III.
+
+\emph{Status.} The CARMA filter is a research prototype. It is not included
+by the deployed configuration, it has no hardware evidence, and no result of
+this paper is a stability, admissibility or hardware statement. The OU-III
+stability study concerns the shipping OU-III filter only; a CARMA prior is a
+statistical model, not a law imposed on the vessel's physical history. The
+full report with every table is \texttt{docs/carma-three-axis.md}.
+
+\section{Three-Axis Wave Motion}
+\label{sec:physics}
+Axes are earth-fixed NED; the wave coordinate $\vct{p}$ is the oscillatory
+displacement about the local equilibrium.
+
+\emph{Heave.} Hydrostatic restoring gives a resonant response amplitude
+operator (RAO) times hull averaging $e^{-kd}$; the heave spectrum is the
+incident spectrum reshaped by it, single-peaked in single seas and
+two-peaked in swell plus wind sea.
+
+\emph{Surge and sway.} A small free-floating hull in long waves follows the
+water-particle orbit: in deep water the horizontal displacement along the
+propagation direction has the elevation amplitude and lags it by a quarter
+period, while hull averaging attenuates short waves. With $b$ the
+propagation direction relative to the bow and $k$ the wavenumber, the
+benchmark uses
+\begin{equation}
+H_{\mathrm{surge}}=e^{-k(d+\ell_L|\cos b|)}\cos b,\quad
+H_{\mathrm{sway}}=e^{-k(d+\ell_B|\sin b|)}\sin b,
+\label{eq:horiz-rao}
+\end{equation}
+($d=\SI{0.5}{m}$, $\ell_L=\SI{0.75}{m}$, $\ell_B=\SI{0.28}{m}$) times the
+quarter-period lag: a smooth low-pass reshaping of the incident spectrum
+without resonance.
+
+\emph{Zero at DC.} The elevation spectrum and every RAO vanish at zero
+frequency, so the wave displacement \emph{and} its time integral are
+bounded. A physically consistent prior therefore has a numerator zero at DC.
+
+\emph{Low-frequency translation.} Anchored sailing on the rode (periods of
+\SIrange{30}{300}{s}), wind drift and manoeuvres move the local equilibrium,
+not the wave coordinate. Their accelerations (1--30\,mg) are of the size of
+accelerometer bias and of $g\,\delta\theta$; an IMU-only estimator cannot
+reconstruct them, and the relevant question is how much of them each prior
+turns into phantom wave displacement.
+
+\emph{Cross-axis coupling.} For linear waves the cross-spectral matrix of
+$(x_N,y_E,z)$ is $S_{xyz}(\omega)=\sum_jS_\eta(\omega)w_j\vct{t}_j
+\vct{t}_j^{\mathsf H}$, Hermitian positive semidefinite. Horizontal axes are
+mutually in phase and in quadrature with the incident elevation; the vessel's
+heave response adds its own phase.
+
+\section{CARMA Priors}
+\label{sec:carma}
+A CARMA($p$,$q$) displacement with transfer function $gB(s)/P(s)$ ($B$, $P$
+monic) driven by unit white noise is realized in the coordinates
+\begin{equation}
+\vct{x}=[p,\,v,\,a,\,l_1,\dots,l_{N-3}]^{\mathsf T},\qquad
+d\vct{x}=\mat{A}\vct{x}\,dt+\vct{G}\,dW,
+\label{eq:carma-ss}
+\end{equation}
+with $\vct{G}=g\,\vct{e}_a$ and $p=\vct{e}_0^{\mathsf T}\vct{x}$. Relative
+degree $p-q=3$ gives $\mat{C}\vct{G}=\mat{C}\mat{A}\vct{G}=0$ and
+$\mat{C}\mat{A}^2\vct{G}=g$: displacement and velocity are differentiable,
+acceleration is continuous with finite variance
+($S_a=\omega^4S_p\sim\omega^{-2}$), and its derivative carries the white
+noise. The latent coordinates are those of the cascade realization:
+CARMA(4,1) has one latent state, the input $r$ of its second oscillator, and
+CARMA(5,2) two, $(r,r')$. In these coordinates OU-III's chain is the special
+case $a'=-a/\tau+\text{noise}$ without displacement or velocity feedback;
+the CARMA feedback of $p$ and $v$ into the jerk equation is what makes the
+displacement stationary.
+
+\emph{Shapes.} \texttt{tools/carma\_fit.py} minimizes the RMS log-spectral
+error against JONSWAP ($f_p=\SI{0.29}{Hz}$, $\gamma=3.3$) over
+\SIrange{0.17}{1.30}{Hz}, shape only, with every pole damping in $[0.05,1]$
+(\cref{tab:shapes}). The CARMA(4,1) optimum places its numerator zero at DC.
+
+\begin{table}[t]
+\centering
+\caption{Library shapes fitted to JONSWAP (Hz, damping). RMS and maximum
+log-spectral error over \SIrange{0.17}{1.30}{Hz}.}
+\label{tab:shapes}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Model & Poles and zeros & RMS dB & max dB & DC re peak\\
+\midrule
+C52J & \makecell[l]{0.278/0.097, 0.443/0.523,\\ real 1.864; zeros 0.151/0.20} & 0.84 & 9.7 & $-23.2$\,dB\\
+C41J & 0.307/0.104, 0.815/0.478; zero 0 & 1.86 & 17.5 & zero\\
+C30J & 0.386/0.267, real 5.0 (bound) & 2.93 & 24.0 & $-5.8$\,dB\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\emph{Scaling.} One shape at $\kappa=1$ is moved by a frequency scale
+$\kappa$ (every pole and zero times $\kappa$). With unit gain
+$\mathrm{Var}_\kappa(a)=\mathrm{Var}_1(a)/\kappa$ and
+$\mathrm{Var}_\kappa(p)=\mathrm{Var}_1(p)/\kappa^5$, so a requested
+stationary acceleration standard deviation $\sigma_a$ is met in closed form,
+\begin{equation}
+g^2=\sigma_a^2\,\kappa/\mathrm{Var}_1(a),
+\label{eq:scaling}
+\end{equation}
+without a run-time Lyapunov solve.
+
+\emph{Exact discretization.} The exact transition~\cite{sarkka23}
+$\mat{F}=e^{\mat{A}h}$ and
+$\mat{Q}=\int_0^he^{\mat{A}t}\mat{W}e^{\mat{A}^{\mathsf T}t}dt$ are evaluated
+by a Taylor series at $h_s=h/2^s$ with $\|\mat{A}h_s\|_\infty\le1/4$ in
+diagonally scaled coordinates $\vct{x}=\mat{D}\vct{z}$,
+$\mat{D}=\mathrm{diag}(h_s^{d_i})$ ($d_i$ the coupling distance of state $i$
+from the noise input), followed by $s$ exact doublings
+\begin{equation}
+\mat{Q}(2h)=\mat{Q}(h)+\mat{F}\mat{Q}\mat{F}^{\mathsf T},\qquad
+\mat{F}(2h)=\mat{F}^2.
+\label{eq:doubling}
+\end{equation}
+The scaling keeps the small entries ($Q_{pp}\sim h^5$) at full relative
+precision, and no stationary difference $\mat{P}-\mat{F}\mat{P}\mat{F}^{\mathsf T}$,
+which cancels catastrophically in single precision at \SI{5}{ms}, is formed.
+The unit tests check the realization against $g^2|B|^2/|P|^2$ ($<10^{-9}$
+relative), $\mat{F}$ and $\mat{Q}$ against a double-precision Van Loan
+exponential, the semigroup law for non-uniform steps, the stationary
+covariance against a Kronecker Lyapunov solve, and single-precision
+$\mat{F},\mat{Q}$ within $1.5\times10^{-6}$ of double over
+$f_z=\SIrange{0.05}{1}{Hz}$. Long simulated realizations reproduce the
+designed variances (within 1\,\%) and spectra (within \SI{0.13}{dB}), with
+Brownian acceleration increments.
+
+\section{The Auxiliary State $S$}
+\label{sec:s}
+OU-III needs $S=\int p\,dt$ and $S=0$ because its displacement is a double
+integral of an OU acceleration, so $(v,p)$ alone is not detectable from
+acceleration. A CARMA prior is Hurwitz and observable from acceleration; the
+question is whether the integral of its displacement is controlled. Append
+$S'=p$; $S$ has transfer function $gB(s)/(s\,P(s))$.
+
+\begin{proposition}
+If $B(0)\neq0$, the zero eigenvalue of the augmented system is controllable
+from the noise and unobservable from acceleration; $S$ is a random walk with
+$\mathrm{Var}\,S(t)\sim S_p(0)\,t$. If $B(0)=0$, the zero eigenvalue is
+uncontrollable, $S(t)=S_\infty(t)-S_\infty(0)$ with the stationary
+$S_\infty=g\,(B(s)/s)/P(s)$ a linear functional of the CARMA state, and
+$\mathrm{Var}\,S(t)\to2\,\mathrm{Var}\,S_\infty$. The augmented pair is then
+not stabilizable on the unit circle, the discrete algebraic Riccati equation
+has no stabilizing solution, and a recurring $S=0$ pseudo-measurement
+re-measures $S_\infty$, information the prior already contains.
+\end{proposition}
+
+A zero at DC therefore supplies the low-frequency constraint without an
+auxiliary state. OU-III reaches the same structure by its pseudo-measurement.
+
+\begin{proposition}
+Condition the integrated OU displacement prior
+$S_{OU}(\omega)=2\sigma^2\tau/(\omega^4(1+\omega^2\tau^2))$ on $S=0$
+observed at information rate $1/N$, $N=r_S^2T_S$. The conditional
+displacement spectrum is
+\begin{align}
+S_{\mathrm{eff}}&=\frac{S_{OU}N\omega^2}{S_{OU}+N\omega^2}
+=\frac{2\sigma^2\tau N\omega^2}{2\sigma^2\tau+N\omega^6+N\tau^2\omega^8}
+\nonumber\\
+&=\frac{2\sigma^2}{\tau}\,\frac{|i\omega|^2}{|P(i\omega)|^2},
+\label{eq:ou3-dc-zero}
+\end{align}
+with $P$ the monic Hurwitz factor of $N\tau^2s^8-Ns^6+2\sigma^2\tau$: a
+CARMA(4,1) with $B(s)=s$.
+\end{proposition}
+
+The equivalence holds for the two-sided (smoothing) posterior; the causal
+filters differ by up to half of the gain in \SIrange{0.1}{1}{Hz}, because
+the causal OU-III filter conditions only on past pseudo-measurements. At the
+JONSWAP \SI{0.29}{Hz} operating point the factor has two broad pole pairs
+near the peak (damping 0.39 and 0.93): OU-III is a broadband DC-zero prior,
+whereas the fitted CARMA(4,1) is a narrow one (damping 0.10). OU-III's $S=0$
+must therefore not be carried over to a DC-zero CARMA; a CARMA without a DC
+zero (the fitted CARMA(5,2)) can carry $S$ with a pole-placement law
+$r_S=\sqrt{S_p(0)}\,\tau/(\kappa_R\sqrt{T_S})$, $\kappa_R=0.3627$, as a
+regularizer of a mis-specified DC level.
+
+\section{Cross-Axis Coupling}
+\label{sec:coupling}
+Correlated driving noise through identical horizontal dynamics,
+$\mat{Q}_H=\mat{\Sigma}_h\otimes\mat{Q}_1$, is exact and costs no state, but
+its cross-spectrum $\Sigma_{xy}|H(i\omega)|^2$ is real: it represents the
+in-phase horizontal co-spectrum only. Quadrature coupling to heave needs
+different dynamics, e.g.\ a shared latent built on the narrow-band identity
+$\xi\approx\omega\int\eta$. With the exact cross-spectrum, the noncausal
+Wiener gain of using all three accelerometer axes is 5--7\,\% on
+single-peaked seas under white noise (the $x$--$y$ part at most 1.6\,\%).
+The causal shared-latent model, even with oracle coupling coefficients, is
+worse than independent axes on those seas, because the errors are dominated
+by spectral mismatch, which the narrow-band quadrature adds to. The filter
+therefore uses independent axes; one horizontal model serves $x$ and $y$.
+
+\section{Filter and Implementation}
+\label{sec:filter}
+\texttt{Kalman3D\_Wave\_CARMA3<T,NHC,SH,NZC,SZ>} carries the nine attitude,
+gyro-bias and accelerometer-bias error states of OU-III and a CARMA block
+$[p,v,a,\text{latent}]$ per axis (orders $3$ to $5$), with optional
+$S_x,S_y$ ($S_z$) states. Attitude, bias, accelerometer and magnetometer
+models, the residual accelerometer-bias OU and its freeze, Joseph updates
+and resets are OU-III's. \texttt{SeaStateFusionFilter\_CARMA3} keeps
+OU-III's per-sample schedule (front end, proxy startup, staged commit,
+watchdog, magnetic-service bias gate, accelerometer-noise inflation) and maps
+the measured operating point onto every axis:
+\begin{gather}
+f_{\mathrm{tune}}=\frac{c_\tau}{2\tau},\qquad
+\kappa=\frac{f_{\mathrm{tune}}}{f_{z,\mathrm{base}}},\nonumber\\
+\sigma_z=\max\!\bigl(0.05,\ \sigma_{\mathrm{floor}},\ \sigma_{aw}/c_\sigma\bigr),
+\qquad \sigma_h=S_{\mathrm{factor}}\,\sigma_z,
+\label{eq:mapping}
+\end{gather}
+so the model's displacement zero-crossing frequency is placed on the
+measured one and the amplitude is the measured band acceleration RMS with
+OU-III's floor. No horizontal statistic is measured. The mappings were fixed
+before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are recomputed only when
+the sample interval or the committed operating point changes.
+
+\begin{table}[t]
+\centering
+\caption{State dimension and cost. Multiply-adds of one prediction and one
+accelerometer update; ESP32-S3 sizes from the Xtensa GCC~14.2.0 target
+compiler (object code, no hardware run).}
+\label{tab:cost}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcrrrr@{}}
+\toprule
+Configuration & $N_X$ & MACs & \makecell{filter\\(B)} & \makecell{code\\(B)} & \makecell{stack\\(B)}\\
+\midrule
+OU-III (shipping) & 21 & 12\,483 & 5692 & 156\,309 & 1024\\
+C41 $x/y/z$ & 21 & 9315 & 4928 & 136\,507 & 1344\\
+C52 $x/y/z$ & 24 & 12\,582 & 6232 & 140\,806 & 2000\\
+C41 $x/y$ + C52 $z$ & 22 & 10\,344 & 5392 & 146\,803 & 2000\\
+C52 $x/y$ + C41 $z$ & 23 & 11\,433 & 5736 & 147\,782 & 2000\\
+C52 $x/y/z$ + $S_x,S_y$ & 26 & 15\,232 & 7080 & 145\,745 & 2032\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+CARMA(4,1) everywhere has OU-III's 21 states and is 25\,\% cheaper per
+sample (\cref{tab:cost}), because OU-III propagates its 12-state linear block
+as one dense matrix while the CARMA blocks are applied per axis. The cost it
+adds is re-discretization: the library compares the interval exactly, so a
+jittered sample clock re-runs the matrix exponential on every sample
+(host update at a fixed / jittered interval: 5.65 / \SI{7.07}{\micro s} for
+C41 against 11.26 / \SI{12.41}{\micro s} for OU-III, whose closed-form
+transition has no such cost). Host times rank the variants; they are not
+ESP32-S3 times.
+
+\section{Steady-State Analysis}
+\label{sec:steady}
+Exact steady-state Kalman transfers (algebraic Riccati equation at
+\SI{200}{Hz}, white sensor noise, oracle operating point) applied to the true
+displacement spectra separate signal distortion from noise propagation
+(\cref{tab:steady}). OU-III's broad prior distorts moderately everywhere but
+passes accelerometer noise at low frequency; a stationary CARMA prior
+propagates two to four times less noise and wins whenever its shape is close
+enough to the vessel spectrum. On the mixed swell and wind sea the fitted
+shapes lose, CARMA(5,2) catastrophically: almost all of its error is
+distortion.
+
+\begin{table}[t]
+\centering
+\caption{Steady-state $x$ error, mm RMS (white noise, oracle operating
+point); last row heave for OU-III / C41J / C52J.}
+\label{tab:steady}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Prior & JONSWAP & PM & mixed & bimodal\\
+\midrule
+OU-III & 10.0 & 13.7 & 70.2 & 33.2\\
+C30J & 18.4 & 28.0 & 113.7 & 58.7\\
+C41J & 5.6 & 8.8 & 87.6 & 23.3\\
+C52J & 6.8 & 12.7 & 283.7 & 46.1\\
+C41, sway-fitted & 4.8 & 7.5 & 80.4 & 23.2\\
+\midrule
+heave & \makecell{13.4/10.2\\/13.7} & \makecell{17.2/14.8\\/21.3} &
+\makecell{60.7/93.7\\/302.1} & \makecell{31.5/26.9\\/51.3}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Paired Benchmark}
+\label{sec:benchmark}
+\texttt{tests/kalman\_carma/carma3\_bench} runs one scenario and seed per
+process: a random-phase directional sea through the RAOs of
+\cref{sec:physics} plus the scenario's low-frequency translation, sensed by
+one IMU and magnetometer stream (\SI{200}{Hz}; accelerometer noise
+\SI{1.5}{mg}, turn-on bias up to \SI{8}{mg} with a random walk; gyro bias
+up to \SI{0.05}{\degree/s}; magnetometer at \SI{25}{Hz} with hard- and
+soft-iron terms) that is fed identically to every filter. Errors are taken
+against the wave coordinate over $t\ge\SI{300}{s}$ of a \SI{1200}{s} run.
+The truth contains no CARMA model, and no ground truth enters any estimator
+or tuner. The complete-INS level runs the filters as built; a level with
+prescribed attitude isolates the motion prior. In total 14\,930 filter runs
+were made; every table, confidence interval and Wilcoxon test is in
+\texttt{reports/results/carma3\_benchmark/summary.md}.
+
+\begin{table*}[t]
+\centering
+\caption{Complete INS, simulation: RMS error in \% of incident $H_s$,
+horizontal $\sqrt{x^2+y^2}$ (H) and heave (Z); 100 paired seeds per sea;
+still IMU in mm (30 seeds); NEES of position and velocity (6 if
+consistent).}
+\label{tab:principal}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccccccccccc@{}}
+\toprule
+& & & \multicolumn{2}{c}{JONSWAP 0.29\,Hz} & \multicolumn{2}{c}{PM 0.25\,Hz} &
+\multicolumn{2}{c}{Swell + wind sea} & \multicolumn{2}{c}{Still IMU (mm)} & NEES\\
+Prior ($x/y$; $z$) & States & MACs & H & Z & H & Z & H & Z & H & Z & JONSWAP / mixed\\
+\midrule
+OU-III; OU-III & 21 & 12\,483 & 5.18 & 3.12 & 5.58 & 3.26 & 18.26 & 10.27 & 53 & 27 & 7.7 / 31\\
+C41; C41 & 21 & 9315 & 2.66 & 1.83 & 2.91 & 2.10 & 15.14 & 11.65 & 84 & 53 & 5.4 / 64\\
+C52; C52 & 24 & 12\,582 & 2.05 & 2.04 & 2.68 & 2.68 & 31.67 & 27.23 & 87 & 46 & 4.4 / 324\\
+C52; C41 & 23 & 11\,433 & 2.05 & 1.83 & 2.67 & 2.10 & 31.08 & 11.65 & 87 & 53 & 4.1 / 190\\
+C41; C52 & 22 & 10\,344 & 2.66 & 2.04 & 2.91 & 2.69 & 15.31 & 27.27 & 84 & 46 & 5.7 / 186\\
+C52+$S$; C52 & 26 & 15\,232 & 2.02 & 2.04 & 2.77 & 2.68 & 31.76 & 27.23 & 80 & 46 & 4.5 / 336\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\emph{Principal seas} (\cref{tab:principal}). CARMA(4,1) on all axes halves
+the horizontal error on the single-peaked seas (paired change
+$+48.7\,\%$, 95\,\% bootstrap interval $[+48.4,+48.9]$, on JONSWAP) and
+lowers heave by 36--41\,\%, better than OU-III on every seed. On the mixed
+swell and wind sea it is still 17\,\% better horizontally but 13\,\% worse in
+heave. Heave depends only on the vertical model: variants that share it
+differ by at most 0.04\,\% $H_s$ on any condition.
+
+\begin{table}[t]
+\centering
+\caption{Further complete-INS conditions (30 seeds; 20 of \SI{3600}{s}):
+RMS error in \% of $H_s$ for OU-III / C41 / C52 on all axes.}
+\label{tab:conditions}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Condition & horizontal & heave\\
+\midrule
+following, underway \SI{2.5}{m/s} & 10.54 / 4.03 / 4.04 & 8.43 / 4.72 / 5.25\\
+head, underway \SI{2.5}{m/s} & 3.65 / 2.06 / 1.91 & 2.46 / 1.79 / 2.41\\
+anchored slow drift & 6.67 / 3.64 / 2.64 & 3.16 / 1.82 / 2.04\\
+drifting & 10.04 / 5.39 / 3.40 & 3.14 / 1.83 / 2.05\\
+manoeuvring & 26.04 / 14.11 / 8.01 & 3.20 / 1.83 / 2.04\\
+bimodal & 11.10 / 6.22 / 9.18 & 5.90 / 4.18 / 7.89\\
+broadband & 16.85 / 7.34 / 7.60 & 8.32 / 5.39 / 5.79\\
+JONSWAP \SI{0.10}{Hz}, \SI{4}{m} & 10.26 / 4.77 / 4.34 & 4.69 / 2.60 / 2.83\\
+\SI{5}{cm} sea & 32.66 / 8.92 / 8.13 & 17.14 / 9.58 / 9.73\\
+\SI{300}{s} magnetometer gap & 5.27 / 2.71 / 2.10 & 3.14 / 1.83 / 2.05\\
+$\pm25\,\%$ $dt$ jitter & 5.26 / 2.71 / 2.10 & 3.15 / 1.84 / 2.07\\
+mixed sea, \SI{3600}{s} & 18.30 / 15.09 / 31.71 & 10.25 / 11.61 / 27.06\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\emph{All conditions} (\cref{tab:conditions}). Horizontal CARMA(4,1) is
+better than OU-III on all 31 complete-INS conditions: 43--73\,\% on every
+single-peaked, bimodal, broadband, directional, underway, anchored, drifting,
+manoeuvring, low-amplitude, sensor-fault and long case, 17--18\,\% on the
+mixed sea. CARMA(5,2) is better than CARMA(4,1) on most single-peaked seas
+and much better under low-frequency translation, worse on the bimodal sea,
+and 73\,\% worse than OU-III on the mixed sea. With the attitude prescribed,
+the ranking is unchanged, so the CARMA advantage is not an artifact of the
+attitude coupling.
+
+\emph{The mixed-sea collapse of CARMA(5,2).} Its numerator zeros sit at
+$0.151\,\kappa$\,Hz. On the mixed sea the tuner's operating frequency has a
+median of \SI{0.218}{Hz} ($\kappa\approx0.59$), which places the notch at
+\SI{0.089}{Hz}, on the \SI{0.09}{Hz} swell carrying about 60\,\% of the
+elevation variance. The swell then cannot be represented: 323 of 352\,mm of
+$x$ error (seed 1) lies in \SIrange{0.05}{0.1}{Hz}, and the unexplained swell
+acceleration leaks into the tilt (pitch \SI{1.6}{\degree} RMS). The mechanism
+is structural, not a tuning issue; mixed orders inherit it.
+
+\emph{Horizontal $S$.} CARMA(5,2) with the derived $S$ law is within a few
+per cent of CARMA(5,2) everywhere and does not repair the mixed sea. Carrying
+OU-III's $r_S$ onto CARMA(4,1), which Proposition~1 shows to be invalid,
+lowers low-frequency errors (still IMU \SI{42}{mm}) but is worse where the sea
+has broad or low-frequency energy: it acts as extra shrinkage that counts
+prior information twice.
+
+\emph{Still IMU.} Every CARMA prior shows more phantom displacement than
+OU-III, horizontally (76--87 against \SI{53}{mm}) and in heave (46--53
+against \SI{27}{mm}), nearly all below \SI{0.05}{Hz} and unchanged by
+calibrating the turn-on bias. With no waves the tuner pins the operating
+frequency at its \SI{0.05}{Hz} bound and the amplitude at its
+\SI{0.05}{m/s^2} floor, so the resonant prior expects decimetres of
+displacement at \SI{20}{s} periods and turns sensor noise and slow tilt and
+bias leakage into motion there. In the first \SI{120}{s} after Live the
+still-IMU heave transient is 2--3 times OU-III's; in waves it is smaller than
+OU-III's, because CARMA starts from a stationary covariance that matches the
+sea.
+
+\emph{Consistency and attitude.} On single-peaked seas CARMA is closer to
+consistent than OU-III, whose horizontal axes are overconfident; on the
+mixed sea every filter is overconfident and CARMA much more
+(\cref{tab:principal}): with a prior outside the true family the Kalman
+covariance is not an error bound, and no model-error term is carried. Roll
+and pitch errors are similar for every filter except CARMA(5,2) on the mixed
+sea; the horizontal CARMA prior improves heading in the magnetometer gap
+(\SI{2.09}{\degree} against \SI{2.90}{\degree}) and while manoeuvring.
+
+\section{Pinned Vessel-RAO Dataset}
+\label{sec:dataset}
+The eight scored records of the dataset described above (JONSWAP and
+PM--Stokes, $H_s$ \SIrange{0.27}{8.5}{m}) were replayed through the shared
+\texttt{W3dSimulationRunner}: OU-III is the unchanged
+\texttt{kalman\_ou\_iii-sim}, the CARMA variants \texttt{carma3-sim} with the
+identical adapter configuration, ten seeds, final \SI{900}{s} of each record.
+The hull differs from the synthetic benchmark's.
+
+\begin{table}[t]
+\centering
+\caption{Pinned dataset: 10 seeds $\times$ 8 records, paired per (record,
+seed); RMS in \% of $H_s$, change against OU-III with its 95\,\% bootstrap
+interval (better on all 80 pairs).}
+\label{tab:dataset}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Filter & horizontal & heave & \makecell{roll/pitch/yaw\\(deg)}\\
+\midrule
+OU-III & 6.36 & 3.98 & 0.30/0.26/2.43\\
+C41 $x/y/z$ & 3.04 (+52.2 [50.8, 53.8]) & 2.50 (+37.2 [35.3, 39.1]) & 0.30/0.24/2.29\\
+C52 $x/y/z$ & 2.76 (+56.7 [54.5, 58.8]) & 2.83 (+28.9 [26.0, 31.7]) & 0.30/0.24/2.33\\
+C52 $x/y$ + C41 $z$ & 2.76 (+56.7 [54.5, 58.8]) & 2.50 (+37.2 [35.3, 39.1]) & 0.29/0.24/2.33\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+On this independent hull and these single-peaked seas the synthetic results
+carry over (\cref{tab:dataset}). The dataset has no mixed sea, no still
+water and no low-frequency translation, so it cannot test the obstacles of
+\cref{sec:obstacles}.
+
+\section{Deterministic Replay}
+\label{sec:replay}
+\Cref{tab:carma_sim_results} is generated during the build by
+\texttt{tools/carma\_sim\_table.py} from \texttt{carma3-sim} (CARMA(4,1) on
+all axes) with the default seeds, on the same eight records in the same
+order as the OU-III and TFG tables. It is a single realization per record,
+reported for continuity, not a controlled comparison; the controlled one is
+\cref{tab:dataset}. Yaw in particular depends on the seed: the per-seed mean
+yaw RMS of CARMA(4,1) over the eight records ranges from
+\SIrange{0.95}{3.61}{\degree} across the ten seeds of \cref{tab:dataset},
+and the default seeds give \SIrange{0.46}{0.75}{\degree} per record, below
+all ten. The simulator fails the build if any
+default-seed record exceeds its regression bar (worst value plus 0.5\,\%).
+
+\IfFileExists{carma-sim-results-generated.tex-part}{%
+  \input{carma-sim-results-generated.tex-part}%
+}{%
+  \begin{table}[t]\centering\small
+    \fbox{\parbox{0.9\linewidth}{\centering Results table not generated.\\
+      Run \texttt{tools/carma\_sim\_table.py}.}}
+  \end{table}%
+}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_carma3_jonswap_medium_xykin.pgf}
+  \caption{Horizontal displacement, velocity and acceleration, JONSWAP
+    $H_s=\SI{1.5}{m}$, last \SI{60}{s}; RMS errors over the scored
+    \SI{900}{s} window.}
+  \label{fig:xykin}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_carma3_jonswap_medium_zkin.pgf}
+  \caption{Vertical kinematics on the same record, with the
+    $\pm$ displacement and velocity envelopes of the adaptation.}
+  \label{fig:zkin}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_carma3_jonswap_medium_tuner.pgf}
+  \caption{Operating point over the whole replay: tracker frequency and
+    $1/(2\tau_{\mathrm{applied}})$, the frequency on which the CARMA shapes
+    are placed; band acceleration and the applied $\sigma_a$; $\tau$; and the
+    vertical scale $\kappa_z$.}
+  \label{fig:tuner}
+\end{figure}
+
+\section{Obstacles and Recommendation}
+\label{sec:obstacles}
+On this evidence CARMA(4,1) on all three axes is the research candidate. It
+is preferred to OU-III's horizontal chain with CARMA in heave, because
+horizontal CARMA(4,1) wins on all 31 conditions at no extra cost and heave
+does not depend on the horizontal prior; to CARMA(5,2), whose notch the
+frequency mapping can place on a swell; to mixed orders, which inherit that
+failure; and to coupled priors, whose oracle gain is about 5\,\% and for which
+no estimator of the coupling exists. It is \emph{not} shippable. Remaining
+obstacles:
+\begin{enumerate}[leftmargin=*,itemsep=1pt]
+\item still water and very quiet seas: phantom displacement and a still-IMU
+  heave startup transient 2--3 times OU-III's; a valid low-frequency or
+  ``no waves'' mechanism in the prior is needed;
+\item the mixed swell and wind sea: heave 13\,\% worse than OU-III; one fixed
+  shape scaled by one frequency cannot represent two peaks;
+\item covariance under mismatch: no model-error term, so the covariance is
+  not an error bound on multi-peaked seas;
+\item sample-clock jitter re-runs the matrix exponential on every sample;
+\item hull and sea dependence: one synthetic and one replay hull, a
+  JONSWAP-fitted horizontal shape, no lever arm, wind heel or nonlinear
+  waves;
+\item no hardware evidence (AtomS3R timing, float behaviour, sea data);
+\item no stability analysis.
+\end{enumerate}
+
+\section{Relation to the OU-III Stability Study}
+The OU-III stability study and its premises (marine motion, IMU bias and
+magnetic service, applied to one persistent physical execution) concern the
+shipping OU-III filter. None of them transfers to this filter. A
+nondegenerate stationary Gaussian CARMA realization is not almost surely
+bounded over an infinite horizon, and its jerk is not subject to a
+deterministic bound; the operating-point commits make the filter a switched
+linear system. A replacement of OU-III would require its own process-model
+mismatch, observability, covariance and full estimator stability analyses.
+
+\section*{Reproducibility Note}
+The filter, its wrapper and the CARMA model library are in
+\texttt{src/kalman\_carma}; the tests, the benchmark and the dataset
+simulator are in \texttt{tests/kalman\_carma}. The benchmark driver
+\texttt{tools/carma3\_benchmark.py} reproduces every run from committed
+seeds, and its raw results are in
+\texttt{reports/results/carma3\_benchmark}. This paper and its chart gallery
+are built by the repository's GitHub Actions workflow from a fresh replay of
+the dataset.
+
+\begin{thebibliography}{9}
+\bibitem{brockwell01}
+P. J. Brockwell, ``Continuous-time ARMA processes,'' in \emph{Handbook of
+Statistics}, vol. 19, Elsevier, 2001, pp. 249--276.
+
+\bibitem{brockwell04}
+P. J. Brockwell, ``Representations of continuous-time ARMA processes,''
+\emph{J. Appl. Probab.}, vol. 41, no. A, pp. 375--382, 2004.
+
+\bibitem{sarkka23}
+S. S\"arkk\"a and L. Svensson, \emph{Bayesian Filtering and Smoothing},
+2nd ed., Cambridge University Press, 2023.
+\end{thebibliography}
+
+\end{document}

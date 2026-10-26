@@ -146,13 +146,48 @@ CARMA_ADAPTER(Adapter_A52S, 5, true, 5, false, nullptr)
 CARMA_ADAPTER(Adapter_A41S, 4, true, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_H41, 4, false, 4, false, &carma3_bench::CARMA41_SWAY_SHAPE)
 
+// Regression bars for the default variant A41 on the eight scored records
+// (default seeds, magnetometer on), each at the measured worst value plus
+// about 0.5 %, the margin kalman_ou_iii-sim and kalman_tfg-sim use.
+constexpr W3dFailureLimits kA41RegressionBars{
+    .err_limit_percent_z_jonswap   = 3.073f,  // worst 3.0571 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 3.231f,  // worst 3.21488 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.7575f, // worst 0.753738 (jonswap H4.0)
+    .err_limit_roll_deg            = 0.3565f, // worst 0.354707 (pmstokes H8.5)
+    .err_limit_pitch_deg           = 0.2137f, // worst 0.212555 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 4.888f,  // worst 4.86298 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 5.276f,  // worst 5.24895 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.209f,  // worst 4.18715 (pmstokes H8.5)
+    .bias_3d_percent               = 82.43f,  // worst 82.0115 (pmstokes H8.5, accel)
+    .gyro_bias_3d_percent          = 12.78f,  // worst 12.7086 (pmstokes H8.5, gyro)
+};
+
+// The research variants print the same summary but have no fitted bars.
+constexpr float kUngated = 1.0e9f;
+constexpr W3dFailureLimits kUngatedBars{
+    .err_limit_percent_z_jonswap   = kUngated,
+    .err_limit_percent_z_pmstokes  = kUngated,
+    .err_limit_yaw_deg             = kUngated,
+    .err_limit_percent_3d_jonswap  = kUngated,
+    .err_limit_percent_3d_pmstokes = kUngated,
+    .acc_z_bias_percent            = kUngated,
+    .bias_3d_percent               = kUngated,
+};
+
+// FilterSnapshot::tuning_target/applied carry the r_S target and the
+// vertical model's frequency scale kappa_z (see CarmaAdapter::snapshot).
+constexpr W3dSummaryLabels kLabels{.target = "RS_target", .applied = "kappa_z_applied"};
+
 template<class A>
 void run_file(const std::string& filename, float dt, bool with_mag, const W3dRandomSeeds& seeds,
-              bool write_timeseries, float window, const std::string& family) {
+              bool write_timeseries, float window, const std::string& family,
+              const W3dFailureLimits& bars) {
     auto result = process_wave_file_for_tracker<A>(filename, dt, with_mag, add_noise, 25.0f,
                                                    "_fusion_" + family, "_fusion_" + family + "_nomag",
                                                    seeds, write_timeseries);
-    if (result && window > 0.0f) print_validation_metrics(*result, dt, window, family.c_str());
+    if (!result) return;
+    if (window > 0.0f) print_validation_metrics(*result, dt, window, family.c_str());
+    print_summary_and_fail_if_needed(*result, dt, bars, kLabels);
 }
 
 }  // namespace
@@ -188,20 +223,27 @@ int main(int argc, char* argv[]) {
     std::cout << "Simulation starting with_mag=" << (with_mag ? "true" : "false")
               << ", noise=" << (add_noise ? "true" : "false") << ", variant=" << variant << "\n";
     try {
+        // The bars are fitted to the default seeds with noise and magnetometer;
+        // any other replay is a diagnostic, not a regression.
+        const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
+                                   && !std::getenv("W3D_INIT_SEED");
+        const bool gated = variant == "A41" && add_noise && with_mag && default_seeds;
+        const W3dFailureLimits& bars = gated ? kA41RegressionBars : kUngatedBars;
         for (const auto& f : files) {
             const std::string family = "CARMA3_" + variant;
-            if (variant == "A41") run_file<Adapter_A41>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "A52") run_file<Adapter_A52>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "M45") run_file<Adapter_M45>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "M54") run_file<Adapter_M54>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "A52S") run_file<Adapter_A52S>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "A41S") run_file<Adapter_A41S>(f, dt, with_mag, seeds, write_timeseries, window, family);
-            else if (variant == "H41") run_file<Adapter_H41>(f, dt, with_mag, seeds, write_timeseries, window, family);
+            if (variant == "A41") run_file<Adapter_A41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "A52") run_file<Adapter_A52>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "M45") run_file<Adapter_M45>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "M54") run_file<Adapter_M54>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "A52S") run_file<Adapter_A52S>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "A41S") run_file<Adapter_A41S>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "H41") run_file<Adapter_H41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S or H41");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";
         return 2;
     }
+    if (std::getenv("W3D_COLLECT_ALL_GATES") && w3d_any_quality_gate_failed()) return 1;
     return 0;
 }

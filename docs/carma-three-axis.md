@@ -9,7 +9,9 @@ and the CARMA model library live in `src/kalman_carma/`
 `CarmaVerticalModel.h`); nothing in the deployed configuration includes them.
 A CARMA prior is a statistical model, not a law imposed on the vessel's
 physical history; no result below is a stability, admissibility or hardware
-statement.
+statement.  The paper `doc/kalman_carma/kalman_carma.tex` and its chart
+gallery `doc/kalman_carma/kalman_carma-charts.tex` summarize this report;
+CI builds both from a fresh replay of the dataset.
 
 **Result (simulation only; no hardware).**  CARMA(4,1) on all three axes
 (21 states, the same as OU-III, 25 % fewer multiply-adds per sample) is the
@@ -643,7 +645,9 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   three-axis sinusoid recovered within 10 % on every axis with PSD
   covariance; correlated prior; wrapper on a still IMU.  Wired into
   `make all` through `run_tests.sh` with `carma_model-test`, the process
-  validation and paired smoke runs of `carma3_bench` at both levels.
+  validation, paired smoke runs of `carma3_bench` at both levels and the
+  default-seed `carma3-sim` replay of the eight scored dataset records, which
+  fails on a regression bar (each at the measured worst value plus 0.5 %).
 
 ## 9. Benchmark
 
@@ -675,7 +679,7 @@ to 0.9 rad/s in the dataset; every sea has `H_s/L_p <= 0.06`.  Two levels:
 
 100 paired seeds on the four principal seas at both levels; 30 on 27
 secondary complete-INS conditions and 5 level-1 ones; 20 seeds of 3600 s on
-JONSWAP and the mixed sea; 18490 filter runs in `raw_runs.csv`.  All
+JONSWAP and the mixed sea; 14930 filter runs in `raw_runs.csv`.  All
 tables, per-axis metrics, confidence intervals and Wilcoxon tests are in the
 generated `reports/results/carma3_benchmark/summary.md` and
 `paired_stats.json`; the tables below are excerpts.
@@ -1184,6 +1188,8 @@ benchmark's hull only.
     python3 tools/carma3_benchmark.py truth
     python3 tools/carma3_benchmark.py timing           # on an idle host
     python3 tools/carma3_benchmark.py report           # summary.md, figures
+    python3 tools/carma_sim_table.py                   # doc/kalman_carma results table
+    (cd plots/kalman_carma && bash draw_plots.sh)      # doc/kalman_carma charts
 
 ESP32-S3 sizes: `tests/kalman_carma/arduino/carma3_size_probe/build.sh
 <xtensa toolchain bin dir>` (Espressif `esp-14.2.0_20241119`), written to
