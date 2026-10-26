@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "bb52c2fb3ca7eaa91132129c8b51298829a52318d9b1c8fe7332447814201cc9",
+  "replay_fingerprint": "fbdec60aa0e24fc5f7de82dd904a11d9909aab786a75799026bf7cd58d02119c",
   "results_file_count": 506,
   "results_files": [
     {
@@ -1296,7 +1296,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "d11e98a89b0b0201492e6bd028334446816de9444c66fbe1c9078ef2f27dc04e"
+      "sha256": "1d880ae57a4f0497bc712d9522db28f1d17caafc419de6ec580e7a4a6abe8265"
     },
     {
       "kind": "file",
@@ -1366,22 +1366,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "76cdaddfd0e21700ed73af3e3627c3e70b15aa6d2e7f8cca9f01976040b3d66c"
+      "sha256": "f040622d4792dfc416a5a25a3eccc0224e1cf36e3679003275816c3ba07bacd1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "c2a29a86625a48cf3f76daa3fb811a2ee8b909b4d589c71dabab33bebf4543a1"
+      "sha256": "279c40686c113aeb03103cfac14fc5867a9adc439ec5e86051770e125ea6fec8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "26abf670c6eaa448672c87d9e05bf8a0af26097a8ea501b619d8a57a336fc4ab"
+      "sha256": "a37d930dec1ca6cfd2a45f2d5ed01e2c1a41b83e0d32f3fd5c49b26def5866dc"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "a7e606ccc86bb532cf0cbac09975b2bfa370a504e91e317edb6d0d215fd73067"
+      "sha256": "75d27253c84167e8698db7f90b0b66577a27af03fa0665894f8654592fde22c8"
     },
     {
       "kind": "file",
@@ -1391,12 +1391,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "7e248f773f7235850ab20ec1e99ab75cb75068e24d01e56a43a59c09d27cd2eb"
+      "sha256": "0fcdaf497a23e499b66d78351775cd914872af3df23668f4e5891fe081729127"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "24b537485e822f710b642350f19a50e361dc75b7f91b5e1f59b7b17ec8183d28"
+      "sha256": "c0473d12b042ab71459ba8e3eaab307907f02aa31c31728971b896e26a9f9592"
     },
     {
       "kind": "file",
@@ -1406,12 +1406,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "543d615429212ce2a47b17fcb6329dcc4b7e3a595f499f44781054435fea0087"
+      "sha256": "5762caa9b98141660cf0781c536dd7255bff854fe3ada83cd77acee6c2b3678e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "c26271cae4936db4db43e5fb91caf6524bf6a94c36b874a197b51a9905ceebec"
+      "sha256": "e81247c1f5f17700dfc3e9edf2a7124583b580b05265a5faa76863903e37e3b2"
     },
     {
       "kind": "file",
@@ -1421,7 +1421,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
+      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
     },
     {
       "kind": "file",
@@ -1436,7 +1436,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "d048edd51c4da620a9005a52a313aaf9c8fd2f0697639912f0a3f238bff1ee89"
+      "sha256": "be78e1e27a8a01ff72a5b158cc173cb9269df70d9cc75f8cf604c3b41e25d84c"
     },
     {
       "kind": "file",
@@ -2534,13 +2534,13 @@
       "sha256": "948cf40818672c2660561dde906e6935d1ed5175ae891ec6c6052b5fc3066b81"
     }
   ],
-  "results_fingerprint": "887cd07839c349d67c7aa05d5d5ab77303413b12d950ccf815580e10efbdb24b",
+  "results_fingerprint": "42d5d5ea401a098e8c4f72470c87e0355d8778efa27e3c8e88f3fc590fa897c7",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 811,
+  "tracked_replay_file_count": 812,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2565,7 +2565,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/device-compass.yml",
-      "sha256": "57bf89c24150ec2f9ac6c180d47eae6fd845f46eb021a045d2e9234a73462d2d"
+      "sha256": "ea52a7cc83c388ba622e6f4ae5ba28ed31a6ae9eca789de23c92bc1e130e1a2c"
     },
     {
       "mode": "100644",
@@ -2861,6 +2861,11 @@
       "mode": "100644",
       "path": "sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
       "sha256": "54fccae8861f9e95613bb2502663aa6f76ed02460ac27a99060dd475c9bc28b9"
+    },
+    {
+      "mode": "100644",
+      "path": "sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
+      "sha256": "e22331ccbe988a9345495a6afcde1d9e06df3b8ce379892a4cd1b0336af37bc3"
     },
     {
       "mode": "100644",
@@ -3570,7 +3575,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal-test.cpp",
-      "sha256": "7178dfc1d0d7b16532ebe33f7fa07bd591dcfdfb8e247c629a8efc9fb74014bc"
+      "sha256": "3a18edc91f1f1abf8bb94dd39d2adf454103ece8f6911f904f8603fa7dbfb9d5"
     },
     {
       "mode": "100644",
@@ -3655,7 +3660,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/test_sketch_temperature.py",
-      "sha256": "690035aaf47fcea4b5e9fb1d9920e43a22e82611e619251d9d1a59210a5c5d3a"
+      "sha256": "4aea585be6f8829003eac320a0384235e5595362f63acc1c14074872aea2e5b8"
     },
     {
       "mode": "100644",
@@ -4185,7 +4190,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_device_compass_startup.py",
-      "sha256": "36f6bc7c98b34eea561d1732154b9595298edd2ad35521f7de0f03e9722f73d4"
+      "sha256": "e424410ca6967ff11c34c7cc75e9ef8153021903f8bee48a0592dc98a1972d9c"
     },
     {
       "mode": "100644",
