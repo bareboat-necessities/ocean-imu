@@ -552,7 +552,6 @@ def load_trace(path):
 
 def traces(plt, svgd):
     import carma3_benchmark as cb
-    tdir = OUT / "traces"
     p = cb.trace_path("full", J29, 1)
     if p.exists():
         d = load_trace(p)

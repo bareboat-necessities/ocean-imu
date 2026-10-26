@@ -13,7 +13,7 @@ std::unique_ptr<IEstimator3> make_full_c4(const std::string& n) {
     if (n == "A30") return std::make_unique<FullCARMA3<3, false, 3, false>>(n);
     // A41C:<r> -- horizontal driving-noise correlation r (coupled x-y prior).
     if (n.rfind("A41C:", 0) == 0) {
-        const float r = static_cast<float>(std::atof(n.c_str() + 5));
+        const float r = static_cast<float>(std::strtod(n.c_str() + 5, nullptr));
         return std::make_unique<FullCARMA3<4, false, 4, false>>(n, nullptr, r);
     }
     return nullptr;

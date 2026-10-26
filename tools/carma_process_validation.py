@@ -154,7 +154,6 @@ def validate(input_dir: Path, out_dir: Path | None, check: bool):
         fs = 50.0
         r = {"order": f"CARMA({str(order)[0]},{str(order)[1]})"}
         r["finite"] = bool(np.all(np.isfinite(coarse)) and np.all(np.isfinite(fine)))
-        sd = coarse.std(axis=0)
         r["sample_var_ratio_h_v_a"] = (coarse.var(axis=0) / var_ref).tolist()
         r["max_abs_h_over_sigma"] = float(np.max(np.abs(coarse[:, 0])) / np.sqrt(var_ref[0]))
         r["max_real_pole"] = max_re
@@ -212,7 +211,7 @@ def validate(input_dir: Path, out_dir: Path | None, check: bool):
 
         if check:
             name = r["order"]
-            def need(cond, what):
+            def need(cond, what, name=name):
                 if not cond:
                     failures.append(f"{name}: {what}")
             need(r["finite"], "non-finite sample")
@@ -235,7 +234,7 @@ def validate(input_dir: Path, out_dir: Path | None, check: bool):
                  f"v increment exponent {r['v_increment_scaling_exponent']:.3f}")
 
     summary = {k: {kk: vv for kk, vv in v.items() if not kk.startswith("_")} for k, v in results.items()}
-    for k, v in summary.items():
+    for v in summary.values():
         print(f"{v['order']}: var ratios {np.round(v['sample_var_ratio_h_v_a'], 3).tolist()} "
               f"PSD mean|dB| h={v['psd_h_mean_abs_db']:.3f} v={v['psd_v_mean_abs_db']:.3f} "
               f"a={v['psd_a_mean_abs_db']:.3f}  E[da^2]/(g^2dt)={v['a_increment_ratio_to_g2dt']:.3f} "

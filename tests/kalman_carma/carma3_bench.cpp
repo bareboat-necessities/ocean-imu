@@ -106,9 +106,9 @@ ScenarioX make_scenario(const std::string& full) {
     double rel_deg = NAN;
     for (size_t i = 1; i < tok.size(); ++i) {
         const std::string& m = tok[i];
-        if (m[0] == 'T' && std::isdigit(static_cast<unsigned char>(m[1]))) sc.duration_s = std::atof(m.c_str() + 1);
-        else if (m.rfind("rel", 0) == 0) rel_deg = std::atof(m.c_str() + 3);
-        else if (m[0] == 'U' && (std::isdigit(static_cast<unsigned char>(m[1])) || m[1] == '-')) sc.speed_mps = std::atof(m.c_str() + 1);
+        if (m[0] == 'T' && std::isdigit(static_cast<unsigned char>(m[1]))) sc.duration_s = std::strtod(m.c_str() + 1, nullptr);
+        else if (m.rfind("rel", 0) == 0) rel_deg = std::strtod(m.c_str() + 3, nullptr);
+        else if (m[0] == 'U' && (std::isdigit(static_cast<unsigned char>(m[1])) || m[1] == '-')) sc.speed_mps = std::strtod(m.c_str() + 1, nullptr);
         else if (m == "anchor") sc.lf.kind = Translation::Kind::Anchor;
         else if (m == "drift") sc.lf.kind = Translation::Kind::Drift;
         else if (m == "maneuver") sc.lf.kind = Translation::Kind::Maneuver;

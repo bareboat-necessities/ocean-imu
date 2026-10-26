@@ -488,8 +488,10 @@ column of `raw_runs.csv` is not a measurement: the rolling window of
 and `std::max(0.0, NaN)` turned every later window into 0, so every
 tuner-driven run reported 0 s.  The routine is fixed in `carma_bench.cpp`
 (the window restarts at Live); corrected convergence and startup errors are
-reported in `docs/carma-three-axis.md`.  Every other column is unaffected
-(re-runs are bit identical).
+reported in `docs/carma-three-axis.md`.  The fix affects no other column;
+re-runs with the refactored bench agree to the fifth significant digit, and
+bit for bit with FMA contraction disabled (`docs/carma-three-axis.md`,
+section 1).
 
 ### 7.6 Example trajectories and spectra
 

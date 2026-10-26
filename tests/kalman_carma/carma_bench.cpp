@@ -92,6 +92,22 @@ std::string scenario_base(const std::string& name) {
     return base;
 }
 
+// n comma-separated numbers (strtod; false on a malformed list).
+bool parse_numbers(const std::string& s, double* out, int n) {
+    const char* p = s.c_str();
+    for (int i = 0; i < n; ++i) {
+        char* end = nullptr;
+        out[i] = std::strtod(p, &end);
+        if (end == p) return false;
+        p = end;
+        if (i + 1 < n) {
+            if (*p != ',') return false;
+            ++p;
+        }
+    }
+    return true;
+}
+
 Scenario make_scenario(const std::string& full_name) {
     Scenario sc;
     sc.name = full_name;
@@ -100,7 +116,7 @@ Scenario make_scenario(const std::string& full_name) {
     if (full_name.find("_norao") != std::string::npos) sc.heave_rao = false;
     {
         const auto pos = full_name.find("_T");
-        sc.duration_s = (pos == std::string::npos) ? 1200.0 : std::atof(full_name.c_str() + pos + 2);
+        sc.duration_s = (pos == std::string::npos) ? 1200.0 : std::strtod(full_name.c_str() + pos + 2, nullptr);
     }
     return sc;
 }
@@ -657,8 +673,7 @@ int main(int argc, char** argv) {
             else if (n == "C52Nv") v = std::make_unique<VerticalCARMA<5,false>>(n, R_acc, bp, false, true);
             else if (n == "C52Mv") {
                 double q[7];
-                if (std::sscanf(args.shape52.c_str(), "%lf,%lf,%lf,%lf,%lf,%lf,%lf",
-                                &q[0], &q[1], &q[2], &q[3], &q[4], &q[5], &q[6]) != 7) {
+                if (!parse_numbers(args.shape52, q, 7)) {
                     std::cerr << "ERROR: C52Mv needs --shape52 f1,z1,f2,z2,fl,fz,zz\n";
                     return 2;
                 }
@@ -721,7 +736,7 @@ int main(int argc, char** argv) {
     double t_now = 0.0;
     for (long k = 0; k < steps; ++k) {
         // Non-uniform timing: every consumer receives the same jittered step.
-        const double dt_k = (jitter && k > 0) ? dt * (1.0 + jitter_u(jitter_rng)) : (k > 0 ? dt : dt);
+        const double dt_k = (jitter && k > 0) ? dt * (1.0 + jitter_u(jitter_rng)) : dt;
         if (k > 0) t_now += dt_k;
         const TruthSample ts = jitter ? truth.at(t_now) : truth.next();
         // Sensor corruption, once, shared by every estimator.

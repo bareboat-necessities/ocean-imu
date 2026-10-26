@@ -79,7 +79,7 @@ void test_sinusoid_signs() {
     const double A = 1.0, w = 2.0 * M_PI * 0.30, dt = 0.005;
     double se = 0.0, sv = 0.0;
     long n = 0;
-    for (long k = 0; k < 200 * 400; ++k) {
+    for (long k = 0; k < 200L * 400; ++k) {
         const double t = static_cast<double>(k + 1) * dt;
         const double h = A * std::sin(w * t);
         const double az_ned = A * w * w * std::sin(w * t);

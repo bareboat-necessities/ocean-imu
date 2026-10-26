@@ -13,6 +13,10 @@
   sample interval and prints the mean and maximum micros() per update.
 */
 
+// Arduino-only translation unit: host compilers (the repository's warnings and
+// clang-tidy gates compile every tests/*.cpp) see it empty.
+#if __has_include(<Arduino.h>)
+
 #include <Arduino.h>
 #include <cmath>
 
@@ -80,3 +84,5 @@ void loop() {
     n_updates = 0; sum_us = 0; max_us = 0;
   }
 }
+
+#endif  // __has_include(<Arduino.h>)

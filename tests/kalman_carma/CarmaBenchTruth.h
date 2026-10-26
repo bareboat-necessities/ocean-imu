@@ -184,7 +184,7 @@ inline bool base_scenario(const std::string& name, Scenario& sc) {
     auto num = [&](const std::string& key, double def) {
         const auto pos = name.find(key);
         if (pos == std::string::npos) return def;
-        return std::atof(name.c_str() + pos + key.size());
+        return std::strtod(name.c_str() + pos + key.size(), nullptr);
     };
     if (name.rfind("jonswap", 0) == 0) {
         sc.parts = {jonswap_part(num("_hs", 2.0), num("_fp", 0.29), num("_g", 3.3))};
