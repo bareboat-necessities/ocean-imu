@@ -1067,4 +1067,12 @@ benchmark's hull only.
     python3 tools/carma3_benchmark.py dataset          # pinned dataset, 10 seeds
     python3 tools/carma3_benchmark.py traces
     python3 tools/carma3_benchmark.py truth
+    python3 tools/carma3_benchmark.py timing           # on an idle host
     python3 tools/carma3_benchmark.py report           # summary.md, figures
+
+Every row of `raw_runs.csv` reproduces bit for bit (apart from `runtime_ns`)
+with this tree's `carma3_bench` on the host that produced it (x86-64, GCC
+`-O3 -march=native`).  The benches build without `-ffp-contract=off`, so a
+different compiler, CPU or translation-unit layout can move CARMA results
+in the fifth significant digit through FMA contraction; no table or
+conclusion depends on that digit.
