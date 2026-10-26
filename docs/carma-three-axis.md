@@ -6,7 +6,9 @@ estimator, its tuning, gates, magnetic handling or the OU-III stability study.
 authoritative implementation.  The three-axis prototype filter, its wrapper
 and the CARMA model library live in `src/kalman_carma/`
 (`Kalman3D_Wave_CARMA3.h`, `SeaStateFusionFilter_CARMA3.h`,
-`CarmaVerticalModel.h`); nothing in the deployed configuration includes them.
+`CarmaVerticalModel.h`); nothing in the deployed OU-III configuration includes
+them.  The experimental AtomS3R sketch `atomS3R_ins_carma3` runs
+recommendation B for research (section 8).
 A CARMA prior is a statistical model, not a law imposed on the vessel's
 physical history; no result below is a stability, admissibility or hardware
 statement.  The paper `doc/kalman_carma/kalman_carma.tex` and its chart
@@ -622,7 +624,12 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   c_sigma)` (the measured band acceleration RMS, with OU-III's floor),
   `sigma_h = S_factor sigma_z` (no horizontal statistic is measured), and the
   `S` laws of section 4.  Mappings fixed before any Monte Carlo run.  Not
-  included by `ArduinoOceanImu.h` or any shipped sketch.
+  included by `ArduinoOceanImu.h`.
+* `sensors/full_marine_ins/atomS3R_ins_carma3/`: an experimental AtomS3R
+  research sketch running recommendation B (CARMA(4,1) x/y/z, no `S`) with
+  the OU-III sketch's I/O, calibration and wrapper settings, minus the lever
+  arm and the pseudo-update cadence, which have no CARMA counterpart.  It is
+  not hardware evidence (obstacle 6 stands).
 * `src/kalman_carma/CarmaVerticalModel.h`: the CARMA model library of
   section 3 (shapes, realization, scaling, exact discretization), one
   instance per axis model.
