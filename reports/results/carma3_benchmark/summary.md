@@ -296,6 +296,20 @@ Medians over runs that shared the 4-core host with other benchmark processes: th
 | C41 x/y + C52 z | 22 | 2.62 | 2.74 | 3.62 | 0.37 |
 | C52 x/y/z + S_x,S_y | 26 | 3.34 | 3.54 | 6.58 | 0.47 |
 
+### ESP32-S3 build probe (Xtensa GCC 14.2.0, -Os; `tests/kalman_carma/arduino/carma3_size_probe`)
+
+Object-level numbers of one translation unit per variant holding the complete fusion wrapper's sample path (not a linked firmware image); `sizeof` evaluated by the target compiler.  No hardware: on-target time and float behaviour are not measured.
+
+| Filter | code bytes (object) | sizeof filter (bytes) | sizeof wrapper (bytes) | largest stack frame (bytes) |
+|---|---|---|---|---|
+| OU-III (shipping) | 156309 | 5692 | 3032 | 1024 |
+| C41 x/y/z | 135694 | 6040 | 2992 | 1344 |
+| C52 x/y/z | 140060 | 8560 | 2992 | 2000 |
+| C41 x/y + C52 z | 147452 | 7176 | 2992 | 2000 |
+| C52 x/y/z + S_x,S_y | 145892 | 10288 | 2992 | 2000 |
+| C52 x/y + C41 z | 148448 | 7408 | 2992 | 2000 |
+| C41 x/y/z + S_x,S_y (OU-III r_S) | 143607 | 7336 | 2992 | 1344 |
+
 ## Coupled x-y prior (oracle correlation) against independent axes
 
 JONSWAP 0.29 Hz, 0.8 m, n=30: horizontal RMS 21.68 mm (C41 x/y/z, independent) against 20.53 mm (A41C:0.795: driving-noise correlation from the true directional spectrum), change +5.3 % [+4.5, +6.2], win 100 %.

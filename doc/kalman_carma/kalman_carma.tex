@@ -327,26 +327,26 @@ OU-III's floor. No horizontal statistic is measured. The mappings were fixed
 before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are exact at a reference
 step $h_0$, recomputed when the committed operating point changes or the step
 moves more than $h_0/16$ from it; nearer steps take their Taylor series in
-$h-h_0$ (\cref{tab:cost}).
+$h-h_0$.
 
 \begin{table}[t]
 \centering
 \caption{State dimension and cost. Multiply-adds of one prediction and one
-accelerometer update, and the multiply-adds a jittered step adds (Taylor
-evaluation of $\mat{F}$, $\mat{Q}$ near the reference step).}
+accelerometer update; ESP32-S3 sizes from the Xtensa GCC~14.2.0 target
+compiler (object code, no hardware run).}
 \label{tab:cost}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}lcrr@{}}
+\begin{tabular}{@{}lcrrrr@{}}
 \toprule
-Configuration & $N_X$ & MACs & \makecell{jittered\\step}\\
+Configuration & $N_X$ & MACs & \makecell{filter\\(B)} & \makecell{code\\(B)} & \makecell{stack\\(B)}\\
 \midrule
-OU-III (shipping) & 21 & 12\,483 & 0\\
-C41 $x/y/z$ & 21 & 4170 & 216\\
-C52 $x/y/z$ & 24 & 5697 & 440\\
-C41 $x/y$ + C52 $z$ & 22 & 4655 & 328\\
-C52 $x/y$ + C41 $z$ & 23 & 5164 & 328\\
-C52 $x/y/z$ + $S_x,S_y$ & 26 & 6971 & 610\\
+OU-III (shipping) & 21 & 12\,483 & 5692 & 156\,309 & 1024\\
+C41 $x/y/z$ & 21 & 4170 & 6040 & 135\,694 & 1344\\
+C52 $x/y/z$ & 24 & 5697 & 8560 & 140\,060 & 2000\\
+C41 $x/y$ + C52 $z$ & 22 & 4655 & 7176 & 147\,452 & 2000\\
+C52 $x/y$ + C41 $z$ & 23 & 5164 & 7408 & 148\,448 & 2000\\
+C52 $x/y/z$ + $S_x,S_y$ & 26 & 6971 & 10\,288 & 145\,892 & 2000\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -360,7 +360,8 @@ $\mat{K}\mat{G}^\top-\mat{P}\mat{C}^\top\mat{K}^\top$ with
 $\mat{G}=\mat{K}\mat{S}-\mat{P}\mat{C}^\top$ (the same expression for any
 gain). A jittered sample clock costs only the Taylor evaluation while the
 step stays within $h_0/16$ of the reference, at the float accuracy of the
-exact discretization (host update at a fixed / $\pm1\,\%$ / $\pm25\,\%$
+exact discretization: 216 multiply-adds for C41 to 610 for C52 + $S$
+(host update at a fixed / $\pm1\,\%$ / $\pm25\,\%$
 jittered interval: 2.53 / 2.60 / \SI{3.18}{\micro s} for C41 against 7.07 / 7.04 / \SI{7.12}{\micro s} for OU-III, whose
 closed-form transition has no such cost). Host times rank the variants; they
 are not ESP32-S3 times.

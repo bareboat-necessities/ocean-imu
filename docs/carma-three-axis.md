@@ -544,17 +544,17 @@ accelerometer bias (3).  Motion states per axis: OU-III `[v, p, S, a_w]` (4),
 CARMA(4,1) `[p, v, a, r]` (4), CARMA(5,2) `[p, v, a, r, r']` (5), plus one
 for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
-| Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | added on a jittered step | host update, fixed dt / +-1 % on a 1 us clock / +-25 % jitter (us) |
-|---|---|---|---|---|---|---|---|
-| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 0 | 7.07 / 7.04 / 7.12 |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | 2.53 / 2.60 / 3.18 |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 5697 | 440 | 2.85 / 2.99 / 4.17 |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 4655 | 328 | 2.62 / 2.74 / 3.62 |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 2.73 / 2.83 / 3.70 |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 6971 | 610 | 3.34 / 3.54 / 6.58 |
-| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | -- |
-| C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | -- |
-| shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 4170 | | not implemented in C++ |
+| Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | added on a jittered step | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed dt / +-1 % on a 1 us clock / +-25 % jitter (us) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 0 | 5692 | 156 309 | 1024 | 7.07 / 7.04 / 7.12 |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | 6040 | 135 694 | 1344 | 2.53 / 2.60 / 3.18 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 5697 | 440 | 8560 | 140 060 | 2000 | 2.85 / 2.99 / 4.17 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 4655 | 328 | 7176 | 147 452 | 2000 | 2.62 / 2.74 / 3.62 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 7408 | 148 448 | 2000 | 2.73 / 2.83 / 3.70 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 6971 | 610 | 10 288 | 145 892 | 2000 | 3.34 / 3.54 / 6.58 |
+| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 7336 | 143 607 | 1344 | -- |
+| C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | as A41 | as A41 | as A41 | -- |
+| shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 4170 | | not implemented in C++ | | | |
 
 * **Operation counts** are the analytic multiply-adds of one prediction plus
   one accelerometer update of each implementation (`cost_model` in
@@ -588,8 +588,9 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   `discretize_lti` does (`carma3-test`).  A +-1 % clock stays inside the
   neighbourhood; the benchmark's +-25 % jitter mostly leaves it, so those
   steps re-run `discretize_lti`.  The class keeps `KF + KQ + 6` matrices per
-  block model (reference coefficients, `A`, `W`, current `F`, `Q`), about
-  1.1 kB more object for C41 x/y/z.  OU-III's closed-form transition has no
+  block model (reference coefficients, `A`, `W`, current `F`, `Q`): 980 B
+  for a 4-state, 1820 B for a 5-state and 3044 B for a 6-state block on the
+  ESP32-S3, two blocks per filter.  OU-III's closed-form transition has no
   such cost.
 * **Host time** (x86-64, `-O3`, one process on an idle host, mean update
   after Live over three JONSWAP seeds) ranks the variants; it is not an
@@ -602,13 +603,19 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   but not measured.  The size of the gap is not robust: the unchanged
   OU-III filter's host time depends on how GCC compiles the benchmark
   adapter's translation unit.
-* **ESP32-S3.**  `tests/kalman_carma/arduino/carma3_size_probe/build.sh`
-  measures, with the target compiler (Espressif Xtensa GCC 14.2.0, `-Os`,
-  arduino-esp32 flags), the object code, the `sizeof` of the wrapper and
-  filter and the largest stack frame of one translation unit per variant
-  holding the complete fusion wrapper's sample path.  Its results for this
-  implementation are not part of this report.  **No hardware was used: no
-  on-target time, float behaviour or AtomS3R validation is claimed.**
+* **ESP32-S3 numbers** are from the target compiler (Espressif Xtensa GCC
+  14.2.0, `-Os`, arduino-esp32 flags) on one translation unit per variant
+  holding the complete fusion wrapper's sample path
+  (`tests/kalman_carma/arduino/carma3_size_probe`, `esp32s3_size.csv`); code
+  bytes are object-level, not a linked image.  All variants are smaller in
+  code than OU-III (one CARMA model class serves every axis).  The filter
+  object grows with `NX^2` and with the `StepDiscretization` coefficients of
+  its two block models (C41 x/y/z 6040 B against OU-III's 5692 B, up to
+  10 288 B for C52 + S).  The largest stack frame is the library's
+  `discretize_lti` (1344 B for a 4 x 4 model, 2000 B for 5 x 5), against
+  1024 B for OU-III; the deepest sample-path chain is `time_update` (560 B
+  for C41 x/y/z) calling it.  **No hardware was used: no on-target time,
+  float behaviour or AtomS3R validation is claimed.**
 * **Conditioning** is section 3: correlation-scaled `cond(P_inf)` 5.5 (C41)
   to 12 (C52), raw up to 1426; float `F`, `Q` within 1.5e-6 of double over
   f_z 0.05-1 Hz; 100 s of float prediction keeps the stationary covariance

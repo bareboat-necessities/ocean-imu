@@ -1,0 +1,8 @@
+variant,code_bytes,rodata_bytes,data_bytes,bss_bytes,sizeof_fusion,sizeof_filter,max_stack_frame,max_stack_function
+OU3,156309,2890,0,20,3032,5692,1024,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
+A41,135694,798,0,20,2992,6040,1344,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A52,140060,798,0,20,2992,8560,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+M45,147452,854,0,20,2992,7176,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A52S,145892,798,0,20,2992,10288,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+M54,148448,854,0,20,2992,7408,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A41S,143607,798,0,20,2992,7336,1344,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
