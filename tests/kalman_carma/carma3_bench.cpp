@@ -35,9 +35,10 @@
   direction relative to the bow (0 following, 90 beam, 180 head; default 30),
   U<m/s> steady forward speed (encounter-frequency Doppler), anchor, drift,
   maneuver (low-frequency translation), maggap (no magnetometer for 300 s from
-  T/3), jit (+-25 % sample-interval jitter), calbias (+-0.01 m/s^2 turn-on
-  bias), norao (unit heave RAO), hlegacy (legacy 0.8 x heave RAO horizontal
-  model).
+  T/3), jit (+-25 % sample-interval jitter), jit1 (+-1 % jitter on a sample
+  clock with 1 us resolution, as a micros() time stamp gives), calbias
+  (+-0.01 m/s^2 turn-on bias), norao (unit heave RAO), hlegacy (legacy
+  0.8 x heave RAO horizontal model).
 
   The complete INS has no declination input, so its horizontal axes are
   magnetic; estimates are rotated into the truth's geographic frame before
@@ -83,6 +84,8 @@ namespace {
 struct ScenarioX {
     Scenario sc;
     bool jitter = false, calbias = false, maggap = false;
+    double jitter_frac = 0.25;   // half-width of the relative interval jitter
+    bool jitter_us = false;      // intervals rounded to whole microseconds
 };
 
 std::vector<std::string> split(const std::string& s, char sep) {
@@ -111,6 +114,7 @@ ScenarioX make_scenario(const std::string& full) {
         else if (m == "maneuver") sc.lf.kind = Translation::Kind::Maneuver;
         else if (m == "maggap") x.maggap = true;
         else if (m == "jit") x.jitter = true;
+        else if (m == "jit1") { x.jitter = true; x.jitter_frac = 0.01; x.jitter_us = true; }
         else if (m == "calbias") x.calbias = true;
         else if (m == "norao") sc.heave_rao = false;
         else if (m == "hlegacy") sc.hmodel.physical = false;
@@ -594,7 +598,8 @@ int main(int argc, char** argv) {
     std::uniform_real_distribution<double> jitter_u(-0.25, 0.25);
     double t_now = 0.0;
     for (long k = 0; k < steps; ++k) {
-        const double dt_k = (sx.jitter && k > 0) ? dt * (1.0 + jitter_u(jitter_rng)) : dt;
+        double dt_k = (sx.jitter && k > 0) ? dt * (1.0 + (sx.jitter_frac / 0.25) * jitter_u(jitter_rng)) : dt;
+        if (sx.jitter_us) dt_k = std::round(dt_k * 1e6) * 1e-6;
         if (k > 0) t_now += dt_k;
         const TruthSample ts = sx.jitter ? truth.at(t_now) : truth.next();
         Vector3f acc = apply_imu_noise(ts.f_b.cast<float>(), acc_noise, static_cast<float>(dt_k));

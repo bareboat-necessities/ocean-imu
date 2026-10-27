@@ -16,7 +16,7 @@ gallery `doc/kalman_carma/kalman_carma-charts.tex` summarize this report;
 CI builds both from a fresh replay of the dataset.
 
 **Result (simulation only; no hardware).**  CARMA(4,1) on all three axes
-(21 states, the same as OU-III, 25 % fewer multiply-adds per sample) is the
+(21 states, the same as OU-III, a third of its multiply-adds per sample) is the
 only configuration that beats OU-III horizontally on every simulated sea.
 In the paired complete-INS benchmark (100 seeds on the four principal seas,
 30 or 20 on 27 further sea conditions) its horizontal RMS error is 43-73 %
@@ -33,8 +33,7 @@ Correlated x-y driving noise is free and gained 5 % with the oracle
 correlation, untested with an estimated one.  Against this, every CARMA
 variant is worse than OU-III on a still IMU (horizontal phantom 84 against
 53 mm RMS, heave 53 against 27 mm, a heave startup transient 2-3 times
-larger) and more overconfident on the mixed sea, and the models are
-re-discretized on every sample whose interval changes.  **Recommendation:
+larger) and more overconfident on the mixed sea.  **Recommendation:
 B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
 (section 12).
 
@@ -545,61 +544,78 @@ accelerometer bias (3).  Motion states per axis: OU-III `[v, p, S, a_w]` (4),
 CARMA(4,1) `[p, v, a, r]` (4), CARMA(5,2) `[p, v, a, r, r']` (5), plus one
 for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
-| Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed / jittered dt (us) |
-|---|---|---|---|---|---|---|---|---|---|
-| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 5692 | 156 309 | 1024 | 11.26 / 12.41 |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | 4928 | 136 507 | 1344 | 5.65 / 7.07 |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 12 582 | 6232 | 140 806 | 2000 | 6.51 / 9.04 |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 10 344 | 5392 | 146 803 | 2000 | 5.94 / 7.94 |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5736 | 147 782 | 2000 | 6.17 / 8.18 |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 15 232 | 7080 | 145 745 | 2032 | 7.78 / 13.59 |
-| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 11 433 | 5664 | 143 703 | 1536 | -- |
-| C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 9315 | as A41 | as A41 | as A41 | -- |
-| shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 9315 | not implemented in C++ | | | |
+| Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | added on a jittered step | ESP32-S3 `sizeof` filter (B) | ESP32-S3 code, object (B) | largest stack frame (B) | host update, fixed dt / +-1 % on a 1 us clock / +-25 % jitter (us) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 0 | 5692 | 156 309 | 1024 | 7.07 / 7.04 / 7.12 |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | 6040 | 135 694 | 1344 | 2.53 / 2.60 / 3.18 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 5697 | 440 | 8560 | 140 060 | 2000 | 2.85 / 2.99 / 4.17 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 4655 | 328 | 7176 | 147 452 | 2000 | 2.62 / 2.74 / 3.62 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 7408 | 148 448 | 2000 | 2.73 / 2.83 / 3.70 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 6971 | 610 | 10 288 | 145 892 | 2000 | 3.34 / 3.54 / 6.58 |
+| C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 7336 | 143 607 | 1344 | -- |
+| C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | as A41 | as A41 | as A41 | -- |
+| shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 4170 | | not implemented in C++ | | | |
 
 * **Operation counts** are the analytic multiply-adds of one prediction plus
-  one accelerometer update of the structured implementation (block-diagonal
-  `F_LL` applied per axis, symmetric Joseph update; `cost_model` in
-  `tools/carma3_analysis.py`).  CARMA(4,1) everywhere is 25 % cheaper than
-  OU-III, whose implementation propagates its 12-state linear block as one
-  dense matrix; CARMA(5,2) everywhere costs the same as OU-III; the S
+  one accelerometer update of each implementation (`cost_model` in
+  `tools/carma3_analysis.py`).  OU-III propagates its 12-state linear block
+  as one dense matrix on both sides of `P`, forms its gain with one LDLT
+  solve per state and evaluates the Joseph update with 24 products per
+  entry.  The CARMA filter applies the block-diagonal `F_LL` to the upper
+  block triangle of `P` only (each block written to both triangles), copies
+  the unit rows of `F_AA = [[R, B], [0, I]]`, forms its gain through `S^-1`
+  (three solves) and writes the Joseph update
+  `P - K C P - (K C P)' + K S K'` as `K G' - (P C') K'` with
+  `G = K S - P C'`, the same expression for any gain, frozen bias rows
+  included, at 6 products per entry.  CARMA(4,1) everywhere needs a third of
+  OU-III's multiply-adds, CARMA(5,2) everywhere less than half, and the S
   states make CARMA the most expensive.  Correlated x-y noise and the
   shared-latent coupling add no state: `Q_H = Sigma_h (x) Q_1` and the
   coupling enters `C` and `A`, not `NX`.
+* **Discretization.**  `F`, `Q` of each CARMA block (one horizontal model
+  serves x and y through the Kronecker structure) are exact at a reference
+  step `h0`, recomputed by `discretize_lti` when the committed operating
+  point changes or the step `h = h0 + d` leaves the neighbourhood
+  `|d| ||D^-1 A D||_inf <= 1/16`, `D = diag(h0^d_i)` the scaling of
+  `discretize_lti` (its shift couplings give `|d|/h0`, so the neighbourhood
+  is `h0/16`, 312 us at 200 Hz, over the tuner's frequency range).  Inside
+  it `StepDiscretization` (`CarmaVerticalModel.h`) evaluates their Taylor
+  series in `d` (`dF/dh = A F`, `dQ/dh = F W F'`; `max(3, M - 1)` and twice
+  as many terms for an `M`-state block) from coefficients formed once per
+  reference: the "added on a jittered step" column.  On a 5 ms reference
+  with +-300 us of jitter and f_z 0.05-1.2 Hz it agrees with the double
+  discretization of the actual step at least as closely as the float
+  `discretize_lti` does (`carma3-test`).  A +-1 % clock stays inside the
+  neighbourhood; the benchmark's +-25 % jitter mostly leaves it, so those
+  steps re-run `discretize_lti`.  The class keeps `KF + KQ + 6` matrices per
+  block model (reference coefficients, `A`, `W`, current `F`, `Q`): 980 B
+  for a 4-state, 1820 B for a 5-state and 3044 B for a 6-state block on the
+  ESP32-S3, two blocks per filter.  OU-III's closed-form transition has no
+  such cost.
+* **Host time** (x86-64, `-O3`, one process on an idle host, mean update
+  after Live over three JONSWAP seeds) ranks the variants; it is not an
+  ESP32-S3 time.  An absolute target estimate would need a measured
+  host/target ratio for this code, which does not exist.  The defensible
+  statement is relative: on this host every CARMA variant costs less per
+  sample than the OU-III filter that the AtomS3R runs today, at a fixed and
+  at a jittered sample interval; that the ordering holds on the target is
+  plausible (the multiply-add counts are the layout-independent comparison)
+  but not measured.  The size of the gap is not robust: the unchanged
+  OU-III filter's host time depends on how GCC compiles the benchmark
+  adapter's translation unit.
 * **ESP32-S3 numbers** are from the target compiler (Espressif Xtensa GCC
   14.2.0, `-Os`, arduino-esp32 flags) on one translation unit per variant
   holding the complete fusion wrapper's sample path
   (`tests/kalman_carma/arduino/carma3_size_probe`, `esp32s3_size.csv`); code
   bytes are object-level, not a linked image.  All variants are smaller in
-  code than OU-III (one CARMA model class serves every axis); the filter
-  object grows roughly with `NX^2` (+736 to +2152 B over C41 x/y/z for two to
-  five added states); the largest stack frame is the
-  library's `discretize_lti` (2000 B for a 5 x 5 model), against 1024 B for
-  OU-III.  **No hardware was used: no on-target time, float behaviour or
-  AtomS3R validation is claimed.**
-* **Host time** (x86-64, `-O3`, one process on an idle host, mean update
-  after Live over three JONSWAP seeds) ranks the variants; it is not an
-  ESP32-S3 time.  An absolute target estimate would need a measured
-  host/target ratio for this code, which does not exist.  The defensible
-  statement is relative: on this host every C41 variant costs less per
-  sample than the OU-III filter that the AtomS3R runs today; that the
-  ordering holds on the target is plausible (similar operation counts and
-  code paths) but not measured.  The size of the gap is not robust: the
-  unchanged OU-III filter's host time depends on how GCC compiles the
-  benchmark adapter's translation unit (with other filter adapters in the
-  same unit it measured 8.9-10.3 us per update against 11.9 us here,
-  interleaved on one host, while the CARMA times did not move), so the
-  multiply-add counts are the layout-independent comparison.
-* **Discretization.**  `F`, `Q` are recomputed only when the sample interval
-  or the committed operating point changes (one horizontal model serves x and
-  y through the Kronecker structure).  The library compares the interval
-  exactly, so a jittered sample clock re-runs the scaled Taylor/doubling
-  exponential of every CARMA block on every sample (the "jittered" column:
-  C41 x/y/z 5.65 -> 7.07 us, C52 x/y/z 6.51 -> 9.04 us, C52 + S 7.78 ->
-  13.59 us, against OU-III 11.26 -> 12.41 us); OU-III's closed-form transition
-  has no such cost.  A dt quantized to the
-  nominal rate, or a cached table, would remove it at a controlled error;
-  this is not implemented.
+  code than OU-III (one CARMA model class serves every axis).  The filter
+  object grows with `NX^2` and with the `StepDiscretization` coefficients of
+  its two block models (C41 x/y/z 6040 B against OU-III's 5692 B, up to
+  10 288 B for C52 + S).  The largest stack frame is the library's
+  `discretize_lti` (1344 B for a 4 x 4 model, 2000 B for 5 x 5), against
+  1024 B for OU-III; the deepest sample-path chain is `time_update` (560 B
+  for C41 x/y/z) calling it.  **No hardware was used: no on-target time,
+  float behaviour or AtomS3R validation is claimed.**
 * **Conditioning** is section 3: correlation-scaled `cond(P_inf)` 5.5 (C41)
   to 12 (C52), raw up to 1426; float `F`, `Q` within 1.5e-6 of double over
   f_z 0.05-1 Hz; 100 s of float prediction keeps the stationary covariance
@@ -629,10 +645,11 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   research sketch running recommendation B (CARMA(4,1) x/y/z, no `S`) with
   the OU-III sketch's I/O, calibration and wrapper settings, minus the lever
   arm and the pseudo-update cadence, which have no CARMA counterpart.  It is
-  not hardware evidence (obstacle 6 stands).
+  not hardware evidence (obstacle 5 stands).
 * `src/kalman_carma/CarmaVerticalModel.h`: the CARMA model library of
   section 3 (shapes, realization, scaling, exact discretization), one
-  instance per axis model.
+  instance per axis model, and `StepDiscretization`, the reference-step
+  discretization of a jittered sample clock (section 7).
 * `tests/kalman_carma/carma3/`: benchmark adapters only (`Bench3.h`,
   `FullAdapters.h`), shared by `carma3_bench` and `carma3-sim`.
 * The OU-III native-secant diagnostic hashes the whole `src/` tree, so a
@@ -640,7 +657,7 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   `shipping_source_tree_sha256`: regenerated with clang 18.1.3, every other
   field of `reports/results/ou3_stability/planar-native-secants-diagnostic.json`
   is reproduced exactly.
-* `tests/kalman_carma/carma3-test.cpp` (54 checks): layouts; the CARMA
+* `tests/kalman_carma/carma3-test.cpp` (74 checks): layouts; the CARMA
   accelerations in the attitude-aware accelerometer model (vertical
   acceleration / bias and attitude / horizontal acceleration
   cross-covariances) and the position and velocity pseudo-measurements on
@@ -648,7 +665,10 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   symmetric, PSD covariance; bounded `S`); Kronecker discretization;
   stationary covariance invariant over 100 s of float prediction
   (<= 1.5e-4); S growth = `S_p(0)` per second with a DC level, bounded with a
-  DC zero; float vs double discretization over f_z 0.05-1 Hz; noiseless
+  DC zero; float vs double discretization over f_z 0.05-1 Hz;
+  `StepDiscretization` on a +-300 us jittered 5 ms clock against double
+  (every step from the series, f_z 0.05-1.2 Hz) and its refresh conditions;
+  noiseless
   three-axis sinusoid recovered within 10 % on every axis with PSD
   covariance; correlated prior; wrapper on a still IMU.  Wired into
   `make all` through `run_tests.sh` with `carma_model-test`, the process
@@ -697,7 +717,7 @@ generated `reports/results/carma3_benchmark/summary.md` and
 |---|---|---|---|---|---|
 | JONSWAP 0.29 Hz, 0.8 m (n=100) | horizontal | 5.18 | 2.66 (+48.7 % [+48.4, +48.9]) | 2.05 (+60.5 % [+60.1, +60.8]) | 2.05 (+60.4 % [+60.1, +60.8]) |
 |  | heave | 3.12 | 1.83 (+41.4 % [+41.0, +41.7]) | 2.04 (+34.5 % [+34.0, +35.1]) | 1.83 (+41.4 % [+41.1, +41.7]) |
-| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 2.91 (+47.8 % [+47.6, +48.0]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
+| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 2.91 (+47.8 % [+47.6, +48.1]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
 |  | heave | 3.26 | 2.10 (+35.5 % [+35.0, +36.0]) | 2.68 (+17.7 % [+16.3, +19.0], win 98 %) | 2.10 (+35.5 % [+35.1, +36.0]) |
 | mixed swell + wind (n=100) | horizontal | 18.26 | 15.14 (+17.1 % [+16.8, +17.5]) | 31.67 (-73.4 % [-74.5, -72.2], win 0 %) | 31.08 (-70.2 % [-71.2, -69.1], win 0 %) |
 |  | heave | 10.27 | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) | 27.23 (-165.2 % [-166.8, -163.5], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) |
@@ -722,7 +742,7 @@ RMS error in % of incident H_s; in brackets the paired change against OU-III wit
 | JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 / 4.03 / 4.04 / 4.04 | 8.43 / 4.72 / 5.25 |
 | JONSWAP 0.29 Hz, 0.8 m, beam, underway 2.5 m/s | 30 | 5.47 / 3.00 / 2.86 / 2.86 | 3.31 / 2.15 / 2.83 |
 | JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 / 3.64 / 2.64 / 2.64 | 3.16 / 1.82 / 2.04 |
-| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 / 5.39 / 3.40 / 3.40 | 3.14 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 / 5.39 / 3.39 / 3.40 | 3.14 / 1.83 / 2.05 |
 | JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 / 14.11 / 8.01 / 8.01 | 3.20 / 1.83 / 2.04 |
 | bimodal | 30 | 11.10 / 6.22 / 9.18 / 9.17 | 5.90 / 4.18 / 7.89 |
 | broadband | 30 | 16.85 / 7.34 / 7.60 / 7.60 | 8.32 / 5.39 / 5.79 |
@@ -738,9 +758,9 @@ RMS error in % of incident H_s; in brackets the paired change against OU-III wit
 | JONSWAP 0.29 Hz, 0.8 m, 300 s magnetometer gap | 30 | 5.27 / 2.71 / 2.10 / 2.10 | 3.14 / 1.83 / 2.05 |
 | JONSWAP 0.29 Hz, 0.8 m, +-25 % dt jitter | 30 | 5.26 / 2.71 / 2.10 / 2.10 | 3.15 / 1.84 / 2.07 |
 | JONSWAP 0.29 Hz, 0.8 m, legacy horizontal truth | 30 | 5.52 / 2.97 / 2.45 / 2.45 | 3.14 / 1.83 / 2.05 |
-| mixed swell + wind, legacy horizontal truth | 30 | 15.62 / 12.82 / 26.25 / 25.86 | 10.27 / 11.65 / 27.03 |
+| mixed swell + wind, legacy horizontal truth | 30 | 15.62 / 12.82 / 26.25 / 25.87 | 10.27 / 11.65 / 27.03 |
 | JONSWAP 0.29 Hz, 0.8 m, 3600 s | 20 | 5.18 / 2.64 / 2.03 / 2.03 | 3.12 / 1.82 / 2.03 |
-| mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.71 / 30.89 | 10.25 / 11.61 / 27.06 |
+| mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.72 / 30.89 | 10.25 / 11.61 / 27.06 |
 
 RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C41's.
 
@@ -777,7 +797,7 @@ RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C4
 | changing f_p | 100 | 5.70 | 2.88 | 2.91 | 2.64 | 2.47 | 2.47 |
 | JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 | 4.03 | 3.59 | 2.78 | 4.04 | 3.81 |
 | JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 | 3.64 | 3.41 | 3.19 | 2.64 | 2.62 |
-| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 | 5.39 | 4.92 | 4.79 | 3.40 | 3.36 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 | 5.39 | 4.92 | 4.79 | 3.39 | 3.36 |
 | JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 | 14.11 | 12.72 | 12.72 | 8.01 | 7.98 |
 | bimodal | 30 | 11.10 | 6.22 | 6.91 | 6.43 | 9.18 | 9.40 |
 | broadband | 30 | 16.85 | 7.34 | 8.27 | 7.77 | 7.60 | 7.87 |
@@ -889,7 +909,7 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 214.3 | 31.5 | 53.1 | 184.5 | 78.0 | 11.4 | 2.1 | 0.3 |
-| x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.6 | 3.7 | 0.6 |
+| x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.7 | 3.7 | 0.6 |
 | x | C52 x/y/z | 351.7 | 11.0 | 35.7 | 322.8 | 104.9 | 10.4 | 3.9 | 0.5 |
 | z | OU-III (shipping) | 122.4 | 20.6 | 26.8 | 106.7 | 44.9 | 8.8 | 1.3 | 0.2 |
 | z | C41 x/y/z | 129.4 | 9.5 | 21.2 | 121.9 | 40.4 | 15.9 | 10.0 | 1.2 |
@@ -900,8 +920,8 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 41.5 | 17.5 | 32.3 | 12.6 | 1.6 | 0.3 | 0.1 | 0.1 |
-| x | C41 x/y/z | 61.6 | 28.5 | 45.7 | 5.3 | 1.9 | 1.6 | 1.9 | 4.5 |
-| x | C52 x/y/z | 64.5 | 24.5 | 52.3 | 5.0 | 1.8 | 1.1 | 1.0 | 2.5 |
+| x | C41 x/y/z | 61.5 | 28.5 | 45.7 | 5.3 | 1.9 | 1.6 | 1.9 | 4.5 |
+| x | C52 x/y/z | 64.5 | 24.5 | 52.2 | 5.0 | 1.8 | 1.1 | 1.0 | 2.5 |
 | z | OU-III (shipping) | 24.9 | 14.7 | 17.9 | 6.7 | 0.9 | 0.2 | 0.1 | 0.1 |
 | z | C41 x/y/z | 47.7 | 35.7 | 26.4 | 3.1 | 1.1 | 0.9 | 1.3 | 3.3 |
 | z | C52 x/y/z | 41.1 | 27.3 | 26.9 | 2.9 | 1.0 | 0.6 | 0.7 | 1.8 |
@@ -926,7 +946,7 @@ wave band (0.2-0.4 Hz) and below it, C52 cuts it most below the wave band
 (0-0.05 Hz: bias, tilt and rotation leakage, which `g dtheta` makes larger
 horizontally than vertically) at a slightly higher in-band error.  On the
 mixed sea, every filter's error sits mostly at the swell, C52's most (on x, 322.8 of 351.7 mm in 0.05-0.1 Hz, seed 1; the INS tuner's operating frequency has a median of 0.218 Hz there, which puts the C52 notch at 0.089 Hz); on the still IMU the
-CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; the tuner is pinned at its bound, f_z = 0.050 Hz, with the 0.05 m/s^2 amplitude floor).
+CARMA error sits in the prior's band (C41 x: 45.7 of 61.5 mm in 0.017-0.05 Hz; the tuner is pinned at its bound, f_z = 0.050 Hz, with the 0.05 m/s^2 amplitude floor).
 
 ![Time series, JONSWAP](../reports/results/carma3_benchmark/timeseries_xyz_jonswap.svg)
 ![Error PSD, JONSWAP](../reports/results/carma3_benchmark/error_psd_xyz_jonswap.svg)
@@ -944,7 +964,7 @@ CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; t
 |  | C52 x/y + C41 z | 1.52 / 1.09 / 4.1 | 1.47 / 1.26 | 18 / 263 | 100 / 469 | 90 / 96 | 0.21 / 0.23 / 1.67 |
 | mixed swell + wind | OU-III (shipping) | 18.34 / 7.13 / 30.9 | 0.33 / 0.50 | 301 / 1482 | 985 / 2411 | 912 / 853 | 0.29 / 0.22 / 1.89 |
 |  | C41 x/y/z | 32.01 / 28.20 / 63.7 | 0.24 / 0.25 | 208 / 621 | 599 / 1133 | 953 / 921 | 0.20 / 0.24 / 1.55 |
-|  | C52 x/y/z | 161.31 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
+|  | C52 x/y/z | 161.32 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
 |  | C52 x/y + C41 z | 153.40 / 28.26 / 190.2 | 0.09 / 0.25 | 357 / 621 | 877 / 1133 | 959 / 922 | 0.21 / 0.32 / 2.02 |
 
 Means over 100 paired seeds (convergence: median).
@@ -1114,11 +1134,10 @@ stationary-covariance invariance and non-uniform steps are tested.
    prior is the most robust on the mixed sea in heave.
 10. **Does any measured improvement justify the increase in state dimension
     and computational cost?**  For C41 x/y/z there is no increase: 21 states
-    like OU-III, 25 % fewer multiply-adds per sample, less code, a faster
-    host update at a fixed sample interval (section 7).  The cost it does add
-    is per-sample re-discretization when the interval jitters.  For C52 x/y/z
-    (+3 states, OU-III's cost), the single-peaked gain over C41 does not
-    justify the mixed-sea risk.  S states (+2) bring no consistent gain.
+    like OU-III, a third of its multiply-adds per sample and a faster host
+    update at a fixed and at a jittered sample interval (section 7).  For C52
+    x/y/z (+3 states, less than half of OU-III's multiply-adds), the
+    single-peaked gain over C41 does not justify the mixed-sea risk.  S states (+2) bring no consistent gain.
     Coupling adds no states but needs information the filter does not have.
 
 ## 12. Recommendation
@@ -1159,13 +1178,11 @@ stationary-covariance invariance and non-uniform steps are tested.
    represent two peaks.
 3. Covariance under mismatch: no model-error term; the covariance is not an
    error bound on multi-peaked seas.
-4. Sample-clock jitter re-runs the matrix exponential each sample; quantize
-   dt or tabulate `F`, `Q` with a stated error before any target timing.
-5. Hull and sea dependence: one synthetic hull and one replay hull; the
+4. Hull and sea dependence: one synthetic hull and one replay hull; the
    horizontal shape is the JONSWAP fit; no lever arm, wind heel or
    nonlinear waves.
-6. No hardware evidence: no AtomS3R timing, float behaviour or sea data.
-7. No stability analysis: the OU-III stability study does not cover a CARMA
+5. No hardware evidence: no AtomS3R timing, float behaviour or sea data.
+6. No stability analysis: the OU-III stability study does not cover a CARMA
    motion model.
 
 ## Limitations

@@ -331,21 +331,16 @@ private:
 
     T tau_aw = T(2.1);
 
-    // Horizontal CARMA prior (unit acceleration variance) and its cached exact
-    // discretization; Sigma_h_ scales Q and the stationary covariance.
+    // Horizontal CARMA prior (unit acceleration variance) and its
+    // discretization at the current step; Sigma_h_ scales Q and the
+    // stationary covariance.
     HorizontalModel hmodel_;
     Eigen::Matrix<T,2,2> Sigma_h_ = Eigen::Matrix<T,2,2>::Identity();
-    MatrixHA F_H_ = MatrixHA::Identity();
-    MatrixHA Q_H1_ = MatrixHA::Zero();
-    T cache_dt_h_ = T(-1);
-    uint32_t cache_generation_h_ = 0xffffffffu;
+    carma::StepDiscretization<T,NHA> disc_h_;
 
-    // Vertical prior and its cached exact discretization.
+    // Vertical prior and its discretization at the current step.
     VerticalModel vmodel_;
-    MatrixZZ F_Z_cache_ = MatrixZZ::Identity();
-    MatrixZZ Q_Z_cache_ = MatrixZZ::Zero();
-    T cache_dt_ = T(-1);
-    uint32_t cache_generation_ = 0xffffffffu;
+    carma::StepDiscretization<T,NZ> disc_z_;
 
     T sigma_S0_ = T(50.0);
     T pseudo_update_elapsed_s_ = T(0);
@@ -356,7 +351,6 @@ private:
 
     MatrixBaseN F_AA_scratch_;
     MatrixBaseN Q_AA_scratch_;
-    MatrixLL tmpLL_scratch_;
     MatrixBaseN tmpAA_scratch_;
     Eigen::Matrix<T,BASE_N,NL> tmpAL_scratch_;
     MatrixNX3 PCt_scratch_;
@@ -407,6 +401,36 @@ private:
         return M;
     }
 
+    // ou_detail::simpson_B_Q_BT evaluated with the step's B(Ts) = B1, which
+    // time_update already has, and B(0) = 0: (Ts/6) (4 Bm Q Bm^T + B1 Q B1^T).
+    static Matrix3 simpson_B_Q_BT_(const Vector3& w, T Ts, const Matrix3& Q, const Matrix3& B1) {
+        Matrix3 Rm, Bm;
+        ou_detail::rot_and_B_from_wt(w, T(0.5) * Ts, Rm, Bm);
+        T BQm[3][3], BQ1[3][3];
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) {
+                T am = T(0), a1 = T(0);
+                for (int k = 0; k < 3; ++k) {
+                    am += Bm(i,k) * Q(k,j);
+                    a1 += B1(i,k) * Q(k,j);
+                }
+                BQm[i][j] = am;
+                BQ1[i][j] = a1;
+            }
+        const T c = Ts / T(6);
+        Matrix3 out;
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) {
+                T am = T(0), a1 = T(0);
+                for (int k = 0; k < 3; ++k) {
+                    am += BQm[i][k] * Bm(j,k);
+                    a1 += BQ1[i][k] * B1(j,k);
+                }
+                out(i,j) = c * (T(4) * am + a1);
+            }
+        return out;
+    }
+
     void applyQuaternionCorrectionFromErrorState();
     void project_acc_bias_();
 
@@ -426,30 +450,48 @@ private:
         return std::isfinite(v) ? v : std::numeric_limits<T>::quiet_NaN();
     }
 
+    // K = PCt S^-1 through the three columns of S^-1 (three vector solves, not
+    // one per state).
     void gain3_(const MatrixNX3& PCt, const Eigen::LDLT<Matrix3>& ldlt, MatrixNX3& K) const {
-        for (int i = 0; i < NX; ++i) {
-            const Vector3 rhs(PCt(i,0), PCt(i,1), PCt(i,2));
-            const Vector3 sol = ldlt.solve(rhs);
-            K(i,0) = sol(0); K(i,1) = sol(1); K(i,2) = sol(2);
+        Matrix3 Sinv;
+        for (int k = 0; k < 3; ++k) {
+            Vector3 e = Vector3::Zero();
+            e(k) = T(1);
+            const Vector3 c = ldlt.solve(e);
+            Sinv(0,k) = c(0); Sinv(1,k) = c(1); Sinv(2,k) = c(2);
         }
+        for (int i = 0; i < NX; ++i)
+            for (int b = 0; b < 3; ++b)
+                K(i,b) = PCt(i,0) * Sinv(0,b) + PCt(i,1) * Sinv(1,b) + PCt(i,2) * Sinv(2,b);
     }
 
+    // Joseph form P - K C P - (K C P)^T + K S K^T, with C P = PCt^T for the
+    // symmetric P.  With G = K S - PCt the update is K G^T - PCt K^T, the
+    // same expression for any gain (frozen rows included) at 2M instead of
+    // M (M + 2) products per entry.  Both triangles get the same value, so
+    // Pext stays exactly symmetric.  The gain is copied to locals, which the
+    // stores into Pext cannot alias.
     template<int M>
     void joseph_update_(const MatrixNX3& K, const Matrix3& S, const MatrixNX3& PCt) {
+        T Kl[NX][M], G[NX][M];
+        for (int i = 0; i < NX; ++i)
+            for (int b = 0; b < M; ++b) {
+                Kl[i][b] = K(i,b);
+                T g = -PCt(i,b);
+                for (int a = 0; a < M; ++a) g += K(i,a) * S(a,b);
+                G[i][b] = g;
+            }
         for (int i = 0; i < NX; ++i) {
+            T pi[M];
+            for (int l = 0; l < M; ++l) pi[l] = PCt(i,l);
             for (int j = i; j < NX; ++j) {
-                T kcp_ij = T(0), kcp_ji = T(0), ksk = T(0);
-                for (int l = 0; l < M; ++l) {
-                    kcp_ij += K(i,l) * PCt(j,l);
-                    kcp_ji += K(j,l) * PCt(i,l);
-                }
-                for (int a = 0; a < M; ++a)
-                    for (int b = 0; b < M; ++b) ksk += K(i,a) * S(a,b) * K(j,b);
-                Pext(i,j) += -(kcp_ij + kcp_ji) + ksk;
-                if (j != i) Pext(j,i) = Pext(i,j);
+                T d = T(0);
+                for (int l = 0; l < M; ++l) d += Kl[i][l] * G[j][l] - pi[l] * Kl[j][l];
+                const T v = Pext(i,j) + d;
+                Pext(i,j) = v;
+                Pext(j,i) = v;
             }
         }
-        symmetrize_Pext_();
     }
 
     template<int M>
@@ -467,17 +509,45 @@ private:
     void refresh_vertical_discretization_(T Ts);
     void refresh_horizontal_discretization_(T Ts);
 
+    // With gyro bias F_AA = [[R, B], [0, I]]: rows 3..5 are unit rows.
+    static constexpr bool aa_unit_row_(int i) { return with_gyro_bias && i >= 3; }
+
+    // Pext block (rows ra.., cols rb..) <- Fa P_ab Fb^T, mirrored into (b, a).
+    // A diagonal block (ra == rb, Fa == Fb) computes its upper triangle.
+    // Blocks below the diagonal are never read, so the upper block triangle
+    // can be propagated in place.
+    template<int NA, int NB>
+    void propagate_block_(int ra, int rb, const Eigen::Matrix<T,NA,NA>& Fa,
+                          const Eigen::Matrix<T,NB,NB>& Fb, bool diag) {
+        T X[NA][NB];
+        for (int i = 0; i < NA; ++i)
+            for (int j = 0; j < NB; ++j) {
+                T acc = T(0);
+                for (int k = 0; k < NA; ++k) acc += Fa(i,k) * Pext(ra + k, rb + j);
+                X[i][j] = acc;
+            }
+        for (int i = 0; i < NA; ++i)
+            for (int j = diag ? i : 0; j < NB; ++j) {
+                T acc = T(0);
+                for (int k = 0; k < NB; ++k) acc += X[i][k] * Fb(j,k);
+                Pext(ra + i, rb + j) = acc;
+                Pext(rb + j, ra + i) = acc;
+            }
+    }
+
     // out = F_LL in.
     void apply_F_LL_(const T (&in)[NL], T (&out)[NL]) const {
+        const MatrixHA& F_H = disc_h_.Phi();
+        const MatrixZZ& F_Z = disc_z_.Phi();
         for (int ax = 0; ax < 2; ++ax)
             for (int i = 0; i < NHA; ++i) {
                 T acc = T(0);
-                for (int j = 0; j < NHA; ++j) acc += F_H_(i,j) * in[ax * NHA + j];
+                for (int j = 0; j < NHA; ++j) acc += F_H(i,j) * in[ax * NHA + j];
                 out[ax * NHA + i] = acc;
             }
         for (int i = 0; i < NZ; ++i) {
             T acc = T(0);
-            for (int j = 0; j < NZ; ++j) acc += F_Z_cache_(i,j) * in[NH + j];
+            for (int j = 0; j < NZ; ++j) acc += F_Z(i,j) * in[NH + j];
             out[NH + i] = acc;
         }
     }
@@ -664,36 +734,32 @@ bool CARMA3_CLS::initialize_from_acc_preserve_yaw(Vector3 const& acc_body) {
 
 CARMA3_TPL
 void CARMA3_CLS::refresh_vertical_discretization_(T Ts) {
-    if (Ts == cache_dt_ && vmodel_.generation() == cache_generation_) return;
+    if (disc_z_.advance(vmodel_.generation(), Ts)) return;
     if constexpr (SZ) {
         MatrixZZ A = MatrixZZ::Zero();
         MatrixZZ W = MatrixZZ::Zero();
         A.template topLeftCorner<NZC,NZC>() = vmodel_.A();
         A(NZC, 0) = T(1);    // S_z' = h
         W.template topLeftCorner<NZC,NZC>() = vmodel_.W();
-        carma::discretize_lti<T,NZ>(A, W, Ts, F_Z_cache_, Q_Z_cache_);
+        disc_z_.refresh(A, W, vmodel_.generation(), Ts);
     } else {
-        carma::discretize_lti<T,NZ>(vmodel_.A(), vmodel_.W(), Ts, F_Z_cache_, Q_Z_cache_);
+        disc_z_.refresh(vmodel_.A(), vmodel_.W(), vmodel_.generation(), Ts);
     }
-    cache_dt_ = Ts;
-    cache_generation_ = vmodel_.generation();
 }
 
 CARMA3_TPL
 void CARMA3_CLS::refresh_horizontal_discretization_(T Ts) {
-    if (Ts == cache_dt_h_ && hmodel_.generation() == cache_generation_h_) return;
+    if (disc_h_.advance(hmodel_.generation(), Ts)) return;
     if constexpr (SH) {
         MatrixHA A = MatrixHA::Zero();
         MatrixHA W = MatrixHA::Zero();
         A.template topLeftCorner<NHC,NHC>() = hmodel_.A();
         A(NHC, 0) = T(1);   // S' = p
         W.template topLeftCorner<NHC,NHC>() = hmodel_.W();
-        carma::discretize_lti<T,NHA>(A, W, Ts, F_H_, Q_H1_);
+        disc_h_.refresh(A, W, hmodel_.generation(), Ts);
     } else {
-        carma::discretize_lti<T,NHA>(hmodel_.A(), hmodel_.W(), Ts, F_H_, Q_H1_);
+        disc_h_.refresh(hmodel_.A(), hmodel_.W(), hmodel_.generation(), Ts);
     }
-    cache_dt_h_ = Ts;
-    cache_generation_h_ = hmodel_.generation();
 }
 
 CARMA3_TPL
@@ -710,24 +776,26 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     qref.normalize();
 
     const Vector3 w = last_gyr_bias_corrected;
-    const T omega = w.norm();
-    const T theta = omega * Ts;
     MatrixBaseN& F_AA = F_AA_scratch_;
     F_AA.setIdentity();
-    const Matrix3 I3 = Matrix3::Identity();
-    if (theta < T(1e-5)) {
-        const Matrix3 Wx = skew_(w);
-        F_AA.template topLeftCorner<3,3>() = I3 - Wx * Ts + (Wx * Wx) * (Ts * Ts / T(2));
-    } else {
-        const Matrix3 Wn = skew_(w / (omega + std::numeric_limits<T>::epsilon()));
-        const T s = std::sin(theta), c = std::cos(theta);
-        F_AA.template topLeftCorner<3,3>() = I3 - s * Wn + (T(1) - c) * (Wn * Wn);
-    }
+    [[maybe_unused]] Matrix3 Bstep;
     if constexpr (GB) {
-        Matrix3 Rstep, Bstep;
+        Matrix3 Rstep;
         ou_detail::rot_and_B_from_wt(w, Ts, Rstep, Bstep);
         F_AA.template topLeftCorner<3,3>() = Rstep;
         F_AA.template block<3,3>(0,3) = Bstep;
+    } else {
+        const T omega = w.norm();
+        const T theta = omega * Ts;
+        const Matrix3 I3 = Matrix3::Identity();
+        if (theta < T(1e-5)) {
+            const Matrix3 Wx = skew_(w);
+            F_AA.template topLeftCorner<3,3>() = I3 - Wx * Ts + (Wx * Wx) * (Ts * Ts / T(2));
+        } else {
+            const Matrix3 Wn = skew_(w / (omega + std::numeric_limits<T>::epsilon()));
+            const T s = std::sin(theta), c = std::cos(theta);
+            F_AA.template topLeftCorner<3,3>() = I3 - s * Wn + (T(1) - c) * (Wn * Wn);
+        }
     }
 
     MatrixBaseN& Q_AA = Q_AA_scratch_;
@@ -742,7 +810,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         if (ou_detail::is_isotropic3(Qg)) I_R = Matrix3::Identity() * (Qg(0,0) * Ts);
         else I_R = ou_detail::simpson_R_Q_RT(w, Ts, Qg);
         Matrix3 I_BB = Matrix3::Zero();
-        if constexpr (GB) I_BB = ou_detail::simpson_B_Q_BT(w, Ts, Qbg);
+        if constexpr (GB) I_BB = simpson_B_Q_BT_(w, Ts, Qbg, Bstep);
         Q_AA.template topLeftCorner<3,3>() = I_R + I_BB;
         if constexpr (GB) {
             Matrix3 IB;
@@ -755,60 +823,90 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         Q_AA = T(0.5) * (Q_AA + Q_AA.transpose()).eval();
         ou_detail::project_psd_ou_iii<T,BASE_N>(Q_AA, T(1e-12));
     }
+    // Every block below is written to both triangles with one value, so the
+    // propagated covariance is exactly symmetric.  Unit rows of F_AA are
+    // applied as copies.
     {
         MatrixBaseN& tmpAA = tmpAA_scratch_;
-        tmpAA.noalias() = F_AA * Pext.template block<BASE_N,BASE_N>(0,0);
-        Pext.template block<BASE_N,BASE_N>(0,0).noalias() = tmpAA * F_AA.transpose();
-        Pext.template block<BASE_N,BASE_N>(0,0) += Q_AA;
+        for (int i = 0; i < BASE_N; ++i)
+            for (int j = 0; j < BASE_N; ++j) {
+                if (aa_unit_row_(i)) { tmpAA(i,j) = Pext(i,j); continue; }
+                T acc = T(0);
+                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k,j);
+                tmpAA(i,j) = acc;
+            }
+        for (int i = 0; i < BASE_N; ++i)
+            for (int j = i; j < BASE_N; ++j) {
+                T acc;
+                if (aa_unit_row_(j)) {
+                    acc = Q_AA(i,j) + tmpAA(i,j);
+                } else {
+                    acc = Q_AA(i,j);
+                    for (int k = 0; k < BASE_N; ++k) acc += tmpAA(i,k) * F_AA(j,k);
+                }
+                Pext(i,j) = acc;
+                Pext(j,i) = acc;
+            }
     }
 
     // Linear block: block-diagonal F_LL applied structurally.
     refresh_horizontal_discretization_(Ts);
     refresh_vertical_discretization_(Ts);
+    const MatrixHA& F_H = disc_h_.Phi();
+    const MatrixZZ& F_Z = disc_z_.Phi();
 
-    T in[NL], out[NL];
-
-    for (int k = 0; k < NL; ++k) in[k] = xext(OFF_L + k);
-    apply_F_LL_(in, out);
-    for (int k = 0; k < NL; ++k) xext(OFF_L + k) = out[k];
-
-    MatrixLL& FP = tmpLL_scratch_;
-    for (int j = 0; j < NL; ++j) {
-        for (int k = 0; k < NL; ++k) in[k] = Pext(OFF_L + k, OFF_L + j);
+    {
+        T in[NL], out[NL];
+        for (int k = 0; k < NL; ++k) in[k] = xext(OFF_L + k);
         apply_F_LL_(in, out);
-        for (int k = 0; k < NL; ++k) FP(k, j) = out[k];
+        for (int k = 0; k < NL; ++k) xext(OFF_L + k) = out[k];
     }
-    for (int i = 0; i < NL; ++i) {
-        for (int k = 0; k < NL; ++k) in[k] = FP(i, k);
-        apply_F_LL_(in, out);
-        for (int j = 0; j < NL; ++j) Pext(OFF_L + i, OFF_L + j) = out[j];
-    }
+
+    // P_LL <- F_LL P_LL F_LL^T over the upper block triangle (x, y, z).
+    constexpr int LX = OFF_L, LY = OFF_L + NHA;
+    propagate_block_<NHA,NHA>(LX, LX, F_H, F_H, true);
+    propagate_block_<NHA,NHA>(LX, LY, F_H, F_H, false);
+    propagate_block_<NHA,NZ>(LX, OFF_Z, F_H, F_Z, false);
+    propagate_block_<NHA,NHA>(LY, LY, F_H, F_H, true);
+    propagate_block_<NHA,NZ>(LY, OFF_Z, F_H, F_Z, false);
+    propagate_block_<NZ,NZ>(OFF_Z, OFF_Z, F_Z, F_Z, true);
     // Q_H = Sigma_h (x) Q_1.
+    const MatrixHA& Q_H1 = disc_h_.Q();
+    const MatrixZZ& Q_Z = disc_z_.Q();
     for (int ax = 0; ax < 2; ++ax)
         for (int bx = 0; bx < 2; ++bx) {
             const T s = Sigma_h_(ax, bx);
             if (s == T(0)) continue;
             for (int a = 0; a < NHA; ++a)
                 for (int b = 0; b < NHA; ++b)
-                    Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1_(a, b);
+                    Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1(a, b);
         }
     for (int a = 0; a < NZ; ++a)
         for (int b = 0; b < NZ; ++b)
-            Pext(OFF_Z + a, OFF_Z + b) += Q_Z_cache_(a, b);
+            Pext(OFF_Z + a, OFF_Z + b) += Q_Z(a, b);
 
+    // P_AL <- F_AA P_AL F_LL^T.
     Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
     for (int i = 0; i < BASE_N; ++i)
         for (int j = 0; j < NL; ++j) {
+            if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
             T acc = T(0);
             for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
             tmpAL(i,j) = acc;
         }
     for (int i = 0; i < BASE_N; ++i) {
-        for (int k = 0; k < NL; ++k) in[k] = tmpAL(i, k);
-        apply_F_LL_(in, out);
-        for (int j = 0; j < NL; ++j) {
-            Pext(i, OFF_L + j) = out[j];
-            Pext(OFF_L + j, i) = out[j];
+        for (int ax = 0; ax < 2; ++ax)
+            for (int j = 0; j < NHA; ++j) {
+                T acc = T(0);
+                for (int k = 0; k < NHA; ++k) acc += F_H(j,k) * tmpAL(i, ax * NHA + k);
+                Pext(i, OFF_L + ax * NHA + j) = acc;
+                Pext(OFF_L + ax * NHA + j, i) = acc;
+            }
+        for (int j = 0; j < NZ; ++j) {
+            T acc = T(0);
+            for (int k = 0; k < NZ; ++k) acc += F_Z(j,k) * tmpAL(i, NH + k);
+            Pext(i, OFF_Z + j) = acc;
+            Pext(OFF_Z + j, i) = acc;
         }
     }
 
@@ -827,14 +925,21 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         Eigen::Matrix<T,BASE_N,3> tmpAB;
         for (int i = 0; i < BASE_N; ++i)
             for (int j = 0; j < 3; ++j) {
-                T acc = T(0);
-                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_BA + j);
+                T acc;
+                if (aa_unit_row_(i)) {
+                    acc = Pext(i, OFF_BA + j);
+                } else {
+                    acc = T(0);
+                    for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_BA + j);
+                }
                 tmpAB(i,j) = acc * phi_b;
             }
         Pext.template block<BASE_N,3>(0, OFF_BA) = tmpAB;
         Pext.template block<3,BASE_N>(OFF_BA, 0) = tmpAB.transpose();
 
+        // P_LB <- F_LL P_LB phi_b.
         for (int j = 0; j < 3; ++j) {
+            T in[NL], out[NL];
             for (int k = 0; k < NL; ++k) in[k] = Pext(OFF_L + k, OFF_BA + j);
             apply_F_LL_(in, out);
             for (int k = 0; k < NL; ++k) {
@@ -843,8 +948,6 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
             }
         }
     }
-
-    symmetrize_Pext_();
 
     if constexpr (SH || SZ) {
         if (ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
@@ -882,19 +985,25 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     }
 
     MatrixNX3& PCt = PCt_scratch_;
-    PCt.setZero();
     for (int i = 0; i < NX; ++i) {
-        Vector3 acc = Vector3::Zero();
-        for (int c = 0; c < NCOL; ++c) acc += Pext(i, col[c]) * cvec[c];
-        PCt(i,0) = acc(0); PCt(i,1) = acc(1); PCt(i,2) = acc(2);
+        T pc0 = T(0), pc1 = T(0), pc2 = T(0);
+        for (int c = 0; c < NCOL; ++c) {
+            const T v = Pext(i, col[c]);
+            pc0 += v * cvec[c](0); pc1 += v * cvec[c](1); pc2 += v * cvec[c](2);
+        }
+        PCt(i,0) = pc0; PCt(i,1) = pc1; PCt(i,2) = pc2;
     }
     Matrix3& S_mat = S_scratch_;
     S_mat = Racc;
-    for (int c = 0; c < NCOL; ++c) {
-        const Vector3 pc(PCt(col[c],0), PCt(col[c],1), PCt(col[c],2));
-        S_mat.noalias() += cvec[c] * pc.transpose();
-    }
-    S_mat = T(0.5) * (S_mat + S_mat.transpose()).eval();
+    for (int c = 0; c < NCOL; ++c)
+        for (int a = 0; a < 3; ++a)
+            for (int b = 0; b < 3; ++b) S_mat(a,b) += cvec[c](a) * PCt(col[c], b);
+    for (int a = 0; a < 3; ++a)
+        for (int b = a + 1; b < 3; ++b) {
+            const T v = T(0.5) * (S_mat(a,b) + S_mat(b,a));
+            S_mat(a,b) = v;
+            S_mat(b,a) = v;
+        }
 
     if constexpr (AB) {
         if (!use_ba) {

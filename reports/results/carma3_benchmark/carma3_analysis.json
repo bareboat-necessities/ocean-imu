@@ -131,55 +131,62 @@
   "CARMA(4,1) XY + CARMA(5,2) Z": {
    "P_bytes_float": 1936,
    "P_floats": 484,
-   "acc_update_madds": 7143,
-   "predict_madds": 3201,
+   "acc_update_madds": 2616,
+   "jitter_series_madds": 328,
+   "predict_madds": 2039,
    "states": 22,
-   "total_madds_per_sample": 10344
+   "total_madds_per_sample": 4655
   },
   "CARMA(4,1) XYZ": {
    "P_bytes_float": 1764,
    "P_floats": 441,
-   "acc_update_madds": 6570,
-   "predict_madds": 2745,
+   "acc_update_madds": 2439,
+   "jitter_series_madds": 216,
+   "predict_madds": 1731,
    "states": 21,
-   "total_madds_per_sample": 9315
+   "total_madds_per_sample": 4170
   },
   "CARMA(4,1) XYZ + S_x,S_y": {
    "P_bytes_float": 2116,
    "P_floats": 529,
-   "acc_update_madds": 7740,
-   "predict_madds": 3693,
+   "acc_update_madds": 2799,
+   "jitter_series_madds": 328,
+   "predict_madds": 2365,
    "states": 23,
-   "total_madds_per_sample": 11433
+   "total_madds_per_sample": 5164
   },
   "CARMA(5,2) XY + CARMA(4,1) Z": {
    "P_bytes_float": 2116,
    "P_floats": 529,
-   "acc_update_madds": 7740,
-   "predict_madds": 3693,
+   "acc_update_madds": 2799,
+   "jitter_series_madds": 328,
+   "predict_madds": 2365,
    "states": 23,
-   "total_madds_per_sample": 11433
+   "total_madds_per_sample": 5164
   },
   "CARMA(5,2) XYZ": {
    "P_bytes_float": 2304,
    "P_floats": 576,
-   "acc_update_madds": 8361,
-   "predict_madds": 4221,
+   "acc_update_madds": 2988,
+   "jitter_series_madds": 440,
+   "predict_madds": 2709,
    "states": 24,
-   "total_madds_per_sample": 12582
+   "total_madds_per_sample": 5697
   },
   "CARMA(5,2) XYZ + S_x,S_y": {
    "P_bytes_float": 2704,
    "P_floats": 676,
-   "acc_update_madds": 9675,
-   "predict_madds": 5557,
+   "acc_update_madds": 3384,
+   "jitter_series_madds": 610,
+   "predict_madds": 3587,
    "states": 26,
-   "total_madds_per_sample": 15232
+   "total_madds_per_sample": 6971
   },
   "OU3 (shipping, dense 12x12 linear block)": {
    "P_bytes_float": 1764,
    "P_floats": 441,
    "acc_update_madds": 6570,
+   "jitter_series_madds": 0,
    "predict_madds": 5913,
    "states": 21,
    "total_madds_per_sample": 12483
@@ -187,10 +194,11 @@
   "coupled CARMA(4,1) XY (shared A, correlated W) + Z": {
    "P_bytes_float": 1764,
    "P_floats": 441,
-   "acc_update_madds": 6570,
-   "predict_madds": 2745,
+   "acc_update_madds": 2439,
+   "jitter_series_madds": 216,
+   "predict_madds": 1731,
    "states": 21,
-   "total_madds_per_sample": 9315
+   "total_madds_per_sample": 4170
   }
  },
  "coupled_model": {

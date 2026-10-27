@@ -71,7 +71,7 @@ zero at DC makes the integral of the displacement stationary, and we show
 that OU-III's recurring $S=0$ pseudo-measurement is itself equivalent, for
 the smoothing posterior, to a broad DC-zero CARMA(4,1) prior. In a paired
 complete-INS simulation benchmark (31 sea conditions, 20--100 seeds each)
-CARMA(4,1) on all three axes, at OU-III's 21 states and 25\,\% fewer
+CARMA(4,1) on all three axes, at OU-III's 21 states and a third of its
 multiply-adds per sample, reduced the horizontal RMS error by 43--73\,\% on
 single-peaked, bimodal, broadband, underway and translating seas and by
 17\,\% on a mixed swell and wind sea, and the heave error by 27--46\,\%
@@ -324,8 +324,10 @@ f_{\mathrm{tune}}=\frac{c_\tau}{2\tau},\qquad
 so the model's displacement zero-crossing frequency is placed on the
 measured one and the amplitude is the measured band acceleration RMS with
 OU-III's floor. No horizontal statistic is measured. The mappings were fixed
-before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are recomputed only when
-the sample interval or the committed operating point changes.
+before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are exact at a reference
+step $h_0$, recomputed when the committed operating point changes or the step
+moves more than $h_0/16$ from it; nearer steps take their Taylor series in
+$h-h_0$.
 
 \begin{table}[t]
 \centering
@@ -340,24 +342,29 @@ compiler (object code, no hardware run).}
 Configuration & $N_X$ & MACs & \makecell{filter\\(B)} & \makecell{code\\(B)} & \makecell{stack\\(B)}\\
 \midrule
 OU-III (shipping) & 21 & 12\,483 & 5692 & 156\,309 & 1024\\
-C41 $x/y/z$ & 21 & 9315 & 4928 & 136\,507 & 1344\\
-C52 $x/y/z$ & 24 & 12\,582 & 6232 & 140\,806 & 2000\\
-C41 $x/y$ + C52 $z$ & 22 & 10\,344 & 5392 & 146\,803 & 2000\\
-C52 $x/y$ + C41 $z$ & 23 & 11\,433 & 5736 & 147\,782 & 2000\\
-C52 $x/y/z$ + $S_x,S_y$ & 26 & 15\,232 & 7080 & 145\,745 & 2032\\
+C41 $x/y/z$ & 21 & 4170 & 6040 & 135\,694 & 1344\\
+C52 $x/y/z$ & 24 & 5697 & 8560 & 140\,060 & 2000\\
+C41 $x/y$ + C52 $z$ & 22 & 4655 & 7176 & 147\,452 & 2000\\
+C52 $x/y$ + C41 $z$ & 23 & 5164 & 7408 & 148\,448 & 2000\\
+C52 $x/y/z$ + $S_x,S_y$ & 26 & 6971 & 10\,288 & 145\,892 & 2000\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-CARMA(4,1) everywhere has OU-III's 21 states and is 25\,\% cheaper per
-sample (\cref{tab:cost}), because OU-III propagates its 12-state linear block
-as one dense matrix while the CARMA blocks are applied per axis. The cost it
-adds is re-discretization: the library compares the interval exactly, so a
-jittered sample clock re-runs the matrix exponential on every sample
-(host update at a fixed / jittered interval: 5.65 / \SI{7.07}{\micro s} for
-C41 against 11.26 / \SI{12.41}{\micro s} for OU-III, whose closed-form
-transition has no such cost). Host times rank the variants; they are not
-ESP32-S3 times.
+CARMA(4,1) everywhere has OU-III's 21 states and a third of its
+multiply-adds per sample (\cref{tab:cost}): OU-III propagates its 12-state
+linear block as one dense matrix on both sides of $\mat{P}$, while the CARMA
+blocks are applied per axis to the upper block triangle, the gain is formed
+through $\mat{S}^{-1}$ and the Joseph update is written as
+$\mat{K}\mat{G}^\top-\mat{P}\mat{C}^\top\mat{K}^\top$ with
+$\mat{G}=\mat{K}\mat{S}-\mat{P}\mat{C}^\top$ (the same expression for any
+gain). A jittered sample clock costs only the Taylor evaluation while the
+step stays within $h_0/16$ of the reference, at the float accuracy of the
+exact discretization: 216 multiply-adds for C41 to 610 for C52 + $S$
+(host update at a fixed / $\pm1\,\%$ / $\pm25\,\%$
+jittered interval: 2.53 / 2.60 / \SI{3.18}{\micro s} for C41 against 7.07 / 7.04 / \SI{7.12}{\micro s} for OU-III, whose
+closed-form transition has no such cost). Host times rank the variants; they
+are not ESP32-S3 times.
 
 \section{Steady-State Analysis}
 \label{sec:steady}
@@ -426,11 +433,11 @@ consistent).}
 Prior ($x/y$; $z$) & States & MACs & H & Z & H & Z & H & Z & H & Z & JONSWAP / mixed\\
 \midrule
 OU-III; OU-III & 21 & 12\,483 & 5.18 & 3.12 & 5.58 & 3.26 & 18.26 & 10.27 & 53 & 27 & 7.7 / 31\\
-C41; C41 & 21 & 9315 & 2.66 & 1.83 & 2.91 & 2.10 & 15.14 & 11.65 & 84 & 53 & 5.4 / 64\\
-C52; C52 & 24 & 12\,582 & 2.05 & 2.04 & 2.68 & 2.68 & 31.67 & 27.23 & 87 & 46 & 4.4 / 324\\
-C52; C41 & 23 & 11\,433 & 2.05 & 1.83 & 2.67 & 2.10 & 31.08 & 11.65 & 87 & 53 & 4.1 / 190\\
-C41; C52 & 22 & 10\,344 & 2.66 & 2.04 & 2.91 & 2.69 & 15.31 & 27.27 & 84 & 46 & 5.7 / 186\\
-C52+$S$; C52 & 26 & 15\,232 & 2.02 & 2.04 & 2.77 & 2.68 & 31.76 & 27.23 & 80 & 46 & 4.5 / 336\\
+C41; C41 & 21 & 4170 & 2.66 & 1.83 & 2.91 & 2.10 & 15.14 & 11.65 & 84 & 53 & 5.4 / 64\\
+C52; C52 & 24 & 5697 & 2.05 & 2.04 & 2.68 & 2.68 & 31.67 & 27.23 & 87 & 46 & 4.4 / 324\\
+C52; C41 & 23 & 5164 & 2.05 & 1.83 & 2.67 & 2.10 & 31.08 & 11.65 & 87 & 53 & 4.1 / 190\\
+C41; C52 & 22 & 4655 & 2.66 & 2.04 & 2.91 & 2.69 & 15.31 & 27.27 & 84 & 46 & 5.7 / 186\\
+C52+$S$; C52 & 26 & 6971 & 2.02 & 2.04 & 2.77 & 2.68 & 31.76 & 27.23 & 80 & 46 & 4.5 / 336\\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -458,7 +465,7 @@ Condition & horizontal & heave\\
 following, underway \SI{2.5}{m/s} & 10.54 / 4.03 / 4.04 & 8.43 / 4.72 / 5.25\\
 head, underway \SI{2.5}{m/s} & 3.65 / 2.06 / 1.91 & 2.46 / 1.79 / 2.41\\
 anchored slow drift & 6.67 / 3.64 / 2.64 & 3.16 / 1.82 / 2.04\\
-drifting & 10.04 / 5.39 / 3.40 & 3.14 / 1.83 / 2.05\\
+drifting & 10.04 / 5.39 / 3.39 & 3.14 / 1.83 / 2.05\\
 manoeuvring & 26.04 / 14.11 / 8.01 & 3.20 / 1.83 / 2.04\\
 bimodal & 11.10 / 6.22 / 9.18 & 5.90 / 4.18 / 7.89\\
 broadband & 16.85 / 7.34 / 7.60 & 8.32 / 5.39 / 5.79\\
@@ -466,7 +473,7 @@ JONSWAP \SI{0.10}{Hz}, \SI{4}{m} & 10.26 / 4.77 / 4.34 & 4.69 / 2.60 / 2.83\\
 \SI{5}{cm} sea & 32.66 / 8.92 / 8.13 & 17.14 / 9.58 / 9.73\\
 \SI{300}{s} magnetometer gap & 5.27 / 2.71 / 2.10 & 3.14 / 1.83 / 2.05\\
 $\pm25\,\%$ $dt$ jitter & 5.26 / 2.71 / 2.10 & 3.15 / 1.84 / 2.07\\
-mixed sea, \SI{3600}{s} & 18.30 / 15.09 / 31.71 & 10.25 / 11.61 / 27.06\\
+mixed sea, \SI{3600}{s} & 18.30 / 15.09 / 31.72 & 10.25 / 11.61 / 27.06\\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -623,7 +630,6 @@ obstacles:
   shape scaled by one frequency cannot represent two peaks;
 \item covariance under mismatch: no model-error term, so the covariance is
   not an error bound on multi-peaked seas;
-\item sample-clock jitter re-runs the matrix exponential on every sample;
 \item hull and sea dependence: one synthetic and one replay hull, a
   JONSWAP-fitted horizontal shape, no lever arm, wind heel or nonlinear
   waves;
