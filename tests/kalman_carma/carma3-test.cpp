@@ -23,6 +23,9 @@
       at DC (CARMA(4,1));
     * float discretization of the horizontal blocks (with S) across the
       tuner's frequency range against double;
+    * on a jittered sample clock, the Taylor extension of F and Q from a
+      reference step (StepDiscretization) against double, and its refresh
+      conditions;
     * a noiseless three-axis sinusoid is recovered in phase and amplitude on
       every axis and the covariance stays positive semidefinite;
     * the correlated (coupled) horizontal prior has the requested correlation;
@@ -321,6 +324,75 @@ void test_float_discretization(const kc::CarmaShape& sh, const char* label) {
     std::printf("[float] %s: worst scaled float error %.2e over f_z 0.05..1 Hz\n", label, worst);
 }
 
+// Jittered sample clock (+-300 us on 5 ms), driven as the filter drives it
+// (refresh() when advance() declines): StepDiscretization against the double
+// discretization at the actual step, with the metric and bar of
+// test_float_discretization; the plain float discretization at the same
+// steps is printed for comparison.  Also: a step outside the neighbourhood
+// and a model change need refresh(), and a repeated step leaves F and Q
+// unchanged.
+template<int N, bool SH>
+void test_step_discretization(const kc::CarmaShape& sh, const char* label) {
+    constexpr int NA = N + (SH ? 1 : 0);
+    using MF = Eigen::Matrix<float,NA,NA>;
+    using MD = Eigen::Matrix<double,NA,NA>;
+    std::mt19937 rng(11u);
+    std::uniform_int_distribution<int> jit_us(-300, 300);
+    double worst = 0.0, worst_plain = 0.0;
+    int n_series = 0, n_steps = 0;
+    bool sym = true, guards = true;
+    for (double fz : {0.05, 0.1, 0.3, 0.6, 1.0}) {
+        kc::CarmaVerticalModel<float, N> mf(sh);
+        mf.configure(static_cast<float>(fz / mf.base_zero_crossing_hz()), 1.0f);
+        MF Af = MF::Zero(), Wf = Af;
+        Af.template topLeftCorner<N,N>() = mf.A(); Wf.template topLeftCorner<N,N>() = mf.W();
+        if constexpr (SH) Af(N, 0) = 1.0f;
+        const MD Ad = Af.template cast<double>(), Wd = Wf.template cast<double>();
+        kc::StepDiscretization<float, NA> sd;
+        guards = guards && !sd.advance(mf.generation(), 0.005f);
+        sd.refresh(Af, Wf, mf.generation(), 0.005f);
+        for (int k = 0; k < 200; ++k) {
+            const float h = 0.005f + 1e-6f * static_cast<float>(jit_us(rng));
+            ++n_steps;
+            if (sd.advance(mf.generation(), h)) ++n_series;
+            else sd.refresh(Af, Wf, mf.generation(), h);
+            MD Fd, Qd; kc::discretize_lti<double,NA>(Ad, Wd, double(h), Fd, Qd);
+            MF Fp, Qp; kc::discretize_lti<float,NA>(Af, Wf, h, Fp, Qp);
+            const MF& F = sd.Phi();
+            const MF& Q = sd.Q();
+            for (int i = 0; i < NA; ++i)
+                for (int j = 0; j < NA; ++j) {
+                    const double sc = std::sqrt(Qd(i,i) * Qd(j,j));
+                    const double fs = std::max(1.0, std::abs(Fd(i,j))) * 10.0;
+                    worst = std::max({worst, std::abs(double(Q(i,j)) - Qd(i,j)) / sc,
+                                      std::abs(double(F(i,j)) - Fd(i,j)) / fs});
+                    worst_plain = std::max({worst_plain, std::abs(double(Qp(i,j)) - Qd(i,j)) / sc,
+                                            std::abs(double(Fp(i,j)) - Fd(i,j)) / fs});
+                    sym = sym && Q(i,j) == Q(j,i);
+                }
+        }
+        // From a 5 ms reference; a half-microsecond offset is a new step.
+        sd.refresh(Af, Wf, mf.generation(), 0.005f);
+        const MF F_last = sd.Phi();
+        guards = guards && sd.advance(mf.generation(), 0.0050025f) && sd.Phi() != F_last;
+        const MF F_rep = sd.Phi(), Q_rep = sd.Q();
+        guards = guards && sd.advance(mf.generation(), 0.0050025f) && sd.Phi() == F_rep && sd.Q() == Q_rep;
+        guards = guards && !sd.advance(mf.generation(), 0.0060f);
+        guards = guards && !sd.advance(mf.generation() + 1u, 0.005f);
+    }
+    char buf[160];
+    std::snprintf(buf, sizeof buf, "%s: most jittered steps use the series", label);
+    check(2 * n_series > n_steps, buf, n_series, 0.5 * n_steps);
+    std::snprintf(buf, sizeof buf, "%s: series F, Q within 1e-4 of double for f_z 0.05..1 Hz, +-300 us jitter", label);
+    check(worst < 1e-4, buf, worst, 1e-4);
+    std::snprintf(buf, sizeof buf, "%s: series Q exactly symmetric", label);
+    check(sym, buf);
+    std::snprintf(buf, sizeof buf, "%s: out-of-range step and model change need refresh, repeated step reuses", label);
+    check(guards, buf);
+    std::printf("[step] %s: %d of %d jittered steps from the series; worst scaled error %.2e, "
+                "float discretization at the same steps %.2e\n", label, n_series, n_steps, worst, worst_plain);
+}
+
 // Level attitude, noiseless specific force of a three-axis sinusoid.
 template<int NHC, int NZC>
 void test_sinusoid(const char* label) {
@@ -424,6 +496,11 @@ int main() {
     test_float_discretization<5, false>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)");
     test_float_discretization<5, true>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)+S");
     test_float_discretization<4, true>(kc::CARMA41_JONSWAP_SHAPE, "CARMA(4,1)+S");
+    test_step_discretization<3, false>(kc::CARMA30_JONSWAP_SHAPE, "CARMA(3,0)");
+    test_step_discretization<4, false>(kc::CARMA41_JONSWAP_SHAPE, "CARMA(4,1)");
+    test_step_discretization<5, false>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)");
+    test_step_discretization<4, true>(kc::CARMA41_JONSWAP_SHAPE, "CARMA(4,1)+S");
+    test_step_discretization<5, true>(kc::CARMA52_JONSWAP_SHAPE, "CARMA(5,2)+S");
     test_sinusoid<4, 4>("CARMA(4,1) x3");
     test_sinusoid<5, 5>("CARMA(5,2) x3");
     test_sinusoid<4, 5>("CARMA(4,1) xy + (5,2) z");

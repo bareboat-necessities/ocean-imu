@@ -12,7 +12,8 @@ skipped.
                  and carma3-sim
     traces       time series for the figures
     truth        realized motion levels of every scenario (seed 1)
-    timing       host update time on an otherwise idle machine (one job)
+    timing       host update time on an otherwise idle machine (one job):
+                 fixed, +-1 % (1 us clock) and +-25 % jittered intervals
     report       tables (summary.md), paired statistics (paired_stats.json)
                  and figures
 
@@ -271,11 +272,12 @@ def cmd_truth(args):
 
 
 def cmd_timing(args):
-    """Serial runs on an idle host: fixed and +-25 % jittered sample interval."""
+    """Serial runs on an idle host: fixed, +-1 % on a 1 us clock and +-25 %
+    jittered sample interval."""
     if TIMING_RAW.exists():
         TIMING_RAW.unlink()
     cmds = [["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", "OU3,A41,A52,M45,M54,A52S"]
-            for sc in (J29, f"{J29}+jit") for seed in range(1, args.seeds + 1)]
+            for sc in (J29, f"{J29}+jit1", f"{J29}+jit") for seed in range(1, args.seeds + 1)]
     run_bench(cmds, TIMING_RAW, 1)
 
 

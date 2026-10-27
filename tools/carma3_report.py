@@ -305,19 +305,25 @@ def report():
     lines.append("")
     tr = load(OUT / "timing_runs.csv")
     if tr:
-        lines.append("### Idle host (one process; three JONSWAP seeds, fixed and +-25 % jittered dt)")
+        lines.append("### Idle host (one process; three JONSWAP seeds; fixed dt, +-1 % jitter on a 1 us clock, "
+                     "+-25 % jitter)")
         lines.append("")
-        lines.append("| Filter | states | mean update fixed dt (us) | mean update jittered dt (us) | ratio to OU-III (fixed) |")
-        lines.append("|---|---|---|---|---|")
+        lines.append("| Filter | states | mean update fixed dt (us) | +-1 % jitter, 1 us clock (us) | "
+                     "+-25 % jitter (us) | ratio to OU-III (fixed) |")
+        lines.append("|---|---|---|---|---|---|")
         tt = collections.defaultdict(lambda: collections.defaultdict(list))
         for r in tr:
-            tt[r["filter"]]["jit" if r["scenario"].endswith("+jit") else "fix"].append(fnum(r, "runtime_ns") / 1000)
+            sc = r["scenario"]
+            key = "jit1" if sc.endswith("+jit1") else ("jit" if sc.endswith("+jit") else "fix")
+            tt[r["filter"]][key].append(fnum(r, "runtime_ns") / 1000)
         base = np.mean(tt["OU3"]["fix"]) if tt.get("OU3") else np.nan
         for f in ORDER:
             if f in tt:
-                a, b = np.mean(tt[f]["fix"]), np.mean(tt[f]["jit"])
-                cost.setdefault(f, {}).update(idle_update_us=float(a), idle_update_us_jitter=float(b))
-                lines.append(f"| {LABEL[f]} | {meta.get(f, ('', ''))[0]} | {a:.2f} | {b:.2f} | {a / base:.2f} |")
+                a, c, b = np.mean(tt[f]["fix"]), np.mean(tt[f]["jit1"]), np.mean(tt[f]["jit"])
+                cost.setdefault(f, {}).update(idle_update_us=float(a), idle_update_us_jitter1=float(c),
+                                              idle_update_us_jitter=float(b))
+                lines.append(f"| {LABEL[f]} | {meta.get(f, ('', ''))[0]} | {a:.2f} | {c:.2f} | {b:.2f} | "
+                             f"{a / base:.2f} |")
         lines.append("")
     es = load(OUT / "esp32s3_size.csv")
     if es:
