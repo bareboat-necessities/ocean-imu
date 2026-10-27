@@ -324,8 +324,8 @@ void test_float_discretization(const kc::CarmaShape& sh, const char* label) {
     std::printf("[float] %s: worst scaled float error %.2e over f_z 0.05..1 Hz\n", label, worst);
 }
 
-// Jittered sample clock (+-300 us on 5 ms), driven as the filter drives it
-// (refresh() when advance() declines): StepDiscretization against the double
+// Jittered sample clock (+-300 us on 5 ms, inside the h0/16 neighbourhood)
+// over the tuner's frequency range: StepDiscretization against the double
 // discretization at the actual step, with the metric and bar of
 // test_float_discretization; the plain float discretization at the same
 // steps is printed for comparison.  Also: a step outside the neighbourhood
@@ -341,7 +341,7 @@ void test_step_discretization(const kc::CarmaShape& sh, const char* label) {
     double worst = 0.0, worst_plain = 0.0;
     int n_series = 0, n_steps = 0;
     bool sym = true, guards = true;
-    for (double fz : {0.05, 0.1, 0.3, 0.6, 1.0}) {
+    for (double fz : {0.05, 0.1, 0.3, 0.6, 1.0, 1.2}) {
         kc::CarmaVerticalModel<float, N> mf(sh);
         mf.configure(static_cast<float>(fz / mf.base_zero_crossing_hz()), 1.0f);
         MF Af = MF::Zero(), Wf = Af;
@@ -381,9 +381,9 @@ void test_step_discretization(const kc::CarmaShape& sh, const char* label) {
         guards = guards && !sd.advance(mf.generation() + 1u, 0.005f);
     }
     char buf[160];
-    std::snprintf(buf, sizeof buf, "%s: most jittered steps use the series", label);
-    check(2 * n_series > n_steps, buf, n_series, 0.5 * n_steps);
-    std::snprintf(buf, sizeof buf, "%s: series F, Q within 1e-4 of double for f_z 0.05..1 Hz, +-300 us jitter", label);
+    std::snprintf(buf, sizeof buf, "%s: every step within +-300 us uses the series", label);
+    check(n_series == n_steps, buf, n_series, n_steps);
+    std::snprintf(buf, sizeof buf, "%s: series F, Q within 1e-4 of double for f_z 0.05..1.2 Hz, +-300 us jitter", label);
     check(worst < 1e-4, buf, worst, 1e-4);
     std::snprintf(buf, sizeof buf, "%s: series Q exactly symmetric", label);
     check(sym, buf);

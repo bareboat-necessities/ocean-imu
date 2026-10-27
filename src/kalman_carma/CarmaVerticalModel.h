@@ -165,6 +165,18 @@ inline T inf_norm(const Mat<T,M>& X) {
     return m;
 }
 
+// Structural distance d_i of state i from the noise input (number of
+// couplings in A); states the noise cannot reach get 0.
+template<typename T, int M>
+inline void noise_distance(const Mat<T,M>& A, const Mat<T,M>& W, int (&d)[M]) {
+    for (int i = 0; i < M; ++i) d[i] = (W(i,i) != T(0)) ? 0 : 4 * M;
+    for (int pass = 0; pass < M; ++pass)
+        for (int i = 0; i < M; ++i)
+            for (int j = 0; j < M; ++j)
+                if (A(i,j) != T(0) && d[j] + 1 < d[i]) d[i] = d[j] + 1;
+    for (int i = 0; i < M; ++i) if (d[i] >= 4 * M) d[i] = 0;
+}
+
 }  // namespace detail
 
 // Exact discretization of dx = A x dt + dB, Cov(dB) = W dt, over step h >= 0.
@@ -193,22 +205,16 @@ inline bool discretize_lti(const Eigen::Matrix<T,M,M>& A,
         ++s;
     }
 
-    // Structural distance d_i of state i from the noise input (number of
-    // couplings in A); states the noise cannot reach get 0.  In the scaled
-    // coordinates x = D z, D = diag(h_s^d_i), every entry of Q and F is of
-    // the order of its leading term, so the series below neither loses the
-    // small entries (Q_hh ~ h^5) to the large ones nor produces subnormal
-    // intermediate values.
+    // In the scaled coordinates x = D z, D = diag(h_s^d_i) (d_i from
+    // detail::noise_distance), every entry of Q and F is of the order of its
+    // leading term, so the series below neither loses the small entries
+    // (Q_hh ~ h^5) to the large ones nor produces subnormal intermediate
+    // values.
     int d[M];
-    for (int i = 0; i < M; ++i) d[i] = (W(i,i) != T(0)) ? 0 : 4 * M;
-    for (int pass = 0; pass < M; ++pass)
-        for (int i = 0; i < M; ++i)
-            for (int j = 0; j < M; ++j)
-                if (A(i,j) != T(0) && d[j] + 1 < d[i]) d[i] = d[j] + 1;
+    detail::noise_distance<T,M>(A, W, d);
     T hp[2 * M + 1];
     hp[0] = T(1);
     for (int i = 1; i <= 2 * M; ++i) hp[i] = hp[i - 1] * hs;
-    for (int i = 0; i < M; ++i) if (d[i] >= 4 * M) d[i] = 0;
     // A_s = D^-1 A D: A_ij h_s^(d_j - d_i), exponent >= -1 on every coupling.
     Mat As;
     for (int i = 0; i < M; ++i)
@@ -283,10 +289,13 @@ inline bool discretize_lti(const Eigen::Matrix<T,M,M>& A,
 //     Q(h0 + d) = Q(h0) + sum_{k=1..KQ} d^k/k! Q^(k),
 //     Q^(1) = F(h0) W F(h0)^T,   Q^(k+1) = A Q^(k) + Q^(k) A^T.
 //
-// On max(|d|/h0, ||A||_inf |d|) <= 1/16 the truncation stays below the float
-// rounding of the reference discretization itself (carma3-test).  The
-// coefficients are formed on the first step that needs them, so a constant
-// interval runs discretize_lti() once per model change and nothing else.
+// The neighbourhood is |d| ||A_s||_inf <= 1/16 with A_s = D^-1 A D,
+// D = diag(h0^d_i) the scaling of discretize_lti(): its shift couplings
+// contribute |d|/h0, its feedback rows their weight relative to each
+// entry's scale.  There the truncation stays below the float rounding of the
+// reference discretization itself (carma3-test).  The coefficients are formed
+// on the first step that needs them, so a constant interval runs
+// discretize_lti() once per model change and nothing else.
 template<typename T, int M>
 class StepDiscretization {
 public:
@@ -302,7 +311,7 @@ public:
         if (!ref_ok_) return false;
         const T d = h - h0_;
         const T ad = std::abs(d);
-        if (!(ad <= kRange * h0_) || !(norm_a_ * ad <= kRange)) return false;
+        if (!(ad <= kRange * h0_) || !(norm_s_ * ad <= kRange)) return false;
         if (!series_ready_) build_series_();
         evaluate_(d);
         h_ = h;
@@ -316,7 +325,7 @@ public:
         W_ = W;
         Fc_[0] = F_;
         Qc_[0] = Q_;
-        norm_a_ = detail::inf_norm<T,M>(A);
+        norm_s_ = scaled_inf_norm_(A, W, h);
         h0_ = h;
         h_ = h;
         generation_ = generation;
@@ -328,6 +337,25 @@ public:
 
 private:
     static constexpr T kRange = T(0.0625);
+
+    // ||D^-1 A D||_inf, D = diag(h^d_i).
+    static T scaled_inf_norm_(const Mat& A, const Mat& W, T h) {
+        int d[M];
+        detail::noise_distance<T,M>(A, W, d);
+        T hp[2 * M + 1];
+        hp[0] = T(1);
+        for (int i = 1; i <= 2 * M; ++i) hp[i] = hp[i - 1] * h;
+        T m = T(0);
+        for (int i = 0; i < M; ++i) {
+            T r = T(0);
+            for (int j = 0; j < M; ++j) {
+                const int e = d[j] - d[i];
+                r += std::abs(A(i,j)) * ((e >= 0) ? hp[e] : T(1) / hp[-e]);
+            }
+            m = std::max(m, r);
+        }
+        return m;
+    }
 
     void build_series_() {
         Mat X;
@@ -373,7 +401,7 @@ private:
     Mat W_ = Mat::Zero();
     Mat Fc_[KF + 1];
     Mat Qc_[KQ + 1];
-    T norm_a_ = T(0);
+    T norm_s_ = T(0);
     T h0_ = T(-1);
     T h_ = T(-1);
     uint32_t generation_ = 0xffffffffu;
