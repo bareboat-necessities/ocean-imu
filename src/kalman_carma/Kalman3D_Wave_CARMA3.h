@@ -986,12 +986,12 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
 
     MatrixNX3& PCt = PCt_scratch_;
     for (int i = 0; i < NX; ++i) {
-        T p0 = T(0), p1 = T(0), p2 = T(0);
+        T pc0 = T(0), pc1 = T(0), pc2 = T(0);
         for (int c = 0; c < NCOL; ++c) {
             const T v = Pext(i, col[c]);
-            p0 += v * cvec[c](0); p1 += v * cvec[c](1); p2 += v * cvec[c](2);
+            pc0 += v * cvec[c](0); pc1 += v * cvec[c](1); pc2 += v * cvec[c](2);
         }
-        PCt(i,0) = p0; PCt(i,1) = p1; PCt(i,2) = p2;
+        PCt(i,0) = pc0; PCt(i,1) = pc1; PCt(i,2) = pc2;
     }
     Matrix3& S_mat = S_scratch_;
     S_mat = Racc;
