@@ -71,7 +71,7 @@ zero at DC makes the integral of the displacement stationary, and we show
 that OU-III's recurring $S=0$ pseudo-measurement is itself equivalent, for
 the smoothing posterior, to a broad DC-zero CARMA(4,1) prior. In a paired
 complete-INS simulation benchmark (31 sea conditions, 20--100 seeds each)
-CARMA(4,1) on all three axes, at OU-III's 21 states and 25\,\% fewer
+CARMA(4,1) on all three axes, at OU-III's 21 states and a third of its
 multiply-adds per sample, reduced the horizontal RMS error by 43--73\,\% on
 single-peaked, bimodal, broadband, underway and translating seas and by
 17\,\% on a mixed swell and wind sea, and the heave error by 27--46\,\%
@@ -324,40 +324,46 @@ f_{\mathrm{tune}}=\frac{c_\tau}{2\tau},\qquad
 so the model's displacement zero-crossing frequency is placed on the
 measured one and the amplitude is the measured band acceleration RMS with
 OU-III's floor. No horizontal statistic is measured. The mappings were fixed
-before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are recomputed only when
-the sample interval or the committed operating point changes.
+before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are exact at a reference
+step $h_0$, recomputed when the committed operating point changes or the step
+moves more than $h_0/16$ from it; nearer steps take their Taylor series in
+$h-h_0$ (\cref{tab:cost}).
 
 \begin{table}[t]
 \centering
 \caption{State dimension and cost. Multiply-adds of one prediction and one
-accelerometer update; ESP32-S3 sizes from the Xtensa GCC~14.2.0 target
-compiler (object code, no hardware run).}
+accelerometer update, and the multiply-adds a jittered step adds (Taylor
+evaluation of $\mat{F}$, $\mat{Q}$ near the reference step).}
 \label{tab:cost}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}lcrrrr@{}}
+\begin{tabular}{@{}lcrr@{}}
 \toprule
-Configuration & $N_X$ & MACs & \makecell{filter\\(B)} & \makecell{code\\(B)} & \makecell{stack\\(B)}\\
+Configuration & $N_X$ & MACs & \makecell{jittered\\step}\\
 \midrule
-OU-III (shipping) & 21 & 12\,483 & 5692 & 156\,309 & 1024\\
-C41 $x/y/z$ & 21 & 9315 & 4928 & 136\,507 & 1344\\
-C52 $x/y/z$ & 24 & 12\,582 & 6232 & 140\,806 & 2000\\
-C41 $x/y$ + C52 $z$ & 22 & 10\,344 & 5392 & 146\,803 & 2000\\
-C52 $x/y$ + C41 $z$ & 23 & 11\,433 & 5736 & 147\,782 & 2000\\
-C52 $x/y/z$ + $S_x,S_y$ & 26 & 15\,232 & 7080 & 145\,745 & 2032\\
+OU-III (shipping) & 21 & 12\,483 & 0\\
+C41 $x/y/z$ & 21 & 4170 & 216\\
+C52 $x/y/z$ & 24 & 5697 & 440\\
+C41 $x/y$ + C52 $z$ & 22 & 4655 & 328\\
+C52 $x/y$ + C41 $z$ & 23 & 5164 & 328\\
+C52 $x/y/z$ + $S_x,S_y$ & 26 & 6971 & 610\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-CARMA(4,1) everywhere has OU-III's 21 states and is 25\,\% cheaper per
-sample (\cref{tab:cost}), because OU-III propagates its 12-state linear block
-as one dense matrix while the CARMA blocks are applied per axis. The cost it
-adds is re-discretization: the library compares the interval exactly, so a
-jittered sample clock re-runs the matrix exponential on every sample
-(host update at a fixed / jittered interval: 5.65 / \SI{7.07}{\micro s} for
-C41 against 11.26 / \SI{12.41}{\micro s} for OU-III, whose closed-form
-transition has no such cost). Host times rank the variants; they are not
-ESP32-S3 times.
+CARMA(4,1) everywhere has OU-III's 21 states and a third of its
+multiply-adds per sample (\cref{tab:cost}): OU-III propagates its 12-state
+linear block as one dense matrix on both sides of $\mat{P}$, while the CARMA
+blocks are applied per axis to the upper block triangle, the gain is formed
+through $\mat{S}^{-1}$ and the Joseph update is written as
+$\mat{K}\mat{G}^\top-\mat{P}\mat{C}^\top\mat{K}^\top$ with
+$\mat{G}=\mat{K}\mat{S}-\mat{P}\mat{C}^\top$ (the same expression for any
+gain). A jittered sample clock costs only the Taylor evaluation while the
+step stays within $h_0/16$ of the reference, at the float accuracy of the
+exact discretization (host update at a fixed / $\pm1\,\%$ / $\pm25\,\%$
+jittered interval: {A41TEX} for C41 against {OU3TEX} for OU-III, whose
+closed-form transition has no such cost). Host times rank the variants; they
+are not ESP32-S3 times.
 
 \section{Steady-State Analysis}
 \label{sec:steady}
@@ -623,7 +629,6 @@ obstacles:
   shape scaled by one frequency cannot represent two peaks;
 \item covariance under mismatch: no model-error term, so the covariance is
   not an error bound on multi-peaked seas;
-\item sample-clock jitter re-runs the matrix exponential on every sample;
 \item hull and sea dependence: one synthetic and one replay hull, a
   JONSWAP-fitted horizontal shape, no lever arm, wind heel or nonlinear
   waves;

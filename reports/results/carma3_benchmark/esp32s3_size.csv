@@ -1,8 +1,0 @@
-variant,code_bytes,rodata_bytes,data_bytes,bss_bytes,sizeof_fusion,sizeof_filter,max_stack_frame,max_stack_function
-OU3,156309,2890,0,20,3032,5692,1024,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
-A41,136507,798,0,20,2992,4928,1344,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-A52,140806,798,0,20,2992,6232,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-M45,146803,854,0,20,2992,5392,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-A52S,145745,798,0,20,2992,7080,2032,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"
-M54,147782,854,0,20,2992,5736,2000,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-A41S,143703,798,0,20,2992,5664,1536,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"

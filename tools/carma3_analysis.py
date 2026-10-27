@@ -753,34 +753,66 @@ def _coupled_eval(mz, N, sh, kappa, res_std, alpha, wz, c, S, f, noise_scale_h):
 # Cost model
 # ---------------------------------------------------------------------------
 
-def cost_model(nx, blocks, ncol_acc):
-    """Multiply-adds of one predict + accelerometer update for the structured
-    implementation of Kalman3D_Wave_CARMA3 (dense counts, symmetric P)."""
+def cost_model(nx, blocks, ncol_acc, impl="carma3"):
+    """Multiply-adds of one predict + accelerometer update (symmetric P).
+
+    impl="ou3": the shipping OU-III implementation (dense linear block applied
+    to both sides of P_LL, gain by one LDLT solve per state, Joseph with
+    6 + 18 products per entry).  impl="carma3": Kalman3D_Wave_CARMA3 (block-
+    diagonal F_LL over the upper block triangle, the unit rows of
+    F_AA = [[R, B], [0, I]] copied, gain through S^-1, Joseph as
+    K G^T - PCt K^T with 6 products per entry).  jitter_series_madds is the
+    extra per-sample cost of a step that differs from the previous one inside
+    StepDiscretization's neighbourhood (Taylor evaluation of F and Q of the
+    horizontal and the vertical block); OU-III's closed-form transition has
+    none."""
     base = 6
     nl = nx - base - 3
+    pairs = nx * (nx + 1) // 2
     apply_fll = sum(b * b for b in blocks)                 # one structured F_LL application
-    predict = (2 * base ** 3                                # F_AA P_AA F_AA^T
-               + (2 * nl + base + 3) * apply_fll            # P_LL both sides, P_AL, P_LB
-               + base * base * nl + base * base * 3 + 9 * nx)
-    update = (nx * ncol_acc * 3                             # P C^T
-              + ncol_acc * 9                                # S
-              + nx * 9 * 2                                  # gain via LDLT solves
-              + (nx * (nx + 1) // 2) * (6 + 18))            # Joseph, 3 columns
+    if impl == "ou3":
+        predict = (2 * base ** 3                            # F_AA P_AA F_AA^T
+                   + (2 * nl + base + 3) * apply_fll        # P_LL both sides, P_AL, P_LB
+                   + base * base * nl + base * base * 3 + 9 * nx)
+        update = (nx * ncol_acc * 3                         # P C^T
+                  + ncol_acc * 9                            # S
+                  + nx * 9 * 2                              # gain via LDLT solves
+                  + pairs * (6 + 18))                       # Joseph, 3 columns
+        series = 0
+    else:
+        rows = 3                                            # non-unit rows of F_AA
+        p_ll = 0
+        for a, na in enumerate(blocks):
+            for b in range(a, len(blocks)):
+                nb = blocks[b]
+                p_ll += na * na * nb + (na * (na + 1) // 2 * na if a == b else na * nb * nb)
+        predict = (rows * base * base + base * (rows * (rows + 1) // 2)   # F_AA P_AA F_AA^T
+                   + p_ll                                               # P_LL, upper block triangle
+                   + rows * base * nl + base * apply_fll                # P_AL
+                   + rows * base * 3 + 3 * apply_fll + 9 * nx)          # P_AB, P_LB
+        update = (nx * ncol_acc * 3                         # P C^T
+                  + ncol_acc * 9                            # S
+                  + 3 * 9 + nx * 9                          # S^-1 (three solves), K = P C^T S^-1
+                  + nx * 9 + pairs * 6)                     # G = K S - P C^T; Joseph, 3 columns
+        series = 0
+        for m in (blocks[0], blocks[-1]):                   # one horizontal model serves x and y
+            kf = max(3, m - 1)
+            series += kf * m * m + 2 * kf * m * (m + 1) // 2
     return {"states": nx, "P_floats": nx * nx, "P_bytes_float": 4 * nx * nx,
             "predict_madds": int(predict), "acc_update_madds": int(update),
-            "total_madds_per_sample": int(predict + update)}
+            "total_madds_per_sample": int(predict + update), "jitter_series_madds": int(series)}
 
 
 COST_CONFIGS = {
-    # name: (NX, linear-block sizes applied by F_LL, accelerometer Jacobian columns)
-    "OU3 (shipping, dense 12x12 linear block)": (21, [12], 9),
-    "CARMA(4,1) XYZ": (21, [4, 4, 4], 9),
-    "CARMA(5,2) XYZ": (24, [5, 5, 5], 9),
-    "CARMA(4,1) XY + CARMA(5,2) Z": (22, [4, 4, 5], 9),
-    "CARMA(5,2) XY + CARMA(4,1) Z": (23, [5, 5, 4], 9),
-    "CARMA(5,2) XYZ + S_x,S_y": (26, [6, 6, 5], 9),
-    "CARMA(4,1) XYZ + S_x,S_y": (23, [5, 5, 4], 9),
-    "coupled CARMA(4,1) XY (shared A, correlated W) + Z": (21, [4, 4, 4], 9),
+    # name: (NX, linear-block sizes applied by F_LL, accelerometer Jacobian columns, implementation)
+    "OU3 (shipping, dense 12x12 linear block)": (21, [12], 9, "ou3"),
+    "CARMA(4,1) XYZ": (21, [4, 4, 4], 9, "carma3"),
+    "CARMA(5,2) XYZ": (24, [5, 5, 5], 9, "carma3"),
+    "CARMA(4,1) XY + CARMA(5,2) Z": (22, [4, 4, 5], 9, "carma3"),
+    "CARMA(5,2) XY + CARMA(4,1) Z": (23, [5, 5, 4], 9, "carma3"),
+    "CARMA(5,2) XYZ + S_x,S_y": (26, [6, 6, 5], 9, "carma3"),
+    "CARMA(4,1) XYZ + S_x,S_y": (23, [5, 5, 4], 9, "carma3"),
+    "coupled CARMA(4,1) XY (shared A, correlated W) + Z": (21, [4, 4, 4], 9, "carma3"),
 }
 
 
