@@ -546,12 +546,12 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
 
 | Configuration | id | states x / y / z | NX | P floats / bytes | multiply-adds per sample | added on a jittered step | host update, fixed dt / +-1 % on a 1 us clock / +-25 % jitter (us) |
 |---|---|---|---|---|---|---|---|
-| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 0 | {OU3} |
-| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | {A41} |
-| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 5697 | 440 | {A52} |
-| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 4655 | 328 | {M45} |
-| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | {M54} |
-| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 6971 | 610 | {A52S} |
+| OU-III (shipping) | OU3 | 4 / 4 / 4 | 21 | 441 / 1764 | 12 483 | 0 | 7.07 / 7.04 / 7.12 |
+| C41 x/y/z | A41 | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | 2.53 / 2.60 / 3.18 |
+| C52 x/y/z | A52 | 5 / 5 / 5 | 24 | 576 / 2304 | 5697 | 440 | 2.85 / 2.99 / 4.17 |
+| C41 x/y + C52 z | M45 | 4 / 4 / 5 | 22 | 484 / 1936 | 4655 | 328 | 2.62 / 2.74 / 3.62 |
+| C52 x/y + C41 z | M54 | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | 2.73 / 2.83 / 3.70 |
+| C52 x/y/z + S_x, S_y | A52S | 6 / 6 / 5 | 26 | 676 / 2704 | 6971 | 610 | 3.34 / 3.54 / 6.58 |
 | C41 x/y/z + S_x, S_y | A41S | 5 / 5 / 4 | 23 | 529 / 2116 | 5164 | 328 | -- |
 | C41 x/y/z, correlated x-y noise | A41C | 4 / 4 / 4 | 21 | 441 / 1764 | 4170 | 216 | -- |
 | shared-latent coupled C41 (section 5) | -- | 4 / 4 / 4 | 21 | 441 / 1764 | about 4170 | | not implemented in C++ |
@@ -710,7 +710,7 @@ generated `reports/results/carma3_benchmark/summary.md` and
 |---|---|---|---|---|---|
 | JONSWAP 0.29 Hz, 0.8 m (n=100) | horizontal | 5.18 | 2.66 (+48.7 % [+48.4, +48.9]) | 2.05 (+60.5 % [+60.1, +60.8]) | 2.05 (+60.4 % [+60.1, +60.8]) |
 |  | heave | 3.12 | 1.83 (+41.4 % [+41.0, +41.7]) | 2.04 (+34.5 % [+34.0, +35.1]) | 1.83 (+41.4 % [+41.1, +41.7]) |
-| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 2.91 (+47.8 % [+47.6, +48.0]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
+| PM 0.25 Hz, 1 m (n=100) | horizontal | 5.58 | 2.91 (+47.8 % [+47.6, +48.1]) | 2.68 (+52.0 % [+51.4, +52.7]) | 2.67 (+52.0 % [+51.4, +52.7]) |
 |  | heave | 3.26 | 2.10 (+35.5 % [+35.0, +36.0]) | 2.68 (+17.7 % [+16.3, +19.0], win 98 %) | 2.10 (+35.5 % [+35.1, +36.0]) |
 | mixed swell + wind (n=100) | horizontal | 18.26 | 15.14 (+17.1 % [+16.8, +17.5]) | 31.67 (-73.4 % [-74.5, -72.2], win 0 %) | 31.08 (-70.2 % [-71.2, -69.1], win 0 %) |
 |  | heave | 10.27 | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) | 27.23 (-165.2 % [-166.8, -163.5], win 0 %) | 11.65 (-13.4 % [-13.9, -12.9], win 0 %) |
@@ -735,7 +735,7 @@ RMS error in % of incident H_s; in brackets the paired change against OU-III wit
 | JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 / 4.03 / 4.04 / 4.04 | 8.43 / 4.72 / 5.25 |
 | JONSWAP 0.29 Hz, 0.8 m, beam, underway 2.5 m/s | 30 | 5.47 / 3.00 / 2.86 / 2.86 | 3.31 / 2.15 / 2.83 |
 | JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 / 3.64 / 2.64 / 2.64 | 3.16 / 1.82 / 2.04 |
-| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 / 5.39 / 3.40 / 3.40 | 3.14 / 1.83 / 2.05 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 / 5.39 / 3.39 / 3.40 | 3.14 / 1.83 / 2.05 |
 | JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 / 14.11 / 8.01 / 8.01 | 3.20 / 1.83 / 2.04 |
 | bimodal | 30 | 11.10 / 6.22 / 9.18 / 9.17 | 5.90 / 4.18 / 7.89 |
 | broadband | 30 | 16.85 / 7.34 / 7.60 / 7.60 | 8.32 / 5.39 / 5.79 |
@@ -751,9 +751,9 @@ RMS error in % of incident H_s; in brackets the paired change against OU-III wit
 | JONSWAP 0.29 Hz, 0.8 m, 300 s magnetometer gap | 30 | 5.27 / 2.71 / 2.10 / 2.10 | 3.14 / 1.83 / 2.05 |
 | JONSWAP 0.29 Hz, 0.8 m, +-25 % dt jitter | 30 | 5.26 / 2.71 / 2.10 / 2.10 | 3.15 / 1.84 / 2.07 |
 | JONSWAP 0.29 Hz, 0.8 m, legacy horizontal truth | 30 | 5.52 / 2.97 / 2.45 / 2.45 | 3.14 / 1.83 / 2.05 |
-| mixed swell + wind, legacy horizontal truth | 30 | 15.62 / 12.82 / 26.25 / 25.86 | 10.27 / 11.65 / 27.03 |
+| mixed swell + wind, legacy horizontal truth | 30 | 15.62 / 12.82 / 26.25 / 25.87 | 10.27 / 11.65 / 27.03 |
 | JONSWAP 0.29 Hz, 0.8 m, 3600 s | 20 | 5.18 / 2.64 / 2.03 / 2.03 | 3.12 / 1.82 / 2.03 |
-| mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.71 / 30.89 | 10.25 / 11.61 / 27.06 |
+| mixed swell + wind, 3600 s | 20 | 18.30 / 15.09 / 31.72 / 30.89 | 10.25 / 11.61 / 27.06 |
 
 RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C41's.
 
@@ -790,7 +790,7 @@ RMS error, % of incident H_s (complete INS).  Heave of C52 x/y + C41 z equals C4
 | changing f_p | 100 | 5.70 | 2.88 | 2.91 | 2.64 | 2.47 | 2.47 |
 | JONSWAP 0.29 Hz, 0.8 m, following, underway 2.5 m/s | 30 | 10.54 | 4.03 | 3.59 | 2.78 | 4.04 | 3.81 |
 | JONSWAP 0.29 Hz, 0.8 m, anchored slow drift | 30 | 6.67 | 3.64 | 3.41 | 3.19 | 2.64 | 2.62 |
-| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 | 5.39 | 4.92 | 4.79 | 3.40 | 3.36 |
+| JONSWAP 0.29 Hz, 0.8 m, drifting | 30 | 10.04 | 5.39 | 4.92 | 4.79 | 3.39 | 3.36 |
 | JONSWAP 0.29 Hz, 0.8 m, manoeuvring | 30 | 26.04 | 14.11 | 12.72 | 12.72 | 8.01 | 7.98 |
 | bimodal | 30 | 11.10 | 6.22 | 6.91 | 6.43 | 9.18 | 9.40 |
 | broadband | 30 | 16.85 | 7.34 | 8.27 | 7.77 | 7.60 | 7.87 |
@@ -902,7 +902,7 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 214.3 | 31.5 | 53.1 | 184.5 | 78.0 | 11.4 | 2.1 | 0.3 |
-| x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.6 | 3.7 | 0.6 |
+| x | C41 x/y/z | 166.1 | 14.6 | 28.7 | 155.5 | 51.6 | 7.7 | 3.7 | 0.6 |
 | x | C52 x/y/z | 351.7 | 11.0 | 35.7 | 322.8 | 104.9 | 10.4 | 3.9 | 0.5 |
 | z | OU-III (shipping) | 122.4 | 20.6 | 26.8 | 106.7 | 44.9 | 8.8 | 1.3 | 0.2 |
 | z | C41 x/y/z | 129.4 | 9.5 | 21.2 | 121.9 | 40.4 | 15.9 | 10.0 | 1.2 |
@@ -913,8 +913,8 @@ mechanism:
 | Axis | Filter | total | 0.0-0.017 Hz | 0.017-0.05 Hz | 0.05-0.1 Hz | 0.1-0.2 Hz | 0.2-0.4 Hz | 0.4-0.8 Hz | 0.8-5.0 Hz |
 |---|---|---|---|---|---|---|---|---|---|
 | x | OU-III (shipping) | 41.5 | 17.5 | 32.3 | 12.6 | 1.6 | 0.3 | 0.1 | 0.1 |
-| x | C41 x/y/z | 61.6 | 28.5 | 45.7 | 5.3 | 1.9 | 1.6 | 1.9 | 4.5 |
-| x | C52 x/y/z | 64.5 | 24.5 | 52.3 | 5.0 | 1.8 | 1.1 | 1.0 | 2.5 |
+| x | C41 x/y/z | 61.5 | 28.5 | 45.7 | 5.3 | 1.9 | 1.6 | 1.9 | 4.5 |
+| x | C52 x/y/z | 64.5 | 24.5 | 52.2 | 5.0 | 1.8 | 1.1 | 1.0 | 2.5 |
 | z | OU-III (shipping) | 24.9 | 14.7 | 17.9 | 6.7 | 0.9 | 0.2 | 0.1 | 0.1 |
 | z | C41 x/y/z | 47.7 | 35.7 | 26.4 | 3.1 | 1.1 | 0.9 | 1.3 | 3.3 |
 | z | C52 x/y/z | 41.1 | 27.3 | 26.9 | 2.9 | 1.0 | 0.6 | 0.7 | 1.8 |
@@ -939,7 +939,7 @@ wave band (0.2-0.4 Hz) and below it, C52 cuts it most below the wave band
 (0-0.05 Hz: bias, tilt and rotation leakage, which `g dtheta` makes larger
 horizontally than vertically) at a slightly higher in-band error.  On the
 mixed sea, every filter's error sits mostly at the swell, C52's most (on x, 322.8 of 351.7 mm in 0.05-0.1 Hz, seed 1; the INS tuner's operating frequency has a median of 0.218 Hz there, which puts the C52 notch at 0.089 Hz); on the still IMU the
-CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; the tuner is pinned at its bound, f_z = 0.050 Hz, with the 0.05 m/s^2 amplitude floor).
+CARMA error sits in the prior's band (C41 x: 45.7 of 61.5 mm in 0.017-0.05 Hz; the tuner is pinned at its bound, f_z = 0.050 Hz, with the 0.05 m/s^2 amplitude floor).
 
 ![Time series, JONSWAP](../reports/results/carma3_benchmark/timeseries_xyz_jonswap.svg)
 ![Error PSD, JONSWAP](../reports/results/carma3_benchmark/error_psd_xyz_jonswap.svg)
@@ -957,7 +957,7 @@ CARMA error sits in the prior's band (C41 x: 45.7 of 61.6 mm in 0.017-0.05 Hz; t
 |  | C52 x/y + C41 z | 1.52 / 1.09 / 4.1 | 1.47 / 1.26 | 18 / 263 | 100 / 469 | 90 / 96 | 0.21 / 0.23 / 1.67 |
 | mixed swell + wind | OU-III (shipping) | 18.34 / 7.13 / 30.9 | 0.33 / 0.50 | 301 / 1482 | 985 / 2411 | 912 / 853 | 0.29 / 0.22 / 1.89 |
 |  | C41 x/y/z | 32.01 / 28.20 / 63.7 | 0.24 / 0.25 | 208 / 621 | 599 / 1133 | 953 / 921 | 0.20 / 0.24 / 1.55 |
-|  | C52 x/y/z | 161.31 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
+|  | C52 x/y/z | 161.32 / 149.53 / 324.2 | 0.09 / 0.09 | 357 / 452 | 878 / 1022 | 969 / 905 | 0.48 / 1.60 / 2.64 |
 |  | C52 x/y + C41 z | 153.40 / 28.26 / 190.2 | 0.09 / 0.25 | 357 / 621 | 877 / 1133 | 959 / 922 | 0.21 / 0.32 / 2.02 |
 
 Means over 100 paired seeds (convergence: median).
