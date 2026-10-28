@@ -1,0 +1,626 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,bm}
+\usepackage{newtxtext,newtxmath}
+\usepackage{textcomp}
+\interdisplaylinepenalty=2500
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array,booktabs,makecell,adjustbox}
+\usepackage{mathtools}
+\usepackage{enumitem}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage{bookmark}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\usepackage{pgf}
+
+% Keep this --- needed by PGF outputs that reference \mathdefault
+\providecommand{\mathdefault}[1]{#1}
+
+% Generated figures live beside this file only after plots/kalman_tfg_carma
+% has run. Wrap every include so the manuscript still compiles from a clean
+% checkout.
+\newcommand{\IncludePGF}[1]{%
+  \IfFileExists{#1}{\resizebox{\linewidth}{!}{\input{#1}}}%
+                   {\fbox{\parbox{0.92\linewidth}{\centering\small
+                     Figure \texttt{\detokenize{#1}} not generated.\\
+                     Run \texttt{plots/kalman\_tfg\_carma/draw\_plots.sh}.}}}%
+}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Skew}[1]{\left[#1\right]_\times}
+\DeclareMathOperator{\Exp}{Exp}
+\DeclareMathOperator{\Log}{Log}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\title{Three-Axis CARMA Motion Priors on the Two-Frame Lie Group:
+A Paired Comparison with the Quaternion MEKF for Marine Inertial Wave
+Estimation (experimental draft)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This experimental paper moves the three-axis CARMA(4,1) wave-motion filter
+CARMA3 from its quaternion multiplicative EKF (MEKF) onto a right-invariant
+two-frame Lie group, keeping its CARMA prior, wrapper, startup, adaptation and
+magnetic handling unchanged, and asks whether the coherent error geometry
+improves estimation. The 21-state filter TFG-CARMA3 has estimate-independent
+accelerometer and magnetometer Jacobians, a group injection and a full reset
+transport; for a CARMA prior with one shape on every axis the attitude does
+not enter the translational dynamics, and the structured impulse response of
+the transition collapses to a closed form. The two filters are first-order
+equivalent, and a paired simulation benchmark (36 conditions, 20--100 seeds,
+plus 80 replays of an independent vessel-RAO dataset) confirms it for
+translation: in 34 of 36 conditions every displacement and velocity change
+lies inside $\pm1\,\%$ with its whole 95\,\% interval. Where the CARMA prior
+misfits (a mixed swell and wind sea, manoeuvring) the invariant coordinates
+give 2.6--6\,\% lower tilt error, 3--7\,\% lower accelerometer-bias error and
+7.6--12\,\% lower attitude NEES, and through a magnetometer outage the filter
+without reset transport keeps an honest heading covariance (NEES 1.2 over
+\SI{2400}{s}). It costs 3.4 times CARMA3's multiply-adds. The results are
+simulation only; nothing here changes the shipping OU-III estimator or bears
+on its stability study.
+\end{abstract}
+\input{../simulation-dataset.tex-part}
+
+\begin{IEEEkeywords}
+invariant EKF, Lie group, two-frame group, CARMA process, Kalman filter,
+inertial navigation, marine heave, wave estimation
+\end{IEEEkeywords}
+
+\section{Introduction and Status}
+\label{sec:intro}
+The experimental CARMA3 filter (\texttt{src/kalman\_carma}, companion paper
+\texttt{kalman\_carma.pdf}) replaces the three integrated Ornstein--Uhlenbeck
+chains of the shipping OU-III marine estimator by stationary CARMA(4,1)
+displacement priors~\cite{brockwell01} on all three world axes. It keeps
+OU-III's quaternion MEKF~\cite{markley03}: additive errors on the world-frame
+CARMA states and the body-frame biases, and a body-frame attitude error. The
+two-frame Lie-group filter of the repository (\texttt{kalman\_tfg.pdf}) carries
+world states and body biases in one group with a right-invariant
+error~\cite{barrau17,barrau18}. This paper combines the two and tests the
+hypothesis
+\begin{quote}\small
+representing attitude, the CARMA translational states and the IMU biases on
+the right-invariant two-frame group yields measurably better estimation
+(accuracy, robustness, bias tracking or covariance consistency) than the
+quaternion MEKF with the same three-axis CARMA(4,1) prior.
+\end{quote}
+Everything else is held fixed: the same CARMA model library, shape,
+frequency/amplitude mapping and exact discretization; the same wrapper source
+(front end, proxy startup, staged tune commit, tilt watchdog,
+magnetometer-service bias gate, vibration-aware accelerometer covariance); the
+same sensor streams and the same physical initial uncertainty.
+
+\emph{Status.} TFG-CARMA3 is a research prototype. It is not included by the
+deployed configuration, it has no on-target timing or hardware evidence, and
+no result here is a stability, admissibility or hardware statement. The full
+report, with every table, is \texttt{docs/tfg-carma3-research.md}; the
+generated statistics are in \texttt{reports/results/tfg\_carma3}.
+
+\section{State, Group and Error}
+\label{sec:group}
+The nominal state is $X=(R,W,B)$ in the two-frame group with four world and
+two body columns,
+\begin{gather}
+R=R_{bw}\in\mathrm{SO}(3),\notag\\
+W=[\,p\;v\;a\;l\,]\in\R^{3\times4},\quad
+B=[\,b_g\;b_a\,]\in\R^{3\times2},
+\end{gather}
+where row $k$ of $W$ is the CARMA state of world axis $k$ in the library
+coordinates (displacement, velocity, acceleration, latent), and the group law
+is
+\begin{equation}
+(R_1,W_1,B_1)\circ(R_2,W_2,B_2)=(R_1R_2,\;W_1+R_1W_2,\;B_2+R_2^{\top}B_1).
+\end{equation}
+The error is right-invariant, $\eta=\hat X X^{-1}=\Exp_G(\xi)$, and corrections
+act on the left, $\hat X^{+}=\Exp_G(-\hat\xi)\hat X$. In local coordinates
+\begin{equation}
+\Exp(\phi)=\hat R R^{\top},\quad \rho_i=\hat w_i-\Exp(\phi)\,w_i,\quad
+\beta=R(\hat b-b),
+\end{equation}
+ordered as $\xi=[\phi\,|\,\beta_g\,|\,\rho_p\,\rho_v\,\rho_a\,\rho_l\,|\,\beta_a]$
+(21 states). The attitude error is world-referred, and the body biases are
+carried as world-referred vectors whose body-frame meaning is fixed by the
+true attitude.
+
+\section{Error Dynamics and Discretization}
+\label{sec:dynamics}
+With measured rate $\omega_m$, gyro white noise $n_g$, bias walk $n_{bg}$,
+CARMA driving noise $\zeta\in\R^3$ with spatial covariance $\Sigma_s$ and the
+residual accelerometer-bias OU process of CARMA3,
+\begin{equation}
+R'=R\Skew{\omega_m-b_g-n_g},\quad W'=WA^{\top}+g\,e_a\zeta^{\top},\quad
+b_g'=n_{bg},
+\end{equation}
+and $b_a'=-b_a/\tau_b+n_{ba}$ (active) or $b_a'=0$ (held). $A$ is the
+CARMA(4,1) realization at the committed frequency scale $\kappa$ with unit
+acceleration variance, $g^2=\kappa/\mathrm{Var}_1(a)$. The mean propagation
+over a step $h$ is exact: $R\leftarrow R\Exp(\omega h)$,
+$W\leftarrow W\Phi_A^{\top}$ with $\Phi_A=e^{Ah}$.
+
+Linearized at $\xi=0$, with $\omega_w=\hat R\omega$,
+\begin{align}
+\phi' &= -\beta_g+\hat R n_g,\qquad
+\beta_g' = \Skew{\omega_w}\beta_g-\hat R n_{bg},\\
+\rho_i' &= \textstyle\sum_j A_{ij}\rho_j-\Skew{\hat w_i}\beta_g
+           +\Skew{\hat w_i}\hat R n_g-g\,e_{a,i}\,\zeta .
+\end{align}
+
+\begin{proposition}[No attitude-to-translation term]
+\label{prop:commute}
+With one $A$ on every axis, $(QW)A^{\top}=Q(WA^{\top})$ for every rotation
+$Q$, so the attitude error does not act on $W$ through $A$:
+$\Phi_{\rho,\phi}=0$.
+\end{proposition}
+
+The $\beta_g\to\rho$ coupling $-\Skew{\hat w_i}$ depends on the estimate, so
+the filter is a right-invariant two-frame error-state EKF, not a group-affine
+(log-linear) invariant EKF; no estimate independence of the error dynamics is
+claimed.
+
+\begin{proposition}[Collapse of the impulse response]
+\label{prop:collapse}
+Since the skew map is linear in each column and
+$\Phi_A(h-t)\Phi_A(t)=\Phi_A(h)$,
+\begin{equation}
+(\Phi_A(h-t)\otimes I_3)\,\Skew{W(t)}=\Skew{W(t)\Phi_A(h-t)^{\top}}
+=\Skew{W(h)}
+\end{equation}
+for every $t$. Hence every $\rho$ column of the transition and of the noise
+injection is $\Skew{w_i(h)}$ times the attitude column:
+$\Phi_{\rho_i,b_g}=\Skew{w_i(h)}F$ with $F=-R_0hJ_l(\omega h)R_0^{\top}$.
+\end{proposition}
+
+The quadrature that the OU filter on the same group needs is therefore
+unnecessary for this prior. After the collapse the discrete process noise
+needs only $3\times3$ integrals: $Q_{\rho_i,\rho_j}=\Skew{w_i(h)}Q_{\phi\phi}
+\Skew{w_j(h)}^{\top}+Q_A(i,j)\,\Sigma_s$, where $Q_A$ is the library's exact
+CARMA process covariance at unit amplitude, so the CARMA part is
+$Q_A\otimes\Sigma_s$ exactly. The prior itself is CARMA3's: the fitted
+CARMA(4,1) JONSWAP shape with a zero at DC, the mapping $\kappa=f_{\mathrm{tune}}
+/f_{z,\mathrm{model}}$ and the amplitude from the measured band acceleration.
+There is no auxiliary $S$ state.
+
+\section{Measurements, Correction and Reset}
+\label{sec:measurement}
+The accelerometer and magnetometer residuals are formed in the world frame,
+$r_a=\hat R(f_m-\hat b_a-k_a\Delta T)-(\hat a-g)$ and $r_m=\hat Rm-B_w$, with
+noise $\hat R\,R_{a,m}\hat R^{\top}$. At $\xi=0$
+\begin{align}
+H_a&=[\,\Skew{g}\;|\;0\;|\;0\;0\;-I\;0\;|\;-I\,],\notag\\
+H_m&=[\,-\Skew{B_w}\;|\;0\;\cdots\,],
+\end{align}
+exactly: the Jacobians do not depend on the estimate. The world residual is
+$\hat R$ times CARMA3's body residual, so the innovation information is
+identical; only the error coordinates differ. CARMA3's semantics are kept: no
+innovation gating, and a held accelerometer bias stays in the innovation
+covariance but not in the gain.
+
+The estimated error $\mathbf a=K r$ is injected by
+$\hat X^{+}=\Exp_G(-\mathbf a)\hat X$, which rotates every world column and
+re-expresses the biases. The Joseph-form posterior covariance is transported
+into the new coordinates by the right Jacobian
+\begin{equation}
+J_r(\mathbf a)=\textstyle\sum_n(-\mathrm{ad}_{\mathbf a})^n/(n+1)!
+\end{equation}
+whose blocks are $J_l(-\phi)$ and the $\mathrm{SE}(3)$ left-Jacobian block
+$Q_r(\phi,z)$~\cite{barfoot17} for each vector block $z$. Two ablations remove
+part of it: attitude-only ($J_l(-\phi)$ on the attitude block, the MEKF
+analogue) and none.
+
+\section{Relation to the Quaternion MEKF}
+\label{sec:equivalence}
+CARMA3's errors $e=[\delta\theta_b,\delta b_g,\delta w,\delta b_a]$ map to
+first order as
+\begin{equation}
+\phi=\hat R\,\delta\theta_b,\quad \beta=-\hat R\,\delta b,\quad
+\rho_i=-\delta w_i+\Skew{\hat w_i}\hat R\,\delta\theta_b,
+\end{equation}
+a linear map $\xi=T(\hat X)e$ that depends on the estimate. Both linear models
+are exact first-order linearizations of the same system, so
+$\Phi_{\mathrm{TFG}}=T(\hat X_1)\Phi_{\mathrm{MEKF}}T(\hat X_0)^{-1}$,
+$H_{\mathrm{TFG}}=\hat R H_{\mathrm{MEKF}}T^{-1}$ and
+$K_{\mathrm{TFG}}=TK_{\mathrm{MEKF}}\hat R^{\top}$.
+
+\begin{proposition}[First-order equivalence]
+\label{prop:equiv}
+The two filters differ only through the injection (equal to first order), the
+covariance transport and the estimate at which $T$ is evaluated around a
+correction. In CARMA3's coordinates the TFG update implies, to first order in
+the correction,
+$\delta w_i^{+}=\delta w_i-\tfrac12\Skew{\phi_a}\delta w_i
++\tfrac12\Skew{\Delta\hat w_i}\phi$, against CARMA3's
+$\delta w_i^{+}=\delta w_i$.
+\end{proposition}
+
+The term is a product of a state correction and the attitude error. The
+filters therefore separate only where the world states receive large
+corrections, which is where the CARMA prior misfits.
+
+\emph{Unobservable heading.} Without a magnetometer a rotation of the world
+about the vertical is a symmetry. In the invariant coordinates the
+unobservable direction is $e_{\phi_z}$ for every estimate
+($H_ae_{\phi_z}=\Skew{g}e_z=0$, $\Phi e_{\phi_z}=e_{\phi_z}$), so the
+information along it cannot grow under prediction or update. In CARMA3's
+coordinates the direction $n(\hat X)=[\hat R^{\top}e_z,0,\Skew{\hat w}e_z,0]$
+moves with the estimate, and each update adds information along the new
+direction, the classical source of false heading
+observability. The full reset $J_r(\mathbf a)$ re-introduces an estimate
+dependence; only the filter without transport preserves the direction exactly.
+
+\emph{Equivariance.} With one $A$ on every axis the CARMA transition commutes
+with every world rotation and
+$Q_d(Q\Sigma_sQ^{\top})=(I\otimes Q)Q_d(\Sigma_s)(I\otimes Q)^{\top}$. The
+complete filter is yaw-equivariant for the isotropic horizontal prior that the
+wrapper uses. Different horizontal and vertical CARMA models would add an
+attitude-to-translation coupling; the implementation refuses such a
+configuration rather than approximating it.
+
+\section{Implementation}
+\label{sec:impl}
+\texttt{Kalman3D\_Wave\_TFG\_CARMA3<T,NC>} stores the nominal state as a
+\texttt{TwoFrameGroup<T,NC,2>} and a dense symmetric $21\times21$ covariance.
+The prediction applies the structured transition in two passes and the
+structured $Q_d$; the update forms $PH^{\top}$ from the sparse $H$, solves for
+$K$, applies CARMA3's symmetric Joseph form, the structured
+$J_r(\mathbf a)PJ_r(\mathbf a)^{\top}$, the group injection and CARMA3's
+gyro-bias and accelerometer-bias mean projections. Every covariance-sized
+temporary is a member: there is no dynamic allocation after construction and
+no $21\times21$ stack temporary. The wrapper is the CARMA3 wrapper with its
+inner-filter template parameter set; every covariance write CARMA3 performs in
+its own coordinates (attitude seeds, the stationary CARMA prior, bias freeze,
+heading gauge) is applied to $T^{-1}PT^{-\top}$ and mapped back, so both
+filters represent the same physical uncertainty at every phase change.
+
+\section{Verification}
+\label{sec:verify}
+\texttt{tests/kalman\_carma/tfg\_carma3-test} runs 199 checks against
+independent references; every one passes, also under AddressSanitizer and
+UBSan. No expected value is what the implementation produced. Representative
+worst discrepancies are in \cref{tab:verify}.
+
+\begin{table}[t]
+  \centering
+  \caption{Selected verification checks (worst over the cases).}
+  \label{tab:verify}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}p{0.56\columnwidth}ll@{}}
+    \toprule
+    Check & Worst & Limit\\
+    \midrule
+    Group laws, $\Log_G(\Exp_G(\xi))=\xi$ (50 elements) & 4.9e-15 & 1e-11\\
+    $J_r(\mathbf a)$ vs finite differences, $|\mathbf a|\approx1$ & 8.0e-10 & 1e-8\\
+    Transported covariance vs Monte Carlo (corr.\ units) & 0.023 & 0.04\\
+    $H_a$, $H_m$ vs finite differences (relative) & 1.7e-10 & 1e-8\\
+    Complete update vs dense reference: state / covariance & 2.4e-11 / 1.6e-9 & 1e-7 / 1e-6\\
+    $\Phi$ vs finite differences of the nonlinear error flow & 3.0e-9 & 2e-8\\
+    $Q_d$ vs RK4 Lyapunov integration (corr.\ units) & 3.7e-11 & 1e-7\\
+    $\Phi_{\rho,\phi}=0$; collapse identity & 0 / 0 & 1e-15\\
+    Welch PSD of $p_{x,y,z}$ vs analytic, mean dB & 0.19 & 0.35\\
+    Float vs double, \SI{60}{s} jittered: attitude (rad) & 3.5e-5 & 1e-4\\
+    Yaw-rotated world frame, complete filter & 1.5e-12 & 1e-9\\
+    Heading information never rises, no transport (24\,000 steps) & 0 & 1e-9\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two reported quantities support \cref{prop:equiv,sec:mechanism}: over
+\SI{120}{s} without magnetometer the heading information grows by a factor of
+273 (full reset), 15 (attitude-only reset), 0.99 (no transport) and 751
+(CARMA3's MEKF).
+
+\section{Paired Benchmark}
+\label{sec:bench}
+\texttt{carma3\_bench --extended} feeds one random-phase directional sea,
+through the vessel RAOs of the CARMA study, and one IMU/magnetometer stream per
+seed (\SI{200}{Hz}) identically to every filter. Errors are against the wave
+coordinate in the geographic frame, scored from \SI{300}{s}. There are 100
+paired seeds on the four principal seas, 30 on each of 29 further conditions
+(broadband, bimodal, headings, anchored, drifting, underway, manoeuvring,
+still IMU, small seas, large roll/pitch, rapid turns, magnetometer gaps, bias
+and temperature drift, sample jitter) and 20 seeds of \SI{3600}{s} on three
+more. The paired change is $1-\overline{\mathrm{TFG}}/\overline{\mathrm{MEKF}}$
+(positive when TFG-CARMA3 is lower) with a 95\,\% bootstrap interval, the
+Holm-corrected Wilcoxon signed-rank test and an equivalence statement when the
+whole interval lies inside $\pm1\,\%$, a margin fixed before the runs.
+
+\begin{table}[t]
+  \centering
+  \caption{Principal seas, 100 paired seeds: change TFG-CARMA3 vs CARMA3
+    (positive = TFG lower; e = equivalent; bold = significant after Holm).}
+  \label{tab:principal}
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{adjustbox}{max width=\columnwidth}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    & JONSWAP & PM & mixed & changing $f_p$\\
+    \midrule
+    heave & +0.001\,\% e & +0.001\,\% e & +0.001\,\% e & +0.002\,\% e\\
+    horizontal & $-$0.003\,\% e & 0.000\,\% e & \textbf{+0.091\,\%} e & +0.002\,\% e\\
+    pitch & +0.017\,\% e & +0.031\,\% e & \textbf{+4.66\,\%} & +0.041\,\% e\\
+    max heading excursion & +0.36\,\% e & +0.34\,\% e & \textbf{+2.77\,\%} & +0.34\,\% e\\
+    gyro-bias RMS & +0.15\,\% e & +0.11\,\% e & \textbf{+1.17\,\%} & \textbf{+0.57\,\%} e\\
+    accel-bias RMS & \textbf{+0.091\,\%} e & \textbf{+0.074\,\%} e & \textbf{+3.17\,\%} & +0.10\,\% e\\
+    gyro bias, last \SI{60}{s} & $-$0.79\,\% & $-$0.78\,\% & $-$0.11\,\% e & $-$0.29\,\% e\\
+    \bottomrule
+  \end{tabular}
+  \end{adjustbox}
+\end{table}
+
+\emph{Translation is equivalent.} In 34 of the 36 conditions every
+displacement and velocity change lies inside $\pm1\,\%$ with its whole
+interval, typically within $\pm0.01\,\%$ (\cref{tab:principal}). The two
+exceptions are the \SI{900}{s} and \SI{2400}{s} magnetometer outages, whose
+horizontal intervals widen with point estimates unfavourable to TFG-CARMA3,
+neither significant.
+
+\emph{Attitude and bias are better where the prior misfits.} In the mixed
+swell and wind sea tilt is 3.0\,\% lower (\SI{3600}{s}: 6.0\,\%) and the
+accelerometer bias 3.2\,\% (7.5\,\% at the end of the run); when manoeuvring,
+yaw is 13.3\,\% lower ($[7.5,18.9]$, raw $p=7\times10^{-4}$, not significant
+after the matrix-wide correction) and tilt 2.6\,\% lower. Elsewhere attitude
+and bias are equivalent. The accelerometer-bias error is
+17.1--17.4\,mg per degree of tilt error in every condition, against
+$g\pi/180=17.45$\,mg/deg: the residual horizontal bias error is the
+tilt-equivalent bias the accelerometer cannot separate from tilt.
+
+\emph{Unfavourable.} The gyro-bias error over the last \SI{60}{s} is 0.8\,\%
+higher in the regular seas (raw $p=0.002$, Holm $p=0.12$) and 16.7\,\% higher
+when manoeuvring (raw $p=0.01$), while the whole-window gyro-bias RMS is
+lower; this is not explained. CARMA3's weaknesses, still-IMU drift and
+mixed-sea heave, are unchanged to 0.02\,\%: they belong to the prior, not to
+the error geometry.
+
+\begin{table}[t]
+  \centering
+  \caption{Consistency (means): OU-III / CARMA3 / TFG-CARMA3 / TFG without
+    reset transport, and magnetometer outages.}
+  \label{tab:consistency}
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{adjustbox}{max width=\columnwidth}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    & OU-III & CARMA3 & TFG & TFG, no reset\\
+    \midrule
+    attitude NEES (3 dof), JONSWAP & 50.7 & 48.0 & 47.5 & 47.3\\
+    attitude NEES (3 dof), mixed & 58.2 & 50.3 & 46.5 & 44.4\\
+    yaw NEES (1 dof), mixed & -- & 12.4 & 11.2 & 10.8\\
+    yaw NEES in a \SI{900}{s} gap & 395 & 16.4 & 7.3 & 2.2\\
+    yaw NEES in a \SI{2400}{s} loss & 2570 & 141 & 57 & 1.2\\
+    yaw RMS \SI{60}{s} after the \SI{900}{s} gap (deg) & 19.2 & 3.67 & 3.04 & 2.07\\
+    yaw RMS in the \SI{2400}{s} loss (deg) & 58.7 & 16.5 & 18.4 & 17.3\\
+    \bottomrule
+  \end{tabular}
+  \end{adjustbox}
+\end{table}
+
+\emph{Consistency.} Translational consistency is identical to 0.1\,\%.
+Attitude is overconfident by a factor of about 15 in every filter, OU-III
+included (\cref{tab:consistency}); TFG-CARMA3 lowers attitude NEES by 1\,\%
+in regular seas and 8\,\% in the mixed sea. Through a magnetometer outage only
+the TFG without reset transport reports its heading uncertainty honestly. That
+pays off at reacquisition: after the \SI{900}{s} gap TFG-CARMA3 has 17\,\%
+less post-gap heading error than CARMA3. Accuracy \emph{during} a long gap is
+not better.
+
+\section{Pinned Vessel-RAO Dataset}
+\label{sec:dataset}
+The eight scored records of the pinned 28\,ft vessel-RAO dataset are a second
+simulator with its own sensor models. Over 80 paired replays (8 records,
+10 seeds) the translational changes are +0.006\,\% (heave), $-$0.012\,\%
+(surge) and $-$0.018\,\% (sway), with no replay differing by more than
+0.11\,\%. Roll, pitch and heading change by +0.06\,\%, +0.29\,\% and +0.25\,\%
+on average. CARMA3's advantage over OU-III is unchanged; for example, on
+JONSWAP $H_s=\SI{1.5}{m}$ the heave error is 4.03\,\% of $H_s$ for OU-III
+against 2.21\,\% for both CARMA filters.
+
+\section{Deterministic Replay}
+\label{sec:replay}
+\Cref{tab:tfg_carma_sim_results} is generated during the build by
+\texttt{tools/tfg\_carma\_sim\_table.py} from
+\texttt{tests/kalman\_tfg\_carma/tfg\_carma3-sim} with the default seeds, on
+the same eight records in the same order as the OU-III, TFG and CARMA3 tables.
+The simulator shares CARMA3's dataset adapter, so this replay and CARMA3's
+differ only in the estimator. It is a single realization per record, reported
+for continuity, not a controlled comparison; the controlled one is
+\cref{sec:dataset}. The simulator fails the build if any default-seed record
+exceeds its regression bar (worst value plus 0.5\,\%).
+
+\IfFileExists{tfg-carma-sim-results-generated.tex-part}{%
+  \input{tfg-carma-sim-results-generated.tex-part}%
+}{%
+  \begin{table}[t]\centering\small
+    \fbox{\parbox{0.9\linewidth}{\centering Results table not generated.\\
+      Run \texttt{tools/tfg\_carma\_sim\_table.py}.}}
+  \end{table}%
+}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_tfg_carma3_jonswap_medium_att.pgf}
+  \caption{Roll, pitch and yaw, JONSWAP $H_s=\SI{1.5}{m}$, last \SI{60}{s};
+    RMS errors over the scored \SI{900}{s} window.}
+  \label{fig:att}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_tfg_carma3_jonswap_medium_xykin.pgf}
+  \caption{Horizontal displacement, velocity and acceleration on the same
+    record.}
+  \label{fig:xykin}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \IncludePGF{w3d_tfg_carma3_jonswap_medium_zkin.pgf}
+  \caption{Vertical kinematics on the same record, with the $\pm$
+    displacement and velocity envelopes of the adaptation.}
+  \label{fig:zkin}
+\end{figure}
+
+\section{Mechanism}
+\label{sec:mechanism}
+\Cref{prop:equiv} explains the translational result: the filters share the
+measurement information, the prior and the wrapper, and differ only by terms
+that are products of a state correction and the attitude error. Where the
+prior fits, both factors are small after convergence and the filters agree to
+$10^{-4}$ in every translational RMS. All 32 conditions with a CARMA3
+velocity error below \SI{0.045}{m/s} show tilt changes within $\pm0.5\,\%$.
+The pair separates in the mixed sea and when manoeuvring, where the
+single-peak prior misfits a bimodal sea or a low-frequency translation and the
+acceleration state receives large corrections every update; the \SI{2400}{s}
+magnetometer loss also has a large velocity error, from heading error rotating
+the horizontal estimates, and an unchanged tilt. The magnitude of the motion
+does not order the conditions.
+
+The ablations locate the gain in the invariant coordinates. Writing the
+covariance policies natively instead of physically changes nothing; removing
+the reset transport \emph{increases} the mixed-sea tilt gain from 3.0\,\% to
+4.6\,\% and the manoeuvring heading gain from 13.3\,\% to 23.6\,\%, but loses
+the manoeuvring tilt gain. The interpretation consistent with all of this is
+one property, the estimate dependence of the MEKF's error coordinates. For
+tilt, CARMA3's accelerometer attitude Jacobian $\Skew{\hat R^{\top}(\hat a-g)}$
+is evaluated at the CARMA acceleration estimate, so a misfitting prior enters
+the attitude sensitivity, whereas $H_a$ of \cref{sec:measurement} does not
+depend on the estimate. For heading, the moving unobservable direction admits
+false information (\cref{sec:verify}). With CARMA(5,2), which misfits the
+mixed sea more strongly, the MEKF's tilt error grows to \SI{1.64}{\degree}
+(attitude NEES 819), the full-reset TFG's to \SI{0.99}{\degree} and the TFG
+without transport keeps \SI{0.34}{\degree} (NEES 50), lower than the MEKF in
+30 of 30 seeds. No experiment removed the estimate dependence from CARMA3's
+MEKF itself, so this remains an interpretation.
+
+The shared attitude overconfidence is mostly an accelerometer-bias effect: the
+simulated turn-on bias reaches 8\,mg against the 0.4\,mg stationary deviation
+of the inherited bias model, and with a calibrated accelerometer CARMA3's
+attitude NEES falls from 48 to 23.
+
+\section{Computational Feasibility}
+\label{sec:cost}
+\begin{table}[t]
+  \centering
+  \caption{Cost per \SI{200}{Hz} sample and ESP32-S3 build evidence.}
+  \label{tab:cost}
+  \footnotesize
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{adjustbox}{max width=\columnwidth}
+  \begin{tabular}{@{}lccccc@{}}
+    \toprule
+    & OU-III & CARMA3 & TFG & TFG, no reset\\
+    \midrule
+    multiply-adds, prediction + accel.\ update & 12\,483 & 4170 & 14\,109 & 8682\\
+    host time per sample (\si{\micro s}) & 22.31 & 7.42 & 11.29 & 8.08\\
+    ESP32-S3 \texttt{sizeof} filter (B) & 5692 & 6040 & 5800 & 5800\\
+    ESP32-S3 object code (B) & 156\,309 & 135\,694 & 117\,548 & 117\,548\\
+    deepest stack chain, time update (B) & 4288 & 3968 & 1744 & --\\
+    filter reaches heap allocation & yes & yes & no & no\\
+    \bottomrule
+  \end{tabular}
+  \end{adjustbox}
+\end{table}
+
+TFG-CARMA3 costs 3.4 times CARMA3's multiply-adds and 1.13 times OU-III's
+(\cref{tab:cost}). The prediction couples every world column to the gyro bias
+($\Phi_{\rho_i,b_g}=\Skew{w_i}F$), and the reset transport takes 5427 of the
+7644 multiply-adds of the accelerometer update; without it the update is
+cheaper than CARMA3's. Host time grows less than the count (1.5 times CARMA3)
+because the wrapper's front end and tuner are shared. With Espressif GCC
+\texttt{esp-14.2.0\_20241119} at \texttt{-Os} the filter compiles and links
+for the ESP32-S3 with no undefined reference, a smaller object and a shallower
+static stack than CARMA3, and no heap allocation reachable from its own
+methods. There is no on-target timing.
+
+\section{Limitations and Recommendation}
+\label{sec:recommend}
+The limits are those of the evidence: simulation only, on one synthetic bench
+and one replay dataset with the IMU at the centre of gravity; CARMA3's
+policies mapped into the invariant coordinates rather than redesigned; a
+shared attitude inconsistency; the unexplained end-of-run gyro-bias signal;
+no group-affine property and no stability result; one CARMA shape and scale
+on every axis; an open trade-off between the correct first-order reset
+transport and the more consistent filter without it; and multiple-comparison
+correction only within each table.
+
+For the quantity the filter exists to estimate, wave displacement and
+velocity, the two-frame group yields no measurable improvement over the
+quaternion MEKF with the same prior: the filters are first-order equivalent
+and the CARMA prior, not the error geometry, sets the translational error.
+For attitude, heading consistency and the accelerometer bias it yields a
+conditional improvement where the prior misfits, at 3.4 times CARMA3's
+arithmetic. TFG-CARMA3 should not replace CARMA3's MEKF and should not be
+deployed. The variant without reset transport merits a targeted continuation
+against two falsifying experiments: an observability-constrained CARMA3 MEKF
+(if it matches, the group is unnecessary) and on-target timing on the
+ESP32-S3.
+
+\section{Relation to the OU-III Stability Study}
+The OU-III stability study and its premises (marine motion, IMU bias and
+magnetic service, applied to one persistent physical execution) concern the
+shipping OU-III filter. None of them transfers to this filter. A CARMA prior
+is a statistical model, not a law imposed on the vessel's physical history,
+and a replacement of OU-III would require its own process-model mismatch,
+observability, covariance and full estimator stability analyses.
+
+\section*{Reproducibility Note}
+The filter and its wrapper are in \texttt{src/kalman\_carma}; the
+mathematical verification, the paired benchmark and its dataset adapter are in
+\texttt{tests/kalman\_carma}; the gated deterministic replay behind this paper
+is \texttt{tests/kalman\_tfg\_carma}. \texttt{tools/tfg\_carma3\_benchmark.py}
+reproduces every benchmark run from committed seeds, and its raw results and
+generated statistics are in \texttt{reports/results/tfg\_carma3}. This paper
+and its chart gallery are built by the repository's GitHub Actions workflow
+from a fresh replay of the dataset.
+
+\begin{thebibliography}{9}
+\bibitem{brockwell01}
+P. J. Brockwell, ``Continuous-time ARMA processes,'' in \emph{Handbook of
+Statistics}, vol. 19, Elsevier, 2001, pp. 249--276.
+
+\bibitem{markley03}
+F. L. Markley, ``Attitude error representations for Kalman filtering,''
+\emph{J. Guid. Control Dyn.}, vol. 26, no. 2, pp. 311--317, 2003.
+
+\bibitem{barrau17}
+A. Barrau and S. Bonnabel, ``The invariant extended Kalman filter as a stable
+observer,'' \emph{IEEE Trans. Autom. Control}, vol. 62, no. 4,
+pp. 1797--1812, 2017.
+
+\bibitem{barrau18}
+A. Barrau and S. Bonnabel, ``Invariant Kalman filtering,'' \emph{Annu. Rev.
+Control Robot. Auton. Syst.}, vol. 1, pp. 237--257, 2018.
+
+\bibitem{barfoot17}
+T. D. Barfoot, \emph{State Estimation for Robotics}, Cambridge University
+Press, 2017.
+\end{thebibliography}
+\end{document}

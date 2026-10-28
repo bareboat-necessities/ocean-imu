@@ -126,7 +126,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, imu_calibrate, detrend, nlo]
+        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_tfg_carma, imu_calibrate, detrend, nlo]
 
     steps:
       - name: Checkout
@@ -249,6 +249,15 @@ jobs:
             --data-dir plots/kalman_carma \
             --output doc/kalman_carma/carma-sim-results-generated.tex-part
           git --no-pager diff --stat -- doc/kalman_carma/carma-sim-results-generated.tex-part
+
+      - name: Regenerate the deterministic 900 s table (kalman_tfg_carma)
+        if: matrix.dir == 'kalman_tfg_carma'
+        run: |
+          python3 -u tools/tfg_carma_sim_table.py \
+            --binary tests/kalman_tfg_carma/tfg_carma3-sim \
+            --data-dir plots/kalman_tfg_carma \
+            --output doc/kalman_tfg_carma/tfg-carma-sim-results-generated.tex-part
+          git --no-pager diff --stat -- doc/kalman_tfg_carma/tfg-carma-sim-results-generated.tex-part
 
       - name: Clean test build (${{ matrix.dir }})
         run: make -C tests/${{ matrix.dir }} clean

@@ -22,6 +22,12 @@ Files:
 * `tools/tfg_carma3_benchmark.py`, `tools/tfg_carma3_report.py` -- the Monte
   Carlo driver and the statistics/figures; results in
   `reports/results/tfg_carma3/`.
+* `tests/kalman_tfg_carma/tfg_carma3-sim.cpp` -- the gated default-seed
+  replay of the eight scored dataset records (CARMA3's dataset adapter,
+  `tests/kalman_carma/carma3/SimAdapters.h`); `tools/tfg_carma_sim_table.py`
+  and `plots/kalman_tfg_carma/` turn it into the results table and chart
+  gallery of the experimental article `doc/kalman_tfg_carma/kalman_tfg_carma.tex`
+  and `kalman_tfg_carma-charts.tex`, which CI builds into PDFs.
 
 **Result in brief** (simulation; sections 7-13; generated tables in
 `reports/results/tfg_carma3/summary.md`):
@@ -1159,10 +1165,11 @@ at 3.4 times CARMA3's multiply-adds.
   Lyapunov `Qd`, Monte Carlo transport, the dense reference update, the
   yaw-information test) apply unchanged to any future invariant variant.
 
-A LaTeX article was not prepared.  The primary result is an equivalence,
-and the positive findings are conditional and partly post hoc; they do not
-yet justify a publication-style claim.  This document and the generated
-summary are the record.
+`doc/kalman_tfg_carma/kalman_tfg_carma.tex` condenses this report into an
+experimental draft article, with the deterministic replay table and charts.
+The primary result is an equivalence, and the positive findings are
+conditional and partly post hoc; the draft makes no stronger claim than this
+document, which with the generated summary remains the record.
 
 ## 14. Reproduction
 
@@ -1177,6 +1184,9 @@ summary are the record.
     python3 tools/tfg_carma3_benchmark.py traces --jobs 4
     python3 tools/tfg_carma3_benchmark.py timing              # one process, idle host
     python3 tools/tfg_carma3_benchmark.py report              # summary.md, paired_stats.json, figures
+    make -C tests/kalman_tfg_carma test                       # gated dataset replay
+    python3 tools/tfg_carma_sim_table.py                      # doc/kalman_tfg_carma table
+    (cd plots/kalman_tfg_carma && bash draw_plots.sh)         # chart gallery (PGF/SVG)
     bash tests/kalman_carma/arduino/carma3_size_probe/build.sh host   # host size proxy
     bash tests/kalman_carma/arduino/carma3_size_probe/build.sh <xtensa toolchain bin dir> > esp32s3_size.csv
     bash tests/kalman_carma/arduino/carma3_size_probe/callgraph.sh <xtensa toolchain bin dir> <out dir>

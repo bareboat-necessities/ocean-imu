@@ -12,6 +12,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/kalman_ou_ii \
 	$(REPO_ROOT)/tests/kalman_ou_iii \
 	$(REPO_ROOT)/tests/kalman_tfg \
+	$(REPO_ROOT)/tests/kalman_tfg_carma \
 	$(REPO_ROOT)/tests/nlo \
 	$(REPO_ROOT)/tests/pii_observer \
 	$(REPO_ROOT)/tests/spectrum \
