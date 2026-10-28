@@ -7,9 +7,14 @@ OU families) the proxy-startup wrapper through src/kalman_common/.  A
 source-level contract about "what the OU-III implementation does" therefore
 has to read the wrapper together with the shared headers it is built from.
 
+OU-III's tuning envelope, regularizer law constants and TuneState are
+defined in src/kalman_common/SeaStateTuning.h, which the CARMA research
+wrappers share; they still belong to OU-III's estimator-specific layer.
+
 wrapper_source(family) returns exactly that unit.  estimator_layer(family)
-returns the wrapper alone, for contracts that are specifically about the
-estimator-specific layer (the regularizer law, the state layout, ...).
+returns the wrapper and its estimator-specific headers, for contracts that are
+specifically about the estimator-specific layer (the regularizer law, the
+state layout, ...).
 """
 
 from __future__ import annotations
@@ -25,6 +30,11 @@ WRAPPERS = {
 }
 
 _COMMON = "src/kalman_common/"
+ESTIMATOR_HEADERS = {
+    "ou2": (),
+    "ou3": (_COMMON + "SeaStateTuning.h",),
+    "tfg": (),
+}
 _OU_SHARED = (
     _COMMON + "SeaStateOUFamilyDefaults.h",
     _COMMON + "SeaStateFusionDefaults.h",
@@ -52,7 +62,9 @@ def _text(path: str) -> str:
 
 
 def estimator_layer(family: str) -> str:
-    return _text(WRAPPERS[family])
+    parts = [_text(WRAPPERS[family])]
+    parts.extend(_text(path) for path in ESTIMATOR_HEADERS[family])
+    return "\n".join(parts)
 
 
 def wrapper_source(family: str) -> str:
@@ -62,7 +74,7 @@ def wrapper_source(family: str) -> str:
 
 
 def source_paths(family: str) -> tuple[str, ...]:
-    return (WRAPPERS[family],) + tuple(SHARED[family])
+    return (WRAPPERS[family],) + ESTIMATOR_HEADERS[family] + tuple(SHARED[family])
 
 
 _NUMBER = r"(-?[0-9]+(?:\.[0-9]*)?(?:[eE][-+]?[0-9]+)?)f?"

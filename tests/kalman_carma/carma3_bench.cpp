@@ -255,7 +255,7 @@ public:
             const double c0 = static_cast<double>(model_.noise_gain2()) *
                               kc::carma_unit_psd<N>(model_.shape(), model_.kappa(), 0.0);
             rs_ = (c0 > 1e-14) ? static_cast<float>(std::sqrt(c0)) * op.tau /
-                                     (ocean_imu::ou3::R_S_POLE_KAPPA_DEFAULT * std::sqrt(op.ts))
+                                     (seastate::common::tuning::R_S_POLE_KAPPA_DEFAULT * std::sqrt(op.ts))
                                : rs_factor_ * op.rs;
         }
     }

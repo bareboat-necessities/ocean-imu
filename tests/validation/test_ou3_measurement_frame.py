@@ -524,7 +524,7 @@ class MeasurementFrameTests(unittest.TestCase):
 
     def test_planar_process_calculus_is_bound_to_literal_source(self):
         root = Path(__file__).resolve().parents[2]
-        core = (root/'src/kalman_ou_common/KalmanOUCoreMath.h').read_text()
+        core = (root/'src/kalman_common/MekfAttitudeMath.h').read_text()
         shipping = (root/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
         for text in ('w = std::fma(-t2, T(1)/T(8), w);',
                      'w = std::fma( t4, T(1)/T(384), w);',

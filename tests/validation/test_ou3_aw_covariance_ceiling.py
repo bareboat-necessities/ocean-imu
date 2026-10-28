@@ -69,7 +69,8 @@ class AwCovarianceCeilingTest(unittest.TestCase):
 
     def test_shipping_source_premises(self):
         kalman = (ROOT/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()
-        fusion = (ROOT/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h').read_text()
+        fusion = (ROOT/'src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h').read_text() + \
+            (ROOT/'src/kalman_common/SeaStateTuning.h').read_text()
         # Pending sync adds Pi_+(target-P_aw); the stationary std is diagonal.
         self.assertIn('for (int i = 0; i < 3; ++i) evals(i) = std::max(T(0), evals(i));', kalman)
         self.assertIn('Pext.template block<3,3>(OFF_AW, OFF_AW) += Delta;', kalman)

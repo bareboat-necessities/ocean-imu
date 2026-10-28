@@ -230,6 +230,8 @@ def _baseline_fairness_thresholds_and_hardware_limits_are_recorded(self):
 
     header = (
         REPO_ROOT / "src" / "kalman_ou_iii" / "SeaStateFusionFilter_OU_III.h"
+    ).read_text(encoding="utf-8") + (
+        REPO_ROOT / "src" / "kalman_common" / "SeaStateTuning.h"
     ).read_text(encoding="utf-8")
 
     def clamp(name):

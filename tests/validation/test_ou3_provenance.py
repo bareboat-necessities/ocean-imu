@@ -24,7 +24,9 @@ class ProofProvenanceTests(unittest.TestCase):
     def test_stale_bound_hash_fails_without_promoting_theorem(self):
         for group, source in (
             ("authoritative_shipping_sources", "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h"),
+            ("authoritative_shipping_sources", "src/kalman_common/SeaStateTuning.h"),
             ("operation_lemma_sources", "src/kalman_ou_common/KalmanOUCoreMath.h"),
+            ("operation_lemma_sources", "src/kalman_common/MekfAttitudeMath.h"),
             ("operation_lemma_sources", "tools/stability/ou3_theorem/interval_riccati_21.py"),
             ("operation_lemma_sources", "tools/stability/ou3_theorem/rank_loss_interval_factor.py"),
             ("operation_lemma_sources", "docs/ou3-construction-mean-action.md"),

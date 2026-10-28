@@ -9,8 +9,9 @@
   estimator; SeaStateFusionFilter_OU_III stays the shipping filter.  It keeps
   OU-III's per-sample schedule (shared front end, proxy startup, staged tune
   commit, tilt watchdog, magnetometer-service bias gate, vibration Racc
-  inflation) and maps the measured operating point (tau, sigma_aw) onto the
-  CARMA priors:
+  inflation) and OU-III's tuning envelope and r_S law
+  (kalman_common/SeaStateTuning.h), and maps the measured operating point
+  (tau, sigma_aw) onto the CARMA priors:
 
     kappa_z  = f_tune / f_z,z-model,      f_tune = c_tau / (2 tau)
                (the model's displacement zero-crossing frequency is placed
@@ -56,9 +57,18 @@
 #include <numbers>
 
 #include "kalman_carma/Kalman3D_Wave_CARMA3.h"
-#include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+#include "kalman_common/AccelVibrationConditioning.h"
+#include "kalman_common/MarineWaveFrontEnd.h"
+#include "kalman_common/ProxyStartupFusion.h"
+#include "kalman_common/SeaStateAdaptationCommon.h"
+#include "kalman_common/SeaStateFusionDefaults.h"
+#include "kalman_common/SeaStateFusionFilterCommon.h"
+#include "kalman_common/SeaStateTuning.h"
 
 namespace ocean_imu::carma {
+
+namespace defaults = ::seastate::common::defaults;
+namespace tuning = ::seastate::common::tuning;
 
 template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ,
          class MekfT = kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>>
@@ -88,12 +98,12 @@ public:
 
     explicit SeaStateFusionFilter_CARMA3(bool with_mag = true)
         : Adaptation(Adaptation::EstimatorBounds{
-              ou3::MAX_TUNE_FREQ_HZ, ou3::MIN_TAU_S, ou3::MAX_TAU_S, ou3::MAX_SIGMA_A,
-              ou3::PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT}),
+              tuning::MAX_TUNE_FREQ_HZ, tuning::MIN_TAU_S, tuning::MAX_TAU_S, tuning::MAX_SIGMA_A,
+              tuning::PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT}),
           with_mag_(with_mag)
     {
-        setAccelVibrationGuard(ACC_VIBRATION_GUARD_HZ_DEFAULT, ACC_VIBRATION_GUARD_POLES_DEFAULT);
-        setAccelVibrationRaccGain(ACC_VIBRATION_RACC_GAIN_DEFAULT);
+        setAccelVibrationGuard(defaults::ACC_VIBRATION_GUARD_HZ, defaults::ACC_VIBRATION_GUARD_POLES);
+        setAccelVibrationRaccGain(defaults::ACC_VIBRATION_RACC_GAIN);
     }
 
     void initialize(const Eigen::Vector3f& sigma_a, const Eigen::Vector3f& sigma_g,
@@ -288,9 +298,9 @@ private:
         const float TS = pseudo_update_period_for_(tau);
         const float c_sigma = (std::isfinite(sigma_coeff_) && sigma_coeff_ > 0.0f) ? sigma_coeff_ : 1.0f;
         const float sigma_aB = std::max(sigma / c_sigma, 1e-6f);
-        if (!(TS > 0.0f) || !(tau > 0.0f)) return ou3::R_S_MSE_COEFF_DEFAULT;
+        if (!(TS > 0.0f) || !(tau > 0.0f)) return tuning::R_S_MSE_COEFF_DEFAULT;
         const float tau2 = tau * tau;
-        return ou3::R_S_MSE_COEFF_DEFAULT * rs_qeff_pow_ *
+        return tuning::R_S_MSE_COEFF_DEFAULT * rs_qeff_pow_ *
                std::pow(sigma_aB * tau2 * tau2, 6.0f / 7.0f) / std::sqrt(TS);
     }
 
@@ -303,7 +313,7 @@ private:
         const float tau = tune_.tau_applied;
         const float TS = mekf_->get_pseudo_update_period_s();
         if (!(c0 > 1e-14) || !(tau > 0.0f) || !(TS > 0.0f)) return NAN;
-        return static_cast<float>(std::sqrt(c0)) * tau / (ou3::R_S_POLE_KAPPA_DEFAULT * std::sqrt(TS));
+        return static_cast<float>(std::sqrt(c0)) * tau / (tuning::R_S_POLE_KAPPA_DEFAULT * std::sqrt(TS));
     }
 
     void apply_RS_tune_() {
@@ -341,7 +351,7 @@ private:
     void adapt_mekf(float dt, float tau_t, float sigma_t, float RS_t, float sea_time_sec) {
         const float alpha = tauSigmaSmoothingAlpha_(dt, sea_time_sec);
         const float RS_sec = seastate::common::adaptiveSmoothingHorizonSec(
-            ou3::ADAPT_RS_MULT, tau_t, RS_t, tune_.RS_applied, ou3::ADAPT_RS_SLEW_LOG, dt);
+            tuning::ADAPT_RS_MULT, tau_t, RS_t, tune_.RS_applied, tuning::ADAPT_RS_SLEW_LOG, dt);
         const float alpha_RS = 1.0f - std::exp(-dt / RS_sec);
         tune_.tau_applied   += alpha    * (tau_t   - tune_.tau_applied);
         tune_.sigma_applied += alpha    * (sigma_t - tune_.sigma_applied);
@@ -395,18 +405,18 @@ private:
     int  mag_updates_to_unlock_ = 250;
     bool acc_bias_hold_ = false;
     bool with_mag_;
-    float mag_delay_sec_ = MAG_DELAY_SEC;
+    float mag_delay_sec_ = defaults::MAG_DELAY_SEC;
     seastate::common::TiltResetWatchdog tilt_watchdog_{};
 
-    float rs_qeff_pow_ = std::pow(2.0f * ou3::R_S_ACCEL_NOISE_DENSITY_DEFAULT, 1.0f / 14.0f);
-    float min_R_S_ = ou3::MIN_R_S;
-    float max_R_S_ = ou3::MAX_R_S;
+    float rs_qeff_pow_ = std::pow(2.0f * tuning::R_S_ACCEL_NOISE_DENSITY_DEFAULT, 1.0f / 14.0f);
+    float min_R_S_ = tuning::MIN_R_S;
+    float max_R_S_ = tuning::MAX_R_S;
     float R_S_x_factor_ = 0.72f;
     float R_S_y_factor_ = 0.50f;
     float S_factor_ = 1.0f;
     float h_corr_ = 0.0f;
 
-    ou3::TuneState tune_;
+    tuning::TuneState tune_;
     float RS_target_ = NAN;
     float tau_coeff_ = 1.0f;
     float sigma_coeff_ = 0.9f;

@@ -14,10 +14,12 @@
 //
 // Constants that merely happen to share a value but belong to an
 // estimator's model (OU prior bounds, regularizer bounds and coefficients,
-// horizontal anisotropy, the r_S/r_p0/r_v0 smoothing multipliers) stay in the
-// estimator's own wrapper, and so do the ones that are intentionally
-// different; see the "Intentionally different" block at the end, which names
-// them so a reader can tell a deliberate difference from drift.
+// horizontal anisotropy, the r_S/r_p0/r_v0 smoothing multipliers) stay with
+// the estimator's own wrapper (OU-III's in SeaStateTuning.h, which its wrapper
+// re-exports and the CARMA research wrappers share), and so do the ones that
+// are intentionally different; see the "Intentionally different" block at the
+// end, which names them so a reader can tell a deliberate difference from
+// drift.
 
 namespace seastate::common::defaults {
 

@@ -108,7 +108,7 @@
 #include <cstdint>
 #include <limits>
 
-#include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
@@ -461,7 +461,7 @@ private:
 
     void project_gyro_bias_() {
         auto bias = X_.B.col(0);
-        ou_detail::project_gyro_bias<T>(bias);
+        filter_detail::project_gyro_bias<T>(bias);
     }
     void project_acc_bias_() {
         if (!(acc_bias_limit_ > T(0))) return;
@@ -889,7 +889,7 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
     Matrix3 Ig = Matrix3::Zero();   // int R Qg R^T
     Matrix3 Ib = Matrix3::Zero();   // int C Qbg C^T,  C(s) = int_s^h R
     Matrix3 IC = Matrix3::Zero();   // int C
-    const bool iso = ou_detail::is_isotropic3<T>(Q_gyro_);
+    const bool iso = filter_detail::is_isotropic3<T>(Q_gyro_);
     for (int k = 0; k < 5; ++k) {
         const T s = T(0.5) * Ts * (T(1) + T(d::kGL5Nodes[k]));
         const T wq = T(0.5) * Ts * T(d::kGL5Weights[k]);

@@ -47,7 +47,7 @@ FS = 200.0
 DT = 1.0 / FS
 SIGMA_N = 1.51e-3 * 9.80665               # injected accelerometer white noise
 R_FILTER = (2.8 * SIGMA_N * 0.71) ** 2      # filter measurement variance
-# OU-III constants (SeaStateFusionFilter_OU_III.h / SeaStateFusionDefaults.h)
+# OU-III constants (SeaStateTuning.h / SeaStateFusionDefaults.h)
 C_J = 0.0538
 R_A = 0.0148 ** 2 * 0.005
 TS_RATIO = 0.015 / 1.1

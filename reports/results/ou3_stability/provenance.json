@@ -9,11 +9,15 @@
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "5796b962fbf9d1081a8d42b9efbded0295d30265"
+      "git_blob_sha": "9c522d7b2d50b40af478847cb1ce1d8541c6b500"
+    },
+    {
+      "path": "src/kalman_common/SeaStateTuning.h",
+      "git_blob_sha": "40299aceab6047d4429c2c4eeb46770d898ec7b8"
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
-      "git_blob_sha": "875e2e7c1cfb28adda11121b6a10a2515e23178b"
+      "git_blob_sha": "60282fe06cf2617e2edf7b940552df2c52dc2710"
     },
     {
       "path": "src/kalman_common/SeaStateOUFamilyDefaults.h",
@@ -132,7 +136,7 @@
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
-      "git_blob_sha": "d7d738fccd1c9e73d998ef8785c589d291d28a97"
+      "git_blob_sha": "ad7b0ec59270543fc86bc23670a1f24034317396"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
@@ -164,7 +168,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "17124871c9a4a0da73ee32db9bad27260ff1edf8"
+      "git_blob_sha": "05a19624c875195b76dc2486ac1ea622cd1bc8fa"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -284,7 +288,19 @@
     },
     {
       "path": "src/kalman_ou_common/KalmanOUCoreMath.h",
-      "git_blob_sha": "532bc2b48b08e6d75d7a19ffc74d502759967537"
+      "git_blob_sha": "03580814934d8e3f47313c251ef8fbb91ce3114e"
+    },
+    {
+      "path": "src/kalman_common/MekfAttitudeMath.h",
+      "git_blob_sha": "90957c984e4149ee7cf6ea5e4c2fb8b0df94682d"
+    },
+    {
+      "path": "src/kalman_common/CovarianceProjection.h",
+      "git_blob_sha": "6bf65d787dab78accb272d28b85e1287233b2395"
+    },
+    {
+      "path": "src/kalman_common/PeriodicSchedule.h",
+      "git_blob_sha": "aeb3424f383c76892664f1b754266a9cca785523"
     },
     {
       "path": "src/tuner/AdaptiveWaveBandPass.h",
@@ -336,7 +352,7 @@
     },
     {
       "path": "tests/validation/test_ou3_aw_covariance_ceiling.py",
-      "git_blob_sha": "e39951f4fa1856715e7acf0003712b13c69e131a"
+      "git_blob_sha": "f1260ca42f82797dbe5939fb2ca906e684b83bff"
     },
     {
       "path": "tests/validation/test_ou3_aw_tracking.py",
@@ -544,7 +560,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/gyro_bias_projection.py",
-      "git_blob_sha": "836fe3c7c64f6e1fa7c07d97b02e5ae783289411"
+      "git_blob_sha": "3d1e54f38ec178eb755b705fedb1750ccdcf125e"
     },
     {
       "path": "tools/stability/ou3_theorem/imu_bias.py",
@@ -756,7 +772,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "d9bdaacda4355fb63b3ab81641ad5fe6cd4fe594"
+      "git_blob_sha": "6419531ea7f5cd012e250304098a08b43540e2b8"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -824,7 +840,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "3dda7397dd82e2bf67a214b14c31f63a88f6fd39"
+      "git_blob_sha": "0f57436555382caf77ea9ea0600530cb76deb804"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -968,7 +984,7 @@
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "61c4079552bed5ebd64de05676ddd443492d94c4"
+      "git_blob_sha": "10f764869840a16a15eaffa15f8e9f74fd83075e"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",
@@ -1665,5 +1681,33 @@
   "receipt_schur_continuation_base_main_commit": "a47da994b85f2ec844b199d27b619a7fcc553adb",
   "receipt_schur_continuation_incorporated_main_commit": "59171c1a4aef654bb9808629e8856e4a56edfcc8",
   "receipt_schur_continuation_automated_evidence_preserved": "944f7bdffa379e3381e4ebfc7b3f2d77722d1990",
-  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c"
+  "receipt_schur_continuation_earlier_automated_evidence_preserved": "070e7de3633f396dac2636d1783f735f9ea87d4c",
+  "kalman_common_header_split_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "starting_pr_head": "b87a0f9995c97fe0905043f6ffbca37026389573",
+    "moved_verbatim": {
+      "src/kalman_ou_common/KalmanOUCoreMath.h": [
+        "src/kalman_common/MekfAttitudeMath.h",
+        "src/kalman_common/CovarianceProjection.h",
+        "src/kalman_common/PeriodicSchedule.h"
+      ],
+      "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": [
+        "src/kalman_common/SeaStateTuning.h"
+      ]
+    },
+    "names_re_exported": [
+      "ocean_imu::kalman::ou_detail",
+      "ocean_imu::ou3"
+    ],
+    "shipping_estimator_header_byte_identical": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
+    "normalized_assembly_identical_translation_units": {
+      "host_O3_march_native_ou_ii_ou_iii_tfg": 12,
+      "esp32s3_Os_size_probe_variants": 8
+    },
+    "native_secant_diagnostic_rerun_payload_identical": true,
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
+  }
 }

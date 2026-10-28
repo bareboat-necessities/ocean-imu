@@ -50,7 +50,9 @@
 #include <cstring>
 #include <limits>
 
-#include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "kalman_common/CovarianceProjection.h"
+#include "kalman_common/MekfAttitudeMath.h"
+#include "kalman_common/PeriodicSchedule.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 
 namespace ocean_imu::kalman {
@@ -206,7 +208,7 @@ public:
         if (!(period_s > T(0)) || !std::isfinite(period_s)) return;
         const T new_period = std::max(T(1e-4), period_s);
         pseudo_update_elapsed_s_ =
-            ou_detail::retarget_period_elapsed_progress_preserving(pseudo_update_elapsed_s_, new_period);
+            filter_detail::retarget_period_elapsed_progress_preserving(pseudo_update_elapsed_s_, new_period);
         pseudo_update_period_s_ = new_period;
     }
     [[nodiscard]] T get_pseudo_update_period_s() const { return pseudo_update_period_s_; }
@@ -389,7 +391,7 @@ private:
     void project_gyro_bias_() {
         if constexpr (with_gyro_bias) {
             auto bias = xext.template segment<3>(3);
-            ou_detail::project_gyro_bias<T>(bias);
+            filter_detail::project_gyro_bias<T>(bias);
         }
     }
 
@@ -401,11 +403,11 @@ private:
         return M;
     }
 
-    // ou_detail::simpson_B_Q_BT evaluated with the step's B(Ts) = B1, which
+    // filter_detail::simpson_B_Q_BT evaluated with the step's B(Ts) = B1, which
     // time_update already has, and B(0) = 0: (Ts/6) (4 Bm Q Bm^T + B1 Q B1^T).
     static Matrix3 simpson_B_Q_BT_(const Vector3& w, T Ts, const Matrix3& Q, const Matrix3& B1) {
         Matrix3 Rm, Bm;
-        ou_detail::rot_and_B_from_wt(w, T(0.5) * Ts, Rm, Bm);
+        filter_detail::rot_and_B_from_wt(w, T(0.5) * Ts, Rm, Bm);
         T BQm[3][3], BQ1[3][3];
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) {
@@ -771,7 +773,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     if constexpr (GB) gyro_bias = xext.template segment<3>(3);
     last_gyr_bias_corrected = gyr - gyro_bias;
 
-    const Eigen::Quaternion<T> dq_wb = ou_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
+    const Eigen::Quaternion<T> dq_wb = filter_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
     qref.normalize();
 
@@ -781,7 +783,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     [[maybe_unused]] Matrix3 Bstep;
     if constexpr (GB) {
         Matrix3 Rstep;
-        ou_detail::rot_and_B_from_wt(w, Ts, Rstep, Bstep);
+        filter_detail::rot_and_B_from_wt(w, Ts, Rstep, Bstep);
         F_AA.template topLeftCorner<3,3>() = Rstep;
         F_AA.template block<3,3>(0,3) = Bstep;
     } else {
@@ -807,21 +809,21 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         Matrix3 Qbg = Matrix3::Zero();
         if constexpr (GB) Qbg = Qbase.template bottomRightCorner<3,3>();
         Matrix3 I_R;
-        if (ou_detail::is_isotropic3(Qg)) I_R = Matrix3::Identity() * (Qg(0,0) * Ts);
-        else I_R = ou_detail::simpson_R_Q_RT(w, Ts, Qg);
+        if (filter_detail::is_isotropic3(Qg)) I_R = Matrix3::Identity() * (Qg(0,0) * Ts);
+        else I_R = filter_detail::simpson_R_Q_RT(w, Ts, Qg);
         Matrix3 I_BB = Matrix3::Zero();
         if constexpr (GB) I_BB = simpson_B_Q_BT_(w, Ts, Qbg, Bstep);
         Q_AA.template topLeftCorner<3,3>() = I_R + I_BB;
         if constexpr (GB) {
             Matrix3 IB;
-            ou_detail::integral_B_ds(w, Ts, IB);
+            filter_detail::integral_B_ds(w, Ts, IB);
             const Matrix3 Qtb = IB * Qbg;
             Q_AA.template topRightCorner<3,3>() = Qtb;
             Q_AA.template bottomLeftCorner<3,3>() = Qtb.transpose();
             Q_AA.template bottomRightCorner<3,3>() = Qbg * Ts;
         }
         Q_AA = T(0.5) * (Q_AA + Q_AA.transpose()).eval();
-        ou_detail::project_psd_ou_iii<T,BASE_N>(Q_AA, T(1e-12));
+        filter_detail::project_psd_symmetrize_large<T,BASE_N>(Q_AA, T(1e-12));
     }
     // Every block below is written to both triangles with one value, so the
     // propagated covariance is exactly symmetric.  Unit rows of F_AA are
@@ -950,7 +952,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     }
 
     if constexpr (SH || SZ) {
-        if (ou_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
+        if (filter_detail::periodic_update_due(Ts, pseudo_update_period_s_, pseudo_update_elapsed_s_)) {
             applyIntegralZeroPseudoMeas();
         }
     }
@@ -1146,9 +1148,9 @@ void CARMA3_CLS::applyQuaternionCorrectionFromErrorState() {
         xext.template head<3>().setZero();
         return;
     }
-    qref = ou_detail::quat_from_delta_theta(dtheta) * qref;
+    qref = filter_detail::quat_from_delta_theta(dtheta) * qref;
     qref.normalize();
-    ou_detail::apply_left_error_reset<T, NX>(Pext, dtheta);
+    filter_detail::apply_left_error_reset<T, NX>(Pext, dtheta);
     xext.template head<3>().setZero();
     project_acc_bias_();
 }
