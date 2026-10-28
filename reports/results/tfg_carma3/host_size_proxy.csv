@@ -1,0 +1,9 @@
+variant,code_bytes,rodata_bytes,data_bytes,bss_bytes,sizeof_fusion,sizeof_filter,max_stack_frame,max_stack_function
+OU3,234765,4186,48,32,3072,5728,1456,"static void Eigen::internal::product_triangular_matrix_matrix<Scalar, Index, Mode, true, L"
+A41,192102,2050,48,32,3040,6128,1456,"static void Eigen::internal::product_triangular_matrix_matrix<Scalar, Index, Mode, true, L"
+A52,193845,2050,48,32,3040,8608,2096,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+M45,201217,2106,48,32,3040,7248,2096,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A52S,200654,2066,48,32,3040,10336,2096,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+M54,202232,2106,48,32,3040,7472,2096,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
+A41S,198563,2066,48,32,3040,7424,1456,"static void Eigen::internal::product_triangular_matrix_matrix<Scalar, Index, Mode, true, L"
+T41,167417,2182,48,32,3040,5888,1456,"static void Eigen::internal::product_triangular_matrix_matrix<Scalar, Index, Mode, true, L"

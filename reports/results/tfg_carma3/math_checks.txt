@@ -1,0 +1,234 @@
+CHECK group: X X^-1 = I                                              value=1.776e-15 limit=1.0e-12 PASS
+CHECK group: associativity                                           value=1.776e-15 limit=1.0e-12 PASS
+CHECK group: Log_G(Exp_G(xi)) = xi, |phi| 1e-6..2.5                  value=4.219e-15 limit=1.0e-11 PASS
+CHECK group: right invariance of eta = Xhat X^-1                     value=4.885e-15 limit=1.0e-11 PASS
+CHECK group: Y.retract(X.local(Y)) = X                               value=4.441e-15 limit=1.0e-12 PASS
+CHECK group: bias slot of Xhat X^-1 is R (bhat - b)                  value=2.776e-17 limit=1.0e-14 PASS
+CHECK group: beta_g = R (bhat_g - b_g) to first order                value=1.131e-05 limit=1.0e-04 PASS
+CHECK reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e-03       value=8.978e-13 limit=1.0e-08 PASS
+CHECK reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e-03                value=8.674e-19 limit=1.0e-12 PASS
+CHECK reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e-01       value=1.178e-10 limit=1.0e-08 PASS
+CHECK reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e-01                value=8.327e-17 limit=1.0e-12 PASS
+CHECK reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e+00       value=8.007e-10 limit=1.0e-08 PASS
+CHECK reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e+00                value=1.776e-15 limit=1.0e-12 PASS
+CHECK reset: MC cov of transported error vs J P J^T (corr units)     value=2.252e-02 limit=4.0e-02 PASS
+CHECK reset: MC cov vs untransported P (corr units, contrast)        value=5.730e-01 limit=inf REPORT
+CHECK accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: identity, zero states value=7.632e-11 limit=1.0e-08 PASS
+CHECK mag H = [-[B_w]x ..] vs FD: identity, zero states              value=3.365e-11 limit=1.0e-08 PASS
+CHECK accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: small roll/pitch (3, -2 deg) value=9.057e-11 limit=1.0e-08 PASS
+CHECK mag H = [-[B_w]x ..] vs FD: small roll/pitch (3, -2 deg)       value=8.120e-11 limit=1.0e-08 PASS
+CHECK accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: large roll/pitch (40, -30 deg) value=9.057e-11 limit=1.0e-08 PASS
+CHECK mag H = [-[B_w]x ..] vs FD: large roll/pitch (40, -30 deg)     value=7.115e-11 limit=1.0e-08 PASS
+CHECK accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: large yaw (170 deg) value=9.057e-11 limit=1.0e-08 PASS
+CHECK mag H = [-[B_w]x ..] vs FD: large yaw (170 deg)                value=1.682e-10 limit=1.0e-08 PASS
+CHECK accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: nonzero CARMA states 2 m value=1.048e-10 limit=1.0e-08 PASS
+CHECK mag H = [-[B_w]x ..] vs FD: nonzero CARMA states 2 m           value=7.617e-11 limit=1.0e-08 PASS
+CHECK update: accel state vs dense FD reference: identity, zero states value=4.266e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference: identity, zero states value=7.185e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference: identity, zero states value=4.981e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference: identity, zero states value=7.148e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference: small roll/pitch (3, -2 deg) value=3.853e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference: small roll/pitch (3, -2 deg) value=1.587e-09 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference: small roll/pitch (3, -2 deg) value=2.521e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference: small roll/pitch (3, -2 deg) value=1.557e-09 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference: large roll/pitch (40, -30 deg) value=7.242e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference: large roll/pitch (40, -30 deg) value=8.438e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference: large roll/pitch (40, -30 deg) value=7.211e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference: large roll/pitch (40, -30 deg) value=8.440e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference: large yaw (170 deg) value=3.934e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference: large yaw (170 deg) value=5.573e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference: large yaw (170 deg) value=3.580e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference: large yaw (170 deg) value=5.401e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference: nonzero CARMA states 2 m value=2.370e-11 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference: nonzero CARMA states 2 m value=5.822e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference: nonzero CARMA states 2 m value=1.979e-11 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference: nonzero CARMA states 2 m value=5.532e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference (bias held): identity, zero states value=1.379e-14 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference (bias held): identity, zero states value=7.057e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference (bias held): identity, zero states value=2.182e-13 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference (bias held): identity, zero states value=7.029e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference (bias held): small roll/pitch (3, -2 deg) value=6.341e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference (bias held): small roll/pitch (3, -2 deg) value=1.226e-09 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference (bias held): small roll/pitch (3, -2 deg) value=6.300e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference (bias held): small roll/pitch (3, -2 deg) value=1.210e-09 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference (bias held): large roll/pitch (40, -30 deg) value=1.961e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference (bias held): large roll/pitch (40, -30 deg) value=3.230e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference (bias held): large roll/pitch (40, -30 deg) value=1.605e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference (bias held): large roll/pitch (40, -30 deg) value=2.773e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference (bias held): large yaw (170 deg) value=4.538e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference (bias held): large yaw (170 deg) value=1.689e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference (bias held): large yaw (170 deg) value=3.591e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference (bias held): large yaw (170 deg) value=1.490e-10 limit=1.0e-06 PASS
+CHECK update: accel state vs dense FD reference (bias held): nonzero CARMA states 2 m value=1.380e-12 limit=1.0e-07 PASS
+CHECK update: accel covariance vs dense FD reference (bias held): nonzero CARMA states 2 m value=6.702e-10 limit=1.0e-06 PASS
+CHECK update: accel+mag state vs dense FD reference (bias held): nonzero CARMA states 2 m value=1.580e-12 limit=1.0e-07 PASS
+CHECK update: accel+mag covariance vs dense FD reference (bias held): nonzero CARMA states 2 m value=6.707e-10 limit=1.0e-06 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 0.0) value=1.110e-16 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 0.0) value=3.331e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 0.0) value=3.666e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 0.4) value=1.838e-13 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 0.4) value=8.882e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 0.4) value=3.666e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 1.3) value=4.020e-13 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 1.3) value=7.772e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 1.3) value=3.666e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 0.0) value=1.110e-16 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 0.0) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 0.0) value=1.516e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 0.4) value=1.639e-12 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 0.4) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 0.4) value=1.516e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 1.3) value=9.436e-12 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 1.3) value=1.998e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 1.3) value=1.516e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) value=2.403e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) value=3.331e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) value=6.890e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) value=2.093e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) value=1.998e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) value=2.043e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) value=2.925e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) value=1.110e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) value=1.400e-14 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) value=7.852e-11 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) value=3.630e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) value=2.755e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) value=9.838e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) value=1.084e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) value=1.857e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) value=1.783e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) value=3.331e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) value=9.370e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) value=6.320e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) value=7.772e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) value=1.992e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) value=3.109e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) value=6.661e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) value=2.172e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) value=1.932e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) value=3.213e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) value=2.005e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) value=1.189e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) value=5.182e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) value=1.159e-11 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 0.0) value=4.441e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 0.0) value=1.554e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 0.0) value=6.601e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 0.4) value=3.902e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 0.4) value=2.331e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 0.4) value=1.708e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 1.3) value=1.885e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 1.3) value=2.220e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 1.3) value=1.484e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 0.0) value=2.731e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 0.0) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 0.0) value=1.105e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 0.4) value=2.220e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 0.4) value=3.553e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 0.4) value=2.936e-12 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 1.3) value=2.985e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 1.3) value=2.331e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 1.3) value=5.396e-13 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 0.0) value=2.975e-09 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 0.0) value=3.331e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 0.0) value=8.669e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 0.4) value=1.776e-09 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 0.4) value=8.882e-16 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 0.4) value=1.852e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 1.3) value=8.882e-10 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 1.3) value=1.110e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 1.3) value=1.394e-15 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 0.0) value=1.015e-09 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 0.0) value=1.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 0.0) value=5.180e-13 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 0.4) value=1.644e-09 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 0.4) value=3.442e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 0.4) value=4.150e-13 limit=1.0e-07 PASS
+CHECK transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 1.3) value=1.990e-09 limit=2.0e-08 PASS
+CHECK transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 1.3) value=2.887e-15 limit=1.0e-10 PASS
+CHECK process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 1.3) value=4.007e-13 limit=1.0e-07 PASS
+CHECK transition: Phi_{rho,phi} = 0 (isotropic CARMA)                value=0.000e+00 limit=1.0e-15 PASS
+CHECK transition: Phi_{rho_i,bg} = [w_i(h)]x Phi_{phi,bg}            value=0.000e+00 limit=1.0e-14 PASS
+CHECK quadrature: collapsed Qd vs structured GL-5 impulse response (gyro/bias rows) value=8.270e-16 limit=1.0e-09 PASS
+CHECK quadrature: collapsed Qd vs structured GL-5 (full, corr units) value=8.270e-16 limit=1.0e-06 PASS
+CHECK semigroup: Phi(h1+h2) = Phi(h2) Phi(h1), non-uniform steps     value=4.441e-16 limit=1.0e-12 PASS
+CHECK semigroup: Qd(h1+h2) = Phi(h2) Qd(h1) Phi(h2)^T + Qd(h2)       value=8.781e-16 limit=1.0e-08 PASS
+CHECK linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-04          value=1.762e-07 limit=inf REPORT
+CHECK linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-03          value=1.457e-06 limit=inf REPORT
+CHECK linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-02          value=1.177e-05 limit=inf REPORT
+CHECK linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-01          value=1.474e-04 limit=inf REPORT
+CHECK time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0050  value=2.713e-16 limit=1.0e-12 PASS
+CHECK time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0050 (mean) value=4.441e-16 limit=1.0e-12 PASS
+CHECK time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0063  value=2.713e-16 limit=1.0e-12 PASS
+CHECK time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0063 (mean) value=3.331e-16 limit=1.0e-12 PASS
+CHECK Monte Carlo: propagated covariance vs sample covariance (corr units) value=5.814e-02 limit=8.0e-02 PASS
+CHECK Monte Carlo: per-state variance ratio |S_ii/P_ii - 1|          value=5.814e-02 limit=1.0e-01 PASS
+CHECK Monte Carlo: mean error / standard error                       value=2.393e+00 limit=4.5e+00 PASS
+CHECK stationary prior Sigma_s (x) P_inf invariant over 100 s (double) value=3.830e-14 limit=1.0e-09 PASS
+CHECK stationary prior invariant over 100 s (float)                  value=1.679e-05 limit=2.0e-04 PASS
+CHECK process: sample covariance vs Sigma_s (x) P_inf (corr units, 5.8 h) value=2.291e-02 limit=5.0e-02 PASS
+CHECK process: Welch PSD of p_x, p_y, p_z vs analytic, mean |dB| (0.12-0.9 Hz) value=1.865e-01 limit=3.5e-01 PASS
+CHECK process: Welch PSD of p_x, p_y, p_z vs analytic, max |dB|      value=5.072e-01 limit=1.2e+00 PASS
+CHECK process: Welch PSD of a_z vs w^4 S_p, max |dB|                 value=1.136e+00 limit=1.2e+00 PASS
+CHECK process: x-y co-spectrum / (sx sy S_p) - r, mean over frequency value=1.559e-02 limit=4.0e-02 PASS
+CHECK process: x-y co-spectrum / (sx sy S_p) - r, max over frequency value=8.431e-02 limit=inf REPORT
+CHECK process: DC zero, S_p(1 mHz)/S_p(2 mHz) = 1/4                  value=2.404e-05 limit=1.0e-04 PASS
+CHECK process: largest pole real part (rad/s)                        value=-1.680e-01 limit=inf REPORT
+CHECK process: CARMA(4,1) Hurwitz                                    value=-1.680e-01 limit=-1.0e-03 PASS
+CHECK float vs double: attitude difference over 60 s, +-25 % jitter (rad) value=3.480e-05 limit=1.0e-04 PASS
+CHECK float vs double: position difference (m)                       value=8.938e-05 limit=1.0e-03 PASS
+CHECK float vs double: covariance difference (corr units)            value=1.616e-04 limit=2.0e-02 PASS
+CHECK float: covariance PSD (min corr eigenvalue)                    value=-1.905e-02 limit=1.0e-05 PASS
+CHECK equivariance: CARMA transition commutes with any world rotation value=2.220e-16 limit=1.0e-14 PASS
+CHECK equivariance: Qd(Q S Q^T) = (I (x) Q) Qd(S) (I (x) Q)^T        value=6.552e-17 limit=1.0e-13 PASS
+CHECK equivariance: filter under world yaw, isotropic horizontal prior value=1.361e-12 limit=1.0e-09 PASS
+CHECK equivariance: anisotropic Sigma_s rotated with the frame       value=1.421e-12 limit=1.0e-09 PASS
+CHECK non-invariance: anisotropic Sigma_s NOT rotated (expected nonzero) value=2.243e+00 limit=inf REPORT
+CHECK anisotropic A: |A([phi]x W) - [phi]x A(W)| / |A W| (commutator) value=1.431e-01 limit=inf REPORT
+CHECK anisotropic A: derived Phi_{rho,phi} = int Phi_A C(W) vs FD    value=3.442e-10 limit=1.0e-07 PASS
+CHECK anisotropic A: |Phi_{rho,phi}| over 50 ms (zero when isotropic) value=2.495e-01 limit=inf REPORT
+CHECK MEKF relation: one prediction from equal seeds, T^-1 P T^-T vs CARMA3 P value=5.392e-16 limit=1.0e-09 PASS
+CHECK MEKF relation: first accel update, state difference (rad / m)  value=5.437e-04 limit=inf REPORT
+CHECK MEKF relation: first accel update, covariance difference (corr units) value=1.433e-01 limit=inf REPORT
+CHECK MEKF relation (Full): max attitude difference over 60 s (rad)  value=1.122e-02 limit=inf REPORT
+CHECK MEKF relation (Full): max position difference over 60 s (m)    value=6.790e-03 limit=inf REPORT
+CHECK MEKF relation (Full): max covariance difference (corr units)   value=1.407e-01 limit=inf REPORT
+CHECK MEKF relation (AttitudeOnly): max attitude difference over 60 s (rad) value=1.749e-02 limit=inf REPORT
+CHECK MEKF relation (AttitudeOnly): max position difference over 60 s (m) value=1.020e-02 limit=inf REPORT
+CHECK MEKF relation (AttitudeOnly): max covariance difference (corr units) value=2.876e-01 limit=inf REPORT
+CHECK MEKF relation (None): max attitude difference over 60 s (rad)  value=1.777e-02 limit=inf REPORT
+CHECK MEKF relation (None): max position difference over 60 s (m)    value=1.044e-02 limit=inf REPORT
+CHECK MEKF relation (None): max covariance difference (corr units)   value=2.883e-01 limit=inf REPORT
+CHECK yaw information: max relative rise per step, TFG reset Full    value=7.457e+00 limit=inf REPORT
+CHECK yaw information: final/initial, TFG reset Full                 value=2.729e+02 limit=inf REPORT
+CHECK yaw information: max relative rise per step, CARMA3 MEKF       value=2.134e+01 limit=inf REPORT
+CHECK yaw information: final/initial, CARMA3 MEKF                    value=7.511e+02 limit=inf REPORT
+CHECK yaw std (deg) after 120 s accel-only: TFG                      value=2.583e+00 limit=inf REPORT
+CHECK yaw std (deg) after 120 s accel-only: CARMA3                   value=1.482e+00 limit=inf REPORT
+CHECK yaw information: max relative rise per step, TFG reset AttitudeOnly value=7.799e-01 limit=inf REPORT
+CHECK yaw information: final/initial, TFG reset AttitudeOnly         value=1.510e+01 limit=inf REPORT
+CHECK yaw information e^T P^-1 e never rises, TFG reset None (rel. per step) value=0.000e+00 limit=1.0e-09 PASS
+CHECK yaw std (deg) after 120 s accel-only: TFG reset None           value=2.976e+01 limit=inf REPORT
+CHECK yaw information: max relative rise per step, TFG reset None    value=0.000e+00 limit=inf REPORT
+CHECK yaw information: final/initial, TFG reset None                 value=9.867e-01 limit=inf REPORT
+CHECK held accel bias: unchanged by 2000 updates                     value=0.000e+00 limit=1.0e-15 PASS
+CHECK held accel bias: cross-covariance stays zero                   value=0.000e+00 limit=1.0e-15 PASS
+CHECK sinusoid (carma3-test input): worst-axis relative RMS error    value=8.556e-02 limit=1.0e-01 PASS
+CHECK sinusoid (carma3-test input): covariance PSD                   value=-6.127e-02 limit=1.0e-04 PASS
+CHECK rotating sinusoid: TFG-CARMA3 relative displacement RMS error  value=1.037e-01 limit=inf REPORT
+CHECK rotating sinusoid: CARMA3 (MEKF) relative displacement RMS error value=1.037e-01 limit=inf REPORT
+CHECK rotating sinusoid: |TFG/MEKF error ratio - 1| (first-order equivalence) value=4.281e-05 limit=1.0e-02 PASS
+CHECK rotating sinusoid: TFG covariance PSD                          value=-1.712e-02 limit=1.0e-09 PASS
+CHECK physical write: attitude write keeps the e covariance          value=1.093e-15 limit=1.0e-12 PASS
+CHECK native write: attitude write keeps the invariant covariance    value=8.674e-17 limit=1.0e-15 PASS
+CHECK wrapper: still IMU went live                                   value=0.000e+00 limit=0.0e+00 PASS
+CHECK wrapper: still IMU finite                                      value=0.000e+00 limit=0.0e+00 PASS
+CHECK wrapper: still IMU |p| < 0.5 m after 240 s (as carma3-test)    value=4.126e-02 limit=5.0e-01 PASS
+CHECK wrapper: common CARMA scale (no rejected anisotropic configuration) value=0.000e+00 limit=0.0e+00 PASS
+tfg_carma3-test: 199/199 checks passed

@@ -640,7 +640,10 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   c_sigma)` (the measured band acceleration RMS, with OU-III's floor),
   `sigma_h = S_factor sigma_z` (no horizontal statistic is measured), and the
   `S` laws of section 4.  Mappings fixed before any Monte Carlo run.  Not
-  included by `ArduinoOceanImu.h`.
+  included by `ArduinoOceanImu.h`.  The inner filter is a defaulted template
+  parameter (`MekfT`, default `Kalman3D_Wave_CARMA3`) so the experimental
+  two-frame Lie-group core of `docs/tfg-carma3-research.md` runs behind the
+  same schedule; the default instantiation is unchanged.
 * `sensors/full_marine_ins/atomS3R_ins_carma3/`: an experimental AtomS3R
   research sketch running recommendation B (CARMA(4,1) x/y/z, no `S`) with
   the OU-III sketch's I/O, calibration and wrapper settings, minus the lever
