@@ -658,6 +658,16 @@ Multiply-adds: one prediction plus one accelerometer update, analytic loop count
 
 TFG-CARMA3 magnetometer update: 7668 multiply-adds.
 
+### ESP32-S3 (Espressif GCC esp-14.2.0_20241119, -Os; build time only, no on-target timing)
+
+Object sizes from `tests/kalman_carma/arduino/carma3_size_probe/build.sh`; link (with `link_main.cpp` against the toolchain's newlib/libstdc++, default linker script) and static call-graph chains from `callgraph.sh`.  Chain bytes sum the frames GCC reports along the deepest direct-call path; library functions outside the translation unit count as 0.
+
+| filter | code, object (B) | sizeof filter (B) | largest frame (B) | linked text (B) | undefined refs | deepest chain from the sample entry (B) | deepest chain: time update / accel update (B) | filter methods reach heap allocation |
+|---|---|---|---|---|---|---|---|---|
+| OU-III (shipping) | 156309 | 5692 | 1024 | 186928 | 0 | 4784 | 4288 / 1248 | yes |
+| CARMA3 Q-MEKF | 135694 | 6040 | 1344 | 167268 | 0 | 4560 | 3968 / 1008 | yes |
+| TFG-CARMA3 | 117548 | 5800 | 1344 | 152876 | 0 | 3264 | 1744 / 1728 | no |
+
 ## 10. Mathematical verification (tests/kalman_carma/tfg_carma3-test)
 
 | check | measured | limit | result |

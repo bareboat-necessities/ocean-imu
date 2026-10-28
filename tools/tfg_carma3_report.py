@@ -501,6 +501,34 @@ def table_timing(rows, stats):
         cells.append(mem[0] if mem else "--")
         lines.append(f"| {LABEL[f]} | " + " | ".join(cells) + " |")
     lines += ["", f"TFG-CARMA3 magnetometer update: {cost['T41']['mag_update_madds']} multiply-adds.", ""]
+    size = {r["variant"]: r for r in read(OUT / "esp32s3_size.csv")}
+    link = {r["variant"]: r for r in read(OUT / "esp32s3_link.csv")}
+    chain = {}
+    for r in read(OUT / "esp32s3_callgraph.csv"):
+        chain.setdefault(r["variant"], {})[r["root"]] = r
+    if size:
+        yes = {"True": "yes", "False": "no"}
+        lines += ["### ESP32-S3 (Espressif GCC esp-14.2.0_20241119, -Os; build time only, no on-target timing)", "",
+                  "Object sizes from `tests/kalman_carma/arduino/carma3_size_probe/build.sh`; link (with "
+                  "`link_main.cpp` against the toolchain's newlib/libstdc++, default linker script) and static "
+                  "call-graph chains from `callgraph.sh`.  Chain bytes sum the frames GCC reports along the deepest "
+                  "direct-call path; library functions outside the translation unit count as 0.", "",
+                  "| filter | code, object (B) | sizeof filter (B) | largest frame (B) | linked text (B) | "
+                  "undefined refs | deepest chain from the sample entry (B) | deepest chain: time update / accel "
+                  "update (B) | filter methods reach heap allocation |", "|---|---|---|---|---|---|---|---|---|"]
+        for f in ("OU3", "A41", "T41"):
+            s, lk, c = size.get(f), link.get(f, {}), chain.get(f, {})
+            if not s:
+                continue
+            heap = any(c.get(k, {}).get("reaches_heap_allocation") == "True"
+                       for k in ("time_update", "measurement_update_acc_only", "measurement_update_mag_only"))
+            lines.append(f"| {LABEL[f]} | {s['code_bytes']} | {s['sizeof_filter']} | {s['max_stack_frame']} | "
+                         f"{lk.get('text_bytes', '--')} | {lk.get('undefined_references', '--')} | "
+                         f"{c.get('sample_path', {}).get('worst_stack_chain_bytes', '--')} | "
+                         f"{c.get('time_update', {}).get('worst_stack_chain_bytes', '--')} / "
+                         f"{c.get('measurement_update_acc_only', {}).get('worst_stack_chain_bytes', '--')} | "
+                         f"{yes[str(heap)] if c else '--'} |")
+        lines.append("")
     return lines
 
 

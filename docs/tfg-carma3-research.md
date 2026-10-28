@@ -53,7 +53,9 @@ Files:
 * Unfavourable: 3.4 times CARMA3's multiply-adds (1.13 times OU-III's;
   1.5 times CARMA3's host time); end-of-run gyro-bias error up to 0.8 %
   higher in regular seas and 17 % higher when manoeuvring (not
-  significant after correction); no ESP32-S3 build evidence (section 11).
+  significant after correction).  On the ESP32-S3 it compiles and links
+  (smaller code and a shallower stack than CARMA3; no heap allocation on its
+  sample path), but no on-target timing exists (section 11).
 * Recommendation (section 13): do not replace CARMA3's Q-MEKF or deploy;
   continue only the no-transport variant as a targeted experiment against
   an observability-constrained CARMA3 MEKF.
@@ -841,11 +843,12 @@ property, the estimate dependence of the error coordinates:
 The post-hoc gap test (summary section 11; mixed sea, magnetometer absent
 for 300 s, 30 seeds) is consistent with this: with heading uncorrectable,
 the gains grow -- tilt +5.1 % (no transport +8.1 %) and accelerometer bias
-+5.4 % (+8.4 %), both significant after correction; pitch +7.3 %
-(+12.4 %) and heading after the gap +12.5 % (+19.8 %), with intervals
-that exclude zero but do not survive the correction -- and the heading
-NEES in the gap is 10.7 for CARMA3, 6.3 and 4.9 for the TFG variants.  It is not a proof: no experiment removed
-the estimate dependence from CARMA3's MEKF itself (section 12).
++5.4 % (+8.4 %), both significant after correction; pitch +7.3 % (+12.4 %)
+and heading after the gap +12.5 % (+19.8 %), with intervals that exclude
+zero but do not survive the correction -- and the heading NEES in the gap is
+10.7 for CARMA3, 6.3 and 4.9 for the TFG variants.  It is not a proof: no
+experiment removed the estimate dependence from CARMA3's MEKF itself
+(section 12).
 
 ### 8.4 Attitude consistency is mostly a shared accelerometer-bias effect
 
@@ -971,9 +974,15 @@ the invariant coordinates that T41R0 already shows at lower cost.
 | multiply-adds per sample (prediction + accelerometer) | 12 483 | 4170 | 14 109 | 8682 | 11 355 |
 | host update, fixed dt (us) | 22.31 | 7.42 | 11.29 | 8.08 | 9.64 |
 | host update, +-25 % jitter (us) | 23.97 | 9.62 | 12.76 | 8.87 | 10.50 |
+| **ESP32-S3** `sizeof` filter (B) | 5692 | 6040 | 5800 | as T41 | as T41 |
+| **ESP32-S3** code, object-level (B) | 156 309 | 135 694 | 117 548 | as T41 | as T41 |
+| **ESP32-S3** linked text, probe + newlib/libstdc++ (B); undefined references | 186 928; 0 | 167 268; 0 | 152 876; 0 | | |
+| **ESP32-S3** largest stack frame (B) | 1024 | 1344 | 1344 | | |
+| **ESP32-S3** deepest static stack chain from the sample entry (B) | 4784 | 4560 | 3264 | | |
+| **ESP32-S3** deepest chain: time update / accelerometer update (B) | 4288 / 1248 | 3968 / 1008 | 1744 / 1728 | | |
+| **ESP32-S3** filter methods can reach heap allocation | yes | yes | no | | |
 | filter object, x86-64 (B) | 5728 | 6128 | 5888 | as T41 | as T41 |
 | code, object-level, x86-64 `-Os` (B) | 234 765 | 192 102 | 167 417 | as T41 | as T41 |
-| largest stack frame in the filter / whole translation unit, x86-64 `-Os` (B) | 976 / 1456 | 1440 / 1456 | 1440 / 1456 | | |
 
 * **Operation counts** are analytic loop counts of each implementation in
   one convention (`cost_model` in `tools/carma3_analysis.py` for OU-III and
@@ -996,14 +1005,20 @@ the invariant coordinates that T41R0 already shows at lower cost.
   matrix and the `NX x 3` gain/cross-covariance scratch, all members; no
   dynamic allocation after construction; one CARMA model and one
   `StepDiscretization` (CARMA3 keeps two, horizontal and vertical), so the
-  object is 240 B smaller than CARMA3's on the host.
+  object is 240 B smaller than CARMA3's (5800 B against 6040 B on the
+  ESP32-S3).
 * **Stack.**  The physical/invariant covariance mappings and the transport
   run in place through the member scratch with scalar loops (no `NX x NX`
-  stack temporary, no Eigen `21 x 21` product).  The largest TFG-CARMA3 frame
-  is `right_jacobian_cross` (1056 B, a leaf under the update), the next
-  `time_update` (816 B); the library's `discretize_lti` (1440 B, shared with
-  CARMA3) and the shared front end's Eigen triangular product (1456 B) are
-  larger.
+  stack temporary, no Eigen `21 x 21` product).  On the ESP32-S3 the largest
+  TFG-CARMA3 frames are `time_update` (768 B), `joseph_update_` (560 B) and
+  `right_jacobian_cross` (544 B); the largest frame in the translation unit
+  is the shared library's `discretize_lti` (1344 B, as in CARMA3).  The
+  deepest static call chain of the filter's own methods is 1744 B (CARMA3
+  3968 B, OU-III 4288 B: both reach an eigendecomposition through their PSD
+  projection, which TFG-CARMA3 does not use); from the sample entry the
+  deepest chain, 3264 B, runs through the shared front end's
+  `setFromTwoVectors`, not the filter.  The Arduino loop task's default
+  stack is 8 KB.
 * **Float.**  The filter is templated; the target runs `float` (the ESP32-S3
   FPU is single precision).  Section 5's float-vs-double check over 60 s of
   jittered sampling: 3.5e-5 rad, 0.085 mm, covariance 1.5e-4 (correlation
@@ -1017,28 +1032,41 @@ the invariant coordinates that T41R0 already shows at lower cost.
   tuner and schedule, which the counts exclude.  This host is about three
   times slower than the one of `docs/carma-three-axis.md` (OU-III 7.07 us
   there): ratios carry over, absolute times do not.
-* **ESP32-S3.**  `tests/kalman_carma/arduino/carma3_size_probe` gained the
-  TFG-CARMA3 wrapper as variant 7 (`T41`), and `build.sh host` compiles the
-  same eight translation units with the host compiler (the x86-64 rows above,
-  `host_size_proxy.csv`).  **The Xtensa build was not run in this study**:
-  executing the downloaded Espressif toolchain was not permitted in the
-  session that produced it.  There is therefore no target compile, link,
-  size, stack or timing evidence for TFG-CARMA3; CARMA3's target numbers
-  (`reports/results/carma3_benchmark/esp32s3_size.csv`, 6040 B filter,
-  135 694 B code, 1344 B largest frame) and the host proxies above (TFG
-  smaller than CARMA3 in code and object size, no new frame above the
-  existing ones) make a successful target build plausible but do not show
-  it.  At 200-240 Hz the multiply-add count is the relevant comparison:
-  14 109 per sample against the shipping OU-III's 12 483, i.e. about
-  2.8-3.4 M multiply-adds per second (plus about 0.2 M for the magnetometer)
-  -- if OU-III meets its deadline on the AtomS3R the TFG-CARMA3 arithmetic is
-  of the same order, but that is an inference, not a measurement.  No sketch
-  was added or changed.
+* **ESP32-S3** (Espressif GCC `esp-14.2.0_20241119`, the GCC of
+  arduino-esp32 3.3.x, archive SHA-256 checked against Espressif's release;
+  `-Os` with arduino-esp32's C++ flags).  `carma3_size_probe/build.sh`
+  compiles one translation unit per variant holding the complete wrapper's
+  sample path (`esp32s3_size.csv`; its seven existing rows reproduce
+  `reports/results/carma3_benchmark/esp32s3_size.csv` byte for byte).
+  `callgraph.sh` links each object with `link_main.cpp` against the
+  toolchain's newlib/libstdc++ and reads GCC's call graph
+  (`esp32s3_link.csv`, `esp32s3_callgraph.csv`):
+  * compile and link succeed for every variant, with no Eigen expression
+    error, no undefined reference and no relocation warning; the only link
+    warnings are newlib's OS stubs (`pthread_*`, `_getpid`, `_kill`, ...),
+    identical for all three filters and supplied by ESP-IDF on target;
+  * no heap allocation or C++ throw is reachable from TFG-CARMA3's
+    `time_update` or its two updates (CARMA3's and OU-III's `time_update`
+    can reach `malloc` through Eigen's eigendecomposition workspace); from
+    the sample entry the shared front end can reach both (Eigen's
+    `setFromTwoVectors`, identical in all three);
+  * the only double-precision arithmetic reachable from the filter is the
+    shared gyro-bias projection's near-boundary branch, as in CARMA3.
+  This is build-time evidence on a link with the toolchain's default linker
+  script, not the ESP-IDF memory map, and **there is no on-target time**:
+  no hardware was used.  At 200-240 Hz the multiply-add count remains the
+  timing comparison: 14 109 per sample against the shipping OU-III's
+  12 483, about 2.8-3.4 M multiply-adds per second (plus about 0.2 M for the
+  magnetometer).  If OU-III meets its deadline on the AtomS3R, TFG-CARMA3's
+  arithmetic is of the same order; that is an inference, not a measurement.
+  No sketch was added or changed.
 
 ## 12. Limitations and unresolved questions
 
-* **No target evidence.**  No ESP32-S3 compile, size, stack or timing of
-  TFG-CARMA3 exists (section 11); no hardware was used for anything.
+* **No target timing.**  TFG-CARMA3 compiles and links for the ESP32-S3
+  with known sizes and static stack depths (section 11), but it has not run
+  on an ESP32-S3: no on-target time, float behaviour or AtomS3R validation
+  is claimed, and no hardware was used for anything.
 * **Simulation only, one bench.**  The synthetic grid uses the CARMA3
   benchmark's vessel RAOs, sensor models and magnetometer disturbances;
   the pinned dataset is a second, independent simulator.  Neither contains
@@ -1102,29 +1130,30 @@ interval, usually inside +-0.01 %, and the two exceptions are long
 magnetometer outages whose point estimates favour the MEKF without being
 significant.  The derivation predicts this: the filters are first-order
 equivalent, and the CARMA prior, not the error geometry, sets the
-translational error.  For attitude, heading consistency and the
-accelerometer bias, **yes, conditionally**: where the CARMA prior misfits
-(mixed sea, manoeuvring) TFG-CARMA3 gives 2.6-6 % lower tilt error,
-3-7 % lower accelerometer-bias error and 7.6-12 % lower attitude NEES
-(significant after correction) and up to 13 % lower heading error (raw
-p = 7e-4, not significant after the matrix-wide correction); it reacquires
-heading faster after a magnetometer gap; elsewhere it is equivalent.  These gains do not touch CARMA3's known weaknesses (still
-IMU, mixed-sea heave), and they come at 3.4 times CARMA3's multiply-adds.
+translational error.  For attitude, heading consistency and the accelerometer
+bias, **yes, conditionally**: where the CARMA prior misfits (mixed sea,
+manoeuvring) TFG-CARMA3 gives 2.6-6 % lower tilt error, 3-7 % lower
+accelerometer-bias error and 7.6-12 % lower attitude NEES (significant after
+correction) and up to 13 % lower heading error (raw p = 7e-4, not
+significant after the matrix-wide correction); it reacquires heading faster
+after a magnetometer gap; elsewhere it is equivalent.  These gains do not
+touch CARMA3's known weaknesses (still IMU, mixed-sea heave), and they come
+at 3.4 times CARMA3's multiply-adds.
 
 * **Do not replace CARMA3's quaternion MEKF with TFG-CARMA3 as
-  implemented**, and do not deploy it: there is no translational benefit,
-  no target build evidence, and the cost is above the shipping OU-III's.
+  implemented**, and do not deploy it: there is no translational benefit, no
+  on-target timing, and the arithmetic cost is above the shipping OU-III's.
 * **TFG-CARMA3 merits limited, targeted continuation, not general
   development.**  The most promising variant is the TFG *without* reset
-  transport (T41R0): more consistent than the full filter everywhere
-  (nearly consistent in heading through a 2400 s outage), more accurate in
-  heading when manoeuvring (+23.6 % against CARMA3, 30 of 30 seeds) and
-  after gaps, within 0.15 points of it elsewhere -- but without the full
-  filter's tilt gain when manoeuvring (-0.2 % against +2.6 %) -- and at
-  8682 multiply-adds per sample about 2.1 times CARMA3 and 0.7 times
-  OU-III.  Two experiments decide whether to go further: (1) an observability-constrained CARMA3 MEKF (section 12) -- if
-  it matches T41R0, the two-frame group is unnecessary; (2) a target build
-  and timing of T41R0 on the ESP32-S3.
+  transport (T41R0): more consistent than the full filter everywhere (nearly
+  consistent in heading through a 2400 s outage), more accurate in heading
+  when manoeuvring (+23.6 % against CARMA3, 30 of 30 seeds) and after gaps,
+  within 0.15 points of it elsewhere -- but without the full filter's tilt
+  gain when manoeuvring (-0.2 % against +2.6 %) -- and at 8682 multiply-adds
+  per sample about 2.1 times CARMA3 and 0.7 times OU-III.  Two experiments
+  decide whether to go further: (1) an observability-constrained CARMA3 MEKF
+  (section 12) -- if it matches T41R0, the two-frame group is unnecessary;
+  (2) on-target timing of T41R0 on the ESP32-S3 (it builds; section 11).
 * **The verification framework stands on its own**: the independent
   references of section 5 (finite differences of the group maps, RK4
   Lyapunov `Qd`, Monte Carlo transport, the dense reference update, the
@@ -1149,7 +1178,9 @@ summary are the record.
     python3 tools/tfg_carma3_benchmark.py timing              # one process, idle host
     python3 tools/tfg_carma3_benchmark.py report              # summary.md, paired_stats.json, figures
     bash tests/kalman_carma/arduino/carma3_size_probe/build.sh host   # host size proxy
-    bash tests/kalman_carma/arduino/carma3_size_probe/build.sh <xtensa toolchain bin dir>   # target (not run here)
+    bash tests/kalman_carma/arduino/carma3_size_probe/build.sh <xtensa toolchain bin dir> > esp32s3_size.csv
+    bash tests/kalman_carma/arduino/carma3_size_probe/callgraph.sh <xtensa toolchain bin dir> <out dir>
+        # esp32s3_link.csv, esp32s3_callgraph.csv (Espressif esp-14.2.0_20241119)
 
 The main grid took about 3.2 h with four jobs on a 4-core x86-64 host.
 Rows reproduce bit for bit (apart from `runtime_ns`) with this tree's
