@@ -55,9 +55,14 @@ SCORED_WINDOW_S = 900.0
 # a 1200 s trace is too many PGF points for TeX to typeset comfortably.
 FULL_RUN_RATE_HZ = 2.0
 
-PATTERN = re.compile(
-    r"^w3d_(?P<wave>[a-z0-9]+)_H(?P<height>[0-9.]+)_.*_fusion_" + FAMILY + r"\.csv$"
-)
+# Output files are <PREFIX>_<wave>_<low|medium|high>_<chart>.pgf/.svg.
+PREFIX = "w3d_carma3"
+
+
+def replay_pattern(family: str) -> re.Pattern:
+    return re.compile(
+        r"^w3d_(?P<wave>[a-z0-9]+)_H(?P<height>[0-9.]+)_.*_fusion_" + family + r"\.csv$"
+    )
 
 _PGF_OK = True
 
@@ -218,15 +223,21 @@ def plot_direction(full, base):
     finalize(fig, base, "_dir")
 
 
-def main() -> None:
-    files = sorted(glob.glob(f"*_fusion_{FAMILY}.csv"))
+def main(family: str = FAMILY, prefix: str = PREFIX) -> None:
+    """Plot every ``*_fusion_<family>.csv`` replay in the working directory.
+
+    plots/kalman_tfg_carma reuses this gallery for TFG-CARMA3, whose replays
+    carry the same columns.
+    """
+    pattern = replay_pattern(family)
+    files = sorted(glob.glob(f"*_fusion_{family}.csv"))
     if not files:
-        print(f"no *_fusion_{FAMILY}.csv in this directory; nothing to plot")
+        print(f"no *_fusion_{family}.csv in this directory; nothing to plot")
         return
     step_tracking = get_decimation_step(BASE_SAMPLE_RATE_HZ)
     step_full = get_decimation_step(BASE_SAMPLE_RATE_HZ, FULL_RUN_RATE_HZ)
     for path in files:
-        m = PATTERN.match(os.path.basename(path))
+        m = pattern.match(os.path.basename(path))
         if not m or m.group("wave") not in ALLOWED_WAVES:
             continue
         height = float(m.group("height"))
@@ -237,7 +248,7 @@ def main() -> None:
         if df.empty:
             print(f"skipping {path}: no rows")
             continue
-        base = f"w3d_carma3_{m.group('wave')}_{group}"
+        base = f"{prefix}_{m.group('wave')}_{group}"
         scored = tail(df, SCORED_WINDOW_S)
         win = tail(df, PLOT_WINDOW_S).iloc[::step_tracking]
         full = df.iloc[::step_full]
