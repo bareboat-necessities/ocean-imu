@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/tfg-carma3-research",
-  "git_commit": "b87a0f9995c97fe0905043f6ffbca37026389573",
+  "git_branch": "main",
+  "git_commit": "aa516b3267858f9ce893e0e58717a2726fcf673e",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -85,6 +85,10 @@
       "bytes": 6431,
       "sha256": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803"
     },
+    "src/kalman_common/CovarianceProjection.h": {
+      "bytes": 5204,
+      "sha256": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31"
+    },
     "src/kalman_common/MagneticStartupCommon.h": {
       "bytes": 16146,
       "sha256": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41"
@@ -92,6 +96,14 @@
     "src/kalman_common/MarineWaveFrontEnd.h": {
       "bytes": 18846,
       "sha256": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943"
+    },
+    "src/kalman_common/MekfAttitudeMath.h": {
+      "bytes": 10440,
+      "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234"
+    },
+    "src/kalman_common/PeriodicSchedule.h": {
+      "bytes": 1500,
+      "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba"
     },
     "src/kalman_common/ProxyStartupFusion.h": {
       "bytes": 42810,
@@ -102,8 +114,8 @@
       "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee"
     },
     "src/kalman_common/SeaStateFusionDefaults.h": {
-      "bytes": 12224,
-      "sha256": "e58da410e895754e8c18a478e4f131da232f23b8134cd55abf560a54e334fecf"
+      "bytes": 12331,
+      "sha256": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d"
     },
     "src/kalman_common/SeaStateFusionFilterCommon.h": {
       "bytes": 19966,
@@ -113,17 +125,21 @@
       "bytes": 3188,
       "sha256": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07"
     },
+    "src/kalman_common/SeaStateTuning.h": {
+      "bytes": 6217,
+      "sha256": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388"
+    },
     "src/kalman_ou_common/KalmanOUCoreMath.h": {
-      "bytes": 29967,
-      "sha256": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2"
+      "bytes": 16146,
+      "sha256": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "bytes": 95583,
       "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 56032,
-      "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d"
+      "bytes": 51541,
+      "sha256": "1076b7ce7f5c926d508b46d7eba6774b7fc2eef8a2c6a9f5318a75aef9abb129"
     },
     "src/tuner/AccelVibrationGuard.h": {
       "bytes": 11977,
@@ -211,7 +227,7 @@
     "tau_s": 2.50470543
   },
   "numpy": "1.26.4",
-  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -322,11 +338,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-28T14:08:49+00:00",
-    "git_commit": "b87a0f9995c97fe0905043f6ffbca37026389573",
+    "generated_at": "2026-10-28T19:17:22+00:00",
+    "git_commit": "aa516b3267858f9ce893e0e58717a2726fcf673e",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -368,6 +384,10 @@
         "sha256": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
         "size_bytes": 6431
       },
+      "src/kalman_common/CovarianceProjection.h": {
+        "sha256": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+        "size_bytes": 5204
+      },
       "src/kalman_common/MagneticStartupCommon.h": {
         "sha256": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
         "size_bytes": 16146
@@ -375,6 +395,14 @@
       "src/kalman_common/MarineWaveFrontEnd.h": {
         "sha256": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
         "size_bytes": 18846
+      },
+      "src/kalman_common/MekfAttitudeMath.h": {
+        "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+        "size_bytes": 10440
+      },
+      "src/kalman_common/PeriodicSchedule.h": {
+        "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+        "size_bytes": 1500
       },
       "src/kalman_common/ProxyStartupFusion.h": {
         "sha256": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba",
@@ -385,8 +413,8 @@
         "size_bytes": 21011
       },
       "src/kalman_common/SeaStateFusionDefaults.h": {
-        "sha256": "e58da410e895754e8c18a478e4f131da232f23b8134cd55abf560a54e334fecf",
-        "size_bytes": 12224
+        "sha256": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d",
+        "size_bytes": 12331
       },
       "src/kalman_common/SeaStateFusionFilterCommon.h": {
         "sha256": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
@@ -396,17 +424,21 @@
         "sha256": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
         "size_bytes": 3188
       },
+      "src/kalman_common/SeaStateTuning.h": {
+        "sha256": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+        "size_bytes": 6217
+      },
       "src/kalman_ou_common/KalmanOUCoreMath.h": {
-        "sha256": "714524883769572a141971074317d2aa62ad23f6cf022eb1f2ec735375b09be2",
-        "size_bytes": 29967
+        "sha256": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+        "size_bytes": 16146
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
         "sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
         "size_bytes": 95583
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "15269fbd15f757c6fe9b9f7464b6c025bef3a0ed7c9fe2759c3a3cad7d32776d",
-        "size_bytes": 56032
+        "sha256": "1076b7ce7f5c926d508b46d7eba6774b7fc2eef8a2c6a9f5318a75aef9abb129",
+        "size_bytes": 51541
       },
       "src/tuner/AccelVibrationGuard.h": {
         "sha256": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -509,8 +541,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "40696940571",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "40744971308",
+      "workflow": "build"
     }
   },
   "result_files": {
