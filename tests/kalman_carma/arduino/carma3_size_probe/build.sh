@@ -1,28 +1,35 @@
 #!/bin/bash
-# ESP32-S3 size/stack probe of the three-axis CARMA filters (see
+# ESP32-S3 size/stack probe of the three-axis CARMA filters, TFG-CARMA3 included (see
 # carma3_size_probe.cpp).  Usage: build.sh <xtensa toolchain bin dir> [out dir]
 # The toolchain is Espressif's crosstool-NG release (esp-14.2.0_20241119, the
 # GCC of arduino-esp32 3.3.x); flags follow arduino-esp32's C++ defaults.
+# build.sh host [out dir] compiles the same translation units with the host
+# g++ (64-bit, same flags without -mlongcalls): a proxy, not target numbers.
 set -euo pipefail
-TC=${1:?xtensa toolchain bin dir}
+TC=${1:?xtensa toolchain bin dir, or host}
 OUT=${2:-$(mktemp -d)}
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../../../.." && pwd)
 EIGEN=${EIGEN_DIR:-/usr/include/eigen3}
-for v in 0 1 2 3 4 5 6; do
-  (cd "$OUT" && "$TC/xtensa-esp32s3-elf-g++" -std=gnu++2a -Os -mlongcalls -ffunction-sections -fdata-sections \
+if [ "$TC" = host ]; then
+  CXX=g++; OBJDUMP=objdump; TARGET_FLAGS=-DCARMA3_PROBE_HOST
+else
+  CXX="$TC/xtensa-esp32s3-elf-g++"; OBJDUMP="$TC/xtensa-esp32s3-elf-objdump"; TARGET_FLAGS=-mlongcalls
+fi
+for v in 0 1 2 3 4 5 6 7; do
+  (cd "$OUT" && "$CXX" -std=gnu++2a -Os $TARGET_FLAGS -ffunction-sections -fdata-sections \
       -fexceptions -fno-rtti -fstack-usage -DCARMA3_PROBE_VARIANT=$v -I"$ROOT/src" -isystem "$EIGEN" \
       -c "$HERE/carma3_size_probe.cpp" -o "$OUT/v$v.o")
-  "$TC/xtensa-esp32s3-elf-objdump" -h "$OUT/v$v.o" > "$OUT/v$v.h.txt"
+  "$OBJDUMP" -h "$OUT/v$v.o" > "$OUT/v$v.h.txt"
   for s in fusion mekf; do
-    "$TC/xtensa-esp32s3-elf-objdump" -s -j ".rodata.carma3_probe_sizeof_$s" "$OUT/v$v.o" > "$OUT/v$v.$s.txt"
+    "$OBJDUMP" -s -j ".rodata.carma3_probe_sizeof_$s" "$OUT/v$v.o" > "$OUT/v$v.$s.txt"
   done
 done
 python3 - "$OUT" <<'PY'
 import csv, re, sys
 from pathlib import Path
 out = Path(sys.argv[1])
-names = ["OU3", "A41", "A52", "M45", "A52S", "M54", "A41S"]
+names = ["OU3", "A41", "A52", "M45", "A52S", "M54", "A41S", "T41"]
 wr = csv.writer(sys.stdout, lineterminator="\n")
 wr.writerow(["variant", "code_bytes", "rodata_bytes", "data_bytes", "bss_bytes", "sizeof_fusion", "sizeof_filter",
              "max_stack_frame", "max_stack_function"])

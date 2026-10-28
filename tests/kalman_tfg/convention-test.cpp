@@ -25,6 +25,7 @@
 
 #define EIGEN_NON_ARDUINO
 
+#include "kalman_ou_common/KalmanOUCoreMath.h"
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
 

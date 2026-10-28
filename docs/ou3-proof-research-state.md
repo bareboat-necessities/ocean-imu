@@ -44,6 +44,37 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — header reorganization rebound; no shipping operator changed.**
+The generic attitude, covariance-projection and schedule helpers moved
+verbatim from `KalmanOUCoreMath.h` into `src/kalman_common/`
+(`MekfAttitudeMath.h`, `CovarianceProjection.h`, `PeriodicSchedule.h`;
+namespace `ocean_imu::kalman::filter_detail`, every name re-exported into
+`ou_detail`). OU-III's tuning envelope, r_S law constants and `TuneState`
+moved verbatim from `SeaStateFusionFilter_OU_III.h` into
+`src/kalman_common/SeaStateTuning.h`, re-exported into `ocean_imu::ou3`. The
+CARMA research filters therefore include no OU header.
+`Kalman3D_Wave_OU_III.h` is byte-identical. The unchanged fail-closed
+validator rejected seven bound blobs, the source hashes recorded in
+`planar-service-frontend-binding.json` and
+`planar-generated-port-structure.json`, and the native secants' whole-`src/`
+digest. Failed quantity: source provenance only; classification E. Evidence:
+at the repository's own flags (`-O3 -march=native -funroll-loops`),
+normalized assembly (symbol renames and label numbering only) is identical
+for all twelve OU-III, OU-II and TFG translation units compared, including
+the OU-III simulator, shipping-contract, core-numerics and gyro-projection
+tests, and at `-Os` for all eight ESP32-S3 size-probe variants, including
+the deployed `SeaStateFusion_OU_III`. The native-secant diagnostic was
+regenerated from the new tree and every field except
+`shipping_source_tree_sha256` reproduced exactly. Structures preserved:
+every shipping operation, constant and chronology, bit for bit. Relaxations
+introduced: none. Rebound: the seven blobs, the two certificates' hash
+fields, the secant digest and the committed secant report's blob; newly
+bound: `SeaStateTuning.h` (shipping) and the three math headers (operation
+lemmas). Readers of moved literal text (gyro-bias radius, quaternion
+polynomial, `MAX_SIGMA_A` premise, SpectralMSE density) read the new files.
+No proof flag, payload or OPEN dependency changes; the current limiter and
+next experiment are unchanged.
+
 **D — an inverse-domain estimate alone does not settle the linked receipt.**
 The exact failed sufficient step is promoting CR45's covariance-column
 payment to `alpha>=dbar` without checking the SAME prefix's threshold.

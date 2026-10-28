@@ -13,12 +13,12 @@
     at both precisions.
 
     Small-angle branches reuse the thresholds and the fma-based expansion
-    style already established in kalman_ou_common/KalmanOUCoreMath.h. Those
+    style already established in kalman_common/MekfAttitudeMath.h. Those
     thresholds are chosen for float and remain safe for double.
 
     CONVENTION. This file's Exp() is the standard right-handed exponential:
     Exp(phi) rotates by +phi about phi/|phi|, and the filter uses it to carry
-    a body-to-world rotation R = R_bw. KalmanOUCoreMath's rot_and_B_from_wt()
+    a body-to-world rotation R = R_bw. MekfAttitudeMath's rot_and_B_from_wt()
     returns the *transpose* of this, because OU-III propagates a world-to-body
     quaternion. The two are not interchangeable; swapping them silently
     inverts every rotation in the filter.
@@ -32,17 +32,17 @@
 
 #include <cmath>
 
-#include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "kalman_common/MekfAttitudeMath.h"
 
 namespace ocean_imu::lie {
 
-// skew() and quat_from_delta_theta() already exist in the OU core math and
+// skew() and quat_from_delta_theta() already exist in the MEKF attitude math and
 // carry the expansions this file has to agree with. Alias rather than clone.
-using ocean_imu::kalman::ou_detail::skew;
-using ocean_imu::kalman::ou_detail::quat_from_delta_theta;
+using ocean_imu::kalman::filter_detail::skew;
+using ocean_imu::kalman::filter_detail::quat_from_delta_theta;
 
 // Angle below which the trigonometric forms lose significance and the Taylor
-// branches take over. Matches KalmanOUCoreMath.h's quat_from_delta_theta.
+// branches take over. Matches MekfAttitudeMath.h's quat_from_delta_theta.
 template<typename T>
 inline constexpr T kSmallAngle = T(1e-2);
 

@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[3]
-COMMON = ROOT / "src/kalman_ou_common/KalmanOUCoreMath.h"
+COMMON = ROOT / "src/kalman_common/MekfAttitudeMath.h"
 
 
 def source_radius():

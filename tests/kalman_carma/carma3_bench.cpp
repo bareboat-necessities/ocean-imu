@@ -24,6 +24,11 @@
                      H41          CARMA(4,1) all axes, horizontal shape fitted
                                   to the benchmark's own sway RAO (hull-dependent)
                      A41C:<r>     A41 with horizontal noise correlation r
+                     T41          CARMA(4,1) on all three axes on the two-frame
+                                  Lie group (Kalman3D_Wave_TFG_CARMA3) behind
+                                  the same wrapper; T41R0, T41RA, T41NW its
+                                  reset / covariance-write ablations; T52,
+                                  T52R0 the CARMA(5,2) follow-up
   --level l1       prescribed attitude, per-axis reduced filters on
                    y = R_nb f + g e_z = a + R_nb b + n, one shared
                    measurement-only operating point (the vertical channel's
@@ -35,10 +40,18 @@
   direction relative to the bow (0 following, 90 beam, 180 head; default 30),
   U<m/s> steady forward speed (encounter-frequency Doppler), anchor, drift,
   maneuver (low-frequency translation), maggap (no magnetometer for 300 s from
-  T/3), jit (+-25 % sample-interval jitter), jit1 (+-1 % jitter on a sample
+  T/3; maggap<N> for N s), gbdrift (extra gyroscope-bias ramp and oscillation),
+  temp (IMU temperature warming 25 -> 45 C with a 300 s cycle, accelerometer
+  bias temperature coefficients that differ from the filters' model; the
+  temperature is passed to every filter), turns (zigzag heading changes of
+  90 deg in 6 s every 120 s from 240 s), jit (+-25 % sample-interval jitter), jit1 (+-1 % jitter on a sample
   clock with 1 us resolution, as a micros() time stamp gives), calbias
   (+-0.01 m/s^2 turn-on bias), norao (unit heave RAO), hlegacy (legacy
   0.8 x heave RAO horizontal model).
+
+  --extended appends consistency, attitude, bias, conditioning and
+  magnetometer-service columns (and, with --timeseries, per-filter error and
+  predicted-sigma columns); without it the output is unchanged.
 
   The complete INS has no declination input, so its horizontal axes are
   magnetic; estimates are rotated into the truth's geographic frame before
@@ -83,7 +96,8 @@ namespace {
 
 struct ScenarioX {
     Scenario sc;
-    bool jitter = false, calbias = false, maggap = false;
+    bool jitter = false, calbias = false, maggap = false, temp = false;
+    double maggap_len = 300.0;   // magnetometer gap length from T/3
     double jitter_frac = 0.25;   // half-width of the relative interval jitter
     bool jitter_us = false;      // intervals rounded to whole microseconds
 };
@@ -112,7 +126,18 @@ ScenarioX make_scenario(const std::string& full) {
         else if (m == "anchor") sc.lf.kind = Translation::Kind::Anchor;
         else if (m == "drift") sc.lf.kind = Translation::Kind::Drift;
         else if (m == "maneuver") sc.lf.kind = Translation::Kind::Maneuver;
-        else if (m == "maggap") x.maggap = true;
+        else if (m.rfind("maggap", 0) == 0) {
+            x.maggap = true;
+            if (m.size() > 6) x.maggap_len = std::strtod(m.c_str() + 6, nullptr);
+        }
+        else if (m == "gbdrift") {
+            // ~0.05 deg/s ramps over 1200 s plus a 600 s oscillation, beyond
+            // the shared random-walk model.
+            sc.bias.gyro_ramp_rps_per_s = Eigen::Vector3d(0.03, -0.03, 0.05) * (PI / 180.0) / 1200.0;
+            sc.bias.gyro_sin_amp_rps = Eigen::Vector3d(0.02, 0.015, 0.03) * (PI / 180.0);
+        }
+        else if (m == "temp") x.temp = true;
+        else if (m == "turns") sc.att.turn_deg = 90.0;
         else if (m == "jit") x.jitter = true;
         else if (m == "jit1") { x.jitter = true; x.jitter_frac = 0.01; x.jitter_us = true; }
         else if (m == "calbias") x.calbias = true;
@@ -230,7 +255,7 @@ public:
             const double c0 = static_cast<double>(model_.noise_gain2()) *
                               kc::carma_unit_psd<N>(model_.shape(), model_.kappa(), 0.0);
             rs_ = (c0 > 1e-14) ? static_cast<float>(std::sqrt(c0)) * op.tau /
-                                     (ocean_imu::ou3::R_S_POLE_KAPPA_DEFAULT * std::sqrt(op.ts))
+                                     (seastate::common::tuning::R_S_POLE_KAPPA_DEFAULT * std::sqrt(op.ts))
                                : rs_factor_ * op.rs;
         }
     }
@@ -353,6 +378,10 @@ struct Series {
     bool failed = false;
     std::string fail_reason;
     double t_live = NAN;
+    // --extended: attitude/yaw/joint NEES, coverage, world-frame attitude
+    // error (tilt, phi_z, angle), predicted yaw std, bias errors.
+    std::vector<float> natt, nyaw, n9p, n9n, tilt, phiz, angerr, sigyaw, bgerr, baerr, cov[3];
+    double cond_max = NAN;
 };
 
 struct AxisStats {
@@ -434,6 +463,8 @@ struct Args {
     std::string timeseries;
     int decimate = 10;
     bool header = false;
+    bool extended = false;
+    bool scenario_given = false;
     double score_start = 300.0;
     double startup_window = 120.0;
 };
@@ -446,7 +477,7 @@ Args parse(int argc, char** argv) {
             if (++i >= argc) throw std::invalid_argument("missing value for " + k);
             return argv[i];
         };
-        if (k == "--scenario") a.scenario = val();
+        if (k == "--scenario") { a.scenario = val(); a.scenario_given = true; }
         else if (k == "--seed") a.seed = static_cast<unsigned>(std::stoul(val()));
         else if (k == "--level") a.level = val();
         else if (k == "--filters") a.filters = val();
@@ -454,19 +485,57 @@ Args parse(int argc, char** argv) {
         else if (k == "--decimate") a.decimate = std::stoi(val());
         else if (k == "--score-start") a.score_start = std::stod(val());
         else if (k == "--header") a.header = true;
+        else if (k == "--extended") a.extended = true;
         else throw std::invalid_argument("unknown argument " + k);
     }
     return a;
 }
 
-void print_header() {
+const char* const kExtendedColumns =
+    ",rms_3d,rmsv_h,att_nees,att_nees_in95,yaw_nees,yaw_nees_in95,nees9_phys,nees9_native,cov95_x,cov95_y,cov95_z,"
+    "tilt_rms_deg,tilt_max_deg,yaw_w_rms_deg,yaw_w_max_deg,att_max_deg,pred_yaw_deg,su_tilt_rms_deg,su_yaw_rms_deg,"
+    "bg_rms_dph,ba_rms_mg,bg_f60_dph,ba_f60_mg,cond_max,mag_forwarded,mag_applied,yaw_gap_rms_deg,yaw_gap_nees,"
+    "pred_yaw_gap_end_deg,yaw_post_rms_deg,yaw_recover_s,turn_peak_deg,turn_recover_s";
+
+void print_header(bool extended) {
     std::printf("level,scenario,seed,filter,states,memory_bytes,runtime_ns,hs_incident,hs_heave,"
                 "std_x,std_y,std_z,lf_std_x,lf_std_y,t_live,failed");
     for (const char* ax : {"x", "y", "z"})
         std::printf(",rms_%s,pct_%s,mean_%s,peak_%s,lf_%s,trend_%s,rmsv_%s,nees_%s,predstd_%s,conv_%s,"
                     "su_rms_%s,su_peak_%s,f60_%s", ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax);
-    std::printf(",rms_h,nees_pos3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg\n");
+    std::printf(",rms_h,nees_pos3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg");
+    if (extended) std::printf("%s", kExtendedColumns);
+    std::printf("\n");
 }
+
+double window_frac_le(const std::vector<float>& x, const std::vector<float>& t, double t0, double t1, double thr) {
+    double s = 0; long n = 0;
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (t[i] < t0 || t[i] > t1 || !std::isfinite(x[i])) continue;
+        s += (x[i] <= thr) ? 1.0 : 0.0; ++n;
+    }
+    return n ? s / static_cast<double>(n) : NAN;
+}
+
+double window_max_abs(const std::vector<float>& x, const std::vector<float>& t, double t0, double t1) {
+    double m = NAN;
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (t[i] < t0 || t[i] > t1 || !std::isfinite(x[i])) continue;
+        m = std::isfinite(m) ? std::max(m, std::abs(double(x[i]))) : std::abs(double(x[i]));
+    }
+    return m;
+}
+
+double value_at(const std::vector<float>& x, const std::vector<float>& t, double t0) {
+    for (size_t i = 0; i < x.size(); ++i)
+        if (t[i] >= t0) return x[i];
+    return NAN;
+}
+
+// IMU temperature of the temp scenario and the true accelerometer-bias
+// temperature coefficients (the filters model 0.002 m/s^2/C on every axis).
+double temp_profile(double t) { return 25.0 + 20.0 * (1.0 - std::exp(-t / 400.0)) + 3.0 * std::sin(TWO_PI * t / 300.0); }
+const Eigen::Vector3d kTempCoeffTrue(0.0025, 0.0015, 0.0030);
 
 int truth_stats(const ScenarioX& sx, const Args& args, double dt, long steps) {
     const Scenario& sc = sx.sc;
@@ -517,8 +586,8 @@ int main(int argc, char** argv) {
     try {
         args = parse(argc, argv);
         if (args.header) {
-            print_header();
-            if (argc == 2) return 0;
+            print_header(args.extended);
+            if (argc == 2 || !args.scenario_given) return 0;
         }
         sx = make_scenario(args.scenario);
     } catch (const std::exception& e) {
@@ -550,7 +619,7 @@ int main(int argc, char** argv) {
     R_mg(1,0) = std::sin(dec); R_mg(1,1) = std::cos(dec);
     const float mag_dt = 1.0f / 25.0f;
     float mag_phase = 0.0f;
-    const double gap0 = sc.duration_s / 3.0, gap1 = gap0 + 300.0;
+    const double gap0 = sc.duration_s / 3.0, gap1 = gap0 + sx.maggap_len;
 
     WaveTruth truth(sc, w3d_expand_seed(base, 21u), dt);
     const double hs_inc = sc.stationary ? 0.0
@@ -591,9 +660,14 @@ int main(int argc, char** argv) {
         ts_out << "t,x_true,y_true,z_true,x_total,y_total";
         for (const auto& e : est) ts_out << ",x_" << e->name() << ",y_" << e->name() << ",z_" << e->name();
         for (const auto& e : est) ts_out << ",fz_" << e->name();
+        if (args.extended && full)
+            for (const auto& e : est)
+                for (const char* c : {"ex", "ey", "ez", "sx", "sy", "sz", "droll", "dpitch", "dyaw", "syaw", "natt", "nis"})
+                    ts_out << "," << c << "_" << e->name();
         ts_out << "\n";
     }
 
+    const bool gyro_drift = sc.bias.gyro_ramp_rps_per_s.squaredNorm() > 0 || sc.bias.gyro_sin_amp_rps.squaredNorm() > 0;
     std::mt19937 jitter_rng(w3d_expand_seed(base, 31u));
     std::uniform_real_distribution<double> jitter_u(-0.25, 0.25);
     double t_now = 0.0;
@@ -604,11 +678,21 @@ int main(int argc, char** argv) {
         const TruthSample ts = sx.jitter ? truth.at(t_now) : truth.next();
         Vector3f acc = apply_imu_noise(ts.f_b.cast<float>(), acc_noise, static_cast<float>(dt_k));
         acc += ts.extra_acc_bias_b.cast<float>();
-        const Vector3f gyr = apply_imu_noise(ts.omega_b.cast<float>(), gyr_noise, static_cast<float>(dt_k));
+        Vector3d ba_true = (acc_noise.turn_on_bias + acc_noise.bias_rw).cast<double>() + ts.extra_acc_bias_b;
+        double tempC = 35.0;
+        if (sx.temp) {
+            tempC = temp_profile(ts.t);
+            acc += (kTempCoeffTrue * (tempC - 35.0)).cast<float>();
+            ba_true += kTempCoeffTrue * (tempC - 35.0);
+        }
+        Vector3f gyr = apply_imu_noise(ts.omega_b.cast<float>(), gyr_noise, static_cast<float>(dt_k));
+        if (gyro_drift) gyr += ts.extra_gyro_bias_b.cast<float>();
+        const Vector3d bg_true = (gyr_noise.turn_on_bias + gyr_noise.bias_rw).cast<double>() + ts.extra_gyro_bias_b;
         Sensors s;
         s.dt = static_cast<float>(dt_k);
         s.acc_ned = acc;
         s.gyr_ned = gyr;
+        s.tempC = static_cast<float>(tempC);
         mag_phase += s.dt;
         if (mag_phase >= mag_dt) {
             while (mag_phase >= mag_dt) mag_phase -= mag_dt;
@@ -631,6 +715,10 @@ int main(int argc, char** argv) {
                 for (auto* e : l1) e->set_operating_point(op);
             }
         }
+
+        // Truth in the estimators' magnetic world frame (v_geo = R_mg v_mag).
+        const Eigen::Matrix3d Rtrue_mag = R_mg.transpose() * ts.R_nb;
+        const Vector3d p_mag = R_mg.transpose() * ts.p_wave, v_mag = R_mg.transpose() * ts.v_wave;
 
         pw_all.push_back(ts.p_wave);
         if (ts.t >= args.score_start) {
@@ -699,6 +787,45 @@ int main(int argc, char** argv) {
             se.droll.push_back(static_cast<float>(rr));
             se.dpitch.push_back(static_cast<float>(pr));
             se.dyaw.push_back(static_cast<float>(yr));
+            if (args.extended && full) {
+                float natt = NAN, nyaw = NAN, n9p = NAN, n9n = NAN, tilt = NAN, phz = NAN, ang = NAN, syaw = NAN;
+                float bge = NAN, bae = NAN, cv[3] = {NAN, NAN, NAN};
+                if (e.live && e.has_ext) {
+                    const Eigen::AngleAxisd aa(Eigen::Matrix3d(e.q_bw.toRotationMatrix() * Rtrue_mag.transpose()));
+                    const Vector3d phi = aa.angle() * aa.axis();   // Log(Rhat R^T), world frame
+                    const Eigen::Matrix3d Pa = e.P9.topLeftCorner<3,3>();
+                    Eigen::LDLT<Eigen::Matrix3d> la(Pa);
+                    if (la.info() == Eigen::Success && la.isPositive()) natt = static_cast<float>(phi.dot(la.solve(phi)));
+                    if (Pa(2,2) > 0) {
+                        nyaw = static_cast<float>(phi(2) * phi(2) / Pa(2,2));
+                        syaw = static_cast<float>(std::sqrt(Pa(2,2)));
+                    }
+                    Eigen::Matrix<double,9,1> x9;
+                    x9.head<3>() = phi;
+                    x9.segment<3>(3) = e.p - p_mag;
+                    x9.segment<3>(6) = e.v - v_mag;
+                    Eigen::LDLT<Eigen::Matrix<double,9,9>> l9(e.P9);
+                    if (l9.info() == Eigen::Success && l9.isPositive()) n9p = static_cast<float>(x9.dot(l9.solve(x9)));
+                    n9n = static_cast<float>(est[i]->native_nees9(Truth9{Rtrue_mag, p_mag, v_mag}));
+                    tilt = static_cast<float>(std::hypot(phi(0), phi(1)));
+                    phz = static_cast<float>(phi(2));
+                    ang = static_cast<float>(phi.norm());
+                    bge = static_cast<float>((e.b_g - bg_true).norm());
+                    bae = static_cast<float>((e.b_a - ba_true).norm());
+                    for (int a = 0; a < 3; ++a) {
+                        const float var = se.pp[a].back(), err = se.e[a].back();
+                        cv[a] = var > 0 ? (std::abs(err) <= 1.96f * std::sqrt(var) ? 1.0f : 0.0f) : NAN;
+                    }
+                    if (k % 200 == 0) {
+                        const double c = est[i]->cond_corr();
+                        se.cond_max = std::isfinite(se.cond_max) ? std::max(se.cond_max, c) : c;
+                    }
+                }
+                se.natt.push_back(natt); se.nyaw.push_back(nyaw); se.n9p.push_back(n9p); se.n9n.push_back(n9n);
+                se.tilt.push_back(tilt); se.phiz.push_back(phz); se.angerr.push_back(ang); se.sigyaw.push_back(syaw);
+                se.bgerr.push_back(bge); se.baerr.push_back(bae);
+                for (int a = 0; a < 3; ++a) se.cov[a].push_back(cv[a]);
+            }
         }
         if (ts_out.is_open() && k % args.decimate == 0) {
             char buf[160];
@@ -716,6 +843,19 @@ int main(int argc, char** argv) {
                 std::snprintf(buf, sizeof buf, ",%.4f", e->op_fz_hz());
                 ts_out << buf;
             }
+            if (args.extended && full)
+                for (size_t i = 0; i < est.size(); ++i) {
+                    const Series& se = series[i];
+                    const size_t j = se.t.size() - 1;
+                    auto sd = [](float v) { return std::sqrt(std::max(0.0f, v)); };
+                    std::snprintf(buf, sizeof buf, ",%.5f,%.5f,%.5f,%.5f,%.5f,%.5f", se.e[0][j], se.e[1][j], se.e[2][j],
+                                  sd(se.pp[0][j]), sd(se.pp[1][j]), sd(se.pp[2][j]));
+                    ts_out << buf;
+                    std::snprintf(buf, sizeof buf, ",%.4f,%.4f,%.4f,%.4f,%.3f,%.3f", se.droll[j] * 180.0 / PI,
+                                  se.dpitch[j] * 180.0 / PI, se.dyaw[j] * 180.0 / PI, se.sigyaw[j] * 180.0 / PI,
+                                  se.natt[j], se.nis[j]);
+                    ts_out << buf;
+                }
             ts_out << "\n";
         }
     }
@@ -745,13 +885,15 @@ int main(int argc, char** argv) {
                     est[i]->memory_bytes(), runtime, hs_inc, hs_heave, std_w[0], std_w[1], std_w[2], lfx, lfy,
                     se.t_live, se.failed ? 1 : 0);
         const double hs_ref = hs_inc > 0 ? hs_inc : NAN;
-        double rms_h2 = 0;
+        double rms_h2 = 0, rms_ax[3] = {NAN, NAN, NAN}, rmsv_ax[3] = {NAN, NAN, NAN};
         for (int a = 0; a < 3; ++a) {
             const AxisStats w = axis_stats(se, a, args.score_start, sc.duration_s, dt);
             const AxisStats f60 = axis_stats(se, a, sc.duration_s - 60.0, sc.duration_s, dt);
             const AxisStats su = axis_stats(se, a, se.t_live, se.t_live + args.startup_window, dt);
             const double conv = convergence_time(se, a, w.rms, dt);
             if (a < 2) rms_h2 += w.rms * w.rms;
+            rms_ax[a] = w.rms;
+            rmsv_ax[a] = w.rmsv;
             std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.2f,%.6g,%.6g,%.6g",
                         w.rms, 100.0 * w.rms / hs_ref, w.mean, w.peak, w.lf, w.trend, w.rmsv, w.nees, w.predstd,
                         conv, su.rms, su.peak, f60.rms);
@@ -764,7 +906,7 @@ int main(int argc, char** argv) {
             nis_in += (se.nis[j] >= lo && se.nis[j] <= hi) ? 1.0 : 0.0; ++nn;
         }
         const double t0 = args.score_start, t1 = sc.duration_s;
-        std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g\n",
+        std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g",
                     std::sqrt(rms_h2), window_mean(se.nees3, se.t, t0, t1, false),
                     window_mean(se.nees6, se.t, t0, t1, false), window_mean(se.nis, se.t, t0, t1, false),
                     nn ? nis_in / static_cast<double>(nn) : NAN,
@@ -772,6 +914,74 @@ int main(int argc, char** argv) {
                     std::sqrt(window_mean(se.dpitch, se.t, t0, t1, true)) * 180.0 / PI,
                     std::sqrt(window_mean(se.dyaw, se.t, t0, t1, true)) * 180.0 / PI,
                     window_mean(se.dyaw, se.t, t0, t1, false) * 180.0 / PI);
+        if (args.extended && full) {
+            const double r2d = 180.0 / PI;
+            auto rms = [&](const std::vector<float>& x, double a0, double a1) {
+                return std::sqrt(window_mean(x, se.t, a0, a1, true));
+            };
+            const double t_su0 = se.t_live, t_su1 = se.t_live + args.startup_window;
+            double gap_rms = NAN, gap_nees = NAN, gap_pred = NAN, post_rms = NAN, recover = NAN;
+            if (sx.maggap) {
+                gap_rms = rms(se.phiz, gap0, gap1) * r2d;
+                gap_nees = window_mean(se.nyaw, se.t, gap0, gap1, false);
+                gap_pred = value_at(se.sigyaw, se.t, gap1 - 2.0 * dt) * r2d;
+                post_rms = rms(se.phiz, gap1, gap1 + 60.0) * r2d;
+                // First time after the gap from which |phi_z| stays within
+                // max(0.5 deg, 2 x the pre-gap RMS) for 30 s.
+                const double thr = std::max(0.5 / r2d, 2.0 * rms(se.phiz, std::max(t_su0, gap0 - 120.0), gap0));
+                double cand = gap1;
+                for (size_t j = 0; j < se.t.size(); ++j) {
+                    if (se.t[j] < gap1) continue;
+                    if (!std::isfinite(se.phiz[j]) || std::abs(se.phiz[j]) > thr) { cand = se.t[j] + dt; continue; }
+                    if (se.t[j] - cand >= 30.0) { recover = cand - gap1; break; }
+                }
+            }
+            std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g",
+                        std::sqrt(rms_ax[0] * rms_ax[0] + rms_ax[1] * rms_ax[1] + rms_ax[2] * rms_ax[2]),
+                        std::hypot(rmsv_ax[0], rmsv_ax[1]),
+                        window_mean(se.natt, se.t, t0, t1, false), window_frac_le(se.natt, se.t, t0, t1, 7.8147),
+                        window_mean(se.nyaw, se.t, t0, t1, false), window_frac_le(se.nyaw, se.t, t0, t1, 3.8415),
+                        window_mean(se.n9p, se.t, t0, t1, false), window_mean(se.n9n, se.t, t0, t1, false),
+                        window_mean(se.cov[0], se.t, t0, t1, false), window_mean(se.cov[1], se.t, t0, t1, false),
+                        window_mean(se.cov[2], se.t, t0, t1, false));
+            std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g",
+                        rms(se.tilt, t0, t1) * r2d, window_max_abs(se.tilt, se.t, t0, t1) * r2d,
+                        rms(se.phiz, t0, t1) * r2d, window_max_abs(se.phiz, se.t, t0, t1) * r2d,
+                        window_max_abs(se.angerr, se.t, t0, t1) * r2d, rms(se.sigyaw, t0, t1) * r2d,
+                        rms(se.tilt, t_su0, t_su1) * r2d, rms(se.phiz, t_su0, t_su1) * r2d);
+            // Rapid turns: mean over turns of the peak attitude error in the 60 s
+            // after each turn starts, and of the time from the turn end until
+            // the error stays within max(0.5 deg, 2 x its pre-turn RMS) for 20 s.
+            double turn_peak = NAN, turn_rec = NAN;
+            if (sc.att.turn_deg != 0.0) {
+                double sp = 0, sr = 0;
+                int np = 0, nr = 0;
+                for (int kt = 0;; ++kt) {
+                    const double tk = sc.att.turn_t0_s + kt * sc.att.turn_period_s;
+                    if (tk + 60.0 > sc.duration_s) break;
+                    if (tk < t0) continue;
+                    sp += window_max_abs(se.angerr, se.t, tk, tk + 60.0) * r2d;
+                    ++np;
+                    const double te = tk + sc.att.turn_dur_s;
+                    const double thr = std::max(0.5 / r2d, 2.0 * rms(se.angerr, tk - 60.0, tk));
+                    double cand = te;
+                    for (size_t j = 0; j < se.t.size(); ++j) {
+                        if (se.t[j] < te || se.t[j] > tk + sc.att.turn_period_s) continue;
+                        if (!std::isfinite(se.angerr[j]) || se.angerr[j] > thr) { cand = se.t[j] + dt; continue; }
+                        if (se.t[j] - cand >= 20.0) { sr += cand - te; ++nr; break; }
+                    }
+                }
+                if (np) turn_peak = sp / np;
+                if (nr) turn_rec = sr / nr;
+            }
+            std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%ld,%ld,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g",
+                        rms(se.bgerr, t0, t1) * r2d * 3600.0, rms(se.baerr, t0, t1) / 9.80665 * 1000.0,
+                        rms(se.bgerr, sc.duration_s - 60.0, sc.duration_s) * r2d * 3600.0,
+                        rms(se.baerr, sc.duration_s - 60.0, sc.duration_s) / 9.80665 * 1000.0,
+                        se.cond_max, est[i]->mag_forwarded(), est[i]->mag_applied(),
+                        gap_rms, gap_nees, gap_pred, post_rms, recover, turn_peak, turn_rec);
+        }
+        std::printf("\n");
         if (se.failed) std::cerr << "FAILURE " << est[i]->name() << ": " << se.fail_reason << "\n";
     }
     return 0;

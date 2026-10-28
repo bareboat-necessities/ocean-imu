@@ -1,0 +1,13 @@
+variant,root,worst_stack_chain_bytes,chain_frames,reaches_heap_allocation,reaches_double_arithmetic,reaches_throw,largest_frame_in_chain
+OU3,sample_path,4784,13,True,True,True,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
+OU3,time_update,4288,10,True,True,True,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
+OU3,measurement_update_acc_only,1248,6,False,True,False,"void ocean_imu::kalman::Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurem"
+OU3,measurement_update_mag_only,912,6,False,True,False,"void ocean_imu::kalman::Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurem"
+A41,sample_path,4560,13,True,True,True,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
+A41,time_update,3968,10,True,True,True,"void Eigen::internal::apply_block_householder_on_the_left(MatrixType&, const VectorsType&,"
+A41,measurement_update_acc_only,1008,6,False,True,False,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"
+A41,measurement_update_mag_only,896,6,False,True,False,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias, with_acc"
+T41,sample_path,3264,11,True,True,True,"void Eigen::internal::make_block_householder_triangular_factor(TriangularFactorType&, cons"
+T41,time_update,1744,7,False,True,False,"void ocean_imu::kalman::Kalman3D_Wave_TFG_CARMA3<T, NC>::time_update(const Vector3&, T) [w"
+T41,measurement_update_acc_only,1728,9,False,True,False,"Eigen::Matrix<Type, 3, 3> ocean_imu::kalman::tfg_carma_detail::right_jacobian_cross(const "
+T41,measurement_update_mag_only,1728,9,False,True,False,"Eigen::Matrix<Type, 3, 3> ocean_imu::kalman::tfg_carma_detail::right_jacobian_cross(const "

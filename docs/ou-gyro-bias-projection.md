@@ -73,8 +73,9 @@ error beyond the physical qualification. Calibration is unchanged.
 
 ## Implemented operation order
 
-`KalmanOUCoreMath.h` supplies one radial projection helper. Construction and
-truth initialization set gyro bias to zero. Both filters guard retained means
+`kalman_common/MekfAttitudeMath.h` supplies one radial projection helper
+(`ou_detail::project_gyro_bias` in the OU filters). Construction and truth
+initialization set gyro bias to zero. Both filters guard retained means
 at attitude/accelerometer initialization, attitude handoff, frame retargeting,
 every prediction entry, and the common correction-injection entry. All accepted
 accelerometer, magnetic, position, velocity, vertical-velocity and OU-III

@@ -75,7 +75,7 @@ class OUPaperCodeParityTests(unittest.TestCase):
             self.ou3_wrap,
         )
         self.assertRegex(self.ou3_wrap, r"R_S_MSE_COEFF_DEFAULT\s*=\s*0\.0538f")
-        self.assertIn("0.0148f * 0.0148f * FREQ_SMOOTHER_DT", self.ou3_wrap)
+        self.assertIn("0.0148f * 0.0148f * defaults::NOMINAL_IMU_DT_S", self.ou3_wrap)
         self.assertIn("std::pow(u, 6.0f / 7.0f)", self.ou3_wrap)
         self.assertIn("/ std::sqrt(TS)", self.ou3_wrap)
         self.assertIn("if (rs_law_ != RSAdaptationLaw::Cubic) return 1.0f;", self.ou3_wrap)
