@@ -336,7 +336,9 @@ the amplitude `g^2 = sigma_a^2 kappa / Var_1(a)`, the exact scaled-series
 discretization with doublings and the reference-step Taylor extension for a
 jittered clock.  The wrapper is the same code, so the mapping
 `sigma_h = S_factor c_carma max(sigma_floor, sigma_aw / c_sigma)` and every
-clamp are CARMA3's.  There is no `S` state and no `S = 0`
+clamp are CARMA3's (`c_carma` is the wrapper's `carma_sigma_gain_`, 1 by
+default and in every run here; `sigma_floor = max(carma_sigma_floor_ =
+0.05 m/s^2, band noise floor, 1e-4 m/s^2)`).  There is no `S` state and no `S = 0`
 pseudo-measurement; the fourth CARMA state is the latent coordinate of the
 cascade realization.  Section 5 checks stability, positive semidefiniteness,
 stationary covariances and spectra of the three-axis process as the filter
@@ -413,9 +415,9 @@ discrepancies (worst over the cases of each family):
 
 | Check | Cases | Worst measured | Limit |
 |---|---|---|---|
-| Group: `X X^-1 = I`, associativity, `Log_G(Exp_G(xi)) = xi` (`|phi|` 1e-6..2.5), right invariance of `eta`, retract/local | 50 random elements | 4.9e-15 | 1e-11 |
+| Group: `X X^-1 = I`, associativity, `Log_G(Exp_G(xi)) = xi` (`\|phi\|` 1e-6..2.5), right invariance of `eta`, retract/local | 50 random elements | 4.9e-15 | 1e-11 |
 | Bias slot of `Xhat X^-1` equals `R (bhat - b)` exactly | 50 | 2.8e-17 | 1e-14 |
-| `J_r(a)` vs FD of `Log_G(Exp_G(-a) Exp_G(a+d))`, `|a|` ~ 1e-3 / 0.1 / 1 | 30 | 9e-13 / 1.2e-10 / 8.0e-10 | 1e-8 |
+| `J_r(a)` vs FD of `Log_G(Exp_G(-a) Exp_G(a+d))`, `\|a\|` ~ 1e-3 / 0.1 / 1 | 30 | 9e-13 / 1.2e-10 / 8.0e-10 | 1e-8 |
 | `J_r(a)` vs Kalman3D_Wave_TFG's series implementation | 30 | 1.8e-15 | 1e-12 |
 | Transported covariance vs Monte Carlo of `Log_G(Exp_G(-a) Exp_G(a+d))`, correlated `P` with attitude-translation cross terms (20 000 draws) | 1 | 0.023 (corr. units; untransported 0.57) | 0.04 |
 | Accelerometer and magnetometer `H` vs FD of the residual: identity, small (3/-2 deg) and large (40/-30 deg) roll/pitch, 170 deg yaw, 2 m CARMA states, nonzero biases | 10 | 1.7e-10 (relative) | 1e-8 |
@@ -442,14 +444,14 @@ discrepancies (worst over the cases of each family):
 | Held accelerometer bias: unchanged, zero cross-covariance after 2000 updates | 1 | 0 / 0 | 1e-15 |
 | CARMA3's noiseless three-axis sinusoid (its own 10 % bar); rotating version, TFG/MEKF error ratio | 2 | 8.6 %; 4.3e-5 | 10 %; 1 % |
 | Physical / native attitude write keeps its covariance | 2 | 1.2e-15 / 8.7e-17 | 1e-12 / 1e-15 |
-| Wrapper on a still, noisy IMU (as carma3-test): live, finite, `|p|` after 240 s | 1 | 41 mm | 0.5 m |
+| Wrapper on a still, noisy IMU (as carma3-test): live, finite, `\|p\|` after 240 s | 1 | 41 mm | 0.5 m |
 
 Reported quantities (no pass/fail bar), the mechanism evidence of
 section 8:
 
 | Quantity | Value |
 |---|---|
-| Linearization error of one step, `|xi(h) - Phi xi(0)| / |xi|`, `|xi|` ~ 1e-4 / 1e-3 / 1e-2 / 1e-1 | 1.8e-7 / 1.5e-6 / 1.2e-5 / 1.5e-4 |
+| Linearization error of one step, `\|xi(h) - Phi xi(0)\| / \|xi\|`, `\|xi\|` ~ 1e-4 / 1e-3 / 1e-2 / 1e-1 | 1.8e-7 / 1.5e-6 / 1.2e-5 / 1.5e-4 |
 | First accelerometer update after a seed from identical states: state difference TFG vs MEKF | 5.4e-4 (rad, m) |
 | First update: covariance difference (correlation units) | 0.14 |
 | 60 s side by side, max attitude difference: full reset / attitude-only / none | 0.011 / 0.017 / 0.018 rad |

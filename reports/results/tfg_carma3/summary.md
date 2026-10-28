@@ -664,17 +664,17 @@ TFG-CARMA3 magnetometer update: 7668 multiply-adds.
 |---|---|---|---|
 | group: X X^-1 = I | 1.776e-15 | 1.0e-12 | PASS |
 | group: associativity | 1.776e-15 | 1.0e-12 | PASS |
-| group: Log_G(Exp_G(xi)) = xi, |phi| 1e-6..2.5 | 4.219e-15 | 1.0e-11 | PASS |
+| group: Log_G(Exp_G(xi)) = xi, \|phi\| 1e-6..2.5 | 4.219e-15 | 1.0e-11 | PASS |
 | group: right invariance of eta = Xhat X^-1 | 4.885e-15 | 1.0e-11 | PASS |
 | group: Y.retract(X.local(Y)) = X | 4.441e-15 | 1.0e-12 | PASS |
 | group: bias slot of Xhat X^-1 is R (bhat - b) | 2.776e-17 | 1.0e-14 | PASS |
 | group: beta_g = R (bhat_g - b_g) to first order | 1.131e-05 | 1.0e-04 | PASS |
-| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e-03 | 8.978e-13 | 1.0e-08 | PASS |
-| reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e-03 | 8.674e-19 | 1.0e-12 | PASS |
-| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e-01 | 1.178e-10 | 1.0e-08 | PASS |
-| reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e-01 | 8.327e-17 | 1.0e-12 | PASS |
-| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), |a| ~ 1e+00 | 8.007e-10 | 1.0e-08 | PASS |
-| reset: J_r(a) vs Kalman3D_Wave_TFG, |a| ~ 1e+00 | 1.776e-15 | 1.0e-12 | PASS |
+| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), \|a\| ~ 1e-03 | 8.978e-13 | 1.0e-08 | PASS |
+| reset: J_r(a) vs Kalman3D_Wave_TFG, \|a\| ~ 1e-03 | 8.674e-19 | 1.0e-12 | PASS |
+| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), \|a\| ~ 1e-01 | 1.178e-10 | 1.0e-08 | PASS |
+| reset: J_r(a) vs Kalman3D_Wave_TFG, \|a\| ~ 1e-01 | 8.327e-17 | 1.0e-12 | PASS |
+| reset: J_r(a) vs FD of Log(Exp(-a)Exp(a+d)), \|a\| ~ 1e+00 | 8.007e-10 | 1.0e-08 | PASS |
+| reset: J_r(a) vs Kalman3D_Wave_TFG, \|a\| ~ 1e+00 | 1.776e-15 | 1.0e-12 | PASS |
 | reset: MC cov of transported error vs J P J^T (corr units) | 2.252e-02 | 4.0e-02 | PASS |
 | reset: MC cov vs untransported P (corr units, contrast) | 5.730e-01 | inf | REPORT |
 | accel H = [[g]x .. -I(a) .. -I(b_a)] vs FD: identity, zero states | 7.632e-11 | 1.0e-08 | PASS |
@@ -727,119 +727,119 @@ TFG-CARMA3 magnetometer update: 7668 multiply-adds.
 | update: accel covariance vs dense FD reference (bias held): nonzero CARMA states 2 m | 6.702e-10 | 1.0e-06 | PASS |
 | update: accel+mag state vs dense FD reference (bias held): nonzero CARMA states 2 m | 1.580e-12 | 1.0e-07 | PASS |
 | update: accel+mag covariance vs dense FD reference (bias held): nonzero CARMA states 2 m | 6.707e-10 | 1.0e-06 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 0.0) | 1.110e-16 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 0.0) | 3.666e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 0.4) | 1.838e-13 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 0.4) | 8.882e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 0.4) | 3.666e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, |w| 1.3) | 4.020e-13 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, |w| 1.3) | 7.772e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, |w| 1.3) | 3.666e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 0.0) | 1.110e-16 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 0.0) | 1.516e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 0.4) | 1.639e-12 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 0.4) | 1.516e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, |w| 1.3) | 9.436e-12 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, |w| 1.3) | 1.998e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, |w| 1.3) | 1.516e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) | 2.403e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 0.0) | 6.890e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) | 2.093e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) | 1.998e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 0.4) | 2.043e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) | 2.925e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) | 1.110e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, |w| 1.3) | 1.400e-14 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) | 7.852e-11 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 0.0) | 3.630e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) | 2.755e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 0.4) | 9.838e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) | 1.084e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, |w| 1.3) | 1.857e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) | 1.783e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 0.0) | 9.370e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) | 6.320e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) | 7.772e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 0.4) | 1.992e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) | 3.109e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) | 6.661e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, |w| 1.3) | 2.172e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) | 1.932e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 0.0) | 3.213e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) | 2.005e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 0.4) | 1.189e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) | 5.182e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, |w| 1.3) | 1.159e-11 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 0.0) | 4.441e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 0.0) | 1.554e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 0.0) | 6.601e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 0.4) | 3.902e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 0.4) | 2.331e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 0.4) | 1.708e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, |w| 1.3) | 1.885e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, |w| 1.3) | 2.220e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, |w| 1.3) | 1.484e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 0.0) | 2.731e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 0.0) | 1.105e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 0.4) | 2.220e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 0.4) | 3.553e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 0.4) | 2.936e-12 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, |w| 1.3) | 2.985e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, |w| 1.3) | 2.331e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, |w| 1.3) | 5.396e-13 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 0.0) | 2.975e-09 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 0.0) | 8.669e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 0.4) | 1.776e-09 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 0.4) | 8.882e-16 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 0.4) | 1.852e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, |w| 1.3) | 8.882e-10 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, |w| 1.3) | 1.110e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, |w| 1.3) | 1.394e-15 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 0.0) | 1.015e-09 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 0.0) | 5.180e-13 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 0.4) | 1.644e-09 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 0.4) | 3.442e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 0.4) | 4.150e-13 | 1.0e-07 | PASS |
-| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, |w| 1.3) | 1.990e-09 | 2.0e-08 | PASS |
-| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, |w| 1.3) | 2.887e-15 | 1.0e-10 | PASS |
-| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, |w| 1.3) | 4.007e-13 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, \|w\| 0.0) | 1.110e-16 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, \|w\| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, \|w\| 0.0) | 3.666e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, \|w\| 0.4) | 1.838e-13 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, \|w\| 0.4) | 8.882e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, \|w\| 0.4) | 3.666e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.005, \|w\| 1.3) | 4.020e-13 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.005, \|w\| 1.3) | 7.772e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.005, \|w\| 1.3) | 3.666e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, \|w\| 0.0) | 1.110e-16 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, \|w\| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, \|w\| 0.0) | 1.516e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, \|w\| 0.4) | 1.639e-12 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, \|w\| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, \|w\| 0.4) | 1.516e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (identity, zero states, h 0.050, \|w\| 1.3) | 9.436e-12 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (identity, zero states, h 0.050, \|w\| 1.3) | 1.998e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (identity, zero states, h 0.050, \|w\| 1.3) | 1.516e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.0) | 2.403e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.0) | 6.890e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.4) | 2.093e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.4) | 1.998e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, \|w\| 0.4) | 2.043e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.005, \|w\| 1.3) | 2.925e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.005, \|w\| 1.3) | 1.110e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.005, \|w\| 1.3) | 1.400e-14 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.0) | 7.852e-11 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.0) | 3.630e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.4) | 2.755e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, \|w\| 0.4) | 9.838e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (small roll/pitch (3, -2 deg), h 0.050, \|w\| 1.3) | 1.084e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (small roll/pitch (3, -2 deg), h 0.050, \|w\| 1.3) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (small roll/pitch (3, -2 deg), h 0.050, \|w\| 1.3) | 1.857e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.0) | 1.783e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.0) | 9.370e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.4) | 6.320e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.4) | 7.772e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, \|w\| 0.4) | 1.992e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.005, \|w\| 1.3) | 3.109e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.005, \|w\| 1.3) | 6.661e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.005, \|w\| 1.3) | 2.172e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.0) | 1.932e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.0) | 3.213e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.4) | 2.005e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.4) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, \|w\| 0.4) | 1.189e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large roll/pitch (40, -30 deg), h 0.050, \|w\| 1.3) | 5.182e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large roll/pitch (40, -30 deg), h 0.050, \|w\| 1.3) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large roll/pitch (40, -30 deg), h 0.050, \|w\| 1.3) | 1.159e-11 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, \|w\| 0.0) | 4.441e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, \|w\| 0.0) | 1.554e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, \|w\| 0.0) | 6.601e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, \|w\| 0.4) | 3.902e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, \|w\| 0.4) | 2.331e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, \|w\| 0.4) | 1.708e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.005, \|w\| 1.3) | 1.885e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.005, \|w\| 1.3) | 2.220e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.005, \|w\| 1.3) | 1.484e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, \|w\| 0.0) | 2.731e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, \|w\| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, \|w\| 0.0) | 1.105e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, \|w\| 0.4) | 2.220e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, \|w\| 0.4) | 3.553e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, \|w\| 0.4) | 2.936e-12 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (large yaw (170 deg), h 0.050, \|w\| 1.3) | 2.985e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (large yaw (170 deg), h 0.050, \|w\| 1.3) | 2.331e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (large yaw (170 deg), h 0.050, \|w\| 1.3) | 5.396e-13 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, \|w\| 0.0) | 2.975e-09 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, \|w\| 0.0) | 3.331e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, \|w\| 0.0) | 8.669e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, \|w\| 0.4) | 1.776e-09 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, \|w\| 0.4) | 8.882e-16 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, \|w\| 0.4) | 1.852e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.005, \|w\| 1.3) | 8.882e-10 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.005, \|w\| 1.3) | 1.110e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.005, \|w\| 1.3) | 1.394e-15 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, \|w\| 0.0) | 1.015e-09 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, \|w\| 0.0) | 1.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, \|w\| 0.0) | 5.180e-13 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, \|w\| 0.4) | 1.644e-09 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, \|w\| 0.4) | 3.442e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, \|w\| 0.4) | 4.150e-13 | 1.0e-07 | PASS |
+| transition: Phi vs FD of the nonlinear error flow (nonzero CARMA states 2 m, h 0.050, \|w\| 1.3) | 1.990e-09 | 2.0e-08 | PASS |
+| transition: Phi vs RK4 of continuous model (nonzero CARMA states 2 m, h 0.050, \|w\| 1.3) | 2.887e-15 | 1.0e-10 | PASS |
+| process noise: Qd vs RK4 Lyapunov (corr units) (nonzero CARMA states 2 m, h 0.050, \|w\| 1.3) | 4.007e-13 | 1.0e-07 | PASS |
 | transition: Phi_{rho,phi} = 0 (isotropic CARMA) | 0.000e+00 | 1.0e-15 | PASS |
 | transition: Phi_{rho_i,bg} = [w_i(h)]x Phi_{phi,bg} | 0.000e+00 | 1.0e-14 | PASS |
 | quadrature: collapsed Qd vs structured GL-5 impulse response (gyro/bias rows) | 8.270e-16 | 1.0e-09 | PASS |
 | quadrature: collapsed Qd vs structured GL-5 (full, corr units) | 8.270e-16 | 1.0e-06 | PASS |
 | semigroup: Phi(h1+h2) = Phi(h2) Phi(h1), non-uniform steps | 4.441e-16 | 1.0e-12 | PASS |
 | semigroup: Qd(h1+h2) = Phi(h2) Qd(h1) Phi(h2)^T + Qd(h2) | 8.781e-16 | 1.0e-08 | PASS |
-| linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-04 | 1.762e-07 | inf | REPORT |
-| linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-03 | 1.457e-06 | inf | REPORT |
-| linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-02 | 1.177e-05 | inf | REPORT |
-| linearization: |xi(h) - Phi xi(0)|/|xi|, |xi| ~ 1e-01 | 1.474e-04 | inf | REPORT |
+| linearization: \|xi(h) - Phi xi(0)\|/\|xi\|, \|xi\| ~ 1e-04 | 1.762e-07 | inf | REPORT |
+| linearization: \|xi(h) - Phi xi(0)\|/\|xi\|, \|xi\| ~ 1e-03 | 1.457e-06 | inf | REPORT |
+| linearization: \|xi(h) - Phi xi(0)\|/\|xi\|, \|xi\| ~ 1e-02 | 1.177e-05 | inf | REPORT |
+| linearization: \|xi(h) - Phi xi(0)\|/\|xi\|, \|xi\| ~ 1e-01 | 1.474e-04 | inf | REPORT |
 | time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0050 | 2.713e-16 | 1.0e-12 | PASS |
 | time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0050 (mean) | 4.441e-16 | 1.0e-12 | PASS |
 | time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0063 | 2.713e-16 | 1.0e-12 | PASS |
 | time_update: structured P vs dense Phi P Phi^T + Qd, h 0.0063 (mean) | 3.331e-16 | 1.0e-12 | PASS |
 | Monte Carlo: propagated covariance vs sample covariance (corr units) | 5.814e-02 | 8.0e-02 | PASS |
-| Monte Carlo: per-state variance ratio |S_ii/P_ii - 1| | 5.814e-02 | 1.0e-01 | PASS |
+| Monte Carlo: per-state variance ratio \|S_ii/P_ii - 1\| | 5.814e-02 | 1.0e-01 | PASS |
 | Monte Carlo: mean error / standard error | 2.393e+00 | 4.5e+00 | PASS |
 | stationary prior Sigma_s (x) P_inf invariant over 100 s (double) | 3.830e-14 | 1.0e-09 | PASS |
 | stationary prior invariant over 100 s (float) | 1.679e-05 | 2.0e-04 | PASS |
 | process: sample covariance vs Sigma_s (x) P_inf (corr units, 5.8 h) | 2.291e-02 | 5.0e-02 | PASS |
-| process: Welch PSD of p_x, p_y, p_z vs analytic, mean |dB| (0.12-0.9 Hz) | 1.865e-01 | 3.5e-01 | PASS |
-| process: Welch PSD of p_x, p_y, p_z vs analytic, max |dB| | 5.072e-01 | 1.2e+00 | PASS |
-| process: Welch PSD of a_z vs w^4 S_p, max |dB| | 1.136e+00 | 1.2e+00 | PASS |
+| process: Welch PSD of p_x, p_y, p_z vs analytic, mean \|dB\| (0.12-0.9 Hz) | 1.865e-01 | 3.5e-01 | PASS |
+| process: Welch PSD of p_x, p_y, p_z vs analytic, max \|dB\| | 5.072e-01 | 1.2e+00 | PASS |
+| process: Welch PSD of a_z vs w^4 S_p, max \|dB\| | 1.136e+00 | 1.2e+00 | PASS |
 | process: x-y co-spectrum / (sx sy S_p) - r, mean over frequency | 1.559e-02 | 4.0e-02 | PASS |
 | process: x-y co-spectrum / (sx sy S_p) - r, max over frequency | 8.431e-02 | inf | REPORT |
 | process: DC zero, S_p(1 mHz)/S_p(2 mHz) = 1/4 | 2.404e-05 | 1.0e-04 | PASS |
@@ -854,9 +854,9 @@ TFG-CARMA3 magnetometer update: 7668 multiply-adds.
 | equivariance: filter under world yaw, isotropic horizontal prior | 1.361e-12 | 1.0e-09 | PASS |
 | equivariance: anisotropic Sigma_s rotated with the frame | 1.421e-12 | 1.0e-09 | PASS |
 | non-invariance: anisotropic Sigma_s NOT rotated (expected nonzero) | 2.243e+00 | inf | REPORT |
-| anisotropic A: |A([phi]x W) - [phi]x A(W)| / |A W| (commutator) | 1.431e-01 | inf | REPORT |
+| anisotropic A: \|A([phi]x W) - [phi]x A(W)\| / \|A W\| (commutator) | 1.431e-01 | inf | REPORT |
 | anisotropic A: derived Phi_{rho,phi} = int Phi_A C(W) vs FD | 3.442e-10 | 1.0e-07 | PASS |
-| anisotropic A: |Phi_{rho,phi}| over 50 ms (zero when isotropic) | 2.495e-01 | inf | REPORT |
+| anisotropic A: \|Phi_{rho,phi}\| over 50 ms (zero when isotropic) | 2.495e-01 | inf | REPORT |
 | MEKF relation: one prediction from equal seeds, T^-1 P T^-T vs CARMA3 P | 5.392e-16 | 1.0e-09 | PASS |
 | MEKF relation: first accel update, state difference (rad / m) | 5.437e-04 | inf | REPORT |
 | MEKF relation: first accel update, covariance difference (corr units) | 1.433e-01 | inf | REPORT |
@@ -887,13 +887,13 @@ TFG-CARMA3 magnetometer update: 7668 multiply-adds.
 | sinusoid (carma3-test input): covariance PSD | -6.127e-02 | 1.0e-04 | PASS |
 | rotating sinusoid: TFG-CARMA3 relative displacement RMS error | 1.037e-01 | inf | REPORT |
 | rotating sinusoid: CARMA3 (MEKF) relative displacement RMS error | 1.037e-01 | inf | REPORT |
-| rotating sinusoid: |TFG/MEKF error ratio - 1| (first-order equivalence) | 4.281e-05 | 1.0e-02 | PASS |
+| rotating sinusoid: \|TFG/MEKF error ratio - 1\| (first-order equivalence) | 4.281e-05 | 1.0e-02 | PASS |
 | rotating sinusoid: TFG covariance PSD | -1.712e-02 | 1.0e-09 | PASS |
 | physical write: attitude write keeps the e covariance | 1.093e-15 | 1.0e-12 | PASS |
 | native write: attitude write keeps the invariant covariance | 8.674e-17 | 1.0e-15 | PASS |
 | wrapper: still IMU went live | 0.000e+00 | 0.0e+00 | PASS |
 | wrapper: still IMU finite | 0.000e+00 | 0.0e+00 | PASS |
-| wrapper: still IMU |p| < 0.5 m after 240 s (as carma3-test) | 4.126e-02 | 5.0e-01 | PASS |
+| wrapper: still IMU \|p\| < 0.5 m after 240 s (as carma3-test) | 4.126e-02 | 5.0e-01 | PASS |
 | wrapper: common CARMA scale (no rejected anisotropic configuration) | 0.000e+00 | 0.0e+00 | PASS |
 
 tfg_carma3-test: 199/199 checks passed

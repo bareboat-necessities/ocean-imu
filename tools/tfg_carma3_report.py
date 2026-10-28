@@ -513,7 +513,8 @@ def table_math():
     for line in p.read_text().splitlines():
         m = re.match(r"CHECK (.*?)\s+value=(\S+) limit=(\S+) (\w+)", line)
         if m:
-            lines.append(f"| {m.group(1).strip()} | {m.group(2)} | {m.group(3)} | {m.group(4)} |")
+            name = m.group(1).strip().replace("|", "\\|")   # a literal | would split the cell
+            lines.append(f"| {name} | {m.group(2)} | {m.group(3)} | {m.group(4)} |")
         elif "checks passed" in line:
             lines += ["", line]
     lines.append("")
