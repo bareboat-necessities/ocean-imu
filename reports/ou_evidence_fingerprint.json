@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "16f95f1080f23f6c6905e25eddeb7c140e7ae5cef56c5a8f805adf94dd238634",
+  "replay_fingerprint": "faa28936a057c13304009be697ca4188e1b9e1c90f9c8be4dcdfb10e1053a511",
   "results_file_count": 541,
   "results_files": [
     {
@@ -1296,7 +1296,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "20356c63d8736f7bdaf3dd28a6acadf9579024ff887595a3506b257440eb108b"
+      "sha256": "97b4a0fd13070d0d4268af473f6d0f36dfdf95c376b48583075bc82c0a3a957a"
     },
     {
       "kind": "file",
@@ -1366,57 +1366,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "466c5a580e350d600ddf34689d8cc4bc3e4f932b83ca6795ac5263d9cc0959b4"
+      "sha256": "b7b0d765e090810fbe117072851bb76f53d796bdb82f6d9f6db0140f1f251939"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "da6868e3b8bc31b239114926f0af5426a5e888cf0196cb87a1d0a3082427707e"
+      "sha256": "ccbed690a9a9e049655066d5fb68ace0b73aadb6fb4228776e2f721166ea1734"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "00bf690bbaeaba157d57c870e527c7a6e37f755da0b181691504f0ec3d5a64d4"
+      "sha256": "74cac7aa296f52ea5a0586d8927c58a31c62cb3d4a0dc114bb5bded2a92b62b4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "7e1da046395bb6f6e8acb5da468d4d5f074c76f7691ceaef27e8a61fb78a4cf0"
+      "sha256": "0b1adab778f76a4506f52fe68882127e15dfa63a860dac31a86064d0ca01da66"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "411d58b5ee07dc650394d9e9f07ab013bf6e70bfcab3129eb81ba0e3dbc30542"
+      "sha256": "4b3f326075c0d1e5f5594ea27f67af7a7cdeeee0285ffed1028c1180e0e1632b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "e6f99cfd4a8e2303d5216ddd7e64fe44cc827d4c88e620fedada36b0e2eadab0"
+      "sha256": "28f7baf56407e35de83290db3f21c25d634cfc7daddf89670e726d56092e1372"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "900185c74529f5e5b1d373fa65858d5987f230806757a08eb6876e3e379d8db2"
+      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "a39ba94e3a257bdbf9e1b2e222bbbf2247209c30b45317629095893437b0251b"
+      "sha256": "819f2c1b9828bb884df35a00af1b77336c3eb528e88b7cdc475aad8a47644db7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "3beae507d9547b388a2badf2f9f5c19234d4be9ce14729e06c25a619207b26a3"
+      "sha256": "c09a8738c773956c39f70e6d1b5426585922d78af683cacf8bc260e43a5c1696"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "4c460750846e3bae89ad0ce9ab6fc0f104723516efc1c48a1c32c9bcb78f3f17"
+      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
     },
     {
       "kind": "file",
@@ -1436,7 +1436,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "c4810237e02a5bb063008bcf95036f14f2e7bb37fbb109f4ac6fa0d183019749"
+      "sha256": "6da1d29e72accbdf8f38c0ed76263d7f2e1afb548ae08ef3b66e185961f5d4ee"
     },
     {
       "kind": "file",
@@ -2709,13 +2709,13 @@
       "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
     }
   ],
-  "results_fingerprint": "740c41edda0727156f7ed949675dab383ec27d3830f612bbd2b30e1ffb779ccb",
+  "results_fingerprint": "2bf28c06c006cdbe6ad4121cb0a7c3bb8e296b7839bc5f3983139ad976c89c54",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 826,
+  "tracked_replay_file_count": 833,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2735,7 +2735,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "36c735ee9001a803f2bdf4524227053b1dde24cf8d473de9a5fa93754e87b914"
+      "sha256": "fe6edaf2f716f85a615ca30fbc5f80d1926e43b268a362f4f60b28330f1df54d"
     },
     {
       "mode": "100644",
@@ -2825,7 +2825,7 @@
     {
       "mode": "100644",
       "path": "Makefile",
-      "sha256": "5d503085a4ebcaa3e50744203fe64a3c9e78ecbf99fd16874dec9fb92c96690f"
+      "sha256": "21913a6ace0b8da21d2cfa3e42bc0a2716882b228d11b2e84144e4fe10c548f0"
     },
     {
       "mode": "100644",
@@ -2905,7 +2905,7 @@
     {
       "mode": "100644",
       "path": "plots/kalman_carma/kalman_carma-plots.py",
-      "sha256": "6dc27b7fb47e57802d407832d26c1ff924f38427f1cb7e91ad7a1c578875db16"
+      "sha256": "d0a28877890d8676f106c3fcf3b52d8171a18de7e3494d16f8270da1f8f67b20"
     },
     {
       "mode": "100644",
@@ -2941,6 +2941,16 @@
       "mode": "100644",
       "path": "plots/kalman_tfg/kalman_tfg-plots.py",
       "sha256": "aee1c92e45eb71eb56b0c347dd7a292e514eca31c9d05b6b8de736146f2893b2"
+    },
+    {
+      "mode": "100755",
+      "path": "plots/kalman_tfg_carma/draw_plots.sh",
+      "sha256": "8dc72c4a1c5e40f5fc43d51c467a38f9bcf12b254613ca288910aba204b826e9"
+    },
+    {
+      "mode": "100644",
+      "path": "plots/kalman_tfg_carma/kalman_tfg_carma-plots.py",
+      "sha256": "bcafe8e76bb9496447b2ca67164b515b7b5b5a06c9991327cd550ce5ef5e1de8"
     },
     {
       "mode": "100644",
@@ -3915,7 +3925,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3-sim.cpp",
-      "sha256": "47cbfabbfe6f14b893388e29b4341b24a44fd5fa65aaf22d85887f63c478d0f8"
+      "sha256": "6185f7db69e2e0e1fa9043787693c0b14843cfc868e74af4c92a3839f0a383be"
     },
     {
       "mode": "100644",
@@ -3936,6 +3946,11 @@
       "mode": "100644",
       "path": "tests/kalman_carma/carma3/FullAdaptersTFG.h",
       "sha256": "0c13aedf6e91039179ba39e820babb099b2204f190a71fd21c03ff86cebcf77c"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma3/SimAdapters.h",
+      "sha256": "847dc9cfe6648058d74c41ece5ba46e2944652a7def8a624f34f6edeff65c5ce"
     },
     {
       "mode": "100644",
@@ -4271,6 +4286,21 @@
       "mode": "100644",
       "path": "tests/kalman_tfg/tfg_rs_axis_factors-test.cpp",
       "sha256": "ad3a57c29d6487a4e107eeb5476c1531166b95e815b9688c981f77722e3ef917"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tfg_carma/Makefile",
+      "sha256": "c33966e962f4865f46c75df73c61bec6512684351e3af148db933d59d34113eb"
+    },
+    {
+      "mode": "100755",
+      "path": "tests/kalman_tfg_carma/run_tests.sh",
+      "sha256": "202206682e66c3bd5840b25fe93ef1093e5c5aa280548f5096c4c9faf9d025e6"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tfg_carma/tfg_carma3-sim.cpp",
+      "sha256": "daba0840b5dc9ef898f872ee5069780ce950c75554b45227756b8375e5cbfb00"
     },
     {
       "mode": "100644",
@@ -5445,7 +5475,7 @@
     {
       "mode": "100644",
       "path": "tools/carma_sim_table.py",
-      "sha256": "e83b5b08b9bc532255c8f402bae8bc153db8f63678eea064640a65e817994539"
+      "sha256": "7d2b38d9c190414374799cea8ed4520ea01fa3b4b434a6ea96507769c4195009"
     },
     {
       "mode": "100644",
@@ -6811,6 +6841,11 @@
       "mode": "100644",
       "path": "tools/tfg_carma3_report.py",
       "sha256": "def4c022e0b2646e0f87997afeeb26de0db9307c7966dd61013250dfe23fdd69"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tfg_carma_sim_table.py",
+      "sha256": "778c775af254d14e584f2119d3305d7b1f4813af2d2dd2fc1cf69edfe7198f2a"
     },
     {
       "mode": "100644",
