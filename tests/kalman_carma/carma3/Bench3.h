@@ -25,6 +25,7 @@ struct Sensors {
     bool mag_tick = false;
     Eigen::Vector3f mag_ned = Eigen::Vector3f::Zero();
     Eigen::Vector3d y_level = Eigen::Vector3d::Zero();   // level 1: R_nb f + g e_z (NED)
+    float tempC = 35.0f;                                  // IMU temperature passed to every filter
 };
 
 struct Estimate3 {
@@ -38,6 +39,19 @@ struct Estimate3 {
     int nis_dof = 3;
     bool has_att = false;
     Eigen::Quaterniond q_bw = Eigen::Quaterniond::Identity();   // body -> world (NED)
+    // Extended diagnostics (carma3_bench --extended), in the estimator's world
+    // frame: covariance of e9 = [Log(Rhat R^T), phat - p, vhat - v] (common
+    // coordinates for every filter) and the body-frame bias estimates (the
+    // accelerometer bias at the sample temperature).
+    bool has_ext = false;
+    Eigen::Matrix<double,9,9> P9 = Eigen::Matrix<double,9,9>::Constant(NAN);
+    Eigen::Vector3d b_g = Eigen::Vector3d::Constant(NAN), b_a = Eigen::Vector3d::Constant(NAN);
+};
+
+// Truth in an estimator's world frame, for the native-coordinate NEES.
+struct Truth9 {
+    Eigen::Matrix3d R_bw = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d p = Eigen::Vector3d::Zero(), v = Eigen::Vector3d::Zero();
 };
 
 class IEstimator3 {
@@ -51,6 +65,15 @@ public:
     // CARMA operating frequency kappa * f_z,base (the tuner's f_tune); NaN
     // for OU-III, which has no CARMA model.  Diagnostic output only.
     virtual double op_fz_hz() const { return NAN; }
+    // Joint NEES of [attitude, p, v] in the estimator's OWN error coordinates
+    // (MEKF: dtheta_b, additive p, v; Lie group: phi, rho_p, rho_v).
+    virtual double native_nees9(const Truth9&) const { return NAN; }
+    // Correlation-scaled condition number of the full covariance.
+    virtual double cond_corr() const { return NAN; }
+    // Magnetometer samples that reached the estimator and the updates it
+    // applied (rejected = forwarded - applied).
+    virtual long mag_forwarded() const { return -1; }
+    virtual long mag_applied() const { return -1; }
 };
 
 // Shipping simulator configuration (as kalman_ou_iii-sim).
@@ -84,10 +107,12 @@ Eigen::Matrix<double,6,6> extract_pv(const Mat& P, const int (&ip)[3], const int
 std::unique_ptr<IEstimator3> make_full_ou(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_c4(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_c5(const std::string& name);
+std::unique_ptr<IEstimator3> make_full_tfg(const std::string& name);
 
 inline std::unique_ptr<IEstimator3> make_full(const std::string& name) {
     if (auto e = make_full_ou(name)) return e;
     if (auto e = make_full_c4(name)) return e;
+    if (auto e = make_full_tfg(name)) return e;
     return make_full_c5(name);
 }
 

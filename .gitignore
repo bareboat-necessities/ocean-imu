@@ -123,3 +123,4 @@ tests/kalman_carma/carma3_bench
 tests/kalman_carma/process/
 tests/kalman_carma/smoke3_*.csv
 reports/results/carma3_benchmark/traces/
+reports/results/tfg_carma3/traces/

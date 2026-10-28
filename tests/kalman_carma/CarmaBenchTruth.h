@@ -106,6 +106,12 @@ struct AttitudeModel {
     double yaw_wander_deg = 3.0;     // slow heading wander amplitude
     double yaw_osc_deg = 0.0;        // extra yaw oscillation
     double yaw_osc_hz = 0.05;
+    // Rapid heading changes: from turn_t0_s, every turn_period_s a smootherstep
+    // turn of turn_deg over turn_dur_s, alternating in sign (zigzag); off at 0.
+    double turn_deg = 0.0;
+    double turn_dur_s = 6.0;
+    double turn_period_s = 120.0;
+    double turn_t0_s = 240.0;
 };
 
 struct BiasDrift {
@@ -114,6 +120,10 @@ struct BiasDrift {
     Eigen::Vector3d ramp_mps2_per_s = Eigen::Vector3d::Zero();
     Eigen::Vector3d sin_amp_mps2 = Eigen::Vector3d::Zero();
     double sin_period_s = 900.0;
+    // Extra body-frame gyroscope bias history, the same form, rad/s.
+    Eigen::Vector3d gyro_ramp_rps_per_s = Eigen::Vector3d::Zero();
+    Eigen::Vector3d gyro_sin_amp_rps = Eigen::Vector3d::Zero();
+    double gyro_sin_period_s = 600.0;
 };
 
 struct HorizontalModel {
@@ -164,6 +174,7 @@ struct TruthSample {
     Eigen::Vector3d omega_b = Eigen::Vector3d::Zero();   // body rate, rad/s
     Eigen::Vector3d f_b = Eigen::Vector3d::Zero();       // specific force, body
     Eigen::Vector3d extra_acc_bias_b = Eigen::Vector3d::Zero();
+    Eigen::Vector3d extra_gyro_bias_b = Eigen::Vector3d::Zero();
     // Wave coordinate (oscillatory, about the local equilibrium); p/v/a_ned
     // above are the total motion, wave plus low-frequency translation.
     Eigen::Vector3d p_wave = Eigen::Vector3d::Zero();
@@ -674,6 +685,12 @@ private:
             }
             yaw += lf_yaw;
             dyaw += lf_dyaw;
+            if (at.turn_deg != 0.0) {
+                double tp = 0.0, dtp = 0.0;
+                turns(t, tp, dtp);
+                yaw += tp;
+                dyaw += dtp;
+            }
         }
         s.roll = roll; s.pitch = pitch; s.yaw = yaw;
         const Eigen::Matrix3d R =
@@ -688,6 +705,26 @@ private:
         s.f_b = R.transpose() * (s.a_ned - Eigen::Vector3d(0, 0, G));
         s.extra_acc_bias_b = sc_.bias.ramp_mps2_per_s * t +
             sc_.bias.sin_amp_mps2 * std::sin(TWO_PI * t / sc_.bias.sin_period_s);
+        s.extra_gyro_bias_b = sc_.bias.gyro_ramp_rps_per_s * t +
+            sc_.bias.gyro_sin_amp_rps * std::sin(TWO_PI * t / sc_.bias.gyro_sin_period_s);
+    }
+
+    // Zigzag heading: turn k starts at t0 + k period and moves the heading by
+    // (-1)^k turn_deg along a smootherstep of length turn_dur_s.
+    void turns(double t, double& psi, double& dpsi) const {
+        const auto& at = sc_.att;
+        psi = 0.0; dpsi = 0.0;
+        if (t < at.turn_t0_s) return;
+        const double d2r = PI / 180.0;
+        const long last = static_cast<long>((t - at.turn_t0_s) / at.turn_period_s);
+        for (long k = 0; k <= last; ++k) {
+            const double sgn = (k % 2 == 0) ? 1.0 : -1.0;
+            const double x = (t - at.turn_t0_s - static_cast<double>(k) * at.turn_period_s) / at.turn_dur_s;
+            if (x >= 1.0) { psi += sgn * at.turn_deg * d2r; continue; }
+            if (x <= 0.0) continue;
+            psi += sgn * at.turn_deg * d2r * x * x * x * (10.0 + x * (-15.0 + 6.0 * x));
+            dpsi += sgn * at.turn_deg * d2r * 30.0 * x * x * (1.0 - x) * (1.0 - x) / at.turn_dur_s;
+        }
     }
 
     Scenario sc_;

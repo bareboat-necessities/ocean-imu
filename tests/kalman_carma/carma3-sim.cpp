@@ -17,8 +17,11 @@
 
     W3D_CARMA3_VARIANT selects A41 (default; CARMA(4,1) on all axes), A52,
     M45 (CARMA(4,1) x/y, (5,2) z), M54 (CARMA(5,2) x/y, (4,1) z), A52S (with
-    S_x, S_y), A41S (OU-III r_S carried over, negative control) or H41
-    (horizontal shape fitted to the carma3_bench sway RAO).
+    S_x, S_y), A41S (OU-III r_S carried over, negative control), H41
+    (horizontal shape fitted to the carma3_bench sway RAO), or T41 / T41R0:
+    A41's prior and wrapper on the two-frame Lie group
+    (Kalman3D_Wave_TFG_CARMA3, full reset / no reset transport;
+    docs/tfg-carma3-research.md).
 */
 
 #define EIGEN_NON_ARDUINO
@@ -32,6 +35,7 @@
 
 #include "util/W3dSimCommon.h"
 #include "carma3/FullAdapters.h"
+#include "kalman_carma/Kalman3D_Wave_TFG_CARMA3.h"
 
 using Eigen::Quaternionf;
 using Eigen::Vector3f;
@@ -40,7 +44,8 @@ namespace {
 
 bool add_noise = true;
 
-template<int NHC, bool SH, int NZC, bool SZ>
+template<int NHC, bool SH, int NZC, bool SZ,
+         class MekfT = ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>>
 class CarmaAdapter final : public IW3dFusionAdapter {
 public:
     static constexpr float SIGMA_A_RESCALE = 0.71f;
@@ -48,7 +53,8 @@ public:
     static constexpr float SIGMA_M_RESCALE = 8.0f;
 
     CarmaAdapter(bool with_mag, const Vector3f& sigma_a_init, const Vector3f& sigma_g,
-                 const Vector3f& sigma_m, const ocean_imu::kalman::carma::CarmaShape* hshape) {
+                 const Vector3f& sigma_m, const ocean_imu::kalman::carma::CarmaShape* hshape,
+                 int tfg_reset_mode = -1) {
         cfg_.with_mag = with_mag;
         cfg_.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
         cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
@@ -68,6 +74,10 @@ public:
         filter.enableTuner(true);
         filter.enableClamp(true);
         if (hshape) filter.setHorizontalShape(*hshape);
+        if constexpr (requires { typename MekfT::ResetMode; }) {
+            if (tfg_reset_mode >= 0)
+                filter.mekf().set_reset_mode(static_cast<typename MekfT::ResetMode>(tfg_reset_mode));
+        }
     }
 
     void updateMag(const Vector3f& mag_body_ned) override { fusion_.updateMag(mag_body_ned); }
@@ -117,7 +127,7 @@ public:
     }
 
 private:
-    using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, NHC, SH, NZC, SZ>;
+    using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, NHC, SH, NZC, SZ, MekfT>;
     mutable Fusion fusion_;
     typename Fusion::Config cfg_{};
 };
@@ -145,6 +155,24 @@ CARMA_ADAPTER(Adapter_M54, 5, false, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_A52S, 5, true, 5, false, nullptr)
 CARMA_ADAPTER(Adapter_A41S, 4, true, 4, false, nullptr)
 CARMA_ADAPTER(Adapter_H41, 4, false, 4, false, &carma3_bench::CARMA41_SWAY_SHAPE)
+
+#define TFG_ADAPTER(NAME, RESET)                                                        \
+    class NAME final : public IW3dFusionAdapter {                                       \
+    public:                                                                             \
+        using Core = ocean_imu::kalman::Kalman3D_Wave_TFG_CARMA3<float, 4>;             \
+        NAME(bool m, const Vector3f& a, const Vector3f& g, const Vector3f& s)           \
+            : impl_(m, a, g, s, nullptr, static_cast<int>(Core::ResetMode::RESET)) {}   \
+        void updateMag(const Vector3f& b) override { impl_.updateMag(b); }              \
+        void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { \
+            impl_.update(dt, g, a, t);                                                  \
+        }                                                                               \
+        FilterSnapshot snapshot() const override { return impl_.snapshot(); }          \
+    private:                                                                            \
+        CarmaAdapter<4, false, 4, false, Core> impl_;                                   \
+    };
+
+TFG_ADAPTER(Adapter_T41, Full)
+TFG_ADAPTER(Adapter_T41R0, None)
 
 // Regression bars for the default variant A41 on the eight scored records
 // (default seeds, magnetometer on), each at the measured worst value plus
@@ -238,7 +266,9 @@ int main(int argc, char* argv[]) {
             else if (variant == "A52S") run_file<Adapter_A52S>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "A41S") run_file<Adapter_A41S>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "H41") run_file<Adapter_H41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
-            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S or H41");
+            else if (variant == "T41") run_file<Adapter_T41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "T41R0") run_file<Adapter_T41R0>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else throw std::invalid_argument("W3D_CARMA3_VARIANT must be A41, A52, M45, M54, A52S, A41S, H41, T41 or T41R0");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

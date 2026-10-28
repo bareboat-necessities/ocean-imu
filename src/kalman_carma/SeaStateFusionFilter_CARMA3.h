@@ -27,6 +27,10 @@
   No horizontal acceleration statistic is measured: the mapping is fixed and
   uses only quantities the shipping tuner already produces.
 
+  MekfT is the inner filter.  It defaults to Kalman3D_Wave_CARMA3; the
+  two-frame Lie-group variant of SeaStateFusionFilter_TFG_CARMA3.h runs through
+  this same schedule so the two differ only in the estimator.
+
   Horizontal S law.  For a horizontal CARMA with S (SH):
     * if the shape has a nonzero DC level c0 = S_p(0) (e.g. CARMA(5,2) as
       fitted), S is a random walk under the prior and S = 0 every T_S closes a
@@ -56,7 +60,8 @@
 
 namespace ocean_imu::carma {
 
-template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ>
+template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ,
+         class MekfT = kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>>
 class SeaStateFusionFilter_CARMA3
     : public seastate::common::AccelVibrationConditioning,
       public seastate::common::MarineWaveFrontEnd<trackerT>,
@@ -77,7 +82,7 @@ class SeaStateFusionFilter_CARMA3
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    using Mekf = kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>;
+    using Mekf = MekfT;
     using FrontEnd::startupProxyQuat;
     using FrontEnd::wavePeriodUsable;
 
@@ -415,16 +420,17 @@ struct SeaStateFusionConfig_CARMA3 : seastate::common::ProxyStartupFusionConfig 
     float R_S_noise = 1.5f;
 };
 
-template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ>
+template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ,
+         class MekfT = kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>>
 class SeaStateFusion_CARMA3
     : public seastate::common::ProxyStartupFusion<
-          SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ>,
+          SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ, MekfT>,
           SeaStateFusionConfig_CARMA3>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     using Config = SeaStateFusionConfig_CARMA3;
-    using Impl = SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ>;
+    using Impl = SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ, MekfT>;
 
     void begin(const Config& cfg) {
         this->beginStartup_(cfg, [](Impl& impl, const Config& c) {

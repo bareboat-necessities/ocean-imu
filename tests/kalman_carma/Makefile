@@ -15,7 +15,7 @@ else
 endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = carma_model-test carma_process-sim carma3-test carma3_bench carma3-sim
+TARGETS = carma_model-test carma_process-sim carma3-test tfg_carma3-test carma3_bench carma3-sim
 all: build test
 build: $(TARGETS)
 test: $(TARGETS)
@@ -26,7 +26,9 @@ carma_process-sim: carma_process-sim.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma3-test: carma3-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma3_bench: carma3_bench.o carma3_filters_ou.o carma3_filters_c4.o carma3_filters_c5.o W3dSimCommon.o
+tfg_carma3-test: tfg_carma3-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+carma3_bench: carma3_bench.o carma3_filters_ou.o carma3_filters_c4.o carma3_filters_c5.o carma3_filters_tfg.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma3-sim: carma3-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

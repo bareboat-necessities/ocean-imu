@@ -18,12 +18,14 @@
     4  SeaStateFusion_CARMA3<KALMANF, 5,T, 5,F>    CARMA(5,2) x/y/z + S_x, S_y
     5  SeaStateFusion_CARMA3<KALMANF, 5,F, 4,F>    CARMA(5,2) x/y + CARMA(4,1) z
     6  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
+    7  SeaStateFusion_TFG_CARMA3<KALMANF, 4>       CARMA(4,1) x/y/z on the two-frame
+                                                   Lie group (docs/tfg-carma3-research.md)
 */
 
-// Built only by the Xtensa target compiler (build.sh); host compilers (the
-// repository's warnings and clang-tidy gates compile every tests/*.cpp) see
-// an empty translation unit.
-#if defined(__XTENSA__)
+// Built only by the Xtensa target compiler or by `build.sh host`; host
+// compilers otherwise (the repository's warnings and clang-tidy gates compile
+// every tests/*.cpp) see an empty translation unit.
+#if defined(__XTENSA__) || defined(CARMA3_PROBE_HOST)
 
 #define EIGEN_NON_ARDUINO
 #define EIGEN_NO_DEBUG
@@ -32,6 +34,7 @@
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
+#include "kalman_carma/SeaStateFusionFilter_TFG_CARMA3.h"
 
 #if CARMA3_PROBE_VARIANT == 0
 using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
@@ -45,8 +48,10 @@ using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, 
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, true, 5, false>;
 #elif CARMA3_PROBE_VARIANT == 5
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 4, false>;
-#else
+#elif CARMA3_PROBE_VARIANT == 6
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, true, 4, false>;
+#else
+using Fusion = ocean_imu::carma::SeaStateFusion_TFG_CARMA3<TrackerType::KALMANF, 4>;
 #endif
 
 const float g_std = 9.80665f;
@@ -77,4 +82,4 @@ extern "C" float carma3_probe_step(Fusion* f, float dt, const float* gyr, const 
     return f->raw().mekf().get_position().z();
 }
 
-#endif  // __XTENSA__
+#endif  // __XTENSA__ || CARMA3_PROBE_HOST
