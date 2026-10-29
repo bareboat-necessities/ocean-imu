@@ -527,6 +527,39 @@ and Robust Estimation in C\texttt{++}/Eigen}
     library defaults stay at 9.80665\,m/s$^2$; the simulations use it as
     their world gravity.
 
+    \subsection{Earth Rotation and Celestial Tides}
+
+    WGS84 normal gravity in Section~\ref{sec:gravity} is effective
+    gravity in the rotating Earth-fixed frame: it already includes
+    centrifugal acceleration from Earth's spin (up to about
+    $0.034$\,m/s$^2$ at the equator). Applying this correction again
+    would double-count it.
+
+    The Moon and Sun contribute time-varying \emph{tidal} gravity:
+    the differential pull across Earth matters, not their much
+    larger common acceleration of Earth and the sensor. These
+    variations are of order $10^{-6}$\,m/s$^2$
+    \cite{IERS2010}, well below the unmodelled local gravity
+    disturbance above. They are negligible for this BMI270
+    static-hold accelerometer fit; no ephemeris correction is used.
+
+    A stationary gyro does sense Earth's angular rate,
+    $\Omega_E=7.292115\times10^{-5}$\,rad/s
+    ($15.04^\circ$/hour). In north--east--down coordinates,
+    $\boldsymbol{\Omega}_E^n=
+    \Omega_E(\cos\varphi,0,-\sin\varphi)^\top$, so
+    \begin{equation}
+        \overline{\boldsymbol{\omega}}_m^b \simeq
+        \mathbf{b}_g + \mathbf{R}_n^b\boldsymbol{\Omega}_E^n.
+    \end{equation}
+    Thus the current single-pose stationary mean absorbs a small,
+    orientation-dependent Earth-rate component into the fitted
+    gyro bias. Explicit removal would need an independent
+    true-north-referenced attitude and consistent treatment in
+    INS mechanization; neither is part of this calibration.
+    Coriolis and transport-rate effects from vessel motion are
+    likewise navigation-model terms, not static calibration terms.
+
     \subsection{Pose Design}
 
     Linearized at $\mathbf{S}=\mathbf{I}$, $\mathbf{b}=\mathbf{0}$, a hold
@@ -1149,6 +1182,12 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
         G.~Guennebaud, B.~Jacob, et al.,
         ``Eigen v3,''
         \url{http://eigen.tuxfamily.org}, 2010.
+
+        \bibitem{IERS2010}
+        G.~Petit and B.~Luzum, Eds.,
+        \emph{IERS Conventions (2010)}, IERS Technical Note~36,
+        International Earth Rotation and Reference Systems Service,
+        2010. \url{https://iers-conventions.obspm.fr/conventions/content/tn36.pdf}
 
         \bibitem{Higham1988}
         N.~J.~Higham,
