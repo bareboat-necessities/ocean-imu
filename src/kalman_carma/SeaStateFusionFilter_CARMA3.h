@@ -32,6 +32,16 @@
   two-frame Lie-group variant of SeaStateFusionFilter_TFG_CARMA3.h runs through
   this same schedule so the two differ only in the estimator.
 
+  IMU lever arm (setImuLeverArmBody, off by default).  An IMU at body offset r
+  from the centre of gravity measures alpha x r + omega x (omega x r) on top of
+  the CoG specific force.  The wrapper removes it at its input, from the
+  measured rate (kalman_common/ImuLeverArm.h), so the vibration guard, the
+  startup proxy and the magnetic reference it learns, the tuner, the direction
+  estimator and the inner filter all see CoG specific force.  The inner
+  filter's own set_imu_lever_arm_body() (OU-III's placement) corrects only its
+  accelerometer update; docs/carma-imu-lever-arm.md measures the difference.
+  Use one or the other, never both.
+
   Horizontal S law.  For a horizontal CARMA with S (SH):
     * if the shape has a nonzero DC level c0 = S_p(0) (e.g. CARMA(5,2) as
       fitted), S is a random walk under the prior and S = 0 every T_S closes a
@@ -58,6 +68,7 @@
 
 #include "kalman_carma/Kalman3D_Wave_CARMA3.h"
 #include "kalman_common/AccelVibrationConditioning.h"
+#include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/MarineWaveFrontEnd.h"
 #include "kalman_common/ProxyStartupFusion.h"
 #include "kalman_common/SeaStateAdaptationCommon.h"
@@ -108,6 +119,7 @@ public:
 
     void initialize(const Eigen::Vector3f& sigma_a, const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m) {
+        lever_.reset_kinematics();
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });
@@ -117,6 +129,7 @@ public:
                         const Eigen::Vector3f& sigma_m, float Pq0, float Pb0, float b0,
                         float R_S_noise, float gravity_magnitude) {
         gravity_mps2_ = gravity_magnitude;
+        lever_.reset_kinematics();  // a restart may follow a gap in the samples
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,
                                        gravity_magnitude);
         seastate::common::finalizeInitialization(
@@ -146,6 +159,12 @@ public:
     }
 
 private:
+    // The measured specific force moved from the IMU to the CoG.
+    Eigen::Vector3f cogSpecificForce_(const Eigen::Vector3f& acc, const Eigen::Vector3f& gyro, float dt) {
+        lever_.update_rate(gyro, dt);
+        return acc - lever_.acceleration();
+    }
+
     void updateCore_(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                      float tempC, bool drive_mekf) {
         if (!mekf_) return;
@@ -154,7 +173,8 @@ private:
         time_ += dt;
         startup_stage_t_ += dt;
 
-        const Eigen::Vector3f acc_in = conditionAccel_(acc, dt);
+        const Eigen::Vector3f acc_in = lever_.enabled() ? conditionAccel_(cogSpecificForce_(acc, gyro, dt), dt)
+                                                        : conditionAccel_(acc, dt);
         levelVertical_(dt, gyro, acc_in);
         if (drive_mekf) apply_racc_vibration_inflation_();
         if (drive_mekf) {
@@ -195,6 +215,21 @@ public:
     }
 
     void setWithMag(bool with_mag) { with_mag_ = with_mag; }
+
+    // IMU installation lever arm: r_b is the IMU position relative to the
+    // vessel centre of gravity in the body frame (x forward, y starboard,
+    // z down), metres.  Zero, the default, switches the correction off.  See
+    // the file header; do not also set the inner filter's lever arm.
+    void setImuLeverArmBody(const Eigen::Vector3f& r_b) {
+        const bool was_enabled = lever_.enabled();
+        lever_.set_offset_body(r_b);
+        if (lever_.enabled() && !was_enabled) lever_.reset_kinematics();
+    }
+    void clearImuLeverArm() { lever_.clear(); }
+    const Eigen::Vector3f& imuLeverArmBody() const noexcept { return lever_.offset_body(); }
+    // Corner of the low-pass ahead of the rate derivative (default 15 Hz).
+    void setImuLeverArmCutoffHz(float hz) { lever_.set_derivative_cutoff_hz(hz); }
+    float imuLeverArmCutoffHz() const noexcept { return lever_.derivative_cutoff_hz(); }
     void setSFactor(float s) { if (std::isfinite(s) && s > 0.0f) S_factor_ = s; }
     void setRSXFactor(float k) { if (std::isfinite(k)) R_S_x_factor_ = std::min(std::max(k, 0.0f), 4.0f); }
     void setRSYFactor(float k) { if (std::isfinite(k)) R_S_y_factor_ = std::min(std::max(k, 0.0f), 4.0f); }
@@ -407,6 +442,7 @@ private:
     bool with_mag_;
     float mag_delay_sec_ = defaults::MAG_DELAY_SEC;
     seastate::common::TiltResetWatchdog tilt_watchdog_{};
+    kalman::filter_detail::ImuLeverArm<float> lever_{};
 
     float rs_qeff_pow_ = std::pow(2.0f * tuning::R_S_ACCEL_NOISE_DENSITY_DEFAULT, 1.0f / 14.0f);
     float min_R_S_ = tuning::MIN_R_S;

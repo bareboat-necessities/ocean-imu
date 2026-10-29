@@ -34,7 +34,9 @@
   Retained from OU-III line for line in its mathematics: attitude and
   gyro-bias prediction, accelerometer and magnetometer models and Jacobians,
   error-state reset, residual accelerometer-bias OU and its freeze, Joseph
-  updates, input guards.
+  updates, input guards.  The optional IMU lever arm
+  (set_imu_lever_arm_body, off by default) is OU-III's measurement model with
+  the band-limited rate derivative of kalman_common/ImuLeverArm.h.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -51,6 +53,7 @@
 #include <limits>
 
 #include "kalman_common/CovarianceProjection.h"
+#include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_common/PeriodicSchedule.h"
 #include "kalman_carma/CarmaVerticalModel.h"
@@ -309,6 +312,23 @@ public:
     }
     void set_exact_att_bias_Qd(bool on) { use_exact_att_bias_Qd_ = on; }
 
+    // IMU installation lever arm (off-CoG correction), kalman_common/
+    // ImuLeverArm.h.  r_b is the IMU position relative to the CoG in the body
+    // frame (x forward, y starboard, z down), metres.  Zero, the default,
+    // switches the correction off and leaves the filter exactly as it is
+    // without it.
+    void set_imu_lever_arm_body(const Vector3& r_b) { lever_.set_offset_body(r_b); }
+    void clear_imu_lever_arm() { lever_.clear(); }
+    [[nodiscard]] const Vector3& imu_lever_arm_body() const noexcept { return lever_.offset_body(); }
+    // Corner of the low-pass ahead of the rate derivative (default 15 Hz).
+    void set_imu_lever_arm_cutoff_hz(T hz) { lever_.set_derivative_cutoff_hz(hz); }
+    [[nodiscard]] T imu_lever_arm_cutoff_hz() const noexcept { return lever_.derivative_cutoff_hz(); }
+    // Ablation only: OU-III's model in place of the default, and its alpha
+    // smoothing (used by that model alone).  docs/carma-imu-lever-arm.md.
+    using LeverArmModel = typename filter_detail::ImuLeverArm<T>::Model;
+    void set_imu_lever_arm_model(LeverArmModel m) { lever_.set_model(m); }
+    void set_alpha_smoothing_tau(T tau_sec) { lever_.set_alpha_smoothing_tau(tau_sec); }
+
 private:
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
@@ -319,6 +339,7 @@ private:
     MatrixNX Pext;
 
     Vector3 last_gyr_bias_corrected{};
+    filter_detail::ImuLeverArm<T> lever_;
 
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
@@ -695,6 +716,9 @@ CARMA3_TPL
 bool CARMA3_CLS::initialize_from_attitude(Eigen::Quaternion<T> const& q_bw, T tilt_sigma_rad, T yaw_sigma_rad) {
     if (!q_bw.coeffs().allFinite() || !(q_bw.norm() > T(1e-8))) return false;
     set_quaternion_boat(q_bw);
+    // The wrapper hands over here after holding the prediction; the lever
+    // arm's rate history must not difference across that gap.
+    lever_.reset_kinematics();
     const T tilt = (std::isfinite(tilt_sigma_rad) && tilt_sigma_rad > T(0)) ? tilt_sigma_rad : T(0.035);
     const T yaw = (std::isfinite(yaw_sigma_rad) && yaw_sigma_rad > T(0)) ? yaw_sigma_rad : T(1.5708);
     set_accel_only_attitude_covariance_(tilt, yaw);
@@ -772,6 +796,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     Vector3 gyro_bias = Vector3::Zero();
     if constexpr (GB) gyro_bias = xext.template segment<3>(3);
     last_gyr_bias_corrected = gyr - gyro_bias;
+    lever_.update_rate(last_gyr_bias_corrected, Ts);
 
     const Eigen::Quaternion<T> dq_wb = filter_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
@@ -971,13 +996,18 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     const Matrix3 Rwb = R_wb();
     const Vector3 aw(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
     const Vector3 f_cog_b = Rwb * (aw - g_world);
-    const Vector3 r = acc_meas - (f_cog_b + ba_term);
+    Vector3 f_pred = f_cog_b + ba_term;
+    // Off-CoG IMU: the rotational term at the sensor (ImuLeverArm.h).  Its
+    // attitude Jacobian is zero; its gyro-bias Jacobian is appended below.
+    if (lever_.enabled()) f_pred += lever_.acceleration();
+    const Vector3 r = acc_meas - f_pred;
     last_acc_diag_.r = r;
 
     const Matrix3 J_att = -skew_(f_cog_b);
-    constexpr int NCOL = 6 + (AB ? 3 : 0);
-    int col[NCOL];
-    Vector3 cvec[NCOL];
+    constexpr int NCOL_MAX = 6 + (AB ? 3 : 0) + (GB ? 3 : 0);
+    int ncol = 6 + (AB ? 3 : 0);
+    int col[NCOL_MAX];
+    Vector3 cvec[NCOL_MAX];
     for (int k = 0; k < 3; ++k) { col[k] = k; cvec[k] = J_att.col(k); }
     col[3] = idx_a(0);   cvec[3] = Rwb.col(0);
     col[4] = idx_a(1);   cvec[4] = Rwb.col(1);
@@ -985,11 +1015,17 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     if constexpr (AB) {
         for (int k = 0; k < 3; ++k) { col[6 + k] = OFF_BA + k; cvec[6 + k] = Vector3::Unit(k); }
     }
+    if constexpr (GB) {
+        if (lever_.enabled()) {
+            const Matrix3 J_bg = lever_.bias_jacobian();
+            for (int k = 0; k < 3; ++k) { col[ncol] = 3 + k; cvec[ncol] = J_bg.col(k); ++ncol; }
+        }
+    }
 
     MatrixNX3& PCt = PCt_scratch_;
     for (int i = 0; i < NX; ++i) {
         T pc0 = T(0), pc1 = T(0), pc2 = T(0);
-        for (int c = 0; c < NCOL; ++c) {
+        for (int c = 0; c < ncol; ++c) {
             const T v = Pext(i, col[c]);
             pc0 += v * cvec[c](0); pc1 += v * cvec[c](1); pc2 += v * cvec[c](2);
         }
@@ -997,7 +1033,7 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     }
     Matrix3& S_mat = S_scratch_;
     S_mat = Racc;
-    for (int c = 0; c < NCOL; ++c)
+    for (int c = 0; c < ncol; ++c)
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b) S_mat(a,b) += cvec[c](a) * PCt(col[c], b);
     for (int a = 0; a < 3; ++a)

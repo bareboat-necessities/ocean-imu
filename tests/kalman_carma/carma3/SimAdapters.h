@@ -66,6 +66,11 @@ public:
         fusion_.update(dt, gyr, acc, temperature_c);
     }
 
+    // For a harness that configures the filter beyond what this adapter does
+    // (carma_lever_arm-sim's filter-side lever arm).  A class-template member,
+    // so the replays that never call it compile exactly as before.
+    auto& fusion() noexcept { return fusion_; }
+
     FilterSnapshot snapshot() const override {
         const auto& filter = fusion_.raw();
         const auto& d = filter.dir();
