@@ -15,7 +15,7 @@ for sketch in sorted((root / "sensors").rglob("*.ino")):
     assert re.search(r"applyAccel\([^;]+,\s*tempC\)", text), sketch
     assert re.search(r"applyGyro\([^;]+,\s*tempC\)", text), sketch
     checked.append(sketch.relative_to(root))
-assert len(checked) == 7, f"Review new external calibration consumers: {checked}"
+assert len(checked) == 8, f"Review new external calibration consumers: {checked}"
 compass = (root / "src/AtomS3R/AtomS3R_CompassAppBase.h").read_text()
 assert re.search(r"runtime_\.applyAccel\([^;]+,\s*s\.tempC\)", compass)
 assert re.search(r"runtime_\.applyGyro\([^;]+,\s*s\.tempC\)", compass)
