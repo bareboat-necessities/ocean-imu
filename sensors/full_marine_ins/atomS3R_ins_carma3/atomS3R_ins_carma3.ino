@@ -73,6 +73,9 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
+// The OU-III sketch's startup settings (ONLINE_TUNE_WARMUP_SEC,
+// ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
+#include "kalman_common/SeaStateOUFamilyDefaults.h"
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
