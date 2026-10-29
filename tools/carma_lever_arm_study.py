@@ -52,8 +52,6 @@ from sim_dataset import input_provenance
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "results" / "carma_lever_arm_study"
-# A smoke run must not replace the committed full-study evidence.
-DEFAULT_SMOKE_OUTPUT_DIR = Path(tempfile.gettempdir()) / "carma_lever_arm_study_smoke"
 BINARY = ROOT / "tests" / "kalman_carma" / "carma_lever_arm-sim"
 DEFAULT_WINDOW_SEC = 900.0
 
@@ -122,7 +120,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data-dir", type=Path, required=True)
     p.add_argument("--output-dir", type=Path, default=None,
-                   help=f"default {DEFAULT_OUTPUT_DIR} for --mode full, {DEFAULT_SMOKE_OUTPUT_DIR} for smoke")
+                   help=f"default {DEFAULT_OUTPUT_DIR} for --mode full, a new temporary directory for smoke")
     p.add_argument("--window-sec", type=float, default=DEFAULT_WINDOW_SEC)
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--mode", choices=("smoke", "full"), default="full")
@@ -601,7 +599,12 @@ def main() -> int:
     sources = {r: ou3.find_record(args.data_dir, r) for r in records}
     dataset = input_provenance(sources.values())
 
-    out = args.output_dir or (DEFAULT_OUTPUT_DIR if full else DEFAULT_SMOKE_OUTPUT_DIR)
+    out = args.output_dir
+    if out is None:
+        # A smoke run must not replace the committed full-study evidence,
+        # nor another smoke run's output.
+        out = DEFAULT_OUTPUT_DIR if full else Path(tempfile.mkdtemp(prefix="carma_lever_arm_study_smoke_"))
+        print(f"Writing results to {out}", flush=True)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
