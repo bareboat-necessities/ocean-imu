@@ -68,6 +68,7 @@ AXES: dict[str, tuple[float, float, float]] = {
     "z-up": (0.0, 0.0, -1.0),
 }
 AXIS_LABEL = {"x-forward": "forward", "y-starboard": "starboard", "z-up": "above"}
+AXIS_WHERE = {"x-forward": "forward of", "y-starboard": "starboard of", "z-up": "above"}
 DISTANCES_M = (0.10, 0.20, 0.30, 0.50, 1.00, 2.00)
 
 # Arm -> (simulator input-stage model, estimator placement or None).
@@ -104,8 +105,12 @@ FIGURES = (
     "carma_lever_arm_penalty.svg",
     "carma_lever_arm_tilt.svg",
     "carma_lever_arm_yaw.svg",
+    "carma_lever_arm_sea_state.svg",
     "carma_lever_arm_cutoff.svg",
 )
+# The per-sea figure: the direction each channel suffers most.
+SEA_STATE_CASES = (("disp_3d_rms_m", "z-up", "3-D displacement"), ("max_tilt_rms_deg", "x-forward", "max roll/pitch"))
+SEA_STATE_DISTANCE_M = 1.00
 
 
 def parse_args() -> argparse.Namespace:
@@ -235,6 +240,7 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             groups.setdefault((row["mode"], row["axis"], float(row["distance_m"])), []).append(row)
         baseline = groups[("baseline", "cg", 0.0)]
         base = {f: ou3.pooled_rms(baseline, f) for f in RMS_FIELDS}
+        base_by_sea = {(r["spectrum"], float(r["hs_m"])): r for r in baseline}
         base_tilt = max(base["roll_rms_deg"], base["pitch_rms_deg"])
         items: list[dict[str, Any]] = []
         for key in sorted(groups):
@@ -249,6 +255,13 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             item["disp_z_ratio_to_baseline"] = item["disp_z_rms_m"] / base["disp_z_rms_m"]
             item["tilt_ratio_to_baseline"] = item["max_tilt_rms_deg"] / base_tilt
             item["yaw_ratio_to_baseline"] = item["yaw_rms_deg"] / base["yaw_rms_deg"]
+            # Pooling weights the largest seas, where the installed term is
+            # smallest against the wave signal; the worst single sea is
+            # carried alongside.
+            per_sea = [(r, base_by_sea[(r["spectrum"], float(r["hs_m"]))]) for r in rs]
+            item["disp_3d_ratio_worst_sea"] = max(
+                float(r["disp_3d_rms_m"]) / float(b["disp_3d_rms_m"]) for r, b in per_sea)
+            item["tilt_ratio_worst_sea"] = max(max_tilt(r) / max_tilt(b) for r, b in per_sea)
             item["installed_rms_mps2"] = ou3.pooled_rms(rs, "installed_rms_mps2")
             item["residual_rms_mps2"] = ou3.pooled_rms(rs, "residual_rms_mps2")
             item["excess_removed_fraction"] = float("nan")
@@ -337,7 +350,8 @@ def markdown_report(
         "Offsets are in the sketches' body frame: forward, starboard, and above the CG.",
         f"Scoring uses the trailing **{window_sec:.0f} s** of each 1200 s record; every",
         "entry is the RMS pooled over the eight seas; ratios are to the filter's own",
-        "CG baseline.  The inner-filter arms report no residual: the simulator cannot",
+        "CG baseline; the worst-sea columns divide each sea by its own baseline and",
+        "keep the largest.  The inner-filter arms report no residual: the simulator cannot",
         "see a correction made inside the estimator.  The removed fraction of the",
         f"uncorrected 3-D excess is shown where that excess exceeds {100 * EXCESS_FLOOR:.0f} % of the baseline.",
         "",
@@ -355,9 +369,9 @@ def markdown_report(
             f"CG baseline: 3-D displacement {fmt(base['disp_3d_rms_m'])} m, max roll/pitch "
             f"{fmt(base['max_tilt_rms_deg'])} deg, yaw {fmt(base['yaw_rms_deg'])} deg.",
             "",
-            "| Arm | Axis | Offset [cm] | 3D / CG | Tilt / CG | Yaw / CG | Installed [m/s^2] "
-            "| Residual [m/s^2] | 3D excess removed |",
-            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| Arm | Axis | Offset [cm] | 3D / CG | 3D / CG, worst sea | Tilt / CG | Tilt / CG, worst sea "
+            "| Yaw / CG | Installed [m/s^2] | Residual [m/s^2] | 3D excess removed |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
         order = {a: i for i, a in enumerate(("unmodeled", *[a for a in ARMS if a != "unmodeled"]))}
         rows = sorted((s for s in fs if s["mode"] != "baseline"),
@@ -365,7 +379,8 @@ def markdown_report(
         for s in rows:
             lines.append(
                 f"| {s['mode']} | {s['axis']} | {100 * float(s['distance_m']):.0f} | "
-                f"{fmt(s['disp_3d_ratio_to_baseline'], 3)}x | {fmt(s['tilt_ratio_to_baseline'], 3)}x | "
+                f"{fmt(s['disp_3d_ratio_to_baseline'], 3)}x | {fmt(s['disp_3d_ratio_worst_sea'], 3)}x | "
+                f"{fmt(s['tilt_ratio_to_baseline'], 3)}x | {fmt(s['tilt_ratio_worst_sea'], 3)}x | "
                 f"{fmt(s['yaw_ratio_to_baseline'], 3)}x | {fmt(s['installed_rms_mps2'], 4)} | "
                 f"{fmt(s['residual_rms_mps2'], 4)} | {pct(s['excess_removed_fraction'])} |"
             )
@@ -408,11 +423,11 @@ def headline_markdown(summaries: list[dict[str, Any]], sweep: list[dict[str, Any
     lines: list[str] = []
     for filt in FILTERS:
         lines += [
-            f"**{FILTER_LABELS[filt]}** (RMS / CG baseline, eight seas pooled)",
+            f"**{FILTER_LABELS[filt]}** (RMS / CG baseline: eight seas pooled, and the worst single sea)",
             "",
-            "| IMU | Uncorrected 3-D | Corrected 3-D | Corrected tilt | Corrected yaw "
-            "| Inner-filter tilt | OU-III model tilt | OU-III model yaw |",
-            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea "
+            "| Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
         for d in HEADLINE_DISTANCES_M:
             for axis in AXES:
@@ -421,13 +436,14 @@ def headline_markdown(summaries: list[dict[str, Any]], sweep: list[dict[str, Any
                     continue
                 lines.append(
                     f"| {100 * d:.0f} cm {AXIS_LABEL[axis]} "
-                    f"| {fmt(cell['unmodeled']['disp_3d_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['unmodeled']['disp_3d_ratio_to_baseline'], 2)} "
+                    f"| {fmt(cell['unmodeled']['disp_3d_ratio_worst_sea'], 2)} "
                     f"| {fmt(cell['wrapper']['disp_3d_ratio_to_baseline'], 3)} "
-                    f"| {fmt(cell['wrapper']['tilt_ratio_to_baseline'], 3)} "
-                    f"| {fmt(cell['wrapper']['yaw_ratio_to_baseline'], 3)} "
-                    f"| {fmt(cell['mekf']['tilt_ratio_to_baseline'], 3)} "
-                    f"| {fmt(cell['mekf_ou3']['tilt_ratio_to_baseline'], 3)} "
-                    f"| {fmt(cell['mekf_ou3']['yaw_ratio_to_baseline'], 3)} |"
+                    f"| {fmt(cell['wrapper']['disp_3d_ratio_worst_sea'], 3)} "
+                    f"| {fmt(cell['wrapper']['tilt_ratio_worst_sea'], 2)} "
+                    f"| {fmt(cell['wrapper']['yaw_ratio_to_baseline'], 2)} "
+                    f"| {fmt(cell['mekf']['tilt_ratio_worst_sea'], 2)} "
+                    f"| {fmt(cell['mekf_ou3']['tilt_ratio_to_baseline'], 2)} |"
                 )
         lines.append("")
     lines += [
@@ -482,7 +498,7 @@ def write_ratio_grid(path: Path, summaries: list[dict[str, Any]], field: str, yl
             ax.grid(True, alpha=0.3)
             ax.tick_params(labelsize=7)
             if row == 0:
-                ax.set_title(f"IMU {AXIS_LABEL[axis]} of CG", fontsize=8)
+                ax.set_title(f"IMU {AXIS_WHERE[axis]} CG", fontsize=8)
             if col == 0:
                 ax.set_ylabel(f"{FILTER_LABELS[filt]}\n{ylabel}", fontsize=7.5)
     fig.supxlabel("IMU offset from CG [cm]", fontsize=8, y=0.1)
@@ -490,6 +506,42 @@ def write_ratio_grid(path: Path, summaries: list[dict[str, Any]], field: str, yl
     handles, labels = axarr[0][0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=5, fontsize=6.5, frameon=False, bbox_to_anchor=(0.5, 0.0))
     fig.subplots_adjust(left=0.11, right=0.99, bottom=0.2, top=0.88, wspace=0.08, hspace=0.12)
+    ou3._save(fig, path)
+    plt.close(fig)
+
+
+def write_sea_state_plot(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Per-sea ratios at 1 m: the pooled RMS hides the calm seas."""
+    plt = ou3.reproducible_pyplot()
+    arms = ("unmodeled", "wrapper", "mekf")
+    fig, axarr = plt.subplots(len(FILTERS), len(SEA_STATE_CASES), figsize=(7.2, 4.6), sharex=True)
+    width = 0.27
+    for row, filt in enumerate(FILTERS):
+        frows = [r for r in rows if r["filter"] == filt]
+        for col, (field, axis, title) in enumerate(SEA_STATE_CASES):
+            ax = axarr[row][col]
+            seas: list[tuple[float, str]] = []
+            top = 1.0
+            for index, arm in enumerate(arms):
+                seas, ratios = ou3._per_sea_ratio(frows, arm, axis, SEA_STATE_DISTANCE_M, field)
+                top = max([top] + [v for v in ratios if math.isfinite(v)])
+                ax.bar([i + (index - 1) * width for i in range(len(seas))], ratios, width=width,
+                       color=ARM_STYLE[arm]["color"], label=ARM_LABELS[arm])
+            ax.axhline(1.0, color="#666666", linewidth=0.8)
+            ax.set_ylim(0.0, top * 1.08)
+            ax.set_xticks(range(len(seas)))
+            ax.set_xticklabels([f"{ou3.SPECTRUM_SHORT[spectrum]} {hs:g}" for hs, spectrum in seas], rotation=90,
+                               fontsize=6.5)
+            ax.tick_params(labelsize=7)
+            ax.grid(True, axis="y", alpha=0.3)
+            if row == 0:
+                ax.set_title(f"{title}, IMU {100 * SEA_STATE_DISTANCE_M:.0f} cm {AXIS_WHERE[axis]} CG", fontsize=8)
+            if col == 0:
+                ax.set_ylabel(f"{FILTER_LABELS[filt]}\nRMS / CG baseline", fontsize=7.5)
+    fig.supxlabel("Incident spectrum and $H_s$ [m]", fontsize=8, y=0.09)
+    handles, labels = axarr[0][0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=7, frameon=False, bbox_to_anchor=(0.5, 0.0))
+    fig.subplots_adjust(left=0.1, right=0.99, bottom=0.22, top=0.93, wspace=0.15, hspace=0.12)
     ou3._save(fig, path)
     plt.close(fig)
 
@@ -605,6 +657,7 @@ def main() -> int:
                          "tilt RMS / CG", "Pooled max roll/pitch error against IMU offset")
         write_ratio_grid(figures["carma_lever_arm_yaw.svg"], summaries, "yaw_ratio_to_baseline",
                          "yaw RMS / CG", "Pooled yaw error against IMU offset")
+        write_sea_state_plot(figures["carma_lever_arm_sea_state.svg"], rows)
         write_cutoff_plot(figures["carma_lever_arm_cutoff.svg"], sweep, summaries)
         generated += list(figures.values())
 
