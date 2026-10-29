@@ -22,12 +22,13 @@ Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
 - keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled;
 - estimates 3-D marine motion with CARMA(4,1) priors whose frequency and amplitude follow the operating point measured by the shared OU-III tuner;
+- optionally corrects an IMU mounted away from the centre of gravity (`IMU_LEVER_ARM_*_M` at the top of the sketch, zero by default);
 - provides on-device graphics and serial/NMEA output (the same sentences as the OU-III sketch);
 - enables the shared IMU calibration wizard by default.
 
 Differences from the OU-III sketch:
 
-- no IMU lever-arm (off-CoG) correction: mount the IMU close to the centre of gravity;
+- the IMU lever-arm correction is removed at the fusion wrapper's input, so the startup tilt, the magnetic reference, the tuner and the wave direction all see centre-of-gravity motion; OU-III removes it in its MEKF's accelerometer update only. The [off-CoG study](../../../docs/carma-imu-lever-arm.md) compares the two;
 - no `S = 0` pseudo-measurement, so there is no pseudo-update cadence setting.
 
 ## Install and upload

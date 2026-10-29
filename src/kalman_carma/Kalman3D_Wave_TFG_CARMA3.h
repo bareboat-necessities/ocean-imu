@@ -64,7 +64,7 @@
   The model is not group-affine (the beta_g -> rho term depends on the
   estimate), so this is a right-invariant two-frame Lie-group error-state
   EKF, not a log-linear invariant EKF.  Its accelerometer and magnetometer
-  Jacobians are state independent:
+  Jacobians are state independent (without the optional lever arm below):
 
       r_a = Rhat (f_m - bhat_a - k_a dT) - (ahat - g),   H_a = [ [g]x 0 .. -I(rho_a) .. -I(beta_a) ]
       r_m = Rhat m - B_w,                               H_m = [ -[B_w]x 0 .. ]
@@ -72,6 +72,17 @@
   with noise Rhat R Rhat^T.  A finite correction a = K r is injected as
   Exp_G(-a) Xhat and the covariance transported by the full group right
   Jacobian J_r(a) = d Log_G(Exp_G(-a) Exp_G(a + d)) / d d.
+
+  Optional IMU lever arm (set_imu_lever_arm_body, off by default): the
+  rotational term L = alpha x r + omega x (omega x r) of an IMU at body
+  offset r is removed from f_m with CARMA3's model,
+  kalman_common/ImuLeverArm.h.  L depends on the gyro bias through the
+  bias-corrected rate, d L / d b_g = J_L, and b_g - bhat_g = -Rhat^T beta_g to
+  first order, so the accelerometer Jacobian gains
+
+      H_a,beta_g = -Rhat J_L Rhat^T,
+
+  the one estimate-dependent block, present only while a lever arm is set.
 
   Policy parity with Kalman3D_Wave_CARMA3.  The fusion wrapper is the same code
   for both filters (SeaStateFusionFilter_TFG_CARMA3.h).  Every covariance
@@ -108,6 +119,7 @@
 #include <cstdint>
 #include <limits>
 
+#include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 #include "lie/SO3Jacobians.h"
@@ -354,6 +366,23 @@ public:
     // kept for interface parity.
     void set_exact_att_bias_Qd(bool on) { use_exact_att_bias_Qd_ = on; }
 
+    // IMU installation lever arm (off-CoG correction), CARMA3's API and model
+    // (kalman_common/ImuLeverArm.h).  r_b is the IMU position relative to the
+    // CoG in the body frame (x forward, y starboard, z down), metres.  Zero,
+    // the default, switches the correction off and leaves the filter exactly
+    // as it is without it.
+    void set_imu_lever_arm_body(const Vector3& r_b) { lever_.set_offset_body(r_b); }
+    void clear_imu_lever_arm() { lever_.clear(); }
+    [[nodiscard]] const Vector3& imu_lever_arm_body() const noexcept { return lever_.offset_body(); }
+    // Corner of the low-pass ahead of the rate derivative (default 15 Hz).
+    void set_imu_lever_arm_cutoff_hz(T hz) { lever_.set_derivative_cutoff_hz(hz); }
+    [[nodiscard]] T imu_lever_arm_cutoff_hz() const noexcept { return lever_.derivative_cutoff_hz(); }
+    // Ablation only: OU-III's model in place of the default, and its alpha
+    // smoothing (used by that model alone).  docs/carma-imu-lever-arm.md.
+    using LeverArmModel = typename filter_detail::ImuLeverArm<T>::Model;
+    void set_imu_lever_arm_model(LeverArmModel m) { lever_.set_model(m); }
+    void set_alpha_smoothing_tau(T tau_sec) { lever_.set_alpha_smoothing_tau(tau_sec); }
+
     void set_reset_mode(ResetMode m) { reset_mode_ = m; }
     [[nodiscard]] ResetMode reset_mode() const { return reset_mode_; }
     void set_covariance_write_mode(CovarianceWriteMode m) { write_mode_ = m; }
@@ -389,6 +418,7 @@ private:
     MatrixNX P_;
     Vector3 B_w_ = Vector3::UnitX();
     Vector3 last_gyr_bias_corrected_ = Vector3::Zero();
+    filter_detail::ImuLeverArm<T> lever_;
 
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
@@ -428,7 +458,8 @@ private:
     MeasDiag3 last_mag_diag_;
 
     struct StepBlocks {
-        Matrix3 F;              // Phi_{phi,bg}
+        // Not "F": the Arduino core defines a function-like F() macro.
+        Matrix3 Phi_pb;         // Phi_{phi,bg}
         Matrix3 E;              // Phi_{bg,bg}
         Matrix3 R1;             // attitude at the end of the step
         Matrix3 Xs[NC];         // [w_i(h)]x
@@ -837,6 +868,8 @@ TFGC3_TPL
 bool TFGC3_CLS::initialize_from_attitude(Eigen::Quaternion<T> const& q_bw, T tilt_sigma_rad, T yaw_sigma_rad) {
     if (!q_bw.coeffs().allFinite() || !(q_bw.norm() > T(1e-8))) return false;
     set_quaternion_boat(q_bw);
+    // As in CARMA3: the wrapper hands over here after holding the prediction.
+    lever_.reset_kinematics();
     const T tilt = (std::isfinite(tilt_sigma_rad) && tilt_sigma_rad > T(0)) ? tilt_sigma_rad : T(0.035);
     const T yaw = (std::isfinite(yaw_sigma_rad) && yaw_sigma_rad > T(0)) ? yaw_sigma_rad : T(1.5708);
     begin_write_();
@@ -876,7 +909,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
     const Matrix3 Rinc = lie::Exp<T>(wh);
     b.R1 = R0 * Rinc;
     b.E = b.R1 * R0.transpose();
-    b.F = -(R0 * (Ts * lie::left_jacobian<T>(wh)) * R0.transpose());
+    b.Phi_pb = -(R0 * (Ts * lie::left_jacobian<T>(wh)) * R0.transpose());
     for (int i = 0; i < NC; ++i) b.Xs[i] = lie::skew<T>(Vector3(W1.col(i)));
     b.phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / std::max(T(1e-3), tau_bacc_)) : T(1);
 }
@@ -926,7 +959,7 @@ void TFGC3_CLS::apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks
         T pphi[3], pbg[3], fpb[3];
         for (int k = 0; k < 3; ++k) { pphi[k] = at(OFF_PHI + k, c); pbg[k] = at(OFF_BG + k, c); }
         for (int k = 0; k < 3; ++k) {
-            fpb[k] = b.F(k,0) * pbg[0] + b.F(k,1) * pbg[1] + b.F(k,2) * pbg[2];
+            fpb[k] = b.Phi_pb(k,0) * pbg[0] + b.Phi_pb(k,1) * pbg[1] + b.Phi_pb(k,2) * pbg[2];
             out(OFF_PHI + k, c) = pphi[k] + fpb[k];
             out(OFF_BG + k, c) = b.E(k,0) * pbg[0] + b.E(k,1) * pbg[1] + b.E(k,2) * pbg[2];
         }
@@ -1011,6 +1044,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
 
     const Vector3 w = gyr - X_.B.col(0);
     last_gyr_bias_corrected_ = w;
+    lever_.update_rate(w, Ts);
     const Matrix3 R0 = X_.R;
 
     refresh_discretization_(Ts);
@@ -1138,11 +1172,15 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     const Vector3 g_world(0, 0, gravity_magnitude_);
     const Vector3 ba_term = X_.B.col(1) + k_a_ * (tempC - tempC_ref);
     const Matrix3& R = X_.R;
-    const Vector3 r = R * (acc_meas - ba_term) - (Vector3(X_.X.col(IA)) - g_world);
+    // Off-CoG IMU: remove the rotational term L at the sensor (see the header).
+    const bool lever = lever_.enabled();
+    const Vector3 f_cog = lever ? Vector3(acc_meas - lever_.acceleration()) : acc_meas;
+    const Vector3 r = R * (f_cog - ba_term) - (Vector3(X_.X.col(IA)) - g_world);
     last_acc_diag_.r = r;
     const Matrix3 Rw = R * Racc_ * R.transpose();
 
-    // H = [ [g]x | 0 | 0 0 -I 0.. | -I ];  [g]x = [[0,-g,0],[g,0,0],[0,0,0]].
+    // H = [ [g]x | H_bg | 0 0 -I 0.. | -I ];  [g]x = [[0,-g,0],[g,0,0],[0,0,0]],
+    // H_bg = -R J_L R^T with a lever arm, 0 without.
     const T g = gravity_magnitude_;
     MatrixNX3& PHt = PHt_scratch_;
     for (int i = 0; i < NX; ++i) {
@@ -1150,11 +1188,25 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         PHt(i,1) =  g * P_(i, OFF_PHI + 0) - P_(i, OFF_A + 1) - P_(i, OFF_BA + 1);
         PHt(i,2) = -P_(i, OFF_A + 2) - P_(i, OFF_BA + 2);
     }
+    Matrix3 H_bg = Matrix3::Zero();
+    if (lever) {
+        H_bg = -(R * lever_.bias_jacobian() * R.transpose());
+        for (int i = 0; i < NX; ++i)
+            for (int b = 0; b < 3; ++b)
+                PHt(i,b) += P_(i, OFF_BG) * H_bg(b,0) + P_(i, OFF_BG + 1) * H_bg(b,1) +
+                            P_(i, OFF_BG + 2) * H_bg(b,2);
+    }
     Matrix3 S = Rw;
     for (int b = 0; b < 3; ++b) {
         S(0,b) += -g * PHt(OFF_PHI + 1, b) - PHt(OFF_A + 0, b) - PHt(OFF_BA + 0, b);
         S(1,b) +=  g * PHt(OFF_PHI + 0, b) - PHt(OFF_A + 1, b) - PHt(OFF_BA + 1, b);
         S(2,b) += -PHt(OFF_A + 2, b) - PHt(OFF_BA + 2, b);
+    }
+    if (lever) {
+        for (int a = 0; a < 3; ++a)
+            for (int b = 0; b < 3; ++b)
+                S(a,b) += H_bg(a,0) * PHt(OFF_BG, b) + H_bg(a,1) * PHt(OFF_BG + 1, b) +
+                          H_bg(a,2) * PHt(OFF_BG + 2, b);
     }
     for (int a = 0; a < 3; ++a)
         for (int b = a + 1; b < 3; ++b) {

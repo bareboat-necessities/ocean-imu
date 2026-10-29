@@ -87,6 +87,7 @@ Arduino .ino sketches for esp32s3 (on atomS3R):
 - Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou2
 - Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 - Kalman CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_carma3
+- Kalman TFG-CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg_carma3
 - Two-Frame Lie-Group (TFG): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg
 - PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_pii_observer
 - Non-Linear Observer NLO: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_nlo
@@ -240,6 +241,8 @@ The deployable arm reconstructs the angular acceleration through a two-pole low-
 </p>
 
 Pooled ratios understate the effect and the per-sea figure is the honest one. An RMS over all eight seas is dominated by the largest, where the injected rotational term is smallest relative to the wave signal; broken out sea by sea, the displacement penalty is worst in the mildest seas and the attitude penalty worst in the steepest.
+
+The experimental CARMA3 and TFG-CARMA3 filters carry the same deployable model, applied at their fusion wrapper's input; their own off-CoG study, out to 2 m and against OU-III's in-filter placement, is [`docs/carma-imu-lever-arm.md`](docs/carma-imu-lever-arm.md).
 
 ### Embedded target: M5Stack AtomS3R
 

@@ -38,7 +38,7 @@ If you are bringing up a new board or a new installation, use [`imu_basic/atomS3
 
 1. [Basic AtomS3R IMU](imu_basic/atomS3R_imu_m5_basic/README.md); if a compass later reads wrong headings, run [magnetometer diagnostics](imu_basic/atomS3R_mag_diagnostics/README.md)
 2. [Mahony compass](compass_ahrs/atomS3R_compass_mahony/README.md) or [qMEKF compass](compass_ahrs/atomS3R_compass_qmekf/README.md)
-3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), [experimental CARMA3 marine INS](full_marine_ins/atomS3R_ins_carma3/README.md), [TFG marine INS](full_marine_ins/atomS3R_ins_tfg/README.md), [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md), or [time-varying-gain NLO](full_marine_ins/atomS3R_ins_nlo/README.md)
+3. [OU-II marine INS](full_marine_ins/atomS3R_ins_kalman_ou2/README.md), [OU-III marine INS](full_marine_ins/atomS3R_ins_kalman_ou3/README.md), [experimental CARMA3 marine INS](full_marine_ins/atomS3R_ins_carma3/README.md), [experimental TFG-CARMA3 marine INS](full_marine_ins/atomS3R_ins_tfg_carma3/README.md), [TFG marine INS](full_marine_ins/atomS3R_ins_tfg/README.md), [PII observer](full_marine_ins/atomS3R_ins_pii_observer/README.md), or [time-varying-gain NLO](full_marine_ins/atomS3R_ins_nlo/README.md)
 
 ## Coordinate convention
 

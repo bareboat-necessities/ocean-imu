@@ -10,6 +10,9 @@ Files:
 
 * `src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h` -- the filter,
   `Kalman3D_Wave_TFG_CARMA3<T, NC>` (NC = 4: CARMA(4,1), 21 error states).
+  Its optional IMU lever arm, off in every run reported here, adds the one
+  estimate-dependent block to the accelerometer Jacobian
+  (`docs/carma-imu-lever-arm.md`).
 * `src/kalman_carma/SeaStateFusionFilter_TFG_CARMA3.h` -- the wrapper: the
   CARMA3 wrapper with the inner filter replaced (a defaulted template
   parameter of `SeaStateFusionFilter_CARMA3`; CARMA3's own instantiations are
@@ -28,6 +31,9 @@ Files:
   and `plots/kalman_tfg_carma/` turn it into the results table and chart
   gallery of the experimental article `doc/kalman_tfg_carma/kalman_tfg_carma.tex`
   and `kalman_tfg_carma-charts.tex`, which CI builds into PDFs.
+* `sensors/full_marine_ins/atomS3R_ins_tfg_carma3/` -- an AtomS3R research
+  sketch: `atomS3R_ins_carma3` with this wrapper in place of CARMA3's.
+  It compiles in CI; it is not hardware evidence.
 
 **Result in brief** (simulation; sections 7-13; generated tables in
 `reports/results/tfg_carma3/summary.md`):
@@ -1043,7 +1049,10 @@ the invariant coordinates that T41R0 already shows at lower cost.
   `-Os` with arduino-esp32's C++ flags).  `carma3_size_probe/build.sh`
   compiles one translation unit per variant holding the complete wrapper's
   sample path (`esp32s3_size.csv`; its seven existing rows reproduce
-  `reports/results/carma3_benchmark/esp32s3_size.csv` byte for byte).
+  `reports/results/carma3_benchmark/esp32s3_size.csv` byte for byte).  The
+  figures predate the optional IMU lever arm (`docs/carma-imu-lever-arm.md`):
+  a 92 B model in each filter object and in the wrapper, and a few branches
+  on the sample path; they have not been re-measured.
   `callgraph.sh` links each object with `link_main.cpp` against the
   toolchain's newlib/libstdc++ and reads GCC's call graph
   (`esp32s3_link.csv`, `esp32s3_callgraph.csv`):
@@ -1065,7 +1074,9 @@ the invariant coordinates that T41R0 already shows at lower cost.
   12 483, about 2.8-3.4 M multiply-adds per second (plus about 0.2 M for the
   magnetometer).  If OU-III meets its deadline on the AtomS3R, TFG-CARMA3's
   arithmetic is of the same order; that is an inference, not a measurement.
-  No sketch was added or changed.
+  The research sketch `sensors/full_marine_ins/atomS3R_ins_tfg_carma3/` is
+  the CARMA3 sketch with this wrapper; it keeps the default loop-task
+  stack on the strength of these static depths, not a target measurement.
 
 ## 12. Limitations and unresolved questions
 
@@ -1076,8 +1087,9 @@ the invariant coordinates that T41R0 already shows at lower cost.
 * **Simulation only, one bench.**  The synthetic grid uses the CARMA3
   benchmark's vessel RAOs, sensor models and magnetometer disturbances;
   the pinned dataset is a second, independent simulator.  Neither contains
-  a real vessel or a real IMU.  The IMU sits at the centre of gravity (no
-  lever arm, which neither CARMA filter models).
+  a real vessel or a real IMU.  The IMU sits at the centre of gravity; the
+  filters' optional lever-arm correction and off-CoG installations are
+  studied separately (`docs/carma-imu-lever-arm.md`).
 * **The comparison inherits CARMA3's policies.**  Startup, staged commit,
   watchdog, magnetic-service gate, vibration inflation and every
   covariance write are CARMA3's, mapped into the invariant coordinates
