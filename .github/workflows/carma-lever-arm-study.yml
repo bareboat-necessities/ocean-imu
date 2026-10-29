@@ -13,6 +13,7 @@ on:
       - "tools/ou3_lever_arm_study.py"
       - "tests/validation/test_carma_lever_arm_study.py"
       - "docs/carma-imu-lever-arm.md"
+      - "reports/results/carma_lever_arm_study/**"
       - ".github/workflows/carma-lever-arm-study.yml"
   workflow_dispatch:
     inputs:

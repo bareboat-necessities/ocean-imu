@@ -41,6 +41,7 @@ import json
 import math
 import os
 import shutil
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Iterable, Sequence
@@ -51,6 +52,8 @@ from sim_dataset import input_provenance
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "results" / "carma_lever_arm_study"
+# A smoke run must not replace the committed full-study evidence.
+DEFAULT_SMOKE_OUTPUT_DIR = Path(tempfile.gettempdir()) / "carma_lever_arm_study_smoke"
 BINARY = ROOT / "tests" / "kalman_carma" / "carma_lever_arm-sim"
 DEFAULT_WINDOW_SEC = 900.0
 
@@ -96,6 +99,8 @@ SWEEP_DISTANCE_M = 1.00
 RMS_FIELDS = ou3.RMS_FIELDS
 ROW_FIELDS = ou3.ROW_FIELDS
 RATIO_FIELDS = ("disp_3d_ratio_to_baseline", "tilt_ratio_to_baseline", "yaw_ratio_to_baseline")
+# The headline also publishes the worst single sea; the cutoff sweep does not.
+SUMMARY_COMPARE_FIELDS = RATIO_FIELDS + ("disp_3d_ratio_worst_sea", "tilt_ratio_worst_sea")
 COMPARE_TOLERANCE = 0.01
 # A removed fraction is reported only where the uncorrected excess clears the
 # run-to-run scatter of a correction; below that it is a ratio of noise.
@@ -116,7 +121,8 @@ SEA_STATE_DISTANCE_M = 1.00
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data-dir", type=Path, required=True)
-    p.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    p.add_argument("--output-dir", type=Path, default=None,
+                   help=f"default {DEFAULT_OUTPUT_DIR} for --mode full, {DEFAULT_SMOKE_OUTPUT_DIR} for smoke")
     p.add_argument("--window-sec", type=float, default=DEFAULT_WINDOW_SEC)
     p.add_argument("--jobs", type=int, default=4)
     p.add_argument("--mode", choices=("smoke", "full"), default="full")
@@ -595,7 +601,7 @@ def main() -> int:
     sources = {r: ou3.find_record(args.data_dir, r) for r in records}
     dataset = input_provenance(sources.values())
 
-    out = args.output_dir
+    out = args.output_dir or (DEFAULT_OUTPUT_DIR if full else DEFAULT_SMOKE_OUTPUT_DIR)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -683,7 +689,8 @@ def main() -> int:
 
     if args.compare_to is not None:
         complaints = compare(args.compare_to / summary_path.name, summaries,
-                             ("filter", "mode", "axis", "distance_m"), RATIO_FIELDS, args.compare_tolerance)
+                             ("filter", "mode", "axis", "distance_m"), SUMMARY_COMPARE_FIELDS,
+                             args.compare_tolerance)
         if sweep and (args.compare_to / sweep_path.name).exists():
             complaints += compare(args.compare_to / sweep_path.name, sweep, ("filter", "cutoff_hz"),
                                   RATIO_FIELDS, args.compare_tolerance)

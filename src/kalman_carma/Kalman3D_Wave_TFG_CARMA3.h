@@ -458,7 +458,8 @@ private:
     MeasDiag3 last_mag_diag_;
 
     struct StepBlocks {
-        Matrix3 F;              // Phi_{phi,bg}
+        // Not "F": the Arduino core defines a function-like F() macro.
+        Matrix3 Phi_pb;         // Phi_{phi,bg}
         Matrix3 E;              // Phi_{bg,bg}
         Matrix3 R1;             // attitude at the end of the step
         Matrix3 Xs[NC];         // [w_i(h)]x
@@ -908,7 +909,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
     const Matrix3 Rinc = lie::Exp<T>(wh);
     b.R1 = R0 * Rinc;
     b.E = b.R1 * R0.transpose();
-    b.F = -(R0 * (Ts * lie::left_jacobian<T>(wh)) * R0.transpose());
+    b.Phi_pb = -(R0 * (Ts * lie::left_jacobian<T>(wh)) * R0.transpose());
     for (int i = 0; i < NC; ++i) b.Xs[i] = lie::skew<T>(Vector3(W1.col(i)));
     b.phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / std::max(T(1e-3), tau_bacc_)) : T(1);
 }
@@ -958,7 +959,7 @@ void TFGC3_CLS::apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks
         T pphi[3], pbg[3], fpb[3];
         for (int k = 0; k < 3; ++k) { pphi[k] = at(OFF_PHI + k, c); pbg[k] = at(OFF_BG + k, c); }
         for (int k = 0; k < 3; ++k) {
-            fpb[k] = b.F(k,0) * pbg[0] + b.F(k,1) * pbg[1] + b.F(k,2) * pbg[2];
+            fpb[k] = b.Phi_pb(k,0) * pbg[0] + b.Phi_pb(k,1) * pbg[1] + b.Phi_pb(k,2) * pbg[2];
             out(OFF_PHI + k, c) = pphi[k] + fpb[k];
             out(OFF_BG + k, c) = b.E(k,0) * pbg[0] + b.E(k,1) * pbg[1] + b.E(k,2) * pbg[2];
         }

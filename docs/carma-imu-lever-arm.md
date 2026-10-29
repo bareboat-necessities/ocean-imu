@@ -205,11 +205,12 @@ CARMA3) did: without the `k_alpha` term, OU-III's estimator kept tilt at the
 CG level on the forward and starboard arms; with it, pitch RMS tripled on the
 forward arm.
 
-This study does not run OU-III, so it says nothing directly about OU-III's
-numbers.  It does show this model degrading attitude in two filters that share
-OU-III's attitude mathematics, and the OU-III sketch exposes the same model
-through its `IMU_LEVER_ARM_*_M`.  An OU-III run of this matrix belongs before
-anyone enters a nonzero offset there.
+This study does not run OU-III, so OU-III remains untested and the study says
+nothing directly about its numbers.  It does show this model degrading
+attitude in both CARMA filters it ran (CARMA3's multiplicative attitude filter
+and TFG-CARMA3's two-frame invariant one), and the OU-III sketch exposes the
+same model through its `IMU_LEVER_ARM_*_M`.  An OU-III run of this matrix
+belongs before anyone enters a nonzero offset there.
 
 ## Limits
 

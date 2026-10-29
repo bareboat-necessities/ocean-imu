@@ -103,6 +103,8 @@ public:
 
     // Once per prediction step, with the bias-corrected body rate.
     void update_rate(const Vector3& omega, T dt) {
+        // A non-finite sample would stay in the recursive filters for good.
+        if (!omega.allFinite()) return;
         if (model_ == Model::OuIII) {
             update_ou3_(omega, dt);
             return;

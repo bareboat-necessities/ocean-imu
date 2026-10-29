@@ -111,7 +111,7 @@ the benchmark's IMU is at the centre of gravity, so roll/pitch reach the
 translational estimate only through the attitude estimate: a tilt error
 `dtheta` puts `g dtheta` into the horizontal specific force (0.1 deg is
 0.017 m/s^2), which is why the horizontal channel is the attitude-coupled
-one.  A lever arm (IMU above the roll centre) would add `alpha x r` to the
+one.  A lever arm (IMU above the centre of gravity) would add `alpha x r` to the
 horizontal acceleration; the CARMA filters' optional correction and its
 off-CoG study are `docs/carma-imu-lever-arm.md`, and the benchmark here keeps
 the IMU at the centre of gravity.
@@ -611,8 +611,9 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   bytes are object-level, not a linked image.  They predate the optional
   IMU lever arm (`docs/carma-imu-lever-arm.md`), which adds a 92 B model to
   the filter object and another to the wrapper, and a few branches to the
-  sample path; they have not been re-measured.  All variants are smaller in
-  code than OU-III (one CARMA model class serves every axis).  The filter
+  sample path; they have not been re-measured.  Before that feature every
+  variant was smaller in code than OU-III (one CARMA model class serves every
+  axis).  The filter
   object grows with `NX^2` and with the `StepDiscretization` coefficients of
   its two block models (C41 x/y/z 6040 B against OU-III's 5692 B, up to
   10 288 B for C52 + S).  The largest stack frame is the library's
