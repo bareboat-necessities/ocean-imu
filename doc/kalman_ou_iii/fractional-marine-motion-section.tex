@@ -309,7 +309,7 @@ identifiability is an empirical question.
 
 \subsection{Reproducible Spectral and Motion Illustrations}
 \label{sec:frac-figures}
-Figures~\ref{fig:frac-spectra}--\ref{fig:frac-motion} are generated
+Figures~\ref{fig:frac-spectra}--\ref{fig:frac-highpass-refit} are generated
 by the checked-in Python script in this document's directory.
 That script also saves a JSON record of every fit, parameter, and
 numerical configuration. All spectra use the one-sided convention
@@ -354,6 +354,125 @@ the selected band and family, not a general theorem ranking CARMA
 above fractional dynamics. In particular, the fractional operator's
 closer asymptotic tail does not guarantee a better fit around a
 narrow peak and its shoulders.
+
+\subsubsection{A matched-objective refit with fractional high-pass shaping}
+The original four fixed-order tests do not exhaust fractional
+spectral modeling. In particular, their \(\omega^2\) low-frequency
+suppression is too weak to mimic the rapidly suppressed low-frequency
+shoulder of an \emph{incident} JONSWAP spectrum. To test whether
+additional fractional shaping changes that result, introduce
+\begin{equation}
+H_{\nu,\eta}(s)=\frac{\sigma s}{L(s)^\nu}
+  \left(\frac{s}{s+\lambda}\right)^\eta,
+\quad \eta\geq0,\ \lambda>0,
+\label{eq:frac-highpass}
+\end{equation}
+where \(L(s)=s^2+2\zeta\omega_0s+\omega_0^2\),
+\(\lambda\) has units \(\mathrm{rad\,s^{-1}}\),
+and the fractional factor uses the analytic branch in
+\(\operatorname{Re}s>0\). Because
+\(\operatorname{Re}[s/(s+\lambda)]>0\) there, that factor is
+analytic and bounded for positive real \(\eta\). Combined with
+the stable fractional oscillator, it defines a causal stationary
+Gaussian output under the variance conditions already derived.
+Its PSD, for the same white-noise intensity convention as
+(\ref{eq:frac-psd}), is
+\begin{equation}
+S_{\nu,\eta}(\omega)=q\frac{\omega^2}{|L(i\omega)|^{2\nu}}
+\left(\frac{\omega^2}{\omega^2+\lambda^2}\right)^\eta.
+\label{eq:frac-highpass-psd}
+\end{equation}
+At low frequencies the spectrum now behaves as
+\(\omega^{2+2\eta}\), whereas its high-frequency exponent
+remains \(2-4\nu\). Thus the exact displacement, velocity,
+and acceleration mean-square thresholds on \(\nu\) are unchanged.
+This is a \emph{phenomenological high-pass prior}; the
+fractional factor is not an identified Cummins radiation kernel.
+
+To avoid comparing a newly fitted fractional model against
+unchanged historical CARMA parameters, we refit CARMA(4,1),
+CARMA(5,2), and the high-pass families using the identical
+JONSWAP target, variance constraint, frequency grid, bounds,
+and log-PSD objective (\ref{eq:frac-fit-objective}). Multiple
+bounded initializations reduce sensitivity to local minima,
+but do not establish a global optimum. For the new
+\(\nu=1.80\) model, optimizing \(\eta,\lambda,f_0,\zeta\)
+reduces the JONSWAP error from \(3.17\) to \(0.76\) dB;
+the fitted \(\eta\approx4.72\) is \emph{not} a small
+perturbation. Allowing \(\nu\) to vary gives \(\nu\approx1.96\),
+\(\eta\approx4.17\), and only a marginal further improvement
+to \(0.758\) dB. These are real numerical spectral improvements
+within the more flexible transfer family, not measured estimator
+improvements.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=.99\textwidth]{fractional-fig-7-highpass-refit.pdf}
+\caption{\emph{Matched-objective} incident JONSWAP fitting:
+original single fractional oscillator \(\nu=1.80\),
+new fractional high-pass shaper at fixed \(\nu=1.80\),
+integer high-pass control \(\nu=2,\eta=4\), and independently
+refitted CARMA(5,2). Left: fitted one-sided spectra with
+the common \((H_s/4)^2\) variance. Right: log-PSD residuals
+over the same 0.18--1.15 Hz band. High-pass fractional
+shaping improves the original fractional fit substantially,
+but the similarly effective integer control and the better
+CARMA(5,2) refit prevent attribution of a unique fractional
+advantage. No hull RAO or INS measurements are included.}
+\label{fig:frac-highpass-refit}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{Separate bounded, multi-start fits to incident JONSWAP
+(\(\gamma=3.3\)) and PM (\(\gamma=1\)), both with
+\(f_p=0.29\) Hz, \(H_s=1\) m. Lower is better. The JONSWAP
+peak-band metric is normalized \(L_2\) spectral error over
+0.24--0.48 Hz; the other scores use (\ref{eq:frac-fit-objective})
+over 0.18--1.15 Hz. PM parameters are fitted anew, not transferred
+from JONSWAP. Exact wave-state count applies only to rational
+models; noninteger models need approximation.}
+\label{tab:frac-fair-refit}
+\footnotesize
+\begin{tabular}{lrrrr}
+\hline
+Model & JONSWAP (dB) & Peak \(L_2\) (\%) & PM (dB) & Exact states/axis \\
+\hline
+CARMA(4,1), refitted & 1.61 & 16.2 & --- & 4 \\
+CARMA(5,2), refitted & \textbf{0.58} & 17.5 & \textbf{0.21} & 5 \\
+Single fractional, \(\nu=1.80\) & 3.17 & --- & --- & non-Markov \\
+Fractional high-pass, \(\nu=1.80\) & 0.76 & 21.2 & 0.59 & non-Markov \\
+Fractional high-pass, free \(\nu\) & 0.76 & 21.5 & 0.43 & non-Markov \\
+Integer high-pass, \(\nu=2,\eta=4\) & 0.76 & 21.3 & 0.66 & 8 \\
+\hline
+\end{tabular}
+\end{table*}
+
+The more flexible fit is \emph{not} evidence that fractional
+memory is essential. Indeed, the integer-order control
+\begin{equation}
+H_{2,4}(s)=\frac{\sigma s^5}{L(s)^2(s+\lambda)^4}
+\label{eq:frac-integer-highpass}
+\end{equation}
+achieves \(0.759\) dB on JONSWAP, essentially indistinguishable
+from the best fractional high-pass score under this metric.
+It is an exact \emph{eight-state-per-axis} rational process,
+versus five states for CARMA(5,2), and its XYZ use would
+nominally require \(33\) total states with the same nine
+non-wave INS states. A fractional high-pass requires a
+separate finite-band rational approximation and may require
+more states; the necessary order has \emph{not} been measured.
+Allowing CARMA(5,2) to refit the same objective obtains
+\(0.577\) dB, and its PM refit obtains \(0.207\) dB versus
+\(0.431\) dB for the free-fractional high-pass. Furthermore,
+the fractionally shaped JONSWAP fit has about \(21\%\)
+peak-band relative \(L_2\) error versus \(17.5\%\) for the
+refitted CARMA(5,2). Some CARMA refit parameters reach
+the supplied optimization bounds and require physical
+qualification before use. The original negative result was
+\emph{family-specific}; the new positive shaping result is
+\emph{not a cost-matched win}. Neither metric tests estimator
+startup, bias rejection, or covariance consistency.
 
 \begin{figure*}[t]
 \centering
@@ -683,7 +802,11 @@ correlated excitation at a fixed state budget: this attacks a
 documented CARMA failure and a physical structural omission.
 \emph{Second}, test a tempered, fractionally shaped CARMA(4,1)
 with enforced DC zero and acceleration regularity against
-a same-order rational-only shaping baseline.
+a same-order rational-only shaping baseline. The improved
+fractional high-pass fits in Table~\ref{tab:frac-fair-refit}
+motivate an additional \emph{state-budgeted} test, but a model
+that merely reproduces their steep low-frequency cutoff using
+eight or more states does not beat refitted five-state CARMA(5,2).
 \emph{Third}, conditionally prototype an order-5
 approximation to \(\nu\approx1.85\) in the \emph{benchmark},
 only after independent vessel-response fits justify it and
@@ -693,8 +816,11 @@ a separate lower-priority experiment.
 
 The present evidence establishes a mathematically coherent
 fractional oscillator, a credible finite-band rational surrogate,
-and a negative single-JONSWAP fit relative to the documented
-CARMA choices. It does \emph{not} establish a fractional
+and a much better fit after adding a fractional high-pass factor.
+An equally successful integer high-pass control and a better
+cost- and objective-aware CARMA(5,2) refit show why spectral
+flexibility alone does not prove a unique fractional advantage.
+It does \emph{not} establish a fractional
 three-axis motion prior superior in estimation accuracy,
 stationary behavior, or runtime. Neither the stochastic-model
 regularity calculation nor the existing shipping OU--III

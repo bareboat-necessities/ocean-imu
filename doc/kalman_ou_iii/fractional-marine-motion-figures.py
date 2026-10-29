@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproduce six *illustrative* fractional marine-motion figures.
+"""Reproduce seven *illustrative* fractional marine-motion figures.
 
 Run: python3 doc/kalman_ou_iii/fractional-marine-motion-figures.py
 Requires: numpy, scipy, matplotlib. Outputs vector PDFs and a numerical JSON
@@ -26,11 +26,17 @@ reproducible, deliberately conservative state-budget experiment. It preserves
 the DC zero, relative degree three, and a stable four-state oscillator core.
 The metric is complex transfer relative error over the declared band, with
 the corresponding PSD log error also reported.
+
+Figure 7 performs a separate, matched-objective multi-start refit: additional
+low-frequency fractional high-pass shaping versus a strictly rational order-8
+control and a refitted CARMA(5,2). All use the same variance, weights, and
+band. No result represents a vessel response or an INS benchmark.
 """
 
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
@@ -70,6 +76,18 @@ def L(s: np.ndarray, f0: float, zeta: float) -> np.ndarray:
 def frac(f: np.ndarray, nu: float, f0: float, zeta: float) -> np.ndarray:
     s = 1j * TWOPI * f
     return s / L(s, f0, zeta)**nu
+
+
+def frac_highpass(f: np.ndarray, nu: float, f0: float, zeta: float,
+                  eta: float, cutoff_hz: float) -> np.ndarray:
+    """Stable high-pass spectral shaping; integer nu=2,eta=4 has 8 poles.
+
+    For eta>=0 and lambda>0, (s/(s+lambda))**eta is bounded/analytic
+    on Re(s)>0. Its DC slope is 2+2*eta in the PSD; its high-frequency
+    slope remains 2-4*nu. This is a proposed phenomenological prior.
+    """
+    s = 1j * TWOPI * f
+    return frac(f, nu, f0, zeta) * (s / (s + TWOPI * cutoff_hz))**eta
 
 
 def c41(f: np.ndarray, f1: float, z1: float, f2: float, z2: float) -> np.ndarray:
@@ -145,7 +163,11 @@ def fit_fractional(nu: float, target_fn, band: np.ndarray,
 
 
 def save(fig: plt.Figure, index: int, shortname: str):
-    fig.savefig(OUT / f"fractional-fig-{index}-{shortname}.pdf")
+    # Freeze PDF metadata so regenerating the same numerical figures also
+    # reproduces their binary assets rather than only their visible artwork.
+    fig.savefig(OUT / f"fractional-fig-{index}-{shortname}.pdf",
+                metadata={"CreationDate": datetime(2026, 10, 29,
+                                                    tzinfo=timezone.utc)})
     plt.close(fig)
 
 
@@ -462,6 +484,143 @@ def fig6(summary: dict):
         fits=results)
 
 
+def fig7(fixed_nu_fits: dict, summary: dict):
+    """Test the objection that the original fractional family was too narrow.
+
+    All fits use the exact Figure 1 JONSWAP target, quadrature normalization,
+    frequency band and weights. Parameter bounds are visible in the JSON.
+    The comparison includes an integer-only control: H=s^5/[L(s)^2(s+lambda)^4],
+    a strictly rational transfer with *eight* poles per axis, and a separately
+    refitted five-pole CARMA. Thus spectral gains are not attributed to
+    fractional dynamics without a rational model with equivalent flexibility.
+    """
+    target_fn = lambda ff: wave(ff, .29, 3.3, HS)
+    target = target_fn(FIT1)
+    w = weights(target)
+    var = (HS / 4)**2
+    cases = {
+        "fractional_highpass_nu_1p80": dict(
+            fn=lambda ff, x: frac_highpass(ff, 1.80, x[0], x[1], x[2], x[3]),
+            lower=[.16, .035, 0., .015], upper=[.56, .95, 6., 2.],
+            starts=[[.29, .15, .5, .30], [.29, .15, 1.5, .30],
+                    [.35, .40, 2., .15], [.25, .12, 3., .50]]),
+        "fractional_highpass_free_nu": dict(
+            fn=lambda ff, x: frac_highpass(ff, x[2], x[0], x[1], x[3], x[4]),
+            lower=[.16, .035, 1.76, 0., .015],
+            upper=[.56, .95, 2.65, 6., 2.],
+            starts=[[.29, .15, 1.80, .5, .30], [.29, .15, 1.8, 1.5, .30],
+                    [.35, .40, 1.85, 2., .15], [.25, .12, 2.0, 3., .50]]),
+        "integer_highpass_order_8": dict(
+            fn=lambda ff, x: frac_highpass(ff, 2., x[0], x[1], 4., x[2]),
+            lower=[.16, .035, .015], upper=[.56, .95, 2.],
+            starts=[[.27, .20, .35], [.28, .15, .50], [.35, .4, .15]]),
+        "CARMA_41_refitted": dict(
+            fn=lambda ff, x: c41(ff, *x),
+            lower=[.17, .035, .38, .035], upper=[.49, .72, 1.5, .95],
+            starts=[[.306945, .104191, .815318, .478188],
+                    [.29, .12, .60, .40], [.29, .25, .80, .45]]),
+        "CARMA_52_refitted": dict(
+            fn=lambda ff, x: c52(ff, *x),
+            lower=[.15, .035, .31, .04, .10, .06, .03],
+            upper=[.52, .70, 1.5, .95, 4., 1.25, .95],
+            starts=[[.27812, .09715, .44274, .52299, 1.86402, .15105, .20],
+                    [.29, .10, .70, .45, 2., .15, .25],
+                    [.29, .20, .60, .40, 1., .30, .30]])
+    }
+
+    def fit_case(case, target_fn):
+        targ = target_fn(FIT1)
+        weight = weights(targ)
+        lo, hi = np.array(case["lower"]), np.array(case["upper"])
+        best = None
+        for start in case["starts"]:
+            def residual(x):
+                model = scaled_model(lambda ff, *pars: case["fn"](ff, pars),
+                                     tuple(x), FIT1, var)
+                return log_resid(model, targ, weight)
+            res = least_squares(residual,
+                np.clip(np.array(start), lo + 1e-6, hi - 1e-6),
+                bounds=(lo, hi), max_nfev=700,
+                ftol=1e-10, xtol=1e-10, gtol=1e-10)
+            if best is None or np.linalg.norm(res.fun) < np.linalg.norm(best.fun):
+                best = res
+        fn = lambda ff: scaled_model(
+            lambda freq, *pars: case["fn"](freq, pars),
+            tuple(best.x), ff, var)
+        return best.x, fn, rms_db(fn(FIT1), targ, weight)
+
+    fits = {}
+    for name, case in cases.items():
+        x, fn, error = fit_case(case, target_fn)
+        # Peak-energy L2 mismatch is an independent *metric* evaluated at the
+        # fitted log-spectrum parameters, not an independently optimized fit.
+        local = (FIT1 >= .24) & (FIT1 <= .48)
+        spectral_l2 = 100.0 * np.sqrt(np.trapezoid(
+            (fn(FIT1)[local] - target[local])**2, FIT1[local]) / np.trapezoid(
+            target[local]**2, FIT1[local]))
+        fits[name] = dict(parameters=list(map(float, x)), weighted_RMS_dB=error,
+            peak_band_relative_L2_percent=float(spectral_l2),
+            parameter_bounds=dict(lower=case["lower"], upper=case["upper"]))
+
+    # A PM response is a separate target, not a claim of cross-sea transfer.
+    # Refit parameters for that target with exactly the same procedure.
+    pm_target = lambda ff: wave(ff, .29, 1.0, HS)
+    pm_fits = {}
+    for name in ("fractional_highpass_nu_1p80", "fractional_highpass_free_nu",
+                 "integer_highpass_order_8", "CARMA_52_refitted"):
+        x, _, err = fit_case(cases[name], pm_target)
+        pm_fits[name] = dict(parameters=list(map(float, x)),
+                             weighted_RMS_dB=err)
+
+    f = np.linspace(.12, 1.22, 1750)
+    fig, ax = plt.subplots(1, 2, figsize=(7.12, 3.00))
+    ax[0].semilogy(f, target_fn(f), color="black", lw=2.25,
+                   label="JONSWAP target")
+    # The original ν=1.80 fit (without the extra factor) is retained for a
+    # directly legible before/after comparison on the same axes.
+    old = fixed_nu_fits["1.80"]
+    oldfn = lambda ff: scaled_model(frac,
+        (1.8, old["f0_Hz"], old["zeta"]), ff, var)
+    curves = [("Simple fractional", oldfn, COL["gray"], "--")]
+    for name, label, color, ls in [
+        ("fractional_highpass_nu_1p80", "Fractional high-pass", COL["purple"], "-"),
+        ("integer_highpass_order_8", "Integer high-pass (8 states)", COL["orange"], "-.") ,
+        ("CARMA_52_refitted", "Refitted CARMA(5,2)", COL["blue"], "-")]:
+        pars = fits[name]["parameters"]
+        case = cases[name]
+        fn = lambda ff, c=case, p=pars: scaled_model(
+            lambda freq, *args: c["fn"](freq, args), tuple(p), ff, var)
+        curves.append((label, fn, color, ls))
+    for label, fn, color, ls in curves:
+        ax[0].semilogy(f, fn(f), color=color, ls=ls, label=label)
+        ax[1].plot(FIT1, 10 * np.log10(np.maximum(fn(FIT1), 1e-100) / target),
+                   color=color, ls=ls, label=label)
+    ax[0].set(xlim=(.16, 1.20), ylim=(1e-4, 1.8),
+              xlabel="Frequency (Hz)",
+              ylabel=r"One-sided PSD ($\mathrm{m^2/Hz}$)",
+              title="(a) Equal-variance incident-wave fits")
+    ax[0].legend(loc="upper right", frameon=False, fontsize=6.55)
+    ax[0].grid(True, which="major")
+    ax[1].axhline(0, lw=.9, color="black")
+    ax[1].set(xlim=(float(FIT1[0]), float(FIT1[-1])),
+              xlabel="Frequency (Hz)", ylabel="Model / JONSWAP (dB)",
+              title="(b) Residuals on the identical fit band")
+    ax[1].legend(frameon=False, fontsize=6.55, loc="upper right")
+    ax[1].grid(True)
+    fig.subplots_adjust(wspace=.28)
+    save(fig, 7, "highpass-refit")
+    summary["highpass_fractional_refits"] = dict(
+        transfer="H=s/L(s)^nu * (s/(s+2*pi*lambda_hz))^eta",
+        low_frequency_PSD_slope="2+2*eta",
+        high_frequency_PSD_slope="2-4*nu",
+        numerical_quadrature_variance_m2=var,
+        fit_band_Hz=[float(FIT1[0]), float(FIT1[-1])],
+        objective="same as Fig 1: weighted log-PSD RMS, with full-band common variance",
+        optimization="bounded multistart scipy least_squares; local, not global, optimum",
+        JONSWAP_fits=fits, PM_fits=pm_fits,
+        caveat="integer nu=2 eta=4 is an 8-state rational model per axis; exact noninteger models are not finite-state Markov")
+
+
 def math_checks():
     f = np.geomspace(0.001, 10, 250)
     assert np.allclose(frac(f, 2., .29, .22), c41(f, .29, .22, .29, .22),
@@ -476,6 +635,9 @@ def math_checks():
     # Analytical implication: f^(2-4*nu) has finite k-th derivative energy
     # only if 2*k+2-4*nu < -1, equivalent to nu>(2*k+3)/4.
     assert [(2*k+3)/4 for k in range(3)] == [0.75, 1.25, 1.75]
+    assert np.allclose(frac_highpass(f, 2., .29, .22, 4., .45),
+        (1j*TWOPI*f)**5 / (L(1j*TWOPI*f, .29, .22)**2
+                        * (1j*TWOPI*f+TWOPI*.45)**4), rtol=2e-12)
 
 
 def main():
@@ -494,15 +656,18 @@ def main():
     fig4(fits, summary)
     fig5(summary)
     fig6(summary)
+    fig7(fits, summary)
     with (OUT / "fractional-marine-motion-fit-summary.json").open("w") as file:
         json.dump(summary, file, indent=2, sort_keys=True)
         file.write("\n")
-    print("Generated six vector PDFs and fractional-marine-motion-fit-summary.json")
+    print("Generated seven vector PDFs and fractional-marine-motion-fit-summary.json")
     print("Fractional JONSWAP fits:", summary["incident_JONSWAP_fractional_fits"])
     print("Rational order accuracy:", {k: v["log_PSD_RMS_dB"] for k, v in
           summary["rational_approximation"]["model_orders"].items()})
     print("Mixed seas:", {k: v["weighted_RMS_log_PSD_dB"] for k, v in
           summary["mixed_swell_wind"]["fits"].items()})
+    print("Matched-objective refits:", {k: round(v["weighted_RMS_dB"], 4)
+          for k, v in summary["highpass_fractional_refits"]["JONSWAP_fits"].items()})
 
 
 if __name__ == "__main__":

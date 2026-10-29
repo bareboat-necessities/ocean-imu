@@ -54,8 +54,10 @@ noise, fractional OU and CARFIMA, fractional damping, and
 a causal fractional-powered stochastic oscillator. It establishes
 stationary-variance and mean-square derivative thresholds,
 compares spectral fits to PM/JONSWAP, and measures stable finite-state
-approximations. Eight reproducible figures include time traces,
-spectral comparisons, and mixed-sea examples. Crucially, incident
+approximations. New fractional high-pass shaping improves a narrow
+oscillator's JONSWAP fit, but a refitted rational baseline remains
+competitive with fewer states. Nine reproducible figures include
+time traces, spectral comparisons, and mixed-sea examples. Crucially, incident
 elevation is not vessel displacement, and spectral fit alone cannot
 establish INS accuracy. Startup behavior, three-axis coherence,
 covariance consistency, and embedded cost remain unverified.
@@ -571,9 +573,12 @@ to test whether spectral fit improvements survive
 bias-contaminated, vessel-response-aware, held-out
 heave reconstruction at realistic IMU sampling rates.
 The fractional-calculus extension demonstrates mathematically admissible
-fractional wave priors and low-order stable approximations, but it finds
-no spectral-fit or INS-performance superiority over documented CARMA
-models. On mixed seas, separate wave components and directional
+fractional wave priors, finite-band rational approximations, and improved
+spectral fitting with extra fractional high-pass shaping. Nevertheless,
+an integer high-pass control fits similarly, and refitted CARMA(5,2)
+achieves a better JONSWAP fit with fewer exact states. No fractional
+INS-performance advantage has been demonstrated.
+On mixed seas, separate wave components and directional
 cross-axis structure may matter more than a fractional exponent.
 Its first recommended experiment is a state-budget-controlled,
 RAO-aware, multicomponent benchmark before any fractional deployment.
@@ -585,7 +590,7 @@ for mathematical and experimental verification.
 Results of the experimental CARMA implementation are reported
 separately in \texttt{doc/kalman\_carma/kalman\_carma.tex} and
 \texttt{docs/carma-three-axis.md}; no shipping claim is made.
-The six fractional figures are numerical illustrations with a checked-in
+The seven fractional figures are numerical illustrations with a checked-in
 reproduction script and parameter/fit summary, not hardware results.
 
 \begin{thebibliography}{99}

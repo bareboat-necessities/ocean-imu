@@ -32,6 +32,191 @@
     "2.00": 0.08015009380863039
   },
   "generated_by": "fractional-marine-motion-figures.py",
+  "highpass_fractional_refits": {
+    "JONSWAP_fits": {
+      "CARMA_41_refitted": {
+        "parameter_bounds": {
+          "lower": [
+            0.17,
+            0.035,
+            0.38,
+            0.035
+          ],
+          "upper": [
+            0.49,
+            0.72,
+            1.5,
+            0.95
+          ]
+        },
+        "parameters": [
+          0.2966686970263571,
+          0.09707885277508158,
+          0.7225749966883898,
+          0.3597591860514757
+        ],
+        "peak_band_relative_L2_percent": 16.151720894851486,
+        "weighted_RMS_dB": 1.6065309560096717
+      },
+      "CARMA_52_refitted": {
+        "parameter_bounds": {
+          "lower": [
+            0.15,
+            0.035,
+            0.31,
+            0.04,
+            0.1,
+            0.06,
+            0.03
+          ],
+          "upper": [
+            0.52,
+            0.7,
+            1.5,
+            0.95,
+            4.0,
+            1.25,
+            0.95
+          ]
+        },
+        "parameters": [
+          0.27958891405811476,
+          0.13937803491562326,
+          0.4003230148567293,
+          0.9499999999999998,
+          0.6726736075710571,
+          0.16172319648354558,
+          0.030000000000000002
+        ],
+        "peak_band_relative_L2_percent": 17.52575470817695,
+        "weighted_RMS_dB": 0.5773507386685339
+      },
+      "fractional_highpass_free_nu": {
+        "parameter_bounds": {
+          "lower": [
+            0.16,
+            0.035,
+            1.76,
+            0.0,
+            0.015
+          ],
+          "upper": [
+            0.56,
+            0.95,
+            2.65,
+            6.0,
+            2.0
+          ]
+        },
+        "parameters": [
+          0.27002464150171235,
+          0.22618821487373156,
+          1.963972632341196,
+          4.168904640494542,
+          0.45653253668866495
+        ],
+        "peak_band_relative_L2_percent": 21.497676578580286,
+        "weighted_RMS_dB": 0.7580584713572128
+      },
+      "fractional_highpass_nu_1p80": {
+        "parameter_bounds": {
+          "lower": [
+            0.16,
+            0.035,
+            0.0,
+            0.015
+          ],
+          "upper": [
+            0.56,
+            0.95,
+            6.0,
+            2.0
+          ]
+        },
+        "parameters": [
+          0.27079095441536855,
+          0.21564482429195467,
+          4.7235703565912175,
+          0.33647611901152086
+        ],
+        "peak_band_relative_L2_percent": 21.21448338665231,
+        "weighted_RMS_dB": 0.7620163196747952
+      },
+      "integer_highpass_order_8": {
+        "parameter_bounds": {
+          "lower": [
+            0.16,
+            0.035,
+            0.015
+          ],
+          "upper": [
+            0.56,
+            0.95,
+            2.0
+          ]
+        },
+        "parameters": [
+          0.2705559814767564,
+          0.22867753067605537,
+          0.49768328028157455
+        ],
+        "peak_band_relative_L2_percent": 21.294093829011214,
+        "weighted_RMS_dB": 0.7589210664729059
+      }
+    },
+    "PM_fits": {
+      "CARMA_52_refitted": {
+        "parameters": [
+          0.23976863893884842,
+          0.22650573895417067,
+          0.3785872948089177,
+          0.4624122105930814,
+          2.157704420430663,
+          0.16766572565576038,
+          0.030000000000000002
+        ],
+        "weighted_RMS_dB": 0.20706094183680337
+      },
+      "fractional_highpass_free_nu": {
+        "parameters": [
+          0.24509772297043364,
+          0.31328683567392374,
+          2.252973832454676,
+          5.999999999999999,
+          0.4105294365067581
+        ],
+        "weighted_RMS_dB": 0.4310346410843902
+      },
+      "fractional_highpass_nu_1p80": {
+        "parameters": [
+          0.2580852413511701,
+          0.30103572917754234,
+          5.999999999999999,
+          0.26696952598876333
+        ],
+        "weighted_RMS_dB": 0.5872856509737517
+      },
+      "integer_highpass_order_8": {
+        "parameters": [
+          0.2635593305105208,
+          0.31507649289699785,
+          0.45808616176174083
+        ],
+        "weighted_RMS_dB": 0.6569272061541154
+      }
+    },
+    "caveat": "integer nu=2 eta=4 is an 8-state rational model per axis; exact noninteger models are not finite-state Markov",
+    "fit_band_Hz": [
+      0.18,
+      1.15
+    ],
+    "high_frequency_PSD_slope": "2-4*nu",
+    "low_frequency_PSD_slope": "2+2*eta",
+    "numerical_quadrature_variance_m2": 0.0625,
+    "objective": "same as Fig 1: weighted log-PSD RMS, with full-band common variance",
+    "optimization": "bounded multistart scipy least_squares; local, not global, optimum",
+    "transfer": "H=s/L(s)^nu * (s/(s+2*pi*lambda_hz))^eta"
+  },
   "incident_JONSWAP_fractional_fits": {
     "1.80": {
       "f0_Hz": 0.3601654289936417,
