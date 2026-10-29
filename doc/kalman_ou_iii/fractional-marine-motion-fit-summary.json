@@ -1,0 +1,186 @@
+{
+  "asymptotic_loglog_slopes_nu_1p85": {
+    "acceleration_high": -1.4000000000000004,
+    "acceleration_low": 6.0,
+    "displacement_high": -5.4,
+    "displacement_low": 2.0
+  },
+  "convention": "one-sided S(f) in m^2/Hz; variance = integral_0^inf S(f)df",
+  "disclaimer": "Numerical spectral illustrations, not INS or hardware measurements",
+  "existing_C41J": {
+    "f1_Hz": 0.306945,
+    "f2_Hz": 0.815318,
+    "weighted_RMS_dB": 1.816150198150007,
+    "zeta1": 0.104191,
+    "zeta2": 0.478188
+  },
+  "existing_C52J": {
+    "f1_Hz": 0.27812,
+    "f2_Hz": 0.44274,
+    "f_lambda_Hz": 1.86402,
+    "f_zero_Hz": 0.15105,
+    "weighted_RMS_dB": 0.8711766483917849,
+    "zeta1": 0.09715,
+    "zeta2": 0.52299,
+    "zeta_zero": 0.2
+  },
+  "fit_weights": "0.2+0.8*(S_target/max(S_target))^0.3",
+  "fixed_parameter_half_power_bandwidth_Hz": {
+    "1.80": 0.08645403377110697,
+    "1.85": 0.08375234521575983,
+    "1.90": 0.08285178236397747,
+    "2.00": 0.08015009380863039
+  },
+  "generated_by": "fractional-marine-motion-figures.py",
+  "incident_JONSWAP_fractional_fits": {
+    "1.80": {
+      "f0_Hz": 0.3601654289936417,
+      "weighted_RMS_dB": 3.1698493131418983,
+      "zeta": 0.3976747286087103
+    },
+    "1.85": {
+      "f0_Hz": 0.3649653923611938,
+      "weighted_RMS_dB": 3.237890317108174,
+      "zeta": 0.4168250967483455
+    },
+    "1.90": {
+      "f0_Hz": 0.36988740412770166,
+      "weighted_RMS_dB": 3.3020214558711545,
+      "zeta": 0.43581206834276526
+    },
+    "2.00": {
+      "f0_Hz": 0.38009923784547517,
+      "weighted_RMS_dB": 3.4189611854589734,
+      "zeta": 0.47321676958011555
+    }
+  },
+  "mixed_swell_wind": {
+    "fits": {
+      "single_fractional": {
+        "parameters": [
+          0.2118119350341503,
+          0.7999999999999999,
+          1.7600000000000002
+        ],
+        "weighted_RMS_log_PSD_dB": 5.220801262332776
+      },
+      "single_integer": {
+        "parameters": [
+          0.2371656834095617,
+          0.7999999999999999
+        ],
+        "weighted_RMS_log_PSD_dB": 5.258332255743635
+      },
+      "two_integer": {
+        "parameters": [
+          0.10999463677378203,
+          0.21673508413093234,
+          0.3172526773110606,
+          0.4807749683512384,
+          0.5217944376690049
+        ],
+        "weighted_RMS_log_PSD_dB": 3.6866983114348924
+      }
+    },
+    "fitting_band_Hz": [
+      0.051,
+      0.66
+    ],
+    "objective": "weighted RMS log PSD residual, fixed common integrated response variance",
+    "surrogate_heave_RAO_squared": "1/(1+(f/0.70Hz)^4), unvalidated illustration",
+    "swell": {
+      "Hs_m": 1.25,
+      "peak_Hz": 0.095,
+      "type": "PM"
+    },
+    "target_variance_m2": 0.15487135055780082,
+    "wind": {
+      "Hs_m": 1.0,
+      "gamma": 3.3,
+      "peak_Hz": 0.29,
+      "type": "JONSWAP"
+    }
+  },
+  "rational_approximation": {
+    "constrained_pole_zero_family": "s/L(s)^2 times m stable real pole-zero ratios",
+    "fitting_band_Hz": [
+      0.06,
+      1.5
+    ],
+    "model_orders": {
+      "4": {
+        "complex_relative_RMS_percent": 31.902768277338968,
+        "gain": 1.1955051568250605,
+        "log_PSD_RMS_dB": 1.7257994978752917,
+        "max_abs_PSD_error_dB": 4.250032822146852,
+        "poles_rad_s": [],
+        "zeros_rad_s": []
+      },
+      "5": {
+        "complex_relative_RMS_percent": 7.61175476406043,
+        "gain": 2.970473853065795,
+        "log_PSD_RMS_dB": 0.4379318104656631,
+        "max_abs_PSD_error_dB": 0.9605907709641258,
+        "poles_rad_s": [
+          12.17349807670413
+        ],
+        "zeros_rad_s": [
+          4.54674852853966
+        ]
+      },
+      "6": {
+        "complex_relative_RMS_percent": 4.144002051952961,
+        "gain": 2.630744776007161,
+        "log_PSD_RMS_dB": 0.2673603874299409,
+        "max_abs_PSD_error_dB": 0.5641853444962059,
+        "poles_rad_s": [
+          1.1130486214332636,
+          8.030999380834274
+        ],
+        "zeros_rad_s": [
+          2.0315639200045545,
+          2.031564069376736
+        ]
+      },
+      "7": {
+        "complex_relative_RMS_percent": 3.4460857264943425,
+        "gain": 5.096620198849227,
+        "log_PSD_RMS_dB": 0.204763940267492,
+        "max_abs_PSD_error_dB": 0.530592811928373,
+        "poles_rad_s": [
+          0.9861080218631146,
+          6.021297565332985,
+          75.39821203765366
+        ],
+        "zeros_rad_s": [
+          1.8248587399690714,
+          1.8248461273915848,
+          32.58243817166393
+        ]
+      }
+    },
+    "objective": "unweighted complex relative transfer-function least squares",
+    "target": {
+      "f0_Hz": 0.29,
+      "nu": 1.85,
+      "zeta": 0.22
+    }
+  },
+  "spectral_fitting_objective": "weighted RMS of 10log10(Smodel/Starget); model fixed to target integrated variance",
+  "time_synthesis": {
+    "displayed_interval_s": [
+      25,
+      95
+    ],
+    "filter_approximation": "spectral grid; no finite rational approximation",
+    "method": "FFT filtering of one shared seeded Gaussian white-noise record; periodic grid",
+    "sampling_Hz": 200.0,
+    "seed": 20261029,
+    "theoretical_target_variance_m2": 0.0625,
+    "total_duration_s": 240.0
+  },
+  "variance_quadrature_band_Hz": [
+    0.008,
+    12.0
+  ]
+}
