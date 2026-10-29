@@ -6,7 +6,11 @@
   \usepackage[T1]{fontenc}
 \fi
 \usepackage{amsmath,amssymb,mathtools,bm}
-\usepackage{newtxtext,newtxmath}
+\IfFileExists{newtxtext.sty}{%
+  \usepackage{newtxtext,newtxmath}%
+}{%
+  \usepackage{txfonts}% Times-compatible fallback for minimal TeX installations
+}
 \usepackage{textcomp}
 \usepackage{booktabs,array}
 \usepackage{graphicx}
@@ -28,7 +32,7 @@
 \newcommand{\PSD}{S_x}
 \newcommand{\Hz}{\,\mathrm{Hz}}
 
-\title{Other Stochastic Models for Marine Motion in Kalman Filters (draft)}
+\title{Other Stochastic Models for Marine Motion in Kalman Filters (Draft)}
 
 \author{Mikhail S. Grushinskiy%
 \thanks{Independent researcher, Bareboat Necessities project, Fair Lawn, NJ, USA.
@@ -39,27 +43,32 @@ Correspondence: mgrouch@users.github.com.}}
 
 \begin{abstract}
 A low-cost marine inertial measurement unit senses specific force, not
-displacement. Twice integrating corrected acceleration is vulnerable to
-low-frequency noise, attitude error, and accelerometer bias. In a broad-banded
-sea state with one dominant encounter frequency, a stationary stochastic
-displacement prior may give an appropriate alternative to unrestrained
-integration. This research note develops a hierarchy of \emph{linear}
-continuous-time stochastic differential equations: an ordinary
-Ornstein--Uhlenbeck (OU) displacement, a white-noise-forced damped oscillator,
-an oscillator driven by colored OU forcing, and spectrally shaped continuous-time
-autoregressive moving-average (CARMA) processes. We derive power spectra,
-acceleration regularity requirements, and exact Kalman state-space
-realizations. Two reproducible comparison figures illustrate time traces and
-spectral shapes. Particular attention is paid to CARMA(3,0), (4,1), and (5,2),
-which permit mean-square acceleration, in contrast to CARMA(2,0) and (4,2).
-These are \emph{candidate models}, not shipping Ocean-IMU methods or claims
-of improved heave accuracy. The note ends with a controlled experimental
-program for model selection, adaptation, and possible integration.
+displacement. Integration of corrected acceleration amplifies bias,
+attitude error, and low-frequency noise. This draft reviews stationary
+linear displacement priors: ordinary Ornstein--Uhlenbeck (OU),
+white- and colored-noise damped oscillators, and
+CARMA(3,0), (4,1), and (5,2). We derive their power spectra,
+acceleration regularity, and Kalman state-space realizations.
+A fractional-calculus extension examines fractional Brownian
+noise, fractional OU and CARFIMA, fractional damping, and
+a causal fractional-powered stochastic oscillator. It establishes
+stationary-variance and mean-square derivative thresholds,
+compares spectral fits to PM/JONSWAP, and measures stable finite-state
+approximations. New fractional high-pass shaping improves a narrow
+oscillator's JONSWAP fit, but a refitted rational baseline remains
+competitive with fewer states. Nine reproducible figures include
+time traces, spectral comparisons, and mixed-sea examples. Crucially, incident
+elevation is not vessel displacement, and spectral fit alone cannot
+establish INS accuracy. Startup behavior, three-axis coherence,
+covariance consistency, and embedded cost remain unverified.
+The work recommends paired, held-out, state-budget-controlled
+experiments; it makes no claims of improved shipping performance.
 \end{abstract}
 
 \begin{IEEEkeywords}
 marine heave, Kalman filtering, continuous-time stochastic processes,
-CARMA, Ornstein--Uhlenbeck process, spectral factorization, inertial navigation
+CARMA, Ornstein--Uhlenbeck process, fractional calculus,
+hydrodynamic memory, spectral factorization, inertial navigation
 \end{IEEEkeywords}
 
 \section{The Reconstruction Problem}
@@ -547,6 +556,8 @@ covariance, and full estimator stability analyses.
 Nothing in this article revises the shipping estimator
 or its proof assumptions.
 
+\input{fractional-marine-motion-section.tex}
+
 \section{Conclusion}
 A plain OU displacement prior misses resonant marine
 heave; a white-forced second-order oscillator represents
@@ -561,6 +572,16 @@ The next step is not to declare a new best filter, but
 to test whether spectral fit improvements survive
 bias-contaminated, vessel-response-aware, held-out
 heave reconstruction at realistic IMU sampling rates.
+The fractional-calculus extension demonstrates mathematically admissible
+fractional wave priors, finite-band rational approximations, and improved
+spectral fitting with extra fractional high-pass shaping. Nevertheless,
+an integer high-pass control fits similarly, and refitted CARMA(5,2)
+achieves a better JONSWAP fit with fewer exact states. No fractional
+INS-performance advantage has been demonstrated.
+On mixed seas, separate wave components and directional
+cross-axis structure may matter more than a fractional exponent.
+Its first recommended experiment is a state-budget-controlled,
+RAO-aware, multicomponent benchmark before any fractional deployment.
 
 \section*{Acknowledgment and Status}
 This is a supervised AI-assisted research proposal
@@ -569,8 +590,10 @@ for mathematical and experimental verification.
 Results of the experimental CARMA implementation are reported
 separately in \texttt{doc/kalman\_carma/kalman\_carma.tex} and
 \texttt{docs/carma-three-axis.md}; no shipping claim is made.
+The seven fractional figures are numerical illustrations with a checked-in
+reproduction script and parameter/fit summary, not hardware results.
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
 \bibitem{brockwell01}
 P. J. Brockwell, ``Continuous-time ARMA processes,''
 in \emph{Handbook of Statistics}, vol. 19,
@@ -593,5 +616,93 @@ S. S\"arkk\"a and L. Svensson,
 \emph{Bayesian Filtering and Smoothing}, 2nd ed.,
 Cambridge University Press, 2023,
 doi: 10.1017/9781108917407.
+\bibitem{mandelbrot68}
+B. B. Mandelbrot and J. W. Van Ness,
+\emph{Fractional Brownian motions, fractional noises and applications},
+\emph{SIAM Review}, vol. 10, no. 4, pp. 422--437, 1968,
+doi: 10.1137/1010093.
+
+\bibitem{cheridito03}
+P. Cheridito, H. Kawaguchi, and M. Maejima,
+\emph{Fractional Ornstein--Uhlenbeck processes},
+\emph{Electronic Journal of Probability}, vol. 8,
+paper 3, pp. 1--14, 2003, doi: 10.1214/EJP.v8-125.
+
+\bibitem{tsai09}
+H. Tsai, \emph{On continuous-time autoregressive fractionally
+integrated moving average processes},
+\emph{Bernoulli}, vol. 15, no. 1, pp. 178--194, 2009,
+doi: 10.3150/08-BEJ143.
+
+\bibitem{drozdov07}
+A. D. Drozdov, \emph{Fractional oscillator driven by a Gaussian noise},
+\emph{Physica A}, vol. 376, pp. 237--245, 2007,
+doi: 10.1016/j.physa.2006.10.060.
+
+\bibitem{mitseas26}
+I. P. Mitseas, \emph{Non-stationary stochastic vessel roll dynamics with
+hereditary fractional-order hydrodynamic damping and added-inertia
+nonlinearity}, \emph{Probabilistic Engineering Mechanics},
+vol. 85, art. 104000, 2026,
+doi: 10.1016/j.probengmech.2026.104000.
+
+\bibitem{lutz01}
+E. Lutz, \emph{Fractional Langevin equation},
+\emph{Physical Review E}, vol. 64, art. 051106, 2001,
+doi: 10.1103/PhysRevE.64.051106.
+
+\bibitem{cummins62}
+W. E. Cummins, \emph{The Impulse Response Function and Ship Motions}.
+David Taylor Model Basin, Report 1661, 1962.
+
+\bibitem{perezfossen08}
+T. Perez and T. I. Fossen, \emph{Time- vs. frequency-domain
+identification of parametric radiation force models for marine
+structures at zero speed}, \emph{Modeling, Identification and
+Control}, vol. 29, no. 1, pp. 1--19, 2008,
+doi: 10.4173/mic.2008.1.1.
+
+\bibitem{kaasen20}
+K. E. Kaasen, \emph{Consistent state space modelling of hydrodynamic
+memory}, in \emph{Proc. ASME 39th Int. Conf. Ocean, Offshore
+and Arctic Engineering}, vol. 1, 2020,
+doi: 10.1115/OMAE2020-19194.
+
+\bibitem{pierson64}
+W. J. Pierson and L. Moskowitz, \emph{A proposed spectral form for
+fully developed wind seas based on the similarity theory of
+S. A. Kitaigorodskii}, \emph{Journal of Geophysical Research},
+vol. 69, no. 24, pp. 5181--5190, 1964,
+doi: 10.1029/JZ069i024p05181.
+
+\bibitem{hasselmann73}
+K. Hasselmann \emph{et al.}, \emph{Measurements of Wind-Wave
+Growth and Swell Decay during the Joint North Sea Wave Project
+(JONSWAP)}. Deutsches Hydrographisches Institut, Hamburg, 1973.
+
+\bibitem{oustaloup00}
+A. Oustaloup, F. Levron, F. Nanot, and B. Mathieu,
+\emph{Frequency-band complex noninteger differentiator:
+characterization and synthesis},
+\emph{IEEE Trans. Circuits Syst. I}, vol. 47, no. 1,
+pp. 25--39, 2000, doi: 10.1109/81.817385.
+
+\bibitem{gustavsen99}
+B. Gustavsen and A. Semlyen, \emph{Rational approximation of frequency
+domain responses by vector fitting},
+\emph{IEEE Trans. Power Delivery}, vol. 14, no. 3,
+pp. 1052--1061, 1999, doi: 10.1109/61.772353.
+
+\bibitem{beylkin05}
+G. Beylkin and L. Monz\'on, \emph{On approximation of functions by
+exponential sums}, \emph{Applied and Computational Harmonic Analysis},
+vol. 19, no. 1, pp. 17--48, 2005,
+doi: 10.1016/j.acha.2005.01.003.
+
+\bibitem{vanloan78}
+C. F. Van Loan, \emph{Computing integrals involving the matrix
+exponential}, \emph{IEEE Trans. Automatic Control},
+vol. 23, no. 3, pp. 395--404, 1978,
+doi: 10.1109/TAC.1978.1101743.
 \end{thebibliography}
 \end{document}
