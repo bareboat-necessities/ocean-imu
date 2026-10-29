@@ -1,0 +1,102 @@
+name: carma-lever-arm-study
+
+on:
+  pull_request:
+    paths:
+      - "src/kalman_carma/**"
+      - "src/kalman_common/ImuLeverArm.h"
+      - "src/util/W3dSimCommon.*"
+      - "tests/kalman_carma/carma3/**"
+      - "tests/kalman_carma/carma_lever_arm-*.cpp"
+      - "tests/kalman_carma/Makefile"
+      - "tools/carma_lever_arm_study.py"
+      - "tools/ou3_lever_arm_study.py"
+      - "tests/validation/test_carma_lever_arm_study.py"
+      - "docs/carma-imu-lever-arm.md"
+      - ".github/workflows/carma-lever-arm-study.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Study size
+        required: true
+        default: full
+        type: choice
+        options: [smoke, full]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carma-lever-arm-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  study:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++ make libeigen3-dev python3-numpy python3-matplotlib
+
+      - name: Download versioned simulation data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          mkdir -p /tmp/carma-lever-data
+          unzip -o sim-data-files-vessel-rao-28ft.zip -d /tmp/carma-lever-data >/dev/null
+
+      - name: Build the lever-arm simulator and checks
+        run: make -C tests/kalman_carma carma_lever_arm-sim carma_lever_arm-test
+
+      - name: Check the lever-arm model, its Jacobians and zero-offset identity
+        run: ./carma_lever_arm-test
+        working-directory: tests/kalman_carma
+
+      # Against the committed evidence, before the re-run replaces it; the
+      # re-run is held to the committed ratios by --compare-to below.
+      - name: Unit-test the study and its documentation contract
+        run: python3 tests/validation/test_carma_lever_arm_study.py
+
+      # Keep the committed summaries where the re-run cannot overwrite them,
+      # so the study can be asked whether it still reaches the same numbers.
+      - name: Stage the committed summaries
+        if: ${{ (inputs.mode || 'full') == 'full' }}
+        run: |
+          mkdir -p /tmp/carma-lever-committed
+          for name in lever_arm_summary.csv lever_arm_cutoff_summary.csv; do
+            git show "HEAD:reports/results/carma_lever_arm_study/$name" \
+              > "/tmp/carma-lever-committed/$name"
+          done
+
+      # Byte equality across machines is not available (the simulator is built
+      # -march=native, and this runner's Matplotlib is not the one that drew
+      # the committed figures); every published ratio is compared instead, to
+      # a tolerance far below the effects the study reports.
+      - name: Run the lever-arm study
+        run: |
+          MODE="${{ inputs.mode || 'full' }}"
+          COMPARE=""
+          if [ "$MODE" = "full" ]; then
+            COMPARE="--compare-to /tmp/carma-lever-committed"
+          fi
+          python3 -u tools/carma_lever_arm_study.py \
+            --data-dir /tmp/carma-lever-data \
+            --mode "$MODE" \
+            --jobs 4 \
+            --output-dir reports/results/carma_lever_arm_study \
+            $COMPARE
+
+      - name: Upload study artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: carma-lever-arm-study
+          path: reports/results/carma_lever_arm_study/**
+          if-no-files-found: warn

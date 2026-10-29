@@ -101,11 +101,48 @@ static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
 static constexpr float ROT_STILL_GYRO_RAD_S = 0.15f;
 
-// IMU installation: Kalman3D_Wave_TFG_CARMA3 has no lever-arm (off-CoG)
-// correction, so mount the IMU as close to the vessel centre of gravity as
-// practical.  Roll/pitch-induced tangential and centripetal acceleration at an
-// offset IMU leaks into the heave channel uncorrected.
+// ---------------------------------------------------------------------------
+// IMU installation lever arm (IMU position relative to the vessel centre of
+// gravity), in BODY-NED metres:  x = forward (towards the bow),
+//                                y = starboard,
+//                                z = down.
 //
+// A rigidly mounted IMU that does not sit exactly on the CoG does not measure
+// the CoG motion.  For a body-fixed offset r it measures
+//
+//     a_imu = a_cog + (alpha x r) + omega x (omega x r)
+//
+// i.e. the CoG specific force plus a tangential term (alpha = angular
+// acceleration) and a centripetal term (omega = angular rate).  Both terms are
+// deterministic and both are correlated with attitude, so an IMU bolted a few
+// decimetres away from the CoG leaks roll/pitch motion into the same
+// acceleration channel this filter integrates into heave, and biases the
+// attitude estimate that rides on it.  docs/carma-imu-lever-arm.md measures
+// the cost per direction and distance, and what the correction recovers.
+//
+// The filter can subtract that term itself, but only if it is told r.  It is
+// left at ZERO here, which is also the filter's own default: a zero lever arm
+// means "IMU is at the CoG", the correction is switched off completely, and
+// the device behaves exactly as it did before this knob was exposed.  The call
+// is written out explicitly in resetFusion_() so the adjustment point is
+// visible rather than implied.
+//
+// To adjust for a real installation, measure the offset on the boat as
+// (IMU position - CoG position) along the three axes above and enter it here.
+// Example: an IMU 1.20 m forward of, 0.15 m to starboard of and 0.30 m ABOVE
+// the CoG (z is positive DOWN, so "above" is negative):
+//
+//     static constexpr float IMU_LEVER_ARM_X_M =  1.20f;
+//     static constexpr float IMU_LEVER_ARM_Y_M =  0.15f;
+//     static constexpr float IMU_LEVER_ARM_Z_M = -0.30f;
+//
+// A few centimetres of accuracy is plenty; a wrong sign is worse than leaving
+// the correction off, because it doubles the term instead of removing it.
+// ---------------------------------------------------------------------------
+static constexpr float IMU_LEVER_ARM_X_M = 0.0f;  // + forward (towards bow)
+static constexpr float IMU_LEVER_ARM_Y_M = 0.0f;  // + starboard
+static constexpr float IMU_LEVER_ARM_Z_M = 0.0f;  // + down
+
 // Loop-task stack: unlike atomS3R_ins_tfg, this sketch keeps the Arduino
 // default.  Kalman3D_Wave_TFG_CARMA3 keeps its covariance scratch in members
 // and has no NX x NX stack temporary; its deepest static chain from the sample
@@ -400,6 +437,31 @@ private:
     ff.setAccNoiseFloorSigma(ACC_NOISE_FLOOR_SIGMA_DEFAULT);
     ff.enableClamp(true);
     ff.setFreqInputCutoffHz(6.0f);
+
+    // IMU installation lever-arm (off-CoG) correction.
+    //
+    // Set explicitly on every reset, so the adjustment point is visible; the
+    // wrapper keeps it across fusion_.begin().  Unlike OU-III, whose
+    // correction lives in its MEKF's accelerometer update, the CARMA wrapper
+    // removes the term at its input, before the vibration guard: the startup
+    // tilt proxy, the magnetic reference it learns, the tuner and the
+    // wave-direction estimator then see CoG specific force, as the filter
+    // does.  docs/carma-imu-lever-arm.md measured both placements: inside the
+    // MEKF the rest of the wrapper still sees the IMU's own motion, and tilt
+    // suffers in calm seas.  Do not also set ff.mekf().set_imu_lever_arm_body():
+    // the term would be removed twice.
+    //
+    // The vector below is zero by default, which tells the filter the IMU sits
+    // on the centre of gravity and turns the correction off (identical to
+    // ff.clearImuLeverArm()).  Edit IMU_LEVER_ARM_*_M near the top of this
+    // sketch to enter the real installation offset -- nothing else has to
+    // change here.  Related knob, if the correction is enabled and the gyro is
+    // noisy: ff.setImuLeverArmCutoffHz(hz) sets the low-pass corner ahead of
+    // the angular-acceleration derivative (default 15 Hz).  A lower corner
+    // passes less differentiated gyro noise but lags more; the study's corner
+    // sweep shows both ways to lose.
+    ff.setImuLeverArmBody(
+        Vector3f(IMU_LEVER_ARM_X_M, IMU_LEVER_ARM_Y_M, IMU_LEVER_ARM_Z_M));
 
     rot_.reset();
     gyro_bias_.reset();

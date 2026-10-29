@@ -242,6 +242,8 @@ The deployable arm reconstructs the angular acceleration through a two-pole low-
 
 Pooled ratios understate the effect and the per-sea figure is the honest one. An RMS over all eight seas is dominated by the largest, where the injected rotational term is smallest relative to the wave signal; broken out sea by sea, the displacement penalty is worst in the mildest seas and the attitude penalty worst in the steepest.
 
+The experimental CARMA3 and TFG-CARMA3 filters carry the same deployable model, applied at their fusion wrapper's input; their own off-CoG study, out to 2 m and against OU-III's in-filter placement, is [`docs/carma-imu-lever-arm.md`](docs/carma-imu-lever-arm.md).
+
 ### Embedded target: M5Stack AtomS3R
 
 <p align="center">

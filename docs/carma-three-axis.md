@@ -111,9 +111,10 @@ the benchmark's IMU is at the centre of gravity, so roll/pitch reach the
 translational estimate only through the attitude estimate: a tilt error
 `dtheta` puts `g dtheta` into the horizontal specific force (0.1 deg is
 0.017 m/s^2), which is why the horizontal channel is the attitude-coupled
-one.  A lever arm (IMU above the roll centre) would add `r x alpha` to the
-horizontal acceleration; it is studied elsewhere (`docs/ou-iii-imu-lever-arm.md`)
-and not here.
+one.  A lever arm (IMU above the roll centre) would add `alpha x r` to the
+horizontal acceleration; the CARMA filters' optional correction and its
+off-CoG study are `docs/carma-imu-lever-arm.md`, and the benchmark here keeps
+the IMU at the centre of gravity.
 
 **Low-frequency translation is not wave motion.**  Second-order
 (difference-frequency) forces and wind drive horizontal motion far below the
@@ -607,7 +608,10 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   14.2.0, `-Os`, arduino-esp32 flags) on one translation unit per variant
   holding the complete fusion wrapper's sample path
   (`tests/kalman_carma/arduino/carma3_size_probe`, `esp32s3_size.csv`); code
-  bytes are object-level, not a linked image.  All variants are smaller in
+  bytes are object-level, not a linked image.  They predate the optional
+  IMU lever arm (`docs/carma-imu-lever-arm.md`), which adds a 92 B model to
+  the filter object and another to the wrapper, and a few branches to the
+  sample path; they have not been re-measured.  All variants are smaller in
   code than OU-III (one CARMA model class serves every axis).  The filter
   object grows with `NX^2` and with the `StepDiscretization` coefficients of
   its two block models (C41 x/y/z 6040 B against OU-III's 5692 B, up to
@@ -629,11 +633,14 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   Kronecker `Q`, and a vertical CARMA block `[h, v, a, latent (, S_z)]`.
   Attitude, gyro bias, accelerometer and magnetometer models, the residual
   accelerometer-bias OU and its freeze, Joseph updates and resets are
-  OU-III's mathematics.  Not carried over: wind heel, lever arm, the
+  OU-III's mathematics.  Not carried over: wind heel, the
   commanded-parameter random walk (none enabled by the deployed wrapper).
+  The optional `set_imu_lever_arm_body` is OU-III's placement with a
+  band-limited rate derivative (`docs/carma-imu-lever-arm.md`).
 * `src/kalman_carma/SeaStateFusionFilter_CARMA3.h`: OU-III's per-sample
   schedule (shared front end, proxy startup, staged commit, watchdog,
-  magnetometer-service bias gate, Racc inflation) with the operating-point
+  magnetometer-service bias gate, Racc inflation, and an optional
+  input-stage IMU lever-arm correction, `setImuLeverArmBody`) with the operating-point
   mappings `kappa = f_tune / f_z,model`, `f_tune = c_tau / (2 tau)`, for
   every axis (the model's displacement zero-crossing frequency is placed on
   the measured one), `sigma_z = max(0.05 m/s^2, noise floor, sigma_aw /
@@ -653,8 +660,9 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   includes an OU header.
 * `sensors/full_marine_ins/atomS3R_ins_carma3/`: an experimental AtomS3R
   research sketch running recommendation B (CARMA(4,1) x/y/z, no `S`) with
-  the OU-III sketch's I/O, calibration and wrapper settings, minus the lever
-  arm and the pseudo-update cadence, which have no CARMA counterpart.  It is
+  the OU-III sketch's I/O, calibration and wrapper settings, minus the
+  pseudo-update cadence, which has no CARMA counterpart; its lever arm is the
+  wrapper's input-stage correction (`docs/carma-imu-lever-arm.md`).  It is
   not hardware evidence (obstacle 5 stands).
 * `src/kalman_carma/CarmaVerticalModel.h`: the CARMA model library of
   section 3 (shapes, realization, scaling, exact discretization), one
@@ -1189,8 +1197,9 @@ stationary-covariance invariance and non-uniform steps are tested.
 3. Covariance under mismatch: no model-error term; the covariance is not an
    error bound on multi-peaked seas.
 4. Hull and sea dependence: one synthetic hull and one replay hull; the
-   horizontal shape is the JONSWAP fit; no lever arm, wind heel or
-   nonlinear waves.
+   horizontal shape is the JONSWAP fit; no lever arm (the IMU is at the
+   centre of gravity; off-CoG installations are `docs/carma-imu-lever-arm.md`),
+   wind heel or nonlinear waves.
 5. No hardware evidence: no AtomS3R timing, float behaviour or sea data.
 6. No stability analysis: the OU-III stability study does not cover a CARMA
    motion model.
