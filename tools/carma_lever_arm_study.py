@@ -96,6 +96,9 @@ RMS_FIELDS = ou3.RMS_FIELDS
 ROW_FIELDS = ou3.ROW_FIELDS
 RATIO_FIELDS = ("disp_3d_ratio_to_baseline", "tilt_ratio_to_baseline", "yaw_ratio_to_baseline")
 COMPARE_TOLERANCE = 0.01
+# A removed fraction is reported only where the uncorrected excess clears the
+# run-to-run scatter of a correction; below that it is a ratio of noise.
+EXCESS_FLOOR = 0.05
 
 FIGURES = (
     "carma_lever_arm_penalty.svg",
@@ -263,8 +266,7 @@ def summarize(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 ("max_tilt_rms_deg", base_tilt, "tilt_excess_removed_fraction"),
             ):
                 excess = reference[field] - b
-                # A fraction of run-to-run scatter says nothing.
-                if excess > 0.01 * b:
+                if excess > EXCESS_FLOOR * b:
                     item[name] = (reference[field] - item[field]) / excess
         out += items
     return out
@@ -336,7 +338,8 @@ def markdown_report(
         f"Scoring uses the trailing **{window_sec:.0f} s** of each 1200 s record; every",
         "entry is the RMS pooled over the eight seas; ratios are to the filter's own",
         "CG baseline.  The inner-filter arms report no residual: the simulator cannot",
-        "see a correction made inside the estimator.",
+        "see a correction made inside the estimator.  The removed fraction of the",
+        f"uncorrected 3-D excess is shown where that excess exceeds {100 * EXCESS_FLOOR:.0f} % of the baseline.",
         "",
     ]
     if commit:
@@ -353,8 +356,8 @@ def markdown_report(
             f"{fmt(base['max_tilt_rms_deg'])} deg, yaw {fmt(base['yaw_rms_deg'])} deg.",
             "",
             "| Arm | Axis | Offset [cm] | 3D / CG | Tilt / CG | Yaw / CG | Installed [m/s^2] "
-            "| Residual [m/s^2] | 3D excess removed | Tilt excess removed |",
-            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| Residual [m/s^2] | 3D excess removed |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
         order = {a: i for i, a in enumerate(("unmodeled", *[a for a in ARMS if a != "unmodeled"]))}
         rows = sorted((s for s in fs if s["mode"] != "baseline"),
@@ -364,8 +367,7 @@ def markdown_report(
                 f"| {s['mode']} | {s['axis']} | {100 * float(s['distance_m']):.0f} | "
                 f"{fmt(s['disp_3d_ratio_to_baseline'], 3)}x | {fmt(s['tilt_ratio_to_baseline'], 3)}x | "
                 f"{fmt(s['yaw_ratio_to_baseline'], 3)}x | {fmt(s['installed_rms_mps2'], 4)} | "
-                f"{fmt(s['residual_rms_mps2'], 4)} | {pct(s['excess_removed_fraction'])} | "
-                f"{pct(s['tilt_excess_removed_fraction'])} |"
+                f"{fmt(s['residual_rms_mps2'], 4)} | {pct(s['excess_removed_fraction'])} |"
             )
         lines.append("")
     if sweep:
@@ -379,7 +381,7 @@ def markdown_report(
         ]
         for s in sweep:
             lines.append(
-                f"| {FILTER_LABELS[s['filter']]} | {s['cutoff_hz']:.0f} | {fmt(s['disp_3d_ratio_to_baseline'], 3)}x | "
+                f"| {FILTER_LABELS[s['filter']]} | {float(s['cutoff_hz']):.0f} | {fmt(s['disp_3d_ratio_to_baseline'], 3)}x | "
                 f"{fmt(s['tilt_ratio_to_baseline'], 3)}x | {fmt(s['yaw_ratio_to_baseline'], 3)}x |"
             )
         lines.append("")
@@ -395,6 +397,54 @@ def markdown_report(
         f"Study matrix: {'8 records, 2 filters, 3 axes, 6 offsets, 5 arms' if full else 'smoke subset'}.",
     ]
     return "\n".join(lines) + "\n"
+
+
+HEADLINE_DISTANCES_M = (0.30, 1.00, 2.00)
+
+
+def headline_markdown(summaries: list[dict[str, Any]], sweep: list[dict[str, Any]]) -> str:
+    """The table docs/carma-imu-lever-arm.md quotes, rendered from the summaries."""
+    fmt = ou3.fmt
+    lines: list[str] = []
+    for filt in FILTERS:
+        lines += [
+            f"**{FILTER_LABELS[filt]}** (RMS / CG baseline, eight seas pooled)",
+            "",
+            "| IMU | Uncorrected 3-D | Corrected 3-D | Corrected tilt | Corrected yaw "
+            "| Inner-filter tilt | OU-III model tilt | OU-III model yaw |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+        for d in HEADLINE_DISTANCES_M:
+            for axis in AXES:
+                cell = {arm: pick(summaries, filt, arm, axis, d) for arm in ("unmodeled", "wrapper", "mekf", "mekf_ou3")}
+                if any(v is None for v in cell.values()):
+                    continue
+                lines.append(
+                    f"| {100 * d:.0f} cm {AXIS_LABEL[axis]} "
+                    f"| {fmt(cell['unmodeled']['disp_3d_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['wrapper']['disp_3d_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['wrapper']['tilt_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['wrapper']['yaw_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['mekf']['tilt_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['mekf_ou3']['tilt_ratio_to_baseline'], 3)} "
+                    f"| {fmt(cell['mekf_ou3']['yaw_ratio_to_baseline'], 3)} |"
+                )
+        lines.append("")
+    lines += [
+        f"Derivative corner of the corrected arm, IMU {100 * SWEEP_DISTANCE_M:.0f} cm {AXIS_LABEL[SWEEP_AXIS]} the CG "
+        "(3-D RMS / CG baseline):",
+        "",
+        "| Corner [Hz] | " + " | ".join(FILTER_LABELS[f] for f in FILTERS) + " |",
+        "| ---: | " + " | ".join("---:" for _ in FILTERS) + " |",
+    ]
+    for cutoff in sorted({float(s["cutoff_hz"]) for s in sweep}):
+        cells = []
+        for filt in FILTERS:
+            match = [s for s in sweep if s["filter"] == filt and float(s["cutoff_hz"]) == cutoff]
+            cells.append(fmt(match[0]["disp_3d_ratio_to_baseline"], 3) if match else "n/a")
+        lines.append(f"| {cutoff:.0f} | " + " | ".join(cells) + " |")
+    lines.append("")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
