@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "claude/tfg-carma3-sketch",
-  "git_commit": "16062a991f429064b0fa09d3f2b5f53584574ac8",
+  "git_commit": "23090059874f1fd3668c4901896a865077a3659e",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -341,8 +341,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-10-29T14:22:11+00:00",
-    "git_commit": "16062a991f429064b0fa09d3f2b5f53584574ac8",
+    "generated_at": "2026-10-29T17:50:08+00:00",
+    "git_commit": "23090059874f1fd3668c4901896a865077a3659e",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,7 +541,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "40883280486",
+      "run_id": "40918103988",
       "workflow": "ou-full-evidence-branch"
     }
   },

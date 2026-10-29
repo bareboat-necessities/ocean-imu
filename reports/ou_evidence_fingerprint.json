@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "740df0d35a95dbfc1de6c09774cb7dd4762b13cd88056d7995777df2e585da69",
-  "results_file_count": 541,
+  "replay_fingerprint": "b5b52bd8223f0feb76974ca82310b3d51be36d44665311f8fe8a7e64adce4848",
+  "results_file_count": 552,
   "results_files": [
     {
       "kind": "file",
@@ -117,6 +117,61 @@
       "kind": "file",
       "path": "reports/results/carma3_benchmark/truth_motion.csv",
       "sha256": "9711779b82dd4ead296763423095bb432946c3145df6099602f458ea0d27a1a2"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/carma_lever_arm_cutoff.svg",
+      "sha256": "78c3fcbcf791454b2eb3b2470c9242dda460d99c293d6bdb183f9dce33f846ec"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/carma_lever_arm_penalty.svg",
+      "sha256": "c139f6d331584214264d14e2f9e6b3468263c9d3a563101a24866fd9cde0cbd2"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/carma_lever_arm_sea_state.svg",
+      "sha256": "fd8870931faf1a489ae3fa897b39bf5551a4bb9c041f2967a24e85a3fa860624"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/carma_lever_arm_tilt.svg",
+      "sha256": "60ff8d72b79c19d6f096014637b188d227b8fa339c3315eb8abdf268bb483153"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/carma_lever_arm_yaw.svg",
+      "sha256": "98915ce04b5e5ac78dc971e79c211fa1d6132513ed8a8713cc246f8c42237cea"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/lever_arm_cutoff_runs.csv",
+      "sha256": "07c79405c8ad336a563bbd4837ece25b131872e2324afff9d711ab0c37c5f659"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/lever_arm_cutoff_summary.csv",
+      "sha256": "c7bf05e6358539efce291670dafda35b036ba754fbdd0d195944b8c2bb058ad1"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/lever_arm_report.md",
+      "sha256": "8a73b871039a83c2b7ed5d2555236f732c5d05ba43e31a6e15459ee6237c5d25"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/lever_arm_runs.csv",
+      "sha256": "ddebb3a237a8a3810715ff88c91e4f5d76655ffa8245f76c3c5e4e6e657f5009"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/lever_arm_summary.csv",
+      "sha256": "99cc407beb805542f306d8e0905a84267a94843f651069e3606a6604c143526f"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/carma_lever_arm_study/manifest.json",
+      "sha256": "a96e9238bdf8e8e4d8f3c3a350070b0f3810ad530fb7200096026a1fbc78d439"
     },
     {
       "kind": "file",
@@ -1151,7 +1206,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "d1134066ab1d3397956be959c8ffa7185b47ac5d8abb84eb8f78ca6015f9b5c5"
+      "sha256": "cec9c4247e68fce6ddadccf1d9f4ea30e286785917df1c1f6844289ef3cfbfc2"
     },
     {
       "kind": "file",
@@ -1196,7 +1251,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "1fdaf81e51d9ae04afa1884f232d86865852be4f2a62392aacbd220d108a0157"
+      "sha256": "9f4d0f5ed940eeafd2ab012a6143f5da1bdf27a1a93262b4103914497f5fec90"
     },
     {
       "kind": "file",
@@ -1296,7 +1351,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "6650d424a6447b4425ace642f51cf1c2a034e972b6e59af56edd25efdf04ec66"
+      "sha256": "69d9a5f58b36f3a3cfae3565974fe9e21c58537ad9bcbdb581eb369c405a9f10"
     },
     {
       "kind": "file",
@@ -1366,37 +1421,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "eba64aa2d44828a1d5e3411d0f3f25df7b174c8f0a47402eb7185c3a26820d65"
+      "sha256": "466c5a580e350d600ddf34689d8cc4bc3e4f932b83ca6795ac5263d9cc0959b4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "4fcf03d4f253b614888b9056b0fac76ee2fbe4f343cff489b027d0b76b814cbb"
+      "sha256": "da6868e3b8bc31b239114926f0af5426a5e888cf0196cb87a1d0a3082427707e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "b41cc4d2d7662843c2359dae927e183bcac3eacadb93de6bc36d03138af7bd73"
+      "sha256": "00bf690bbaeaba157d57c870e527c7a6e37f755da0b181691504f0ec3d5a64d4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "2abdc9b666b42d491ae2822467e34afbe67d79e71827693bb67dfd5a3fc2eb52"
+      "sha256": "7e1da046395bb6f6e8acb5da468d4d5f074c76f7691ceaef27e8a61fb78a4cf0"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "3f458c7793ad4d14af5e9835589c83fb4a17c77fa365145665d68db66d498cd2"
+      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "6929946deff32163ca09992ba6074ea76d30faf19252132f96df134018098bce"
+      "sha256": "79cf8020f265cfef9e4a86dd78cae35d6c7161b211cb6903e18ca7a76cd431c4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "664efc1a3bb9b0d0e71e9590a5eb0d895e14367db2d299267472148204f327e8"
+      "sha256": "e6f99cfd4a8e2303d5216ddd7e64fe44cc827d4c88e620fedada36b0e2eadab0"
     },
     {
       "kind": "file",
@@ -1406,17 +1461,17 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "73bbe956c0b1f7a6c154fd12673b9e899fc6385f627ddaa9f25168027d107a34"
+      "sha256": "a39ba94e3a257bdbf9e1b2e222bbbf2247209c30b45317629095893437b0251b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "a1b61a4fdb67921251a8c4036ecdc40aff2ae4b02a4b77532b376fa2763aef31"
+      "sha256": "3beae507d9547b388a2badf2f9f5c19234d4be9ce14729e06c25a619207b26a3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "b87654441d96bf41cf2e58701638bcf1d1ef05d227672b41498d833d7e778470"
+      "sha256": "4c460750846e3bae89ad0ce9ab6fc0f104723516efc1c48a1c32c9bcb78f3f17"
     },
     {
       "kind": "file",
@@ -1436,7 +1491,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "9bea8621f1663b043d80b3e27c02f22f1f8be7ab88d1eb1e6d52755c4969a905"
+      "sha256": "c4810237e02a5bb063008bcf95036f14f2e7bb37fbb109f4ac6fa0d183019749"
     },
     {
       "kind": "file",
@@ -2709,13 +2764,13 @@
       "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
     }
   ],
-  "results_fingerprint": "8f084c59aaa75d14694432ad354d932c46680d3e906c37070ca988f56bb3aded",
+  "results_fingerprint": "7259745751182f48b869e9bac797f72ad404e04afd92a570f1ed69327e0eea52",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 834,
+  "tracked_replay_file_count": 840,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2736,6 +2791,11 @@
       "mode": "100644",
       "path": ".github/workflows/build.yml",
       "sha256": "fe6edaf2f716f85a615ca30fbc5f80d1926e43b268a362f4f60b28330f1df54d"
+    },
+    {
+      "mode": "100644",
+      "path": ".github/workflows/carma-lever-arm-study.yml",
+      "sha256": "c8f59fefc67ef8df2d9ba98d40fd5d3e85467d445684ec9da2de525b9a4fcda4"
     },
     {
       "mode": "100644",
@@ -3050,7 +3110,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
-      "sha256": "42b817fc87bf74af174ab514958586f54ece851e41167664d4d33d8e1b8fa1da"
+      "sha256": "9337b921c0514c470559ce98e3770ca23edb55ceaa26a999248d5e3223f87a56"
     },
     {
       "mode": "100644",
@@ -3080,7 +3140,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "sha256": "76e59f36f0a5ef2cd2c85f57beef21c26e67007bca355c9fa093711534126e9e"
+      "sha256": "034c798352b1d9e43a69e82706b49373cee777285d066e9a63bbca44b9168749"
     },
     {
       "mode": "100644",
@@ -3325,17 +3385,17 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_CARMA3.h",
-      "sha256": "1d8ccf562d6dc7a183527d46157625e33e645970d16a031dae295a9ce3ca8ecd"
+      "sha256": "afd94c3b27de1b9fa8a58d77c19464caaa1185004ca2fa80bb3823ab8f76dd6b"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
-      "sha256": "54c69196a2c3fc8405af63fbb681274043ba9f0a8e3666f943bd37bc9faf15df"
+      "sha256": "a4ee83e350b356c4dcd255bc2f880c883e210190feee1e1108d8a9993ff66eff"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
-      "sha256": "799cbf5bf014ed8ad5804940f96bc9b7e05e228014e55a839ee9199f80d6c08a"
+      "sha256": "c0fe42386a458125d932c639fb959b9ac79d6c37cafd36fe4656b7ffb6ccb1d3"
     },
     {
       "mode": "100644",
@@ -3351,6 +3411,11 @@
       "mode": "100644",
       "path": "src/kalman_common/CovarianceProjection.h",
       "sha256": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31"
+    },
+    {
+      "mode": "100644",
+      "path": "src/kalman_common/ImuLeverArm.h",
+      "sha256": "d3666ec7a15ea039010f4138036134767f756b8de2df6257f6c15df1a5663a23"
     },
     {
       "mode": "100644",
@@ -3795,7 +3860,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal-test.cpp",
-      "sha256": "3a18edc91f1f1abf8bb94dd39d2adf454103ece8f6911f904f8603fa7dbfb9d5"
+      "sha256": "85164f4b3ad5e31d64a13294a481599c0c2c42368bfa868cace12267e704e02b"
     },
     {
       "mode": "100644",
@@ -3880,7 +3945,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/test_sketch_temperature.py",
-      "sha256": "4aea585be6f8829003eac320a0384235e5595362f63acc1c14074872aea2e5b8"
+      "sha256": "008bfd637eea88fe0f8d0f063bebf560fa186c1e7c9a36052f462f80bacc7953"
     },
     {
       "mode": "100644",
@@ -3900,7 +3965,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/Makefile",
-      "sha256": "463bf30eb49f62d308e9dff053f9df17b0a04fca340daebe67c0910215cd1493"
+      "sha256": "d6777b603ec7a1b2a222d8ad9808deefd2ec4c4ea2fa6f9226da040613ef9182"
     },
     {
       "mode": "100755",
@@ -3955,7 +4020,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3/SimAdapters.h",
-      "sha256": "847dc9cfe6648058d74c41ece5ba46e2944652a7def8a624f34f6edeff65c5ce"
+      "sha256": "30073a1ac6c5cee47f67ec2e4f5e7c06f28a8191af4d758bb363c6081c0d6787"
     },
     {
       "mode": "100644",
@@ -3984,6 +4049,16 @@
     },
     {
       "mode": "100644",
+      "path": "tests/kalman_carma/carma_lever_arm-sim.cpp",
+      "sha256": "35eed8cddd5af4e898230215a392ef6aa50badf834d15bee2f5013fe13a06e0e"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_carma/carma_lever_arm-test.cpp",
+      "sha256": "d7dcce6219cc0d66a9c381284b9cabfc6885e4e3df2c1bde1acfd268b9785f40"
+    },
+    {
+      "mode": "100644",
       "path": "tests/kalman_carma/carma_model-test.cpp",
       "sha256": "343b5a4c06fcc35955a41bdfa3c809ff7a993a3b56b12bcfdeecc02f86de6e70"
     },
@@ -3995,7 +4070,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_carma/run_tests.sh",
-      "sha256": "f431dce768fdad05fa206534038137f71332e9553be327760fe9fba20dd17267"
+      "sha256": "208e91ea9d73d7d681920126b2aa4a0c6945f0cff5d2b3e8f429a849d90205a5"
     },
     {
       "mode": "100644",
@@ -4436,6 +4511,11 @@
       "mode": "100644",
       "path": "tests/validation/test_branch_evidence_trigger.py",
       "sha256": "b4191f9b4459047b8ce2ff16ac9e0c2cbf66a489859a2030591b0d082e2bd091"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_carma_lever_arm_study.py",
+      "sha256": "cb8848012fcf51a1ef047f2a63f03d41262d68415f33b9ba0f7ca9665519b7b0"
     },
     {
       "mode": "100644",
@@ -5466,6 +5546,11 @@
       "mode": "100644",
       "path": "tools/carma_fit.py",
       "sha256": "d04a9b2d2c0b23a1f192cfd60a4313b87673f2b767be386c07e28d3473bd7438"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/carma_lever_arm_study.py",
+      "sha256": "797d69eaa39973b31d101b596da25e7a5c4ab08b462b6c6ea77a7ff6674de2fc"
     },
     {
       "mode": "100644",
