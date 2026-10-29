@@ -28,6 +28,9 @@ Files:
   and `plots/kalman_tfg_carma/` turn it into the results table and chart
   gallery of the experimental article `doc/kalman_tfg_carma/kalman_tfg_carma.tex`
   and `kalman_tfg_carma-charts.tex`, which CI builds into PDFs.
+* `sensors/full_marine_ins/atomS3R_ins_tfg_carma3/` -- an AtomS3R research
+  sketch: `atomS3R_ins_carma3` with this wrapper in place of CARMA3's.
+  It compiles in CI; it is not hardware evidence.
 
 **Result in brief** (simulation; sections 7-13; generated tables in
 `reports/results/tfg_carma3/summary.md`):
@@ -1065,7 +1068,9 @@ the invariant coordinates that T41R0 already shows at lower cost.
   12 483, about 2.8-3.4 M multiply-adds per second (plus about 0.2 M for the
   magnetometer).  If OU-III meets its deadline on the AtomS3R, TFG-CARMA3's
   arithmetic is of the same order; that is an inference, not a measurement.
-  No sketch was added or changed.
+  The research sketch `sensors/full_marine_ins/atomS3R_ins_tfg_carma3/` is
+  the CARMA3 sketch with this wrapper; it keeps the default loop-task
+  stack on the strength of these static depths, not a target measurement.
 
 ## 12. Limitations and unresolved questions
 
