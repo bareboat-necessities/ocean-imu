@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "b5b52bd8223f0feb76974ca82310b3d51be36d44665311f8fe8a7e64adce4848",
+  "replay_fingerprint": "812973844aaa359c1ebc1f2020f5d6998b3a858592d277953b3e26b45aa563d0",
   "results_file_count": 552,
   "results_files": [
     {
@@ -1206,7 +1206,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "cec9c4247e68fce6ddadccf1d9f4ea30e286785917df1c1f6844289ef3cfbfc2"
+      "sha256": "c211b59f93d13a1a752435f020509bf82bbf291f608d036675118c4135a89cf9"
     },
     {
       "kind": "file",
@@ -1251,7 +1251,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "9f4d0f5ed940eeafd2ab012a6143f5da1bdf27a1a93262b4103914497f5fec90"
+      "sha256": "d56e594d4cd87b41d081d412941adee85eca140d9a6c6f417fde115ff14e4fa0"
     },
     {
       "kind": "file",
@@ -1351,7 +1351,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "69d9a5f58b36f3a3cfae3565974fe9e21c58537ad9bcbdb581eb369c405a9f10"
+      "sha256": "d3603ef6b7670cb47db6199c776c6728b9821f55d1d5b417eccda15004dc932e"
     },
     {
       "kind": "file",
@@ -1421,37 +1421,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "466c5a580e350d600ddf34689d8cc4bc3e4f932b83ca6795ac5263d9cc0959b4"
+      "sha256": "f388db448b9d4f77ae53ff08fe39a1bf973165de3968929121e44af787b6b38a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "da6868e3b8bc31b239114926f0af5426a5e888cf0196cb87a1d0a3082427707e"
+      "sha256": "bed5430a561c6fc58b41a77d18f3cef502bd5771f22e727a73dfc154a44bf9f2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "00bf690bbaeaba157d57c870e527c7a6e37f755da0b181691504f0ec3d5a64d4"
+      "sha256": "7f27b2f3ab5639cfa17dcfa1da9f746d423167e52af1ea0e6bb2456ce97f8722"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "7e1da046395bb6f6e8acb5da468d4d5f074c76f7691ceaef27e8a61fb78a4cf0"
+      "sha256": "75ccb6c177720f5395b4256d7719717a02bdc8f59ba0c6cb0af51d009546800a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "4a92296f915a38c3df921e643760d3e43335dadc1dbca9f38f468c68553789f1"
+      "sha256": "159ec3376e5659d4ebef74d0199a5c35adb4b73eab51141c24066958bbc22e69"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "79cf8020f265cfef9e4a86dd78cae35d6c7161b211cb6903e18ca7a76cd431c4"
+      "sha256": "0a72b9f091886c580fd259d2016fb9c020c32679d9b23c584d9226780c3161fd"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "e6f99cfd4a8e2303d5216ddd7e64fe44cc827d4c88e620fedada36b0e2eadab0"
+      "sha256": "5f38acecb8638d0be8ff95eb6a141c0699997d111b7f3884c98c85c45993c079"
     },
     {
       "kind": "file",
@@ -1461,22 +1461,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "a39ba94e3a257bdbf9e1b2e222bbbf2247209c30b45317629095893437b0251b"
+      "sha256": "7df2e12a3edb44ec6d3343f2b4b32097965ecf3c92d3784f67534fd1b6b3d971"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "3beae507d9547b388a2badf2f9f5c19234d4be9ce14729e06c25a619207b26a3"
+      "sha256": "8c0d0eefe752105aebef46d7678ea6caf8cbdb6aa2fa415b84080372b14e1e73"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "4c460750846e3bae89ad0ce9ab6fc0f104723516efc1c48a1c32c9bcb78f3f17"
+      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
+      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
     },
     {
       "kind": "file",
@@ -1491,7 +1491,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "c4810237e02a5bb063008bcf95036f14f2e7bb37fbb109f4ac6fa0d183019749"
+      "sha256": "f246a002d4c2fb24945aab81cd0c8ab658bb047178481c58da69783e3a15adb1"
     },
     {
       "kind": "file",
@@ -2764,7 +2764,7 @@
       "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
     }
   ],
-  "results_fingerprint": "7259745751182f48b869e9bac797f72ad404e04afd92a570f1ed69327e0eea52",
+  "results_fingerprint": "202830e6860b451caaa45cbc590cfb5f683e839e6aa1c3326b73bbe0a2b1cc0c",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -2795,7 +2795,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/carma-lever-arm-study.yml",
-      "sha256": "c8f59fefc67ef8df2d9ba98d40fd5d3e85467d445684ec9da2de525b9a4fcda4"
+      "sha256": "b03783e65d06561855537844b3916df7ecd3acbe9c16842b53752b4e26bb2023"
     },
     {
       "mode": "100644",
@@ -3390,7 +3390,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
-      "sha256": "a4ee83e350b356c4dcd255bc2f880c883e210190feee1e1108d8a9993ff66eff"
+      "sha256": "a96d03df713b4c20ad663032e39374cde82f55a31379db75b1f82e424c31d6bc"
     },
     {
       "mode": "100644",
@@ -3415,7 +3415,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_common/ImuLeverArm.h",
-      "sha256": "d3666ec7a15ea039010f4138036134767f756b8de2df6257f6c15df1a5663a23"
+      "sha256": "3363c971cd4492cb1132b16c5dc28f2712f34d5db05fee838a71ecaa90fdfb84"
     },
     {
       "mode": "100644",
@@ -5550,7 +5550,7 @@
     {
       "mode": "100644",
       "path": "tools/carma_lever_arm_study.py",
-      "sha256": "797d69eaa39973b31d101b596da25e7a5c4ab08b462b6c6ea77a7ff6674de2fc"
+      "sha256": "e0b4aafdd913bbd7d6941e226152ccc52391351870c6b08e2e6531700fda0f2a"
     },
     {
       "mode": "100644",
