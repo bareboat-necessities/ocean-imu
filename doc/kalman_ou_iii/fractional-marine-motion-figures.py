@@ -345,13 +345,13 @@ def fig5(summary: dict):
     for m in range(4):
         order = 4 + m
         best = None
-        for trial in range(5 if m else 1):
+        for _trial in range(5 if m else 1):
             rates = TWOPI * np.geomspace(0.10, 1.20, max(1, m))[:m]
             starts = (np.log(rates * (1.0 + 0.16*rng.standard_normal(m)))
                       if m else np.empty(0))
             x0 = np.r_[log_g, starts, starts + 0.09]
 
-            def residual(x):
+            def residual(x, m=m):
                 r = rational(band, f0, zeta, np.exp(x[0]), x[1:1+m],
                              x[1+m:1+2*m]) / target - 1.0
                 return np.r_[r.real, r.imag]
@@ -496,7 +496,6 @@ def fig7(fixed_nu_fits: dict, summary: dict):
     """
     target_fn = lambda ff: wave(ff, .29, 3.3, HS)
     target = target_fn(FIT1)
-    w = weights(target)
     var = (HS / 4)**2
     cases = {
         "fractional_highpass_nu_1p80": dict(
