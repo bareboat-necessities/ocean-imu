@@ -122,7 +122,9 @@ jobs:
               || (needs['ou-evidence'].result == 'success'
                   && needs['evidence-contract'].result == 'success')) }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # kalman_ou_iii PGF generation alone takes 22-28 min on hosted runners;
+    # 45 min cancelled that job on slower runners before LaTeX finished.
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
