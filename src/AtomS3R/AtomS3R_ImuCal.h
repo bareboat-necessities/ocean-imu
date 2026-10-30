@@ -462,9 +462,13 @@ static inline void loadMagTiming_(const ImuCalBlobV5& b) {
 // ACC_CONF at its reset value 0xA8 (100 Hz, normal filter, performance mode)
 // and GYR_CONF at 200 Hz, so a reader that needs both on every sample runs at
 // 100 Hz and drops every other gyro sample. 0xA9 keeps the same filter setting
-// at 200 Hz. Call after every M5Unified IMU initialisation and before
-// configureAtomS3RMag(), whose timing configuration fingerprints ACC_CONF.
+// at 200 Hz. Like Bosch's driver, the write is checked against the EVENT
+// register's configuration error code (bits 4:2: 1 accel, 3 accel+gyro); a
+// rejected or unconfirmed write restores the previous value. Call after every
+// M5Unified IMU initialisation and before configureAtomS3RMag(), whose timing
+// configuration fingerprints ACC_CONF.
 static inline bool configureAtomS3RAccel200Hz(Print& log) {
+  constexpr uint8_t EVENT_ADDR     = 0x1B;
   constexpr uint8_t ACC_CONF_ADDR  = 0x40;
   constexpr uint8_t ACC_CONF_200HZ = 0xA9;
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
@@ -473,9 +477,11 @@ static inline bool configureAtomS3RAccel200Hz(Print& log) {
   const bool wrote = imu0->writeRegister8(ACC_CONF_ADDR, ACC_CONF_200HZ);
   delay(2);
   const uint8_t after = imu0->readRegister8(ACC_CONF_ADDR);
-  const bool ok = wrote && after == ACC_CONF_200HZ;
-  log.printf("[ACCCFG] BMI270 ACC_CONF 0x%02X -> 0x%02X (%s)\n", before, after,
-             ok ? "200 Hz" : "FAILED, driver setting kept");
+  const uint8_t cfg_err = (imu0->readRegister8(EVENT_ADDR) >> 2) & 0x07;
+  const bool ok = wrote && after == ACC_CONF_200HZ && cfg_err != 1 && cfg_err != 3;
+  if (!ok) imu0->writeRegister8(ACC_CONF_ADDR, before);
+  log.printf("[ACCCFG] BMI270 ACC_CONF 0x%02X -> 0x%02X cfg_err=%u (%s)\n", before, after,
+             static_cast<unsigned>(cfg_err), ok ? "200 Hz" : "FAILED, driver setting restored");
   return ok;
 }
 
