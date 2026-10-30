@@ -1522,6 +1522,10 @@ void testGravityConvention(std::ostream& rep) {
           "loaded blob keeps accel_g = g_cal_local");
     RuntimeCals rt; rt.rebuildFromBlob(ld);
     check(rt.acc.ok && !rt.accel_gravity_mismatch && rt.acc.g == ImuCalCfg::g_cal_local, "runtime applies it");
+    check(std::string(atoms3r_ical::calibrationUnusableReason(true, rt)) == "no gyroscope calibration",
+          "an accel-only record is not a usable full calibration");
+    RuntimeCals none; none.rebuildFromBlob(ImuCalBlobV5{});
+    check(atoms3r_ical::calibrationUnusableReason(false, none) != nullptr, "no saved calibration is unusable");
     const Eigen::Vector3f probe(0.3f, -9.7f, 0.4f);
     check(rt.applyAccel(probe, 25.0f) == c.rt.applyAccel(probe, 25.0f), "stored and fitted runtime identical");
   }
@@ -1541,10 +1545,13 @@ void testGravityConvention(std::ostream& rep) {
     RuntimeCals rt; rt.rebuildFromBlob(ld);
     check(!rt.acc.ok && rt.accel_gravity_mismatch, "its accelerometer calibration is not applied");
     check(rt.gyr.ok && rt.mag.ok, "gyro and magnetometer calibrations stay in use");
+    check(std::string(atoms3r_ical::calibrationUnusableReason(true, rt)) == "accel fitted against another gravity",
+          "a gravity mismatch is reported as unusable");
     const Eigen::Vector3f probe(0.3f, -9.7f, 0.4f);
     check(rt.applyAccel(probe, 25.0f) == probe, "accelerometer passes raw, not rescaled");
     RuntimeCals same; same.rebuildFromBlob(ld, ImuCalCfg::g_std);
     check(same.acc.ok, "a firmware configured with that gravity applies it");
+    check(atoms3r_ical::calibrationUnusableReason(true, same) == nullptr, "a fully applied calibration is usable");
 
     // (10) A magnetometer fit is applied only to data from the source it was
     // fitted on (uncompensated M5Unified values vs Bosch-compensated uT).
@@ -1552,6 +1559,10 @@ void testGravityConvention(std::ostream& rep) {
     RuntimeCals comp; comp.rebuildFromBlob(ld);
     check(!comp.mag.ok && comp.mag_source_mismatch && comp.gyr.ok,
           "an uncompensated mag fit is not applied to compensated data; gyro stays in use");
+    RuntimeCals comp_g; comp_g.rebuildFromBlob(ld, ImuCalCfg::g_std);
+    check(comp_g.acc.ok && comp_g.gyr.ok &&
+              std::string(atoms3r_ical::calibrationUnusableReason(true, comp_g)) == "mag fitted on another data source",
+          "a mag source mismatch is reported as unusable");
     ImuCalBlobV5 cb = ld; cb.mag_source = atoms3r_ical::MAG_SOURCE_BMM150_COMPENSATED;
     bindTimingFixture(cb);
     ImuCalBlobV5 crb, cld;
