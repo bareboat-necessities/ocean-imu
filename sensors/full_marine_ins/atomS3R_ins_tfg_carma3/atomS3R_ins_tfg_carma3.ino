@@ -170,6 +170,7 @@ public:
     cfg.internal_imu = true;
     M5.begin(cfg);
     clearM5UnifiedImuCalibration();
+    configureAtomS3RAccel200Hz(Serial);
     configureAtomS3RMag(Serial);
     delay(250);
 

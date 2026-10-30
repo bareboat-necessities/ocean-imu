@@ -458,6 +458,27 @@ static inline void loadMagTiming_(const ImuCalBlobV5& b) {
       double(t.fit_width_s+t.residual_time_s)*1000);
 }
 
+// BMI270 accelerometer at 200 Hz, the gyroscope's rate. M5Unified leaves
+// ACC_CONF at its reset value 0xA8 (100 Hz, normal filter, performance mode)
+// and GYR_CONF at 200 Hz, so a reader that needs both on every sample runs at
+// 100 Hz and drops every other gyro sample. 0xA9 keeps the same filter setting
+// at 200 Hz. Call after every M5Unified IMU initialisation and before
+// configureAtomS3RMag(), whose timing configuration fingerprints ACC_CONF.
+static inline bool configureAtomS3RAccel200Hz(Print& log) {
+  constexpr uint8_t ACC_CONF_ADDR  = 0x40;
+  constexpr uint8_t ACC_CONF_200HZ = 0xA9;
+  auto* imu0 = M5.Imu.getImuInstancePtr(0);
+  if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
+  const uint8_t before = imu0->readRegister8(ACC_CONF_ADDR);
+  const bool wrote = imu0->writeRegister8(ACC_CONF_ADDR, ACC_CONF_200HZ);
+  delay(2);
+  const uint8_t after = imu0->readRegister8(ACC_CONF_ADDR);
+  const bool ok = wrote && after == ACC_CONF_200HZ;
+  log.printf("[ACCCFG] BMI270 ACC_CONF 0x%02X -> 0x%02X (%s)\n", before, after,
+             ok ? "200 Hz" : "FAILED, driver setting kept");
+  return ok;
+}
+
 static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   auto& src = atoms3rMagSource();
   src = AtomS3RMagSource{};
