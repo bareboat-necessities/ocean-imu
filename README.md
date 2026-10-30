@@ -78,8 +78,10 @@ Autopilot Use Cases:
 
 - [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/autopilots-methods.pdf)
 
-There are two versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
+There are several versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
 
+- CARMA(4,1) stochastic process with Two Frame Lie Group filter delivers the lowest RMS of heave error (below 3% of significant wave height).
+- CARMA(4,1) with QMEKF is a quaternion counterpart of the previous one.
 - OU_III uses higher-order integral drift correction. It is a 21-dimensional-state Kalman filter and is the OU variant used for the main 3-D navigation study.
 - TFG is a right-invariant two-frame Lie-group error-state EKF. Same 21 dimensional state and the same OU wave model as OU_III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
 - OU_II uses more direct integral drift correction and is more responsive to sea-state changes. It is an 18-dimensional-state Kalman filter.
