@@ -18,12 +18,17 @@ The articles describing the math behind the methods:
 
 INS Filters:
 
-- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/kalman_ou-w3d.pdf)
-- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/kalman_ou-w3d-stability-study.pdf)
+- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_ou-w3d.pdf)
 
-- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/kalman_tfg.pdf)
+- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_ou-w3d-stability-study.pdf)
 
-- [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/pii_observer-model.pdf)
+- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_tfg.pdf)
+
+- [CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_carma.pdf)
+
+- [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_tfg_carma.pdf)
+
+- [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/pii_observer-model.pdf)
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
 
@@ -35,41 +40,43 @@ Heave-only filters (comparison baselines, see [docs/heave-only.md](docs/heave-on
 
 Research Studies:
 
-- [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/kalman-wave-dir.pdf)
+- [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-wave-dir.pdf)
 
-- [Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/ins-startup.pdf)
+- [INS Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/ins-startup.pdf)
 
-- [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/kalman-gnss-fusion.pdf)
+- [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-gnss-fusion.pdf)
 
-Frequency tracking:
-
-- [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/freq-tracking_adaptive_notch_kalman.pdf)
-
-- [Aranovskiy Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/freq-tracking_aranovskiy.pdf)
-
-- [PLL Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/freq-tracking_pll.pdf)
-
-- [Zero Crossing Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/freq-tracking_zero_crossing.pdf)
+- [Stochastic Marine Motion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/stochastic-marine-motion.pdf)
 
 IMU Calibration:
 
-- [IMU Calibration Method](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/imu_calibrate-method.pdf)
+- [IMU Calibration Method](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/imu_calibrate-method.pdf)
+
+Frequency tracking:
+
+- [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_adaptive_notch_kalman.pdf)
+
+- [Aranovskiy Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_aranovskiy.pdf)
+
+- [PLL Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_pll.pdf)
+
+- [Zero Crossing Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_zero_crossing.pdf)
 
 Wave Models:
 
-- [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/wave_sim-waves.pdf)
+- [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-waves.pdf)
 
-- [Fenton Waves](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/wave_sim-fenton.pdf)
+- [Fenton Waves](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-fenton.pdf)
 
-- [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/wave_sim-spectral.pdf)
+- [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-spectral.pdf)
 
-- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/spectrum-sea_metrics.pdf)
+- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/spectrum-sea_metrics.pdf)
 
-- [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/wave_sim-vessel-RAO.pdf)
+- [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-vessel-RAO.pdf)
 
 Autopilot Use Cases:
 
-- [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.6.0/autopilots-methods.pdf)
+- [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/autopilots-methods.pdf)
 
 There are two versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
 
@@ -112,7 +119,7 @@ https://github.com/bareboat-necessities/ins-dashboard-gtk
 
 ## Results
 
-Results of the tests, simulations and documentation built from the development branch are published at https://github.com/bareboat-necessities/ocean-imu/releases/tag/v2.6.0
+Results of the tests, simulations and documentation built from the development branch are published at https://github.com/bareboat-necessities/ocean-imu/releases/tag/v2.7.0
 
 The figures below are the current **OU-III** diagnostics and validation evidence. The per-wave and spectrum figures under [`reports/results/readme/`](reports/results/readme/) are copied from SVG artifacts generated by successful `build` runs on `main`; the aggregate error plots come from the versioned full validation bundle under [`reports/results/ou_validation/`](reports/results/ou_validation/), and the transition, engine-vibration, and lever-arm figures come from their own versioned study bundles under [`reports/results/`](reports/results/). Every figure ships with the CSV, summary, and manifest that produced it, so the front page stays tied to reproducible outputs instead of manually copied sample images.
 
