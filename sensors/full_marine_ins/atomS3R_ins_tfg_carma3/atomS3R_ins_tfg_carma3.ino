@@ -190,11 +190,12 @@ public:
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Wizard did not save calibration.");
       }
     }
 #endif
 
+    requireUsableCalibration_();
     reinitImu_();
     resetFusion_();
     drawHomeStatic_();
@@ -341,6 +342,61 @@ private:
       std::memset(&blob_, 0, sizeof(blob_));
     }
     runtime_.rebuildFromBlob(blob_);
+  }
+
+  void reportCalibration_(const char* why) {
+    if (!why) {
+      Serial.println("[CAL] applied: accelerometer, gyroscope, magnetometer");
+      return;
+    }
+    Serial.printf("[CAL] UNUSABLE: %s. Stopped before the estimator%s.\n", why,
+                  SEA_STATE_ENABLE_WIZARD ? "; tap to calibrate" : "");
+    Serial.printf("[CAL] blob=%d A=%d G=%d M=%d\n", static_cast<int>(have_blob_),
+                  static_cast<int>(runtime_.acc.ok), static_cast<int>(runtime_.gyr.ok),
+                  static_cast<int>(runtime_.mag.ok));
+    if (runtime_.accel_gravity_mismatch) {
+      Serial.printf("[CAL] accel_g=%.7f, firmware g_cal_local=%.7f (-DATOMS3R_CALIBRATION_GRAVITY_MPS2)\n",
+                    static_cast<double>(blob_.accel_g), static_cast<double>(g_local));
+    }
+    if (runtime_.mag_source_mismatch) {
+      Serial.printf("[CAL] mag fitted on source %u, firmware delivers source %u\n",
+                    static_cast<unsigned>(blob_.mag_source), static_cast<unsigned>(activeMagSource()));
+    }
+  }
+
+  // The estimator never runs on raw sensor values: unless the saved
+  // calibration applies in full, stop here. The reason is repeated on serial
+  // so a monitor opened later still sees it; a tap runs the wizard.
+  void requireUsableCalibration_() {
+    const char* why = calibrationUnusableReason(have_blob_, runtime_);
+    reportCalibration_(why);
+    while (why) {
+      ui_.setReadRotation();
+      ui_.title("STOPPED");
+      ui_.line("Calibration unusable:");
+      ui_.line(why);
+      ui_.line("");
+#if SEA_STATE_ENABLE_WIZARD
+      ui_.line("Tap: calibrate");
+#endif
+      uint32_t last_report_ms = millis();
+      for (;;) {
+#if SEA_STATE_ENABLE_WIZARD
+        Input::update();
+        if (Input::tapPressed()) break;
+#endif
+        if (millis() - last_report_ms >= 5000u) {
+          last_report_ms = millis();
+          reportCalibration_(why);
+        }
+        delay(10);
+      }
+#if SEA_STATE_ENABLE_WIZARD
+      runWizardFlow_(true);
+#endif
+      why = calibrationUnusableReason(have_blob_, runtime_);
+      reportCalibration_(why);
+    }
   }
 
   bool runWizardFlow_(bool boot_mode) {
@@ -503,6 +559,7 @@ private:
 
     store_.erase();
     reloadBlobAndRuntime_();
+    requireUsableCalibration_();
     reinitImu_();
     resetFusion_();
   }
@@ -515,6 +572,7 @@ private:
       ui_.notSavedNotice();
     }
 
+    requireUsableCalibration_();
     reinitImu_();
     resetFusion_();
   }
