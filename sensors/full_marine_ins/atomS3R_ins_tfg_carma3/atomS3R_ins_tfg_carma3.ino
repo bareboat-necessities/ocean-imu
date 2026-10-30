@@ -314,6 +314,8 @@ private:
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
   ins::RateOfTurnFilter rot_{};
   bool acc_bias_estimating_ = false;
+  float acc_bias_norm_mps2_ = NAN;
+  float acc_bias_z_mps2_    = NAN;
 
 private:
   static void waitForNextLoopTick_(uint32_t loop_start_us) {
@@ -621,6 +623,9 @@ private:
                                       fusion_.raw().getDirSignState(),
                                       fusion_.isLive());
     acc_bias_estimating_ = fusion_.isLive();
+    const Vector3f acc_bias_mps2 = fusion_.raw().mekf().get_acc_bias();
+    acc_bias_norm_mps2_ = acc_bias_mps2.norm();
+    acc_bias_z_mps2_    = acc_bias_mps2.z();
 
     rates_.update(millis());
 
@@ -745,13 +750,15 @@ private:
 #else
   #if ARDUINO_PLOTTER
     Serial.printf(
-      "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\tWavAxisDeg:%+.2f\tWavDirDeg:%+.2f\tWavSign:%d\n",
+      "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\tWavAxisDeg:%+.2f\tWavDirDeg:%+.2f\tWavSign:%d\tAccBiasNormCmS2:%+.3f\tAccBiasZCmS2:%+.3f\n",
       static_cast<double>(heave_raw_m_ * 100.0f),
       static_cast<double>(wave_envelope_m_ * 100.0f),
       static_cast<double>(heave_wave_clean_m_ * 100.0f),
       static_cast<double>(wave_.axis_deg),
       static_cast<double>(wave_.dir_deg),
-      wave_.sign_raw);
+      wave_.sign_raw,
+      static_cast<double>(acc_bias_norm_mps2_ * 100.0f),
+      static_cast<double>(acc_bias_z_mps2_ * 100.0f));
   #else
     Serial.printf(
       "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
