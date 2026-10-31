@@ -118,6 +118,18 @@ the result. Other IMU types keep their driver settings. The 45-second capture
 minimum and all magnetic quality limits are unchanged; independent verification
 still needs at least 56 seconds and 140 independent averaged observations.
 
+The same call first sets the BMI270 accelerometer to the gyroscope's 200 Hz
+(`configureAtomS3RAccel200Hz()`: `ACC_CONF` 0xA8 to 0xA9, the same normal
+filter in performance mode). M5Unified leaves it at the 100 Hz reset rate with
+the gyroscope at 200 Hz, so a reader that needs both data-ready bits used only
+every other gyro sample. The write is read back and checked against the
+BMI270 `EVENT` configuration-error code; a rejected write restores 100 Hz. An
+`[ACCCFG]` line reports the result. Calibration and runtime therefore sample
+at the same rate. The loops poll the data registers rather than a FIFO, so
+200 Hz is nominal: an occasional sample can still be overwritten between polls.
+`ACC_CONF` is part of the magnetic timing configuration, so a magnetic timing
+record fitted at another accelerometer rate is not loaded.
+
 The BMM150 data registers hold uncompensated Hall readings; M5Unified 0.2.13
 discards RHALL and never reads the factory trim registers. `configureAtomS3RMag()`
 also reads the trim block (0x5D..0x71) once, and every new reading is re-read
@@ -268,6 +280,17 @@ also checked on ordinary load. The optional dynamic timing stage follows this
 sweep; see [magnetic timing](magnetic-timing.md#dynamic-timing-calibration).
 
 ## Persistence and failure reporting
+
+Every INS and compass sketch stops before its estimator unless the saved
+calibration applies in full (`requireUsableCalibration()` in
+`AtomS3R_CalibrationGate.cpp`, reasons from `calibrationUnusableReason()`): no
+valid record, an accelerometer set fitted against another gravity than the
+firmware's `g_cal_local`, a magnetometer set fitted on a data source the
+firmware cannot deliver, or a missing set. It reports the reason and the
+mismatching values on serial every 5 seconds (`[CAL] UNUSABLE: ...`), shows it
+on the display and, when the sketch builds the wizard in, runs it on tap. A
+usable calibration is logged as `[CAL] applied: ...`. The check runs at boot,
+after an erase and after a wizard run, so no estimator runs on raw values.
 
 `ImuCalBlobV5` is a 372-byte explicitly laid-out record under `blob_m5v5`.
 Its outer CRC covers all metadata, including the optional magnetic timing

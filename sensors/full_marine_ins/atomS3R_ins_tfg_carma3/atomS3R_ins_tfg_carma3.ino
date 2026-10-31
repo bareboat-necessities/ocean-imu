@@ -45,6 +45,7 @@
 
 #include <ArduinoOceanImu.h>
 
+#include "AtomS3R/AtomS3R_CalibrationGate.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
@@ -190,11 +191,12 @@ public:
       if (saved) {
         Serial.println("[BOOT] Wizard saved calibration.");
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Wizard did not save calibration.");
       }
     }
 #endif
 
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
     drawHomeStatic_();
@@ -503,6 +505,7 @@ private:
 
     store_.erase();
     reloadBlobAndRuntime_();
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
   }
@@ -515,6 +518,7 @@ private:
       ui_.notSavedNotice();
     }
 
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
   }

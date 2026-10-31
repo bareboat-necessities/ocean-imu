@@ -1305,6 +1305,18 @@ Physical S is never reset by the estimator pseudo-measurement.
 
 ## Retained facts
 
+The shipping sketch's BMI270 accelerometer runs at the gyroscope's 200 Hz
+(`configureAtomS3RAccel200Hz()`: `ACC_CONF` 0xA9, same filter). M5Unified had
+left it at the 100 Hz reset rate and the sketch accepts a frame only with both
+data-ready bits, so deployed IMU intervals were 10 ms, outside the 0.006 s
+admitted by [sampling fidelity](ou3-sampling-fidelity.md). Register polling
+against the sensor clock and loop overruns can still give an occasional longer
+interval, so the interval bound stays a deployment qualification. The sketch
+also stops before the estimator when the saved calibration cannot be applied
+in full. Estimator source, constants, gates and physical assumptions are
+unchanged; the sketch's provenance blob and the native-secant `src/` hash are
+rebound.
+
 The H18-to-A21 magnetic release gate counts only corrections the core
 actually applied (`seastate::common::MagServiceCount`); rejected calls advance
 neither the count nor its 1-s clock. This is the accepted-update count already
