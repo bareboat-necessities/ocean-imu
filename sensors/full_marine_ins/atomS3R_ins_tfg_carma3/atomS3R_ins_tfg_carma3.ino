@@ -153,12 +153,6 @@ static constexpr float IMU_LEVER_ARM_Z_M = 0.0f;  // + down
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
-#if SEA_STATE_ENABLE_WIZARD
-static constexpr CalibrationWizardFn kCalibrationWizard = runImuCalWizard;
-#else
-static constexpr CalibrationWizardFn kCalibrationWizard = nullptr;
-#endif
-
 namespace ins = ocean_imu::ins;
 using wave_direction::WaveDirectionReport;
 
@@ -177,7 +171,6 @@ public:
     cfg.internal_imu = true;
     M5.begin(cfg);
     clearM5UnifiedImuCalibration();
-    configureAtomS3RAccel200Hz(Serial);
     configureAtomS3RMag(Serial);
     delay(250);
 
@@ -203,7 +196,7 @@ public:
     }
 #endif
 
-    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kCalibrationWizard);
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
     drawHomeStatic_();
@@ -512,7 +505,7 @@ private:
 
     store_.erase();
     reloadBlobAndRuntime_();
-    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kCalibrationWizard);
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
   }
@@ -525,7 +518,7 @@ private:
       ui_.notSavedNotice();
     }
 
-    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kCalibrationWizard);
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, kSeaStateCalibrationWizard);
     reinitImu_();
     resetFusion_();
   }

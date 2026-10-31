@@ -28,3 +28,21 @@ void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV5& blo
                               RuntimeCals& runtime, CalibrationWizardFn wizard);
 
 }  // namespace atoms3r_ical
+
+// The wizard a sea-state INS sketch's gate offers: SEA_STATE_ENABLE_WIZARD,
+// which those sketches define before their includes, selects runImuCalWizard;
+// without it the gate offers none and no wizard is linked.
+#if defined(SEA_STATE_ENABLE_WIZARD) && SEA_STATE_ENABLE_WIZARD
+#include "AtomS3R/ImuCalWizardRunner.h"
+#endif
+
+namespace atoms3r_ical {
+
+static constexpr CalibrationWizardFn kSeaStateCalibrationWizard =
+#if defined(SEA_STATE_ENABLE_WIZARD) && SEA_STATE_ENABLE_WIZARD
+    runImuCalWizard;
+#else
+    nullptr;
+#endif
+
+}  // namespace atoms3r_ical

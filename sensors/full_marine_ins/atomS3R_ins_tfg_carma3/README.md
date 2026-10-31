@@ -14,9 +14,8 @@ Open the sketch: [`atomS3R_ins_tfg_carma3.ino`](atomS3R_ins_tfg_carma3.ino).
 
 ## What it does
 
-- reads and calibrates the AtomS3R IMU using the shared device layer;
-- stops at startup, before the estimator, when the saved calibration cannot be applied in full (none saved, accelerometer fitted against another gravity, magnetometer fitted on another data source, or a missing set), reports the reason on serial every 5 s and offers the wizard on tap; it never runs on raw sensor values;
-- runs the estimator at a nominal 200 Hz, with the BMI270 accelerometer switched from its 100 Hz reset rate to the gyroscope's 200 Hz, so frames are no longer limited to every other gyro sample (the loop polls registers, not a FIFO, so an occasional sample can still be overwritten between polls);
+- reads and calibrates the AtomS3R IMU using the shared device layer, which samples the BMI270 accelerometer at the gyroscope's 200 Hz and stops before the estimator when the saved calibration cannot be applied in full ([calibration safety](../../../docs/calibration-safety.md));
+- runs the estimator at 200 Hz;
 - rejects sporadic single-sample IMU spikes before calibration and fusion with the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h) (disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`);
 - learns tilt during startup while the vessel may already be moving;
 - performs a one-shot magnetic north lock inside the sea-state fusion filter;

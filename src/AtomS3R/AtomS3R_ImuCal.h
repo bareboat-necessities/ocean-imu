@@ -405,6 +405,8 @@ static inline void clearM5UnifiedImuCalibration() {
 
 // AtomS3R magnetometer setup used for both calibration and runtime. Call after
 // every M5Unified IMU initialisation (M5Unified soft-resets the BMM150):
+//  - accelerometer at the gyroscope's 200 Hz (configureAtomS3RAccel200Hz),
+//    first, because the magnetic timing configuration fingerprints ACC_CONF;
 //  - low-noise setting: 47 XY / 41 Z repetitions at M5Unified's 30 Hz output
 //    rate instead of the 1/1 reset value (AtomS3R_Bmm150AuxPreset.h);
 //  - Bosch compensation: reads the factory trim registers once, then every
@@ -464,9 +466,8 @@ static inline void loadMagTiming_(const ImuCalBlobV5& b) {
 // 100 Hz and drops every other gyro sample. 0xA9 keeps the same filter setting
 // at 200 Hz. Like Bosch's driver, the write is checked against the EVENT
 // register's configuration error code (bits 4:2: 1 accel, 3 accel+gyro); a
-// rejected or unconfirmed write restores the previous value. Call after every
-// M5Unified IMU initialisation and before configureAtomS3RMag(), whose timing
-// configuration fingerprints ACC_CONF.
+// rejected or unconfirmed write restores the previous value.
+// configureAtomS3RMag() calls it first, before it fingerprints ACC_CONF.
 static inline bool configureAtomS3RAccel200Hz(Print& log) {
   constexpr uint8_t EVENT_ADDR     = 0x1B;
   constexpr uint8_t ACC_CONF_ADDR  = 0x40;
@@ -486,6 +487,7 @@ static inline bool configureAtomS3RAccel200Hz(Print& log) {
 }
 
 static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
+  configureAtomS3RAccel200Hz(log);
   auto& src = atoms3rMagSource();
   src = AtomS3RMagSource{};
   activeMagTiming() = {};

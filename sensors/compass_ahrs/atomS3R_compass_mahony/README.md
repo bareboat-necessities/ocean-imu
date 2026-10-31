@@ -16,7 +16,7 @@ Open the sketch: [`atomS3R_compass_mahony.ino`](atomS3R_compass_mahony.ino).
 - calibrated magnetometer updates when healthy magnetic data are available;
 - graphical compass UI by default;
 - NMEA 0183 serial output by default (`HDM`, `XDR`, and `ROT` through the shared app);
-- the common AtomS3R IMU calibration workflow;
+- the common AtomS3R IMU calibration workflow; the shared device layer samples the BMI270 accelerometer at the gyroscope's 200 Hz and stops before the filter when the saved calibration cannot be applied in full ([calibration safety](../../../docs/calibration-safety.md));
 - rejection of sporadic single-sample IMU spikes before calibration and fusion by the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h): detection runs on |a| plus the vertical (body z) accelerometer component, which also catches vertical sign flips, and a rejected read has its accelerometer and gyro replaced together from the same observed window sample (settings in `ImuSpikeCfg`; disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`).
 
 The Mahony backend is a good embedded baseline when you want a small and responsive attitude estimator without the covariance machinery of the qMEKF.
