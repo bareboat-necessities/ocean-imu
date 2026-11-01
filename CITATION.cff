@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "ocean-imu: Embedded-friendly marine IMU and wave-processing algorithms in modern C++ for sensor fusion, marine motion estimation"
+type: software
+authors:
+  - family-names: "Grushinskiy"
+    given-names: "Mikhail"
+repository-code: "https://github.com/bareboat-necessities/ocean-imu"
+url: "https://github.com/bareboat-necessities/ocean-imu"
+license: MIT
+version: 2.7.2
+date-released: 2026-11-01
+keywords:
+  - "Kalman filter"
+  - "inertial navigation"
+  - "GNSS/INS fusion"
+  - "AHRS"
+  - "marine sensor fusion"
+  - "heave estimation"
