@@ -9,10 +9,12 @@
 #include <memory>
 #include <new>
 
+#include "AtomS3R/AtomS3R_CalibrationGate.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
+#include "AtomS3R/ImuCalWizardRunner.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
 
@@ -312,7 +314,7 @@ class CompassAppBase {
         have_blob_ = true;
         runtime_.rebuildFromBlob(blob_);
       } else {
-        Serial.println("[BOOT] Wizard did not save calibration. Running with raw values.");
+        Serial.println("[BOOT] Wizard did not save calibration.");
       }
     } else {
       Serial.println("[BOOT] Found saved calibration:");
@@ -320,6 +322,7 @@ class CompassAppBase {
       printBlobDetail(Serial, blob_);
     }
 
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, runImuCalWizard);
     resetPipeline_();
     drawHomeStatic_();
 
@@ -394,6 +397,7 @@ class CompassAppBase {
     store_.erase();
     clearM5UnifiedImuCalibration();
     reloadBlobAndRuntime_();
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, runImuCalWizard);
     resetPipeline_();
 
     Serial.println("[HOME] erased blob + cleared M5Unified cal");
@@ -415,6 +419,7 @@ class CompassAppBase {
     blob_ = saved;
     have_blob_ = true;
     runtime_.rebuildFromBlob(blob_);
+    requireUsableCalibration(ui_, store_, blob_, have_blob_, runtime_, runImuCalWizard);
     resetPipeline_();
   }
 

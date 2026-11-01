@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "4bbbe7ed48a70b00949b78f04d656f6674104944e5d4b8d92fb04183def956c6",
+  "replay_fingerprint": "a255c638a02c4d73701983351bc40002d094c41264be2dd922d38897bbab4fe1",
   "results_file_count": 552,
   "results_files": [
     {
@@ -1206,7 +1206,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "c211b59f93d13a1a752435f020509bf82bbf291f608d036675118c4135a89cf9"
+      "sha256": "be637a40690590980f36892994691178e1a7b26a45d94c1250b02469fcec4d75"
     },
     {
       "kind": "file",
@@ -1251,7 +1251,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "9e1804f333fa9f0edea6d20d939cd29de00b555f713f86926de2a85e673309c8"
+      "sha256": "87ffa10b6aa18c9f13d059aef9389cd7641850224df9f03986e9db3cf4d4868b"
     },
     {
       "kind": "file",
@@ -1351,7 +1351,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "3654ceb0ff77f3139992651088a286162c72dfcc630f7efbf55de297114a7545"
+      "sha256": "807ce52af8cba2b0841b34798273efb0cb59df25063e80f13b8c7c0b9946e590"
     },
     {
       "kind": "file",
@@ -1421,37 +1421,37 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "a906cfc413febfc41bb612e64e18543faecac5fb0dd565fcc3fd41d459cd1ab1"
+      "sha256": "eba64aa2d44828a1d5e3411d0f3f25df7b174c8f0a47402eb7185c3a26820d65"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "94131a738c50f97062df4415d07a2c28a8dec16ebe35c2366980ea2ec80469f9"
+      "sha256": "4fcf03d4f253b614888b9056b0fac76ee2fbe4f343cff489b027d0b76b814cbb"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "f81ee4211829be859b45fcfe1f3b2c08c6a8a147cda2a4bb61e134d4cc7ee035"
+      "sha256": "b41cc4d2d7662843c2359dae927e183bcac3eacadb93de6bc36d03138af7bd73"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "f10e4bbe78f1868e6e743737f9cbc0fe334c7cb57f5e4afaec55a21edaea3fe0"
+      "sha256": "2abdc9b666b42d491ae2822467e34afbe67d79e71827693bb67dfd5a3fc2eb52"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "3ead1f43e24a58b45985a46416ededfe94630b3f9dc32c233064efce07c2dc8b"
+      "sha256": "3f458c7793ad4d14af5e9835589c83fb4a17c77fa365145665d68db66d498cd2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "1853bbfbb42980d2dcb0130ba508e7ecf5c32c8510df137b70350cec044d4ad4"
+      "sha256": "9f796fc31bf0e77bfba84343135067e2778489cfa10ed01a0d63453b0725c0c1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "053f147d216049ec18158700a6fa7912377fe937f9bb4b8b223d419c71b7e993"
+      "sha256": "664efc1a3bb9b0d0e71e9590a5eb0d895e14367db2d299267472148204f327e8"
     },
     {
       "kind": "file",
@@ -1461,22 +1461,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "caeb9b01bbf8085ac33f7fd5d227257fd15356946dff4fec3127644b7ff5fdb8"
+      "sha256": "73bbe956c0b1f7a6c154fd12673b9e899fc6385f627ddaa9f25168027d107a34"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "30636cfb3c39a25610d38c050188eed770057902f1c2ee335d6f30f3cf83a4b1"
+      "sha256": "a1b61a4fdb67921251a8c4036ecdc40aff2ae4b02a4b77532b376fa2763aef31"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "599b8b59c4c338b39f5bb8c6c3ff6c30e506d8823d6bb0ac57a3731d72ab03e6"
+      "sha256": "b87654441d96bf41cf2e58701638bcf1d1ef05d227672b41498d833d7e778470"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "fd89867d9bafe74249c93eedbccf7aac16efa586c48126057d8c678ba6c1472b"
+      "sha256": "9a55af1bfd72a44fd07a995a1424f9c7dd256159c4fc94c1f23066b6bc92ac5a"
     },
     {
       "kind": "file",
@@ -1491,7 +1491,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "fca9c1eac83d8de8588d2fab7826b0d7f8fd380353d2fc48d601f2599b4324ec"
+      "sha256": "9bea8621f1663b043d80b3e27c02f22f1f8be7ab88d1eb1e6d52755c4969a905"
     },
     {
       "kind": "file",
@@ -2764,13 +2764,13 @@
       "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
     }
   ],
-  "results_fingerprint": "87dafb088becb44b05a759951a2f2fe4e7b86316b0babae15e764022acbf5f9f",
+  "results_fingerprint": "9bcccae69fa682b29e74679b249a7d27480c18355d066c355cf332d8696c8fbd",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 841,
+  "tracked_replay_file_count": 843,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -2835,7 +2835,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/quality-gates.yml",
-      "sha256": "1f52e443ee3b67aeb05e8f18e73abbc3040f63fb9b574618a5faea7b1b102b11"
+      "sha256": "d876f36433c8e85d4eea59a4bb33e2e6bb8c130be0c3cc3cabfa0792fa2f26b8"
     },
     {
       "mode": "100644",
@@ -3115,37 +3115,37 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
-      "sha256": "9337b921c0514c470559ce98e3770ca23edb55ceaa26a999248d5e3223f87a56"
+      "sha256": "088482296f28e6032f2312695b4eaf88e36c657f651cdfe48237c1c2ca06ac9c"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "a9b598f13cd30637e58b0d8ebe1440725e9eeeb8f21ef662b02ded47dcbf32ec"
+      "sha256": "4507a07da29c24c932cd1c31ba50440a057e0eea63dcadf0ffb1de150323f259"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "2d3a161c7f7f08ad82dc3d8979b42d50973d918d24ddb7804e5ac5a2f5cb5270"
+      "sha256": "95c4028c6c605fc94c71db5ac80ed1ece70f32e92e448e81d88f32b5e472c765"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-      "sha256": "7c474387547b0df8de139f865f873e884564919aded83acb1dcc5be78a45e28f"
+      "sha256": "15e7a2f319122b250b6e8048a7c3cf6b044d30d37248ff0bb38181f4dbd2d73b"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
-      "sha256": "33e13ae7adb8bd0505539e01aad65b8ae9ee5e1c5124933c9c9e6ad6da3f5ace"
+      "sha256": "ce09a01a5de372861e5746cae4d5126a19cc7a8b85367a37170647b2a56abd73"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "901610cd1225704decdf1f2373daa5504c541c4cf5644df43c788875cc62e3d4"
+      "sha256": "18cca6e93828c690598f7c4f7697f38a1e715c15dab586ae52719930021848da"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "sha256": "af83d93475a3acd10aa3ce3441e0f8f97d850c48b0df62e892fae9c456e9d91a"
+      "sha256": "d60bbe83a1dd354e977ed6da8625301116f085c44ba22b162970f7fa21eb1481"
     },
     {
       "mode": "100644",
@@ -3179,8 +3179,18 @@
     },
     {
       "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_CalibrationGate.cpp",
+      "sha256": "5019bcd658132867e464e6ff7c71aa52bb92be3a5b419724ed0056d6f2fda439"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_CalibrationGate.h",
+      "sha256": "00404c288d0981edf2c5a67132ce978a3e9400efda997e2161b90eeab08e156c"
+    },
+    {
+      "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
-      "sha256": "116ce049e21d5319d7b80261bb42ba21d7543f8605c31fa76b312b24bbff404d"
+      "sha256": "0cfea4fbc4cc136916853ea7622727501f3f41f82f599b77acdae03584ad519e"
     },
     {
       "mode": "100644",
@@ -3195,12 +3205,12 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "cdb20fcacbb15a224cf3df4fed93e1941194bf0e7be1d91fd5cfe82a82ce78ca"
+      "sha256": "72d0d1cc9c652139ca860ff656e8817006bc2dbcb888f747b45b71a41300964c"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCalBlob.h",
-      "sha256": "45f5488d181f8f5fa672dc2c333cfda18a893f499bcfde1e3759029f7317464f"
+      "sha256": "981e565e8d9999dd4830aa94edc1e9e3170f86e12a8b89e3b21521ed1bfead85"
     },
     {
       "mode": "100644",
@@ -3865,7 +3875,7 @@
     {
       "mode": "100644",
       "path": "tests/imu_calibrate/accel_cal-test.cpp",
-      "sha256": "85164f4b3ad5e31d64a13294a481599c0c2c42368bfa868cace12267e704e02b"
+      "sha256": "766d339fa5ba2752d9385b7bfb2de9fbcdd5d5bad18ce829fa3ebd7e091bdc2b"
     },
     {
       "mode": "100644",

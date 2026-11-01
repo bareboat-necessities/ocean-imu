@@ -15,7 +15,7 @@ Open the sketch: [`atomS3R_ins_nlo.ino`](atomS3R_ins_nlo.ino).
 
 ## What it does
 
-- reads and calibrates the AtomS3R IMU using the shared device layer;
+- reads and calibrates the AtomS3R IMU using the shared device layer, which samples the BMI270 accelerometer at the gyroscope's 200 Hz and stops before the estimator when the saved calibration cannot be applied in full ([calibration safety](../../../docs/calibration-safety.md));
 - runs the observer at 200 Hz through [`TimeVarGainNloAdapter`](../../../src/nlo/TimeVarGainNLO_Adapter.h);
 - rejects sporadic single-sample IMU spikes before calibration and fusion with the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h): detection runs on |a| plus the vertical (body z) accelerometer component, which also catches vertical sign flips, and a rejected read has its accelerometer and gyro replaced together from the same observed window sample (settings in `ImuSpikeCfg`; disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`);
 - bootstraps attitude with the adapter's Mahony startup stage, then seeds and hands over to the observer;

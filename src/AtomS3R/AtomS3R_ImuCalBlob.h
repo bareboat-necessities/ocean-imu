@@ -487,6 +487,19 @@ struct RuntimeCals {
   }
 };
 
+// Why the runtime cannot apply the saved calibration in full, or nullptr when
+// accelerometer, gyroscope and magnetometer sets are all applied. A sketch
+// that must not run an estimator on raw sensor values stops on a reason.
+static inline const char* calibrationUnusableReason(bool have_blob, const RuntimeCals& rc) {
+  if (!have_blob) return "no valid saved calibration";
+  if (rc.accel_gravity_mismatch) return "accel fitted against another gravity";
+  if (!rc.acc.ok) return "no accelerometer calibration";
+  if (!rc.gyr.ok) return "no gyroscope calibration";
+  if (rc.mag_source_mismatch) return "mag fitted on another data source";
+  if (!rc.mag.ok) return "no magnetometer calibration";
+  return nullptr;
+}
+
 // Key-value persistence over any backend with the Preferences byte API:
 //   size_t getBytesLength(const char*), size_t getBytes(const char*, void*, size_t),
 //   size_t putBytes(const char*, const void*, size_t), bool remove(const char*)

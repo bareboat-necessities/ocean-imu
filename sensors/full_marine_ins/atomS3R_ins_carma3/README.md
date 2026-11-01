@@ -14,7 +14,7 @@ Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 
 ## What it does
 
-- reads and calibrates the AtomS3R IMU using the shared device layer;
+- reads and calibrates the AtomS3R IMU using the shared device layer, which samples the BMI270 accelerometer at the gyroscope's 200 Hz and stops before the estimator when the saved calibration cannot be applied in full ([calibration safety](../../../docs/calibration-safety.md));
 - runs the estimator at 200 Hz;
 - rejects sporadic single-sample IMU spikes before calibration and fusion with the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h) (disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`);
 - learns tilt during startup while the vessel may already be moving;

@@ -19,7 +19,7 @@ Open the sketch: [`atomS3R_ins_pii_observer.ino`](atomS3R_ins_pii_observer.ino).
 - AHRS roll, pitch, and yaw;
 - heave / vertical displacement estimate;
 - wave-envelope estimate;
-- common AtomS3R calibration support and optional calibration wizard;
+- common AtomS3R calibration support and optional calibration wizard; the shared device layer samples the BMI270 accelerometer at the gyroscope's 200 Hz and stops before the estimator when the saved calibration cannot be applied in full ([calibration safety](../../../docs/calibration-safety.md));
 - rejection of sporadic single-sample IMU spikes before calibration and fusion by the shared [`ImuSpikeFilter`](../../../src/AtomS3R/AtomS3R_ImuSpikeFilter.h): detection runs on |a| plus the vertical (body z) accelerometer component, which also catches vertical sign flips, and a rejected read has its accelerometer and gyro replaced together from the same observed window sample (settings in `ImuSpikeCfg`; disable with `-DATOMS3R_IMU_SPIKE_FILTER=0`);
 - on-device UI and serial/NMEA output.
 
