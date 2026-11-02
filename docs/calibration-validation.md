@@ -32,6 +32,7 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Covariance and injection | Rejected magnetic updates preserve covariance; accepted Joseph updates remain finite, symmetric and PSD |
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
 | Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
+| Wizard task dispatch | Actual dispatcher runs off the caller stack, retains the caller's core, publishes save/cancel correctly, handles allocation failure, and services a registered caller watchdog |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
 spaced stationary OU components approximate a flicker plateau over a finite
@@ -70,20 +71,34 @@ arduino-cli compile --library . --jobs 1 --warnings default \
   sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 ```
 
-The 680-byte schema retains existing NVS access and verified writes. The
-streaming Allan state is 3120 bytes on the host ABI. Rotation samples occupy
-20 bytes each; the 32768-sample capture and bounded segment metadata consume
-about 657 KB, explicitly allocated in PSRAM and freed after fitting. The
-wizard itself is heap-owned behind the existing runner entry, rather than
+The 680-byte schema retains existing NVS access and verified writes. Target
+DWARF type layouts give 3104 bytes for the streaming Allan state (3120 bytes
+on the host ABI), 656600 bytes for the 32768-sample rotation fitter including
+bounded metadata, and 84824 bytes for the wizard. Rotation samples occupy
+20 bytes each; the fitter is explicitly allocated in PSRAM and freed after
+fitting. The wizard is heap-owned behind the existing runner entry, rather than
 placed on the loop-task stack or retained globally by each compass.
-The fitting worker has a 32768-byte stack. ESP-IDF stack sizes and high-water
+The UI task and fitting worker each have a 32768-byte stack, so a fit can use
+65536 bytes of task stacks in addition to caller/RTOS memory. The compiler
+reports 64 bytes for the public dispatcher and 48 bytes for its runner. The
+4144-byte workflow and 720-byte restore wrapper execute on the UI task;
+neither is nested beneath the application's setup/loop stack. ESP-IDF stack sizes and high-water
 marks are interpreted as bytes.
 
-The synthetic benchmark firmware crosscompiles to 691891 bytes of flash
-and 26976 bytes of global internal RAM with the reference toolchain. Its
+Crossbuilds use the documented board options and CI optimization flags:
+
+| Firmware | Flash bytes | Global internal RAM bytes |
+| --- | ---: | ---: |
+| OU-III INS | Hotfix rebuild pending | Hotfix rebuild pending |
+| qMEKF compass | 1062811 | 28056 |
+| Synthetic benchmark | Hotfix rebuild pending | Hotfix rebuild pending |
+
+Global RAM excludes runtime heap and task-stack allocations. The benchmark's
 compiler-reported individual stack frames include gyro fit 3392 bytes,
 normal-equation evaluation 944 bytes, the NIS solve lambda 368 bytes, and
-the benchmark entry 6896 bytes. These are individual static frame estimates;
+the benchmark entry 6896 bytes. Production worker entry frames are 2512 bytes
+for the gyro/alignment fit and 4880 bytes for stationary noise acquisition;
+the wizard task entry itself uses 32 bytes. These are individual static frame estimates;
 they are neither measured task peaks nor a proof of total stack headroom.
 Optimization, inlining and call chains affect the actual peak.
 
@@ -116,12 +131,8 @@ structures and the next qualification step. This remains a release blocker.
 
 Build serially on constrained hosts: parallel Eigen-heavy native and MCU
 compilers exhausted this environment's 8 GB memory limit. A serial build
-completed. The full OU-III image is 1346875 bytes before the final resource
-configuration, exceeding the default 1310720-byte application slot; use
-the documented 3342336-byte OTA slots on the board's 8 MB flash. With CI's
-`-funroll-loops -fno-finite-math-only` flags plus stack-usage reporting, the
-OU-III image crosscompiles to 1347791 bytes, with 31168 bytes of global
-internal RAM (296512 bytes remaining before runtime allocations).
+completed. The full OU-III image exceeds the default 1310720-byte application
+slot; use the documented 3342336-byte OTA slots on the board's 8 MB flash.
 
 Real calibration accuracy requires independently captured device rotations,
 fixture registration, and magnetic-environment checks. Real sensor noise

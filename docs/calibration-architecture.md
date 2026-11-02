@@ -155,10 +155,17 @@ The existing runImuCalWizard entry is defined out of line so large fitting
 and GUI instantiations compile separately from estimator sketches. The compass
 uses that same entry instead of retaining another wizard object. This reduces
 compiler peak RAM and keeps the large wizard off the application stack.
+The public runAndSave dispatcher runs the complete UI, capture and validation
+flow on a dedicated 32 KiB task on the caller's core. Moving only the object
+to the heap does not protect Arduino's smaller loopTask stack from nested
+calls. The caller waits and services its watchdog when registered; only the
+wizard task accesses the UI during that wait. Serial logs report the task's
+stack budget and actual free-stack high-water mark.
 
 The rotation buffer is allocated explicitly in PSRAM and released after
 fitting; it never occupies the loop-task stack. AtomS3R builds require OPI
-PSRAM enabled. The 32 KiB worker stack and its high-water mark use bytes, as
+PSRAM enabled. The UI and fitting tasks each have a 32 KiB stack, with up to
+64 KiB allocated simultaneously during a fit. Stack sizes and high-water marks use bytes, as
 required by ESP-IDF, rather than upstream FreeRTOS words. Logs report allocated
 bytes, free PSRAM, fit microseconds and stack headroom. These measurements
 must be collected on hardware; host timing is not an ESP32-S3 benchmark.

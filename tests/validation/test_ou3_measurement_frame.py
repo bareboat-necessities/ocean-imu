@@ -676,7 +676,19 @@ class MeasurementFrameTests(unittest.TestCase):
         probe = (root/'tools/stability/ou3_theorem/planar_service_probe.cpp').read_text()
         for literal in ('F_AA.template block<3,3>(0,3) = Bstep;',
                         'const Matrix3 J_att = -skew_symmetric_matrix(v2hat);',
-                        'S_mat = Rmag;', 'project_psd_ou_iii<T,6>(Q_AA, T(1e-12))'):
+                        'project_psd_ou_iii<T,6>(Q_AA, T(1e-12))'):
+            self.assertIn(literal, core)
+        # Rnoise in the operation lemma is the effective SPD covariance.
+        # Bind the rotated/inflated magnetic R actually used by the update,
+        # including rejection before correction; this does not qualify the
+        # separate, source-bound service-word evidence.
+        for literal in (
+                'const Matrix3 Rmeasurement=R_body_to_prime*Rmag*R_body_to_prime.transpose();',
+                'const Matrix3 HPH = J_att * Pext.template block<3,3>(0,0) * J_att.transpose();',
+                'magnetic_gate_.evaluate(r, HPH, Rmeasurement, mag_meas.norm()/v2hat.norm())',
+                'if (!decision.accepted) { last_mag_diag_.S=HPH+Rmeasurement; last_mag_diag_.nis=decision.nis; return; }',
+                'S_mat=HPH+decision.inflation*Rmeasurement;',
+                'joseph_update3_(K, S_mat, PCt);'):
             self.assertIn(literal, core)
         self.assertIn('float b0  = 1e-10f;', config)
         self.assertIn('c.Pq0, c.Pb0, c.b0, c.R_S_noise', wrapper)

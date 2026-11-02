@@ -28,6 +28,7 @@
 #include <memory>
 #include <new>
 #include <esp_heap_caps.h>
+#include <esp_task_wdt.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -85,6 +86,7 @@ struct ImuCalWizardCfg {
 
   // FreeRTOS stack:
   static constexpr uint32_t FIT_STACK_BYTES     = 32768;
+  static constexpr uint32_t WIZARD_STACK_BYTES  = 32768;
 
   static constexpr uint32_t FIT_TIMEOUT_MS      = 30000;
   static constexpr uint32_t GYRO_MATRIX_TIMEOUT_MS = 120000;
@@ -113,6 +115,46 @@ public:
   // abort before SAVE leaves storage untouched. Failed writes report whether
   // recovery was actually verified; storage failure can also prevent rollback.
   bool runAndSave(ImuCalBlobV6& out_saved) {
+    // The wizard owns heap storage, but its nested UI/capture/validation calls
+    // still need more stack than Arduino's loopTask can provide at boot.
+    // Keep the existing workflow on the caller's core, with its own stack.
+    WizardTaskCtx ctx{this,&out_saved};
+    TaskHandle_t task=nullptr;
+    const BaseType_t rc=xTaskCreatePinnedToCore(&ImuCalWizard::wizardTask_,"imu-cal-ui",
+      ImuCalWizardCfg::WIZARD_STACK_BYTES,&ctx,1,&task,xPortGetCoreID());
+    if(rc!=pdPASS || task==nullptr) {
+      Serial.println("[WIZ] UI task allocation failed");
+      ui_.fail("CALIBRATION","Task allocation failed");return false;
+    }
+    while(!ctx.done.load()) {
+      // If an application enabled the loop watchdog, waiting for user input
+      // or the 40-minute capture must not stop the caller's watchdog service.
+      if(esp_task_wdt_status(nullptr)==ESP_OK)esp_task_wdt_reset();
+      delay(20);
+    }
+    return ctx.saved;
+  }
+
+private:
+  struct WizardTaskCtx {
+    ImuCalWizard* wizard;
+    ImuCalBlobV6* out;
+    bool saved=false;
+    std::atomic<bool> done{false};
+  };
+  static void wizardTask_(void* p) {
+    auto* ctx=static_cast<WizardTaskCtx*>(p);
+    Serial.printf("[WIZ] UI task stack=%luB free=%luB\n",
+      static_cast<unsigned long>(ImuCalWizardCfg::WIZARD_STACK_BYTES),
+      static_cast<unsigned long>(hwmBytes_()));
+    ctx->saved=ctx->wizard->runAndRestore_(*ctx->out);
+    Serial.printf("[WIZ] UI task done saved=%d stack_free=%luB\n",int(ctx->saved),
+      static_cast<unsigned long>(hwmBytes_()));
+    ctx->done=true; // no access to ctx or wizard after publishing completion
+    vTaskDelete(nullptr);
+  }
+
+  bool runAndRestore_(ImuCalBlobV6& out_saved) {
     if (runAndSave_(out_saved)) return true;
     // The magnetometer stage switches to the calibration source; a run that
     // did not save keeps the previous calibration, so read the magnetometer
@@ -126,7 +168,6 @@ public:
     return false;
   }
 
-private:
   /**
    * Run calibration stages and retry menus. Fill out_saved and return true only after
    * saving and validating readback; return false on cancellation or save failure.
