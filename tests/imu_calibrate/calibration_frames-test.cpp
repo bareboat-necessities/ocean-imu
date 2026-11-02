@@ -68,7 +68,7 @@ int main(){
     if(i<16)train[i]=pose;else validation[i-16]=pose;
   }
   atoms3r_magdiag::MagModel model;
-  const auto alignment=atoms3r_magdiag::solveAlignment(train,16,model);float rms;
+  const auto alignment=atoms3r_magdiag::solveAlignment(train,16,model);float rms=NAN;
   check(alignment.ok && alignment.R.isApprox(rim,1e-4f) &&
     atoms3r_magdiag::validateAlignment(alignment,validation,5,model,rms),"wizard-sized independent magnetic alignment");
   for(auto& p:train)p=train[0];

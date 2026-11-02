@@ -109,6 +109,9 @@ gate_sanitizers() {
       grep -B2 -A20 'runtime error:\|ERROR: AddressSanitizer\|ERROR: LeakSanitizer' "$rlog" | head -80
       fail "sanitizers: $d — ubsan=$ub asan=$as leak=$lk"
     elif (( rc != 0 )); then
+      # Campaign summaries can push the failing assertion out of the tail.
+      # Preserve those messages as well as the final context.
+      grep -E 'CHECK FAILED:|FAIL:|FAIL ' "$rlog" | head -30 || true
       tail -30 "$rlog"; fail "sanitizers: $d test suite exited $rc"
     else
       ok "sanitizers: $d clean"

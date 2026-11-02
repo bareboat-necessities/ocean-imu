@@ -113,7 +113,10 @@ class QmekfBackend : public IAttitudeBackend {
   const auto& magneticHealth() const {return mekf_->magneticHealth();}
 
  private:
-  static Vector3f accelModelStd_(){return Vector3f::Constant(.06f*ImuCalCfg::g_std);}
+  static Vector3f accelModelStd_(){
+    const float g = ImuCalCfg::g_std; // model/noise allowance in nominal g
+    return Vector3f::Constant(.06f*g);
+  }
   void rememberMagReference_(const Vector3f& measurement) {
     const auto qc=mekf_->quaternion();
     mag_reference_world_=Eigen::Quaternionf(qc(3),qc(0),qc(1),qc(2))*measurement;

@@ -34,6 +34,16 @@ validation rotations (every fourth segment). Timestamp gaps over 20 ms,
 non-finite values, excessive rates, exhausted storage, and unqualified endpoints
 discard the active segment. A retry establishes a fresh quiet start.
 
+After each rotation prompt, keep the device still until **Turn now** appears.
+The existing stationary capture qualifies a fresh start after button/menu
+handling. Integration starts at that fresh sensor timestamp. You may wait
+before turning; an unchanged pose is not a failed rotation. Proven quiet
+prefixes are released while waiting, retaining the six-second endpoint means
+and every unqualified/moving interval. A gap before motion restarts start-pose
+qualification; a gap during motion rejects the segment. The retry screen and
+`[GYRROT]` serial diagnostics identify the actual failure (sample gap, stale
+stream, insufficient angle, or unsuccessful stillness).
+
 For calibrated unit specific force u, inertial constancy gives
 du/dt = -[omega]x u. Each measured midpoint rate is corrected by the existing
 temperature-bias model, then integrated with Exp(-S_g omega dt). A robust Huber

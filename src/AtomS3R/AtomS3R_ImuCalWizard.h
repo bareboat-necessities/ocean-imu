@@ -407,45 +407,90 @@ private:
       bool accepted=false;
       while(!accepted) {
         char label[32];snprintf(label,sizeof(label),"Rotation %d / 20",segment+1);
-        ui_.waitTap("GYRO 3D",label,"Hold; tap, then turn");
-        ui_.title("TURN/HOLD");ui_.line("Turn 40-120 deg");ui_.line("Use varied axes");
-        ui_.line("Then place & hold");ui_.line("Keep clear of metal");
-        const int hint=ui_.cursorY();ui_.line("Wait for quiet pose");
-        const uint32_t start=micros();
-        gyro_rotations_->beginSegment(start,endpoint_a_,endpoint_temp_,segment%4==3,endpoint_w_);
+        ui_.waitTap("GYRO 3D",label,"Tap; hold for prompt");
+        ui_.title("TURN/HOLD");ui_.line("First hold still");ui_.line("Then turn 40-120 deg");
+        ui_.line("Use varied tilt axes");ui_.line("Then place & hold");
+        const int hint=ui_.cursorY();ui_.line("Qualifying start...");
         imu_cal::GyroCaptureCfg cfg;cfg.timeout_ms=45000;
         imu_cal::GyroCapture<float,400,8> quiet(gyroCal_,cfg);quiet.begin(millis());
-        uint32_t draw=millis();bool failed=false;
+        uint32_t draw=millis();bool failed=false,armed=false,moved=false;
+        const char* failure=nullptr;float last_progress=0;
+        // Menus can take arbitrarily long and the device may be picked up to
+        // press BtnA. Qualify the actual start AFTER those unobserved motions.
+        // An IMU timestamp, never a UI/wall-clock epoch, anchors integration.
+        auto anchor=[&](const ImuSample& s,bool renew_pose) {
+          if(renew_pose) {
+            endpoint_a_=quiet.meanAccel();endpoint_w_=quiet.meanGyro();
+            endpoint_temp_=quiet.meanTemperature();endpoint_m_=quiet.meanMag();
+          }
+          gyro_rotations_->cancelSegment();
+          return gyro_rotations_->beginSegment(s.sample_us,endpoint_a_,endpoint_temp_,segment%4==3,endpoint_w_);
+        };
         while(true) {
           Input::update();
           ImuSample s;const bool fresh=readSample_(s);const uint32_t now=millis();
-          if(fresh && !gyro_rotations_->add(s.sample_us,s.w,s.tempC)){failed=true;break;}
+          if(fresh && armed) {
+            moved=moved || (s.w-gyr_out_.biasT.bias(s.tempC)).norm()>.01f ||
+              (s.a-endpoint_a_).norm()>.10f;
+            if(!gyro_rotations_->add(s.sample_us,s.w,s.tempC)) {
+              // A lost interval can never be used as a rotation. Before any
+              // turn, requalify a fresh start instead of an immediate RETRY.
+              if(!moved && gyro_rotations_->reason==imu_cal::GyroRotationFail::GAP) {
+                armed=false;quiet.begin(now);last_progress=0;
+              } else {failure=imu_cal::gyroRotationReason(gyro_rotations_->reason);failed=true;break;}
+            }
+          }
           const auto state=quiet.update(now,fresh?&s.a:nullptr,fresh?&s.w:nullptr,
             fresh?s.tempC:NAN,fresh?&s.m:nullptr);
           if(state==imu_cal::GyroCaptureStatus::READY) {
             const Vector3f a=quiet.meanAccel(),w=quiet.meanGyro();
             const float t=quiet.meanTemperature();
-            if((w-gyr_out_.biasT.bias(t)).norm()>.01f ||
-               (a.normalized().cross(endpoint_a_.normalized())).norm()<.2f ||
-               !quiet.hasMagReference()){failed=true;break;}
+            if((w-gyr_out_.biasT.bias(t)).norm()>.01f || !quiet.hasMagReference()) {
+              failure="Start/hold not quiet";failed=true;break;
+            }
+            if(!armed || !moved) {
+              if(!anchor(s,true)){failure=imu_cal::gyroRotationReason(gyro_rotations_->reason);failed=true;break;}
+              armed=true;quiet.begin(now);last_progress=0;
+              ui_.lineAt(hint,"Turn now");draw=now;
+              tryCalLogLine(Serial,"[GYRROT] start qualified; waiting for turn");
+              continue;
+            }
+            if((a.normalized().cross(endpoint_a_.normalized())).norm()<.2f) {
+              failure=imu_cal::gyroRotationReason(imu_cal::GyroRotationFail::ENDPOINT);failed=true;break;
+            }
             accepted=gyro_rotations_->finishSegment(a,t,cfg.useful_ms*.001);
-            if(!accepted){failed=true;break;}
+            if(!accepted){failure=imu_cal::gyroRotationReason(gyro_rotations_->reason);failed=true;break;}
             endpoint_a_=a;endpoint_w_=w;endpoint_temp_=t;endpoint_m_=quiet.meanMag();
             if(!retainPose())return false;
             bias_sum+=w-gyr_out_.biasT.k*(t-gyr_out_.biasT.T0);++bias_poses;
             break;
           }
           if(state==imu_cal::GyroCaptureStatus::STALE || state==imu_cal::GyroCaptureStatus::TIMEOUT) {
+            failure=state==imu_cal::GyroCaptureStatus::STALE?"No fresh samples":"Stillness not reached";
             failed=true;break;
           }
+          // Release only a PROVEN stationary prefix while waiting. Keep the
+          // full six-second start means and the first unqualified/moving
+          // interval. Waiting for the user must not fill the PSRAM buffer.
+          const float progress=quiet.progress();
+          if(fresh && armed && !moved && progress>last_progress && quiet.hasMagReference() &&
+             (quiet.meanAccel()-endpoint_a_).norm()<cfg.max_accel_change &&
+             (quiet.meanGyro()-endpoint_w_).norm()<cfg.max_gyro_change &&
+             (quiet.meanMag()-endpoint_m_).norm()<std::max(float(cfg.max_mag_change),.015f*endpoint_m_.norm())) {
+            if(!anchor(s,false)){failure=imu_cal::gyroRotationReason(gyro_rotations_->reason);failed=true;break;}
+          }
+          last_progress=progress;
           if(uint32_t(now-draw)>=150) {
-            ui_.lineAt(hint,state==imu_cal::GyroCaptureStatus::MOVING?"Turning...":"Hold this pose");
+            ui_.lineAt(hint,!armed?"Qualifying start...":!moved?"Turn now":
+              state==imu_cal::GyroCaptureStatus::MOVING?"Turning...":"Hold this pose");
             ui_.bar01((segment+quiet.progress())/20.f);draw=now;
           }
           delay(1);
         }
         if(failed) {
-          const char* reason=imu_cal::gyroRotationReason(gyro_rotations_->reason);
+          const char* reason=failure?failure:"Rotation capture failed";
+          Serial.printf("[GYRROT] segment=%d armed=%d moved=%d reason=%s samples=%d quiet=%s\n",
+            segment+1,int(armed),int(moved),reason,gyro_rotations_->samples(),quiet.resetReason());
           gyro_rotations_->cancelSegment();
           if(!ui_.retryMenu("GYRO rotation",reason,"New pose; vary tilt axes"))return false;
           // A retry establishes a NEW quiet start, never reuses an endpoint
