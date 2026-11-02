@@ -33,6 +33,10 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
 | Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
 | Wizard task dispatch | Actual dispatcher runs off the caller stack, retains the caller's core, publishes save/cancel correctly, handles allocation failure, and services a registered caller watchdog |
+| Turn/hold interaction | The old code reproduces an invisible first-hold bar and a false rotation failure on isolated acceleration spikes; both regressions pass with the revised workflow |
+| Endpoint qualification | Three noisy 20-turn acquisitions complete and recover the identity gyro matrix within 0.005 Frobenius error, including independent validation; ideal first endpoints qualify in under five seconds |
+| Turn retries | Injected sample gap and stillness timeout at turn 7 preserve the six accepted turns and fitted bias; only the current turn is repeated, with the stillness failure reason displayed |
+| Pauses and timing | Pauses during all twenty turns, 12/60-second waits before motion, timestamp wrap, stale streams, and insufficient tilt are exercised by the actual capture-method replay |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
 spaced stationary OU components approximate a flicker plateau over a finite
@@ -73,7 +77,7 @@ arduino-cli compile --library . --jobs 1 --warnings default \
 
 The 680-byte schema retains existing NVS access and verified writes. Target
 DWARF type layouts give 3104 bytes for the streaming Allan state (3120 bytes
-on the host ABI), 656600 bytes for the 32768-sample rotation fitter including
+on the host ABI), 1311960 bytes for the 65536-sample rotation fitter including
 bounded metadata, and 84824 bytes for the wizard. Rotation samples occupy
 20 bytes each; the fitter is explicitly allocated in PSRAM and freed after
 fitting. The wizard is heap-owned behind the existing runner entry, rather than
@@ -90,7 +94,7 @@ Crossbuilds use the documented board options and CI optimization flags:
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
 | OU-III INS | 1348359 | 31168 |
-| qMEKF compass | 1062811 | 28056 |
+| qMEKF compass (current turn/hold workflow) | 1066575 | 28056 |
 | Synthetic benchmark | 695083 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. The benchmark's

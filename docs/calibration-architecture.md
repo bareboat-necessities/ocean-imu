@@ -35,14 +35,34 @@ non-finite values, excessive rates, exhausted storage, and unqualified endpoints
 discard the active segment. A retry establishes a fresh quiet start.
 
 After each rotation prompt, keep the device still until **Turn now** appears.
-The existing stationary capture qualifies a fresh start after button/menu
-handling. Integration starts at that fresh sensor timestamp. You may wait
+Rest the device on the table or a stable side, rather than trying to hold it
+motionless in your hand. The initial bias fit retains its six-second useful
+hold. Subsequent endpoints use 2.5 seconds of useful samples, after magnetic
+settling, and at least 80 retained samples. A normal endpoint takes about
+4.5 seconds and spans two independent two-second magnetic means. The existing
+scatter, mean-change, freshness, and magnetic-change gates still apply.
+
+The stationary capture qualifies a fresh start after button/menu handling.
+Integration starts at that fresh sensor timestamp. Integrated gyro rotation,
+rather than a single raw-sample excursion, detects the turn. You may wait
 before turning; an unchanged pose is not a failed rotation. Proven quiet
-prefixes are released while waiting, retaining the six-second endpoint means
-and every unqualified/moving interval. A gap before motion restarts start-pose
-qualification; a gap during motion rejects the segment. The retry screen and
-`[GYRROT]` serial diagnostics identify the actual failure (sample gap, stale
-stream, insufficient angle, or unsuccessful stillness).
+prefixes are released while waiting, retaining the qualified endpoint means
+and every unqualified/moving interval. A gap while still at the start restarts
+qualification; a gap during motion rejects the segment. If a turn pauses
+without enough tilt, **Tilt onto a side** requests more motion while retaining
+the same trajectory. Each attempt is bounded to three minutes.
+Retries discard only the active turn. They preserve previously accepted
+turns, fitted gyro bias, and the completed accelerometer/magnetometer stages;
+the retry screen identifies the current turn and how many turns are retained.
+The rotation buffer reserves 65536 samples in PSRAM (about 1.25 MiB), allowing
+ordinary pauses across all twenty turns. The same preflight checks this full
+reservation before any calibration poses are requested.
+
+The bar fills across the current hold. **Rotation n / 20** reports overall
+completion separately; the bar no longer compresses one hold into 5% of its
+width. The display shows quiet seconds or the reason the quiet interval was
+reset. The retry screen and periodic `[GYRROT]` serial diagnostics identify
+sample gaps, stale streams, insufficient tilt, and unsuccessful stillness.
 
 For calibrated unit specific force u, inertial constancy gives
 du/dt = -[omega]x u. Each measured midpoint rate is corrected by the existing

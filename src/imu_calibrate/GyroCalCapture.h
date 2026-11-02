@@ -15,6 +15,7 @@ struct GyroCaptureCfg {
   uint32_t block_ms=250, useful_ms=6000, timeout_ms=70000, stuck_ms=12000;
   uint32_t spacing_ms=25, max_gap_ms=60, mag_stale_ms=1000;
   uint32_t mag_window_ms=2000;
+  int min_samples=220; // Shorter endpoint holds may opt in; bias capture keeps 220.
   double max_gyro_std=0.005, max_gyro_change=0.004;
   double max_accel_std=0.08, max_accel_change=0.06;
   double max_mag_change=0.6; // uT, with an additional 1.5% raw-field allowance
@@ -119,7 +120,7 @@ public:
     for(int i=0;i<nb_;++i) {pose_a_+=block_a_[i].template cast<double>();
       pose_w_+=block_w_[i].template cast<double>();pose_t_+=block_t_[i];++pose_n_;}
     ++kept_blocks_;
-    status_=(kept_blocks_*cfg_.block_ms>=cfg_.useful_ms && cal_.buf.n>=220) ?
+    status_=(kept_blocks_*cfg_.block_ms>=cfg_.useful_ms && cal_.buf.n>=cfg_.min_samples) ?
              GyroCaptureStatus::READY : GyroCaptureStatus::HOLDING;
     resetBlock_();return status_;
   }
