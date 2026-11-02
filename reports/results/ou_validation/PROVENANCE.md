@@ -1,7 +1,7 @@
 # OU validation evidence provenance
 
 These numerical rows come from a full simulator regeneration on the pinned
-v1.2.1 28 ft vessel-response dataset. The immutable `replay_provenance` block
+v1.2.3 vessel-response archive. The immutable `replay_provenance` block
 in `ou_validation_manifest.json` identifies the actual replay commit,
 implementation/build dependencies, versioned inputs, and SHA-256 of the
 normalized raw replay CSV. The manifest also records the compiler and Eigen

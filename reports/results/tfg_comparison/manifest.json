@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "5a417adf4dddfb7751c4493fed106c8c2282d81c3596da865c2301d5b3b85b6a",
-    "TFG": "eaa366570c87e3c7b3f3b4b2ef92ed6e7b3b9243fcc3fb827ea032de7639ca3f"
+    "OU_III": "08658d525ddd055adc7f5bc5659390c72b9ea617fb3d86006775a29d208d30f1",
+    "TFG": "1d1c89154bf0da9665682f22c876b8ecb3c08c2897119c356358ae5b97c57f91"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.3"
   },
-  "generated_utc": "2026-10-28T18:44:14+00:00",
-  "git_commit": "aa516b3267858f9ce893e0e58717a2726fcf673e",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   12 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3788 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  192 +-\n reports/results/tfg_comparison/raw_runs.json       | 1644 ++++-----\n 5 files changed, 2830 insertions(+), 2830 deletions(-)",
+  "generated_utc": "2026-11-02T05:01:21+00:00",
+  "git_commit": "d1e8afe1f09f5a1e4b497c86d286c17022f7fdeb",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    4 +-\n reports/results/tfg_comparison/paired_summary.json | 3980 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3210 ++++++++--------\n 4 files changed, 3777 insertions(+), 3777 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "78752df4472edc50cfc22118b6defa58668c7f9a35dbac0a82ae9c436f253144",
+    "comparison.tex": "87969fd94278f7ce577b878ba76609ad2f89467154e2d1ea043b1808cd5622b8",
     "gate_diagnostics.json": "1afc82442f84a8d2651e5e5a0b3492a6bce3b1c5ef5e1bc9359928b2b796aaa8",
-    "paired_summary.json": "0dca5bae318d7269d0b48f36bbd9921c8df190accb8994a01b9370bcd9aa77fc",
-    "raw_runs.csv": "5f37b68fbf972beb2744ed95b66fa32d1ab1af0e85d7eb7d2efb11f27d37d543",
-    "raw_runs.json": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
+    "paired_summary.json": "ea8723200a44fb4176d7667a575bc75df6f29485480801d2a1fc522671b2d90b",
+    "raw_runs.csv": "abb9927ca7b21e73e4dfcaa3c815e71fb566c0dd44caee8ac11c7be28e8a69ff",
+    "raw_runs.json": "268cbf6b5dfe2a89d28e6ee709e1037b497a1b19fddaff056134301b562baca0"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -153,21 +153,22 @@
     "src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
     "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
     "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/MagneticInnovationGate.h": "db626be9097324cfc8affadebf8e8a39c9d1a2e8155581b9cddea729280f81b1",
     "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
     "src/kalman_common/MarineWaveFrontEnd.h": "52a20e03b14f22d438050eb9b9b3c36ddf9dd39e9f43ab0b6692baf64e453943",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
-    "src/kalman_common/ProxyStartupFusion.h": "40c182d5451a4f0f13cbdfdf2b08554841f91335a889bab167aba0363501bbba",
+    "src/kalman_common/ProxyStartupFusion.h": "eeab6517f14b4c86490f7373f257e16363ce1e0197d36b434baee6c04c92de11",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
     "src/kalman_common/SeaStateFusionDefaults.h": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
     "src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
     "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "5786b9d7ab6543d89acd934478679f01484b4a845fbd661e9543b5abb621c41b",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "1076b7ce7f5c926d508b46d7eba6774b7fc2eef8a2c6a9f5318a75aef9abb129",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "4e6f1cafa61bf4d3442cba1ab5196699fae76cb0fc962ace8a0d45c9106e557d",
-    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "42bc3dd373913ac6022d98f498e5c74d830c5761c92762055a7bdea052015255",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "a9b3b28389e235298eb073f4e20b013655319463e75709aaaac23f5b8cbca36b",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "509513b7c5b9d2b2878c0987ee68f748938f2979f852085f9fdbdc40a36d63d5",
     "src/lie/SO3Jacobians.h": "14a77376205b4f4bf916cfdbe1e645fd6a23e2db9a880b281600da60af76f500",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
     "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -199,7 +200,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "40744971308",
-    "workflow": "build"
+    "run_id": "41390545033",
+    "workflow": "ou-full-evidence-branch"
   }
 }
