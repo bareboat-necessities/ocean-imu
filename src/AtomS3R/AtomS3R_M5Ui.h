@@ -241,12 +241,32 @@ public:
     return taps < 3;
   }
 
-  enum class GyroFitAction : uint8_t { RETRY_FIT, NEW_TURNS, ABORT };
+  bool confirmDiscardCaptures() {
+    title("DISCARD?");line("Unsaved data lost");line("");
+    line("Tap: keep data");line("3 taps: discard");
+    return waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS)>=3;
+  }
+
+  enum class GyroFitAction : uint8_t { RETRY_FIT, ABORT };
   GyroFitAction gyroFitFailMenu(const char* why) {
     title("GYRO FIT");line(why);line("Captures kept");line("");
-    line("Tap: retry fit");line("2 taps: new turns");line("3 taps: abort");
+    line("Tap: retry fit");line("3 taps: exit menu");
     const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
-    return taps>=3?GyroFitAction::ABORT:taps==2?GyroFitAction::NEW_TURNS:GyroFitAction::RETRY_FIT;
+    return taps>=3 && confirmDiscardCaptures()?GyroFitAction::ABORT:GyroFitAction::RETRY_FIT;
+  }
+
+  enum class MagAlignmentAction : uint8_t { RETRY_FIT, NEW_HOLDS, ABORT };
+  MagAlignmentAction magAlignmentFailMenu(const char* why) {
+    title("MAG ALIGN");line(why);line("Gyro result kept");line("");
+    line("Tap: retry solve");line("2 taps: mag holds");line("3 taps: exit menu");
+    const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    if(taps>=3)return confirmDiscardCaptures()?MagAlignmentAction::ABORT:MagAlignmentAction::RETRY_FIT;
+    if(taps==2) {
+      title("MAG ONLY?");line("Gyro result kept");line("Replace mag holds?");line("");
+      line("Tap: keep data");line("3 taps: replace");
+      if(waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS)>=3)return MagAlignmentAction::NEW_HOLDS;
+    }
+    return MagAlignmentAction::RETRY_FIT;
   }
 
   // Overwrites one text row (size-1 font) at the current rotation.

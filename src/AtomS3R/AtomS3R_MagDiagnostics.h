@@ -14,7 +14,7 @@
   - axisConsistency: compares magnetometer changes with the rotation the gyro
     measured between two readings, for every signed axis permutation of the
     magnetometer. The identity hypothesis should win clearly.
-  - solveAlignment: the small rotation between magnetometer and accelerometer
+  - solveAlignment: registration between magnetometer and accelerometer
     frames that makes the dip angle constant. An ellipsoid fit cannot see it.
   - headingErrorDeg: tilt-compensated heading error that a given magnetometer
     frame rotation and dip produce at chosen headings and tilts.
@@ -182,8 +182,20 @@ static inline AxisResult axisConsistency(const GyroMagPair* p, int n, const Pose
   return r;
 }
 
+enum class AlignmentFail : uint8_t { OK, TOO_FEW, GEOMETRY, SOLVE, RESIDUAL, AMBIGUOUS };
+static inline const char* alignmentReason(AlignmentFail reason) {
+  switch(reason) {
+    case AlignmentFail::OK:return "OK";
+    case AlignmentFail::TOO_FEW:return "More mag holds needed";
+    case AlignmentFail::GEOMETRY:return "Mag poses too alike";
+    case AlignmentFail::SOLVE:return "Mag solve failed";
+    case AlignmentFail::AMBIGUOUS:return "Mag axes ambiguous";
+    default:return "Mag dip inconsistent";
+  }
+}
 struct Alignment {
   bool ok = false;
+  AlignmentFail reason = AlignmentFail::TOO_FEW;
   M3 R = M3::Identity();  // corrected m = R * m_cal
   V3 rotvec_deg = V3::Zero();
   float dip_deg = NAN;
@@ -192,7 +204,8 @@ struct Alignment {
 };
 
 // Least squares on d_i . (Exp(delta) R m_i) = sin(dip), linearised and iterated.
-static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal) {
+static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal,
+                                      bool full_rotation=false) {
   Alignment out;
   if (!p || n < imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN) return out;
   auto dipSd = [&](const M3& R, float& mean) {
@@ -208,45 +221,74 @@ static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal
   };
   float mean0 = NAN;
   out.dip_sd_before = dipSd(M3::Identity(), mean0);
-  M3 R = M3::Identity();
-  for (int it = 0; it < 6; ++it) {
-    Eigen::Matrix4d H = Eigen::Matrix4d::Zero();
-    Eigen::Vector4d g = Eigen::Vector4d::Zero();
-    int used = 0;
-    for (int i = 0; i < n; ++i) {
-      const V3 m = R * cal.apply(p[i].m_raw);
-      const float mn = m.norm(), an = p[i].a.norm();
-      if (!(mn > 1e-6f) || !(an > 1e-6f)) continue;
-      const V3 u = m / mn, d = -p[i].a / an;
-      Eigen::Vector4d j;
-      const V3 c = u.cross(d);
-      j << c.x(), c.y(), c.z(), -1.0;
-      H += j * j.transpose();
-      g += j * double(d.dot(u));
-      ++used;
+  const float before=out.dip_sd_before;
+  // Retain the original small-trim solve for diagnostic callers. The unified
+  // calibration also admits arbitrary proper PCB rotations. Reuse that same
+  // solver from the 24 proper signed-axis seeds rather than assuming identity.
+  auto fromSeed=[&](M3 R) {
+    Alignment result;result.dip_sd_before=before;result.reason=AlignmentFail::GEOMETRY;
+    for (int it = 0; it < (full_rotation?20:6); ++it) {
+      Eigen::Matrix4d H = Eigen::Matrix4d::Zero();
+      Eigen::Vector4d g = Eigen::Vector4d::Zero();
+      int used = 0;
+      for (int i = 0; i < n; ++i) {
+        const V3 m = R * cal.apply(p[i].m_raw);
+        const float mn = m.norm(), an = p[i].a.norm();
+        if (!(mn > 1e-6f) || !(an > 1e-6f)) continue;
+        const V3 u = m / mn, d = -p[i].a / an;
+        Eigen::Vector4d j;
+        const V3 c = u.cross(d);
+        j << c.x(), c.y(), c.z(), -1.0;
+        H += j * j.transpose();
+        g += j * double(d.dot(u));
+        ++used;
+      }
+      if (used < imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN) {result.reason=AlignmentFail::TOO_FEW;return result;}
+      // Test the UNDAMPED information. A ridge cannot qualify a missing axis.
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> es(H);
+      if(es.info()!=Eigen::Success || es.eigenvalues()[0]<1e-5*used)return result;
+      result.condition=float(es.eigenvalues()[3]/es.eigenvalues()[0]);
+      if(result.condition>1e5f)return result;
+      // Retain the existing small numerical ridge only after observability.
+      for (int k = 0; k < 3; ++k) H(k, k) += 1e-3 * used;
+      // Residual r = d.u + j.x with x = [delta; s]; normal equations H x = -g.
+      const Eigen::Vector4d x = H.ldlt().solve(-g);
+      if (!x.allFinite()) {result.reason=AlignmentFail::SOLVE;return result;}
+      V3 delta(float(x(0)), float(x(1)), float(x(2)));
+      const float ang = delta.norm();
+      const float step=full_rotation?std::fmin(ang,.35f):ang;
+      if (ang > 1e-9f) R = Eigen::AngleAxisf(step, delta / ang).toRotationMatrix() * R;
+      if (ang < 1e-6f) break;
     }
-    if (used < imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN) return out;
-    // Test the UNDAMPED information. A ridge cannot qualify a missing axis.
-    Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> es(H);
-    if(es.info()!=Eigen::Success || es.eigenvalues()[0]<1e-5*used)return out;
-    out.condition=float(es.eigenvalues()[3]/es.eigenvalues()[0]);
-    if(out.condition>1e5f)return out;
-    // Retain the existing small numerical ridge only after observability.
-    for (int k = 0; k < 3; ++k) H(k, k) += 1e-3 * used;
-    // Residual r = d.u + j.x with x = [delta; s]; normal equations H x = -g.
-    const Eigen::Vector4d x = H.ldlt().solve(-g);
-    if (!x.allFinite()) return out;
-    const V3 delta(float(x(0)), float(x(1)), float(x(2)));
-    const float ang = delta.norm();
-    if (ang > 1e-9f) R = Eigen::AngleAxisf(ang, delta / ang).toRotationMatrix() * R;
-    if (ang < 1e-6f) break;
+    const Eigen::AngleAxisf aa(R);
+    result.R = R;
+    result.rotvec_deg = aa.axis() * (aa.angle() * kRadToDeg);
+    result.dip_sd_after = dipSd(R, result.dip_deg);
+    result.ok = std::isfinite(result.dip_sd_after) && result.dip_sd_after<1.5f &&
+      (full_rotation || aa.angle()<20.0f/kRadToDeg) && result.dip_sd_after<=before+.1f;
+    result.reason=result.ok?AlignmentFail::OK:AlignmentFail::RESIDUAL;
+    return result;
+  };
+  if(!full_rotation)return fromSeed(M3::Identity());
+  Alignment candidates[24];int count=0;
+  out.reason=AlignmentFail::GEOMETRY;
+  for(int k=0;k<48;++k) {
+    const M3 seed=signedPermutation(k);
+    if(seed.determinant()<.5f)continue; // never fit a reflected sensor frame
+    const Alignment candidate=fromSeed(seed);
+    if(candidate.ok)candidates[count++]=candidate;
+    if((candidate.ok && !out.ok) || (candidate.ok==out.ok &&
+       std::isfinite(candidate.dip_sd_after) && (!std::isfinite(out.dip_sd_after) ||
+       candidate.dip_sd_after<out.dip_sd_after)))out=candidate;
   }
-  const Eigen::AngleAxisf aa(R);
-  out.R = R;
-  out.rotvec_deg = aa.axis() * (aa.angle() * kRadToDeg);
-  out.dip_sd_after = dipSd(R, out.dip_deg);
-  out.ok = std::isfinite(out.dip_sd_after) && out.dip_sd_after<1.5f &&
-    aa.angle()<20.0f/kRadToDeg && out.dip_sd_after<=out.dip_sd_before+.1f;
+  // Training data alone must distinguish a frame. Never use validation poses
+  // to select a seed, or silently select among nearly tied distant solutions.
+  if(out.ok)for(int k=0;k<count;++k) {
+    const float separation=Eigen::AngleAxisf(candidates[k].R*out.R.transpose()).angle()*kRadToDeg;
+    if(separation>5 && candidates[k].dip_sd_after<=out.dip_sd_after+.01f) {
+      out.ok=false;out.reason=AlignmentFail::AMBIGUOUS;break;
+    }
+  }
   return out;
 }
 

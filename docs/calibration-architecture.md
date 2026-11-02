@@ -113,7 +113,8 @@ turn and retained count. After twelve turns, fitting either qualifies the set
 or offers four additional turns, keeping every prior capture. A further block
 of four can be added if necessary, up to twenty total. Extra held-out flags are
 also predetermined. A failed final fit never automatically erases the set:
-retrying the fit, requesting a new gyro set, or aborting is an explicit choice.
+one or two taps retry the fit on the same data. Exiting requires three taps
+and a separate three-tap discard confirmation. There is no double-tap new-gyro-set shortcut.
 The complete accelerometer and magnetometer stages are not rerun by this flow.
 Captures are retained in this wizard session, not checkpointed across power loss. The 131072-sample PSRAM reservation (about 2.5 MiB)
 includes ordinary pauses and slow motions across twenty turns and is checked
@@ -150,10 +151,62 @@ The initial twelve-turn set provides thirteen quiet magnetic endpoint poses.
 The initial pose and eight training endpoints fit the existing constant-dip
 alignment solver; four independent endpoints validate the frozen rotation
 and dip. Appended turns keep their predetermined train/validation roles.
-The undamped information must have full rank
-before the original numerical ridge is added. A repeated pose, an unobserved
-axis, a rotation over 20 degrees, or independent dip RMS over 1.5 degrees fails.
-A large wrong signed-axis mapping must be corrected in the driver.
+The undamped information must have full rank before the original numerical
+ridge is added. The unified wizard reuses the existing iterative solve from
+24 proper signed-axis seeds and allows full proper rotations. Each iteration
+has a 0.35-radian step cap. The training poses select the best qualified dip
+scatter; near-tied solutions separated by more than five degrees are rejected.
+Independent poses never select a seed or adjust the answer. The fitted matrix
+is always a proper rotation. Unobservable axes, training scatter over 1.5 degrees
+and independent dip RMS over 1.5 degrees remain unacceptable. Existing diagnostic callers retain the
+original six-iteration, small-trim profile unless they explicitly request full
+registration. Driver axis conventions remain upstream and must establish consistent
+right-handed frames: with unknown dip, constant-dip data alone cannot identify
+a global field reversal caused by an incorrect reflected driver mapping.
+
+Gyro fitting and magnetic registration are separate worker jobs and recovery
+stages. A magnetic failure never offers more gyro turns or reruns the gyro
+fit. Its screen identifies field-strength change, insufficient pose geometry,
+ambiguous axes, numerical failure, dip inconsistency or failed independent
+validation. Serial ALIGN records include pose counts, rotation angle, training
+scatter, independent RMS, conditioning, time and stack headroom.
+One tap retries the magnetic solve on the same endpoints. Two taps offer
+magnetic-only recovery, with a separate three-tap confirmation before replacing
+magnetic endpoints. This takes thirteen quiet holds using the same qualified
+endpoint-capture implementation, while retaining the gyro matrix, bias and
+rotation samples. Screen orientation follows gravity, hand support is allowed,
+and movement resets only the current quiet interval. Instruction pages have
+no timeout. Nine magnetic poses train and four validate; their actual counts
+are stored independently of the gyro segment counts. Exiting requires a
+separate discard confirmation. Session data is still volatile across power loss.
+
+### INSLIB comparison
+
+INSLIB's [IMU calibration](https://github.com/jnz/INSLIB/blob/main/tools/inslib_imu_calib.py)
+uses an initial stationary recording and varied stationary poses separated by
+recorded motion. Its IMU-TK fit estimates accelerometer and gyro scale and
+cross-axis terms. It does not require a named USB-up pose or a precision fixture.
+Its generic CSV path supports other IMUs; better hardware does not change the
+underlying endpoint-gravity principle.
+
+Its [magnetic fitter](https://github.com/jnz/INSLIB/blob/main/tools/inslib_mag_calib.py)
+first solves hard/soft iron, then calls
+[align_by_dip](https://github.com/jnz/INSLIB/blob/main/tools/inslib_frame_align.py#L338)
+with paired quiet gravity/field directions. This fits magnetometer-to-IMU PCB
+registration by making dip constant across poses. Five poses are its minimum;
+more varied poses improve observability. It warns at weak geometry, rotation
+over 20 degrees and dip scatter over three degrees. These are warnings rather
+than independent validation gates in that function. The common physical-field
+assumption cannot distinguish a frame error from a changing magnetic field.
+
+INSLIB makes magnetic calibration optional. In `solve_session()`, an exception
+from magnetic fitting is logged and the successful IMU calibration is returned.
+Housing alignment is separately optional: a level placement determines tilt,
+and nonparallel known directions determine full rotation. It folds rotations
+into output matrices. This project retains separately stored intrinsic,
+mag-to-IMU, IMU-to-housing and housing-to-vessel transforms and requires a fully
+qualified record for normal calibrated operation. Magnetic failure stays within
+its own recovery stage rather than discarding the successful IMU work.
 
 Mounting uses known physical directions. The retained Eigen SVD solves Wahba's
 problem in solveFrameAlignment() for fixture tooling and rejects collinear

@@ -89,20 +89,32 @@ int main(){
   Matrix3f solved;
   check(imu_cal::solveFrameAlignment(src,dst,3,solved) && solved.isApprox(rvh*rhi,1e-5f),"physical fixture alignment");
   src[1]=src[2]=src[0];check(!imu_cal::solveFrameAlignment(src,dst,3,solved),"gravity alone cannot determine mounting yaw");
-  // Actual wizard pose count and train/validation split, not hundreds of poses.
-  atoms3r_magdiag::Pose train[9],validation[4];std::mt19937 rng(19);std::normal_distribution<float> n;
-  for(int i=0;i<13;++i) {
-    Eigen::Quaternionf q(n(rng),n(rng),n(rng),n(rng));q.normalize();
-    atoms3r_magdiag::Pose pose;pose.a=q.conjugate()*Vector3f(0,0,-9.80256f);
-    pose.m_raw=rim.transpose()*(q.conjugate()*Vector3f(20,0,43));
-    if(i<9)train[i]=pose;else validation[i-9]=pose;
-  }
+  // Actual wizard pose count and train/validation split, including full PCB rotations.
+  atoms3r_magdiag::Pose train[9],validation[4];float rms=NAN;
   atoms3r_magdiag::MagModel model;
-  const auto alignment=atoms3r_magdiag::solveAlignment(train,9,model);float rms=NAN;
-  check(alignment.ok && alignment.R.isApprox(rim,1e-4f) &&
-    atoms3r_magdiag::validateAlignment(alignment,validation,4,model,rms),"wizard-sized independent magnetic alignment");
+  for(float degrees:{0.f,2.f,30.f,90.f,140.f,179.f}) {
+    std::mt19937 rng(19);std::normal_distribution<float> n;
+    const Matrix3f expected=Eigen::AngleAxisf(degrees/atoms3r_magdiag::kRadToDeg,
+      Vector3f(.3f,1,.2f).normalized()).toRotationMatrix();
+    for(int i=0;i<13;++i) {
+      Eigen::Quaternionf q(n(rng),n(rng),n(rng),n(rng));q.normalize();
+      atoms3r_magdiag::Pose pose;pose.a=q.conjugate()*Vector3f(0,0,-9.80256f);
+      pose.m_raw=expected.transpose()*(q.conjugate()*Vector3f(20,0,43));
+      if(i<9)train[i]=pose;else validation[i-9]=pose;
+    }
+    const auto alignment=atoms3r_magdiag::solveAlignment(train,9,model,true);
+    check(alignment.ok && alignment.R.isApprox(expected,1e-3f) && alignment.R.determinant()>.999f &&
+      atoms3r_magdiag::validateAlignment(alignment,validation,4,model,rms),
+      "wizard-sized independent magnetic alignment across full rotation range");
+    // Validation stays outside the solve and cannot rescue a corrupted endpoint.
+    validation[0].m_raw=-validation[0].m_raw;float corrupt_rms=NAN;
+    check(!atoms3r_magdiag::validateAlignment(alignment,validation,4,model,corrupt_rms),
+      "independent magnetic corruption remains rejected");
+  }
   for(auto& p:train)p=train[0];
-  check(!atoms3r_magdiag::solveAlignment(train,9,model).ok,"ridge cannot qualify degenerate alignment");
+  const auto degenerate=atoms3r_magdiag::solveAlignment(train,9,model,true);
+  check(!degenerate.ok && degenerate.reason==atoms3r_magdiag::AlignmentFail::GEOMETRY,
+    "ridge or multiple seeds cannot qualify degenerate alignment");
   std::printf("calibration frames: blob_bytes=%zu independent_alignment_rms=%.8g\n",sizeof(rb),double(rms));
   return errors?1:0;
 }

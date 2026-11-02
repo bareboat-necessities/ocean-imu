@@ -163,7 +163,7 @@ int main(){
     require(bias.rotation_train_segments==8 && bias.rotation_validation_segments==4,
       "twelve turns must keep four independent validations out of the eight training rotations");
     atoms3r_magdiag::MagModel model;
-    const auto alignment=atoms3r_magdiag::solveAlignment(training,nt,model);float rms=0;
+    const auto alignment=atoms3r_magdiag::solveAlignment(training,nt,model,true);float rms=0;
     require(nt==9 && nv==4 && atoms3r_magdiag::validateAlignment(alignment,validation,nv,model,rms),
       "the shorter wizard must also qualify magnetic registration using the actual held poses");
     require(ok && (bias.S-truth).norm()<.005f,

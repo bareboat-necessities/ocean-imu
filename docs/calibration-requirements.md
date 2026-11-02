@@ -29,10 +29,12 @@ test and a frozen independent validation set. The shorter wizard plan changes
 sample redundancy, not conditioning, coefficient plausibility or residual
 limits. Additional turns are offered when the measured geometry is insufficient.
 
-Magnetic alignment retains the constant-dip model and its intended small
-registration range. A numerical ridge cannot make unobservable geometry
+Magnetic alignment retains the constant-dip model, with an explicit full-rotation
+profile for PCB registration and the existing small-trim profile for diagnostics. A numerical ridge cannot make unobservable geometry
 observable, so rank/conditioning is checked before regularization. Physical
-mounting rotations are stored separately from intrinsic SPD matrices.
+mounting rotations are stored separately from intrinsic SPD matrices. Magnetic
+recovery preserves successful gyro work and can replace only magnetic quiet
+endpoints; a double tap cannot erase the gyro set.
 
 The shared magnetic policy changes which measurements are applied and the
 effective covariance. Existing stability certificates bound another operator;

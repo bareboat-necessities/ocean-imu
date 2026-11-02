@@ -13,6 +13,7 @@ python3 test_wizard_memory.py
 python3 test_wizard_fresh.py
 python3 test_gyro_wizard_start.py
 python3 test_gyro_turn_task.py
+python3 test_mag_alignment_task.py
 python3 test_noise_task.py
 python3 test_wizard_config.py
 ./calibration_accuracy-test

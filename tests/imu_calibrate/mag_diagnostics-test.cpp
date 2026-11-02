@@ -126,6 +126,16 @@ static void testAlignment() {
   makePoses(poses, M3::Identity(), rng);
   const Alignment none = solveAlignment(poses, NP, trueModel());
   require(none.ok && none.rotvec_deg.norm() < 0.3f, "aligned sensors report no rotation");
+
+  // PCB registration is a proper rotation, not necessarily a small trim.
+  // The wizard must not reject correct data merely because it exceeds 20 deg.
+  for(float degrees:{30.f,90.f,140.f,179.f}) {
+    const M3 mounting=Eigen::AngleAxisf(degrees/kRadToDeg,V3(.3f,1.f,.2f).normalized()).toRotationMatrix();
+    makePoses(poses,mounting,rng);
+    const Alignment full=solveAlignment(poses,NP,trueModel(),true);
+    require(full.ok && full.R.isApprox(mounting.transpose(),.01f),"full PCB rotation registration");
+    require(std::fabs(full.R.determinant()-1)<1e-4f,"registration preserves a proper frame");
+  }
 }
 
 static void testHeadingError() {

@@ -23,7 +23,9 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Eight noisy gyro seeds | Worst matrix error 0.00104775 versus 0.0613840 for bias-only identity, about 59-fold smaller |
 | Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps and NaNs fail |
 | Final accelerometer model at gyro endpoints | Recovers gyro matrix with distorted/bias-shifted raw accelerometer endpoints |
-| Magnetic alignment with wizard-sized pose sets | 9 fit/4 independent poses; the exact fixture passes independent dip validation |
+| Magnetic alignment with wizard-sized pose sets | 9 fit/4 independent poses; proper rotations at 0, 2, 30, 90, 140 and 179 degrees pass independent dip validation; degenerate geometry and corrupted validation endpoints fail |
+| Magnetic worker | Actual production worker applies final accelerometer calibration, separates field/geometry/validation failures, preserves gyro results, and records 9/4 magnetic counts after recovery independently of the longer gyro set |
+| Magnetic recovery and menu safety | Actual completion flow retries or replaces only magnetic holds; actual quiet-capture worker reaches USB-up without touching accepted gyro segments; two taps cannot clear gyro captures and replacing magnetic holds/exiting needs separate confirmation |
 | Fresh full-calibration admission | Actual entry selects no previous slope or gyro reference; calibrated noise mode and cancellation remain separate |
 | Noise worker | Complete simulated 40-minute sensor acquisition, wrapping clock, stopped/missing/frozen samples, temperature and cancellation; no invalid run yields a model |
 | Noise runtime wiring | Unified record round-trip retains density units and identified-axis masks; short and invalid records cannot configure a filter |
@@ -76,7 +78,8 @@ It reads calibrated six-axis NOISERAW records with wrapping uint32
 microsecond timestamps. Firmware also checks independent magnetic stillness;
 that check is not reconstructed by this six-axis replay.
 
-The focused calibration build and complete runner pass. The new worker/admission regressions and TFG strength-anomaly fixture fail
+The focused calibration build and complete runner pass. The full-rotation and double-tap regressions fail against the preceding source
+(the original 20-degree rejection and two-tap restart respectively). The worker/admission regressions and TFG strength-anomaly fixture fail
 against the preceding source for the intended behavioral reasons: stopped-stream
 handling, previous-coefficient reuse and omission of the common field-ratio guard.
 
@@ -110,21 +113,24 @@ marks are interpreted as bytes.
 
 The architecture audit crossbuilds the qMEKF compass, OU-III INS, TFG INS and
 benchmark with the documented board options and CI optimization flags. The
-TFG image was rebuilt again after the final human-supported endpoint changes;
+TFG image was rebuilt again after the final magnetic recovery and registration changes;
 its row below includes the latest shared wizard/capture translation unit.
-The other rows record the architecture-audit builds before that last UI/capture
-correction. Compilation and linking do not establish operation on a board.
+The other rows record the architecture-audit builds before those shared wizard
+changes. Compilation and linking do not establish operation on a board.
 
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
 | OU-III INS | 1354811 | 31168 |
 | qMEKF compass | 1069683 | 28056 |
-| TFG INS (latest endpoint profile) | 1274739 | 40904 |
+| TFG INS (latest registration/recovery) | 1279499 | 40904 |
 | Synthetic benchmark | 695803 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. Production
-worker entry frames are 2512 bytes for the gyro/alignment fit and 4880 bytes
-for stationary noise acquisition; the wizard task entry uses 32 bytes.
+worker entry frames are 176 bytes for gyro matrix fitting, 3328 bytes for
+magnetic alignment, 1232 bytes for magnetic-only capture and 4880 bytes for
+stationary noise acquisition; the wizard task entry uses 32 bytes. The shared
+alignment iteration helper has a 1056-byte frame. Full registration and recovery
+add 4760 flash bytes to the preceding TFG image with unchanged global RAM.
 These are individual static frame estimates, not measured task peaks or a
 proof of total stack headroom. Optimization, inlining and call chains affect
 the actual peak.

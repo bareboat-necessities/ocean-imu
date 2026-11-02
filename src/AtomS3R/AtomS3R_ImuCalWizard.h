@@ -265,6 +265,7 @@ private:
       if (!accel_.runRecheckStage(io)) return accelFail_();
       if (!accel_.runFinalFit(io)) return accelFail_();
       if(!completeGyroCalibration_())return false;
+      if(!completeMagAlignment_())return false;
       gyro_rotations_.reset();
       if(!captureMounting_())return false;
       // Optional magnetic timing record. It is stored for diagnostics only;
@@ -290,8 +291,8 @@ private:
       mat_to_rowmajor9_(mount_HI_,blob.R_HI);mat_to_rowmajor9_(mount_VH_,blob.R_VH);
       blob.housing_alignment_ok=blob.vessel_alignment_ok=1;
       blob.alignment_train_sd=alignment_.dip_sd_after;blob.alignment_validation_sd=alignment_validation_;
-      blob.alignment_condition=alignment_.condition;blob.alignment_train_poses=gyr_out_.rotation_train_segments+1;
-      blob.alignment_validation_poses=gyr_out_.rotation_validation_segments;
+      blob.alignment_condition=alignment_.condition;blob.alignment_train_poses=alignment_train_count_;
+      blob.alignment_validation_poses=alignment_validation_count_;
       fillAccelFromFit(blob, accel_.result(), fc, capture_s);
       blob.sensor_id_lo = sensor_id_lo_;
       blob.sensor_id_hi = sensor_id_hi_;
@@ -541,14 +542,10 @@ private:
         if(!ui_.retryMenuHere("Retry fit?","Captured turns kept"))return false;
       }
       if(fit_.ok)break;
-      const char* why=gyro_rotations_->reason==imu_cal::GyroRotationFail::OK?
-        "Mag alignment failed":imu_cal::gyroRotationReason(gyro_rotations_->reason);
+      const char* why=imu_cal::gyroRotationReason(gyro_rotations_->reason);
       if(requested>=imu_cal::GyroCalibrationPlan::MAXIMUM) {
         const auto action=ui_.gyroFitFailMenu(why);
         if(action==M5Ui::GyroFitAction::ABORT)return false;
-        if(action==M5Ui::GyroFitAction::NEW_TURNS) {
-          alignment_pose_count_=0;requested=imu_cal::GyroCalibrationPlan::INITIAL;
-        }
         continue;
       }
       char kept[24];snprintf(kept,sizeof(kept),"%d turns kept",gyro_rotations_->segments());
@@ -601,28 +598,120 @@ private:
     imu_cal::AccelCalibration<float> acc;AccelProc::Fitter::toFloat(w.accel_.result(),w.accel_fcfg_.g,acc);
     const uint32_t start=micros();
     ctx->ok=w.gyro_rotations_ && w.gyro_rotations_->fit(acc,w.gyr_out_,[](void*){vTaskDelay(1);});
-    if(ctx->ok) {
-      atoms3r_magdiag::Pose train[24],validation[24];int nt=0,nv=0;
-      for(int i=0;i<w.alignment_pose_count_;++i) {
-        auto pose=w.raw_alignment_[i];pose.a=acc.apply(pose.a,w.alignment_temp_[i]);
-        const float norm=w.mag_out_.apply(pose.m_raw).norm();
-        if(!std::isfinite(norm) || std::fabs(norm-w.mag_out_.field_uT)>3.f){ctx->ok=false;break;}
-        if(i && imu_cal::GyroCalibrationPlan::validation(i-1))validation[nv++]=pose;else train[nt++]=pose;
-      }
-      atoms3r_magdiag::MagModel model;model.A=w.mag_out_.A;model.b=w.mag_out_.b;
-      if(ctx->ok) {
-        w.alignment_=atoms3r_magdiag::solveAlignment(train,nt,model);
-        ctx->ok=atoms3r_magdiag::validateAlignment(w.alignment_,validation,nv,model,w.alignment_validation_);
-      }
-    }
     ctx->reason=ctx->ok?imu_cal::FitFail::OK:imu_cal::FitFail::DEGENERATE_COVERAGE;
+    ctx->detail=w.gyro_rotations_?imu_cal::gyroRotationReason(w.gyro_rotations_->reason):"Gyro buffer missing";
     Serial.printf("[GYRROT] ok=%d reason=%s fit_us=%lu train=%.6g validation=%.6g cond=%.6g stack_hwm=%luB\n",
-      int(ctx->ok),w.gyro_rotations_?imu_cal::gyroRotationReason(w.gyro_rotations_->reason):"no buffer",
-      static_cast<unsigned long>(micros()-start),double(w.gyr_out_.rotation_train_rms),
+      int(ctx->ok),ctx->detail,static_cast<unsigned long>(micros()-start),double(w.gyr_out_.rotation_train_rms),
       double(w.gyr_out_.rotation_validation_rms),double(w.gyr_out_.rotation_condition),
       static_cast<unsigned long>(hwmBytes_()));
-    Serial.printf("[ALIGN] ok=%d train_sd=%.4f independent_rms=%.4f cond=%.5g\n",int(w.alignment_.ok),
-      double(w.alignment_.dip_sd_after),double(w.alignment_validation_),double(w.alignment_.condition));
+    ctx->done=true;vTaskDelete(nullptr);
+  }
+
+  static void fitTaskMagAlignment_(void* p) {
+    FitCtx* ctx=static_cast<FitCtx*>(p);ImuCalWizard& w=*ctx->wiz;
+    imu_cal::AccelCalibration<float> acc;AccelProc::Fitter::toFloat(w.accel_.result(),w.accel_fcfg_.g,acc);
+    ctx->ok=true;ctx->detail="Mag alignment failed";ctx->reason=imu_cal::FitFail::MAG_VERIFY_FAIL;
+    const uint32_t start=micros();
+    w.alignment_={};w.alignment_validation_=INFINITY;
+    atoms3r_magdiag::Pose train[24],validation[24];int nt=0,nv=0;
+    for(int i=0;i<w.alignment_pose_count_;++i) {
+      auto pose=w.raw_alignment_[i];pose.a=acc.apply(pose.a,w.alignment_temp_[i]);
+      const float norm=w.mag_out_.apply(pose.m_raw).norm();
+      if(!std::isfinite(norm) || std::fabs(norm-w.mag_out_.field_uT)>3.f){
+        ctx->ok=false;ctx->detail="Mag field changed";
+        Serial.printf("[ALIGN_FIELD] pose=%d norm=%.6g expected=%.6g\n",i+1,double(norm),double(w.mag_out_.field_uT));break;
+      }
+      if(i && imu_cal::GyroCalibrationPlan::validation(i-1))validation[nv++]=pose;else train[nt++]=pose;
+    }
+    w.alignment_train_count_=nt;w.alignment_validation_count_=nv;
+    atoms3r_magdiag::MagModel model;model.A=w.mag_out_.A;model.b=w.mag_out_.b;
+    if(ctx->ok) {
+      w.alignment_=atoms3r_magdiag::solveAlignment(train,nt,model,true);
+      ctx->detail=atoms3r_magdiag::alignmentReason(w.alignment_.reason);
+      ctx->ok=w.alignment_.ok;
+      if(ctx->ok) {
+        ctx->ok=atoms3r_magdiag::validateAlignment(w.alignment_,validation,nv,model,w.alignment_validation_);
+        ctx->detail=ctx->ok?"OK":"Mag check failed";
+      }
+    }
+    ctx->reason=ctx->ok?imu_cal::FitFail::OK:imu_cal::FitFail::MAG_VERIFY_FAIL;
+    Serial.printf("[ALIGN] ok=%d reason=%s train=%d validation=%d rotation=%.4f train_sd=%.4f independent_rms=%.4f cond=%.5g fit_us=%lu stack_hwm=%luB\n",
+      int(ctx->ok),ctx->detail,nt,nv,double(w.alignment_.rotvec_deg.norm()),double(w.alignment_.dip_sd_after),
+      double(w.alignment_validation_),double(w.alignment_.condition),
+      static_cast<unsigned long>(micros()-start),static_cast<unsigned long>(hwmBytes_()));
+    ctx->done=true;vTaskDelete(nullptr);
+  }
+
+  bool completeMagAlignment_() {
+    for(;;) {
+      if(runFitTask_(FitKind::MAG_ALIGNMENT,"Mag to IMU",false))return true;
+      const auto action=ui_.magAlignmentFailMenu(fit_.detail);
+      if(action==M5Ui::MagAlignmentAction::ABORT)return false;
+      if(action==M5Ui::MagAlignmentAction::NEW_HOLDS && !captureMagAlignment_())return false;
+    }
+  }
+
+  // Recovery measures only magnetic/gravity endpoints. The accepted gyro
+  // matrix and rotation samples are never cleared, refitted or recaptured.
+  bool captureMagAlignment_() {
+    ui_.waitTapHere("MAG ONLY","Gyro result kept","13 quiet holds");
+    ui_.waitTapHere("MAG HOLDS","Use different sides","Turn 1/4 turn too");
+    for(int i=0;i<4;++i)if(!accel_.expectedUp(turn_pose_ids_[i],turn_.targets[i]))return false;
+    alignment_pose_count_=0;
+    for(int i=0;i<13;++i) {
+      const int target=i%4;
+      const char* face=target==0?"Screen facing up":target==1?"USB end up":target==2?"Left edge down":"Right edge down";
+      char label[16];snprintf(label,sizeof(label),"MAG %d/13",i+1);
+      ui_.waitTapHere(label,face,"Turn 1/4 turn too");
+      for(;;) {
+        turn_.target=target;turn_.progress=0;turn_.reason="none";turn_.retry=false;
+        turn_.rotation=(ui_.rotation()-M5UiCfg::ROT_READ)&3;
+        if(runFitTask_(FitKind::MAG_POSE,face,false))break;
+        if(!ui_.retryMenuHere("Retry mag hold",fit_.detail,"Gyro result kept") && ui_.confirmDiscardCaptures())return false;
+      }
+      raw_alignment_[i].a=endpoint_a_;raw_alignment_[i].m_raw=endpoint_m_;
+      alignment_temp_[i]=endpoint_temp_;++alignment_pose_count_;
+    }
+    return true;
+  }
+
+  static void fitTaskMagPose_(void* p) {
+    auto* ctx=static_cast<FitCtx*>(p);auto& w=*ctx->wiz;auto& status=w.turn_;
+    imu_cal::GyroCapture<float,400,8> quiet(w.gyroCal_,imu_cal::GyroTurnCapture<>::endpointConfig());
+    quiet.begin(millis());ctx->ok=false;ctx->reason=imu_cal::FitFail::MAG_VERIFY_FAIL;ctx->detail="Mag hold stopped";
+    const uint32_t start=millis();
+    uint32_t next=micros(),rotate_since=millis();int candidate=status.rotation.load();
+    while(!status.retry.load()) {
+      if(uint32_t(millis()-start)>=180000){ctx->detail="Mag hold timed out";break;}
+      if(int32_t(micros()-next)<0){vTaskDelay(1);continue;}next=micros()+5000;
+      ImuSample sample;const bool fresh=w.readSample_(sample);
+      if(fresh) {
+        const int r=gyroReadRotation_(sample.a,status.targets,status.rotation.load());
+        if(r!=candidate){candidate=r;rotate_since=millis();}
+        if(uint32_t(millis()-rotate_since)>=100)status.rotation=candidate;
+        if(!sample.a.allFinite() || sample.a.norm()<1 ||
+           sample.a.normalized().dot(status.targets[status.target.load()])<=.819152f) {
+          quiet.begin(millis());status.progress=0;status.reason="Use shown side";continue;
+        }
+      }
+      const auto state=quiet.update(millis(),fresh?&sample.a:nullptr,fresh?&sample.w:nullptr,
+        fresh?sample.tempC:NAN,fresh?&sample.m:nullptr);
+      status.progress=int(std::min(.99f,float(quiet.quietMilliseconds())/imu_cal::GyroTurnCapture<>::HOLD_MS)*1000);
+      status.reason=quiet.resetReason();
+      if(state==imu_cal::GyroCaptureStatus::READY) {
+        const Vector3f a=quiet.meanAccel(),rate=quiet.meanGyro();const float temp=quiet.meanTemperature();
+        if(a.normalized().dot(status.targets[status.target.load()])<=.819152f ||
+           (rate-w.gyr_out_.biasT.bias(temp)).norm()>.01f || !quiet.hasMagReference()) {
+          const bool wrong_side=a.normalized().dot(status.targets[status.target.load()])<=.819152f;
+          quiet.begin(millis());status.progress=0;status.reason=wrong_side?"Use shown side":"Let it settle";continue;
+        }
+        w.endpoint_a_=a;w.endpoint_w_=rate;w.endpoint_temp_=temp;w.endpoint_m_=quiet.meanMag();
+        ctx->ok=true;ctx->reason=imu_cal::FitFail::OK;ctx->detail="OK";break;
+      }
+      if(state==imu_cal::GyroCaptureStatus::STALE || state==imu_cal::GyroCaptureStatus::TIMEOUT) {
+        ctx->detail=state==imu_cal::GyroCaptureStatus::STALE?"No fresh samples":"Mag hold timed out";break;
+      }
+    }
     ctx->done=true;vTaskDelete(nullptr);
   }
 
@@ -943,13 +1032,15 @@ private:
 
 private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4, GYRO_MATRIX=5, NOISE_CAPTURE=6 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4,
+    GYRO_MATRIX=5, NOISE_CAPTURE=6, MAG_ALIGNMENT=7, MAG_POSE=8 };
 
   struct FitCtx {
     // Publish fitted coefficients across cores before the UI consumes them.
     std::atomic<bool> done{false};
     volatile bool ok   = false;
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
+    const char* detail = "Task create failed";
     FitKind kind = FitKind::GYRO;
     imu_cal::AccelFitJob* job = nullptr;
     const ImuCalBlobV6* blob = nullptr;   // SAVE_CHECK
@@ -1048,20 +1139,25 @@ private:
     fit_.done = false;
     fit_.ok = false;
     fit_.reason = imu_cal::FitFail::BAD_ARG;
+    fit_.detail = "Task create failed";
     fit_.kind = kind;
     fit_.wiz = this;
     fit_.task = nullptr;
 
     ui_.setReadRotation();
-    ui_.title(kind==FitKind::NOISE_CAPTURE?"NOISE 40M":kind == FitKind::MAG ? "REFINE" : "FIT");
+    ui_.title(kind==FitKind::NOISE_CAPTURE?"NOISE 40M":kind==FitKind::MAG_ALIGNMENT?"MAG ALIGN":
+      kind==FitKind::MAG_POSE?"MAG HOLD":kind == FitKind::MAG ? "REFINE" : "FIT");
     ui_.line(what);
-    ui_.line(kind==FitKind::NOISE_CAPTURE?"Keep still; tap stops":kind == FitKind::MAG ? "Improving the fit" : "Working...");
+    ui_.line(kind==FitKind::NOISE_CAPTURE?"Keep still; tap stops":kind==FitKind::MAG_ALIGNMENT?"Gyro result kept":
+      kind==FitKind::MAG_POSE?"Hand support is OK":kind == FitKind::MAG ? "Improving the fit" : "Working...");
 
     TaskFunction_t fn = nullptr;
     switch (kind) {
       case FitKind::ACCEL_JOB: fn = &ImuCalWizard::fitTaskAccelJob_; break;
       case FitKind::GYRO:  fn = &ImuCalWizard::fitTaskGyro_;  break;
       case FitKind::GYRO_MATRIX: fn=&ImuCalWizard::fitTaskGyroMatrix_;break;
+      case FitKind::MAG_ALIGNMENT: fn=&ImuCalWizard::fitTaskMagAlignment_;break;
+      case FitKind::MAG_POSE: fn=&ImuCalWizard::fitTaskMagPose_;break;
       case FitKind::NOISE_CAPTURE: fn=&ImuCalWizard::fitTaskNoise_;break;
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       case FitKind::MAG_VERIFY: fn = &ImuCalWizard::fitTaskMagVerify_; break;
@@ -1075,7 +1171,7 @@ private:
       what,
       (uint32_t)ImuCalWizardCfg::FIT_STACK_BYTES, // ESP-IDF uses bytes
       &fit_,
-      kind==FitKind::NOISE_CAPTURE?2:1,
+      (kind==FitKind::NOISE_CAPTURE || kind==FitKind::MAG_POSE)?2:1,
       &fit_.task,
       0
     );
@@ -1088,8 +1184,11 @@ private:
     const uint32_t t0 = millis();
     float ph = 0.f;
     uint32_t last_draw=t0;
+    int display_rotation=ui_.rotation();
     const uint32_t timeout=kind==FitKind::NOISE_CAPTURE?ImuCalWizardCfg::NOISE_TIMEOUT_MS:
-      kind==FitKind::GYRO_MATRIX?ImuCalWizardCfg::GYRO_MATRIX_TIMEOUT_MS:ImuCalWizardCfg::FIT_TIMEOUT_MS;
+      kind==FitKind::MAG_POSE?180000u:
+      (kind==FitKind::GYRO_MATRIX || kind==FitKind::MAG_ALIGNMENT)?
+        ImuCalWizardCfg::GYRO_MATRIX_TIMEOUT_MS:ImuCalWizardCfg::FIT_TIMEOUT_MS;
 
     while (!fit_.done) {
       Input::update();
@@ -1098,6 +1197,7 @@ private:
         vTaskDelete(fit_.task);
         fit_.task = nullptr;
         fit_.reason = imu_cal::FitFail::BAD_ARG;
+        fit_.detail = "Fit timed out";
         if (show_fail) ui_.fail("FIT", "Timeout");
         return false;
       }
@@ -1105,6 +1205,18 @@ private:
       if(kind==FitKind::NOISE_CAPTURE) {
         if(Input::tapPressed())noise_cancel_=true;
         if(uint32_t(millis()-last_draw)>=1000){ui_.bar01(noise_progress_.load());last_draw=millis();}
+      } else if(kind==FitKind::MAG_POSE) {
+        if(Input::tapPressed())turn_.retry=true;
+        if(uint32_t(millis()-last_draw)>=150) {
+          const int rotation=(M5UiCfg::ROT_READ+turn_.rotation.load())&3;
+          if(rotation!=display_rotation) {
+            ui_.setRotation(rotation);ui_.title("MAG HOLD");ui_.line(what);ui_.line("Hand support is OK");
+            display_rotation=rotation;
+          }
+          ui_.lineAt(76,"Hold ~3.5 quiet sec");
+          ui_.lineAt(88,gyroRestHelp_(turn_.reason.load()));
+          ui_.bar01(turn_.progress.load()*.001f);last_draw=millis();
+        }
       } else {ph += 0.09f;ui_.bar01(0.5f + 0.5f * sinf(ph));}
       delay(30);
     }
@@ -1444,7 +1556,7 @@ public:
   float endpoint_temp_=25;
   atoms3r_magdiag::Pose raw_alignment_[24];
   float alignment_temp_[24]{};
-  int alignment_pose_count_=0;
+  int alignment_pose_count_=0,alignment_train_count_=0,alignment_validation_count_=0;
   atoms3r_magdiag::Alignment alignment_{};
   float alignment_validation_=INFINITY;
   Matrix3f mount_HI_=Matrix3f::Identity(),mount_VH_=Matrix3f::Identity();
