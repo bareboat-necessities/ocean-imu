@@ -10,8 +10,10 @@ for filter in 1 2 3 4 5 6; do ./magnetic_fusion_$filter; done
 python3 test_qmekf_reference.py
 python3 test_wizard_task.py
 python3 test_wizard_memory.py
+python3 test_wizard_fresh.py
 python3 test_gyro_wizard_start.py
 python3 test_gyro_turn_task.py
+python3 test_noise_task.py
 python3 test_wizard_config.py
 ./calibration_accuracy-test
 ./mag_field_consistency-test

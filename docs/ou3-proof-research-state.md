@@ -2,6 +2,37 @@
 
 ## Current hypothesis
 
+**E — calibration audit: standalone TFG omitted the shared strength guard.**
+With measurement covariance `10000 I`, fields at 1.6 and 0.6 times the trusted
+strength had small NIS and were both accepted: the caller supplied no field
+ratio to the common gate. It now supplies `norm(r + B_w) / norm(B_w)` from
+the existing world-frame residual. The regression fails before the fix and
+passes for all six cores afterwards. Residuals, Jacobians, correlated R,
+inflation, Joseph updates and injections are retained; no proof relaxation is
+introduced. The invalidated hypothesis was that every caller supplied the
+same gross-strength qualification. No shipping instability conclusion follows.
+The full native `make all` run subsequently stops at
+`tools/tfg_comparison.py --check --require-ci` with
+`ValueError: TFG comparison source provenance is stale`. Current-source
+comparison reproduction and new-policy service qualification remain the
+limiter; archived hashes are not relabeled. The next falsifiable experiment
+is the current-source TFG comparison plus the actual shipping-word magnetic
+health/service audit described below.
+
+**E — tilt endpoint capture used the bias stillness profile.** A physically
+coupled 0.1-degree braced rocking fixture at 4/6/8 Hz fails the original
+0.005/0.004 rad/s scatter/change profile without any button input. Tilt
+endpoints now use a separate 0.08/0.04 rad/s profile while initial stationary
+bias and noise acquisition retain their strict limits. Gravity, magnetic,
+freshness, raw rate, final mean rate, information and independent validation
+gates are preserved. Twenty guided campaigns pass the unchanged 0.005 matrix
+error bound; the three rocking cases finish within 4.2 s of placement, with
+worst matrix error 0.002822. Misplaced endpoints and unqualified slow placement
+wait on the same target rather than discarding accepted turns. These are
+synthetic capture checks, not device qualification or a new physical-bias bound.
+No proof relaxation or theorem promotion is introduced; physical operator
+qualification and the actual magnetic-service audit remain open.
+
 **Calibration extension qualification is OPEN.** The current calibration
 branch changes the magnetic measurement operator to shared vector NIS,
 correlated R, adaptive inflation and persistent disturbance/recovery state.

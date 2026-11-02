@@ -58,8 +58,12 @@ public:
       return fail_(std::strcmp(reason_,"none")?reason_:"Stillness not reached");
     if(state==GyroCaptureStatus::READY) {
       const V qa=quiet_.meanAccel(),qw=quiet_.meanGyro();const float qt=quiet_.meanTemperature();
-      if((qw-bias_.biasT.bias(qt)).norm()>.01f || !quiet_.hasMagReference())
-        return fail_("Start/hold not quiet");
+      if((qw-bias_.biasT.bias(qt)).norm()>.01f || !quiet_.hasMagReference()) {
+        // A human may still be placing the cube. Reject this quiet window,
+        // not the turn; keep its target, trajectory and earlier accepted turns.
+        quiet_.begin(now);last_progress_=0;reason_="Let it settle";
+        return phase_;
+      }
       const bool misplaced=armed_ && !twisted_ && qa.normalized().dot(a0_.normalized())<.85f;
       if(!armed_ || !moved_ || misplaced) {
         const bool new_target=!armed_ || misplaced;
@@ -73,11 +77,11 @@ public:
       // A named, generously sized target makes the action concrete. This is
       // only an acquisition region; the final fit still uses measured endpoints.
       if(!twisted_ || !atTarget_(qa)) {
-        // Once the finish hold is shown, do not silently return to TIP after
-        // its timer fills. Report the rejected endpoint through the retry UI.
-        if(holding_)return fail_("Target pose changed");
+        // Placement is a human action, not a failed rotation. Keep the named
+        // target and recorded trajectory while a misplaced endpoint is fixed.
         quiet_.begin(now);last_progress_=0;
-        phase_=twisted_?GyroTurnPhase::TURN:GyroTurnPhase::TWIST;return phase_;
+        reason_="Use shown side";
+        phase_=holding_?GyroTurnPhase::HOLD:twisted_?GyroTurnPhase::TURN:GyroTurnPhase::TWIST;return phase_;
       }
       if(!fit_.finishSegment(qa,qt,USEFUL_MS*.001))return fail_(gyroRotationReason(fit_.reason));
       a1_=qa;w1_=qw;m1_=quiet_.meanMag();t1_=qt;
@@ -94,7 +98,12 @@ public:
       // No hold bar is displayed while a turn is requested. Only show the finish hold
       // once there is useful tilt toward the requested face. Movement then
       // restarts this hold, not the requested turn or any accepted turn.
-      holding_=holding_ || (twisted_ && atTarget_(*a));
+      if(!holding_ && twisted_ && atTarget_(*a)) {
+        holding_=true;
+        // Give the finish pose its own complete settling/measurement window.
+        // Neither the movement time nor an old quiet block counts toward it.
+        quiet_.begin(now);last_progress_=0;reason_="none";
+      }
       phase_=holding_?GyroTurnPhase::HOLD:!twisted_?GyroTurnPhase::TWIST:GyroTurnPhase::TURN;
     }
     return phase_;
@@ -114,7 +123,13 @@ public:
   float temperature() const {return t1_;}
 private:
   static GyroCaptureCfg config_() {
-    GyroCaptureCfg c;c.timeout_ms=90000;c.useful_ms=USEFUL_MS;c.min_samples=64;c.mag_window_ms=MAG_WINDOW_MS;return c;
+    GyroCaptureCfg c;c.timeout_ms=90000;c.useful_ms=USEFUL_MS;c.min_samples=64;c.mag_window_ms=MAG_WINDOW_MS;
+    // Endpoints determine gravity direction; they do not fit stationary bias.
+    // Small braced hand tremor has appreciable rate scatter despite an accurate
+    // mean gravity direction. Keep gravity, magnetic, freshness and final mean
+    // rate gates, while reserving the original strict rate profile for bias.
+    c.max_gyro_std=.08;c.max_gyro_change=.04;
+    return c;
   }
   bool atTarget_(const V& a) const {
     return target_>=0 && a.allFinite() && a.norm()>1 &&

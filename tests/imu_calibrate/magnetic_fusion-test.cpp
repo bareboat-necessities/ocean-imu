@@ -82,6 +82,13 @@ int main(){
   check(covariance.allFinite() && (covariance-covariance.transpose()).norm()<1e-6f,"Joseph covariance stays finite and symmetric");
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eigen(covariance);
   check(eigen.info()==Eigen::Success && eigen.eigenvalues().minCoeff()>-1e-6f,"Joseph covariance stays PSD");
+  // A large R can make a gross strength anomaly have small NIS. Every core
+  // must still use the shared field-ratio guard, independent of covariance.
+  check(f->set_Rmag_covariance(10000.f*M::Identity()),"accept uncertain field covariance");
+  for(float scale:{1.6f,.6f}) {
+    f->measurement_update_mag_only(scale*m);
+    check(!f->magneticHealth().accepted,"gross field strength cannot qualify itself through large R");
+  }
   std::printf("magnetic fusion kind=%d heading_change=%.8g rejected=%u\n",MAG_FILTER_KIND,
       double(quat(*f).angularDistance(before)),f->magneticHealth().rejected);
   return errors?1:0;

@@ -827,7 +827,10 @@ class Kalman3D_Wave_TFG {
         const Matrix3 HPH=H*PHt;
         Matrix3 Ruse=Rw;
         if(magnetic) {
-            const auto decision=magnetic_gate_.evaluate(r, HPH, Rw);
+            // r + B_w_ is the measured field in world coordinates. A large
+            // covariance must not hide a gross field-strength anomaly.
+            const T field_ratio=(r+B_w_).norm()/B_w_.norm();
+            const auto decision=magnetic_gate_.evaluate(r, HPH, Rw, field_ratio);
             if(!decision.accepted) {diag.S=HPH+Rw;diag.nis=decision.nis;return false;}
             Ruse*=decision.inflation;
         }

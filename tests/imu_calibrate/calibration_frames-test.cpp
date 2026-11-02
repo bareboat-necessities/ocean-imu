@@ -44,6 +44,30 @@ int main(){
   check(runtime.applyAccel(x,25).isApprox(rvh*rhi*runtime.acc.apply(x,25),1e-6f),"accel intrinsic then housing then vessel");
   check(runtime.applyGyro(x,25).isApprox(rvh*rhi*runtime.gyr.apply(x,25),1e-6f),"full gyro matrix applied once");
   check(runtime.applyMag(x).isApprox(rvh*rhi*rim*runtime.mag.apply(x),1e-6f),"mag alignment applied once in correct order");
+  struct NoiseConsumer {
+    Vector3f density=Vector3f::Zero(),walk=Vector3f::Zero();unsigned mask=0,calls=0;
+    void set_gyro_noise_density_rad_sqrt_s(const Vector3f& n){density=n;++calls;}
+    void set_measured_gyro_bias_walk(const Vector3f& n,uint8_t m){walk=n;mask=m;++calls;}
+  } consumer;
+  check(!runtime.configureProcessNoise(consumer) && !consumer.calls,"absent noise cannot configure an estimator");
+  b=rb;b.noise.valid=1;b.noise.white_mask=63;b.noise.walk_mask=1<<4;
+  b.noise.duration_ms=2400000;b.noise.samples=480001;b.noise.period_s=.005f;
+  for(int k=0;k<6;++k){b.noise.white_density[k]=k<3?.002f:.0002f;
+    b.noise.sample_std[k]=b.noise.white_density[k]/std::sqrt(b.noise.period_s);}
+  b.noise.bias_random_walk[4]=.00003f;
+  ImuCalBlobV6 with_noise;
+  check(store.saveVerified(b,with_noise),"measured noise round-trips in the unified record");
+  runtime.rebuildFromBlob(with_noise);
+  check(runtime.configureProcessNoise(consumer) && consumer.calls==2 && consumer.mask==2 &&
+    consumer.density.isApprox(Vector3f::Constant(.0002f)) && consumer.walk==Vector3f(0,.00003f,0),
+    "runtime passes continuous gyro density and only identifiable walk axes");
+  check(runtime.noiseAccelStd().isApprox(Vector3f::Constant(.002f/std::sqrt(.005f))),
+    "runtime retains measured accelerometer sample scatter in vessel coordinates");
+  b=with_noise;b.noise.duration_ms=2399999;
+  check(!validateBlob(Store::sealed_(b)),"a short acquisition cannot masquerade as measured noise");
+  runtime.rebuildFromBlob(Store::sealed_(b));
+  consumer.calls=0;
+  check(!runtime.configureProcessNoise(consumer) && !consumer.calls,"invalid noise record clears earlier runtime parameters");
   b=rb;b.gyro_train_segments=7;b.gyro_coeff_crc=gyroCoeffCrc(b);
   check(!validateBlob(Store::sealed_(b)),"too few short-plan training rotations rejected");
   b=rb;b.alignment_train_poses=8;

@@ -191,8 +191,9 @@ private:
       mag_verified_ = false;alignment_pose_count_=0;
       timing_fit_ = {}; timing_saved_ = false;
 
-      // A valid CURRENT-schema record may supply a qualified thermal prior
-      // and the raw stationary gyro level used by the accelerometer gate.
+      // A current record admits the separate noise workflow. Full calibration
+      // starts with fresh coefficients, including temperature slopes and the
+      // accelerometer capture's stationary gyro reference.
       ImuCalBlobV6 prev{};
       const bool have_prev = store_.load(prev);
       sensorIdentity_();
@@ -213,19 +214,17 @@ private:
       // memory setting must not discard a completed accel/mag acquisition.
       if(!prepareGyroRotationStorage_())return false;
 
-      const imu_cal::AccelThermalPrior prior =
-          have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
-      Serial.printf("[ACC] thermal prior: %s\n", prior.valid ? "compatible slope available" : "none");
-      const Vector3f gyro_level = have_prev && prev.gyro_ok
-          ? Vector3f(prev.gyro_b0[0], prev.gyro_b0[1], prev.gyro_b0[2]) : Vector3f::Zero();
+      const imu_cal::AccelThermalPrior prior{};
+      Serial.println("[ACC] fresh fit; no previous coefficients");
+      const Vector3f gyro_level=Vector3f::Zero();
       // Replay context (tests/imu_calibrate/accel_cal-replay).
       Serial.printf("[ACCMODE] full g=%.7f\n", (double)accel_fcfg_.g);
       Serial.printf("[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f\n", (int)prior.valid, prior.k[0], prior.k[1],
                     prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
       Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,%d\n", (double)gyro_level.x(), (double)gyro_level.y(),
-                    (double)gyro_level.z(), (int)(have_prev && prev.gyro_ok));
+                    (double)gyro_level.z(), 0);
 
-      accel_.begin(accel_ccfg_, accel_fcfg_, prior, gyro_level, have_prev && prev.gyro_ok);
+      accel_.begin(accel_ccfg_, accel_fcfg_, prior, gyro_level, false);
       AccelIo io(*this);
 
       if (!accel_.runMainStage(io)) return accelFail_();
@@ -463,7 +462,9 @@ private:
        !std::strcmp(reason,"frozen IMU"))return "Sensor data paused";
     if(!std::strcmp(reason,"gyro scatter") || !std::strcmp(reason,"accel scatter") ||
        !std::strcmp(reason,"gyro mean changed") || !std::strcmp(reason,"accel mean changed") ||
-       !std::strcmp(reason,"invalid sample"))return "Movement detected";
+       !std::strcmp(reason,"invalid sample"))return "Let it settle";
+    if(!std::strcmp(reason,"Use shown side"))return reason;
+    if(!std::strcmp(reason,"Let it settle"))return reason;
     return "Keep steady";
   }
 
@@ -659,7 +660,7 @@ private:
     ctx->ok=false;ctx->reason=imu_cal::FitFail::BAD_ARG;
     if(!calibrationUnusableReason(true,runtime) && w.noise_capture_) {
       imu_cal::GyroCapture<float,400,8> quiet(w.gyroCal_);quiet.begin(millis());
-      bool settled=false;uint32_t next=micros();
+      bool settled=false;uint32_t next=micros(),last_sample_us=next;
       while(!w.noise_cancel_.load()) {
         const int32_t wait=int32_t(next-micros());if(wait>0)delayMicroseconds(uint32_t(wait));
         next+=5000; // same 200 Hz clock as the production sensor path
@@ -669,10 +670,12 @@ private:
             fresh?s.tempC:NAN,fresh?&s.m:nullptr);
           if(state==imu_cal::GyroCaptureStatus::READY) {
             settled=true;w.noise_capture_->begin(s.sample_us,.005,ImuCalCfg::g_cal_local);
+            last_sample_us=s.sample_us;
           } else if(state==imu_cal::GyroCaptureStatus::STALE || state==imu_cal::GyroCaptureStatus::TIMEOUT) {
             ctx->reason=imu_cal::FitFail::GYRO_NOT_STILL;break;
           }
         } else if(fresh) {
+          last_sample_us=s.sample_us;
           const Vector3f a=runtime.applyAccel(s.a,s.tempC),rate=runtime.applyGyro(s.w,s.tempC),m=runtime.applyMag(s.m);
           const auto state=w.noise_capture_->add(s.sample_us,a,rate,s.tempC,&m);
 #if ATOMS3R_NOISE_RAW_LOG
@@ -687,6 +690,11 @@ private:
             Serial.printf("[NOISE] rejected status=%u samples=%lu\n",unsigned(state),
               static_cast<unsigned long>(w.noise_capture_->samples()));break;
           }
+        } else if(uint32_t(micros()-last_sample_us)>=20000) {
+          // No next sample means the analyzer cannot detect the missing
+          // interval itself. End the run promptly instead of waiting for the
+          // forty-minute UI timeout with a frozen progress bar.
+          Serial.println("[NOISE] sample stream stopped");break;
         }
         // Yield before the next precise epoch; display work stays on core 1.
         vTaskDelay(1);

@@ -25,6 +25,8 @@ m_V = R_VH R_HI R_IM A_m (m_raw - b_m)
 | Stationary noise | Extend | Separate 40-minute acquisition and Allan analysis; never infer a marine-motion prior from stationary sensor data. |
 
 Existing tests remain in place unless a schema assumption explicitly requires updating. The modified magnetic-service policy requires its own stability qualification; existing certificates are not automatically evidence for this version.
+Requirement-by-requirement implementation and remaining qualification are tracked
+in [calibration-requirements.md](calibration-requirements.md).
 
 ## Gyro matrix and independent validation
 
@@ -72,13 +74,22 @@ that same turn rather than trap the operator in the original orientation.
 The initial bias fit retains its six-second useful hold. Subsequent endpoints
 use 2 seconds of useful samples plus magnetic settling, and at least 64
 retained samples. A normal endpoint takes about 3.5 seconds and spans two
-independent 1.5-second magnetic means. Scatter, mean-change, freshness, and
-magnetic-change gates still apply. The visible bar includes settling and starts
+independent 1.5-second magnetic means. The initial flat-table bias hold retains its strict rate-scatter/change limits
+(0.005/0.004 rad/s). Tilt endpoints instead use 0.08/0.04 rad/s: small braced
+hand tremor can have appreciable rate scatter while preserving an accurate
+mean gravity direction. Acceleration scatter/change, raw rate limits, magnetic
+stability, freshness, final mean rate and independent fit validation still apply.
+Physically coupled 0.1-degree rocking at 4, 6 and 8 Hz, including lever-arm
+acceleration and measured-rate integration, passes the unchanged matrix and
+independent-validation bounds. This is an endpoint profile, not a relaxation
+of stationary bias or forty-minute noise acquisition. The visible bar includes settling and starts
 with the first qualified block. Motion screens have no stillness bar.
 Movement restarts only the current quiet hold, with a plain-language explanation.
 The finish screen stays latched after entering the target cone; a transient
-reading cannot silently send it back to TIP. A rejected final mean produces
-an explicit retry reason rather than returning to the movement instructions.
+reading cannot silently send it back to TIP. The finish pose starts a fresh complete quiet window after entering its target.
+A rejected final mean or misplaced endpoint restarts only that window on the
+same target. Slow placement continues waiting; it neither qualifies a moving
+endpoint nor opens the retry menu.
 Every capture screen offers **Tap: retry turn**; this stops only the active
 turn and opens its retry/abort menu, preserving accepted turns.
 
@@ -135,9 +146,11 @@ accelerometer frame and capture machinery.
 
 ## Physical registration
 
-The 21 quiet endpoint poses also provide raw magnetic means. Sixteen poses fit
-the existing constant-dip alignment solver; five independent poses validate
-the frozen rotation and dip. The undamped information must have full rank
+The initial twelve-turn set provides thirteen quiet magnetic endpoint poses.
+The initial pose and eight training endpoints fit the existing constant-dip
+alignment solver; four independent endpoints validate the frozen rotation
+and dip. Appended turns keep their predetermined train/validation roles.
+The undamped information must have full rank
 before the original numerical ridge is added. A repeated pose, an unobserved
 axis, a rotation over 20 degrees, or independent dip RMS over 1.5 degrees fails.
 A large wrong signed-axis mapping must be corrected in the driver.
@@ -165,7 +178,9 @@ thermally stable support. Checks cover fresh timing, frozen words, finite
 data, acceleration/rate limits, fixed one-second pose means, fixed magnetic
 means including loss/staleness, and temperature span below 2 C. At 200 Hz,
 480001 samples span 2400 seconds. Missing frames invalidate the run;
-samples are never concatenated across gaps.
+samples are never concatenated across gaps. The worker also applies a 20 ms
+freshness deadline when samples stop completely; the analyzer cannot detect
+that case without the worker's independent clock.
 
 The fixed-memory implementation computes non-overlapping-cluster Allan
 deviation at 17 dyadic averaging times. Adjacent differences share a cluster
@@ -218,7 +233,10 @@ a measurement degree of freedom.
 
 Three-dimensional chi-square quantiles are 11.34486673 (99%) and 21.10751347
 (99.99%). A moderate innovation inflates R, preserving its correlations and
-leaving H P H' untouched. A gross innovation or field-norm anomaly is rejected.
+leaving H P H' untouched. A gross innovation or field-norm anomaly is rejected, including when a large
+measurement covariance would make its NIS small. All six cores supply the
+field-strength ratio to the same gate; TFG reconstructs the world measurement
+as residual plus reference.
 Rejection changes neither state nor covariance and never resets the magnetic
 reference. Ten clean innovations at the ORIGINAL covariance are required
 before recovery; recovery starts with inflated R and decays it gradually.
@@ -246,6 +264,13 @@ padding, CRC, device identity, coefficient bindings, verified writes, exact
 readback and verified recovery. Version 5 records, even under the new key,
 cannot be read or automatically relabeled by save(). Runtime rebuilding also
 fails closed. The boot gate requires fresh calibration for unsupported records.
+Full recalibration supplies no previous temperature slope or stationary gyro
+reference to the accelerometer capture/fitter. An unidentifiable thermal slope
+remains explicitly unlearned. The retained numerical library can still validate
+externally supplied thermal evidence; the wizard does not use it to substitute
+previous coefficients. An existing current-schema record is used for the
+separate noise workflow and verified write recovery, rather than to fill a
+failed full fit.
 
 The existing runImuCalWizard entry is defined out of line so large fitting
 and GUI instantiations compile separately from estimator sketches. The compass

@@ -36,7 +36,7 @@ using Fit=imu_cal::GyroRotationFit<131072,24>;
 void require(bool b,const char* text){if(!b){std::cerr<<text<<'\n';std::exit(1);}}
 int main(){
   const V targets[4]={V(0,0,-1),V(-1,0,0),V(0,1,0),V(0,-1,0)};
-  for(int mode=0;mode<18;++mode) {
+  for(int mode=0;mode<21;++mode) {
     auto fit=std::make_unique<Fit>();fit->cfg.min_train=imu_cal::GyroCalibrationPlan::MIN_TRAIN;
     imu_cal::GyroCalibrator<float,400,8> cal;cal.g=9.8025605f;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
     imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
@@ -53,7 +53,7 @@ int main(){
         Eigen::AngleAxisf pickup(.3f,V(.2f,-.4f,1).normalized());base=pickup*base;field=pickup*field;
         imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,segment);capture.begin(uint32_t(clock/1000));const uint64_t rest_epoch=clock;
         uint64_t turn=0,twist=0;float total=0,theta=0,yaw=0;const float speed=mode==5?.15f:.6f;V axis=V::UnitX(),a=base,m=field;
-        V mag_noise=V::Zero();bool jolted=false,wrong_pose=false;
+        V mag_noise=V::Zero();bool jolted=false,wrong_pose=false;uint64_t misplaced_since=0,grip_since=0;
         for(int sample=0;sample<40000;++sample) {
           clock+=5000;
           if(capture.phase()==Phase::TWIST && !twist) {
@@ -81,11 +81,28 @@ int main(){
           const float eps=std::sin(float(clock%1000000)*.000071f);
           a.x()+=.001f*eps;w+=V(.0001f*eps,.00008f*eps,-.00006f*eps);
           if(mode==1 || mode>=9){a+=.01f*V(noise(rng),noise(rng),noise(rng));w+=.0023f*V(noise(rng),noise(rng),noise(rng));}
+          // A braced human hold can rock by only 0.1 degree while having
+          // much higher angular-rate scatter than a bias-calibration hold.
+          // Keep gravity, rate and lever-arm acceleration physically coupled.
+          Eigen::Quaternionf grip=Eigen::Quaternionf::Identity();
+          if(mode>=18 && turn && theta>=total) {
+            if(!grip_since)grip_since=clock;
+            const float frequency=float(4+2*(mode-18)),omega=2.f*3.14159265359f*frequency;
+            const float t=float(clock-grip_since)*1e-6f,amplitude=.1f*3.14159265359f/180;
+            const float angle=amplitude*(1-std::cos(omega*t));
+            const float velocity=amplitude*omega*std::sin(omega*t);
+            const float acceleration=amplitude*omega*omega*std::cos(omega*t);
+            const V rocking_axis=targets[capture.target()].unitOrthogonal(),arm(.008f,.005f,.006f);
+            grip=Eigen::Quaternionf(Eigen::AngleAxisf(angle,rocking_axis));
+            a=grip*a-acceleration*rocking_axis.cross(arm)+velocity*velocity*rocking_axis.cross(rocking_axis.cross(arm));
+            w=grip*w-velocity*rocking_axis;
+          }
           if(clock%100000<5000){
             const float me=turn && clock>turn?float((clock-turn)/100000)*.1f:0;
             const float mt=std::min(total,mode==2 && me>=.25f && me<6.5f?.15f:
               mode==2 && me>=6.5f?.15f+(me-6.5f)*speed:me*speed);
             m=Eigen::AngleAxisf(-mt,axis)*(Eigen::AngleAxisf(-yaw,base.normalized())*field);
+            m=grip*m;
             if(mode==1 || mode>=9)mag_noise=.3f*V(noise(rng),noise(rng),noise(rng));
             m+=mag_noise+V(.02f*eps,0,0);
           }
@@ -95,11 +112,14 @@ int main(){
           if(mode==6 && capture.phase()==Phase::HOLD && capture.progress()>.8f && !jolted) {
             a=Eigen::AngleAxisf(.9f,a.normalized().unitOrthogonal())*a;jolted=true;
           }
-          if(mode==7 && segment==1 && retries==0 && capture.phase()==Phase::HOLD && capture.progress()>.25f)wrong_pose=true;
+          if(mode==7 && segment==1 && !misplaced_since && capture.phase()==Phase::HOLD && capture.progress()>.25f)misplaced_since=clock;
+          wrong_pose=misplaced_since && clock-misplaced_since<6000000;
           if(wrong_pose) {V bad=-targets[capture.target()]*cal.g+V(.001f*eps,0,0);m=Eigen::Quaternionf::FromTwoVectors(a,bad)*m;a=bad;w=V(.0001f*eps,0,0);}
           w=truth.inverse()*w;
           if(mode==17 && turn && imu_cal::GyroCalibrationPlan::validation(segment))w*=.75f;
           const auto phase=capture.update(uint32_t(clock/1000),uint32_t(clock),&a,&w,25,&m);
+          if(mode==7 && segment==1 && misplaced_since)require(phase==Phase::HOLD || phase==Phase::DONE,
+            "adjusting a misplaced finish pose must keep the same target and all completed turns");
           if(!twist && capture.progress()>.01f)saw_progress=true;
           if((mode==4 || mode==6) && jolted && capture.resets() && capture.progress()<.1f){
             require(phase==Phase::HOLD,"a movement restarts the hold, not the turn instruction");saw_restart=true;
@@ -110,8 +130,8 @@ int main(){
           if(phase==Phase::HOLD)require(capture.update(uint32_t(clock/1000),0,nullptr,nullptr,NAN,nullptr)==Phase::HOLD,
               "between sensor deliveries the hold instruction must remain stable");
           if(phase==Phase::FAILED){
-            require(retries==0 && ((mode==3 && fit->segments()==6 && std::string(capture.reason())=="Rotation sample gap") ||
-              (mode==7 && fit->segments()==1 && std::string(capture.reason())=="Target pose changed")),"only the interrupted turn may be discarded");
+            require(retries==0 && mode==3 && fit->segments()==6 && std::string(capture.reason())=="Rotation sample gap",
+              "ordinary placement or braced hand tremor must not kick out to retry");
             ++retries;
             // Rebase the physical world, not the delayed/noisy magnetometer
             // register. Otherwise retries invent a different magnetic dip.
@@ -120,12 +140,14 @@ int main(){
             base=pa;field=pm;break;
           }
           if(phase==Phase::DONE){
+            if(mode>=18)require(grip_since && clock-grip_since<4200000,
+              "a braced human hold must complete near 3.5 seconds despite small hand tremor");
             atoms3r_magdiag::Pose pose;pose.a=capture.accel();pose.m_raw=capture.mag();
             if(imu_cal::GyroCalibrationPlan::validation(segment))validation[nv++]=pose;else training[nt++]=pose;
             accepted=true;field=rotation*(Eigen::AngleAxisf(-yaw,base.normalized())*field);base=rotation*base;break;
           }
         }
-        require(accepted || ((mode==3 || mode==7) && retries==1),"guided turn did not complete");
+        require(accepted || (mode==3 && retries==1),"guided turn did not complete");
       }
     }
     require(fit->segments()==imu_cal::GyroCalibrationPlan::INITIAL && fit->samples()<131072 && saw_progress,"twelve turns must retain their progress within storage");
@@ -165,6 +187,20 @@ int main(){
     require(phase==Phase::FAILED && std::string(capture.reason())=="Turn took too long" &&
       fit->samples()==0 && fit->segments()==0,
       "a long live motion must release only its own budget, without a false stale-sensor failure");
+  }
+  {
+    auto fit=std::make_unique<Fit>();imu_cal::GyroCalibrator<float,400,8> cal;
+    cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
+    imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
+    imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,0);capture.begin(0);
+    for(uint32_t ms=5;ms<20000;ms+=5) {
+      const float eps=std::sin(ms*.071f);
+      V a(.001f*eps,0,-cal.g),w(.0001f*eps,0,.015f);
+      V m=Eigen::AngleAxisf(-.015f*ms*.001f,V::UnitZ())*V(24,5,40);
+      const auto phase=capture.update(ms,ms*1000,&a,&w,25,&m);
+      require(phase==Phase::REST && fit->segments()==0,
+        "slow placement/yaw must keep waiting in place, never qualify bias or kick out to retry");
+    }
   }
   std::cout<<"gyro guide: named faces/wait/noise/pause/gap/restart/storage/matrix validation PASS\n";
 }
