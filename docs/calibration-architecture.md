@@ -57,9 +57,9 @@ early tip before the twist is complete can establish a new quiet start for
 that same turn rather than trap the operator in the original orientation.
 
 The initial bias fit retains its six-second useful hold. Subsequent endpoints
-use 2.5 seconds of useful samples plus magnetic settling, and at least 80
-retained samples. A normal endpoint takes about 4.5 seconds and spans two
-independent two-second magnetic means. Scatter, mean-change, freshness, and
+use 2 seconds of useful samples plus magnetic settling, and at least 64
+retained samples. A normal endpoint takes about 3.5 seconds and spans two
+independent 1.5-second magnetic means. Scatter, mean-change, freshness, and
 magnetic-change gates still apply. The visible bar includes settling and starts
 with the first qualified block. Motion screens have no stillness bar.
 Movement restarts only the current quiet hold, with a plain-language explanation.

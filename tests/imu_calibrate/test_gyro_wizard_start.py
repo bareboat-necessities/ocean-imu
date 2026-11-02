@@ -47,12 +47,15 @@ int main(){
       while(!accepted) {
         // Button handling can change the device orientation before acquisition.
         Eigen::AngleAxisf pickup(.3f,V(.2f,-.4f,1).normalized());base=pickup*base;field=pickup*field;
-        imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,segment);capture.begin(uint32_t(clock/1000));
+        imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,segment);capture.begin(uint32_t(clock/1000));const uint64_t rest_epoch=clock;
         uint64_t turn=0,twist=0;float total=0,theta=0,yaw=0;const float speed=mode==5?.15f:.6f;V axis=V::UnitX(),a=base,m=field;
         V mag_noise=V::Zero();bool jolted=false,wrong_pose=false;
         for(int sample=0;sample<40000;++sample) {
           clock+=5000;
-          if(capture.phase()==Phase::TWIST && !twist)twist=clock+(mode==0?60000000:1500000);
+          if(capture.phase()==Phase::TWIST && !twist) {
+            if(mode==0)require(clock-rest_epoch<3700000,"the initial quiet hold must finish within the 3.5-second target plus one block");
+            twist=clock+(mode==0?60000000:1500000);
+          }
           if(capture.phase()==Phase::TURN && !turn) {
             turn=clock+500000;
             const V goal=targets[capture.target()];

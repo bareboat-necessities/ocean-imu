@@ -490,7 +490,7 @@ private:
       ui_.lineAt(100,"Tap: retry turn");
     }
     if(phase==Phase::REST || phase==Phase::HOLD) {
-      char timer[32];snprintf(timer,sizeof(timer),"Steady %.1f / ~4.5s",progress*.0045f);
+      char timer[32];snprintf(timer,sizeof(timer),"Steady %.1f / ~3.5s",progress*(imu_cal::GyroTurnCapture<>::HOLD_MS*1e-6f));
       ui_.lineAt(76,timer);ui_.lineAt(88,progress?"Measuring...":gyroRestHelp_(reason));
       ui_.bar01(progress*.001f);
     }

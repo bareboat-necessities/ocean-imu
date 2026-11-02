@@ -37,6 +37,7 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Sensor/UI scheduling | Production worker and UI execute on separate host threads; injected 80 ms LCD stalls preserve 200 Hz capture, the accepted turn, and the 20 ms gap gate |
 | Screen layout | Real renderer text fits 128 pixels; USB-up and both edge-down rotations match the accelerometer guide; the real UI header preserves pose orientation through next/retry/confirmation menus |
 | Guided geometry | Direct face tips expose an information deficiency; alternating twists followed by the named tips recover the full matrix with independent validation, without weakening the fitter |
+| Short gyro holds | A 3.5-second target uses 2 seconds of useful samples and two 1.5-second magnetic windows; eight guided campaigns retain matrix error below 0.005 and independent validation |
 | Controller replay | Eight twenty-turn campaigns cover waits, noise, pauses, sample gaps, hold disturbances, slow motion, late pose jitter and rejected endpoints; matrix Frobenius error is below 0.005 |
 | USB-up regressions | A late single-reading pose excursion reproduces the old reversion and now retains the finish screen; a rejected mean in turn 2 opens retry while retaining turn 1; a live tap-to-retry also preserves accepted data |
 | Turn retries | The actual wrapper retries a timeout at turn 7 while retaining six accepted turns and fitting bias only once; worker allocation failure also preserves accepted data |
@@ -66,8 +67,8 @@ It reads calibrated six-axis NOISERAW records with wrapping uint32
 microsecond timestamps. Firmware also checks independent magnetic stillness;
 that check is not reconstructed by this six-axis replay.
 
-The final `timeout 180 make all` rerun reached the unchanged CARMA build and
-returned exit 124 while compiling `carma3-sim.o` (recipe reported
+The final `timeout 90 make all` rerun reached the unchanged CARMA build and
+returned exit 124 while compiling `carma_lever_arm-test.o` (recipe reported
 `Terminated`). The complete calibration runner and qMEKF crossbuild pass;
 this does not establish a repository-wide pass.
 

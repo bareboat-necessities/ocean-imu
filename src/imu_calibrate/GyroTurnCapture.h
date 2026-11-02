@@ -12,6 +12,7 @@ enum class GyroTurnPhase : uint8_t { REST, TWIST, TURN, HOLD, DONE, FAILED };
 template<int SAMPLES=131072>
 class GyroTurnCapture {
 public:
+  static constexpr uint32_t HOLD_MS=3500,USEFUL_MS=2000,MAG_WINDOW_MS=1500;
   using V=Eigen::Vector3f;
   using Fit=GyroRotationFit<SAMPLES,24>;
   GyroTurnCapture(Fit& fit,GyroCalibrator<float,400,8>& cal,
@@ -77,7 +78,7 @@ public:
         quiet_.begin(now);last_progress_=0;
         phase_=twisted_?GyroTurnPhase::TURN:GyroTurnPhase::TWIST;return phase_;
       }
-      if(!fit_.finishSegment(qa,qt,2.5))return fail_(gyroRotationReason(fit_.reason));
+      if(!fit_.finishSegment(qa,qt,USEFUL_MS*.001))return fail_(gyroRotationReason(fit_.reason));
       a1_=qa;w1_=qw;m1_=quiet_.meanMag();t1_=qt;
       phase_=GyroTurnPhase::DONE;return phase_;
     }
@@ -103,7 +104,7 @@ public:
   // Include magnetic settling so the visible bar starts at the first quiet
   // block. Completion still requires all capture gates, never this estimate.
   float progress() const {return phase_==GyroTurnPhase::DONE?1.f:
-    std::min(.99f,quiet_.quietMilliseconds()/4500.f);}
+    std::min(.99f,float(quiet_.quietMilliseconds())/HOLD_MS);}
   const char* reason() const {return reason_;}
   uint32_t resets() const {return quiet_.resets();}
   const V& accel() const {return a1_;}
@@ -112,7 +113,7 @@ public:
   float temperature() const {return t1_;}
 private:
   static GyroCaptureCfg config_() {
-    GyroCaptureCfg c;c.timeout_ms=90000;c.useful_ms=2500;c.min_samples=80;return c;
+    GyroCaptureCfg c;c.timeout_ms=90000;c.useful_ms=USEFUL_MS;c.min_samples=64;c.mag_window_ms=MAG_WINDOW_MS;return c;
   }
   bool atTarget_(const V& a) const {
     return target_>=0 && a.allFinite() && a.norm()>1 &&
