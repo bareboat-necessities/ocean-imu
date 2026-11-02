@@ -28,6 +28,11 @@ clean count and inflation state, effective correlated R and actually applied
 magnetic service through every prefix before regenerating dependent evidence.
 The controlling limiter is new-policy service/covariance qualification, not
 a reason to weaken provenance checks or promote finite replays.
+The held-bias transition regression now derives gyro, specific force and
+body magnetic field from the same analytic roll/pitch/displacement history.
+A fixed body field during those turns is not a constant world field. The
+actually-applied service assertion and all held-bias invariants remain strict;
+the corrected fixture passes at the repository's native optimization flags.
 
 **GOVERNING STRATEGY:** symmetry/kernels → justified quotient/tube → exact
 linked information dissipation → actual forcing → only necessary activation

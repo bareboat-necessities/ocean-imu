@@ -148,22 +148,28 @@ static void test_held_bias_is_invariant_across_a_served_window(){
     f.mekf().set_mag_world_ref(field);
 
     const float dt = .005f;
-    auto stream = [&](int k, V3& gyro, V3& acc){
+    // One physical attitude generates gyro, specific force and magnetic field.
+    // Holding the BODY field fixed while roll/pitch change is inconsistent
+    // with the world reference and is correctly rejected by vector NIS.
+    auto stream = [&](int k, V3& gyro, V3& acc, V3& mag){
         const float t = static_cast<float>(k)*dt;
         const float w = 2.0f*float(M_PI)/8.0f;
         const float roll = .35f*std::sin(w*t);
         const float pitch = .22f*std::sin(w*t + 1.1f);
-        gyro = V3(.35f*w*std::cos(w*t), .22f*w*std::cos(w*t + 1.1f), 0.0f);
-        acc = V3(g_std*std::sin(pitch), -g_std*std::sin(roll),
-                 -g_std - 1.2f*w*w*std::sin(w*t));
+        const Eigen::Quaternionf q=Eigen::AngleAxisf(pitch,V3::UnitY())*
+                                   Eigen::AngleAxisf(roll,V3::UnitX());
+        const float rd=.35f*w*std::cos(w*t),pd=.22f*w*std::cos(w*t+1.1f);
+        gyro = V3(rd,pd*std::cos(roll),-pd*std::sin(roll));
+        acc = q.conjugate()*V3(0,0,-g_std-1.2f*w*w*std::sin(w*t));
+        mag = q.conjugate()*field;
     };
 
-    V3 gyro, acc;
-    stream(0, gyro, acc);
+    V3 gyro, acc, mag;
+    stream(0, gyro, acc, mag);
     f.initialize_from_acc(acc);
     int live = -1;
     for (int k = 0; k < 200*400 && live < 0; ++k) {
-        stream(k, gyro, acc);
+        stream(k, gyro, acc, mag);
         f.updateFrontEnd(dt, gyro, acc);
         if (f.isTunerReady()) { f.goLive(f.startupProxyQuat(), .035f, 1.5708f); live = k; }
     }
@@ -174,10 +180,10 @@ static void test_held_bias_is_invariant_across_a_served_window(){
     const auto covariance_before = m.covariance_full();
     int applied = 0;
     for (int k = live + 1; k <= live + 200; ++k) {
-        stream(k, gyro, acc);
+        stream(k, gyro, acc, mag);
         f.updateTime(dt, gyro, acc);
         if ((k % 20) == 0) {
-            f.updateMag(field);
+            f.updateMag(mag);
             if (m.lastMagDiag().accepted) ++applied;
         }
     }

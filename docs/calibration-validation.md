@@ -89,9 +89,9 @@ Crossbuilds use the documented board options and CI optimization flags:
 
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
-| OU-III INS | Hotfix rebuild pending | Hotfix rebuild pending |
+| OU-III INS | 1348359 | 31168 |
 | qMEKF compass | 1062811 | 28056 |
-| Synthetic benchmark | Hotfix rebuild pending | Hotfix rebuild pending |
+| Synthetic benchmark | 695083 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. The benchmark's
 compiler-reported individual stack frames include gyro fit 3392 bytes,
@@ -116,6 +116,9 @@ archive from oceanography-waves-lib v1.2.3, SHA256
 `87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c`.
 The focused checks pass through both Make and CMake. The full native replay
 run is still in progress; its result will be recorded before the PR is ready.
+The separate 1135-test Python run currently reports 18 failures and 8 errors,
+all in committed proof/replay provenance and reproduction checks. The CMake
+source-path contract and the magnetic effective-covariance source binding pass.
 The independent proof check currently fails closed:
 
 ```sh
