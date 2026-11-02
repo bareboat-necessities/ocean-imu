@@ -33,10 +33,12 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
 | Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
 | Wizard task dispatch | Actual dispatcher runs off the caller stack, retains the caller's core, publishes save/cancel correctly, handles allocation failure, and services a registered caller watchdog |
-| Turn/hold interaction | The old code reproduces an invisible first-hold bar and a false rotation failure on isolated acceleration spikes; both regressions pass with the revised workflow |
-| Endpoint qualification | Three noisy 20-turn acquisitions complete and recover the identity gyro matrix within 0.005 Frobenius error, including independent validation; ideal first endpoints qualify in under five seconds |
-| Turn retries | Injected sample gap and stillness timeout at turn 7 preserve the six accepted turns and fitted bias; only the current turn is repeated, with the stillness failure reason displayed |
-| Pauses and timing | Pauses during all twenty turns, 12/60-second waits before motion, timestamp wrap, stale streams, and insufficient tilt are exercised by the actual capture-method replay |
+| Turn guide | REST / TWIST / TIP NOW / LET GO use separate screens; four named target faces keep the LCD readable and avoid the connected USB edge |
+| Sensor/UI scheduling | Production worker and UI execute on separate host threads; injected 80 ms LCD stalls preserve 200 Hz capture, the accepted turn, and the 20 ms gap gate |
+| Screen layout | The real renderer's headlines, instructions, and dynamic rows fit the 128-pixel display without wrapping or bar overlap |
+| Guided geometry | Direct face tips expose an information deficiency; alternating twists followed by the named tips recover the full matrix with independent validation, without weakening the fitter |
+| Controller replay | Twenty turns each with long waits, sensor noise, pauses, an interrupted turn, a restarted hold, and slow 0.15 rad/s motions pass; matrix Frobenius error is below 0.005 |
+| Turn retries | The actual wrapper retries a timeout at turn 7 while retaining six accepted turns and fitting bias only once; worker allocation failure also preserves accepted data |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
 spaced stationary OU components approximate a flicker plateau over a finite
@@ -63,6 +65,11 @@ It reads calibrated six-axis NOISERAW records with wrapping uint32
 microsecond timestamps. Firmware also checks independent magnetic stillness;
 that check is not reconstructed by this six-axis replay.
 
+The final `timeout 180 make all` rerun reached the unchanged CARMA build and
+returned exit 124 while compiling `carma3_filters_c5.o` (recipe reported
+`Terminated`). The complete calibration runner and qMEKF crossbuild pass;
+this does not establish a repository-wide pass.
+
 ## Firmware resources and reproduction
 
 Toolchain: ESP32 Arduino 3.3.7, M5Unified 0.2.13, M5GFX 0.2.19,
@@ -75,15 +82,17 @@ arduino-cli compile --library . --jobs 1 --warnings default \
   sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 ```
 
-The 680-byte schema retains existing NVS access and verified writes. Target
-DWARF type layouts give 3104 bytes for the streaming Allan state (3120 bytes
-on the host ABI), 1311960 bytes for the 65536-sample rotation fitter including
-bounded metadata, and 84824 bytes for the wizard. Rotation samples occupy
+The 680-byte schema retains existing NVS access and verified writes. The streaming Allan state uses 3104 bytes on the target (3120 bytes on
+the host ABI). The rotation fitter reserves 131072 twenty-byte samples plus
+bounded metadata, about 2.5 MiB of PSRAM. The heap-owned wizard also holds the small atomic capture
+status context. Rotation samples occupy
 20 bytes each; the fitter is explicitly allocated in PSRAM and freed after
 fitting. The wizard is heap-owned behind the existing runner entry, rather than
 placed on the loop-task stack or retained globally by each compass.
-The UI task and fitting worker each have a 32768-byte stack, so a fit can use
-65536 bytes of task stacks in addition to caller/RTOS memory. The compiler
+The UI task and each sensor/fit worker have a 32768-byte stack. Sensor capture
+and fitting run sequentially, so either operation can use
+65536 bytes of task stacks in addition to caller/RTOS memory. The compiler estimates 1536 bytes for the capture worker frame and 160 bytes
+for its UI runner; these are not hardware peak measurements. It
 reports 64 bytes for the public dispatcher and 48 bytes for its runner. The
 4144-byte workflow and 720-byte restore wrapper execute on the UI task;
 neither is nested beneath the application's setup/loop stack. ESP-IDF stack sizes and high-water
@@ -94,7 +103,7 @@ Crossbuilds use the documented board options and CI optimization flags:
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
 | OU-III INS | 1348359 | 31168 |
-| qMEKF compass (current turn/hold workflow) | 1066575 | 28056 |
+| qMEKF compass (current guided workflow) | 1068699 | 28056 |
 | Synthetic benchmark | 695083 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. The benchmark's

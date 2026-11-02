@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Replay real rotation capture, with hardware/UI replaced by a virtual clock."""
+"""Replay the production turn controller and the real per-turn retry wrapper."""
 import os
 from pathlib import Path
 import shlex
@@ -8,206 +8,141 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root / "src/AtomS3R/AtomS3R_ImuCalWizard.h").read_text()
-start = source.index("bool captureGyroRotations_(")
-brace = source.index("{", start)
-depth, end = 1, brace + 1
-while depth:
-    depth += (source[end] == "{") - (source[end] == "}")
-    end += 1
-method = source[start:end]
+
+def block(marker):
+    start = source.index(marker)
+    end = brace = source.index("{", start)
+    depth = 1
+    while depth:
+        end += 1
+        depth += (source[end] == "{") - (source[end] == "}")
+    return source[start:end + 1]
+
+# The capture worker must stay free of display/input work. The independent
+# scheduler replay below additionally runs the real worker and UI on threads.
+worker = block("static void gyroTurnTask_(")
+assert "ui_." not in worker and "Input::" not in worker
 
 cpp = r'''
 #define EIGEN_NON_ARDUINO
-#define INPUT 0x01
-#include "imu_calibrate/GyroCalFit.h"
-#include "imu_calibrate/GyroCalCapture.h"
-#include <cstdio>
-#include <cstdlib>
-#include <memory>
-#include <random>
-#include <string>
+#include "imu_calibrate/GyroTurnCapture.h"
 #include <iostream>
-using Eigen::Vector3f;
-using RotationFit=imu_cal::GyroRotationFit<65536,24>;
-struct ImuSample {Vector3f a,w,m;float tempC=25;uint32_t sample_us=0;};
-struct Simulation {
-  uint64_t us=0xffff0000ULL,last_sample=us,turn=0;
-  uint32_t idle_ms=12000;
-  bool latency=false,inject_gap=false,idle_gap=false,gapped=false,stale=false,small_turn=false;
-  bool impulses=false,paused_turn=false,retry_once=false,sensor_noise=false,inject_timeout=false;
-  int gap_segment=1;
-  int captures=0,retries=0,starts=0,tilt_prompts=0;
-  bool visible_hold_progress=false;
-  uint64_t prompt_us=0;
-  uint64_t first_hold_ms=0,mag_epoch=0;
-  std::mt19937 rng{811};std::normal_distribution<float> noise{0,1};
-  Vector3f mag_noise=Vector3f::Zero();
-  Eigen::Vector3d a{0,0,-9.8025605},m{24,5,40},axis{1,0,0};
-  std::string reason;
-  double angleAt(uint64_t at) const {
-    if(!turn || at<=turn+uint64_t(idle_ms)*1000)return 0;
-    const double seconds=(at-turn-uint64_t(idle_ms)*1000)*1e-6;
-    if(paused_turn)return seconds<.25?seconds*.6:seconds<6.5?.15:std::min(.9,.15+(seconds-6.5)*.6);
-    return std::min(small_turn?.05:.9,seconds*.6);
-  }
-  double angle() const {return angleAt(us);}
-  double rate() const {
-    if(!turn || us<=turn+uint64_t(idle_ms)*1000 || angle()>=(small_turn?.05:.9))return 0;
-    const double seconds=(us-turn-uint64_t(idle_ms)*1000)*1e-6;
-    return paused_turn && seconds>=.25 && seconds<6.5?0:.6;
-  }
-  void next() {
-    const Eigen::AngleAxisd r(-angle(),axis);a=r*a;m=r*m;turn=0;++starts;
-    // Moving the device to press the button is unobserved. Its old endpoint
-    // must not be reused as the starting gravity direction of this turn.
-    const Eigen::AngleAxisd pickup(.3,Eigen::Vector3d(.2,-.4,1).normalized());a=pickup*a;m=pickup*m;
-    axis=Eigen::Vector3d(std::sin(starts*.73),std::cos(starts*1.21),std::sin(starts*1.77+.5)).normalized();
-    if(std::fabs(axis.dot(a.normalized()))>.85)axis=a.normalized().unitOrthogonal();
-    us+=120000;prompt_us=us; // menu/display work must precede the sensor epoch
-  }
-} sim;
-uint32_t micros(){return uint32_t(sim.us);}
-uint32_t millis(){return uint32_t(sim.us/1000);}
-void delay(unsigned ms){sim.us+=uint64_t(ms)*1000;}
-struct Input {static void update(){}};
-struct SerialMock {
-  template<class... A> void printf(const char*,A...){}
-} Serial;
-template<class S> bool tryCalLogLine(S&,const char*){return true;}
-void require(bool b,const char* text){if(!b){std::cerr<<text<<" reason="<<sim.reason<<'\n';std::exit(1);}}
-class ImuCalWizard {
-public:
-  struct UI {
-    void waitTap(const char*,const char*,const char*){sim.next();}
-    void title(const char*){}
-    void line(const char*){}
-    void lineAt(int,const char* s){
-      if(std::string(s)=="Turn now" && !sim.turn){
-        sim.turn=sim.us;if(sim.starts==1)sim.first_hold_ms=(sim.us-sim.prompt_us)/1000;
-      }
-      if(std::string(s)=="Tilt onto a side")++sim.tilt_prompts;
-    }
-    int cursorY(){return 0;}
-    void bar01(float p){if(sim.starts==1 && !sim.turn && p>.1f && p<.99f)sim.visible_hold_progress=true;}
-    void fail(const char*,const char*){}
-    bool retryMenu(const char*,const char* why,const char*){
-      ++sim.retries;sim.reason=why;return sim.retry_once && sim.retries==1;
-    }
-  } ui_;
-  enum class FitKind{GYRO};
-  std::unique_ptr<RotationFit> gyro_rotations_{new RotationFit};
-  imu_cal::GyroCalibrator<float,400,8> gyroCal_;
-  imu_cal::GyroCalibration<float> gyr_out_;
-  Vector3f endpoint_a_,endpoint_w_=Vector3f::Zero(),endpoint_m_;
-  float endpoint_temp_=25;
-  int alignment_pose_count_=0;
-  struct Pose {Vector3f a,m_raw;} raw_alignment_[24];float alignment_temp_[24]{};
-  bool prepareGyroRotationStorage_(){return true;}
-  bool runFitTask_(FitKind,const char*,bool){return true;}
-  bool captureGyro_(){
-    ++sim.captures;endpoint_a_=sim.a.cast<float>();endpoint_m_=sim.m.cast<float>();
-    gyroCal_.g=9.8025605f;gyr_out_.ok=gyr_out_.biasT.ok=true;return true;
-  }
-  bool readSample_(ImuSample& s){
-    if(sim.stale)return false;
-    if(sim.latency){sim.us+=55000;sim.latency=false;}
-    if(sim.inject_gap && !sim.gapped && sim.starts==sim.gap_segment && sim.angle()>.1){sim.us+=50000;sim.gapped=true;}
-    if(sim.idle_gap && !sim.gapped && sim.turn && sim.us-sim.turn>500000){sim.us+=50000;sim.gapped=true;}
-    if(sim.us-sim.last_sample<5000)return false;
-    sim.last_sample=sim.us;s.sample_us=micros();
-    const Eigen::AngleAxisd r(-sim.angle(),sim.axis);
-    const double eps=std::sin(double(sim.us%1000000)*.000071);
-    s.a=(r*sim.a).cast<float>()+Vector3f(float(.001*eps),0,0);
-    // Isolated opposite acceleration spikes: visible in raw readings, while
-    // block scatter/means still prove the device stationary. Old raw-sample
-    // movement detection latched on a single spike and rejected this hold.
-    if(sim.impulses && sim.us%700000<5000)s.a.x()+=.15f;
-    if(sim.impulses && sim.us%700000>=5000 && sim.us%700000<10000)s.a.x()-=.15f;
-    s.w=Vector3f(float(.0001*eps),float(.00008*eps),float(-.00006*eps));
-    s.w+=sim.axis.cast<float>()*float(sim.rate());
-    if(sim.inject_timeout && sim.starts==7)s.w.x()+=float(.03*eps);
-    if(sim.sensor_noise){
-      s.a+=.01f*Vector3f(sim.noise(sim.rng),sim.noise(sim.rng),sim.noise(sim.rng));
-      s.w+=.0023f*Vector3f(sim.noise(sim.rng),sim.noise(sim.rng),sim.noise(sim.rng));
-      if(sim.mag_epoch!=sim.us/100000){
-        sim.mag_epoch=sim.us/100000;
-        sim.mag_noise=.3f*Vector3f(sim.noise(sim.rng),sim.noise(sim.rng),sim.noise(sim.rng));
-      }
-    }
-    // Independent 10 Hz magnetic observations, as on the real sensor.
-    const double mag_angle=sim.angleAt(sim.us/100000*100000);
-    s.m=(Eigen::AngleAxisd(-mag_angle,sim.axis)*sim.m).cast<float>();
-    s.m.x()+=float(.02*std::sin(double(sim.us/100000)));
-    s.m+=sim.mag_noise;
-    return true;
-  }
-METHOD
-};
+#include <random>
+#include <cstdlib>
+using V=Eigen::Vector3f;
+using Phase=imu_cal::GyroTurnPhase;
+using Fit=imu_cal::GyroRotationFit<131072,24>;
+void require(bool b,const char* text){if(!b){std::cerr<<text<<'\n';std::exit(1);}}
 int main(){
-  for(unsigned wait:{12000u,60000u}) {
-    sim=Simulation{};sim.idle_ms=wait;sim.latency=true;
-    ImuCalWizard w;
-    require(w.captureGyroRotations_(),"waiting before motion must not produce RETRY");
-    require(sim.retries==0 && sim.captures==1 && w.gyro_rotations_->segments()==20,
-            "all twenty real captures must complete without restarting the bias stage");
-    require(w.gyro_rotations_->samples()<65536,"stationary waiting must not exhaust trajectory RAM");
-    require(sim.visible_hold_progress,"the first hold must visibly fill its own progress bar");
-    require(sim.first_hold_ms<5000,"a quiet endpoint should qualify in under five seconds");
-    imu_cal::AccelCalibration<float> acc;acc.ok=acc.biasT.ok=true;acc.g=9.8025605f;
-    const bool fitted=w.gyro_rotations_->fit(acc,w.gyr_out_);
-    std::cerr<<"wait="<<wait<<" fit="<<fitted<<" reason="<<imu_cal::gyroRotationReason(w.gyro_rotations_->reason)
-      <<" error="<<(w.gyr_out_.S-Eigen::Matrix3f::Identity()).norm()<<" validation="<<w.gyr_out_.rotation_validation_rms
-      <<" samples="<<w.gyro_rotations_->samples()<<'\n';
-    require(fitted &&
-      (w.gyr_out_.S-Eigen::Matrix3f::Identity()).norm()<5e-5f && w.gyr_out_.rotation_validation_rms<2e-5f,
-      "waiting and unobserved menu motions must not bias the fitted matrix/held-out endpoints");
+  const V targets[4]={V(0,0,-1),V(-1,0,0),V(0,1,0),V(0,-1,0)};
+  for(int mode=0;mode<6;++mode) {
+    auto fit=std::make_unique<Fit>();
+    imu_cal::GyroCalibrator<float,400,8> cal;cal.g=9.8025605f;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
+    imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
+    std::mt19937 rng(811+mode);std::normal_distribution<float> noise(0,1);
+    uint64_t clock=0xffff0000ULL;V base(0,0,-cal.g),field(24,5,40);
+    bool gapped=false,saw_progress=false,saw_restart=false;int retries=0;
+    for(int segment=0;segment<20;++segment) {
+      bool accepted=false;
+      while(!accepted) {
+        // Button handling can change the device orientation before acquisition.
+        Eigen::AngleAxisf pickup(.3f,V(.2f,-.4f,1).normalized());base=pickup*base;field=pickup*field;
+        imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,segment);capture.begin(uint32_t(clock/1000));
+        uint64_t turn=0,twist=0;float total=0,theta=0,yaw=0;const float speed=mode==5?.15f:.6f;V axis=V::UnitX(),a=base,m=field;
+        V mag_noise=V::Zero();bool jolted=false;
+        for(int sample=0;sample<40000;++sample) {
+          clock+=5000;
+          if(capture.phase()==Phase::TWIST && !twist)twist=clock+(mode==0?60000000:1500000);
+          if(capture.phase()==Phase::TURN && !turn) {
+            turn=clock+500000;
+            const V goal=targets[capture.target()];
+            total=std::acos(std::clamp(base.normalized().dot(goal),-1.f,1.f));
+            axis=goal.cross(base.normalized()).normalized();
+          }
+          const float ye=twist && clock>twist?float(clock-twist)*1e-6f:0;
+          const float previous_yaw=yaw;
+          if(!turn)yaw=(segment%2?-1.f:1.f)*std::min(1.3f,ye*speed);
+          const float elapsed=turn && clock>turn?float(clock-turn)*1e-6f:0;
+          float rate=elapsed>0?speed:0;
+          if(mode==2 && elapsed>=.25f && elapsed<6.5f){theta=.15f;rate=0;}
+          else theta=std::min(total,mode==2 && elapsed>=6.5f?.15f+(elapsed-6.5f)*speed:elapsed*speed);
+          if(theta>=total)rate=0;
+          if(mode==3 && segment==6 && theta>.2f && !gapped){clock+=50000;gapped=true;}
+          const Eigen::AngleAxisf rotation(-theta,axis);
+          a=rotation*base;V w=axis*rate;
+          if(yaw!=previous_yaw)w+=base.normalized()*(segment%2?-speed:speed);
+          const float eps=std::sin(float(clock%1000000)*.000071f);
+          a.x()+=.001f*eps;w+=V(.0001f*eps,.00008f*eps,-.00006f*eps);
+          if(mode==1){a+=.01f*V(noise(rng),noise(rng),noise(rng));w+=.0023f*V(noise(rng),noise(rng),noise(rng));}
+          if(clock%100000<5000){
+            const float me=turn && clock>turn?float((clock-turn)/100000)*.1f:0;
+            const float mt=std::min(total,mode==2 && me>=.25f && me<6.5f?.15f:
+              mode==2 && me>=6.5f?.15f+(me-6.5f)*speed:me*speed);
+            m=Eigen::AngleAxisf(-mt,axis)*(Eigen::AngleAxisf(-yaw,base.normalized())*field);
+            if(mode==1)mag_noise=.3f*V(noise(rng),noise(rng),noise(rng));
+            m+=mag_noise+V(.02f*eps,0,0);
+          }
+          if(mode==4 && capture.phase()==Phase::HOLD && capture.progress()>.2f && !jolted) {
+            a.x()+=1.5f;jolted=true;
+          }
+          const auto phase=capture.update(uint32_t(clock/1000),uint32_t(clock),&a,&w,25,&m);
+          if(!twist && capture.progress()>.01f)saw_progress=true;
+          if(mode==4 && jolted && capture.resets() && capture.progress()<.1f){
+            require(phase==Phase::HOLD,"a movement restarts the hold, not the turn instruction");saw_restart=true;
+          }
+          // Missing polls must not make LET GO flicker back to TURN NOW.
+          if(phase==Phase::HOLD)require(capture.update(uint32_t(clock/1000),0,nullptr,nullptr,NAN,nullptr)==Phase::HOLD,
+              "between sensor deliveries the hold instruction must remain stable");
+          if(phase==Phase::FAILED){
+            require(mode==3 && retries==0 && fit->segments()==6 &&
+              std::string(capture.reason())=="Rotation sample gap","only the interrupted turn may be discarded");
+            ++retries;base=a;field=m;break;
+          }
+          if(phase==Phase::DONE){accepted=true;base=capture.accel();field=capture.mag();break;}
+        }
+        require(accepted || (mode==3 && retries==1),"guided turn did not complete");
+      }
+    }
+    require(fit->segments()==20 && fit->samples()<131072 && saw_progress,"twenty turns must retain their progress within storage");
+    if(mode==4)require(saw_restart,"endpoint movement must exercise an explained hold restart");
+    imu_cal::AccelCalibration<float> acc;acc.ok=acc.biasT.ok=true;acc.g=cal.g;
+    const bool ok=fit->fit(acc,bias);
+    std::cerr<<"mode="<<mode<<" fit="<<ok<<" reason="<<imu_cal::gyroRotationReason(fit->reason)
+      <<" matrix_error="<<(bias.S-Eigen::Matrix3f::Identity()).norm()<<" samples="<<fit->samples()<<'\n';
+    require(ok && (bias.S-Eigen::Matrix3f::Identity()).norm()<.005f,
+      "guided faces must identify the gyro matrix and pass independent validation");
   }
-  sim=Simulation{};sim.impulses=true;
-  {ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==0 && w.gyro_rotations_->segments()==20,
-      "isolated acceleration spikes must not turn stationary waiting into failed rotation");}
-  sim=Simulation{};sim.paused_turn=true;
-  {ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==0 && sim.tilt_prompts>0,
-      "a user may pause after a small tilt and continue the same valid rotation");}
-  for(unsigned seed:{811u,812u,813u}) {
-    sim=Simulation{};sim.sensor_noise=true;sim.rng.seed(seed);
-    ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==0,
-      "sensor noise must allow all twenty shorter endpoint captures");
-    imu_cal::AccelCalibration<float> acc;acc.ok=acc.biasT.ok=true;acc.g=9.8025605f;
-    require(w.gyro_rotations_->fit(acc,w.gyr_out_) &&
-      (w.gyr_out_.S-Eigen::Matrix3f::Identity()).norm()<.005f,
-      "shorter noisy endpoints must still recover the gyro matrix and pass independent validation");
+  {
+    auto fit=std::make_unique<Fit>();imu_cal::GyroCalibrator<float,400,8> cal;
+    cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
+    imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
+    imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,0);capture.begin(0);
+    uint32_t motion=0;Phase phase=Phase::REST;
+    for(uint32_t ms=5;ms<45000 && phase!=Phase::FAILED;ms+=5) {
+      if(phase==Phase::TWIST && !motion)motion=ms;
+      const float eps=std::sin(ms*.071f),angle=motion?(ms-motion)*.00015f:0;
+      V a(.001f*eps,0,-cal.g),w(.0001f*eps,0,motion?-.15f:0);
+      V m=Eigen::AngleAxisf(angle,V::UnitZ())*V(24,5,40);
+      m.x()+=.02f*std::sin(float(ms/100)*.7f);
+      phase=capture.update(ms,ms*1000,&a,&w,25,&m);
+    }
+    std::cerr<<"budget phase="<<int(phase)<<" reason="<<capture.reason()<<" samples="<<fit->samples()<<'\n';
+    require(phase==Phase::FAILED && std::string(capture.reason())=="Turn took too long" &&
+      fit->samples()==0 && fit->segments()==0,
+      "a long live motion must release only its own budget, without a false stale-sensor failure");
   }
-  sim=Simulation{};sim.idle_gap=true;
-  {ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==0 && sim.gapped,
-      "a pre-motion gap must requalify the start without losing an active rotation");}
-  sim=Simulation{};sim.inject_gap=true;
-  {ImuCalWizard w;require(!w.captureGyroRotations_() && sim.retries==1 && sim.gapped &&
-      sim.reason=="Rotation sample gap","a gap during actual motion must still reject the segment");}
-  sim=Simulation{};sim.inject_gap=true;sim.retry_once=true;sim.gap_segment=7;
-  {ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==1 && sim.captures==1 &&
-      sim.starts==21 && w.gyro_rotations_->segments()==20,
-      "retry at turn seven must retain six completed turns and the fitted bias");}
-  sim=Simulation{};sim.inject_timeout=true;sim.retry_once=true;
-  {ImuCalWizard w;require(w.captureGyroRotations_() && sim.retries==1 && sim.captures==1 &&
-      sim.reason=="gyro scatter" && sim.starts==21 && w.gyro_rotations_->segments()==20,
-      "a stillness timeout must show its cause and resume turn seven without repeating completed stages");}
-  sim=Simulation{};sim.stale=true;
-  {ImuCalWizard w;require(!w.captureGyroRotations_() && sim.retries==1 &&
-      sim.reason=="No fresh samples","a stalled start must have its real failure reason");}
-  sim=Simulation{};sim.small_turn=true;
-  {ImuCalWizard w;require(!w.captureGyroRotations_() && sim.retries==1 &&
-      sim.reason=="Rotate to another pose","an insufficient turn must not report OK");}
-  std::cout<<"gyro wizard start: progress/noise/pause/wait/wrap/storage/motion gap/stale/angle PASS\n";
+  std::cout<<"gyro guide: named faces/wait/noise/pause/gap/restart/storage/matrix validation PASS\n";
 }
-'''.replace("METHOD", method)
+'''
+# Include memory explicitly for compilers where Eigen doesn't import it.
+cpp = cpp.replace('#include <cstdlib>', '#include <cstdlib>\n#include <memory>')
 eigen = root / "third_party/eigen"
 if not (eigen / "Eigen/Dense").exists():
     eigen = Path("/usr/include/eigen3")
 with tempfile.TemporaryDirectory() as directory:
-    binary = Path(directory) / "gyro-wizard-start"
+    binary = Path(directory) / "gyro-guide"
     subprocess.run(shlex.split(os.environ.get("CXX", "g++")) + [
         "-std=c++20", "-O1", "-fno-finite-math-only", "-Wall", "-Wextra", "-Werror",
-        "-I", str(root / "src"), "-isystem", str(eigen),
-        "-x", "c++", "-", "-o", str(binary),
+        "-I", str(root / "src"), "-isystem", str(eigen), "-x", "c++", "-", "-o", str(binary),
     ], input=cpp, text=True, check=True)
     subprocess.run([str(binary)], check=True, timeout=60)

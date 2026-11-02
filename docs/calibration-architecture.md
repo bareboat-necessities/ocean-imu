@@ -34,35 +34,53 @@ validation rotations (every fourth segment). Timestamp gaps over 20 ms,
 non-finite values, excessive rates, exhausted storage, and unqualified endpoints
 discard the active segment. A retry establishes a fresh quiet start.
 
-After each rotation prompt, keep the device still until **Turn now** appears.
-Rest the device on the table or a stable side, rather than trying to hold it
-motionless in your hand. The initial bias fit retains its six-second useful
-hold. Subsequent endpoints use 2.5 seconds of useful samples, after magnetic
-settling, and at least 80 retained samples. A normal endpoint takes about
-4.5 seconds and spans two independent two-second magnetic means. The existing
-scatter, mean-change, freshness, and magnetic-change gates still apply.
+Each turn has four separate screens with one action at a time:
 
-The stationary capture qualifies a fresh start after button/menu handling.
-Integration starts at that fresh sensor timestamp. Integrated gyro rotation,
-rather than a single raw-sample excursion, detects the turn. You may wait
-before turning; an unchanged pose is not a failed rotation. Proven quiet
-prefixes are released while waiting, retaining the qualified endpoint means
-and every unqualified/moving interval. A gap while still at the start restarts
-qualification; a gap during motion rejects the segment. If a turn pauses
-without enough tilt, **Tilt onto a side** requests more motion while retaining
-the same trajectory. Each attempt is bounded to three minutes.
-Retries discard only the active turn. They preserve previously accepted
-turns, fitted gyro bias, and the completed accelerometer/magnetometer stages;
-the retry screen identifies the current turn and how many turns are retained.
-The rotation buffer reserves 65536 samples in PSRAM (about 1.25 MiB), allowing
-ordinary pauses across all twenty turns. The same preflight checks this full
-reservation before any calibration poses are requested.
+1. **REST**: set the device on the table and take your hands off.
+2. **TWIST**: lift it, keep the same side up, and twist about a quarter-turn in
+   the displayed direction. Left/right instructions alternate across turns.
+3. **TIP NOW**: tip to the named face: SCREEN UP, USB UP, LEFT DOWN, or RIGHT
+   DOWN, then set it down. These use the device frame measured during the
+   accelerometer stage. USB-down would rest on the cable and screen-down
+   would hide feedback, so neither is requested.
+4. **LET GO**: keep that face resting on the table, hands off, until **Turn kept**.
 
-The bar fills across the current hold. **Rotation n / 20** reports overall
-completion separately; the bar no longer compresses one hold into 5% of its
-width. The display shows quiet seconds or the reason the quiet interval was
-reset. The retry screen and periodic `[GYRROT]` serial diagnostics identify
-sample gaps, stale streams, insufficient tilt, and unsuccessful stillness.
+The short twist is necessary excitation: a replay of direct tips between
+faces alone exposed a rank-deficient nine-parameter information matrix.
+The twist cue advances after about 60 degrees of integrated rotation about
+start gravity; it does not require a precise manually measured angle. A tip
+lands within a generous 35-degree cone about the named face. The fitter still
+uses measured endpoints and all original information/validation gates. An
+early tip before the twist is complete can establish a new quiet start for
+that same turn rather than trap the operator in the original orientation.
+
+The initial bias fit retains its six-second useful hold. Subsequent endpoints
+use 2.5 seconds of useful samples plus magnetic settling, and at least 80
+retained samples. A normal endpoint takes about 4.5 seconds and spans two
+independent two-second magnetic means. Scatter, mean-change, freshness, and
+magnetic-change gates still apply. The visible bar includes settling and starts
+with the first qualified block. Motion screens have no stillness bar.
+Movement restarts only the current quiet hold, with a plain-language explanation.
+
+A separate, 32768-byte capture task on core 0 reads the IMU at a 200 Hz target
+cadence and owns the sensor-clock controller. The UI task reads atomic status
+snapshots; LCD refreshes, button handling, and display wakeup cannot create
+integration gaps. Actual delivery gaps over 20 ms still reject the active turn.
+The target does not change during a valid turn; quiet waits, pauses, and every
+unqualified/moving interval remain in the same controller. Each attempt is
+bounded to three minutes. Periodic `[GYRROT]` diagnostics include phase, target,
+quiet progress, restart count, and the sensor-side failure reason.
+
+Retries discard only the active turn. Accepted turns, fitted bias, and completed
+accelerometer/magnetometer stages remain. The retry screen names the current
+turn and retained count. The 131072-sample PSRAM reservation (about 2.5 MiB)
+includes ordinary pauses and slow motions across twenty turns and is checked
+before any poses. Each turn can consume at most one twentieth of this buffer
+(about 32 seconds of retained trajectory); a long failed attempt cannot use
+the storage needed by later turns. Proven stationary waiting prefixes are
+released. Fresh finite readings update sensor health before quiet-motion
+gates, so a slow turn lasting over twelve seconds is not falsely classified
+as a stalled IMU.
 
 For calibrated unit specific force u, inertial constancy gives
 du/dt = -[omega]x u. Each measured midpoint rate is corrected by the existing

@@ -42,8 +42,7 @@ public:
       if(have_input_ && uint32_t(now-last_input_)>cfg_.max_gap_ms) disturb_("sample gap");
       return status_;
     }
-    if(!a->allFinite() || !w->allFinite() || !finiteT(tempC) ||
-       w->norm()>cal_.max_gyro_norm || std::fabs(a->norm()-cal_.g)>cal_.max_accel_dev) {
+    if(!a->allFinite() || !w->allFinite() || !finiteT(tempC)) {
       disturb_("invalid sample");return status_;
     }
     // M5's update bit alone cannot establish a fresh register value.
@@ -55,6 +54,11 @@ public:
     if(have_input_ && (uint32_t(now-last_input_)==0 || uint32_t(now-last_input_)>0x7fffffffu)) return status_;
     if(have_input_ && uint32_t(now-last_input_)>cfg_.max_gap_ms) disturb_("sample gap");
     last_input_=last_fresh_=now;have_input_=true;
+    // A fresh sample during a real turn is not a stalled sensor. Reject it
+    // from the QUIET hold only after accounting for register/timestamp health.
+    if(w->norm()>cal_.max_gyro_norm || std::fabs(a->norm()-cal_.g)>cal_.max_accel_dev) {
+      disturb_("invalid sample");return status_;
+    }
     if(n_==0) {block_start_=last_kept_=now;ar_=a->template cast<double>();wr_=w->template cast<double>();}
     const D da=a->template cast<double>()-ar_,dw=w->template cast<double>()-wr_;
     sa_+=da;aa_+=da.cwiseProduct(da);sw_+=dw;ww_+=dw.cwiseProduct(dw);++n_;
@@ -126,6 +130,7 @@ public:
   }
   float progress() const {return std::min(1.0f,float(kept_blocks_*cfg_.block_ms)/cfg_.useful_ms);}
   uint32_t resets() const {return resets_;}
+  uint32_t quietMilliseconds() const {return quiet_*cfg_.block_ms;}
   const char* resetReason() const {return reset_reason_;}
   // Means contain only the same qualified blocks retained by the bias fitter.
   V meanAccel() const {return pose_n_ ? V((pose_a_/pose_n_).template cast<T>()) : V::Zero();}
