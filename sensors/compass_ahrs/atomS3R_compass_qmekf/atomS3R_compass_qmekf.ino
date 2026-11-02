@@ -32,9 +32,7 @@ using namespace atoms3r_compass;
 class QmekfBackend : public IAttitudeBackend {
  public:
   void reset() override {
-    const float g = ImuCalCfg::g_std;  // noise below is specified in nominal g (unit conversion)
-
-    Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
+    const Vector3f sigma_a=accelModelStd_();
     Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
     // Full calibrated uT vector: normalization would remove a measurement
     // degree of freedom and invalidate a 3-DOF vector NIS test.
@@ -52,7 +50,14 @@ class QmekfBackend : public IAttitudeBackend {
   }
 
   void configureNoise(const atoms3r_ical::RuntimeCals& runtime) override {
-    if(mekf_ && runtime.configureProcessNoise(*mekf_))mekf_->set_Racc_std(runtime.noiseAccelStd());
+    if(mekf_ && runtime.configureProcessNoise(*mekf_)) {
+      // This gravity-only filter has no translational acceleration state.
+      // Measured sensor scatter must not erase its separate motion/model
+      // allowance. Full marine INS variants model acceleration explicitly.
+      const Vector3f total=(runtime.noiseAccelStd().array().square()+
+        accelModelStd_().array().square()).sqrt().matrix();
+      mekf_->set_Racc_std(total);
+    }
   }
 
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
@@ -108,6 +113,7 @@ class QmekfBackend : public IAttitudeBackend {
   const auto& magneticHealth() const {return mekf_->magneticHealth();}
 
  private:
+  static Vector3f accelModelStd_(){return Vector3f::Constant(.06f*ImuCalCfg::g_std);}
   void rememberMagReference_(const Vector3f& measurement) {
     const auto qc=mekf_->quaternion();
     mag_reference_world_=Eigen::Quaternionf(qc(3),qc(0),qc(1),qc(2))*measurement;

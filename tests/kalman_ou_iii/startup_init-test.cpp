@@ -33,6 +33,7 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include "../common/MagneticRefinementRegression.h"
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 
@@ -515,7 +516,7 @@ int main() {
         }
     }
 
-    bool ok = true;
+    bool ok = magneticRefinementRegression<Wrapper>();
     ok &= test_front_end_is_independent_of_the_mekf();
     ok &= test_heading_frame_ignores_yaw();
     ok &= test_bootstrap_holds_the_mekf();

@@ -124,7 +124,7 @@ public:
       ImuCalWizardCfg::WIZARD_STACK_BYTES,&ctx,1,&task,xPortGetCoreID());
     if(rc!=pdPASS || task==nullptr) {
       Serial.println("[WIZ] UI task allocation failed");
-      ui_.fail("CALIBRATION","Task allocation failed");return false;
+      ui_.fail("CALIBRATION","Task create failed");return false;
     }
     while(!ctx.done.load()) {
       // If an application enabled the loop watchdog, waiting for user input
@@ -378,7 +378,7 @@ private:
         ui_.line("Then place & hold");ui_.line("Keep clear of metal");
         const int hint=ui_.cursorY();ui_.line("Wait for quiet pose");
         const uint32_t start=micros();
-        gyro_rotations_->beginSegment(start,endpoint_a_,endpoint_temp_,segment%4==3);
+        gyro_rotations_->beginSegment(start,endpoint_a_,endpoint_temp_,segment%4==3,endpoint_w_);
         imu_cal::GyroCaptureCfg cfg;cfg.timeout_ms=45000;
         imu_cal::GyroCapture<float,400,8> quiet(gyroCal_,cfg);quiet.begin(millis());
         uint32_t draw=millis();bool failed=false;

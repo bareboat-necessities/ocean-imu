@@ -450,7 +450,6 @@ public:
             }
         }
 
-        maybeRefineMagReference_(mag_body_ned);
         maybeApplyContinuousHardIron_();
 
         // Magnetometer corrections go to the MEKF only once it owns the
@@ -458,6 +457,9 @@ public:
         if (mag_ref_set_ && stage_ == Stage::Live) {
             impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
         }
+        // Reference learning must not assign yaw before the shared magnetic
+        // gate classifies this packet against the existing reference.
+        maybeRefineMagReference_(mag_body_ned);
     }
 
     bool hasMagNorthLock() const noexcept { return mag_ref_set_; }
@@ -573,6 +575,7 @@ protected:
 
         mag_refine_started_  = false;
         mag_refine_done_     = false;
+        mag_refine_window_healthy_ = true;
         mag_refine_time_sec_ = NAN;
         mag_north_lock_time_sec_ = NAN;
         live_time_sec_           = NAN;
@@ -730,12 +733,21 @@ private:
         if (t_ < cfg_.mag_refine_start_sec) return;
         if (!have_last_imu_) return;
 
-        if (!mag_refine_started_) {
+        using Health = decltype(impl_.mekf().magneticHealth().health);
+        const bool packet_healthy = impl_.mekf().lastMagDiag().accepted &&
+            impl_.mekf().magneticHealth().health == Health::HEALTHY;
+        // A partial disturbed window may reject all returning clean samples
+        // against its old norm mean. Rearm the existing accumulator as soon
+        // as shared-gate recovery establishes healthy service again.
+        if (!mag_refine_started_ || (!mag_refine_window_healthy_ && packet_healthy)) {
             beginMagRefinement(mag_auto_tuner_, cfg_.mag_refine_window_sec,
                                cfg_.mag_min_samples);
             mag_refine_started_ = true;
+            mag_refine_window_healthy_ = true;
             last_mag_sample_t_  = NAN;
         }
+
+        mag_refine_window_healthy_ = mag_refine_window_healthy_ && packet_healthy;
 
         const float dt_mag = advanceSampleClock(last_mag_sample_t_, t_, cfg_.mag_sample_dt_sec);
 
@@ -770,6 +782,18 @@ private:
             return;
         }
 
+        // A rejected field cannot replace a reference that has supported
+        // actual magnetic service: even a strength/dip change can corrupt
+        // tilt. Preserve independent repair only for a provisional reference
+        // that has never supported an accepted update. Always require a new
+        // healthy window before committing its averaged absolute heading.
+        if (!mag_refine_window_healthy_) {
+            if (impl_.mekf().magneticHealth().accepted_count == 0) {
+                setMagWorldRef_(mag_world_ref_uT);
+            }
+            mag_refine_started_ = false;
+            return;
+        }
         setMagWorldRef_(mag_world_ref_uT);
 
         const float mag_tilt_yaw_rad = mag_auto_tuner_.getYawGaugeCorrectionRad();
@@ -909,6 +933,7 @@ private:
 
     bool  mag_refine_started_  = false;
     bool  mag_refine_done_     = false;
+    bool  mag_refine_window_healthy_ = true;
     float mag_refine_time_sec_ = NAN;
 
     AdaptiveWaveDetrender3D displacement_detrender_{};

@@ -34,6 +34,25 @@ A fixed body field during those turns is not a constant world field. The
 actually-applied service assertion and all held-bias invariants remain strict;
 the corrected fixture passes at the repository's native optimization flags.
 
+**C — magnetic reference refinement must respect applied service.** Actual
+facade regressions found a 1.5708-radian yaw assignment from one disturbed TFG
+packet at its window boundary, and from an entire disturbed shared OU/CARMA
+window, despite the core NIS policy. The invalidated hypothesis was that core
+measurement rejection alone protects all heading writes. The architecture
+review retains independent proxy tilt, averaging, fit and norm checks; it moves
+packet classification before refinement and admits a trusted-reference/yaw
+replacement only from a healthy, accepted window. A partial window seeded at
+1.7 times the normal field would reject returning clean samples because
+`abs(1/1.7-1)=0.412 > 0.35`; recovery therefore rearms the existing accumulator,
+rather than weakening its norm test. Provisional strength/dip repair without
+any previous accepted service remains independent. The first shared fixture
+also exposed a test-precondition error: it counted the legitimate 0.39248-radian
+bootstrap handoff as a disturbance-time heading step. The regression now
+requires Live and applied service before fault injection. No theorem or
+finite-capture bound is promoted. New-policy service, window eligibility and
+effective covariance remain the next actual-word qualification; the archived
+proof payloads cannot be rebound merely because runtime regressions pass.
+
 **GOVERNING STRATEGY:** symmetry/kernels → justified quotient/tube → exact
 linked information dissipation → actual forcing → only necessary activation
 bounds. [The persistent strategy and derivation](ou3-information-shear-strategy.md)

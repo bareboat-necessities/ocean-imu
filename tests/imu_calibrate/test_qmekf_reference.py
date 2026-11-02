@@ -25,6 +25,7 @@ cpp = r'''
 #include <cstdlib>
 #include <iostream>
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
+#define private public
 #include "ahrs/KalmanQMEKF.h"
 namespace atoms3r_compass {
 using namespace atoms3r_ical;
@@ -44,9 +45,27 @@ struct IAttitudeBackend {
 }
 using namespace atoms3r_compass;
 ''' + backend + r'''
+#undef private
 void require(bool ok,const char* message){if(!ok){std::cerr<<message<<'\n';std::exit(1);}}
 Eigen::Quaternionf quat(const AttitudeSolution& a){return {a.w,a.x,a.y,a.z};}
 int main(){
+  QmekfBackend noise_backend;noise_backend.reset();RuntimeCals runtime;
+  runtime.record_valid=true;auto& n=runtime.noise;n.valid=1;n.white_mask=63;
+  n.duration_ms=2400000;n.samples=480001;n.period_s=.005f;
+  for(int k=0;k<6;++k){n.white_density[k]=k<3?.002f:.0002f;
+    n.sample_std[k]=n.white_density[k]/std::sqrt(.005f);}
+  n.walk_mask=8;n.bias_random_walk[3]=.00003f;
+  const Eigen::Matrix3f model_R=noise_backend.mekf_->Racc;
+  noise_backend.configureNoise(runtime);
+  const Eigen::Vector3f measured_variance=runtime.noiseAccelStd().array().square().matrix();
+  Eigen::Matrix3f total_R=model_R;total_R.diagonal()+=measured_variance;
+  require((noise_backend.mekf_->Racc-total_R).norm()<1e-6f,
+          "measured sensor R erased the gravity-only model uncertainty");
+  for(int k=0;k<3;++k)require(std::fabs(noise_backend.mekf_->Q(k,k)-.0002f*.0002f)<1e-12f,
+          "measured gyro density did not configure process Q");
+  require(std::fabs(noise_backend.mekf_->Q(3,3)-.00003f*.00003f)<1e-12f &&
+          noise_backend.mekf_->Q(4,4)==2e-7f && noise_backend.mekf_->Q(5,5)==2e-7f,
+          "identified random walk mask was not respected");
   QmekfBackend backend;backend.reset();CalibratedSample sample;AttitudeSolution out;
   for(int i=0;i<2000;++i)backend.step(sample,out);
   const auto before=quat(out);

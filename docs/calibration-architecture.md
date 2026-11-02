@@ -40,6 +40,9 @@ temperature-bias model, then integrated with Exp(-S_g omega dt). A robust Huber
 objective minimizes endpoint direction errors over training segments. Analytic
 SO(3) sensitivities propagate through the same exponentials. The optimizer
 uses Eigen's existing fixed-size LDLT; no optimization dependency is added.
+The qualified raw stationary gyro mean seeds the first midpoint interval;
+the integration does not discard the time between the start pose and its
+first fresh rotation sample. Finite spin-up trajectories test this coverage.
 The undamped 9x9 information matrix must be observable and conditioned.
 Singular values, determinant, and coefficient bounds reject implausible
 solutions. A bias-only thermal model requires temperature to stay within 2 C
@@ -106,6 +109,10 @@ white process-noise density on every reset, plus gyro-bias walk only on
 identified axes. Unidentified terms retain the explicitly configured
 estimator model. No old calibration record is consulted. OU/CARMA marine
 frequency, variance, poles and pseudo-measurements remain separate.
+The standalone gravity-only qMEKF compass retains its configured allowance
+for unmodeled translational acceleration: its accelerometer covariance is
+measured sensor covariance plus that separate model covariance. The full INS
+variants already represent marine acceleration in their state model.
 
 Build with ATOMS3R_NOISE_RAW_LOG=1 for a complete serial raw trace. A dropped
 line aborts that diagnostic acquisition; keep the host draining USB. Ordinary
@@ -142,6 +149,16 @@ magneticHealth() exposes nominal NIS, inflation, health and cumulative counts.
 The standalone qMEKF consumer adapts its dip reference slowly only AFTER a
 healthy accepted update. Rebuilding the reference from the current reading
 before the gate would let a disturbance erase its own innovation.
+
+The existing OU/CARMA and TFG reference refinements also run after the current
+packet's Kalman update. Replacing a reference that has supported applied
+magnetic service, or assigning its absolute yaw, requires a full healthy,
+accepted window. A rejected packet cannot bypass NIS through reference learning.
+At healthy recovery a disturbed partial window is discarded, including its
+norm mean, so that old disturbed samples cannot veto the returning clean field.
+Independent strength/dip repair remains available for a provisional reference
+that has never supported an accepted magnetic update. The independent proxy
+tilt and original averaging/fitting algorithms are retained.
 
 ## Persistence and resource validation
 

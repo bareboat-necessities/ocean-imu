@@ -549,6 +549,59 @@ void test_mag_reference_is_refined() {
     check(f.mekf().acc_bias_updates_enabled(), "bias never opened after refinement");
 }
 
+void test_mag_refinement_rejects_heading_shock() {
+    // Locate the reference-window boundary using an independent clean run.
+    // One same-norm 90-degree field shock on that boundary must pass through
+    // the core gate before the facade can make an absolute yaw correction.
+    const Eigen::Quaternionf truth = Eigen::AngleAxisf(0.4f, Vector3f::UnitZ()) *
+        Eigen::AngleAxisf(0.1f, Vector3f::UnitY()) *
+        Eigen::AngleAxisf(0.15f, Vector3f::UnitX());
+    const Vector3f acc = truth.conjugate() * Vector3f(0, 0, -kG);
+    const Vector3f clean = truth.conjugate() * Vector3f(20, 0, 43);
+    const Vector3f shock = truth.conjugate() * Vector3f(0, -20, 43);
+    auto cfg = default_config();
+    cfg.mag_continuous_hard_iron = false;
+    cfg.mag_refine_start_sec = 150.0f;
+    cfg.mag_refine_window_sec = 10.0f;
+    int boundary = -1;
+    for (int replay = 0; replay < 3; ++replay) {
+        Fusion f;
+        f.begin(cfg);
+        float max_jump = 0;
+        bool shock_rejected = true;
+        const int steps = replay == 0 ? 40000 : boundary + 12000;
+        for (int i = 0; i < steps; ++i) {
+            f.update(0.005f, Vector3f::Zero(), acc);
+            if (i % 5 != 0) continue;
+            const bool was_refined = f.magReferenceRefined();
+            const Eigen::Quaternionf before = f.quaternion();
+            const bool inject = (replay == 1 && i == boundary) ||
+                (replay == 2 && i >= boundary - 2200 && i < boundary + 2200);
+            f.updateMag(inject ? (replay == 2 ? Vector3f(1.7f * shock) : shock) : clean);
+            if (replay == 0 && !was_refined && f.magReferenceRefined()) boundary = i;
+            if (inject) {
+                max_jump = std::max(max_jump, before.angularDistance(f.quaternion()));
+                shock_rejected = shock_rejected && !f.mekf().lastMagDiag().accepted &&
+                    !f.magReferenceRefined();
+            }
+        }
+        if (replay == 0) {
+            check(boundary > 0, "clean reference refinement never completed");
+            std::cout << "  clean refinement boundary=" << float(boundary) * .005f << " s\n";
+        } else {
+            check(shock_rejected, "reference refinement bypassed the magnetic shock gate");
+            check(max_jump < 0.01f, "reference refinement caused a 90-degree heading flip");
+            check(f.magReferenceRefined(), "reference refinement did not resume after clean recovery");
+            check(f.quaternion().angularDistance(truth) < 0.01f,
+                  "reference refinement retained a heading error after clean recovery");
+            check((f.mekf().magnetic_reference_world() - Vector3f(20, 0, 43)).norm() < .01f,
+                  "reference refinement retained a disturbed strength/dip model");
+            std::cout << "  refinement shock scenario " << replay << ": jump=" << max_jump
+                      << " rad, final error=" << f.quaternion().angularDistance(truth) << " rad\n";
+        }
+    }
+}
+
 void test_continuous_hard_iron_recovers_heading() {
     const Vector3f offset(0.0f, 3.0f, 0.0f);
     auto yaw_after = [&](bool hard_iron_on, const Vector3f& b) {
@@ -823,6 +876,7 @@ int main() {
     test_fixed_cadence_ablation();
     test_mag_reference_is_windowed();
     test_mag_reference_is_refined();
+    test_mag_refinement_rejects_heading_shock();
     test_continuous_hard_iron_recovers_heading();
     test_hard_iron_can_be_disabled();
     test_aw_cov_sync_only_inflates();

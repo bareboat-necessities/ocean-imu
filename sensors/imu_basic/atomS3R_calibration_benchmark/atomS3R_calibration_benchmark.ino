@@ -30,10 +30,12 @@ static void benchmark(void*) {
     V axis=V(std::sin(1.1f*i+1),std::cos(.91f*i+.2f),.8f).normalized();
     if(std::fabs(axis.dot(g.normalized()))>.85f)axis=g.normalized().unitOrthogonal();
     const V w=axis*(.8f+.04f*i),raw=S.inverse()*w+bias;
-    fit->beginSegment(us,g,25,i%4==3);V end=g;
+    fit->beginSegment(us,g,25,i%4==3,bias);V end=g;float previous_fraction=0;
     for(int k=0;k<=200;++k) {
-      us+=5000;fit->add(us,raw,25);
-      if(k)end=Eigen::AngleAxisf(-w.norm()*.005f,axis)*end;
+      const float fraction=std::min(1.f,float(k+1)/float(10+i%4));
+      us+=5000;fit->add(us,bias+fraction*(raw-bias),25);
+      end=Eigen::AngleAxisf(-w.norm()*.005f*.5f*(previous_fraction+fraction),axis)*end;
+      previous_fraction=fraction;
     }
     fit->finishSegment(end,25);us+=10000;
   }

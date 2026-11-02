@@ -48,11 +48,16 @@ public:
   void clear() {n_=ns_=0;active_=false;reason=GyroRotationFail::OK;}
   int segments() const {return ns_;}
   int samples() const {return n_;}
-  bool beginSegment(uint32_t us,const Eigen::Vector3f& a,float temp,bool validation) {
-    if(active_ || ns_>=MAX_SEGMENTS || !a.allFinite() || !std::isfinite(temp) || a.norm()<1)
+  bool beginSegment(uint32_t us,const Eigen::Vector3f& a,float temp,bool validation,
+                    const Eigen::Vector3f& initial_rate) {
+    if(active_ || ns_>=MAX_SEGMENTS || !a.allFinite() || !std::isfinite(temp) || a.norm()<1 ||
+       !initial_rate.allFinite() || initial_rate.norm()>cfg.max_rate)
       return fail_(GyroRotationFail::BAD_SAMPLE);
     pending_={};pending_.first=n_;pending_.a0=a;pending_.t0=temp;pending_.validation=validation;
-    last_us_=us;have_rate_=false;active_=true;reason=GyroRotationFail::OK;return true;
+    // Qualified stationary mean at the gravity endpoint anchors the first
+    // trapezoid. Dropping that interval biases scale during a finite spin-up.
+    last_us_=us;last_rate_=initial_rate;last_temp_=temp;
+    active_=true;reason=GyroRotationFail::OK;return true;
   }
   bool add(uint32_t us,const Eigen::Vector3f& w,float temp) {
     if(!active_)return false;
@@ -60,7 +65,6 @@ public:
        std::fabs(temp-pending_.t0)>cfg.max_temperature_span) return abort_(GyroRotationFail::BAD_SAMPLE);
     const uint32_t du=us-last_us_;
     if(!du || du>uint32_t(cfg.max_gap_s*1e6))return abort_(GyroRotationFail::GAP);
-    if(!have_rate_) {last_rate_=w;last_temp_=temp;last_us_=us;have_rate_=true;return true;}
     if(n_>=MAX_SAMPLES)return abort_(GyroRotationFail::CAPACITY);
     Sample& s=data_[n_++];
     const Eigen::Vector3f midpoint=.5f*(last_rate_+w);
@@ -183,7 +187,7 @@ private:
     return true;
   }
   Sample data_[MAX_SAMPLES];Segment seg_[MAX_SEGMENTS],pending_{};
-  int n_=0,ns_=0;bool active_=false,have_rate_=false;uint32_t last_us_=0;
+  int n_=0,ns_=0;bool active_=false;uint32_t last_us_=0;
   Eigen::Vector3f last_rate_=Eigen::Vector3f::Zero();float last_temp_=25;
   void (*idle_)(void*)=nullptr;void* idle_context_=nullptr;
 };

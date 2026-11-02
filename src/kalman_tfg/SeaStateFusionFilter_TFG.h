@@ -514,6 +514,7 @@ private:
         hard_iron_.resetApplied();
         mag_refine_started_ = false;
         mag_refine_done_ = false;
+        mag_refine_window_healthy_ = true;
         mag_refine_time_sec_ = NAN;
         mag_north_lock_time_sec_ = NAN;
         mag_init_eligible_t0_ = NAN;
@@ -757,11 +758,13 @@ private:
                 mag_proxy_yaw_offset_rad_ = ::seastate::common::wrapPi(-gauge);
             }
         }
-        maybeRefineMagReference_(mag_body);
         maybeApplyContinuousHardIron_();
         if (mag_reference_learned_ && stage_ == StartupStage::Live) {
             mekf_.measurement_update_mag_only(mag_body - mag_hard_iron_body_uT_);
         }
+        // Classify this packet against the existing reference before a
+        // reference refinement can assign its absolute magnetic heading.
+        maybeRefineMagReference_(mag_body);
     }
 
     void learnMagReferenceWindowed_(const Vector3f& mag_body) {
@@ -813,12 +816,20 @@ private:
         if (!mag_reference_learned_ || stage_ != StartupStage::Live) return;
         if (elapsed_sec_ < cfg_.mag_refine_start_sec || !have_last_imu_) return;
 
-        if (!mag_refine_started_) {
+        using Health = decltype(mekf_.magneticHealth().health);
+        const bool packet_healthy = mekf_.lastMagDiag().accepted &&
+            mekf_.magneticHealth().health == Health::HEALTHY;
+        // Discard a disturbed partial window at healthy recovery, including
+        // its norm mean, so it cannot reject the returning clean field.
+        if (!mag_refine_started_ || (!mag_refine_window_healthy_ && packet_healthy)) {
             ::seastate::common::beginMagRefinement(
                 mag_auto_tuner_, cfg_.mag_refine_window_sec, cfg_.mag_min_samples);
             mag_refine_started_ = true;
+            mag_refine_window_healthy_ = true;
             last_mag_sample_t_ = NAN;
         }
+
+        mag_refine_window_healthy_ = mag_refine_window_healthy_ && packet_healthy;
 
         const float dt_mag = ::seastate::common::advanceSampleClock(
             last_mag_sample_t_, elapsed_sec_, cfg_.mag_sample_dt_sec);
@@ -837,6 +848,16 @@ private:
         const float gauge = cfg_.mag_estimate_hard_iron
             ? mag_auto_tuner_.getYawGaugeCorrectionRad() : sample_gauge;
         if (!std::isfinite(gauge)) return;
+        // As in the shared OU/CARMA acquisition, rejected fields cannot
+        // replace a reference that has supported actual magnetic service.
+        // Independent strength/dip repair remains available if a provisional
+        // reference has never supported an accepted update; then collect a
+        // new healthy window before any absolute heading assignment.
+        if (!mag_refine_window_healthy_) {
+            if (mekf_.magneticHealth().accepted_count == 0) setMagWorldRef_(ref);
+            mag_refine_started_ = false;
+            return;
+        }
         setMagWorldRef_(ref);
         // Use the current magnetic heading, retaining the core's wave-aware
         // tilt. A window-mean proxy gauge would lag by gyro_bias * window/2.
@@ -1112,6 +1133,7 @@ private:
     float mag_north_lock_time_sec_ = NAN;
     bool mag_refine_started_ = false;
     bool mag_refine_done_ = false;
+    bool mag_refine_window_healthy_ = true;
     float mag_refine_time_sec_ = NAN;
 
     Vector3f mag_hard_iron_body_uT_{Vector3f::Zero()};

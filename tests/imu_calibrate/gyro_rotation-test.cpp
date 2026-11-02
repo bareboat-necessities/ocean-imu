@@ -20,12 +20,17 @@ static void data(Fit& fit,bool degenerate=false,bool corrupt=false,bool noisy=fa
     V observed=g0+(noisy?.002:0)*V(normal(rng),normal(rng),normal(rng));
     if(accelerometer)observed=accelerometer->S.cast<double>().inverse()*observed+
       accelerometer->biasT.bias(25).cast<double>();
-    fit.beginSegment(us,observed.cast<float>(),25,i%4==3);
-    V end=g0;
+    fit.beginSegment(us,observed.cast<float>(),25,i%4==3,Eigen::Vector3f(.006f,-.009f,.004f));
+    V end=g0;double previous_fraction=0;
     for(int k=0;k<=200;++k) {
-      const V measured=raw+(noisy?.002:0)*V(normal(rng),normal(rng),normal(rng));
+      // A stationary start followed by a finite, linear spin-up. Include the
+      // first timestamp interval in the independent physical endpoint truth.
+      const double fraction=std::min(1.,double(k+1)/(10+i%4));
+      const V measured=V(.006,-.009,.004)+fraction*(raw-V(.006,-.009,.004))+
+        (noisy?.002:0)*V(normal(rng),normal(rng),normal(rng));
       us+=5000;fit.add(us,measured.cast<float>(),25);
-      if(k)end=Eigen::AngleAxisd(-omega.norm()*.005,axis)*end;
+      end=Eigen::AngleAxisd(-omega.norm()*.005*.5*(previous_fraction+fraction),axis)*end;
+      previous_fraction=fraction;
     }
     if(corrupt && i%4==3)end=Eigen::AngleAxisd(.15,V::UnitZ())*end;
     end+=(noisy?.002:0)*V(normal(rng),normal(rng),normal(rng));
@@ -74,9 +79,14 @@ int main() {
   data(fit,false,true);check(!fit.fit(acc,gyro) && !gyro.matrix_ok &&
     fit.reason==imu_cal::GyroRotationFail::VALIDATION,"unseen bad rotations reject");
   data(fit,true);check(!fit.fit(acc,gyro),"single-axis rotations cannot identify 9 parameters");
-  fit.clear();fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false);
+  fit.clear();fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f::Zero());
   check(!fit.add(90000,Eigen::Vector3f::Zero(),25) && fit.samples()==0,"gap invalidates entire segment");
-  fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false);
+  fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f::Zero());
   check(!fit.add(6000,Eigen::Vector3f(NAN,0,0),25),"NaN rejected");
+  check(!fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f(NAN,0,0)),
+    "nonfinite stationary start rate rejected");
+  fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f::Zero());
+  check(fit.add(6000,Eigen::Vector3f::Zero(),25) && fit.samples()==1,
+    "first timestamp interval is retained");
   return failures?1:0;
 }
