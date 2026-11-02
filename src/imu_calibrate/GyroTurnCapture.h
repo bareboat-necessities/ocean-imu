@@ -3,6 +3,7 @@
 // Sensor-clock controller. Display/input work must run outside this controller.
 #include "imu_calibrate/GyroCalCapture.h"
 #include "imu_calibrate/GyroCalFit.h"
+#include "imu_calibrate/GyroCalibrationPlan.h"
 
 namespace imu_cal {
 enum class GyroTurnPhase : uint8_t { REST, TWIST, TURN, HOLD, DONE, FAILED };
@@ -31,7 +32,7 @@ public:
     const bool fresh=a && w;
     if(fresh && armed_) {
       // A slow/broken attempt cannot consume storage needed by later turns.
-      if(fit_.samples()-first_sample_>=SAMPLES/20)return fail_("Turn took too long");
+      if(fit_.samples()-first_sample_>=SAMPLES/GyroCalibrationPlan::MAXIMUM)return fail_("Turn took too long");
       const V rate=*w-bias_.biasT.bias(temp);
       if(!fit_.add(us,*w,temp)) {
         if(!moved_ && motion_.vec().norm()<.005f && last_rate_.norm()<.02f && rate.norm()<.02f &&
@@ -134,7 +135,7 @@ private:
   bool anchor_(uint32_t us) {
     fit_.cancelSegment();last_us_=us;last_rate_=w0_-bias_.biasT.bias(t0_);
     motion_=Eigen::Quaternionf::Identity();
-    return fit_.beginSegment(us,a0_,t0_,segment_%4==3,w0_);
+    return fit_.beginSegment(us,a0_,t0_,GyroCalibrationPlan::validation(segment_),w0_);
   }
   GyroTurnPhase fail_(const char* why) {
     reason_=why;fit_.cancelSegment();phase_=GyroTurnPhase::FAILED;return phase_;

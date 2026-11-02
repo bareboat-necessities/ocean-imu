@@ -1,4 +1,5 @@
 #pragma once
+#include "imu_calibrate/GyroCalibrationPlan.h"
 
 /*
   Copyright 2026, Mikhail Grushinskiy
@@ -193,7 +194,7 @@ struct Alignment {
 // Least squares on d_i . (Exp(delta) R m_i) = sin(dip), linearised and iterated.
 static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal) {
   Alignment out;
-  if (!p || n < 12) return out;
+  if (!p || n < imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN) return out;
   auto dipSd = [&](const M3& R, float& mean) {
     double s = 0, ss = 0; int k = 0;
     for (int i = 0; i < n; ++i) {
@@ -224,7 +225,7 @@ static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal
       g += j * double(d.dot(u));
       ++used;
     }
-    if (used < 12) return out;
+    if (used < imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN) return out;
     // Test the UNDAMPED information. A ridge cannot qualify a missing axis.
     Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> es(H);
     if(es.info()!=Eigen::Success || es.eigenvalues()[0]<1e-5*used)return out;

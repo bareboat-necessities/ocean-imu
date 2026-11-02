@@ -77,7 +77,7 @@ mag_diagnostics-test: mag_diagnostics-test.o
 
 # The library headers under test (header-only), so edits there rebuild the tests.
 SRC_DIR = ../../src
-CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/MagCalFit.h \
+CAL_HEADERS = $(SRC_DIR)/imu_calibrate/GyroCalibrationPlan.h $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/MagCalFit.h \
               $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(SRC_DIR)/imu_calibrate/MagCalSampling.h $(SRC_DIR)/imu_calibrate/GyroCalCapture.h $(SRC_DIR)/imu_calibrate/AccelCalFit.h \
               $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
               $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h $(SRC_DIR)/imu_calibrate/SensorNoise.h

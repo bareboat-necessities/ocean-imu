@@ -26,6 +26,7 @@ assert "ui_." not in worker and "Input::" not in worker
 cpp = r'''
 #define EIGEN_NON_ARDUINO
 #include "imu_calibrate/GyroTurnCapture.h"
+#include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include <iostream>
 #include <random>
 #include <cstdlib>
@@ -35,14 +36,17 @@ using Fit=imu_cal::GyroRotationFit<131072,24>;
 void require(bool b,const char* text){if(!b){std::cerr<<text<<'\n';std::exit(1);}}
 int main(){
   const V targets[4]={V(0,0,-1),V(-1,0,0),V(0,1,0),V(0,-1,0)};
-  for(int mode=0;mode<8;++mode) {
-    auto fit=std::make_unique<Fit>();
+  for(int mode=0;mode<18;++mode) {
+    auto fit=std::make_unique<Fit>();fit->cfg.min_train=imu_cal::GyroCalibrationPlan::MIN_TRAIN;
     imu_cal::GyroCalibrator<float,400,8> cal;cal.g=9.8025605f;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
     imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
     std::mt19937 rng(811+mode);std::normal_distribution<float> noise(0,1);
+    Eigen::Matrix3f truth=Eigen::Matrix3f::Identity();if(mode>=8)truth<<1.035f,.018f,-.012f,-.009f,.975f,.022f,.014f,-.017f,1.02f;
+    atoms3r_magdiag::Pose training[24],validation[8];int nt=1,nv=0;
+    training[0].a=V(0,0,-cal.g);training[0].m_raw=V(24,5,40);
     uint64_t clock=0xffff0000ULL;V base(0,0,-cal.g),field(24,5,40);
     bool gapped=false,saw_progress=false,saw_restart=false;int retries=0;
-    for(int segment=0;segment<20;++segment) {
+    for(int segment=0;segment<imu_cal::GyroCalibrationPlan::INITIAL;++segment) {
       bool accepted=false;
       while(!accepted) {
         // Button handling can change the device orientation before acquisition.
@@ -76,13 +80,13 @@ int main(){
           if(yaw!=previous_yaw)w+=base.normalized()*(segment%2?-speed:speed);
           const float eps=std::sin(float(clock%1000000)*.000071f);
           a.x()+=.001f*eps;w+=V(.0001f*eps,.00008f*eps,-.00006f*eps);
-          if(mode==1){a+=.01f*V(noise(rng),noise(rng),noise(rng));w+=.0023f*V(noise(rng),noise(rng),noise(rng));}
+          if(mode==1 || mode>=9){a+=.01f*V(noise(rng),noise(rng),noise(rng));w+=.0023f*V(noise(rng),noise(rng),noise(rng));}
           if(clock%100000<5000){
             const float me=turn && clock>turn?float((clock-turn)/100000)*.1f:0;
             const float mt=std::min(total,mode==2 && me>=.25f && me<6.5f?.15f:
               mode==2 && me>=6.5f?.15f+(me-6.5f)*speed:me*speed);
             m=Eigen::AngleAxisf(-mt,axis)*(Eigen::AngleAxisf(-yaw,base.normalized())*field);
-            if(mode==1)mag_noise=.3f*V(noise(rng),noise(rng),noise(rng));
+            if(mode==1 || mode>=9)mag_noise=.3f*V(noise(rng),noise(rng),noise(rng));
             m+=mag_noise+V(.02f*eps,0,0);
           }
           if(mode==4 && capture.phase()==Phase::HOLD && capture.progress()>.2f && !jolted) {
@@ -92,7 +96,9 @@ int main(){
             a=Eigen::AngleAxisf(.9f,a.normalized().unitOrthogonal())*a;jolted=true;
           }
           if(mode==7 && segment==1 && retries==0 && capture.phase()==Phase::HOLD && capture.progress()>.25f)wrong_pose=true;
-          if(wrong_pose) {a=-targets[capture.target()]*cal.g+V(.001f*eps,0,0);w=V(.0001f*eps,0,0);}
+          if(wrong_pose) {V bad=-targets[capture.target()]*cal.g+V(.001f*eps,0,0);m=Eigen::Quaternionf::FromTwoVectors(a,bad)*m;a=bad;w=V(.0001f*eps,0,0);}
+          w=truth.inverse()*w;
+          if(mode==17 && turn && imu_cal::GyroCalibrationPlan::validation(segment))w*=.75f;
           const auto phase=capture.update(uint32_t(clock/1000),uint32_t(clock),&a,&w,25,&m);
           if(!twist && capture.progress()>.01f)saw_progress=true;
           if((mode==4 || mode==6) && jolted && capture.resets() && capture.progress()<.1f){
@@ -106,24 +112,43 @@ int main(){
           if(phase==Phase::FAILED){
             require(retries==0 && ((mode==3 && fit->segments()==6 && std::string(capture.reason())=="Rotation sample gap") ||
               (mode==7 && fit->segments()==1 && std::string(capture.reason())=="Target pose changed")),"only the interrupted turn may be discarded");
-            ++retries;base=a;field=m;break;
+            ++retries;
+            // Rebase the physical world, not the delayed/noisy magnetometer
+            // register. Otherwise retries invent a different magnetic dip.
+            V pa=rotation*base,pm=rotation*(Eigen::AngleAxisf(-yaw,base.normalized())*field);
+            if(wrong_pose){V bad=-targets[capture.target()]*cal.g;pm=Eigen::Quaternionf::FromTwoVectors(pa,bad)*pm;pa=bad;}
+            base=pa;field=pm;break;
           }
-          if(phase==Phase::DONE){accepted=true;base=capture.accel();field=capture.mag();break;}
+          if(phase==Phase::DONE){
+            atoms3r_magdiag::Pose pose;pose.a=capture.accel();pose.m_raw=capture.mag();
+            if(imu_cal::GyroCalibrationPlan::validation(segment))validation[nv++]=pose;else training[nt++]=pose;
+            accepted=true;field=rotation*(Eigen::AngleAxisf(-yaw,base.normalized())*field);base=rotation*base;break;
+          }
         }
         require(accepted || ((mode==3 || mode==7) && retries==1),"guided turn did not complete");
       }
     }
-    require(fit->segments()==20 && fit->samples()<131072 && saw_progress,"twenty turns must retain their progress within storage");
+    require(fit->segments()==imu_cal::GyroCalibrationPlan::INITIAL && fit->samples()<131072 && saw_progress,"twelve turns must retain their progress within storage");
     if(mode==4)require(saw_restart,"endpoint movement must exercise an explained hold restart");
     imu_cal::AccelCalibration<float> acc;acc.ok=acc.biasT.ok=true;acc.g=cal.g;
     const bool ok=fit->fit(acc,bias);
     std::cerr<<"mode="<<mode<<" fit="<<ok<<" reason="<<imu_cal::gyroRotationReason(fit->reason)
-      <<" matrix_error="<<(bias.S-Eigen::Matrix3f::Identity()).norm()<<" samples="<<fit->samples()<<'\n';
-    require(ok && (bias.S-Eigen::Matrix3f::Identity()).norm()<.005f,
+      <<" matrix_error="<<(bias.S-truth).norm()<<" samples="<<fit->samples()<<'\n';
+    if(mode==17) {
+      require(!ok && !bias.matrix_ok && fit->reason==imu_cal::GyroRotationFail::VALIDATION,
+        "the shorter plan must reject corrupted independent validation rotations");continue;
+    }
+    require(bias.rotation_train_segments==8 && bias.rotation_validation_segments==4,
+      "twelve turns must keep four independent validations out of the eight training rotations");
+    atoms3r_magdiag::MagModel model;
+    const auto alignment=atoms3r_magdiag::solveAlignment(training,nt,model);float rms=0;
+    require(nt==9 && nv==4 && atoms3r_magdiag::validateAlignment(alignment,validation,nv,model,rms),
+      "the shorter wizard must also qualify magnetic registration using the actual held poses");
+    require(ok && (bias.S-truth).norm()<.005f,
       "guided faces must identify the gyro matrix and pass independent validation");
   }
   {
-    auto fit=std::make_unique<Fit>();imu_cal::GyroCalibrator<float,400,8> cal;
+    auto fit=std::make_unique<Fit>();fit->cfg.min_train=imu_cal::GyroCalibrationPlan::MIN_TRAIN;imu_cal::GyroCalibrator<float,400,8> cal;
     cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
     imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
     imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,0);capture.begin(0);

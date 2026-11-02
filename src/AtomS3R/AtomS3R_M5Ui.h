@@ -241,6 +241,14 @@ public:
     return taps < 3;
   }
 
+  enum class GyroFitAction : uint8_t { RETRY_FIT, NEW_TURNS, ABORT };
+  GyroFitAction gyroFitFailMenu(const char* why) {
+    title("GYRO FIT");line(why);line("Captures kept");line("");
+    line("Tap: retry fit");line("2 taps: new turns");line("3 taps: abort");
+    const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    return taps>=3?GyroFitAction::ABORT:taps==2?GyroFitAction::NEW_TURNS:GyroFitAction::RETRY_FIT;
+  }
+
   // Overwrites one text row (size-1 font) at the current rotation.
   void lineAt(int row_px, const char* s) {
     M5.Display.fillRect(0, row_px, M5.Display.width(), 8, TFT_BLACK);

@@ -29,14 +29,27 @@ Existing tests remain in place unless a schema assumption explicitly requires up
 ## Gyro matrix and independent validation
 
 The existing quiet-interval capture supplies bias and qualified endpoint means.
-Twenty subsequent turn-and-hold segments provide 15 training rotations and 5
-validation rotations (every fourth segment). Timestamp gaps over 20 ms,
+The initial set is twelve turn-and-hold segments: eight training rotations and
+four independent validation rotations. Validation segments 3, 6, 9 and 12
+are assigned before acquisition and never used to optimize the matrix.
+`GyroCalibrationPlan` shares this policy with acquisition, magnetic registration
+and record validation. The wizard selects an eight-training-segment profile;
+the standalone gyro fitter retains its default twelve-training-segment setting.
+Magnetic alignment uses the initial quiet pose plus eight training endpoints
+(nine training poses), and the same four held-out endpoints. Conditioning,
+coefficient plausibility, and train/validation residual limits are unchanged;
+there is less acquisition redundancy, so physical qualification remains open. Timestamp gaps over 20 ms,
 non-finite values, excessive rates, exhausted storage, and unqualified endpoints
 discard the active segment. A retry establishes a fresh quiet start.
 
+Before capture, three instruction cards wait indefinitely for a tap. They
+explain support, twisting and tipping before any acquisition timer starts.
+The per-turn start prompt is also untimed. Introductory cards are shown once,
+not repeated after a failed turn or when extra turns are appended.
+
 Each turn has four separate screens with one action at a time:
 
-1. **HOLD — Start n/20**: steady it against the table. Supporting it with a
+1. **HOLD — Start n/12**: steady it against the table. Supporting it with a
    hand is allowed; sensor motion, rather than hand contact, is measured.
 2. **TWIST**: lift it, keep the same side up, and twist about a quarter-turn in
    the displayed direction. Left/right instructions alternate across turns.
@@ -44,7 +57,7 @@ Each turn has four separate screens with one action at a time:
    DOWN, then set it down. These use the device frame measured during the
    accelerometer stage. USB-down would rest on the cable and screen-down
    would hide feedback, so neither is requested.
-4. **HOLD — Finish n/20**: keep the requested side steady against the table
+4. **HOLD — Finish n/12**: keep the requested side steady against the table
    until **Turn kept**. The target is written once, followed by the support cue.
 
 The short twist is necessary excitation: a replay of direct tips between
@@ -52,7 +65,7 @@ faces alone exposed a rank-deficient nine-parameter information matrix.
 The twist cue advances after about 60 degrees of integrated rotation about
 start gravity; it does not require a precise manually measured angle. A tip
 lands within a generous 35-degree cone about the named face. The fitter still
-uses measured endpoints and all original information/validation gates. An
+uses measured endpoints and the original information, physical and residual limits. An
 early tip before the twist is complete can establish a new quiet start for
 that same turn rather than trap the operator in the original orientation.
 
@@ -85,7 +98,13 @@ quiet progress, restart count, and the sensor-side failure reason.
 
 Retries discard only the active turn. Accepted turns, fitted bias, and completed
 accelerometer/magnetometer stages remain. The retry screen names the current
-turn and retained count. The 131072-sample PSRAM reservation (about 2.5 MiB)
+turn and retained count. After twelve turns, fitting either qualifies the set
+or offers four additional turns, keeping every prior capture. A further block
+of four can be added if necessary, up to twenty total. Extra held-out flags are
+also predetermined. A failed final fit never automatically erases the set:
+retrying the fit, requesting a new gyro set, or aborting is an explicit choice.
+The complete accelerometer and magnetometer stages are not rerun by this flow.
+Captures are retained in this wizard session, not checkpointed across power loss. The 131072-sample PSRAM reservation (about 2.5 MiB)
 includes ordinary pauses and slow motions across twenty turns and is checked
 before any poses. Each turn can consume at most one twentieth of this buffer
 (about 32 seconds of retained trajectory); a long failed attempt cannot use

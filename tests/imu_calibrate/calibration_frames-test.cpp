@@ -24,11 +24,11 @@ static ImuCalBlobV6 record() {
   imu_cal::GyroCalibration<float> g;g.ok=g.biasT.ok=g.matrix_ok=true;
   g.biasT.T_lo=g.biasT.T_hi=g.biasT.T0;
   g.S<<1.03f,.02f,0,0,.98f,.01f,-.01f,0,1.02f;
-  g.rotation_condition=3;g.rotation_train_segments=12;g.rotation_validation_segments=4;
+  g.rotation_condition=3;g.rotation_train_segments=8;g.rotation_validation_segments=4;
   g.biasT.b0<<.01f,-.02f,.005f;fillGyroFromFit(b,g);
   b.mag_ok=1;b.mag_A[0]=1.1f;b.mag_A[4]=.9f;b.mag_A[8]=1;b.mag_field_uT=45;b.mag_b[1]=2;
   b.mag_alignment_ok=b.housing_alignment_ok=b.vessel_alignment_ok=1;
-  b.alignment_condition=3;b.alignment_train_poses=12;b.alignment_validation_poses=4;
+  b.alignment_condition=3;b.alignment_train_poses=9;b.alignment_validation_poses=4;
   b.sensor_id_lo=12;b.sensor_id_hi=34;b.imu_type=5;
   return b;
 }
@@ -44,6 +44,12 @@ int main(){
   check(runtime.applyAccel(x,25).isApprox(rvh*rhi*runtime.acc.apply(x,25),1e-6f),"accel intrinsic then housing then vessel");
   check(runtime.applyGyro(x,25).isApprox(rvh*rhi*runtime.gyr.apply(x,25),1e-6f),"full gyro matrix applied once");
   check(runtime.applyMag(x).isApprox(rvh*rhi*rim*runtime.mag.apply(x),1e-6f),"mag alignment applied once in correct order");
+  b=rb;b.gyro_train_segments=7;b.gyro_coeff_crc=gyroCoeffCrc(b);
+  check(!validateBlob(Store::sealed_(b)),"too few short-plan training rotations rejected");
+  b=rb;b.alignment_train_poses=8;
+  check(!validateBlob(Store::sealed_(b)),"too few short-plan alignment poses rejected");
+  b=rb;b.gyro_validation_segments=3;b.gyro_coeff_crc=gyroCoeffCrc(b);
+  check(!validateBlob(Store::sealed_(b)),"short plan still requires four independent validation rotations");
   b=rb;b.version=5;b.crc=computeBlobCrc(b);
   check(!validateBlob(b) && !store.save(b),"unsupported header cannot be sealed as new");
   Store old;std::vector<uint8_t> v5(372,0);old.kv.putBytes("blob_m5v5",v5.data(),v5.size());
@@ -60,19 +66,19 @@ int main(){
   check(imu_cal::solveFrameAlignment(src,dst,3,solved) && solved.isApprox(rvh*rhi,1e-5f),"physical fixture alignment");
   src[1]=src[2]=src[0];check(!imu_cal::solveFrameAlignment(src,dst,3,solved),"gravity alone cannot determine mounting yaw");
   // Actual wizard pose count and train/validation split, not hundreds of poses.
-  atoms3r_magdiag::Pose train[16],validation[5];std::mt19937 rng(19);std::normal_distribution<float> n;
-  for(int i=0;i<21;++i) {
+  atoms3r_magdiag::Pose train[9],validation[4];std::mt19937 rng(19);std::normal_distribution<float> n;
+  for(int i=0;i<13;++i) {
     Eigen::Quaternionf q(n(rng),n(rng),n(rng),n(rng));q.normalize();
     atoms3r_magdiag::Pose pose;pose.a=q.conjugate()*Vector3f(0,0,-9.80256f);
     pose.m_raw=rim.transpose()*(q.conjugate()*Vector3f(20,0,43));
-    if(i<16)train[i]=pose;else validation[i-16]=pose;
+    if(i<9)train[i]=pose;else validation[i-9]=pose;
   }
   atoms3r_magdiag::MagModel model;
-  const auto alignment=atoms3r_magdiag::solveAlignment(train,16,model);float rms=NAN;
+  const auto alignment=atoms3r_magdiag::solveAlignment(train,9,model);float rms=NAN;
   check(alignment.ok && alignment.R.isApprox(rim,1e-4f) &&
-    atoms3r_magdiag::validateAlignment(alignment,validation,5,model,rms),"wizard-sized independent magnetic alignment");
+    atoms3r_magdiag::validateAlignment(alignment,validation,4,model,rms),"wizard-sized independent magnetic alignment");
   for(auto& p:train)p=train[0];
-  check(!atoms3r_magdiag::solveAlignment(train,16,model).ok,"ridge cannot qualify degenerate alignment");
+  check(!atoms3r_magdiag::solveAlignment(train,9,model).ok,"ridge cannot qualify degenerate alignment");
   std::printf("calibration frames: blob_bytes=%zu independent_alignment_rms=%.8g\n",sizeof(rb),double(rms));
   return errors?1:0;
 }

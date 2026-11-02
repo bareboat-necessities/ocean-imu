@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "imu_calibrate/AccelCalFit.h"
+#include "imu_calibrate/GyroCalibrationPlan.h"
 #include "imu_calibrate/SensorNoise.h"
 #include "AtomS3R/AtomS3R_ImuUnits.h"
 
@@ -258,7 +259,7 @@ static inline bool gyroSetValid(const ImuCalBlobV6& b) {
       !isfinite(b.gyro_validation_rms) || b.gyro_validation_rms<0 || b.gyro_validation_rms>.025f ||
       !isfinite(b.gyro_validation_max) || b.gyro_validation_max<0 || b.gyro_validation_max>.06f ||
       !isfinite(b.gyro_condition) || b.gyro_condition<1 || b.gyro_condition>1e5f ||
-      b.gyro_train_segments<12 || b.gyro_validation_segments<4))return false;
+      b.gyro_train_segments<imu_cal::GyroCalibrationPlan::MIN_TRAIN || b.gyro_validation_segments<4))return false;
   if (!allFinite_(b.gyro_b0, 3) || !allFinite_(b.gyro_k, 3) || !allFinite_(b.gyro_k_sigma, 3) ||
       !isfinite(b.gyro_T0) || !isfinite(b.gyro_T_lo) || !isfinite(b.gyro_T_hi) ||
       !isfinite(b.gyro_temp_lo) || !isfinite(b.gyro_temp_hi) ||
@@ -317,7 +318,7 @@ static inline bool framesValid(const ImuCalBlobV6& b) {
       b.alignment_train_sd>=0 && b.alignment_train_sd<1.5f &&
       isfinite(b.alignment_validation_sd) && b.alignment_validation_sd>=0 && b.alignment_validation_sd<1.5f &&
       isfinite(b.alignment_condition) && b.alignment_condition>=1 && b.alignment_condition<1e5f &&
-      b.alignment_train_poses>=12 && b.alignment_validation_poses>=4));
+      b.alignment_train_poses>=imu_cal::GyroCalibrationPlan::MIN_ALIGNMENT_TRAIN && b.alignment_validation_poses>=4));
 }
 
 static inline bool magSetValid(const ImuCalBlobV6& b) {

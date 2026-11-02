@@ -22,7 +22,7 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Eight noisy gyro seeds | Worst matrix error 0.0010231 versus 0.0613840 for bias-only identity, about 60-fold smaller |
 | Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps and NaNs fail |
 | Final accelerometer model at gyro endpoints | Recovers gyro matrix with distorted/bias-shifted raw accelerometer endpoints |
-| Magnetic alignment with wizard-sized pose sets | 16 fit/5 independent poses; independent dip RMS 1.02e-5 degrees in the exact fixture |
+| Magnetic alignment with wizard-sized pose sets | 9 fit/4 independent poses; the exact fixture passes independent dip validation |
 | Frame/schema tests | Noncommuting composition, gravity-only yaw ambiguity, reflected rotations, old keys/versions, truncation and CRC corruption |
 | Forty-minute white-noise trace | 480001 samples, 2400000 ms; accel N=0.00200198 versus 0.002, gyro N=0.000199806 versus 0.0002 |
 | Long-term identifiability | White-only trace reports no bias-instability or walk terms; short traces cannot report a model |
@@ -36,10 +36,12 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Turn guide | Start/finish holds are distinct; TWIST and TIP show short actions; hand support is allowed and each target is written once |
 | Sensor/UI scheduling | Production worker and UI execute on separate host threads; injected 80 ms LCD stalls preserve 200 Hz capture, the accepted turn, and the 20 ms gap gate |
 | Screen layout | Real renderer text fits 128 pixels; USB-up and both edge-down rotations match the accelerometer guide; the real UI header preserves pose orientation through next/retry/confirmation menus |
-| Guided geometry | Direct face tips expose an information deficiency; alternating twists followed by the named tips recover the full matrix with independent validation, without weakening the fitter |
-| Short gyro holds | A 3.5-second target uses 2 seconds of useful samples and two 1.5-second magnetic windows; eight guided campaigns retain matrix error below 0.005 and independent validation |
-| Controller replay | Eight twenty-turn campaigns cover waits, noise, pauses, sample gaps, hold disturbances, slow motion, late pose jitter and rejected endpoints; matrix Frobenius error is below 0.005 |
+| Guided geometry | Direct face tips expose an information deficiency; alternating twists followed by the named tips recover the full matrix with independent validation, with unchanged conditioning, physical and residual limits |
+| Short gyro holds | A 3.5-second target uses 2 seconds of useful samples and two 1.5-second magnetic windows; seventeen guided campaigns retain matrix error below 0.005 and independent validation |
+| Controller replay | Seventeen twelve-turn campaigns cover waits, noise, pauses, gaps, hold disturbances, slow motion, late pose jitter, retries, nonidentity scale/cross-axis matrices and eight noisy nonidentity seeds; matrix Frobenius error is below 0.005 |
 | USB-up regressions | A late single-reading pose excursion reproduces the old reversion and now retains the finish screen; a rejected mean in turn 2 opens retry while retaining turn 1; a live tap-to-retry also preserves accepted data |
+| Reading and final-fit recovery | Instruction cards wait five simulated minutes for input; a failed twelve-turn fit appends four turns without refitting bias or repeating cards; explicit abort after twenty failed turns preserves the captured set until exit |
+| Reduced-plan integrity | Eight training rotations and four untouched validation rotations; magnetic registration from actual held endpoints; corrupted validation rotations and undersized sealed records are rejected |
 | Turn retries | The actual wrapper retries a timeout at turn 7 while retaining six accepted turns and fitting bias only once; worker allocation failure also preserves accepted data |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
@@ -67,8 +69,8 @@ It reads calibrated six-axis NOISERAW records with wrapping uint32
 microsecond timestamps. Firmware also checks independent magnetic stillness;
 that check is not reconstructed by this six-axis replay.
 
-The final `timeout 90 make all` rerun reached the unchanged CARMA build and
-returned exit 124 while compiling `carma_lever_arm-test.o` (recipe reported
+The final `timeout 180 make all` rerun reached the unchanged CARMA build and
+returned exit 124 while compiling `accel_cal-test.o` (recipe reported
 `Terminated`). The complete calibration runner and qMEKF crossbuild pass;
 this does not establish a repository-wide pass.
 
@@ -101,7 +103,7 @@ neither is nested beneath the application's setup/loop stack. ESP-IDF stack size
 marks are interpreted as bytes.
 
 The local ESP32 toolchain was removed by workspace maintenance before the
-pose-orientation and finish-hold correction. Those changes are verified by
+pose-orientation, finish-hold and twelve-turn corrections. Those changes are verified by
 host controller/worker tests and by compiling the full UI header against LCD
 and clock stubs; a new device crossbuild is not claimed here. The table below
 records the last crossbuild before that correction, using the documented

@@ -188,7 +188,7 @@ private:
 
       gyr_out_ = imu_cal::GyroCalibration<float>{};
       mag_out_ = imu_cal::MagCalibration<float>{};
-      mag_verified_ = false;
+      mag_verified_ = false;alignment_pose_count_=0;
       timing_fit_ = {}; timing_saved_ = false;
 
       // A valid CURRENT-schema record may supply a qualified thermal prior
@@ -265,11 +265,7 @@ private:
       // Later rechecks (thermal evidence + held-out verification), final fit.
       if (!accel_.runRecheckStage(io)) return accelFail_();
       if (!accel_.runFinalFit(io)) return accelFail_();
-      for(;;) {
-        if(!captureGyroRotations_())return false;
-        if(runFitTask_(FitKind::GYRO_MATRIX,"GYRO matrix",false))break;
-        if(!ui_.retryMenu("GYRO / ALIGN","More varied tilts","Repeat rotations"))return false;
-      }
+      if(!completeGyroCalibration_())return false;
       gyro_rotations_.reset();
       if(!captureMounting_())return false;
       // Optional magnetic timing record. It is stored for diagnostics only;
@@ -295,7 +291,8 @@ private:
       mat_to_rowmajor9_(mount_HI_,blob.R_HI);mat_to_rowmajor9_(mount_VH_,blob.R_VH);
       blob.housing_alignment_ok=blob.vessel_alignment_ok=1;
       blob.alignment_train_sd=alignment_.dip_sd_after;blob.alignment_validation_sd=alignment_validation_;
-      blob.alignment_condition=alignment_.condition;blob.alignment_train_poses=16;blob.alignment_validation_poses=5;
+      blob.alignment_condition=alignment_.condition;blob.alignment_train_poses=gyr_out_.rotation_train_segments+1;
+      blob.alignment_validation_poses=gyr_out_.rotation_validation_segments;
       fillAccelFromFit(blob, accel_.result(), fc, capture_s);
       blob.sensor_id_lo = sensor_id_lo_;
       blob.sensor_id_hi = sensor_id_hi_;
@@ -392,6 +389,8 @@ private:
     return true;
   }
 
+  int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
+  Vector3f gyro_bias_sum_=Vector3f::Zero();unsigned gyro_bias_poses_=0;
   static constexpr uint8_t turn_pose_ids_[4]={0,2,4,5};
   struct TurnCtx {
     ImuCalWizard* wiz=nullptr;
@@ -474,8 +473,8 @@ private:
     const uint8_t pose=turn_pose_ids_[target>=0 && target<4?target:0];
     if(new_screen) {
       ui_.title(phase==Phase::TWIST?"TWIST":phase==Phase::TURN?"TIP":"HOLD");
-      char count[24];snprintf(count,sizeof(count),"%s %d/20",
-        phase==Phase::REST?"Start":phase==Phase::HOLD?"Finish":"Turn",segment+1);ui_.line(count);
+      char count[24];snprintf(count,sizeof(count),"%s %d/%d",
+        phase==Phase::REST?"Start":phase==Phase::HOLD?"Finish":"Turn",segment+1,turn_total_);ui_.line(count);
       ui_.line("");
       if(phase==Phase::TWIST) {
         ui_.line("Keep this side up.");
@@ -498,7 +497,7 @@ private:
 
   bool runGyroTurn_(int segment,const char*& why) {
     using Phase=imu_cal::GyroTurnPhase;
-    char label[24];snprintf(label,sizeof(label),"Turn %d of 20",segment+1);
+    char label[24];snprintf(label,sizeof(label),"Turn %d of %d",segment+1,turn_total_);
     ui_.waitTapHere("GYRO TILT",label,nullptr);
     turn_.wiz=this;turn_.segment=segment;turn_.phase=Phase::REST;
     turn_.target=-1;turn_.progress=0;turn_.reason="none";turn_.resets=0;
@@ -531,31 +530,69 @@ private:
     return turn_.ok;
   }
 
-  bool captureGyroRotations_() {
+  bool completeGyroCalibration_() {
+    int requested=imu_cal::GyroCalibrationPlan::INITIAL;
+    for(;;) {
+      if(!captureGyroRotations_(requested))return false;
+      for(;;) {
+        if(runFitTask_(FitKind::GYRO_MATRIX,"GYRO matrix",false))break;
+        if(fit_.reason!=imu_cal::FitFail::BAD_ARG)break;
+        if(!ui_.retryMenuHere("Retry fit?","Captured turns kept"))return false;
+      }
+      if(fit_.ok)break;
+      const char* why=gyro_rotations_->reason==imu_cal::GyroRotationFail::OK?
+        "Mag alignment failed":imu_cal::gyroRotationReason(gyro_rotations_->reason);
+      if(requested>=imu_cal::GyroCalibrationPlan::MAXIMUM) {
+        const auto action=ui_.gyroFitFailMenu(why);
+        if(action==M5Ui::GyroFitAction::ABORT)return false;
+        if(action==M5Ui::GyroFitAction::NEW_TURNS) {
+          alignment_pose_count_=0;requested=imu_cal::GyroCalibrationPlan::INITIAL;
+        }
+        continue;
+      }
+      char kept[24];snprintf(kept,sizeof(kept),"%d turns kept",gyro_rotations_->segments());
+      if(!ui_.retryMenuHere("Add 4 turns?",why,kept))return false;
+      requested+=imu_cal::GyroCalibrationPlan::EXTRA;
+    }
+    return true;
+  }
+
+  bool captureGyroRotations_(int requested=imu_cal::GyroCalibrationPlan::INITIAL) {
     if(!prepareGyroRotationStorage_())return false;
-    gyro_rotations_->clear();
-    if(!captureGyro_() || !runFitTask_(FitKind::GYRO,"GYRO bias",true))return false;
-    alignment_pose_count_=0;
+    turn_total_=requested;
     auto retainPose=[&]() {
       if(alignment_pose_count_>=24 || !endpoint_m_.allFinite())return false;
       raw_alignment_[alignment_pose_count_].a=endpoint_a_;
       raw_alignment_[alignment_pose_count_].m_raw=endpoint_m_;
       alignment_temp_[alignment_pose_count_++]=endpoint_temp_;return true;
     };
-    if(!retainPose()){ui_.fail("ALIGN","No quiet mag data");return false;}
-    Vector3f bias_sum=gyr_out_.biasT.b0;unsigned bias_poses=1;
-    for(int segment=0;segment<20;++segment) {
+    if(alignment_pose_count_==0) {
+      // These instruction pages have no timeout and precede sensor capture.
+      ui_.waitTapHere("HOLD","Steady on table","Support is OK");
+      ui_.waitTapHere("TWIST","Keep same side up","Rotate 1/4 turn");
+      ui_.waitTapHere("TIP","Follow named side","Then hold ~3.5 sec");
+      gyro_rotations_->clear();
+      gyro_rotations_->cfg.min_train=imu_cal::GyroCalibrationPlan::MIN_TRAIN;
+      for(;;) {
+        if(!captureGyro_())return false; // explicit abort from its retry menu
+        if(runFitTask_(FitKind::GYRO,"GYRO bias",false))break;
+        if(!ui_.retryMenuHere("Retry gyro bias",imu_cal::fitFailStr(fit_.reason),"Earlier stages kept"))return false;
+      }
+      if(!retainPose()){ui_.fail("ALIGN","No quiet mag data");return false;}
+      gyro_bias_sum_=gyr_out_.biasT.b0;gyro_bias_poses_=1;
+    }
+    for(int segment=gyro_rotations_->segments();segment<requested;++segment) {
       for(;;) {
         const char* why=nullptr;
         if(runGyroTurn_(segment,why))break;
-        char retry[32],kept[32];snprintf(retry,sizeof(retry),"Retry turn %d / 20",segment+1);
+        char retry[32],kept[32];snprintf(retry,sizeof(retry),"Retry turn %d / %d",segment+1,turn_total_);
         snprintf(kept,sizeof(kept),"%d turns kept",gyro_rotations_->segments());
         if(!ui_.retryMenuHere(retry,why,kept))return false;
       }
       if(!retainPose())return false;
-      bias_sum+=endpoint_w_-gyr_out_.biasT.k*(endpoint_temp_-gyr_out_.biasT.T0);++bias_poses;
+      gyro_bias_sum_+=endpoint_w_-gyr_out_.biasT.k*(endpoint_temp_-gyr_out_.biasT.T0);++gyro_bias_poses_;
     }
-    gyr_out_.biasT.b0=bias_sum/float(bias_poses);return true;
+    gyr_out_.biasT.b0=gyro_bias_sum_/float(gyro_bias_poses_);return true;
   }
 
   static void fitTaskGyroMatrix_(void* p) {
@@ -569,7 +606,7 @@ private:
         auto pose=w.raw_alignment_[i];pose.a=acc.apply(pose.a,w.alignment_temp_[i]);
         const float norm=w.mag_out_.apply(pose.m_raw).norm();
         if(!std::isfinite(norm) || std::fabs(norm-w.mag_out_.field_uT)>3.f){ctx->ok=false;break;}
-        if(i && i%4==0)validation[nv++]=pose;else train[nt++]=pose;
+        if(i && imu_cal::GyroCalibrationPlan::validation(i-1))validation[nv++]=pose;else train[nt++]=pose;
       }
       atoms3r_magdiag::MagModel model;model.A=w.mag_out_.A;model.b=w.mag_out_.b;
       if(ctx->ok) {

@@ -32,6 +32,7 @@ cpp = r'''
 using V=Eigen::Vector3f;using Vector3f=V;
 using Phase=imu_cal::GyroTurnPhase;
 using TaskHandle_t=void*;constexpr int pdPASS=1;
+struct M5Ui{enum class GyroFitAction {RETRY_FIT,NEW_TURNS,ABORT};};
 struct M5UiCfg{static constexpr uint8_t ROT_READ=0;};
 struct ImuCalWizardCfg{static constexpr uint32_t FIT_STACK_BYTES=32768;};
 struct ImuSample {V a,w,m;float tempC=25;uint32_t sample_us=0;};
@@ -56,6 +57,7 @@ int xTaskCreatePinnedToCore(void(*fn)(void*),const char*,uint32_t stack,void* ct
 const V targets[4]={V(0,0,-1),V(-1,0,0),V(0,1,0),V(0,-1,0)};
 class ImuCalWizard {
 public:
+  int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
   static constexpr uint8_t turn_pose_ids_[4]={0,2,4,5};
 CONTEXT turn_;
   struct Accel {bool expectedUp(int pose,V& up){
@@ -67,7 +69,7 @@ CONTEXT turn_;
     void setRotation(uint8_t r){rot=r;}
     void waitTapHere(const char*,const char*,const char*){}
     void title(const char* s){finishing=false;require(std::strlen(s)<=10,"headline does not fit");if(std::string(s)=="TWIST")twist_requested=true;}
-    void line(const char* s){if(std::string(s).starts_with("Finish "))finishing=true;if(std::string(s)=="Finish 2/20")saw_finish2=true;require(std::strlen(s)<=21,"instruction does not fit 128px display");
+    void line(const char* s){if(std::string(s).starts_with("Finish "))finishing=true;if(std::string(s)=="Finish 2/12")saw_finish2=true;require(std::strlen(s)<=21,"instruction does not fit 128px display");
       const char* captions[]={"Screen facing up","USB end up","Left edge down","Right edge down"};
       require(std::string(s).find("hands off")==std::string::npos,"hand support must be permitted");
       for(int i=0;i<4;++i)if(std::string(s)==captions[i])requested=i;
@@ -115,15 +117,23 @@ RUN
 };
 class RetryWizard {
 public:
-  struct Fit {int n=0;void clear(){n=0;}int segments()const{return n;}};
+  struct Fit {imu_cal::GyroRotationFail reason=imu_cal::GyroRotationFail::GEOMETRY;imu_cal::GyroRotationCfg cfg;int n=0;void clear(){n=0;}int segments()const{return n;}};
   std::unique_ptr<Fit> gyro_rotations_{new Fit};
-  enum class FitKind {GYRO};
+  enum class FitKind {GYRO,GYRO_MATRIX};
+  struct {bool ok=false;imu_cal::FitFail reason=imu_cal::FitFail::OK;} fit_;
+  bool always_bad=false,initial_bias_fail=false;int matrix_fits=0,adds=0,intros=0;
   int captures=0,fits=0,calls=0,retries=0,alignment_pose_count_=0;
+  int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
+  V gyro_bias_sum_=V::Zero();unsigned gyro_bias_poses_=0;
   struct UI {
     RetryWizard* owner;
     void fail(const char*,const char*){}
-    bool retryMenuHere(const char* title,const char* why,const char* kept){
-      require(std::string(title)=="Retry turn 7 / 20" && std::string(why)=="gyro scatter" &&
+    void waitTapHere(const char*,const char*,const char*){++owner->intros;}
+    M5Ui::GyroFitAction gyroFitFailMenu(const char*){return M5Ui::GyroFitAction::ABORT;}
+    bool retryMenuHere(const char* title,const char* why,const char* kept=nullptr){
+      if(std::string(title)=="Retry gyro bias")return true;
+      if(std::string(title)=="Add 4 turns?"){++owner->adds;return true;}
+      require(std::string(title)=="Retry turn 7 / 12" && std::string(why)=="gyro scatter" &&
         std::string(kept)=="6 turns kept","timeout must explain the cause and retained progress");
       ++owner->retries;return true;
     }
@@ -134,18 +144,38 @@ public:
   struct Pose {V a,m_raw;} raw_alignment_[24];float alignment_temp_[24]{};
   bool prepareGyroRotationStorage_(){return true;}
   bool captureGyro_(){++captures;return true;}
-  bool runFitTask_(FitKind,const char*,bool){++fits;return true;}
+  bool runFitTask_(FitKind kind,const char*,bool){
+    if(kind==FitKind::GYRO){++fits;if(initial_bias_fail && fits==1){fit_.reason=imu_cal::FitFail::GYRO_NOT_STILL;return false;}return true;}
+    ++matrix_fits;fit_.reason=imu_cal::FitFail::DEGENERATE_COVERAGE;
+    fit_.ok=!always_bad && gyro_rotations_->segments()>=16;return fit_.ok;
+  }
   bool fakeTurn_(int segment,const char*& why){
     ++calls;if(segment==6 && retries==0){why="gyro scatter";return false;}
     ++gyro_rotations_->n;return true;
   }
+COMPLETE
 WRAPPER
 };
 int main(){
   RetryWizard retry;
   require(retry.captureGyroRotations_() && retry.captures==1 && retry.fits==1 &&
-    retry.calls==21 && retry.retries==1 && retry.gyro_rotations_->segments()==20 &&
-    retry.alignment_pose_count_==21,"retry wrapper repeated completed turns or fitted bias");
+    retry.calls==13 && retry.retries==1 && retry.gyro_rotations_->segments()==12 &&
+    retry.alignment_pose_count_==13,"retry wrapper repeated completed turns or fitted bias");
+  require(retry.captureGyroRotations_(16) && retry.captures==1 && retry.fits==1 &&
+    retry.calls==17 && retry.gyro_rotations_->segments()==16 && retry.alignment_pose_count_==17,
+    "extra turns must append without discarding captures, refitting bias or repeating instructions");
+  require(retry.intros==3,"introductory instructions must not repeat when turns are appended");
+  RetryWizard bias_retry;bias_retry.initial_bias_fail=true;
+  require(bias_retry.captureGyroRotations_() && bias_retry.captures==2 && bias_retry.intros==3 &&
+    bias_retry.gyro_rotations_->segments()==12,"bias-fit retry must preserve earlier stages and not repeat instructions");
+  RetryWizard complete;
+  require(complete.completeGyroCalibration_() && complete.captures==1 && complete.calls==17 &&
+    complete.adds==1 && complete.matrix_fits==2 && complete.alignment_pose_count_==17,
+    "failed final fit must add data to the existing set, not restart it");
+  RetryWizard rejected;rejected.always_bad=true;
+  require(!rejected.completeGyroCalibration_() && rejected.captures==1 && rejected.calls==21 &&
+    rejected.gyro_rotations_->segments()==20 && rejected.alignment_pose_count_==21,
+    "final rejection must keep all captures until explicit abort; no automatic reset");
   ImuCalWizard w;w.gyroCal_.g=9.8025605f;w.gyroCal_.max_gyro_norm=.12f;w.gyroCal_.max_accel_dev=.8f;
   w.gyr_out_.ok=w.gyr_out_.biasT.ok=true;const char* why=nullptr;
   require(w.runGyroTurn_(1,why),"slow display interrupted real turn capture");worker.join();
@@ -172,6 +202,7 @@ cpp = (cpp.replace("CONTEXT", block("struct TurnCtx"))
        .replace("HELPER", block("static const char* gyroRestHelp_("))
        .replace("RENDER", block("void drawGyroTurn_("))
        .replace("CALLBACK", block("static void gyroTurnTask_("))
+       .replace("COMPLETE", block("bool completeGyroCalibration_("))
        .replace("WRAPPER", block("bool captureGyroRotations_(").replace("runGyroTurn_(", "fakeTurn_("))
        .replace("RUN", block("bool runGyroTurn_(").replace("drawGyroTurn_(", "slowDraw_(")))
 eigen = root / "third_party/eigen"
@@ -206,7 +237,7 @@ struct DisplayMock {
   void drawRect(int,int,int,int,int){} void fillRect(int,int,int,int,int){}
   void wakeup(){} int width(){return 128;}int height(){return 128;}int getCursorY(){return y;}
 };
-struct ButtonMock {bool pressed=false;bool wasPressed(){bool p=pressed;pressed=false;return p;}};
+struct ButtonMock {bool pressed=false;uint32_t press_after=0;bool wasPressed(){bool p=pressed || (press_after && millis()>=press_after);if(p)press_after=0;pressed=false;return p;}};
 inline struct {DisplayMock Display;ButtonMock BtnA;void update(){}} M5;
 ''')
     menus = r'''
@@ -215,7 +246,9 @@ inline struct {DisplayMock Display;ButtonMock BtnA;void update(){}} M5;
 #include <iostream>
 int main(){
   atoms3r_ical::M5Ui ui;ui.begin();
-  ui.setRotation(2);M5.BtnA.pressed=true;ui.waitTapHere("GYRO","Turn 2/20");
+  ui.setRotation(2);const uint32_t read_start=millis();M5.BtnA.press_after=read_start+300000;
+  ui.waitTapHere("READ","Take your time");assert(millis()-read_start>=300000 && ui.rotation()==2);
+  M5.BtnA.pressed=true;ui.waitTapHere("GYRO","Turn 2/12");
   assert(M5.Display.rotation==2 && ui.rotation()==2);
   M5.BtnA.pressed=true;assert(ui.retryMenuHere("Retry turn 2","Pose changed","1 turn kept"));
   assert(M5.Display.rotation==2 && ui.rotation()==2);
