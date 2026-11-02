@@ -397,26 +397,44 @@ private:
     ImuCalWizard* wiz=nullptr;
     Vector3f targets[4];int segment=0;
     std::atomic<imu_cal::GyroTurnPhase> phase{imu_cal::GyroTurnPhase::REST};
-    std::atomic<int> target{-1},progress{0};
+    std::atomic<int> target{-1},progress{0},rotation{0};
     std::atomic<const char*> reason{"none"};
     std::atomic<uint32_t> resets{0};
-    std::atomic<bool> done{false};
+    std::atomic<bool> done{false},retry{false};
     bool ok=false;
   } turn_;
+
+  // Same pose rotations as AccelIo; use gravity in its measured device frame.
+  static int gyroReadRotation_(const Vector3f& a,const Vector3f (&targets)[4],int previous) {
+    if(!a.allFinite() || a.norm()<1)return previous;
+    const Vector3f up=a.normalized();
+    const float screen=up.dot(targets[0]),usb=up.dot(targets[1]),left=up.dot(targets[2]);
+    if(std::fabs(screen)>.8f)return 0;
+    if(std::fabs(usb)>.8f)return usb>0?2:0;
+    if(std::fabs(left)>.8f)return left>0?1:3;
+    return previous; // no redraw/flicker between edge orientations
+  }
 
   static void gyroTurnTask_(void* context) {
     auto& c=*static_cast<TurnCtx*>(context);auto& w=*c.wiz;
     imu_cal::GyroTurnCapture<> capture(*w.gyro_rotations_,w.gyroCal_,w.gyr_out_,c.targets,c.segment);
-    capture.begin(millis());uint32_t next=micros(),log=millis();
+    capture.begin(millis());uint32_t next=micros(),log=millis(),rotate_since=millis();
+    int candidate=c.rotation.load();
     for(;;) {
       // Only this worker accesses the IMU. LCD/BtnA work runs on the UI task;
       // a slow redraw must never create an unobserved integration interval.
-      if(int32_t(micros()-next)<0){vTaskDelay(1);continue;}
+      const bool retry=c.retry.load();
+      if(!retry && int32_t(micros()-next)<0){vTaskDelay(1);continue;}
       next=micros()+5000;
-      ImuSample sample;const bool fresh=w.readSample_(sample);
-      const auto phase=capture.update(millis(),fresh?sample.sample_us:0,
+      ImuSample sample;const bool fresh=!retry && w.readSample_(sample);
+      const auto phase=retry?capture.cancel():capture.update(millis(),fresh?sample.sample_us:0,
         fresh?&sample.a:nullptr,fresh?&sample.w:nullptr,
         fresh?sample.tempC:NAN,fresh?&sample.m:nullptr);
+      if(fresh) {
+        const int rotation=gyroReadRotation_(sample.a,c.targets,c.rotation.load());
+        if(rotation!=candidate){candidate=rotation;rotate_since=millis();}
+        if(uint32_t(millis()-rotate_since)>=100)c.rotation=candidate;
+      }
       c.target=capture.target();c.progress=int(capture.progress()*1000);
       c.reason=capture.reason();c.resets=capture.resets();c.phase=phase;
       if(phase==imu_cal::GyroTurnPhase::DONE || phase==imu_cal::GyroTurnPhase::FAILED) {
@@ -446,8 +464,8 @@ private:
        !std::strcmp(reason,"frozen IMU"))return "Sensor data paused";
     if(!std::strcmp(reason,"gyro scatter") || !std::strcmp(reason,"accel scatter") ||
        !std::strcmp(reason,"gyro mean changed") || !std::strcmp(reason,"accel mean changed") ||
-       !std::strcmp(reason,"invalid sample"))return "Moved: rest it again";
-    return "Keep hands off";
+       !std::strcmp(reason,"invalid sample"))return "Movement detected";
+    return "Keep steady";
   }
 
   void drawGyroTurn_(int segment,imu_cal::GyroTurnPhase phase,int target,
@@ -455,38 +473,36 @@ private:
     using Phase=imu_cal::GyroTurnPhase;
     const uint8_t pose=turn_pose_ids_[target>=0 && target<4?target:0];
     if(new_screen) {
-      ui_.title(phase==Phase::TWIST?"TWIST":phase==Phase::TURN?"TIP NOW":phase==Phase::HOLD?"LET GO":"REST");
-      char count[24];snprintf(count,sizeof(count),"Turn %d of 20",segment+1);ui_.line(count);
+      ui_.title(phase==Phase::TWIST?"TWIST":phase==Phase::TURN?"TIP":"HOLD");
+      char count[24];snprintf(count,sizeof(count),"%s %d/20",
+        phase==Phase::REST?"Start":phase==Phase::HOLD?"Finish":"Turn",segment+1);ui_.line(count);
       ui_.line("");
       if(phase==Phase::TWIST) {
-        ui_.line("Lift it off table.");ui_.line("Keep same side up.");
-        ui_.line(segment%2?"Twist to the RIGHT.":"Twist to the LEFT.");
-        ui_.line("About a quarter-turn.");ui_.line("Then wait for TIP.");
-      } else if(phase==Phase::TURN) {
-        ui_.line(imu_cal::kAccelPoses[pose].name);
-        ui_.line(imu_cal::kAccelPoses[pose].lines[0]);
-        ui_.line("One slow quarter-turn");ui_.line("Set down. Let go.");
-        ui_.line("Do not spin it flat.");
+        ui_.line("Keep this side up.");
+        ui_.line(segment%2?"Turn right 1/4 turn.":"Turn left 1/4 turn.");
+      } else if(phase==Phase::TURN || phase==Phase::HOLD) {
+        ui_.line(pose==0?"Screen facing up":pose==2?"USB end up":
+                 pose==4?"Left edge down":"Right edge down");
+        ui_.line(phase==Phase::HOLD?"Hand support is OK.":"Then steady on table.");
       } else {
-        ui_.line("Rest it on the table.");ui_.line("Take your hands off.");
-        ui_.line(phase==Phase::HOLD?"Keep the NEW side.":"Wait for TWIST.");
+        ui_.line("Steady on table.");ui_.line("Hand support is OK.");
       }
+      ui_.lineAt(100,"Tap: retry turn");
     }
     if(phase==Phase::REST || phase==Phase::HOLD) {
-      char timer[32];snprintf(timer,sizeof(timer),"Rest %.1f / ~4.5 sec",progress*.0045f);
-      ui_.lineAt(82,timer);ui_.lineAt(94,progress?"Keep hands off":gyroRestHelp_(reason));
+      char timer[32];snprintf(timer,sizeof(timer),"Steady %.1f / ~4.5s",progress*.0045f);
+      ui_.lineAt(76,timer);ui_.lineAt(88,progress?"Measuring...":gyroRestHelp_(reason));
       ui_.bar01(progress*.001f);
     }
-    // TURN has instructions only. It never shows a stillness bar resetting
-    // while the user is doing exactly what the screen requests.
   }
 
   bool runGyroTurn_(int segment,const char*& why) {
     using Phase=imu_cal::GyroTurnPhase;
     char label[24];snprintf(label,sizeof(label),"Turn %d of 20",segment+1);
-    ui_.waitTap("GYRO TILT",label,"Tap, then set down");
+    ui_.waitTapHere("GYRO TILT",label,nullptr);
     turn_.wiz=this;turn_.segment=segment;turn_.phase=Phase::REST;
     turn_.target=-1;turn_.progress=0;turn_.reason="none";turn_.resets=0;
+    turn_.rotation=(ui_.rotation()-M5UiCfg::ROT_READ)&3;turn_.retry=false;
     turn_.ok=false;turn_.done=false;
     for(int i=0;i<4;++i)if(!accel_.expectedUp(turn_pose_ids_[i],turn_.targets[i])) {
       why="Missing device frame";return false;
@@ -496,15 +512,17 @@ private:
         ImuCalWizardCfg::FIT_STACK_BYTES,&turn_,2,&task,0)!=pdPASS || !task) {
       why="Capture task failed";return false;
     }
-    auto shown=Phase::FAILED;int shown_target=-2;uint32_t draw=millis()-150;
+    auto shown=Phase::FAILED;int shown_target=-2,shown_rotation=-1;uint32_t draw=millis()-150;
     while(!turn_.done.load()) {
       Input::update();
-      const auto phase=turn_.phase.load();const int target=turn_.target.load();
+      if(Input::tapPressed())turn_.retry=true;
+      const auto phase=turn_.phase.load();const int target=turn_.target.load(),rotation=turn_.rotation.load();
       if(phase==Phase::DONE || phase==Phase::FAILED){delay(5);continue;}
-      if(phase!=shown || target!=shown_target || uint32_t(millis()-draw)>=150) {
+      if(phase!=shown || target!=shown_target || rotation!=shown_rotation || uint32_t(millis()-draw)>=150) {
+        if(rotation!=shown_rotation)ui_.setRotation(uint8_t((M5UiCfg::ROT_READ+rotation)&3));
         drawGyroTurn_(segment,phase,target,turn_.progress.load(),turn_.reason.load(),
-                      phase!=shown || target!=shown_target);
-        shown=phase;shown_target=target;draw=millis();
+                      phase!=shown || target!=shown_target || rotation!=shown_rotation);
+        shown=phase;shown_target=target;shown_rotation=rotation;draw=millis();
       }
       delay(20);
     }
@@ -532,7 +550,7 @@ private:
         if(runGyroTurn_(segment,why))break;
         char retry[32],kept[32];snprintf(retry,sizeof(retry),"Retry turn %d / 20",segment+1);
         snprintf(kept,sizeof(kept),"%d turns kept",gyro_rotations_->segments());
-        if(!ui_.retryMenu(retry,why,kept))return false;
+        if(!ui_.retryMenuHere(retry,why,kept))return false;
       }
       if(!retainPose())return false;
       bias_sum+=endpoint_w_-gyr_out_.biasT.k*(endpoint_temp_-gyr_out_.biasT.T0);++bias_poses;

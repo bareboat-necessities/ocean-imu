@@ -21,7 +21,7 @@ public:
   }
   void begin(uint32_t now) {
     fit_.cancelSegment();quiet_.begin(now);start_=now;first_sample_=fit_.samples();
-    phase_=GyroTurnPhase::REST;reason_="none";armed_=moved_=twisted_=false;target_=-1;
+    phase_=GyroTurnPhase::REST;reason_="none";armed_=moved_=twisted_=holding_=false;target_=-1;
     last_progress_=0;motion_=Eigen::Quaternionf::Identity();
   }
   GyroTurnPhase update(uint32_t now,uint32_t us,const V* a,const V* w,float temp,const V* mag) {
@@ -71,6 +71,9 @@ public:
       // A named, generously sized target makes the action concrete. This is
       // only an acquisition region; the final fit still uses measured endpoints.
       if(!twisted_ || !atTarget_(qa)) {
+        // Once the finish hold is shown, do not silently return to TIP after
+        // its timer fills. Report the rejected endpoint through the retry UI.
+        if(holding_)return fail_("Target pose changed");
         quiet_.begin(now);last_progress_=0;
         phase_=twisted_?GyroTurnPhase::TURN:GyroTurnPhase::TWIST;return phase_;
       }
@@ -86,14 +89,16 @@ public:
     }
     last_progress_=progress;
     if(armed_ && fresh) {
-      // No hold bar is displayed while a turn is requested. Only show LET GO
+      // No hold bar is displayed while a turn is requested. Only show the finish hold
       // once there is useful tilt toward the requested face. Movement then
       // restarts this hold, not the requested turn or any accepted turn.
-      phase_=!twisted_?GyroTurnPhase::TWIST:atTarget_(*a)?GyroTurnPhase::HOLD:GyroTurnPhase::TURN;
+      holding_=holding_ || (twisted_ && atTarget_(*a));
+      phase_=holding_?GyroTurnPhase::HOLD:!twisted_?GyroTurnPhase::TWIST:GyroTurnPhase::TURN;
     }
     return phase_;
   }
   GyroTurnPhase phase() const {return phase_;}
+  GyroTurnPhase cancel() {return fail_("Retry requested");}
   int target() const {return target_;}
   // Include magnetic settling so the visible bar starts at the first quiet
   // block. Completion still requires all capture gates, never this estimate.
@@ -139,7 +144,7 @@ private:
   V a1_=V::Zero(),w1_=V::Zero(),m1_=V::Zero();float t1_=25;
   V last_rate_=V::Zero();Eigen::Quaternionf motion_=Eigen::Quaternionf::Identity();
   int segment_,target_=-1,first_sample_=0;uint32_t start_=0,last_us_=0;
-  bool armed_=false,moved_=false,twisted_=false;float last_progress_=0;
+  bool armed_=false,moved_=false,twisted_=false,holding_=false;float last_progress_=0;
   GyroTurnPhase phase_=GyroTurnPhase::REST;const char* reason_="none";
 };
 } // namespace imu_cal

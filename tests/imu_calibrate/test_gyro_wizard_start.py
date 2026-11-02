@@ -35,7 +35,7 @@ using Fit=imu_cal::GyroRotationFit<131072,24>;
 void require(bool b,const char* text){if(!b){std::cerr<<text<<'\n';std::exit(1);}}
 int main(){
   const V targets[4]={V(0,0,-1),V(-1,0,0),V(0,1,0),V(0,-1,0)};
-  for(int mode=0;mode<6;++mode) {
+  for(int mode=0;mode<8;++mode) {
     auto fit=std::make_unique<Fit>();
     imu_cal::GyroCalibrator<float,400,8> cal;cal.g=9.8025605f;cal.max_gyro_norm=.12f;cal.max_accel_dev=.8f;
     imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
@@ -49,7 +49,7 @@ int main(){
         Eigen::AngleAxisf pickup(.3f,V(.2f,-.4f,1).normalized());base=pickup*base;field=pickup*field;
         imu_cal::GyroTurnCapture<> capture(*fit,cal,bias,targets,segment);capture.begin(uint32_t(clock/1000));
         uint64_t turn=0,twist=0;float total=0,theta=0,yaw=0;const float speed=mode==5?.15f:.6f;V axis=V::UnitX(),a=base,m=field;
-        V mag_noise=V::Zero();bool jolted=false;
+        V mag_noise=V::Zero();bool jolted=false,wrong_pose=false;
         for(int sample=0;sample<40000;++sample) {
           clock+=5000;
           if(capture.phase()==Phase::TWIST && !twist)twist=clock+(mode==0?60000000:1500000);
@@ -85,22 +85,29 @@ int main(){
           if(mode==4 && capture.phase()==Phase::HOLD && capture.progress()>.2f && !jolted) {
             a.x()+=1.5f;jolted=true;
           }
+          if(mode==6 && capture.phase()==Phase::HOLD && capture.progress()>.8f && !jolted) {
+            a=Eigen::AngleAxisf(.9f,a.normalized().unitOrthogonal())*a;jolted=true;
+          }
+          if(mode==7 && segment==1 && retries==0 && capture.phase()==Phase::HOLD && capture.progress()>.25f)wrong_pose=true;
+          if(wrong_pose) {a=-targets[capture.target()]*cal.g+V(.001f*eps,0,0);w=V(.0001f*eps,0,0);}
           const auto phase=capture.update(uint32_t(clock/1000),uint32_t(clock),&a,&w,25,&m);
           if(!twist && capture.progress()>.01f)saw_progress=true;
-          if(mode==4 && jolted && capture.resets() && capture.progress()<.1f){
+          if((mode==4 || mode==6) && jolted && capture.resets() && capture.progress()<.1f){
             require(phase==Phase::HOLD,"a movement restarts the hold, not the turn instruction");saw_restart=true;
           }
-          // Missing polls must not make LET GO flicker back to TURN NOW.
+          if(mode==6 && jolted)require(phase==Phase::HOLD || phase==Phase::DONE,
+              "late USB-up jitter must not silently revert the finish screen to TIP");
+          // Missing polls must not make the finish hold flicker back to TIP.
           if(phase==Phase::HOLD)require(capture.update(uint32_t(clock/1000),0,nullptr,nullptr,NAN,nullptr)==Phase::HOLD,
               "between sensor deliveries the hold instruction must remain stable");
           if(phase==Phase::FAILED){
-            require(mode==3 && retries==0 && fit->segments()==6 &&
-              std::string(capture.reason())=="Rotation sample gap","only the interrupted turn may be discarded");
+            require(retries==0 && ((mode==3 && fit->segments()==6 && std::string(capture.reason())=="Rotation sample gap") ||
+              (mode==7 && fit->segments()==1 && std::string(capture.reason())=="Target pose changed")),"only the interrupted turn may be discarded");
             ++retries;base=a;field=m;break;
           }
           if(phase==Phase::DONE){accepted=true;base=capture.accel();field=capture.mag();break;}
         }
-        require(accepted || (mode==3 && retries==1),"guided turn did not complete");
+        require(accepted || ((mode==3 || mode==7) && retries==1),"guided turn did not complete");
       }
     }
     require(fit->segments()==20 && fit->samples()<131072 && saw_progress,"twenty turns must retain their progress within storage");

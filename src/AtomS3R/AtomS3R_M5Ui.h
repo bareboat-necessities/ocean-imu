@@ -62,6 +62,7 @@ public:
   }
 
   void setReadRotation() { setRotation(M5UiCfg::ROT_READ); }
+  uint8_t rotation() const { return rot_; }
 
   void clear() {
     M5.Display.fillScreen(TFT_BLACK);
@@ -97,6 +98,11 @@ public:
 
   void waitTap(const char* t, const char* l1 = nullptr, const char* l2 = nullptr) {
     setReadRotation();
+    waitTapHere(t,l1,l2);
+  }
+
+  // Keep the capture pose's readable orientation for its next/retry screen.
+  void waitTapHere(const char* t, const char* l1 = nullptr, const char* l2 = nullptr) {
     title(t);
     if (l1) line(l1);
     if (l2) line(l2);
@@ -220,6 +226,10 @@ public:
   // Retry prompt for one hold; false = abort (previous calibration kept).
   bool retryMenu(const char* what, const char* why1, const char* why2 = nullptr) {
     setReadRotation();
+    return retryMenuHere(what,why1,why2);
+  }
+
+  bool retryMenuHere(const char* what, const char* why1, const char* why2 = nullptr) {
     title("RETRY?");
     if (what) line(what);
     if (why1) line(why1);

@@ -36,14 +36,16 @@ discard the active segment. A retry establishes a fresh quiet start.
 
 Each turn has four separate screens with one action at a time:
 
-1. **REST**: set the device on the table and take your hands off.
+1. **HOLD — Start n/20**: steady it against the table. Supporting it with a
+   hand is allowed; sensor motion, rather than hand contact, is measured.
 2. **TWIST**: lift it, keep the same side up, and twist about a quarter-turn in
    the displayed direction. Left/right instructions alternate across turns.
-3. **TIP NOW**: tip to the named face: SCREEN UP, USB UP, LEFT DOWN, or RIGHT
+3. **TIP**: tip to the named face: SCREEN UP, USB UP, LEFT DOWN, or RIGHT
    DOWN, then set it down. These use the device frame measured during the
    accelerometer stage. USB-down would rest on the cable and screen-down
    would hide feedback, so neither is requested.
-4. **LET GO**: keep that face resting on the table, hands off, until **Turn kept**.
+4. **HOLD — Finish n/20**: keep the requested side steady against the table
+   until **Turn kept**. The target is written once, followed by the support cue.
 
 The short twist is necessary excitation: a replay of direct tips between
 faces alone exposed a rank-deficient nine-parameter information matrix.
@@ -61,6 +63,16 @@ independent two-second magnetic means. Scatter, mean-change, freshness, and
 magnetic-change gates still apply. The visible bar includes settling and starts
 with the first qualified block. Motion screens have no stillness bar.
 Movement restarts only the current quiet hold, with a plain-language explanation.
+The finish screen stays latched after entering the target cone; a transient
+reading cannot silently send it back to TIP. A rejected final mean produces
+an explicit retry reason rather than returning to the movement instructions.
+Every capture screen offers **Tap: retry turn**; this stops only the active
+turn and opens its retry/abort menu, preserving accepted turns.
+
+The gyro LCD uses the same pose rotations as the accelerometer guide: USB up
+adds rotation 2, left edge down adds 1, right edge down adds 3, and screen up
+uses 0. A dominant gravity direction must persist for 100 ms before changing
+rotation. Confirmation, next-turn and retry menus retain this orientation.
 
 A separate, 32768-byte capture task on core 0 reads the IMU at a 200 Hz target
 cadence and owns the sensor-clock controller. The UI task reads atomic status

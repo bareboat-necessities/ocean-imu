@@ -33,11 +33,12 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
 | Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
 | Wizard task dispatch | Actual dispatcher runs off the caller stack, retains the caller's core, publishes save/cancel correctly, handles allocation failure, and services a registered caller watchdog |
-| Turn guide | REST / TWIST / TIP NOW / LET GO use separate screens; four named target faces keep the LCD readable and avoid the connected USB edge |
+| Turn guide | Start/finish holds are distinct; TWIST and TIP show short actions; hand support is allowed and each target is written once |
 | Sensor/UI scheduling | Production worker and UI execute on separate host threads; injected 80 ms LCD stalls preserve 200 Hz capture, the accepted turn, and the 20 ms gap gate |
-| Screen layout | The real renderer's headlines, instructions, and dynamic rows fit the 128-pixel display without wrapping or bar overlap |
+| Screen layout | Real renderer text fits 128 pixels; USB-up and both edge-down rotations match the accelerometer guide; the real UI header preserves pose orientation through next/retry/confirmation menus |
 | Guided geometry | Direct face tips expose an information deficiency; alternating twists followed by the named tips recover the full matrix with independent validation, without weakening the fitter |
-| Controller replay | Twenty turns each with long waits, sensor noise, pauses, an interrupted turn, a restarted hold, and slow 0.15 rad/s motions pass; matrix Frobenius error is below 0.005 |
+| Controller replay | Eight twenty-turn campaigns cover waits, noise, pauses, sample gaps, hold disturbances, slow motion, late pose jitter and rejected endpoints; matrix Frobenius error is below 0.005 |
+| USB-up regressions | A late single-reading pose excursion reproduces the old reversion and now retains the finish screen; a rejected mean in turn 2 opens retry while retaining turn 1; a live tap-to-retry also preserves accepted data |
 | Turn retries | The actual wrapper retries a timeout at turn 7 while retaining six accepted turns and fitting bias only once; worker allocation failure also preserves accepted data |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
@@ -66,7 +67,7 @@ microsecond timestamps. Firmware also checks independent magnetic stillness;
 that check is not reconstructed by this six-axis replay.
 
 The final `timeout 180 make all` rerun reached the unchanged CARMA build and
-returned exit 124 while compiling `carma3_filters_c5.o` (recipe reported
+returned exit 124 while compiling `carma3-sim.o` (recipe reported
 `Terminated`). The complete calibration runner and qMEKF crossbuild pass;
 this does not establish a repository-wide pass.
 
@@ -98,12 +99,17 @@ reports 64 bytes for the public dispatcher and 48 bytes for its runner. The
 neither is nested beneath the application's setup/loop stack. ESP-IDF stack sizes and high-water
 marks are interpreted as bytes.
 
-Crossbuilds use the documented board options and CI optimization flags:
+The local ESP32 toolchain was removed by workspace maintenance before the
+pose-orientation and finish-hold correction. Those changes are verified by
+host controller/worker tests and by compiling the full UI header against LCD
+and clock stubs; a new device crossbuild is not claimed here. The table below
+records the last crossbuild before that correction, using the documented
+board options and CI optimization flags:
 
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
 | OU-III INS | 1348359 | 31168 |
-| qMEKF compass (current guided workflow) | 1068699 | 28056 |
+| qMEKF compass (before pose UI correction) | 1068699 | 28056 |
 | Synthetic benchmark | 695083 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. The benchmark's
