@@ -17,10 +17,10 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | --- | --- |
 | Retained workflow and persistence fault tests | 676/676 and 8995/8995 checks |
 | Accelerometer campaign | 1627/1627 checks, 30 seeds; ten release-reference scenarios pass |
-| Analytic gyro SO(3) sensitivity | Matches independent central finite differences |
+| Analytic gyro SO(3) sensitivity | Matches independent finite differences |
 | Full gyro matrix, exact synthetic rotations | Frobenius matrix error 9.61e-8; independent endpoint RMS 4.09e-8 rad |
 | Eight noisy gyro seeds | Worst matrix error 0.0010231 versus 0.0613840 for bias-only identity, about 60-fold smaller |
-| Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps, NaNs, and invalid endpoints fail |
+| Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps and NaNs fail |
 | Final accelerometer model at gyro endpoints | Recovers gyro matrix with distorted/bias-shifted raw accelerometer endpoints |
 | Magnetic alignment with wizard-sized pose sets | 16 fit/5 independent poses; independent dip RMS 1.02e-5 degrees in the exact fixture |
 | Frame/schema tests | Noncommuting composition, gravity-only yaw ambiguity, reflected rotations, old keys/versions, truncation and CRC corruption |
@@ -31,6 +31,7 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Ninety-degree magnetic heading disturbance | All six Kalman implementations reject 100 disturbances with zero heading change in the fixture; clean recovery passes |
 | Covariance and injection | Rejected magnetic updates preserve covariance; accepted Joseph updates remain finite, symmetric and PSD |
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
+| Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
 
 The mixed-noise test uses independent stochastic sources: logarithmically
 spaced stationary OU components approximate a flicker plateau over a finite
@@ -64,7 +65,7 @@ Arduino Eigen 0.3.2. Enable OPI PSRAM and the default_8MB partition scheme:
 
 ```sh
 arduino-cli compile --library . --jobs 1 --warnings default \
-  --build-property compiler.cpp.extra_flags=-fstack-usage \
+  --build-property 'compiler.cpp.extra_flags=-funroll-loops -fno-finite-math-only -fstack-usage' \
   --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc,PSRAM=opi,PartitionScheme=default_8MB \
   sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 ```
@@ -100,11 +101,27 @@ archive from oceanography-waves-lib v1.2.3, SHA256
 `87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c`.
 The focused checks pass through both Make and CMake. The full native replay
 run is still in progress; its result will be recorded before the PR is ready.
+The independent proof check currently fails closed:
+
+```sh
+python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-stability-evidence.json
+```
+
+It exits 1 with `validation_pass=false`: three changed source bindings, an
+exact-certificate reproduction mismatch, and nine source-bound diagnostic
+failures. The changed magnetic operator requires new qualification; old
+fingerprints and finite diagnostic payloads have not been relabeled.
+See [the proof research state](ou3-proof-research-state.md) for the retained
+structures and the next qualification step. This remains a release blocker.
+
 Build serially on constrained hosts: parallel Eigen-heavy native and MCU
 compilers exhausted this environment's 8 GB memory limit. A serial build
 completed. The full OU-III image is 1346875 bytes before the final resource
 configuration, exceeding the default 1310720-byte application slot; use
-the documented 3342336-byte OTA slots on the board's 8 MB flash.
+the documented 3342336-byte OTA slots on the board's 8 MB flash. With CI's
+`-funroll-loops -fno-finite-math-only` flags plus stack-usage reporting, the
+OU-III image crosscompiles to 1347791 bytes, with 31168 bytes of global
+internal RAM (296512 bytes remaining before runtime allocations).
 
 Real calibration accuracy requires independently captured device rotations,
 fixture registration, and magnetic-environment checks. Real sensor noise

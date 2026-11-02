@@ -2,6 +2,33 @@
 
 ## Current hypothesis
 
+**Calibration extension qualification is OPEN.** The current calibration
+branch changes the magnetic measurement operator to shared vector NIS,
+correlated R, adaptive inflation and persistent disturbance/recovery state.
+The archived manifest counts below describe their bound source revision;
+they do not qualify this changed operator. Running
+`python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-stability-evidence.json`
+fails with `validation_pass=false`: three changed source bindings, one exact
+certificate reproduction mismatch and nine source-bound diagnostic failures.
+Classification **E** (stale provenance); this is not an instability result.
+The invalidated hypothesis is that the archived magnetic update and deployed
+configuration are unchanged. No fingerprint or old diagnostic payload is
+relabeled to pass.
+
+Shipping-faithfulness record: (1) preserved residual/Jacobian models, OU/S
+prediction, tuner chronology, Joseph covariance update and error injection;
+(2) no proof relaxation or surrogate introduced; (3) the reported proof
+failure is E, while the old test that expected a gross magnetic outlier to
+reach gyro-bias projection has been replaced by an accepted-innovation
+projection fixture plus rejection invariants; (4) no shipping instability
+counterexample found; (5) retained algebraic identities remain available
+under their stated premises, with no new stability claim; (6) next falsifiable
+qualification is an actual shipping-word audit carrying the gate's health,
+clean count and inflation state, effective correlated R and actually applied
+magnetic service through every prefix before regenerating dependent evidence.
+The controlling limiter is new-policy service/covariance qualification, not
+a reason to weaken provenance checks or promote finite replays.
+
 **GOVERNING STRATEGY:** symmetry/kernels → justified quotient/tube → exact
 linked information dissipation → actual forcing → only necessary activation
 bounds. [The persistent strategy and derivation](ou3-information-shear-strategy.md)

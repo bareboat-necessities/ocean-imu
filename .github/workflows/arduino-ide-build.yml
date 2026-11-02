@@ -31,13 +31,13 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32@3.3.11
           arduino-cli lib install M5Unified@0.2.23 M5GFX@0.2.32 Eigen@0.3.2
-      - name: Link every shipped sketch with Arduino IDE default flags
+      - name: Link every shipped sketch with default flags and calibration board options
         shell: bash
         run: |
           set -euo pipefail
           while IFS= read -r -d '' sketch; do
             echo "Compiling $sketch"
             arduino-cli compile --jobs 1 --warnings default \
-              --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc \
+              --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc,PSRAM=opi,PartitionScheme=default_8MB \
               --library "$GITHUB_WORKSPACE" "$(dirname "$sketch")"
           done < <(find sensors examples -name '*.ino' -print0 | sort -z)

@@ -134,9 +134,24 @@ void corrections() {
             const int offset=op==0?gyro_aw_offset:op==1?0:op==2?9:op==5?12:6;
             m.Pext.template block<3,3>(3,offset)=.9f*Eigen::Matrix3f::Identity();
             m.Pext.template block<3,3>(offset,3)=.9f*Eigen::Matrix3f::Identity();
+            if(op==1) {
+                // A gross field outlier is now rejected before correction.
+                // Exercise projection with a valid SPD covariance whose
+                // bias/attitude coupling gives a large gain, and a small
+                // norm-preserving field rotation that passes vector NIS.
+                m.xext.template segment<3>(3).setZero();
+                m.Pext.template block<3,3>(3,3)=100.f*Eigen::Matrix3f::Identity();
+                m.Pext.template block<3,3>(3,0)=9.f*Eigen::Matrix3f::Identity();
+                m.Pext.template block<3,3>(0,3)=9.f*Eigen::Matrix3f::Identity();
+            }
             switch(op) {
             case 0: m.measurement_update_acc_only(V(1000,500,-g_std)); break;
-            case 1: m.measurement_update_mag_only(V(1000,500,43)); break;
+            case 1: {
+                const V predicted=m.R_wb()*m.v2ref;
+                m.measurement_update_mag_only(Eigen::AngleAxisf(.09f,predicted.unitOrthogonal())*predicted);
+                check(m.lastMagDiag().accepted,"projection fixture must pass magnetic NIS");
+                break;
+            }
             case 2: m.measurement_update_position_pseudo(V(1000,500,200),V::Ones()); break;
             case 3: m.measurement_update_velocity_pseudo(V(1000,500,200),V::Ones()); break;
             case 4: m.measurement_update_vert_velocity_pseudo(1000,1); break;
@@ -147,6 +162,14 @@ void corrections() {
             check(bounded(m), "repeated coupled correction escaped radius");
             check(m.gyroscope_bias().norm()>.99f*radius, "adversarial correction did not engage projection");
             check(m.covariance_full().allFinite(), "correction covariance became nonfinite");
+            if(op==1) {
+                const auto mean=m.xext.eval();const auto covariance=m.covariance_full();
+                m.measurement_update_mag_only(V(1000,500,43));
+                check(!m.lastMagDiag().accepted,"gross magnetic outlier was applied");
+                check(same(mean,m.xext) && same(covariance,m.covariance_full()),
+                      "rejected magnetic outlier changed mean or covariance");
+                m.magnetic_gate_.reset(); // independent accepted-correction trials
+            }
         }
     }
 }
