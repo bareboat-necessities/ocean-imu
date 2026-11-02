@@ -151,7 +151,6 @@ public:
 // NVS store (Preferences)
 // Deliberately qualify the generic CRC/NVS load with physical sensor identity.
 // Keep the generic storage implementation reusable in host fault-injection tests.
-// cppcheck-suppress duplInheritedMember
 class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {
 public:
   bool load(ImuCalBlobV6& out) {

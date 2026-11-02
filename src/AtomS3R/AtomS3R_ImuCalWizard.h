@@ -208,6 +208,9 @@ private:
       }
       if(start==M5Ui::StartAction::NOISE)return captureNoise_(prev,out_saved);
       Serial.printf("[WIZ] mode=full have_prev=%d\n", (int)have_prev);
+      // Reserve the trajectory before asking for any poses. A wrong board
+      // memory setting must not discard a completed accel/mag acquisition.
+      if(!prepareGyroRotationStorage_())return false;
 
       const imu_cal::AccelThermalPrior prior =
           have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
@@ -351,14 +354,45 @@ private:
     void operator()(RotationFit* p) const {if(p){p->~RotationFit();heap_caps_free(p);}}
   };
 
-  bool captureGyroRotations_() {
-    // Large acquisition buffer lives in PSRAM only, never on a task stack.
-    gyro_rotations_.reset();
-    void* memory=heap_caps_malloc(sizeof(RotationFit),MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
-    if(!memory){ui_.fail("GYRO","Not enough PSRAM");return false;}
+  bool prepareGyroRotationStorage_() {
+    if(gyro_rotations_)return true;
+    constexpr unsigned caps=MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT;
+    const size_t total=heap_caps_get_total_size(caps);
+    const size_t available=heap_caps_get_free_size(caps);
+    const size_t largest=heap_caps_get_largest_free_block(caps);
+#if defined(CONFIG_SPIRAM_MODE_OCT) && CONFIG_SPIRAM_MODE_OCT
+    const char* mode="OPI";
+#elif defined(CONFIG_SPIRAM_MODE_QUAD) && CONFIG_SPIRAM_MODE_QUAD
+    const char* mode="QSPI";
+#else
+    const char* mode="unavailable";
+#endif
+    Serial.printf("[GYRROT] PSRAM found=%u mode=%s total=%u free=%u largest=%u need=%u\n",
+      unsigned(psramFound()),mode,unsigned(total),unsigned(available),unsigned(largest),unsigned(sizeof(RotationFit)));
+    // The registered byte-addressable external heap is authoritative, even
+    // if a custom SDK initialized it without Arduino's psramFound flag.
+    if(total==0) {
+      Serial.println("[GYRROT] Enable Tools > PSRAM > OPI PSRAM, then rebuild and upload");
+      ui_.failLines("GYRO memory","PSRAM unavailable","Enable OPI PSRAM","Rebuild & upload");
+      return false;
+    }
+    if(largest<sizeof(RotationFit)) {
+      ui_.failLines("GYRO memory",available>=sizeof(RotationFit)?"PSRAM fragmented":"PSRAM too small",
+        "Restart then retry");return false;
+    }
+    void* memory=heap_caps_malloc(sizeof(RotationFit),caps);
+    if(!memory) {
+      Serial.println("[GYRROT] PSRAM allocation failed after preflight");
+      ui_.failLines("GYRO memory","Allocation failed","Restart then retry");return false;
+    }
     gyro_rotations_.reset(new(memory) RotationFit{});
-    Serial.printf("[GYRROT] storage=%u PSRAM_free=%u\n",unsigned(sizeof(RotationFit)),
-      unsigned(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)));
+    return true;
+  }
+
+  bool captureGyroRotations_() {
+    // Reuse the reservation; never allocate this buffer on a task stack.
+    if(!prepareGyroRotationStorage_())return false;
+    gyro_rotations_->clear();
     if(!captureGyro_() || !runFitTask_(FitKind::GYRO,"GYRO bias",true))return false;
     alignment_pose_count_=0;
     auto retainPose=[&]() {

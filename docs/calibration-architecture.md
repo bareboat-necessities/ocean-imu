@@ -179,9 +179,18 @@ calls. The caller waits and services its watchdog when registered; only the
 wizard task accesses the UI during that wait. Serial logs report the task's
 stack budget and actual free-stack high-water mark.
 
-The rotation buffer is allocated explicitly in PSRAM and released after
-fitting; it never occupies the loop-task stack. AtomS3R builds require OPI
-PSRAM enabled. The UI and fitting tasks each have a 32 KiB stack, with up to
+The rotation buffer is reserved explicitly in PSRAM before the first full
+calibration capture and released after fitting; it never occupies the loop-task
+stack. AtomS3R builds require **Tools > PSRAM > OPI PSRAM**, followed by a
+rebuild/upload (`PSRAM=opi` in the FQBN). The Arduino AtomS3 board defaults to
+PSRAM disabled. The wizard reports the configured mode, detected/registered
+external heap, total/free bytes, largest block and required allocation. Missing
+PSRAM produces a setup instruction before any pose captures; low or fragmented
+memory produces a separate allocation error. The same reservation is reused
+through capture, rather than freed and allocated again. Separate noise capture
+does not reserve the gyro trajectory. M5Stack's [AtomS3R configuration](https://docs.m5stack.com/en/core/AtomS3R)
+uses `qio_opi` with `BOARD_HAS_PSRAM`.
+The UI and fitting tasks each have a 32 KiB stack, with up to
 64 KiB allocated simultaneously during a fit. Stack sizes and high-water marks use bytes, as
 required by ESP-IDF, rather than upstream FreeRTOS words. Logs report allocated
 bytes, free PSRAM, fit microseconds and stack headroom. These measurements

@@ -8,11 +8,10 @@
 # conditions after an early exit. Every arm tests a different member.
 identicalConditionAfterEarlyExit:src/util/W3dSimCommon.h
 
-# ImuCalBlobV2 is a fixed-layout binary record written to NVS and read back on
-# the next boot. Zeroing it with memset is intentional: the all-zero bit
-# pattern is the blob's documented "empty" state, and IEEE-754 reads those bits
-# as +0.0f on every target this library builds for.
-memsetClassFloat:src/AtomS3R/AtomS3R_ImuCalWizard.h
+# The device wrapper deliberately qualifies the reusable CRC/NVS loader with
+# physical sensor identity. Its same-name load method is intentional; generic
+# persistence stays hardware independent and retains host fault-injection tests.
+duplInheritedMember:src/AtomS3R/AtomS3R_ImuCal.h
 
 # Reported against a host-only test helper whose std::string defaults name the
 # output-file suffix. It is called once per simulation run, and the file is
