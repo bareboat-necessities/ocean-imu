@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the real PSRAM preflight before any full-calibration captures."""
+"""Exercise the real PSRAM preflight before optional gyro rotations."""
 import os
 from pathlib import Path
 import shlex
@@ -21,10 +21,9 @@ def block(marker):
 
 
 flow = block("bool runAndSave_(")
-assert "prepareGyroRotationStorage_()" in flow, "PSRAM must be reserved before full captures"
-assert (flow.index("StartAction::NOISE") < flow.index("prepareGyroRotationStorage_()")
-        < flow.index("accel_.runMainStage")), "noise must stay separate from full-capture PSRAM admission"
+assert "prepareGyroRotationStorage_()" not in flow, "basic/noise calibration must not require a trajectory allocation"
 capture = block("bool captureGyroRotations_(")
+assert capture.index("prepareGyroRotationStorage_()") < capture.index("runGyroTurn_("), "tilt must reserve storage before rotation capture"
 assert "gyro_rotations_.reset()" not in capture, "capture must retain the preflight reservation"
 
 cpp = r'''

@@ -2,6 +2,29 @@
 
 ## Current hypothesis
 
+**E — mandatory advanced fits prevented saving measured calibration.** The
+wizard and boot gate previously required a full gyro matrix and fine magnetic
+registration even when accel/gyro-bias/magnetic intrinsic fits were valid.
+A failed full gyro fit now automatically attempts a three-scale model on the
+same data with independent validation. If both fail, an explicit bias-only
+profile is available. Failed magnetic registration automatically selects
+nominal axes with integrity-protected quality flags. Failed
+matrices/rotation-fit qualification are discarded, while this session's strict
+stationary bias and measured intrinsic sets are retained. Missing gyro bias-only consent or measured coefficients still blocks
+admission. The old memory test required PSRAM before every calibration; its
+contract now requires reservation before optional gyro turns, retaining
+unavailable/fragmented/allocation-failure checks. The obsolete assertion
+`PSRAM must be reserved before full captures` was a test-contract failure
+(class E), not a numerical failure or reason to restore mandatory tilt. Estimator prediction,
+innovation/Joseph/injection equations and magnetic health policy are preserved;
+no proof relaxation or theorem promotion is introduced. Full-fit accuracy and
+physical residual-bias bounds do not follow for a skipped correction. The
+invalidated hypothesis was that every usable record must contain all advanced
+fits. The current limiter remains physical sensor/profile qualification and
+stale source-bound evidence. The next falsifiable experiment is a real operator
+skip/save/reboot trial and independent sensor-error comparison of each profile;
+no shipping instability counterexample is claimed.
+
 **E — calibration audit: standalone TFG omitted the shared strength guard.**
 With measurement covariance `10000 I`, fields at 1.6 and 0.6 times the trusted
 strength had small NIS and were both accepted: the caller supplied no field

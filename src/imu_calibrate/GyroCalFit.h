@@ -101,31 +101,61 @@ public:
   template<typename T>
   bool fit(const AccelCalibration<T>& acc,GyroCalibration<T>& gyro,
            void (*idle)(void*)=nullptr,void* context=nullptr) {
+    return fitModel_<9>(acc,gyro,idle,context);
+  }
+  // Same captured rotations, gravity endpoints, robust objective and frozen
+  // validation set. Only the three diagonal scale coefficients are free.
+  template<typename T>
+  bool fitScaleOnly(const AccelCalibration<T>& acc,GyroCalibration<T>& gyro,
+                    void (*idle)(void*)=nullptr,void* context=nullptr) {
+    return fitModel_<3>(acc,gyro,idle,context);
+  }
+private:
+  template<int Parameters,typename T>
+  bool fitModel_(const AccelCalibration<T>& acc,GyroCalibration<T>& gyro,
+           void (*idle)(void*)=nullptr,void* context=nullptr) {
     idle_=idle;idle_context_=context;
-    gyro.matrix_ok=false;reason=GyroRotationFail::OK;
+    gyro.matrix_ok=false;gyro.scale_only=false;reason=GyroRotationFail::OK;
     if(active_ || !acc.ok || !gyro.ok)return fail_(GyroRotationFail::BAD_SAMPLE);
     int nt=0,nv=0;for(int i=0;i<ns_;++i)seg_[i].validation?++nv:++nt;
     if(nt<cfg.min_train || nv<cfg.min_validation)return fail_(GyroRotationFail::TOO_FEW);
-    M S=M::Identity();H9 H;Eigen::Matrix<double,9,1> g;
+    using Information=Eigen::Matrix<double,Parameters,Parameters>;
+    using Gradient=Eigen::Matrix<double,Parameters,1>;
+    auto normal=[&](const M& matrix,Information& H,Gradient& g,double& cost) {
+      if constexpr(Parameters==9)return normal_(matrix,acc,gyro,H,g,cost);
+      else {
+        H9 full_H;Eigen::Matrix<double,9,1> full_g;
+        if(!normal_(matrix,acc,gyro,full_H,full_g,cost))return false;
+        for(int r=0;r<3;++r) {
+          g[r]=full_g[4*r];
+          for(int c=0;c<3;++c)H(r,c)=full_H(4*r,4*c);
+        }
+        return true;
+      }
+    };
+    M S=M::Identity();Information H;Gradient g;
     double cost=0;
-    if(!normal_(S,acc,gyro,H,g,cost))return false;
+    if(!normal(S,H,g,cost))return false;
     double lambda=1e-5;
     for(int it=0;it<cfg.max_iterations;++it) {
-      H9 damped=H;damped.diagonal().array()+=lambda;
+      Information damped=H;damped.diagonal().array()+=lambda;
       const auto ldlt=damped.ldlt();
       if(ldlt.info()!=Eigen::Success || !ldlt.isPositive())return fail_(GyroRotationFail::SOLVE);
-      const Eigen::Matrix<double,9,1> dx=ldlt.solve(-g);
+      const Gradient dx=ldlt.solve(-g);
       if(!dx.allFinite())return fail_(GyroRotationFail::SOLVE);
-      M candidate=S;for(int r=0;r<3;++r)for(int c=0;c<3;++c)candidate(r,c)+=dx[3*r+c];
-      H9 Hn;Eigen::Matrix<double,9,1> gn;double cn=0;
-      if(!normal_(candidate,acc,gyro,Hn,gn,cn))return false;
+      M candidate=S;
+      for(int k=0;k<Parameters;++k) {
+        const int index=Parameters==3?4*k:k;candidate(index/3,index%3)+=dx[k];
+      }
+      Information Hn;Gradient gn;double cn=0;
+      if(!normal(candidate,Hn,gn,cn))return false;
       if(cn<=cost) {S=candidate;H=Hn;g=gn;cost=cn;lambda=std::max(1e-10,lambda*.2);
         if(dx.norm()<1e-8)break;}
       else lambda*=10;
     }
-    Eigen::SelfAdjointEigenSolver<H9> es(H);
+    Eigen::SelfAdjointEigenSolver<Information> es(H);
     if(es.info()!=Eigen::Success || es.eigenvalues()[0]<cfg.min_information ||
-       es.eigenvalues()[8]/es.eigenvalues()[0]>cfg.max_condition)return fail_(GyroRotationFail::GEOMETRY);
+       es.eigenvalues()[Parameters-1]/es.eigenvalues()[0]>cfg.max_condition)return fail_(GyroRotationFail::GEOMETRY);
     Eigen::JacobiSVD<M> svd(S);
     if(!S.allFinite() || S.determinant()<=0 || svd.singularValues().minCoeff()<.8 ||
        svd.singularValues().maxCoeff()>1.25 || (S-M::Identity()).cwiseAbs().maxCoeff()>.20)
@@ -141,9 +171,9 @@ public:
     train=std::sqrt(train/nt);validation=std::sqrt(validation/nv);
     if(train>cfg.max_train_rms || validation>cfg.max_validation_rms || vmax>cfg.max_validation_error)
       return fail_(GyroRotationFail::VALIDATION);
-    gyro.S=stored.template cast<T>();gyro.matrix_ok=true;
+    gyro.S=stored.template cast<T>();gyro.matrix_ok=true;gyro.scale_only=Parameters==3;
     gyro.rotation_train_rms=T(train);gyro.rotation_validation_rms=T(validation);
-    gyro.rotation_validation_max=T(vmax);gyro.rotation_condition=T(es.eigenvalues()[8]/es.eigenvalues()[0]);
+    gyro.rotation_validation_max=T(vmax);gyro.rotation_condition=T(es.eigenvalues()[Parameters-1]/es.eigenvalues()[0]);
     gyro.rotation_train_segments=nt;gyro.rotation_validation_segments=nv;return true;
   }
 private:

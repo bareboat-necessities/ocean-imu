@@ -141,14 +141,14 @@ struct ImuCalBlobV6 {
   uint8_t gyro_thermal_reason = 0; // imu_cal::GyroThermalReason
   uint8_t gyro_thermal_bins = 0;
   uint8_t gyro_reserved = 0;
-  uint8_t gyro_matrix_ok = 0, gyro_matrix_pad[3]{};
+  uint8_t gyro_matrix_ok = 0, gyro_matrix_skipped = 0, gyro_scale_only = 0, gyro_matrix_pad[1]{};
   float gyro_S[9] = {1,0,0,0,1,0,0,0,1};
   float gyro_train_rms=0,gyro_validation_rms=0,gyro_validation_max=0,gyro_condition=0;
   uint16_t gyro_train_segments=0,gyro_validation_segments=0;
   uint32_t gyro_coeff_crc = 0;
 
   // Physical rotations: columns are source axes expressed in destination.
-  uint8_t mag_alignment_ok=0,housing_alignment_ok=0,vessel_alignment_ok=0,frame_reserved=0;
+  uint8_t mag_alignment_ok=0,housing_alignment_ok=0,vessel_alignment_ok=0,mag_alignment_skipped=0;
   float R_IM[9]={1,0,0,0,1,0,0,0,1};
   float R_HI[9]={1,0,0,0,1,0,0,0,1};
   float R_VH[9]={1,0,0,0,1,0,0,0,1};
@@ -249,8 +249,15 @@ static inline uint32_t gyroCoeffCrc(const ImuCalBlobV6& b) {
 static inline bool gyroSetValid(const ImuCalBlobV6& b) {
   using L = imu_cal::GyroThermalLimits;
   if (!b.gyro_ok || b.gyro_coeff_crc != gyroCoeffCrc(b)) return false;
-  if (!allFinite_(b.gyro_S,9) || b.gyro_matrix_ok>1) return false;
+  if (!allFinite_(b.gyro_S,9) || b.gyro_matrix_ok>1 || b.gyro_matrix_skipped>1 || b.gyro_scale_only>1) return false;
   const Matrix3f S=mat_from_rowmajor9_(b.gyro_S);
+  // Explicit basic mode keeps this session's measured bias. It must never
+  // apply a failed matrix or claim rotation-fit qualification.
+  if(b.gyro_matrix_skipped && (b.gyro_matrix_ok || S!=Matrix3f::Identity() ||
+      b.gyro_train_rms!=0 || b.gyro_validation_rms!=0 || b.gyro_validation_max!=0 ||
+      b.gyro_condition!=0 || b.gyro_train_segments!=0 || b.gyro_validation_segments!=0))return false;
+  if(b.gyro_scale_only && (!b.gyro_matrix_ok || b.gyro_matrix_skipped ||
+      S(0,1)!=0 || S(0,2)!=0 || S(1,0)!=0 || S(1,2)!=0 || S(2,0)!=0 || S(2,1)!=0))return false;
   Eigen::JacobiSVD<Matrix3f> svd(S);
   if(S.determinant()<=0 || svd.singularValues().minCoeff()<.8f ||
      svd.singularValues().maxCoeff()>1.25f ||
@@ -285,7 +292,8 @@ static inline bool gyroSetValid(const ImuCalBlobV6& b) {
   return true;
 }
 
-static inline void fillGyroFromFit(ImuCalBlobV6& b, const imu_cal::GyroCalibration<float>& g) {
+static inline void fillGyroFromFit(ImuCalBlobV6& b, const imu_cal::GyroCalibration<float>& g,
+                                  bool matrix_skipped=false) {
   b.gyro_ok = g.ok ? 1 : 0;
   b.gyro_T0 = g.biasT.T0;
   for (int j = 0; j < 3; ++j) {
@@ -299,6 +307,7 @@ static inline void fillGyroFromFit(ImuCalBlobV6& b, const imu_cal::GyroCalibrati
   b.gyro_thermal_bins = g.thermal_bins;
   b.gyro_reserved = 0;
   b.gyro_matrix_ok=g.matrix_ok;
+  b.gyro_matrix_skipped=matrix_skipped;b.gyro_scale_only=g.scale_only;
   mat_to_rowmajor9_(g.S,b.gyro_S);
   b.gyro_train_rms=g.rotation_train_rms;b.gyro_validation_rms=g.rotation_validation_rms;
   b.gyro_validation_max=g.rotation_validation_max;b.gyro_condition=g.rotation_condition;
@@ -313,6 +322,10 @@ static inline bool rotationValid(const float r[9]) {
 }
 static inline bool framesValid(const ImuCalBlobV6& b) {
   return b.mag_alignment_ok<=1 && b.housing_alignment_ok<=1 && b.vessel_alignment_ok<=1 &&
+    b.mag_alignment_skipped<=1 && (!b.mag_alignment_skipped ||
+      (!b.mag_alignment_ok && mat_from_rowmajor9_(b.R_IM)==Matrix3f::Identity() &&
+       b.alignment_train_sd==0 && b.alignment_validation_sd==0 && b.alignment_condition==0 &&
+       b.alignment_train_poses==0 && b.alignment_validation_poses==0)) &&
     rotationValid(b.R_IM) && rotationValid(b.R_HI) && rotationValid(b.R_VH) &&
     (!b.mag_alignment_ok || (b.mag_ok && isfinite(b.alignment_train_sd) &&
       b.alignment_train_sd>=0 && b.alignment_train_sd<1.5f &&
@@ -443,7 +456,7 @@ static inline ImuCalBlobV6 accelOnlyCandidate(const ImuCalBlobV6& prev, const im
   b.imu_type = imu_type;
   // A changed accelerometer model changes gravity endpoints and the noise
   // transformation. The old rotation/noise qualifications cannot be reused.
-  b.gyro_matrix_ok=0;b.mag_alignment_ok=0;b.noise={};
+  b.gyro_matrix_ok=0;b.gyro_scale_only=0;b.mag_alignment_ok=0;b.gyro_matrix_skipped=0;b.mag_alignment_skipped=0;b.noise={};
   b.gyro_coeff_crc=gyroCoeffCrc(b);
   b.mag_timing={};
   return b;
@@ -481,6 +494,7 @@ struct RuntimeCals {
   imu_cal::MagCalibration<float>   mag{};
   Matrix3f R_VI=Matrix3f::Identity(),R_IM=Matrix3f::Identity();
   bool frames_ok=false,mag_alignment_ok=false,record_valid=false;
+  bool gyro_matrix_skipped=false,mag_alignment_skipped=false;
   imu_cal::SensorNoiseModel noise{};
 
   Vector3f noiseAccelStd() const {return Vector3f(noise.sample_std[0],noise.sample_std[1],noise.sample_std[2]);}
@@ -505,6 +519,7 @@ struct RuntimeCals {
     if(!record_valid) {*this=RuntimeCals{};return;}
     frames_ok=b.housing_alignment_ok && b.vessel_alignment_ok;
     mag_alignment_ok=b.mag_alignment_ok;
+    gyro_matrix_skipped=b.gyro_matrix_skipped;mag_alignment_skipped=b.mag_alignment_skipped;
     R_VI=mat_from_rowmajor9_(b.R_VH)*mat_from_rowmajor9_(b.R_HI);
     R_IM=mat_from_rowmajor9_(b.R_IM);noise=b.noise;
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
@@ -522,7 +537,7 @@ struct RuntimeCals {
     gyr = imu_cal::GyroCalibration<float>{};
     gyr.ok = gyroSetValid(b);
     gyr.S  = mat_from_rowmajor9_(b.gyro_S);
-    gyr.matrix_ok=b.gyro_matrix_ok;
+    gyr.matrix_ok=b.gyro_matrix_ok;gyr.scale_only=b.gyro_scale_only;
     gyr.biasT.ok = gyr.ok;
     gyr.biasT.T0 = b.gyro_T0;
     gyr.biasT.b0 = Vector3f(b.gyro_b0[0], b.gyro_b0[1], b.gyro_b0[2]);
@@ -561,20 +576,19 @@ struct RuntimeCals {
   }
 };
 
-// Why the runtime cannot apply the saved calibration in full, or nullptr when
-// accelerometer, gyroscope and magnetometer sets are all applied. A sketch
-// that must not run an estimator on raw sensor values stops on a reason.
+// A basic record is usable only when the operator explicitly chose the
+// nominal axes/scale. Missing qualifications alone never enable basic mode.
 static inline const char* calibrationUnusableReason(bool have_blob, const RuntimeCals& rc) {
   if (!have_blob) return "no valid saved calibration";
   if (!rc.record_valid) return "invalid calibration; recalibrate";
   if (rc.accel_gravity_mismatch) return "accel fitted against another gravity";
   if (!rc.acc.ok) return "no accelerometer calibration";
   if (!rc.gyr.ok) return "no gyroscope calibration";
-  if (!rc.gyr.matrix_ok) return "gyro rotation calibration required";
+  if (!rc.gyr.matrix_ok && !rc.gyro_matrix_skipped) return "gyro rotation calibration required";
   if (!rc.frames_ok) return "housing/vessel alignment required";
   if (rc.mag_source_mismatch) return "mag fitted on another data source";
   if (!rc.mag.ok) return "no magnetometer calibration";
-  if (!rc.mag_alignment_ok) return "magnetometer alignment required";
+  if (!rc.mag_alignment_ok && !rc.mag_alignment_skipped) return "magnetometer alignment required";
   return nullptr;
 }
 

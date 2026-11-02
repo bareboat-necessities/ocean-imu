@@ -725,6 +725,7 @@ struct GyroCalibration {
   bool ok = false;
   Eigen::Matrix<T,3,3> S = Eigen::Matrix<T,3,3>::Identity(); // intrinsic gyro triad -> accelerometer intrinsic frame
   bool matrix_ok = false;
+  bool scale_only = false; // qualified diagonal S; cross-axis terms remain unmeasured
   T rotation_train_rms = T(0), rotation_validation_rms = T(0), rotation_validation_max = T(0);
   T rotation_condition = T(0);
   uint16_t rotation_train_segments = 0, rotation_validation_segments = 0;

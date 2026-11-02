@@ -20,12 +20,15 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Accelerometer campaign | 1650/1650 checks, 30 seeds; ten release-reference scenarios pass |
 | Analytic gyro SO(3) sensitivity | Matches independent finite differences |
 | Full gyro matrix, exact synthetic rotations | Frobenius matrix error 9.95e-8; independent endpoint RMS 5.81e-8 rad |
+| Scale-only fallback | Repeated cardinal tips fail nine-parameter observability but the same captures qualify three scales. Eight noisy seeds give worst scale-matrix error 0.000144906 versus 0.0512348 for identity; corrupted held-out rotations, unobserved axes, significant cross-axis error and implausible scales are rejected |
 | Eight noisy gyro seeds | Worst matrix error 0.00104775 versus 0.0613840 for bias-only identity, about 59-fold smaller |
 | Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps and NaNs fail |
 | Final accelerometer model at gyro endpoints | Recovers gyro matrix with distorted/bias-shifted raw accelerometer endpoints |
 | Magnetic alignment with wizard-sized pose sets | 9 fit/4 independent poses; proper rotations at 0, 2, 30, 90, 140 and 179 degrees pass independent dip validation; degenerate geometry and corrupted validation endpoints fail |
-| Magnetic worker | Actual production worker applies final accelerometer calibration, separates field/geometry/validation failures, preserves gyro results, and records 9/4 magnetic counts after recovery independently of the longer gyro set |
-| Magnetic recovery and menu safety | Actual completion flow retries or replaces only magnetic holds; actual quiet-capture worker reaches USB-up without touching accepted gyro segments; two taps cannot clear gyro captures and replacing magnetic holds/exiting needs separate confirmation |
+| Magnetic worker | Actual production worker applies final accelerometer calibration, separates field/geometry/validation failures, preserves gyro results and records the actual 9/4 or 15/6 magnetic pose counts |
+| Basic profile save and startup | Qualified scale-only and basic profiles (gyro bias only, nominal mag axes, both) pass verified persistence and startup admission; missing gyro consent, unmeasured bias, rejected matrices, fictitious qualification and CRC tampering remain blocked |
+| Optional gyro workflow | Production completion flow skips before capture, after failed fit, on failed turn and on missing rotation memory; the strict session bias and accepted segments are retained with zero matrix qualification |
+| Automatic fit recovery | Actual gyro worker attempts three scales only after the full fit fails. Actual magnetic completion skips a failed fit once, retains full/scale-only gyro results and continues without a menu or recapture. Gyro exit still requires separate confirmation |
 | Fresh full-calibration admission | Actual entry selects no previous slope or gyro reference; calibrated noise mode and cancellation remain separate |
 | Noise worker | Complete simulated 40-minute sensor acquisition, wrapping clock, stopped/missing/frozen samples, temperature and cancellation; no invalid run yields a model |
 | Noise runtime wiring | Unified record round-trip retains density units and identified-axis masks; short and invalid records cannot configure a filter |
@@ -113,7 +116,7 @@ marks are interpreted as bytes.
 
 The architecture audit crossbuilds the qMEKF compass, OU-III INS, TFG INS and
 benchmark with the documented board options and CI optimization flags. The
-TFG image was rebuilt again after the final magnetic recovery and registration changes;
+TFG image was rebuilt again after the final scale fallback, automatic magnetic skip and startup-gate changes;
 its row below includes the latest shared wizard/capture translation unit.
 The other rows record the architecture-audit builds before those shared wizard
 changes. Compilation and linking do not establish operation on a board.
@@ -122,15 +125,17 @@ changes. Compilation and linking do not establish operation on a board.
 | --- | ---: | ---: |
 | OU-III INS | 1354811 | 31168 |
 | qMEKF compass | 1069683 | 28056 |
-| TFG INS (latest registration/recovery) | 1279499 | 40904 |
+| TFG INS (scale fallback/basic profiles) | 1284503 | 40912 |
 | Synthetic benchmark | 695803 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. Production
-worker entry frames are 176 bytes for gyro matrix fitting, 3328 bytes for
-magnetic alignment, 1232 bytes for magnetic-only capture and 4880 bytes for
-stationary noise acquisition; the wizard task entry uses 32 bytes. The shared
-alignment iteration helper has a 1056-byte frame. Full registration and recovery
-add 4760 flash bytes to the preceding TFG image with unchanged global RAM.
+worker entry frames are 192 bytes for gyro matrix fitting, 3328 bytes for
+magnetic alignment and 4880 bytes for stationary noise acquisition; the wizard task entry uses 32 bytes. The shared
+alignment iteration helper has a 1056-byte frame. Full/scale-only optimizer
+frames are 3296/1152 bytes; the scale information projection uses 784 bytes.
+Automatic fallback and basic profiles add 5004 flash bytes and 8 global RAM
+bytes over the registration/recovery build. Choosing bias-only before tilt avoids allocating
+the 2.5 MiB rotation trajectory.
 These are individual static frame estimates, not measured task peaks or a
 proof of total stack headroom. Optimization, inlining and call chains affect
 the actual peak.

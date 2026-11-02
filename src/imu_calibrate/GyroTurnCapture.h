@@ -16,7 +16,6 @@ public:
   static constexpr uint32_t HOLD_MS=3500,USEFUL_MS=2000,MAG_WINDOW_MS=1500;
   using V=Eigen::Vector3f;
   using Fit=GyroRotationFit<SAMPLES,24>;
-  static GyroCaptureCfg endpointConfig() { return config_(); }
   GyroTurnCapture(Fit& fit,GyroCalibrator<float,400,8>& cal,
                   const GyroCalibration<float>& bias,const V (&targets)[4],int segment)
       : fit_(fit),bias_(bias),quiet_(cal,config_()),segment_(segment) {

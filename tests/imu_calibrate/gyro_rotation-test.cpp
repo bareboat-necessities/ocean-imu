@@ -39,6 +39,31 @@ static void data(Fit& fit,bool degenerate=false,bool corrupt=false,bool noisy=fa
     check(fit.finishSegment(end.cast<float>(),25),"segment stored");us+=10000;
   }
 }
+// Repeated cardinal tips identify three scales but leave the full nine-
+// parameter model underdetermined. Validation uses different start directions.
+static void scaleData(Fit& fit,const M& scales,bool corrupt=false,bool noisy=false,unsigned seed=71) {
+  fit.clear();std::mt19937 rng(seed);std::normal_distribution<double> noise;
+  uint32_t us=1000;
+  const V bias(.006,-.009,.004);
+  for(int i=0;i<20;++i) {
+    const bool validation=i%4==3;const int axis_id=i%3;
+    const V axis=V::Unit(axis_id),start=V::Unit((axis_id+(validation?2:1))%3)*9.8025605;
+    const double angle=validation?1.1:1.5707963267948966;
+    double integral=0,previous=0;
+    for(int k=1;k<=200;++k){const double fraction=std::min(1.,k/10.);integral+=.0025*(previous+fraction);previous=fraction;}
+    const V omega=axis*(angle/integral);
+    fit.beginSegment(us,start.cast<float>(),25,validation,bias.cast<float>());
+    for(int k=1;k<=200;++k) {
+      const double fraction=std::min(1.,k/10.);us+=5000;
+      const V rate=bias+scales.inverse()*(omega*fraction)+(noisy?.001:0)*V(noise(rng),noise(rng),noise(rng));
+      check(fit.add(us,rate.cast<float>(),25),"scale fallback sample stored");
+    }
+    V end=Eigen::AngleAxisd(-angle,axis)*start;
+    if(corrupt && validation)end=Eigen::AngleAxisd(.15,end.normalized().unitOrthogonal())*end;
+    end+=(noisy?.002:0)*V(noise(rng),noise(rng),noise(rng));
+    check(fit.finishSegment(end.cast<float>(),25),"scale fallback segment stored");us+=10000;
+  }
+}
 int main() {
   // Analytic derivative through a sequence, tested independently of fitting.
   V u=V(.3,-.6,.7).normalized();const V start=u;
@@ -79,6 +104,33 @@ int main() {
   data(fit,false,true);check(!fit.fit(acc,gyro) && !gyro.matrix_ok &&
     fit.reason==imu_cal::GyroRotationFail::VALIDATION,"unseen bad rotations reject");
   data(fit,true);check(!fit.fit(acc,gyro),"single-axis rotations cannot identify 9 parameters");
+  const M scales=V(1.04,.975,1.02).asDiagonal();
+  scaleData(fit,scales);
+  check(!fit.fit(acc,gyro) && fit.reason==imu_cal::GyroRotationFail::GEOMETRY,
+    "cardinal tips must not falsely qualify all nine coefficients");
+  const int kept_samples=fit.samples();
+  check(fit.fitScaleOnly(acc,gyro) && gyro.matrix_ok && gyro.scale_only && fit.samples()==kept_samples,
+    "same captured data must qualify the three-scale fallback without recapture");
+  check((gyro.S.cast<double>()-scales).norm()<2e-5 && gyro.rotation_validation_rms<2e-6,
+    "diagonal scales must recover truth and pass independent directions");
+  double worst_scale=0;
+  for(unsigned seed=0;seed<8;++seed) {
+    scaleData(fit,scales,false,true,71+seed);
+    const bool ok=fit.fitScaleOnly(acc,gyro);
+    const double error=(gyro.S.cast<double>()-scales).norm();worst_scale=std::max(worst_scale,error);
+    check(ok && error<.002 && gyro.rotation_validation_rms<.004,"noisy independent scale recovery");
+  }
+  std::printf("gyro scale fallback: seeds=8 worst_scale_error=%.8g identity_error=%.8g\n",
+    worst_scale,(scales-M::Identity()).norm());
+  scaleData(fit,scales,true);
+  check(!fit.fitScaleOnly(acc,gyro) && !gyro.matrix_ok && !gyro.scale_only &&
+    fit.reason==imu_cal::GyroRotationFail::VALIDATION,"scale fallback must reject corrupted held-out rotations");
+  data(fit,true);
+  check(!fit.fitScaleOnly(acc,gyro),"scale fallback cannot qualify an unobserved axis");
+  scaleData(fit,Eigen::AngleAxisd(.12,V::UnitZ()).toRotationMatrix()*scales);
+  check(!fit.fitScaleOnly(acc,gyro),"scale fallback must reject significant cross-axis error");
+  scaleData(fit,V(1.4,1.,1.).asDiagonal());
+  check(!fit.fitScaleOnly(acc,gyro),"scale fallback retains physical plausibility limits");
   fit.clear();fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f::Zero());
   check(!fit.add(90000,Eigen::Vector3f::Zero(),25) && fit.samples()==0,"gap invalidates entire segment");
   fit.beginSegment(1000,Eigen::Vector3f(0,0,-9.8),25,false,Eigen::Vector3f::Zero());

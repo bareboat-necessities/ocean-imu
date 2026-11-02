@@ -28,6 +28,64 @@ Existing tests remain in place unless a schema assumption explicitly requires up
 Requirement-by-requirement implementation and remaining qualification are tracked
 in [calibration-requirements.md](calibration-requirements.md).
 
+## Automatic fallback and basic operation
+
+Fresh measured accelerometer calibration, stationary gyro bias, verified
+magnetometer intrinsics and physical mounting declarations remain required.
+A failed advanced fit no longer discards those measured sets.
+
+The gyro worker first fits all nine coefficients of the existing correction
+matrix. If that fails, it automatically refits the same captured rotations
+with only three diagonal scales free. It reuses the same integration,
+analytic sensitivities, robust objective, physical limits and independent
+validation. The three-parameter information matrix must be observable and
+conditioned. The optimizer starts from identity; it does not use coefficients
+from the failed full fit. No turns are repeated for this attempt. A successful
+fallback is stored as `gyro_matrix_ok=1`, `gyro_scale_only=1`, with a qualified
+diagonal `S`; cross-axis corrections remain unmeasured. A successful full fit
+has `gyro_scale_only=0`. DONE, the GYRO SCALE notice and startup identify the
+chosen model. The full-fit baseline accuracy and noisy campaign are unchanged.
+
+At **GYRO TILT**, one tap starts the twelve-turn procedure and two taps choose
+**Use bias only** before rotation capture or PSRAM allocation. When both full
+and scale-only fits fail, one tap appends four turns when possible (up to twenty)
+or retries the final fit. Two taps choose bias only. The same escape is offered
+after a failed turn or missing rotation memory. Three taps open a confirmed exit.
+Bias-only restores the latest strict stationary fit from this session, including
+its thermal qualification, rather than endpoint bias refinement. It sets
+`S=I`, `gyro_matrix_ok=0`, `gyro_matrix_skipped=1`, `gyro_scale_only=0` and clears
+rotation-fit quality metadata. Earlier accel/mag stages and accepted turns are
+kept. The choice has an untimed explanation page and never reuses coefficients
+from an earlier record.
+
+Magnetic registration is attempted once on the retained endpoints. On any
+failure it automatically continues with nominal driver axes: the already
+verified hard/soft-iron correction is retained, `R_IM=I`, `mag_alignment_ok=0`,
+`mag_alignment_skipped=1`, and alignment quality metadata is zero. A brief
+MAG SKIP notice and serial diagnostic state the result. There is no retry menu
+or extra magnetic pose sequence, including when gyro tilt was skipped before
+providing endpoint pairs. A successful gyro fit, whether full or scale-only,
+is retained. Magnetic timing acquisition is omitted when gyro tilt was skipped
+or magnetic registration did not qualify.
+
+DONE and the startup BASIC CAL notice distinguish **Gyro: full matrix**,
+**Gyro: scale only**, **Gyro: bias only**, and **MAG: nominal axes** as applicable.
+These profiles are usable measured calibrations with declared unmeasured
+corrections, not full-fit accuracy claims. Cross-axis errors remain after a
+scale-only fit; scale and cross-axis errors remain in bias-only mode. Skipped
+magnetic registration leaves PCB rotation error unmeasured. Correct nominal
+driver axis mapping remains required. The boot gate accepts these profiles
+after verified save/readback, while continuing to reject missing measured bias,
+unverified intrinsics, missing mounting, corrupt records or a missing gyro
+qualification without an explicit bias-only selection.
+
+The profile flags use reserved bytes in the same 680-byte schema-6 record.
+CRC and gyro coefficient binding protect them. A scale-only model must be
+qualified and diagonal; a skipped gyro fit must be identity with zero quality
+metadata. Skipped magnetic registration must also be identity with zero alignment
+metadata. Contradictory profiles are rejected. Old unsupported records are not
+migrated or used as fallback.
+
 ## Gyro matrix and independent validation
 
 The existing quiet-interval capture supplies bias and qualified endpoint means.
@@ -91,7 +149,7 @@ A rejected final mean or misplaced endpoint restarts only that window on the
 same target. Slow placement continues waiting; it neither qualifies a moving
 endpoint nor opens the retry menu.
 Every capture screen offers **Tap: retry turn**; this stops only the active
-turn and opens its retry/abort menu, preserving accepted turns.
+turn and opens its retry/bias-only/confirmed-exit menu, preserving accepted turns.
 
 The gyro LCD uses the same pose rotations as the accelerometer guide: USB up
 adds rotation 2, left edge down adds 1, right edge down adds 3, and screen up
@@ -113,12 +171,13 @@ turn and retained count. After twelve turns, fitting either qualifies the set
 or offers four additional turns, keeping every prior capture. A further block
 of four can be added if necessary, up to twenty total. Extra held-out flags are
 also predetermined. A failed final fit never automatically erases the set:
-one or two taps retry the fit on the same data. Exiting requires three taps
-and a separate three-tap discard confirmation. There is no double-tap new-gyro-set shortcut.
+one tap appends four turns when possible or retries the final fit; two taps
+continue with measured gyro bias only. Exiting requires three taps and a
+separate three-tap discard confirmation. There is no double-tap new-gyro-set shortcut.
 The complete accelerometer and magnetometer stages are not rerun by this flow.
 Captures are retained in this wizard session, not checkpointed across power loss. The 131072-sample PSRAM reservation (about 2.5 MiB)
 includes ordinary pauses and slow motions across twenty turns and is checked
-before any poses. Each turn can consume at most one twentieth of this buffer
+before gyro turns. Each turn can consume at most one twentieth of this buffer
 (about 32 seconds of retained trajectory); a long failed attempt cannot use
 the storage needed by later turns. Proven stationary waiting prefixes are
 released. Fresh finite readings update sensor health before quiet-motion
@@ -164,21 +223,14 @@ registration. Driver axis conventions remain upstream and must establish consist
 right-handed frames: with unknown dip, constant-dip data alone cannot identify
 a global field reversal caused by an incorrect reflected driver mapping.
 
-Gyro fitting and magnetic registration are separate worker jobs and recovery
-stages. A magnetic failure never offers more gyro turns or reruns the gyro
-fit. Its screen identifies field-strength change, insufficient pose geometry,
-ambiguous axes, numerical failure, dip inconsistency or failed independent
-validation. Serial ALIGN records include pose counts, rotation angle, training
-scatter, independent RMS, conditioning, time and stack headroom.
-One tap retries the magnetic solve on the same endpoints. Two taps offer
-magnetic-only recovery, with a separate three-tap confirmation before replacing
-magnetic endpoints. This takes thirteen quiet holds using the same qualified
-endpoint-capture implementation, while retaining the gyro matrix, bias and
-rotation samples. Screen orientation follows gravity, hand support is allowed,
-and movement resets only the current quiet interval. Instruction pages have
-no timeout. Nine magnetic poses train and four validate; their actual counts
-are stored independently of the gyro segment counts. Exiting requires a
-separate discard confirmation. Session data is still volatile across power loss.
+Gyro fitting and magnetic registration are separate worker jobs. A magnetic
+failure never reruns gyro fitting or requests more turns. Its diagnostic
+identifies field-strength change, insufficient geometry, ambiguity, numerical
+failure, dip inconsistency or failed independent validation. Serial ALIGN
+records include counts, rotation, training scatter, independent RMS,
+conditioning, time and stack headroom. On failure the wizard marks fine
+registration skipped, retains magnetic intrinsics and all other fits, and
+continues with nominal axes. Session data remains volatile across power loss.
 
 ### INSLIB comparison
 
@@ -204,8 +256,8 @@ from magnetic fitting is logged and the successful IMU calibration is returned.
 Housing alignment is separately optional: a level placement determines tilt,
 and nonparallel known directions determine full rotation. It folds rotations
 into output matrices. This project retains separately stored intrinsic,
-mag-to-IMU, IMU-to-housing and housing-to-vessel transforms and requires a fully
-qualified record for normal calibrated operation. Magnetic failure stays within
+mag-to-IMU, IMU-to-housing and housing-to-vessel transforms and supports qualified full/scale-only gyro fits, explicit bias-only operation,
+and automatic nominal magnetic axes after registration failure. Fresh measured bias and intrinsic sets are required in either case. Magnetic failure stays within
 its own recovery stage rather than discarding the successful IMU work.
 
 Mounting uses known physical directions. The retained Eigen SVD solves Wahba's
@@ -219,7 +271,8 @@ MOUNT <R_HI: nine row-major numbers> <R_VH: nine row-major numbers>
 ~~~
 
 The rotations are validated separately and composed only by RuntimeCals.
-A full intrinsic update requires renewed gyro/magnetic registration; the
+A full intrinsic update requires renewed gyro/magnetic registration or an
+explicit choice of the basic profiles; the
 retired accelerometer-only UI could otherwise retain dependent qualifications.
 The retained library candidate helper invalidates those dependent qualifications.
 
@@ -336,13 +389,13 @@ calls. The caller waits and services its watchdog when registered; only the
 wizard task accesses the UI during that wait. Serial logs report the task's
 stack budget and actual free-stack high-water mark.
 
-The rotation buffer is reserved explicitly in PSRAM before the first full
-calibration capture and released after fitting; it never occupies the loop-task
-stack. AtomS3R builds require **Tools > PSRAM > OPI PSRAM**, followed by a
+The optional rotation buffer is reserved in PSRAM before gyro tilt capture
+and released after fitting; it never occupies the loop-task stack. Bias-only
+operation skips that allocation. Advanced tilt needs **Tools > PSRAM > OPI PSRAM**, followed by a
 rebuild/upload (`PSRAM=opi` in the FQBN). The Arduino AtomS3 board defaults to
 PSRAM disabled. The wizard reports the configured mode, detected/registered
 external heap, total/free bytes, largest block and required allocation. Missing
-PSRAM produces a setup instruction before any pose captures; low or fragmented
+PSRAM produces a setup instruction and a bias-only choice before gyro turns; low or fragmented
 memory produces a separate allocation error. The same reservation is reused
 through capture, rather than freed and allocated again. Separate noise capture
 does not reserve the gyro trajectory. M5Stack's [AtomS3R configuration](https://docs.m5stack.com/en/core/AtomS3R)

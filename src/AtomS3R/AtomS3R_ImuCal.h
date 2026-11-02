@@ -213,6 +213,9 @@ static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalB
   out.printf("  schema=%u gyro_matrix=%u frames(IM,HI,VH)=%u,%u,%u measured_noise=%u\n",
     unsigned(b.version),unsigned(b.gyro_matrix_ok),unsigned(b.mag_alignment_ok),
     unsigned(b.housing_alignment_ok),unsigned(b.vessel_alignment_ok),unsigned(b.noise.valid));
+  if(b.gyro_scale_only)out.println("  gyro: three scales calibrated; cross-axis fit unmeasured");
+  if(b.gyro_matrix_skipped)out.println("  gyro: measured bias only; scale/axis fit explicitly skipped");
+  if(b.mag_alignment_skipped)out.println("  mag: nominal driver axes; alignment explicitly skipped");
   if (b.mag_ok && b.mag_source != activeMagSource()) {
     out.printf("  mag: fitted on %s data, firmware delivers %s: NOT applied, recalibrate the magnetometer\n",
                b.mag_source == MAG_SOURCE_BMM150_COMPENSATED ? "Bosch-compensated" : "uncompensated",

@@ -45,7 +45,7 @@ public:
   int accel_ccfg_=0;
   unsigned sensor_id_lo_=12,sensor_id_hi_=34,imu_type_=5;
   int alignment_pose_count_=0,timing_fit_=0;
-  bool mag_verified_=false,timing_saved_=false,noise_called=false;
+  bool mag_verified_=false,timing_saved_=false,noise_called=false,gyro_matrix_skipped_=false,mag_alignment_skipped_=false;
   imu_cal::GyroCalibration<float> gyr_out_;
   imu_cal::MagCalibration<float> mag_out_;
   void configureCalibrators_(){}void sensorIdentity_(){}

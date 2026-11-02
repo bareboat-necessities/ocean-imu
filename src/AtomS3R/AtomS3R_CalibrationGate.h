@@ -4,7 +4,8 @@
   Copyright (c) 2026 Mikhail Grushinskiy
 
   Startup gate for AtomS3R sketches that must not run an estimator on raw
-  sensor values: the sketch stops until the saved calibration applies in full.
+  sensor values: the sketch stops until verified measured sets apply. Explicit
+  basic profiles retain measured bias/intrinsics with nominal scale/axes.
 */
 
 #include "AtomS3R/AtomS3R_ImuCal.h"

@@ -22,6 +22,7 @@ cpp = r'''
 #define EIGEN_NON_ARDUINO
 #include "imu_calibrate/GyroTurnCapture.h"
 #include "imu_calibrate/AccelCalCapture.h"
+#include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include <atomic>
 #include <thread>
 #include <chrono>
@@ -32,7 +33,7 @@ cpp = r'''
 using V=Eigen::Vector3f;using Vector3f=V;
 using Phase=imu_cal::GyroTurnPhase;
 using TaskHandle_t=void*;constexpr int pdPASS=1;
-struct M5Ui{enum class GyroFitAction {RETRY_FIT,ABORT};enum class MagAlignmentAction {RETRY_FIT,NEW_HOLDS,ABORT};};
+struct M5Ui{enum class GyroFitAction {RETRY_FIT,ADD_TURNS,BIAS_ONLY,ABORT};};
 struct M5UiCfg{static constexpr uint8_t ROT_READ=0;};
 struct ImuCalWizardCfg{static constexpr uint32_t FIT_STACK_BYTES=32768;};
 struct ImuSample {V a,w,m;float tempC=25;uint32_t sample_us=0;};
@@ -45,7 +46,7 @@ void delay(unsigned){std::this_thread::sleep_for(std::chrono::microseconds(100))
 void vTaskDelay(unsigned){clock_us+=1000;std::this_thread::sleep_for(std::chrono::microseconds(30));}
 void vTaskDelete(void*){}
 struct Input{static void update(){}static bool tapPressed(){return manual_retry.exchange(false);}};
-struct {template<class... A>void printf(const char*,A...){} } Serial;
+struct {void println(const char*){}template<class... A>void printf(const char*,A...){} } Serial;
 template<class S>bool tryCalLogLine(S&,const char*){return true;}
 void require(bool b,const char* s){if(!b){std::cerr<<s<<'\n';std::exit(1);}}
 int xTaskCreatePinnedToCore(void(*fn)(void*),const char*,uint32_t stack,void* ctx,
@@ -76,14 +77,11 @@ CONTEXT turn_;
     }
     void lineAt(int y,const char* s){require(y<=100 && std::strlen(s)<=21,"dynamic row overlaps or wraps");}
     void bar01(float p){if(retry_on_hold && finishing && p>.25f){manual_retry=true;retry_on_hold=false;}}
-    void showOkAuto(const char*,const char*){}
+    void showOkAuto(const char*,const char*,const char* = "OK"){}
   } ui_;
   std::unique_ptr<imu_cal::GyroRotationFit<131072,24>> gyro_rotations_{new imu_cal::GyroRotationFit<131072,24>};
   imu_cal::GyroCalibrator<float,400,8> gyroCal_;
   imu_cal::GyroCalibration<float> gyr_out_;
-  struct FitCtx {ImuCalWizard* wiz;bool ok=false;imu_cal::FitFail reason=imu_cal::FitFail::BAD_ARG;
-    const char* detail="";bool done=false;};
-MAG_POSE
   V endpoint_a_,endpoint_w_,endpoint_m_;float endpoint_temp_=25;
   struct Physics {uint64_t last=0,start=0,twist=0;float total=0,yaw=0;V axis=V::UnitX();} physics_;
   bool readSample_(ImuSample& s){
@@ -124,7 +122,10 @@ public:
   std::unique_ptr<Fit> gyro_rotations_{new Fit};
   enum class FitKind {GYRO,GYRO_MATRIX,MAG_ALIGNMENT};
   struct {bool ok=false;imu_cal::FitFail reason=imu_cal::FitFail::OK;const char* detail="Mag poses too alike";} fit_;
-  bool always_bad=false,initial_bias_fail=false,replace_mag=false;int matrix_fits=0,adds=0,intros=0,mag_fits=0,mag_captures=0;
+  bool skip_before=false,skip_after=false,skip_turn=false,mag_bad=true,missing_memory=false;
+  bool gyro_matrix_skipped_=false,mag_alignment_skipped_=false;
+  imu_cal::GyroCalibration<float> gyro_bias_fit_;atoms3r_magdiag::Alignment alignment_;
+  bool always_bad=false,initial_bias_fail=false;int matrix_fits=0,adds=0,intros=0,mag_fits=0,mag_captures=0;
   int captures=0,fits=0,calls=0,retries=0,alignment_pose_count_=0;
   int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
   V gyro_bias_sum_=V::Zero();unsigned gyro_bias_poses_=0;
@@ -132,11 +133,18 @@ public:
     RetryWizard* owner;
     void fail(const char*,const char*){}
     void waitTapHere(const char*,const char*,const char*){++owner->intros;}
-    M5Ui::MagAlignmentAction magAlignmentFailMenu(const char* why){
-      require(std::string(why)=="Mag poses too alike","alignment cause must reach the magnetic menu");
-      return owner->replace_mag?M5Ui::MagAlignmentAction::NEW_HOLDS:M5Ui::MagAlignmentAction::RETRY_FIT;
+    void showOkAuto(const char*,const char*,const char*){}
+    M5Ui::GyroFitAction gyroTiltMenu(){return owner->skip_before?M5Ui::GyroFitAction::BIAS_ONLY:M5Ui::GyroFitAction::RETRY_FIT;}
+    M5Ui::GyroFitAction gyroFitFailMenu(const char*,bool can_add=false){
+      if(owner->skip_after)return M5Ui::GyroFitAction::BIAS_ONLY;
+      if(can_add){++owner->adds;return M5Ui::GyroFitAction::ADD_TURNS;}
+      return M5Ui::GyroFitAction::ABORT;
     }
-    M5Ui::GyroFitAction gyroFitFailMenu(const char*){return M5Ui::GyroFitAction::ABORT;}
+    M5Ui::GyroFitAction gyroTurnFailMenu(const char* why,const char* kept){
+      require(std::string(why)=="gyro scatter" && std::string(kept)=="6 turns kept",
+        "timeout must explain the cause and retained progress");
+      ++owner->retries;return owner->skip_turn?M5Ui::GyroFitAction::BIAS_ONLY:M5Ui::GyroFitAction::RETRY_FIT;
+    }
     bool retryMenuHere(const char* title,const char* why,const char* kept=nullptr){
       if(std::string(title)=="Retry gyro bias")return true;
       if(std::string(title)=="Add 4 turns?"){++owner->adds;return true;}
@@ -149,19 +157,21 @@ public:
   V endpoint_a_=V(0,0,-9.8f),endpoint_w_=V::Zero(),endpoint_m_=V(24,5,40);
   float endpoint_temp_=25;
   struct Pose {V a,m_raw;} raw_alignment_[24];float alignment_temp_[24]{};
-  bool prepareGyroRotationStorage_(){return true;}
+  bool prepareGyroRotationStorage_(){return !missing_memory;}
   bool captureGyro_(){++captures;return true;}
   bool runFitTask_(FitKind kind,const char*,bool){
-    if(kind==FitKind::MAG_ALIGNMENT){++mag_fits;fit_.ok=mag_fits>1;return fit_.ok;}
+    if(kind==FitKind::MAG_ALIGNMENT){++mag_fits;fit_.ok=!mag_bad;return fit_.ok;}
     if(kind==FitKind::GYRO){++fits;if(initial_bias_fail && fits==1){fit_.reason=imu_cal::FitFail::GYRO_NOT_STILL;return false;}return true;}
     ++matrix_fits;fit_.reason=imu_cal::FitFail::DEGENERATE_COVERAGE;
-    fit_.ok=!always_bad && gyro_rotations_->segments()>=16;return fit_.ok;
+    fit_.ok=!always_bad && gyro_rotations_->segments()>=16;
+    gyr_out_.S(0,0)=fit_.ok?1.03f:1.2f;gyr_out_.rotation_condition=999;return fit_.ok;
   }
   bool fakeTurn_(int segment,const char*& why){
     ++calls;if(segment==6 && retries==0){why="gyro scatter";return false;}
     ++gyro_rotations_->n;return true;
   }
-  bool captureMagAlignment_(){++mag_captures;alignment_pose_count_=13;return true;}
+  RetryWizard(){gyr_out_.ok=gyr_out_.biasT.ok=true;gyr_out_.biasT.b0=V(.01f,.02f,.03f);}
+BASIC
 COMPLETE_MAG
 COMPLETE
 WRAPPER
@@ -186,14 +196,27 @@ int main(){
   require(!rejected.completeGyroCalibration_() && rejected.captures==1 && rejected.calls==21 &&
     rejected.gyro_rotations_->segments()==20 && rejected.alignment_pose_count_==21,
     "final rejection must keep all captures until explicit abort; no automatic reset");
-  for(bool replace:{false,true}) {
-    RetryWizard magnetic;magnetic.replace_mag=replace;
+  for(int phase:{0,1,2,3}) {
+    RetryWizard basic;basic.skip_before=phase==0;basic.skip_after=phase==1 || phase==3;basic.skip_turn=phase==2;basic.missing_memory=phase==3;
+    basic.always_bad=true;
+    require(basic.completeGyroCalibration_() && basic.gyro_matrix_skipped_ && basic.gyr_out_.ok &&
+      !basic.gyr_out_.matrix_ok && basic.gyr_out_.S==Eigen::Matrix3f::Identity() &&
+      basic.gyr_out_.biasT.b0==V(.01f,.02f,.03f) && basic.gyr_out_.rotation_condition==0 &&
+      basic.gyr_out_.rotation_train_segments==0,"skip must preserve this session's strict bias and discard unqualified matrix metadata");
+    require(basic.gyro_rotations_->segments()==(phase==0 || phase==3?0:phase==1?12:6),
+      "skipping tilt must not erase completed rotations or require extra turns");
+    require(basic.matrix_fits==(phase==1?1:0),"skipping before capture/on timeout must avoid matrix fitting");
+  }
+  for(bool bad:{false,true}) {
+    RetryWizard magnetic;magnetic.mag_bad=bad;magnetic.gyr_out_.scale_only=true;
     magnetic.gyro_rotations_->n=20;magnetic.alignment_pose_count_=21;
-    magnetic.gyr_out_.S(0,0)=1.03f;
-    require(magnetic.completeMagAlignment_() && magnetic.mag_fits==2 &&
-      magnetic.mag_captures==int(replace) && magnetic.matrix_fits==0 && magnetic.captures==0 &&
-      magnetic.gyro_rotations_->segments()==20 && magnetic.gyr_out_.S(0,0)==1.03f,
-      "magnetic retry/recovery must never repeat or discard the successful gyro calibration");
+    magnetic.gyr_out_.S(0,0)=1.03f;magnetic.alignment_.ok=true;
+    require(magnetic.completeMagAlignment_() && magnetic.mag_fits==1 &&
+      magnetic.mag_captures==0 && magnetic.matrix_fits==0 && magnetic.captures==0 &&
+      magnetic.gyro_rotations_->segments()==20 && magnetic.gyr_out_.S(0,0)==1.03f &&
+      magnetic.gyr_out_.scale_only && magnetic.mag_alignment_skipped_==bad &&
+      magnetic.alignment_.ok==!bad,
+      "magnetic failure must skip automatically, retain gyro scales and continue without recapture");
   }
   ImuCalWizard w;w.gyroCal_.g=9.8025605f;w.gyroCal_.max_gyro_norm=.12f;w.gyroCal_.max_accel_dev=.8f;
   w.gyr_out_.ok=w.gyr_out_.biasT.ok=true;const char* why=nullptr;
@@ -210,16 +233,6 @@ int main(){
   w.physics_={};requested=-1;twist_requested=false;retry_on_hold=true;
   require(!w.runGyroTurn_(1,why) && std::string(why)=="Retry requested","tap during a hold must offer a retry");worker.join();
   require(w.gyro_rotations_->segments()==1,"manual retry must preserve the completed turn");
-  w.physics_={};w.physics_.last=clock_us.load();requested=1;twist_requested=false;retry_on_hold=false;max_gap=0;
-  for(int i=0;i<4;++i)w.turn_.targets[i]=targets[i];
-  w.turn_.target=1;w.turn_.retry=false;
-  const auto gyro_matrix=w.gyr_out_.S;
-  ImuCalWizard::FitCtx mag{&w};
-  std::thread mag_worker([&]{w.fitTaskMagPose_(&mag);});mag_worker.join();
-  require(mag.ok && mag.done,"magnetic-only capture did not complete a quiet hold");
-  require(w.endpoint_a_.normalized().isApprox(targets[1],.001f) &&
-    w.gyr_out_.S==gyro_matrix && w.gyro_rotations_->segments()==1 && max_gap<=20000,
-    "magnetic-only capture must reach USB-up quietly and preserve gyro results and samples");
   allocation_failure=true;require(!w.runGyroTurn_(1,why) && std::string(why)=="Capture task failed",
     "task allocation must fail without discarding accepted turns");
   require(w.gyro_rotations_->segments()==1,"failed worker start lost an accepted turn");
@@ -227,7 +240,7 @@ int main(){
 }
 '''
 cpp = (cpp.replace("CONTEXT", block("struct TurnCtx"))
-       .replace("MAG_POSE", block("static void fitTaskMagPose_("))
+       .replace("BASIC", block("bool useGyroBiasOnly_("))
        .replace("COMPLETE_MAG", block("bool completeMagAlignment_("))
        .replace("ROTATION", block("static int gyroReadRotation_("))
        .replace("HELPER", block("static const char* gyroRestHelp_("))
@@ -292,19 +305,17 @@ int main(){
   ui.setRotation(1);M5.BtnA.pressed=true;assert(ui.retryMenu("Other stage","Retry"));
   assert(M5.Display.rotation==0);
   uint32_t t=millis();M5.BtnA.scheduled={t+10,t+110};
-  assert(ui.gyroFitFailMenu("Gyro check failed")==atoms3r_ical::M5Ui::GyroFitAction::RETRY_FIT);
+  assert(ui.gyroFitFailMenu("Gyro check failed")==atoms3r_ical::M5Ui::GyroFitAction::BIAS_ONLY);
   t=millis();M5.BtnA.scheduled={t+10,t+110,t+210,t+1100};
   assert(ui.gyroFitFailMenu("Gyro check failed")==atoms3r_ical::M5Ui::GyroFitAction::RETRY_FIT);
   t=millis();M5.BtnA.scheduled={t+10,t+110,t+210,t+1100,t+1200,t+1300};
   assert(ui.gyroFitFailMenu("Gyro check failed")==atoms3r_ical::M5Ui::GyroFitAction::ABORT);
-  t=millis();M5.BtnA.scheduled={t+10,t+110,t+1100};
-  assert(ui.magAlignmentFailMenu("Mag check failed")==atoms3r_ical::M5Ui::MagAlignmentAction::RETRY_FIT);
-  t=millis();M5.BtnA.scheduled={t+10,t+110,t+1100,t+1200,t+1300};
-  assert(ui.magAlignmentFailMenu("Mag check failed")==atoms3r_ical::M5Ui::MagAlignmentAction::NEW_HOLDS);
-  t=millis();M5.BtnA.scheduled={t+10,t+110,t+210,t+1100};
-  assert(ui.magAlignmentFailMenu("Mag check failed")==atoms3r_ical::M5Ui::MagAlignmentAction::RETRY_FIT);
-  t=millis();M5.BtnA.scheduled={t+10,t+110,t+210,t+1100,t+1200,t+1300};
-  assert(ui.magAlignmentFailMenu("Mag check failed")==atoms3r_ical::M5Ui::MagAlignmentAction::ABORT);
+  t=millis();M5.BtnA.scheduled={t+10,t+110};
+  assert(ui.gyroTiltMenu()==atoms3r_ical::M5Ui::GyroFitAction::BIAS_ONLY);
+  M5.BtnA.pressed=true;
+  assert(ui.gyroFitFailMenu("Need varied tilt axes",true)==atoms3r_ical::M5Ui::GyroFitAction::ADD_TURNS);
+  t=millis();M5.BtnA.scheduled={t+10,t+110};
+  assert(ui.gyroTurnFailMenu("gyro scatter","6 turns kept")==atoms3r_ical::M5Ui::GyroFitAction::BIAS_ONLY);
   std::cout<<"gyro menus: real UI preserves pose rotation; other stages keep default behavior PASS\n";
 }
 '''

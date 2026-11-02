@@ -11,6 +11,9 @@ void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCa
                        const RuntimeCals& rc) {
   if (!why) {
     Serial.println("[CAL] applied: accelerometer, gyroscope, magnetometer");
+    if(rc.gyr.scale_only)Serial.println("[CAL] gyro: three scales calibrated; cross-axis fit unmeasured");
+    if(rc.gyro_matrix_skipped)Serial.println("[CAL] BASIC gyro: measured bias applied; scale/axis fit skipped");
+    if(rc.mag_alignment_skipped)Serial.println("[CAL] BASIC mag: intrinsic fit applied; nominal driver axes, alignment skipped");
     return;
   }
   Serial.printf("[CAL] UNUSABLE: %s. Stopped before the estimator%s.\n", why,
@@ -63,6 +66,12 @@ void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV6& blo
     }
     why = calibrationUnusableReason(have_blob, runtime);
     reportCalibration(why, wizard != nullptr, have_blob, blob, runtime);
+  }
+  if(runtime.gyro_matrix_skipped || runtime.gyr.scale_only || runtime.mag_alignment_skipped) {
+    ui.setReadRotation();ui.title("BASIC CAL");
+    ui.line(runtime.gyro_matrix_skipped?"Gyro: bias only":runtime.gyr.scale_only?"Gyro: scale only":"Gyro: full matrix");
+    ui.line(runtime.mag_alignment_skipped?"MAG: nominal axes":"MAG: axes aligned");
+    ui.line("Fine fits unmeasured");delay(1800);
   }
 }
 

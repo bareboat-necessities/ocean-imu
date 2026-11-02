@@ -115,8 +115,8 @@ public:
     }
   }
 
-  void showOkAuto(const char* l1 = nullptr, const char* l2 = nullptr) {
-    title("OK");
+  void showOkAuto(const char* l1 = nullptr, const char* l2 = nullptr, const char* heading = "OK") {
+    title(heading);
     if (l1) line(l1);
     if (l2) line(l2);
     const uint32_t t0 = millis();
@@ -247,26 +247,27 @@ public:
     return waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS)>=3;
   }
 
-  enum class GyroFitAction : uint8_t { RETRY_FIT, ABORT };
-  GyroFitAction gyroFitFailMenu(const char* why) {
-    title("GYRO FIT");line(why);line("Captures kept");line("");
-    line("Tap: retry fit");line("3 taps: exit menu");
+  enum class GyroFitAction : uint8_t { RETRY_FIT, ADD_TURNS, BIAS_ONLY, ABORT };
+  GyroFitAction gyroTiltMenu() {
+    title("GYRO TILT");line("Optional scale / axes");line("Bias already measured");line("");
+    line("Tap: 12 turns");line("2 taps: use bias only");line("3 taps: exit menu");
     const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
-    return taps>=3 && confirmDiscardCaptures()?GyroFitAction::ABORT:GyroFitAction::RETRY_FIT;
+    if(taps>=3)return confirmDiscardCaptures()?GyroFitAction::ABORT:GyroFitAction::RETRY_FIT;
+    return taps==2?GyroFitAction::BIAS_ONLY:GyroFitAction::RETRY_FIT;
   }
-
-  enum class MagAlignmentAction : uint8_t { RETRY_FIT, NEW_HOLDS, ABORT };
-  MagAlignmentAction magAlignmentFailMenu(const char* why) {
-    title("MAG ALIGN");line(why);line("Gyro result kept");line("");
-    line("Tap: retry solve");line("2 taps: mag holds");line("3 taps: exit menu");
+  GyroFitAction gyroFitFailMenu(const char* why,bool can_add=false) {
+    title("GYRO FIT");line(why);line("Captures kept");line("");
+    line(can_add?"Tap: add 4 turns":"Tap: retry fit");line("2 taps: use bias only");line("3 taps: exit menu");
     const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
-    if(taps>=3)return confirmDiscardCaptures()?MagAlignmentAction::ABORT:MagAlignmentAction::RETRY_FIT;
-    if(taps==2) {
-      title("MAG ONLY?");line("Gyro result kept");line("Replace mag holds?");line("");
-      line("Tap: keep data");line("3 taps: replace");
-      if(waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS)>=3)return MagAlignmentAction::NEW_HOLDS;
-    }
-    return MagAlignmentAction::RETRY_FIT;
+    if(taps>=3)return confirmDiscardCaptures()?GyroFitAction::ABORT:GyroFitAction::RETRY_FIT;
+    return taps==2?GyroFitAction::BIAS_ONLY:can_add?GyroFitAction::ADD_TURNS:GyroFitAction::RETRY_FIT;
+  }
+  GyroFitAction gyroTurnFailMenu(const char* why,const char* kept) {
+    title("GYRO TURN");line(why);line(kept);line("");
+    line("Tap: retry turn");line("2 taps: use bias only");line("3 taps: exit menu");
+    const uint8_t taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    if(taps>=3)return confirmDiscardCaptures()?GyroFitAction::ABORT:GyroFitAction::RETRY_FIT;
+    return taps==2?GyroFitAction::BIAS_ONLY:GyroFitAction::RETRY_FIT;
   }
 
   // Overwrites one text row (size-1 font) at the current rotation.

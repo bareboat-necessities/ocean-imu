@@ -8,22 +8,25 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root / 'src/AtomS3R/AtomS3R_ImuCalWizard.h').read_text()
-start = source.index('static void fitTaskMagAlignment_(')
-end = source.index('{', start)
-depth = 1
-while depth:
-    end += 1
-    depth += (source[end] == '{') - (source[end] == '}')
-worker = source[start:end + 1]
+def block(marker):
+    start = source.index(marker)
+    end = source.index('{', start)
+    depth = 1
+    while depth:
+        end += 1
+        depth += (source[end] == '{') - (source[end] == '}')
+    return source[start:end + 1]
+worker = block('static void fitTaskMagAlignment_(')
 cpp = r'''
 #define EIGEN_NON_ARDUINO
-#include "imu_calibrate/CalibrateIMU.h"
+#include "imu_calibrate/GyroCalFit.h"
+#include <memory>
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include <random>
 #include <cstdlib>
 #include <iostream>
 using V=Eigen::Vector3f;
-uint32_t micros(){return 0;}void vTaskDelete(void*){}
+uint32_t micros(){return 0;}void vTaskDelete(void*){}void vTaskDelay(unsigned){}
 struct {template<class... T>void printf(const char*,T...){} } Serial;
 struct AccelProc {struct Fitter {
   static void toFloat(const imu_cal::AccelCalibration<float>& in,float,imu_cal::AccelCalibration<float>& out){out=in;}
@@ -38,10 +41,30 @@ struct ImuCalWizard {
   atoms3r_magdiag::Alignment alignment_;float alignment_validation_=INFINITY;
   imu_cal::MagCalibration<float> mag_out_;
   imu_cal::GyroCalibration<float> gyr_out_;
+  struct RotationMock {
+    bool full_ok=true,scale_ok=true;int full_calls=0,scale_calls=0;
+    imu_cal::GyroRotationFail reason=imu_cal::GyroRotationFail::GEOMETRY;
+    bool fit(const imu_cal::AccelCalibration<float>&,imu_cal::GyroCalibration<float>& g,void(*)(void*)) {
+      ++full_calls;g.matrix_ok=full_ok;g.scale_only=false;return full_ok;
+    }
+    bool fitScaleOnly(const imu_cal::AccelCalibration<float>&,imu_cal::GyroCalibration<float>& g,void(*)(void*)) {
+      ++scale_calls;g.matrix_ok=scale_ok;g.scale_only=scale_ok;
+      if(scale_ok){g.S.setIdentity();g.S(0,0)=1.04f;}return scale_ok;
+    }
+  };
+  std::unique_ptr<RotationMock> gyro_rotations_{new RotationMock};
   static uint32_t hwmBytes_(){return 0;}
+GYRO_WORKER
 WORKER
 };
 int main(){
+  for(int scenario:{0,1,2}) {
+    ImuCalWizard gyro;gyro.gyr_out_.ok=gyro.gyr_out_.biasT.ok=true;auto& r=*gyro.gyro_rotations_;r.full_ok=scenario==0;r.scale_ok=scenario==1;
+    ImuCalWizard::FitCtx result{&gyro};gyro.fitTaskGyroMatrix_(&result);
+    require(result.done && result.ok==(scenario<2) && r.full_calls==1 && r.scale_calls==(scenario==0?0:1),
+      "production gyro worker must try three scales automatically only after full fitting fails");
+    require(gyro.gyr_out_.scale_only==(scenario==1),"worker must publish the correct qualified model");
+  }
   ImuCalWizard w;auto& acc=w.accel_.fit;acc.ok=acc.biasT.ok=true;
   acc.biasT.b0=V(.1f,-.2f,.15f);acc.S.diagonal()<<1.02f,.98f,1.01f;
   w.mag_out_.ok=true;w.mag_out_.field_uT=V(20,0,43).norm();
@@ -61,7 +84,7 @@ int main(){
     populate(count);ImuCalWizard::FitCtx ctx{&w};w.fitTaskMagAlignment_(&ctx);
     require(ctx.done && ctx.ok && w.alignment_.R.isApprox(rotation,.001f),"worker must qualify actual calibrated endpoints");
     require(w.alignment_train_count_==(count==13?9:15) && w.alignment_validation_count_==(count==13?4:6),
-      "magnetic-only recovery must persist its own counts, independently of the gyro set");
+      "magnetic fit must persist its actual counts independently of the gyro set");
     require(w.gyr_out_.S(0,0)==1.03f && w.gyr_out_.rotation_validation_segments==6,
       "magnetic worker changed successful gyro data");
   }
@@ -77,7 +100,7 @@ int main(){
     "independent validation must reject a direction error after training succeeds");
   std::cout<<"mag worker: full registration, calibrated endpoints, independent counts and distinct failure causes PASS\n";
 }
-'''.replace('WORKER', worker)
+'''.replace('GYRO_WORKER', block('static void fitTaskGyroMatrix_(')).replace('WORKER', worker)
 eigen = root / 'third_party/eigen'
 if not (eigen / 'Eigen/Dense').exists():
     eigen = Path('/usr/include/eigen3')

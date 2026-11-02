@@ -40,6 +40,70 @@ int main(){
   mat_to_rowmajor9_(rim,b.R_IM);mat_to_rowmajor9_(rhi,b.R_HI);mat_to_rowmajor9_(rvh,b.R_VH);
   Store store;ImuCalBlobV6 rb;check(store.saveVerified(b,rb),"new schema round-trip");
   RuntimeCals runtime;runtime.rebuildFromBlob(rb);check(!calibrationUnusableReason(true,runtime),"full calibration usable");
+  // Explicit basic choices are usable after verified save/reload. A missing
+  // full fit without operator consent must still stop the startup gate.
+  for(int profile:{1,2,3}) {
+    ImuCalBlobV6 basic=rb;
+    if(profile&1) {
+      imu_cal::GyroCalibration<float> bias;bias.ok=bias.biasT.ok=true;
+      bias.biasT.T_lo=bias.biasT.T_hi=bias.biasT.T0;bias.biasT.b0=Vector3f(.012f,-.008f,.003f);
+      fillGyroFromFit(basic,bias,true);
+    }
+    if(profile&2) {
+      basic.mag_alignment_ok=0;basic.mag_alignment_skipped=1;
+      mat_to_rowmajor9_(Matrix3f::Identity(),basic.R_IM);
+      basic.alignment_train_sd=basic.alignment_validation_sd=basic.alignment_condition=0;
+      basic.alignment_train_poses=basic.alignment_validation_poses=0;
+    }
+    ImuCalBlobV6 readback;
+    check(store.saveVerified(basic,readback),"basic profile must reach verified persistence");
+    RuntimeCals loaded;loaded.rebuildFromBlob(readback);
+    check(!calibrationUnusableReason(true,loaded) && loaded.gyro_matrix_skipped==bool(profile&1) &&
+      loaded.mag_alignment_skipped==bool(profile&2),"basic profile must survive reload without reentering the wizard");
+    if(profile&1) {
+      const Vector3f input(.3f,.2f,-.4f);
+      check(!loaded.gyr.matrix_ok && loaded.applyGyro(input,25).isApprox(rvh*rhi*(input-loaded.gyr.biasT.b0),1e-6f),
+        "basic mode applies measured bias and nominal scale/axes exactly once");
+      auto unchosen=readback;unchosen.gyro_matrix_skipped=0;unchosen.gyro_coeff_crc=gyroCoeffCrc(unchosen);
+      loaded.rebuildFromBlob(Store::sealed_(unchosen));
+      check(calibrationUnusableReason(true,loaded)!=nullptr,"missing gyro fit cannot silently opt into basic mode");
+      auto failed=readback;failed.gyro_S[0]=1.1f;failed.gyro_coeff_crc=gyroCoeffCrc(failed);
+      check(!validateBlob(Store::sealed_(failed)),"explicit skip cannot apply an unqualified nonidentity gyro matrix");
+      failed=readback;failed.gyro_train_segments=12;failed.gyro_coeff_crc=gyroCoeffCrc(failed);
+      check(!validateBlob(Store::sealed_(failed)),"skipped rotation fit cannot claim training qualification");
+      failed=readback;failed.gyro_ok=0;failed.gyro_coeff_crc=gyroCoeffCrc(failed);
+      loaded.rebuildFromBlob(Store::sealed_(failed));
+      check(calibrationUnusableReason(true,loaded)!=nullptr,"basic mode cannot bypass missing measured gyro bias");
+    }
+    if(profile&2) {
+      auto unchosen=readback;unchosen.mag_alignment_skipped=0;
+      loaded.rebuildFromBlob(Store::sealed_(unchosen));
+      check(calibrationUnusableReason(true,loaded)!=nullptr,"missing mag alignment cannot silently select nominal axes");
+      auto failed=readback;mat_to_rowmajor9_(rim,failed.R_IM);
+      check(!validateBlob(Store::sealed_(failed)),"skipped alignment cannot retain a failed magnetic rotation");
+      failed=readback;failed.mag_alignment_ok=1;
+      check(!validateBlob(Store::sealed_(failed)),"alignment cannot be both qualified and skipped");
+    }
+    auto tampered=readback;tampered.gyro_matrix_skipped^=1;
+    loaded.rebuildFromBlob(tampered);
+    check(!loaded.record_valid && !loaded.gyro_matrix_skipped && !loaded.mag_alignment_skipped,
+      "integrity failure clears profile permissions with the coefficients");
+  }
+  b=rb;b.gyro_scale_only=1;
+  mat_to_rowmajor9_(Vector3f(1.04f,.975f,1.02f).asDiagonal().toDenseMatrix(),b.gyro_S);
+  b.gyro_coeff_crc=gyroCoeffCrc(b);ImuCalBlobV6 scale_record;
+  check(store.saveVerified(b,scale_record),"qualified scale-only model must survive verified persistence");
+  RuntimeCals scale_runtime;scale_runtime.rebuildFromBlob(scale_record);
+  check(!calibrationUnusableReason(true,scale_runtime) && scale_runtime.gyr.matrix_ok &&
+    scale_runtime.gyr.scale_only && !scale_runtime.gyro_matrix_skipped &&
+    scale_runtime.gyr.S.diagonal().isApprox(Vector3f(1.04f,.975f,1.02f)),
+    "startup must retain measured scales and distinguish them from bias-only/full models");
+  auto bad_scale=scale_record;bad_scale.gyro_S[1]=.01f;bad_scale.gyro_coeff_crc=gyroCoeffCrc(bad_scale);
+  check(!validateBlob(Store::sealed_(bad_scale)),"scale-only flag cannot qualify unmeasured cross-axis terms");
+  bad_scale=scale_record;bad_scale.gyro_matrix_ok=0;bad_scale.gyro_coeff_crc=gyroCoeffCrc(bad_scale);
+  check(!validateBlob(Store::sealed_(bad_scale)),"scale-only model must have passed fit qualification");
+  bad_scale=scale_record;bad_scale.gyro_scale_only=2;bad_scale.gyro_coeff_crc=gyroCoeffCrc(bad_scale);
+  check(!validateBlob(Store::sealed_(bad_scale)),"unknown gyro model flags rejected");
   const Vector3f x(1,2,-9);
   check(runtime.applyAccel(x,25).isApprox(rvh*rhi*runtime.acc.apply(x,25),1e-6f),"accel intrinsic then housing then vessel");
   check(runtime.applyGyro(x,25).isApprox(rvh*rhi*runtime.gyr.apply(x,25),1e-6f),"full gyro matrix applied once");
