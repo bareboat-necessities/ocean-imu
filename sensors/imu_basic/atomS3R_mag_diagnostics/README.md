@@ -91,7 +91,7 @@ Copy the whole serial log, from the `[DIAG]` header through the `[VERDICT]` bloc
   gyro:  T0=36.83
     b0=[0.002320 -0.010273 -0.007242]
     k =[0.000000 0.000000 0.000000]
-    S (w_cal = S*(w_raw - bias(T)) ; S=I (stationary bias-only fit)):
+    S (w_cal = S*(w_raw - bias(T)) ; intrinsic gyro -> IMU (full matrix fit)):
       [1.000, 0.000, 0.000]
       [0.000, 1.000, 0.000]
       [0.000, 0.000, 1.000]

@@ -15,7 +15,7 @@ constexpr float kMagDtMs = 40.0f;
 constexpr uint32_t kMagCadenceDiv = (kMagPeriodUs / kLoopPeriodUs);
 
 ImuCalStoreNvs calStore;
-ImuCalBlobV5 calBlob;
+ImuCalBlobV6 calBlob;
 RuntimeCals runtimeCals;
 bool hasSavedCalibration = false;
 
@@ -54,10 +54,8 @@ void setup()
   }
   else
   {
-    runtimeCals.mag.ok = true;
-    runtimeCals.mag.A = Matrix3f::Identity();
-    runtimeCals.mag.b = Vector3f::Zero();
-    Serial.println("No IMU calibration in NVS; assuming zero mag calibration (A=I, b=0).");
+    runtimeCals = RuntimeCals{};
+    Serial.println("[CAL] No valid schema-6 calibration; run the full wizard. Raw diagnostic values follow.");
   }
 }
 

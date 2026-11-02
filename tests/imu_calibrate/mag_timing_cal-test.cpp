@@ -70,12 +70,12 @@ struct KV {
 };
 static void persistence() {
     ImuCalStoreT<KV> store;
-    ImuCalBlobV5 b{};
+    ImuCalBlobV6 b{};
     b.gyro_ok=1; b.gyro_coeff_crc=gyroCoeffCrc(b);
     b.mag_ok=1; b.mag_A[0]=b.mag_A[4]=b.mag_A[8]=1; b.mag_field_uT=50;
     b.sensor_id_lo=123; b.imu_type=3;
     check(gyroSetValid(b) && magSetValid(b),"spatial fixture");
-    ImuCalBlobV5 loaded;
+    ImuCalBlobV6 loaded;
     check(magTimingAbsent(b.mag_timing),"default timing record is absent");
     check(store.saveVerified(b,loaded) && store.load(loaded) && magTimingAbsent(loaded.mag_timing),
           "timing record is optional");
@@ -100,7 +100,7 @@ static void persistence() {
     check(!store.save(changed),"device binding");
     changed=b; changed.accel_b0[0]=.1f;
     check(store.save(changed),"accel-only preserves timing");
-    store.kv.bytes[store.kKeyV5][16]^=1;
+    store.kv.bytes[store.kKeyV6][16]^=1;
     check(!store.load(loaded),"corruption rejected");
     changed=b; changed.mag_timing.residual_time_s=NAN;
     changed.mag_timing.crc=magTimingCrc(changed.mag_timing);
@@ -114,7 +114,7 @@ static void persistence() {
     store.kv.putBytes("blob_m5v4",&sealed,sizeof(sealed));
     check(!store.load(loaded),"old calibration key requires recalibration");
     changed=sealed; changed.version=4; changed.crc=computeBlobCrc(changed);
-    store.kv.putBytes(store.kKeyV5,&changed,sizeof(changed));
+    store.kv.putBytes(store.kKeyV6,&changed,sizeof(changed));
     check(!store.load(loaded),"old version in new key rejected");
 
 }

@@ -124,3 +124,7 @@ tests/kalman_carma/process/
 tests/kalman_carma/smoke3_*.csv
 reports/results/carma3_benchmark/traces/
 reports/results/tfg_carma3/traces/
+
+# Unified calibration regression executables
+tests/imu_calibrate/magnetic_fusion_[1-6]
+tests/imu_calibrate/sensor_noise-replay

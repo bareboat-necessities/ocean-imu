@@ -125,6 +125,8 @@
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
 
+#include "kalman_common/MagneticInnovationGate.h"
+
 namespace ocean_imu::kalman {
 
 namespace tfg_carma_detail {
@@ -245,6 +247,11 @@ public:
 
     const MeasDiag3& lastAccDiag() const noexcept { return last_acc_diag_; }
     const MeasDiag3& lastMagDiag() const noexcept { return last_mag_diag_; }
+    const auto& magneticHealth() const { return magnetic_gate_.last(); }
+    bool set_Rmag_covariance(const Matrix3& covariance) {
+        if (!ocean_imu::MagneticInnovationGate<T>::covarianceValid(covariance)) return false;
+        Rmag_ = covariance; return true;
+    }
 
     Kalman3D_Wave_TFG_CARMA3(Vector3 const& sigma_a, Vector3 const& gyro_noise_density_rad_sqrt_s,
                              Vector3 const& sigma_m,
@@ -361,6 +368,9 @@ public:
         Q_gyro_ = d.array().square().matrix().asDiagonal();
     }
     // Gyro-bias random-walk variance density per axis, (rad/s)^2/s.
+    void set_measured_gyro_bias_walk(const Vector3& density,uint8_t mask) {
+        for(int k=0;k<3;++k)if(mask&(1<<k))Q_bg_(k,k)=density[k]*density[k];
+    }
     void set_Q_bgyro_rw(const Vector3& var_per_s) { Q_bg_ = var_per_s.cwiseAbs().asDiagonal(); }
     // The attitude/bias process noise is always the exact one; the flag is
     // kept for interface parity.
@@ -455,6 +465,7 @@ private:
     MatrixNX3 K_scratch_;
 
     MeasDiag3 last_acc_diag_;
+    ocean_imu::MagneticInnovationGate<T> magnetic_gate_{};
     MeasDiag3 last_mag_diag_;
 
     struct StepBlocks {
@@ -1241,6 +1252,9 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     for (int a = 0; a < 3; ++a)
         for (int b = 0; b < 3; ++b)
             S(a,b) += Hphi(a,0) * PHt(OFF_PHI, b) + Hphi(a,1) * PHt(OFF_PHI + 1, b) + Hphi(a,2) * PHt(OFF_PHI + 2, b);
+    const auto decision=magnetic_gate_.evaluate(r, Matrix3(S-Rw), Rw, mag_meas.norm()/B_w_.norm());
+    if (!decision.accepted) { last_mag_diag_.S=S; last_mag_diag_.nis=decision.nis; return; }
+    S += (decision.inflation-T(1))*Rw;
     const bool freeze = !acc_bias_updates_enabled_;
     if (freeze) freeze_acc_bias_rows_(PHt);
     correct3_(r, S, PHt, Rmag_.norm(), freeze, last_mag_diag_);

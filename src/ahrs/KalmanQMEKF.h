@@ -36,6 +36,8 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include "kalman_common/MagneticInnovationGate.h"
+
 using Eigen::Matrix;
 using Eigen::Map;
 
@@ -85,6 +87,16 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     void measurement_update_mag_only(T const mag[3]);
     Vector4 const& quaternion() const;
     MatrixN const& covariance() const;
+    void set_Racc_std(const Vector3& standard_deviation) {Racc=standard_deviation.array().square().matrix().asDiagonal();}
+    void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {Q.template topLeftCorner<3,3>()=density.array().square().matrix().asDiagonal();}
+    void set_measured_gyro_bias_walk(const Vector3& density,uint8_t mask) {
+      if constexpr(with_bias)for(int k=0;k<3;++k)if(mask&(1<<k))Q(3+k,3+k)=density[k]*density[k];
+    }
+    const auto& magneticHealth() const { return magnetic_gate_.last(); }
+    bool set_Rmag_covariance(const Matrix3& covariance) {
+      if(!ocean_imu::MagneticInnovationGate<T>::covarianceValid(covariance))return false;
+      Rmag=covariance;return true;
+    }
     Vector3 gyroscope_bias() const;
 
   private:
@@ -102,11 +114,11 @@ class EIGEN_ALIGN_MAX QuaternionMEKF {
     Matrix4 F;
 
     // Constant matrices
-    const Matrix3 Racc, Rmag;
-    const MatrixM R;
-    const MatrixN Q;
+    Matrix3 Racc, Rmag;
+    ocean_imu::MagneticInnovationGate<T> magnetic_gate_{};
+    MatrixN Q;
 
-    void measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm);
+    void measurement_update_partial(const Eigen::Ref<const Vector3>& meas, const Eigen::Ref<const Vector3>& vhat, const Eigen::Ref<const Matrix3>& Rm, bool magnetic=false);
     void set_transition_matrix(const Eigen::Ref<const Vector3>& gyr, T Ts);
     Matrix3 skew_symmetric_matrix(const Eigen::Ref<const Vector3>& vec) const;
     Matrix3 right_jacobian(const Vector3& angle) const;
@@ -124,7 +136,6 @@ QuaternionMEKF<T, with_bias>::QuaternionMEKF(Vector3 const& sigma_a, Vector3 con
   // here, so a mismatch silently misleads the next person to add a dependency.
   : Racc(sigma_a.array().square().matrix().asDiagonal()),
   Rmag(sigma_m.array().square().matrix().asDiagonal()),
-  R((Vector6() << sigma_a, sigma_m).finished().array().square().matrix().asDiagonal()),
   Q(initialize_Q(sigma_g, b0)) {
 
   qref.setIdentity();
@@ -277,6 +288,12 @@ void QuaternionMEKF<T, with_bias>::measurement_update(Vector3 const& acc, Vector
 
   Matrix3 const C1 = skew_symmetric_matrix(v1hat);
   Matrix3 const C2 = skew_symmetric_matrix(v2hat);
+  const auto decision=magnetic_gate_.evaluate(Vector3(mag-v2hat), Matrix3(C2*P.template topLeftCorner<3,3>()*C2.transpose()), Rmag, mag.norm()/v2hat.norm());
+  if(!decision.accepted) {measurement_update_acc_only(acc);return;}
+  MatrixM Ruse=MatrixM::Zero();
+  Ruse.template topLeftCorner<3,3>()=Racc;
+  Ruse.template bottomRightCorner<3,3>()=decision.inflation*Rmag;
+
 
   Matrix<T, M, N> C;
   if constexpr (with_bias) {
@@ -293,7 +310,7 @@ void QuaternionMEKF<T, with_bias>::measurement_update(Vector3 const& acc, Vector
   Vector6 const y = (Vector6() << acc,
                                   mag).finished();
   Vector6 const inno = y - yhat;
-  MatrixM const s = C * P * C.transpose() + R;
+  MatrixM const s = C * P * C.transpose() + Ruse;
 
   // K = P * C.T * (s)^-1
   // K * s = P * C.T
@@ -309,7 +326,7 @@ void QuaternionMEKF<T, with_bias>::measurement_update(Vector3 const& acc, Vector
 
     // Joseph form of covariance measurement update
     MatrixN const temp = MatrixN::Identity() - K * C;
-    P = temp * P * temp.transpose() + K * R * K.transpose();
+    P = temp * P * temp.transpose() + K * Ruse * K.transpose();
 
     // Apply quaternion correction
     applyQuaternionCorrectionFromErrorState();
@@ -327,7 +344,8 @@ void QuaternionMEKF<T, with_bias>::measurement_update(T const acc[3], T const ma
 }
 
 template<typename T, bool with_bias>
-void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm) {
+void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3 const> const& meas, Eigen::Ref<Vector3 const> const& vhat, Eigen::Ref<Matrix3 const>const& Rm, bool magnetic) {
+  if(!meas.allFinite() || !vhat.allFinite())return;
   Matrix3 const C1 = skew_symmetric_matrix(vhat);
 
   Matrix<T, 3, N> C;
@@ -338,7 +356,14 @@ void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
     C = C1;
   }
   Vector3 const inno = meas - vhat;
-  Matrix3 const s = C * P * C.transpose() + Rm;
+  const Matrix3 HPH=C*P*C.transpose();
+  Matrix3 Ruse=Rm;
+  if(magnetic) {
+    const auto decision=magnetic_gate_.evaluate(Vector3(meas-vhat), HPH, Matrix3(Rm), meas.norm()/vhat.norm());
+    if(!decision.accepted)return;
+    Ruse*=decision.inflation;
+  }
+  Matrix3 const s = HPH + Ruse;
 
   // K = P * C.T * (s)^-1
   // K * s = P * C.T
@@ -346,15 +371,15 @@ void QuaternionMEKF<T, with_bias>::measurement_update_partial(Eigen::Ref<Vector3
   // This is the form
   // x * A = b
   // Which can be solved with the code below
-  Eigen::FullPivLU<Matrix3> lu(s);
-  if (lu.isInvertible()) {
-    Matrix<T, N, 3> const K = P * C.transpose() * lu.inverse();
+  Eigen::LDLT<Matrix3> ldlt(s);
+  if (ldlt.info()==Eigen::Success && ldlt.isPositive()) {
+    Matrix<T, N, 3> const K = ldlt.solve((P*C.transpose()).transpose()).transpose();
 
     x += K * inno;
 
     // Joseph form of covariance measurement update
     MatrixN const temp = MatrixN::Identity() - K * C;
-    P = temp * P * temp.transpose() + K * Rm * K.transpose();
+    P = temp * P * temp.transpose() + K * Ruse * K.transpose();
 
     // Apply quaternion correction
     applyQuaternionCorrectionFromErrorState();
@@ -380,7 +405,7 @@ void QuaternionMEKF<T, with_bias>::measurement_update_acc_only(T const acc[3]) {
 template<typename T, bool with_bias>
 void QuaternionMEKF<T, with_bias>::measurement_update_mag_only(Vector3 const& mag) {
   Vector3 const v2hat = magnetometer_measurement_func();
-  measurement_update_partial(mag, v2hat, Rmag);
+  measurement_update_partial(mag, v2hat, Rmag, true);
 }
 
 template<typename T, bool with_bias>

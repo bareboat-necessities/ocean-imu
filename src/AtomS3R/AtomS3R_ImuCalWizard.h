@@ -11,7 +11,7 @@
   bounded targeted extra holds, three later rechecks, and a full-matrix fit
   with thermal-slope qualification (imu_cal::AccelCalProcedure). In the full
   wizard the rechecks follow the gyro and magnetometer stages; the
-  accelerometer-only mode keeps the saved gyro and magnetometer calibration.
+  separate noise mode retains the current intrinsic calibration.
   Nothing is saved unless the complete candidate validates. Failed writes
   attempt recovery and report whether the previous bytes were verified.
 */
@@ -25,6 +25,9 @@
 #include <limits>
 #include <algorithm>
 #include <atomic>
+#include <memory>
+#include <new>
+#include <esp_heap_caps.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -36,6 +39,9 @@
 #include "imu_calibrate/AccelCalCapture.h"  // accelerometer procedure (host-tested)
 #include "imu_calibrate/MagCalSampling.h"   // magnetic moments and capture
 #include "imu_calibrate/MagTimingCal.h"
+#include "imu_calibrate/GyroCalFit.h"
+#include "imu_calibrate/FrameAlignment.h"
+#include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include "imu_calibrate/GyroCalCapture.h"   // continuous quiet hold
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
@@ -43,6 +49,9 @@
 // complete block logs and may wait for serial output; keep the host reading.
 #ifndef ATOMS3R_ICAL_RAW_LOG
 #define ATOMS3R_ICAL_RAW_LOG 0
+#endif
+#ifndef ATOMS3R_NOISE_RAW_LOG
+#define ATOMS3R_NOISE_RAW_LOG 0
 #endif
 
 namespace atoms3r_ical {
@@ -76,9 +85,10 @@ struct ImuCalWizardCfg {
 
   // FreeRTOS stack:
   static constexpr uint32_t FIT_STACK_BYTES     = 32768;
-  static constexpr uint32_t FIT_STACK_WORDS     = FIT_STACK_BYTES / sizeof(StackType_t);
 
   static constexpr uint32_t FIT_TIMEOUT_MS      = 30000;
+  static constexpr uint32_t GYRO_MATRIX_TIMEOUT_MS = 120000;
+  static constexpr uint32_t NOISE_TIMEOUT_MS = 2520000;
 };
 
 // Small helpers
@@ -102,12 +112,12 @@ public:
   // out_saved is filled with the saved blob (readback-validated). On any
   // abort before SAVE leaves storage untouched. Failed writes report whether
   // recovery was actually verified; storage failure can also prevent rollback.
-  bool runAndSave(ImuCalBlobV5& out_saved) {
+  bool runAndSave(ImuCalBlobV6& out_saved) {
     if (runAndSave_(out_saved)) return true;
     // The magnetometer stage switches to the calibration source; a run that
     // did not save keeps the previous calibration, so read the magnetometer
     // the way that one was fitted again.
-    ImuCalBlobV5 prev{};
+    ImuCalBlobV6 prev{};
     activeMagTiming() = {};
     if (store_.load(prev)) {
       if (magSetValid(prev) && magSourceFollower()) magSourceFollower()(prev.mag_source);
@@ -118,11 +128,10 @@ public:
 
 private:
   /**
-   * Run calibration stages and retry menus, preserving compatible gyro/magnetic
-   * data in accelerometer-only mode. Fill out_saved and return true only after
+   * Run calibration stages and retry menus. Fill out_saved and return true only after
    * saving and validating readback; return false on cancellation or save failure.
    */
-  bool runAndSave_(ImuCalBlobV5& out_saved) {
+  bool runAndSave_(ImuCalBlobV6& out_saved) {
     Serial.println("[WIZ] start");
 
     for (;;) {
@@ -140,25 +149,24 @@ private:
       mag_verified_ = false;
       timing_fit_ = {}; timing_saved_ = false;
 
-      // Previous calibration: source of the preserved gyro/mag
-      // (accelerometer-only mode), a compatible thermal slope, and the
-      // stationary gyro level used by the rotation gate.
-      ImuCalBlobV5 prev{};
+      // A valid CURRENT-schema record may supply a qualified thermal prior
+      // and the raw stationary gyro level used by the accelerometer gate.
+      ImuCalBlobV6 prev{};
       const bool have_prev = store_.load(prev);
       sensorIdentity_();
-      // Preserved gyro/mag fields must belong to this sensor and source. The
-      // optional timing record is carried unchanged; it stays bound to them.
-      const bool can_accel_only = have_prev && gyroSetValid(prev) &&
-          prev.sensor_id_lo == sensor_id_lo_ && prev.sensor_id_hi == sensor_id_hi_ &&
-          prev.imu_type == imu_type_ && (!prev.mag_ok || prev.mag_source == activeMagSource());
+      // Gyro endpoints and magnetic alignment depend on the final accel fit.
+      // A full recalibration is required when changing that intrinsic model.
+      RuntimeCals previous_runtime;
+      if(have_prev)previous_runtime.rebuildFromBlob(prev);
+      const bool can_noise=have_prev && !calibrationUnusableReason(true,previous_runtime);
 
-      const M5Ui::StartAction start = ui_.startMenu(can_accel_only);
+      const M5Ui::StartAction start = ui_.startMenu(can_noise);
       if (start == M5Ui::StartAction::CANCEL) {
         Serial.println("[WIZ] cancelled; previous calibration kept");
         return false;
       }
-      const bool accel_only = (start == M5Ui::StartAction::ACCEL_ONLY);
-      Serial.printf("[WIZ] mode=%s have_prev=%d\n", accel_only ? "accel_only" : "full", (int)have_prev);
+      if(start==M5Ui::StartAction::NOISE)return captureNoise_(prev,out_saved);
+      Serial.printf("[WIZ] mode=full have_prev=%d\n", (int)have_prev);
 
       const imu_cal::AccelThermalPrior prior =
           have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
@@ -166,7 +174,7 @@ private:
       const Vector3f gyro_level = have_prev && prev.gyro_ok
           ? Vector3f(prev.gyro_b0[0], prev.gyro_b0[1], prev.gyro_b0[2]) : Vector3f::Zero();
       // Replay context (tests/imu_calibrate/accel_cal-replay).
-      Serial.printf("[ACCMODE] %s g=%.7f\n", accel_only ? "accel_only" : "full", (double)accel_fcfg_.g);
+      Serial.printf("[ACCMODE] full g=%.7f\n", (double)accel_fcfg_.g);
       Serial.printf("[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f\n", (int)prior.valid, prior.k[0], prior.k[1],
                     prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
       Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,%d\n", (double)gyro_level.x(), (double)gyro_level.y(),
@@ -177,47 +185,51 @@ private:
 
       if (!accel_.runMainStage(io)) return accelFail_();
 
-      if (!accel_only) {
-        if (!captureGyro_()) return false;
-        if (gyroCal_.buf.n < ImuCalWizardCfg::GYRO_MIN_TO_FIT) {
-          ui_.fail("GYRO", "Too few accepted");
-          return false;
-        }
-        if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
-        accel_.setGyroReference(gyr_out_.biasT.b0);
-        Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
-                      (double)gyr_out_.biasT.b0.z());
+      if (!captureGyro_()) return false;
+      if (gyroCal_.buf.n < ImuCalWizardCfg::GYRO_MIN_TO_FIT) {
+        ui_.fail("GYRO", "Too few accepted");
+        return false;
+      }
+      if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
+      accel_.setGyroReference(gyr_out_.biasT.b0);
+      Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
+                    (double)gyr_out_.biasT.b0.z());
 
-        // If mag is unavailable, skip MAG stage cleanly. A saved magnetometer
-        // calibration is never dropped that way: the user retries the probe
-        // or aborts (previous calibration kept).
-        bool mag_present = magAvailable_();
-        while (!mag_present && have_prev && magSetValid(prev)) {
-          Serial.println("[MAG] not responding; saved mag calibration exists -> retry or abort");
-          const auto act = ui_.magFailMenu("MAG not responding", "Abort keeps old cal");
-          if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
-          if (act != M5Ui::MagFailAction::RETRY_MAG) return false;
-          mag_present = magAvailable_();
-        }
+      // Complete calibration requires a magnetic triad and its alignment;
+      // retry the probe or abort without writing.
+      bool mag_present = magAvailable_();
+      while (!mag_present) {
+        Serial.println("[MAG] not responding; retry or abort full calibration");
+        const auto act = ui_.magFailMenu("MAG not responding", "Abort keeps old cal");
+        if (act == M5Ui::MagFailAction::REDO_ALL) { redo_all = true; break; }
+        if (act != M5Ui::MagFailAction::RETRY_MAG) return false;
+        mag_present = magAvailable_();
+      }
+      if (redo_all) {
+        Serial.println("[WIZ] redo all requested");
+        continue;
+      }
+      if (!runMagStage_(redo_all)) {
         if (redo_all) {
           Serial.println("[WIZ] redo all requested");
           continue;
         }
-        if (!mag_present) {
-          Serial.println("[MAG] unavailable -> skipping mag calibration");
-          mag_out_.ok = false;
-        } else if (!runMagStage_(redo_all)) {
-          if (redo_all) {
-            Serial.println("[WIZ] redo all requested");
-            continue;
-          }
-          return false;
-        }
+        return false;
       }
 
+      // Later rechecks (thermal evidence + held-out verification), final fit.
+      if (!accel_.runRecheckStage(io)) return accelFail_();
+      if (!accel_.runFinalFit(io)) return accelFail_();
+      for(;;) {
+        if(!captureGyroRotations_())return false;
+        if(runFitTask_(FitKind::GYRO_MATRIX,"GYRO matrix",false))break;
+        if(!ui_.retryMenu("GYRO / ALIGN","More varied tilts","Repeat rotations"))return false;
+      }
+      gyro_rotations_.reset();
+      if(!captureMounting_())return false;
       // Optional magnetic timing record. It is stored for diagnostics only;
       // runtime magnetic corrections do not apply it.
-      if (!accel_only && mag_out_.ok && gyr_out_.ok && activeMagTimingConfiguration()) {
+      if (mag_out_.ok && gyr_out_.ok && activeMagTimingConfiguration()) {
         timing_cal_.reset();
         while (!captureMagTiming_()) {
           const auto action=ui_.timingFailMenu("Timing not identified", imu_cal::magTimingReason(timing_fit_.reason));
@@ -227,39 +239,37 @@ private:
         }
       }
 
-      // Later rechecks (thermal evidence + held-out verification), final fit.
-      if (!accel_.runRecheckStage(io)) return accelFail_();
-      if (!accel_.runFinalFit(io)) return accelFail_();
-
-      // Candidate: new accelerometer set; gyro/mag from this run, or carried
-      // unchanged from the previous calibration in accelerometer-only mode.
+      // One candidate contains every intrinsic fit and frame qualification.
       imu_cal::AccelCalibration<float> fc;
       AccelProc::Fitter::toFloat(accel_.result(), accel_fcfg_.g, fc);
       const uint32_t capture_s = accel_.totalHoldMs() / 1000u;
-      ImuCalBlobV5 blob;
-      if (accel_only) {
-        blob = accelOnlyCandidate(prev, accel_.result(), fc, capture_s, sensor_id_lo_, sensor_id_hi_, imu_type_);
-      } else {
-        fillGyroMag_(blob);
-        fillAccelFromFit(blob, accel_.result(), fc, capture_s);
-        blob.sensor_id_lo = sensor_id_lo_;
-        blob.sensor_id_hi = sensor_id_hi_;
-        blob.imu_type = imu_type_;
-        blob.mag_timing = {};
-        if (blob.mag_ok && timing_fit_.ok) {
-          auto& t=blob.mag_timing;
-          t.version=1; t.binding=magTimingBinding(blob); t.configuration=activeMagTimingConfiguration();
-          t.delay_us=timing_fit_.delay_us; t.fit_width_s=timing_fit_.fit_width_s;
-          t.residual_time_s=timing_fit_.residual_time_s;
-          t.train_rms_rad=timing_fit_.train_rms_rad; t.validation_rms_rad=timing_fit_.validation_rms_rad;
-          t.improvement=timing_fit_.improvement;
-          t.train_pairs=timing_fit_.train_pairs; t.validation_pairs=timing_fit_.validation_pairs;
-          t.crc=magTimingCrc(t);
-        }
+      ImuCalBlobV6 blob;
+      fillGyroMag_(blob);
+      blob.mag_alignment_ok=alignment_.ok;
+      mat_to_rowmajor9_(alignment_.R,blob.R_IM);
+      mat_to_rowmajor9_(mount_HI_,blob.R_HI);mat_to_rowmajor9_(mount_VH_,blob.R_VH);
+      blob.housing_alignment_ok=blob.vessel_alignment_ok=1;
+      blob.alignment_train_sd=alignment_.dip_sd_after;blob.alignment_validation_sd=alignment_validation_;
+      blob.alignment_condition=alignment_.condition;blob.alignment_train_poses=16;blob.alignment_validation_poses=5;
+      fillAccelFromFit(blob, accel_.result(), fc, capture_s);
+      blob.sensor_id_lo = sensor_id_lo_;
+      blob.sensor_id_hi = sensor_id_hi_;
+      blob.imu_type = imu_type_;
+      blob.mag_timing = {};
+      if (blob.mag_ok && timing_fit_.ok) {
+        auto& t=blob.mag_timing;
+        t.version=1; t.binding=magTimingBinding(blob); t.configuration=activeMagTimingConfiguration();
+        t.delay_us=timing_fit_.delay_us; t.fit_width_s=timing_fit_.fit_width_s;
+        t.residual_time_s=timing_fit_.residual_time_s;
+        t.train_rms_rad=timing_fit_.train_rms_rad; t.validation_rms_rad=timing_fit_.validation_rms_rad;
+        t.improvement=timing_fit_.improvement;
+        t.train_pairs=timing_fit_.train_pairs; t.validation_pairs=timing_fit_.validation_pairs;
+        t.crc=magTimingCrc(t);
       }
 
       // The stored float set, rebuilt through the runtime path, must reproduce
       // the fit before it is written...
+      blob=ImuCalStoreNvs::sealed_(blob);
       if (!validateStoredOnTask_(blob, "candidate")) {
         ui_.fail("SAVE", "Float check failed");
         return false;
@@ -268,7 +278,7 @@ private:
       ui_.setReadRotation();
       ui_.title("SAVE");
       ui_.line("Writing...");
-      ImuCalBlobV5 rb{};
+      ImuCalBlobV6 rb{};
       const bool saved = store_.saveVerified(blob, rb);
       // ...and again after the read-back, which must be byte-identical to it.
       const bool rb_ok = saved && validateStoredOnTask_(rb, "readback");
@@ -295,6 +305,214 @@ private:
   }
 
   using AccelProc = imu_cal::AccelCalProcedure<ImuCalWizardCfg::ACCEL_MAX_OBS, ImuCalWizardCfg::ACCEL_MAX_HOLDS>;
+  using RotationFit=imu_cal::GyroRotationFit<32768,24>;
+  struct RotationDeleter {
+    void operator()(RotationFit* p) const {if(p){p->~RotationFit();heap_caps_free(p);}}
+  };
+
+  bool captureGyroRotations_() {
+    // Large acquisition buffer lives in PSRAM only, never on a task stack.
+    gyro_rotations_.reset();
+    void* memory=heap_caps_malloc(sizeof(RotationFit),MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+    if(!memory){ui_.fail("GYRO","Not enough PSRAM");return false;}
+    gyro_rotations_.reset(new(memory) RotationFit{});
+    Serial.printf("[GYRROT] storage=%u PSRAM_free=%u\n",unsigned(sizeof(RotationFit)),
+      unsigned(heap_caps_get_free_size(MALLOC_CAP_SPIRAM)));
+    if(!captureGyro_() || !runFitTask_(FitKind::GYRO,"GYRO bias",true))return false;
+    alignment_pose_count_=0;
+    auto retainPose=[&]() {
+      if(alignment_pose_count_>=24 || !endpoint_m_.allFinite())return false;
+      raw_alignment_[alignment_pose_count_].a=endpoint_a_;
+      raw_alignment_[alignment_pose_count_].m_raw=endpoint_m_;
+      alignment_temp_[alignment_pose_count_++]=endpoint_temp_;return true;
+    };
+    if(!retainPose()){ui_.fail("ALIGN","No quiet mag data");return false;}
+    Vector3f bias_sum=gyr_out_.biasT.b0;unsigned bias_poses=1;
+    for(int segment=0;segment<20;++segment) {
+      bool accepted=false;
+      while(!accepted) {
+        char label[32];snprintf(label,sizeof(label),"Rotation %d / 20",segment+1);
+        ui_.waitTap("GYRO 3D",label,"Hold; tap, then turn");
+        ui_.title("TURN/HOLD");ui_.line("Turn 40-120 deg");ui_.line("Use varied axes");
+        ui_.line("Then place & hold");ui_.line("Keep clear of metal");
+        const int hint=ui_.cursorY();ui_.line("Wait for quiet pose");
+        const uint32_t start=micros();
+        gyro_rotations_->beginSegment(start,endpoint_a_,endpoint_temp_,segment%4==3);
+        imu_cal::GyroCaptureCfg cfg;cfg.timeout_ms=45000;
+        imu_cal::GyroCapture<float,400,8> quiet(gyroCal_,cfg);quiet.begin(millis());
+        uint32_t draw=millis();bool failed=false;
+        while(true) {
+          Input::update();
+          ImuSample s;const bool fresh=readSample_(s);const uint32_t now=millis();
+          if(fresh && !gyro_rotations_->add(s.sample_us,s.w,s.tempC)){failed=true;break;}
+          const auto state=quiet.update(now,fresh?&s.a:nullptr,fresh?&s.w:nullptr,
+            fresh?s.tempC:NAN,fresh?&s.m:nullptr);
+          if(state==imu_cal::GyroCaptureStatus::READY) {
+            const Vector3f a=quiet.meanAccel(),w=quiet.meanGyro();
+            const float t=quiet.meanTemperature();
+            if((w-gyr_out_.biasT.bias(t)).norm()>.01f ||
+               (a.normalized().cross(endpoint_a_.normalized())).norm()<.2f ||
+               !quiet.hasMagReference()){failed=true;break;}
+            accepted=gyro_rotations_->finishSegment(a,t,cfg.useful_ms*.001);
+            if(!accepted){failed=true;break;}
+            endpoint_a_=a;endpoint_w_=w;endpoint_temp_=t;endpoint_m_=quiet.meanMag();
+            if(!retainPose())return false;
+            bias_sum+=w-gyr_out_.biasT.k*(t-gyr_out_.biasT.T0);++bias_poses;
+            break;
+          }
+          if(state==imu_cal::GyroCaptureStatus::STALE || state==imu_cal::GyroCaptureStatus::TIMEOUT) {
+            failed=true;break;
+          }
+          if(uint32_t(now-draw)>=150) {
+            ui_.lineAt(hint,state==imu_cal::GyroCaptureStatus::MOVING?"Turning...":"Hold this pose");
+            ui_.bar01((segment+quiet.progress())/20.f);draw=now;
+          }
+          delay(1);
+        }
+        if(failed) {
+          const char* reason=imu_cal::gyroRotationReason(gyro_rotations_->reason);
+          gyro_rotations_->cancelSegment();
+          if(!ui_.retryMenu("GYRO rotation",reason,"New pose; vary tilt axes"))return false;
+          // A retry establishes a NEW quiet start, never reuses an endpoint
+          // after an unobserved movement or a gap.
+          if(!captureGyro_())return false;
+        }
+      }
+    }
+    gyr_out_.biasT.b0=bias_sum/float(bias_poses);
+    return true;
+  }
+
+  static void fitTaskGyroMatrix_(void* p) {
+    FitCtx* ctx=static_cast<FitCtx*>(p);ImuCalWizard& w=*ctx->wiz;
+    imu_cal::AccelCalibration<float> acc;AccelProc::Fitter::toFloat(w.accel_.result(),w.accel_fcfg_.g,acc);
+    const uint32_t start=micros();
+    ctx->ok=w.gyro_rotations_ && w.gyro_rotations_->fit(acc,w.gyr_out_,[](void*){vTaskDelay(1);});
+    if(ctx->ok) {
+      atoms3r_magdiag::Pose train[24],validation[24];int nt=0,nv=0;
+      for(int i=0;i<w.alignment_pose_count_;++i) {
+        auto pose=w.raw_alignment_[i];pose.a=acc.apply(pose.a,w.alignment_temp_[i]);
+        const float norm=w.mag_out_.apply(pose.m_raw).norm();
+        if(!std::isfinite(norm) || std::fabs(norm-w.mag_out_.field_uT)>3.f){ctx->ok=false;break;}
+        if(i && i%4==0)validation[nv++]=pose;else train[nt++]=pose;
+      }
+      atoms3r_magdiag::MagModel model;model.A=w.mag_out_.A;model.b=w.mag_out_.b;
+      if(ctx->ok) {
+        w.alignment_=atoms3r_magdiag::solveAlignment(train,nt,model);
+        ctx->ok=atoms3r_magdiag::validateAlignment(w.alignment_,validation,nv,model,w.alignment_validation_);
+      }
+    }
+    ctx->reason=ctx->ok?imu_cal::FitFail::OK:imu_cal::FitFail::DEGENERATE_COVERAGE;
+    Serial.printf("[GYRROT] ok=%d reason=%s fit_us=%lu train=%.6g validation=%.6g cond=%.6g stack_hwm=%luB\n",
+      int(ctx->ok),w.gyro_rotations_?imu_cal::gyroRotationReason(w.gyro_rotations_->reason):"no buffer",
+      static_cast<unsigned long>(micros()-start),double(w.gyr_out_.rotation_train_rms),
+      double(w.gyr_out_.rotation_validation_rms),double(w.gyr_out_.rotation_condition),
+      static_cast<unsigned long>(hwmBytes_()));
+    Serial.printf("[ALIGN] ok=%d train_sd=%.4f independent_rms=%.4f cond=%.5g\n",int(w.alignment_.ok),
+      double(w.alignment_.dip_sd_after),double(w.alignment_validation_),double(w.alignment_.condition));
+    ctx->done=true;vTaskDelete(nullptr);
+  }
+
+  bool captureMounting_() {
+    ui_.title("MOUNT");ui_.line("x fwd, y stbd, z down");
+    ui_.line("Tap ONLY if I=H=V");ui_.line("Else serial: MOUNT");
+    ui_.line("18 matrix entries");
+    Serial.println("[MOUNT] Tap confirms aligned IMU/housing/vessel axes. Otherwise send MOUNT followed by R_HI and R_VH, each 9 row-major entries.");
+    mount_HI_.setIdentity();mount_VH_.setIdentity();
+    char line[400];size_t n=0;
+    while(true) {
+      Input::update();if(Input::tapPressed())return true;
+      while(Serial.available()) {
+        const char c=char(Serial.read());
+        if(c=='\r')continue;
+        if(c!='\n') {if(n+1<sizeof(line))line[n++]=c;else n=0;continue;}
+        line[n]=0;n=0;
+        float r[18];int end=0;
+        const int fields=sscanf(line,"MOUNT %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %n",
+          &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7],&r[8],&r[9],&r[10],&r[11],&r[12],
+          &r[13],&r[14],&r[15],&r[16],&r[17],&end);
+        if(fields==18 && line[end]==0 && rotationValid(r) && rotationValid(r+9)) {
+          mount_HI_=mat_from_rowmajor9_(r);mount_VH_=mat_from_rowmajor9_(r+9);
+          Serial.println("[MOUNT] accepted");return true;
+        }
+        Serial.println("[MOUNT] invalid: need two proper orthonormal rotations");
+      }
+      delay(2);
+    }
+  }
+
+  static void fitTaskNoise_(void* p) {
+    FitCtx* ctx=static_cast<FitCtx*>(p);ImuCalWizard& w=*ctx->wiz;
+    RuntimeCals runtime;runtime.rebuildFromBlob(*ctx->blob);
+    ctx->ok=false;ctx->reason=imu_cal::FitFail::BAD_ARG;
+    if(!calibrationUnusableReason(true,runtime) && w.noise_capture_) {
+      imu_cal::GyroCapture<float,400,8> quiet(w.gyroCal_);quiet.begin(millis());
+      bool settled=false;uint32_t next=micros();
+      while(!w.noise_cancel_.load()) {
+        const int32_t wait=int32_t(next-micros());if(wait>0)delayMicroseconds(uint32_t(wait));
+        next+=5000; // same 200 Hz clock as the production sensor path
+        ImuSample s;const bool fresh=readImuMapped(M5.Imu,s);
+        if(!settled) {
+          const auto state=quiet.update(millis(),fresh?&s.a:nullptr,fresh?&s.w:nullptr,
+            fresh?s.tempC:NAN,fresh?&s.m:nullptr);
+          if(state==imu_cal::GyroCaptureStatus::READY) {
+            settled=true;w.noise_capture_->begin(s.sample_us,.005,ImuCalCfg::g_cal_local);
+          } else if(state==imu_cal::GyroCaptureStatus::STALE || state==imu_cal::GyroCaptureStatus::TIMEOUT) {
+            ctx->reason=imu_cal::FitFail::GYRO_NOT_STILL;break;
+          }
+        } else if(fresh) {
+          const Vector3f a=runtime.applyAccel(s.a,s.tempC),rate=runtime.applyGyro(s.w,s.tempC),m=runtime.applyMag(s.m);
+          const auto state=w.noise_capture_->add(s.sample_us,a,rate,s.tempC,&m);
+#if ATOMS3R_NOISE_RAW_LOG
+          char raw[220];snprintf(raw,sizeof(raw),"[NOISERAW] %lu,%.8g,%.8g,%.8g,%.8g,%.8g,%.8g,%.6g",
+            static_cast<unsigned long>(s.sample_us),double(a.x()),double(a.y()),double(a.z()),
+            double(rate.x()),double(rate.y()),double(rate.z()),double(s.tempC));
+          if(!tryCalLogLine(Serial,raw)){Serial.println("[NOISE] raw log dropped");break;}
+#endif
+          w.noise_progress_.store(w.noise_capture_->progress());
+          if(state==imu_cal::NoiseCaptureStatus::READY){ctx->ok=true;ctx->reason=imu_cal::FitFail::OK;break;}
+          if(state!=imu_cal::NoiseCaptureStatus::CAPTURING) {
+            Serial.printf("[NOISE] rejected status=%u samples=%lu\n",unsigned(state),
+              static_cast<unsigned long>(w.noise_capture_->samples()));break;
+          }
+        }
+        // Yield before the next precise epoch; display work stays on core 1.
+        vTaskDelay(1);
+      }
+    }
+    Serial.printf("[NOISE] ok=%d cancelled=%d stack_free=%luB\n",int(ctx->ok),int(w.noise_cancel_.load()),
+      static_cast<unsigned long>(hwmBytes_()));
+    ctx->done=true;vTaskDelete(nullptr);
+  }
+
+  bool captureNoise_(const ImuCalBlobV6& previous,ImuCalBlobV6& out) {
+    ui_.waitTap("NOISE 40M","Warm up; quiet table","Tap then leave still");
+    Serial.printf("[NOISESTART] schema=6 calibration_crc=%08lx sensor=%08lx%08lx period=.005\n",
+      static_cast<unsigned long>(previous.crc),static_cast<unsigned long>(previous.sensor_id_hi),
+      static_cast<unsigned long>(previous.sensor_id_lo));
+    noise_capture_.reset(new(std::nothrow) imu_cal::StationaryNoiseCapture<>{});
+    if(!noise_capture_){ui_.fail("NOISE","Allocation failed");return false;}
+    noise_progress_=0;noise_cancel_=false;fit_.blob=&previous;
+    const bool acquired=runFitTask_(FitKind::NOISE_CAPTURE,"NOISE 40M",false);fit_.blob=nullptr;
+    if(!acquired){if(!noise_cancel_.load())ui_.fail("NOISE","Motion/timing/temp");noise_capture_.reset();return false;}
+    auto& capture=*noise_capture_;
+    ImuCalBlobV6 candidate=previous;
+    if(!capture.report(candidate.noise)){ui_.fail("NOISE","Noise not identified");return false;}
+    for(int l=0;l<17;++l) {
+      Serial.printf("[ALLAN] %.8g,%lu",capture.tau(l),static_cast<unsigned long>(capture.pairs(l)));
+      for(int k=0;k<6;++k)Serial.printf(",%.9g",capture.deviation(l,k));Serial.println();
+    }
+    for(int k=0;k<6;++k)Serial.printf("[NOISE] axis=%d N=%.9g sample_std=%.9g BI=%s:%.9g RW=%s:%.9g\n",
+      k,double(candidate.noise.white_density[k]),double(candidate.noise.sample_std[k]),
+      candidate.noise.bias_mask&(1<<k)?"identified":"unidentified",double(candidate.noise.bias_instability[k]),
+      candidate.noise.walk_mask&(1<<k)?"identified":"unidentified",double(candidate.noise.bias_random_walk[k]));
+    if(!store_.saveVerified(candidate,out)) {
+      Serial.printf("[NOISE] save failed status=%u\n",unsigned(store_.lastSaveStatus()));
+      ui_.fail("NOISE",store_.lastSaveStatus()==ImuCalStoreNvs::SaveStatus::RECOVERY_FAILED?
+        "Recovery failed":"Write/readback fail");return false;
+    }
+    noise_capture_.reset();ui_.showOkAuto("NOISE","Model saved");return true;
+  }
 
   // Screens, samples and the fit task for the accelerometer procedure.
   class AccelIo : public imu_cal::AccelCalIo {
@@ -417,11 +635,11 @@ private:
 
   // Rebuilds RuntimeCals from `b` and re-validates the accelerometer set on
   // the retained observations (float, exactly as applied at runtime).
-  bool validateStored_(const ImuCalBlobV5& b, const char* what) {
+  bool validateStored_(const ImuCalBlobV6& b, const char* what) {
     RuntimeCals rc;
     rc.rebuildFromBlob(b);
     imu_cal::AccelFullFitResult r = accel_.result();
-    bool ok = rc.acc.ok && AccelProc::Fitter::validateFloat(accel_.obs(), accel_.nObs(), rc.acc, accel_fcfg_, r) &&
+    bool ok = !calibrationUnusableReason(true,rc) && rc.acc.ok && AccelProc::Fitter::validateFloat(accel_.obs(), accel_.nObs(), rc.acc, accel_fcfg_, r) &&
                     accelMetaBound(b);
     if (mag_verified_) {
       imu_cal::MagFitQuality q;
@@ -432,7 +650,7 @@ private:
     return ok;
   }
 
-  void showDone_(const ImuCalBlobV5& rb) {
+  void showDone_(const ImuCalBlobV6& rb) {
     ui_.setReadRotation();
     ui_.title("DONE");
     M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
@@ -505,7 +723,7 @@ private:
 
 private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4, GYRO_MATRIX=5, NOISE_CAPTURE=6 };
 
   struct FitCtx {
     // Publish fitted coefficients across cores before the UI consumes them.
@@ -514,7 +732,7 @@ private:
     imu_cal::FitFail reason = imu_cal::FitFail::BAD_ARG;
     FitKind kind = FitKind::GYRO;
     imu_cal::AccelFitJob* job = nullptr;
-    const ImuCalBlobV5* blob = nullptr;   // SAVE_CHECK
+    const ImuCalBlobV6* blob = nullptr;   // SAVE_CHECK
     const char* blob_what = "";
 
     ImuCalWizard* wiz = nullptr;
@@ -522,8 +740,8 @@ private:
   } fit_{};
 
   static uint32_t hwmBytes_() {
-    const uint32_t words = (uint32_t)uxTaskGetStackHighWaterMark(nullptr);
-    return words * (uint32_t)sizeof(StackType_t);
+    // ESP-IDF reports free stack in BYTES, unlike upstream FreeRTOS.
+    return (uint32_t)uxTaskGetStackHighWaterMark(nullptr);
   }
 
   // Accelerometer procedure fit (preliminary or final) on the large-stack task.
@@ -548,7 +766,7 @@ private:
     vTaskDelete(nullptr);
   }
 
-  bool validateStoredOnTask_(const ImuCalBlobV5& b, const char* what) {
+  bool validateStoredOnTask_(const ImuCalBlobV6& b, const char* what) {
     fit_.blob = &b;
     fit_.blob_what = what;
     const bool ok = runFitTask_(FitKind::SAVE_CHECK, "SAVE check", false);
@@ -615,14 +833,16 @@ private:
     fit_.task = nullptr;
 
     ui_.setReadRotation();
-    ui_.title(kind == FitKind::MAG ? "REFINE" : "FIT");
+    ui_.title(kind==FitKind::NOISE_CAPTURE?"NOISE 40M":kind == FitKind::MAG ? "REFINE" : "FIT");
     ui_.line(what);
-    ui_.line(kind == FitKind::MAG ? "Improving the fit" : "Working...");
+    ui_.line(kind==FitKind::NOISE_CAPTURE?"Keep still; tap stops":kind == FitKind::MAG ? "Improving the fit" : "Working...");
 
     TaskFunction_t fn = nullptr;
     switch (kind) {
       case FitKind::ACCEL_JOB: fn = &ImuCalWizard::fitTaskAccelJob_; break;
       case FitKind::GYRO:  fn = &ImuCalWizard::fitTaskGyro_;  break;
+      case FitKind::GYRO_MATRIX: fn=&ImuCalWizard::fitTaskGyroMatrix_;break;
+      case FitKind::NOISE_CAPTURE: fn=&ImuCalWizard::fitTaskNoise_;break;
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       case FitKind::MAG_VERIFY: fn = &ImuCalWizard::fitTaskMagVerify_; break;
       case FitKind::SAVE_CHECK: fn = &ImuCalWizard::fitTaskSaveCheck_; break;
@@ -633,9 +853,9 @@ private:
     const BaseType_t rc = xTaskCreatePinnedToCore(
       fn,
       what,
-      (uint32_t)ImuCalWizardCfg::FIT_STACK_WORDS, // FreeRTOS (StackType_t)
+      (uint32_t)ImuCalWizardCfg::FIT_STACK_BYTES, // ESP-IDF uses bytes
       &fit_,
-      1,
+      kind==FitKind::NOISE_CAPTURE?2:1,
       &fit_.task,
       0
     );
@@ -647,11 +867,14 @@ private:
 
     const uint32_t t0 = millis();
     float ph = 0.f;
+    uint32_t last_draw=t0;
+    const uint32_t timeout=kind==FitKind::NOISE_CAPTURE?ImuCalWizardCfg::NOISE_TIMEOUT_MS:
+      kind==FitKind::GYRO_MATRIX?ImuCalWizardCfg::GYRO_MATRIX_TIMEOUT_MS:ImuCalWizardCfg::FIT_TIMEOUT_MS;
 
     while (!fit_.done) {
       Input::update();
 
-      if ((uint32_t)(millis() - t0) > ImuCalWizardCfg::FIT_TIMEOUT_MS) {
+      if ((uint32_t)(millis() - t0) > timeout) {
         vTaskDelete(fit_.task);
         fit_.task = nullptr;
         fit_.reason = imu_cal::FitFail::BAD_ARG;
@@ -659,8 +882,10 @@ private:
         return false;
       }
 
-      ph += 0.09f;
-      ui_.bar01(0.5f + 0.5f * sinf(ph));
+      if(kind==FitKind::NOISE_CAPTURE) {
+        if(Input::tapPressed())noise_cancel_=true;
+        if(uint32_t(millis()-last_draw)>=1000){ui_.bar01(noise_progress_.load());last_draw=millis();}
+      } else {ph += 0.09f;ui_.bar01(0.5f + 0.5f * sinf(ph));}
       delay(30);
     }
 
@@ -790,6 +1015,8 @@ private:
       }
       if (status == imu_cal::GyroCaptureStatus::READY) {
         Serial.printf("[GYR] quiet capture n=%d restarts=%lu\n", gyroCal_.buf.n, (unsigned long)capture.resets());
+        endpoint_a_=capture.meanAccel();endpoint_w_=capture.meanGyro();endpoint_temp_=capture.meanTemperature();
+        endpoint_m_=capture.meanMag();
         ui_.showOkAuto("GYRO", "Captured");
         return true;
       }
@@ -924,7 +1151,7 @@ private:
         // Timing uses every gyro delivery, including gyro-only frames.
         if (readImuMapped(M5.Imu, sample, true)) {
           const Vector3f w=gyr_out_.apply(sample.w,sample.tempC);
-          const Vector3f m=mag_out_.apply(sample.m);
+          const Vector3f m=alignment_.R*mag_out_.apply(sample.m);
           timing_cal_.add(sample.sample_us,w,sample.mag_timing.have,
               sample.mag_timing.sequence,sample.mag_timing.frame_us,m,segment);
         }
@@ -964,11 +1191,11 @@ private:
 
   // Gyro and magnetometer fields of a full-wizard candidate (the accelerometer
   // set is filled by fillAccelFromFit()).
-  void fillGyroMag_(ImuCalBlobV5& blob) {
-    memset((void*)&blob, 0, sizeof(blob));
-    blob.magic = ImuCalBlobV5::IMU_CAL_MAGIC;
-    blob.version = ImuCalBlobV5::IMU_CAL_VERSION;
-    blob.size_bytes = sizeof(ImuCalBlobV5);
+  void fillGyroMag_(ImuCalBlobV6& blob) {
+    blob = ImuCalBlobV6{};
+    blob.magic = ImuCalBlobV6::IMU_CAL_MAGIC;
+    blob.version = ImuCalBlobV6::IMU_CAL_VERSION;
+    blob.size_bytes = sizeof(ImuCalBlobV6);
 
     fillGyroFromFit(blob, gyr_out_);
 
@@ -990,6 +1217,17 @@ public:
   imu_cal::AccelCaptureCfg accel_ccfg_{};
   imu_cal::AccelFitCfg accel_fcfg_{};
   imu_cal::GyroCalibrator<float,  400, 8> gyroCal_{};
+  std::unique_ptr<RotationFit,RotationDeleter> gyro_rotations_;
+  std::unique_ptr<imu_cal::StationaryNoiseCapture<>> noise_capture_;
+  std::atomic<float> noise_progress_{0};std::atomic<bool> noise_cancel_{false};
+  Vector3f endpoint_a_=Vector3f::Zero(),endpoint_w_=Vector3f::Zero(),endpoint_m_=Vector3f::Zero();
+  float endpoint_temp_=25;
+  atoms3r_magdiag::Pose raw_alignment_[24];
+  float alignment_temp_[24]{};
+  int alignment_pose_count_=0;
+  atoms3r_magdiag::Alignment alignment_{};
+  float alignment_validation_=INFINITY;
+  Matrix3f mount_HI_=Matrix3f::Identity(),mount_VH_=Matrix3f::Identity();
   imu_cal::MagCalibrator<float,   400>    magCal_{};
 
   imu_cal::GyroCalibration<float>  gyr_out_{};

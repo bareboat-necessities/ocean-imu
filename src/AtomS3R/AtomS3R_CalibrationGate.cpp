@@ -7,7 +7,7 @@
 namespace atoms3r_ical {
 namespace {
 
-void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCalBlobV5& blob,
+void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCalBlobV6& blob,
                        const RuntimeCals& rc) {
   if (!why) {
     Serial.println("[CAL] applied: accelerometer, gyroscope, magnetometer");
@@ -29,7 +29,7 @@ void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCa
 
 }  // namespace
 
-void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV5& blob, bool& have_blob,
+void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV6& blob, bool& have_blob,
                               RuntimeCals& runtime, CalibrationWizardFn wizard) {
   const char* why = calibrationUnusableReason(have_blob, runtime);
   reportCalibration(why, wizard != nullptr, have_blob, blob, runtime);
@@ -55,7 +55,7 @@ void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV5& blo
     }
 
     clearM5UnifiedImuCalibration();
-    ImuCalBlobV5 saved{};
+    ImuCalBlobV6 saved{};
     if (wizard(ui, store, saved)) {
       blob = saved;
       have_blob = true;

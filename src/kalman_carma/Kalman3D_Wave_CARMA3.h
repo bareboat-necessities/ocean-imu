@@ -58,6 +58,8 @@
 #include "kalman_common/PeriodicSchedule.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 
+#include "kalman_common/MagneticInnovationGate.h"
+
 namespace ocean_imu::kalman {
 
 template <typename T = float, int NHC = 4, bool SH = false, int NZC = 4, bool SZ = false,
@@ -113,6 +115,11 @@ public:
 
     const MeasDiag3& lastAccDiag() const noexcept { return last_acc_diag_; }
     const MeasDiag3& lastMagDiag() const noexcept { return last_mag_diag_; }
+    const auto& magneticHealth() const { return magnetic_gate_.last(); }
+    bool set_Rmag_covariance(const Matrix3& covariance) {
+        if (!ocean_imu::MagneticInnovationGate<T>::covarianceValid(covariance)) return false;
+        Rmag = covariance; return true;
+    }
 
     Kalman3D_Wave_CARMA3(Vector3 const& sigma_a, Vector3 const& gyro_noise_density_rad_sqrt_s,
                          Vector3 const& sigma_m,
@@ -306,6 +313,9 @@ public:
     void set_accel_bias_limit(T limit_mps2) { acc_bias_limit_ = limit_mps2; }
     [[nodiscard]] T accel_bias_limit() const { return acc_bias_limit_; }
 
+    void set_measured_gyro_bias_walk(const Vector3& density,uint8_t mask) {
+        if constexpr(with_gyro_bias)for(int k=0;k<3;++k)if(mask&(1<<k))Qbase(3+k,3+k)=density[k]*density[k];
+    }
     void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {
         const Vector3 d = density.cwiseAbs();
         Qbase.template topLeftCorner<3,3>() = d.array().square().matrix().asDiagonal();
@@ -381,6 +391,7 @@ private:
     Matrix3 S_scratch_;
 
     MeasDiag3 last_acc_diag_;
+    ocean_imu::MagneticInnovationGate<T> magnetic_gate_{};
     MeasDiag3 last_mag_diag_;
 
     void symmetrize_Pext_() {
@@ -1079,8 +1090,11 @@ void CARMA3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     last_mag_diag_.r = r;
     const Matrix3 J_att = -skew_(v2hat);
     Matrix3& S_mat = S_scratch_;
-    S_mat = Rmag;
-    S_mat.noalias() += J_att * Pext.template block<3,3>(0,0) * J_att.transpose();
+    const Matrix3 HPH = J_att * Pext.template block<3,3>(0,0) * J_att.transpose();
+    const auto decision=magnetic_gate_.evaluate(r, HPH, Rmag, mag_meas.norm()/v2hat.norm());
+    if (!decision.accepted) { last_mag_diag_.S=HPH+Rmag; last_mag_diag_.nis=decision.nis; return; }
+    S_mat=HPH+decision.inflation*Rmag;
+
     MatrixNX3& PCt = PCt_scratch_;
     PCt.noalias() = Pext.template block<NX,3>(0,0) * J_att.transpose();
     if constexpr (AB) {

@@ -248,7 +248,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV5   blob_{};
+  ImuCalBlobV6   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -338,7 +338,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV5 saved{};
+    ImuCalBlobV6 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -410,9 +410,15 @@ private:
 
     fcfg.enable_displacement_detrend = true;
 
+    if(runtime_.noise.valid) {
+      fcfg.sigma_a=runtime_.noiseAccelStd();
+      fcfg.sigma_g=runtime_.noiseGyroDensity();
+    }
+
     fusion_.begin(fcfg);
 
     auto& ff = fusion_.raw();
+    runtime_.configureProcessNoise(ff.mekf());
     ff.enableTuner(true);
     // Without S states there is no S = 0 pseudo-measurement, so OU-III's
     // pseudo-update cadence knob has no counterpart here.

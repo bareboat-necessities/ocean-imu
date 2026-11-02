@@ -7,7 +7,7 @@
   dependencies (host-testable). AtomS3R_ImuCal.h adds the NVS backend, the M5
   sensor mapping and the serial printers.
 
-  Only the current layout (version 5, key "blob_m5v5") is read or written.
+  Only the current layout (version 6, key "blob_m5v6") is read or written.
   Blobs of earlier versions are not loaded; the device runs the wizard again.
 
   The accelerometer metadata describes one coefficient set; accel_coeff_crc
@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "imu_calibrate/AccelCalFit.h"
+#include "imu_calibrate/SensorNoise.h"
 #include "AtomS3R/AtomS3R_ImuUnits.h"
 
 namespace atoms3r_ical {
@@ -40,7 +41,7 @@ using Matrix3f = Eigen::Matrix<float,3,3>;
 static constexpr uint32_t IMU_CAL_MAGIC = 0x434C554D; // 'MULC'
 static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = 1;
 
-// Units the magnetometer calibration was fitted in (ImuCalBlobV5::mag_source).
+// Units the magnetometer calibration was fitted in (ImuCalBlobV6::mag_source).
 // A calibration is applied only to data from the same source.
 static constexpr uint8_t MAG_SOURCE_M5_RAW = 0;               // M5Unified uncompensated values
 static constexpr uint8_t MAG_SOURCE_BMM150_COMPENSATED = 1;   // Bosch trim/RHALL compensated uT
@@ -68,14 +69,14 @@ struct MagTimingRecord {
 };
 static_assert(sizeof(MagTimingRecord) == 48, "timing record layout");
 
-struct ImuCalBlobV5 {
+struct ImuCalBlobV6 {
   static constexpr uint32_t IMU_CAL_MAGIC   = atoms3r_ical::IMU_CAL_MAGIC;
-  static constexpr uint16_t IMU_CAL_VERSION = 5;
+  static constexpr uint16_t IMU_CAL_VERSION = 6;
   static constexpr uint8_t  IMU_CAL_MODE_M5_IMU_API = atoms3r_ical::IMU_CAL_MODE_M5_IMU_API;
 
   uint32_t magic = IMU_CAL_MAGIC;
   uint16_t version = IMU_CAL_VERSION;
-  uint16_t size_bytes = sizeof(ImuCalBlobV5);
+  uint16_t size_bytes = sizeof(ImuCalBlobV6);
   uint8_t  build_mode = 0;
 
   uint8_t  accel_ok = 0;
@@ -139,19 +140,31 @@ struct ImuCalBlobV5 {
   uint8_t gyro_thermal_reason = 0; // imu_cal::GyroThermalReason
   uint8_t gyro_thermal_bins = 0;
   uint8_t gyro_reserved = 0;
+  uint8_t gyro_matrix_ok = 0, gyro_matrix_pad[3]{};
+  float gyro_S[9] = {1,0,0,0,1,0,0,0,1};
+  float gyro_train_rms=0,gyro_validation_rms=0,gyro_validation_max=0,gyro_condition=0;
+  uint16_t gyro_train_segments=0,gyro_validation_segments=0;
   uint32_t gyro_coeff_crc = 0;
 
+  // Physical rotations: columns are source axes expressed in destination.
+  uint8_t mag_alignment_ok=0,housing_alignment_ok=0,vessel_alignment_ok=0,frame_reserved=0;
+  float R_IM[9]={1,0,0,0,1,0,0,0,1};
+  float R_HI[9]={1,0,0,0,1,0,0,0,1};
+  float R_VH[9]={1,0,0,0,1,0,0,0,1};
+  float alignment_train_sd=0,alignment_validation_sd=0,alignment_condition=0;
+  uint16_t alignment_train_poses=0,alignment_validation_poses=0;
+  imu_cal::SensorNoiseModel noise{};
   MagTimingRecord mag_timing{};
 
   uint32_t crc = 0;
 };
-static constexpr size_t IMU_CAL_CRC_LEN_V5 = offsetof(ImuCalBlobV5, crc);
-// No implicit padding: 372 is the sum of the field sizes, so every byte is a
-// named field and struct copies preserve what the CRC and readback compare.
-static_assert(sizeof(ImuCalBlobV5) == 372, "ImuCalBlobV5: implicit padding");
+static constexpr size_t IMU_CAL_CRC_LEN_V6 = offsetof(ImuCalBlobV6, crc);
+// Named fields cover the entire wire record (no Eigen objects or pointers).
+static_assert(sizeof(ImuCalBlobV6) == 680, "ImuCalBlobV6: implicit padding");
+static_assert(sizeof(ImuCalBlobV6) == IMU_CAL_CRC_LEN_V6 + 4, "Blob must have no trailing padding");
 
 // Current layout.
-using ImuCalBlob = ImuCalBlobV5;
+using ImuCalBlob = ImuCalBlobV6;
 
 static inline uint32_t crc32_ieee_(const uint8_t* data, size_t n, uint32_t crc = 0xFFFFFFFFu) {
   for (size_t i = 0; i < n; ++i) {
@@ -185,10 +198,10 @@ static inline uint32_t computeBlobCrcT_(const Blob& in, size_t len) {
   return ~crc32_ieee_(tmp, len);
 }
 
-static inline uint32_t computeBlobCrc(const ImuCalBlobV5& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V5); }
+static inline uint32_t computeBlobCrc(const ImuCalBlobV6& in) { return computeBlobCrcT_(in, IMU_CAL_CRC_LEN_V6); }
 
 // CRC of the accelerometer coefficient set (everything the runtime applies).
-static inline uint32_t accelCoeffCrc(const ImuCalBlobV5& b) {
+static inline uint32_t accelCoeffCrc(const ImuCalBlobV6& b) {
   uint32_t c = 0xFFFFFFFFu;
   c = crc32_ieee_((const uint8_t*)&b.accel_ok, sizeof(b.accel_ok), c);
   c = crc32_ieee_((const uint8_t*)&b.accel_g, sizeof(b.accel_g), c);
@@ -201,7 +214,7 @@ static inline uint32_t accelCoeffCrc(const ImuCalBlobV5& b) {
   return ~c;
 }
 
-static inline bool accelMetaBound(const ImuCalBlobV5& b) { return b.accel_coeff_crc == accelCoeffCrc(b); }
+static inline bool accelMetaBound(const ImuCalBlobV6& b) { return b.accel_coeff_crc == accelCoeffCrc(b); }
 
 // Largest |accel_g - g_cal_local| treated as the same gravity: float rounding
 // only (a height-datum mix-up is ~1e-4, 9.80665 vs local ~4e-3 m/s^2).
@@ -209,7 +222,7 @@ static constexpr float kAccelGravityMatchTol = 1.0e-5f;
 
 // True when the accelerometer set was fitted against `g_cfg` (the physical
 // gravity this firmware calibrates to and its estimators remove).
-static inline bool accelGravityMatches(const ImuCalBlobV5& b, float g_cfg = ImuCalCfg::g_cal_local) {
+static inline bool accelGravityMatches(const ImuCalBlobV6& b, float g_cfg = ImuCalCfg::g_cal_local) {
   return isfinite(b.accel_g) && fabsf(b.accel_g - g_cfg) <= kAccelGravityMatchTol;
 }
 
@@ -221,20 +234,31 @@ static inline bool allFinite_(const float* a, int n) {
 // Unlike an unqualified legacy coefficient, every gyro thermal model has its
 // coefficients, evidence, uncertainty and permitted runtime interval bound
 // together. The outer blob CRC also binds these bytes and sensor identity.
-static inline uint32_t gyroCoeffCrc(const ImuCalBlobV5& b) {
+static inline uint32_t gyroCoeffCrc(const ImuCalBlobV6& b) {
   uint32_t c = 0xFFFFFFFFu;
   c = crc32_ieee_((const uint8_t*)&b.gyro_ok, sizeof(b.gyro_ok), c);
   c = crc32_ieee_((const uint8_t*)&b.gyro_T0, sizeof(b.gyro_T0), c);
   c = crc32_ieee_((const uint8_t*)b.gyro_b0, sizeof(b.gyro_b0), c);
   c = crc32_ieee_((const uint8_t*)b.gyro_k, sizeof(b.gyro_k), c);
   c = crc32_ieee_((const uint8_t*)&b.gyro_T_lo,
-                 offsetof(ImuCalBlobV5, gyro_coeff_crc) - offsetof(ImuCalBlobV5, gyro_T_lo), c);
+                 offsetof(ImuCalBlobV6, gyro_coeff_crc) - offsetof(ImuCalBlobV6, gyro_T_lo), c);
   return ~c;
 }
 
-static inline bool gyroSetValid(const ImuCalBlobV5& b) {
+static inline bool gyroSetValid(const ImuCalBlobV6& b) {
   using L = imu_cal::GyroThermalLimits;
   if (!b.gyro_ok || b.gyro_coeff_crc != gyroCoeffCrc(b)) return false;
+  if (!allFinite_(b.gyro_S,9) || b.gyro_matrix_ok>1) return false;
+  const Matrix3f S=mat_from_rowmajor9_(b.gyro_S);
+  Eigen::JacobiSVD<Matrix3f> svd(S);
+  if(S.determinant()<=0 || svd.singularValues().minCoeff()<.8f ||
+     svd.singularValues().maxCoeff()>1.25f ||
+     (S-Matrix3f::Identity()).cwiseAbs().maxCoeff()>.20f)return false;
+  if(b.gyro_matrix_ok && (!isfinite(b.gyro_train_rms) || b.gyro_train_rms<0 || b.gyro_train_rms>.025f ||
+      !isfinite(b.gyro_validation_rms) || b.gyro_validation_rms<0 || b.gyro_validation_rms>.025f ||
+      !isfinite(b.gyro_validation_max) || b.gyro_validation_max<0 || b.gyro_validation_max>.06f ||
+      !isfinite(b.gyro_condition) || b.gyro_condition<1 || b.gyro_condition>1e5f ||
+      b.gyro_train_segments<12 || b.gyro_validation_segments<4))return false;
   if (!allFinite_(b.gyro_b0, 3) || !allFinite_(b.gyro_k, 3) || !allFinite_(b.gyro_k_sigma, 3) ||
       !isfinite(b.gyro_T0) || !isfinite(b.gyro_T_lo) || !isfinite(b.gyro_T_hi) ||
       !isfinite(b.gyro_temp_lo) || !isfinite(b.gyro_temp_hi) ||
@@ -260,7 +284,7 @@ static inline bool gyroSetValid(const ImuCalBlobV5& b) {
   return true;
 }
 
-static inline void fillGyroFromFit(ImuCalBlobV5& b, const imu_cal::GyroCalibration<float>& g) {
+static inline void fillGyroFromFit(ImuCalBlobV6& b, const imu_cal::GyroCalibration<float>& g) {
   b.gyro_ok = g.ok ? 1 : 0;
   b.gyro_T0 = g.biasT.T0;
   for (int j = 0; j < 3; ++j) {
@@ -273,10 +297,30 @@ static inline void fillGyroFromFit(ImuCalBlobV5& b, const imu_cal::GyroCalibrati
   b.gyro_thermal_reason = (uint8_t)g.thermal_reason;
   b.gyro_thermal_bins = g.thermal_bins;
   b.gyro_reserved = 0;
+  b.gyro_matrix_ok=g.matrix_ok;
+  mat_to_rowmajor9_(g.S,b.gyro_S);
+  b.gyro_train_rms=g.rotation_train_rms;b.gyro_validation_rms=g.rotation_validation_rms;
+  b.gyro_validation_max=g.rotation_validation_max;b.gyro_condition=g.rotation_condition;
+  b.gyro_train_segments=g.rotation_train_segments;b.gyro_validation_segments=g.rotation_validation_segments;
   b.gyro_coeff_crc = gyroCoeffCrc(b);
 }
 
-static inline bool magSetValid(const ImuCalBlobV5& b) {
+static inline bool rotationValid(const float r[9]) {
+  if(!allFinite_(r,9))return false;
+  const Matrix3f R=mat_from_rowmajor9_(r);
+  return (R.transpose()*R-Matrix3f::Identity()).norm()<1e-4f && fabsf(R.determinant()-1)<1e-4f;
+}
+static inline bool framesValid(const ImuCalBlobV6& b) {
+  return b.mag_alignment_ok<=1 && b.housing_alignment_ok<=1 && b.vessel_alignment_ok<=1 &&
+    rotationValid(b.R_IM) && rotationValid(b.R_HI) && rotationValid(b.R_VH) &&
+    (!b.mag_alignment_ok || (b.mag_ok && isfinite(b.alignment_train_sd) &&
+      b.alignment_train_sd>=0 && b.alignment_train_sd<1.5f &&
+      isfinite(b.alignment_validation_sd) && b.alignment_validation_sd>=0 && b.alignment_validation_sd<1.5f &&
+      isfinite(b.alignment_condition) && b.alignment_condition>=1 && b.alignment_condition<1e5f &&
+      b.alignment_train_poses>=12 && b.alignment_validation_poses>=4));
+}
+
+static inline bool magSetValid(const ImuCalBlobV6& b) {
   if (!b.mag_ok || !allFinite_(b.mag_A, 9) || !allFinite_(b.mag_b, 3) ||
       !isfinite(b.mag_field_uT) || b.mag_field_uT < 12 || b.mag_field_uT > 120 ||
       !isfinite(b.mag_rms) || b.mag_rms < 0 || b.mag_rms > imu_cal::MagFitLimits::rmsLimit(b.mag_field_uT)) return false;
@@ -285,11 +329,14 @@ static inline bool magSetValid(const ImuCalBlobV5& b) {
   return imu_cal::MagGeometricFit<1>::matrixValid(A,bias);
 }
 
-inline uint32_t magTimingBinding(const ImuCalBlobV5& b) {
+inline uint32_t magTimingBinding(const ImuCalBlobV6& b) {
   uint32_t c=crc32_ieee_(reinterpret_cast<const uint8_t*>(&b.gyro_ok),
-      offsetof(ImuCalBlobV5, accel_T_lo)-offsetof(ImuCalBlobV5, gyro_ok));
+      offsetof(ImuCalBlobV6, accel_T_lo)-offsetof(ImuCalBlobV6, gyro_ok));
   const uint32_t tail[]={gyroCoeffCrc(b), b.sensor_id_lo, b.sensor_id_hi, b.imu_type};
-  return ~crc32_ieee_(reinterpret_cast<const uint8_t*>(tail),sizeof(tail),c);
+  c=crc32_ieee_(reinterpret_cast<const uint8_t*>(tail),sizeof(tail),c);
+  // Timing fitting uses rates and fields registered in I.
+  c=crc32_ieee_(reinterpret_cast<const uint8_t*>(b.R_IM),sizeof(b.R_IM),c);
+  return ~crc32_ieee_(&b.mag_alignment_ok,sizeof(b.mag_alignment_ok),c);
 }
 inline uint32_t magTimingCrc(const MagTimingRecord& r) {
   return ~crc32_ieee_(reinterpret_cast<const uint8_t*>(&r),offsetof(MagTimingRecord,crc));
@@ -315,7 +362,7 @@ inline bool magTimingAbsent(const MagTimingRecord& r) {
          zero(r.validation_rms_rad) && zero(r.improvement) &&
          r.train_pairs == 0 && r.validation_pairs == 0 && r.crc == 0;
 }
-inline bool magTimingCompatible(const ImuCalBlobV5& b, uint32_t id_lo, uint32_t id_hi,
+inline bool magTimingCompatible(const ImuCalBlobV6& b, uint32_t id_lo, uint32_t id_hi,
                                 uint8_t imu_type, uint8_t source, uint32_t configuration) {
   return gyroSetValid(b) && magSetValid(b) && b.sensor_id_lo==id_lo &&
       b.sensor_id_hi==id_hi && b.imu_type==imu_type && b.mag_source==source &&
@@ -324,16 +371,17 @@ inline bool magTimingCompatible(const ImuCalBlobV5& b, uint32_t id_lo, uint32_t 
 }
 inline MagTimingRecord& activeMagTiming() { static MagTimingRecord r{}; return r; }
 inline uint32_t& activeMagTimingConfiguration() { static uint32_t c=0; return c; }
-using MagTimingLoader = void (*)(const ImuCalBlobV5&);
+using MagTimingLoader = void (*)(const ImuCalBlobV6&);
 inline MagTimingLoader& magTimingLoader() { static MagTimingLoader loader=nullptr; return loader; }
 
 
-static inline bool validateBlob(const ImuCalBlobV5& b) {
-  if (b.magic != ImuCalBlobV5::IMU_CAL_MAGIC) return false;
-  if (b.version != ImuCalBlobV5::IMU_CAL_VERSION) return false;
-  if (b.size_bytes != sizeof(ImuCalBlobV5)) return false;
+static inline bool validateBlob(const ImuCalBlobV6& b) {
+  if (b.magic != ImuCalBlobV6::IMU_CAL_MAGIC) return false;
+  if (b.version != ImuCalBlobV6::IMU_CAL_VERSION) return false;
+  if (b.size_bytes != sizeof(ImuCalBlobV6)) return false;
   if (b.build_mode != IMU_CAL_MODE_M5_IMU_API) return false;
   if (computeBlobCrc(b) != b.crc) return false;
+  if (!framesValid(b) || !imu_cal::noiseModelValid(b.noise)) return false;
   if (b.gyro_ok && !gyroSetValid(b)) return false;
   if (b.mag_ok && !magSetValid(b)) return false;
   if (!magTimingAbsent(b.mag_timing) && (!b.mag_ok || !magTimingValid(b.mag_timing) ||
@@ -347,7 +395,7 @@ static inline bool validateBlob(const ImuCalBlobV5& b) {
 
 // Fills the accelerometer coefficient set and its metadata from a full fit,
 // then binds the metadata. Gyro/mag fields are left untouched.
-static inline void fillAccelFromFit(ImuCalBlobV5& b, const imu_cal::AccelFullFitResult& r,
+static inline void fillAccelFromFit(ImuCalBlobV6& b, const imu_cal::AccelFullFitResult& r,
                                     const imu_cal::AccelCalibration<float>& fc, uint32_t capture_s)
 {
   b.accel_ok = fc.ok ? 1 : 0;
@@ -379,19 +427,24 @@ static inline void fillAccelFromFit(ImuCalBlobV5& b, const imu_cal::AccelFullFit
   b.accel_coeff_crc = accelCoeffCrc(b);
 }
 
-// Candidate of an accelerometer-only recalibration: the previous blob with
-// its gyro and magnetometer fields carried unchanged and a new, bound
-// accelerometer set and sensor identity.
-static inline ImuCalBlobV5 accelOnlyCandidate(const ImuCalBlobV5& prev, const imu_cal::AccelFullFitResult& r,
+// Component-update helper: retain intrinsic gyro/mag evidence, but invalidate
+// their dependent registrations and noise/timing qualifications. This partial
+// candidate cannot pass the full estimator boot gate.
+static inline ImuCalBlobV6 accelOnlyCandidate(const ImuCalBlobV6& prev, const imu_cal::AccelFullFitResult& r,
                                               const imu_cal::AccelCalibration<float>& fc, uint32_t capture_s,
                                               uint32_t id_lo, uint32_t id_hi, uint8_t imu_type)
 {
-  ImuCalBlobV5 b;
+  ImuCalBlobV6 b;
   memcpy((void*)&b, &prev, sizeof(b));
   fillAccelFromFit(b, r, fc, capture_s);
   b.sensor_id_lo = id_lo;
   b.sensor_id_hi = id_hi;
   b.imu_type = imu_type;
+  // A changed accelerometer model changes gravity endpoints and the noise
+  // transformation. The old rotation/noise qualifications cannot be reused.
+  b.gyro_matrix_ok=0;b.mag_alignment_ok=0;b.noise={};
+  b.gyro_coeff_crc=gyroCoeffCrc(b);
+  b.mag_timing={};
   return b;
 }
 
@@ -399,7 +452,7 @@ static inline ImuCalBlobV5 accelOnlyCandidate(const ImuCalBlobV5& prev, const im
 // slope this firmware validated (LEARNED, or PRESERVED from one), with bound
 // metadata, for the same sensor and IMU. Bias offsets are never carried: they
 // can change at every power cycle and are re-measured each session.
-static inline imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV5& b, uint32_t id_lo,
+static inline imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV6& b, uint32_t id_lo,
                                                                 uint32_t id_hi, uint8_t imu_type,
                                                                 double max_k_abs = 0.02)
 {
@@ -425,7 +478,19 @@ struct RuntimeCals {
   imu_cal::AccelCalibration<float> acc{};
   imu_cal::GyroCalibration<float>  gyr{};
   imu_cal::MagCalibration<float>   mag{};
+  Matrix3f R_VI=Matrix3f::Identity(),R_IM=Matrix3f::Identity();
+  bool frames_ok=false,mag_alignment_ok=false,record_valid=false;
+  imu_cal::SensorNoiseModel noise{};
 
+  Vector3f noiseAccelStd() const {return Vector3f(noise.sample_std[0],noise.sample_std[1],noise.sample_std[2]);}
+  Vector3f noiseGyroDensity() const {return Vector3f(noise.white_density[3],noise.white_density[4],noise.white_density[5]);}
+  template<class Filter> bool configureProcessNoise(Filter& filter) const {
+    if(!record_valid || !noise.valid || !imu_cal::noiseModelValid(noise))return false;
+    filter.set_gyro_noise_density_rad_sqrt_s(noiseGyroDensity());
+    const Vector3f walk(noise.bias_random_walk[3],noise.bias_random_walk[4],noise.bias_random_walk[5]);
+    filter.set_measured_gyro_bias_walk(walk,noise.walk_mask>>3);
+    return true;
+  }
   // Set when the blob holds an accelerometer calibration fitted against a
   // different gravity than this firmware's g_cal_local; it is then not applied.
   bool accel_gravity_mismatch = false;
@@ -433,7 +498,14 @@ struct RuntimeCals {
   // than this firmware delivers; it is then not applied.
   bool mag_source_mismatch = false;
 
-  void rebuildFromBlob(const ImuCalBlobV5& b, float g_cfg = ImuCalCfg::g_cal_local) {
+  void rebuildFromBlob(const ImuCalBlobV6& b, float g_cfg = ImuCalCfg::g_cal_local) {
+    record_valid=validateBlob(b);
+    // Fail closed even if a caller bypassed the verified store.
+    if(!record_valid) {*this=RuntimeCals{};return;}
+    frames_ok=b.housing_alignment_ok && b.vessel_alignment_ok;
+    mag_alignment_ok=b.mag_alignment_ok;
+    R_VI=mat_from_rowmajor9_(b.R_VH)*mat_from_rowmajor9_(b.R_HI);
+    R_IM=mat_from_rowmajor9_(b.R_IM);noise=b.noise;
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
     acc.ok = (b.accel_ok != 0) && !accel_gravity_mismatch;
     acc.g  = b.accel_g;
@@ -448,7 +520,8 @@ struct RuntimeCals {
 
     gyr = imu_cal::GyroCalibration<float>{};
     gyr.ok = gyroSetValid(b);
-    gyr.S  = Matrix3f::Identity();
+    gyr.S  = mat_from_rowmajor9_(b.gyro_S);
+    gyr.matrix_ok=b.gyro_matrix_ok;
     gyr.biasT.ok = gyr.ok;
     gyr.biasT.T0 = b.gyro_T0;
     gyr.biasT.b0 = Vector3f(b.gyro_b0[0], b.gyro_b0[1], b.gyro_b0[2]);
@@ -478,11 +551,11 @@ struct RuntimeCals {
     if (mag.ok && gyr.ok && magTimingLoader()) magTimingLoader()(b);
   }
 
-  Vector3f applyAccel(const Vector3f& a_raw, float tempC) const { return acc.ok ? acc.apply(a_raw, tempC) : a_raw; }
-  Vector3f applyGyro (const Vector3f& w_raw, float tempC) const { return gyr.ok ? gyr.apply(w_raw, tempC) : w_raw; }
+  Vector3f applyAccel(const Vector3f& a_raw, float tempC) const { return acc.ok ? Vector3f(R_VI*acc.apply(a_raw, tempC)) : a_raw; }
+  Vector3f applyGyro (const Vector3f& w_raw, float tempC) const { return gyr.ok ? Vector3f(R_VI*gyr.apply(w_raw, tempC)) : w_raw; }
   Vector3f applyMag  (const Vector3f& m_raw) const {
     if (!mag.ok) return m_raw;
-    const Vector3f m_cal = mag.apply(m_raw);
+    const Vector3f m_cal = R_VI*R_IM*mag.apply(m_raw);
     return m_cal.allFinite() ? m_cal : m_raw;
   }
 };
@@ -492,11 +565,15 @@ struct RuntimeCals {
 // that must not run an estimator on raw sensor values stops on a reason.
 static inline const char* calibrationUnusableReason(bool have_blob, const RuntimeCals& rc) {
   if (!have_blob) return "no valid saved calibration";
+  if (!rc.record_valid) return "invalid calibration; recalibrate";
   if (rc.accel_gravity_mismatch) return "accel fitted against another gravity";
   if (!rc.acc.ok) return "no accelerometer calibration";
   if (!rc.gyr.ok) return "no gyroscope calibration";
+  if (!rc.gyr.matrix_ok) return "gyro rotation calibration required";
+  if (!rc.frames_ok) return "housing/vessel alignment required";
   if (rc.mag_source_mismatch) return "mag fitted on another data source";
   if (!rc.mag.ok) return "no magnetometer calibration";
+  if (!rc.mag_alignment_ok) return "magnetometer alignment required";
   return nullptr;
 }
 
@@ -506,16 +583,17 @@ static inline const char* calibrationUnusableReason(bool have_blob, const Runtim
 template <class KV>
 class ImuCalStoreT {
 public:
-  static constexpr const char* kKeyV5 = "blob_m5v5";
+  static constexpr const char* kKeyV6 = "blob_m5v6";
 
   KV kv;
 
-  bool load(ImuCalBlobV5& out) { return loadV5_(out); }
+  bool load(ImuCalBlobV6& out) { return loadV6_(out); }
 
-  // Writes the v5 key only; true when the bytes were accepted.
-  bool save(const ImuCalBlobV5& in) {
-    ImuCalBlobV5 tmp = sealed_(in);
-    return validateBlob(tmp) && kv.putBytes(kKeyV5, &tmp, sizeof(tmp)) == sizeof(tmp);
+  // Writes the v6 key only; true when the bytes were accepted.
+  bool save(const ImuCalBlobV6& in) {
+    if(in.magic!=ImuCalBlobV6::IMU_CAL_MAGIC || in.version!=6 || in.size_bytes!=sizeof(in))return false;
+    ImuCalBlobV6 tmp = sealed_(in);
+    return validateBlob(tmp) && kv.putBytes(kKeyV6, &tmp, sizeof(tmp)) == sizeof(tmp);
   }
 
   // Writes the candidate and reads the key back. Succeeds only when the stored
@@ -529,54 +607,57 @@ public:
   };
   SaveStatus lastSaveStatus() const { return last_save_status_; }
 
-  bool saveVerified(const ImuCalBlobV5& in, ImuCalBlobV5& readback) {
-    const ImuCalBlobV5 cand = sealed_(in);
+  bool saveVerified(const ImuCalBlobV6& in, ImuCalBlobV6& readback) {
+    if(in.magic!=ImuCalBlobV6::IMU_CAL_MAGIC || in.version!=6 || in.size_bytes!=sizeof(in)) {
+      last_save_status_=SaveStatus::INVALID_CANDIDATE;return false;
+    }
+    const ImuCalBlobV6 cand = sealed_(in);
     if (!validateBlob(cand)) { last_save_status_ = SaveStatus::INVALID_CANDIDATE; return false; }
-    ImuCalBlobV5 prev;
+    ImuCalBlobV6 prev;
     bool read_failed = false;
-    const bool had_prev = loadV5_(prev, &read_failed);
+    const bool had_prev = loadV6_(prev, &read_failed);
     // Do not confuse a failed read of a possibly valid record with absence.
     if (read_failed) { last_save_status_ = SaveStatus::PREVIOUS_UNREADABLE; return false; }
-    ImuCalBlobV5 rb;
-    if (kv.putBytes(kKeyV5, &cand, sizeof(cand)) == sizeof(cand) && loadV5_(rb) && sameBytes(rb, cand)) {
+    ImuCalBlobV6 rb;
+    if (kv.putBytes(kKeyV6, &cand, sizeof(cand)) == sizeof(cand) && loadV6_(rb) && sameBytes(rb, cand)) {
       readback = rb;
       last_save_status_ = SaveStatus::OK;
       return true;
     }
     if (had_prev) {
       // A dropped write may already have left the previous bytes intact.
-      if (loadV5_(rb) && sameBytes(rb, prev)) {
+      if (loadV6_(rb) && sameBytes(rb, prev)) {
         last_save_status_ = SaveStatus::PREVIOUS_RETAINED;
       } else {
-        const bool wrote = kv.putBytes(kKeyV5, &prev, sizeof(prev)) == sizeof(prev);
-        const bool restored = loadV5_(rb) && sameBytes(rb, prev);
+        const bool wrote = kv.putBytes(kKeyV6, &prev, sizeof(prev)) == sizeof(prev);
+        const bool restored = loadV6_(rb) && sameBytes(rb, prev);
         last_save_status_ = wrote && restored ? SaveStatus::PREVIOUS_RETAINED : SaveStatus::RECOVERY_FAILED;
       }
     } else {
-      const bool removed = kv.remove(kKeyV5);
-      last_save_status_ = removed && kv.getBytesLength(kKeyV5) == 0 ?
+      const bool removed = kv.remove(kKeyV6);
+      last_save_status_ = removed && kv.getBytesLength(kKeyV6) == 0 ?
                           SaveStatus::FAILED_EMPTY : SaveStatus::RECOVERY_FAILED;
     }
     return false;
   }
 
-  void erase() { kv.remove(kKeyV5); }
+  void erase() { kv.remove(kKeyV6); }
 
   // Byte-for-byte equality of two stored blobs (padding included: both sides
   // are byte copies of what was written).
-  static bool sameBytes(const ImuCalBlobV5& a, const ImuCalBlobV5& b) {
-    uint8_t ba[sizeof(ImuCalBlobV5)], bb[sizeof(ImuCalBlobV5)];
+  static bool sameBytes(const ImuCalBlobV6& a, const ImuCalBlobV6& b) {
+    uint8_t ba[sizeof(ImuCalBlobV6)], bb[sizeof(ImuCalBlobV6)];
     memcpy(ba, &a, sizeof(ba));
     memcpy(bb, &b, sizeof(bb));
     return memcmp(ba, bb, sizeof(ba)) == 0;
   }
 
-  static ImuCalBlobV5 sealed_(const ImuCalBlobV5& in) {
-    ImuCalBlobV5 tmp;
+  static ImuCalBlobV6 sealed_(const ImuCalBlobV6& in) {
+    ImuCalBlobV6 tmp;
     memcpy(&tmp, &in, sizeof(tmp));
-    tmp.magic = ImuCalBlobV5::IMU_CAL_MAGIC;
-    tmp.version = ImuCalBlobV5::IMU_CAL_VERSION;
-    tmp.size_bytes = sizeof(ImuCalBlobV5);
+    tmp.magic = ImuCalBlobV6::IMU_CAL_MAGIC;
+    tmp.version = ImuCalBlobV6::IMU_CAL_VERSION;
+    tmp.size_bytes = sizeof(ImuCalBlobV6);
     tmp.build_mode = IMU_CAL_MODE_M5_IMU_API;
     memset(tmp.pad_a, 0, sizeof(tmp.pad_a));
     memset(tmp.pad_g, 0, sizeof(tmp.pad_g));
@@ -588,11 +669,11 @@ public:
 
 private:
   SaveStatus last_save_status_ = SaveStatus::OK;
-  bool loadV5_(ImuCalBlobV5& out, bool* read_failed = nullptr) {
+  bool loadV6_(ImuCalBlobV6& out, bool* read_failed = nullptr) {
     if (read_failed) *read_failed = false;
-    if (kv.getBytesLength(kKeyV5) != sizeof(ImuCalBlobV5)) return false;
-    ImuCalBlobV5 tmp;
-    if (kv.getBytes(kKeyV5, &tmp, sizeof(tmp)) != sizeof(tmp)) {
+    if (kv.getBytesLength(kKeyV6) != sizeof(ImuCalBlobV6)) return false;
+    ImuCalBlobV6 tmp;
+    if (kv.getBytes(kKeyV6, &tmp, sizeof(tmp)) != sizeof(tmp)) {
       if (read_failed) *read_failed = true;
       return false;
     }

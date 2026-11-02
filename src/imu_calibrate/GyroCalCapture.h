@@ -31,6 +31,7 @@ public:
     cal_.clear();start_=last_fresh_=last_input_=last_kept_=now;
     have_input_=have_words_=have_mag_words_=false;quiet_=kept_blocks_=resets_=0;reference_=false;
     status_=GyroCaptureStatus::SETTLING;reset_reason_="none";resetBlock_();resetMag_();
+    pose_a_.setZero();pose_w_.setZero();pose_t_=0;pose_n_=0;
   }
   GyroCaptureStatus update(uint32_t now,const V* a,const V* w,T tempC,const V* mag=nullptr) {
     if(status_==GyroCaptureStatus::READY) return status_;
@@ -115,6 +116,8 @@ public:
     for(int i=0;i<nb_;++i) if(!cal_.addSample(block_w_[i],block_a_[i],block_t_[i])) {
       disturb_("sample not retained");return status_;
     }
+    for(int i=0;i<nb_;++i) {pose_a_+=block_a_[i].template cast<double>();
+      pose_w_+=block_w_[i].template cast<double>();pose_t_+=block_t_[i];++pose_n_;}
     ++kept_blocks_;
     status_=(kept_blocks_*cfg_.block_ms>=cfg_.useful_ms && cal_.buf.n>=220) ?
              GyroCaptureStatus::READY : GyroCaptureStatus::HOLDING;
@@ -123,12 +126,19 @@ public:
   float progress() const {return std::min(1.0f,float(kept_blocks_*cfg_.block_ms)/cfg_.useful_ms);}
   uint32_t resets() const {return resets_;}
   const char* resetReason() const {return reset_reason_;}
+  // Means contain only the same qualified blocks retained by the bias fitter.
+  V meanAccel() const {return pose_n_ ? V((pose_a_/pose_n_).template cast<T>()) : V::Zero();}
+  V meanGyro() const {return pose_n_ ? V((pose_w_/pose_n_).template cast<T>()) : V::Zero();}
+  T meanTemperature() const {return pose_n_ ? T(pose_t_/pose_n_) : T(NAN);}
+  bool hasMagReference() const {return mag_reference_;}
+  V meanMag() const {return mag_reference_ ? V(ref_m_.template cast<T>()) : V::Constant(T(NAN));}
 private:
   void resetBlock_() {n_=nb_=mag_seen_=keep_n_=0;sa_.setZero();aa_.setZero();sw_.setZero();ww_.setZero();keep_w_.setZero();keep_a_.setZero();keep_t_=0;}
   void resetMag_() {nm_=0;sm_.setZero();mag_reference_=false;}
   void disturb_(const char* reason) {
     if(quiet_ || kept_blocks_ || n_) ++resets_;
     reset_reason_=reason;
+    pose_a_.setZero();pose_w_.setZero();pose_t_=0;pose_n_=0;
     cal_.clear();quiet_=kept_blocks_=0;reference_=false;status_=GyroCaptureStatus::MOVING;
     resetBlock_();resetMag_();
   }
@@ -145,6 +155,7 @@ private:
   D ar_,wr_,sa_,aa_,sw_,ww_,sm_,ref_a_,ref_w_,ref_m_,keep_w_,keep_a_;
   int keep_n_=0;double keep_t_=0;
   int n_=0,nm_=0,nb_=0,mag_seen_=0;
+  D pose_a_=D::Zero(),pose_w_=D::Zero();double pose_t_=0;int pose_n_=0;
   V block_a_[kBlockSamples],block_w_[kBlockSamples];T block_t_[kBlockSamples]{};
 };
 } // namespace imu_cal

@@ -723,7 +723,11 @@ struct GyroCalibration {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   bool ok = false;
-  Eigen::Matrix<T,3,3> S = Eigen::Matrix<T,3,3>::Identity(); // keep identity unless you have a known-rate rig
+  Eigen::Matrix<T,3,3> S = Eigen::Matrix<T,3,3>::Identity(); // intrinsic gyro triad -> accelerometer intrinsic frame
+  bool matrix_ok = false;
+  T rotation_train_rms = T(0), rotation_validation_rms = T(0), rotation_validation_max = T(0);
+  T rotation_condition = T(0);
+  uint16_t rotation_train_segments = 0, rotation_validation_segments = 0;
   TempBias3<T> biasT;
   GyroThermal thermal = GyroThermal::UNLEARNED;
   GyroThermalReason thermal_reason = GyroThermalReason::SPAN_SMALL;

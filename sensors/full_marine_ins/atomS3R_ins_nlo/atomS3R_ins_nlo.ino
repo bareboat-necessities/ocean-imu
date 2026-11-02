@@ -274,7 +274,7 @@ class FusionApp {
 
   ImuCalStoreNvs store_{};
   bool have_blob_ = false;
-  ImuCalBlobV5 blob_{};
+  ImuCalBlobV6 blob_{};
   RuntimeCals runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -363,7 +363,7 @@ class FusionApp {
     (void)boot_mode;
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV5 saved{};
+    ImuCalBlobV6 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {

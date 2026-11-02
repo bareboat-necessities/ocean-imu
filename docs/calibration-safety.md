@@ -66,8 +66,9 @@ below the noise thresholds. Calibration needs a stationary support.
 A normal short stationary capture estimates the mean accepted angular rate at
 the measured mean temperature. Its temperature slope is exactly zero unless
 all thermal identification gates pass. Full gyro recalibration does not borrow
-an unqualified historical slope; accelerometer-only recalibration carries the
-existing validated gyro calibration unchanged.
+an unqualified historical slope. The full workflow estimates the existing
+gyro correction matrix from gravity-referenced rotations after final accel fitting;
+see [unified calibration](calibration-architecture.md).
 
 The thermal regression uses double precision and equally weighted populated
 temperature-bin means, centered on their measured mean temperature. Each bin
@@ -292,7 +293,11 @@ on the display and, when the sketch builds the wizard in, runs it on tap. A
 usable calibration is logged as `[CAL] applied: ...`. The check runs at boot,
 after an erase and after a wizard run, so no estimator runs on raw values.
 
-`ImuCalBlobV5` is a 372-byte explicitly laid-out record under `blob_m5v5`.
+`ImuCalBlobV6` is a 680-byte explicitly laid-out record under `blob_m5v6`.
+It includes the full gyro matrix, three separate physical rotations, their
+quality evidence, device identity, and an optional measured sensor-noise model.
+The wizard requires complete intrinsic and physical-frame qualification.
+Older records, including version 5, are never read, migrated, or used as fallback.
 Its outer CRC covers all metadata, including the optional magnetic timing
 record. An absent record is all zero; a present one must be qualified and carry
 its configuration/gyro/mag/device binding and its own CRC. The record is

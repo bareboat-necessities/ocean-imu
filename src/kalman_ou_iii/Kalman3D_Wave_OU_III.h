@@ -31,6 +31,8 @@
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 
+#include "kalman_common/MagneticInnovationGate.h"
+
 namespace ocean_imu::kalman {
 
 template <typename T = float, bool with_gyro_bias = true, bool with_accel_bias = true>
@@ -80,6 +82,11 @@ class Kalman3D_Wave_OU_III {
 
     const MeasDiag3& lastAccDiag() const noexcept { return last_acc_diag_; }
     const MeasDiag3& lastMagDiag() const noexcept { return last_mag_diag_; }
+    const auto& magneticHealth() const { return magnetic_gate_.last(); }
+    bool set_Rmag_covariance(const Matrix3& covariance) {
+        if (!ocean_imu::MagneticInnovationGate<T>::covarianceValid(covariance)) return false;
+        Rmag = covariance; return true;
+    }
 
     // Constructor signatures preserved, additional defaults for linear process noise
     Kalman3D_Wave_OU_III(Vector3 const& sigma_a, Vector3 const& gyro_noise_density_rad_sqrt_s, Vector3 const& sigma_m,
@@ -504,6 +511,9 @@ class Kalman3D_Wave_OU_III {
     void set_accel_bias_limit(T limit_mps2) { acc_bias_limit_ = limit_mps2; }
     [[nodiscard]] T accel_bias_limit() const { return acc_bias_limit_; }
 
+    void set_measured_gyro_bias_walk(const Vector3& density,uint8_t mask) {
+        if constexpr(with_gyro_bias)for(int k=0;k<3;++k)if(mask&(1<<k))Qbase(3+k,3+k)=density[k]*density[k];
+    }
     void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {
         const Vector3 d = density.cwiseAbs();
         Qbase.template topLeftCorner<3,3>() = d.array().square().matrix().asDiagonal();
@@ -692,6 +702,7 @@ class Kalman3D_Wave_OU_III {
     Matrix3      S_scratch_;
 
     MeasDiag3 last_acc_diag_;
+    ocean_imu::MagneticInnovationGate<T> magnetic_gate_{};
     MeasDiag3 last_mag_diag_;
 
     EIGEN_STRONG_INLINE void symmetrize_Pext_() {
@@ -2172,15 +2183,16 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     // Jacobian uses the no-bias predicted vector
     const Matrix3 J_att = -skew_symmetric_matrix(v2hat);
 
+    const Matrix3 R_body_to_prime=Rx_(-wind_heel_rad_);
+    const Matrix3 Rmeasurement=R_body_to_prime*Rmag*R_body_to_prime.transpose();
+
     // Innovation covariance S = C P Cᵀ + R
     Matrix3& S_mat = S_scratch_;
-    S_mat = Rmag;
+    const Matrix3 HPH = J_att * Pext.template block<3,3>(0,0) * J_att.transpose();
+    const auto decision=magnetic_gate_.evaluate(r, HPH, Rmeasurement, mag_meas.norm()/v2hat.norm());
+    if (!decision.accepted) { last_mag_diag_.S=HPH+Rmeasurement; last_mag_diag_.nis=decision.nis; return; }
+    S_mat=HPH+decision.inflation*Rmeasurement;
 
-    const Matrix3 P_th_th = Pext.template block<3,3>(0,0);
-    S_mat.noalias() += J_att * P_th_th * J_att.transpose();
-
-
-    // PCᵀ = P Cᵀ
     MatrixNX3& PCt = PCt_scratch_;
     PCt.setZero();
     PCt.noalias() += Pext.template block<NX,3>(0,0) * J_att.transpose();
@@ -2192,7 +2204,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
     }
 
     Eigen::LDLT<Matrix3> ldlt;
-    if (!safe_ldlt3_(S_mat, ldlt, Rmag.norm())) {
+    if (!safe_ldlt3_(S_mat, ldlt, Rmeasurement.norm())) {
         last_mag_diag_.S = S_mat;
         last_mag_diag_.nis = std::numeric_limits<T>::quiet_NaN();
         last_mag_diag_.accepted = false;

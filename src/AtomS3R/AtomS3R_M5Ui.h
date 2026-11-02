@@ -206,29 +206,15 @@ public:
 
   // Start of the calibration wizard. Without a previous calibration only the
   // full wizard is offered (single tap).
-  enum class StartAction : uint8_t { FULL = 0, ACCEL_ONLY = 1, CANCEL = 2 };
+  enum class StartAction : uint8_t { FULL=0, NOISE=1, CANCEL=2 };
 
-  StartAction startMenu(bool accel_only_available) {
-    setReadRotation();
-    title("IMU CAL");
-    if (!accel_only_available) {
-      line("Tap to begin");
-      line("");
-      line("Tap BtnA");
-      while (true) {
-        Input::update();
-        if (Input::tapPressed()) break;
-        delay(10);
-      }
-      return StartAction::FULL;
-    }
-    line("Tap: full calib");
-    line("Tap x2: accel only");
-    line("Tap x3: cancel");
-    const uint8_t taps = waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
-    if (taps >= 3) return StartAction::CANCEL;
-    if (taps == 2) return StartAction::ACCEL_ONLY;
-    return StartAction::FULL;
+  StartAction startMenu(bool noise_available) {
+    setReadRotation();title("CALIBRATE");line("1 tap: Full cal");
+    if(noise_available)line("2 taps: Noise 40m");
+    line("3 taps: Cancel");
+    const int taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+    if(taps>=3)return StartAction::CANCEL;
+    return noise_available && taps==2?StartAction::NOISE:StartAction::FULL;
   }
 
   // Retry prompt for one hold; false = abort (previous calibration kept).

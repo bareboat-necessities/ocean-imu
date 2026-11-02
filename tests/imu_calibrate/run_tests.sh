@@ -2,6 +2,12 @@
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
+./calibration_frames-test
+./gyro_rotation-test
+./sensor_noise-test
+./magnetic_innovation-test
+for filter in 1 2 3 4 5 6; do ./magnetic_fusion_$filter; done
+python3 test_qmekf_reference.py
 python3 test_wizard_config.py
 ./calibration_accuracy-test
 ./mag_field_consistency-test

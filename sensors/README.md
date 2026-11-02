@@ -46,15 +46,16 @@ The AtomS3R helper layer converts device readings into the project body/NED-orie
 
 ## Calibration wizard
 
-The compass and INS sketches share one on-device calibration wizard (single tap on the home screen, or automatically when nothing is saved). With a saved calibration that includes the gyro, the first screen offers **Tap: full calib / Tap x2: accel only / Tap x3: cancel**.
+The compass and INS sketches share one on-device calibration wizard (single tap on the home screen, or automatically when nothing is saved). The first screen offers full calibration or cancellation. A complete schema-6 record also enables a separate **40-minute stationary noise** workflow. Unsupported old records require fresh calibration; they are never migrated or used as fallback. Build AtomS3R firmware with **OPI PSRAM** and the **8M with spiffs (3MB APP/1.5MB SPIFFS)** partition scheme enabled. This uses the board's 8 MB flash and retains two OTA application slots; the default 1.2 MB application slot is too small for the full OU-III firmware.
 
 - **Accelerometer:** ten guided holds — the six faces, then four tilted "screen up, ~45 deg" corners described by the USB end and the left/right edge. Each hold shows its instructions first ("Tap then place"). The device is then placed on a table or held by hand; modest hand motion is fine. A hold completes after about 5 s of steady data. If the measured geometry leaves a term undetermined, or one hold disagrees with the others, at most two extra holds are requested.
-- **Gyro and magnetometer:** unchanged (full wizard only).
+- **Gyro and magnetometer:** retained quiet bias and hard/soft-iron fitting, followed by 20 gravity-referenced rotations for gyro scale/misalignment and independent magnetic frame registration.
+- **Mounting:** explicitly confirm aligned IMU/housing/vessel axes, or provide measured physical rotations through the MOUNT command.
 - **Rechecks:** three short holds (screen up, USB up, left edge down) give temperature evidence and a held-out check.
 
 **Gravity.** M5Unified reports acceleration in nominal g, converted to m/s² with the exact standard value 9.80665 (`ImuCalCfg::g_std`). That is only a unit. The physical gravity at the calibration site is `ImuCalCfg::g_cal_local`; the default is WGS84 normal gravity at Fair Lawn, NJ 07410 (40.935833° N, ellipsoidal height −9 m), 9.8025605 m/s². The accelerometer is calibrated to that static norm, and every sketch's estimator removes the same value, so a still device reads zero translational acceleration. Elsewhere, build with `-DATOMS3R_CALIBRATION_GRAVITY_MPS2=<your gravity>` and recalibrate. A saved accelerometer calibration fitted against a different gravity is reported at boot and not applied; gyro and magnetometer calibrations stay in use.
 
-The accelerometer part takes about 2.5–3 minutes in simulation. Nothing is saved unless the whole result validates; otherwise, or after a cancel, the previous calibration stays. The method, pose design and validation are in [`doc/imu_calibrate/imu_calibrate-method.tex`](../doc/imu_calibrate/imu_calibrate-method.tex).
+The accelerometer part takes about 2.5–3 minutes in simulation; gyro rotations and frame registration add further stages. The [unified calibration guide](../docs/calibration-architecture.md) describes the procedure, noise model, new format and validation. Nothing is saved unless the whole result validates; otherwise, or after a cancel, the previous calibration stays. The method, pose design and validation are in [`doc/imu_calibrate/imu_calibrate-method.tex`](../doc/imu_calibrate/imu_calibrate-method.tex).
 
 ## Related repository areas
 

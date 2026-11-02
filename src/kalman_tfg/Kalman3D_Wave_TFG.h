@@ -52,6 +52,8 @@
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
 
+#include "kalman_common/MagneticInnovationGate.h"
+
 namespace ocean_imu::kalman {
 
 namespace tfg_detail {
@@ -260,9 +262,13 @@ class Kalman3D_Wave_TFG {
     }
     [[nodiscard]] const Matrix3& aw_stationary_cov() const { return Sigma_aw_; }
 
+    void set_gyro_noise_density_rad_sqrt_s(const Vector3& density) {Q_gyro_=density.array().square().matrix().asDiagonal();}
     void set_gyro_noise_density_rad_sqrt_s(T density) {
         const T d = std::max(T(0), density);
         Q_gyro_ = Matrix3::Identity() * (d*d);
+    }
+    void set_measured_gyro_bias_walk(const Vector3& density,uint8_t mask) {
+        for(int k=0;k<3;++k)if(mask&(1<<k))Q_bg_(k,k)=density[k]*density[k];
     }
     void set_Q_bgyro_rw(const Vector3& var_per_s) {
         Q_bg_ = var_per_s.cwiseAbs().asDiagonal();
@@ -586,6 +592,11 @@ class Kalman3D_Wave_TFG {
 
     [[nodiscard]] const MeasDiag3& lastAccDiag() const { return last_acc_diag_; }
     [[nodiscard]] const MeasDiag3& lastMagDiag() const { return last_mag_diag_; }
+    const auto& magneticHealth() const { return magnetic_gate_.last(); }
+    bool set_Rmag_covariance(const Matrix3& covariance) {
+        if (!ocean_imu::MagneticInnovationGate<T>::covarianceValid(covariance)) return false;
+        Rmag_ = covariance; return true;
+    }
     [[nodiscard]] const MeasDiag3& lastIntegralDiag() const { return last_S_diag_; }
 
     void set_Racc_std(const Vector3& std_body) { Racc_ = std_body.cwiseAbs2().asDiagonal(); }
@@ -684,7 +695,7 @@ class Kalman3D_Wave_TFG {
         }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         mag_residual(mag_meas_body, r, H, Rw);
-        return apply_update3_(r, H, Rw, last_mag_diag_);
+        return apply_update3_(r, H, Rw, last_mag_diag_, true);
     }
 
     bool applyIntegralZeroPseudoMeas() {
@@ -806,23 +817,30 @@ class Kalman3D_Wave_TFG {
     }
 
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
-                        const Matrix3& Rw, MeasDiag3& diag) {
+                        const Matrix3& Rw, MeasDiag3& diag, bool magnetic=false) {
         diag = MeasDiag3{};
         diag.r = r;
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
 
         Eigen::Matrix<T,NX,3>& PHt = scratch_nx3_a_;
         PHt.noalias() = P_ * H.transpose();
-        Matrix3 S = H * PHt + Rw;
+        const Matrix3 HPH=H*PHt;
+        Matrix3 Ruse=Rw;
+        if(magnetic) {
+            const auto decision=magnetic_gate_.evaluate(r, HPH, Rw);
+            if(!decision.accepted) {diag.S=HPH+Rw;diag.nis=decision.nis;return false;}
+            Ruse*=decision.inflation;
+        }
+        Matrix3 S = HPH + Ruse;
         S = T(0.5) * (S + S.transpose()).eval();
         diag.S = S;
 
         Eigen::LDLT<Matrix3> ldlt(S);
-        if (ldlt.info() != Eigen::Success) return false;
+        if (ldlt.info() != Eigen::Success || !ldlt.isPositive()) return false;
         const Vector3 Sinv_r = ldlt.solve(r);
         if (!Sinv_r.allFinite()) return false;
         diag.nis = r.dot(Sinv_r);
-        if (nis_gate_ > T(0) && !(diag.nis <= nis_gate_)) return false;
+        if (!magnetic && nis_gate_ > T(0) && !(diag.nis <= nis_gate_)) return false;
 
         // Plain assignment rather than noalias(): the right-hand side is a
         // solve expression, which Eigen routes through its own temporary
@@ -840,7 +858,7 @@ class Kalman3D_Wave_TFG {
         IKH.noalias() -= K * H;
 
         MatrixNX& Pj = scratch_b_;
-        Pj = (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
+        Pj = (IKH * P_ * IKH.transpose() + K * Ruse * K.transpose()).eval();
 
         MatrixNX& Jreset = scratch_c_;
         build_reset_jacobian(correction, Jreset);
@@ -977,6 +995,7 @@ class Kalman3D_Wave_TFG {
     static constexpr T kTempRefC = T(35);
 
     MeasDiag3 last_acc_diag_{};
+    ocean_imu::MagneticInnovationGate<T> magnetic_gate_{};
     MeasDiag3 last_mag_diag_{};
     MeasDiag3 last_S_diag_{};
     Vector3 last_omega_{Vector3::Zero()};

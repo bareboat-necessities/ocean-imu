@@ -70,13 +70,13 @@ conversion time.
 
 ## Storage
 
-The v5 calibration record (`ImuCalBlobV5`, key `blob_m5v5`, 372 bytes) holds a
+The v6 calibration record (`ImuCalBlobV6`, key `blob_m5v6`, 680 bytes) holds a
 `MagTimingRecord`:
 
 - the fitted lag, profile width and residual-to-time allowance;
 - training and validation RMS, improvement and pair counts;
 - the BMI270/BMM150 configuration fingerprint;
-- a binding to the gyro and magnetic calibration and the device identity;
+- a binding to gyro/magnetic coefficients, magnetometer-to-IMU rotation and device identity;
 - its own CRC.
 
 An all-zero record means no timing was saved. At boot the record is loaded only

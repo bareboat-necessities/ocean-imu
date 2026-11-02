@@ -240,7 +240,7 @@ private:
 
   ImuCalStoreNvs store_{};
   bool           have_blob_ = false;
-  ImuCalBlobV5   blob_{};
+  ImuCalBlobV6   blob_{};
   RuntimeCals    runtime_{};
 
 #if SEA_STATE_ENABLE_WIZARD
@@ -367,7 +367,7 @@ private:
 
     clearM5UnifiedImuCalibration();
 
-    ImuCalBlobV5 saved{};
+    ImuCalBlobV6 saved{};
     const bool did_save = runImuCalWizard(ui_, store_, saved);
 
     if (did_save) {
@@ -440,7 +440,13 @@ private:
 
     fcfg.acc_vibration_guard_hz = ACC_VIBRATION_GUARD_HZ;
 
+    if(runtime_.noise.valid) {
+      fcfg.sigma_a=runtime_.noiseAccelStd();
+      fcfg.gyro_noise_density=runtime_.noiseGyroDensity().maxCoeff();
+    }
+
     fusion_.begin(fcfg);
+    runtime_.configureProcessNoise(fusion_.mekf());
 
     fusion_.enableTuner(true);
     // Virtual-constraint (pseudo-measurement) cadence scales with the wave

@@ -185,12 +185,13 @@ struct Alignment {
   V3 rotvec_deg = V3::Zero();
   float dip_deg = NAN;
   float dip_sd_before = NAN, dip_sd_after = NAN;
+  float condition = INFINITY;
 };
 
 // Least squares on d_i . (Exp(delta) R m_i) = sin(dip), linearised and iterated.
 static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal) {
   Alignment out;
-  if (n < 12) return out;
+  if (!p || n < 12) return out;
   auto dipSd = [&](const M3& R, float& mean) {
     double s = 0, ss = 0; int k = 0;
     for (int i = 0; i < n; ++i) {
@@ -222,7 +223,12 @@ static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal
       ++used;
     }
     if (used < 12) return out;
-    // Small ridge keeps a poorly excited axis at zero instead of inventing it.
+    // Test the UNDAMPED information. A ridge cannot qualify a missing axis.
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix4d> es(H);
+    if(es.info()!=Eigen::Success || es.eigenvalues()[0]<1e-5*used)return out;
+    out.condition=float(es.eigenvalues()[3]/es.eigenvalues()[0]);
+    if(out.condition>1e5f)return out;
+    // Retain the existing small numerical ridge only after observability.
     for (int k = 0; k < 3; ++k) H(k, k) += 1e-3 * used;
     // Residual r = d.u + j.x with x = [delta; s]; normal equations H x = -g.
     const Eigen::Vector4d x = H.ldlt().solve(-g);
@@ -236,8 +242,24 @@ static inline Alignment solveAlignment(const Pose* p, int n, const MagModel& cal
   out.R = R;
   out.rotvec_deg = aa.axis() * (aa.angle() * kRadToDeg);
   out.dip_sd_after = dipSd(R, out.dip_deg);
-  out.ok = std::isfinite(out.dip_sd_after);
+  out.ok = std::isfinite(out.dip_sd_after) && out.dip_sd_after<1.5f &&
+    aa.angle()<20.0f/kRadToDeg && out.dip_sd_after<=out.dip_sd_before+.1f;
   return out;
+}
+
+// Independent poses are never used to adjust the fitted R or dip.
+static inline bool validateAlignment(const Alignment& fit,const Pose* validation,int n,
+                                     const MagModel& cal,float& rms_deg) {
+  rms_deg=INFINITY;
+  if(!fit.ok || !validation || n<4)return false;
+  double s=0;
+  for(int i=0;i<n;++i) {
+    const float dip=dipDeg(fit.R*cal.apply(validation[i].m_raw),validation[i].a);
+    if(!std::isfinite(dip))return false;
+    s+=std::pow(double(dip-fit.dip_deg),2);
+  }
+  rms_deg=float(std::sqrt(s/n));
+  return rms_deg<1.5f;
 }
 
 // Tilt-compensated heading (deg, 0..360) from body-frame specific force and field.

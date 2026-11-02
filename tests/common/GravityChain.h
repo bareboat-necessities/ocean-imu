@@ -81,7 +81,7 @@ struct Calibration {
   bool ok = false;
   imu_cal::AccelFullFitResult r;
   imu_cal::AccelCalibration<float> fc;
-  atoms3r_ical::ImuCalBlobV5 blob;
+  atoms3r_ical::ImuCalBlobV6 blob;
   atoms3r_ical::RuntimeCals rt;
 };
 
@@ -99,6 +99,8 @@ inline Calibration calibrate(const Sensor& s, double g_true, double g_cfg,
   if (!fitter->fit(obs.data(), (int)obs.size(), cfg, prior, c.r, false)) return c;
   Fitter::toFloat(c.r, cfg.g, c.fc);
   atoms3r_ical::fillAccelFromFit(c.blob, c.r, c.fc, 70);
+  c.blob.build_mode=atoms3r_ical::IMU_CAL_MODE_M5_IMU_API;
+  c.blob.crc=atoms3r_ical::computeBlobCrc(c.blob);
   c.rt.rebuildFromBlob(c.blob, g_runtime);
   c.ok = c.r.ok && c.fc.ok;
   return c;

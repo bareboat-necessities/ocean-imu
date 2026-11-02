@@ -1,0 +1,115 @@
+# Calibration validation
+
+The reference tree is main at `d2d34116e3a1a1ca7e26cde49e0f2473dcb14a08`.
+This report separates synthetic numerical validation, firmware resource
+checks, and physical qualification. The procedure and reuse assessment are
+in [calibration-architecture.md](calibration-architecture.md).
+
+## Numerical checks
+
+The original calibration suite was built and run before the extensions.
+`AccelCalFit.h` and `AccelCalCapture.h` have no changes against the reference
+tree. All 17 printed accelerometer campaign/gravity summary rows reproduce
+the baseline exactly, including the 30-seed robust-fit campaign. The old
+schema assumptions in fixtures were updated without replacing the fitter.
+
+| Check | Result |
+| --- | --- |
+| Retained workflow and persistence fault tests | 676/676 and 8995/8995 checks |
+| Accelerometer campaign | 1627/1627 checks, 30 seeds; ten release-reference scenarios pass |
+| Analytic gyro SO(3) sensitivity | Matches independent central finite differences |
+| Full gyro matrix, exact synthetic rotations | Frobenius matrix error 9.61e-8; independent endpoint RMS 4.09e-8 rad |
+| Eight noisy gyro seeds | Worst matrix error 0.0010231 versus 0.0613840 for bias-only identity, about 60-fold smaller |
+| Gyro rejection tests | Degenerate axes, corrupted independent rotations, gaps, NaNs, and invalid endpoints fail |
+| Final accelerometer model at gyro endpoints | Recovers gyro matrix with distorted/bias-shifted raw accelerometer endpoints |
+| Magnetic alignment with wizard-sized pose sets | 16 fit/5 independent poses; independent dip RMS 1.02e-5 degrees in the exact fixture |
+| Frame/schema tests | Noncommuting composition, gravity-only yaw ambiguity, reflected rotations, old keys/versions, truncation and CRC corruption |
+| Forty-minute white-noise trace | 480001 samples, 2400000 ms; accel N=0.00200198 versus 0.002, gyro N=0.000199806 versus 0.0002 |
+| Long-term identifiability | White-only trace reports no bias-instability or walk terms; short traces cannot report a model |
+| Mixed flicker-like/random-walk trace | Accel plateau coefficient 0.00237667 versus approximately 0.00225904; gyro walk 3.12645e-5 versus 3e-5 |
+| Correlated magnetic Gaussian innovations | 12 gross rejects in 100000 trials at the 0.01% gross-tail threshold |
+| Ninety-degree magnetic heading disturbance | All six Kalman implementations reject 100 disturbances with zero heading change in the fixture; clean recovery passes |
+| Covariance and injection | Rejected magnetic updates preserve covariance; accepted Joseph updates remain finite, symmetric and PSD |
+| Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
+
+The mixed-noise test uses independent stochastic sources: logarithmically
+spaced stationary OU components approximate a flicker plateau over a finite
+band, while integrated white increments create known gyro random walk. This
+does not claim that a plateau identifies flicker outside the measured range.
+All coefficients above use the units and Allan convention documented in the
+architecture guide. These are synthetic results, not sensor specifications.
+
+Reproduce the focused checks with GCC 13.3 / C++20 and Eigen:
+
+```sh
+make -C tests/imu_calibrate build
+bash tests/imu_calibrate/run_tests.sh
+```
+
+The replay executable uses the exact same bounded-memory analyzer as the
+firmware, rather than a second Allan implementation:
+
+```sh
+tests/imu_calibrate/sensor_noise-replay capture.log > noise.json
+```
+
+It reads calibrated six-axis NOISERAW records with wrapping uint32
+microsecond timestamps. Firmware also checks independent magnetic stillness;
+that check is not reconstructed by this six-axis replay.
+
+## Firmware resources and reproduction
+
+Toolchain: ESP32 Arduino 3.3.7, M5Unified 0.2.13, M5GFX 0.2.19,
+Arduino Eigen 0.3.2. Enable OPI PSRAM and the default_8MB partition scheme:
+
+```sh
+arduino-cli compile --library . --jobs 1 --warnings default \
+  --build-property compiler.cpp.extra_flags=-fstack-usage \
+  --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc,PSRAM=opi,PartitionScheme=default_8MB \
+  sensors/full_marine_ins/atomS3R_ins_kalman_ou3
+```
+
+The 680-byte schema retains existing NVS access and verified writes. The
+streaming Allan state is 3120 bytes on the host ABI. Rotation samples occupy
+20 bytes each; the 32768-sample capture and bounded segment metadata consume
+about 657 KB, explicitly allocated in PSRAM and freed after fitting. The
+wizard itself is heap-owned behind the existing runner entry, rather than
+placed on the loop-task stack or retained globally by each compass.
+The fitting worker has a 32768-byte stack. ESP-IDF stack sizes and high-water
+marks are interpreted as bytes.
+
+The synthetic benchmark firmware crosscompiles to 691891 bytes of flash
+and 26976 bytes of global internal RAM with the reference toolchain. Its
+compiler-reported individual stack frames include gyro fit 3392 bytes,
+normal-equation evaluation 944 bytes, the NIS solve lambda 368 bytes, and
+the benchmark entry 6896 bytes. These are individual static frame estimates;
+they are neither measured task peaks nor a proof of total stack headroom.
+Optimization, inlining and call chains affect the actual peak.
+
+Build and run `sensors/imu_basic/atomS3R_calibration_benchmark` on an AtomS3R
+to collect BENCH records: gyro fit microseconds/accuracy, mean and worst
+noise-update time, three magnetic-gate timing paths, free internal RAM,
+free PSRAM, allocation sizes, and actual task stack headroom. The production
+wizard also logs fit time and stack headroom. No board was available in the
+implementation environment; no on-device runtime values are claimed.
+
+## Qualification limits
+
+A full native repository run uses `make all` and the pinned simulation
+archive from oceanography-waves-lib v1.2.3, SHA256
+`87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c`.
+The focused checks pass through both Make and CMake. The full native replay
+run is still in progress; its result will be recorded before the PR is ready.
+Build serially on constrained hosts: parallel Eigen-heavy native and MCU
+compilers exhausted this environment's 8 GB memory limit. A serial build
+completed. The full OU-III image is 1346875 bytes before the final resource
+configuration, exceeding the default 1310720-byte application slot; use
+the documented 3342336-byte OTA slots on the board's 8 MB flash.
+
+Real calibration accuracy requires independently captured device rotations,
+fixture registration, and magnetic-environment checks. Real sensor noise
+requires a fresh uninterrupted 40-minute stationary acquisition after warmup.
+The noise fit does not qualify a marine-motion model or arbitrarily long
+physical bias histories. The revised magnetic service policy requires fresh
+stability qualification; archived stability evidence is not promoted by
+these regression tests.

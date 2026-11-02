@@ -1,7 +1,7 @@
 #pragma once
 // Synthetic qualified timing metadata for persistence tests; never device evidence.
 #include "AtomS3R/AtomS3R_ImuCalBlob.h"
-inline void bindTimingFixture(atoms3r_ical::ImuCalBlobV5& b, uint32_t configuration=123) {
+inline void bindTimingFixture(atoms3r_ical::ImuCalBlobV6& b, uint32_t configuration=123) {
     using namespace atoms3r_ical;
     auto& r=b.mag_timing;
     r={}; r.binding=magTimingBinding(b); r.configuration=configuration;

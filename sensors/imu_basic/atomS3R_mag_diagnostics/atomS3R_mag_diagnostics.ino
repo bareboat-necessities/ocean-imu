@@ -71,7 +71,7 @@ enum class Phase : uint8_t { WAIT_STILL, STILL, WAIT_POSES, POSES, WAIT_ROTATE, 
 
 static M5Ui ui;
 static ImuCalStoreNvs store;
-static ImuCalBlobV5 blob{};
+static ImuCalBlobV6 blob{};
 static RuntimeCals cals{};
 static bool have_blob = false;
 
@@ -207,7 +207,7 @@ static void toggleCompensation() {
   magSourceFollower() = nullptr;
   cals.rebuildFromBlob(blob);
   saved_ok = cals.mag.ok;
-  saved_model.A = cals.mag.A;
+  saved_model.A = cals.R_VI*cals.R_IM*cals.mag.A;
   saved_model.b = cals.mag.b;
   have_m = false;
   Serial.printf("[MAGCFG] magnetometer now: %s; saved mag calibration %s\n", magLabel(),
@@ -490,7 +490,7 @@ static void analyzeTask(void*) {
   Serial.printf("[FIT] ok=%d reason=%s gate=%s rms=%.4f p95=%.4f inliers=%d/%d cells=%d field=%.2f\n",
                 (int)fresh_ok, imu_cal::fitFailStr(fresh_reason), imu_cal::magFitGateText(q.gate),
                 q.rms, q.p95, q.inliers, q.samples, q.cells, (double)fresh.field_uT);
-  fresh_model.A = fresh.A; fresh_model.b = fresh.b;
+  fresh_model.A = cals.R_VI*cals.R_IM*fresh.A; fresh_model.b = fresh.b;
   if (fresh_ok) {
     printMat("[FIT] fresh A", fresh.A);
     Serial.printf("[FIT] fresh b [%.3f %.3f %.3f]\n", fresh.b.x(), fresh.b.y(), fresh.b.z());
@@ -767,7 +767,7 @@ void setup() {
   if (!have_blob) memset(&blob, 0, sizeof(blob));
   cals.rebuildFromBlob(blob);
   saved_ok = cals.mag.ok;
-  saved_model.A = cals.mag.A;
+  saved_model.A = cals.R_VI*cals.R_IM*cals.mag.A;
   saved_model.b = cals.mag.b;
 
   if (!M5.Imu.isEnabled()) {

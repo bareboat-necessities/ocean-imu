@@ -13,7 +13,6 @@
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 
-#include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/ImuCalWizardRunner.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
 #include "nmea/NmeaCompass.h"
@@ -259,6 +258,7 @@ class IAttitudeBackend {
  public:
   virtual ~IAttitudeBackend() = default;
   virtual void reset() = 0;
+  virtual void configureNoise(const RuntimeCals&) {}
   virtual void step(const CalibratedSample& s, AttitudeSolution& out) = 0;
   virtual bool isValid() const = 0;
 };
@@ -267,8 +267,7 @@ class CompassAppBase {
  public:
   CompassAppBase(std::unique_ptr<IAttitudeBackend> backend, MagGateConfig mag_cfg, const char* boot_name)
       : backend_(std::move(backend))
-      , wizard_(ui_, store_),
-      mag_gate_(mag_cfg), boot_name_(boot_name) {}
+      , mag_gate_(mag_cfg), boot_name_(boot_name) {}
 
   void begin() {
     delay(200);            // allow power to stabilize
@@ -305,8 +304,8 @@ class CompassAppBase {
 
     if (!have_blob_) {
       Serial.println("[BOOT] No saved calibration. Starting wizard...");
-      ImuCalBlobV5 saved{};
-      if (wizard_.runAndSave(saved)) {
+      ImuCalBlobV6 saved{};
+      if (runImuCalWizard(ui_,store_,saved)) {
         Serial.println("[BOOT] Wizard saved calibration. Loaded:");
         printBlobSummary(Serial, saved);
         printBlobDetail(Serial, saved);
@@ -406,8 +405,8 @@ class CompassAppBase {
   void handleRunWizard_() {
     Serial.println("[HOME] single tap => RUN WIZARD");
 
-    ImuCalBlobV5 saved{};
-    if (!wizard_.runAndSave(saved)) {
+    ImuCalBlobV6 saved{};
+    if (!runImuCalWizard(ui_,store_,saved)) {
       ui_.notSavedNotice();
       return;
     }
@@ -425,6 +424,7 @@ class CompassAppBase {
 
   void resetPipeline_() {
     backend_->reset();
+    backend_->configureNoise(runtime_);
     mag_gate_.reset();
     rot_.reset();
     outputs_ = CompassOutputs{};
@@ -555,7 +555,6 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
  protected:
   M5Ui ui_{};
   ImuCalStoreNvs store_{};
-  ImuCalWizard wizard_;
   RuntimeCals runtime_{};
   CompassUI compass_ui_{};
 
@@ -565,7 +564,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   ImuSpikeFilter imu_spike_;
 
   bool have_blob_ = false;
-  ImuCalBlobV5 blob_{};
+  ImuCalBlobV6 blob_{};
 
   bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
   bool compass_ui_ready_ = false;

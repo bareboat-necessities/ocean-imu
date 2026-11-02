@@ -36,7 +36,9 @@ class QmekfBackend : public IAttitudeBackend {
 
     Vector3f sigma_a; sigma_a <<  0.06f * g,  0.06f * g,   0.06f * g;
     Vector3f sigma_g; sigma_g <<    0.0030f,    0.0030f,     0.0030f;
-    Vector3f sigma_m; sigma_m <<     0.020f,     0.020f,      0.020f;
+    // Full calibrated uT vector: normalization would remove a measurement
+    // degree of freedom and invalidate a 3-DOF vector NIS test.
+    Vector3f sigma_m; sigma_m <<     0.80f,     0.80f,      0.80f;
 
     if (mekf_) {
       mekf_->~QuaternionMEKF<float, true>();
@@ -46,7 +48,11 @@ class QmekfBackend : public IAttitudeBackend {
     // sigma_g is a gyro white-noise density (rad/s/sqrt(Hz)); the gyro-bias
     // random-walk density 2e-7 rad^2/s^3 equals the former 1e-9 per 200 Hz step.
     mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f, 2e-7f);
-    inited_ = false;
+    inited_ = false;mag_reference_ready_=false;mag_elapsed_s_=0;mag_reference_world_.setZero();
+  }
+
+  void configureNoise(const atoms3r_ical::RuntimeCals& runtime) override {
+    if(mekf_ && runtime.configureProcessNoise(*mekf_))mekf_->set_Racc_std(runtime.noiseAccelStd());
   }
 
   void step(const CalibratedSample& s, AttitudeSolution& out) override {
@@ -56,11 +62,12 @@ class QmekfBackend : public IAttitudeBackend {
       if (an0 > 1e-6f) a_init *= (ImuCalCfg::g_cal_local / an0);  // reference at the physical static norm
 
       if (s.mag_ok)
-        mekf_->initialize_from_acc_mag(a_init, s.m_unit);
+        mekf_->initialize_from_acc_mag(a_init, s.m_cal);
       else
         mekf_->initialize_from_acc(a_init);
 
       inited_ = true;
+      if(s.mag_ok)rememberMagReference_(s.m_cal);
     }
 
     mekf_->time_update(s.w_cal, s.dt);
@@ -70,15 +77,27 @@ class QmekfBackend : public IAttitudeBackend {
     if (an > 1e-6f) a_att *= (ImuCalCfg::g_cal_local / an);
     mekf_->measurement_update_acc_only(a_att);
 
+    if(std::isfinite(s.dt) && s.dt>0)mag_elapsed_s_+=s.dt;
     if (s.mag_ok && s.mag_fresh) {
-      // Field reference rebuilt from this reading, as in Mahony: its own dip,
-      // pointing to magnetic north. A reference frozen at start keeps the
-      // dip error of that one sample (local disturbance, motion at boot),
-      // which tilts the attitude and turns the heading at east/west when pitched.
-      const auto qc = mekf_->quaternion();  // x, y, z, w
-      const Vector3f mw = Eigen::Quaternionf(qc(3), qc(0), qc(1), qc(2)) * s.m_unit;
-      mekf_->set_mag_world_ref(Vector3f(sqrtf(mw.x() * mw.x() + mw.y() * mw.y()), 0.0f, mw.z()));
-      mekf_->measurement_update_mag_only(s.m_unit);
+      // First magnetic acquisition establishes the yaw gauge. Once acquired,
+      // the trusted reference must be used for NIS BEFORE any adaptation.
+      if(!mag_reference_ready_) {
+        mekf_->initialize_from_acc_mag(a_att,s.m_cal);
+        rememberMagReference_(s.m_cal);
+      }
+      mekf_->measurement_update_mag_only(s.m_cal);
+      const auto& health=mekf_->magneticHealth();
+      if(health.accepted && health.health==ocean_imu::MagneticInnovationGate<float>::Health::HEALTHY) {
+        const auto qc=mekf_->quaternion();
+        const Vector3f mw=Eigen::Quaternionf(qc(3),qc(0),qc(1),qc(2))*s.m_cal;
+        const Vector3f target(std::hypot(mw.x(),mw.y()),0,mw.z());
+        // Retain gradual dip correction for boot noise, but an outlier or a
+        // recovery packet cannot redefine its own predicted measurement.
+        const float alpha=1.f-std::exp(-std::min(.2f,mag_elapsed_s_)/10.f);
+        mag_reference_world_+=alpha*(target-mag_reference_world_);
+        mekf_->set_mag_world_ref(mag_reference_world_);
+      }
+      mag_elapsed_s_=0;
     }
 
     const auto q = mekf_->quaternion();
@@ -86,8 +105,16 @@ class QmekfBackend : public IAttitudeBackend {
   }
 
   bool isValid() const override { return inited_; }
+  const auto& magneticHealth() const {return mekf_->magneticHealth();}
 
  private:
+  void rememberMagReference_(const Vector3f& measurement) {
+    const auto qc=mekf_->quaternion();
+    mag_reference_world_=Eigen::Quaternionf(qc(3),qc(0),qc(1),qc(2))*measurement;
+    mag_reference_ready_=true;mag_elapsed_s_=0;
+  }
+  Vector3f mag_reference_world_=Vector3f::Zero();
+  bool mag_reference_ready_=false;float mag_elapsed_s_=0;
   alignas(QuaternionMEKF<float, true>) uint8_t storage_[sizeof(QuaternionMEKF<float, true>)];
   QuaternionMEKF<float, true>* mekf_ = nullptr;
   bool inited_ = false;

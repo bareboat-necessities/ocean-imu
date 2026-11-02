@@ -18,7 +18,7 @@
     #include "AtomS3R/AtomS3R_ImuCal.h"
 
     atoms3r_ical::ImuCalStoreNvs store;
-    atoms3r_ical::ImuCalBlobV5   blob;
+    atoms3r_ical::ImuCalBlobV6   blob;
     atoms3r_ical::RuntimeCals    cals;
 
     void setup() {
@@ -149,7 +149,17 @@ public:
 };
 
 // NVS store (Preferences)
-class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {};
+class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {
+public:
+  bool load(ImuCalBlobV6& out) {
+    ImuCalBlobV6 candidate;
+    if(!ImuCalStoreT<PrefsKv>::load(candidate))return false;
+    const uint64_t id=ESP.getEfuseMac();
+    if(candidate.sensor_id_lo!=uint32_t(id) || candidate.sensor_id_hi!=uint32_t(id>>32) ||
+       candidate.imu_type!=uint8_t(M5.Imu.getType()))return false;
+    out=candidate;return true;
+  }
+};
 
 // Pretty 3x3 print from row-major float[9].
 static __attribute__((noinline)) void printMat3RowMajor(Print& out, const float a[9], int prec = 9) {
@@ -193,11 +203,14 @@ static __attribute__((noinline)) void printMatHeader(Print& out, const char* nam
 }
 
 // Print helpers (startup serial)
-static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalBlobV5& b) {
+static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalBlobV6& b) {
   const char* mode = "unknown";
   if (b.build_mode == IMU_CAL_MODE_M5_IMU_API) mode = "m5_imu_api";
   out.printf("  build_mode: %s\n", mode);
   out.printf("  ok: A=%d G=%d M=%d\n", (int)b.accel_ok, (int)b.gyro_ok, (int)b.mag_ok);
+  out.printf("  schema=%u gyro_matrix=%u frames(IM,HI,VH)=%u,%u,%u measured_noise=%u\n",
+    unsigned(b.version),unsigned(b.gyro_matrix_ok),unsigned(b.mag_alignment_ok),
+    unsigned(b.housing_alignment_ok),unsigned(b.vessel_alignment_ok),unsigned(b.noise.valid));
   if (b.mag_ok && b.mag_source != activeMagSource()) {
     out.printf("  mag: fitted on %s data, firmware delivers %s: NOT applied, recalibrate the magnetometer\n",
                b.mag_source == MAG_SOURCE_BMM150_COMPENSATED ? "Bosch-compensated" : "uncompensated",
@@ -209,7 +222,7 @@ static __attribute__((noinline)) void printBlobSummary(Print& out, const ImuCalB
   }
 }
 
-static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBlobV5& b) {
+static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBlobV6& b) {
   // ACCEL
   out.printf("  accel: g=%.7f (%s) T0=%.2f rms_mag=%.4f\n", (double)b.accel_g,
              accelGravityMatches(b) ? "matches g_cal_local" : "differs from g_cal_local",
@@ -242,14 +255,17 @@ static __attribute__((noinline)) void printBlobDetail(Print& out, const ImuCalBl
 
   // GYRO
   out.printf("  gyro:  T0=%.2f\n", (double)b.gyro_T0);
+  printMatHeader(out,"S_g","gyro intrinsic -> I");printMat3RowMajor(out,b.gyro_S);
+  out.printf("    rotations train=%u val=%u rms=%.6g/%.6g max=%.6g cond=%.6g\n",
+    unsigned(b.gyro_train_segments),unsigned(b.gyro_validation_segments),double(b.gyro_train_rms),
+    double(b.gyro_validation_rms),double(b.gyro_validation_max),double(b.gyro_condition));
+  printMatHeader(out,"R_IM","mag -> IMU");printMat3RowMajor(out,b.R_IM);
+  printMatHeader(out,"R_HI","IMU -> housing");printMat3RowMajor(out,b.R_HI);
+  printMatHeader(out,"R_VH","housing -> vessel");printMat3RowMajor(out,b.R_VH);
   out.printf("    b0=[%.6f %.6f %.6f]\n", (double)b.gyro_b0[0], (double)b.gyro_b0[1], (double)b.gyro_b0[2]);
   out.printf("    k =[%.6f %.6f %.6f]\n", (double)b.gyro_k[0], (double)b.gyro_k[1], (double)b.gyro_k[2]);
 
-  // Gyro calibrator *always* sets S=I (stationary-only).
-  printMatHeader(out, "S", "w_cal = S*(w_raw - bias(T)) ; S=I (stationary bias-only fit)");
-  const float* I = mat3_identity_rowmajor_();
-  printMat3RowMajor(out, I, 3);
-  printMatDiagOffDiagRms(out, I);
+  printMatDiagOffDiagRms(out,b.gyro_S);
 
   out.printf("    thermal=%s reason=%u bins=%u evidence T=[%.2f %.2f] clamp T=[%.2f %.2f]\n",
              b.gyro_thermal == (uint8_t)imu_cal::GyroThermal::LEARNED ? "LEARNED" : "BIAS_ONLY",
@@ -450,7 +466,7 @@ static inline uint32_t magTimingConfiguration_(m5::IMU_Base* dev, const Bmm150Re
   c=crc32_ieee_(regs,sizeof(regs),c);
   return ~crc32_ieee_(aux,sizeof(aux),c);
 }
-static inline void loadMagTiming_(const ImuCalBlobV5& b) {
+static inline void loadMagTiming_(const ImuCalBlobV6& b) {
   const uint64_t id=ESP.getEfuseMac();
   if (magTimingCompatible(b,uint32_t(id),uint32_t(id>>32),uint8_t(M5.Imu.getType()),
       activeMagSource(),activeMagTimingConfiguration())) activeMagTiming()=b.mag_timing;

@@ -131,16 +131,16 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     \subsection{Gyroscope}
 
-    The gyroscope error model used here is the simpler bias-only form,
-    because scale-factor and cross-sensitivity calibration requires a
-    precision rate rig:
+    The gyroscope uses a full scale/misalignment correction in the
+    accelerometer intrinsic frame:
     \begin{equation}
-        \boldsymbol{\omega}_\text{cal} = \mathbf{S}\bigl(\boldsymbol{\omega}_\text{raw}
-        - \mathbf{b}(T)\bigr),
-        \quad \mathbf{S} = \mathbf{I}_3.
+        \boldsymbol{\omega}_I=\mathbf{S}_g
+        (\boldsymbol{\omega}_{\mathrm{raw}}-\mathbf b_g(T)).
     \end{equation}
-    The identity scale matrix is retained in the struct so that a measured-rate
-    rig can upgrade it without changing the API.
+    Stationary bias capture is retained. Diverse rotations between calibrated
+    gravity endpoints identify the nine matrix entries without a rate rig;
+    see Section~\ref{sec:gyro_fit}. Housing/vessel mounting rotations remain
+    separate from this intrinsic correction.
 
     \subsection{Temperature Bias Model}
     \label{sec:tempbias}
@@ -625,9 +625,9 @@ and Robust Estimation in C\texttt{++}/Eigen}
     \subsection{Screen Sequence}
 
     \begin{enumerate}
-        \item \texttt{IMU CAL}: with a saved calibration that includes the
-        gyroscope, ``Tap: full calib / Tap x2: accel only / Tap x3: cancel'';
-        otherwise ``Tap to begin''.
+        \item \texttt{CALIBRATE}: one tap starts a full calibration;
+        with a complete current record, two taps start a separate 40-minute
+        stationary-noise capture. Three taps cancel.
         \item For each hold, the preparation screen (reading rotation):
         title \texttt{ACCEL} (\texttt{EXTRA i/2} or \texttt{CHECK i/3}),
         the label (e.g.\ \texttt{7/10 USB DN+LEFT DN}), the full
@@ -733,9 +733,8 @@ and Robust Estimation in C\texttt{++}/Eigen}
     $T_\text{ref}$ is the mean of the hold-mean temperatures (rounded to
     0.1\,$^\circ$C). The three rechecks follow the gyroscope and
     magnetometer stages in the full wizard, so their temperatures differ by
-    whatever the device warmed in normal use. In accelerometer-only mode
-    they follow immediately and no wait is inserted. The gyroscope hold is
-    not reused as a recheck: the unchanged gyro stage ends after 220
+    whatever the device warmed in normal use. The gyroscope hold is
+    not reused as a recheck: the gyro bias stage ends after 220
     samples, short of the 5\,s accelerometer hold. The slope is fitted
     jointly with the nine static parameters, from the rechecks' measured
     vectors, never by subtracting repeated poses. It is kept
@@ -778,7 +777,7 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     \subsection{Persistence and Runtime}
 
-    The blob (version 3, key \texttt{blob\_m5v3}) holds the accelerometer,
+    The blob (version 6, key \texttt{blob\_m5v6}) holds the accelerometer,
     gyroscope and magnetometer coefficients, the accelerometer runtime
     clamp, qualification metadata and the sensor identity. Only this layout
     and key are read; calibrations saved by earlier firmware are not loaded,
@@ -795,9 +794,10 @@ and Robust Estimation in C\texttt{++}/Eigen}
     reproducing the double hold RMS within 0.2\,mm/s$^2$. The save succeeds
     only if the read-back validates and equals the candidate byte for byte,
     so an older blob can never pass as the new one; after a failed write the
-    previous valid blob is written back. Accelerometer-only recalibration
-    copies the saved gyroscope and magnetometer fields unchanged. On any
-    failure or abort nothing is written. \texttt{RuntimeCals} applies the
+    previous valid current-schema blob is restored and checked, or recovery
+    failure is reported. An intrinsic update renews the dependent gyro and
+    magnetic registrations. Unsupported old records are never migrated or used
+    as fallback. Aborting capture does not initiate a write. \texttt{RuntimeCals} applies the
     calibration once, upstream of every estimator, after
     \texttt{clearM5UnifiedImuCalibration()}.
 
@@ -944,6 +944,57 @@ and Robust Estimation in C\texttt{++}/Eigen}
     temperature interval widened by $2\,{}^\circ$C at each end.  Stored
     float coefficients are rechecked over that interval; failure of that
     precision check also falls back to the stationary bias.
+
+% -----------------------------------------------------------------------
+    \subsection{Gravity-referenced gyro scale and misalignment}
+
+    Following Tedaldi et al.~\cite{Tedaldi2014}, let $u_i$ denote calibrated
+    unit specific force at a quiet pose. During
+    a rotation, $\dot u=-[\omega_I]_\times u$. Timestamped midpoint rates
+    therefore propagate the starting direction by
+    \begin{equation}
+      \widehat u_{i+1}=\left(\prod_{k\ \mathrm{in\ time\ order}}
+      \exp(-[S_g(\omega_k-b_g(T_k))\Delta t_k]_\times)\right)u_i.
+    \end{equation}
+    The product is chronological left multiplication. The existing quiet
+    capture validates both endpoints; samples spanning a gap are discarded.
+    A Huber objective on $\widehat u_{i+1}-u_{i+1}$ fits the nine entries of
+    $S_g$ using analytic SO(3) sensitivities and fixed-size damped LDLT.
+    Acceptance uses the undamped information matrix, physical singular-value
+    bounds, and independent rotation segments evaluated with the stored float
+    coefficients. Twenty segments supply fifteen training and five validation
+    rotations; repeated single-axis motion cannot qualify the full model.
+
+    \subsection{Intrinsic calibration and physical alignment}
+
+    Column-vector runtime corrections are
+    \begin{align}
+      a_V&=R_{VH}R_{HI}S_a(a_{\mathrm{raw}}-b_a(T)),\\
+      \omega_V&=R_{VH}R_{HI}S_g(\omega_{\mathrm{raw}}-b_g(T)),\\
+      m_V&=R_{VH}R_{HI}R_{IM}A_m(m_{\mathrm{raw}}-b_m).
+    \end{align}
+    The existing constant-dip magnetometer alignment solver is retained with
+    undamped observability tests and separate validation poses. Fixture
+    directions determine housing/vessel rotations; gravity alone cannot
+    determine yaw. Mounting is never absorbed into the SPD intrinsic matrices.
+
+    \subsection{Stationary noise and magnetic innovations}
+
+    A separate 2400-second run computes dyadic non-overlapping-cluster Allan
+    deviation with bounded memory. Four consecutive scales and sufficient
+    cluster differences must support each reported slope. Unidentified
+    long-term terms remain absent. The white coefficient satisfies
+    $\sigma_A(\tau)=N/\sqrt\tau$ and continuous intensity $Q=N^2$;
+    bias instability is not a random-walk driving covariance. These sensor
+    parameters do not determine the stochastic marine-motion prior.
+
+    All Kalman magnetic updates share a full-vector NIS policy,
+    $r^T(HPH^T+R)^{-1}r$, with correlated $3\times3$ measurement covariance.
+    The three-degree-of-freedom 99\% and 99.99\% thresholds are 11.34486673
+    and 21.10751347. Moderate innovations inflate $R$; gross outliers are
+    rejected. Ten clean nominal-covariance innovations precede gradual
+    recovery. Each estimator retains its Joseph covariance update and
+    quaternion/Lie-group error injection with the effective covariance.
 
 % -----------------------------------------------------------------------
     \section{Software Architecture}
@@ -1157,14 +1208,21 @@ Eigen::Vector3f m_cal = result.apply(m_raw);
 
     \texttt{imu\_cal} provides in-situ IMU calibration in C\texttt{++}/Eigen
     headers. Magnetometer and library accelerometer calibration use a
-    robust 10-parameter ellipsoid fit; gyroscope calibration fits a linear
-    temperature-bias model from stationary data. The AtomS3R accelerometer
+    robust 10-parameter ellipsoid fit; gyro calibration extends the stationary
+    temperature-bias estimator with gravity-referenced scale/misalignment
+    fitting, physical registration and independent verification. The AtomS3R accelerometer
     procedure uses guided static holds chosen for observability, a geometric
     full-matrix fit with a qualified thermal slope, held-out checks,
     re-validated float coefficients and verified persistence.
 
 % -----------------------------------------------------------------------
     \begin{thebibliography}{9}
+        \bibitem{Tedaldi2014}
+        D.~Tedaldi, A.~Pretto, and E.~Menegatti,
+        ``A robust and easy to implement method for IMU calibration without external equipments,''
+        in \emph{Proc. IEEE ICRA}, 2014, pp.~3042--3049,
+        doi:~10.1109/ICRA.2014.6907297.
+
 
         \bibitem{Frosio2009}
         I.~Frosio, F.~Pedersini, and N.~A.~Borghese,
