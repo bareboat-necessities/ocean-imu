@@ -8,8 +8,8 @@ correlated R, adaptive inflation and persistent disturbance/recovery state.
 The archived manifest counts below describe their bound source revision;
 they do not qualify this changed operator. Running
 `python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-stability-evidence.json`
-fails with `validation_pass=false`: three changed source bindings, one exact
-certificate reproduction mismatch and nine source-bound diagnostic failures.
+fails with `validation_pass=false`: seven changed source bindings, two exact
+certificate reproduction mismatches and nine source-bound diagnostic failures.
 Classification **E** (stale provenance); this is not an instability result.
 The invalidated hypothesis is that the archived magnetic update and deployed
 configuration are unchanged. No fingerprint or old diagnostic payload is

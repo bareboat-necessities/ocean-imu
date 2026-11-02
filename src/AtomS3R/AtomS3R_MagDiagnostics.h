@@ -168,9 +168,11 @@ static inline AxisResult axisConsistency(const GyroMagPair* p, int n, const Pose
   // Index k ^ 7 is -T(k): same axis order, every sign flipped.
   const float dip = meanDip(best);
   if (std::isfinite(dip) && ((dip < 0) == northern_hemisphere)) best ^= 7;
-  int second = -1;
+  // Seed with the first candidate outside the best +/- pair. There are 46
+  // eligible permutations; the running minimum always has a valid index.
+  int second = (best == 0 || (best ^ 7) == 0) ? 1 : 0;
   for (int k = 0; k < 48; ++k)
-    if (k != best && k != (best ^ 7) && (second < 0 || sse[k] < sse[second])) second = k;
+    if (k != best && k != (best ^ 7) && sse[k] < sse[second]) second = k;
   r.best = best;
   r.best_dip = meanDip(best);
   r.best_rms = float(std::sqrt(sse[best] / r.pairs));
