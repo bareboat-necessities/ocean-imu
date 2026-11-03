@@ -74,6 +74,16 @@ public:
     // applied (rejected = forwarded - applied).
     virtual long mag_forwarded() const { return -1; }
     virtual long mag_applied() const { return -1; }
+    // Wave-excitation study (docs/carma-wave-excitation.md): CARMA excitation
+    // options "<mode>[/opt...]" (carma3_bench header) and the label printed
+    // for the configured adapter; false for an adapter without them.
+    virtual bool set_options(const std::string&) { return false; }
+    virtual void set_label(const std::string&) {}
+    // CARMA vertical acceleration std of the committed prior, evidence weight
+    // p, detection statistic z, period confidence c_f, EW band variance, its
+    // expectation under "no waves", CARMA operating frequency [Hz] and the
+    // committed tau [s].
+    virtual bool excitation_diag(double (&)[8]) const { return false; }
 };
 
 // Shipping simulator configuration (as kalman_ou_iii-sim).

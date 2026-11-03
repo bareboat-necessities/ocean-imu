@@ -17,6 +17,10 @@
 
 #include <Eigen/Eigenvalues>
 
+#include <cstdlib>
+#include <string>
+#include <vector>
+
 namespace carma3_bench {
 
 // Extended diagnostics shared by every adapter.
@@ -78,6 +82,73 @@ double mekf_native_nees9(const Mat& P, const Eigen::Matrix3d& R, const Eigen::Ve
     return e.dot(l.solve(e));
 }
 
+// Excitation options of a CARMA wrapper: "<mode>[/opt...]" (carma3_bench
+// header; docs/carma-wave-excitation.md).
+template<class Impl>
+bool apply_carma_excitation_options(Impl& f, const std::string& opts) {
+    using ocean_imu::carma::CarmaExcitationMode;
+    std::vector<std::string> tok;
+    {
+        size_t a = 0;
+        while (a <= opts.size()) {
+            const size_t b = opts.find('/', a);
+            tok.push_back(opts.substr(a, b == std::string::npos ? std::string::npos : b - a));
+            if (b == std::string::npos) break;
+            a = b + 1;
+        }
+    }
+    if (tok.empty()) return false;
+    const std::string& m = tok[0];
+    if (m == "A") f.setCarmaExcitationMode(CarmaExcitationMode::Legacy);
+    else if (m == "B0") f.setCarmaExcitationMode(CarmaExcitationMode::FloorOff);
+    else if (m == "B") f.setCarmaExcitationMode(CarmaExcitationMode::Debiased);
+    else if (m == "C") f.setCarmaExcitationMode(CarmaExcitationMode::Evidence);
+    else if (m == "Cnf") { f.setCarmaExcitationMode(CarmaExcitationMode::Evidence); f.setCarmaFrequencyHold(false); }
+    else if (m == "Cng") { f.setCarmaExcitationMode(CarmaExcitationMode::Evidence); f.setCarmaEvidenceGate(false); }
+    else return false;
+    auto n = f.carmaSensorNoise();
+    auto th = f.carmaEvidenceThresholds();
+    for (size_t i = 1; i < tok.size(); ++i) {
+        const std::string& o = tok[i];
+        auto num = [&](size_t p) { return static_cast<float>(std::strtod(o.c_str() + p, nullptr)); };
+        auto pair = [&](size_t p, float& x, float& y) {
+            char* end = nullptr;
+            x = static_cast<float>(std::strtod(o.c_str() + p, &end));
+            if (!end || *end != '_') return false;
+            y = static_cast<float>(std::strtod(end + 1, nullptr));
+            return true;
+        };
+        if (o.rfind("nv", 0) == 0) {
+            const float k = std::sqrt(num(2));
+            n.white_sigma_mps2 *= k;
+            n.bias_rw_mps2_sqrts *= k;
+        } else if (o == "rw0") n.bias_rw_mps2_sqrts = 0.0f;
+        else if (o.rfind("nf", 0) == 0) f.setCarmaNumericalSigmaFloor(num(2));
+        else if (o.rfind("u", 0) == 0) n.rel_var_uncertainty = num(1);
+        else if (o.rfind("z", 0) == 0) { if (!pair(1, th.z0, th.z1)) return false; }
+        else if (o.rfind("r", 0) == 0) { if (!pair(1, th.r0, th.r1)) return false; }
+        else if (o.rfind("k", 0) == 0) { if (!pair(1, th.k0, th.k1)) return false; }
+        else return false;
+    }
+    f.setCarmaSensorNoise(n.white_sigma_mps2, n.bias_rw_mps2_sqrts, n.rel_var_uncertainty);
+    f.setCarmaEvidenceThresholds(th);
+    return true;
+}
+
+template<class Impl>
+bool carma_excitation_diag(const Impl& f, double (&d)[8]) {
+    const auto& ev = f.waveEvidence();
+    d[0] = f.getCarmaAccelStd();
+    d[1] = ev.waveProbability();
+    d[2] = ev.zScore();
+    d[3] = ev.frequencyConfidence();
+    d[4] = f.getAccelVariance();
+    d[5] = ev.noiseVariance();
+    d[6] = static_cast<double>(f.getVerticalKappa()) * f.mekf().vertical_model().base_zero_crossing_hz();
+    d[7] = f.getTauApplied();
+    return true;
+}
+
 // Shipping OU-III, unchanged.
 class FullOU3 final : public IEstimator3 {
 public:
@@ -128,6 +199,7 @@ public:
     long mag_applied() const override { return mag_.applied; }
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
     int states() const override { return 21; }
+    void set_label(const std::string& l) override { label_ = l; }
 
 private:
     // [dtheta, b_g, v, p, S, a_w, b_a]
@@ -200,6 +272,9 @@ public:
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
     int states() const override { return M::NX; }
     Fusion& fusion() { return fusion_; }
+    bool set_options(const std::string& o) override { return apply_carma_excitation_options(fusion_.raw(), o); }
+    void set_label(const std::string& l) override { label_ = l; }
+    bool excitation_diag(double (&d)[8]) const override { return carma_excitation_diag(fusion_.raw(), d); }
 
 private:
     static constexpr int kIp[3] = {M::pos_index(0), M::pos_index(1), M::pos_index(2)};
