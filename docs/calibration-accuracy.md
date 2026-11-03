@@ -81,6 +81,29 @@ takes 195 seconds for capture and 170 seconds for verification, within the
 220/180-second limits. These worst-case durations are not the normal 20–30 Hz
 guidance times.
 
+Gyro scale and cross-axis terms (`gyro_axis-test`) are checked on simulated
+full sessions through the deployed accelerometer procedure and user model at
+200 Hz with 2 ms read latency, a true gyro matrix with 1% scale and 0.7%
+cross-axis errors, and the stationary bias used for integration. The metric is
+the worst-case relative rate error, the largest singular value of
+`S_applied * S_true^-1 - I`. Means over 12 seeds:
+
+| Scenario | Fitted | Nominal axes | After calibration |
+| --- | ---: | ---: | ---: |
+| Typical | 12/12 | 2.01% | 0.10% |
+| Bias drifted 0.0015 rad/s since the stationary hold | 12/12 | 2.01% | 0.11% |
+| Unsteady hands (twice the wobble, tremor, drift) | 12/12 | 2.01% | 0.13% |
+| 30-150 ms sample dropouts every ~25 s | 4/12 | 2.01% | 1.47% |
+| Exact gyro (nominal axes correct) | 0/12 | 0 | 0 |
+
+No session ends worse than with nominal axes, and the worst fitted session is
+0.28%. Dropouts break the integration, so fewer turns qualify and those
+sessions keep nominal axes (the four fitted ones reach 0.12%). A 40-seed run of
+the same scenarios gives the same picture. These are simulations, not device
+measurements. Bosch quotes BMI270 post-soldering sensitivity errors down to
+about 0.4% after its on-chip component re-trimming; the simulated errors are
+larger to exercise the correction, and an accurate gyro keeps nominal axes.
+
 Run `make -C tests/imu_calibrate test` for the current checks. To reproduce the
 reference from the Git tag, run `bash tests/imu_calibrate/compare_release.sh`
 from the repository root. This extracts the release into a temporary directory

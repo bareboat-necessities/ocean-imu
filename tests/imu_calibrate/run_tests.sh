@@ -16,4 +16,5 @@ python3 test_sketch_temperature.py
 ./accel_cal-test
 python3 test_release_accuracy.py
 ./accel_cal_gravity_override-test
+./gyro_axis-test
 ./accel_cal-replay calibrate_accel_replay_sample.log

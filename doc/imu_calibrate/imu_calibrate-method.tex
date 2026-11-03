@@ -131,16 +131,16 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     \subsection{Gyroscope}
 
-    The gyroscope error model used here is the simpler bias-only form,
-    because scale-factor and cross-sensitivity calibration requires a
-    precision rate rig:
+    The gyroscope error model is
     \begin{equation}
         \boldsymbol{\omega}_\text{cal} = \mathbf{S}\bigl(\boldsymbol{\omega}_\text{raw}
-        - \mathbf{b}(T)\bigr),
-        \quad \mathbf{S} = \mathbf{I}_3.
+        - \mathbf{b}(T)\bigr).
     \end{equation}
-    The identity scale matrix is retained in the struct so that a measured-rate
-    rig can upgrade it without changing the API.
+    The bias $\mathbf{b}(T)$ comes only from a strict stationary hold
+    (Section~\ref{sec:gyro_fit}). The scale and cross-axis matrix
+    $\mathbf{S}$ needs no rate table: it is fitted from the turns between the
+    accelerometer holds (Section~\ref{sec:gyro_axes}) and is the identity
+    unless that fit qualifies.
 
     \subsection{Temperature Bias Model}
     \label{sec:tempbias}
@@ -628,6 +628,8 @@ and Robust Estimation in C\texttt{++}/Eigen}
         \item \texttt{IMU CAL}: with a saved calibration that includes the
         gyroscope, ``Tap: full calib / Tap x2: accel only / Tap x3: cancel'';
         otherwise ``Tap to begin''.
+        \item Full wizard only: \texttt{GYRO}, a strict stationary hold on
+        the table, before the first accelerometer hold.
         \item For each hold, the preparation screen (reading rotation):
         title \texttt{ACCEL} (\texttt{EXTRA i/2} or \texttt{CHECK i/3}),
         the label (e.g.\ \texttt{7/10 USB DN+LEFT DN}), the full
@@ -644,11 +646,11 @@ and Robust Estimation in C\texttt{++}/Eigen}
         retry / Tap x3: abort'' (at most two retries per hold).
         \item \texttt{FIT} ``ACCEL / Working...'' (preliminary fit), then
         at most two \texttt{EXTRA} holds.
-        \item Full wizard only: the existing \texttt{GYRO} and \texttt{MAG}
-        stages.
+        \item Full wizard only: the \texttt{MAG} stage.
         \item \texttt{CHECK 1/3}--\texttt{3/3}: SCREEN UP, USB UP, LEFT DOWN.
         \item \texttt{FIT} (final), \texttt{SAVE} ``Writing...'', then
-        \texttt{DONE} ``A:1 G:1 M:1 / Saved OK / Bias sd 0.0025 m/s2 /
+        \texttt{DONE} ``A:1 G:1 M:1 / Saved OK / Gyro axes: fitted|nominal /
+        MAG timing: saved|not saved / Bias sd 0.0025 m/s2 /
         Temp slope: learned|kept|none / Tap BtnA''.
     \end{enumerate}
     Any failure shows \texttt{FAILED} ``ACCEL / two reason lines /
@@ -731,8 +733,8 @@ and Robust Estimation in C\texttt{++}/Eigen}
 
     Every retained block carries the mean of its valid temperatures.
     $T_\text{ref}$ is the mean of the hold-mean temperatures (rounded to
-    0.1\,$^\circ$C). The three rechecks follow the gyroscope and
-    magnetometer stages in the full wizard, so their temperatures differ by
+    0.1\,$^\circ$C). The three rechecks follow the magnetometer stage in
+    the full wizard, so their temperatures differ by
     whatever the device warmed in normal use. In accelerometer-only mode
     they follow immediately and no wait is inserted. The gyroscope hold is
     not reused as a recheck: the unchanged gyro stage ends after 220
@@ -944,6 +946,76 @@ and Robust Estimation in C\texttt{++}/Eigen}
     temperature interval widened by $2\,{}^\circ$C at each end.  Stored
     float coefficients are rechecked over that interval; failure of that
     precision check also falls back to the stationary bias.
+
+    The bias is never estimated from accelerometer holds, which may be
+    hand held, or from turns.
+
+% -----------------------------------------------------------------------
+    \section{Gyroscope Scale and Cross-Axis Terms}
+    \label{sec:gyro_axes}
+
+    The method is that of IMU-TK (Tedaldi, Pretto and Menegatti, ICRA 2014),
+    also used by INSLIB: between two poses the accelerometer measures both
+    gravity directions, and the gyroscope integrated over the motion between
+    them must carry one onto the other. The poses are the accelerometer
+    holds already in the wizard, so the user does nothing extra; the
+    stationary gyro hold now comes first so that its bias is known while
+    the poses are taken.
+
+    With $\boldsymbol{\omega}_\text{true} = (\mathbf{I}+\mathbf{E})\,
+    (\boldsymbol{\omega}_\text{raw} - \mathbf{b}) - \delta\mathbf{b}$, the
+    nine terms of $\mathbf{E}$ and a constant rate offset
+    $\delta\mathbf{b}$ (drift since the stationary hold, a nuisance with a
+    $2\times10^{-3}$\,rad/s prior that is not stored) form
+    $\boldsymbol{\theta}\in\mathbb{R}^{12}$. The attitude
+    $\mathbf{R}(t)$ since an anchor is integrated from the bias-corrected
+    rate (trapezoidal rate, exact $SO(3)$ step, sample gaps up to 50\,ms),
+    together with its first-order sensitivity
+    $\boldsymbol{\phi}(t)=\mathbf{P}(t)\boldsymbol{\theta}$ (left
+    perturbation in the anchor frame):
+    \begin{equation}
+        \mathbf{P}_{n+1} = \mathbf{P}_n + \mathbf{R}_{n+1}\mathbf{J}_r(\bar{\boldsymbol{\omega}}\Delta t)\,
+        \Delta t\,\bigl[\mathbf{I}_3\otimes\bar{\boldsymbol{\omega}}^{\mathsf T} \;\; -\mathbf{I}_3\bigr],
+    \end{equation}
+    with columns ordered as $E_{ij}$ then $\delta\mathbf{b}$. Only the
+    samples of retained accelerometer blocks enter a hold, as sums of
+    $\mathbf{R}\mathbf{a}$, $\mathbf{R}$, $\mathbf{a}$ and $\mathbf{P}$;
+    blocks before a re-settle are discarded. Memory is fixed and independent
+    of session length. Each completed hold re-anchors the integration, so
+    every linearisation spans a single transition.
+
+    The calibrated gravity direction of hold $h$ in the anchor frame is
+    $\mathbf{d}_h = \mathbf{G}_h/\|\mathbf{G}_h\|$ with
+    $\mathbf{G}_h = \sum\mathbf{R}(\mathbf{a}-\mathbf{b}_a)
+    + \bar{\mathbf{R}}(\mathbf{A}-\mathbf{I})\sum(\mathbf{a}-\mathbf{b}_a)$
+    from the final accelerometer calibration $(\mathbf{A},\mathbf{b}_a)$,
+    and $\partial\mathbf{d}_h/\partial\boldsymbol{\theta} =
+    -[\mathbf{d}_h]_\times\bar{\mathbf{P}}_h$. For consecutive holds $p,q$
+    the residual is
+    $\mathbf{r}_{pq}(\boldsymbol{\theta}) = \mathbf{d}_q - \mathbf{d}_p
+    + (\partial\mathbf{d}_q - \partial\mathbf{d}_p)\boldsymbol{\theta}$,
+    solved by ridge least squares with a 2\,\% prior on each term of
+    $\mathbf{E}$ and a nominal $2\times10^{-3}$\,rad pair error.
+
+    Acceptance uses leave-one-hold-out prediction: every hold's pairs are
+    predicted from the others, with the full model and with $\mathbf{E}=0$
+    (the offset still free). While the held-out RMS exceeds
+    $3\times10^{-3}$\,rad, the hold whose removal minimises it is dropped
+    (at most two) if that at least halves it; such a hold was disturbed by
+    motion the accelerometer gates kept. The matrix is applied only with at
+    least seven pairs, a held-out RMS at most $10^{-2}$\,rad and at least
+    25\,\% below that of nominal axes, $|S_{ii}-1|\le0.05$ and
+    $|S_{ij}|\le0.05$. Otherwise the gyroscope keeps nominal axes; this
+    never fails the calibration.
+
+    The matrix is stored in its own key with a CRC, bound to the gyroscope
+    coefficient set and sensor identity of the saved calibration; a missing,
+    unbound or invalid record means nominal axes, so calibrations saved
+    without it are unchanged. Accelerometer-only recalibration keeps it.
+    In simulated sessions (\texttt{gyro\_axis-test}: the accelerometer user
+    model with 1\,\% scale and 0.7\,\% cross-axis truth, 2\,ms read
+    latency) the worst-case relative rate error falls from 2.0\,\% to
+    0.10\,\% on average; with an exact gyroscope no matrix is applied.
 
 % -----------------------------------------------------------------------
     \section{Software Architecture}

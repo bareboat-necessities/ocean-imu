@@ -30,6 +30,11 @@ whether diagnostics are delivered.
 
 ## Gyroscope stillness and temperature qualification
 
+In the full wizard this is the first stage, before the accelerometer poses:
+its bias is the only rate bias the calibration uses, and the poses are then
+integrated with it (see below). Accelerometer holds, which may be hand held,
+and turns never contribute to the bias.
+
 The device asks the user to put it on a table. It waits for three quiet
 250 ms blocks, then collects six continuous quiet seconds at at most 40 Hz.
 Progress resets automatically after motion or a sample gap over 60 ms; samples
@@ -102,6 +107,41 @@ A stationary, temperature-correlated physical drift cannot in general be
 separated from a true thermal effect using this capture alone. Qualification
 limits that ambiguity; it does not claim a traceable environmental-chamber
 calibration. Short captures normally remain bias-only.
+
+## Gyroscope scale and cross-axis terms
+
+The gyro matrix in `w_cal = S * (w_raw - bias(T))` is fitted from the turns
+between the accelerometer holds, the IMU-TK method (Tedaldi, Pretto and
+Menegatti, ICRA 2014) that INSLIB uses: between two poses the accelerometer
+measures both gravity directions, and the integrated gyro must carry one onto
+the other. No extra user steps or rate table are needed.
+[`src/imu_calibrate/GyroAxisFit.h`](../src/imu_calibrate/GyroAxisFit.h)
+integrates the bias-corrected rate continuously through the accelerometer stage,
+including the instruction and acknowledgement screens, together with the
+first-order sensitivity of the attitude to the nine matrix terms and to a
+constant rate offset. Only retained accelerometer blocks contribute, as fixed
+sums per hold; blocks before a re-settle are dropped. Each completed hold
+re-anchors the integration, so every linearisation spans one transition.
+A sample gap over 50 ms starts a new chain; turns across it are not used.
+
+The offset since the stationary hold is a nuisance term with a prior and is
+not stored. The matrix is applied only when leave-one-hold-out prediction of
+gravity directions is at least 25% better than nominal axes and within
+0.01 rad, from at least seven pose pairs, with every diagonal term within 5%
+of one and every cross term within 0.05. Up to two holds that the others
+contradict (motion the accelerometer gates kept) are dropped when that at
+least halves the held-out error. Otherwise the gyro keeps nominal axes; the
+fit never fails a calibration. `[GYRAX]` serial lines report the result.
+
+The matrix is stored under its own NVS key, `gyro_ax_v1`, with a CRC, bound to
+the gyro coefficient set and sensor identity of the saved calibration. A
+missing, unbound or invalid record means nominal axes, so calibrations saved
+before this record existed keep working unchanged. Erase removes both keys;
+accelerometer-only recalibration keeps the gyro set and therefore the matrix.
+The DONE screen shows `Gyro axes: fitted` or `nominal`, and startup logs
+`[CAL] applied: ... gyroscope (fitted|nominal axes) ...`. There is no
+magnetometer-to-IMU rotation fit: the BMM150 and BMI270 share one board and
+the magnetometer keeps its rotation-free hard/soft-iron calibration.
 
 ## Magnetometer direction and capture
 

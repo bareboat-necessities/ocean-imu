@@ -7,11 +7,17 @@
 
   Uses M5Unified IMU API as the IMU sample source.
 
+  Gyroscope: a strict stationary hold first; it alone gives the rate bias.
   Accelerometer: ten guided static holds (six faces + four screen-up corners),
   bounded targeted extra holds, three later rechecks, and a full-matrix fit
   with thermal-slope qualification (imu_cal::AccelCalProcedure). In the full
-  wizard the rechecks follow the gyro and magnetometer stages; the
-  accelerometer-only mode keeps the saved gyro and magnetometer calibration.
+  wizard the rechecks follow the magnetometer stage; the accelerometer-only
+  mode keeps the saved gyro and magnetometer calibration.
+  Gyro scale and cross-axis terms come from the same accelerometer holds
+  (imu_cal::GyroAxisFitter, IMU-TK as in INSLIB): the gyro is integrated
+  between poses and must carry one measured gravity direction onto the
+  next. They are applied only when they predict held-out poses better than
+  nominal axes; otherwise the gyro keeps nominal axes. No extra user steps.
   Nothing is saved unless the complete candidate validates. Failed writes
   attempt recovery and report whether the previous bytes were verified.
 */
@@ -37,6 +43,7 @@
 #include "imu_calibrate/MagCalSampling.h"   // magnetic moments and capture
 #include "imu_calibrate/MagTimingCal.h"
 #include "imu_calibrate/GyroCalCapture.h"   // continuous quiet hold
+#include "imu_calibrate/GyroAxisFit.h"      // gyro scale/cross-axis from the accel holds
 
 // Set to 1 to stream every raw accel/gyro sample as [ACCRAW] lines for
 // tests/imu_calibrate/accel_cal-replay. This diagnostic mode also preserves
@@ -137,6 +144,10 @@ private:
 
       gyr_out_ = imu_cal::GyroCalibration<float>{};
       mag_out_ = imu_cal::MagCalibration<float>{};
+      gyro_axes_ = imu_cal::GyroAxisResult{};
+      gyro_axes_saved_ = false;
+      gyro_chain_on_ = false;
+      gyro_chain_.reset();
       mag_verified_ = false;
       timing_fit_ = {}; timing_saved_ = false;
 
@@ -163,31 +174,42 @@ private:
       const imu_cal::AccelThermalPrior prior =
           have_prev ? accelThermalPriorFrom(prev, sensor_id_lo_, sensor_id_hi_, imu_type_) : imu_cal::AccelThermalPrior{};
       Serial.printf("[ACC] thermal prior: %s\n", prior.valid ? "compatible slope available" : "none");
-      const Vector3f gyro_level = have_prev && prev.gyro_ok
+      Vector3f gyro_level = have_prev && prev.gyro_ok
           ? Vector3f(prev.gyro_b0[0], prev.gyro_b0[1], prev.gyro_b0[2]) : Vector3f::Zero();
+      bool gyro_level_ok = have_prev && prev.gyro_ok;
       // Replay context (tests/imu_calibrate/accel_cal-replay).
       Serial.printf("[ACCMODE] %s g=%.7f\n", accel_only ? "accel_only" : "full", (double)accel_fcfg_.g);
       Serial.printf("[ACCPRIOR] %d,%.7f,%.7f,%.7f,%.2f,%.2f,%.2f,%.2f\n", (int)prior.valid, prior.k[0], prior.k[1],
                     prior.k[2], prior.k_temp_lo, prior.k_temp_hi, prior.clamp_lo, prior.clamp_hi);
       Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,%d\n", (double)gyro_level.x(), (double)gyro_level.y(),
-                    (double)gyro_level.z(), (int)(have_prev && prev.gyro_ok));
-
-      accel_.begin(accel_ccfg_, accel_fcfg_, prior, gyro_level, have_prev && prev.gyro_ok);
-      AccelIo io(*this);
-
-      if (!accel_.runMainStage(io)) return accelFail_();
+                    (double)gyro_level.z(), (int)gyro_level_ok);
 
       if (!accel_only) {
+        // Rest first, as in IMU-TK/INSLIB: the strict stationary hold is the
+        // only source of the rate bias, and the accelerometer poses below are
+        // integrated with it.
         if (!captureGyro_()) return false;
         if (gyroCal_.buf.n < ImuCalWizardCfg::GYRO_MIN_TO_FIT) {
           ui_.fail("GYRO", "Too few accepted");
           return false;
         }
         if (!runFitTask_(FitKind::GYRO, "GYRO", true)) return false;
-        accel_.setGyroReference(gyr_out_.biasT.b0);
-        Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyr_out_.biasT.b0.x(), (double)gyr_out_.biasT.b0.y(),
-                      (double)gyr_out_.biasT.b0.z());
+        gyro_level = gyr_out_.biasT.b0;
+        gyro_level_ok = true;
+        Serial.printf("[ACCGYRO] %.7f,%.7f,%.7f,1\n", (double)gyro_level.x(), (double)gyro_level.y(),
+                      (double)gyro_level.z());
+      }
 
+      accel_.begin(accel_ccfg_, accel_fcfg_, prior, gyro_level, gyro_level_ok);
+      accel_.setGyroChain(accel_only ? nullptr : &gyro_chain_);
+      AccelIo io(*this);
+
+      gyro_chain_on_ = !accel_only;
+      const bool main_ok = accel_.runMainStage(io);
+      gyro_chain_on_ = false;
+      if (!main_ok) return accelFail_();
+
+      if (!accel_only) {
         // If mag is unavailable, skip MAG stage cleanly. A saved magnetometer
         // calibration is never dropped that way: the user retries the probe
         // or aborts (previous calibration kept).
@@ -228,8 +250,18 @@ private:
       }
 
       // Later rechecks (thermal evidence + held-out verification), final fit.
-      if (!accel_.runRecheckStage(io)) return accelFail_();
+      gyro_chain_on_ = !accel_only;
+      const bool recheck_ok = accel_.runRecheckStage(io);
+      gyro_chain_on_ = false;
+      if (!recheck_ok) return accelFail_();
       if (!accel_.runFinalFit(io)) return accelFail_();
+
+      // Gyro scale/cross-axis terms from the integrated turns between the
+      // holds. Optional: without a qualified fit the gyro keeps nominal axes.
+      if (!accel_only) {
+        if (!runFitTask_(FitKind::GYRO_AXES, "GYRO axes", false)) gyro_axes_ = imu_cal::GyroAxisResult{};
+        if (gyro_axes_.ok) gyr_out_.S = gyro_axes_.S;
+      }
 
       // Candidate: new accelerometer set; gyro/mag from this run, or carried
       // unchanged from the previous calibration in accelerometer-only mode.
@@ -284,6 +316,16 @@ private:
         return false;
       }
 
+      if (!accel_only) {
+        // The optional gyro axis record is bound to the saved gyro set; a
+        // stale one from an earlier calibration is removed.
+        const GyroAxisRecord rec = makeGyroAxisRecord(rb, gyro_axes_);
+        const bool wrote = store_.saveGyroAxes(gyro_axes_.ok ? &rec : nullptr);
+        Serial.printf("[GYRAX] %s record %s\n", gyro_axes_.ok ? "fitted" : "nominal",
+                      wrote ? "written" : "WRITE FAILED (nominal axes)");
+      }
+      Matrix3f gyro_S;
+      gyro_axes_saved_ = store_.loadGyroAxes(rb, gyro_S);
       timing_saved_ = rb.mag_ok && magTimingValid(rb.mag_timing);
       activeMagTiming() = {};
       if (magTimingLoader()) magTimingLoader()(rb);
@@ -314,7 +356,7 @@ private:
       while (true) {
         Input::update();
         if (Input::tapPressed()) break;
-        delay(10);
+        delay(w_.pumpGyro_() ? 1 : 10);  // the turn to the next pose starts here
       }
       drawn_ = false;
       Serial.printf("[ACCPREP] %d,%d,%d\n", (int)v.kind, (int)v.pose, (int)v.attempt);
@@ -328,6 +370,7 @@ private:
       s.a = ims.a;
       s.w = ims.w;
       s.tempC = ims.tempC;
+      s.gyro = w_.feedGyro_(ims);
 #if ATOMS3R_ICAL_RAW_LOG
       Serial.printf("[ACCRAW] %lu,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.4f\n", (unsigned long)s.t_us,
                     (double)s.a.x(), (double)s.a.y(), (double)s.a.z(),
@@ -367,8 +410,17 @@ private:
     }
 
     void holdOk(const imu_cal::AccelStepView& v) override {
-      w_.ui_.showOkAuto(v.label, "Captured");
-      delay(80);
+      // As M5Ui::showOkAuto, with the gyro integrated throughout.
+      M5Ui& ui = w_.ui_;
+      ui.title("OK");
+      ui.line(v.label);
+      ui.line("Captured");
+      const uint32_t t0 = millis();
+      while (millis() - t0 < M5UiCfg::OK_PAUSE_MS + 80) {
+        Input::update();
+        if (millis() - t0 < M5UiCfg::OK_PAUSE_MS && Input::tapPressed()) break;
+        delay(w_.pumpGyro_() ? 1 : 10);
+      }
     }
 
     bool holdRetry(const imu_cal::AccelStepView& v, const char* why) override {
@@ -437,6 +489,7 @@ private:
     ui_.title("DONE");
     M5.Display.printf("A:%d G:%d M:%d\n", (int)rb.accel_ok, (int)rb.gyro_ok, (int)rb.mag_ok);
     ui_.line("Saved OK");
+    ui_.line(gyro_axes_saved_ ? "Gyro axes: fitted" : "Gyro axes: nominal");
     ui_.line(timing_saved_ ? "MAG timing: saved" : "MAG timing: not saved");
     char l[22];
     float bs = rb.accel_bias_sigma[0];
@@ -505,7 +558,7 @@ private:
 
 private:
   // FIT task machinery
-  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4 };
+  enum class FitKind : uint8_t { ACCEL_JOB=0, GYRO=1, MAG=2, MAG_VERIFY=3, SAVE_CHECK=4, GYRO_AXES=5 };
 
   struct FitCtx {
     // Publish fitted coefficients across cores before the UI consumes them.
@@ -572,6 +625,31 @@ private:
     vTaskDelete(nullptr);
   }
 
+  // Gyro scale/cross-axis fit over the accelerometer holds (final accel set).
+  static void fitTaskGyroAxes_(void* p) {
+    FitCtx* ctx = (FitCtx*)p;
+    ImuCalWizard* self = ctx->wiz;
+    imu_cal::AccelCalibration<float> fc;
+    AccelProc::Fitter::toFloat(self->accel_.result(), self->accel_fcfg_.g, fc);
+    imu_cal::GyroHoldView views[ImuCalWizardCfg::ACCEL_MAX_HOLDS];
+    const int n = std::min(self->accel_.nHolds(), ImuCalWizardCfg::ACCEL_MAX_HOLDS);
+    for (int i = 0; i < n; ++i) views[i] = self->accel_.gyroHoldView(i);
+    auto& r = self->gyro_axes_;
+    self->gyro_fitter_.fit(views, n, fc, imu_cal::GyroAxisCfg{}, r);
+    Serial.printf("[GYRAX] %s holds=%d pairs=%d dropped=%d cv_nominal=%.5f cv_fit=%.5f rms=%.5f "
+                  "max_turn=%.1fdeg offset=(%.5f,%.5f,%.5f) stack=%luB\n",
+                  imu_cal::gyroAxisReasonStr(r.reason), n, r.pairs, r.dropped, (double)r.cv_nominal,
+                  (double)r.cv_fit, (double)r.rms_fit, (double)r.max_angle * 57.2958, (double)r.offset.x(),
+                  (double)r.offset.y(), (double)r.offset.z(), (unsigned long)hwmBytes_());
+    Serial.printf("[GYRAX] S=[%.5f %.5f %.5f; %.5f %.5f %.5f; %.5f %.5f %.5f]\n",
+                  (double)r.S(0,0), (double)r.S(0,1), (double)r.S(0,2), (double)r.S(1,0), (double)r.S(1,1),
+                  (double)r.S(1,2), (double)r.S(2,0), (double)r.S(2,1), (double)r.S(2,2));
+    ctx->reason = imu_cal::FitFail::OK;
+    ctx->ok = true;
+    ctx->done = true;
+    vTaskDelete(nullptr);
+  }
+
   const char* magFailureText_() const {
     if (fit_.reason == imu_cal::FitFail::BAD_ARG) return "Fit task failed";
     return fit_.reason == imu_cal::FitFail::MAG_QUALITY_FAIL ?
@@ -626,6 +704,7 @@ private:
       case FitKind::MAG:   fn = &ImuCalWizard::fitTaskMag_;   break;
       case FitKind::MAG_VERIFY: fn = &ImuCalWizard::fitTaskMagVerify_; break;
       case FitKind::SAVE_CHECK: fn = &ImuCalWizard::fitTaskSaveCheck_; break;
+      case FitKind::GYRO_AXES: fn = &ImuCalWizard::fitTaskGyroAxes_; break;
       default:             fn = &ImuCalWizard::fitTaskGyro_;  break;
     }
 
@@ -708,6 +787,21 @@ private:
   // Capture steps
   bool readSample_(ImuSample& s) {
     return readImuMapped(M5.Imu, s);
+  }
+
+  // Gyro integration through the accelerometer stage, with the stationary
+  // bias (the matrix is what is being calibrated). Null when off or unusable.
+  const imu_cal::GyroChainState* feedGyro_(const ImuSample& s) {
+    if (!gyro_chain_on_) return nullptr;
+    return gyro_chain_.feed(s.sample_us, s.w - gyr_out_.biasT.bias(s.tempC));
+  }
+  // Reads and integrates while a screen waits (between accelerometer holds);
+  // false when integration is off.
+  bool pumpGyro_() {
+    if (!gyro_chain_on_) return false;
+    ImuSample s;
+    if (readSample_(s)) (void)feedGyro_(s);
+    return true;
   }
 
   bool readMagSample_(Vector3f& m_out) {
@@ -994,6 +1088,11 @@ public:
 
   imu_cal::GyroCalibration<float>  gyr_out_{};
   imu_cal::MagCalibration<float>   mag_out_{};
+  imu_cal::GyroChain gyro_chain_{};
+  bool gyro_chain_on_ = false;
+  imu_cal::GyroAxisFitter<> gyro_fitter_{};
+  imu_cal::GyroAxisResult gyro_axes_{};
+  bool gyro_axes_saved_ = false;
   imu_cal::MagFitQuality mag_verify_quality_{};
   bool mag_verified_ = false;
   imu_cal::MagTimingCal timing_cal_{}; // fixed storage, never on the loop stack

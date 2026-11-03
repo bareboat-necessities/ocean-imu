@@ -10,6 +10,11 @@
   Only the current layout (version 5, key "blob_m5v5") is read or written.
   Blobs of earlier versions are not loaded; the device runs the wizard again.
 
+  The optional gyro scale/cross-axis matrix (GyroAxisRecord) has its own key,
+  "gyro_ax_v1", bound to the gyro coefficient set and sensor identity of the
+  blob it was fitted with. Without a bound, valid record the gyro keeps
+  nominal axes, so a blob saved before the record existed is unchanged.
+
   The accelerometer metadata describes one coefficient set; accel_coeff_crc
   binds it to that set. A thermal slope is only carried into a later session
   when the metadata is bound and the sensor identity matches.
@@ -29,6 +34,7 @@
 #include <math.h>
 
 #include "imu_calibrate/AccelCalFit.h"
+#include "imu_calibrate/GyroAxisFit.h"
 #include "AtomS3R/AtomS3R_ImuUnits.h"
 
 namespace atoms3r_ical {
@@ -276,6 +282,57 @@ static inline void fillGyroFromFit(ImuCalBlobV5& b, const imu_cal::GyroCalibrati
   b.gyro_coeff_crc = gyroCoeffCrc(b);
 }
 
+// Optional gyro scale/cross-axis matrix from imu_cal::GyroAxisFitter:
+// w_cal = S * (w_raw - bias(T)). Stored under its own key, bound to the gyro
+// coefficient set and sensor identity of the blob it was fitted with.
+struct GyroAxisRecord {
+  uint32_t version = 1, binding = 0;
+  float S[9]{};                       // row-major
+  float cv_nominal = 0, cv_fit = 0;   // held-out direction RMS, rad
+  uint16_t pairs = 0, dropped = 0;
+  uint32_t crc = 0;
+};
+static_assert(sizeof(GyroAxisRecord) == 60, "gyro axis record layout");
+
+inline uint32_t gyroAxisBinding(const ImuCalBlobV5& b) {
+  const uint32_t v[] = {gyroCoeffCrc(b), b.sensor_id_lo, b.sensor_id_hi, b.imu_type};
+  return ~crc32_ieee_(reinterpret_cast<const uint8_t*>(v), sizeof(v));
+}
+inline uint32_t gyroAxisCrc(const GyroAxisRecord& r) {
+  return ~crc32_ieee_(reinterpret_cast<const uint8_t*>(&r), offsetof(GyroAxisRecord, crc));
+}
+inline bool gyroAxisValid(const GyroAxisRecord& r) {
+  const imu_cal::GyroAxisCfg lim;
+  if (r.version != 1 || r.crc != gyroAxisCrc(r) || !allFinite_(r.S, 9) || r.pairs < lim.min_pairs ||
+      !std::isfinite(r.cv_nominal) || !(r.cv_fit >= 0) || !(r.cv_fit <= float(lim.max_cv))) return false;
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      if (!(fabsf(r.S[3 * i + j] - (i == j ? 1.0f : 0.0f)) <= float(i == j ? lim.max_scale_dev : lim.max_cross)))
+        return false;
+  return true;
+}
+// Record of a qualified fit, bound to blob `b` (sealed: crc set).
+inline GyroAxisRecord makeGyroAxisRecord(const ImuCalBlobV5& b, const imu_cal::GyroAxisResult& r) {
+  GyroAxisRecord g;
+  mat_to_rowmajor9_(r.S, g.S);
+  g.cv_nominal = r.cv_nominal; g.cv_fit = r.cv_fit;
+  g.pairs = (uint16_t)r.pairs; g.dropped = (uint16_t)r.dropped;
+  g.binding = gyroAxisBinding(b);
+  g.crc = gyroAxisCrc(g);
+  return g;
+}
+// The gyro matrix the runtime applies with blob `b`: true and S only for a
+// valid record bound to b's valid gyro set.
+inline bool gyroAxisApplies(const GyroAxisRecord& r, const ImuCalBlobV5& b, Matrix3f& S) {
+  if (!gyroSetValid(b) || !gyroAxisValid(r) || r.binding != gyroAxisBinding(b)) return false;
+  S = mat_from_rowmajor9_(r.S);
+  return true;
+}
+// Reads the stored record for blob `b` (installed by the NVS store; null:
+// nominal axes).
+using GyroAxisLoader = bool (*)(const ImuCalBlobV5& b, Matrix3f& S);
+inline GyroAxisLoader& gyroAxisLoader() { static GyroAxisLoader loader = nullptr; return loader; }
+
 static inline bool magSetValid(const ImuCalBlobV5& b) {
   if (!b.mag_ok || !allFinite_(b.mag_A, 9) || !allFinite_(b.mag_b, 3) ||
       !isfinite(b.mag_field_uT) || b.mag_field_uT < 12 || b.mag_field_uT > 120 ||
@@ -432,6 +489,8 @@ struct RuntimeCals {
   // Set when the blob's magnetometer fit was made from a different data source
   // than this firmware delivers; it is then not applied.
   bool mag_source_mismatch = false;
+  // Set when a bound gyro scale/cross-axis matrix is applied (else nominal axes).
+  bool gyro_axes = false;
 
   void rebuildFromBlob(const ImuCalBlobV5& b, float g_cfg = ImuCalCfg::g_cal_local) {
     accel_gravity_mismatch = (b.accel_ok != 0) && !accelGravityMatches(b, g_cfg);
@@ -461,6 +520,9 @@ struct RuntimeCals {
     gyr.temp_lo = b.gyro_temp_lo; gyr.temp_hi = b.gyro_temp_hi;
     gyr.temperature_information = b.gyro_temperature_information;
     gyr.slope_sigma = Vector3f(b.gyro_k_sigma[0], b.gyro_k_sigma[1], b.gyro_k_sigma[2]);
+    Matrix3f S;
+    gyro_axes = gyr.ok && gyroAxisLoader() && gyroAxisLoader()(b, S);
+    if (gyro_axes) gyr.S = S;
 
     // Read the magnetometer the way the saved fit was made when the firmware
     // can; a fit made in other units (e.g. before Bosch compensation) that
@@ -507,6 +569,7 @@ template <class KV>
 class ImuCalStoreT {
 public:
   static constexpr const char* kKeyV5 = "blob_m5v5";
+  static constexpr const char* kKeyGyroAxis = "gyro_ax_v1";
 
   KV kv;
 
@@ -560,7 +623,23 @@ public:
     return false;
   }
 
-  void erase() { kv.remove(kKeyV5); }
+  void erase() { kv.remove(kKeyV5); kv.remove(kKeyGyroAxis); }
+
+  // Optional gyro axis record: S when the stored record applies to blob `b`.
+  bool loadGyroAxes(const ImuCalBlobV5& b, Matrix3f& S) {
+    GyroAxisRecord r;
+    return kv.getBytesLength(kKeyGyroAxis) == sizeof(r) &&
+           kv.getBytes(kKeyGyroAxis, &r, sizeof(r)) == sizeof(r) && gyroAxisApplies(r, b, S);
+  }
+  // Writes a valid record, or removes the key for nullptr; true only when
+  // the stored state was read back as intended.
+  bool saveGyroAxes(const GyroAxisRecord* r) {
+    if (!r) return kv.remove(kKeyGyroAxis) && kv.getBytesLength(kKeyGyroAxis) == 0;
+    GyroAxisRecord rb;
+    return gyroAxisValid(*r) && kv.putBytes(kKeyGyroAxis, r, sizeof(*r)) == sizeof(*r) &&
+           kv.getBytesLength(kKeyGyroAxis) == sizeof(rb) && kv.getBytes(kKeyGyroAxis, &rb, sizeof(rb)) == sizeof(rb) &&
+           memcmp(&rb, r, sizeof(rb)) == 0;
+  }
 
   // Byte-for-byte equality of two stored blobs (padding included: both sides
   // are byte copies of what was written).

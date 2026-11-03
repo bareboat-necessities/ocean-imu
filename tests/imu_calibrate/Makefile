@@ -23,7 +23,7 @@ endif
 LDFLAGS  =
 
 # Targets
-TARGETS = calibration_accuracy-test mag_field_consistency-test mag_hand_motion-test calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test mag_diagnostics-test
+TARGETS = calibration_accuracy-test mag_field_consistency-test mag_hand_motion-test calibration_workflow-test calibration_safety-test imu_calibrate-test accel_cal-test accel_cal-replay accel_cal_gravity_override-test mag_diagnostics-test gyro_axis-test
 
 all: build test
 
@@ -73,11 +73,14 @@ accel_cal_gravity_override-test: accel_cal_gravity_override-test.o
 mag_diagnostics-test: mag_diagnostics-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+gyro_axis-test: gyro_axis-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 # The library headers under test (header-only), so edits there rebuild the tests.
 SRC_DIR = ../../src
 CAL_HEADERS = $(SRC_DIR)/imu_calibrate/CalibrateIMU.h $(SRC_DIR)/imu_calibrate/MagCalFit.h \
               $(SRC_DIR)/imu_calibrate/MagCalCapture.h $(SRC_DIR)/imu_calibrate/MagCalSampling.h $(SRC_DIR)/imu_calibrate/GyroCalCapture.h $(SRC_DIR)/imu_calibrate/AccelCalFit.h \
-              $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
+              $(SRC_DIR)/imu_calibrate/AccelCalCapture.h $(SRC_DIR)/imu_calibrate/GyroAxisFit.h $(SRC_DIR)/AtomS3R/AtomS3R_ImuCalBlob.h \
               $(SRC_DIR)/AtomS3R/AtomS3R_ImuUnits.h
 
 calibration_accuracy-test.o: $(CAL_HEADERS)
@@ -89,6 +92,7 @@ imu_calibrate-test.o: $(CAL_HEADERS)
 accel_cal-test.o: accel_cal_sim.h accel_cal_replay.h ../common/GravityChain.h $(CAL_HEADERS)
 accel_cal-replay.o: accel_cal_replay.h $(CAL_HEADERS)
 accel_cal_gravity_override-test.o: ../common/GravityChain.h $(CAL_HEADERS)
+gyro_axis-test.o: accel_cal_sim.h $(CAL_HEADERS)
 mag_diagnostics-test.o: $(SRC_DIR)/AtomS3R/AtomS3R_MagDiagnostics.h $(SRC_DIR)/AtomS3R/AtomS3R_MagAcquisition.h $(SRC_DIR)/AtomS3R/AtomS3R_Bmm150AuxPreset.h $(SRC_DIR)/AtomS3R/AtomS3R_Bmm150Compensation.h
 
 %.o: %.cpp

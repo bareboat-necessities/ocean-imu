@@ -10,7 +10,8 @@ namespace {
 void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCalBlobV5& blob,
                        const RuntimeCals& rc) {
   if (!why) {
-    Serial.println("[CAL] applied: accelerometer, gyroscope, magnetometer");
+    Serial.printf("[CAL] applied: accelerometer, gyroscope (%s axes), magnetometer\n",
+                  rc.gyro_axes ? "fitted" : "nominal");
     return;
   }
   Serial.printf("[CAL] UNUSABLE: %s. Stopped before the estimator%s.\n", why,

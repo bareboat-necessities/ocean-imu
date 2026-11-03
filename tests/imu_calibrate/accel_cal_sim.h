@@ -74,6 +74,8 @@ struct SensorTruth {
   double ar_sd = 0.003, ar_rho = 0.995;  // correlated noise
   Vec3 gyro_bias = Vec3::Zero();
   double gyro_noise = 0.0015;
+  // Gyro scale/cross-axis truth: true rate = gyro_S * (raw - bias).
+  Mat3 gyro_S = Mat3::Identity();
 
   Mat3 S_at(double T) const { return S + dS_dT * (T - T0); }
   Vec3 bias_at(double T) const { return b0 + k * (T - T0); }
@@ -148,6 +150,7 @@ struct StreamModel {
   double jitter_ms = 0.5;
   double p_stale = 0.0;           // exact repeat of the previous sample, new timestamp
   double p_gap = 0.0;             // start of a 30-150 ms dropout
+  double stamp_latency_ms = 0.0;  // uniform read latency added to the timestamp
 };
 
 struct Scenario {
@@ -249,7 +252,8 @@ public:
     for (int j = 0; j < 3; ++j) ar_(j) = truth_.ar_rho * ar_(j) + std::sqrt(1 - truth_.ar_rho * truth_.ar_rho) * rng_.normal(truth_.ar_sd);
     const Mat3 A = truth_.S_at(T) * truth_.R_mis.transpose();
     a_raw = A.inverse() * f_b + truth_.bias_at(T) + rng_.nvec(truth_.noise) + ar_;
-    w_raw = w_b + truth_.gyro_bias + rng_.nvec(truth_.gyro_noise);
+    const Vec3 w_meas = truth_.gyro_S.isIdentity(0.0) ? w_b : Vec3(truth_.gyro_S.inverse() * w_b);
+    w_raw = w_meas + truth_.gyro_bias + rng_.nvec(truth_.gyro_noise);
   }
 
   double tempReading(double T) {
@@ -259,6 +263,10 @@ public:
   }
 
   void addShock(double t0, double dur, const Vec3& a) { shocks_.push_back({t0, dur, a}); }
+
+  // Hold motion starts from the placed attitude instead of jumping by its
+  // initial wobble/settle offset (needed when the gyro is integrated).
+  bool smooth_holds = false;
 
 private:
   struct Shock { double t0, dur; Vec3 a; };
@@ -273,6 +281,12 @@ private:
       return expso3(d * m) * move_from_;
     }
     const double th = t - (move_t0_ + move_T_);
+    Vec3 rv = holdRv_(th, t);
+    if (smooth_holds) rv -= holdRv_(0.0, move_t0_ + move_T_);
+    return expso3(rv) * move_to_;
+  }
+
+  Vec3 holdRv_(double th, double t) const {
     Vec3 rv = Vec3::Zero();
     for (int j = 0; j < 3; ++j) rv += wob_amp_[j] * std::sin(2 * kPi * wob_f_[j] * th + wob_ph_[j]);
     rv += drift_ * th;
@@ -281,7 +295,7 @@ private:
       const double u = std::min(1.0, (t - regrip_t_) / 0.5);
       rv += regrip_v_ * (u * u * (3 - 2 * u));
     }
-    return expso3(rv) * move_to_;
+    return rv;
   }
 
   Vec3 linAccAt_(double t) const {
@@ -338,7 +352,8 @@ public:
       gap_until_ = w_.t() + w_.rng().uni(0.03, 0.15);
       return false;
     }
-    s.t_us = (uint32_t)(uint64_t)std::llround(w_.t() * 1e6);
+    const double lat = m_.stamp_latency_ms > 0 ? w_.rng().uni(0, m_.stamp_latency_ms * 1e-3) : 0.0;
+    s.t_us = (uint32_t)(uint64_t)std::llround((w_.t() + lat) * 1e6);
     if (have_prev_ && m_.p_stale > 0 && w_.rng().chance(m_.p_stale)) {
       s.a = prev_.a; s.w = prev_.w; s.tempC = prev_.tempC;
       return true;

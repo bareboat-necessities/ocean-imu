@@ -32,6 +32,7 @@
 */
 
 #include "imu_calibrate/AccelCalFit.h"
+#include "imu_calibrate/GyroAxisFit.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -194,6 +195,8 @@ struct AccelRawSample {
   Eigen::Vector3f a = Eigen::Vector3f::Zero();   // body frame, m/s^2
   Eigen::Vector3f w = Eigen::Vector3f::Zero();   // body frame, rad/s
   float tempC = NAN;
+  // Integrated gyro attitude at this sample (GyroAxisFit.h), or none.
+  const GyroChainState* gyro = nullptr;
 };
 
 struct AccelHoldStats {
@@ -274,6 +277,7 @@ public:
     blk_.reset();
     up_sum_.setZero();
     wsum_.setZero(); wcnt_ = 0;
+    hold_g_.reset();
   }
 
   // Feeds one fresh sample. Returns the phase after it.
@@ -309,6 +313,7 @@ public:
     }
     if (blk_.n == 0) blk_.start(t_ms_, s.a, s.w);
     blk_.add(t_ms_, s.a, s.w, s.tempC);
+    blk_.g.add(s.gyro, s.a);
     if (t_ms_ - blk_.t_start_ms >= cfg_->block_ms) {
       closeBlock_();
       blk_.reset();
@@ -350,6 +355,8 @@ public:
   }
   int firstObs() const { return first_obs_; }
   int keptBlocks() const { return (int)(n_fit_ + n_ver_); }
+  // Gyro attitude sums over the retained blocks only.
+  const GyroPoseSums& gyroSums() const { return hold_g_; }
 
 private:
   struct Block {
@@ -358,6 +365,7 @@ private:
     Eigen::Vector3f a_ref, sa, saa, amin, amax;
     Eigen::Vector3f w_ref, sw, sww;
     float st = 0; int nt = 0;
+    GyroPoseSums g;
     void reset() { n = 0; }
     void start(uint32_t t, const Eigen::Vector3f& a, const Eigen::Vector3f& w) {
       n = 0; t_start_ms = t; t_first_ms = t; t_last_ms = t; max_gap_ms = 0;
@@ -365,6 +373,7 @@ private:
       sa.setZero(); saa.setZero(); sw.setZero(); sww.setZero();
       amin = a; amax = a;
       st = 0; nt = 0;
+      g.reset();
     }
     void add(uint32_t t, const Eigen::Vector3f& a, const Eigen::Vector3f& w, float tC) {
       if (n > 0) max_gap_ms = std::max(max_gap_ms, t - t_last_ms);
@@ -426,6 +435,7 @@ private:
     c.a = mean_a; c.w = mean_w; c.a_std = a_std; c.n = (uint16_t)std::min<uint32_t>(b.n, 65535u);
     c.t_ms = (b.t_first_ms + b.t_last_ms) / 2;
     c.tempC = (b.nt > 0) ? b.st / (float)b.nt : NAN;
+    c.g = b.g;
 
     if (phase_ == AccelHoldPhase::PLACING) {
       if (t_ms_ < cfg_->min_after_start_ms) { run_ = 0; hint_ = AccelHoldHint::PLACE; return; }
@@ -457,6 +467,7 @@ private:
     float a_std, tempC;
     uint32_t t_ms;
     uint16_t n;
+    GyroPoseSums g;
   };
 
   void reject_(bool region) {
@@ -475,6 +486,9 @@ private:
       ++stats_.resettles;
       run_ = 0; rej_run_ = 0;
       have_last_kept_ = false;
+      // Blocks before the disturbance may have been taken while still being
+      // placed; the gyro pose uses only the final settled run.
+      hold_g_.reset();
     }
   }
 
@@ -494,6 +508,7 @@ private:
     ++stats_.kept;
     up_sum_ += c.a.normalized();
     wsum_ += c.w; ++wcnt_;
+    hold_g_.merge(c.g);
     last_kept_a_ = c.a; have_last_kept_ = true;
     if (n_fit_ >= fit_need_ && n_ver_ >= ver_need_) {
       phase_ = AccelHoldPhase::DONE;
@@ -533,6 +548,7 @@ private:
   Eigen::Vector3f up_sum_ = Eigen::Vector3f::Zero();
   Eigen::Vector3f wsum_ = Eigen::Vector3f::Zero();
   int wcnt_ = 0;
+  GyroPoseSums hold_g_;
 };
 
 // Procedure
@@ -576,6 +592,9 @@ struct AccelHoldRecord {
   uint32_t t_start_ms = 0;          // session clock at the hold's first sample
   Eigen::Vector3f up = Eigen::Vector3f::Zero();
   AccelHoldStats stats;
+  // Gyro attitude sums relative to the anchor before the hold (entry) and to
+  // the anchor its completion created (exit); see GyroAxisFit.h.
+  GyroPoseSums gyro_entry, gyro_exit;
 };
 
 template <int MAXO = 340, int MAXH = 24>
@@ -659,6 +678,22 @@ public:
       if (bad < 0) return setFail_(AccelProcFail::FIT_FAILED, gateText_(result_.gate));
       if (!recapture_(io, bad)) return false;
     }
+  }
+
+  // Optional gyro integration (GyroAxisFit.h). Completed holds re-anchor it.
+  void setGyroChain(GyroChain* chain) { gyro_chain_ = chain; }
+
+  // Gyro view of hold i for GyroAxisFitter: its sums and mean temperature.
+  GyroHoldView gyroHoldView(int i) const {
+    GyroHoldView v;
+    const AccelHoldRecord& h = holds_[i];
+    v.entry = &h.gyro_entry;
+    v.exit = &h.gyro_exit;
+    float st = 0; int nt = 0;
+    for (int k = h.first_obs; k < h.first_obs + h.n_obs && k < n_obs_; ++k)
+      if (std::isfinite(obs_[k].tempC)) { st += obs_[k].tempC; ++nt; }
+    v.tempC = nt ? st / (float)nt : NAN;
+    return v;
   }
 
   // Replaces the stationary gyro level used by the rotation gate (e.g. after
@@ -913,6 +948,13 @@ private:
         h.t_start_ms = hold_t0_session;
         h.up = up;
         h.stats = st;
+        h.gyro_entry = engine_.gyroSums();
+        if (gyro_chain_) {
+          h.gyro_exit = gyro_chain_->reanchor(h.gyro_entry);
+        } else {
+          h.gyro_exit = GyroPoseSums{};
+          h.gyro_exit.broken = true;
+        }
         total_hold_ms_ += st.t_total_ms;
         // Blocks carry hold-relative times; rebase to the session clock.
         for (int i = h.first_obs; i < n_obs_; ++i) {
@@ -1049,6 +1091,7 @@ private:
   AccelHoldFail fail_hold_ = AccelHoldFail::NONE;
 
   AccelHoldEngine<MAXO> engine_;
+  GyroChain* gyro_chain_ = nullptr;
   Fitter fitter_;
   AccelFullFitResult prelim_;
   AccelFullFitResult result_;

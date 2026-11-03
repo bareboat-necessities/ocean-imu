@@ -148,8 +148,17 @@ public:
   }
 };
 
-// NVS store (Preferences)
-class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {};
+static inline bool loadGyroAxesNvs_(const ImuCalBlobV5& b, Matrix3f& S) {
+  ImuCalStoreT<PrefsKv> store;
+  return store.loadGyroAxes(b, S);
+}
+
+// NVS store (Preferences). The runtime reads the optional gyro axis record
+// (RuntimeCals::rebuildFromBlob) through it.
+class ImuCalStoreNvs : public ImuCalStoreT<PrefsKv> {
+public:
+  ImuCalStoreNvs() { gyroAxisLoader() = &loadGyroAxesNvs_; }
+};
 
 // Pretty 3x3 print from row-major float[9].
 static __attribute__((noinline)) void printMat3RowMajor(Print& out, const float a[9], int prec = 9) {
