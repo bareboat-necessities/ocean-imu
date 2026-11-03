@@ -59,7 +59,8 @@ static void testIntegrator() {
   // Fine reference: body(t) -> body(0).
   Mat3 R = Mat3::Identity();
   const double h = 1e-5;
-  for (double t = 0; t < T - 1e-12; t += h) R = R * expso3(rateAt(t + 0.5 * h) * h);
+  const long steps = std::lround(T / h);
+  for (long k = 0; k < steps; ++k) R = R * expso3(rateAt((double(k) + 0.5) * h) * h);
   imu_cal::GyroChainState s0;
   const Mat3 Rc = integrateChain(Eigen::Matrix3f::Zero(), Eigen::Vector3f::Zero(), T, &s0);
   const double err = logso3(Rc.transpose() * R).norm();
@@ -209,7 +210,7 @@ static void testRecord() {
 // including the preparation and acknowledgement screens.
 class GyroSimIo : public imu_cal::AccelCalIo {
 public:
-  GyroSimIo(World& w, Stream& s, const Scenario& sc, imu_cal::GyroChain* chain, Eigen::Vector3f bias)
+  GyroSimIo(World& w, Stream& s, const Scenario& sc, imu_cal::GyroChain* chain, const Eigen::Vector3f& bias)
       : w_(w), s_(s), sc_(sc), chain_(chain), bias_(bias) {}
 
   void pump(double dur) {
@@ -388,7 +389,8 @@ int main() {
   testReanchor();
   testRecord();
 
-  const int seeds = getenv("GYRO_AXIS_SEEDS") ? atoi(getenv("GYRO_AXIS_SEEDS")) : 12;
+  const char* seeds_env = std::getenv("GYRO_AXIS_SEEDS");
+  const int seeds = seeds_env ? std::max(1, int(std::strtol(seeds_env, nullptr, 10))) : 12;
   // Typical MEMS gyro: ~1% scale and cross-axis errors.
   campaign({"typical", 0.010, 0.007, 1e-4, 0.0, true}, seeds, 0.8, 0.35, 0.0, 0.010);
   // Rate bias drifted ~0.1 deg/s since the stationary capture.

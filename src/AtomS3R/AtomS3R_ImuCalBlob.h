@@ -635,10 +635,12 @@ public:
   // the stored state was read back as intended.
   bool saveGyroAxes(const GyroAxisRecord* r) {
     if (!r) return kv.remove(kKeyGyroAxis) && kv.getBytesLength(kKeyGyroAxis) == 0;
-    GyroAxisRecord rb;
-    return gyroAxisValid(*r) && kv.putBytes(kKeyGyroAxis, r, sizeof(*r)) == sizeof(*r) &&
-           kv.getBytesLength(kKeyGyroAxis) == sizeof(rb) && kv.getBytes(kKeyGyroAxis, &rb, sizeof(rb)) == sizeof(rb) &&
-           memcmp(&rb, r, sizeof(rb)) == 0;
+    // Compare the bytes written with the bytes read (as sameBytes does).
+    uint8_t want[sizeof(GyroAxisRecord)], got[sizeof(GyroAxisRecord)];
+    memcpy(want, r, sizeof(want));
+    return gyroAxisValid(*r) && kv.putBytes(kKeyGyroAxis, want, sizeof(want)) == sizeof(want) &&
+           kv.getBytesLength(kKeyGyroAxis) == sizeof(got) && kv.getBytes(kKeyGyroAxis, got, sizeof(got)) == sizeof(got) &&
+           memcmp(want, got, sizeof(want)) == 0;
   }
 
   // Byte-for-byte equality of two stored blobs (padding included: both sides
