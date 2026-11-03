@@ -222,11 +222,12 @@ struct GyroAxisResult {
   float max_angle = 0;                // largest gravity-direction change of a pair, rad
 };
 
-template <int MAXP = 32>
+template <int MAXP = 24>
 class GyroAxisFitter {
   using V3 = Eigen::Vector3d;
   using M3 = Eigen::Matrix3d;
   using J = Eigen::Matrix<double, 3, kGyroAxisParams>;
+  using JF = Eigen::Matrix<float, 3, kGyroAxisParams>;   // per-pair storage
   using H = Eigen::Matrix<double, kGyroAxisParams, kGyroAxisParams>;
   using X = Eigen::Matrix<double, kGyroAxisParams, 1>;
 
@@ -247,8 +248,8 @@ public:
         J Jp, Jq;
         if (!direction_(*holds[p].exit, holds[p].tempC, acc, dp, Jp) ||
             !direction_(*holds[q].entry, holds[q].tempC, acc, dq, Jq)) break;
-        r0_[np_] = dq - dp;
-        J_[np_] = Jq - Jp;
+        r0_[np_] = (dq - dp).template cast<float>();
+        J_[np_] = (Jq - Jp).template cast<float>();
         hp_[np_] = p;
         hq_[np_] = q;
         use_[np_] = true;
@@ -312,7 +313,7 @@ public:
     out.cv_nominal = float(cv_nom);
     double ss = 0;
     for (int i = 0; i < np_; ++i)
-      if (use_[i]) ss += (r0_[i] + J_[i] * x).squaredNorm();
+      if (use_[i]) ss += residual_(i, x).squaredNorm();
     out.rms_fit = float(std::sqrt(ss / std::max(1, used)));
     if (!S.allFinite()) return finish_(out, GyroAxisReason::SOLVE);
     for (int i = 0; i < 3; ++i)
@@ -334,6 +335,9 @@ private:
   }
 
   bool touches_(int i, int h) const { return hp_[i] == h || hq_[i] == h; }
+  V3 residual_(int i, const X& x) const {
+    return r0_[i].template cast<double>() + J_[i].template cast<double>() * x;
+  }
 
   // Calibrated gravity direction of a hold in its anchor frame and its
   // sensitivity to the parameters.
@@ -362,8 +366,9 @@ private:
     g.setZero();
     for (int i = 0; i < np_; ++i) {
       if (!use_[i]) continue;
-      h.noalias() += J_[i].transpose() * J_[i];
-      g.noalias() -= J_[i].transpose() * r0_[i];
+      const J j = J_[i].template cast<double>();
+      h.noalias() += j.transpose() * j;
+      g.noalias() -= j.transpose() * r0_[i].template cast<double>();
     }
   }
 
@@ -375,8 +380,9 @@ private:
     X g = g_all;
     for (int i = 0; i < np_; ++i) {
       if (!use_[i] || !touches_(i, skip)) continue;
-      h.noalias() -= J_[i].transpose() * J_[i];
-      g.noalias() += J_[i].transpose() * r0_[i];
+      const J j = J_[i].template cast<double>();
+      h.noalias() -= j.transpose() * j;
+      g.noalias() += j.transpose() * r0_[i].template cast<double>();
     }
     const double s2 = cfg.noise_rad * cfg.noise_rad;
     for (int k = 0; k < kGyroAxisParams; ++k) {
@@ -412,8 +418,8 @@ private:
           if (!solve_(h_all, g_all, cfg, h, true, xf) || !solve_(h_all, g_all, cfg, h, false, xn)) return false;
           solved = true;
         }
-        ef += (r0_[i] + J_[i] * xf).squaredNorm();
-        en += (r0_[i] + J_[i] * xn).squaredNorm();
+        ef += residual_(i, xf).squaredNorm();
+        en += residual_(i, xn).squaredNorm();
         ++k;
       }
       if (!k) continue;
@@ -426,8 +432,8 @@ private:
   }
 
   int np_ = 0, nh_ = 0;
-  V3 r0_[MAXP];
-  J J_[MAXP];
+  Eigen::Vector3f r0_[MAXP];
+  JF J_[MAXP];
   int hp_[MAXP] = {}, hq_[MAXP] = {};
   bool use_[MAXP] = {};
 };
