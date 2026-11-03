@@ -128,7 +128,6 @@ public:
   bool always_bad=false,initial_bias_fail=false;int matrix_fits=0,adds=0,intros=0,mag_fits=0,mag_captures=0;
   int captures=0,fits=0,calls=0,retries=0,alignment_pose_count_=0;
   int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
-  V gyro_bias_sum_=V::Zero();unsigned gyro_bias_poses_=0;
   struct UI {
     RetryWizard* owner;
     void fail(const char*,const char*){}
@@ -185,6 +184,15 @@ int main(){
     retry.calls==17 && retry.gyro_rotations_->segments()==16 && retry.alignment_pose_count_==17,
     "extra turns must append without discarding captures, refitting bias or repeating instructions");
   require(retry.intros==3,"introductory instructions must not repeat when turns are appended");
+  RetryWizard supported;
+  const V strict_bias=supported.gyr_out_.biasT.b0;
+  supported.endpoint_w_=strict_bias+V(0,0,.004f); // below the endpoint mean-rate limit
+  require(supported.captureGyroRotations_(),"supported endpoint capture failed");
+  const float yaw_error_45s=(supported.gyr_out_.biasT.b0-strict_bias).z()*45*57.2957795f;
+  std::cout<<"supported-endpoint bias: induced_yaw_45s_deg="<<yaw_error_45s<<'\n';
+  require(supported.gyr_out_.biasT.b0==strict_bias,
+    "motion-tolerant endpoints must never replace the strict stationary bias");
+
   RetryWizard bias_retry;bias_retry.initial_bias_fail=true;
   require(bias_retry.captureGyroRotations_() && bias_retry.captures==2 && bias_retry.intros==3 &&
     bias_retry.gyro_rotations_->segments()==12,"bias-fit retry must preserve earlier stages and not repeat instructions");
@@ -272,13 +280,17 @@ inline void delay(unsigned ms){now_ms+=ms;}
 #pragma once
 #include "Arduino.h"
 #include <vector>
+#include <string>
+#include <cstring>
+#include <cassert>
 constexpr int TFT_BLACK=0,TFT_WHITE=1,TFT_DARKGREY=2,TFT_GREEN=3;
 struct DisplayMock {
-  int rotation=0,y=0;
+  int rotation=0,y=0,size=1;std::vector<std::string> text;
   void setRotation(int r){rotation=r;}
-  void setBrightness(int){} void setTextSize(int){} void setTextColor(int,int){}
+  void setBrightness(int){} void setTextSize(int s){size=s;} void setTextColor(int,int){}
   void fillScreen(int){} void setCursor(int,int row){y=row;}
-  void println(const char* = ""){y+=8;} void print(const char*){}
+  void println(const char* s = ""){assert(std::strlen(s)*6*size<=128);assert(y+8*size<=128);text.emplace_back(s);y+=8*size;}
+  void print(const char*){}
   void drawRect(int,int,int,int,int){} void fillRect(int,int,int,int,int){}
   void wakeup(){} int width(){return 128;}int height(){return 128;}int getCursorY(){return y;}
 };
@@ -289,7 +301,9 @@ struct ButtonMock {bool pressed=false;uint32_t press_after=0;std::vector<uint32_
 inline struct {DisplayMock Display;ButtonMock BtnA;void update(){}} M5;
 ''')
     menus = r'''
+#define EIGEN_NON_ARDUINO
 #include "AtomS3R/AtomS3R_M5Ui.h"
+#include "imu_calibrate/FrameAlignment.h"
 #include <cassert>
 #include <iostream>
 int main(){
@@ -301,7 +315,7 @@ int main(){
   M5.BtnA.pressed=true;assert(ui.retryMenuHere("Retry turn 2","Pose changed","1 turn kept"));
   assert(M5.Display.rotation==2 && ui.rotation()==2);
   ui.showOkAuto("Turn kept");assert(M5.Display.rotation==2);
-  M5.BtnA.pressed=true;ui.waitTap("Other stage");assert(M5.Display.rotation==0);
+  M5.BtnA.pressed=true;ui.waitTap("OTHER");assert(M5.Display.rotation==0);
   ui.setRotation(1);M5.BtnA.pressed=true;assert(ui.retryMenu("Other stage","Retry"));
   assert(M5.Display.rotation==0);
   uint32_t t=millis();M5.BtnA.scheduled={t+10,t+110};
@@ -316,12 +330,38 @@ int main(){
   assert(ui.gyroFitFailMenu("Need varied tilt axes",true)==atoms3r_ical::M5Ui::GyroFitAction::ADD_TURNS);
   t=millis();M5.BtnA.scheduled={t+10,t+110};
   assert(ui.gyroTurnFailMenu("gyro scatter","6 turns kept")==atoms3r_ical::M5Ui::GyroFitAction::BIAS_ONLY);
+  auto gestures=[&](const std::vector<int>& groups){
+    M5.BtnA.pressed=false;M5.BtnA.scheduled.clear();uint32_t when=millis()+10;
+    for(int n:groups){for(int k=0;k<n;++k)M5.BtnA.scheduled.push_back(when+100*k);when+=1000;}
+  };
+  gestures({1});auto axes=ui.mountingMenu();
+  assert(axes.up==imu_cal::FrameAxis::NEG_Z && axes.forward==imu_cal::FrameAxis::POS_X);
+  for(int up=0;up<6;++up)for(int fwd=0;fwd<6;++fwd) {
+    const auto u=imu_cal::FrameAxis(up),f=imu_cal::FrameAxis(fwd);
+    if(!imu_cal::frameAxesPerpendicular(u,f))continue;
+    std::vector<int> groups={2,1}; // change mount, acknowledge edge naming
+    for(int n=0;n<up;++n)groups.push_back(1);
+    groups.push_back(2);
+    int current=imu_cal::frameAxesPerpendicular(u,imu_cal::FrameAxis::POS_X)?3:0;
+    while(current!=fwd){groups.push_back(1);do{current=(current+1)%6;}while(current/2==up/2);}
+    groups.push_back(2);groups.push_back(1); // choose forward, confirm mount
+    gestures(groups);axes=ui.mountingMenu();assert(axes.up==u && axes.forward==f);
+    Eigen::Matrix3f R;assert(imu_cal::mountingRotation(axes.up,axes.forward,R));
+  }
+  gestures({2,1,3,1});axes=ui.mountingMenu(); // back from up chooser, use default
+  assert(axes.up==imu_cal::FrameAxis::NEG_Z);
+  gestures({2,1,2,2,3,1});axes=ui.mountingMenu(); // cancel confirmation, use default
+  assert(axes.forward==imu_cal::FrameAxis::POS_X);
+  gestures({3,1,1});axes=ui.mountingMenu(); // untimed help returns without losing fits
+  gestures({2,1});assert(ui.startMenu(true)==atoms3r_ical::M5Ui::StartAction::GYRO_BIAS);
+  gestures({2,2});assert(ui.startMenu(true)==atoms3r_ical::M5Ui::StartAction::NOISE);
+  std::cout<<"mounting: default, 24 orientations, cancel/back/help and saved-fit tools PASS\n";
   std::cout<<"gyro menus: real UI preserves pose rotation; other stages keep default behavior PASS\n";
 }
 '''
     menu_binary = Path(directory) / "gyro-menus"
     subprocess.run(shlex.split(os.environ.get("CXX", "g++")) + [
-        "-std=c++20", "-I", directory, "-I", str(root / "src"), "-x", "c++", "-",
+        "-std=c++20", "-I", directory, "-I", str(root / "src"), "-isystem", str(eigen), "-x", "c++", "-",
         "-o", str(menu_binary),
     ], input=menus, text=True, check=True)
     subprocess.run([str(menu_binary)], check=True, timeout=10)

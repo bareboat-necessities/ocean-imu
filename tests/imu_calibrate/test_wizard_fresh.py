@@ -24,7 +24,7 @@ const char* calibrationUnusableReason(bool,const RuntimeCals&){return nullptr;}
 imu_cal::AccelThermalPrior accelThermalPriorFrom(const ImuCalBlobV6&,unsigned,unsigned,unsigned){
   imu_cal::AccelThermalPrior p;p.valid=true;p.k[0]=.003;return p;
 }
-struct M5Ui {enum class StartAction {FULL,NOISE,CANCEL};};
+struct M5Ui {enum class StartAction {FULL,NOISE,CANCEL,GYRO_BIAS};};
 struct {void println(const char*){}template<class... A>void printf(const char*,A...){} } Serial;
 void clearM5UnifiedImuCalibration(){}
 void require(bool b,const char* why){if(!b){std::cerr<<why<<'\n';std::exit(1);}}
@@ -45,11 +45,12 @@ public:
   int accel_ccfg_=0;
   unsigned sensor_id_lo_=12,sensor_id_hi_=34,imu_type_=5;
   int alignment_pose_count_=0,timing_fit_=0;
-  bool mag_verified_=false,timing_saved_=false,noise_called=false,gyro_matrix_skipped_=false,mag_alignment_skipped_=false;
+  bool mag_verified_=false,timing_saved_=false,noise_called=false,bias_called=false,gyro_matrix_skipped_=false,mag_alignment_skipped_=false;
   imu_cal::GyroCalibration<float> gyr_out_;
   imu_cal::MagCalibration<float> mag_out_;
   void configureCalibrators_(){}void sensorIdentity_(){}
   bool prepareGyroRotationStorage_(){return true;}
+  bool repairGyroBias_(const ImuCalBlobV6& previous,ImuCalBlobV6&){bias_called=previous.token==47;return true;}
   bool captureNoise_(const ImuCalBlobV6& previous,ImuCalBlobV6&){noise_called=previous.token==47;return true;}
 ENTRY
 };
@@ -62,9 +63,12 @@ int main(){
   wizard.ui_.action=M5Ui::StartAction::NOISE;
   require(wizard.runAndSave_(out) && wizard.noise_called && wizard.accel_.begins==1,
           "noise acquisition must keep its calibrated frame without restarting intrinsic calibration");
+  wizard.ui_.action=M5Ui::StartAction::GYRO_BIAS;
+  require(wizard.runAndSave_(out) && wizard.bias_called && wizard.accel_.begins==1,
+    "gyro-only repair must reuse current accel/mag without full acquisition");
   wizard.ui_.action=M5Ui::StartAction::CANCEL;
   require(!wizard.runAndSave_(out) && wizard.accel_.begins==1,"cancel must not begin acquisition");
-  std::cout<<"wizard admission: fresh coefficients, separate calibrated noise capture and cancellation PASS\n";
+  std::cout<<"wizard admission: fresh coefficients, separate gyro repair/noise capture and cancellation PASS\n";
 }
 '''.replace("ENTRY", entry)
 with tempfile.TemporaryDirectory() as directory:

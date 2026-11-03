@@ -12,7 +12,7 @@ in [calibration-validation.md](calibration-validation.md).
 | 1. Review and reuse | Existing capture, numerical utilities, wizard, correction and Preferences store were extended. The accelerometer and magnetometer capture/fitter headers are byte-for-byte identical to reference main `d2d34116e3a1a1ca7e26cde49e0f2473dcb14a08`. | Retention independently checked against the reference files; applicable numerical and persistence tests retained. |
 | 2. Robust accelerometer | `AccelCalCapture.h` and `AccelCalFit.h` retain multi-orientation quiet blocks, outlier rejection, PolarSPD fitting, conditioning, physical bounds, thermal evidence, residuals, cross-validation and stored-float validation. | Existing 30-seed campaign and release-reference checks; no simpler INSLIB replacement. Mounting is applied separately in `RuntimeCals`. |
 | 3. IMU-TK gyro extension | `GyroCalCapture.h` supplies stationary bias/endpoints. `GyroCalFit.h` integrates measured intervening rates against calibrated gravity endpoints and fits the existing `GyroCalibration::S`. `GyroTurnCapture.h` controls acquisition. | Analytic sensitivity checks, exact/noisy full-matrix recovery, final-accelerometer endpoints, independent validation rejection, missing/frozen data and guided controller replays. Independent real device rotations remain required. |
-| 4. Magnetometer and physical frames | Existing hard/soft-iron fitting is retained. `solveAlignment()` adds an undamped observability check and independent dip validation. `FrameAlignment.h` solves known-direction registration. `RuntimeCals` composes intrinsic, magnetometer-to-IMU, IMU-to-housing and housing-to-vessel transforms once. | Noncommuting transforms, reflection/degeneracy rejection and held-out magnetic poses are tested. MOUNT accepts two measured rotation matrices over serial, or an explicit confirmation that the three frames coincide. It does not infer unknown installation yaw from gravity. Physical fixture/installation measurements remain required. |
+| 4. Magnetometer and physical frames | Existing hard/soft-iron fitting is retained. `solveAlignment()` adds an undamped observability check and independent dip validation. `FrameAlignment.h` solves known-direction registration. `RuntimeCals` composes intrinsic, magnetometer-to-IMU, IMU-to-housing and housing-to-vessel transforms once. | Noncommuting transforms, reflection/degeneracy rejection and held-out magnetic poses are tested. MOUNT explains the device-axis default and provides a button-only editor for all 24 right-angle installations. Fine PCB-to-case tilt and arbitrary installation angles still require measured fixture directions; the button presets do not qualify them. |
 | 5. Existing wizard evolution | Existing UI, acquisition, quality, tasks, retry and verified save paths remain. Added rotation, mounting and separate noise stages. Initial gyro set is 12 turns, with optional blocks of 4 up to 20. | Production controller/worker/UI replays cover slow LCDs, orientation, pauses, late hold jitter and local retry. Instructions and start prompts are untimed; completed turns remain on retry. Initial/endpoint holds use separate rate profiles; hand-supported 4/6/8 Hz micro-tremor is replayed with coupled acceleration and rate. Placement gets its own full 3.5 s window; misplaced/unsettled endpoints wait on the same target instead of retrying the turn. Real operator acceptance remains open. |
 | 6. New format, no old-record fallback | One 680-byte schema 6 record/key stores all intrinsics, gyro matrix, three rotations, quality/noise metadata, identity and CRC. Existing NVS verified writes and verified current-record recovery are reused. Only schema 6 is loaded. Full recalibration starts without previous slopes or gyro-reference coefficients. | Old keys/versions, truncation, CRC corruption, invalid rotations and coefficient/quality bindings are tested. A cancelled acquisition cannot replace the saved record; an explicitly selected basic profile can publish its fresh measured sets with skipped qualifications marked. Preserving a valid current record after an aborted write is storage recovery, not old-format migration. |
 | 7. Measured noise | Separate 40-minute sensor-clock acquisition, bounded-memory dyadic Allan deviation, timing/frozen/motion/temperature/magnetic checks, qualified white/plateau/walk fits and explicit unidentifiable terms. Runtime reset paths configure measured gyro process noise and accelerometer scatter. | White and mixed stochastic fixtures, short-data rejection, wraparound and the production worker's complete simulated acquisition/loss/cancel paths pass. Record-to-runtime tests verify units and identified-axis masks. A real warmed-up 40-minute trace has not been acquired. Marine OU/CARMA priors remain distinct. |
@@ -32,9 +32,9 @@ limits. Additional turns are offered when the measured geometry is insufficient.
 Magnetic alignment retains the constant-dip model, with an explicit full-rotation
 profile for PCB registration and the existing small-trim profile for diagnostics. A numerical ridge cannot make unobservable geometry
 observable, so rank/conditioning is checked before regularization. Physical
-mounting rotations are stored separately from intrinsic SPD matrices. Magnetic
-recovery preserves successful gyro work and can replace only magnetic quiet
-endpoints; a double tap cannot erase the gyro set.
+mounting rotations are stored separately from intrinsic SPD matrices. Failed
+magnetic registration preserves successful gyro work and continues with nominal
+axes without restarting poses.
 
 The shared magnetic policy changes which measurements are applied and the
 effective covariance. Existing stability certificates bound another operator;
@@ -58,6 +58,15 @@ corrections. Verified persistence and runtime admission accept these profiles;
 missing bias/intrinsics, invalid matrices, false quality metadata, missing
 mounting and corrupt records remain blocked. Full-fit accuracy and physical
 residual-bias bounds are not claimed for unmeasured corrections.
+
+Relaxed gyro endpoint holds never update the strict stationary bias. A production
+wrapper regression reproduces a 0.00369 rad/s bias error before this correction
+(9.52 degrees of uncorrected yaw drift in 45 seconds) and zero contamination
+afterwards. This identifies a calibration defect, not the complete cause of an
+observed hardware heading error. A current-record gyro-only tool reuses strict
+capture/fit/save, preserves accel/mag/mounts, and explicitly returns the gyro to
+nominal scale/axes. Dependent noise/timing qualification is cleared. Real
+before/after heading and rate measurements remain required.
 
 ## Completion evidence still needed
 

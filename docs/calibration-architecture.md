@@ -52,7 +52,9 @@ and scale-only fits fail, one tap appends four turns when possible (up to twenty
 or retries the final fit. Two taps choose bias only. The same escape is offered
 after a failed turn or missing rotation memory. Three taps open a confirmed exit.
 Bias-only restores the latest strict stationary fit from this session, including
-its thermal qualification, rather than endpoint bias refinement. It sets
+its thermal qualification. All gyro models retain that strict bias: the relaxed,
+hand-supported endpoint means constrain gravity and rotation fitting only. They
+are never averaged into the stationary bias. Bias-only sets
 `S=I`, `gyro_matrix_ok=0`, `gyro_matrix_skipped=1`, `gyro_scale_only=0` and clears
 rotation-fit quality metadata. Earlier accel/mag stages and accepted turns are
 kept. The choice has an untimed explanation page and never reuses coefficients
@@ -85,6 +87,30 @@ qualified and diagonal; a skipped gyro fit must be identity with zero quality
 metadata. Skipped magnetic registration must also be identity with zero alignment
 metadata. Contradictory profiles are rejected. Old unsupported records are not
 migrated or used as fallback.
+
+## Repairing a saved gyro calibration
+
+With a usable current-schema record, **CALIBRATE → two taps: saved fits →
+one tap: gyro bias only** takes one strict table-rest capture without repeating
+accelerometer, magnetic or mounting stages. The instruction card is untimed;
+after the placement window, allow about eight quiet seconds. Existing capture,
+stationary fitting and verified NVS writes are reused.
+
+This repair preserves the saved accelerometer, magnetic and mounting fields,
+sensor identity and unrelated quality metadata. It replaces the gyro model
+with fresh measured bias and nominal scale/axes, explicitly marked as bias-only.
+A matrix fitted using an incorrect bias cannot be requalified without rotations.
+Measured noise and magnetic timing are cleared because their gyro correction
+basis has changed. Cancellation or fit failure leaves the saved record intact.
+Only an already usable current record admits this tool; unsupported old records
+still require full calibration.
+
+When a console is connected, startup prints the current coefficients and frame
+matrices. OU-III and TFG-CARMA3 also emit a best-effort `[HEADING LIVE]` record on
+the transition to fused heading: `q` is fused heading, `m` is the direct magnetic
+heading using the current tilt, and `d` is their wrapped difference in degrees.
+This helps distinguish a Live heading discontinuity from an existing compass
+error; it does not certify either heading against a physical reference.
 
 ## Gyro matrix and independent validation
 
@@ -257,20 +283,30 @@ Housing alignment is separately optional: a level placement determines tilt,
 and nonparallel known directions determine full rotation. It folds rotations
 into output matrices. This project retains separately stored intrinsic,
 mag-to-IMU, IMU-to-housing and housing-to-vessel transforms and supports qualified full/scale-only gyro fits, explicit bias-only operation,
-and automatic nominal magnetic axes after registration failure. Fresh measured bias and intrinsic sets are required in either case. Magnetic failure stays within
-its own recovery stage rather than discarding the successful IMU work.
+and automatic nominal magnetic axes after registration failure. Fresh measured
+bias and intrinsic sets are required in either case. Failed registration displays
+a skip notice and continues with the successful IMU work.
 
-Mounting uses known physical directions. The retained Eigen SVD solves Wahba's
-problem in solveFrameAlignment() for fixture tooling and rejects collinear
-references: gravity alone cannot determine yaw. At the MOUNT screen, tap only
-when the documented IMU, housing and vessel axes actually coincide (forward,
-starboard, down). Otherwise send measured proper rotations:
+Mounting declares how the device will be installed, not its current pose during
+calibration. MOUNT explains the default: **screen up, USB points backward**.
+One tap uses those device axes; two taps change the installation; three taps
+open untimed help. No serial connection is required.
 
-~~~
-MOUNT <R_HI: nine row-major numbers> <R_VH: nine row-major numbers>
-~~~
+The button editor first names the case face that will point up, then a
+perpendicular case face that will point toward the front of the boat. A tap
+cycles faces, two taps choose, and three taps go back. The confirmation page
+lists both choices and waits without a timeout. Left/right refer to the screen
+viewed upright with USB at the bottom, as explained before editing. All 24
+proper right-angle installations are supported; parallel directions and
+reflections cannot be selected. The housing is the nominal AtomS3R case
+(`R_HI=I`); the selected case-to-vessel rotation is stored in `R_VH`.
 
-The rotations are validated separately and composed only by RuntimeCals.
+These declarations do not measure fine PCB-to-case tilt or arbitrary installation
+angles. The retained Eigen SVD solves Wahba's problem in `solveFrameAlignment()`
+for measured fixture directions and rejects collinear references: gravity alone
+cannot determine unknown mounting yaw. The data model retains separate measured
+`R_HI` and `R_VH` fields. Rotations are validated separately and composed only by
+`RuntimeCals`.
 A full intrinsic update requires renewed gyro/magnetic registration or an
 explicit choice of the basic profiles; the
 retired accelerometer-only UI could otherwise retain dependent qualifications.
@@ -278,8 +314,9 @@ The retained library candidate helper invalidates those dependent qualifications
 
 ## Separate stationary noise workflow
 
-After a complete current-schema calibration exists, the start menu offers a
-separate 40-minute stationary capture. Warm up the sensor and use a quiet,
+After a usable current-schema calibration exists, **CALIBRATE → two taps:
+saved fits → two taps: noise 40m** offers a separate 40-minute stationary capture.
+Warm up the sensor and use a quiet,
 thermally stable support. Checks cover fresh timing, frozen words, finite
 data, acceleration/rate limits, fixed one-second pose means, fixed magnetic
 means including loss/staleness, and temperature span below 2 C. At 200 Hz,

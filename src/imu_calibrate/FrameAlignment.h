@@ -1,7 +1,23 @@
 #pragma once
 // Copyright 2026, Mikhail Grushinskiy
 #include "imu_calibrate/CalibrateIMU.h"
+#include "imu_calibrate/FrameAxes.h"
 namespace imu_cal {
+// Known right-angle installation: selected source directions point up and
+// forward in the output frame (x forward, y right, z down). No pose capture
+// or assumption about the device's current attitude is involved.
+template<typename T>
+bool mountingRotation(FrameAxis up,FrameAxis forward,Eigen::Matrix<T,3,3>& rotation) {
+  if(!frameAxesPerpendicular(up,forward))return false;
+  using V=Eigen::Matrix<T,3,1>;
+  const V directions[6]={-V::UnitZ(),V::UnitZ(),-V::UnitX(),V::UnitX(),-V::UnitY(),V::UnitY()};
+  const V down=-directions[uint8_t(up)],fwd=directions[uint8_t(forward)];
+  const V right=down.cross(fwd);
+  Eigen::Matrix<T,3,3> result;
+  result.row(0)=fwd.transpose();result.row(1)=right.transpose();result.row(2)=down.transpose();
+  rotation=result;return true;
+}
+
 // Wahba alignment of measured, known physical directions. Gravity alone does
 // not determine yaw: two non-collinear directions are mandatory. This utility
 // is shared by fixture/installation tooling, separate from intrinsic fitting.

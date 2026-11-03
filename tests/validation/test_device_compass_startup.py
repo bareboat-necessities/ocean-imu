@@ -96,7 +96,15 @@ class DeviceCompassStartupTest(unittest.TestCase):
 #include "util/AngleUtils.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
+#include "AtomS3R/AtomS3R_CalLog.h"
 using Vector3f = Eigen::Vector3f;
+using atoms3r_ical::tryCalLogLine;
+struct DiagnosticSerial {
+    explicit operator bool() const {return true;}
+    int availableForWrite() const {return 64;}
+    size_t write(const uint8_t*,size_t n) {return n;}
+};
+[[maybe_unused]] DiagnosticSerial Serial;
 namespace ins = ocean_imu::ins;
 constexpr float RAD_TO_DEG = 57.29577951308232f;
 constexpr float D2R = 1.0f / RAD_TO_DEG;

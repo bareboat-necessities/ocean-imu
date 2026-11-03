@@ -30,9 +30,12 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Optional gyro workflow | Production completion flow skips before capture, after failed fit, on failed turn and on missing rotation memory; the strict session bias and accepted segments are retained with zero matrix qualification |
 | Automatic fit recovery | Actual gyro worker attempts three scales only after the full fit fails. Actual magnetic completion skips a failed fit once, retains full/scale-only gyro results and continues without a menu or recapture. Gyro exit still requires separate confirmation |
 | Fresh full-calibration admission | Actual entry selects no previous slope or gyro reference; calibrated noise mode and cancellation remain separate |
+| Strict gyro bias retained | Actual turn wrapper with endpoint mean rate offset 0.004 rad/s reproduces 9.51992 degrees of uncorrected yaw drift over 45 s before the fix; strict bias is unchanged afterwards (zero contamination), including after all twelve accepted turns |
+| Gyro-only repair | Production save method runs real strict capture, stationary fitting and verified storage; all saved accel/mag/mount/identity fields match byte for byte. New bias-only correction boots successfully. Cancellation and failed fitting preserve the prior record and output |
 | Noise worker | Complete simulated 40-minute sensor acquisition, wrapping clock, stopped/missing/frozen samples, temperature and cancellation; no invalid run yields a model |
 | Noise runtime wiring | Unified record round-trip retains density units and identified-axis masks; short and invalid records cannot configure a filter |
 | Frame/schema tests | Noncommuting composition, gravity-only yaw ambiguity, reflected rotations, old keys/versions, truncation and CRC corruption |
+| Button-only mounting | Actual renderer/menu tests select the default and all 24 right-angle installations, exercise back/help/cancel and saved-fit tools, and enforce 128-pixel text bounds. Each preset maps its named up/forward faces correctly and survives verified storage/runtime composition |
 | Forty-minute white-noise trace | 480001 samples, 2400000 ms; accel N=0.00200198 versus 0.002, gyro N=0.000199806 versus 0.0002 |
 | Long-term identifiability | White-only trace reports no bias-instability or walk terms; short traces cannot report a model |
 | Mixed flicker-like/random-walk trace | Accel plateau coefficient 0.00237667 versus approximately 0.00225904; gyro walk 3.12645e-5 versus 3e-5 |
@@ -41,6 +44,7 @@ schema assumptions in fixtures were updated without replacing the fitter.
 | Gross field strength with uncertain covariance | All six cores reject 1.6x/0.6x field magnitude even when large R makes NIS small; the test reproduces TFG's previously omitted ratio guard |
 | Covariance and injection | Rejected magnetic updates preserve covariance; accepted Joseph updates remain finite, symmetric and PSD |
 | Actual qMEKF compass consumer | Dip/norm and 90-degree disturbances cannot redefine the trusted reference; recovery and late first acquisition pass |
+| Heading geometry with transition diagnostics | Production compass method in five INS sketches passes 1800 orientations per sketch, invalid inputs and fused-yaw selection; worst geometric error 0.0000611 degrees. This is not a device-heading qualification |
 | Retained gyro-bias projection regression | OU-II/III still project large accepted corrections; gross magnetic outliers preserve the complete mean and covariance |
 | Wizard task dispatch | Actual dispatcher runs off the caller stack, retains the caller's core, publishes save/cancel correctly, handles allocation failure, and services a registered caller watchdog |
 | Turn guide | Start/finish holds are distinct; TWIST and TIP show short actions; hand support is allowed and each target is written once |
@@ -86,6 +90,17 @@ The focused calibration build and complete runner pass. The full-rotation and do
 against the preceding source for the intended behavioral reasons: stopped-stream
 handling, previous-coefficient reuse and omission of the common field-ratio guard.
 
+For the reported Live heading regression, first retain the connected startup
+coefficient/frame dump from the existing current record. Then select
+**CALIBRATE → two taps: saved fits → tap: gyro bias only**, let the device rest
+on the table, and retain the new dump. This comparison changes only gyro
+calibration and dependent noise/timing qualification. Check a fixed physical
+orientation before and after Live, and check headings through a full rotation
+against the same independent magnetic reference. `[HEADING LIVE]` compares fused
+and direct magnetic heading using the current tilt; a small difference does not
+prove that the tilt, intrinsic magnetic fit or physical heading is correct.
+This hardware comparison has not been performed in the implementation environment.
+
 ## Firmware resources and reproduction
 
 Toolchain: Arduino CLI 1.3.1, ESP32 Arduino 3.3.7, M5Unified 0.2.13,
@@ -110,32 +125,33 @@ and fitting run sequentially, so either operation can use
 65536 bytes of task stacks in addition to caller/RTOS memory. The compiler estimates 1552 bytes for the capture worker frame and 128 bytes
 for its UI runner; these are not hardware peak measurements. It
 reports 64 bytes for the public dispatcher and 48 bytes for its runner. The
-4144-byte workflow and 720-byte restore wrapper execute on the UI task;
+3808-byte workflow and 720-byte restore wrapper execute on the UI task;
 neither is nested beneath the application's setup/loop stack. ESP-IDF stack sizes and high-water
 marks are interpreted as bytes.
 
 The architecture audit crossbuilds the qMEKF compass, OU-III INS, TFG INS and
 benchmark with the documented board options and CI optimization flags. The
-TFG image was rebuilt again after the final scale fallback, automatic magnetic skip and startup-gate changes;
-its row below includes the latest shared wizard/capture translation unit.
-The other rows record the architecture-audit builds before those shared wizard
-changes. Compilation and linking do not establish operation on a board.
+OU-III and TFG-CARMA3 images below include the final mounting UI, strict-bias
+correction, gyro-only repair and heading diagnostics. The TFG row records the scale-fallback
+build; qMEKF and benchmark rows record the earlier architecture audit.
+Compilation and linking do not establish operation on a board.
 
 | Firmware | Flash bytes | Global internal RAM bytes |
 | --- | ---: | ---: |
-| OU-III INS | 1354811 | 31168 |
+| OU-III INS (mounting/bias repair) | 1358239 | 31176 |
+| TFG-CARMA3 INS (mounting/bias repair) | 1217083 | 31232 |
 | qMEKF compass | 1069683 | 28056 |
 | TFG INS (scale fallback/basic profiles) | 1284503 | 40912 |
 | Synthetic benchmark | 695803 | 25624 |
 
 Global RAM excludes runtime heap and task-stack allocations. Production
 worker entry frames are 192 bytes for gyro matrix fitting, 3328 bytes for
-magnetic alignment and 4880 bytes for stationary noise acquisition; the wizard task entry uses 32 bytes. The shared
+magnetic alignment and 4896 bytes for stationary noise acquisition; the wizard task entry uses 32 bytes. The shared
 alignment iteration helper has a 1056-byte frame. Full/scale-only optimizer
 frames are 3296/1152 bytes; the scale information projection uses 784 bytes.
-Automatic fallback and basic profiles add 5004 flash bytes and 8 global RAM
-bytes over the registration/recovery build. Choosing bias-only before tilt avoids allocating
-the 2.5 MiB rotation trajectory.
+The gyro-only repair frame uses 2688 bytes; the mounting menu and rotation
+constructor use 48 and 256 bytes. Choosing bias-only before tilt, or the separate
+gyro-only repair, avoids allocating the 2.5 MiB rotation trajectory.
 These are individual static frame estimates, not measured task peaks or a
 proof of total stack headroom. Optimization, inlining and call chains affect
 the actual peak.
@@ -156,12 +172,12 @@ All native targets build successfully when compiled serially. The default
 `make all` algorithm suites run through `tests/util` and stop in validation:
 `python3 ../../tools/tfg_comparison.py --check --require-ci` raises
 `ValueError: TFG comparison source provenance is stale` (outer make exit 2).
-After the final changes, all directories were rebuilt and the same known
-validation blocker checked first, without removing any build/test directory.
-The full TFG native suite was rerun after the strength-guard correction and
-passes, as do the TFG-CARMA3 core (199 checks), measurement/covariance contracts
-(44 checks), and the wave-direction and wave-simulation suites after that
-barrier.
+The final mounting/bias-repair run built every native target and passed all
+algorithm suites through `tests/util`, including the complete calibration,
+TFG and TFG-CARMA3 suites, before reaching that same validation blocker.
+No build/test directory was removed to bypass it. The wave-direction and
+wave-simulation suites beyond the barrier passed in the preceding audit;
+they were built but not rerun by this final command after validation stopped.
 This does not establish a repository-wide green result.
 The separate 1135-test Python run reports 14 failures, 6 errors and 1 skip,
 all in committed proof/replay provenance and reproduction checks. The CMake

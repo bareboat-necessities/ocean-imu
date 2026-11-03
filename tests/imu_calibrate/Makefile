@@ -120,5 +120,5 @@ calibration_frames-test: calibration_frames-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 sensor_noise-replay: sensor_noise-replay.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-calibration_frames-test.o: $(CAL_HEADERS) ../../src/imu_calibrate/FrameAlignment.h ../../src/AtomS3R/AtomS3R_MagDiagnostics.h
+calibration_frames-test.o: $(CAL_HEADERS) ../../src/imu_calibrate/FrameAxes.h ../../src/imu_calibrate/FrameAlignment.h ../../src/AtomS3R/AtomS3R_MagDiagnostics.h
 sensor_noise-replay.o: $(NEW_CAL_HEADERS) $(CAL_HEADERS)

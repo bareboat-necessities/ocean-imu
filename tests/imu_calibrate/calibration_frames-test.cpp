@@ -148,6 +148,27 @@ int main(){
   b=rb;b.R_HI[0]=-b.R_HI[0];check(!validateBlob(Store::sealed_(b)),"reflection cannot become mounting rotation");
   b=rb;b.gyro_S[0]=2;b.gyro_coeff_crc=gyroCoeffCrc(b);
   check(!validateBlob(Store::sealed_(b)),"implausible gyro scale rejected");
+  const Vector3f faces[6]={-Vector3f::UnitZ(),Vector3f::UnitZ(),-Vector3f::UnitX(),
+    Vector3f::UnitX(),-Vector3f::UnitY(),Vector3f::UnitY()};
+  int mounts=0;
+  for(int up=0;up<6;++up)for(int fwd=0;fwd<6;++fwd) {
+    Matrix3f selected=Matrix3f::Identity();
+    const bool valid=imu_cal::mountingRotation(imu_cal::FrameAxis(up),imu_cal::FrameAxis(fwd),selected);
+    check(valid==(up/2!=fwd/2),"parallel/opposite mounting directions must be rejected");
+    if(!valid)continue;
+    ++mounts;
+    check((selected*faces[up]).isApprox(-Vector3f::UnitZ()) &&
+      (selected*faces[fwd]).isApprox(Vector3f::UnitX()) && std::fabs(selected.determinant()-1)<1e-6f,
+      "button mounting must map the named faces to up/forward with right handedness");
+    auto mounted=rb;mat_to_rowmajor9_(selected,mounted.R_VH);
+    ImuCalBlobV6 verified;check(store.saveVerified(mounted,verified),"mount preset must survive verified storage");
+    RuntimeCals loaded;loaded.rebuildFromBlob(verified);
+    check(loaded.applyAccel(x,25).isApprox(selected*rhi*loaded.acc.apply(x,25),1e-5f),
+      "selected mounting must apply once after intrinsic calibration");
+  }
+  Matrix3f unchanged=rvh;
+  check(mounts==24 && !imu_cal::mountingRotation(imu_cal::FrameAxis(6),imu_cal::FrameAxis::POS_X,unchanged) &&
+    unchanged==rvh,"invalid mounting selection must preserve the previous matrix");
   Vector3f src[3]={Vector3f::UnitX(),Vector3f::UnitY(),Vector3f::UnitZ()},dst[3];
   for(int i=0;i<3;++i)dst[i]=rvh*rhi*src[i];
   Matrix3f solved;

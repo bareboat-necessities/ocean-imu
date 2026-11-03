@@ -192,7 +192,7 @@ private:
       gyro_matrix_skipped_=mag_alignment_skipped_=false;
       timing_fit_ = {}; timing_saved_ = false;
 
-      // A current record admits the separate noise workflow. Full calibration
+      // A current record admits gyro repair and separate noise capture. Full calibration
       // starts with fresh coefficients, including temperature slopes and the
       // accelerometer capture's stationary gyro reference.
       ImuCalBlobV6 prev{};
@@ -202,14 +202,15 @@ private:
       // A full recalibration is required when changing that intrinsic model.
       RuntimeCals previous_runtime;
       if(have_prev)previous_runtime.rebuildFromBlob(prev);
-      const bool can_noise=have_prev && !calibrationUnusableReason(true,previous_runtime);
+      const bool can_saved_tools=have_prev && !calibrationUnusableReason(true,previous_runtime);
 
-      const M5Ui::StartAction start = ui_.startMenu(can_noise);
+      const M5Ui::StartAction start = ui_.startMenu(can_saved_tools);
       if (start == M5Ui::StartAction::CANCEL) {
         Serial.println("[WIZ] cancelled; previous calibration kept");
         return false;
       }
       if(start==M5Ui::StartAction::NOISE)return captureNoise_(prev,out_saved);
+      if(start==M5Ui::StartAction::GYRO_BIAS)return repairGyroBias_(prev,out_saved);
       Serial.printf("[WIZ] mode=full have_prev=%d\n", (int)have_prev);
       const imu_cal::AccelThermalPrior prior{};
       Serial.println("[ACC] fresh fit; no previous coefficients");
@@ -390,7 +391,6 @@ private:
   }
 
   int turn_total_=imu_cal::GyroCalibrationPlan::INITIAL;
-  Vector3f gyro_bias_sum_=Vector3f::Zero();unsigned gyro_bias_poses_=0;
   static constexpr uint8_t turn_pose_ids_[4]={0,2,4,5};
   struct TurnCtx {
     ImuCalWizard* wiz=nullptr;
@@ -533,8 +533,8 @@ private:
   }
 
   bool useGyroBiasOnly_() {
-    // Restore the latest strict stationary fit from THIS session, rather
-    // than a failed matrix or the less strict endpoint bias refinement.
+    // Restore the latest strict stationary fit from THIS session and discard
+    // any failed matrix and its rotation-fit qualification.
     if(!gyro_bias_fit_.ok || !gyro_bias_fit_.biasT.ok) {
       ui_.fail("GYRO","Quiet bias required");return false;
     }
@@ -597,7 +597,6 @@ private:
       }
       gyro_bias_fit_=gyr_out_;
       if(!retainPose()){ui_.fail("ALIGN","No quiet mag data");return false;}
-      gyro_bias_sum_=gyr_out_.biasT.b0;gyro_bias_poses_=1;
     }
     for(int segment=gyro_rotations_->segments();segment<requested;++segment) {
       for(;;) {
@@ -610,9 +609,10 @@ private:
         if(action==M5Ui::GyroFitAction::BIAS_ONLY)return useGyroBiasOnly_();
       }
       if(!retainPose())return false;
-      gyro_bias_sum_+=endpoint_w_-gyr_out_.biasT.k*(endpoint_temp_-gyr_out_.biasT.T0);++gyro_bias_poses_;
     }
-    gyr_out_.biasT.b0=gyro_bias_sum_/float(gyro_bias_poses_);return true;
+    // Endpoint holds allow hand-supported motion. They constrain gravity and
+    // rotation fitting, but cannot replace the strict stationary bias fit.
+    return true;
   }
 
   static void fitTaskGyroMatrix_(void* p) {
@@ -679,31 +679,44 @@ private:
     return true;
   }
 
+  bool repairGyroBias_(const ImuCalBlobV6& previous,ImuCalBlobV6& saved) {
+    RuntimeCals current;current.rebuildFromBlob(previous);
+    if(calibrationUnusableReason(true,current))return false;
+    ui_.waitTapHere("GYRO BIAS","Other fits kept","Nominal scale / axes");
+    for(;;) {
+      if(!captureGyro_())return false;
+      if(runFitTask_(FitKind::GYRO,"GYRO bias",false))break;
+      if(!ui_.retryMenuHere("Retry quiet bias",imu_cal::fitFailStr(fit_.reason),"Saved fits kept"))return false;
+    }
+    ImuCalBlobV6 candidate=previous,readback;
+    // A matrix fitted against a contaminated bias cannot be re-qualified
+    // without rotation data. Match the proven bias-only correction instead.
+    fillGyroFromFit(candidate,gyr_out_,true);
+    candidate.noise={};candidate.mag_timing={};
+    candidate=ImuCalStoreNvs::sealed_(candidate);
+    current.rebuildFromBlob(candidate);
+    if(calibrationUnusableReason(true,current)) {ui_.fail("SAVE","Gyro record invalid");return false;}
+    if(!store_.saveVerified(candidate,readback)) {
+      ui_.fail("SAVE",store_.lastSaveStatus()==ImuCalStoreNvs::SaveStatus::RECOVERY_FAILED?
+        "Recovery failed":"Write/readback fail");return false;
+    }
+    saved=readback;timing_saved_=false;showDone_(readback);
+    return true;
+  }
+
   bool captureMounting_() {
-    ui_.title("MOUNT");ui_.line("x fwd, y stbd, z down");
-    ui_.line("Tap ONLY if I=H=V");ui_.line("Else serial: MOUNT");
-    ui_.line("18 matrix entries");
-    Serial.println("[MOUNT] Tap confirms aligned IMU/housing/vessel axes. Otherwise send MOUNT followed by R_HI and R_VH, each 9 row-major entries.");
-    mount_HI_.setIdentity();mount_VH_.setIdentity();
-    char line[400];size_t n=0;
-    while(true) {
-      Input::update();if(Input::tapPressed())return true;
-      while(Serial.available()) {
-        const char c=char(Serial.read());
-        if(c=='\r')continue;
-        if(c!='\n') {if(n+1<sizeof(line))line[n++]=c;else n=0;continue;}
-        line[n]=0;n=0;
-        float r[18];int end=0;
-        const int fields=sscanf(line,"MOUNT %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %n",
-          &r[0],&r[1],&r[2],&r[3],&r[4],&r[5],&r[6],&r[7],&r[8],&r[9],&r[10],&r[11],&r[12],
-          &r[13],&r[14],&r[15],&r[16],&r[17],&end);
-        if(fields==18 && line[end]==0 && rotationValid(r) && rotationValid(r+9)) {
-          mount_HI_=mat_from_rowmajor9_(r);mount_VH_=mat_from_rowmajor9_(r+9);
-          Serial.println("[MOUNT] accepted");return true;
-        }
-        Serial.println("[MOUNT] invalid: need two proper orthonormal rotations");
+    for(;;) {
+      const auto axes=ui_.mountingMenu();Matrix3f rotation;
+      if(!imu_cal::mountingRotation(axes.up,axes.forward,rotation)) {
+        ui_.fail("MOUNT","Choose different axes");continue;
       }
-      delay(2);
+      // The housing is the AtomS3R case, whose nominal axes are defined by
+      // screen/USB/edges. The selected installation maps those axes to boat.
+      mount_HI_.setIdentity();mount_VH_=rotation;
+      char message[96];snprintf(message,sizeof(message),"[MOUNT] buttons up=%u forward=%u; nominal device-case axes",
+        unsigned(axes.up),unsigned(axes.forward));
+      tryCalLogLine(Serial,message);
+      return true;
     }
   }
 

@@ -35,6 +35,7 @@
 #include <ArduinoOceanImu.h>
 
 #include "AtomS3R/AtomS3R_CalibrationGate.h"
+#include "AtomS3R/AtomS3R_CalLog.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
@@ -519,6 +520,7 @@ private:
   // Once the magnetically informed filter is Live, publish its fused yaw.
   void updateCompassHeading_(const Eigen::Quaternionf& q_bw, bool attitude_ok,
                                bool fused_ready = false, float fused_heading_deg = NAN) {
+    const bool was_fused=heading_fused_;
     heading_mag_ok_ = false;
     heading_mag_deg_ = NAN;
     if (mag_ok_ && attitude_ok) {
@@ -530,6 +532,12 @@ private:
     heading_valid_ = heading_fused_ || heading_mag_ok_;
     heading_deg_ = heading_fused_ ? ins::wrap360Deg(fused_heading_deg)
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
+    if(heading_fused_ && !was_fused && heading_mag_ok_) {
+      char message[128];snprintf(message,sizeof(message),
+        "[HEADING LIVE] q=%.2f m=%.2f d=%+.2f",
+        double(heading_deg_),double(heading_mag_deg_),double(std::remainder(heading_deg_-heading_mag_deg_,360.f)));
+      tryCalLogLine(Serial,message);
+    }
   }
 
   void updateFilter_(const ImuSample& s) {

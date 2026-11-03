@@ -14,6 +14,9 @@ void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCa
     if(rc.gyr.scale_only)Serial.println("[CAL] gyro: three scales calibrated; cross-axis fit unmeasured");
     if(rc.gyro_matrix_skipped)Serial.println("[CAL] BASIC gyro: measured bias applied; scale/axis fit skipped");
     if(rc.mag_alignment_skipped)Serial.println("[CAL] BASIC mag: intrinsic fit applied; nominal driver axes, alignment skipped");
+    // Connected diagnostic consoles can inspect the actual current record
+    // without rerunning calibration. Never wait for a host on power-only USB.
+    if(have_blob && Serial) {printBlobSummary(Serial,blob);printBlobDetail(Serial,blob);}
     return;
   }
   Serial.printf("[CAL] UNUSABLE: %s. Stopped before the estimator%s.\n", why,

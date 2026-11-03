@@ -2,6 +2,37 @@
 
 ## Current hypothesis
 
+**E — relaxed gyro endpoint means contaminated the strict stationary bias.**
+The production wrapper averaged motion-tolerant turn endpoints into `b0`.
+An accepted 0.004 rad/s endpoint mean offset produces a 0.0036923 rad/s bias
+error over twelve endpoints, equivalent to 9.51992 degrees of uncorrected yaw
+drift in 45 s. This invalidates the hypothesis that relaxing endpoint stillness
+could leave stationary bias unchanged under the previous averaging rule.
+Endpoint means now constrain gravity/rotation only; all gyro models retain
+the strict stationary fit. The same wrapper regression reports zero bias
+contamination. A gyro-only repair reuses strict capture, fitting and verified
+storage, preserving the current accel/mag/mount record while explicitly using
+nominal gyro scale/axes and clearing dependent noise/timing qualification.
+Structures preserved: sensor freshness, endpoint geometry, full/scale optimizer,
+independent rotation validation, correction order and all estimator equations.
+Relaxations introduced: none in a proof; no theorem is promoted. This synthetic
+reproduction does not establish the complete cause of the reported device
+heading error. Physical residual bounds, hardware heading comparison and stale
+source-bound evidence remain the limiter. Next falsifiable experiment: repair
+the current gyro bias without repeating other captures, then compare a fixed
+heading before/after Live and independent headings through a full rotation.
+No shipping instability counterexample was found; retained algebraic identities
+and the conditional results below remain unchanged.
+The final required `make all` passes algorithm suites through `tests/util`
+and exits 2 at `python3 ../../tools/tfg_comparison.py --check --require-ci`:
+`ValueError: TFG comparison source provenance is stale` (the retained class-E
+qualification barrier). Current-source comparison/service evidence remains
+required; no archived fingerprint is relabeled.
+The heading host harness also needed a console stub after adding transition
+diagnostics. Its initially unused stub failed `-Werror=unused-variable` for
+sketches without diagnostics (E); marking that test fixture `maybe_unused`
+preserves the geometry checks and does not change deployed heading code.
+
 **E — mandatory advanced fits prevented saving measured calibration.** The
 wizard and boot gate previously required a full gyro matrix and fine magnetic
 registration even when accel/gyro-bias/magnetic intrinsic fits were valid.

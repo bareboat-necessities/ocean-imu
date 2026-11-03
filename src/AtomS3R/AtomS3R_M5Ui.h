@@ -7,6 +7,7 @@
 #include <Arduino.h>
 #include <M5Unified.h>
 #include <math.h>
+#include "imu_calibrate/FrameAxes.h"
 
 namespace atoms3r_ical {
 
@@ -210,17 +211,23 @@ public:
     }
   }
 
-  // Start of the calibration wizard. Without a previous calibration only the
-  // full wizard is offered (single tap).
-  enum class StartAction : uint8_t { FULL=0, NOISE=1, CANCEL=2 };
+  // Current-record tools operate without repeating the full capture.
+  enum class StartAction : uint8_t { FULL=0, NOISE=1, CANCEL=2, GYRO_BIAS=3 };
 
-  StartAction startMenu(bool noise_available) {
-    setReadRotation();title("CALIBRATE");line("1 tap: Full cal");
-    if(noise_available)line("2 taps: Noise 40m");
-    line("3 taps: Cancel");
-    const int taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
-    if(taps>=3)return StartAction::CANCEL;
-    return noise_available && taps==2?StartAction::NOISE:StartAction::FULL;
+  StartAction startMenu(bool saved_available) {
+    for(;;) {
+      setReadRotation();title("CALIBRATE");line("Tap: full calibration");
+      if(saved_available)line("2 taps: saved fits");
+      line("3 taps: cancel");
+      const auto taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+      if(taps>=3)return StartAction::CANCEL;
+      if(taps!=2 || !saved_available)return StartAction::FULL;
+      title("SAVED FITS");line("Keep accel and mag");line("");
+      line("Tap: gyro bias only");line("2 taps: noise 40m");line("3 taps: back");
+      const auto tool=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+      if(tool==1)return StartAction::GYRO_BIAS;
+      if(tool==2)return StartAction::NOISE;
+    }
   }
 
   // Retry prompt for one hold; false = abort (previous calibration kept).
@@ -270,6 +277,23 @@ public:
     return taps==2?GyroFitAction::BIAS_ONLY:GyroFitAction::RETRY_FIT;
   }
 
+  struct MountAxes {
+    imu_cal::FrameAxis up=imu_cal::FrameAxis::NEG_Z;
+    imu_cal::FrameAxis forward=imu_cal::FrameAxis::POS_X;
+  };
+  MountAxes mountingMenu() {
+    MountAxes choice;
+    for(;;) {
+      setReadRotation();title("MOUNT");line("When installed:");line("Screen faces up");line("USB points backward");line("");
+      line("Tap: use this mount");line("2 taps: change mount");line("3 taps: help");
+      const auto taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+      if(taps==1)return MountAxes{};
+      if(taps>=3) {waitTapHere("MOUNT HELP","Sets installation","No pose to capture");continue;}
+      waitTapHere("CASE EDGES","Read screen upright","USB at bottom");
+      if(editMounting_(choice))return choice;
+    }
+  }
+
   // Overwrites one text row (size-1 font) at the current rotation.
   void lineAt(int row_px, const char* s) {
     M5.Display.fillRect(0, row_px, M5.Display.width(), 8, TFT_BLACK);
@@ -295,6 +319,48 @@ public:
   }
 
 private:
+  static const char* mountFaceName_(imu_cal::FrameAxis face) {
+    switch(face) {
+      case imu_cal::FrameAxis::NEG_Z:return "Screen";
+      case imu_cal::FrameAxis::POS_Z:return "Back of case";
+      case imu_cal::FrameAxis::NEG_X:return "USB end";
+      case imu_cal::FrameAxis::POS_X:return "Opposite USB end";
+      case imu_cal::FrameAxis::NEG_Y:return "Left edge";
+      default:return "Right edge";
+    }
+  }
+  bool chooseMountFace_(bool forward,MountAxes& choice) {
+    auto& face=forward?choice.forward:choice.up;
+    if(forward && !imu_cal::frameAxesPerpendicular(choice.up,face)) {
+      face=imu_cal::FrameAxis::NEG_Z;
+      while(!imu_cal::frameAxesPerpendicular(choice.up,face))face=imu_cal::FrameAxis(uint8_t(face)+1);
+    }
+    for(;;) {
+      title(forward?"POINTS FWD":"FACE UP");
+      line(forward?"Toward front of boat":"When mounted:");
+      if(!forward)line("90-degree mounts");
+      line(mountFaceName_(face));line("");
+      line("Tap: next face");line("2 taps: choose");line("3 taps: back");
+      const auto taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+      if(taps>=3)return false;
+      if(taps==2)return true;
+      do {face=imu_cal::FrameAxis((uint8_t(face)+1)%6);}
+      while(forward && !imu_cal::frameAxesPerpendicular(choice.up,face));
+    }
+  }
+  bool editMounting_(MountAxes& choice) {
+    for(;;) {
+      if(!chooseMountFace_(false,choice))return false;
+      if(!chooseMountFace_(true,choice))continue;
+      title("MOUNT OK?");line("Up:");line(mountFaceName_(choice.up));
+      line("Forward:");line(mountFaceName_(choice.forward));line("");
+      line("Tap: use this mount");line("2 taps: edit");line("3 taps: back");
+      const auto taps=waitTapGroupNoTimeout_(M5UiCfg::MENU_TAP_WINDOW_MS);
+      if(taps==1)return true;
+      if(taps>=3)return false;
+    }
+  }
+
   static uint8_t waitTapGroupNoTimeout_(uint32_t window_ms) {
     uint8_t count = 0;
     uint32_t deadline = 0;
