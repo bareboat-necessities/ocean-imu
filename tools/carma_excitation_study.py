@@ -10,7 +10,7 @@ group (T41...), with the shipping OU-III as reference.
     tune       tuning seeds 101-110: evidence-threshold and noise-model
                variants of C on the tuning conditions
     run        validation seeds 1-30 (10 or 20 on secondary grids): experiments
-               E1-E8 (--exp to select); resumable
+               E1-E9 (--exp to select); resumable
     traces     seed-1 time series kept for the figures
     report     summary.md, paired_stats.json and the figures
 
@@ -84,6 +84,9 @@ def experiments():
         g.append(("E7", sc, 20, CORE, None, False))
     for sc in ["stationary", J.format(h="0.8"), J.format(h="0.02"), "jonswap_fp0.08_hs0.2_g5", "mixed_swell_wind"]:
         g.append(("E8", sc, 10, ORDERS, None, False))
+    for sc in ["stationary+jit", "stationary+jit1", f"{J.format(h='0.05')}+jit", f"{J.format(h='0.8')}+jit",
+               f"{J.format(h='0.8')}+jit1"]:
+        g.append(("E9", sc, 10, CORE, None, False))
     return g
 
 
@@ -265,9 +268,11 @@ def run_grid(work, raw, jobs, extended_any=True):
     hdr = "exp," + header(True)
     cols = hdr.split(",")
     std_cols = ("exp," + header(False)).split(",")
-    new = not raw.exists()
-    tnew = not TRANS.exists()
-    pnew = not PSD.exists()
+    def fresh(path):
+        return not path.exists() or path.stat().st_size == 0
+    new = fresh(raw)
+    tnew = fresh(TRANS)
+    pnew = fresh(PSD)
     done = done_keys(raw)
     work = [w for w in work if (w[0], w[1], str(w[2])) not in done]
     print(f"{len(work)} runs to do", flush=True)
@@ -327,32 +332,27 @@ def cmd_run(a):
     run_grid(work, RAW, a.jobs)
 
 
+# Seed-1 time series the figures read: (name, scenario, filters, decimation,
+# columns kept per filter).
 TRACES = [
-    ("calm", "stationary+T2400", ["OU3", "A41@A", "A41@B", "A41@C", "T41@A", "T41@C"]),
-    ("onset", f"{J.format(h='0.05')}+on400w10", FULL),
-    ("repeated", f"{J.format(h='0.5')}+T1500+on300w10+off600w10+on900w10+off1200w10", FULL),
-    ("decay", f"{J.format(h='0.8')}+off600w120", FULL),
-    ("swell", "jonswap_fp0.05_hs0.2_g5", CORE),
-    ("small", J.format(h="0.02"), FULL),
-    ("maneuver", "calm+maneuver", CORE),
+    ("calm", "stationary+T2400", ["OU3", "A41@A", "A41@B", "A41@C", "T41@A", "T41@C"], 100, ["z"]),
+    ("repeated", f"{J.format(h='0.5')}+T1500+on300w10+off600w10+on900w10+off1200w10",
+     ["A41@A", "A41@B", "A41@C"], 40, ["z", "sig", "pw", "zw", "cf", "var", "var0", "fop"]),
 ]
 
 
 def cmd_traces(a):
     require(BENCH)
     TRACE_DIR.mkdir(parents=True, exist_ok=True)
-    for name, sc, filt in TRACES:
+    for name, sc, filt, dec, cols in TRACES:
         out = TRACE_DIR / f"{name}.csv"
         fd, tmp = tempfile.mkstemp(suffix=".csv")
         os.close(fd)
         subprocess.run([str(BENCH), "--level", "full", "--scenario", sc, "--seed", "1", "--filters", ",".join(filt),
-                        "--excitation", "--timeseries", tmp, "--decimate", "40"], capture_output=True, check=True)
+                        "--excitation", "--timeseries", tmp, "--decimate", str(dec)], capture_output=True, check=True)
         ts = read_ts(tmp)
         os.unlink(tmp)
-        keep = ["t", "x_true", "z_true"] + [k for k in ts if any(k.startswith(p + "_") for p in
-                                                                   ("x", "z", "sig", "pw", "zw", "cf", "var", "var0",
-                                                                    "fop", "sz"))
-                                             and k not in ("x_true", "z_true", "x_total")]
+        keep = ["t", "z_true"] + [f"{c}_{f}" for f in filt for c in cols if f"{c}_{f}" in ts]
         with out.open("w") as f:
             f.write(",".join(keep) + "\n")
             for i in range(len(ts["t"])):

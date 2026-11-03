@@ -38,7 +38,8 @@
       q' = q / (a b),
 
   (Isserlis: Var V = V^2 pi / (tau B), B = (int S)^2 / int S^2), N = 2 tau (a + b)
-  for white noise alone.  The excess E = V - E[V | 0] and
+  for white noise alone, times w / (2 - w) while the debiased EMA weight
+  w = 1 - (1 - alpha)^n has not yet reached one.  The excess E = V - E[V | 0] and
 
       z = E / (E[V | 0] sqrt(2/N + u^2)),
 
@@ -215,6 +216,9 @@ public:
         float v0, ne;
         bandNoise(n, dt, in.band_low_hz, in.band_high_hz, in.band_white_gain, in.var_horizon_s, v0, ne);
         var0_ = std::max(v0, 0.0f);
+        // A debiased EMA of weight w = 1 - beta^n has sum w_i^2 larger by
+        // (1 + beta^n)/(1 - beta^n): fewer effective samples after a start.
+        if (std::isfinite(ne)) ne *= w_ / (2.0f - w_);
         n_eff_ = ne;
         excess_ = var_ - var0_;
         const float rel2 = ((std::isfinite(ne) && ne > 0.0f) ? 2.0f / ne : 0.0f) +

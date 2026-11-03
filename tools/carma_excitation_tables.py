@@ -38,9 +38,16 @@ def table(r, rows, header):
     r.w()
 
 
+def mm_fmt(x_m):
+    x = 1e3 * x_m
+    if not np.isfinite(x):
+        return "-"
+    return f"{x:.2f}" if abs(x) >= 0.1 else f"{x:.2g}"
+
+
 def mean_mm(v):
     v = np.asarray(v, float)
-    return f"{1e3 * np.nanmean(v):.2f}" if np.isfinite(v).any() else "-"
+    return mm_fmt(np.nanmean(v)) if np.isfinite(v).any() else "-"
 
 
 def e1(r):
@@ -118,7 +125,7 @@ def small_waves(r, exp, title, filters, note=None):
             cells = [f"{hs:g}", str(len(seeds)), f"{1e3 * truth:.2f}",
                      f"{1e3 * np.nanmean(vaz[fl[0]]):.1f}" if np.isfinite(vaz[fl[0]]).any() else "-"]
             for f in fl:
-                cells.append(f"{1e3 * np.mean(vz[f]):.2f} ({100 * np.mean(vz[f]) / hs:.0f} %)")
+                cells.append(f"{mm_fmt(np.mean(vz[f]))} ({100 * np.mean(vz[f]) / hs:.0f} %)")
             for f in ("A41@C", "T41@C"):
                 if f in fl:
                     cells.append(f"{np.nanmean(va[f]) / truth:.2f} / {100 * (1 - np.nanmean(vp[f])):.1f} %")
@@ -173,10 +180,11 @@ def e4(r):
             def mean(k):
                 v = np.array([fnum(t, k) for t in x])
                 return np.nanmean(v)
-            det = med("detect_s") if f != "A41@A" and f != "T41@A" else med("detect_s")
+            legacy = f in ("A41@A", "T41@A")   # Legacy reads no evidence
+            det = med("detect_s")
             rows.append([sc.replace("jonswap_fp0.29_", "J29 ").replace("_g3.3", ""), f"{kind} {float(lf):g}->{float(lt):g}",
                          LABEL.get(f, f), str(len(x)),
-                         f"{det:.1f}" if np.isfinite(det) else "never",
+                         "-" if legacy else (f"{det:.1f}" if np.isfinite(det) else "never"),
                          f"{med('sigma_settle_s'):.1f}" if np.isfinite(med('sigma_settle_s')) else "-",
                          f"{1e3 * mean('rms_z_0_60'):.1f}", f"{1e3 * mean('rms_z_60_180'):.1f}",
                          f"{1e3 * mean('true_z_0_60'):.1f}", f"{1e3 * mean('peak_z_0_120'):.0f}",
@@ -220,7 +228,7 @@ def e5(r):
         cells = [sc.replace("jonswap_fp0.29_", "J29 ").replace("_g3.3", ""), str(len(seeds))]
         for f in fl:
             if f in d:
-                cells.append(f"{1e3 * np.mean(vz[f]):.1f} / {1e3 * np.mean(vh[f]):.1f} / {100 * np.nanmean(vp[f]):.0f} %")
+                cells.append(f"{mm_fmt(np.mean(vz[f]))} / {mm_fmt(np.mean(vh[f]))} / {100 * np.nanmean(vp[f]):.0f} %")
             else:
                 cells.append("-")
         rows.append(cells)
@@ -248,7 +256,7 @@ def e6(r):
         _, vb = aligned(d, f2, lambda x: fnum(x, "ba_rms_mg"))
         for f in f2:
             rows.append([sc.replace("jonswap_fp0.29_", "J29 ").replace("_g3.3", ""), LABEL.get(f, f), str(len(seeds)),
-                         f"{1e3 * np.mean(vz[f]):.2f}", f"{1e3 * np.mean(vh[f]):.1f}", f"{np.nanmean(vt[f]):.3f}",
+                         mm_fmt(np.mean(vz[f])), mm_fmt(np.mean(vh[f])), f"{np.nanmean(vt[f]):.3f}",
                          f"{np.nanmean(vy[f]):.2f}", f"{np.nanmean(vb[f]):.2f}"])
             if f not in ("A41@A", "T41@A", "OU3"):
                 base = "T41@A" if f.startswith("T41@A") else "A41@A"
@@ -302,7 +310,7 @@ def e8(r):
         f2 = [f for f in fl if f in d]
         seeds, vz = aligned(d, f2, lambda x: fnum(x, "rms_z"))
         _, vh = aligned(d, f2, rms_h)
-        rows.append([sc, str(len(seeds))] + [f"{1e3 * np.mean(vz[f]):.1f} / {1e3 * np.mean(vh[f]):.1f}" for f in f2])
+        rows.append([sc, str(len(seeds))] + [f"{mm_fmt(np.mean(vz[f]))} / {mm_fmt(np.mean(vh[f]))}" for f in f2])
         for c, b in (("A30@C", "A30@A"), ("A52@C", "A52@A"), ("T52@C", "T52@A")):
             if c in vz and b in vz:
                 for name, v in (("heave RMS", vz), ("horizontal RMS", vh)):
@@ -310,6 +318,25 @@ def e8(r):
                     if ps:
                         r.stats.setdefault("E8", {}).setdefault(sc, {}).setdefault(name, {})[c] = ps
     table(r, rows, ["condition", "n"] + [f"{f} heave / horiz. (mm)" for f in fl])
+
+
+def e9(r):
+    r.w("## Experiment 9: jittered sample clock")
+    r.w()
+    r.w("`jit`: +-25 % uniform interval jitter; `jit1`: +-1 % on a 1 us clock (a micros() time stamp).")
+    r.w()
+    fl = ["OU3", "A41@A", "A41@B", "A41@C", "T41@A", "T41@C"]
+    rows = []
+    for (e, sc) in sorted(r.cond("E9"), key=lambda k: k[1]):
+        d = r.g[(e, sc)]
+        f2 = [f for f in fl if f in d]
+        seeds, vz = aligned(d, f2, lambda x: fnum(x, "rms_z"))
+        _, vh = aligned(d, f2, rms_h)
+        _, vf = aligned(d, f2, lambda x: fnum(x, "failed"))
+        rows.append([sc.replace("jonswap_fp0.29_", "J29 ").replace("_g3.3", ""), str(len(seeds))] +
+                    [f"{mm_fmt(np.mean(vz[f]))} / {mm_fmt(np.mean(vh[f]))}" + (" (failed)" if np.nansum(vf[f]) else "")
+                     for f in f2])
+    table(r, rows, ["condition", "n"] + [f"{LABEL.get(f, f)} heave / horiz. (mm)" for f in fl])
 
 
 def cost(r):
@@ -341,4 +368,5 @@ def validation(r):
     e6(r)
     e7(r)
     e8(r)
+    e9(r)
     cost(r)

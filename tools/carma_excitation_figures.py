@@ -227,11 +227,11 @@ def fig_variance(r, plt, svgd, out):
         return
     t = load_trace(tr)
     fig, ax = plt.subplots(figsize=(10, 3.8))
-    ax.plot(t["t"], t["var_A41@C"], color=INK, lw=1.2, label="measured band variance (tuner)")
+    ax.plot(t["t"], t["var_A41@C"], color=INK, lw=1.2, label="measured band variance")
     ax.plot(t["t"], t["var0_A41@C"], color=C["A41@B0"], lw=1.6, label="propagated sensor-noise variance E[V | 0]")
     ax.plot(t["t"], np.maximum(t["sig_A41@C"] ** 2, 1e-12), color=C["A41@C"], lw=1.4,
             label="evidence-mode CARMA sigma^2 (p max(V - E[V|0], 0), smoothed)")
-    ax.plot(t["t"], np.maximum(t["sig_A41"] ** 2, 1e-12), color=C["A41@A"], ls="--", lw=1.2,
+    ax.plot(t["t"], np.maximum(t["sig_A41@A"] ** 2, 1e-12), color=C["A41@A"], ls="--", lw=1.2,
             label="legacy CARMA sigma^2")
     ax.set_yscale("log")
     ax.set_ylim(1e-11, 3)

@@ -142,7 +142,9 @@ bool carma_excitation_diag(const Impl& f, double (&d)[8]) {
     d[1] = ev.waveProbability();
     d[2] = ev.zScore();
     d[3] = ev.frequencyConfidence();
-    d[4] = f.getAccelVariance();
+    // The evidence's own start-clean band variance; Legacy reads the tuner's.
+    d[4] = f.carmaExcitationMode() == ocean_imu::carma::CarmaExcitationMode::Legacy ? f.getAccelVariance()
+                                                                                      : ev.bandVariance();
     d[5] = ev.noiseVariance();
     d[6] = static_cast<double>(f.getVerticalKappa()) * f.mekf().vertical_model().base_zero_crossing_hz();
     d[7] = f.getTauApplied();

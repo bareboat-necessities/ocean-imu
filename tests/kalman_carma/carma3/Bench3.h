@@ -80,9 +80,10 @@ public:
     virtual bool set_options(const std::string&) { return false; }
     virtual void set_label(const std::string&) {}
     // CARMA vertical acceleration std of the committed prior, evidence weight
-    // p, detection statistic z, period confidence c_f, EW band variance, its
-    // expectation under "no waves", CARMA operating frequency [Hz] and the
-    // committed tau [s].
+    // p, detection statistic z, period confidence c_f, EW band variance (the
+    // evidence's own outside Legacy, the tuner's in Legacy), its expectation
+    // under "no waves", CARMA operating frequency [Hz] and the committed
+    // tau [s].
     virtual bool excitation_diag(double (&)[8]) const { return false; }
 };
 
