@@ -100,9 +100,6 @@ public:
         max_horizon_sec_ = max_sec;
     }
 
-    // Corner of the high-pass stages and integrator leaks [Hz].
-    float getHighPassHz() const { return lambda_ / (2.0f * 3.14159265358979323846f); }
-
     float getMomentHorizonSec() const { return last_moment_horizon_sec_; }
     float getLogSmoothingHorizonSec() const { return last_log_horizon_sec_; }
 

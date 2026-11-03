@@ -94,8 +94,6 @@ NoiseRun run_noise(float sw, float qrw, float fref, double T, unsigned seed) {
         in.band_high_hz = band.highHz();
         in.band_white_gain = band.whiteNoiseVarianceGain();
         in.var_horizon_s = tuner.getVarianceHorizonSec();
-        in.elev_high_pass_hz = wpe.getHighPassHz();
-        in.elev_horizon_s = wpe.getMomentHorizonSec();
         ev.update(in, model, cfg);
         const float es = wpe.getElevationStd();
         if (static_cast<double>(k) * dt > 600.0 && k % 20 == 0) {
@@ -118,7 +116,8 @@ NoiseRun run_noise(float sw, float qrw, float fref, double T, unsigned seed) {
     r.var0 = sv0 / static_cast<double>(n);
     r.n_eff = sn / static_cast<double>(n);
     r.elev_var = se / static_cast<double>(n);
-    r.elev0 = CarmaWaveEvidence::elevationNoise(model, dt, wpe.getHighPassHz());
+    // WavePeriodEstimator's default leak corner, 0.02 Hz.
+    r.elev0 = CarmaWaveEvidence::elevationNoise(model, dt, 0.02f);
     r.p_frac = spf / static_cast<double>(n);
     r.exc_mean = sexc / static_cast<double>(n);
     return r;

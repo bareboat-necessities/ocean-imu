@@ -39,7 +39,8 @@
   mode replaces sigma_aw / c_sigma by sqrt(p max(E, 0)), E the band variance
   in excess of the sensor-noise model and p its detection weight, and moves
   the CARMA frequency only with p times the confidence of the measured
-  period, holding it otherwise.  Debiased and FloorOff are its ablations.
+  period (the acceleration band confirms where the waves are), holding it
+  otherwise.  Debiased and FloorOff are its ablations.
   The only floor left, setCarmaNumericalSigmaFloor (1e-5 m/s^2), is
   numerical: it keeps the configured models valid and the covariance out of
   float subnormals.
@@ -274,7 +275,7 @@ public:
     const CarmaSensorNoise& carmaSensorNoise() const noexcept { return sensor_noise_; }
     void setCarmaEvidenceThresholds(const CarmaEvidenceConfig& c) {
         if (!(std::isfinite(c.z0) && std::isfinite(c.z1) && c.z1 > c.z0)) return;
-        if (!(std::isfinite(c.r0) && std::isfinite(c.r1) && c.r1 > c.r0)) return;
+        if (!(std::isfinite(c.zf0) && std::isfinite(c.zf1) && c.zf1 > c.zf0)) return;
         if (!(std::isfinite(c.k0) && std::isfinite(c.k1) && c.k1 > c.k0)) return;
         evidence_cfg_ = c;
     }
@@ -363,8 +364,8 @@ private:
     }
 
     // Wave evidence from the levelled vertical acceleration at the band
-    // corners and horizons the variance channel and the period estimator are
-    // in force with (CarmaWaveEvidence.h).  Measurement-only, like them.
+    // corners and horizon the variance channel is in force with
+    // (CarmaWaveEvidence.h).  Measurement-only, like the channel.
     void update_wave_evidence_(float dt, float a_vertical_measurement) {
         CarmaWaveEvidence::Inputs in;
         in.dt = dt;
@@ -373,8 +374,6 @@ private:
         in.band_high_hz = sigma_wave_band_.highHz();
         in.band_white_gain = sigma_wave_band_.whiteNoiseVarianceGain();
         in.var_horizon_s = tuner_.getVarianceHorizonSec();
-        in.elev_high_pass_hz = FrontEnd::wave_period_.getHighPassHz();
-        in.elev_horizon_s = FrontEnd::wave_period_.getMomentHorizonSec();
         evidence_.update(in, sensor_noise_, evidence_cfg_);
     }
 
@@ -474,8 +473,8 @@ private:
 
     void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {
         stepVarianceChannel_(dt, a_vertical_measurement, freq_hz_for_tuner);
-        // Every mode measures the evidence (diagnostics); Legacy ignores it.
-        update_wave_evidence_(dt, a_vertical_measurement);
+        // Legacy keeps its cost and its outputs: it reads no evidence.
+        if (excitation_mode_ != CarmaExcitationMode::Legacy) update_wave_evidence_(dt, a_vertical_measurement);
         if (!advanceStartupStage_(wavePeriodUsable())) return;
         constexpr float STILL_VAR_DECAY_SEC = 1.0f;
         const float sea_time_sec = measureOperatingPoint_(

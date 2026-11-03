@@ -139,6 +139,19 @@ static constexpr float IMU_LEVER_ARM_X_M = 0.0f;  // + forward (towards bow)
 static constexpr float IMU_LEVER_ARM_Y_M = 0.0f;  // + starboard
 static constexpr float IMU_LEVER_ARM_Z_M = 0.0f;  // + down
 
+// ---------------------------------------------------------------------------
+// Accelerometer noise model of the CARMA wave-excitation evidence
+// (docs/carma-wave-excitation.md): the white noise per sample at LOOP_HZ and
+// the bias random walk of the calibrated vertical acceleration, and the
+// relative uncertainty of that noise variance.  The values are the simulated
+// BMI270-class sensor the study used.  Replace them by the installed device's
+// own values from a stationary Allan-variance record; 0.5 tolerates about a
+// factor of two in the noise variance without reading sensor noise as waves.
+// ---------------------------------------------------------------------------
+static constexpr float CARMA_ACC_WHITE_SIGMA_MPS2      = 0.0148f;
+static constexpr float CARMA_ACC_BIAS_RW_MPS2_SQRTS    = 5.0e-4f;
+static constexpr float CARMA_ACC_NOISE_REL_UNCERTAINTY = 0.5f;
+
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
@@ -423,6 +436,17 @@ private:
     // filter uses (docs/carma-three-axis.md); overriding them would put the
     // device at an operating point no evidence covers.
     ff.setAccNoiseFloorSigma(ACC_NOISE_FLOOR_SIGMA_DEFAULT);
+    // Wave excitation from measured evidence instead of the legacy
+    // 0.05 m/s^2 floor (docs/carma-wave-excitation.md): the CARMA prior is
+    // driven by the noise-debiased band variance, weighted by the evidence
+    // that waves are present, and its frequency is held while the measured
+    // wave period is not confirmed by the acceleration band.  In still water
+    // the prior's driving noise is then at its 1e-5 m/s^2 numerical floor
+    // instead of 0.05 m/s^2 at 0.05 Hz.  CarmaExcitationMode::Legacy restores
+    // the benchmarked behaviour of the documents above.
+    ff.setCarmaExcitationMode(ocean_imu::carma::CarmaExcitationMode::Evidence);
+    ff.setCarmaSensorNoise(CARMA_ACC_WHITE_SIGMA_MPS2, CARMA_ACC_BIAS_RW_MPS2_SQRTS,
+                           CARMA_ACC_NOISE_REL_UNCERTAINTY);
     ff.enableClamp(true);
     ff.setFreqInputCutoffHz(6.0f);
 

@@ -125,8 +125,8 @@ bool apply_carma_excitation_options(Impl& f, const std::string& opts) {
         } else if (o == "rw0") n.bias_rw_mps2_sqrts = 0.0f;
         else if (o.rfind("nf", 0) == 0) f.setCarmaNumericalSigmaFloor(num(2));
         else if (o.rfind("u", 0) == 0) n.rel_var_uncertainty = num(1);
+        else if (o.rfind("zf", 0) == 0) { if (!pair(2, th.zf0, th.zf1)) return false; }
         else if (o.rfind("z", 0) == 0) { if (!pair(1, th.z0, th.z1)) return false; }
-        else if (o.rfind("r", 0) == 0) { if (!pair(1, th.r0, th.r1)) return false; }
         else if (o.rfind("k", 0) == 0) { if (!pair(1, th.k0, th.k1)) return false; }
         else return false;
     }

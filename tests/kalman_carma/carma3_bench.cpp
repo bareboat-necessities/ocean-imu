@@ -61,7 +61,7 @@
   (A legacy, B0 floor removed, B debiased, C evidence, Cnf evidence without
   frequency hold, Cng evidence without the amplitude weight) and options of
   the noise model (nv<x> variance scale, rw0 no bias random walk, u<x>
-  relative variance uncertainty, z<z0>_<z1>, r<r0>_<r1>, k<k0>_<k1>,
+  relative variance uncertainty, z<z0>_<z1>, zf<zf0>_<zf1>, k<k0>_<k1>,
   nf<s> numerical floor).  --excitation appends excitation summary columns and, with
   --timeseries, per-filter excitation columns.
 
@@ -544,7 +544,7 @@ const char* const kExtendedColumns =
 
 const char* const kExcitationColumns =
     ",exc_sig_mean,exc_sig_med,exc_p_mean,exc_p_frac50,exc_z_med,exc_cf_mean,exc_fz_med,exc_fz_p05,exc_fz_p95,"
-    "exc_var_med,exc_var0_med,exc_pz_rms,exc_ph_rms";
+    "exc_var_med,exc_var0_med,exc_pz_rms,exc_ph_rms,p95_x,p95_y,p95_z,true_az_rms";
 
 void print_header(bool extended, bool excitation = false) {
     std::printf("level,scenario,seed,filter,states,memory_bytes,runtime_ns,hs_incident,hs_heave,"
@@ -737,6 +737,8 @@ int main(int argc, char** argv) {
     }
     std::vector<Vector3d> pw_all;
     pw_all.reserve(steps);
+    double saz2 = 0.0;   // true vertical wave acceleration over the score window
+    long naz = 0;
     double lf2[2] = {0, 0};
     long nlf = 0;
 
@@ -824,6 +826,8 @@ int main(int argc, char** argv) {
 
         pw_all.push_back(ts.p_wave);
         if (ts.t >= args.score_start) {
+            saz2 += ts.a_wave.z() * ts.a_wave.z();
+            ++naz;
             for (int i = 0; i < 2; ++i) lf2[i] += std::pow(ts.p_ned(i) - ts.p_wave(i), 2);
             ++nlf;
         }
@@ -1131,6 +1135,14 @@ int main(int argc, char** argv) {
                         quant(zw, 0.5), mean(cf), quant(fop, 0.5), quant(fop, 0.05), quant(fop, 0.95),
                         quant(var, 0.5), quant(var0, 0.5), ne ? std::sqrt(sz2 / static_cast<double>(ne)) : NAN,
                         ne ? std::sqrt(sh2 / static_cast<double>(ne)) : NAN);
+            // 95th percentile of the absolute error per axis.
+            for (int a = 0; a < 3; ++a) {
+                std::vector<double> ae;
+                for (size_t j = 0; j < se.t.size(); ++j)
+                    if (se.t[j] >= w0 && se.t[j] <= w1 && std::isfinite(se.e[a][j])) ae.push_back(std::abs(se.e[a][j]));
+                std::printf(",%.6g", quant(ae, 0.95));
+            }
+            std::printf(",%.6g", naz ? std::sqrt(saz2 / static_cast<double>(naz)) : NAN);
         }
         std::printf("\n");
         if (se.failed) std::cerr << "FAILURE " << est[i]->name() << ": " << se.fail_reason << "\n";
