@@ -651,7 +651,10 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   every axis (the model's displacement zero-crossing frequency is placed on
   the measured one), `sigma_z = max(0.05 m/s^2, noise floor, sigma_aw /
   c_sigma)` (the measured band acceleration RMS, with OU-III's floor),
-  `sigma_h = S_factor sigma_z` (no horizontal statistic is measured), and the
+  `sigma_x,y = S_x,y sigma_z` with keel-frame factors `S_x = S_y = 1` (no
+  horizontal statistic is measured; unequal factors are rotated into NED by
+  the filter's heading, [carma-wave-excitation.md](carma-wave-excitation.md)
+  section 3), and the
   `S` laws of section 4.  Mappings fixed before any Monte Carlo run.  Not
   included by `ArduinoOceanImu.h`.  This amplitude mapping is the
   `Legacy` wave-excitation mode, the default; `setCarmaExcitationMode`

@@ -343,6 +343,17 @@ frequency.
   research sketches `atomS3R_ins_carma3` and `atomS3R_ins_tfg_carma3` select
   `Evidence` explicitly, with the device noise model as constants at the top
   of each sketch.
+* Horizontal amplitude factors, in every mode: `setSFactorXY(S_x, S_y)` sets
+  them in the keel frame (x along the keel, surge; y across it, sway), and
+  `setSFactor(S)` sets both.  `setHorizontalCorrelation(r)` is the
+  surge-sway correlation.  The CARMA horizontal states are world-frame, so
+  with `S_x != S_y` or `r != 0` the keel-frame covariance
+  `sigma_z^2 [S_x^2, r S_x S_y; r S_x S_y, S_y^2]` is rotated into NED by the
+  inner filter's own heading at every committed tune.  The prior turns with
+  the hull and both inner filters stay yaw-equivariant
+  ([tfg-carma3-research.md](tfg-carma3-research.md) section 2.10).  A prior
+  fixed in world coordinates would carry heading information.  The defaults
+  `S_x = S_y = 1`, `r = 0` take the isotropic path unchanged.
 * No covariance is reset at a wave / no-wave transition: the CARMA block's
   covariance follows from `Q(sigma)` alone.  CARMA(3,0), (4,1) and (5,2),
   the shapes, the frequency mapping, startup, magnetic fusion, bias
