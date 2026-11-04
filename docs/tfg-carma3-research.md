@@ -352,7 +352,10 @@ jittered clock.  The wrapper is the same code, so the mapping
 `sigma_h = S_factor c_carma max(sigma_floor, sigma_aw / c_sigma)` and every
 clamp are CARMA3's (`c_carma` is the wrapper's `carma_sigma_gain_`, 1 by
 default and in every run here; `sigma_floor = max(carma_sigma_floor_ =
-0.05 m/s^2, band noise floor, 1e-4 m/s^2)`).  There is no `S` state and no `S = 0`
+0.05 m/s^2, band noise floor, 1e-4 m/s^2)`; this is the wrapper's default
+`Legacy` wave-excitation mode, the mode of every result here; the
+evidence-weighted mode of [carma-wave-excitation.md](carma-wave-excitation.md)
+is shared by both inner filters).  There is no `S` state and no `S = 0`
 pseudo-measurement; the fourth CARMA state is the latent coordinate of the
 cascade realization.  Section 5 checks stability, positive semidefiniteness,
 stationary covariances and spectra of the three-axis process as the filter

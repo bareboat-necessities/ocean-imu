@@ -213,7 +213,7 @@ def e5(r):
     r.w("## Experiment 5: sensor-noise uncertainty and disturbances")
     r.w()
     r.w("`/nv0.5`: the evidence model's noise variance is half the true one (underestimated by 50 %); `/nv2`: twice "
-        "(overestimated by 100 %).  cnoise: 4 mg first-order Gauss-Markov noise (2 s), not in the model; nvar: white "
+        "(overestimated by 100 %).  cnoise / cnoise0.5: 4 / 0.5 mg first-order Gauss-Markov noise (2 s), not in the model; nvar: white "
         "noise variance cycling 1x-2x; engine<rpm>: inboard diesel; temp: IMU temperature 25-45 C with a "
         "mis-modelled bias temperature coefficient.")
     r.w()
@@ -339,6 +339,66 @@ def e9(r):
     table(r, rows, ["condition", "n"] + [f"{LABEL.get(f, f)} heave / horiz. (mm)" for f in fl])
 
 
+def e10(r):
+    r.w("## Experiment 10: horizontal amplitude mapping (S_factor)")
+    r.w()
+    r.w("The horizontal CARMA prior is S_factor times the vertical amplitude; 1 everywhere else in this study.  0.4 "
+        "is the benchmark hull's measured horizontal/vertical wave-acceleration ratio (truth statistics, 0.31-0.54).  "
+        "Heave / horizontal RMS (mm), 10 seeds.")
+    r.w()
+    fl = ["A41@A", "A41@A/sf0.4", "A41@C", "A41@C/sf0.4", "T41@C", "T41@C/sf0.4"]
+    rows = []
+    for (e, sc) in sorted(r.cond("E10"), key=lambda k: (hs_of(k[1]), k[1])):
+        d = r.g[(e, sc)]
+        f2 = [f for f in fl if f in d]
+        seeds, vz = aligned(d, f2, lambda x: fnum(x, "rms_z"))
+        _, vh = aligned(d, f2, rms_h)
+        cells = [sc.replace("jonswap_fp0.29_", "J29 ").replace("_g3.3", ""), str(len(seeds))]
+        cells += [f"{mm_fmt(np.mean(vz[f]))} / {mm_fmt(np.mean(vh[f]))}" for f in f2]
+        for c, b in (("A41@C", "A41@A"), ("A41@C/sf0.4", "A41@A")):
+            ps = paired(vh[c], vh[b]) if c in vh and b in vh else None
+            cells.append(fmt_imp(ps))
+            if ps:
+                r.stats.setdefault("E10", {}).setdefault(sc, {}).setdefault("horizontal RMS", {})[c] = ps
+            ps = paired(vz[c], vz[b]) if c in vz and b in vz else None
+            if ps:
+                r.stats.setdefault("E10", {}).setdefault(sc, {}).setdefault("heave RMS", {})[c] = ps
+        rows.append(cells)
+    table(r, rows, ["condition", "n"] + fl + ["C vs A, horizontal", "C, S 0.4 vs A, horizontal"])
+
+
+def dataset(r):
+    import csv as _csv
+    path = r.out / "dataset_runs.csv"
+    if not path.exists():
+        return
+    rows = list(_csv.DictReader(path.open()))
+    r.w("## Pinned vessel-RAO dataset (independent hull)")
+    r.w()
+    r.w("The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, "
+        "H_s 0.27-8.5 m) through carma3-sim, ten W3D_SEED values, final 900 s; paired per (record, seed).  "
+        "Displacement RMS in % of the record's H_s.")
+    r.w()
+    by = defaultdict(dict)
+    for x in rows:
+        by[x["family"]][(x["input"], x["seed"])] = x
+    out = []
+    for v in ("A41", "T41"):
+        a, c = by.get(f"{v}@A", {}), by.get(f"{v}@C", {})
+        keys = sorted(set(a) & set(c))
+        if not keys:
+            continue
+        for name, k in (("heave", "disp_z_pct_hs"), ("horizontal x", "disp_x_pct_hs"), ("horizontal y", "disp_y_pct_hs"),
+                        ("yaw (deg)", "yaw_rms_deg"), ("pitch (deg)", "pitch_rms_deg")):
+            xa = [fnum(a[q], k) for q in keys]
+            xc = [fnum(c[q], k) for q in keys]
+            ps = paired(xc, xa)
+            if ps:
+                r.stats.setdefault("dataset", {}).setdefault(v, {})[name] = ps
+            out.append([v, name, str(len(keys)), f"{np.mean(xa):.3f}", f"{np.mean(xc):.3f}", fmt_imp(ps)])
+    table(r, out, ["filter", "metric", "pairs", "A (legacy)", "C (evidence)", "C vs A"])
+
+
 def cost(r):
     r.w("## Host cost")
     r.w()
@@ -369,4 +429,6 @@ def validation(r):
     e7(r)
     e8(r)
     e9(r)
+    e10(r)
+    dataset(r)
     cost(r)

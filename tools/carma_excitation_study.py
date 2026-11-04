@@ -10,11 +10,13 @@ group (T41...), with the shipping OU-III as reference.
     tune       tuning seeds 101-110: evidence-threshold and noise-model
                variants of C on the tuning conditions
     run        validation seeds 1-30 (10 or 20 on secondary grids): experiments
-               E1-E9 (--exp to select); resumable
+               E1-E10 (--exp to select); resumable
     traces     seed-1 time series kept for the figures
+    dataset    the pinned 28 ft vessel-RAO records through carma3-sim, 10
+               seeds, CARMA3 and TFG-CARMA3 in modes A and C
     report     summary.md, paired_stats.json and the figures
 
-Run: python3 tools/carma_excitation_study.py {tune,run,traces,report} [--jobs 4]
+Run: python3 tools/carma_excitation_study.py {tune,run,traces,dataset,report} [--jobs 4]
 """
 from __future__ import annotations
 
@@ -53,7 +55,7 @@ SWELL_H = ["0.05", "0.2", "0.5"]
 def experiments():
     g = []
     for sc in ["stationary+T2400", "calm+T2400", "stationary+scal+T2400", "stationary+calbias+T2400"]:
-        g.append(("E1", sc, 30, FULL, "psd", True))
+        g.append(("E1", sc, 30, FULL, "psd" if sc == "stationary+T2400" else None, True))
     for h in HS:
         g.append(("E2", J.format(h=h), 30, FULL, None, False))
         g.append(("E2", f"jonswap_fp0.15_hs{h}_g3.3", 10, CORE, None, False))
@@ -66,7 +68,7 @@ def experiments():
         g.append(("E4", f"{J.format(h='0.05')}+on400w{w}", 30, FULL, "trans", False))
         g.append(("E4", f"{J.format(h='0.8')}+on400w{w}", 30, FULL, "trans", False))
         g.append(("E4", f"{J.format(h='0.8')}+off600w{w}", 30, FULL, "trans", False))
-        g.append(("E4", f"jonswap_fp0.29_hs1_g3.3+lev0w0.001x0.1+lev600w{w}x1", 30, FULL, "trans", False))
+        g.append(("E4", f"jonswap_fp0.29_hs1_g3.3+start0.1+lev600w{w}x1", 30, FULL, "trans", False))
         g.append(("E4", f"jonswap_fp0.29_hs1_g3.3+lev600w{w}x0.1", 30, FULL, "trans", False))
         rw = "60" if w == "120" else w
         g.append(("E4", f"{J.format(h='0.5')}+T1500+on300w{rw}+off600w{rw}+on900w{rw}+off1200w{rw}", 30, FULL,
@@ -76,6 +78,8 @@ def experiments():
             g.append(("E5", base + m, 10, CORE + NOISE, None, False))
     for m in ["", "+cnoise"]:
         g.append(("E5", "jonswap_fp0.08_hs0.2_g5" + m, 10, CORE + NOISE, None, False))
+    for base in ["stationary", J.format(h="0.05"), J.format(h="0.8")]:
+        g.append(("E5", base + "+cnoise0.5", 10, CORE + NOISE, None, False))
     for sc in ["calm", "calm+U2.5", "calm+maneuver", "calm+drift", "calm+anchor", "calm+U2.5+turns",
                f"{J.format(h='0.8')}+hscale0.2", f"{J.format(h='0.2')}+hscale0.2"]:
         g.append(("E6", sc, 20, CORE, None, True))
@@ -87,6 +91,12 @@ def experiments():
     for sc in ["stationary+jit", "stationary+jit1", f"{J.format(h='0.05')}+jit", f"{J.format(h='0.8')}+jit",
                f"{J.format(h='0.8')}+jit1"]:
         g.append(("E9", sc, 10, CORE, None, False))
+    # Horizontal amplitude mapping: S_factor 1 (every other row) against the
+    # benchmark hull's measured horizontal/vertical acceleration ratio, 0.4.
+    for sc in ["stationary", J.format(h="0.05"), J.format(h="0.1"), J.format(h="0.2"), J.format(h="0.8"),
+               "pm_fp0.25_hs0.1", "jonswap_fp0.45_hs0.1_g3.3", "mixed_swell_wind"]:
+        g.append(("E10", sc, 10, ["A41@A", "A41@A/sf0.4", "A41@C", "A41@C/sf0.4", "T41@C", "T41@C/sf0.4"], None,
+                  False))
     return g
 
 
@@ -125,6 +135,10 @@ def envelope_steps(scenario):
     steps = []
     first = True
     for m in scenario.split("+")[1:]:
+        if m.startswith("start"):
+            level = float(m[5:])
+            first = False
+            continue
         if m.startswith("on") or m.startswith("off") or m.startswith("lev"):
             on, off = m.startswith("on"), m.startswith("off")
             body = m[2:] if on else m[3:]
@@ -307,10 +321,15 @@ def run_grid(work, raw, jobs, extended_any=True):
                         tw.writerow(r)
                     tout.flush()
                 for (e, sc, seed, f, ax, fr, pp) in psd:
+                    # Welch PSD averaged into 120 log-spaced bins, 1e-3-5 Hz.
+                    edges = np.logspace(-3, np.log10(5.0), 121)
+                    idx = np.digitize(fr, edges) - 1
+                    binned = [float(np.mean(pp[idx == k])) if np.any(idx == k) else np.nan for k in range(120)]
                     if pnew:
-                        pout.write("exp,scenario,seed,filter,axis,df," + ",".join(f"{x:.6g}" for x in fr) + "\n")
+                        centres = np.sqrt(edges[:-1] * edges[1:])
+                        pout.write("exp,scenario,seed,filter,axis," + ",".join(f"{x:.6g}" for x in centres) + "\n")
                         pnew = False
-                    pout.write(f"{e},{sc},{seed},{f},{ax},{fr[1]:.6g}," + ",".join(f"{x:.4e}" for x in pp) + "\n")
+                    pout.write(f"{e},{sc},{seed},{f},{ax}," + ",".join(f"{x:.4e}" for x in binned) + "\n")
                 pout.flush()
                 if n % 20 == 0 or n == len(work):
                     print(f"  {n}/{len(work)}", flush=True)
@@ -360,6 +379,60 @@ def cmd_traces(a):
         print(f"wrote {out.relative_to(ROOT)}")
 
 
+DATASET_RAW = OUT / "dataset_runs.csv"
+CARMA3_SIM = ROOT / "tests" / "kalman_carma" / "carma3-sim"
+DATASET_FIELDS = ["family", "seed", "input", "disp_z_rms_m", "disp_z_pct_hs", "disp_x_rms_m", "disp_y_rms_m",
+                  "disp_x_pct_hs", "disp_y_pct_hs", "roll_rms_deg", "pitch_rms_deg", "yaw_rms_deg"]
+
+
+def dataset_invocation(variant, mode, seed):
+    tdir = CARMA3_SIM.parent
+    files = sorted(str(p) for p in tdir.glob("wave_data_*.csv"))
+    if not files:
+        sys.exit("no dataset in tests/kalman_carma: make ensure-sim-data")
+    env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
+    env.update(W3D_VALIDATION_WINDOW_SEC="900", W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1",
+               W3D_CARMA3_VARIANT=variant, W3D_CARMA3_EXCITATION=mode, W3D_SEED=str(seed))
+    p = subprocess.run([str(CARMA3_SIM)] + sum((["--input", f] for f in files), []), capture_output=True, text=True,
+                       env=env, cwd=str(tdir))
+    rows = []
+    for line in p.stdout.splitlines():
+        if line.startswith("VALIDATION_METRICS "):
+            rows.append(dict(kv.split("=", 1) for kv in line.split()[1:] if "=" in kv))
+    return p, rows
+
+
+def cmd_dataset(a):
+    require(CARMA3_SIM)
+    done = set()
+    if DATASET_RAW.exists() and DATASET_RAW.stat().st_size:
+        with DATASET_RAW.open() as f:
+            done = {(r["family"], r["seed"]) for r in csv.DictReader(f)}
+    work = [(v, m, s) for s in range(1, 11) for v in ("A41", "T41") for m in ("A", "C")
+            if (f"{v}@{m}", str(s)) not in done]
+    print(f"{len(work)} dataset invocations to do", flush=True)
+    new = not DATASET_RAW.exists() or DATASET_RAW.stat().st_size == 0
+    with DATASET_RAW.open("a") as out:
+        wr = csv.DictWriter(out, fieldnames=DATASET_FIELDS, extrasaction="ignore")
+        if new:
+            wr.writeheader()
+        with ThreadPoolExecutor(max_workers=a.jobs) as ex:
+            futs = {ex.submit(dataset_invocation, *w): w for w in work}
+            for fut in as_completed(futs):
+                v, m, s = futs[fut]
+                p, rows = fut.result()
+                if p.returncode not in (0, 1) or not rows:
+                    print(f"ERROR {v}@{m} seed {s}: rc={p.returncode} {p.stderr[-300:]}", flush=True)
+                    continue
+                for r in rows:
+                    r["family"] = f"{v}@{m}"
+                    r["seed"] = str(s)
+                    r["input"] = Path(r.get("input", "")).name
+                    wr.writerow(r)
+                out.flush()
+                print(f"  {v}@{m} seed {s}: {len(rows)} records", flush=True)
+
+
 def cmd_report(a):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import carma_excitation_report
@@ -368,11 +441,11 @@ def cmd_report(a):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["tune", "run", "traces", "report"])
+    ap.add_argument("cmd", choices=["tune", "run", "traces", "dataset", "report"])
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--exp", default="")
     a = ap.parse_args()
-    {"tune": cmd_tune, "run": cmd_run, "traces": cmd_traces, "report": cmd_report}[a.cmd](a)
+    {"tune": cmd_tune, "run": cmd_run, "traces": cmd_traces, "dataset": cmd_dataset, "report": cmd_report}[a.cmd](a)
 
 
 if __name__ == "__main__":

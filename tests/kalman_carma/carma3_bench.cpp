@@ -51,10 +51,11 @@
   Wave-excitation study (docs/carma-wave-excitation.md): base `calm` (no
   waves, the hull afloat: heading wander and any translation modifier);
   amplitude envelope of the sea on<t>w<w> (from zero), off<t>w<w> (to zero),
-  lev<t>w<w>x<level> (to a level), steps in time order; hscale<x> (heave RAO
+  lev<t>w<w>x<level> (to a level), steps in time order, start<level> (the
+  level before the first step, no transition); hscale<x> (heave RAO
   times x, horizontal unchanged); sensor path: scal (accelerometer and gyro
-  scale factors +-0.5 %, misalignment 0.1 deg), cnoise (first-order
-  Gauss-Markov accelerometer noise, 4 mg, 2 s, on every axis), nvar (white
+  scale factors +-0.5 %, misalignment 0.1 deg), cnoise[<mg>] (first-order
+  Gauss-Markov accelerometer noise, 4 mg unless given, 2 s, every axis), nvar (white
   accelerometer noise variance cycling between 1x and 2x over 600 s),
   engine<rpm> (inboard-diesel vibration of W3dSimCommon at that speed).
   Filter options: <name>@<mode>[/opt...] selects the CARMA excitation mode
@@ -62,7 +63,7 @@
   frequency hold, Cng evidence without the amplitude weight) and options of
   the noise model (nv<x> variance scale, rw0 no bias random walk, u<x>
   relative variance uncertainty, z<z0>_<z1>, zf<zf0>_<zf1>, k<k0>_<k1>,
-  nf<s> numerical floor).  --excitation appends excitation summary columns and, with
+  nf<s> numerical floor, sf<x> horizontal amplitude factor S_factor).  --excitation appends excitation summary columns and, with
   --timeseries, per-filter excitation columns.
 
   --extended appends consistency, attitude, bias, conditioning and
@@ -119,6 +120,7 @@ struct ScenarioX {
     double jitter_frac = 0.25;   // half-width of the relative interval jitter
     bool jitter_us = false;      // intervals rounded to whole microseconds
     bool scal = false, cnoise = false, nvar = false;
+    float cnoise_mg = 4.0f;      // colored-noise std, mg
     float engine_rpm = 0.0f;
 };
 
@@ -180,8 +182,12 @@ ScenarioX make_scenario(const std::string& full) {
             if (sc.env.steps.empty() && on) sc.env.level0 = 0.0;
             sc.env.steps.push_back({tc, std::max(w, 1e-3), level});
         }
+        else if (m.rfind("start", 0) == 0) sc.env.level0 = std::strtod(m.c_str() + 5, nullptr);
         else if (m == "scal") x.scal = true;
-        else if (m == "cnoise") x.cnoise = true;
+        else if (m.rfind("cnoise", 0) == 0) {
+            x.cnoise = true;
+            if (m.size() > 6) x.cnoise_mg = static_cast<float>(std::strtod(m.c_str() + 6, nullptr));
+        }
         else if (m == "nvar") x.nvar = true;
         else if (m.rfind("engine", 0) == 0) x.engine_rpm = static_cast<float>(std::strtod(m.c_str() + 6, nullptr));
         else throw std::invalid_argument("unknown scenario modifier " + m);
@@ -674,7 +680,7 @@ int main(int argc, char** argv) {
     std::mt19937 rng_cn(w3d_expand_seed(base, 42u));
     std::normal_distribution<float> n01(0.0f, 1.0f);
     Vector3f gm_state = Vector3f::Zero();
-    const float gm_tau = 2.0f, gm_sigma = 4e-3f * 9.80665f;
+    const float gm_tau = 2.0f, gm_sigma = 1e-3f * sx.cnoise_mg * 9.80665f;
     std::optional<EngineVibrationModel> engine;
     if (sx.engine_rpm > 0.0f) {
         EngineVibrationConfig ecfg;

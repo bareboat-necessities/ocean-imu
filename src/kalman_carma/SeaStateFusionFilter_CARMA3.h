@@ -32,7 +32,8 @@
   docs/carma-wave-excitation.md).  The formula above is the Legacy mode.  Its
   0.05 m/s^2 floor, and the legacy sigma channel under it, are not wave
   evidence: the channel subtracts the configured 0.12 m/s^2 pre-band floor
-  (35 times the measured still-water band variance of the bench sensor) and
+  (referred through the band, 35 times the band variance the simulated
+  1.5 mg sensor produces in still water) and
   attenuates the variance whenever the stillness detector's fixed
   0.28 m/s^2 RMS threshold reports still water, so in still water and on
   every small sea the CARMA driving noise is the floor itself.  The Evidence

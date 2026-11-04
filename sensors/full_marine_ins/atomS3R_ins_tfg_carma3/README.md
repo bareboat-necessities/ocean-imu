@@ -10,7 +10,7 @@ This sketch runs the **experimental** TFG-CARMA3 Kalman filter, **SeaStateFusion
 
 Open the sketch: [`atomS3R_ins_tfg_carma3.ino`](atomS3R_ins_tfg_carma3.ino).
 
-> **Research sketch, not the shipping estimator.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's still-IMU and mixed-sea weaknesses); attitude and bias are somewhat better where the CARMA prior misfits. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> **Research sketch, not the shipping estimator.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's mixed-sea weakness); attitude and bias are somewhat better where the CARMA prior misfits. Like the CARMA3 sketch it drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom of the benchmarked floor-driven configuration. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
 
 ## What it does
 
@@ -21,7 +21,7 @@ Open the sketch: [`atomS3R_ins_tfg_carma3.ino`](atomS3R_ins_tfg_carma3.ino).
 - performs a one-shot magnetic north lock inside the sea-state fusion filter;
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
 - keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled;
-- estimates 3-D marine motion with CARMA(4,1) priors whose frequency and amplitude follow the operating point measured by the shared OU-III tuner;
+- estimates 3-D marine motion with CARMA(4,1) priors whose frequency and amplitude follow the operating point measured by the shared OU-III tuner, driven only with wave energy the measurements support ([wave excitation](../../../docs/carma-wave-excitation.md); device noise model `CARMA_ACC_*` at the top of the sketch, to be replaced by the installed device's Allan-variance values);
 - optionally corrects an IMU mounted away from the centre of gravity (`IMU_LEVER_ARM_*_M` at the top of the sketch, zero by default);
 - provides on-device graphics and serial/NMEA output (the same sentences as the OU-III sketch);
 - enables the shared IMU calibration wizard by default.

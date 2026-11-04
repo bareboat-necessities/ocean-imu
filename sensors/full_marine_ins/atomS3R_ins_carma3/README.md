@@ -10,7 +10,7 @@ This sketch runs the **experimental** three-axis CARMA Kalman filter, **SeaState
 
 Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 
-> **Research sketch, not the shipping estimator.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. Compared with OU-III it shows larger phantom motion and a larger heave startup transient on a still IMU, and worse heave on mixed swell + wind seas. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> **Research sketch, not the shipping estimator.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. The sketch drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom motion and heave startup transient of the benchmarked floor-driven configuration; heave on mixed swell + wind seas remains worse than OU-III's. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
 
 ## What it does
 
@@ -22,6 +22,7 @@ Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 - uses filter yaw as the primary heading after north lock while retaining tilt-compensated magnetic heading for diagnostics;
 - keeps north on the startup/refined magnetic reference: continuous hard-iron learning is disabled;
 - estimates 3-D marine motion with CARMA(4,1) priors whose frequency and amplitude follow the operating point measured by the shared OU-III tuner;
+- drives those priors only with wave energy the measurements support: the band acceleration variance in excess of the accelerometer's noise model, weighted by the evidence that waves are present, with the CARMA frequency held while the measured wave period is not confirmed by the acceleration band ([wave excitation](../../../docs/carma-wave-excitation.md)). The noise model (`CARMA_ACC_*` at the top of the sketch) is the simulated BMI270-class sensor; replace it with the installed device's stationary Allan-variance values;
 - optionally corrects an IMU mounted away from the centre of gravity (`IMU_LEVER_ARM_*_M` at the top of the sketch, zero by default);
 - provides on-device graphics and serial/NMEA output (the same sentences as the OU-III sketch);
 - enables the shared IMU calibration wizard by default.
@@ -29,7 +30,8 @@ Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 Differences from the OU-III sketch:
 
 - the IMU lever-arm correction is removed at the fusion wrapper's input, so the startup tilt, the magnetic reference, the tuner and the wave direction all see centre-of-gravity motion; OU-III removes it in its MEKF's accelerometer update only. The [off-CoG study](../../../docs/carma-imu-lever-arm.md) compares the two;
-- no `S = 0` pseudo-measurement, so there is no pseudo-update cadence setting.
+- no `S = 0` pseudo-measurement, so there is no pseudo-update cadence setting;
+- the wave-excitation evidence above has no OU-III counterpart; `CarmaExcitationMode::Legacy` restores the benchmarked 0.05 m/s^2 floor of [`docs/carma-three-axis.md`](../../../docs/carma-three-axis.md).
 
 ## Install and upload
 
@@ -47,7 +49,7 @@ The compile-time controls at the top of the sketch include calibration-wizard en
 
 ## More about CARMA3
 
-[`docs/carma-three-axis.md`](../../../docs/carma-three-axis.md) describes the model, the operating-point mapping, the benchmark against OU-III and the remaining obstacles before deployment. The paper is [`doc/kalman_carma/kalman_carma.tex`](../../../doc/kalman_carma/kalman_carma.tex). The implementation lives under [`../../../src/kalman_carma/`](../../../src/kalman_carma/).
+[`docs/carma-three-axis.md`](../../../docs/carma-three-axis.md) describes the model, the operating-point mapping, the benchmark against OU-III and the remaining obstacles before deployment; [`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md) the wave-excitation evidence this sketch enables, its derivation, its validation and its limits. The paper is [`doc/kalman_carma/kalman_carma.tex`](../../../doc/kalman_carma/kalman_carma.tex). The implementation lives under [`../../../src/kalman_carma/`](../../../src/kalman_carma/).
 
 ## Compare
 

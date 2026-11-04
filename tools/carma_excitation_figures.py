@@ -57,7 +57,9 @@ def fig_calm(r, plt, svgd, out):
         axs[0].set_title("Still IMU, seed 1", loc="left", fontsize=10, color=INK)
         axs[0].set_xlim(0, t["t"][-1])
         axs[0].set_ylim(-250, 250)
-        axs[0].legend(fontsize=7, ncol=3, frameon=False, loc="upper right")
+        axs[0].legend(fontsize=7, ncol=3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.18))
+        axs[0].text(0.01, 0.97, "legacy CARMA3 and TFG traces coincide; C at zero", transform=axs[0].transAxes,
+                    fontsize=7, color=INK2, va="top")
     style(axs[0])
     d = r.g.get(("E1", "stationary+T2400"))
     if d:
@@ -69,15 +71,17 @@ def fig_calm(r, plt, svgd, out):
             for off, v, a in ((-0.18, vz[f], 1.0), (0.18, vh[f], 0.45)):
                 m = 1e3 * np.mean(v)
                 lo, hi = (1e3 * np.array(bootstrap_ci(v)))
-                axs[1].barh(i + off, max(m, 1e-3), height=0.32, color=C.get(f, INK2), alpha=a, edgecolor="none")
-                axs[1].errorbar(max(m, 1e-3), i + off, xerr=[[max(m - lo, 0)], [max(hi - m, 0)]], color=INK, lw=0.8,
+                axs[1].barh(i + off, max(m, 1e-4), height=0.32, color=C.get(f, INK2), alpha=a, edgecolor="none")
+                axs[1].errorbar(max(m, 1e-4), i + off, xerr=[[max(m - lo, 0)], [max(hi - m, 0)]], color=INK, lw=0.8,
                                 capsize=2)
-                axs[1].text(max(hi, m, 1e-3) * 1.3, i + off, f"{m:.2f}" if m < 10 else f"{m:.0f}", va="center",
-                            fontsize=7, color=INK2)
+                txt = f"{m:.0f}" if m >= 10 else (f"{m:.2f}" if m >= 0.1 else f"{m:.1g}")
+                axs[1].text(max(hi, m, 1e-4) * 1.3, i + off, txt, va="center", fontsize=7, color=INK2)
+        short = {"OU3": "OU-III", "A41@A": "A legacy", "T41@A": "A legacy, TFG", "A41@B0": "B0 floor off",
+                 "A41@B": "B debiased", "A41@C": "C evidence", "T41@C": "C evidence, TFG"}
         axs[1].set_yticks(y)
-        axs[1].set_yticklabels([LABEL.get(f, f) for f in fl], fontsize=8)
+        axs[1].set_yticklabels([short.get(f, f) for f in fl], fontsize=8)
         axs[1].set_xscale("log")
-        axs[1].set_xlim(1e-3, 2e3)
+        axs[1].set_xlim(1e-4, 2e3)
         axs[1].set_xlabel("RMS (mm), log; dark heave, light horizontal")
         axs[1].set_title(f"2400 s, t >= 300 s, {len(seeds)} seeds, 95 % CI", loc="left", fontsize=10, color=INK)
     style(axs[1])
@@ -93,22 +97,22 @@ def fig_psd(r, plt, svgd, out):
     with path.open() as f:
         rd = csv.reader(f)
         hdr = next(rd)
-        freqs = np.array([float(x) for x in hdr[6:]])
+        freqs = np.array([float(x) for x in hdr[5:]])
         acc = defaultdict(list)
         for row in rd:
             if row[1] != "stationary+T2400":
                 continue
-            acc[(row[3], row[4])].append(np.array([float(x) for x in row[6:]]))
+            acc[(row[3], row[4])].append(np.array([float(x) for x in row[5:]]))
     fig, axs = plt.subplots(1, 2, figsize=(11, 3.8), sharey=True)
     for ax, axis, name in ((axs[0], "z", "heave"), (axs[1], "x", "surge")):
         for f in ["A41@A", "T41@A", "OU3", "A41@B", "A41@C", "T41@C"]:
             v = acc.get((f, axis))
             if not v:
                 continue
-            p = np.mean(v, axis=0)
-            m = freqs > 0
+            p = np.nanmean(v, axis=0)
+            m = np.isfinite(p)
             line(ax, freqs[m], np.maximum(p[m], 1e-14), f, lw=1.3)
-        ax.axvspan(freqs[1], 0.05, color="#eeeeea", zorder=0)
+        ax.axvspan(1e-3, 0.05, color="#eeeeea", zorder=0)
         ax.text(0.0012, 2e-13, "below 0.05 Hz", fontsize=8, color=INK2)
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -174,8 +178,8 @@ def envelope(t, sc):
     e = np.ones_like(t)
     lvl = 1.0
     steps = S.envelope_steps(sc)
-    if steps and steps[0][2] == 0.0:
-        lvl = 0.0
+    if steps:
+        lvl = steps[0][2]
     e[:] = lvl
     for (tc, w, lf, lt) in steps:
         x = np.clip((t - (tc - 0.5 * w)) / w, 0, 1)
@@ -290,8 +294,9 @@ def fig_hs(r, plt, svgd, out):
         ax.set_xticklabels(["0", "0.005", "0.01", "0.02", "0.05", "0.1", "0.2", "0.8"])
         ax.set_xlabel("H_s (m), JONSWAP f_p 0.29 Hz; 0 = still IMU")
         ax.set_ylabel(f"{name} RMS error (mm)")
-        ax.set_ylim(1e-2, 2e2)
+        ax.set_ylim(5e-5, 3e2)
         ax.set_title(name, loc="left", fontsize=10, color=INK)
+        ax.text(0.02, 0.03, "CARMA3 and TFG coincide in each mode", transform=ax.transAxes, fontsize=7, color=INK2)
         style(ax)
     axs[1].legend(fontsize=7, frameon=False, loc="lower right")
     fig.suptitle("RMS displacement error against significant wave height (mean, 95 % CI over seeds)", x=0.01,
@@ -368,11 +373,12 @@ def fig_swell(r, plt, svgd, out):
             axs[0].plot(Ts, err, label=f"{LABEL[f]}, H_s {hs:g} m", **kw)
             axs[1].plot(Ts, amp, **kw)
     axs[0].axhline(100, color=INK, lw=0.8, ls="-.")
-    axs[0].text(8.2, 110, "zero output", fontsize=8, color=INK2)
+    axs[0].text(20.5, 108, "zero output", fontsize=8, color=INK2)
     axs[0].set_yscale("log")
     axs[0].set_xlabel("peak period (s)")
     axs[0].set_ylabel("heave RMS error (% of true heave RMS)")
-    axs[0].legend(fontsize=6, frameon=False, ncol=1, loc="upper left")
+    h, l = axs[0].get_legend_handles_labels()
+    fig.legend(h, l, fontsize=7, frameon=False, ncol=3, loc="upper center", bbox_to_anchor=(0.5, 0.0))
     axs[1].axhline(1.0, color=INK, lw=0.8, ls="-.")
     axs[1].set_xlabel("peak period (s)")
     axs[1].set_ylabel("estimated / true heave RMS")
@@ -403,11 +409,18 @@ def fig_noise(r, plt, svgd, out):
             m = 1e3 * np.mean(vz[f])
             lo, hi = 1e3 * np.array(bootstrap_ci(vz[f]))
             h = next((v for k, v in hatch.items() if f.endswith(k)), None)
-            ax.bar(i, max(m, 1e-3), color=col[f], hatch=h, edgecolor="#fcfcfb", lw=0.5, width=0.8)
-            ax.errorbar(i, max(m, 1e-3), yerr=[[max(m - lo, 0)], [max(hi - m, 0)]], color=INK, lw=0.8, capsize=2)
+            still = sc == "stationary"
+            fl0 = 1e-6 if still else 0.0
+            ax.bar(i, max(m, fl0), color=col[f], hatch=h, edgecolor="#fcfcfb", lw=0.5, width=0.8)
+            ax.errorbar(i, max(m, fl0), yerr=[[max(m - lo, 0)], [max(hi - m, 0)]], color=INK, lw=0.8, capsize=2)
+            ax.text(i, max(hi, m, fl0) * (1.6 if still else 1.02), f"{m:.2g}", ha="center", fontsize=6, color=INK2)
         ax.set_xticks(range(len(f2)))
-        ax.set_xticklabels([f.replace("A41@", "").replace("A41@A", "A") for f in f2], fontsize=7, rotation=45)
-        ax.set_yscale("log")
+        ax.set_xticklabels([f.replace("A41@", "") for f in f2], fontsize=7, rotation=45)
+        if sc == "stationary":
+            ax.set_yscale("log")
+            ax.set_ylim(1e-6, 3e2)
+        else:
+            ax.set_ylim(0, None)
         ax.set_title(nm, loc="left", fontsize=10, color=INK)
         style(ax)
     axs[0].set_ylabel("heave RMS error (mm)")
@@ -430,7 +443,7 @@ def fig_tfg(r, plt, svgd, out):
             if xs:
                 ax.scatter(1e3 * np.array(xs), 1e3 * np.array(ys), s=7, color=col, alpha=0.5, edgecolors="none",
                            label=f"{LABEL[cand]} vs {LABEL[base]} ({len(xs)} runs)")
-        lim = [1e-3, 1e3]
+        lim = [1e-6, 3e3]
         ax.plot(lim, lim, color=INK2, lw=0.8, ls=":")
         ax.set_xscale("log")
         ax.set_yscale("log")
