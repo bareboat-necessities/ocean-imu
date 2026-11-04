@@ -38,6 +38,8 @@
   Scenario: <base>[+modifier...], base from CarmaBenchTruth.h
   base_scenario.  Modifiers: T<s> duration, rel<deg> wave propagation
   direction relative to the bow (0 following, 90 beam, 180 head; default 30),
+  rot<deg> the hull heading and every wave component turned together by deg
+  (the same sea seen from another heading; magnetic field unchanged),
   U<m/s> steady forward speed (encounter-frequency Doppler), anchor, drift,
   maneuver (low-frequency translation), maggap (no magnetometer for 300 s from
   T/3; maggap<N> for N s), gbdrift (extra gyroscope-bias ramp and oscillation),
@@ -141,11 +143,12 @@ ScenarioX make_scenario(const std::string& full) {
     const auto tok = split(full, '+');
     if (tok.empty() || !base_scenario(tok[0], sc)) throw std::invalid_argument("unknown scenario " + full);
     sc.hmodel.physical = true;
-    double rel_deg = NAN;
+    double rel_deg = NAN, rot_deg = NAN;
     for (size_t i = 1; i < tok.size(); ++i) {
         const std::string& m = tok[i];
         if (m[0] == 'T' && std::isdigit(static_cast<unsigned char>(m[1]))) sc.duration_s = std::strtod(m.c_str() + 1, nullptr);
         else if (m.rfind("rel", 0) == 0) rel_deg = std::strtod(m.c_str() + 3, nullptr);
+        else if (m.rfind("rot", 0) == 0) rot_deg = std::strtod(m.c_str() + 3, nullptr);
         else if (m[0] == 'U' && (std::isdigit(static_cast<unsigned char>(m[1])) || m[1] == '-')) sc.speed_mps = std::strtod(m.c_str() + 1, nullptr);
         else if (m == "anchor") sc.lf.kind = Translation::Kind::Anchor;
         else if (m == "drift") sc.lf.kind = Translation::Kind::Drift;
@@ -197,6 +200,10 @@ ScenarioX make_scenario(const std::string& full) {
     // An anchored hull lies head to the waves unless told otherwise.
     if (sc.lf.kind == Translation::Kind::Anchor && !std::isfinite(rel_deg)) rel_deg = 180.0;
     if (std::isfinite(rel_deg) && !sc.parts.empty()) sc.att.heading_deg = sc.parts[0].mean_dir_deg - rel_deg;
+    if (std::isfinite(rot_deg)) {
+        sc.att.heading_deg += rot_deg;
+        for (auto& part : sc.parts) part.mean_dir_deg += rot_deg;
+    }
     return x;
 }
 
