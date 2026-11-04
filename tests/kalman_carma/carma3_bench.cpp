@@ -63,8 +63,10 @@
   frequency hold, Cng evidence without the amplitude weight) and options of
   the noise model (nv<x> variance scale, rw0 no bias random walk, u<x>
   relative variance uncertainty, z<z0>_<z1>, zf<zf0>_<zf1>, k<k0>_<k1>,
-  nf<s> numerical floor, sf<x> horizontal amplitude factor S_factor).  --excitation appends excitation summary columns and, with
-  --timeseries, per-filter excitation columns.
+  nf<s> numerical floor, sf<x> horizontal amplitude factor S_factor on both
+  keel axes, sxy<x>_<y> surge and sway factors).  --excitation appends
+  excitation summary columns and, with --timeseries, per-filter excitation
+  columns.
 
   --extended appends consistency, attitude, bias, conditioning and
   magnetometer-service columns (and, with --timeseries, per-filter error and

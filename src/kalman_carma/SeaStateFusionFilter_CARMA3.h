@@ -20,10 +20,19 @@
                (the measured band acceleration RMS)
     kappa_h  = f_tune / f_z,h-model       (the same measured wave frequency
                                            that scales the vertical shape)
-    sigma_h  = S_factor * c_carma * max(sigma_floor, sigma_aw / c_sigma)
-               (the vertical band acceleration RMS: OU-III's isotropic
-               horizontal prior sigma_aw,H = S_factor sigma_aw,Z, S_factor = 1)
-    r        = 0 (independent axes) unless setHorizontalCorrelation().
+    sigma_s  = S_x,y * c_carma * max(sigma_floor, sigma_aw / c_sigma)
+               (the vertical band acceleration RMS times a keel-frame factor:
+               x along the keel (surge), y across it (sway); S_x = S_y = 1 is
+               OU-III's isotropic horizontal prior sigma_aw,H = sigma_aw,Z)
+    r        = 0 (independent surge and sway) unless setHorizontalCorrelation().
+
+  The CARMA horizontal states are world-frame (NED).  With S_x = S_y and r = 0
+  the horizontal prior is isotropic and yaw-invariant.  Otherwise the
+  keel-frame covariance sigma_z^2 [S_x^2, r S_x S_y; r S_x S_y, S_y^2] is
+  rotated into NED by the inner filter's own heading every time the tune is
+  committed, so the prior turns with the hull and the filter stays
+  yaw-equivariant (docs/tfg-carma3-research.md section 2.10): a prior fixed in
+  world coordinates would carry heading information.
 
   No horizontal acceleration statistic is measured: the mapping is fixed and
   uses only quantities the shipping tuner already produces.
@@ -249,7 +258,16 @@ public:
     // Corner of the low-pass ahead of the rate derivative (default 15 Hz).
     void setImuLeverArmCutoffHz(float hz) { lever_.set_derivative_cutoff_hz(hz); }
     float imuLeverArmCutoffHz() const noexcept { return lever_.derivative_cutoff_hz(); }
-    void setSFactor(float s) { if (std::isfinite(s) && s > 0.0f) S_factor_ = s; }
+    // Horizontal amplitude factors in the keel frame (x along the keel, y
+    // across it), relative to the vertical; setSFactor sets both.
+    void setSFactor(float s) { setSFactorXY(s, s); }
+    void setSFactorXY(float sx, float sy) {
+        if (!(std::isfinite(sx) && sx > 0.0f && std::isfinite(sy) && sy > 0.0f)) return;
+        Sx_factor_ = sx;
+        Sy_factor_ = sy;
+    }
+    float getSxFactor() const noexcept { return Sx_factor_; }
+    float getSyFactor() const noexcept { return Sy_factor_; }
     void setRSXFactor(float k) { if (std::isfinite(k)) R_S_x_factor_ = std::min(std::max(k, 0.0f), 4.0f); }
     void setRSYFactor(float k) { if (std::isfinite(k)) R_S_y_factor_ = std::min(std::max(k, 0.0f), 4.0f); }
     void setTauCoeff(float c) { if (std::isfinite(c) && c > 0.0f) tau_coeff_ = c; }
@@ -293,8 +311,8 @@ public:
     void setMagDelaySec(float d) { if (std::isfinite(d) && d >= 0.0f) mag_delay_sec_ = d; }
     void setMagUpdatesToUnlockAccBias(int n) { if (n >= 0) mag_updates_to_unlock_ = n; }
     void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
-    // Correlation coefficient of the horizontal CARMA driving noise (coupled
-    // prior); 0 = independent axes.
+    // Correlation coefficient of the surge and sway CARMA driving noise in the
+    // keel frame (coupled prior); 0 = independent axes.
     void setHorizontalCorrelation(float r) { if (std::isfinite(r) && std::abs(r) < 1.0f) h_corr_ = r; }
     bool setHorizontalShape(const kalman::carma::CarmaShape& shape) {
         if (!mekf_ || !mekf_->set_horizontal_shape(shape)) return false;
@@ -425,8 +443,26 @@ private:
         const double fz_v = mekf_->vertical_model().base_zero_crossing_hz();
         mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), accel_std);
         const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();
-        const float sh = accel_std * S_factor_;
-        mekf_->set_horizontal_carma(static_cast<float>(f_tune / fz_h), sh, sh, h_corr_);
+        const float kappa_h = static_cast<float>(f_tune / fz_h);
+        const float sx = accel_std * Sx_factor_, sy = accel_std * Sy_factor_;
+        if (sx == sy && h_corr_ == 0.0f) {
+            // Isotropic: yaw-invariant, no heading enters.
+            mekf_->set_horizontal_carma(kappa_h, sx, sx, 0.0f);
+            return;
+        }
+        // Keel-frame covariance rotated into NED by the filter's heading:
+        // the keel's horizontal direction is the first column of R(body->NED).
+        const Eigen::Matrix3f R = mekf_->quaternion_boat().toRotationMatrix();
+        float c = R(0, 0), s = R(1, 0);
+        const float n = std::sqrt(c * c + s * s);
+        if (n > 1e-6f && std::isfinite(n)) { c /= n; s /= n; } else { c = 1.0f; s = 0.0f; }
+        const float a = sx * sx, b = sy * sy, m = h_corr_ * sx * sy;
+        const float wxx = c * c * a - 2.0f * c * s * m + s * s * b;
+        const float wyy = s * s * a + 2.0f * c * s * m + c * c * b;
+        const float wxy = c * s * (a - b) + (c * c - s * s) * m;
+        const float ox = std::sqrt(std::max(wxx, 0.0f)), oy = std::sqrt(std::max(wyy, 0.0f));
+        const float r = (ox > 0.0f && oy > 0.0f) ? std::min(std::max(wxy / (ox * oy), -1.0f), 1.0f) : 0.0f;
+        mekf_->set_horizontal_carma(kappa_h, ox, oy, r);
     }
 
     float rs_spectral_mse_target_(float tau, float sigma) const noexcept {
@@ -560,7 +596,8 @@ private:
     float max_R_S_ = tuning::MAX_R_S;
     float R_S_x_factor_ = 0.72f;
     float R_S_y_factor_ = 0.50f;
-    float S_factor_ = 1.0f;
+    float Sx_factor_ = 1.0f;
+    float Sy_factor_ = 1.0f;
     float h_corr_ = 0.0f;
 
     tuning::TuneState tune_;

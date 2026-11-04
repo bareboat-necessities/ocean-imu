@@ -426,9 +426,72 @@ void test_still(Adapter& legacy, Adapter& evidence, const char* label) {
     check(buf, ec < 0.1 * ea);
 }
 
+// Keel-frame horizontal factors: the inner filter's world-frame covariance is
+// the keel-frame one rotated by the filter's own heading (yaw-equivariant),
+// and the default stays exactly isotropic.
+template <class Adapter>
+double keel_frame_case(Adapter& f, const char* label, double heading_deg, const char* opts) {
+    carma_bench::Scenario sc;
+    carma_bench::base_scenario("jonswap_fp0.29_hs0.5_g3.3", sc);
+    sc.duration_s = 300.0;
+    sc.att.heading_deg = heading_deg;
+    f.set_options(opts);
+    (void)run_wrapper(f, sc, 4u, 300);
+    const auto& m = f.fusion().raw().mekf();
+    const Eigen::Matrix2f S = m.horizontal_sigma();
+    const Eigen::Matrix3f R = m.quaternion_boat().toRotationMatrix();
+    const double psi = std::atan2(static_cast<double>(R(1, 0)), static_cast<double>(R(0, 0)));
+    const double major = 0.5 * std::atan2(2.0 * S(0, 1), static_cast<double>(S(0, 0) - S(1, 1)));
+    double dpsi = std::remainder(major - psi, 3.14159265358979323846);
+    const double tr = S(0, 0) + S(1, 1), det = S(0, 0) * S(1, 1) - S(0, 1) * S(0, 1);
+    const double disc = std::sqrt(std::max(0.0, tr * tr / 4.0 - det));
+    const double ratio = (tr / 2.0 - disc) / (tr / 2.0 + disc);
+    char buf[220];
+    if (std::string(opts).find("sxy") == std::string::npos) {
+        std::snprintf(buf, sizeof buf, "%s heading %.0f deg: default factors give an exactly isotropic prior", label, heading_deg);
+        check(buf, S(0, 1) == 0.0f && S(0, 0) == S(1, 1));
+        return psi;
+    }
+    std::printf("[keel] %s heading %.0f: filter heading %.2f deg, major axis - filter heading %.4f deg, "
+                "eigenvalue ratio %.5f\n", label, heading_deg, psi * 180.0 / 3.14159265358979323846,
+                dpsi * 180.0 / 3.14159265358979323846, ratio);
+    std::snprintf(buf, sizeof buf, "%s heading %.0f deg: surge axis of the prior on the filter heading, sway/surge variance 0.25",
+                  label, heading_deg);
+    check(buf, std::abs(dpsi) < 2e-3 && std::abs(ratio - 0.25) < 1e-3);
+    return psi;
+}
+
+void test_keel_frame_factors() {
+    // The filters' world frame is magnetic NED, so their absolute heading
+    // carries the simulated declination; turning the hull by 90 degrees must
+    // turn the prior with it.
+    double psi_q[2], psi_t[2];
+    for (int i = 0; i < 2; ++i) {
+        const double hdg = i ? 90.0 : 0.0;
+        {
+            carma3_bench::FullCARMA3<4, false, 4, false> f("A41@C");
+            psi_q[i] = keel_frame_case(f, "CARMA3 (4,1)", hdg, "C/sxy1_0.5");
+        }
+        {
+            using M4 = typename carma3_bench::FullTFGCARMA3<4>::M;
+            carma3_bench::FullTFGCARMA3<4> f("T41@C", M4::ResetMode::Full, M4::CovarianceWriteMode::Physical);
+            psi_t[i] = keel_frame_case(f, "TFG-CARMA3 (4,1)", hdg, "C/sxy1_0.5");
+        }
+    }
+    const double d2r = 3.14159265358979323846 / 180.0;
+    const double tq = std::remainder(psi_q[1] - psi_q[0] - 90.0 * d2r, 2.0 * 3.14159265358979323846) / d2r;
+    const double tt = std::remainder(psi_t[1] - psi_t[0] - 90.0 * d2r, 2.0 * 3.14159265358979323846) / d2r;
+    std::printf("[keel] hull turned 90 deg: prior turned 90 %+.2f deg (CARMA3), 90 %+.2f deg (TFG)\n", tq, tt);
+    check("turning the hull by 90 deg turns the keel-frame prior by 90 deg (within 3 deg), both inner filters",
+          std::abs(tq) < 3.0 && std::abs(tt) < 3.0);
+    carma3_bench::FullCARMA3<4, false, 4, false> f("A41@C");
+    keel_frame_case(f, "CARMA3 (4,1)", 90.0, "C");
+}
+
 }  // namespace
 
 int main() {
+    test_keel_frame_factors();
     test_noise_model();
     test_q_scaling<3>("CARMA(3,0)");
     test_q_scaling<4>("CARMA(4,1)");
