@@ -742,6 +742,23 @@ every sea, the mixed sea included, and so is the true displacement ratio
 * heave is unchanged;
 * the mixed sea is 16.7 % worse, on every seed.
 
+An implementation that applies the measured ratio continuously, weighted by
+`p`, was then screened on every scenario of the validation grid (5 seeds).
+Heave is unchanged everywhere (within 0.4 %), and horizontal error improves
+on 62 of 90 scenarios (median 11 %).  But attitude and accelerometer bias
+pay for it.  Tilt and bias error get worse on 57 of 106 scenarios:
+
+* steady seas: median 3.5 %, and 26-36 % on 0.45 Hz seas;
+* abrupt onsets: up to 91 %;
+* engine vibration: yaw two to three times worse.
+
+The horizontal error itself also regresses on the bimodal sea (8 %) and
+under colored noise (9 %).  The pattern is consistent with the mechanism of
+section 6.6.  A horizontal prior sized to the true horizontal motion leaves
+the filter less room to explain horizontal specific force, so the rest goes
+to tilt and bias.  `S_factor = 1` over-drives the horizontal prior and
+protects attitude.
+
 On the mixed sea the swell and the wind sea arrive from different
 directions.  The swell-dominated displacement is 0.70 of the vertical along
 x; the wind-sea-dominated acceleration is 0.45 along x and 0.70 along y.  A
