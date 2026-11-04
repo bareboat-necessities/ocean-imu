@@ -342,9 +342,9 @@ def e9(r):
 def e10(r):
     r.w("## Experiment 10: horizontal amplitude mapping (S_factor)")
     r.w()
-    r.w("The horizontal CARMA prior is S_factor times the vertical amplitude; 1 everywhere else in this study.  0.4 "
-        "is the benchmark hull's measured horizontal/vertical wave-acceleration ratio (truth statistics, 0.31-0.54).  "
-        "Heave / horizontal RMS (mm), 10 seeds.")
+    r.w("The horizontal CARMA prior is S_factor times the vertical amplitude; 1 everywhere else in this study, 0.4 "
+        "here as a smaller fixed factor (the hull's per-axis horizontal/vertical ratio is 0.55-0.59, "
+        "docs/carma-wave-excitation.md section 6.9).  Heave / horizontal RMS (mm), 10 seeds.")
     r.w()
     fl = ["A41@A", "A41@A/sf0.4", "A41@C", "A41@C/sf0.4", "T41@C", "T41@C/sf0.4"]
     rows = []

@@ -504,8 +504,9 @@ row.
   axes (the stillness attenuation discards the measured RMS), the debiased
   modes restore the measured vertical RMS, and the horizontal prior is
   `S_factor = 1` times the vertical.  The benchmark hull's horizontal
-  acceleration is 0.31-0.54 times its vertical (truth statistics), so the
-  restored horizontal prior is about 2.5 times too large, where the legacy
+  wave acceleration and displacement are 0.55-0.59 times the vertical per
+  axis (RMS over both horizontal axes; truth, section 6.9).  The restored
+  horizontal prior is therefore about 1.8 times too large, while the legacy
   floor happened to sit near the true horizontal level.  Experiment 10
   measures this mapping directly.
 
@@ -712,8 +713,8 @@ a +-1 % jitter on a 1 us clock every mode behaves as on the uniform clock.
 ### 6.9 Experiment 10: the horizontal amplitude mapping
 
 The horizontal regression of section 6.2 is the fixed mapping
-`sigma_h = S_factor sigma_z`, `S_factor = 1`.  With the benchmark hull's
-measured ratio, 0.4 (10 seeds):
+`sigma_h = S_factor sigma_z`, `S_factor = 1`.  With a smaller fixed factor,
+0.4 (10 seeds):
 
 | sea | horizontal RMS (mm): A | C | C, S_factor 0.4 | C, S 0.4 vs A |
 |---|---|---|---|---|
@@ -725,11 +726,34 @@ measured ratio, 0.4 (10 seeds):
 | PM 0.25 Hz, 0.1 m | 5.80 | 6.94 | 5.87 | -1.2 % [-1.8, -0.5] |
 | mixed swell + wind | 194 | 193 | 250 | -28.6 % [-29.2, -27.9] |
 
-A hull-matched factor turns every short-period regression into a tie or a
-gain, and costs 29 % on the mixed sea, whose 11 s swell moves the hull
-horizontally about as much as vertically.  No constant fits both; a measured
-horizontal amplitude is the real fix, and it is not in this change (the
-primary experiment keeps every mapping parameter).
+The factor 0.4 turns every short-period regression into a tie or a gain,
+and costs 29 % on the mixed sea.
+
+**A measured ratio does not resolve this.**  A follow-up diagnostic tested
+it (5 seeds).  Applied to the front end's levelled horizontal acceleration,
+the noise-debiased band statistic of section 2.1 recovers the true
+horizontal band variance within 0.1-4 % on every sea, so tilt leakage in the
+band is negligible.  But the ratio it measures is 0.55-0.59 per axis on
+every sea, the mixed sea included, and so is the true displacement ratio
+(0.55-0.57).  With that value (`S_factor` 0.57):
+
+* C's horizontal error falls 15-23 % on the single-peak seas, a tie or a gain
+  against the legacy filter on every one of them;
+* heave is unchanged;
+* the mixed sea is 16.7 % worse, on every seed.
+
+On the mixed sea the swell and the wind sea arrive from different
+directions.  The swell-dominated displacement is 0.70 of the vertical along
+x; the wind-sea-dominated acceleration is 0.45 along x and 0.70 along y.  A
+single isotropic factor driven by acceleration-band statistics cannot
+represent both; `S_factor = 1` helps there by over-driving both axes.
+Neither the frequency confidence nor the band-frequency ratio tells the
+mixed sea apart from the single-peak seas (`c_f = 1`; ratio 1.37 against
+0.92-1.38).  So no measured-ratio variant tested here is free of
+regressions; the fix needs a horizontal prior that can carry two
+directional wave systems.  The primary experiment keeps every mapping
+parameter.  The measured-ratio harness is not part of this change;
+`A41@C/sf0.57` reproduces the bench rows.
 
 ### 6.10 Independent hull: the pinned vessel-RAO records
 

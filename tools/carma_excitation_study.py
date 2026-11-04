@@ -91,8 +91,8 @@ def experiments():
     for sc in ["stationary+jit", "stationary+jit1", f"{J.format(h='0.05')}+jit", f"{J.format(h='0.8')}+jit",
                f"{J.format(h='0.8')}+jit1"]:
         g.append(("E9", sc, 10, CORE, None, False))
-    # Horizontal amplitude mapping: S_factor 1 (every other row) against the
-    # benchmark hull's measured horizontal/vertical acceleration ratio, 0.4.
+    # Horizontal amplitude mapping: S_factor 1 (every other row) against a
+    # smaller fixed factor, 0.4.
     for sc in ["stationary", J.format(h="0.05"), J.format(h="0.1"), J.format(h="0.2"), J.format(h="0.8"),
                "pm_fp0.25_hs0.1", "jonswap_fp0.45_hs0.1_g3.3", "mixed_swell_wind"]:
         g.append(("E10", sc, 10, ["A41@A", "A41@A/sf0.4", "A41@C", "A41@C/sf0.4", "T41@C", "T41@C/sf0.4"], None,
