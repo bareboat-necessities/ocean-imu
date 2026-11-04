@@ -759,6 +759,21 @@ the filter less room to explain horizontal specific force, so the rest goes
 to tilt and bias.  `S_factor = 1` over-drives the horizontal prior and
 protects attitude.
 
+A fixed `S_factor` between 0.6 and 1 shows the same trade-off in smaller
+steps (25 scenarios, 5 seeds; change against 1.0):
+
+| `S_factor` | steady seas: horizontal / tilt and bias | repeated onsets and stops: tilt | engine at 1500 rpm: yaw | weak-heave hull: horizontal / tilt | mixed sea: horizontal |
+|---|---|---|---|---|---|
+| 0.9 | +4.7 % / -0.2 % | -7 % | -13 % | -2.5 % / -2.1 % | -2.7 % |
+| 0.8 | +8.9 % / -0.5 % | -17 % | -29 % | -5.7 % / -5.8 % | -6.0 % |
+| 0.7 | +12.3 % / -1.1 % | -30 % | -50 % | -9.7 % / -12.3 % | -10.1 % |
+| 0.6 | +14.7 % / -2.0 % | -49 % | -75 % | -14.9 % / -24.7 % | -15.0 % |
+
+On steady seas the attitude cost is small: tilt 0.306 to 0.308 degrees at
+0.8.  But every value below 1 costs attitude under repeated transitions and
+engine vibration, and costs everything on a hull that heaves little, so
+`S_factor` stays at 1.
+
 On the mixed sea the swell and the wind sea arrive from different
 directions.  The swell-dominated displacement is 0.70 of the vertical along
 x; the wind-sea-dominated acceleration is 0.45 along x and 0.70 along y.  A
