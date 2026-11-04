@@ -96,6 +96,17 @@ struct Crossfade {
     double t_c = 600.0, width = 10.0;
 };
 
+// Amplitude envelope of sea A: piecewise constant levels joined by C2
+// smootherstep transitions (onset, disappearance, growth, decay).  level0 is
+// the level before the first transition; each step moves to `level` over
+// `width` seconds centred on t_c.  Off (unit gain) without steps.
+struct Envelope {
+    struct Step { double t_c, width, level; };
+    double level0 = 1.0;
+    std::vector<Step> steps;
+    bool enabled() const { return !steps.empty(); }
+};
+
 struct AttitudeModel {
     double roll_gain = 0.8;          // roll per unit beam slope at low frequency
     double pitch_gain = 1.0;
@@ -151,6 +162,8 @@ struct Scenario {
     std::vector<SpectrumPart> parts_b;    // sea B for a crossfade
     FrequencyWarp warp;
     Crossfade fade;
+    Envelope env;
+    double heave_scale = 1.0;             // extra factor on the heave RAO (weak-heave hull)
     bool heave_rao = true;
     double heave_fn_hz = 0.55, heave_zeta = 0.35, heave_avg_m = 0.5;
     double horizontal_gain = 0.8;
@@ -226,6 +239,10 @@ inline bool base_scenario(const std::string& name, Scenario& sc) {
         sc.parts = {jonswap_part(0.05, 0.40, 3.3)};
     } else if (name == "stationary") {
         sc.stationary = true;
+    } else if (name == "calm") {
+        // No waves, but the vessel is afloat: heading wander, and any
+        // translation, speed or heading manoeuvre a modifier adds.
+        sc.parts.clear();
     } else if (name == "bias_drift") {
         sc.parts = {jonswap_part(0.8, 0.29, 3.3)};
         // ~5 mg ramp on body z and ~3 mg on x, y over 1200 s, plus a slow
@@ -319,9 +336,9 @@ public:
             for (int i = 0; i < NF; ++i) {
                 const double omega = TWO_PI * fs[i];
                 const double k = omega * omega / G;
-                std::complex<double> Hh = sc.heave_rao
+                std::complex<double> Hh = sc.heave_scale * (sc.heave_rao
                     ? vessel_rao(omega, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
-                    : std::complex<double>(1.0, 0.0);
+                    : std::complex<double>(1.0, 0.0));
                 std::complex<double> Hr = vessel_rao(omega, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
                 std::complex<double> Hp = vessel_rao(omega, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
                 for (int j = 0; j < ND; ++j) {
@@ -332,8 +349,8 @@ public:
                     // Encounter frequency of this component (U = 0: omega).
                     const double we = (sc.speed_mps != 0.0) ? omega - k * sc.speed_mps * std::cos(rel) : omega;
                     if (sc.speed_mps != 0.0) {
-                        Hh = sc.heave_rao ? vessel_rao_ek(we, k, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
-                                          : std::complex<double>(1.0, 0.0);
+                        Hh = sc.heave_scale * (sc.heave_rao ? vessel_rao_ek(we, k, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m)
+                                                            : std::complex<double>(1.0, 0.0));
                         Hr = vessel_rao_ek(we, k, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
                         Hp = vessel_rao_ek(we, k, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
                     }
@@ -608,6 +625,16 @@ private:
                                + ddw * (mb[ch][0] - a0);
                 }
             }
+            if (sc_.env.enabled()) {
+                double e, de, dde;
+                envelope(t, e, de, dde);
+                for (int ch = 0; ch < SeaSynthesis::NCH; ++ch) {
+                    const double a0 = m[ch][0], a1 = m[ch][1], a2 = m[ch][2];
+                    m[ch][0] = e * a0;
+                    m[ch][1] = e * a1 + de * a0;
+                    m[ch][2] = e * a2 + 2.0 * de * a1 + dde * a0;
+                }
+            }
             if (advance && !sc_.warp.enabled) {
                 sea_a_.rotate();
                 if (sc_.fade.enabled) sea_b_.rotate();
@@ -645,6 +672,23 @@ private:
         ddw = 60.0 * x * (1.0 - x) * (1.0 - 2.0 * x) / (L * L);
     }
 
+public:
+    // Envelope value and its first two derivatives at t.
+    void envelope(double t, double& e, double& de, double& dde) const {
+        e = sc_.env.level0; de = 0.0; dde = 0.0;
+        for (const auto& st : sc_.env.steps) {
+            const double from = e, d = st.level - from;
+            const double x = (t - (st.t_c - 0.5 * st.width)) / st.width;
+            if (x <= 0.0) break;            // steps are in time order
+            if (x >= 1.0) { e = st.level; continue; }
+            e = from + d * x * x * x * (10.0 + x * (-15.0 + 6.0 * x));
+            de = d * 30.0 * x * x * (1.0 - x) * (1.0 - x) / st.width;
+            dde = d * 60.0 * x * (1.0 - x) * (1.0 - 2.0 * x) / (st.width * st.width);
+            break;
+        }
+    }
+
+private:
     void finish(TruthSample& s, const double m[SeaSynthesis::NCH][3], double t) const {
         using S = SeaSynthesis;
         const auto& at = sc_.att;

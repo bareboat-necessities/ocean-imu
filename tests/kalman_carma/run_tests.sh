@@ -1,11 +1,13 @@
 #!/bin/bash -e
 # Experimental CARMA priors: model checks, the spectral validation of the
 # stochastic process, the three-axis filter checks (quaternion MEKF and the
-# two-frame Lie-group variant), their IMU lever arm, short paired smoke
-# replays and the gated replay of the scored dataset records.  The full Monte
+# two-frame Lie-group variant), their IMU lever arm, the wave-excitation
+# evidence, short paired smoke replays and the gated replay of the scored
+# dataset records.  The full Monte
 # Carlo benchmarks are tools/carma3_benchmark.py and
 # tools/tfg_carma3_benchmark.py; the off-CoG study is
-# tools/carma_lever_arm_study.py.
+# tools/carma_lever_arm_study.py; the wave-excitation study is
+# tools/carma_excitation_study.py.
 set -e
 ./carma_model-test
 mkdir -p process
@@ -14,6 +16,10 @@ python3 ../../tools/carma_process_validation.py --input process --check
 ./carma3-test
 ./tfg_carma3-test
 ./carma_lever_arm-test
+# Wave-excitation evidence: sensor-noise model, Q as the excitation goes to
+# zero, still IMU and repeated wave / no-wave transitions on both wrappers
+# (docs/carma-wave-excitation.md).
+./carma_excitation-test
 ./carma3_bench --header --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" --seed 1 \
     --filters OU3,A41,A52,T41 --score-start 200 > smoke3_full.csv
 ./carma3_bench --header --level l1 --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" --seed 1 \

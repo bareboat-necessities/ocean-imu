@@ -38,6 +38,8 @@
   Scenario: <base>[+modifier...], base from CarmaBenchTruth.h
   base_scenario.  Modifiers: T<s> duration, rel<deg> wave propagation
   direction relative to the bow (0 following, 90 beam, 180 head; default 30),
+  rot<deg> the hull heading and every wave component turned together by deg
+  (the same sea seen from another heading; magnetic field unchanged),
   U<m/s> steady forward speed (encounter-frequency Doppler), anchor, drift,
   maneuver (low-frequency translation), maggap (no magnetometer for 300 s from
   T/3; maggap<N> for N s), gbdrift (extra gyroscope-bias ramp and oscillation),
@@ -48,6 +50,25 @@
   clock with 1 us resolution, as a micros() time stamp gives), calbias
   (+-0.01 m/s^2 turn-on bias), norao (unit heave RAO), hlegacy (legacy
   0.8 x heave RAO horizontal model).
+  Wave-excitation study (docs/carma-wave-excitation.md): base `calm` (no
+  waves, the hull afloat: heading wander and any translation modifier);
+  amplitude envelope of the sea on<t>w<w> (from zero), off<t>w<w> (to zero),
+  lev<t>w<w>x<level> (to a level), steps in time order, start<level> (the
+  level before the first step, no transition); hscale<x> (heave RAO
+  times x, horizontal unchanged); sensor path: scal (accelerometer and gyro
+  scale factors +-0.5 %, misalignment 0.1 deg), cnoise[<mg>] (first-order
+  Gauss-Markov accelerometer noise, 4 mg unless given, 2 s, every axis), nvar (white
+  accelerometer noise variance cycling between 1x and 2x over 600 s),
+  engine<rpm> (inboard-diesel vibration of W3dSimCommon at that speed).
+  Filter options: <name>@<mode>[/opt...] selects the CARMA excitation mode
+  (A legacy, B0 floor removed, B debiased, C evidence, Cnf evidence without
+  frequency hold, Cng evidence without the amplitude weight) and options of
+  the noise model (nv<x> variance scale, rw0 no bias random walk, u<x>
+  relative variance uncertainty, z<z0>_<z1>, zf<zf0>_<zf1>, k<k0>_<k1>,
+  nf<s> numerical floor, sf<x> horizontal amplitude factor S_factor on both
+  keel axes, sxy<x>_<y> surge and sway factors).  --excitation appends
+  excitation summary columns and, with --timeseries, per-filter excitation
+  columns.
 
   --extended appends consistency, attitude, bias, conditioning and
   magnetometer-service columns (and, with --timeseries, per-filter error and
@@ -68,7 +89,9 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -100,6 +123,9 @@ struct ScenarioX {
     double maggap_len = 300.0;   // magnetometer gap length from T/3
     double jitter_frac = 0.25;   // half-width of the relative interval jitter
     bool jitter_us = false;      // intervals rounded to whole microseconds
+    bool scal = false, cnoise = false, nvar = false;
+    float cnoise_mg = 4.0f;      // colored-noise std, mg
+    float engine_rpm = 0.0f;
 };
 
 std::vector<std::string> split(const std::string& s, char sep) {
@@ -117,11 +143,12 @@ ScenarioX make_scenario(const std::string& full) {
     const auto tok = split(full, '+');
     if (tok.empty() || !base_scenario(tok[0], sc)) throw std::invalid_argument("unknown scenario " + full);
     sc.hmodel.physical = true;
-    double rel_deg = NAN;
+    double rel_deg = NAN, rot_deg = NAN;
     for (size_t i = 1; i < tok.size(); ++i) {
         const std::string& m = tok[i];
         if (m[0] == 'T' && std::isdigit(static_cast<unsigned char>(m[1]))) sc.duration_s = std::strtod(m.c_str() + 1, nullptr);
         else if (m.rfind("rel", 0) == 0) rel_deg = std::strtod(m.c_str() + 3, nullptr);
+        else if (m.rfind("rot", 0) == 0) rot_deg = std::strtod(m.c_str() + 3, nullptr);
         else if (m[0] == 'U' && (std::isdigit(static_cast<unsigned char>(m[1])) || m[1] == '-')) sc.speed_mps = std::strtod(m.c_str() + 1, nullptr);
         else if (m == "anchor") sc.lf.kind = Translation::Kind::Anchor;
         else if (m == "drift") sc.lf.kind = Translation::Kind::Drift;
@@ -143,11 +170,40 @@ ScenarioX make_scenario(const std::string& full) {
         else if (m == "calbias") x.calbias = true;
         else if (m == "norao") sc.heave_rao = false;
         else if (m == "hlegacy") sc.hmodel.physical = false;
+        else if (m.rfind("hscale", 0) == 0) sc.heave_scale = std::strtod(m.c_str() + 6, nullptr);
+        else if (m.rfind("on", 0) == 0 || m.rfind("off", 0) == 0 || m.rfind("lev", 0) == 0) {
+            // on<t>w<w> / off<t>w<w> / lev<t>w<w>x<level>
+            const bool on = m.rfind("on", 0) == 0, off = m.rfind("off", 0) == 0;
+            const size_t p0 = on ? 2 : 3;
+            char* end = nullptr;
+            const double tc = std::strtod(m.c_str() + p0, &end);
+            if (!end || *end != 'w') throw std::invalid_argument("bad envelope modifier " + m);
+            const double w = std::strtod(end + 1, &end);
+            double level = on ? 1.0 : 0.0;
+            if (!on && !off) {
+                if (!end || *end != 'x') throw std::invalid_argument("bad envelope modifier " + m);
+                level = std::strtod(end + 1, nullptr);
+            }
+            if (sc.env.steps.empty() && on) sc.env.level0 = 0.0;
+            sc.env.steps.push_back({tc, std::max(w, 1e-3), level});
+        }
+        else if (m.rfind("start", 0) == 0) sc.env.level0 = std::strtod(m.c_str() + 5, nullptr);
+        else if (m == "scal") x.scal = true;
+        else if (m.rfind("cnoise", 0) == 0) {
+            x.cnoise = true;
+            if (m.size() > 6) x.cnoise_mg = static_cast<float>(std::strtod(m.c_str() + 6, nullptr));
+        }
+        else if (m == "nvar") x.nvar = true;
+        else if (m.rfind("engine", 0) == 0) x.engine_rpm = static_cast<float>(std::strtod(m.c_str() + 6, nullptr));
         else throw std::invalid_argument("unknown scenario modifier " + m);
     }
     // An anchored hull lies head to the waves unless told otherwise.
     if (sc.lf.kind == Translation::Kind::Anchor && !std::isfinite(rel_deg)) rel_deg = 180.0;
     if (std::isfinite(rel_deg) && !sc.parts.empty()) sc.att.heading_deg = sc.parts[0].mean_dir_deg - rel_deg;
+    if (std::isfinite(rot_deg)) {
+        sc.att.heading_deg += rot_deg;
+        for (auto& part : sc.parts) part.mean_dir_deg += rot_deg;
+    }
     return x;
 }
 
@@ -382,6 +438,8 @@ struct Series {
     // error (tilt, phi_z, angle), predicted yaw std, bias errors.
     std::vector<float> natt, nyaw, n9p, n9n, tilt, phiz, angerr, sigyaw, bgerr, baerr, cov[3];
     double cond_max = NAN;
+    // --excitation: CARMA sigma, p, z, c_f, V, E[V | 0], f_op, tau (Bench3.h).
+    std::vector<float> exc[8];
 };
 
 struct AxisStats {
@@ -464,6 +522,7 @@ struct Args {
     int decimate = 10;
     bool header = false;
     bool extended = false;
+    bool excitation = false;
     bool scenario_given = false;
     double score_start = 300.0;
     double startup_window = 120.0;
@@ -486,6 +545,7 @@ Args parse(int argc, char** argv) {
         else if (k == "--score-start") a.score_start = std::stod(val());
         else if (k == "--header") a.header = true;
         else if (k == "--extended") a.extended = true;
+        else if (k == "--excitation") a.excitation = true;
         else throw std::invalid_argument("unknown argument " + k);
     }
     return a;
@@ -497,7 +557,11 @@ const char* const kExtendedColumns =
     "bg_rms_dph,ba_rms_mg,bg_f60_dph,ba_f60_mg,cond_max,mag_forwarded,mag_applied,yaw_gap_rms_deg,yaw_gap_nees,"
     "pred_yaw_gap_end_deg,yaw_post_rms_deg,yaw_recover_s,turn_peak_deg,turn_recover_s";
 
-void print_header(bool extended) {
+const char* const kExcitationColumns =
+    ",exc_sig_mean,exc_sig_med,exc_p_mean,exc_p_frac50,exc_z_med,exc_cf_mean,exc_fz_med,exc_fz_p05,exc_fz_p95,"
+    "exc_var_med,exc_var0_med,exc_pz_rms,exc_ph_rms,p95_x,p95_y,p95_z,true_az_rms";
+
+void print_header(bool extended, bool excitation = false) {
     std::printf("level,scenario,seed,filter,states,memory_bytes,runtime_ns,hs_incident,hs_heave,"
                 "std_x,std_y,std_z,lf_std_x,lf_std_y,t_live,failed");
     for (const char* ax : {"x", "y", "z"})
@@ -505,6 +569,7 @@ void print_header(bool extended) {
                     "su_rms_%s,su_peak_%s,f60_%s", ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax, ax);
     std::printf(",rms_h,nees_pos3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg");
     if (extended) std::printf("%s", kExtendedColumns);
+    if (excitation) std::printf("%s", kExcitationColumns);
     std::printf("\n");
 }
 
@@ -586,7 +651,7 @@ int main(int argc, char** argv) {
     try {
         args = parse(argc, argv);
         if (args.header) {
-            print_header(args.extended);
+            print_header(args.extended, args.excitation);
             if (argc == 2 || !args.scenario_given) return 0;
         }
         sx = make_scenario(args.scenario);
@@ -611,6 +676,27 @@ int main(int argc, char** argv) {
                                                    w3d_expand_seed(base, 13u), w3d_expand_seed(base, 14u));
     MagNoiseModel mag_noise = make_mag_noise_model(MAG_SIGMA_UT, 2.0f, 0.01f, 0.015f, 0.010f, 1.0f,
                                                    w3d_expand_seed(base, 15u), w3d_expand_seed(base, 16u));
+    // Sensor-path disturbances of the wave-excitation study.
+    Eigen::Matrix3f S_acc = Eigen::Matrix3f::Identity(), S_gyr = Eigen::Matrix3f::Identity();
+    if (sx.scal) {
+        std::mt19937 rng_cal(w3d_expand_seed(base, 41u));
+        std::uniform_real_distribution<float> us(-0.005f, 0.005f);
+        std::uniform_real_distribution<float> um(-0.1f * 3.14159265f / 180.0f, 0.1f * 3.14159265f / 180.0f);
+        for (Eigen::Matrix3f* S : {&S_acc, &S_gyr})
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j) (*S)(i, j) = (i == j) ? 1.0f + us(rng_cal) : um(rng_cal);
+    }
+    std::mt19937 rng_cn(w3d_expand_seed(base, 42u));
+    std::normal_distribution<float> n01(0.0f, 1.0f);
+    Vector3f gm_state = Vector3f::Zero();
+    const float gm_tau = 2.0f, gm_sigma = 1e-3f * sx.cnoise_mg * 9.80665f;
+    std::optional<EngineVibrationModel> engine;
+    if (sx.engine_rpm > 0.0f) {
+        EngineVibrationConfig ecfg;
+        ecfg.rpm = sx.engine_rpm;
+        ecfg.seed = w3d_expand_seed(base, 43u);
+        engine = make_engine_vibration_model(ecfg, static_cast<float>(dt));
+    }
     const Vector3f mag_world_ned = MagSim_WMM::mag_world_aero();
     const double dec = MagSim_WMM::default_declination_deg * PI / 180.0;
     // Magnetic -> geographic NED: the filter's x axis points at azimuth dec.
@@ -622,8 +708,14 @@ int main(int argc, char** argv) {
     const double gap0 = sc.duration_s / 3.0, gap1 = gap0 + sx.maggap_len;
 
     WaveTruth truth(sc, w3d_expand_seed(base, 21u), dt);
-    const double hs_inc = sc.stationary ? 0.0
+    double hs_inc = sc.stationary ? 0.0
         : (sc.fade.enabled ? WaveTruth::incident_hs(sc.parts_b) : WaveTruth::incident_hs(sc.parts));
+    if (sc.env.enabled()) {
+        // Percentages refer to the largest level the envelope reaches.
+        double lmax = sc.env.level0;
+        for (const auto& st : sc.env.steps) lmax = std::max(lmax, st.level);
+        hs_inc *= lmax;
+    }
 
     std::vector<std::unique_ptr<IEstimator3>> est;
     std::vector<Level1Set*> l1;
@@ -632,8 +724,17 @@ int main(int argc, char** argv) {
     if (names.empty()) names = {"OU3", "A41", "A52", "M45", "A52S", "A41S", "H41"};
     for (const auto& n : names) {
         if (full) {
-            auto e = make_full(n);
+            // <name>[@<mode>[/opt...]]: the base adapter, then the options.
+            const size_t at = n.find('@');
+            auto e = make_full(n.substr(0, at));
             if (!e) { std::cerr << "ERROR: unknown full filter " << n << "\n"; return 2; }
+            if (at != std::string::npos) {
+                if (!e->set_options(n.substr(at + 1))) {
+                    std::cerr << "ERROR: bad options for " << n << "\n";
+                    return 2;
+                }
+                e->set_label(n);
+            }
             est.push_back(std::move(e));
         } else {
             auto e = make_level1(n, R_acc, BiasPrior{});
@@ -651,6 +752,8 @@ int main(int argc, char** argv) {
     }
     std::vector<Vector3d> pw_all;
     pw_all.reserve(steps);
+    double saz2 = 0.0;   // true vertical wave acceleration over the score window
+    long naz = 0;
     double lf2[2] = {0, 0};
     long nlf = 0;
 
@@ -664,6 +767,10 @@ int main(int argc, char** argv) {
             for (const auto& e : est)
                 for (const char* c : {"ex", "ey", "ez", "sx", "sy", "sz", "droll", "dpitch", "dyaw", "syaw", "natt", "nis"})
                     ts_out << "," << c << "_" << e->name();
+        if (args.excitation)
+            for (const auto& e : est)
+                for (const char* c : {"sig", "pw", "zw", "cf", "var", "var0", "fop", "sx", "sz"})
+                    ts_out << "," << c << "_" << e->name();
         ts_out << "\n";
     }
 
@@ -676,8 +783,19 @@ int main(int argc, char** argv) {
         if (sx.jitter_us) dt_k = std::round(dt_k * 1e6) * 1e-6;
         if (k > 0) t_now += dt_k;
         const TruthSample ts = sx.jitter ? truth.at(t_now) : truth.next();
-        Vector3f acc = apply_imu_noise(ts.f_b.cast<float>(), acc_noise, static_cast<float>(dt_k));
+        Vector3f acc = apply_imu_noise(S_acc * ts.f_b.cast<float>(), acc_noise, static_cast<float>(dt_k));
         acc += ts.extra_acc_bias_b.cast<float>();
+        if (sx.cnoise) {
+            const float ph = std::exp(-static_cast<float>(dt_k) / gm_tau);
+            const float sd = gm_sigma * std::sqrt(1.0f - ph * ph);
+            for (int i = 0; i < 3; ++i) gm_state(i) = ph * gm_state(i) + sd * n01(rng_cn);
+            acc += gm_state;
+        }
+        if (sx.nvar) {
+            // Extra white noise: total variance (1 + (1 + sin)/2) x nominal.
+            const float extra = ACC_SIGMA * std::sqrt(0.5f * (1.0f + static_cast<float>(std::sin(TWO_PI * ts.t / 600.0))));
+            for (int i = 0; i < 3; ++i) acc(i) += extra * n01(rng_cn);
+        }
         Vector3d ba_true = (acc_noise.turn_on_bias + acc_noise.bias_rw).cast<double>() + ts.extra_acc_bias_b;
         double tempC = 35.0;
         if (sx.temp) {
@@ -685,8 +803,9 @@ int main(int argc, char** argv) {
             acc += (kTempCoeffTrue * (tempC - 35.0)).cast<float>();
             ba_true += kTempCoeffTrue * (tempC - 35.0);
         }
-        Vector3f gyr = apply_imu_noise(ts.omega_b.cast<float>(), gyr_noise, static_cast<float>(dt_k));
+        Vector3f gyr = apply_imu_noise(S_gyr * ts.omega_b.cast<float>(), gyr_noise, static_cast<float>(dt_k));
         if (gyro_drift) gyr += ts.extra_gyro_bias_b.cast<float>();
+        if (engine) apply_engine_vibration(acc, gyr, *engine, static_cast<float>(dt_k));
         const Vector3d bg_true = (gyr_noise.turn_on_bias + gyr_noise.bias_rw).cast<double>() + ts.extra_gyro_bias_b;
         Sensors s;
         s.dt = static_cast<float>(dt_k);
@@ -722,6 +841,8 @@ int main(int argc, char** argv) {
 
         pw_all.push_back(ts.p_wave);
         if (ts.t >= args.score_start) {
+            saz2 += ts.a_wave.z() * ts.a_wave.z();
+            ++naz;
             for (int i = 0; i < 2; ++i) lf2[i] += std::pow(ts.p_ned(i) - ts.p_wave(i), 2);
             ++nlf;
         }
@@ -826,6 +947,11 @@ int main(int argc, char** argv) {
                 se.bgerr.push_back(bge); se.baerr.push_back(bae);
                 for (int a = 0; a < 3; ++a) se.cov[a].push_back(cv[a]);
             }
+            if (args.excitation) {
+                double d[8];
+                if (!est[i]->excitation_diag(d)) std::fill(std::begin(d), std::end(d), NAN);
+                for (int c = 0; c < 8; ++c) se.exc[c].push_back(static_cast<float>(d[c]));
+            }
         }
         if (ts_out.is_open() && k % args.decimate == 0) {
             char buf[160];
@@ -854,6 +980,16 @@ int main(int argc, char** argv) {
                     std::snprintf(buf, sizeof buf, ",%.4f,%.4f,%.4f,%.4f,%.3f,%.3f", se.droll[j] * 180.0 / PI,
                                   se.dpitch[j] * 180.0 / PI, se.dyaw[j] * 180.0 / PI, se.sigyaw[j] * 180.0 / PI,
                                   se.natt[j], se.nis[j]);
+                    ts_out << buf;
+                }
+            if (args.excitation)
+                for (size_t i = 0; i < est.size(); ++i) {
+                    const Series& se = series[i];
+                    const size_t j = se.t.size() - 1;
+                    auto sd = [](float v) { return std::sqrt(std::max(0.0f, v)); };
+                    std::snprintf(buf, sizeof buf, ",%.4e,%.4f,%.3f,%.4f,%.4e,%.4e,%.5f,%.5f,%.5f", se.exc[0][j],
+                                  se.exc[1][j], se.exc[2][j], se.exc[3][j], se.exc[4][j], se.exc[5][j], se.exc[6][j],
+                                  sd(se.pp[0][j]), sd(se.pp[2][j]));
                     ts_out << buf;
                 }
             ts_out << "\n";
@@ -980,6 +1116,48 @@ int main(int argc, char** argv) {
                         rms(se.baerr, sc.duration_s - 60.0, sc.duration_s) / 9.80665 * 1000.0,
                         se.cond_max, est[i]->mag_forwarded(), est[i]->mag_applied(),
                         gap_rms, gap_nees, gap_pred, post_rms, recover, turn_peak, turn_rec);
+        }
+        if (args.excitation) {
+            const double w0 = args.score_start, w1 = sc.duration_s;
+            auto window = [&](const std::vector<float>& x) {
+                std::vector<double> v;
+                for (size_t j = 0; j < x.size(); ++j)
+                    if (se.t[j] >= w0 && se.t[j] <= w1 && std::isfinite(x[j])) v.push_back(x[j]);
+                return v;
+            };
+            auto quant = [](std::vector<double> v, double q) -> double {
+                if (v.empty()) return NAN;
+                const size_t k = std::min(v.size() - 1, static_cast<size_t>(q * static_cast<double>(v.size() - 1) + 0.5));
+                std::nth_element(v.begin(), v.begin() + static_cast<long>(k), v.end());
+                return v[k];
+            };
+            auto mean = [](const std::vector<double>& v) {
+                double a = 0; for (double x : v) a += x; return v.empty() ? NAN : a / static_cast<double>(v.size());
+            };
+            const auto sig = window(se.exc[0]), pw = window(se.exc[1]), zw = window(se.exc[2]), cf = window(se.exc[3]),
+                       var = window(se.exc[4]), var0 = window(se.exc[5]), fop = window(se.exc[6]);
+            double pf = 0; for (double x : pw) pf += x >= 0.5 ? 1.0 : 0.0;
+            // RMS of the estimated displacement itself (the phantom where the truth is zero).
+            double sz2 = 0, sh2 = 0; long ne = 0;
+            for (size_t j = 0; j < se.t.size(); ++j) {
+                const long k = static_cast<long>(j);
+                if (se.t[j] < w0 || se.t[j] > w1 || !std::isfinite(se.e[2][j]) || k >= static_cast<long>(pw_all.size())) continue;
+                const double ez = se.e[2][j] + pw_all[k](2), ex = se.e[0][j] + pw_all[k](0), ey = se.e[1][j] + pw_all[k](1);
+                sz2 += ez * ez; sh2 += ex * ex + ey * ey; ++ne;
+            }
+            std::printf(",%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g",
+                        mean(sig), quant(sig, 0.5), mean(pw), pw.empty() ? NAN : pf / static_cast<double>(pw.size()),
+                        quant(zw, 0.5), mean(cf), quant(fop, 0.5), quant(fop, 0.05), quant(fop, 0.95),
+                        quant(var, 0.5), quant(var0, 0.5), ne ? std::sqrt(sz2 / static_cast<double>(ne)) : NAN,
+                        ne ? std::sqrt(sh2 / static_cast<double>(ne)) : NAN);
+            // 95th percentile of the absolute error per axis.
+            for (int a = 0; a < 3; ++a) {
+                std::vector<double> ae;
+                for (size_t j = 0; j < se.t.size(); ++j)
+                    if (se.t[j] >= w0 && se.t[j] <= w1 && std::isfinite(se.e[a][j])) ae.push_back(std::abs(se.e[a][j]));
+                std::printf(",%.6g", quant(ae, 0.95));
+            }
+            std::printf(",%.6g", naz ? std::sqrt(saz2 / static_cast<double>(naz)) : NAN);
         }
         std::printf("\n");
         if (se.failed) std::cerr << "FAILURE " << est[i]->name() << ": " << se.fail_reason << "\n";

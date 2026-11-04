@@ -11,6 +11,9 @@
     carma3-sim.cpp.
 */
 
+#include <cstdlib>
+#include <stdexcept>
+#include <string>
 #include <memory>
 
 #include "util/W3dSimCommon.h"
@@ -54,6 +57,17 @@ public:
         filter.enableTuner(true);
         filter.enableClamp(true);
         if (hshape) filter.setHorizontalShape(*hshape);
+        // W3D_CARMA3_EXCITATION: A (Legacy), B0, B, C (Evidence); unset keeps
+        // the wrapper default (docs/carma-wave-excitation.md).
+        if (const char* m = std::getenv("W3D_CARMA3_EXCITATION")) {
+            using ocean_imu::carma::CarmaExcitationMode;
+            const std::string v = m;
+            if (v == "A") filter.setCarmaExcitationMode(CarmaExcitationMode::Legacy);
+            else if (v == "B0") filter.setCarmaExcitationMode(CarmaExcitationMode::FloorOff);
+            else if (v == "B") filter.setCarmaExcitationMode(CarmaExcitationMode::Debiased);
+            else if (v == "C") filter.setCarmaExcitationMode(CarmaExcitationMode::Evidence);
+            else throw std::invalid_argument("W3D_CARMA3_EXCITATION must be A, B0, B or C");
+        }
         if constexpr (requires { typename MekfT::ResetMode; }) {
             if (tfg_reset_mode >= 0)
                 filter.mekf().set_reset_mode(static_cast<typename MekfT::ResetMode>(tfg_reset_mode));

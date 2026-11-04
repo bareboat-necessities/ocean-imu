@@ -100,6 +100,9 @@ public:
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
     int states() const override { return M::NX; }
     Fusion& fusion() { return fusion_; }
+    bool set_options(const std::string& o) override { return apply_carma_excitation_options(fusion_.raw(), o); }
+    void set_label(const std::string& l) override { label_ = l; }
+    bool excitation_diag(double (&d)[8]) const override { return carma_excitation_diag(fusion_.raw(), d); }
 
 private:
     static Eigen::Matrix3d skew_(const Eigen::Vector3d& v) {

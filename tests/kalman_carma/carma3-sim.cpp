@@ -21,7 +21,9 @@
     (horizontal shape fitted to the carma3_bench sway RAO), or T41 / T41R0:
     A41's prior and wrapper on the two-frame Lie group
     (Kalman3D_Wave_TFG_CARMA3, full reset / no reset transport;
-    docs/tfg-carma3-research.md).
+    docs/tfg-carma3-research.md).  W3D_CARMA3_EXCITATION selects the
+    wave-excitation mode (A, B0, B, C; docs/carma-wave-excitation.md); the
+    regression bars apply to the wrapper default only.
 */
 
 #define EIGEN_NON_ARDUINO
@@ -146,7 +148,8 @@ int main(int argc, char* argv[]) {
         // any other replay is a diagnostic, not a regression.
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
-        const bool gated = variant == "A41" && add_noise && with_mag && default_seeds;
+        const bool gated = variant == "A41" && add_noise && with_mag && default_seeds &&
+                           !std::getenv("W3D_CARMA3_EXCITATION");
         const W3dFailureLimits& bars = gated ? kA41RegressionBars : kUngatedBars;
         for (const auto& f : files) {
             const std::string family = "CARMA3_" + variant;

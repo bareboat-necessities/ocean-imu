@@ -35,7 +35,12 @@ variant is worse than OU-III on a still IMU (horizontal phantom 84 against
 53 mm RMS, heave 53 against 27 mm, a heave startup transient 2-3 times
 larger) and more overconfident on the mixed sea.  **Recommendation:
 B, CARMA(4,1) on X/Y and Z, as the research candidate; not shippable**
-(section 12).
+(section 12).  Every result in this report is for the wrapper's default
+`Legacy` wave-excitation mode.  The still-IMU phantom and the still-IMU
+startup transient come from that mode's driving-noise floor (0.05 m/s^2 at the
+0.05 Hz tuner bound, section 9.4); the `Evidence` mode of
+[carma-wave-excitation.md](carma-wave-excitation.md), which the AtomS3R
+research sketch uses, replaces the floor with measured wave evidence.
 
 ## 1. Baseline
 
@@ -646,9 +651,15 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   every axis (the model's displacement zero-crossing frequency is placed on
   the measured one), `sigma_z = max(0.05 m/s^2, noise floor, sigma_aw /
   c_sigma)` (the measured band acceleration RMS, with OU-III's floor),
-  `sigma_h = S_factor sigma_z` (no horizontal statistic is measured), and the
+  `sigma_x,y = S_x,y sigma_z` with keel-frame factors `S_x = S_y = 1` (no
+  horizontal statistic is measured; unequal factors are rotated into NED by
+  the filter's heading, [carma-wave-excitation.md](carma-wave-excitation.md)
+  section 3), and the
   `S` laws of section 4.  Mappings fixed before any Monte Carlo run.  Not
-  included by `ArduinoOceanImu.h`.  The inner filter is a defaulted template
+  included by `ArduinoOceanImu.h`.  This amplitude mapping is the
+  `Legacy` wave-excitation mode, the default; `setCarmaExcitationMode`
+  selects the evidence-weighted alternative (`CarmaWaveEvidence.h`,
+  [carma-wave-excitation.md](carma-wave-excitation.md)).  The inner filter is a defaulted template
   parameter (`MekfT`, default `Kalman3D_Wave_CARMA3`) so the experimental
   two-frame Lie-group core of `docs/tfg-carma3-research.md` runs behind the
   same schedule; the default instantiation is unchanged.
@@ -872,6 +883,11 @@ decimetres of displacement at 20 s periods and lets sensor noise and slow
 tilt/bias leakage through there.  OU-III sits at the same operating point
 with the same floor; its `S = 0` updates hold the integral, which at 0.05 Hz
 is a strong constraint.  The only variant below OU-III is the invalid A41S.
+The floor is not wave evidence, and on small seas the legacy sigma channel
+discards the measured amplitude altogether (its configured 0.12 m/s^2
+pre-band floor and its stillness attenuation); the measurement and its
+evidence-weighted replacement are
+[carma-wave-excitation.md](carma-wave-excitation.md).
 
 ### 9.5 Level 1 (prescribed attitude) and where the error lives
 
@@ -1191,7 +1207,9 @@ stationary-covariance invariance and non-uniform steps are tested.
    (metres before the turn-on bias is learned).  The cause is the resonant
    prior at a floored operating point (0.05 Hz, 0.05 m/s^2); a valid
    low-frequency or "no waves" mechanism in the prior is needed (A41S shows
-   the size of the effect on the steady phantom, not a valid fix).
+   the size of the effect on the steady phantom, not a valid fix).  The
+   `Evidence` excitation mode ([carma-wave-excitation.md](carma-wave-excitation.md))
+   is that mechanism in simulation; it is not hardware evidence.
 2. Mixed swell and wind sea: heave 13 % worse than OU-III and
    NEES twice OU-III's; a single fixed shape scaled by one frequency cannot
    represent two peaks.

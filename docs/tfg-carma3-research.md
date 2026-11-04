@@ -326,6 +326,10 @@ direction exactly.  Section 5 quantifies all three.
   original run rotated, to 1e-12.  With an anisotropic horizontal `Sigma_s`
   that is *not* rotated with the frame the runs differ (correlation units
   2.2): the prior then carries heading information.
+* **The wrapper's keel-frame factors.**  `setSFactorXY(S_x, S_y)` builds
+  `Sigma_s` in the keel frame and rotates it with the filter's own heading.
+  So `Sigma_s` turns with the frame, and the complete filter stays
+  yaw-equivariant; the default `S_x = S_y = 1` is isotropic.
 * **Anisotropic dynamics.**  If the axes had different `A` (different
   horizontal and vertical shape or scale), the transition would not commute
   with rotation and the invariant error would acquire
@@ -349,10 +353,13 @@ shape (zero at DC, `f_z0 = 0`), the frequency scale `kappa = f_tune / f_z,model`
 the amplitude `g^2 = sigma_a^2 kappa / Var_1(a)`, the exact scaled-series
 discretization with doublings and the reference-step Taylor extension for a
 jittered clock.  The wrapper is the same code, so the mapping
-`sigma_h = S_factor c_carma max(sigma_floor, sigma_aw / c_sigma)` and every
-clamp are CARMA3's (`c_carma` is the wrapper's `carma_sigma_gain_`, 1 by
+`sigma_x,y = S_x,y c_carma max(sigma_floor, sigma_aw / c_sigma)` (keel-frame
+factors, 1 in every run here) and every clamp are CARMA3's (`c_carma` is the wrapper's `carma_sigma_gain_`, 1 by
 default and in every run here; `sigma_floor = max(carma_sigma_floor_ =
-0.05 m/s^2, band noise floor, 1e-4 m/s^2)`).  There is no `S` state and no `S = 0`
+0.05 m/s^2, band noise floor, 1e-4 m/s^2)`; this is the wrapper's default
+`Legacy` wave-excitation mode, the mode of every result here; the
+evidence-weighted mode of [carma-wave-excitation.md](carma-wave-excitation.md)
+is shared by both inner filters).  There is no `S` state and no `S = 0`
 pseudo-measurement; the fourth CARMA state is the latent coordinate of the
 cascade realization.  Section 5 checks stability, positive semidefiniteness,
 stationary covariances and spectra of the three-axis process as the filter
