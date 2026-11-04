@@ -968,11 +968,15 @@ filters carry their own open obstacles (carma-three-axis.md section 12).
 Raw rows: `reports/results/carma_excitation/raw_runs.csv` (one row per
 experiment, scenario, seed and filter), `transitions.csv` (one row per
 transition), `psd_calm.csv` (still-water PSD per seed), `tuning_runs.csv`,
-`dataset_runs.csv`.  The rows reproduce bit for bit with this tree's
+`dataset_runs.csv`.  The CARMA rows reproduce bit for bit with this tree's
 `carma3_bench` on the host that produced them (x86-64, GCC `-O3
--march=native`) apart from `runtime_ns`; as for the other CARMA benchmarks,
-another compiler or CPU can move results in the fifth significant digit
-through FMA contraction.
+-march=native`), apart from `runtime_ns`.  The OU-III
+reference rows reproduce to about 1e-6 relative.  The bench compiles OU-III
+in one translation unit with the CARMA adapters, so an edit to those
+adapters can change GCC's inlining and FMA contraction in OU-III's code.  The
+shipping OU-III build does not include them.  As for the other CARMA
+benchmarks, another compiler or CPU can move results in the fifth
+significant digit through FMA contraction.
 
 ESP32-S3 sizes: `tests/kalman_carma/arduino/carma3_size_probe/build.sh <xtensa
 toolchain bin dir>`; the host proxy is `build.sh host`.
