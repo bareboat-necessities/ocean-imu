@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "b5b319c94dd11d2d53092c2f19d5e326e72cad286c206d31d5f7f9de701b81dd",
+  "replay_fingerprint": "ba5312fc8d866915b65042776dbdfa0756a41d7c0bba650e2d4d34da6f1e91f3",
   "results_file_count": 571,
   "results_files": [
     {
@@ -1301,7 +1301,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "5ef0e4b1f0e7c73d10a2b91a4d4c1324a6039b0cf2a2c753c0e59cf2e4eb3fd5"
+      "sha256": "b40534319e5cfd07342165fb1fe1c2f6bf417f6ee90442375a7b285e8e6894d3"
     },
     {
       "kind": "file",
@@ -1346,7 +1346,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "bda71cecb63e457183997d90011f5e2a5c7a7228471def62183687d69ba486b8"
+      "sha256": "825e237bf3b6be53c148e2276edcc8c2648502bff9e58c9f24a0f0c3f9e1836c"
     },
     {
       "kind": "file",
@@ -1446,7 +1446,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "bb3be1bc82b7e23e39e3c675a7e6554eb0126649808bbff3fe1f94c92d55679d"
+      "sha256": "ea9748161896b39f90e816932618d6842e0104b4dbc0203a89b08be3d7405bfe"
     },
     {
       "kind": "file",
@@ -1516,57 +1516,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "f040622d4792dfc416a5a25a3eccc0224e1cf36e3679003275816c3ba07bacd1"
+      "sha256": "b7b0d765e090810fbe117072851bb76f53d796bdb82f6d9f6db0140f1f251939"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "279c40686c113aeb03103cfac14fc5867a9adc439ec5e86051770e125ea6fec8"
+      "sha256": "ccbed690a9a9e049655066d5fb68ace0b73aadb6fb4228776e2f721166ea1734"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "a37d930dec1ca6cfd2a45f2d5ed01e2c1a41b83e0d32f3fd5c49b26def5866dc"
+      "sha256": "74cac7aa296f52ea5a0586d8927c58a31c62cb3d4a0dc114bb5bded2a92b62b4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "75d27253c84167e8698db7f90b0b66577a27af03fa0665894f8654592fde22c8"
+      "sha256": "0b1adab778f76a4506f52fe68882127e15dfa63a860dac31a86064d0ca01da66"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "49fac3d17349eb620f7b8dfcc2bcf46db58929a73314c5d120588095d3affffa"
+      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "278d54bd49da6df2ce8aff147d03cd6cc210e874157d057b9c2833696fd4c03c"
+      "sha256": "19e62bf3b897e34583ee8478095904ef4fca5dd9fd4b341437fc73e45c0ed204"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "c0473d12b042ab71459ba8e3eaab307907f02aa31c31728971b896e26a9f9592"
+      "sha256": "28f7baf56407e35de83290db3f21c25d634cfc7daddf89670e726d56092e1372"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "900185c74529f5e5b1d373fa65858d5987f230806757a08eb6876e3e379d8db2"
+      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "5762caa9b98141660cf0781c536dd7255bff854fe3ada83cd77acee6c2b3678e"
+      "sha256": "819f2c1b9828bb884df35a00af1b77336c3eb528e88b7cdc475aad8a47644db7"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "e81247c1f5f17700dfc3e9edf2a7124583b580b05265a5faa76863903e37e3b2"
+      "sha256": "c09a8738c773956c39f70e6d1b5426585922d78af683cacf8bc260e43a5c1696"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "e71956783ad23aa0ace082e5b343d3fe270f9a7d3107a3d35629b62675e386a8"
+      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
     },
     {
       "kind": "file",
@@ -1586,7 +1586,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "be78e1e27a8a01ff72a5b158cc173cb9269df70d9cc75f8cf604c3b41e25d84c"
+      "sha256": "6da1d29e72accbdf8f38c0ed76263d7f2e1afb548ae08ef3b66e185961f5d4ee"
     },
     {
       "kind": "file",
@@ -2859,7 +2859,7 @@
       "sha256": "68e769ade9694add85285403b006dfaf71069054a3c644d46aea76fa33a5a39e"
     }
   ],
-  "results_fingerprint": "cac7cabce13dc39ca7c90e24c177d21a14ec834b5779e03aa594ae6710224674",
+  "results_fingerprint": "cdd2eb65a67e50561e0b7d6b84d0402e64c4d5d7ed64e2264b53f9d3d0aee844",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
@@ -3510,7 +3510,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
-      "sha256": "fed8ec90ab5f1c3b249328bf8f2bf22b83c4e8ec71e9e849ce6586889019db11"
+      "sha256": "104e085dccb778a89434f6c9a2034aca989e7176e072f904ea2019098be0bbb5"
     },
     {
       "mode": "100644",
@@ -4125,7 +4125,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3/FullAdapters.h",
-      "sha256": "9f6990111dda8eb36dadbf0914792d8504ac498669e0ca08eb7e7ba84435a354"
+      "sha256": "c0dd69b2442140aded507b0a3a71bf60e68c81aed500772e5615fa4d0ce18cc9"
     },
     {
       "mode": "100644",
@@ -4140,7 +4140,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma3_bench.cpp",
-      "sha256": "5614452f3ef596b94c2ed3f7e6fe9ed24d9a5d41b788557a5d4989807fb9189d"
+      "sha256": "d6bd4500212328671b30634ea3c22ccfeed33138b40194e92ad80ac4706f0df7"
     },
     {
       "mode": "100644",
@@ -4165,7 +4165,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma/carma_excitation-test.cpp",
-      "sha256": "152a6f4820d31f176c620aed269ee5b72c158c26315ea5c1169d36c1a2709ce5"
+      "sha256": "d487d7e121993a536119c9ad7411b1d3164d46b9ff1ad540f4b3b700841cd30e"
     },
     {
       "mode": "100644",

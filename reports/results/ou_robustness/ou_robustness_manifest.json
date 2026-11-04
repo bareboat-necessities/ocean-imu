@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/carma3-wave-evidence-excitation",
-  "git_commit": "0f6ae0c3110470af7f229cbcc90f8778fddf4a6f",
+  "git_branch": "main",
+  "git_commit": "97216c9f13b4008caba3f2ddfce642d8c8794264",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -341,8 +341,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-04T04:21:15+00:00",
-    "git_commit": "0f6ae0c3110470af7f229cbcc90f8778fddf4a6f",
+    "generated_at": "2026-11-04T14:18:19+00:00",
+    "git_commit": "97216c9f13b4008caba3f2ddfce642d8c8794264",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,8 +541,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "41769252460",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "41840034262",
+      "workflow": "build"
     }
   },
   "result_files": {
