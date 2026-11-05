@@ -77,9 +77,14 @@ single-peaked, bimodal, broadband, underway and translating seas and by
 17\,\% on a mixed swell and wind sea, and the heave error by 27--46\,\%
 except on the mixed sea, where it is 13\,\% worse. CARMA(5,2) collapses on
 the mixed sea because the frequency mapping places its spectral notch on the
-swell. All CARMA priors show more phantom displacement on a still IMU than
-OU-III. The results are simulation only; nothing here changes the shipping
-estimator or bears on its stability study.
+swell. In the wrapper's default (legacy) wave-excitation mode a fixed floor,
+not measured waves, drives every CARMA prior in still water and on small
+seas, so each has more phantom displacement than OU-III on a still IMU, and
+a larger error on seas of $H_s\le\SI{2}{cm}$. The wrapper's evidence-weighted mode removes
+that phantom in simulation, at a cost on some \SIrange{5}{20}{cm} seas
+horizontally and in attitude during calm-water manoeuvres. The results are
+simulation only; nothing here changes the shipping estimator or bears on its
+stability study.
 \end{abstract}
 \input{../simulation-dataset.tex-part}
 
@@ -318,14 +323,22 @@ the measured operating point onto every axis:
 f_{\mathrm{tune}}=\frac{c_\tau}{2\tau},\qquad
 \kappa=\frac{f_{\mathrm{tune}}}{f_{z,\mathrm{base}}},\nonumber\\
 \sigma_z=\max\!\bigl(0.05,\ \sigma_{\mathrm{floor}},\ \sigma_{aw}/c_\sigma\bigr),
-\qquad \sigma_h=S_{\mathrm{factor}}\,\sigma_z,
+\qquad \sigma_{x,y}=S_{x,y}\,\sigma_z,
 \label{eq:mapping}
 \end{gather}
 so the model's displacement zero-crossing frequency is placed on the
-measured one and the amplitude is the measured band acceleration RMS with
-OU-III's floor. No horizontal statistic is measured. The mappings were fixed
-before any Monte Carlo run. $\mat{F}$ and $\mat{Q}$ are exact at a reference
-step $h_0$, recomputed when the committed operating point changes or the step
+measured one. The amplitude $\sigma_{aw}$ is the band acceleration RMS of the
+variance channel the wrapper shares with OU-III, with OU-III's floor. That
+channel subtracts a configured \SI{0.12}{m/s^2} pre-band noise floor and
+attenuates the variance while the front end's stillness detector reports a
+vertical RMS below \SI{0.28}{m/s^2}. In still water and on every sea below
+that RMS, $\sigma_z$ is therefore the \SI{0.05}{m/s^2} floor, not a measured
+amplitude (\cref{sec:quiet}). This is the wrapper's default \emph{legacy}
+excitation mode, the mode of every result outside \cref{sec:quiet}. The
+horizontal factors act in the keel frame and are rotated into NED by the
+filter's heading; $S_x=S_y=1$ (isotropic) in every run. No horizontal
+statistic is measured. The mappings were fixed before any Monte Carlo run.
+$\mat{F}$ and $\mat{Q}$ are exact at a reference step $h_0$, recomputed when the committed operating point changes or the step
 moves more than $h_0/16$ from it; nearer steps take their Taylor series in
 $h-h_0$.
 
@@ -506,16 +519,8 @@ has broad or low-frequency energy: it acts as extra shrinkage that counts
 prior information twice.
 
 \emph{Still IMU.} Every CARMA prior shows more phantom displacement than
-OU-III, horizontally (76--87 against \SI{53}{mm}) and in heave (46--53
-against \SI{27}{mm}), nearly all below \SI{0.05}{Hz} and unchanged by
-calibrating the turn-on bias. With no waves the tuner pins the operating
-frequency at its \SI{0.05}{Hz} bound and the amplitude at its
-\SI{0.05}{m/s^2} floor, so the resonant prior expects decimetres of
-displacement at \SI{20}{s} periods and turns sensor noise and slow tilt and
-bias leakage into motion there. In the first \SI{120}{s} after Live the
-still-IMU heave transient is 2--3 times OU-III's; in waves it is smaller than
-OU-III's, because CARMA starts from a stationary covariance that matches the
-sea.
+OU-III (\cref{tab:principal}); \cref{sec:quiet} gives the mechanism and the
+evidence-weighted excitation that removes it.
 
 \emph{Consistency and attitude.} On single-peaked seas CARMA is closer to
 consistent than OU-III, whose horizontal axes are overconfident; on the
@@ -525,6 +530,95 @@ covariance is not an error bound, and no model-error term is carried. Roll
 and pitch errors are similar for every filter except CARMA(5,2) on the mixed
 sea; the horizontal CARMA prior improves heading in the magnetometer gap
 (\SI{2.09}{\degree} against \SI{2.90}{\degree}) and while manoeuvring.
+
+\section{Still Water and Small Seas}
+\label{sec:quiet}
+\emph{Legacy excitation.} On a still IMU every CARMA prior shows more phantom
+displacement than OU-III, horizontally (76--87 against \SI{53}{mm}) and in
+heave (46--53 against \SI{27}{mm}), nearly all below \SI{0.05}{Hz};
+calibrating the turn-on bias leaves it unchanged. The cause is the
+excitation, not the shape. The period estimate, formed from doubly
+integrated acceleration, holds sensor noise and the front end's slow
+levelling transient (\SIrange{0.015}{0.035}{Hz}), and the tuner clamps it to
+its \SI{0.05}{Hz} bound. The amplitude channel discards the band variance:
+its pre-band floor is 35 times what the simulated \SI{1.5}{mg} sensor
+produces in still water. The prior is therefore driven by the
+\SI{0.05}{m/s^2} floor and expects \SI{0.32}{m} of displacement at
+\SI{20}{s} periods, and it turns sensor noise and slow tilt and bias leakage
+into motion there. In the first \SI{120}{s} after Live the still-IMU heave
+transient is 2.2 (C52) to 3.0 (C41) times OU-III's \SI{0.97}{m}, and the
+ratio is the same with a calibrated turn-on bias (OU-III \SI{0.14}{m}).
+
+The floor drives the prior on every sea whose vertical acceleration RMS is
+below \SI{0.28}{m/s^2}. Down to $H_s=\SI{5}{cm}$ CARMA(4,1) is still better
+than OU-III on both axes (\cref{tab:conditions,tab:quiet}). On these seas,
+however, its startup transient is up to 2.5 times OU-III's (1.2 times on the
+\SI{5}{cm} sea of \cref{tab:conditions}). On every benchmark sea of
+$H_s\ge\SI{0.4}{m}$ it is 0.35--0.46 times OU-III's, because CARMA starts
+from a stationary covariance that matches the sea. At $H_s\le\SI{2}{cm}$ the
+still-IMU phantom dominates, and the steady error exceeds OU-III's on both
+axes on every spectrum tested.
+
+\begin{table}[t]
+\centering
+\caption{Still water and small JONSWAP \SI{0.29}{Hz} seas, complete INS,
+30 paired seeds: horizontal / heave RMS error (mm) of OU-III and of C41 on
+all axes in the legacy and the evidence-weighted excitation. Still IMU over
+\SI{300}{}--\SI{2400}{s}, with the heave transient of the first
+\SI{120}{s} after Live; seas over \SI{300}{}--\SI{1200}{s}. TFG-CARMA3 equals
+C41 to the digits shown in both modes.}
+\label{tab:quiet}
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+$H_s$ & true heave & OU-III & C41 legacy & C41 evidence\\
+\midrule
+still IMU & 0 & 52.6 / 26.9 & 83.7 / 52.2 & 0.0003 / 0.0001\\
+\quad transient & & 971 & 2958 & 0.07\\
+\SI{0.5}{cm} & 1.28 & 53.9 / 26.9 & 87.0 / 53.1 & 0.82 / 1.06\\
+\SI{1}{cm} & 2.55 & 43.0 / 21.8 & 71.9 / 45.9 & 2.11 / 2.41\\
+\SI{2}{cm} & 5.11 & 24.2 / 12.3 & 30.7 / 19.2 & 5.83 / 5.57\\
+\SI{5}{cm} & 12.8 & 17.6 / 9.28 & 6.58 / 5.35 & 6.56 / 5.29\\
+\SI{10}{cm} & 25.5 & 17.0 / 9.42 & 5.29 / 6.43 & 6.51 / 5.15\\
+\SI{20}{cm} & 51.1 & 19.6 / 12.0 & 8.72 / 8.90 & 9.04 / 6.57\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\emph{Evidence-weighted excitation.} The wrapper's optional evidence mode
+(\texttt{CarmaWaveEvidence.h}; the full study is
+\texttt{docs/carma-wave-excitation.md}), which the experimental AtomS3R
+research sketches select, changes only what drives the prior. Its amplitude
+is the band variance in excess of a commissioned sensor-noise model (white
+noise and bias random walk), weighted by a smooth detection probability built
+on the band's effective sample size. Its frequency moves only as far as the
+band's own spectral moments confirm the measured period, and is held
+otherwise. A \SI{1e-5}{m/s^2} numerical floor remains. Because the CARMA
+covariance is proportional to the excitation, the filter reduces to a
+zero-motion AHRS in still water. On a still IMU the phantom falls by five
+orders of magnitude on every seed, and the startup transient from
+\SI{3}{m} to \SI{0.07}{mm} (\cref{tab:quiet}). Detectable small seas keep
+their measured amplitude. On the seas of \cref{tab:quiet} the heave error
+falls by 71--98\,\% at $H_s\le\SI{2}{cm}$ and by 1--26\,\% from
+\SIrange{5}{20}{cm}, and on every small sea tested (four spectra) the evidence
+mode is better than OU-III on both axes.
+
+The mode has four costs. Horizontally, the restored vertical amplitude
+exposes the isotropic mapping $S_{x,y}=1$, which the floor had masked:
+short-period \SIrange{5}{10}{cm} seas are 20--30\,\% worse than in the legacy
+mode, though still better than OU-III. In calm water, a manoeuvre's
+acceleration now reaches attitude and bias (tilt 12.5\,\%, accelerometer-bias
+error 60\,\% worse) instead of becoming \SI{0.6}{m} of phantom displacement.
+The first minute after waves stop abruptly is 31--32\,\% worse, by
+millimetres. Seas below the detection boundary, from $H_s=\SI{3}{mm}$ at
+\SI{3}{s} to \SI{12}{cm} at \SI{25}{s}, are reported as calm. Realistic and
+mixed seas do not regress (paired change against the legacy mode, positive
+better: heave 0 to $+17\,\%$, horizontal $-0.8$ to $+2.5\,\%$), and the
+mixed-sea failure is unchanged. The default is still the legacy mode, whose
+outputs are bit-identical to the filter of the earlier sections.
 
 \section{Pinned Vessel-RAO Dataset}
 \label{sec:dataset}
@@ -560,7 +654,13 @@ C52 $x/y$ + C41 $z$ & 2.76 (+56.7 [54.5, 58.8]) & 2.50 (+37.2 [35.3, 39.1]) & 0.
 On this independent hull and these single-peaked seas the synthetic results
 carry over (\cref{tab:dataset}). The dataset has no mixed sea, no still
 water and no low-frequency translation, so it cannot test the obstacles of
-\cref{sec:obstacles}.
+\cref{sec:obstacles}. Its two \SI{0.27}{m} records are, however, below the
+stillness threshold of \cref{sec:quiet}. The evidence-weighted excitation
+improves their heave from 3.1--3.2 to 2.4--2.5\,\% of $H_s$ and worsens their
+horizontal $y$ from 0.85--0.88 to 1.10--1.13\,\%. Over all 80 pairs this is
+8\,\% better in heave and 1--5\,\% worse horizontally; from
+$H_s=\SI{1.5}{m}$ up the two modes agree within 1.6\,\% in heave and
+5\,\% horizontally.
 
 \section{Deterministic Replay}
 \label{sec:replay}
@@ -623,9 +723,13 @@ failure; and to coupled priors, whose oracle gain is about 5\,\% and for which
 no estimator of the coupling exists. It is \emph{not} shippable. Remaining
 obstacles:
 \begin{enumerate}[leftmargin=*,itemsep=1pt]
-\item still water and very quiet seas: phantom displacement and a still-IMU
-  heave startup transient 2--3 times OU-III's; a valid low-frequency or
-  ``no waves'' mechanism in the prior is needed;
+\item still water and very quiet seas: in the default legacy excitation,
+  phantom displacement, an error above OU-III's at $H_s\le\SI{2}{cm}$ and a
+  still-IMU heave startup transient 2--3 times OU-III's. The
+  evidence-weighted excitation of \cref{sec:quiet} is the needed ``no
+  waves'' mechanism in simulation. It costs horizontal accuracy on
+  short-period \SIrange{5}{10}{cm} seas and attitude in calm-water
+  manoeuvres, and it needs a commissioned per-device noise model;
 \item the mixed swell and wind sea: heave 13\,\% worse than OU-III; one fixed
   shape scaled by one frequency cannot represent two peaks;
 \item covariance under mismatch: no model-error term, so the covariance is
