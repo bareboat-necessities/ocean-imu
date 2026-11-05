@@ -1,0 +1,22 @@
+\begin{table}[t]
+\caption{Complex-OU modal form of C41J against the baseline realization: relative errors of the transfer function, stationary covariance, discrete $\mat Q$ (under $\mat T$) and displacement autocovariance, and the condition number of $\mat T$. Last rows: independently driven modes.}
+\label{tab:modal}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lccccc}
+\toprule
+$\kappa$ & $H$ & $\mat P_\infty$ & $\mat Q$ & autocov. & cond $\mat T$ \\
+\midrule
+0.20 & \num{2.4e-14} & \num{7.0e-15} & \num{5.0e-15} & \num{6.8e-15} & 7 \\
+0.38 & \num{1.8e-14} & \num{4.6e-15} & \num{3.0e-15} & \num{6.1e-15} & 9 \\
+0.71 & \num{7.3e-15} & \num{2.7e-15} & \num{1.9e-15} & \num{2.0e-15} & 17 \\
+1.33 & \num{2.7e-14} & \num{8.6e-15} & \num{7.5e-15} & \num{1.5e-15} & 56 \\
+2.50 & \num{4.6e-15} & \num{8.5e-15} & \num{4.3e-15} & \num{6.2e-15} & 196 \\
+\midrule
+\multicolumn{6}{l}{$Q_{pp}$ log-slope in $h$: common noise 4.98, independent 1.00} \\
+\multicolumn{6}{l}{displacement variance, independent / common: 1.387} \\
+\multicolumn{6}{l}{acceleration PSD log$_2$ slope per octave at 5--10\,Hz: -2.04 / +1.97} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

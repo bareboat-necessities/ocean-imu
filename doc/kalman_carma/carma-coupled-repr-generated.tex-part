@@ -1,0 +1,20 @@
+\begin{table}[t]
+\caption{Share of the truth's $x$--$z$ / $y$--$z$ cross-spectral energy a real (A) or constant-phase (B) coefficient can represent, and the $x$--$z$ phase at the energy peak.}
+\label{tab:repr}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lccc}
+\toprule
+Sea & $x$--$z$ A / B & $y$--$z$ A / B & phase \\
+\midrule
+jonswap\_fp0.29\_hs0.8\_g3.3 & 0.35 / 0.94 & 0.40 / 0.90 & \SI{-62}{\degree} \\
+pm\_fp0.25\_hs1 & 0.41 / 0.92 & 0.47 / 0.89 & \SI{-59}{\degree} \\
+jonswap\_longcrested & 0.35 / 0.94 & 0.40 / 0.90 & \SI{-62}{\degree} \\
+jonswap\_wide\_spread & 0.35 / 0.94 & 0.39 / 0.91 & \SI{-62}{\degree} \\
+mixed\_swell\_wind & 0.38 / 0.93 & 0.41 / 0.91 & \SI{-61}{\degree} \\
+bimodal & 0.41 / 0.84 & 0.71 / 0.94 & \SI{-37}{\degree} \\
+crossing & 0.28 / 0.94 & 0.42 / 0.91 & \SI{-67}{\degree} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}

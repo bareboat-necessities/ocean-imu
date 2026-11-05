@@ -37,6 +37,14 @@
   updates, input guards.  The optional IMU lever arm
   (set_imu_lever_arm_body, off by default) is OU-III's measurement model with
   the band-limited rate derivative of kalman_common/ImuLeverArm.h.
+
+  Motion (last template parameter, default void).  void is the filter
+  described above, unchanged.  A coupled translational block of
+  kalman_carma/CarmaCoupledMotion.h (EXPERIMENTAL: correlated, shared-mode
+  and RAO-structured MCARMA priors, docs/carma-coupled-three-axis.md)
+  replaces the x/y/z CARMA blocks and their discretization; the attitude,
+  bias, magnetometer, reset and Joseph mathematics above are shared, line for
+  line.  The coupled block requires NHC = NZC = 4 and no S states.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -51,6 +59,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <type_traits>
 
 #include "kalman_common/CovarianceProjection.h"
 #include "kalman_common/ImuLeverArm.h"
@@ -60,17 +69,36 @@
 
 namespace ocean_imu::kalman {
 
+namespace carma3_detail {
+// Placeholder of a member a Motion instantiation does not use (and of the
+// motion block in the default one); constructible from anything.
+struct EmptyMember {
+    constexpr EmptyMember() = default;
+    template<class... A> constexpr explicit EmptyMember(A&&...) {}
+};
+template<class M> struct MotionNL { static constexpr int value = M::NL; };
+template<> struct MotionNL<void> { static constexpr int value = 0; };
+// Whether a motion block's positions and velocities are states (unit
+// readouts) or linear combinations of states (the modal form).
+template<class M> struct MotionUnitReadout { static constexpr bool value = M::kUnitReadout; };
+template<> struct MotionUnitReadout<void> { static constexpr bool value = true; };
+}  // namespace carma3_detail
+
 template <typename T = float, int NHC = 4, bool SH = false, int NZC = 4, bool SZ = false,
-          bool with_gyro_bias = true, bool with_accel_bias = true>
+          bool with_gyro_bias = true, bool with_accel_bias = true, class Motion = void>
 class Kalman3D_Wave_CARMA3 {
     static_assert(NHC >= 3 && NHC <= 5, "horizontal CARMA order 3..5");
     static_assert(NZC >= 3 && NZC <= 5, "vertical CARMA order 3..5");
 public:
+    static constexpr bool kMotion = !std::is_void_v<Motion>;
+    static constexpr bool kDenseReadout = !carma3_detail::MotionUnitReadout<Motion>::value;
+    static_assert(!kMotion || (NHC == 4 && NZC == 4 && !SH && !SZ),
+                  "a coupled motion block replaces CARMA(4,1) x/y/z without S states");
     static constexpr int BASE_N = with_gyro_bias ? 6 : 3;
     static constexpr int NHA = NHC + (SH ? 1 : 0);   // states per horizontal axis
     static constexpr int NH = 2 * NHA;
     static constexpr int NZ = NZC + (SZ ? 1 : 0);
-    static constexpr int NL = NH + NZ;
+    static constexpr int NL = kMotion ? carma3_detail::MotionNL<Motion>::value : NH + NZ;
     static constexpr int NX = BASE_N + NL + (with_accel_bias ? 3 : 0);
 
     static constexpr int OFF_L = BASE_N;
@@ -83,8 +111,14 @@ public:
     static constexpr int idx_v(int ax) { return BASE_N + ax * NHA + 1; }
     static constexpr int idx_a(int ax) { return BASE_N + ax * NHA + 2; }
     static constexpr int idx_S(int ax) { return SH ? BASE_N + ax * NHA + NHC : -1; }
-    static constexpr int pos_index(int ax) { return ax < 2 ? idx_p(ax) : OFF_Z; }
-    static constexpr int vel_index(int ax) { return ax < 2 ? idx_v(ax) : OFF_Z + 1; }
+    static constexpr int pos_index(int ax) {
+        if constexpr (kMotion) return BASE_N + Motion::pos_local(ax);
+        else return ax < 2 ? idx_p(ax) : OFF_Z;
+    }
+    static constexpr int vel_index(int ax) {
+        if constexpr (kMotion) return BASE_N + Motion::vel_local(ax);
+        else return ax < 2 ? idx_v(ax) : OFF_Z + 1;
+    }
 
     using Vector3 = Eigen::Matrix<T,3,1>;
     using Matrix3 = Eigen::Matrix<T,3,3>;
@@ -166,13 +200,51 @@ public:
     void set_acc_bias_updates_enabled(bool en);
 
     [[nodiscard]] Vector3 get_velocity() const {
-        return Vector3(xext(idx_v(0)), xext(idx_v(1)), xext(OFF_Z + 1));
+        if constexpr (kDenseReadout) return readout_(1);
+        else if constexpr (kMotion) return Vector3(xext(vel_index(0)), xext(vel_index(1)), xext(vel_index(2)));
+        else return Vector3(xext(idx_v(0)), xext(idx_v(1)), xext(OFF_Z + 1));
     }
     [[nodiscard]] Vector3 get_position() const {
-        return Vector3(xext(idx_p(0)), xext(idx_p(1)), xext(OFF_Z));
+        if constexpr (kDenseReadout) return readout_(0);
+        else if constexpr (kMotion) return Vector3(xext(pos_index(0)), xext(pos_index(1)), xext(pos_index(2)));
+        else return Vector3(xext(idx_p(0)), xext(idx_p(1)), xext(OFF_Z));
+    }
+    // Rows of [p; v] (NED) as linear functionals of the full state: unit rows
+    // except for a dense-readout motion block.  pv_covariance6() = J P J^T.
+    [[nodiscard]] Eigen::Matrix<T,6,NX> pv_readout() const {
+        Eigen::Matrix<T,6,NX> J = Eigen::Matrix<T,6,NX>::Zero();
+        for (int ax = 0; ax < 3; ++ax) {
+            if constexpr (kDenseReadout) {
+                int idx[4]; T w[4];
+                int n = motion_.pos_terms(ax, idx, w);
+                for (int k = 0; k < n; ++k) J(ax, OFF_L + idx[k]) = w[k];
+                n = motion_.vel_terms(ax, idx, w);
+                for (int k = 0; k < n; ++k) J(3 + ax, OFF_L + idx[k]) = w[k];
+            } else {
+                J(ax, pos_index(ax)) = T(1);
+                J(3 + ax, vel_index(ax)) = T(1);
+            }
+        }
+        return J;
+    }
+    [[nodiscard]] Eigen::Matrix<T,6,6> pv_covariance6() const {
+        const Eigen::Matrix<T,6,NX> J = pv_readout();
+        return J * Pext * J.transpose();
     }
     [[nodiscard]] Vector3 get_world_accel() const {
-        return Vector3(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
+        if constexpr (kMotion) {
+            Vector3 a;
+            for (int ax = 0; ax < 3; ++ax) {
+                int idx[4]; T w[4];
+                const int n = motion_.accel_terms(ax, idx, w);
+                T s = T(0);
+                for (int k = 0; k < n; ++k) s += w[k] * xext(OFF_L + idx[k]);
+                a(ax) = s;
+            }
+            return a;
+        } else {
+            return Vector3(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
+        }
     }
     [[nodiscard]] Vector3 get_integral_displacement() const {
         const T nan = std::numeric_limits<T>::quiet_NaN();
@@ -183,6 +255,12 @@ public:
     }
     // [p, v] covariance of one axis (0 = x, 1 = y, 2 = z, NED).
     [[nodiscard]] Eigen::Matrix<T,2,2> pv_covariance(int axis) const {
+        if constexpr (kDenseReadout) {
+            const Eigen::Matrix<T,6,6> C = pv_covariance6();
+            Eigen::Matrix<T,2,2> M;
+            M << C(axis, axis), C(axis, 3 + axis), C(3 + axis, axis), C(3 + axis, 3 + axis);
+            return M;
+        }
         const int ip = pos_index(axis), iv = vel_index(axis);
         Eigen::Matrix<T,2,2> M;
         M << Pext(ip, ip), Pext(ip, iv), Pext(iv, ip), Pext(iv, iv);
@@ -190,6 +268,7 @@ public:
     }
     [[nodiscard]] Eigen::Matrix<T,2,2> vertical_pv_covariance() const { return pv_covariance(2); }
     [[nodiscard]] Matrix3 position_covariance() const {
+        if constexpr (kDenseReadout) return pv_covariance6().template topLeftCorner<3,3>();
         Matrix3 M;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) M(i,j) = Pext(pos_index(i), pos_index(j));
@@ -201,8 +280,9 @@ public:
     // CARMA priors are scaled through kappa, not through tau).
     [[nodiscard]] T get_aw_time_constant() const { return tau_aw; }
     [[nodiscard]] Vector3 get_aw_stationary_std() const {
-        return Vector3(std::sqrt(std::max(T(0), Sigma_h_(0,0))), std::sqrt(std::max(T(0), Sigma_h_(1,1))),
-                       vmodel_.accel_std());
+        if constexpr (kMotion) return motion_.accel_std();
+        else return Vector3(std::sqrt(std::max(T(0), Sigma_h_(0,0))), std::sqrt(std::max(T(0), Sigma_h_(1,1))),
+                            vmodel_.accel_std());
     }
     [[nodiscard]] Vector3 get_RS_noise_std() const { return R_S.diagonal().cwiseMax(T(0)).cwiseSqrt(); }
 
@@ -219,27 +299,109 @@ public:
     // Stationary prior covariance of every CARMA block (the name is the
     // shared wrapper interface).
     void reset_aw_covariance_to_stationary() {
-        reset_horizontal_covariance_to_stationary();
-        reset_vertical_covariance_to_stationary();
-        symmetrize_Pext_();
+        if constexpr (kMotion) {
+            Pext.template block<NL,BASE_N>(OFF_L, 0).setZero();
+            Pext.template block<BASE_N,NL>(0, OFF_L).setZero();
+            if constexpr (with_accel_bias) {
+                Pext.template block<NL,3>(OFF_L, OFF_BA).setZero();
+                Pext.template block<3,NL>(OFF_BA, OFF_L).setZero();
+            }
+            motion_.refresh(motion_.step());
+            recoordinate_motion_();
+            motion_.stationary(Pext, OFF_L);
+            symmetrize_Pext_();
+        } else {
+            reset_horizontal_covariance_to_stationary();
+            reset_vertical_covariance_to_stationary();
+            symmetrize_Pext_();
+        }
     }
 
-    bool set_vertical_carma(T kappa, T accel_std) { return vmodel_.configure(kappa, accel_std); }
-    [[nodiscard]] const VerticalModel& vertical_model() const noexcept { return vmodel_; }
+    bool set_vertical_carma(T kappa, T accel_std) {
+        if constexpr (kMotion) return motion_.set_vertical(kappa, accel_std);
+        else return vmodel_.configure(kappa, accel_std);
+    }
+    [[nodiscard]] const VerticalModel& vertical_model() const noexcept {
+        if constexpr (kMotion) return motion_.vertical_model();
+        else return vmodel_;
+    }
 
     // Horizontal CARMA prior: frequency scale kappa (both axes) and the
     // directional acceleration covariance [[sx^2, r sx sy], [r sx sy, sy^2]].
     bool set_horizontal_carma(T kappa, T sx, T sy, T r = T(0)) {
-        if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
-        if (!(std::abs(r) <= T(1))) return false;
-        if (!hmodel_.configure(kappa, T(1))) return false;   // unit-variance A_h, W_1
-        Sigma_h_ << sx * sx, r * sx * sy, r * sx * sy, sy * sy;
-        return true;
+        if constexpr (kMotion) {
+            return motion_.set_horizontal(kappa, sx, sy, r);
+        } else {
+            if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
+            if (!(std::abs(r) <= T(1))) return false;
+            if (!hmodel_.configure(kappa, T(1))) return false;   // unit-variance A_h, W_1
+            Sigma_h_ << sx * sx, r * sx * sy, r * sx * sy, sy * sy;
+            return true;
+        }
     }
-    bool set_horizontal_shape(const carma::CarmaShape& shape) { return hmodel_.set_shape(shape); }
-    bool set_vertical_shape(const carma::CarmaShape& shape) { return vmodel_.set_shape(shape); }
-    [[nodiscard]] const HorizontalModel& horizontal_model() const noexcept { return hmodel_; }
-    [[nodiscard]] Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_h_; }
+    bool set_horizontal_shape(const carma::CarmaShape& shape) {
+        if constexpr (kMotion) return motion_.set_shape(shape);
+        else return hmodel_.set_shape(shape);
+    }
+    bool set_vertical_shape(const carma::CarmaShape& shape) {
+        if constexpr (kMotion) return motion_.set_shape(shape);
+        else return vmodel_.set_shape(shape);
+    }
+    [[nodiscard]] const HorizontalModel& horizontal_model() const noexcept {
+        if constexpr (kMotion) return motion_.horizontal_model();
+        else return hmodel_;
+    }
+    [[nodiscard]] Eigen::Matrix<T,2,2> horizontal_sigma() const {
+        if constexpr (kMotion) return motion_.horizontal_sigma();
+        else return Sigma_h_;
+    }
+
+    // A motion block whose coordinates depend on its parameters (the modal
+    // form) hands over x_new = M x_old per axis block after a model change:
+    // apply it to the state and, as S P S^T with S = blockdiag(I, I3 (x) M, I),
+    // to the covariance, so the posterior is continuous across the commit.
+    void recoordinate_motion_() {
+        if constexpr (kMotion) {
+            if constexpr (requires(Motion& m, typename Motion::MatB& M) { m.take_recoordinatization(M); }) {
+                using MB = typename Motion::MatB;
+                constexpr int NB = MB::RowsAtCompileTime;
+                MB M;
+                if (!motion_.take_recoordinatization(M)) return;
+                for (int ax = 0; ax < NL / NB; ++ax) {
+                    const int r0 = OFF_L + ax * NB;
+                    const Eigen::Matrix<T,NB,1> xs = xext.template segment<NB>(r0);
+                    xext.template segment<NB>(r0) = M * xs;
+                    const Eigen::Matrix<T,NB,NX> rows = Pext.template block<NB,NX>(r0, 0);
+                    Pext.template block<NB,NX>(r0, 0) = M * rows;
+                }
+                for (int ax = 0; ax < NL / NB; ++ax) {
+                    const int c0 = OFF_L + ax * NB;
+                    const Eigen::Matrix<T,NX,NB> cols = Pext.template block<NX,NB>(0, c0);
+                    Pext.template block<NX,NB>(0, c0) = cols * M.transpose();
+                }
+                symmetrize_Pext_();
+            }
+        }
+    }
+
+    // p (which = 0) or v (1) of a dense-readout motion block.
+    Vector3 readout_(int which) const {
+        Vector3 r;
+        for (int ax = 0; ax < 3; ++ax) {
+            int idx[4]; T w[4];
+            const int n = which == 0 ? motion_.pos_terms(ax, idx, w) : motion_.vel_terms(ax, idx, w);
+            T s = T(0);
+            for (int k = 0; k < n; ++k) s += w[k] * xext(OFF_L + idx[k]);
+            r(ax) = s;
+        }
+        return r;
+    }
+
+    // Coupled motion block (Motion != void only).
+    template<bool B = kMotion, std::enable_if_t<B, int> = 0>
+    auto& motion() noexcept { return motion_; }
+    template<bool B = kMotion, std::enable_if_t<B, int> = 0>
+    const auto& motion() const noexcept { return motion_; }
 
     void reset_vertical_covariance_to_stationary() {
         MatrixCZ P0;
@@ -356,14 +518,15 @@ private:
 
     // Horizontal CARMA prior (unit acceleration variance) and its
     // discretization at the current step; Sigma_h_ scales Q and the
-    // stationary covariance.
-    HorizontalModel hmodel_;
+    // stationary covariance.  (A Motion instantiation keeps its own blocks
+    // and stores placeholders here.)
+    std::conditional_t<kMotion, carma3_detail::EmptyMember, HorizontalModel> hmodel_;
     Eigen::Matrix<T,2,2> Sigma_h_ = Eigen::Matrix<T,2,2>::Identity();
-    carma::StepDiscretization<T,NHA> disc_h_;
+    std::conditional_t<kMotion, carma3_detail::EmptyMember, carma::StepDiscretization<T,NHA>> disc_h_;
 
     // Vertical prior and its discretization at the current step.
-    VerticalModel vmodel_;
-    carma::StepDiscretization<T,NZ> disc_z_;
+    std::conditional_t<kMotion, carma3_detail::EmptyMember, VerticalModel> vmodel_;
+    std::conditional_t<kMotion, carma3_detail::EmptyMember, carma::StepDiscretization<T,NZ>> disc_z_;
 
     T sigma_S0_ = T(50.0);
     T pseudo_update_elapsed_s_ = T(0);
@@ -382,6 +545,10 @@ private:
 
     MeasDiag3 last_acc_diag_;
     MeasDiag3 last_mag_diag_;
+
+    // Coupled motion block (Motion != void; empty, and no storage, otherwise:
+    // the default instantiation keeps its layout and size).
+    [[no_unique_address]] std::conditional_t<kMotion, Motion, carma3_detail::EmptyMember> motion_;
 
     void symmetrize_Pext_() {
         for (int i = 0; i < NX; ++i)
@@ -532,6 +699,11 @@ private:
     void refresh_vertical_discretization_(T Ts);
     void refresh_horizontal_discretization_(T Ts);
 
+    static constexpr int motion_acc_terms_() {
+        if constexpr (kMotion) return Motion::MAX_ACC_TERMS;
+        else return 1;
+    }
+
     // With gyro bias F_AA = [[R, B], [0, I]]: rows 3..5 are unit rows.
     static constexpr bool aa_unit_row_(int i) { return with_gyro_bias && i >= 3; }
 
@@ -560,18 +732,22 @@ private:
 
     // out = F_LL in.
     void apply_F_LL_(const T (&in)[NL], T (&out)[NL]) const {
-        const MatrixHA& F_H = disc_h_.Phi();
-        const MatrixZZ& F_Z = disc_z_.Phi();
-        for (int ax = 0; ax < 2; ++ax)
-            for (int i = 0; i < NHA; ++i) {
+        if constexpr (kMotion) {
+            motion_.apply_F(in, out);
+        } else {
+            const MatrixHA& F_H = disc_h_.Phi();
+            const MatrixZZ& F_Z = disc_z_.Phi();
+            for (int ax = 0; ax < 2; ++ax)
+                for (int i = 0; i < NHA; ++i) {
+                    T acc = T(0);
+                    for (int j = 0; j < NHA; ++j) acc += F_H(i,j) * in[ax * NHA + j];
+                    out[ax * NHA + i] = acc;
+                }
+            for (int i = 0; i < NZ; ++i) {
                 T acc = T(0);
-                for (int j = 0; j < NHA; ++j) acc += F_H(i,j) * in[ax * NHA + j];
-                out[ax * NHA + i] = acc;
+                for (int j = 0; j < NZ; ++j) acc += F_Z(i,j) * in[NH + j];
+                out[NH + i] = acc;
             }
-        for (int i = 0; i < NZ; ++i) {
-            T acc = T(0);
-            for (int j = 0; j < NZ; ++j) acc += F_Z(i,j) * in[NH + j];
-            out[NH + i] = acc;
         }
     }
 };
@@ -580,8 +756,8 @@ private:
 // Implementation
 // ------------------------------------------------------------------------
 
-#define CARMA3_TPL template <typename T, int NHC, bool SH, int NZC, bool SZ, bool GB, bool AB>
-#define CARMA3_CLS Kalman3D_Wave_CARMA3<T,NHC,SH,NZC,SZ,GB,AB>
+#define CARMA3_TPL template <typename T, int NHC, bool SH, int NZC, bool SZ, bool GB, bool AB, class MO>
+#define CARMA3_CLS Kalman3D_Wave_CARMA3<T,NHC,SH,NZC,SZ,GB,AB,MO>
 
 CARMA3_TPL
 CARMA3_CLS::Kalman3D_Wave_CARMA3(
@@ -592,7 +768,8 @@ CARMA3_CLS::Kalman3D_Wave_CARMA3(
     Rmag(sigma_m.array().square().matrix().asDiagonal()),
     Racc(sigma_a.array().square().matrix().asDiagonal()),
     hmodel_(hshape),
-    vmodel_(vshape)
+    vmodel_(vshape),
+    motion_(vshape)
 {
     qref.setIdentity();
     Qbase.setZero();
@@ -609,13 +786,22 @@ CARMA3_CLS::Kalman3D_Wave_CARMA3(
     Pext.template topLeftCorner<3,3>() = Matrix3::Identity() * Pq0;
     if constexpr (GB) Pext.template block<3,3>(3,3) = Matrix3::Identity() * Pb0;
 
-    set_horizontal_carma(T(1), T(1), T(1), T(0));
-    reset_horizontal_covariance_to_stationary();
-    if constexpr (AB) {
-        Pext.template block<3,3>(OFF_BA, OFF_BA) = Matrix3::Identity() * sigma_bacc0_ * sigma_bacc0_;
+    if constexpr (kMotion) {
+        motion_.set_horizontal(T(1), T(1), T(1), T(0));
+        motion_.set_vertical(T(1), T(1));
+        reset_aw_covariance_to_stationary();
+        if constexpr (AB) {
+            Pext.template block<3,3>(OFF_BA, OFF_BA) = Matrix3::Identity() * sigma_bacc0_ * sigma_bacc0_;
+        }
+    } else {
+        set_horizontal_carma(T(1), T(1), T(1), T(0));
+        reset_horizontal_covariance_to_stationary();
+        if constexpr (AB) {
+            Pext.template block<3,3>(OFF_BA, OFF_BA) = Matrix3::Identity() * sigma_bacc0_ * sigma_bacc0_;
+        }
+        vmodel_.configure(T(1), T(1));
+        reset_vertical_covariance_to_stationary();
     }
-    vmodel_.configure(T(1), T(1));
-    reset_vertical_covariance_to_stationary();
 }
 
 CARMA3_TPL
@@ -877,10 +1063,15 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     }
 
     // Linear block: block-diagonal F_LL applied structurally.
-    refresh_horizontal_discretization_(Ts);
-    refresh_vertical_discretization_(Ts);
-    const MatrixHA& F_H = disc_h_.Phi();
-    const MatrixZZ& F_Z = disc_z_.Phi();
+    if constexpr (kMotion) {
+        const Matrix3 Rbw = R_bw();
+        motion_.set_heading(std::atan2(Rbw(1,0), Rbw(0,0)));
+        motion_.refresh(Ts);
+        recoordinate_motion_();
+    } else {
+        refresh_horizontal_discretization_(Ts);
+        refresh_vertical_discretization_(Ts);
+    }
 
     {
         T in[NL], out[NL];
@@ -889,51 +1080,77 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         for (int k = 0; k < NL; ++k) xext(OFF_L + k) = out[k];
     }
 
-    // P_LL <- F_LL P_LL F_LL^T over the upper block triangle (x, y, z).
-    constexpr int LX = OFF_L, LY = OFF_L + NHA;
-    propagate_block_<NHA,NHA>(LX, LX, F_H, F_H, true);
-    propagate_block_<NHA,NHA>(LX, LY, F_H, F_H, false);
-    propagate_block_<NHA,NZ>(LX, OFF_Z, F_H, F_Z, false);
-    propagate_block_<NHA,NHA>(LY, LY, F_H, F_H, true);
-    propagate_block_<NHA,NZ>(LY, OFF_Z, F_H, F_Z, false);
-    propagate_block_<NZ,NZ>(OFF_Z, OFF_Z, F_Z, F_Z, true);
-    // Q_H = Sigma_h (x) Q_1.
-    const MatrixHA& Q_H1 = disc_h_.Q();
-    const MatrixZZ& Q_Z = disc_z_.Q();
-    for (int ax = 0; ax < 2; ++ax)
-        for (int bx = 0; bx < 2; ++bx) {
-            const T s = Sigma_h_(ax, bx);
-            if (s == T(0)) continue;
-            for (int a = 0; a < NHA; ++a)
-                for (int b = 0; b < NHA; ++b)
-                    Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1(a, b);
-        }
-    for (int a = 0; a < NZ; ++a)
-        for (int b = 0; b < NZ; ++b)
-            Pext(OFF_Z + a, OFF_Z + b) += Q_Z(a, b);
-
-    // P_AL <- F_AA P_AL F_LL^T.
-    Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
-    for (int i = 0; i < BASE_N; ++i)
-        for (int j = 0; j < NL; ++j) {
-            if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
-            T acc = T(0);
-            for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
-            tmpAL(i,j) = acc;
-        }
-    for (int i = 0; i < BASE_N; ++i) {
-        for (int ax = 0; ax < 2; ++ax)
-            for (int j = 0; j < NHA; ++j) {
+    if constexpr (kMotion) {
+        // P_LL <- F_LL P_LL F_LL^T + Q_LL (the motion block's structure).
+        motion_.propagate(Pext, OFF_L);
+        // P_AL <- F_AA P_AL F_LL^T, row by row through F_LL.
+        Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
+        for (int i = 0; i < BASE_N; ++i)
+            for (int j = 0; j < NL; ++j) {
+                if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
                 T acc = T(0);
-                for (int k = 0; k < NHA; ++k) acc += F_H(j,k) * tmpAL(i, ax * NHA + k);
-                Pext(i, OFF_L + ax * NHA + j) = acc;
-                Pext(OFF_L + ax * NHA + j, i) = acc;
+                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
+                tmpAL(i,j) = acc;
             }
-        for (int j = 0; j < NZ; ++j) {
-            T acc = T(0);
-            for (int k = 0; k < NZ; ++k) acc += F_Z(j,k) * tmpAL(i, NH + k);
-            Pext(i, OFF_Z + j) = acc;
-            Pext(OFF_Z + j, i) = acc;
+        for (int i = 0; i < BASE_N; ++i) {
+            T in[NL], out[NL];
+            for (int k = 0; k < NL; ++k) in[k] = tmpAL(i,k);
+            apply_F_LL_(in, out);
+            for (int j = 0; j < NL; ++j) {
+                Pext(i, OFF_L + j) = out[j];
+                Pext(OFF_L + j, i) = out[j];
+            }
+        }
+    } else {
+        const MatrixHA& F_H = disc_h_.Phi();
+        const MatrixZZ& F_Z = disc_z_.Phi();
+
+        // P_LL <- F_LL P_LL F_LL^T over the upper block triangle (x, y, z).
+        constexpr int LX = OFF_L, LY = OFF_L + NHA;
+        propagate_block_<NHA,NHA>(LX, LX, F_H, F_H, true);
+        propagate_block_<NHA,NHA>(LX, LY, F_H, F_H, false);
+        propagate_block_<NHA,NZ>(LX, OFF_Z, F_H, F_Z, false);
+        propagate_block_<NHA,NHA>(LY, LY, F_H, F_H, true);
+        propagate_block_<NHA,NZ>(LY, OFF_Z, F_H, F_Z, false);
+        propagate_block_<NZ,NZ>(OFF_Z, OFF_Z, F_Z, F_Z, true);
+        // Q_H = Sigma_h (x) Q_1.
+        const MatrixHA& Q_H1 = disc_h_.Q();
+        const MatrixZZ& Q_Z = disc_z_.Q();
+        for (int ax = 0; ax < 2; ++ax)
+            for (int bx = 0; bx < 2; ++bx) {
+                const T s = Sigma_h_(ax, bx);
+                if (s == T(0)) continue;
+                for (int a = 0; a < NHA; ++a)
+                    for (int b = 0; b < NHA; ++b)
+                        Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1(a, b);
+            }
+        for (int a = 0; a < NZ; ++a)
+            for (int b = 0; b < NZ; ++b)
+                Pext(OFF_Z + a, OFF_Z + b) += Q_Z(a, b);
+
+        // P_AL <- F_AA P_AL F_LL^T.
+        Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
+        for (int i = 0; i < BASE_N; ++i)
+            for (int j = 0; j < NL; ++j) {
+                if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
+                T acc = T(0);
+                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
+                tmpAL(i,j) = acc;
+            }
+        for (int i = 0; i < BASE_N; ++i) {
+            for (int ax = 0; ax < 2; ++ax)
+                for (int j = 0; j < NHA; ++j) {
+                    T acc = T(0);
+                    for (int k = 0; k < NHA; ++k) acc += F_H(j,k) * tmpAL(i, ax * NHA + k);
+                    Pext(i, OFF_L + ax * NHA + j) = acc;
+                    Pext(OFF_L + ax * NHA + j, i) = acc;
+                }
+            for (int j = 0; j < NZ; ++j) {
+                T acc = T(0);
+                for (int k = 0; k < NZ; ++k) acc += F_Z(j,k) * tmpAL(i, NH + k);
+                Pext(i, OFF_Z + j) = acc;
+                Pext(OFF_Z + j, i) = acc;
+            }
         }
     }
 
@@ -994,7 +1211,10 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     if constexpr (AB) ba_term = xext.template segment<3>(OFF_BA) + k_a_ * (tempC - tempC_ref);
 
     const Matrix3 Rwb = R_wb();
-    const Vector3 aw(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
+    const Vector3 aw = [&]() -> Vector3 {
+        if constexpr (kMotion) return get_world_accel();
+        else return Vector3(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
+    }();
     const Vector3 f_cog_b = Rwb * (aw - g_world);
     Vector3 f_pred = f_cog_b + ba_term;
     // Off-CoG IMU: the rotational term at the sensor (ImuLeverArm.h).  Its
@@ -1004,16 +1224,34 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     last_acc_diag_.r = r;
 
     const Matrix3 J_att = -skew_(f_cog_b);
-    constexpr int NCOL_MAX = 6 + (AB ? 3 : 0) + (GB ? 3 : 0);
+    constexpr int NCOL_MAX = 3 + (kMotion ? 3 * motion_acc_terms_() : 3) + (AB ? 3 : 0) + (GB ? 3 : 0);
     int ncol = 6 + (AB ? 3 : 0);
     int col[NCOL_MAX];
     Vector3 cvec[NCOL_MAX];
     for (int k = 0; k < 3; ++k) { col[k] = k; cvec[k] = J_att.col(k); }
-    col[3] = idx_a(0);   cvec[3] = Rwb.col(0);
-    col[4] = idx_a(1);   cvec[4] = Rwb.col(1);
-    col[5] = OFF_Z + 2;  cvec[5] = Rwb.col(2);
-    if constexpr (AB) {
-        for (int k = 0; k < 3; ++k) { col[6 + k] = OFF_BA + k; cvec[6 + k] = Vector3::Unit(k); }
+    if constexpr (kMotion) {
+        // The coupling source sees the measured world-frame acceleration.
+        Vector3 f_meas_cog = acc_meas - ba_term;
+        if (lever_.enabled()) f_meas_cog -= lever_.acceleration();
+        motion_.observe(Rwb.transpose() * f_meas_cog + g_world);
+        int m = 3;
+        for (int ax = 0; ax < 3; ++ax) {
+            int idx[4]; T w[4];
+            const int n = motion_.accel_terms(ax, idx, w);
+            for (int k = 0; k < n; ++k) { col[m] = OFF_L + idx[k]; cvec[m] = Rwb.col(ax) * w[k]; ++m; }
+        }
+        if constexpr (AB) {
+            for (int k = 0; k < 3; ++k) { col[m + k] = OFF_BA + k; cvec[m + k] = Vector3::Unit(k); }
+            m += 3;
+        }
+        ncol = m;
+    } else {
+        col[3] = idx_a(0);   cvec[3] = Rwb.col(0);
+        col[4] = idx_a(1);   cvec[4] = Rwb.col(1);
+        col[5] = OFF_Z + 2;  cvec[5] = Rwb.col(2);
+        if constexpr (AB) {
+            for (int k = 0; k < 3; ++k) { col[6 + k] = OFF_BA + k; cvec[6 + k] = Vector3::Unit(k); }
+        }
     }
     if constexpr (GB) {
         if (lever_.enabled()) {
@@ -1152,6 +1390,15 @@ void CARMA3_CLS::applyIntegralZeroPseudoMeas() {
 
 CARMA3_TPL
 void CARMA3_CLS::measurement_update_position_pseudo(const Vector3& p_meas, const Vector3& sigma_meas) {
+    if constexpr (kMotion) {
+        static_assert(!kDenseReadout || sizeof(MO*) == 0,
+                      "pseudo-measurements need a motion block whose p and v are states");
+        const int idx[3] = {pos_index(0), pos_index(1), pos_index(2)};
+        const Vector3 r = p_meas - get_position();
+        const Vector3 s = sigma_meas.cwiseMax(T(0));
+        select_update_<3>(idx, r, Matrix3(s.array().square().matrix().asDiagonal()), false);
+        return;
+    }
     const int idx[3] = {idx_p(0), idx_p(1), OFF_Z};
     const Vector3 r = p_meas - get_position();
     const Vector3 s = sigma_meas.cwiseMax(T(0));
@@ -1160,6 +1407,15 @@ void CARMA3_CLS::measurement_update_position_pseudo(const Vector3& p_meas, const
 
 CARMA3_TPL
 void CARMA3_CLS::measurement_update_velocity_pseudo(const Vector3& v_meas, const Vector3& sigma_meas) {
+    if constexpr (kMotion) {
+        static_assert(!kDenseReadout || sizeof(MO*) == 0,
+                      "pseudo-measurements need a motion block whose p and v are states");
+        const int idx[3] = {vel_index(0), vel_index(1), vel_index(2)};
+        const Vector3 r = v_meas - get_velocity();
+        const Vector3 s = sigma_meas.cwiseMax(T(0));
+        select_update_<3>(idx, r, Matrix3(s.array().square().matrix().asDiagonal()), false);
+        return;
+    }
     const int idx[3] = {idx_v(0), idx_v(1), OFF_Z + 1};
     const Vector3 r = v_meas - get_velocity();
     const Vector3 s = sigma_meas.cwiseMax(T(0));
@@ -1169,6 +1425,16 @@ void CARMA3_CLS::measurement_update_velocity_pseudo(const Vector3& v_meas, const
 CARMA3_TPL
 void CARMA3_CLS::measurement_update_vert_velocity_pseudo(T vz_meas, T sigma_meas) {
     if (!std::isfinite(vz_meas)) return;
+    if constexpr (kMotion) {
+        static_assert(!kDenseReadout || sizeof(MO*) == 0,
+                      "pseudo-measurements need a motion block whose p and v are states");
+        const int idx[1] = {vel_index(2)};
+        const T s = std::max(T(0), sigma_meas);
+        Matrix3 R = Matrix3::Identity();
+        R(0,0) = s * s;
+        select_update_<1>(idx, Vector3(vz_meas - xext(vel_index(2)), T(0), T(0)), R, false);
+        return;
+    }
     const int idx[1] = {OFF_Z + 1};
     const T s = std::max(T(0), sigma_meas);
     Matrix3 R = Matrix3::Identity();

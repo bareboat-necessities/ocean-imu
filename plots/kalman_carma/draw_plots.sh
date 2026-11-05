@@ -16,3 +16,9 @@ if [ ${#existing[@]} -eq 0 ]; then
 fi
 
 python3 kalman_carma-plots.py
+
+# Coupled three-axis priors (doc/kalman_carma/kalman_carma_coupled.tex): the
+# figures are drawn from the committed study data in
+# reports/results/carma3_coupled (tools/carma3_coupled_benchmark.py).
+python3 ../../tools/carma3_coupled_analysis.py --plots-from-json . --ext png
+python3 ../../tools/carma3_coupled_report.py --figures-only --outdir . --ext png

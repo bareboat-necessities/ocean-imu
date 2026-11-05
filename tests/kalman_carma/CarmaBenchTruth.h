@@ -70,7 +70,9 @@ constexpr double PI = 3.14159265358979323846;
 constexpr double TWO_PI = 2.0 * PI;
 constexpr double G = 9.80665;
 
-enum class SpectrumType { Jonswap, Band };
+// Regular: one long-period-free monochromatic component per direction at
+// fp_hz (amplitude hs_m / (2 sqrt 2), i.e. hs_m = 4 sqrt(m0)), no jitter.
+enum class SpectrumType { Jonswap, Band, Regular };
 
 struct SpectrumPart {
     SpectrumType type = SpectrumType::Jonswap;
@@ -215,6 +217,28 @@ inline bool base_scenario(const std::string& name, Scenario& sc) {
         sc.parts = {jonswap_part(num("_hs", 2.0), num("_fp", 0.29), num("_g", 3.3))};
     } else if (name.rfind("pm", 0) == 0) {
         sc.parts = {jonswap_part(num("_hs", 2.0), num("_fp", 0.25), 1.0)};
+    } else if (name.rfind("regular", 0) == 0) {
+        // regular_f<Hz>_h<wave height m>: a long-crested monochromatic wave.
+        SpectrumPart p;
+        p.type = SpectrumType::Regular;
+        p.fp_hz = num("_f", 0.25);
+        p.hs_m = std::sqrt(2.0) * num("_h", 1.0);
+        p.mean_dir_deg = 30.0;
+        p.spread_s = 1.0e4;
+        sc.parts = {p};
+    } else if (name == "crossing") {
+        // Two systems of similar frequency crossing at 90 deg.
+        sc.parts = {jonswap_part(0.6, 0.25, 3.3, 0.0, 6.0), jonswap_part(0.6, 0.31, 3.3, 90.0, 6.0)};
+    } else if (name == "swell") {
+        // Long-period, long-crested swell.
+        sc.parts = {jonswap_part(1.5, 0.08, 6.0, 30.0, 15.0)};
+    } else if (name == "dir_change") {
+        // The same JONSWAP sea, its propagation direction moving 30 -> 120 deg
+        // over 60 s centred on 600 s (independent realizations crossfaded).
+        sc.parts = {jonswap_part(0.8, 0.29, 3.3, 30.0)};
+        sc.parts_b = {jonswap_part(0.8, 0.29, 3.3, 120.0)};
+        sc.fade.enabled = true;
+        sc.fade.t_c = 600.0; sc.fade.width = 60.0;
     } else if (name == "mixed_swell_wind") {
         sc.parts = {jonswap_part(1.0, 0.09, 5.0, 10.0, 12.0), jonswap_part(0.8, 0.30, 3.3, 60.0, 4.0)};
     } else if (name == "bimodal") {
@@ -313,6 +337,10 @@ public:
         std::uniform_real_distribution<double> u01(0.0, 1.0);
         const double psi_bow = sc.att.heading_deg * PI / 180.0;
         for (const auto& p : parts) {
+            if (p.type == SpectrumType::Regular) {
+                build_regular(sc, p, rng);
+                continue;
+            }
             double flo, fhi;
             if (p.type == SpectrumType::Jonswap) { flo = 0.55 * p.fp_hz; fhi = 4.5 * p.fp_hz; }
             else { flo = 0.8 * p.f_lo_hz; fhi = 1.2 * p.f_hi_hz; }
@@ -383,6 +411,55 @@ public:
         zi_.assign(omega_.size(), 0.0);
         rr_.assign(omega_.size(), 1.0);
         ri_.assign(omega_.size(), 0.0);
+    }
+
+    // One monochromatic component per direction with weight > 1e-12 of the
+    // cos^2s spreading (a long-crested wave for a large spread_s); the
+    // channel coefficients are those of the spectral loop above.
+    void build_regular(const Scenario& sc, const SpectrumPart& p, std::mt19937_64& rng) {
+        constexpr int ND = 5;
+        std::uniform_real_distribution<double> u01(0.0, 1.0);
+        const double psi_bow = sc.att.heading_deg * PI / 180.0;
+        double wsum = 0.0, dwt[ND], th[ND];
+        for (int j = 0; j < ND; ++j) {
+            th[j] = -0.5 * PI + (j + 0.5) * PI / ND;
+            dwt[j] = std::pow(std::cos(th[j]), 2.0 * p.spread_s);
+            wsum += dwt[j];
+        }
+        const double omega = TWO_PI * p.fp_hz, k = omega * omega / G;
+        for (int j = 0; j < ND; ++j) {
+            if (!(dwt[j] / wsum > 1e-12)) continue;
+            const double amp = p.hs_m / (2.0 * std::sqrt(2.0)) * std::sqrt(dwt[j] / wsum);
+            const double dir = p.mean_dir_deg * PI / 180.0 + th[j];
+            const double rel = dir - psi_bow;
+            const double we = (sc.speed_mps != 0.0) ? omega - k * sc.speed_mps * std::cos(rel) : omega;
+            const std::complex<double> Hh = sc.heave_scale * (sc.heave_rao
+                ? vessel_rao_ek(we, k, sc.heave_fn_hz, sc.heave_zeta, sc.heave_avg_m) : std::complex<double>(1.0, 0.0));
+            const std::complex<double> Hr = vessel_rao_ek(we, k, sc.att.roll_fn_hz, sc.att.roll_zeta, sc.att.roll_avg_m);
+            const std::complex<double> Hp = vessel_rao_ek(we, k, sc.att.pitch_fn_hz, sc.att.pitch_zeta, sc.att.pitch_avg_m);
+            const std::complex<double> lag(0.0, -1.0);
+            omega_.push_back(we);
+            phase0_.push_back(TWO_PI * u01(rng));
+            std::complex<double> c[NCH];
+            c[ETA] = amp;
+            c[HEAVE] = amp * Hh;
+            if (sc.hmodel.physical) {
+                const double cb = std::cos(rel), sb = std::sin(rel);
+                const double surge = std::exp(-k * (sc.hmodel.depth_m + sc.hmodel.length_m * std::abs(cb))) * cb;
+                const double sway = std::exp(-k * (sc.hmodel.depth_m + sc.hmodel.beam_m * std::abs(sb))) * sb;
+                c[NORTH] = amp * lag * (surge * std::cos(psi_bow) - sway * std::sin(psi_bow));
+                c[EAST] = amp * lag * (surge * std::sin(psi_bow) + sway * std::cos(psi_bow));
+            } else {
+                c[NORTH] = sc.horizontal_gain * amp * Hh * lag * std::cos(dir);
+                c[EAST] = sc.horizontal_gain * amp * Hh * lag * std::sin(dir);
+            }
+            c[SLOPE_BOW] = k * amp * std::cos(rel) * Hp * lag;
+            c[SLOPE_BEAM] = k * amp * std::sin(rel) * Hr * lag;
+            for (int ch = 0; ch < NCH; ++ch) {
+                cr_[ch].push_back(c[ch].real());
+                ci_[ch].push_back(c[ch].imag());
+            }
+        }
     }
 
     // Phases phi_i = omega_i W + phase0_i set exactly; rotation for step dW.
