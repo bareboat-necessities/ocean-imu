@@ -57,7 +57,7 @@ python3 - <<'PY'
 import csv
 rows = {r["filter"]: r for r in csv.DictReader(open("smoke_coupled.csv"))}
 skip = {"filter", "runtime_ns", "memory_bytes", "states"}
-same = [k for k in rows["A41"] if k not in skip and not k.startswith(("cpl_", "wi_")) and rows["A41"][k] != rows["B41"][k]]
+same = [k for k in rows["A41"] if k not in skip and not k.startswith(("cpl_", "wi_", "runtime_")) and rows["A41"][k] != rows["B41"][k]]
 assert not same, ("B41 differs from A41", same[:5])
 for a in "xyz":
     r = float(rows["COR:off"]["rms_" + a]) / float(rows["A41"]["rms_" + a])
