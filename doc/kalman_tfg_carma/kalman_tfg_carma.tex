@@ -204,7 +204,11 @@ needs only $3\times3$ integrals: $Q_{\rho_i,\rho_j}=\Skew{w_i(h)}Q_{\phi\phi}
 CARMA process covariance at unit amplitude, so the CARMA part is
 $Q_A\otimes\Sigma_s$ exactly. The prior itself is CARMA3's: the fitted
 CARMA(4,1) JONSWAP shape with a zero at DC, the mapping $\kappa=f_{\mathrm{tune}}
-/f_{z,\mathrm{model}}$ and the amplitude from the measured band acceleration.
+/f_{z,\mathrm{model}}$ and the amplitude of the wrapper's default legacy
+excitation mode: the band acceleration RMS with a \SI{0.05}{m/s^2} floor. In
+still water and on seas below \SI{0.28}{m/s^2} vertical RMS the floor is the
+whole excitation (companion paper). Every benchmark result here is for that
+mode; \cref{sec:quiet} gives the evidence-weighted alternative.
 There is no auxiliary $S$ state.
 
 \section{Measurements, Correction and Reset}
@@ -395,9 +399,11 @@ tilt-equivalent bias the accelerometer cannot separate from tilt.
 \emph{Unfavourable.} The gyro-bias error over the last \SI{60}{s} is 0.8\,\%
 higher in the regular seas (raw $p=0.002$, Holm $p=0.12$) and 16.7\,\% higher
 when manoeuvring (raw $p=0.01$), while the whole-window gyro-bias RMS is
-lower; this is not explained. CARMA3's weaknesses, still-IMU drift and
-mixed-sea heave, are unchanged to 0.02\,\%: they belong to the prior, not to
-the error geometry.
+lower; this is not explained. CARMA3's weaknesses are unchanged to
+0.02\,\%: the still-IMU phantom displacement (heave \SI{53}{mm} against
+OU-III's \SI{27}{mm}, horizontal 84 against \SI{53}{mm}) and mixed-sea heave.
+They belong to the prior and its excitation, not to the error geometry
+(\cref{sec:quiet}).
 
 \begin{table}[t]
   \centering
@@ -431,6 +437,34 @@ the TFG without reset transport reports its heading uncertainty honestly. That
 pays off at reacquisition: after the \SI{900}{s} gap TFG-CARMA3 has 17\,\%
 less post-gap heading error than CARMA3. Accuracy \emph{during} a long gap is
 not better.
+
+\section{Still Water and the Excitation Mode}
+\label{sec:quiet}
+The still-IMU phantom of both filters comes from the legacy excitation's
+floor (companion paper). With no waves, the prior sits at the \SI{0.05}{Hz}
+tuner bound with \SI{0.05}{m/s^2} of driving noise, and it turns sensor
+noise and slow tilt and bias leakage into displacement. The wrapper's
+evidence-weighted excitation (\texttt{CarmaWaveEvidence.h},
+\texttt{docs/carma-wave-excitation.md}) replaces the floors with the
+noise-debiased band variance, weighted by its detection probability. It holds
+the CARMA frequency unless the band confirms the measured period. The mode
+acts in the wrapper, so both inner filters receive the same excitation, and
+their translation stays equal. On a still IMU (30 seeds, \SI{2400}{s}),
+heave falls from 52.2 to \SI{1.2e-4}{mm}, horizontal from 83.7 to
+\SI{2.6e-4}{mm}, and the startup transient from 2958 to \SI{0.07}{mm}, for
+both filters. In this mode, on every JONSWAP and PM sea of $H_s$
+\SIrange{0.5}{20}{cm}, the two filters' heave and horizontal RMS differ by at
+most 0.013\,\%.
+
+Without waves, attitude separates only in calm-water manoeuvres. There, the
+evidence mode no
+longer hides the manoeuvre's acceleration as phantom displacement
+(\SI{0.6}{m} in the legacy mode). Against its own legacy mode, CARMA3's tilt
+error is 12.5\,\% worse, its yaw error 14\,\% and its accelerometer-bias
+error 60\,\%. TFG-CARMA3's are 8\,\%, 2\,\% and 52\,\% worse. In evidence
+mode it therefore has 4\,\% lower tilt and 13\,\% lower yaw error than
+CARMA3, the misfit pattern of \cref{sec:bench}. The mode has one cost
+specific to TFG-CARMA3, in still-water arithmetic (\cref{sec:cost}).
 
 \section{Pinned Vessel-RAO Dataset}
 \label{sec:dataset}
@@ -560,10 +594,20 @@ for the ESP32-S3 with no undefined reference, a smaller object and a shallower
 static stack than CARMA3, and no heap allocation reachable from its own
 methods. There is no on-target timing.
 
+In still water, the evidence-weighted excitation of \cref{sec:quiet} drives
+the CARMA covariance down to its \SI{1e-5}{m/s^2} numerical floor. Products
+of these tiny blocks then underflow into subnormal floats inside the TFG
+covariance arithmetic; the stored covariance itself holds none. On the host,
+TFG-CARMA3 then takes \SI{7.7}{\micro s} per sample against \SI{5.1}{\micro s}
+in the legacy mode. With flush-to-zero the penalty disappears, and the
+quaternion MEKF is not affected. Whether the ESP32-S3 FPU slows down on
+subnormals is not measured.
+
 \section{Limitations and Recommendation}
 \label{sec:recommend}
 The limits are those of the evidence: simulation only, on one synthetic bench
-and one replay dataset with the IMU at the centre of gravity; CARMA3's
+and one replay dataset with the IMU at the centre of gravity; the wrapper's
+default legacy excitation in every benchmark run; CARMA3's
 policies mapped into the invariant coordinates rather than redesigned; a
 shared attitude inconsistency; the unexplained end-of-run gyro-bias signal;
 no group-affine property and no stability result; one CARMA shape and scale
