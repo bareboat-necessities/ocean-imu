@@ -254,13 +254,22 @@ def stage_timing(args):
 
 
 def stage_dataset(args):
-    """Replay of the pinned vessel-RAO records with the default seeds; the
-    metrics are the replay's own VALIDATION_METRICS lines (last 900 s)."""
-    require()
+    """Replay of the pinned vessel-RAO records with the default seeds: CSM and
+    CSM_OFF (kalman_carma_shared_modes-sim) and the CARMA3 baseline A41
+    (tests/kalman_carma/carma3-sim, the same records, seeds and adapter); the
+    metrics are the replays' own VALIDATION_METRICS lines (last 900 s)."""
+    require(SIM)
+    carma3_sim = ROOT / "tests" / "kalman_carma" / "carma3-sim"
+    if not carma3_sim.exists():
+        sys.exit("missing tests/kalman_carma/carma3-sim: make -C tests/kalman_carma build")
+    runs = [("A41", carma3_sim, {"W3D_CARMA3_VARIANT": "A41"}),
+            ("CSM_OFF", SIM, {"W3D_CSM_VARIANT": "CSM_OFF"}),
+            ("CSM", SIM, {"W3D_CSM_VARIANT": "CSM"})]
     rows = []
-    for variant in ("A41", "CSM_OFF", "CSM"):
-        env = dict(os.environ, W3D_CSM_VARIANT=variant, W3D_WRITE_TIMESERIES="1")
-        p = subprocess.run([str(SIM)], cwd=TDIR, capture_output=True, text=True, env=env)
+    for variant, exe, extra in runs:
+        env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
+        env.update(extra, W3D_WRITE_TIMESERIES="1")
+        p = subprocess.run([str(exe)], cwd=exe.parent, capture_output=True, text=True, env=env)
         if p.returncode != 0:
             print(f"ERROR dataset {variant}: rc={p.returncode} {p.stderr[-300:]}")
         for line in p.stdout.splitlines():
@@ -287,8 +296,9 @@ def stage_dataset(args):
     # one representative time series per filter for the tracking figures
     TRACE_DIR.mkdir(parents=True, exist_ok=True)
     import pandas as pd
-    for variant in ("A41", "CSM"):
-        src = next(iter(sorted(TDIR.glob(f"w3d_jonswap_H1.500*_fusion_CARMA_SHARED_MODES_{variant}.csv"))), None)
+    for variant, pat in (("A41", ROOT / "tests" / "kalman_carma" / "w3d_jonswap_H1.500*_fusion_CARMA3_A41.csv"),
+                         ("CSM", TDIR / "w3d_jonswap_H1.500*_fusion_CARMA_SHARED_MODES_CSM.csv")):
+        src = next(iter(sorted(pat.parent.glob(pat.name))), None)
         if src:
             d = pd.read_csv(src)
             step = max(1, int(round(0.1 / float(np.median(np.diff(d.time.values))))))
@@ -589,8 +599,10 @@ def figures(stats, outdir, exts=("svg",)):
         p = TRACE_DIR / f"dataset_jonswap_H1.5_{variant}.csv"
         if p.exists():
             return pd.read_csv(p)
-        pat = f"w3d_jonswap_H1.500*_fusion_CARMA_SHARED_MODES_{variant}.csv"
-        src = next(iter(sorted(Path.cwd().glob(pat)) + sorted(TDIR.glob(pat))), None)
+        fam = "CARMA3_A41" if variant == "A41" else f"CARMA_SHARED_MODES_{variant}"
+        pat = f"w3d_jonswap_H1.500*_fusion_{fam}.csv"
+        src = next(iter(sorted(Path.cwd().glob(pat)) + sorted(TDIR.glob(pat))
+                        + sorted((ROOT / "tests" / "kalman_carma").glob(pat))), None)
         if src is None:
             return None
         d = pd.read_csv(src)

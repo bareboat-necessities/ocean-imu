@@ -10,11 +10,13 @@
     filter), so the two simulators differ only in the motion model.
 
     W3D_CSM_VARIANT selects CSM (default: estimated coupling + coupling
-    confidence), CSM_NOCONF (confidence disabled: the research filter
-    SHM:est), CSM_OFF (coupling off: the CARMA(4,1) law on every axis) or A41
-    (the unchanged CARMA3 baseline, for paired replays with the same seeds).
-    The regression bars apply to CSM with the default seeds, noise and
-    magnetometer.  The Monte Carlo comparison is kalman_carma_shared_modes-bench.
+    confidence, the deployable configuration), CSM_NOCONF (confidence
+    disabled: the research filter SHM:est) or CSM_OFF (coupling off: the
+    CARMA(4,1) law on every axis).  The regression bars are fitted to CSM's
+    own replays of these records and gate CSM only (default seeds, noise and
+    magnetometer); the other variants are diagnostics.  The CARMA3 baseline
+    on the same records and seeds is tests/kalman_carma/carma3-sim (A41); the
+    paired Monte Carlo comparison is kalman_carma_shared_modes-bench.
 */
 
 #define EIGEN_NON_ARDUINO
@@ -54,19 +56,10 @@ private:
     CarmaAdapter<4, false, 4, false, CsmCore> impl_;
 };
 
-class A41Adapter final : public IW3dFusionAdapter {
-public:
-    A41Adapter(bool m, const Vector3f& a, const Vector3f& g, const Vector3f& s) : impl_(m, a, g, s, nullptr) {}
-    void updateMag(const Vector3f& b) override { impl_.updateMag(b); }
-    void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }
-    FilterSnapshot snapshot() const override { return impl_.snapshot(); }
-private:
-    CarmaAdapter<4, false, 4, false> impl_;
-};
-
-// Regression bars for CSM on the eight scored records (default seeds,
-// magnetometer on): the measured worst value plus about 0.5 %, the margin
-// carma3-sim uses for A41.
+// Regression bars of the deployable variant CSM on the eight scored records
+// (default seeds, magnetometer on), fitted to CSM's own replays: each is the
+// worst CSM value plus about 0.5 % (the margin convention of carma3-sim and
+// kalman_ou_iii-sim).  Not the CARMA3 baseline's bars.
 constexpr W3dFailureLimits kCsmRegressionBars{
     .err_limit_percent_z_jonswap   = 3.244f,  // worst 3.22788 (jonswap H0.27)
     .err_limit_percent_z_pmstokes  = 3.393f,  // worst 3.37567 (pmstokes H0.27)
@@ -150,8 +143,7 @@ int main(int argc, char* argv[]) {
             if (variant == "CSM") run_file<CsmAdapter<0>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_NOCONF") run_file<CsmAdapter<1>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_OFF") run_file<CsmAdapter<2>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
-            else if (variant == "A41") run_file<A41Adapter>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
-            else throw std::invalid_argument("W3D_CSM_VARIANT must be CSM, CSM_NOCONF, CSM_OFF or A41");
+            else throw std::invalid_argument("W3D_CSM_VARIANT must be CSM, CSM_NOCONF or CSM_OFF");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

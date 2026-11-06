@@ -14,8 +14,9 @@ make -C tests/kalman_carma_shared_modes test      # unit tests, paired smoke row
 
 cd tests/kalman_carma_shared_modes
 ./carma_shared_modes-test                         # unit and numerical tests
-./kalman_carma_shared_modes-sim                   # dataset replay, CSM (regression bars)
-W3D_CSM_VARIANT=A41 ./kalman_carma_shared_modes-sim   # ... the CARMA3 baseline, same seeds (also CSM_OFF, CSM_NOCONF)
+./kalman_carma_shared_modes-sim                   # dataset replay, CSM against its own regression bars
+W3D_CSM_VARIANT=CSM_OFF ./kalman_carma_shared_modes-sim   # diagnostics: CSM_OFF, CSM_NOCONF (ungated)
+(cd ../kalman_carma && ./carma3-sim)                  # the CARMA3 baseline A41, same records and seeds
 W3D_SEED=7 ./kalman_carma_shared_modes-sim --input wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv
 
 # Monte Carlo (carma3_bench engine: synthetic directional seas, paired filters)

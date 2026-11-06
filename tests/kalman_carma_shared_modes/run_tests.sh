@@ -34,13 +34,10 @@ for a in "xyz":
 print("csm smoke:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
 PY
 
-# The CARMA3 baseline on the same records and seeds (ungated): the paired
-# series of doc/kalman_carma_shared_modes's tracking charts.
-W3D_CSM_VARIANT=A41 ./kalman_carma_shared_modes-sim > /dev/null
-
-# Deterministic replay of the eight scored dataset records with the default
-# variant CSM; a record above its regression bar fails the run after all
-# eight are scored.  The tracking charts are drawn from these replays.
+# Deterministic replay of the eight scored dataset records with the
+# deployable variant CSM against CSM's own regression bars; a record above
+# its bar fails the run after all eight are scored.  The chart gallery and
+# the tracking charts are drawn from these replays.
 sim_status=0
 W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim || sim_status=$?
 exit "$sim_status"
