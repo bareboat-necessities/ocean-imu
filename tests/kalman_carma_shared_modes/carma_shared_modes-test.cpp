@@ -257,7 +257,7 @@ void test2_preservation() {
     Sea sea(30.0);
     Imu imu;
     double dmax = 0.0;
-    for (long k = 0; k < 400 * 200; ++k) {
+    for (long k = 0; k < 400L * 200L; ++k) {
         const double t = static_cast<double>(k) * 0.005;
         Eigen::Vector3d p, a;
         sea.eval(t, p, a);

@@ -258,8 +258,7 @@ public:
         else if (st_.nis_ratio < cfg_.nis_ratio_low) nis_bad_ = false;
         // Consistency of the prior with the monitor (hysteresis).
         st_.mismatch_d2 = mismatch_d2<T>(prior, monitor, cfg_.beta_rel_floor);
-        if (!prior.valid || !monitor.valid) consistent_ = false;
-        else if (st_.mismatch_d2 > cfg_.d2_high) consistent_ = false;
+        if (!prior.valid || !monitor.valid || st_.mismatch_d2 > cfg_.d2_high) consistent_ = false;
         else if (st_.mismatch_d2 < cfg_.d2_low) consistent_ = true;
         st_.consistent = consistent_;
         st_.monitor_coherence = monitor.gamma2;

@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "carma3/SimAdapters.h"
+#include "../kalman_carma/carma3/SimAdapters.h"
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
 
 using Eigen::Vector3f;

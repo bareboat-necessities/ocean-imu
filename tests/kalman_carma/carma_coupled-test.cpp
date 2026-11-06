@@ -467,13 +467,13 @@ void test5_crosscov() {
     md.coupling().set_config(c); md.coupling().set_external(Sd);
     md.set_vertical(0.9, std::sqrt(Sd.re(2,2))); md.set_horizontal(0.9, std::sqrt(Sd.re(0,0)), std::sqrt(Sd.re(1,1)), 0.0);
     md.refresh(0.005);
-    Eigen::Matrix<double,24,24> P, A, W, Pl;
+    Eigen::Matrix<double,24,24> P, A, W, P_lyap;
     md.stationary(P, 0);
     joint_kron<8>(md.block_A(), md.block_W(), md.excitation(), true, A, W);
-    kc::stationary_covariance_doubling<double,24>(A, W, Pl);
-    check((P - Pl).cwiseAbs().maxCoeff() / Pl.cwiseAbs().maxCoeff() < 1e-9,
+    kc::stationary_covariance_doubling<double,24>(A, W, P_lyap);
+    check((P - P_lyap).cwiseAbs().maxCoeff() / P_lyap.cwiseAbs().maxCoeff() < 1e-9,
           "SHM stationary covariance (Hermitian Kronecker) equals the joint Lyapunov solution",
-          (P - Pl).cwiseAbs().maxCoeff() / Pl.cwiseAbs().maxCoeff(), 1e-9);
+          (P - P_lyap).cwiseAbs().maxCoeff() / P_lyap.cwiseAbs().maxCoeff(), 1e-9);
     // Float filter prediction keeps the stationary covariance (100 s).
     auto f = make_filter<SHM<float>>();
     kc::Hermitian3<float> Sf; Sf.re = Sd.re.cast<float>(); Sf.im = Sd.im.cast<float>();
@@ -726,7 +726,7 @@ struct ModelTruth {
         m.set_horizontal(kappa, std::sqrt(S.re(0,0)), std::sqrt(S.re(1,1)), 0.0);
         m.refresh(h);
         F.setZero();
-        for (int a = 0; a < 3; ++a) F.block<8,8>(8 * a, 8 * a) = m.block_F();
+        for (Eigen::Index a = 0; a < 3; ++a) F.block<8,8>(8 * a, 8 * a) = m.block_F();
         Eigen::Matrix<double,24,24> Q = Eigen::Matrix<double,24,24>::Zero();
         m.propagate(Q, 0);
         L = sqrtm(Q);
@@ -1210,7 +1210,7 @@ void test17_modal_numerator() {
     Cc H[3];
     double kin = 0.0;
     for (int ax = 0; ax < 3; ++ax) {
-        const Eigen::Matrix<double,1,4> c = m.readout_p(ax);
+        const Eigen::Matrix<double,1,4>& c = m.readout_p(ax);
         H[ax] = (c.cast<Cc>() * R * Gm.cast<Cc>())(0,0);
         const double n2 = std::abs((c * A * A * Gm)(0,0));
         kin = std::max(kin, std::max(std::abs((c * Gm)(0,0)), std::abs((c * A * Gm)(0,0))) / n2);

@@ -555,7 +555,7 @@ private:
         res_[1] = (p2 + wz0) / ((p2 - std::conj(p2)) * (p2 - p1) * (p2 - std::conj(p1)));
         Eigen::Matrix<double,NB,NB> Ad = Eigen::Matrix<double,NB,NB>::Zero();
         Eigen::Matrix<double,NB,1> Gd;
-        for (int k = 0; k < 2; ++k) {
+        for (Eigen::Index k = 0; k < 2; ++k) {
             Ad(2 * k, 2 * k) = mu_[k].real();     Ad(2 * k, 2 * k + 1) = -mu_[k].imag();
             Ad(2 * k + 1, 2 * k) = mu_[k].imag(); Ad(2 * k + 1, 2 * k + 1) = mu_[k].real();
             Gd(2 * k) = res_[k].real();           Gd(2 * k + 1) = res_[k].imag();
@@ -593,7 +593,7 @@ private:
         // Latent readout l = 1/P xi = sum 2 Re(z_k / (p_k + w_z0)) (the
         // residues of 1/P are r_k / B(p_k)); c_l G = c_l A G = c_l A^2 G = 0.
         Eigen::Matrix<double,1,NB> cl;
-        for (int k = 0; k < 2; ++k) {
+        for (Eigen::Index k = 0; k < 2; ++k) {
             const Cd q = mu_[k] + wz0;
             cl(2 * k) = 2.0 * q.real() / std::norm(q);
             cl(2 * k + 1) = 2.0 * q.imag() / std::norm(q);

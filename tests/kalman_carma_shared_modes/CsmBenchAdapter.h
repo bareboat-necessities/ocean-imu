@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 
-#include "carma3/FullAdapters.h"
+#include "../kalman_carma/carma3/FullAdapters.h"
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 
 namespace carma3_bench {

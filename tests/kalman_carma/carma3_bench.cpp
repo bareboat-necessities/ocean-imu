@@ -1185,7 +1185,7 @@ int main(int argc, char** argv) {
             };
             auto quant = [](std::vector<double> v, double q) -> double {
                 if (v.empty()) return NAN;
-                const size_t k = std::min(v.size() - 1, static_cast<size_t>(q * static_cast<double>(v.size() - 1) + 0.5));
+                const size_t k = std::min(v.size() - 1, static_cast<size_t>(std::lround(q * static_cast<double>(v.size() - 1))));
                 std::nth_element(v.begin(), v.begin() + static_cast<long>(k), v.end());
                 return v[k];
             };
