@@ -1,0 +1,64 @@
+{
+ "git_revision": "9cd0c3b8c0ab1088cf87486c9cb06530d4d56869",
+ "scenarios": {
+  "jonswap_fp0.29_hs0.8_g3.3": "directionally spread JONSWAP (cos^8)",
+  "jonswap_fp0.29_hs0.8_g3.3+sp10000": "long-crested JONSWAP (strongest coupling)",
+  "jonswap_fp0.29_hs0.8_g3.3+sp1": "broadly spread JONSWAP (cos^2, weak coupling)",
+  "jonswap_fp0.29_hs0.8_g3.3+rel90": "beam sea (phase and RAO change the coupling)",
+  "jonswap_fp0.29_hs0.8_g3.3+rel180": "head sea",
+  "jonswap_fp0.29_hs0.8_g3.3+hscale0.5": "heave RAO x0.5 (heave weaker than the surge it couples to)",
+  "jonswap_fp0.29_hs0.8_g3.3+hscale1.5": "heave RAO x1.5",
+  "regular_f0.25_h1": "regular monochromatic wave",
+  "pm_fp0.25_hs1": "Pierson-Moskowitz",
+  "swell": "long-period swell",
+  "jonswap_fp0.45_hs0.4_g3.3": "short-period wind waves",
+  "mixed_swell_wind": "mixed wind sea + swell",
+  "bimodal": "two systems, different frequencies",
+  "crossing": "two crossing systems (90 deg)",
+  "small_amplitude": "very low sea state (5 cm)",
+  "changing_fp": "peak frequency 0.22 -> 0.36 Hz over 600 s",
+  "abrupt_change": "wind sea -> long higher sea in 10 s (period, direction, height)",
+  "dir_change": "direction 30 -> 120 deg over 60 s",
+  "jonswap_fp0.29_hs0.8_g3.3+on400w60+off900w60": "wave onset and cessation",
+  "jonswap_fp0.29_hs0.8_g3.3+turns": "heading changes (90 deg zigzag)",
+  "jonswap_fp0.29_hs0.8_g3.3+maneuver": "vessel manoeuvring",
+  "jonswap_fp0.29_hs0.8_g3.3+cnoise": "coloured accelerometer noise (4 mg, 2 s)",
+  "jonswap_fp0.29_hs0.8_g3.3+nvar": "accelerometer noise variance cycling 1x-2x",
+  "jonswap_fp0.29_hs0.8_g3.3+jit": "+-25 % sample-interval jitter",
+  "jonswap_fp0.29_hs0.8_g3.3+magdist+scal": "magnetic disturbances, calibration residuals",
+  "bias_drift": "accelerometer bias ramp and oscillation"
+ },
+ "filters": [
+  "A41@C",
+  "CSM",
+  "CSM27",
+  "CSM27Q",
+  "CSM27H",
+  "CSM:off"
+ ],
+ "robust_filters": "A41@C,CSM/ext-true,CSM27/ext-true,CSM/ext-flip,CSM:noconf/ext-flip,CSM27/ext-flip,CSM27:noconf/ext-flip,CSM/ext-rot90,CSM:noconf/ext-rot90,CSM27/ext-rot90,CSM27:noconf/ext-rot90,CSM/ext-ph45,CSM:noconf/ext-ph45,CSM27/ext-ph45,CSM27:noconf/ext-ph45,CSM/ext-amp2,CSM:noconf/ext-amp2,CSM27/ext-amp2,CSM27:noconf/ext-amp2",
+ "turn_filters": "A41@C,CSM,CSM27,CSM/fz400/keel,CSM27/fz400/keel",
+ "seeds": {
+  "run": 30,
+  "robust": 20,
+  "traces": 10
+ },
+ "n_rows": {
+  "run": 4680,
+  "ablation": 630,
+  "robust": 1240
+ },
+ "duration_s": "per scenario (default 1200 s), scored from 300 s",
+ "result_files": [
+  "ablation_runs.csv",
+  "cost_model.csv",
+  "dataset_gates.csv",
+  "dataset_summary.csv",
+  "esp32s3_size.csv",
+  "raw_runs.csv",
+  "robustness_runs.csv",
+  "smoke_runs.csv",
+  "timing_core.csv",
+  "timing_runs.csv"
+ ]
+}

@@ -19,16 +19,21 @@
     confidence (CarmaCouplingConfidence.h) compares with the prior.  The
     monitor never enters the prior, so a filter whose confidence is held at
     one reproduces the research filter bit for bit.
+
+    The second template parameter is the underlying block (default: the
+    33-state block above).  The minimal 27-state filter passes
+    CarmaMinimalSharedModeMotion (CarmaSharedModesMinimalMotion.h), which
+    has the same interface, and gets the same monitor and deadband.
 */
 
 #include "kalman_carma/CarmaCoupledMotion.h"
 
 namespace ocean_imu::carma_shared_modes {
 
-template<typename T>
-class SharedModesMotion : public kalman::carma::CarmaKroneckerMotion<T, true> {
+template<typename T, class Block = kalman::carma::CarmaKroneckerMotion<T, true>>
+class SharedModesMotion : public Block {
 public:
-    using Base = kalman::carma::CarmaKroneckerMotion<T, true>;
+    using Base = Block;
     using Vector3 = typename Base::Vector3;
     using Estimator = kalman::carma::CarmaCrossSpectrumEstimator<T>;
     using Base::Base;

@@ -1,0 +1,5 @@
+filter,states,P_floats,P_bytes,predict_madds,acc_update_madds,per_sample_madds,jitter_series_madds,per_commit_madds,commit_amortized_madds,total_madds_per_sample
+A41 (21),21,441,1764,1809,2439,4248,216,4608,230,4478
+CSM (33),33,1089,4356,8727,4959,13686,952,28672,1433,15119
+CSM27 (27),27,729,2916,4401,3591,7992,600,19440,972,8964
+CSM27Q (27),27,729,2916,4401,3591,7992,600,19440,972,8964

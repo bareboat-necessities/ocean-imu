@@ -32,6 +32,10 @@
     CARMA3 wrapper in particular (SeaStateFusionFilter_CarmaSharedModes.h).
     At c = 0 the prior is the independent-axis CARMA(4,1) law on every axis.
 
+    The second template parameter is the motion block (default: the 33-state
+    SharedModesMotion<T>).  KalmanCarmaSharedModesMinimal.h instantiates the
+    same core with the six-state-per-axis minimal realization (27 states).
+
     Scalar T: float on the target (the default), double for analysis.  Fixed
     size throughout; nothing is allocated after construction.  Ground truth,
     oracle coupling and RAO knowledge never enter the class;
@@ -66,19 +70,19 @@ struct SharedModesConfig {
     T amplitude_tolerance = T(0); // amplitude commit deadband (screened and rejected: keep 0)
 };
 
-template<typename T = float>
+template<typename T = float, class MotionBlock = SharedModesMotion<T>>
 class KalmanCarmaSharedModes
-    : public kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, SharedModesMotion<T>> {
+    : public kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, MotionBlock> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using Base = kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, SharedModesMotion<T>>;
+    using Base = kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, MotionBlock>;
     using Vector3 = typename Base::Vector3;
-    using Motion = SharedModesMotion<T>;
+    using Motion = MotionBlock;
     using Hermitian = kalman::carma::Hermitian3<T>;
     using CouplingConfig = kalman::carma::CarmaCouplingConfig;
     using Config = SharedModesConfig<T>;
     using Confidence = CarmaCouplingConfidence<T>;
-    static constexpr int kStates = Base::NX;     // 33
+    static constexpr int kStates = Base::NX;     // 33 (27 with the minimal block)
 
     struct CouplingStatus {
         CouplingMode mode = CouplingMode::Estimated;

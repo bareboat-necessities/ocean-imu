@@ -360,9 +360,32 @@ public:
     // form) hands over x_new = M x_old per axis block after a model change:
     // apply it to the state and, as S P S^T with S = blockdiag(I, I3 (x) M, I),
     // to the covariance, so the posterior is continuous across the commit.
+    // A block may instead hand over one matrix per axis block
+    // (take_axis_recoordinatization, the minimal shared-mode block of
+    // src/kalman_carma_shared_modes): S = blockdiag(I, M_x, M_y, M_z, I).
     void recoordinate_motion_() {
         if constexpr (kMotion) {
-            if constexpr (requires(Motion& m, typename Motion::MatB& M) { m.take_recoordinatization(M); }) {
+            if constexpr (requires(Motion& m, typename Motion::MatB (&M)[NL / Motion::NB]) {
+                              m.take_axis_recoordinatization(M); }) {
+                using MB = typename Motion::MatB;
+                constexpr int NB = MB::RowsAtCompileTime;
+                constexpr int NAX = NL / NB;
+                MB M[NAX];
+                if (!motion_.take_axis_recoordinatization(M)) return;
+                for (int ax = 0; ax < NAX; ++ax) {
+                    const int r0 = OFF_L + ax * NB;
+                    const Eigen::Matrix<T,NB,1> xs = xext.template segment<NB>(r0);
+                    xext.template segment<NB>(r0) = M[ax] * xs;
+                    const Eigen::Matrix<T,NB,NX> rows = Pext.template block<NB,NX>(r0, 0);
+                    Pext.template block<NB,NX>(r0, 0) = M[ax] * rows;
+                }
+                for (int ax = 0; ax < NAX; ++ax) {
+                    const int c0 = OFF_L + ax * NB;
+                    const Eigen::Matrix<T,NX,NB> cols = Pext.template block<NX,NB>(0, c0);
+                    Pext.template block<NX,NB>(0, c0) = cols * M[ax].transpose();
+                }
+                symmetrize_Pext_();
+            } else if constexpr (requires(Motion& m, typename Motion::MatB& M) { m.take_recoordinatization(M); }) {
                 using MB = typename Motion::MatB;
                 constexpr int NB = MB::RowsAtCompileTime;
                 MB M;
