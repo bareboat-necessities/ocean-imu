@@ -101,6 +101,18 @@ scale for every axis) and the isotropic amplitudes; a commit rebuilds `F`, `Q`
 and the excitation.  The posterior covariance is reset to the stationary
 prior only on entering Live, never during adaptation.
 
+**Adaptation and the complexified realization.**  At fixed parameters the
+complexified mode is the CARMA(4,1) law exactly.  Under adaptation it is not,
+because matching spectra no longer imply matching laws once `sigma(t)` and
+`kappa(t)` vary.  With coupling off (`CSM_OFF`) and the tuner frozen after
+300 s, the dataset replay matches A41 to 0.03 %.  With adaptation it differs
+by -1.6 % to +6 % in heave, and is worst on the two Hs 0.27 m records.  A
+kappa commit deadband changes nothing (<= 0.2 %).  An amplitude deadband
+narrows that gap on the dataset records, but on the screening seeds
+1001-1020 it costs heave on most seas and up to 6.9 % horizontal on the very
+low sea, so the pre-registered criterion rejected it (`screen_runs.csv`).
+The default commits every amplitude, as the research filter does.
+
 ## 3. Measurement update and reset
 
 These are the baseline's, line for line: the accelerometer

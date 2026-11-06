@@ -43,20 +43,17 @@ public:
     Estimator& monitor() noexcept { return monitor_; }
     const Estimator& monitor() const noexcept { return monitor_; }
 
-    // Frequency-scale deadband (relative; 0 = every commit, as the research
-    // filter).  The complexified mode's latent and imaginary states change
-    // meaning with kappa; the CARMA3 schedule recommits kappa every 0.1 s, and
-    // on small seas the tuner's frequency chatters.  A commit whose kappa is
-    // within tol of the one in force keeps it; amplitudes always apply.
-    void set_kappa_tolerance(T tol) { if (std::isfinite(tol) && tol >= T(0)) tol_ = tol; }
-    T kappa_tolerance() const noexcept { return tol_; }
-    // Amplitude deadband (relative; 0 = every commit).
+    // Amplitude commit deadband (relative; 0 = every commit, the default and
+    // the research filter's behaviour).  Screened on seeds 1001-1020 and
+    // rejected (docs/kalman-carma-shared-modes.md section 2); kept so that
+    // screening is reproducible.  A commit whose amplitude is within tol of
+    // the one in force keeps it; kappa always applies.
     void set_amplitude_tolerance(T tol) { if (std::isfinite(tol) && tol >= T(0)) atol_ = tol; }
     bool set_vertical(T kappa, T accel_std) {
-        return Base::set_vertical(hold_(kv_, kappa, tol_), hold_(sz_, accel_std, atol_));
+        return Base::set_vertical(kappa, hold_(sz_, accel_std, atol_));
     }
     bool set_horizontal(T kappa, T sx, T sy, T r) {
-        return Base::set_horizontal(hold_(kh_, kappa, tol_), hold_(sx_, sx, atol_), hold_(sy_, sy, atol_), r);
+        return Base::set_horizontal(kappa, hold_(sx_, sx, atol_), hold_(sy_, sy, atol_), r);
     }
 
 private:
@@ -66,7 +63,7 @@ private:
         return k;
     }
     Estimator monitor_;
-    T tol_ = T(0), atol_ = T(0), kv_ = T(0), kh_ = T(0), sz_ = T(0), sx_ = T(0), sy_ = T(0);
+    T atol_ = T(0), sz_ = T(0), sx_ = T(0), sy_ = T(0);
 };
 
 }  // namespace ocean_imu::carma_shared_modes

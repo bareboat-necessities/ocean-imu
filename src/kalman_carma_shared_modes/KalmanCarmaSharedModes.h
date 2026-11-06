@@ -63,8 +63,7 @@ struct SharedModesConfig {
     T horizon_s = T(240);         // coupling estimate (screened, seeds 1001-1020)
     T band_frac = T(0.15);        // envelope band / f_op (screened)
     T warmup_s = T(120);          // coupling estimate warm-up
-    T kappa_tolerance = T(0);     // frequency-scale commit deadband (SharedModesMotion)
-    T amplitude_tolerance = T(0); // amplitude commit deadband (SharedModesMotion)
+    T amplitude_tolerance = T(0); // amplitude commit deadband (screened and rejected: keep 0)
 };
 
 template<typename T = float>
@@ -123,7 +122,6 @@ public:
         m.coupling().estimator().configure(ec);
         ec.horizon_s = cfg_.confidence.monitor_horizon_s;
         m.monitor().configure(ec);
-        m.set_kappa_tolerance(cfg_.kappa_tolerance);
         m.set_amplitude_tolerance(cfg_.amplitude_tolerance);
         CouplingConfidenceConfig<T> k = cfg_.confidence;
         if (cfg_.mode == CouplingMode::Off) k.enabled = false;
