@@ -69,7 +69,7 @@ import carma3_coupled_benchmark as research  # noqa: E402  (scenario table of th
 
 J29 = research.J29
 SCENARIOS = dict(research.SCENARIOS)
-FINAL_FILTERS = "A41,SHM:est,CSM,CSM:off"
+FINAL_FILTERS = "A41,A41@C,SHM:est,CSM,CSM:off"
 BASE = "A41"
 ROB_SEAS = [J29, "mixed_swell_wind", "pm_fp0.25_hs1"]
 ROB_FILTERS = ("A41,CSM:off,CSM/ext-true,CSM:noconf/ext-true,CSM/ext-flip,CSM:noconf/ext-flip,"
@@ -83,9 +83,9 @@ TRACE_EXTRA = {J29: "A41,CSM/ext-flip,CSM:noconf/ext-flip"}
 SPEC_SEAS = [J29, "mixed_swell_wind", "crossing"]
 SPEC_FILTERS = ["A41", "SHM:est", "CSM"]
 TIMING_FILTERS = ["A41", "SHM:est", "CSM", "CSM:off"]
-LABEL = {"A41": "CARMA3 baseline (A41)", "SHM:est": "Option C research (SHM:est)", "CSM": "Shared modes (CSM)",
+LABEL = {"A41": "CARMA3 baseline (A41)", "A41@C": "CARMA3 baseline, Evidence excitation (A41@C)", "SHM:est": "Option C research (SHM:est)", "CSM": "Shared modes (CSM)",
          "CSM:off": "CSM coupling off", "CSM:noconf": "CSM without confidence"}
-COLORS = {"A41": "#555555", "SHM:est": "#ff9896", "CSM": "#d62728", "CSM:off": "#1f77b4", "truth": "#000000"}
+COLORS = {"A41": "#555555", "A41@C": "#8c564b", "SHM:est": "#ff9896", "CSM": "#d62728", "CSM:off": "#1f77b4", "truth": "#000000"}
 
 
 # ---------------------------------------------------------------------------
@@ -496,6 +496,22 @@ def stage_report(args):
         F = FINAL_FILTERS.split(",")
         s = summarize(df, F, SCENARIOS)
         stats["final"] = s
+        # The same rows paired against the same-excitation baseline A41@C:
+        # CSM (Evidence) - A41@C is the effect of the shared modes alone.
+        se = summarize(df, [f for f in F if f != BASE], SCENARIOS, base="A41@C")
+        stats["final_vs_evidence"] = se
+        md.append("## Final Monte Carlo against the same-excitation baseline A41@C\n")
+        md.append("| scenario | CSM x / y / z (%) | CSM:off x / y / z (%) |")
+        md.append("|---|---|---|")
+        for sc, purpose in SCENARIOS.items():
+            r = se.get(sc, {})
+            cells = []
+            for f in ("CSM", "CSM:off"):
+                q = r.get(f, {})
+                cells.append(" / ".join(f"{100 * q['chg_rms_' + a]['change']:+.1f}" if q.get("chg_rms_" + a) else "--"
+                                        for a in "xyz"))
+            md.append(f"| {purpose} | " + " | ".join(cells) + " |")
+        md.append("")
         md.append("## Final Monte Carlo (50 seeds)\n")
         md.append("| scenario | A41 rms x/y/z (mm) | " + " | ".join(f"{f} x / y / z (%)" for f in F[1:]) + " | NEES6 mean (A41 / " + " / ".join(F[1:]) + ") |")
         md.append("|---" * (3 + len(F) - 1) + "|")

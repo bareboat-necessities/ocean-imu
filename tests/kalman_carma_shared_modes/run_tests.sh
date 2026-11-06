@@ -10,24 +10,24 @@ set -e
 # The full validation is tools/carma_shared_modes_validation.py.
 ./carma_shared_modes-test
 
-# Paired smoke row (carma3_bench engine): CSM:noconf is the research filter
-# SHM:est (same model and code; the two objects differ in memory layout, so
+# Paired smoke row (carma3_bench engine): CSM:noconf@A (Legacy excitation)
+# is the research filter SHM:est (same model and code; the two objects differ in memory layout, so
 # float results agree to rounding -- carma_shared_modes-test checks bit
-# identity where the layouts coincide), CSM:off is the independent-axis
-# CARMA(4,1) law (A41 within 3 %: equal in law, the complexified realization
+# identity where the layouts coincide), CSM:off (Evidence excitation, the
+# CSM default) is the independent-axis CARMA(4,1) law (A41@C within 3 %: equal in law, the complexified realization
 # re-coordinatizes differently at the 10 Hz model commits), and the deployable CSM runs without
 # failure.  Timing columns are never compared.
 ./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
-    --seed 1 --filters A41,SHM:est,CSM:noconf,CSM,CSM:off --score-start 200 > smoke_csm.csv
+    --seed 1 --filters A41,A41@C,SHM:est,CSM:noconf@A,CSM,CSM:off --score-start 200 > smoke_csm.csv
 python3 - <<'PY'
 import csv
 rows = {r["filter"]: r for r in csv.DictReader(open("smoke_csm.csv"))}
 for a in "xyz":
     for c in ("rms_", "rmsv_", "nees_"):
-        r = float(rows["CSM:noconf"][c + a]) / float(rows["SHM:est"][c + a])
-        assert abs(r - 1.0) < 1e-3, ("CSM:noconf / SHM:est", c + a, r)
-    r = float(rows["CSM:off"]["rms_" + a]) / float(rows["A41"]["rms_" + a])
-    assert abs(r - 1.0) < 0.03, ("CSM:off / A41", a, r)
+        r = float(rows["CSM:noconf@A"][c + a]) / float(rows["SHM:est"][c + a])
+        assert abs(r - 1.0) < 1e-3, ("CSM:noconf@A / SHM:est", c + a, r)
+    r = float(rows["CSM:off"]["rms_" + a]) / float(rows["A41@C"]["rms_" + a])
+    assert abs(r - 1.0) < 0.03, ("CSM:off / A41@C", a, r)
 assert rows["CSM"]["failed"] == "0"
 for a in "xyz":
     assert 0.0 < float(rows["CSM"]["pct_" + a]) < 25.0, ("CSM", a)

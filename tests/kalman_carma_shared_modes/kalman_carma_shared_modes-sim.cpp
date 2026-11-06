@@ -48,6 +48,10 @@ public:
         c.confidence.enabled = Variant == 0;
         c.confidence.accel_noise_std = a.x();
         impl_.fusion().raw().mekf().configureSharedModes(c);
+        // Evidence excitation (the filter's default) unless W3D_CARMA3_EXCITATION
+        // selects another mode for a diagnostic replay.
+        if (!std::getenv("W3D_CARMA3_EXCITATION"))
+            impl_.fusion().raw().setCarmaExcitationMode(ocean_imu::carma::CarmaExcitationMode::Evidence);
     }
     void updateMag(const Vector3f& b) override { impl_.updateMag(b); }
     void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }
@@ -57,20 +61,20 @@ private:
 };
 
 // Regression bars of the deployable variant CSM on the eight scored records
-// (default seeds, magnetometer on), fitted to CSM's own replays: each is the
+// (default seeds, magnetometer on, Evidence excitation), fitted to CSM's own replays: each is the
 // worst CSM value plus about 0.5 % (the margin convention of carma3-sim and
 // kalman_ou_iii-sim).  Not the CARMA3 baseline's bars.
 constexpr W3dFailureLimits kCsmRegressionBars{
-    .err_limit_percent_z_jonswap   = 3.244f,  // worst 3.22788 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 3.393f,  // worst 3.37567 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.7319f, // worst 0.728307 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3587f, // worst 0.35693 (pmstokes H8.5)
-    .err_limit_pitch_deg           = 0.2247f, // worst 0.223595 (pmstokes H8.5)
-    .err_limit_percent_3d_jonswap  = 4.674f,  // worst 4.65064 (jonswap H0.27)
-    .err_limit_percent_3d_pmstokes = 5.007f,  // worst 4.98241 (pmstokes H0.27)
-    .acc_z_bias_percent            = 4.191f,  // worst 4.17061 (pmstokes H8.5)
-    .bias_3d_percent               = 84.15f,  // worst 83.7269 (pmstokes H8.5, accel)
-    .gyro_bias_3d_percent          = 12.71f,  // worst 12.6464 (pmstokes H8.5, gyro)
+    .err_limit_percent_z_jonswap   = 2.531f,  // worst 2.51837 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 2.470f,  // worst 2.4579 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.7551f, // worst 0.751307 (pmstokes H0.27)
+    .err_limit_roll_deg            = 0.3590f, // worst 0.35719 (pmstokes H8.5)
+    .err_limit_pitch_deg           = 0.2246f, // worst 0.223436 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 4.419f,  // worst 4.39697 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 4.873f,  // worst 4.84908 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.187f,  // worst 4.16607 (pmstokes H8.5)
+    .bias_3d_percent               = 84.17f,  // worst 83.7517 (pmstokes H8.5, accel)
+    .gyro_bias_3d_percent          = 12.71f,  // worst 12.6499 (pmstokes H8.5, gyro)
 };
 
 constexpr float kUngated = 1.0e9f;
@@ -136,7 +140,8 @@ int main(int argc, char* argv[]) {
         // any other replay is a diagnostic, not a regression.
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
-        const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds;
+        const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
+                           !std::getenv("W3D_CARMA3_EXCITATION");
         const W3dFailureLimits& bars = gated ? kCsmRegressionBars : kUngatedBars;
         for (const auto& f : files) {
             const std::string family = "CARMA_SHARED_MODES_" + variant;

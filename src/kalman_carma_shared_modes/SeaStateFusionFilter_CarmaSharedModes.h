@@ -14,7 +14,7 @@
     after the wrapper has created it.  Use it exactly as SeaStateFusion_CARMA3:
 
         SeaStateFusion_CarmaSharedModes f;
-        f.begin(cfg);                       // estimated coupling + confidence (default)
+        f.begin(cfg);                       // estimated coupling + confidence, Evidence excitation
         f.update(dt, gyr, acc, temp_c);     // every IMU sample
         f.updateMag(mag);                   // at the magnetometer rate
         f.raw().mekf().coupling();          // confidence, state, applied coupling
@@ -37,8 +37,15 @@ public:
     using Mekf = KalmanCarmaSharedModes<float>;
     using SharedModes = Mekf::Config;
 
-    void begin(const Config& cfg, const SharedModes& shared_modes = SharedModes{}) {
+    // The wave excitation defaults to Evidence mode (kalman_carma/CarmaWaveEvidence.h,
+    // docs/carma-wave-excitation.md), the mode the AtomS3R sketches deploy:
+    // the Legacy floor and stillness attenuation make the amplitude jump on
+    // small seas, which the complexified realization tolerates worse than
+    // the CARMA3 baseline (docs/kalman-carma-shared-modes.md section 2).
+    void begin(const Config& cfg, const SharedModes& shared_modes = SharedModes{},
+               carma::CarmaExcitationMode excitation = carma::CarmaExcitationMode::Evidence) {
         Base::begin(cfg);
+        this->raw().setCarmaExcitationMode(excitation);
         this->raw().mekf().configureSharedModes(shared_modes);
     }
 

@@ -163,6 +163,7 @@ struct Research {
         f->begin(c.fusion);
         f->raw().enableTuner(true);
         f->raw().enableClamp(true);
+        f->raw().setCarmaExcitationMode(ocean_imu::carma::CarmaExcitationMode::Evidence);   // as the CSM default
         kc::CarmaCouplingConfig cc;
         cc.source = kc::CarmaCouplingConfig::Source::Estimated;
         f->raw().mekf().motion().coupling().set_config(cc);

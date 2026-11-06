@@ -113,6 +113,32 @@ narrows that gap on the dataset records, but on the screening seeds
 low sea, so the pre-registered criterion rejected it (`screen_runs.csv`).
 The default commits every amplitude, as the research filter does.
 
+**Wave excitation: Evidence mode.**  The amplitude jumps come from the Legacy
+excitation chain, which applies the 0.05 m/s^2 floor and the stillness
+attenuation at 0.28 m/s^2 vertical RMS (docs/carma-wave-excitation.md).  On
+the Hs 0.27 m records the sea sits near that threshold.  Evidence mode, the
+still-sea phantom fix that the AtomS3R sketches deploy, replaces both with
+the noise-debiased band variance and a detection weight.  It is therefore the
+shared-modes filter's default (`SeaStateFusion_CarmaSharedModes::begin`,
+`kalman_carma_shared_modes-sim`).  On the dataset replay with Evidence mode:
+
+| record | heave Z % Hs, A41 Legacy / A41 Evidence / CSM | 3D %, A41 Evidence / CSM |
+|---|---|---|
+| JONSWAP 0.27 m | 3.06 / 2.46 / 2.52 | 4.06 / 4.03 |
+| PM-Stokes 0.27 m | 3.21 / 2.41 / 2.46 | 4.08 / 4.07 |
+| JONSWAP 1.5 m | 2.25 / 2.21 / 2.19 | 4.48 / 4.34 |
+| PM-Stokes 8.5 m | 2.37 / 2.36 / 2.25 | 5.27 / 4.85 |
+
+CSM's regression bars are fitted in this mode.  They are below the CARMA3
+and TFG-CARMA3 bars (Legacy) for heave (2.531 / 2.470 against 3.072 / 3.231
+% Hs), 3D (4.419 / 4.873 against 4.890 / 5.278) and yaw (0.755 against
+0.766 deg).  They are above those bars for pitch (0.225 against 0.214 deg)
+and the bias errors (accelerometer 84.2 against 82.5 %, gyroscope 12.7
+against 12.4 %).  Like for like, against A41 in Evidence mode, CSM's
+small-sea heave is about 2 % worse, a residue of the realization effect
+above, while its 3D error is lower on every record.  The Monte Carlo pairs
+CSM with both A41 (Legacy, the historical baseline) and A41@C (Evidence).
+
 ## 3. Measurement update and reset
 
 These are the baseline's, line for line: the accelerometer

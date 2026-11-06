@@ -12,7 +12,8 @@
     filters below -- sees the same sea and the same IMU stream.
 
     Names: CSM[:noconf|:off][/option...]
-      CSM          DEPLOYABLE default: estimated coupling + coupling confidence
+      CSM          DEPLOYABLE default: estimated coupling + coupling confidence,
+                   Evidence excitation (CSM@A: the Legacy excitation)
       CSM:noconf   confidence disabled (c = 1: the research filter SHM:est)
       CSM:off      coupling off (the fallback model: CARMA(4,1) law per axis)
     Robustness options (deliberately wrong coupling priors; the wrong prior is
@@ -226,6 +227,9 @@ public:
     }
     int states() const override { return Mekf::NX; }
     void set_label(const std::string& l) override { label_ = l; }
+    // <name>@<mode>[/opt...]: the CARMA excitation mode (default Evidence).
+    bool set_options(const std::string& o) override { return apply_carma_excitation_options(f_.raw(), o); }
+    bool excitation_diag(double (&d)[8]) const override { return carma_excitation_diag(f_.raw(), d); }
     bool coupling_diag(double (&d)[6]) const override {
         const H3& S = f_.raw().mekf().motion().excitation();
         const int pr[3][2] = {{0, 2}, {1, 2}, {0, 1}};
