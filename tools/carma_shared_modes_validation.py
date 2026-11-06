@@ -58,6 +58,7 @@ RAW = OUT / "raw_runs.csv"
 ROB = OUT / "robustness_runs.csv"
 TIM = OUT / "timing_runs.csv"
 SMOKE = OUT / "smoke_runs.csv"
+SCREEN = OUT / "screen_runs.csv"
 DATASET = OUT / "dataset_summary.csv"
 TRACE_DIR = OUT / "traces"
 SPEC_DIR = OUT / "spectra"
@@ -152,6 +153,46 @@ def stage_smoke(args):
     for f in ("CSM", "CSM:off"):
         assert rows[f]["failed"] == "0", f
     print("smoke ok:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
+
+
+# Screening of the amplitude commit deadband (the only hyper-parameter this
+# filter adds that is chosen from data), on the screening seeds 1001-1020 only.
+# Criterion fixed before the run: the tolerance with the largest mean paired
+# 3-D RMS improvement over CSM without deadband across the wave seas, subject
+# to no sea's heave RMS worse by more than 1 %; ties go to the smaller value.
+SCREEN_SEAS = list(research.SCREEN_SCENARIOS) + ["small_amplitude", "jonswap_fp0.45_hs0.4_g3.3"]
+SCREEN_TOLS = [0.1, 0.2, 0.3]
+
+
+def stage_screen(args):
+    filters = "A41,CSM," + ",".join(f"CSM/atol{t:g}" for t in SCREEN_TOLS)
+    work = [(sc, s) for sc in SCREEN_SEAS for s in range(1001, 1021)]
+    todo = pending(read_rows(SCREEN), work)
+    print(f"screen: {len(todo)} of {len(work)} rows to run", flush=True)
+    run_rows([cmd(sc, s, filters) for sc, s in todo], SCREEN, args.jobs)
+    df = load(SCREEN)
+    if df.empty:
+        return
+    df["rms3"] = np.sqrt(df.rms_x ** 2 + df.rms_y ** 2 + df.rms_z ** 2)
+    best, best_gain = 0.0, 0.0
+    for t in SCREEN_TOLS:
+        f = f"CSM/atol{t:g}"
+        gains, worst_z = [], 1.0
+        for sc in SCREEN_SEAS:
+            if sc in ("calm", "stationary"):
+                continue
+            g = paired(df, sc, f, "rms3", base="CSM")
+            z = paired(df, sc, f, "rms_z", base="CSM")
+            if g and z:
+                gains.append(g["change"])
+                worst_z = min(worst_z, z["change"])
+        mean_gain = float(np.mean(gains)) if gains else float("nan")
+        ok = worst_z >= -0.01
+        print(f"  atol {t:g}: mean 3-D change vs CSM {100 * mean_gain:+.2f} %, worst heave {100 * worst_z:+.2f} %"
+              f" -> {'admissible' if ok else 'rejected'}")
+        if ok and mean_gain > best_gain + 1e-4:
+            best, best_gain = t, mean_gain
+    print(f"screen: selected amplitude tolerance {best:g} (mean 3-D gain {100 * best_gain:+.2f} %)")
 
 
 def stage_run(args):
@@ -822,7 +863,7 @@ def figures(stats, outdir, exts=("svg",)):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("stage", choices=["smoke", "dataset", "run", "robust", "traces", "spectra", "timing", "report",
+    ap.add_argument("stage", choices=["screen", "smoke", "dataset", "run", "robust", "traces", "spectra", "timing", "report",
                                       "figures", "all"])
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=50)

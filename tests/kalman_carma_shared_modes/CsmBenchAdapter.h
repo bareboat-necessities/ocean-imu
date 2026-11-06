@@ -26,6 +26,7 @@
       ext-amp2   x-z and y-z terms doubled (wrong amplitude; capped PSD by the mapping)
       fz<s>      freeze the estimated coupling at scenario time s ...
       keel       ... in the keel frame (it turns with the hull)
+      atol<x>    amplitude commit deadband (relative; screening option)
     Environment: CSM_TRACE=<path prefix> writes <prefix><label>.csv at 1 Hz
     (confidence, evidence, state, D^2, SNR, NIS ratio, f_op, sigma_z,
     applied coherence / phase, estimated direction).
@@ -50,6 +51,7 @@ struct CsmSpec {
     std::string ext;              // "", true, flip, rot90, ph45, amp2
     float freeze_at_s = -1.0f;
     bool keel = false;
+    float amplitude_tol = -1.0f;   // < 0: the configuration default
 };
 
 inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
@@ -74,6 +76,7 @@ inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
                 return false;
         } else if (o.rfind("fz", 0) == 0) sp.freeze_at_s = static_cast<float>(std::strtod(o.c_str() + 2, nullptr));
         else if (o == "keel") sp.keel = true;
+        else if (o.rfind("atol", 0) == 0) sp.amplitude_tol = static_cast<float>(std::strtod(o.c_str() + 4, nullptr));
         else return false;
     }
     return !(sp.off && !sp.ext.empty());
@@ -93,6 +96,7 @@ public:
                : sp_.ext.empty() ? csm::CouplingMode::Estimated : csm::CouplingMode::External;
         c.confidence.enabled = sp_.confidence;
         c.confidence.accel_noise_std = ACC_SIGMA;
+        if (sp_.amplitude_tol >= 0.0f) c.amplitude_tolerance = sp_.amplitude_tol;
         f_.begin(fc, c);
         f_.raw().enableTuner(true);
         f_.raw().enableClamp(true);
