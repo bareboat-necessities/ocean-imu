@@ -30,6 +30,19 @@ python3 ../../tools/carma_shared_modes_validation.py all --jobs 4   # full valid
 python3 ../../tools/carma_shared_modes_sim_table.py                  # deterministic 900 s table (doc/kalman_carma_shared_modes)
 ```
 
-Filter names in the Monte Carlo benchmark: `CSM` (deployable default: estimated coupling + confidence), `CSM:noconf` (confidence disabled: the research filter `SHM:est`), `CSM:off` (coupling off), with the robustness options `ext-true|ext-flip|ext-rot90|ext-ph45|ext-amp2` (an external coupling prior built from the truth, deliberately wrong except `ext-true`) and `fz<s>`/`keel` (freeze the coupling, optionally in the keel frame). The bench's own filters (`A41`, `SHM:est`, ...) are available alongside; see [`CsmBenchAdapter.h`](CsmBenchAdapter.h).
+The 27-state minimal realization (`KalmanCarmaSharedModesMinimal.h`,
+[`docs/kalman-carma-shared-modes-minimal.md`](../../docs/kalman-carma-shared-modes-minimal.md)):
 
-The ESP32-S3 size and stack probe is [`arduino/csm_size_probe/build.sh`](arduino/csm_size_probe/build.sh) (Espressif Xtensa toolchain); the AtomS3R sketch is [`sensors/full_marine_ins/atomS3R_ins_carma_shared_modes`](../../sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/README.md).
+```sh
+./carma_shared_modes_minimal-test                 # 27 = 33 at fixed kappa, cascade = A41 through adaptation, commits
+W3D_CSM_VARIANT=CSM27 ./kalman_carma_shared_modes-sim     # dataset replay (also CSM27_OFF, CSM27Q, CSM27Q_OFF, CSM27H, CSM27_NOCONF)
+./kalman_carma_shared_modes-bench --level full --scenario changing_fp --seed 1 --filters CSM,CSM27,CSM27Q,CSM27H
+make kalman_carma_shared_modes_minimal-timing && ./kalman_carma_shared_modes_minimal-timing --ftz   # host core timing
+python3 ../../tools/carma_shared_modes_minimal_analysis.py        # observability, stochastic order, conditioning
+python3 ../../tools/carma_shared_modes_minimal_study.py all --jobs 4   # -> reports/results/kalman_carma_shared_modes_minimal
+python3 ../../tools/carma_shared_modes_minimal_study.py size --toolchain <xtensa bin dir>   # ESP32-S3 size / stack
+```
+
+Filter names in the Monte Carlo benchmark: `CSM` (deployable default: estimated coupling + confidence), `CSM:noconf` (confidence disabled: the research filter `SHM:est`), `CSM:off` (coupling off), with the robustness options `ext-true|ext-flip|ext-rot90|ext-ph45|ext-amp2` (an external coupling prior built from the truth, deliberately wrong except `ext-true`) and `fz<s>`/`keel` (freeze the coupling, optionally in the keel frame). The 27-state realizations take the same suffixes and options: `CSM27` (Cascade, the default realization), `CSM27Q` (Quotient with the regression lift), `CSM27H` (QuotientHold, ablation), e.g. `CSM27:off`, `CSM27/ext-flip`. The bench's own filters (`A41`, `SHM:est`, ...) are available alongside; see [`CsmBenchAdapter.h`](CsmBenchAdapter.h).
+
+The ESP32-S3 size and stack probe is [`arduino/csm_size_probe/build.sh`](arduino/csm_size_probe/build.sh) (Espressif Xtensa toolchain; variants A41, CSM, CSM27, CSM27Q); the AtomS3R sketch is [`sensors/full_marine_ins/atomS3R_ins_carma_shared_modes`](../../sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/README.md).

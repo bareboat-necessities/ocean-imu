@@ -21,3 +21,11 @@ python3 kalman_carma_shared_modes-plots.py
 #    (tools/carma_shared_modes_validation.py) and, for the tracking charts,
 #    from the replays above.
 python3 ../../tools/carma_shared_modes_validation.py figures --outdir . --ext pgf,svg
+
+# 3. The figures of kalman_carma_shared_modes-minimal.tex (the 27-state
+#    minimal realization), from the committed study data in
+#    reports/results/kalman_carma_shared_modes_minimal (analysis.json from
+#    tools/carma_shared_modes_minimal_analysis.py, summary.json and traces from
+#    tools/carma_shared_modes_minimal_study.py).
+python3 ../../tools/carma_shared_modes_minimal_analysis.py --figures-only --outdir . --ext pgf,svg
+python3 ../../tools/carma_shared_modes_minimal_study.py figures --outdir . --ext pgf,svg

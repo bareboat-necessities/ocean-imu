@@ -11,9 +11,14 @@
     filter of a row -- the CARMA3 baseline A41, the research SHM:est and the
     filters below -- sees the same sea and the same IMU stream.
 
-    Names: CSM[:noconf|:off][/option...]
+    Names: CSM[27|27Q|27H][:noconf|:off][/option...]
       CSM          DEPLOYABLE default: estimated coupling + coupling confidence,
                    Evidence excitation (CSM@A: the Legacy excitation)
+      CSM27        the 27-state minimal realization (KalmanCarmaSharedModesMinimal,
+                   Cascade: CARMA3 coordinates + lossless colouring); every
+                   suffix and option below applies to it as well
+      CSM27Q       ... Quotient realization (regression lift at kappa commits)
+      CSM27H       ... QuotientHold (quotient coordinates held; ablation)
       CSM:noconf   confidence disabled (c = 1: the research filter SHM:est)
       CSM:off      coupling off (the fallback model: CARMA(4,1) law per axis)
     Robustness options (deliberately wrong coupling priors; the wrong prior is
@@ -28,6 +33,8 @@
       fz<s>      freeze the estimated coupling at scenario time s ...
       keel       ... in the keel frame (it turns with the hull)
       atol<x>    amplitude commit deadband (relative; screening option)
+      rawhold    CSM27 only: hold the colouring states themselves at commits
+                 instead of the normalized ones (ablation)
     Environment: CSM_TRACE=<path prefix> writes <prefix><label>.csv at 1 Hz
     (confidence, evidence, state, D^2, SNR, NIS ratio, f_op, sigma_z,
     applied coherence / phase, estimated direction).
@@ -41,23 +48,29 @@
 
 #include "../kalman_carma/carma3/FullAdapters.h"
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModesMinimal.h"
 
 namespace carma3_bench {
 
 namespace csm = ocean_imu::carma_shared_modes;
 
 struct CsmSpec {
+    int realization = -1;         // -1: the 33-state filter; else csm::MinimalRealization
     bool confidence = true;
     bool off = false;
     std::string ext;              // "", true, flip, rot90, ph45, amp2
     float freeze_at_s = -1.0f;
     bool keel = false;
     float amplitude_tol = -1.0f;   // < 0: the configuration default
+    bool raw_hold = false;         // CSM27: hold the unnormalized colouring (ablation)
 };
 
 inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
     if (name.rfind("CSM", 0) != 0) return false;
     std::string rest = name.substr(3);
+    if (rest.rfind("27Q", 0) == 0) { sp.realization = static_cast<int>(csm::MinimalRealization::Quotient); rest = rest.substr(3); }
+    else if (rest.rfind("27H", 0) == 0) { sp.realization = static_cast<int>(csm::MinimalRealization::QuotientHold); rest = rest.substr(3); }
+    else if (rest.rfind("27", 0) == 0) { sp.realization = static_cast<int>(csm::MinimalRealization::Cascade); rest = rest.substr(2); }
     std::vector<std::string> tok;
     size_t p = 0;
     while (p <= rest.size()) {
@@ -78,21 +91,23 @@ inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
         } else if (o.rfind("fz", 0) == 0) sp.freeze_at_s = static_cast<float>(std::strtod(o.c_str() + 2, nullptr));
         else if (o == "keel") sp.keel = true;
         else if (o.rfind("atol", 0) == 0) sp.amplitude_tol = static_cast<float>(std::strtod(o.c_str() + 4, nullptr));
+        else if (o == "rawhold" && sp.realization == static_cast<int>(csm::MinimalRealization::Cascade)) sp.raw_hold = true;
         else return false;
     }
     return !(sp.off && !sp.ext.empty());
 }
 
-class FullCsm final : public IEstimator3 {
+template<class FusionT>
+class FullCsmT final : public IEstimator3 {
 public:
-    using Fusion = csm::SeaStateFusion_CarmaSharedModes;
-    using Mekf = Fusion::Mekf;
+    using Fusion = FusionT;
+    using Mekf = typename Fusion::Mekf;
     using H3 = ocean_imu::kalman::carma::Hermitian3<float>;
 
-    FullCsm(std::string label, const CsmSpec& sp) : label_(std::move(label)), sp_(sp) {
-        Fusion::Config fc;
+    FullCsmT(std::string label, const CsmSpec& sp) : label_(std::move(label)), sp_(sp) {
+        typename Fusion::Config fc;
         fill_config(fc, MAG_DELAY_SEC);
-        Fusion::SharedModes c;
+        typename Fusion::SharedModes c;
         c.mode = sp_.off ? csm::CouplingMode::Off
                : sp_.ext.empty() ? csm::CouplingMode::Estimated : csm::CouplingMode::External;
         c.confidence.enabled = sp_.confidence;
@@ -101,6 +116,9 @@ public:
         f_.begin(fc, c);
         f_.raw().enableTuner(true);
         f_.raw().enableClamp(true);
+        if constexpr (requires { f_.raw().mekf().motion().set_normalized_hold(false); }) {
+            if (sp_.raw_hold) f_.raw().mekf().motion().set_normalized_hold(false);
+        }
         typename ocean_imu::kalman::carma::CarmaCrossSpectrumEstimator<float>::Config ec;
         ec.horizon_s = 600.0f;       // oracle prior (as the research ORACLE runs)
         ec.band_frac = c.band_frac;
@@ -122,7 +140,7 @@ public:
                                      "coh_xz,ph_xz,coh_yz,ph_yz,dir_to_deg,dir_unc_deg,shrinks\n");
         }
     }
-    ~FullCsm() override { if (trace_) std::fclose(trace_); }
+    ~FullCsmT() override { if (trace_) std::fclose(trace_); }
 
     std::string name() const override { return label_; }
     void step(const Sensors& s) override {
@@ -275,5 +293,19 @@ private:
     bool frozen_ = false, keel_ = false;
     std::FILE* trace_ = nullptr;
 };
+
+using FullCsm = FullCsmT<csm::SeaStateFusion_CarmaSharedModes>;
+template<csm::MinimalRealization R> using FullCsm27 = FullCsmT<csm::SeaStateFusion_CarmaSharedModesMinimal<R>>;
+
+inline std::unique_ptr<IEstimator3> make_csm(const std::string& n, const CsmSpec& sp) {
+    using R = csm::MinimalRealization;
+    if (sp.realization < 0) return std::make_unique<FullCsm>(n, sp);
+    switch (static_cast<R>(sp.realization)) {
+        case R::Cascade: return std::make_unique<FullCsm27<R::Cascade>>(n, sp);
+        case R::Quotient: return std::make_unique<FullCsm27<R::Quotient>>(n, sp);
+        case R::QuotientHold: return std::make_unique<FullCsm27<R::QuotientHold>>(n, sp);
+    }
+    return nullptr;
+}
 
 }  // namespace carma3_bench

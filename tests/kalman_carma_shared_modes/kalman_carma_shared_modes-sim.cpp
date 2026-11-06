@@ -12,7 +12,10 @@
     W3D_CSM_VARIANT selects CSM (default: estimated coupling + coupling
     confidence, the deployable configuration), CSM_NOCONF (confidence
     disabled: the research filter SHM:est) or CSM_OFF (coupling off: the
-    CARMA(4,1) law on every axis).  The regression bars are fitted to CSM's
+    CARMA(4,1) law on every axis); CSM27, CSM27_NOCONF, CSM27_OFF (the
+    27-state minimal realization, Cascade), CSM27Q, CSM27Q_OFF (Quotient)
+    and CSM27H (QuotientHold) are the same configurations with the core of
+    KalmanCarmaSharedModesMinimal.h (docs/kalman-carma-shared-modes-minimal.md).  The regression bars are fitted to CSM's
     own replays of these records and gate CSM only (default seeds, noise and
     magnetometer); the other variants are diagnostics.  The CARMA3 baseline
     on the same records and seeds is tests/kalman_carma/carma3-sim (A41); the
@@ -29,6 +32,7 @@
 
 #include "../kalman_carma/carma3/SimAdapters.h"
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#include "kalman_carma_shared_modes/KalmanCarmaSharedModesMinimal.h"
 
 using Eigen::Vector3f;
 
@@ -37,9 +41,10 @@ namespace {
 using namespace carma3_sim;
 namespace csm = ocean_imu::carma_shared_modes;
 using CsmCore = csm::KalmanCarmaSharedModes<float>;
+template<csm::MinimalRealization R> using Csm27Core = csm::KalmanCarmaSharedModesMinimal<float, R>;
 
 // process_wave_file_for_tracker<> constructs the adapter from four arguments.
-template<int Variant>   // 0 CSM, 1 CSM_NOCONF, 2 CSM_OFF
+template<int Variant, class Core = CsmCore>   // 0 CSM, 1 CSM_NOCONF, 2 CSM_OFF
 class CsmAdapter final : public IW3dFusionAdapter {
 public:
     CsmAdapter(bool m, const Vector3f& a, const Vector3f& g, const Vector3f& s) : impl_(m, a, g, s, nullptr) {
@@ -57,7 +62,7 @@ public:
     void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }
     FilterSnapshot snapshot() const override { return impl_.snapshot(); }
 private:
-    CarmaAdapter<4, false, 4, false, CsmCore> impl_;
+    CarmaAdapter<4, false, 4, false, Core> impl_;
 };
 
 // Regression bars of the deployable variant CSM on the eight scored records
@@ -148,7 +153,13 @@ int main(int argc, char* argv[]) {
             if (variant == "CSM") run_file<CsmAdapter<0>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_NOCONF") run_file<CsmAdapter<1>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_OFF") run_file<CsmAdapter<2>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
-            else throw std::invalid_argument("W3D_CSM_VARIANT must be CSM, CSM_NOCONF or CSM_OFF");
+            else if (variant == "CSM27") run_file<CsmAdapter<0, Csm27Core<csm::MinimalRealization::Cascade>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "CSM27_NOCONF") run_file<CsmAdapter<1, Csm27Core<csm::MinimalRealization::Cascade>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "CSM27_OFF") run_file<CsmAdapter<2, Csm27Core<csm::MinimalRealization::Cascade>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "CSM27Q") run_file<CsmAdapter<0, Csm27Core<csm::MinimalRealization::Quotient>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "CSM27Q_OFF") run_file<CsmAdapter<2, Csm27Core<csm::MinimalRealization::Quotient>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else if (variant == "CSM27H") run_file<CsmAdapter<0, Csm27Core<csm::MinimalRealization::QuotientHold>>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            else throw std::invalid_argument("W3D_CSM_VARIANT must be CSM, CSM_NOCONF, CSM_OFF, CSM27, CSM27_NOCONF, CSM27_OFF, CSM27Q, CSM27Q_OFF or CSM27H");
         }
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

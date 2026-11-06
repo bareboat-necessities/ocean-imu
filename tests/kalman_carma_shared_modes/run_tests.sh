@@ -10,6 +10,11 @@ set -e
 # The full validation is tools/carma_shared_modes_validation.py.
 ./carma_shared_modes-test
 
+# EXPERIMENTAL 27-state minimal realization (KalmanCarmaSharedModesMinimal.h,
+# docs/kalman-carma-shared-modes-minimal.md): equivalence with the 33-state
+# filter at fixed parameters, cascade = A41 through adaptation, commits.
+./carma_shared_modes_minimal-test
+
 # Paired smoke row (carma3_bench engine): CSM:noconf@A (Legacy excitation)
 # is the research filter SHM:est (same model and code; the two objects differ in memory layout, so
 # float results agree to rounding -- carma_shared_modes-test checks bit
@@ -32,6 +37,30 @@ assert rows["CSM"]["failed"] == "0"
 for a in "xyz":
     assert 0.0 < float(rows["CSM"]["pct_" + a]) < 25.0, ("CSM", a)
 print("csm smoke:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
+PY
+
+# Paired smoke row of the 27-state minimal realization: with the coupling off
+# the cascade IS the CARMA3 baseline in law, through adaptation (A41@C equal
+# to float rounding); the quotient with its regression lift tracks the
+# 33-state filter (the removed directions carry no information) and every
+# realization runs without failure.
+./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
+    --seed 1 --filters A41@C,CSM,CSM27,CSM27:off,CSM27Q --score-start 200 > smoke_csm27.csv
+python3 - <<'PY'
+import csv
+rows = {r["filter"]: r for r in csv.DictReader(open("smoke_csm27.csv"))}
+for a in "xyz":
+    for c in ("rms_", "rmsv_", "nees_"):
+        r = float(rows["CSM27:off"][c + a]) / float(rows["A41@C"][c + a])
+        assert abs(r - 1.0) < 1e-4, ("CSM27:off / A41@C", c + a, r)
+    r = float(rows["CSM27Q"]["rms_" + a]) / float(rows["CSM"]["rms_" + a])
+    assert abs(r - 1.0) < 0.01, ("CSM27Q / CSM", a, r)
+    r = float(rows["CSM27"]["rms_" + a]) / float(rows["CSM"]["rms_" + a])
+    assert abs(r - 1.0) < 0.05, ("CSM27 / CSM", a, r)
+for f in ("CSM27", "CSM27:off", "CSM27Q"):
+    assert rows[f]["failed"] == "0", f
+    assert rows[f]["states"] == "27", f
+print("csm27 smoke:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
 PY
 
 # Deterministic replay of the eight scored dataset records with the
