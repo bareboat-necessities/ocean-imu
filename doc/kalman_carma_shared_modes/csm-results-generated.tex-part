@@ -1,0 +1,83 @@
+\begin{table*}[t]
+\caption{Final paired Monte Carlo, 50 seeds per sea: baseline RMS (mm) and the change of each filter against it, $x$/$y$/$z$ in \% (positive = better). Mean NEES of $[\vct p,\vct v]$ (6 = consistent).}
+\label{tab:final}
+\centering\scriptsize
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lcccccc}
+\toprule
+Sea & A41 (mm) & A41@C & SHM:est & CSM & CSM:off & NEES A41/A41@C/SHM:est/CSM/CSM:off \\
+\midrule
+calm water (afloat, no waves) & 61.2/60.8/52.2 & +100/+100/+100 & +0/+0/-0 & +100/+100/+100 & +100/+100/+100 & 3.4/0.0/3.4/0.0/0.0 \\
+still IMU & 59.1/58.3/52.2 & +100/+100/+100 & +0/+0/-0 & +100/+100/+100 & +100/+100/+100 & 3.2/0.0/3.2/0.0/0.0 \\
+regular monochromatic wave & 31.4/28.4/23.9 & -0/-0/-0 & +12/+2/+10 & +11/+2/+10 & +1/+0/-2 & 13.1/13.1/12.8/12.8/13.1 \\
+unidirectional JONSWAP & 15.6/14.7/14.6 & -1/-1/+1 & +4/+1/+5 & +3/+0/+6 & -0/-1/-1 & 6.1/6.0/6.0/5.8/6.0 \\
+directionally spread JONSWAP (cos$^8$) & 15.3/14.8/14.6 & -1/-1/+0 & +4/+1/+4 & +3/+0/+5 & -0/-1/-1 & 5.7/5.6/5.6/5.5/5.6 \\
+Pierson-Moskowitz & 21.4/19.7/21.0 & -0/-0/+1 & +6/+3/+8 & +5/+2/+8 & -0/-0/+1 & 6.1/6.0/5.8/5.7/5.9 \\
+long-period swell & 93.7/61.5/89.4 & +12/-8/+27 & +27/+21/+24 & +29/+2/+40 & +11/-8/+27 & 25.2/7.4/16.9/6.5/7.5 \\
+short-period wind waves & 5.6/5.8/6.7 & -1/-1/+1 & +2/+1/-1 & +0/+0/-0 & -1/-1/-2 & 4.0/3.8/3.9/3.7/3.8 \\
+mixed wind sea + swell & 185.4/50.5/147.7 & +1/-0/+1 & +8/+0/+12 & +2/+1/+4 & -0/-1/+1 & 62.9/59.7/60.1/57.9/60.7 \\
+two systems, different frequencies & 67.2/39.4/52.9 & +1/-2/+1 & +16/+0/+16 & +4/-1/+6 & -1/-1/+2 & 10.0/9.5/8.4/8.9/9.5 \\
+two crossing systems (90 deg) & 17.1/17.0/16.9 & -1/-0/+1 & +2/+1/+2 & +1/+0/+3 & -1/-0/+0 & 5.9/5.7/5.7/5.6/5.7 \\
+changing wave direction (30 $\to$ 120 deg) & 14.8/15.8/14.5 & -1/-0/+1 & +1/+3/+4 & +0/+2/+4 & -1/-0/-1 & 5.7/5.5/5.6/5.4/5.5 \\
+abrupt change of wave period & 37.0/43.8/36.5 & -0/+0/+1 & +3/+6/+12 & +2/+4/+9 & -0/-0/+2 & 10.1/9.7/9.8/9.5/10.0 \\
+wave onset and cessation & 32.8/31.9/37.8 & +64/+64/+70 & -3/-3/-4 & +65/+64/+71 & +65/+64/+70 & 5.7/9681.5/5.5/10215.9/10216.0 \\
+vessel heading changes (90 deg zigzag) & 15.1/14.8/14.6 & -0/-1/+0 & +4/+2/+4 & +1/-0/+2 & -0/-1/-1 & 5.0/4.9/4.9/4.8/4.9 \\
+vessel manoeuvring & 77.2/78.5/14.6 & -1/-2/+0 & +2/+1/-13 & -1/-1/-6 & -1/-2/-1 & 60.0/59.5/59.6/59.3/59.6 \\
+very low sea state (5 cm) & 3.1/3.1/4.7 & -25/-26/+8 & -0/-1/+3 & -25/-26/+8 & -25/-26/+7 & 4.4/3.5/4.2/3.5/3.5 \\
+magnetic disturbances, calibration residuals & 15.6/15.2/14.7 & -1/-1/+0 & +4/+1/+4 & +3/-0/+5 & -0/-1/-1 & 6.5/6.3/6.4/6.3/6.3 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Coupling-mismatch injections, 30 seeds: paired change of the horizontal / vertical RMS against A41 (\%, 95\,\% interval) and the mean / median NEES of $[\vct p,\vct v]$, with and without the coupling confidence.}
+\label{tab:robust}
+\centering\scriptsize
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{llccc}
+\toprule
+Injection & Sea & horizontal & heave & NEES mean/median \\
+\midrule
+CSM:off & jonswap\_fp0.29\_hs0.8\_g3.3 & -0.5 [-0.6, -0.4] & -0.7 [-0.9, -0.5] & 5.9/4.5 \\
+CSM/ext-true & jonswap\_fp0.29\_hs0.8\_g3.3 & +1.8 [+1.6, +2.0] & +4.9 [+4.6, +5.2] & 5.7/4.3 \\
+CSM:noconf/ext-true & jonswap\_fp0.29\_hs0.8\_g3.3 & +1.8 [+1.6, +2.0] & +4.9 [+4.6, +5.2] & 5.7/4.3 \\
+CSM/ext-flip & jonswap\_fp0.29\_hs0.8\_g3.3 & -0.5 [-0.6, -0.4] & -0.7 [-0.9, -0.5] & 5.9/4.5 \\
+CSM:noconf/ext-flip & jonswap\_fp0.29\_hs0.8\_g3.3 & -8.1 [-8.5, -7.7] & -27.7 [-28.4, -27.0] & 6.9/5.6 \\
+CSM/ext-rot90 & jonswap\_fp0.29\_hs0.8\_g3.3 & -0.5 [-0.6, -0.4] & -0.7 [-0.9, -0.5] & 5.9/4.5 \\
+CSM:noconf/ext-rot90 & jonswap\_fp0.29\_hs0.8\_g3.3 & -3.8 [-5.0, -2.5] & -10.7 [-11.2, -10.2] & 6.9/4.3 \\
+CSM/ext-ph45 & jonswap\_fp0.29\_hs0.8\_g3.3 & -0.5 [-0.6, -0.4] & -0.7 [-0.9, -0.5] & 5.9/4.5 \\
+CSM:noconf/ext-ph45 & jonswap\_fp0.29\_hs0.8\_g3.3 & +3.1 [+2.6, +3.5] & +0.3 [+0.0, +0.6] & 6.1/4.6 \\
+CSM/ext-amp2 & jonswap\_fp0.29\_hs0.8\_g3.3 & -0.5 [-0.6, -0.4] & -0.7 [-0.9, -0.5] & 5.9/4.5 \\
+CSM:noconf/ext-amp2 & jonswap\_fp0.29\_hs0.8\_g3.3 & -118.5 [-123.2, -114.1] & -131.2 [-133.6, -128.9] & 36.3/35.7 \\
+CSM:off & mixed\_swell\_wind & -0.3 [-0.5, -0.1] & +0.9 [+0.7, +1.1] & 62.3/60.9 \\
+CSM/ext-true & mixed\_swell\_wind & +2.0 [+1.7, +2.4] & +4.1 [+3.6, +4.7] & 59.4/58.3 \\
+CSM:noconf/ext-true & mixed\_swell\_wind & +8.5 [+7.9, +9.1] & +13.8 [+13.4, +14.2] & 58.5/59.0 \\
+CSM/ext-flip & mixed\_swell\_wind & -0.3 [-0.5, -0.1] & +0.9 [+0.7, +1.1] & 62.3/60.9 \\
+CSM:noconf/ext-flip & mixed\_swell\_wind & -21.7 [-22.5, -20.8] & -18.2 [-18.9, -17.4] & 122.5/117.5 \\
+CSM/ext-rot90 & mixed\_swell\_wind & -0.3 [-0.5, -0.1] & +0.9 [+0.7, +1.1] & 62.3/60.9 \\
+CSM:noconf/ext-rot90 & mixed\_swell\_wind & -25.4 [-26.3, -24.6] & -21.0 [-21.6, -20.3] & 133.6/135.1 \\
+CSM/ext-ph45 & mixed\_swell\_wind & -0.3 [-0.5, -0.1] & +0.9 [+0.7, +1.1] & 62.3/60.9 \\
+CSM:noconf/ext-ph45 & mixed\_swell\_wind & -8.8 [-9.8, -7.9] & +9.7 [+9.2, +10.2] & 86.8/87.1 \\
+CSM/ext-amp2 & mixed\_swell\_wind & -0.3 [-0.5, -0.1] & +0.9 [+0.7, +1.1] & 62.3/60.9 \\
+CSM:noconf/ext-amp2 & mixed\_swell\_wind & +0.1 [-1.9, +1.9] & +37.5 [+36.3, +38.8] & 109.4/106.1 \\
+CSM:off & pm\_fp0.25\_hs1 & -0.3 [-0.5, -0.2] & +0.7 [+0.5, +1.0] & 6.3/4.4 \\
+CSM/ext-true & pm\_fp0.25\_hs1 & +4.1 [+3.8, +4.4] & +8.1 [+7.8, +8.4] & 6.1/4.1 \\
+CSM:noconf/ext-true & pm\_fp0.25\_hs1 & +4.4 [+4.0, +4.7] & +8.5 [+8.2, +8.8] & 6.1/4.1 \\
+CSM/ext-flip & pm\_fp0.25\_hs1 & -0.3 [-0.5, -0.2] & +0.7 [+0.5, +1.0] & 6.3/4.4 \\
+CSM:noconf/ext-flip & pm\_fp0.25\_hs1 & -12.9 [-13.6, -12.2] & -29.7 [-30.3, -29.0] & 8.0/6.2 \\
+CSM/ext-rot90 & pm\_fp0.25\_hs1 & -0.3 [-0.5, -0.2] & +0.7 [+0.5, +1.0] & 6.3/4.4 \\
+CSM:noconf/ext-rot90 & pm\_fp0.25\_hs1 & -4.4 [-5.3, -3.4] & -10.5 [-11.2, -9.9] & 7.7/5.1 \\
+CSM/ext-ph45 & pm\_fp0.25\_hs1 & -0.3 [-0.5, -0.2] & +0.7 [+0.5, +1.0] & 6.3/4.4 \\
+CSM:noconf/ext-ph45 & pm\_fp0.25\_hs1 & +2.9 [+2.5, +3.2] & +2.7 [+2.4, +3.0] & 6.7/4.6 \\
+CSM/ext-amp2 & pm\_fp0.25\_hs1 & -0.3 [-0.5, -0.2] & +0.7 [+0.5, +1.0] & 6.3/4.4 \\
+CSM:noconf/ext-amp2 & pm\_fp0.25\_hs1 & -91.4 [-95.3, -87.3] & -89.6 [-92.5, -87.0] & 32.6/32.3 \\
+CSM & jonswap\_fp0.29\_hs0.8\_g3.3+turns & +0.4 [+0.3, +0.5] & +2.4 [+2.2, +2.6] & 4.9/4.5 \\
+CSM:noconf & jonswap\_fp0.29\_hs0.8\_g3.3+turns & +1.8 [+1.6, +2.0] & +5.1 [+4.8, +5.4] & 4.8/4.4 \\
+CSM/fz400/keel & jonswap\_fp0.29\_hs0.8\_g3.3+turns & +0.0 [-0.1, +0.2] & +1.1 [+0.9, +1.3] & 4.9/4.5 \\
+CSM:noconf/fz400/keel & jonswap\_fp0.29\_hs0.8\_g3.3+turns & -0.1 [-0.5, +0.3] & -1.1 [-1.4, -0.8] & 5.1/4.3 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table*}
+
