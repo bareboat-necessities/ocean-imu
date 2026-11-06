@@ -82,6 +82,8 @@ TRACE_FILTERS = "A41,SHM:est,CSM"
 TRACE_EXTRA = {J29: "A41,CSM/ext-flip,CSM:noconf/ext-flip"}
 SPEC_SEAS = [J29, "mixed_swell_wind", "crossing"]
 SPEC_FILTERS = ["A41", "SHM:est", "CSM"]
+TRACE_EVERY = 5      # committed Monte Carlo traces: 10 Hz bench output -> 2 Hz
+SPEC_FMAX = 2.0      # committed spectra: the plotted band (figures show 0.03-1.5 Hz)
 TIMING_FILTERS = ["A41", "SHM:est", "CSM", "CSM:off"]
 LABEL = {"A41": "CARMA3 baseline (A41)", "A41@C": "CARMA3 baseline, Evidence excitation (A41@C)", "SHM:est": "Option C research (SHM:est)", "CSM": "Shared modes (CSM)",
          "CSM:off": "CSM coupling off", "CSM:noconf": "CSM without confidence"}
@@ -240,6 +242,8 @@ def stage_traces(args):
             p = f.result()
             if p.returncode != 0:
                 print("ERROR trace:", p.stderr[-300:])
+    for p in TRACE_DIR.glob("*_ts.csv"):
+        trim_trace(p)
     print(f"traces: {len(cmds)} runs -> {TRACE_DIR.relative_to(ROOT)}")
 
 
@@ -284,6 +288,9 @@ def stage_spectra(args):
                 nseeds += 1
         if not nseeds:
             continue
+        band = f <= SPEC_FMAX
+        f = f[band]
+        acc = {key: S[band] for key, S in acc.items()}
         rows = {"f": f.tolist()}
         for (name, k), S in acc.items():
             rows[f"{name}|{k}|re"] = (np.real(S) / nseeds).tolist()
@@ -352,10 +359,29 @@ def stage_dataset(args):
         src = next(iter(sorted(pat.parent.glob(pat.name))), None)
         if src:
             d = pd.read_csv(src)
-            step = max(1, int(round(0.1 / float(np.median(np.diff(d.time.values))))))
-            keep = [c for c in d.columns if c.startswith(("time", "disp_", "vel_", "roll_", "pitch_", "yaw_", "acc_bias",
-                                                           "gyro_bias", "tau_applied", "sigma_a_applied", "freq_tracker"))]
-            d[keep].iloc[::step].to_csv(TRACE_DIR / f"dataset_jonswap_H1.5_{variant}.csv", index=False, float_format="%.6g")
+            write_dataset_trace(d, TRACE_DIR / f"dataset_jonswap_H1.5_{variant}.csv")
+
+
+def write_dataset_trace(d, out):
+    """The committed replay trace keeps what the figures read: tracking (last
+    120 s) at 0.1 s, attitude errors and bias convergence at 1 s."""
+    dt = float(np.median(np.diff(d.time.values)))
+    keep = [c for c in d.columns if c.startswith(("time", "disp_", "vel_", "roll_", "pitch_", "yaw_", "acc_bias",
+                                                   "gyro_bias"))]
+    t = d.time.values
+    k = np.arange(len(d))
+    fine = max(1, int(round(0.1 / dt))); coarse = max(1, int(round(1.0 / dt)))
+    sel = np.where(t >= t[-1] - 120.0, k % fine == 0, k % coarse == 0)
+    d.loc[sel, keep].to_csv(out, index=False, float_format="%.6g")
+
+
+def trim_trace(path):
+    """A Monte Carlo trace keeps what the rolling-error figures read: time,
+    truth and estimates of the horizontal axes at 2 Hz."""
+    import pandas as pd
+    d = pd.read_csv(path)
+    keep = ["t"] + [c for c in d.columns if c.startswith(("x_", "y_")) and c not in ("x_total", "y_total")]
+    d[keep].iloc[::TRACE_EVERY].to_csv(path, index=False, float_format="%.6g")
 
 
 def dataset_metrics(path, t0=None):
@@ -488,6 +514,14 @@ def manifest(stats):
     }
 
 
+def md_table(df, fmt="{:.4f}"):
+    """Markdown table without the optional tabulate dependency."""
+    cells = lambda r: [fmt.format(x) if isinstance(x, float) else str(x) for x in r]
+    rows = ["| " + " | ".join(map(str, df.columns)) + " |", "|" + "---|" * len(df.columns)]
+    rows += ["| " + " | ".join(cells(r)) + " |" for r in df.itertuples(index=False)]
+    return "\n".join(rows)
+
+
 def fmt_chg(r):
     if not r:
         return "--"
@@ -556,7 +590,7 @@ def stage_report(args):
     ds = load(DATASET)
     if not ds.empty:
         md.append("## Dataset replay (pinned vessel-RAO records, default seeds)\n")
-        md.append(ds.to_markdown(index=False, floatfmt=".4f") if hasattr(ds, "to_markdown") else ds.to_string())
+        md.append(md_table(ds))
         md.append("")
     (OUT / "summary.md").write_text("\n".join(md) + "\n")
     (OUT / "stats.json").write_text(json.dumps(stats, indent=1))
@@ -577,7 +611,8 @@ TEX_DIR = ROOT / "doc" / "kalman_carma_shared_modes"
 
 
 def tex(t):
-    return t.replace("_", "\\_").replace("%", "\\%").replace("&", "\\&").replace("->", "$\\to$")
+    return (t.replace("_", "\\_").replace("%", "\\%").replace("&", "\\&").replace("->", "$\\to$")
+            .replace("^8", "$^8$"))
 
 
 def write_tex(stats):
@@ -792,7 +827,8 @@ def figures(stats, outdir, exts=("svg",)):
             filt = [c[2:] for c in d.columns if c.startswith("x_") and c not in ("x_true", "x_total")]
             for fl in filt:
                 e = np.sqrt((d[f"x_{fl}"] - d.x_true) ** 2 + (d[f"y_{fl}"] - d.y_true) ** 2)
-                ax.plot(d.t, pd.Series(e).rolling(300, min_periods=10).apply(lambda v: np.sqrt(np.mean(v ** 2)), raw=True),
+                k = max(1, int(round(30.0 / float(np.median(np.diff(d.t.values))))))
+                ax.plot(d.t, pd.Series(e).rolling(k, min_periods=max(1, k // 30)).apply(lambda v: np.sqrt(np.mean(v ** 2)), raw=True),
                         lw=0.9, label=fl)
             ax.set_ylabel("rolling 30 s horizontal RMS error (m)")
             ax.set_xlabel("time (s)")

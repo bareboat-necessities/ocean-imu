@@ -62,7 +62,27 @@ Constrained MCARMA (experimental draft)}
 \maketitle
 
 \begin{abstract}
-\InputPart{carma-coupled-abstract-generated.tex-part}
+The experimental CARMA3 quaternion multiplicative extended Kalman filter of
+ocean-IMU models the wave displacement of each axis with an independent
+CARMA(4,1) process. Linear waves couple the axes: surge and heave are in
+quadrature, with a coherence near one in a single wave system. We compare
+three coupled priors in the same filter: correlated excitation (21 states),
+shared directional modes, a complexified CARMA(4,1) mode per axis driven by
+Hermitian noise (33 states), and a constrained multivariate CARMA with a
+heave response amplitude operator (35 states), all with a coupling estimated
+from the IMU alone. In a paired Monte Carlo study (50 seeds, ten wave seas,
+complete INS, simulation only) the shared modes lower the pooled
+displacement error by 11.4\,\%, 4.8\,\% and 12.2\,\% (north, east, heave;
+95\,\% intervals within $\pm0.6$ points), within 1.4 points of the oracle
+coupling and with calm water unchanged. Correlated excitation gains
+nothing, since a real coupling carries at most 41\,\% of the surge--heave
+cross-spectral energy. The constrained MCARMA gains more (26.5\,\% heave),
+but only with the benchmark hull's response operator; a 27\,\% frequency
+error turns the gain into a loss of up to 25\,\%, and its worst update costs
+\SI{824}{\micro s} against \SI{35}{\micro s}. A reversed coupling costs up to
+38\,\%, so a deployable filter needs a coupling confidence and fallback. We
+recommend the shared directional modes as a separate experimental filter;
+the production CARMA3 filter is unchanged.
 \end{abstract}
 
 \section{Introduction and Status}
@@ -560,7 +580,41 @@ applied $x$--$z$ phase.}
 \label{fig:cost}
 \end{figure}
 
-\InputPart{carma-coupled-discussion-generated.tex-part}
+\section{Discussion and Recommendation}
+\label{sec:discussion}
+\textbf{What the gain is.} The shared-mode prior adds one statistic to the
+independent-axis model: the Hermitian band cross-spectrum, whose imaginary
+part is the quadrature relation of linear waves. A real (co-spectrum)
+coupling represents 28--41\,\% of the truth's surge--heave cross-spectral
+energy, a constant phase 84--94\,\%; correspondingly the correlated prior
+gains nothing (heave $+0.6$\,\%, horizontal $-1.3$ and $-3.3$\,\%) while
+the shared modes gain on every wave sea except short-period wind waves
+(heave $-1.2$\,\%), most on long-period swell ($+23.7$\,\% heave) and on
+two-system seas ($+16.1$\,\%). The estimated coupling is within 1.4 points
+of the oracle, so the IMU-only estimator is close to the information the
+model can use.
+
+\textbf{What it costs.} Twice the host update time (\SI{7.0}{\micro s}
+against \SI{3.6}{\micro s} mean), a \SI{15}{kB} filter object on the
+ESP32-S3, and fragility: a reversed coupling costs 8--38\,\% and a
+\SI{90}{\degree} error 6--25\,\%. The coupling belongs in the world frame (a
+keel-frame coupling loses the gain through heading changes), and its
+estimate must be shrunk and monitored with a fallback to independent axes.
+
+\textbf{Why not the MCARMA.} The unrestricted MCARMA(4,1) is not identifiable
+from one IMU (Fisher rank 51 of 54). The constrained form with a heave
+response operator is the most accurate model here, but part of its gain is
+hull knowledge: its operator prior alone gains 2--7\,\%, it uses the
+benchmark hull's operator, and a 27\,\% natural-frequency error costs up to
+25\,\%. It also doubles the accelerometer NIS, and its worst update
+(\SI{824}{\micro s}, 16\,\% of the \SI{5}{ms} step on the host) is
+unsuited to the AtomS3R.
+
+\textbf{Recommendation (Option C).} Adopt the shared directional modes as a
+separate experimental filter with a coupling confidence and fallback, not
+as a change to the production CARMA3 filter, which is unchanged. That filter
+is \texttt{KalmanCarmaSharedModes} (\texttt{docs/kalman-carma-shared-modes.md}).
+All results are simulation; no hardware evidence is claimed.
 
 \section*{Reproduction}
 \texttt{make -C tests/kalman\_carma build test}; then

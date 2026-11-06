@@ -75,9 +75,15 @@ SCREEN_SCENARIOS = [J29, "pm_fp0.25_hs1", "mixed_swell_wind", "dir_change", f"{J
 SCREEN_GRID = [(h, b) for h in (120, 240, 480) for b in (0.15, 0.25, 0.40)]
 SPEC_SCENARIOS = [f"{J29}+sp10000", J29, "mixed_swell_wind", "bimodal", "crossing"]
 SPEC_FILTERS = ["B41", "MOD:est/nz", "COR:est", "SHM:est", "MCA:est"]
-TRACE_SCENARIOS = [J29, "mixed_swell_wind", "dir_change", f"{J29}+on400w60+off900w60", f"{J29}+turns",
-                   "calm", f"{J29}+sp10000"]
+TRACE_SCENARIOS = [J29, "dir_change", f"{J29}+on400w60+off900w60", f"{J29}+turns"]
 TRACE_FILTERS = "B41,MOD:est/nz,COR:est,SHM:est,MCA:est,SHM:orc/flip"
+# The committed traces keep only what the report's figures read
+# (tools/carma3_coupled_report.py trace_plots): the J29 record at the bench's
+# 10 Hz inside its plotted 690-770 s window, the others at 2 Hz (30 s rolling
+# RMS and the applied x-z phase).
+TRACE_FIG_FILTERS = ["B41", "COR:est", "SHM:est", "MCA:est", "SHM:orc/flip"]
+TRACE_J29_WINDOW = (690.0, 770.0)
+TRACE_EVERY = 5
 TIMING_FILTERS = ["B41", "MOD:off", "MOD:est/nz", "COR:est", "SHM:est", "MCA:est"]
 
 
@@ -241,16 +247,36 @@ def spectra(args):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def trim_trace(full: Path, out: Path, scenario: str) -> None:
+    """Reduce a full bench trace to the columns, rate and window the figures read."""
+    import pandas as pd
+    t = pd.read_csv(full)
+    keep = ["t", "x_true", "y_true", "z_true"]
+    keep += [f"{c}_{n}" for n in TRACE_FIG_FILTERS for c in "xyz"]
+    keep += [f"phxz_{n}" for n in TRACE_FIG_FILTERS] + ["dyaw_B41", "dyaw_SHM:est"]
+    t = t[[k for k in keep if k in t.columns]]
+    if scenario == J29:
+        t = t[(t.t >= TRACE_J29_WINDOW[0]) & (t.t <= TRACE_J29_WINDOW[1])]
+    else:
+        t = t.iloc[::TRACE_EVERY]
+    t.to_csv(out, index=False, float_format="%.6g")
+
+
 def traces(args):
     TRACE_DIR.mkdir(parents=True, exist_ok=True)
-    cmds = []
+    cmds, jobs = [], []
     for sc in TRACE_SCENARIOS:
         p = TRACE_DIR / f"{sc.replace('+', '_')}_seed1.csv"
         if p.exists():
             continue
-        cmds.append(cmd(sc, 1, TRACE_FILTERS) + ["--timeseries", str(p), "--decimate", "20", "--extended", "--coupling"])
+        full = p.with_suffix(".full.csv")
+        cmds.append(cmd(sc, 1, TRACE_FILTERS) + ["--timeseries", str(full), "--decimate", "20", "--extended", "--coupling"])
+        jobs.append((full, p, sc))
     with ThreadPoolExecutor(max_workers=args.jobs) as ex:
         list(ex.map(lambda c: subprocess.run([str(BENCH)] + c, capture_output=True, text=True, check=True), cmds))
+    for full, p, sc in jobs:
+        trim_trace(full, p, sc)
+        full.unlink()
     print(f"traces: {len(cmds)} written", flush=True)
 
 

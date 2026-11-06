@@ -1,0 +1,81 @@
+{
+ "git_revision": "db0bde674038abc68dee5e5775ea68d83e72e9b9",
+ "dataset": {
+  "repository": "bareboat-necessities/oceanography-waves-lib",
+  "version": "v1.2.3",
+  "archive": "sim-data-files-vessel-rao-28ft.zip",
+  "record_sha256": {
+   "wave_data_cnoidal_H0.270_L14.047_A0.00_P60.00.csv": "f85ca6c6076e898e18e03daa8e00317a870e6b317df0c7ce21b9ca53460fe598",
+   "wave_data_cnoidal_H1.500_L50.710_A0.00_P120.00.csv": "e472b6941723330f4814fb9f98a9fba4b1693132548c2c1580d2d3c67d8db309",
+   "wave_data_cnoidal_H4.000_L112.766_A0.00_P30.00.csv": "f85e35a30d607c6f922b0776dc137b77137d15192004c9995f731ce6fc6574c7",
+   "wave_data_cnoidal_H8.500_L202.839_A0.00_P72.00.csv": "8efe6103b5b1b62114359108275056b350ae94f7563f1c351410a1a749eef651",
+   "wave_data_fenton_H0.270_L14.047_A0.00_P60.00.csv": "f66a827a4afe1a2395563a6fb199d07aa79fd24d48219cdd69655de1223d47bd",
+   "wave_data_fenton_H1.500_L50.710_A0.00_P120.00.csv": "d8884f47baa22865571fb1bb5db63fde02988bfec7986477013a0cb5667a25f1",
+   "wave_data_fenton_H4.000_L112.766_A0.00_P30.00.csv": "cf1968dc6a19cecf2bbf2a862934054974d0161d98e3c087ef90c91b26af7481",
+   "wave_data_fenton_H8.500_L202.839_A0.00_P72.00.csv": "2e282ff1a57a6eca9ad6cdf5e7e99beb71f0dcf17550acef6d23c53f9d984d76",
+   "wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv": "d0de461ee0452a79da7945ff36ccb376b05f60b94a2295e317902f0c74509416",
+   "wave_data_gerstner_H1.500_L50.710_A0.00_P120.00.csv": "2e15f4daefc02bc2a2d3c002d2edbf6baebd3f183a2dc4ed2a5a034ae51e836b",
+   "wave_data_gerstner_H4.000_L112.766_A0.00_P30.00.csv": "3176fbad00e8c7889bf3f11f92a4ea47fb3fae6618a22f29c91d63537257f735",
+   "wave_data_gerstner_H8.500_L202.839_A0.00_P72.00.csv": "273e758830a7d9217b6937fce7d1842c85cd80ef72e501202ec03a9c76ec2453",
+   "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+   "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+   "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+   "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+   "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+   "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+   "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+   "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+  }
+ },
+ "monte_carlo": {
+  "scenarios": {
+   "calm": "calm water (afloat, no waves)",
+   "stationary": "still IMU",
+   "regular_f0.25_h1": "regular monochromatic wave",
+   "jonswap_fp0.29_hs0.8_g3.3+sp10000": "unidirectional JONSWAP",
+   "jonswap_fp0.29_hs0.8_g3.3": "directionally spread JONSWAP (cos^8)",
+   "pm_fp0.25_hs1": "Pierson-Moskowitz",
+   "swell": "long-period swell",
+   "jonswap_fp0.45_hs0.4_g3.3": "short-period wind waves",
+   "mixed_swell_wind": "mixed wind sea + swell",
+   "bimodal": "two systems, different frequencies",
+   "crossing": "two crossing systems (90 deg)",
+   "dir_change": "changing wave direction (30 -> 120 deg)",
+   "abrupt_change": "abrupt change of wave period",
+   "jonswap_fp0.29_hs0.8_g3.3+on400w60+off900w60": "wave onset and cessation",
+   "jonswap_fp0.29_hs0.8_g3.3+turns": "vessel heading changes (90 deg zigzag)",
+   "jonswap_fp0.29_hs0.8_g3.3+maneuver": "vessel manoeuvring",
+   "small_amplitude": "very low sea state (5 cm)",
+   "jonswap_fp0.29_hs0.8_g3.3+magdist+scal": "magnetic disturbances, calibration residuals"
+  },
+  "seeds": "1..50 (final), 1..30 (robustness), 1..10 (spectra)",
+  "screening_seeds": "1001..1020 (coupled-prior study; estimator horizon and band)",
+  "duration_s": "per scenario (tests/kalman_carma/CarmaBenchTruth.h; default 1200 s, scored from 300 s)",
+  "filters": "A41,A41@C,SHM:est,CSM,CSM:off",
+  "robustness_filters": "A41,CSM:off,CSM/ext-true,CSM:noconf/ext-true,CSM/ext-flip,CSM:noconf/ext-flip,CSM/ext-rot90,CSM:noconf/ext-rot90,CSM/ext-ph45,CSM:noconf/ext-ph45,CSM/ext-amp2,CSM:noconf/ext-amp2",
+  "turn_filters": "A41,CSM,CSM:noconf,CSM/fz400/keel,CSM:noconf/fz400/keel",
+  "sample_rate_hz": 200
+ },
+ "configuration": {
+  "coupling": "estimated (240 s, band 0.15 f_op)",
+  "confidence": "src/kalman_carma_shared_modes/CarmaCouplingConfidence.h defaults"
+ },
+ "software": {
+  "python": "3.13.18",
+  "numpy": "2.5.4",
+  "platform": "Linux-6.18.44-fc-v242-x86_64-with-glibc2.39"
+ },
+ "result_sha256": {
+  "dataset_summary.csv": "2ee2852ec1866e1d80f7f99fbcb147b399d01121c11b90048db117726965be9c",
+  "esp32s3_size.csv": "c058176375f0f2da905f0c018b8c284c90445654d0b92dfcb15d817949bf64b6",
+  "raw_runs.csv": "5281eac4985116287b27a225e1164bffd4fc8a96fcb32610bcccbeec26dc49c7",
+  "robustness_runs.csv": "159ffcf0f19e8b7dfa5322e6c89f4bf2ccc7bfa888a19a270ffbc1785bf8b259",
+  "screen_runs.csv": "03f39a8a7307979d7afb32ba080a841fe515896ba7b891535f732d03da0efb24",
+  "smoke_runs.csv": "11135908a5b5c1332d737238eda1b9858d630dd75690632456b104d38a30afe5",
+  "timing_runs.csv": "df1605f4472faabc0a1c75d6ca23f8c736f18248977c2d7414d49481dff7ac56"
+ },
+ "n_rows": {
+  "final": 4500,
+  "robust": 1230
+ }
+}
