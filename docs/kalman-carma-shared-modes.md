@@ -133,8 +133,25 @@ CSM's regression bars are fitted in this mode.  They are below the CARMA3
 and TFG-CARMA3 bars (Legacy) for heave (2.531 / 2.470 against 3.072 / 3.231
 % Hs), 3D (4.419 / 4.873 against 4.890 / 5.278) and yaw (0.755 against
 0.766 deg).  They are above those bars for pitch (0.225 against 0.214 deg)
-and the bias errors (accelerometer 84.2 against 82.5 %, gyroscope 12.7
-against 12.4 %).  Like for like, against A41 in Evidence mode, CSM's
+and for the accelerometer bias (84.2 against 82.4 / 82.5 %).  On the
+gyroscope bias, CSM's bar (12.71 %) is below CARMA3's (12.78 %) and above
+TFG-CARMA3's (12.40 %): the two-frame Lie group separates the gyroscope bias
+better, and the QMEKF comparison is the relevant one here.
+
+**Bias estimation against the CARMA3 QMEKF** (dataset replay, Evidence
+mode, mean over the eight records):
+
+| quantity | A41 | CSM_OFF | CSM |
+|---|---|---|---|
+| gyroscope bias, 3D RMS (mdeg/s) | 6.774 | -- | 6.765 |
+| accelerometer bias, vertical RMS (mm/s^2) | 1.867 | -- | 1.862 |
+| accelerometer bias, horizontal RMS (mm/s^2) | 49.20 | 49.19 | 50.43 |
+
+The gyroscope and vertical accelerometer biases are equal to or slightly
+better than CARMA3's on every record.  The horizontal accelerometer bias is
+2-4 % worse on the seas of Hs 1.5 m and above and equal on the small seas.
+That cost comes from the coupling, not the realization (`CSM_OFF` matches
+A41), and is the price of its 7-24 % lower surge error.  Like for like, against A41 in Evidence mode, CSM's
 small-sea heave is about 2 % worse, a residue of the realization effect
 above, while its 3D error is lower on every record.  The Monte Carlo pairs
 CSM with both A41 (Legacy, the historical baseline) and A41@C (Evidence).
