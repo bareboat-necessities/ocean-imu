@@ -551,22 +551,52 @@ def figures(stats, outdir, exts=("svg",)):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import pandas as pd
+    import shutil
+    from matplotlib.text import Text
     plt.rcParams.update({"font.size": 8, "axes.grid": True, "grid.alpha": 0.3, "svg.hashsalt": "csm",
                          "pgf.rcfonts": False})
+    if not shutil.which(plt.rcParams["pgf.texsystem"]) and shutil.which("lualatex"):
+        plt.rcParams["pgf.texsystem"] = "lualatex"
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
+    def tex_safe(fig):
+        # PGF text is typeset by LaTeX: "^" and "%" are escaped by matplotlib,
+        # a bare "_" outside math mode is not ("Missing $ inserted").
+        for t in fig.findobj(Text):
+            txt = t.get_text()
+            if "_" in txt:
+                parts = txt.split("$")
+                for i in range(0, len(parts), 2):
+                    parts[i] = parts[i].replace("\\_", "_").replace("_", "\\_")
+                t.set_text("$".join(parts))
+
     def save(fig, name):
         fig.tight_layout()
-        for e in exts:
+        for e in sorted(exts, key=lambda x: x == "pgf"):   # raw text formats first, PGF last
+            if e == "pgf":
+                tex_safe(fig)
             fig.savefig(outdir / f"{name}.{e}", dpi=150)
         plt.close(fig)
 
+    def replay(variant):
+        """Dataset-replay time series (JONSWAP Hs 1.5 m): the committed
+        decimated trace, else a replay CSV of this run (CI copies the
+        replays into plots/kalman_carma_shared_modes) or of the test dir."""
+        p = TRACE_DIR / f"dataset_jonswap_H1.5_{variant}.csv"
+        if p.exists():
+            return pd.read_csv(p)
+        pat = f"w3d_jonswap_H1.500*_fusion_CARMA_SHARED_MODES_{variant}.csv"
+        src = next(iter(sorted(Path.cwd().glob(pat)) + sorted(TDIR.glob(pat))), None)
+        if src is None:
+            return None
+        d = pd.read_csv(src)
+        step = max(1, int(round(0.1 / float(np.median(np.diff(d.time.values))))))
+        return d.iloc[::step].reset_index(drop=True)
+
     # A-D: dataset replay tracking (truth vs estimate), attitude errors, biases
-    a = TRACE_DIR / "dataset_jonswap_H1.5_A41.csv"
-    c = TRACE_DIR / "dataset_jonswap_H1.5_CSM.csv"
-    if a.exists() and c.exists():
-        da, dc = pd.read_csv(a), pd.read_csv(c)
+    dc, da = replay("CSM"), replay("A41")
+    if dc is not None:
         t = dc.iloc[:, 0].values
         w = (t >= t[-1] - 120.0)
         for kind, lab, unit, name in (("disp", "displacement", "m", "tracking_position"),
@@ -576,7 +606,8 @@ def figures(stats, outdir, exts=("svg",)):
             fig, axs = plt.subplots(3, 1, figsize=(7.0, 5.4), sharex=True)
             for i, ax in enumerate("xyz"):
                 axs[i].plot(t[w], dc[f"{kind}_ref_{ax}"].values[w], color="k", lw=1.4, label="truth")
-                axs[i].plot(t[w], da[f"{kind}_est_{ax}"].values[w], color=COLORS["A41"], lw=0.9, label="A41")
+                if da is not None and len(da) == len(dc):
+                    axs[i].plot(t[w], da[f"{kind}_est_{ax}"].values[w], color=COLORS["A41"], lw=0.9, label="A41")
                 axs[i].plot(t[w], dc[f"{kind}_est_{ax}"].values[w], color=COLORS["CSM"], lw=0.9, ls="--", label="CSM")
                 axs[i].set_ylabel(f"{['surge x', 'sway y', 'heave z'][i]} ({unit})")
             axs[0].legend(loc="upper right", ncol=3, fontsize=7)
@@ -588,6 +619,8 @@ def figures(stats, outdir, exts=("svg",)):
             fig, axs = plt.subplots(3, 1, figsize=(7.0, 5.0), sharex=True)
             for i, (r, e) in enumerate(cols):
                 for d, f in ((da, "A41"), (dc, "CSM")):
+                    if d is None:
+                        continue
                     err = (d[e].values - d[r].values + 180.0) % 360.0 - 180.0
                     axs[i].plot(d.iloc[:, 0].values, err, color=COLORS[f], lw=0.8, label=f)
                 axs[i].set_ylabel(f"{r.split('_')[0]} error (deg)")
@@ -602,7 +635,7 @@ def figures(stats, outdir, exts=("svg",)):
                 axs[0].plot(t, dc[f"acc_bias_est_{ax}"].values, color=col, lw=0.8, ls="--", label=f"CSM {ax}")
                 axs[1].plot(t, 57.29578 * dc[f"gyro_bias_{ax}"].values, color=col, lw=1.4, alpha=0.5, label=f"true {ax}")
                 axs[1].plot(t, 57.29578 * dc[f"gyro_bias_est_{ax}"].values, color=col, lw=0.8, ls="--", label=f"CSM {ax}")
-            axs[0].set_ylabel("accelerometer bias (m/s^2)")
+            axs[0].set_ylabel("accelerometer bias (m/s$^2$)")
             axs[1].set_ylabel("gyroscope bias (deg/s)")
             axs[1].set_xlabel("time (s)")
             axs[0].legend(fontsize=6, ncol=3)
@@ -654,7 +687,7 @@ def figures(stats, outdir, exts=("svg",)):
         fig, axs = plt.subplots(4, 1, figsize=(7.2, 7.0), sharex=True)
         for fp in files:
             d = pd.read_csv(fp)
-            lab = fp.stem.split("_conf_")[-1]
+            lab = fp.stem.split("_conf_")[-1].replace("_", ":", 1).replace("_", "/")
             axs[0].plot(d.t, d.confidence, lw=1.0, label=lab)
             axs[1].plot(d.t, d.coh_xz, lw=0.9, label=lab)
             axs[2].plot(d.t, d.f_op, lw=0.9, label=lab)
@@ -662,8 +695,8 @@ def figures(stats, outdir, exts=("svg",)):
             axs[3].semilogy(d.t, np.maximum(d.d2, 1e-3), lw=0.8, label=lab)
         axs[0].set_ylabel("confidence c")
         axs[1].set_ylabel("applied x-z coherence")
-        axs[2].set_ylabel("f_op (Hz), sigma_z (--)")
-        axs[3].set_ylabel("mismatch D^2")
+        axs[2].set_ylabel(r"$f_{op}$ (Hz), $\sigma_z$ (dashed)")
+        axs[3].set_ylabel("mismatch $D^2$")
         axs[3].axhline(16.0, color="k", lw=0.6, ls=":")
         axs[3].axhline(6.0, color="k", lw=0.6, ls=":")
         axs[0].legend(fontsize=6)
