@@ -3,6 +3,6 @@
 These SVGs are copied verbatim from the successful OU-III build on
 main; they are not screenshots or raster conversions.
 
-- build workflow run: https://github.com/bareboat-necessities/ocean-imu/actions/runs/41936398131
-- triggering source SHA: eee815a8a2fffa29c9dadbdd28f76a373b5a10ea
+- build workflow run: https://github.com/bareboat-necessities/ocean-imu/actions/runs/42080293445
+- triggering source SHA: 349a37926c0d7f36f3923228a980c8db33f15752
 - source artifact: release-svgs-kalman_ou_iii
