@@ -619,6 +619,19 @@ confidence; dashed: A41.}
 \label{fig:robust}
 \end{figure*}
 
+\paragraph{Wrong coupling}
+The reduction does not change the safety behaviour (\cref{tab:robust},
+\cref{fig:robust}). With the confidence on, every wrong prior (reversed,
+turned by $90^\circ$, phase-shifted by $45^\circ$, doubled) is withdrawn on
+all three seas. The 33- and 27-state filters then sit at the baseline's
+error (25.7 against 25.7\,mm on the spread JONSWAP) with the same NEES
+(1.65 and 1.64). Without the confidence, the doubled prior is the worst
+case for both (57.5 and 57.0\,mm, NEES 14.1 and 13.9, against 25\,mm with
+the true prior), followed by the reversed one (29.4\,mm for both). The
+27-state filter's 3-D RMS is within $1.6\,\%$ of the 33-state filter's in
+every cell. A coupling frozen at 400\,s in the keel frame behaves the same
+through 90$^\circ$ turns (25.5 and 25.4\,mm).
+
 \begin{table}[!t]
 \caption{Cascade commit rule: paired change against CSM (\%, 95\,\% interval,
 30 seeds) with the normalized colouring held (default) and with the
@@ -629,6 +642,67 @@ colouring itself held.}
 \InputPart{csm27-ablation.tex-part}
 \end{adjustbox}
 \end{table}
+
+\paragraph{Commit rule of the cascade}
+One hypothesis for the cascade's losses was the rescaling of the colouring
+states at amplitude commits, which is noisy on low-acceleration swell and
+under coloured accelerometer noise. It is refuted (\cref{tab:abl}). Holding
+the colouring states themselves, as the 33-state block holds its imaginary
+half, gives the same or worse results there: swell heave $-1.41$ against
+$-1.28\,\%$, coloured noise $-3.50$ against $-3.13\,\%$. It narrows the
+heave RAO $\times0.5$ loss only partly ($-2.55$ against $-3.27\,\%$). The
+cascade's differences therefore come from its C41J coordinates, the
+baseline's commit law, which also produces its gains. The normalized hold
+is kept: it is the one that makes the coupling-off filter exactly A41.
+
+\begin{table}[!t]
+\caption{Regression gates of the dataset replay (eight scored records,
+default seeds, magnetometer on): worst value over the records for CSM27,
+its fitted bar (worst plus about 0.5\,\%, the repository's convention, gated
+in \texttt{run\_tests.sh}), TFG-CARMA3 (T41, its gated Legacy excitation;
+and with Evidence excitation, as CSM27 uses), and CSM.}
+\label{tab:gates}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-gates.tex-part}
+\end{adjustbox}
+\end{table}
+
+\paragraph{Dataset replay and regression gates}
+The eight scored records of the pinned dataset are replayed with the
+seeds, sensor model and adapter configuration of every CARMA filter
+(\cref{tab:dataset}). CSM27 is gated by its own bars (\cref{tab:gates}), and
+all eight records pass. Against TFG-CARMA3 (two-frame Lie group,
+independent axes) the worst heave is 19.7\,\% (JONSWAP) and 25.2\,\%
+(PM-Stokes) lower. That advantage is almost entirely the excitation mode:
+with Evidence excitation TFG-CARMA3 reaches 2.459 and 2.440\,\% of $H_s$,
+against CSM27's 2.455 and 2.403. The 3-D error is 9.4 and 7.1\,\% lower in
+either mode, which is the cross-axis coupling. TFG-CARMA3 is better on pitch
+(4.3\,\%) and on the 3-D accelerometer and gyroscope biases (1.8 and
+2.5\,\%): its two-frame Lie group separates the biases slightly better,
+as the shared-modes documentation reports for the 33-state filter. Against
+CSM the dataset shows the Monte Carlo pattern: heave about 2.4\,\% better,
+3-D 0.3--0.6\,\% worse, attitude and biases equal.
+
+\paragraph{An unexpected finding: the excitation mapping over-couples}
+On the sea with the heave RAO halved, every shared-mode filter is far worse
+than the baseline. A41 and CSM:off are 35.4\,\% $[32.6, 37.6]$ better in 3-D
+than CSM, and the heave error exceeds A41's by more than 20\,\% on 28 of 30
+seeds. The reduction is not the cause: CSM27Q is within $0.12\,\%$ of CSM
+there. The measured multiple coherence of $z$ on $(x,y)$ is unchanged by a
+scaling of heave (0.87 on both seas, from the confidence monitor). The
+coherence of the applied excitation, however, rises from 0.13 to 0.38. The
+mapping keeps the measured regression $\vct S_{hz}/S_{zz}$, normalizes the
+vertical to the prior $\sigma_z^2$ and keeps the horizontal block at the
+prior. The applied coherence is therefore
+$\gamma^2(S_{hh}/S_{zz})/(\sigma_h^2/\sigma_z^2)$. It grows when the hull's
+heave-to-surge ratio departs from the prior's, and the PSD cap then lets the
+prior explain almost all horizontal motion through heave. The consistency
+test compares two data-driven regressions and cannot see it. The mapping is
+shared by the 33- and 27-state filters, so it is outside this study's
+change. A candidate fix is to cap the applied coherence at the measured one,
+$|b|^2\le\gamma^2\sigma_h^2\sigma_z^2$; it would change the 33-state filter
+and needs its own validation.
 
 \begin{table*}[!t]
 \caption{Dataset replay (pinned oceanography-waves-lib records, default

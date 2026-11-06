@@ -231,10 +231,14 @@ def stage_traces(args):
                 acc[("truth", ax)] = acc.get(("truth", ax), 0) + d[f"{ax}_true"].values[:m] ** 2
             t = t[:m]
             n += 1
-        out = {"t": t}
+        # Ensemble mean square per sample, averaged over 1 s blocks (the
+        # figures smooth over 10 s): the committed envelope stays small.
+        blk = max(1, int(round(1.0 / float(np.median(np.diff(t))))))
+        nb = len(t) // blk
+        out = {"t": t[:nb * blk].reshape(nb, blk).mean(axis=1)}
         for (fl, ax), v in acc.items():
-            out[f"{fl}|{ax}"] = np.sqrt(v[:len(t)] / n)
-        pd.DataFrame(out).to_csv(TRACE_DIR / f"{tag}_envelope.csv", index=False, float_format="%.6g")
+            out[f"{fl}|{ax}"] = np.sqrt(v[:nb * blk].reshape(nb, blk).mean(axis=1) / n)
+        pd.DataFrame(out).to_csv(TRACE_DIR / f"{tag}_envelope.csv", index=False, float_format="%.4g")
         print(f"traces {sc}: {n} seeds", flush=True)
 
 
@@ -552,6 +556,16 @@ def compute_stats():
                                               "yaw_deg": float(r.yaw_rms_deg), "ba": float(r.accel_bias_3d_rms_mps2),
                                               "bg": float(r.gyro_bias_3d_rms_radps)}
                                   for r in d[d.record == rec].itertuples()}
+    if GATES.exists():
+        g = csmv.read_rows(GATES)
+        st["gates"] = {}
+        for f in GATE_RUNS:
+            rows = [r for r in g if r["filter"] == f]
+            st["gates"][f] = {"records": {r["record"]: {k: float(r[k]) for k in GATE_KEYS} for r in rows},
+                              "passed": sum(int(r["pass"]) for r in rows)}
+        bj = OUT / "csm27_regression_bars.json"
+        if bj.exists():
+            st["csm27_bars"] = json.loads(bj.read_text())
     if SIZE.exists():
         st["esp32s3"] = {r["variant"]: r for r in csmv.read_rows(SIZE)}
     if TIM.exists():
@@ -676,6 +690,29 @@ def write_tex(st):
                          + r" \\")
         lines += [r"\bottomrule", r"\end{tabular}"]
         parts["csm27-ablation.tex-part"] = "\n".join(lines) + "\n"
+    # dataset regression gates: worst of the eight scored records
+    if st.get("gates"):
+        gt = st["gates"]
+        cats = [("heave \\% $H_s$, JONSWAP", "z_pct_hs", "jonswap", "err_limit_percent_z_jonswap"),
+                ("heave \\% $H_s$, PM-Stokes", "z_pct_hs", "pmstokes", "err_limit_percent_z_pmstokes"),
+                ("3-D \\%, JONSWAP", "pct_3d", "jonswap", "err_limit_percent_3d_jonswap"),
+                ("3-D \\%, PM-Stokes", "pct_3d", "pmstokes", "err_limit_percent_3d_pmstokes"),
+                ("roll (deg)", "roll_deg", "", "err_limit_roll_deg"), ("pitch (deg)", "pitch_deg", "", "err_limit_pitch_deg"),
+                ("yaw (deg)", "yaw_deg", "", "err_limit_yaw_deg"), ("acc.\\ $z$ bias \\%", "acc_z_bias_pct", "", "acc_z_bias_percent"),
+                ("acc.\\ 3-D bias \\%", "acc_bias_3d_pct", "", "bias_3d_percent"),
+                ("gyro 3-D bias \\%", "gyro_bias_3d_pct", "", "gyro_bias_3d_percent")]
+        lines = [r"\begin{tabular}{@{}l r r r r r r@{}}", r"\toprule",
+                 r"gate (worst of 8) & CSM27 & bar & TFG-CARMA3 & TFG, Evidence & CSM (33) & CSM27/TFG \\", r"\midrule"]
+
+        def worst(f, k, fam):
+            return max(v[k] for rec, v in gt[f]["records"].items() if rec.startswith(fam))
+        for name, k, fam, bar in cats:
+            w27, wt = worst("CSM27", k, fam), worst("T41", k, fam)
+            lines.append(" & ".join([name, f"{w27:.4g}", f"{st.get('csm27_bars', {}).get(bar, {}).get('bar', float('nan')):.4g}",
+                                     f"{wt:.4g}", f"{worst('T41@C', k, fam):.4g}", f"{worst('CSM', k, fam):.4g}",
+                                     f"{100 * (w27 / wt - 1):+.1f}\\,\\%"]) + r" \\")
+        lines += [r"\bottomrule", r"\end{tabular}"]
+        parts["csm27-gates.tex-part"] = "\n".join(lines) + "\n"
     # cost
     lines = [r"\begin{tabular}{@{}l r r r r r@{}}", r"\toprule",
              r"filter & $n_x$ & $P$ (B) & madds/sample & madds/commit & total/sample \\", r"\midrule"]
@@ -767,7 +804,7 @@ def figures(st, outdir, exts):
         for i, (sc, p) in enumerate(envs):
             d = pd.read_csv(p)
             t = d.t.values
-            k = max(1, int(round(10.0 / float(np.median(np.diff(t))))))   # 10 s moving RMS
+            k = max(1, int(round(10.0 / float(np.median(np.diff(t))))))   # 10 s moving RMS of the 1 s envelope
 
             def smooth(v, k=k):
                 return np.sqrt(np.convolve(v ** 2, np.ones(k) / k, mode="same"))
