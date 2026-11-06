@@ -129,3 +129,5 @@ tests/kalman_carma_shared_modes/smoke_csm.csv
 tests/kalman_carma_shared_modes/smoke_csm27.csv
 reports/results/carma3_benchmark/traces/
 reports/results/tfg_carma3/traces/
+# raw 10 Hz series of the 27-state study; the committed bundle is the reduced *_envelope.csv
+reports/results/kalman_carma_shared_modes_minimal/traces/*_ts.csv
