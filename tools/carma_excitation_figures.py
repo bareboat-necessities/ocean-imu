@@ -11,7 +11,6 @@ from __future__ import annotations
 import csv
 import re
 from collections import defaultdict
-from pathlib import Path
 
 import numpy as np
 
@@ -132,7 +131,7 @@ def fig_psd(r, plt, svgd, out):
 def fig_excitation(r, plt, svgd, out):
     fig, ax = plt.subplots(figsize=(6.4, 4.6))
     pts = defaultdict(lambda: ([], []))
-    for (e, sc), d in r.g.items():
+    for (e, _sc), d in r.g.items():
         if e not in ("E1", "E2", "E3"):
             continue
         for f in ["A41@A", "A41@B", "A41@C"]:
@@ -435,7 +434,7 @@ def fig_tfg(r, plt, svgd, out):
     for ax, key, nm in ((axs[0], lambda x: fnum(x, "rms_z"), "heave"), (axs[1], rms_h, "horizontal")):
         for (cand, base, col) in (("T41@C", "A41@C", C["T41@C"]), ("T41@A", "A41@A", C["T41@A"])):
             xs, ys = [], []
-            for (e, sc), d in r.g.items():
+            for (_e, _sc), d in r.g.items():
                 if cand in d and base in d:
                     for s in set(d[cand]) & set(d[base]):
                         xs.append(key(d[base][s]))

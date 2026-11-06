@@ -1,0 +1,492 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,bm,amssymb}
+\usepackage{newtxtext,newtxmath}
+\interdisplaylinepenalty=2500
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{array,booktabs,adjustbox}
+\usepackage{mathtools}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Hr}{^{\mathsf H}}
+\newcommand{\T}{^{\mathsf T}}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
+
+\title{Shared Directional Stochastic Modes for Three-Dimensional Marine
+Motion Estimation Using a Quaternion Multiplicative Extended Kalman Filter
+(experimental)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We derive a quaternion multiplicative extended Kalman filter (QMEKF) for
+the displacement, velocity and acceleration of a vessel in waves. Its
+translational prior is a set of shared directional stochastic modes: on
+every axis a complexified CARMA(4,1) process whose real part has exactly the
+law of the independent-axis prior and whose imaginary part is its quadrature
+companion. The axes share these dynamics and are driven by circular complex
+noise with a Hermitian excitation, so the quadrature between horizontal and
+vertical wave motion can be represented. The excitation is estimated from
+the filter's own world-frame acceleration. A coupling-confidence state
+machine scales it, and a covariance decoupling that provably preserves
+positive semidefiniteness withdraws it. We give the continuous-time model,
+the exact discretization, the measurement update and error-state reset, the
+coupling-confidence and fallback procedure with its positivity proof, and
+stability, observability and cost arguments. We also place the model within
+multivariate CARMA theory, including the complex Ornstein--Uhlenbeck
+factorization of Fasen-Hartmann and Scholz and Stelzer's 2024 correction of
+the MCARMA state-space characterization. The filter is experimental and is
+not the shipping estimator; the companion article reports the numerical
+validation.
+\end{abstract}
+
+\section{Introduction and Motivation}
+The CARMA3 QMEKF of ocean-IMU models surge, sway and heave as three
+independent CARMA(4,1) processes sharing one measured operating point. Linear
+wave theory couples them. A wave component moves a floating hull along its
+direction of travel a quarter period behind the elevation and heaves it
+through the heave response amplitude operator (RAO)
+\cite{longuethiggins63,faltinsen90,fossen11}. On the benchmark hull, the
+$x$--$z$ cross-spectral phase at the JONSWAP peak is \SI{-62}{\degree} and
+the coherence is 0.97. The coupled-prior study of this repository compared
+correlated excitation (A), shared directional modes (B, ``Option C'') and a
+constrained MCARMA (C) against the independent baseline. In 50-seed paired
+Monte Carlo runs, only B improved both horizontal and vertical errors on
+every steady directional sea with an estimated coupling. The same study
+found two failures. A confidently reversed coupling gave NEES 380 against
+6.8 for the correct one, and the estimated coupling lost on manoeuvring and
+on wave onset. This article turns B into a standalone filter and adds the
+missing safeguard.
+
+\section{Limitations of Independent-Axis CARMA}
+With independent axes, $\mat S_p(\omega)$ is diagonal: no cross-axis
+information is used. Correlated excitation through identical dynamics,
+$\mat Q=\mat\Sigma_w\otimes\mat Q_C$, yields
+$\mat S_p(\omega)=|H(i\omega)|^2\mat\Sigma_w$, which is real at every
+frequency. It can carry only the co-spectrum, 35--47\,\% of the
+$x$--$z$ cross-spectral energy on single-system seas, while the physical
+relation is mainly quadrature. A model that represents quadrature needs
+different dynamics on the coupled axes or complex excitation. The shared
+modes below are the second option, at the cost of eight instead of four
+states per axis.
+
+\section{Shared Stochastic Wave-Mode Formulation}
+Let $P(s)=(s^2+2\zeta_1\omega_1s+\omega_1^2)(s^2+2\zeta_2\omega_2s+\omega_2^2)$
+and $B(s)=s+\omega_{z0}$ define the per-axis CARMA(4,1) transfer function
+$H=gB/P$ (C41J: $f_1=\SI{0.307}{Hz}$, $\zeta_1=0.104$, $f_2=\SI{0.815}{Hz}$,
+$\zeta_2=0.478$, $\omega_{z0}=0$). Write its roots as
+$\mu_1,\bar\mu_1,\mu_2,\bar\mu_2$ with $\operatorname{Im}\mu_k>0$, and let
+$P_+(s)=(s-\mu_1)(s-\mu_2)$.
+\begin{proposition}[Complexification]
+\label{prop:cx}
+Let $\tfrac12(|P_+(i\omega)|^2+|P_+(-i\omega)|^2)=\omega^4+\beta\omega^2+\gamma$
+and $D(s)=s^2+d_1s+d_0$ with $d_0=\sqrt\gamma$, $d_1=\sqrt{\beta+2d_0}$.
+Then $D$ is Hurwitz and, for every real-coefficient $B$,
+$|\tfrac{B}{P_+D}(i\omega)|^2+|\tfrac{B}{P_+D}(-i\omega)|^2=2|\tfrac{B}{P}(i\omega)|^2$.
+Hence, for $\zeta=(B/P_+D)(s)\xi$ with $\xi$ circular complex white noise of
+intensity $2g^2$, $\operatorname{Re}\zeta$ is a Gaussian process with
+spectrum $g^2|B/P|^2$, the CARMA(4,1) process itself.
+\end{proposition}
+\begin{proof}
+$|P(i\omega)|^2=|P_+(i\omega)|^2|P_+(-i\omega)|^2$ because the roots come in
+conjugate pairs. The left side is therefore
+$|B|^2(|P_+(-i\omega)|^2+|P_+(i\omega)|^2)/(|P|^2|D|^2)$.
+$|D(i\omega)|^2=\omega^4+(d_1^2-2d_0)\omega^2+d_0^2$ equals the
+half-sum by the choice of $d_0,d_1$, and $d_0,d_1>0$ because the half-sum is
+positive for all $\omega$. For circular $\xi$, the real part has spectrum
+$\tfrac14(S_\zeta(\omega)+S_\zeta(-\omega))$.
+\end{proof}
+For C41J the roots of $D$ are $-7.93$ and $-1.25$\,rad/s. The mirror ratio
+$|H(-i\omega)|^2/|H(i\omega)|^2$, which measures how far
+$\operatorname{Im}\zeta$ is from an exact Hilbert companion, is
+\num{8e-4} at the peak and 0.6--2\,\% at 0.45--\SI{1}{Hz} ($\kappa=1$).
+
+\section{Connections to Multivariate CARMA}
+A $d$-variate MCARMA$(p,q)$ process is $\vct Y=\mat P(D)^{-1}\mat B(D)D\vct L$
+with matrix polynomials \cite{marquardt07}. Its state-space characterization
+\cite{schlemm12} was corrected in 2024 \cite{stelzer24}, which restates the
+equivalence through the observer and controller canonical forms of left and
+right matrix-fraction descriptions with monic denominators. We use the
+corrected form. The present model has transfer matrix
+$\mat H(s)=\tfrac{B(s)}{P_+(s)D(s)}\mat I_3$ applied to circular noise with
+covariance $2\mat\Sigma$: a left fraction with scalar, hence commuting,
+denominator, so left and right descriptions coincide.
+
+Fasen-Hartmann and Scholz \cite{fasen21} decompose an MCARMA process with an
+irreducible fraction and a complete set of regular right solvents
+$\mat R_k$ into $p$ dependent complex Ornstein--Uhlenbeck processes driven
+by one L\'evy process, $\vct Y=\sum_k\vct Y^{(k)}$,
+$d\vct Y^{(k)}=\mat R_k\vct Y^{(k)}dt+\mat C_kd\vct L$. For one axis
+($d=1$) this is the partial-fraction form $p=2\operatorname{Re}(z_1+z_2)$,
+$dz_k=\mu_kz_kdt+r_kgdW$, $r_k=B(\mu_k)/P'(\mu_k)$ \cite{brockwell11}. It is
+the exact modal realization of the baseline. Two of its consequences fix the
+present design. First, the residues satisfy
+$\sum_k\operatorname{Re}r_k=\sum_k\operatorname{Re}(r_k\mu_k)=0$ (the first
+two Markov parameters of $B/P$ vanish), so independently driven oscillators
+lose relative degree three. They give white velocity and an acceleration
+with no finite variance. Second, per-mode complex gains $\beta_k$ on a
+second axis keep relative degree three iff
+$\sum\operatorname{Re}(\beta_kr_k)=\sum\operatorname{Re}(\beta_kr_k\mu_k)=0$,
+that is, iff that axis is $(b_1B+b_0)/P$ with real $b_0,b_1$. Its phase
+$-\arctan(b_0/b_1\omega)$ is never constant. The four-state modal form
+therefore cannot carry a constant cross-axis quadrature. The complexified mode
+of \cref{prop:cx} adds the two real poles of $D$ and can, at relative degree
+three by construction.
+
+An unrestricted MCARMA(4,1) on three axes has 54 coefficients. From
+\SI{20}{min} of three-axis acceleration their Whittle Fisher information has
+rank 51, and 44\,\% of them have a relative Cram\'er--Rao bound above
+100\,\% \cite{whittle53,fasen22}. The shared-mode model has 10
+identifiable parameters (frequency scale, three amplitudes, six cross
+terms). It is preferred here because its structure is the physics, a
+single directional wave field seen on three axes, and because it is
+identifiable online and costs a fixed 24 motion states.
+
+\section{Continuous-Time Stochastic State-Space Model}
+Per axis $a\in\{x,y,z\}$ the complex kinematic state is
+$\vct\zeta_a=[\zeta,\dot\zeta,\ddot\zeta,l]\T$, $\dot{\vct\zeta}_a=\mat A_c\vct\zeta_a+\vct e_3\xi_a$,
+with $\mat A_c$ the complex companion form of $P_+D$ in these coordinates,
+$\zeta=\vct c\T\vct\zeta$ and the noise entering $\ddot\zeta$ only. The real
+state is $\vct x_a=[\operatorname{Re}\vct\zeta_a;\operatorname{Im}\vct\zeta_a]\in\R^8$,
+$\mat A_8=\left[\begin{smallmatrix}\operatorname{Re}\mat A_c&-\operatorname{Im}\mat A_c\\
+\operatorname{Im}\mat A_c&\operatorname{Re}\mat A_c\end{smallmatrix}\right]$,
+and the three axes share it:
+\begin{equation}
+d\vct x_L=(\mat I_3\otimes\mat A_8)\vct x_Ldt+d\vct\beta,\quad
+E[d\vct\beta d\vct\beta\T]=\mat W\,dt,
+\label{eq:sde}
+\end{equation}
+\begin{equation}
+\mat W_{ab}=g^2\bigl(\operatorname{Re}(\Sigma_{ab})\mat E+\operatorname{Im}(\Sigma_{ab})\mat J\mat E\bigr),
+\label{eq:W}
+\end{equation}
+with $\mat E=\operatorname{diag}(\vct e_3\vct e_3\T,\vct e_3\vct e_3\T)$,
+$\mat J=\left[\begin{smallmatrix}\mat 0&-\mat I_4\\\mat I_4&\mat 0\end{smallmatrix}\right]$.
+\begin{lemma}
+\label{lem:W}
+$\mat W\succeq0$ iff $\mat\Sigma\succeq0$, and $\mat J$ commutes with $\mat A_8$
+and $\mat E$.
+\end{lemma}
+\begin{proof}
+$\mat J$ is multiplication by $i$ in the real representation, so it commutes
+with the realification of any complex matrix ($\mat A_8$, $\mat E$). For
+$\vct u\in\R^{24}$ write $u_a=\vct u_a^{\mathrm{Re}}+i\vct u_a^{\mathrm{Im}}$.
+Then $\vct u\T\mat W\vct u=g^2\sum_{a,b}\operatorname{Re}(\bar w_a\Sigma_{ab}w_b)$
+with $w_a$ the third component of $u_a$, which is
+$g^2\operatorname{Re}(\vct w\Hr\mat\Sigma\vct w)\ge0$. Conversely, $\vct w$
+ranges over $\C^3$.
+\end{proof}
+The displacement readouts are $p_a=\vct e_1\T\vct x_a$ (real part of
+$\zeta$), $v_a=\vct e_2\T\vct x_a$, $a_a=\vct e_3\T\vct x_a$. These are unit
+selectors, and $\dot v_a=a_a$ holds without noise (relative degree three
+preserved). The displacement cross-spectral matrix is
+\begin{equation}
+S_{ab}(\omega)=\tfrac{g^2}{2}\bigl[\Sigma_{ab}|H(i\omega)|^2+\bar\Sigma_{ab}|H(-i\omega)|^2\bigr],
+\label{eq:S}
+\end{equation}
+with $H=B/(P_+D)$. Away from the small mirror term, $\arg S_{ab}=\arg\Sigma_{ab}$
+and the coherence is $|\Sigma_{ab}|^2/(\Sigma_{aa}\Sigma_{bb})$. A real
+$\mat\Sigma$ reproduces correlated excitation in law; a real diagonal one the
+independent baseline.
+
+\section{State-Vector Definition}
+The error state of the QMEKF is
+\begin{equation}
+\delta\vct x=[\delta\vct\theta,\;\delta\vct b_g,\;\delta\vct x_x,\;\delta\vct x_y,\;\delta\vct x_z,\;\delta\vct b_a]\in\R^{33},
+\end{equation}
+with $\delta\vct\theta$ the body-frame attitude error of
+$\vct q=\hat{\vct q}\otimes\exp(\delta\vct\theta/2)$, the gyroscope and
+accelerometer bias errors, and the 24 motion states in NED with $z$ down. The
+motion states are additive; they are world-frame quantities, because a wave
+field is fixed in the world.
+
+\section{QMEKF Attitude and Bias States}
+These are the baseline's. Gyroscope bias is a random walk,
+$\dot{\vct b}_g=\vct w_{bg}$; the accelerometer bias is a random walk with
+temperature compensation. The attitude kinematics is
+$\dot{\vct q}=\tfrac12\vct q\otimes(\vct\omega_m-\vct b_g-\vct n_g)$, and its
+linearized error dynamics are
+$\delta\dot{\vct\theta}=-[\hat{\vct\omega}]_\times\delta\vct\theta-\delta\vct b_g-\vct n_g$,
+with $\hat{\vct\omega}=\vct\omega_m-\hat{\vct b}_g$ \cite{markley03}.
+
+\section{Coupling and Cross-Spectral Relationships}
+For a linear wave component of azimuth $\psi$ and elevation $\eta$, the hull
+moves $[-i\,s_N,-i\,s_E,H_z(\omega)]\eta$ (surge and sway along the
+direction of travel in quadrature, heave through its RAO). The regression of
+a horizontal axis on heave at the operating frequency is therefore complex:
+$\beta_i=S_{iz}/S_{zz}$. With the axes' accelerations
+$\vct a=-\omega^2\vct p$, the demodulated band cross-spectrum of the
+accelerations has the same ratios. The excitation that reproduces the
+measured regression at $f_{op}$ is
+\begin{equation}
+\mat\Sigma=\begin{bmatrix}\sigma_h^2\mat I_2&\vct b\\\vct b\Hr&\sigma_z^2\end{bmatrix},\quad
+\vct b=s\,c\,\kappa_c\frac{\sigma_z^2}{\hat S_{zz}}\hat{\vct S}_{hz},
+\label{eq:map}
+\end{equation}
+with $s=\max(0,1-1/(N_{\mathrm{eff}}\gamma^2))$ the debiased-coherence
+shrinkage, $\kappa_c$ the configured coupling gain, $c$ the coupling
+confidence (\cref{sec:conf}), and $\vct b$ scaled down if
+$\vct b\Hr(\sigma_h^2\mat I_2)^{-1}\vct b>0.999\sigma_z^2$. The Schur
+complement of the horizontal block is then nonnegative, so $\mat\Sigma\succeq0$
+by construction. Every factor is invariant under rotations about the
+vertical, so the prior does not depend on how the waves sit relative to
+north. The direction of travel follows from $\vct\beta=e^{i\phi}r\vct u$:
+$\phi=\tfrac12\arg(\beta_x^2+\beta_y^2)$, $\vct u=\operatorname{Re}(e^{-i\phi}\vct\beta)$,
+with the sign of $\vct u$ chosen so that the along-direction phase lies in
+$(-\pi,0)$ (the quadrature lag). Its large-sample uncertainty is
+$\sqrt{(1-\gamma^2)/(2N\gamma^2)}$.
+
+\section{Process-Noise Covariance}
+The full process noise is block-diagonal across the attitude, bias and
+motion groups. The motion block is $\mat W$ of \eqref{eq:W}. Sensor noise
+(accelerometer, gyroscope, magnetometer white noise) enters only the
+measurement and the attitude propagation. The wave excitation $\mat\Sigma$
+models the hull's motion, not the sensor, so it is not double-counted: the
+envelope estimate uses the filter's own world-frame acceleration, whose
+sensor-noise content in the band is $\sigma_n^2\,dt\,\pi bf/2$ ($b$ the band
+fraction). The coherence shrinkage removes it from the cross terms, and the
+diagonal keeps the wrapper's amplitude law, which has its own noise
+handling.
+
+\section{Exact Discrete-Time Propagation}
+With $\mat F_8=e^{\mat A_8h}$ and
+$\mat Q_8=\int_0^he^{\mat A_8t}\mat Ee^{\mat A_8\T t}dt$ (unit intensity),
+\cref{lem:W} gives the exact discretization of \eqref{eq:sde}:
+\begin{equation}
+\mat F_L=\mat I_3\otimes\mat F_8,\quad
+\mat Q_{L,ab}=g^2\bigl(\operatorname{Re}(\Sigma_{ab})\mat Q_8+\operatorname{Im}(\Sigma_{ab})\mat J\mat Q_8\bigr),
+\label{eq:disc}
+\end{equation}
+because $e^{\mat A_8t}\mat J=\mat Je^{\mat A_8t}$ and $\mat J\mat E\mat J\T=\mat E$.
+$\mat F_8,\mat Q_8$ are computed by the scaled Taylor series and doublings of
+the baseline (exact up to a controlled truncation below float rounding), and
+by the Taylor extension on a jittered clock. $\mat Q_L\succeq0$ follows from
+\cref{lem:W} applied to the integrand. The dynamics are stable: the poles of
+$\mat A_8$ are $\mu_1,\mu_2$ and the roots of $D$, all in the open left
+half-plane for every $\kappa>0$.
+
+\section{Measurement Model}
+The accelerometer measures the specific force in the body frame,
+\begin{equation}
+\vct f=\mat R_{wb}(\vct a_w-g\vct e_z)+\vct b_a+\vct n_a,
+\end{equation}
+$\vct a_w=[a_x,a_y,a_z]\T$ the motion readouts. Its Jacobian has
+$\partial\vct f/\partial\delta\vct\theta=[\mat R_{wb}(\hat{\vct a}_w-g\vct e_z)]_\times$,
+$\partial\vct f/\partial\delta\vct b_a=\mat I$, and on the motion block the
+columns $\mat R_{wb}\vct e_i$ at the $a$ selector of axis $i$. The
+magnetometer measures $\mat R_{wb}\vct m_w$ and corrects attitude only,
+through the wrapper's service gates.
+
+\section{Kalman Update Equations}
+With $\mat S=\mat H\mat P\mat H\T+\mat R$, $\mat K=\mat P\mat H\T\mat S^{-1}$
+and the innovation $\vct r$, the error mean is $\delta\hat{\vct x}=\mat K\vct r$.
+The covariance follows the Joseph form
+$\mat P^+=(\mat I-\mat K\mat H)\mat P(\mat I-\mat K\mat H)\T+\mat K\mat R\mat K\T$,
+which is positive semidefinite for any gain. The motion and bias states are
+corrected additively. The NIS $\vct r\T\mat S^{-1}\vct r$ is reported.
+
+\section{Error-State Reset}
+After each update the attitude error is folded into the quaternion,
+$\hat{\vct q}\leftarrow\hat{\vct q}\otimes\exp(\delta\hat{\vct\theta}/2)$,
+and the covariance is transported with the reset Jacobian
+$\mat G=\operatorname{blockdiag}(\mat I-\tfrac12[\delta\hat{\vct\theta}]_\times,\mat I)$,
+$\mat P\leftarrow\mat G\mat P\mat G\T$. Only the attitude rows and columns
+change. The motion states are not affected by the reset, so the
+cross-covariances between attitude and motion transform with the attitude
+rows exactly as in the baseline.
+
+\section{Sea-State Adaptation}
+Every \SI{0.1}{s} the wrapper commits the frequency scale
+$\kappa=f_{\mathrm{tune}}/f_{z,\mathrm{base}}$ and isotropic amplitudes from
+OU-III's tuner. The motion block then rebuilds $\mat A_8(\kappa)$,
+$\mat F_8,\mat Q_8$ and $\mat\Sigma$. The state coordinates
+$[\operatorname{Re},\operatorname{Im}](p,v,a,l)$ keep their kinematic meaning
+across $\kappa$. The covariance is never reset during adaptation (only on
+entering Live, to the stationary prior), so a commit changes the next
+prediction, not the posterior.
+
+\section{Coupling-Confidence Estimation}
+\label{sec:conf}
+Let $\vct\beta_p$ be the regression of the prior (the \SI{240}{s} estimate, or
+an external prior) and $\vct\beta_f$ that of a \SI{60}{s} monitor fed with the
+same world-frame accelerations. For an estimate from $N$ independent
+envelope samples, $\operatorname{var}\hat\beta_i\approx(1-\gamma_{iz}^2)S_{ii}/(NS_{zz})$
+\cite{bendat10}. The mismatch statistic is
+\begin{equation}
+D^2=\sum_{i\in\{x,y\}}\frac{|\beta_{f,i}-\beta_{p,i}|^2}{v_{f,i}+v_{p,i}+\epsilon^2|\beta_{p,i}|^2}.
+\end{equation}
+For a consistent prior and independent estimates $D^2$ is approximately
+$\chi^2_4/2$-distributed, with $E[D^2]=2$. The overlap of the two estimates
+only lowers it. Hysteresis declares the prior inconsistent for $D^2>16$ and
+consistent again for $D^2<6$. Further evidence gates are the monitor's SNR
+against the envelope noise floor (log-linear between 10 and 100), the
+low-passed world yaw rate (manoeuvre, $>\SI{3}{\degree/s}$), the low-passed
+$|d\ln f_{op}/dt|$ (sea change, $>0.01/$s), both held \SI{30}{s}, and the
+ratio of the \SI{20}{s} to the \SI{600}{s} mean NIS ($>2$ fallback, $<1.5$
+recovery). Their product $e\in[0,1]$ drives
+\begin{equation}
+c\leftarrow c+(1-e^{-dt/\tau})(e-c),\quad\tau=\begin{cases}\SI{3}{s},&e<c,\\\SI{60}{s},&e\ge c,\end{cases}
+\end{equation}
+so $|\dot c|\le1/\tau$: withdrawal is fast, restoration slow, and there is no
+rapid switching.
+
+\section{Safe Decoupling and Fallback}
+\label{sec:fallback}
+The confidence enters \eqref{eq:map}, so $c=0$ gives the real diagonal
+excitation, which is the independent-axis CARMA(4,1) law on every axis. The
+state is not modified, so position, velocity and attitude are continuous.
+The covariance, however, still carries horizontal--vertical correlation built
+by the coupled prior. Partition the error state into $\vct r$ (attitude and
+biases, 9 states) and the motion states $\vct m=(\vct h,\vct z)$ (16 + 8).
+\begin{proposition}[Positive decoupling]
+\label{prop:shrink}
+Let $\mat P\succeq0$ with $\mat P_{rr}\succ0$,
+$\mat E=\mat P_{hr}\mat P_{rr}^{-1}\mat P_{rz}$ and $\alpha\in[0,1]$. Replacing
+$\mat P_{hz}$ by $\mat E+\alpha(\mat P_{hz}-\mat E)$ (and $\mat P_{zh}$ by its
+transpose) leaves $\mat P$ positive semidefinite.
+\end{proposition}
+\begin{proof}
+$\mat P\succeq0$ iff $\mat P_{rr}\succ0$ and the Schur complement
+$\mat C=\mat P_{mm}-\mat P_{mr}\mat P_{rr}^{-1}\mat P_{rm}\succeq0$. The
+replacement leaves $\mat P_{rr},\mat P_{rm}$ and the diagonal blocks of
+$\mat P_{mm}$ unchanged and changes $\mat C_{hz}=\mat P_{hz}-\mat E$ into
+$\alpha\mat C_{hz}$. Hence $\mat C'=\alpha\mat C+(1-\alpha)\operatorname{blockdiag}(\mat C_{hh},\mat C_{zz})$.
+$\operatorname{blockdiag}(\mat C_{hh},\mat C_{zz})\succeq0$ because principal
+submatrices of $\mat C\succeq0$ are, and a convex combination of PSD matrices
+is PSD.
+\end{proof}
+The filter applies this with $\alpha=c_{\mathrm{new}}/c_{\mathrm{old}}$
+whenever $c$ falls (at most at \SI{10}{Hz}). Simply zeroing $\mat P_{hz}$
+would not be safe. In general the matrix with $\mat P_{hz}=\mat 0$ and
+nonzero $\mat P_{hr},\mat P_{rz}$ is indefinite. At $\alpha=0$ the
+correlation explained by the shared attitude and bias errors, $\mat E$, is
+kept and the rest removed. The dynamics are block-diagonal across axes, so
+with $\mat Q_{hz}=\mat 0$ any remaining cross-covariance decays at the modes'
+damping rates. Recovery is the reverse: when the evidence returns, $c$
+rises with \SI{60}{s} and the cross-covariance rebuilds through
+\eqref{eq:disc} and the updates.
+
+\section{Stability and Observability}
+For fixed parameters the prediction is the exact transition of a stable
+linear system \eqref{eq:disc}. The accelerometer observes
+the three $a$ readouts and, through gravity, two tilt angles; the
+magnetometer observes heading. Within the motion block, $\operatorname{Re}\zeta$
+is observed through $\ddot\zeta$ and the CARMA(4,1) structure exactly as in
+the baseline. $\operatorname{Im}\zeta$ is observed through the cross terms
+of $\mat\Sigma$ only: with $\mat\Sigma$ real it is unobservable but stable
+(detectable), and its covariance stays at the stationary prior. The pair is
+therefore detectable for every $\mat\Sigma$, and the Riccati recursion has a
+bounded solution for fixed parameters \cite{andersonmoore79}. Two
+qualifications apply. Displacement is observable only through the prior's
+low-frequency behaviour (the zero of $B$ at DC), as for the baseline. With
+complex $\mat\Sigma$ the $x$--$z$ quadrature also makes heading weakly
+observable from the accelerometer, which is information when the coupling is
+right and a bias when it is wrong. That is the reason for \cref{sec:conf}.
+This is a linear-model argument at frozen parameters and frozen attitude
+linearization; it is not a proof of stability of the adaptive nonlinear
+filter.
+
+\section{Computational Complexity}
+The prediction costs the attitude and bias blocks plus the motion block:
+three $8\times8$ congruences per axis pair (block-diagonal $\mat F_L$), the
+Kronecker-structured $\mat Q_L$, and the $6\times24$ attitude--motion
+cross-covariances, about 13\,400 multiply-adds against 3\,900 for the
+baseline. The accelerometer update is a Joseph update with a three-row
+measurement on 33 states. The confidence adds two envelope estimators
+(36 multiply-adds per sample) and, at most at \SI{10}{Hz} while $c$ falls, one
+$9\times9$ LDLT and a $16\times9\times8$ product. The model rebuild
+(\SI{10}{Hz}) computes $\mat F_8,\mat Q_8$ once for all axes. All matrices
+are fixed size, nothing is allocated per update, and the 33-state QMEKF is
+one heap allocation at start-up. Measured sizes and times are in the
+companion article.
+
+\section{Limitations and Future Research}
+The coupling is estimated in one band at one operating frequency. Its phase
+is constant across frequency, while the true $x$--$z$ phase follows the heave
+RAO. Two-system seas with different directions are represented only by the
+rank of $\mat\Sigma$, and a two-mode extension needs a second-peak frequency
+estimator that does not exist yet. The confidence detects only mismatches
+that the IMU's own band statistics can contradict, and it reacts after
+seconds to a minute of evidence. The complex mode costs four extra states per
+axis. A constrained MCARMA with the heave RAO in the transfer matrix gave
+larger gains in the study but needs hull knowledge and more stack, and is not
+pursued here. Hardware runtime and stack high-water marks remain to be
+measured on the AtomS3R.
+
+\begin{thebibliography}{99}
+\bibitem{longuethiggins63}
+M. S. Longuet-Higgins, D. E. Cartwright and N. D. Smith, ``Observations of
+the directional spectrum of sea waves using the motions of a floating buoy,''
+in \emph{Ocean Wave Spectra}, Prentice-Hall, 1963, pp. 111--136.
+\bibitem{faltinsen90}
+O. M. Faltinsen, \emph{Sea Loads on Ships and Offshore Structures}.
+Cambridge University Press, 1990.
+\bibitem{fossen11}
+T. I. Fossen, \emph{Handbook of Marine Craft Hydrodynamics and Motion
+Control}. Wiley, 2011.
+\bibitem{marquardt07}
+T. Marquardt and R. Stelzer, ``Multivariate CARMA processes,''
+\emph{Stochastic Process. Appl.}, vol. 117, no. 1, pp. 96--120, 2007.
+\bibitem{schlemm12}
+E. Schlemm and R. Stelzer, ``Multivariate CARMA processes, continuous-time
+state space models and complete regularity of the innovations of the sampled
+processes,'' \emph{Bernoulli}, vol. 18, no. 1, pp. 46--63, 2012.
+\bibitem{stelzer24}
+R. Stelzer, ``Correction to: Multivariate CARMA processes, continuous-time
+state space models and complete regularity of the innovations of the sampled
+processes,'' arXiv:2411.06935, 2024.
+\bibitem{fasen21}
+V. Fasen-Hartmann and M. Scholz, ``Factorization and discrete-time
+representation of multivariate CARMA processes,'' arXiv:2102.11681, 2021.
+\bibitem{brockwell11}
+P. J. Brockwell, R. A. Davis and Y. Yang, ``Estimation for non-negative
+L\'evy-driven CARMA processes,'' \emph{J. Bus. Econom. Statist.}, vol. 29,
+pp. 250--259, 2011.
+\bibitem{whittle53}
+P. Whittle, ``The analysis of multiple stationary time series,'' \emph{J.
+Roy. Statist. Soc. B}, vol. 15, pp. 125--139, 1953.
+\bibitem{fasen22}
+V. Fasen-Hartmann and C. Mayer, ``Whittle estimation for continuous-time
+stationary state space models with finite second moments,'' \emph{Ann. Inst.
+Statist. Math.}, vol. 74, pp. 233--270, 2022.
+\bibitem{markley03}
+F. L. Markley, ``Attitude error representations for Kalman filtering,''
+\emph{J. Guid. Control Dyn.}, vol. 26, no. 2, pp. 311--317, 2003.
+\bibitem{bendat10}
+J. S. Bendat and A. G. Piersol, \emph{Random Data: Analysis and Measurement
+Procedures}, 4th ed. Wiley, 2010.
+\bibitem{andersonmoore79}
+B. D. O. Anderson and J. B. Moore, \emph{Optimal Filtering}. Prentice-Hall,
+1979.
+\end{thebibliography}
+\end{document}

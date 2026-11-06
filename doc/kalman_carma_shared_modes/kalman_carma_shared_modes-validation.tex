@@ -1,0 +1,262 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,bm,amssymb}
+\usepackage{newtxtext,newtxmath}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{array,booktabs,adjustbox}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+
+% Figures are PGF drawn by plots/kalman_carma_shared_modes/draw_plots.sh from
+% the committed validation data and moved here by CI; every include is
+% guarded so the article compiles from a clean checkout.
+\newcommand{\ChartFigure}[2][\linewidth]{%
+  \IfFileExists{#2}{\resizebox{#1}{!}{\input{#2}}}%
+                   {\fbox{\parbox{0.92\linewidth}{\centering\small
+                     Figure \texttt{\detokenize{#2}} not generated.\\
+                     Run \texttt{plots/kalman\_carma\_shared\_modes/draw\_plots.sh}.}}}}
+\newcommand{\InputPart}[1]{%
+  \IfFileExists{#1}{\input{#1}}{\fbox{\small Table \texttt{\detokenize{#1}} not generated.}}}
+
+\title{Numerical Evaluation of Shared Directional CARMA Modes for QMEKF
+Marine Inertial Navigation (experimental)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\InputPart{csm-abstract.tex-part}
+\end{abstract}
+
+\section{Experimental Objectives}
+The standalone shared-modes QMEKF (\texttt{KalmanCarmaSharedModes}, CSM)
+promotes Option C of the coupled-prior study: one complexified CARMA(4,1)
+mode per axis, driven by a Hermitian excitation estimated from the filter's
+own acceleration, plus a coupling confidence that withdraws the coupling,
+with a positivity-preserving covariance decoupling, when the evidence fails.
+The companion article derives the model. This one asks three questions.
+(i) Does CSM reproduce the validated research filter when its confidence is
+disabled? (ii) What does the confidence change on the 18 seas of the study,
+and in particular on the two the research filter lost (manoeuvring and wave
+onset/cessation)? (iii) Does it prevent catastrophic overconfidence when the
+coupling prior is wrong, with bounded errors and reasonable uncertainty?
+Results of the coupled-prior study are labelled as previously established;
+everything else was produced for this article.
+
+\section{Simulation Framework}
+\texttt{kalman\_carma\_shared\_modes-sim} has two modes. The \emph{dataset
+replay} runs the eight scored records of the pinned dataset through the same
+\texttt{W3dSimulationRunner}, seeds, sensor model and adapter configuration
+as the CARMA3 replay, with regression bars. The \emph{Monte Carlo mode} runs
+the carma3\_bench engine: synthetic directional seas through the benchmark
+hull's RAOs, seeded IMU and magnetometer streams, and the same metrics, with
+the CSM filters registered in front of the bench's own. Every filter of a row
+(the CARMA3 baseline A41, the research filter SHM:est, CSM and its fallback
+model CSM:off) sees the same truth and the same sensor stream.
+
+\section{Wave-Data Provenance}
+\InputPart{../simulation-dataset.tex-part}
+The Monte Carlo seas are the 18 scenarios of the coupled-prior study
+(\texttt{tests/kalman\_carma/CarmaBenchTruth.h}): regular waves, PM, JONSWAP
+long-crested and spread, swell, short wind waves, mixed, bimodal and
+crossing seas, calm water, a still IMU, direction and period changes, onset
+and cessation, heading changes, manoeuvring, a very low sea, and magnetic
+disturbances with calibration residuals. Ground-truth position, velocity,
+acceleration, direction and RAO are used for scoring only. The robustness
+injections build their deliberately wrong priors from the true wave
+acceleration, and enter the filter as an external prior that it must reject
+from its own data.
+
+\section{Sensor-Noise Assumptions}
+Accelerometer \SI{1.5}{mg} white with turn-on bias up to \SI{8}{mg} and a
+random walk; gyroscope \SI{0.0016}{rad/s} white with bias up to
+\SI{0.05}{\degree/s}; magnetometer \SI{0.8}{\micro T} at \SI{25}{Hz} with
+hard and soft iron, and in one scenario periodic \SI{15}{\micro T}
+disturbances with scale and misalignment residuals; \SI{200}{Hz} with timing
+jitter where stated. These are the CARMA3 benchmark's, unchanged.
+
+\section{Baseline CARMA3 Configuration}
+A41: the experimental CARMA3 QMEKF with CARMA(4,1) C41J on all axes (21
+states), behind the unchanged CARMA3 wrapper (OU-III's startup, magnetic
+acquisition, tuner and \SI{0.1}{s} commits). It is verified bit-identical to
+the code before the coupled-prior work.
+
+\section{Shared-Mode Configuration}
+CSM: 33 states, the estimated coupling (\SI{240}{s} horizon, band
+$0.15f_{op}$, both screened on seeds 1001--1020 by the coupled-prior study)
+and the coupling confidence with its a-priori defaults (consistency $D^2$
+thresholds 6/16, SNR 10--100, yaw rate \SI{3}{\degree/s}, sea change
+$0.01$/s, holds \SI{30}{s}, NIS ratio 2/1.5, $\tau=3/60$\,s). CSM:noconf is
+CSM with the confidence disabled. It reproduces SHM:est: bit-identical in the
+unit test, and equal to float rounding ($5\times10^{-5}$) in the benchmark
+rows, where the two objects' memory layouts differ. CSM:off is the coupling
+switched off, the independent-axis law of the complexified realization.
+
+\section{Monte Carlo Methodology}
+Every row runs one scenario and seed (1--50 final, 1--30 robustness, 1--10
+spectra), \SI{1200}{s} unless the scenario says otherwise, scored from
+\SI{300}{s} against the wave coordinate. No parameter was chosen on these
+seeds.
+
+\section{Statistical Methods}
+Changes are $1-\overline{\mathrm{RMS}}_{\mathrm{cand}}/\overline{\mathrm{RMS}}_{\mathrm{A41}}$
+over seeds, with 95\,\% intervals from a paired bootstrap that resamples whole
+realizations (seeds), never the autocorrelated \SI{200}{Hz} samples. NEES is
+that of $[\vct p,\vct v]$ in the filter's own coordinates. Its \emph{mean}
+should equal 6 for a consistent filter; the median of a $\chi^2_6$ variable
+is 5.35, so both are reported and are not compared with each other. NIS is
+the accelerometer innovation's (3 dof). Its absolute level reflects the
+inflated measurement noise, so innovation whiteness and cross-axis
+correlation are reported as well.
+
+\section{Position and Velocity Results}
+\InputPart{csm-results-generated.tex-part}
+\InputPart{csm-results-text.tex-part}
+
+\begin{figure*}[t]
+\centering
+\ChartFigure[0.98\textwidth]{comparison_rms.pgf}
+\caption{Paired change of the horizontal and heave RMS displacement error
+against A41 per sea, 50 seeds, 95\,\% bootstrap intervals (positive = better).}
+\label{fig:cmp}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+\ChartFigure{tracking_position.pgf}
+\caption{Dataset replay (JONSWAP $H_s=\SI{1.5}{m}$): truth and estimated
+surge, sway and heave, last \SI{120}{s}.}
+\label{fig:track}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\ChartFigure{tracking_velocity.pgf}
+\caption{Dataset replay: truth and estimated velocity.}
+\label{fig:vel}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\ChartFigure{tracking_attitude.pgf}
+\caption{Dataset replay: roll, pitch and heading errors.}
+\label{fig:att}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\ChartFigure{bias_convergence.pgf}
+\caption{Dataset replay: accelerometer and gyroscope bias, truth and CSM.}
+\label{fig:bias}
+\end{figure}
+
+\section{Spectral Validation}
+\begin{figure*}[t]
+\centering
+\ChartFigure[0.98\textwidth]{spectra_mixed_swell_wind.pgf}
+\caption{Mixed swell and wind sea: displacement and error PSDs, $x$--$z$ and
+$y$--$z$ cross-spectral phase and $x$--$z$ coherence of truth and estimates
+(Welch, 10 seeds).}
+\label{fig:spec}
+\end{figure*}
+\InputPart{csm-spectral-text.tex-part}
+
+\section{Sea-State Adaptation}
+\begin{figure}[t]
+\centering
+\ChartFigure{confidence_dir_change.pgf}
+\caption{Wave direction turning: coupling confidence, applied $x$--$z$
+coherence, operating frequency and vertical amplitude, and the mismatch
+statistic $D^2$ with its hysteresis thresholds.}
+\label{fig:dir}
+\end{figure}
+\begin{figure}[t]
+\centering
+\ChartFigure{confidence_jonswap_fp0_29_hs0_8_g3_3_on400w60_off900w60.pgf}
+\caption{Wave onset at \SI{400}{s} and cessation at \SI{900}{s}.}
+\label{fig:onoff}
+\end{figure}
+\InputPart{csm-adaptation-text.tex-part}
+
+\section{Coupling Estimation Accuracy}
+\InputPart{csm-coupling-text.tex-part}
+
+\section{Incorrect-Coupling Robustness}
+\begin{figure*}[t]
+\centering
+\ChartFigure[0.98\textwidth]{robustness_rms.pgf}
+\caption{Coupling-mismatch injections (30 seeds): horizontal RMS change
+against A41 with (red) and without (grey) the coupling confidence.}
+\label{fig:rob}
+\end{figure*}
+\begin{figure}[t]
+\centering
+\ChartFigure{confidence_jonswap_fp0_29_hs0_8_g3_3_ext.pgf}
+\caption{A reversed external coupling prior: confidence, $D^2$ and the
+fallback.}
+\label{fig:revconf}
+\end{figure}
+\begin{figure}[t]
+\centering
+\ChartFigure{confidence_jonswap_fp0_29_hs0_8_g3_3_maneuver.pgf}
+\caption{Manoeuvring: the coupling is withdrawn during turns and restored
+after the hold.}
+\label{fig:man}
+\end{figure}
+\InputPart{csm-robustness-text.tex-part}
+
+\section{NEES/NIS Consistency}
+\begin{figure}[t]
+\centering
+\ChartFigure{consistency_nees_nis.pgf}
+\caption{NEES of $[\vct p,\vct v]$ (mean o, median x; 6 = consistent mean)
+and mean accelerometer NIS per sea.}
+\label{fig:nees}
+\end{figure}
+\InputPart{csm-consistency-text.tex-part}
+
+\section{Embedded Computational Feasibility}
+\begin{figure}[t]
+\centering
+\ChartFigure{cost_time_memory.pgf}
+\caption{Host update time and ESP32-S3 code size, QMEKF object size and
+largest stack frame.}
+\label{fig:cost}
+\end{figure}
+\InputPart{csm-embedded-text.tex-part}
+
+\section{Limitations}
+\InputPart{csm-limitations-text.tex-part}
+
+\section{Conclusions}
+\InputPart{csm-conclusions-text.tex-part}
+
+\section*{Reproduction}
+\texttt{make -C tests/kalman\_carma\_shared\_modes build test}; then
+\texttt{python3 tools/carma\_shared\_modes\_validation.py all}. Raw rows,
+traces, spectra, statistics and \texttt{manifest.json} (git revision, dataset
+version and checksums, seeds, configuration) are in
+\texttt{reports/results/kalman\_carma\_shared\_modes}.
+
+\end{document}

@@ -16,7 +16,7 @@ endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
 TARGETS = carma_model-test carma_process-sim carma3-test tfg_carma3-test carma3_bench carma3-sim \
-          carma_lever_arm-test carma_lever_arm-sim carma_excitation-test
+          carma_lever_arm-test carma_lever_arm-sim carma_excitation-test carma_coupled-test
 all: build test
 build: $(TARGETS)
 test: $(TARGETS)
@@ -29,7 +29,7 @@ carma3-test: carma3-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 tfg_carma3-test: tfg_carma3-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma3_bench: carma3_bench.o carma3_filters_ou.o carma3_filters_c4.o carma3_filters_c5.o carma3_filters_tfg.o W3dSimCommon.o
+carma3_bench: carma3_bench.o carma3_filters_ou.o carma3_filters_c4.o carma3_filters_c5.o carma3_filters_tfg.o carma3_filters_coupled.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma3-sim: carma3-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -38,6 +38,8 @@ carma_lever_arm-test: carma_lever_arm-test.o
 carma_lever_arm-sim: carma_lever_arm-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_excitation-test: carma_excitation-test.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+carma_coupled-test: carma_coupled-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@

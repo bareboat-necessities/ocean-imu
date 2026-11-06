@@ -29,6 +29,10 @@
                                   the same wrapper; T41R0, T41RA, T41NW its
                                   reset / covariance-write ablations; T52,
                                   T52R0 the CARMA(5,2) follow-up
+                     B41, COR:<o>, SHM:<o>, MCA:<o>
+                                  coupled three-axis priors
+                                  (carma3/FullAdaptersCoupled.h; B41 the
+                                  baseline A41 through the same adapter)
   --level l1       prescribed attitude, per-axis reduced filters on
                    y = R_nb f + g e_z = a + R_nb b + n, one shared
                    measurement-only operating point (the vertical channel's
@@ -60,6 +64,10 @@
   Gauss-Markov accelerometer noise, 4 mg unless given, 2 s, every axis), nvar (white
   accelerometer noise variance cycling between 1x and 2x over 600 s),
   engine<rpm> (inboard-diesel vibration of W3dSimCommon at that speed).
+  Coupled-prior study (docs/carma-coupled-three-axis.md): sp<s> sets the
+  cos^2s spreading of every wave system (sp10000: long-crested); magdist
+  adds a 15 uT body-frame magnetometer disturbance for 10 s every 200 s
+  from 250 s; bases regular_f<Hz>_h<m>, crossing, swell, dir_change.
   Filter options: <name>@<mode>[/opt...] selects the CARMA excitation mode
   (A legacy, B0 floor removed, B debiased, C evidence, Cnf evidence without
   frequency hold, Cng evidence without the amplitude weight) and options of
@@ -73,6 +81,10 @@
   --extended appends consistency, attitude, bias, conditioning and
   magnetometer-service columns (and, with --timeseries, per-filter error and
   predicted-sigma columns); without it the output is unchanged.
+  --coupling appends acceleration errors, accelerometer-innovation whiteness
+  (lag-1 s autocorrelation, lag-0 cross-correlation of the whitened
+  innovation) and the applied cross-axis coherence and phase (and, with
+  --timeseries, x-z coherence and phase columns).
 
   The complete INS has no declination input, so its horizontal axes are
   magnetic; estimates are rotated into the truth's geographic frame before
@@ -124,6 +136,7 @@ struct ScenarioX {
     double jitter_frac = 0.25;   // half-width of the relative interval jitter
     bool jitter_us = false;      // intervals rounded to whole microseconds
     bool scal = false, cnoise = false, nvar = false;
+    bool magdist = false;        // periodic magnetometer disturbance
     float cnoise_mg = 4.0f;      // colored-noise std, mg
     float engine_rpm = 0.0f;
 };
@@ -195,6 +208,12 @@ ScenarioX make_scenario(const std::string& full) {
         }
         else if (m == "nvar") x.nvar = true;
         else if (m.rfind("engine", 0) == 0) x.engine_rpm = static_cast<float>(std::strtod(m.c_str() + 6, nullptr));
+        else if (m.rfind("sp", 0) == 0 && m.size() > 2 && std::isdigit(static_cast<unsigned char>(m[2]))) {
+            const double spread = std::strtod(m.c_str() + 2, nullptr);
+            for (auto* v : {&sc.parts, &sc.parts_b})
+                for (auto& part : *v) part.spread_s = spread;
+        }
+        else if (m == "magdist") x.magdist = true;
         else throw std::invalid_argument("unknown scenario modifier " + m);
     }
     // An anchored hull lies head to the waves unless told otherwise.
@@ -437,6 +456,9 @@ struct Series {
     // --extended: attitude/yaw/joint NEES, coverage, world-frame attitude
     // error (tilt, phi_z, angle), predicted yaw std, bias errors.
     std::vector<float> natt, nyaw, n9p, n9n, tilt, phiz, angerr, sigyaw, bgerr, baerr, cov[3];
+    // --coupling: acceleration error, whitened accelerometer innovation,
+    // applied coupling (coherence, phase deg; x-z, y-z, x-y).
+    std::vector<float> ea[3], wi[3], cpl[6], rt;
     double cond_max = NAN;
     // --excitation: CARMA sigma, p, z, c_f, V, E[V | 0], f_op, tau (Bench3.h).
     std::vector<float> exc[8];
@@ -523,6 +545,7 @@ struct Args {
     bool header = false;
     bool extended = false;
     bool excitation = false;
+    bool coupling = false;
     bool scenario_given = false;
     double score_start = 300.0;
     double startup_window = 120.0;
@@ -546,6 +569,7 @@ Args parse(int argc, char** argv) {
         else if (k == "--header") a.header = true;
         else if (k == "--extended") a.extended = true;
         else if (k == "--excitation") a.excitation = true;
+        else if (k == "--coupling") a.coupling = true;
         else throw std::invalid_argument("unknown argument " + k);
     }
     return a;
@@ -561,7 +585,11 @@ const char* const kExcitationColumns =
     ",exc_sig_mean,exc_sig_med,exc_p_mean,exc_p_frac50,exc_z_med,exc_cf_mean,exc_fz_med,exc_fz_p05,exc_fz_p95,"
     "exc_var_med,exc_var0_med,exc_pz_rms,exc_ph_rms,p95_x,p95_y,p95_z,true_az_rms";
 
-void print_header(bool extended, bool excitation = false) {
+const char* const kCouplingColumns =
+    ",rmsa_x,rmsa_y,rmsa_z,wi_ac1_x,wi_ac1_y,wi_ac1_z,wi_cc_xz,wi_cc_xy,"
+    "cpl_coh_xz,cpl_ph_xz,cpl_coh_yz,cpl_ph_yz,cpl_coh_xy,cpl_ph_xy,runtime_p99_ns,runtime_max_ns";
+
+void print_header(bool extended, bool excitation = false, bool coupling = false) {
     std::printf("level,scenario,seed,filter,states,memory_bytes,runtime_ns,hs_incident,hs_heave,"
                 "std_x,std_y,std_z,lf_std_x,lf_std_y,t_live,failed");
     for (const char* ax : {"x", "y", "z"})
@@ -570,6 +598,7 @@ void print_header(bool extended, bool excitation = false) {
     std::printf(",rms_h,nees_pos3,nees_pv6,nis,nis_in95,roll_rms_deg,pitch_rms_deg,yaw_rms_deg,yaw_mean_deg");
     if (extended) std::printf("%s", kExtendedColumns);
     if (excitation) std::printf("%s", kExcitationColumns);
+    if (coupling) std::printf("%s", kCouplingColumns);
     std::printf("\n");
 }
 
@@ -651,7 +680,7 @@ int main(int argc, char** argv) {
     try {
         args = parse(argc, argv);
         if (args.header) {
-            print_header(args.extended, args.excitation);
+            print_header(args.extended, args.excitation, args.coupling);
             if (argc == 2 || !args.scenario_given) return 0;
         }
         sx = make_scenario(args.scenario);
@@ -771,6 +800,10 @@ int main(int argc, char** argv) {
             for (const auto& e : est)
                 for (const char* c : {"sig", "pw", "zw", "cf", "var", "var0", "fop", "sx", "sz"})
                     ts_out << "," << c << "_" << e->name();
+        if (args.coupling)
+            for (const auto& e : est)
+                for (const char* c : {"cohxz", "phxz"})
+                    ts_out << "," << c << "_" << e->name();
         ts_out << "\n";
     }
 
@@ -819,9 +852,12 @@ int main(int argc, char** argv) {
             const Vector3f m = apply_mag_noise(m_true, mag_noise, mag_dt);
             s.mag_tick = !(sx.maggap && ts.t >= gap0 && ts.t < gap1);
             s.mag_ned = m;
+            if (sx.magdist && ts.t >= 250.0 && std::fmod(ts.t - 250.0, 200.0) < 10.0)
+                s.mag_ned += Vector3f(15.0f, -6.0f, 4.0f);
         }
         s.y_level = ts.R_nb * acc.cast<double>();
         s.y_level.z() += G;
+        s.a_wave_mag = R_mg.transpose() * ts.a_wave;
 
         if (!full) {
             tuner.step(s.dt, static_cast<float>(-s.y_level.z()));
@@ -855,6 +891,7 @@ int main(int argc, char** argv) {
             if (e.live) {
                 se.runtime_ns += std::chrono::duration<double, std::nano>(t1 - t0).count();
                 se.runtime_count++;
+                if (args.coupling) se.rt.push_back(static_cast<float>(std::chrono::duration<double, std::nano>(t1 - t0).count()));
                 if (!std::isfinite(se.t_live)) se.t_live = ts.t;
             }
             se.t.push_back(static_cast<float>(ts.t));
@@ -952,6 +989,20 @@ int main(int argc, char** argv) {
                 if (!est[i]->excitation_diag(d)) std::fill(std::begin(d), std::end(d), NAN);
                 for (int c = 0; c < 8; ++c) se.exc[c].push_back(static_cast<float>(d[c]));
             }
+            if (args.coupling) {
+                Vector3d ea = Vector3d::Constant(NAN), wi = Vector3d::Constant(NAN);
+                if (e.live) {
+                    ea = (full ? Vector3d(R_mg * e.a) : e.a) - ts.a_wave;
+                    wi = e.innov_white;
+                }
+                for (int a = 0; a < 3; ++a) {
+                    se.ea[a].push_back(static_cast<float>(ea(a)));
+                    se.wi[a].push_back(static_cast<float>(wi(a)));
+                }
+                double d[6];
+                if (!e.live || !est[i]->coupling_diag(d)) std::fill(std::begin(d), std::end(d), NAN);
+                for (int c = 0; c < 6; ++c) se.cpl[c].push_back(static_cast<float>(d[c]));
+            }
         }
         if (ts_out.is_open() && k % args.decimate == 0) {
             char buf[160];
@@ -990,6 +1041,13 @@ int main(int argc, char** argv) {
                     std::snprintf(buf, sizeof buf, ",%.4e,%.4f,%.3f,%.4f,%.4e,%.4e,%.5f,%.5f,%.5f", se.exc[0][j],
                                   se.exc[1][j], se.exc[2][j], se.exc[3][j], se.exc[4][j], se.exc[5][j], se.exc[6][j],
                                   sd(se.pp[0][j]), sd(se.pp[2][j]));
+                    ts_out << buf;
+                }
+            if (args.coupling)
+                for (size_t i = 0; i < est.size(); ++i) {
+                    const Series& se = series[i];
+                    const size_t j = se.t.size() - 1;
+                    std::snprintf(buf, sizeof buf, ",%.4f,%.2f", se.cpl[0][j], se.cpl[1][j]);
                     ts_out << buf;
                 }
             ts_out << "\n";
@@ -1127,7 +1185,7 @@ int main(int argc, char** argv) {
             };
             auto quant = [](std::vector<double> v, double q) -> double {
                 if (v.empty()) return NAN;
-                const size_t k = std::min(v.size() - 1, static_cast<size_t>(q * static_cast<double>(v.size() - 1) + 0.5));
+                const size_t k = std::min(v.size() - 1, static_cast<size_t>(std::lround(q * static_cast<double>(v.size() - 1))));
                 std::nth_element(v.begin(), v.begin() + static_cast<long>(k), v.end());
                 return v[k];
             };
@@ -1158,6 +1216,48 @@ int main(int argc, char** argv) {
                 std::printf(",%.6g", quant(ae, 0.95));
             }
             std::printf(",%.6g", naz ? std::sqrt(saz2 / static_cast<double>(naz)) : NAN);
+        }
+        if (args.coupling) {
+            const double w0 = args.score_start, w1 = sc.duration_s;
+            for (int a = 0; a < 3; ++a) std::printf(",%.6g", std::sqrt(window_mean(se.ea[a], se.t, w0, w1, true)));
+            // Whitened innovation: autocorrelation at 1 s and lag-0 cross-correlation.
+            const size_t L = static_cast<size_t>(std::lround(1.0 / dt));
+            auto corr = [&](const std::vector<float>& u, const std::vector<float>& v, size_t lag) -> double {
+                double su = 0, sv = 0, suu = 0, svv = 0, suv = 0; long n = 0;
+                for (size_t j = lag; j < se.t.size(); ++j) {
+                    if (se.t[j - lag] < w0 || se.t[j] > w1) continue;
+                    const double x = u[j - lag], y = v[j];
+                    if (!std::isfinite(x) || !std::isfinite(y)) continue;
+                    su += x; sv += y; suu += x * x; svv += y * y; suv += x * y; ++n;
+                }
+                if (n < 10) return NAN;
+                const double dn = static_cast<double>(n);
+                const double cu = suu / dn - su * su / (dn * dn), cv = svv / dn - sv * sv / (dn * dn);
+                return (cu > 0 && cv > 0) ? (suv / dn - su * sv / (dn * dn)) / std::sqrt(cu * cv) : NAN;
+            };
+            for (int a = 0; a < 3; ++a) std::printf(",%.6g", corr(se.wi[a], se.wi[a], L));
+            std::printf(",%.6g,%.6g", corr(se.wi[0], se.wi[2], 0), corr(se.wi[0], se.wi[1], 0));
+            for (int c = 0; c < 6; c += 2) {
+                // Mean coherence; circular mean phase.
+                double sc_ = 0, ss = 0, sm = 0; long n = 0;
+                for (size_t j = 0; j < se.t.size(); ++j) {
+                    if (se.t[j] < w0 || se.t[j] > w1 || !std::isfinite(se.cpl[c][j]) || !std::isfinite(se.cpl[c + 1][j])) continue;
+                    sm += se.cpl[c][j];
+                    sc_ += std::cos(se.cpl[c + 1][j] * PI / 180.0);
+                    ss += std::sin(se.cpl[c + 1][j] * PI / 180.0);
+                    ++n;
+                }
+                std::printf(",%.6g,%.6g", n ? sm / static_cast<double>(n) : NAN, n ? std::atan2(ss, sc_) * 180.0 / PI : NAN);
+            }
+            std::vector<float> r = se.rt;
+            double p99 = NAN, rmax = NAN;
+            if (!r.empty()) {
+                const size_t k99 = std::min(r.size() - 1, static_cast<size_t>(0.99 * static_cast<double>(r.size())));
+                std::nth_element(r.begin(), r.begin() + static_cast<long>(k99), r.end());
+                p99 = r[k99];
+                rmax = *std::max_element(r.begin(), r.end());
+            }
+            std::printf(",%.6g,%.6g", p99, rmax);
         }
         std::printf("\n");
         if (se.failed) std::cerr << "FAILURE " << est[i]->name() << ": " << se.fail_reason << "\n";

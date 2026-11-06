@@ -105,7 +105,7 @@ def small_waves(r, exp, title, filters, note=None):
         r.w(note)
         r.w()
     by = defaultdict(list)
-    for (e, sc) in r.cond(exp):
+    for (_e, sc) in r.cond(exp):
         key = re.sub(r"_hs[0-9.]+", "", sc)
         by[key].append(sc)
     for fam in sorted(by):
@@ -173,11 +173,11 @@ def e4(r):
             if f not in d:
                 continue
             x = d[f]
-            def med(k):
+            def med(k, x=x):
                 v = np.array([fnum(t, k) for t in x])
                 v = v[np.isfinite(v)] if k != "detect_s" else v
                 return np.median(v) if v.size else np.nan
-            def mean(k):
+            def mean(k, x=x):
                 v = np.array([fnum(t, k) for t in x])
                 return np.nanmean(v)
             legacy = f in ("A41@A", "T41@A")   # Legacy reads no evidence
@@ -403,7 +403,7 @@ def cost(r):
     r.w("## Host cost")
     r.w()
     acc = defaultdict(lambda: [[], []])
-    for (e, sc), d in r.g.items():
+    for (e, _sc), d in r.g.items():
         if e not in ("E7", "E2"):
             continue
         for f, s in d.items():

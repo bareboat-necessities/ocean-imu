@@ -45,7 +45,6 @@
 
 namespace kc = ocean_imu::kalman::carma;
 using ocean_imu::carma::CarmaEvidenceConfig;
-using ocean_imu::carma::CarmaExcitationMode;
 using ocean_imu::carma::CarmaSensorNoise;
 using ocean_imu::carma::CarmaWaveEvidence;
 

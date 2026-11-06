@@ -26,6 +26,10 @@ struct Sensors {
     Eigen::Vector3f mag_ned = Eigen::Vector3f::Zero();
     Eigen::Vector3d y_level = Eigen::Vector3d::Zero();   // level 1: R_nb f + g e_z (NED)
     float tempC = 35.0f;                                  // IMU temperature passed to every filter
+    // ORACLE channel (coupled-prior study, carma3/FullAdaptersCoupled.h): the
+    // true wave acceleration in the estimators' magnetic NED frame.  Only
+    // adapters labelled as oracle read it.
+    Eigen::Vector3d a_wave_mag = Eigen::Vector3d::Zero();
 };
 
 struct Estimate3 {
@@ -45,6 +49,9 @@ struct Estimate3 {
     // accelerometer bias at the sample temperature).
     bool has_ext = false;
     Eigen::Matrix<double,9,9> P9 = Eigen::Matrix<double,9,9>::Constant(NAN);
+    // Accelerometer innovation whitened by the Cholesky factor of its
+    // predicted covariance (carma3_bench --coupling); NaN if not reported.
+    Eigen::Vector3d innov_white = Eigen::Vector3d::Constant(NAN);
     Eigen::Vector3d b_g = Eigen::Vector3d::Constant(NAN), b_a = Eigen::Vector3d::Constant(NAN);
 };
 
@@ -85,6 +92,10 @@ public:
     // under "no waves", CARMA operating frequency [Hz] and the committed
     // tau [s].
     virtual bool excitation_diag(double (&)[8]) const { return false; }
+    // Coupled-prior study (carma3_bench --coupling): magnitude-squared
+    // coherence and phase (deg) of the applied cross-axis excitation for the
+    // pairs x-z, y-z, x-y; false for an adapter without coupling.
+    virtual bool coupling_diag(double (&)[6]) const { return false; }
 };
 
 // Shipping simulator configuration (as kalman_ou_iii-sim).
@@ -119,11 +130,21 @@ std::unique_ptr<IEstimator3> make_full_ou(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_c4(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_c5(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_tfg(const std::string& name);
+std::unique_ptr<IEstimator3> make_full_coupled(const std::string& name);
+
+// Registry of another simulator built on this engine
+// (tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim): a weak
+// declaration that carma3_bench leaves undefined (null), so its filter set is
+// unchanged.
+__attribute__((weak)) std::unique_ptr<IEstimator3> make_full_extra(const std::string& name);
 
 inline std::unique_ptr<IEstimator3> make_full(const std::string& name) {
+    if (make_full_extra != nullptr)
+        if (auto e = make_full_extra(name)) return e;
     if (auto e = make_full_ou(name)) return e;
     if (auto e = make_full_c4(name)) return e;
     if (auto e = make_full_tfg(name)) return e;
+    if (auto e = make_full_coupled(name)) return e;
     return make_full_c5(name);
 }
 

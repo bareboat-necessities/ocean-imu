@@ -8,6 +8,7 @@ on:
       - sensors/full_marine_ins/atomS3R_ins_kalman_ou2/**
       - sensors/full_marine_ins/atomS3R_ins_carma3/**
       - sensors/full_marine_ins/atomS3R_ins_tfg_carma3/**
+      - sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/**
       - src/**
       - tests/kalman_tfg/tfg_orchestrator-test.cpp
       - tests/kalman_tfg/Makefile

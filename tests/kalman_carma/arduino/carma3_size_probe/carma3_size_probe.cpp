@@ -20,6 +20,13 @@
     6  SeaStateFusion_CARMA3<KALMANF, 4,T, 4,F>    CARMA(4,1) x/y/z + S_x, S_y
     7  SeaStateFusion_TFG_CARMA3<KALMANF, 4>       CARMA(4,1) x/y/z on the two-frame
                                                    Lie group (docs/tfg-carma3-research.md)
+    8  CARMA(4,1) x/y/z, correlated excitation     Experiment A
+    9  complexified shared modes                   Experiment B
+   10  RAO-structured MCARMA                       Experiment C
+   11  CARMA(4,1) complex-OU modal representation  Addendum (exact modal
+                                                   equivalent + real coupling)
+       (8-11: Kalman3D_Wave_CARMA3<..., Motion> of kalman_carma/CarmaCoupledMotion.h
+       behind the same wrapper, coupling estimator on; docs/carma-coupled-three-axis.md)
 */
 
 // Built only by the Xtensa target compiler or by `build.sh host`; host
@@ -35,6 +42,7 @@
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 #include "kalman_carma/SeaStateFusionFilter_TFG_CARMA3.h"
+#include "kalman_carma/CarmaCoupledMotion.h"
 
 #if CARMA3_PROBE_VARIANT == 0
 using Fusion = SeaStateFusion_OU_III<TrackerType::KALMANF>;
@@ -50,8 +58,21 @@ using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, 
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 5, false, 4, false>;
 #elif CARMA3_PROBE_VARIANT == 6
 using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, true, 4, false>;
-#else
+#elif CARMA3_PROBE_VARIANT == 7
 using Fusion = ocean_imu::carma::SeaStateFusion_TFG_CARMA3<TrackerType::KALMANF, 4>;
+#else
+#define CARMA3_PROBE_COUPLED 1
+#if CARMA3_PROBE_VARIANT == 8
+using Motion = ocean_imu::kalman::carma::CarmaCorrelatedMotion<float>;
+#elif CARMA3_PROBE_VARIANT == 9
+using Motion = ocean_imu::kalman::carma::CarmaSharedModeMotion<float>;
+#elif CARMA3_PROBE_VARIANT == 10
+using Motion = ocean_imu::kalman::carma::CarmaRaoMcarmaMotion<float>;
+#else
+using Motion = ocean_imu::kalman::carma::CarmaModalMotion<float>;
+#endif
+using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false,
+    ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, 4, false, 4, false, true, true, Motion>>;
 #endif
 
 const float g_std = 9.80665f;
@@ -73,6 +94,11 @@ extern "C" Fusion* carma3_probe_make() {
     cfg.sigma_g = Eigen::Vector3f::Constant(3.1e-5f);
     cfg.sigma_m = Eigen::Vector3f::Constant(7.7f);
     f->begin(cfg);
+#ifdef CARMA3_PROBE_COUPLED
+    ocean_imu::kalman::carma::CarmaCouplingConfig cc;
+    cc.source = ocean_imu::kalman::carma::CarmaCouplingConfig::Source::Estimated;
+    f->raw().mekf().motion().coupling().set_config(cc);
+#endif
     return f;
 }
 

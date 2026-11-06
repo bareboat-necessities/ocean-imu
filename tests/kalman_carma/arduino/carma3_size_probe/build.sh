@@ -16,7 +16,7 @@ if [ "$TC" = host ]; then
 else
   CXX="$TC/xtensa-esp32s3-elf-g++"; OBJDUMP="$TC/xtensa-esp32s3-elf-objdump"; TARGET_FLAGS=-mlongcalls
 fi
-for v in 0 1 2 3 4 5 6 7; do
+for v in 0 1 2 3 4 5 6 7 8 9 10 11; do
   (cd "$OUT" && "$CXX" -std=gnu++2a -Os $TARGET_FLAGS -ffunction-sections -fdata-sections \
       -fexceptions -fno-rtti -fstack-usage -DCARMA3_PROBE_VARIANT=$v -I"$ROOT/src" -isystem "$EIGEN" \
       -c "$HERE/carma3_size_probe.cpp" -o "$OUT/v$v.o")
@@ -29,7 +29,7 @@ python3 - "$OUT" <<'PY'
 import csv, re, sys
 from pathlib import Path
 out = Path(sys.argv[1])
-names = ["OU3", "A41", "A52", "M45", "A52S", "M54", "A41S", "T41"]
+names = ["OU3", "A41", "A52", "M45", "A52S", "M54", "A41S", "T41", "COR", "SHM", "MCA", "MOD"]
 wr = csv.writer(sys.stdout, lineterminator="\n")
 wr.writerow(["variant", "code_bytes", "rodata_bytes", "data_bytes", "bss_bytes", "sizeof_fusion", "sizeof_filter",
              "max_stack_frame", "max_stack_function"])

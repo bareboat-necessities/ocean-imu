@@ -17,6 +17,7 @@ They are intended for **marine motion estimation**, where accelerometer measurem
 | [atomS3R_ins_kalman_ou2](atomS3R_ins_kalman_ou2/README.md) | Adaptive OU-II Kalman INS | More direct integral-drift correction; responsive sea-state adaptation |
 | [atomS3R_ins_kalman_ou3](atomS3R_ins_kalman_ou3/README.md) | Adaptive OU-III Kalman INS | Higher-order integral regularization; main 3-D navigation implementation |
 | [atomS3R_ins_carma3](atomS3R_ins_carma3/README.md) | Experimental three-axis CARMA Kalman INS | OU-III with CARMA(4,1) motion priors on X/Y/Z; research sketch, simulation evidence only |
+| [atomS3R_ins_carma_shared_modes](atomS3R_ins_carma_shared_modes/README.md) | Experimental shared-modes QMEKF INS | CARMA3 with shared directional stochastic modes and coupling confidence; research sketch, simulation evidence only |
 | [atomS3R_ins_tfg_carma3](atomS3R_ins_tfg_carma3/README.md) | Experimental TFG-CARMA3 Kalman INS | CARMA3's prior and wrapper on the two-frame Lie group; research sketch, simulation evidence only |
 | [atomS3R_ins_tfg](atomS3R_ins_tfg/README.md) | Right-invariant two-frame Lie-group INS | Same state and wave model as OU-III on one group, so attitude corrections move the kinematic states with them |
 | [atomS3R_ins_pii_observer](atomS3R_ins_pii_observer/README.md) | Adaptive PII observer + Mahony | Much lighter computation; primarily vertical/heave-oriented motion estimation |
