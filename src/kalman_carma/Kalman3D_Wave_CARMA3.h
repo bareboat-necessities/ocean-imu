@@ -403,6 +403,53 @@ public:
     template<bool B = kMotion, std::enable_if_t<B, int> = 0>
     const auto& motion() const noexcept { return motion_; }
 
+    // Coupling fallback (Motion != void, three equal axis-major motion
+    // blocks; src/kalman_carma_shared_modes): shrink the horizontal-vertical
+    // motion cross-covariance that is NOT explained by the shared attitude and
+    // bias states r by alpha in [0, 1):
+    //   P_hz <- E + alpha (P_hz - E),   E = P_hr P_rr^-1 P_rz.
+    // In the Schur complement C = P_mm - P_mr P_rr^-1 P_rm of the motion block
+    // this is C <- alpha C + (1 - alpha) blockdiag(C_hh, C_zz), a convex
+    // combination of positive semidefinite matrices, while P_rr and P_rm are
+    // unchanged, so P stays positive semidefinite; the state is untouched.
+    // alpha = 0 removes the coupling-induced cross-covariance and keeps the
+    // part the attitude and bias errors induce.  Returns false (and leaves P
+    // alone) if P_rr is not positive definite or alpha is out of range.
+    template<bool B = kMotion, std::enable_if_t<B, int> = 0>
+    bool shrink_motion_vertical_coupling(T alpha) {
+        static_assert(NL % 3 == 0, "three equal axis-major motion blocks");
+        constexpr int NBk = NL / 3, NHk = 2 * NBk, NR = NX - NL;
+        if (!(alpha >= T(0)) || !(alpha < T(1))) return false;
+        int ridx[NR];
+        for (int i = 0; i < OFF_L; ++i) ridx[i] = i;
+        for (int i = OFF_L; i < NR; ++i) ridx[i] = i + NL;
+        Eigen::Matrix<T,NR,NR> Prr;
+        Eigen::Matrix<T,NR,NBk> Prz;
+        for (int i = 0; i < NR; ++i) {
+            for (int j = 0; j < NR; ++j) Prr(i,j) = Pext(ridx[i], ridx[j]);
+            for (int j = 0; j < NBk; ++j) Prz(i,j) = Pext(ridx[i], OFF_L + NHk + j);
+        }
+        // Correlation scaling keeps the factorization well conditioned.
+        Eigen::Matrix<T,NR,1> d;
+        for (int i = 0; i < NR; ++i) {
+            if (!(Prr(i,i) > T(0))) return false;
+            d(i) = T(1) / std::sqrt(Prr(i,i));
+        }
+        const Eigen::LDLT<Eigen::Matrix<T,NR,NR>> ldlt(d.asDiagonal() * Prr * d.asDiagonal());
+        if (ldlt.info() != Eigen::Success || !(ldlt.vectorD().minCoeff() > T(0))) return false;
+        const Eigen::Matrix<T,NR,NBk> X = d.asDiagonal() * ldlt.solve(d.asDiagonal() * Prz);   // P_rr^-1 P_rz
+        for (int i = 0; i < NHk; ++i)
+            for (int j = 0; j < NBk; ++j) {
+                T e = T(0);
+                for (int k = 0; k < NR; ++k) e += Pext(OFF_L + i, ridx[k]) * X(k,j);
+                const int r = OFF_L + i, c = OFF_L + NHk + j;
+                const T v = e + alpha * (T(0.5) * (Pext(r,c) + Pext(c,r)) - e);
+                Pext(r,c) = v;
+                Pext(c,r) = v;
+            }
+        return true;
+    }
+
     void reset_vertical_covariance_to_stationary() {
         MatrixCZ P0;
         if (!vmodel_.stationary_covariance(P0)) return;

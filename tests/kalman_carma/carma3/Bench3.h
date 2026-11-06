@@ -132,7 +132,15 @@ std::unique_ptr<IEstimator3> make_full_c5(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_tfg(const std::string& name);
 std::unique_ptr<IEstimator3> make_full_coupled(const std::string& name);
 
+// Registry of another simulator built on this engine
+// (tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim): a weak
+// declaration that carma3_bench leaves undefined (null), so its filter set is
+// unchanged.
+__attribute__((weak)) std::unique_ptr<IEstimator3> make_full_extra(const std::string& name);
+
 inline std::unique_ptr<IEstimator3> make_full(const std::string& name) {
+    if (make_full_extra != nullptr)
+        if (auto e = make_full_extra(name)) return e;
     if (auto e = make_full_ou(name)) return e;
     if (auto e = make_full_c4(name)) return e;
     if (auto e = make_full_tfg(name)) return e;

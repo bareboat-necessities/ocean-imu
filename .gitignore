@@ -123,5 +123,6 @@ tests/kalman_carma/carma3_bench
 tests/kalman_carma/process/
 tests/kalman_carma/smoke3_*.csv
 tests/kalman_carma/smoke_coupled*.csv
+tests/kalman_carma_shared_modes/smoke_csm.csv
 reports/results/carma3_benchmark/traces/
 reports/results/tfg_carma3/traces/
