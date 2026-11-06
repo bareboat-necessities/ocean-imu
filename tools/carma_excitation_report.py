@@ -135,7 +135,7 @@ class Report:
         self.w(f"### {title}")
         self.w()
         hdr = ["Condition", "n"] + [f"{LABEL.get(f, f)}" for f in filters]
-        for mname, _key, _fmt in metrics:
+        for _mname, _key, _fmt in metrics:
             pass
         rows = []
         for (e, sc) in sorted(self.cond(exp), key=lambda k: k[1]):
@@ -204,7 +204,7 @@ class Report:
         filters = None
         tab = []
         ratios = defaultdict(list)
-        for (e, sc), d in sorted(self.tune.items(), key=lambda k: k[0][1]):
+        for (_e, sc), d in sorted(self.tune.items(), key=lambda k: k[0][1]):
             if filters is None:
                 filters = sorted(d.keys(), key=lambda f: (f != "A41@A", f != "A41@B", f != "A41@C", f))
             seeds, vz = aligned(d, filters, lambda r: fnum(r, "rms_z"))

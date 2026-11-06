@@ -192,13 +192,13 @@ def transition_metrics(ts, filters, scenario, seed, exp):
                 hit = np.nonzero(sig[win] <= thr)[0]
                 rise = tw[hit[0]] - t_s if hit.size else np.inf
             e = z - zt
-            def rms(a, b):
+            def rms(a, b, e=e):
                 m = (t >= a) & (t < b)
                 return float(np.sqrt(np.nanmean(e[m] ** 2))) if m.any() else np.nan
-            def rms_true(a, b):
+            def rms_true(a, b, zt=zt):
                 m = (t >= a) & (t < b)
                 return float(np.sqrt(np.nanmean(zt[m] ** 2))) if m.any() else np.nan
-            def peak(a, b):
+            def peak(a, b, e=e):
                 m = (t >= a) & (t < b)
                 return float(np.nanmax(np.abs(e[m]))) if m.any() else np.nan
             ex = ts[f"x_{f}"] - ts["x_true"]
