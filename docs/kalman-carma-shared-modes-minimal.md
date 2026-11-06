@@ -212,7 +212,8 @@ about 0.05-0.5):
 
 * **Removed directions.**  CSM27Q's largest |change| is 0.12 % (heave RAO
   x0.5); the transient envelopes around the frequency, direction and height
-  changes show `|p_27Q - p_33|` three to four orders below the error.
+  changes show `|p_27Q - p_33|` at 0.02-0.1 mm against errors of 10-40 mm, 2.5-3
+  orders of magnitude below, briefly 0.3 mm at the abrupt frequency change.
   Holding the quotient instead of lifting (CSM27H) costs up to 1.25 %.
 * **Cascade.**  It is better where the complexified realization's adaptation
   cost is largest (regular wave heave +3.3 %, short wind sea +2.2 %, spread
@@ -286,7 +287,22 @@ about 0.05-0.5):
 * Per commit the 33-state block also solves, in double precision (software
   on the ESP32-S3), a 4 x 4 Lyapunov equation by doubling and a complex 4 x 4
   inverse.  The cascade needs neither: its `kappa` scaling is closed form.
-HOST_TIMING
+* **Host time** (x86-64 `-O3`, one job on an otherwise idle machine; ranking
+  only, not an ESP32-S3 time).  The QMEKF core alone
+  (`kalman_carma_shared_modes_minimal-timing`, 200 Hz, commits every 0.1 s,
+  median of three runs): A41 2.31, CSM 6.26, CSM27 4.04 (-36 %), CSM27Q 5.14
+  us per sample; with x86 flush-to-zero 2.10 / 4.16 / 3.56 (-14 %) / 4.00.
+  The difference is the denormals that the float discretization series
+  underflow into, which x86 handles in microcode.  Without commits (FTZ):
+  1.95 / 3.86 / 3.12 (-19 %) / 3.10.  The complete wrapper
+  (`kalman_carma_shared_modes-bench`, mean over three seeds): A41@C 3.36,
+  CSM 6.90, CSM27 4.99 (-28 %), CSM27Q 5.99 us; 99th percentile 6.6 / 33.9 /
+  14.0 (-59 %) / 32.0 us.  The worst-case update is the commit step, and the
+  cascade's commits are the cheapest.  The host saving per sample is smaller
+  than the 42 % in multiply-adds: the front end, the coupling spectrum
+  estimators and the confidence cost the same in both filters, and SIMD
+  flattens the difference between 6 x 6 and 8 x 8 blocks.  A scalar FPU
+  follows the counts more closely.
 
 ## 8. Recommendation
 

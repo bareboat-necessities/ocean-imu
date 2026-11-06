@@ -616,16 +616,6 @@ def write_tex(st):
         lines.append(" & ".join(row) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     parts["csm27-scenarios.tex-part"] = "\n".join(lines) + "\n"
-    # heave / horizontal with CIs for the cascade and the quotient
-    lines = [r"\begin{tabular}{@{}l l l l@{}}", r"\toprule",
-             r"sea & CSM27 heave & CSM27 horizontal & CSM27Q heave \\", r"\midrule"]
-    for sc, r in st["scenarios"].items():
-        fl = r["filters"]
-        lines.append(" & ".join([tex(sc.replace("jonswap_fp0.29_hs0.8_g3.3", "J29")),
-                                 _ci(fl.get("CSM27", {}).get("vs33_rms_z")), _ci(fl.get("CSM27", {}).get("vs33_rms_h")),
-                                 _ci(fl.get("CSM27Q", {}).get("vs33_rms_z"))]) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}"]
-    parts["csm27-ci.tex-part"] = "\n".join(lines) + "\n"
     # groups
     lines = [r"\begin{tabular}{@{}l r r r r r@{}}", r"\toprule",
              r"group (seas) & CSM27 heave & CSM27 3-D & CSM27Q 3-D & CSM27H 3-D & A41 3-D \\", r"\midrule"]
@@ -777,8 +767,9 @@ def figures(st, outdir, exts):
         axes[0].set_yticks(y)
         axes[0].set_yticklabels([short(s) for s in scs])
         axes[0].invert_yaxis()
-        axes[1].legend(loc="lower right", frameon=False)
-        fig.tight_layout()
+        h, lab = axes[1].get_legend_handles_labels()
+        fig.legend(h, lab, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 1.02))
+        fig.tight_layout(rect=(0, 0, 1, 0.97))
         save(fig, "csm27_paired_changes")
     # 2. absolute 3-D RMS with A41 for context (clipped bar chart)
     if scs:
@@ -792,39 +783,56 @@ def figures(st, outdir, exts):
         ax.set_ylabel("3-D position RMS (mm)")
         ax.set_xticks(x)
         ax.set_xticklabels([short(s) for s in scs], rotation=60, ha="right", fontsize=6)
-        ax.legend(ncol=5, frameon=False, fontsize=6, loc="upper left")
+        h, lab = ax.get_legend_handles_labels()
+        fig.legend(h, lab, ncol=5, frameon=False, fontsize=6, loc="upper center", bbox_to_anchor=(0.5, 1.04))
         ax.grid(alpha=0.3, axis="y")
-        fig.tight_layout()
+        fig.tight_layout(rect=(0, 0, 1, 0.95))
         save(fig, "csm27_rms3")
-    # 3. transient envelopes
+    # 3. transient envelopes (from 150 s: the proxy start-up precedes Live)
+    changes = {"changing_fp": [(300.0, 900.0)], "abrupt_change": [(595.0, 605.0)], "dir_change": [(570.0, 630.0)],
+               f"{J29}+on400w60+off900w60": [(370.0, 430.0), (870.0, 930.0)]}
     envs = [(sc, TRACE_DIR / f"{re.sub(r'[^A-Za-z0-9_.+-]', '_', sc)}_envelope.csv") for sc in TRACE_SEAS]
     envs = [(sc, p) for sc, p in envs if p.exists()]
     if envs:
         fig, axes = plt.subplots(len(envs), 2, figsize=(7.2, 1.9 * len(envs)), squeeze=False)
+        handles = []
         for i, (sc, p) in enumerate(envs):
             d = pd.read_csv(p)
+            keep = d.t.values >= 150.0
+            d = d[keep]
             t = d.t.values
             k = max(1, int(round(10.0 / float(np.median(np.diff(t))))))   # 10 s moving RMS of the 1 s envelope
 
             def smooth(v, k=k):
-                return np.sqrt(np.convolve(v ** 2, np.ones(k) / k, mode="same"))
+                return np.sqrt(np.convolve(np.nan_to_num(v) ** 2, np.ones(k) / k, mode="same"))
             for f in TRACE_FILTERS.split(","):
-                axes[i, 0].plot(t, 1000 * smooth(d[f"{f}|z"].values), color=COLORS[f], lw=0.8, label=LABEL[f])
-                h = np.sqrt(d[f"{f}|x"].values ** 2 + d[f"{f}|y"].values ** 2)
-                axes[i, 1].plot(t, 1000 * smooth(h), color=COLORS[f], lw=0.8)
+                ln, = axes[i, 0].plot(t, 1000 * smooth(d[f"{f}|z"].values), color=COLORS[f], lw=0.8, label=LABEL[f])
+                if i == 0:
+                    handles.append(ln)
+                hz = np.sqrt(d[f"{f}|x"].values ** 2 + d[f"{f}|y"].values ** 2)
+                axes[i, 1].plot(t, 1000 * smooth(hz), color=COLORS[f], lw=0.8)
             for f in ("CSM27", "CSM27Q", "CSM27H"):
                 if f"{f}-CSM|z" in d:
-                    axes[i, 0].plot(t, 1000 * smooth(d[f"{f}-CSM|z"].values), color=COLORS[f], lw=0.6, ls=":")
+                    ln, = axes[i, 0].plot(t, 1000 * smooth(d[f"{f}-CSM|z"].values), color=COLORS[f], lw=0.7, ls=":",
+                                          label=f"|{f} - CSM|")
+                    hz = np.sqrt(d[f"{f}-CSM|x"].values ** 2 + d[f"{f}-CSM|y"].values ** 2)
+                    axes[i, 1].plot(t, 1000 * smooth(hz), color=COLORS[f], lw=0.7, ls=":")
+                    if i == 0:
+                        handles.append(ln)
             axes[i, 0].set_ylabel(f"{short(sc)}\nheave (mm)", fontsize=7)
             axes[i, 1].set_ylabel("horizontal (mm)", fontsize=7)
             for a in axes[i]:
+                for t0, t1 in changes.get(sc, []):
+                    a.axvspan(t0, t1, color="#bbbbbb", alpha=0.3, lw=0)
                 a.set_yscale("log")
+                a.set_ylim(bottom=1e-2)
                 a.grid(alpha=0.3)
                 a.set_xlim(t[0], t[-1])
         axes[-1, 0].set_xlabel("time (s)")
         axes[-1, 1].set_xlabel("time (s)")
-        axes[0, 0].legend(fontsize=5.5, frameon=False, ncol=2, loc="lower left")
-        fig.tight_layout()
+        fig.legend(handles, [h.get_label() for h in handles], loc="upper center", ncol=4, frameon=False, fontsize=6,
+                   bbox_to_anchor=(0.5, 1.03))
+        fig.tight_layout(rect=(0, 0, 1, 0.96))
         save(fig, "csm27_transients")
     # 4. consistency
     df = _frame(RAW)
@@ -867,12 +875,14 @@ def figures(st, outdir, exts):
             axes[0, i].axhline(a41, color=COLORS["A41@C"], lw=0.8, ls="--", label="A41")
             axes[0, i].set_xticks(x)
             axes[0, i].set_xticklabels(labels, fontsize=6)
-            axes[0, i].set_yscale("log")
+            vals = [1000 * v.get("rms3", np.nan) for k, v in fl.items() if "ext-" in k] + [a41]
+            axes[0, i].set_ylim(0.85 * np.nanmin(vals), 1.05 * np.nanmax(vals))
             axes[0, i].set_title(short(sc), fontsize=7)
             axes[0, i].grid(alpha=0.3, axis="y")
         axes[0, 0].set_ylabel("3-D RMS (mm)")
-        axes[0, 0].legend(fontsize=5.5, frameon=False)
-        fig.tight_layout()
+        h, lab = axes[0, 0].get_legend_handles_labels()
+        fig.legend(h, lab, fontsize=6, frameon=False, ncol=5, loc="upper center", bbox_to_anchor=(0.5, 1.06))
+        fig.tight_layout(rect=(0, 0, 1, 0.93))
         save(fig, "csm27_robustness")
     # 6. cost
     cost = st["cost"]

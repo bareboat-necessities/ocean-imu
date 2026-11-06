@@ -26,8 +26,10 @@
 \newcommand{\C}{\mathbb{C}}
 \newcommand{\Hr}{^{\mathsf H}}
 \newcommand{\T}{^{\mathsf T}}
-\newcommand{\Re}{\operatorname{Re}}
-\newcommand{\Im}{\operatorname{Im}}
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+% Keep this: PGF figures from matplotlib reference \mathdefault.
+\providecommand{\mathdefault}[1]{#1}
 \sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
 \emergencystretch=2em
 \allowdisplaybreaks
@@ -95,7 +97,8 @@ on the excitation; we argue why 27 is the better operating point.
 The shared-modes QMEKF \texttt{KalmanCarmaSharedModes} (CSM, 33 states:
 attitude error, gyroscope bias, three eight-state motion blocks,
 accelerometer bias) is derived in the companion article
-\texttt{kalman\_carma\_shared\_modes-math}. A preliminary observability
+\texttt{kalman\_carma\_shared\_modes-math}, which places the complexified
+mode among the complex-OU factorizations of CARMA processes \cite{fasen21}. A preliminary observability
 analysis suggested two unobservable directions per axis. This article
 answers, with proofs where they exist and with paired simulations where
 they do not:
@@ -205,7 +208,7 @@ lie in the row space of the observability matrix (as $\mat A_8$ is
 invertible, $\vct e_1\T=\vct e_3\T\mat A_8^{-2}$ on the motion block). The
 Riccati recursion of the observable coordinates is then closed in
 $\mat\Pi\mat P\mat\Pi\T$ with $\mat\Pi\mat Q\mat\Pi\T$, whatever $\mat Q_k$ is,
-and the gains on the observable coordinates coincide \cite{andersonmoore79}.
+and the gains on the observable coordinates coincide \cite{kalman63,andersonmoore79}.
 The EKF linearizes at the attitude, bias and acceleration estimates, which
 are observable, so the linearization points agree by induction. The reset
 congruence acts on the attitude rows and columns only. The fallback
@@ -432,7 +435,8 @@ defaulted template parameter; the 33-state filter is bit-identical,
 \texttt{carma\_shared\_modes-test} [2]). Four elements are new:
 \begin{itemize}
 \item a paired discretization (\texttt{discretize\_lti\_pair},
-  \texttt{StepDiscretizationPair}) that propagates the symmetric
+  \texttt{StepDiscretizationPair}; the exact integrals of \cite{vanloan78}
+  by series and doubling) that propagates the symmetric
   $\mat Q_R$ and the antisymmetric $\mat Q_I$ of \eqref{eq:Q27} through
   \texttt{discretize\_lti}'s scaled series, doublings and jitter series;
 \item a per-axis re-coordinatization hook in the CARMA3 core
@@ -542,14 +546,23 @@ with 95\,\% bootstrap intervals, per sea.}
 \label{fig:paired}
 \end{figure*}
 
+\begin{figure*}[!t]
+\centering
+\ChartFigure[0.9\textwidth]{csm27_rms3.pgf}
+\caption{3-D position RMS per sea (mean over 30 seeds, log scale) of A41,
+CSM, CSM27, CSM27Q and CSM:off.}
+\label{fig:rms3}
+\end{figure*}
+
 \paragraph{The removed directions carry no information}
 The quotient with the regression lift (CSM27Q) is the faithful reduction of
 CSM. Its largest paired 3-D change on any of the 26 seas is $0.12\,\%$
 (heave RAO $\times0.5$). On 24 seas it is below $0.02\,\%$, including every
-gradual, rapid and manoeuvring sea (\cref{tab:scen}, \cref{fig:paired}). The position NEES ratio against CSM has median 0.9999 and
+gradual, rapid and manoeuvring sea (\cref{tab:scen}, \cref{fig:paired,fig:rms3}). The position NEES ratio against CSM has median 0.9999 and
 5--95\,\% range 0.9992--1.0002, and the 95\,\% coverage is identical
 (\cref{tab:cons}). The leakage of \cref{sec:adapt} is therefore real but
-three to four orders below the estimation error: the information the
+two and a half to three orders of magnitude below the estimation error
+(\cref{fig:trans}): the information the
 33-state filter keeps in its unobservable component is negligible. Holding
 the quotient coordinates instead (CSM27H) is worse on 22 seas, by up to
 $1.25\,\%$ (swell): the lift matters, but little.
@@ -764,7 +777,18 @@ precision (software on the ESP32-S3), a $4\times4$ Lyapunov equation by
 doubling and a complex $4\times4$ inverse. The cascade's $\kappa$ scaling is
 closed form. The quotient needs a dense $6\times6$ re-coordinatization at
 every frequency commit and 29\,kB more code than the cascade.
-HOSTTIMINGTEXT
+On the host (x86-64, one job, ranking only) the QMEKF core with 10\,Hz
+commits takes 6.26\,\textmu s per sample for CSM against 4.04 for CSM27
+($-36\,\%$), 5.14 for CSM27Q and 2.31 for A41. With x86 flush-to-zero the
+figures are 4.16, 3.56 ($-14\,\%$), 4.00 and 2.10: the float discretization
+series underflow into denormals, which x86 handles in microcode. The
+complete wrapper takes 6.90 against 4.99\,\textmu s on average ($-28\,\%$),
+with 99th percentiles of 33.9 against 14.0\,\textmu s ($-59\,\%$). The worst
+case is the commit step. The host saving per sample is smaller than the
+multiply-add count suggests: the front end, the two coupling spectrum
+estimators and the confidence cost the same in both filters, and SIMD
+flattens the difference between $6\times6$ and $8\times8$ blocks. A scalar
+FPU follows the counts more closely.
 
 \section{Conclusions}
 \paragraph{Equivalence}
