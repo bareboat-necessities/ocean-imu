@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "claude/carma3-coupled-priors",
-  "git_commit": "db0bde674038abc68dee5e5775ea68d83e72e9b9",
+  "git_branch": "main",
+  "git_commit": "e6a5e3ff1aa4f9aced88965d2f84bf4d2ab04e48",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -341,8 +341,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-06T18:53:57+00:00",
-    "git_commit": "db0bde674038abc68dee5e5775ea68d83e72e9b9",
+    "generated_at": "2026-11-06T20:16:01+00:00",
+    "git_commit": "e6a5e3ff1aa4f9aced88965d2f84bf4d2ab04e48",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,8 +541,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "42268470853",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "42280354464",
+      "workflow": "build"
     }
   },
   "result_files": {
