@@ -19,7 +19,7 @@ Filters (CsmBenchAdapter.h):
 Stages (resumable; each appends to its own CSV):
     smoke     one paired row with the reduction identities
     run       paired Monte Carlo: SCENARIOS x seeds 1..N (default 30)
-    ablate    the cascade's commit rule (normalized vs raw colouring hold) on six seas
+    ablate    the cascade's commit rule (normalized vs raw colouring hold) on seven seas
     robust    wrong coupling priors (external, from the truth, deliberately
               wrong) with and without the confidence, 33 vs 27 states
     traces    10 Hz time series around sea-state changes, seeds 1..10
@@ -116,7 +116,7 @@ ROB_TURN_FILTERS = "A41@C,CSM,CSM27,CSM/fz400/keel,CSM27/fz400/keel"
 # Cascade commit-rule ablation: hold the colouring states themselves instead of
 # the normalized ones, on the seas where the cascade's sign differs.
 ABL = OUT / "ablation_runs.csv"
-ABL_SEAS = ["swell", J29, "abrupt_change", f"{J29}+hscale0.5", "regular_f0.25_h1", "mixed_swell_wind"]
+ABL_SEAS = ["swell", J29, "abrupt_change", f"{J29}+hscale0.5", f"{J29}+cnoise", "regular_f0.25_h1", "mixed_swell_wind"]
 ABL_FILTERS = "CSM,CSM27,CSM27/rawhold"
 
 TRACE_SEAS = ["changing_fp", "abrupt_change", "dir_change", f"{J29}+on400w60+off900w60"]
