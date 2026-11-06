@@ -653,7 +653,7 @@ SHORT = {"B41": "Baseline", "COR:est": "A est.", "COR:orc": "A oracle", "SHM:est
 
 def tex_escape(t):
     return (t.replace("\\", "/").replace("_", "\\_").replace("%", "\\%").replace("&", "\\&")
-            .replace("->", "$\\to$").replace("^2", "$^2$"))
+            .replace("->", "$\\to$").replace("^2", "$^2$").replace("^8", "$^8$"))
 
 
 def fit_tables(text):
