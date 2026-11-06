@@ -412,18 +412,41 @@ void test5_one() {
     sea.eval(0.0, p, a);
     imu.sample(a, acc, gyr);
     core_init(*f, acc, imu.mag(), Commit{1.0, 0.5, 0.3, 0.6});
-    double jump = 0.0, worst_eig = 1.0;
+    using Core = Core27<R>;
+    using MB = typename Core::Motion::MatB;
+    double jump = 0.0, worst_eig = 1.0, row_dev = 0.0;
+    long nontrivial = 0, commits = 0;
     for (long k = 1; k < 200L * 200L; ++k) {
         const double t = static_cast<double>(k) * 0.005;
         sea.eval(t, p, a);
         imu.sample(a, acc, gyr);
         if (k % 20 == 0) {
-            // Commit, then a zero-length prediction applies it without moving the state.
-            const V3d p0 = f->get_position(), v0 = f->get_velocity(), a0 = f->get_world_accel();
-            core_commit(*f, Commit{1.0 + 0.3 * std::sin(t / 7.0), 0.5 * (1.2 + std::sin(t / 5.0) * 0.3), 0.3, 0.6});
-            f->time_update(gyr, 0.0);
-            jump = std::max({jump, (f->get_position() - p0).norm(), (f->get_velocity() - v0).norm(),
-                             (f->get_world_accel() - a0).norm()});
+            const Commit c{1.0 + 0.3 * std::sin(t / 7.0), 0.5 * (1.2 + std::sin(t / 5.0) * 0.3), 0.3, 0.6};
+            // A zero-length prediction returns before the commit is applied, so
+            // exercise the core's own path on a copy: reset_aw_covariance_to_stationary()
+            // runs refresh() and recoordinate_motion_() without propagating the
+            // state (it replaces only the motion covariance).
+            const Core& cf = *f;
+            auto g = std::make_unique<Core>(cf);
+            core_commit(*g, c);
+            g->reset_aw_covariance_to_stationary();
+            jump = std::max({jump, (g->get_position() - f->get_position()).norm(),
+                             (g->get_velocity() - f->get_velocity()).norm(),
+                             (g->get_world_accel() - f->get_world_accel()).norm()});
+            // ... and the transform that path applied is a real one: rows p, v, a
+            // are unit rows, the rest moves on Cascade / Quotient commits.
+            auto h = std::make_unique<Core>(cf);
+            core_commit(*h, c);
+            h->motion().refresh(0.005);
+            MB M[3];
+            if (h->motion().take_axis_recoordinatization(M)) {
+                ++nontrivial;
+                for (const MB& m : M) {
+                    row_dev = std::max(row_dev, (m.template topRows<3>() - MB::Identity().template topRows<3>()).cwiseAbs().maxCoeff());
+                }
+            }
+            ++commits;
+            core_commit(*f, c);
         }
         f->time_update(gyr, 0.005);
         f->measurement_update_acc_only(acc, 35.0);
@@ -434,9 +457,19 @@ void test5_one() {
             worst_eig = std::min(worst_eig, es.eigenvalues()(0));
         }
     }
-    char buf[160];
-    std::snprintf(buf, sizeof buf, "%s: p, v, a continuous through kappa / amplitude commits", rname(R));
+    char buf[200];
+    std::snprintf(buf, sizeof buf, "%s: p, v, a continuous through the core's commit path (%ld of %ld commits re-coordinatize)",
+                  rname(R), nontrivial, commits);
     check(jump < 1e-12, buf, jump, 1e-12);
+    // Cascade: exact (diagonal scaling of the colouring rows).  Quotient: the
+    // rows of Re(p, v, a, l) are [I 0] analytically; the numerically computed
+    // regression lift keeps them to rounding.
+    std::snprintf(buf, sizeof buf, "%s: the applied transforms keep the p, v, a rows (exact; quotient to rounding)", rname(R));
+    const double row_tol = R == MR::Quotient ? 1e-13 : 0.0;
+    check(row_dev <= row_tol, buf, row_dev, row_tol);
+    std::snprintf(buf, sizeof buf, "%s: commits re-coordinatize as the realization requires", rname(R));
+    check(R == MR::QuotientHold ? nontrivial == 0 : nontrivial > commits / 2, buf, static_cast<double>(nontrivial),
+          static_cast<double>(commits));
     std::snprintf(buf, sizeof buf, "%s: covariance PSD after 2000 commits (correlation min eigenvalue)", rname(R));
     check(worst_eig > -1e-9, buf, worst_eig, -1e-9);
 }

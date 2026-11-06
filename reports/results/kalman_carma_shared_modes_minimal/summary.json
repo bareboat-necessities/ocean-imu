@@ -12245,9 +12245,9 @@
    "acc_update_madds": 3591,
    "per_sample_madds": 7992,
    "jitter_series_madds": 600,
-   "per_commit_madds": 13932,
-   "commit_amortized_madds": 696,
-   "total_madds_per_sample": 8688
+   "per_commit_madds": 19440,
+   "commit_amortized_madds": 972,
+   "total_madds_per_sample": 8964
   },
   {
    "filter": "CSM27Q (27)",

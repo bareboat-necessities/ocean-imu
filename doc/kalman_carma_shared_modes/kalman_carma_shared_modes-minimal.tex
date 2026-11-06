@@ -386,7 +386,9 @@ $\mat L=\mat P_8\mat\Pi_8\T(\mat\Pi_8\mat P_8\mat\Pi_8\T)^{-1}$ (minimum
 variance under the stationary prior), and maps
 $\vct x\leftarrow\mat M\vct x$, $\mat P\leftarrow\mat M\mat P\mat M\T$,
 $\mat M=\mat\Pi_8(\kappa_2)\mat L(\kappa_1)$ on every axis. The top rows of
-$\mat M$ are $[\mat I_4\ \mat0]$, so $p,v,a$ are continuous. With the
+$\mat M$ are $[\mat I_4\ \mat0]$ analytically ($\Re\vct\zeta$ is part of
+the quotient), so $p,v,a$ are continuous; the numerically computed lift
+keeps them to $10^{-14}$. With the
 scaling, $\mat M=\mat S_6(\kappa_2)\mat\Pi_8(1)\mat S_8(\kappa_1/\kappa_2)\mat L(1)\mat S_6(\kappa_1)^{-1}$:
 one double-precision factorization at construction, none on the target.
 \emph{QuotientHold} keeps the coordinates instead (ablation).
@@ -441,9 +443,9 @@ defaulted template parameter; the 33-state filter is bit-identical,
   \texttt{discretize\_lti}'s scaled series, doublings and jitter series;
 \item a per-axis re-coordinatization hook in the CARMA3 core
   (\texttt{take\_axis\_recoordinatization}), applied as
-  $\mat S\mat P\mat S\T$ right after a commit. The cascade scales the two
-  colouring rows by $s_a^{\text{new}}/s_a^{\text{old}}$, and the quotient
-  applies $\mat M$;
+  $\mat S\mat P\mat S\T$ right after a commit. The cascade's transform scales
+  the two colouring rows by $s_a^{\text{new}}/s_a^{\text{old}}$, and the
+  quotient's is $\mat M$ (both applied as dense $6\times6$ products);
 \item exact structural zeros: round-off residue in the projected $\mat A_6$
   (down to $10^{-19}$) defeated the structural scaling of the
   discretization and produced denormals, making a refresh $7\times$ slower
@@ -473,7 +475,7 @@ quotient = 33, amplitude commits & $5\times10^{-12}$ (rel.) \\
 cascade:off = A41 through adaptation & $1.6\times10^{-13}$ (rel.) \\
 33 and quotient vs A41, same schedule & 0.22 (rel.) \\
 motion-only KF, $\kappa$ adaptation, $|p_{33}-p_{27Q}|$ & $3\times10^{-5}$\,m \\
-$p,v,a$ jump at a commit & 0 \\
+$p,v,a$ jump at a commit (core path) & 0 (cascade), $5\times10^{-15}$ (quotient) \\
 float wrapper: $P$ symmetric, PSD & exact, min.\ corr.\ eig.\ $>0$ \\
 \bottomrule
 \end{tabular}
@@ -765,8 +767,8 @@ object.}
 \end{figure}
 
 Per sample the 27-state filter needs 7\,992 multiply-adds against
-13\,686 (42\,\% fewer), and one 0.1\,s commit needs 13\,932 against
-28\,672 (51\,\% fewer, \cref{tab:cost}). The covariance shrinks from 1089 to
+13\,686 (42\,\% fewer), and one 0.1\,s commit needs 19\,440 against
+28\,672 (32\,\% fewer, \cref{tab:cost}). The covariance shrinks from 1089 to
 729 floats. The paired discretization keeps $5+11+11$ series coefficients
 of $6\times6$ against $8+15$ of $8\times8$. Together these make the
 ESP32-S3 filter object 3248\,B (21\,\%) smaller and its largest stack frame
@@ -777,8 +779,11 @@ Eigen decompositions in that construction had cost 44\,kB before they were
 replaced. The 33-state block also solves, at every commit and in double
 precision (software on the ESP32-S3), a $4\times4$ Lyapunov equation by
 doubling and a complex $4\times4$ inverse. The cascade's $\kappa$ scaling is
-closed form. The quotient needs a dense $6\times6$ re-coordinatization at
-every frequency commit and 29\,kB more code than the cascade.
+closed form. Both realizations apply their $6\times6$ commit transform
+densely in the core hook, 5\,832 multiply-adds per commit. The cascade's
+transform is diagonal, so a diagonal path would save almost all of that. The
+quotient also forms its lift in double precision and needs 29\,kB more code
+than the cascade.
 On the host (x86-64, one job, ranking only) the QMEKF core with 10\,Hz
 commits takes 6.26\,\textmu s per sample for CSM against 4.04 for CSM27
 ($-36\,\%$), 5.14 for CSM27Q and 2.31 for A41. With x86 flush-to-zero the
@@ -808,7 +813,7 @@ stationary regression lift the quotient stays within $0.12\,\%$ of the
 33-state filter on all 26 seas, and the NEES agrees to a ratio of 0.9999.
 
 \paragraph{Trade-off}
-The trade-off is favourable: 42\,\% fewer multiply-adds per sample, 51\,\%
+The trade-off is favourable: 42\,\% fewer multiply-adds per sample, 32\,\%
 less commit work and 21\,\% less filter memory on the ESP32-S3, for 5\,\%
 more code. There is no approximation error to accept. The cascade's
 differences from the 33-state filter are a different, equally exact,
@@ -817,7 +822,8 @@ adaptive model, better on 20 seas and worse on two.
 \paragraph{Recommended realization}
 The cascade is recommended. With the coupling off it is the CARMA3 baseline
 exactly, adaptation included, so the fallback model is the baseline. It is
-the best conditioned realization and has the cheapest commits. The quotient
+the best conditioned realization, and its measured worst-case update is
+the shortest. The quotient
 is the choice when continuity with the validated 33-state filter matters
 more.
 

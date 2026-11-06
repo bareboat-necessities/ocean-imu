@@ -435,7 +435,10 @@ def cost_rows():
             m, kf = 6, 5
             series = kf * m * m + 2 * 2 * kf * m * (m + 1) // 2
             disc = (m - 1 + 7) * m ** 3 + (2 * (m - 1) + 7) * m ** 3 * 3
-            recoord = 3 * 2 * m * m * nx if kind == "pair6q" else 3 * 2 * 2 * nx   # dense M / two scaled rows+cols
+            # The core applies every axis's 6 x 6 transform densely to the rows and
+            # the columns (Kalman3D_Wave_CARMA3::recoordinate_motion_), the
+            # cascade's diagonal one included.
+            recoord = 3 * 2 * m * m * nx
         per_commit = disc + recoord
         out.append({"filter": name, "states": nx, "P_floats": nx * nx, "P_bytes": 4 * nx * nx,
                     "predict_madds": c["predict_madds"] + q_add, "acc_update_madds": c["acc_update_madds"],

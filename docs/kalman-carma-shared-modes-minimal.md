@@ -50,7 +50,7 @@ filter stays `SeaStateFusionFilter_OU_III`.  The 33-state shared-modes QMEKF
   advantage is the excitation mode (with Evidence excitation TFG-CARMA3 is
   within 0.04 percentage points of Hs).  TFG-CARMA3 is better on pitch (4 %) and on the 3-D
   biases (2 %).
-* **ESP32-S3:** -42 % multiply-adds per sample (13 686 -> 7 992), -51 % per
+* **ESP32-S3:** -42 % multiply-adds per sample (13 686 -> 7 992), -32 % per
   model commit, -3.2 kB (-21 %) filter object, -592 B largest stack frame,
   +10.6 kB (+5.4 %) code.
 * **Dimension:** the minimal Markov order of the three-axis law is
@@ -123,7 +123,8 @@ keeps the state, so the adaptive model depends on the realization.
   `|p_33 - p_27Q| = 3e-5 m`, not rounding).
 * **Quotient**: at a kappa commit the missing component is replaced by its
   stationary regression on the quotient (`L = P8 Pi^T (Pi P8 Pi^T)^-1`), and
-  `x <- Pi(k_new) L(k_old) x` on every axis (`p, v, a` exactly continuous).
+  `x <- Pi(k_new) L(k_old) x` on every axis (`p, v, a` continuous: exactly in
+  exact arithmetic, to 1e-14 with the computed lift).
   With the scaling this is one double factorization at construction.
 * **QuotientHold** holds the quotient coordinates (ablation).
 * **Cascade** (default): the CARMA3 baseline's own `[p, v, a, l]` driven at
@@ -274,7 +275,7 @@ coloured accelerometer noise (-1.61 %) with six seas at 0.0 to +0.35 %.
 |---|---|---|---|---|---|---|---|---|
 | A41 | 21 | 1764 | 4,248 | 4,608 | 6136 | 173,375 | 1328 | 4832 |
 | CSM | 33 | 4356 | 13,686 | 28,672 | 15776 | 196,266 | 2480 | 4896 |
-| CSM27 | 27 | 2916 | 7,992 | 13,932 | 12528 | 206,920 | 1888 | 4864 |
+| CSM27 | 27 | 2916 | 7,992 | 19,440 | 12528 | 206,920 | 1888 | 4864 |
 | CSM27Q | 27 | 2916 | 7,992 | 19,440 | 13600 | 235,752 | 4864 | 4864 |
 
 * Multiply-adds are the analytic counts of the CARMA3 core's structured
@@ -303,7 +304,10 @@ coloured accelerometer noise (-1.61 %) with six seas at 0.0 to +0.35 %.
   (`kalman_carma_shared_modes-bench`, mean over three seeds): A41@C 3.36,
   CSM 6.90, CSM27 4.99 (-28 %), CSM27Q 5.99 us; 99th percentile 6.6 / 33.9 /
   14.0 (-59 %) / 32.0 us.  The worst-case update is the commit step, and the
-  cascade's commits are the cheapest.  The host saving per sample is smaller
+  cascade's are the shortest.  The quotient's commit also forms its lift in
+  double precision, and its dense dynamics underflow into more denormals
+  (with flush-to-zero its refresh costs 3.8 against 2.8 us, without 24
+  against 7).  The host saving per sample is smaller
   than the 42 % in multiply-adds: the front end, the coupling spectrum
   estimators and the confidence cost the same in both filters, and SIMD
   flattens the difference between 6 x 6 and 8 x 8 blocks.  A scalar FPU
@@ -318,7 +322,8 @@ coloured accelerometer noise (-1.61 %) with six seas at 0.0 to +0.35 %.
   information during adaptation, and it costs 42 % fewer multiply-adds per
   sample and 21 % less filter memory, at 5 % more code.
 * Prefer the **cascade** (default).  Its coupling-off model is the CARMA3
-  baseline exactly, it is the best conditioned, its commits are cheapest,
+  baseline exactly, it is the best conditioned, its worst-case update is the
+  shortest,
   and it is better on 20 of 26 seas.  Use the **quotient** when bit-level
   continuity with the validated 33-state filter matters more than those
   properties: it reproduces it to 0.12 % at the same per-sample cost, with
