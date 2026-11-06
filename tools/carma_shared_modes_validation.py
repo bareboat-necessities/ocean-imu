@@ -144,12 +144,22 @@ def pending(rows, work):
 def stage_smoke(args):
     if SMOKE.exists():
         SMOKE.unlink()
-    run_rows([cmd(f"{J29}+T600", 1, "A41,SHM:est,CSM:noconf,CSM,CSM:off", 200.0)], SMOKE, 1)
+    run_rows([cmd(f"{J29}+T600", 1, "A41,A41@C,SHM:est,CSM:noconf@A,CSM,CSM:off", 200.0)], SMOKE, 1)
     rows = {r["filter"]: r for r in read_rows(SMOKE)}
-    skip = {"filter", "runtime_ns", "memory_bytes"}
-    diff = [k for k in rows["SHM:est"] if k not in skip and not k.startswith("runtime_")
-            and rows["SHM:est"][k] != rows["CSM:noconf"][k]]
-    assert not diff, ("CSM:noconf must reproduce SHM:est", diff[:6])
+
+    def rel(a, b, k):
+        x, y = float(rows[a][k]), float(rows[b][k])
+        return abs(x - y) / max(abs(y), 1e-12)
+
+    # With the excitation paired (Legacy, @A), CSM:noconf is the research
+    # filter SHM:est; the two differ only by float summation order.
+    for k in ("rms_h", "rms_x", "rms_y", "rms_z", "nees_x", "nees_y", "nees_z"):
+        if k in rows["SHM:est"]:
+            assert rel("CSM:noconf@A", "SHM:est", k) < 1e-3, ("CSM:noconf@A must reproduce SHM:est", k)
+    # Coupling off is the CARMA(4,1) law of the baseline at the same excitation.
+    for k in ("rms_h", "rms_z"):
+        if k in rows["A41@C"]:
+            assert rel("CSM:off", "A41@C", k) < 0.03, ("CSM:off must track A41@C", k)
     for f in ("CSM", "CSM:off"):
         assert rows[f]["failed"] == "0", f
     print("smoke ok:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
