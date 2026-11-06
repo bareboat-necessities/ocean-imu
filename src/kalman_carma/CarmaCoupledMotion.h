@@ -255,22 +255,22 @@ public:
     }
 
     void apply_F(const T (&in)[NL], T (&out)[NL]) const {
-        const MatB& F = disc_.Phi();
+        const MatB& Phi = disc_.Phi();
         for (int ax = 0; ax < 3; ++ax)
             for (int i = 0; i < NB; ++i) {
                 T acc = T(0);
-                for (int j = 0; j < NB; ++j) acc += F(i,j) * in[ax * NB + j];
+                for (int j = 0; j < NB; ++j) acc += Phi(i,j) * in[ax * NB + j];
                 out[ax * NB + i] = acc;
             }
     }
 
     template<class Mat>
     void propagate(Mat& P, int off) const {
-        const MatB& F = disc_.Phi();
+        const MatB& Phi = disc_.Phi();
         const MatB& Q = disc_.Q();
         for (int a = 0; a < 3; ++a)
             for (int b = a; b < 3; ++b)
-                coupled_detail::congruence_block<T,NB,NB>(P, off + a * NB, off + b * NB, F, F, a == b);
+                coupled_detail::congruence_block<T,NB,NB>(P, off + a * NB, off + b * NB, Phi, Phi, a == b);
         add_structured_(P, off, Q);
     }
 
@@ -500,16 +500,16 @@ private:
     // Closed-form F(h), Q(h) (h = inf: the stationary covariance) of the two
     // complex modes driven by one real noise of intensity g2 (unit
     // acceleration variance), in double.
-    void discretize_(double h, MatB& F, MatB& Q) const {
-        F.setZero();
-        Q.setZero();
+    void discretize_(double h, MatB& Fo, MatB& Qo) const {
+        Fo.setZero();
+        Qo.setZero();
         const bool inf = !std::isfinite(h);
         for (int k = 0; k < 2; ++k) {
             const Cd e = inf ? Cd(0.0) : std::exp(mu_[k] * h);
-            F(2 * k, 2 * k) = static_cast<T>(e.real());
-            F(2 * k, 2 * k + 1) = static_cast<T>(-e.imag());
-            F(2 * k + 1, 2 * k) = static_cast<T>(e.imag());
-            F(2 * k + 1, 2 * k + 1) = static_cast<T>(e.real());
+            Fo(2 * k, 2 * k) = static_cast<T>(e.real());
+            Fo(2 * k, 2 * k + 1) = static_cast<T>(-e.imag());
+            Fo(2 * k + 1, 2 * k) = static_cast<T>(e.imag());
+            Fo(2 * k + 1, 2 * k + 1) = static_cast<T>(e.real());
         }
         // E[z_k conj z_l] = g2 r_k conj r_l (e^{(mu_k + conj mu_l) h} - 1)/(mu_k + conj mu_l),
         // E[z_k z_l]      = g2 r_k r_l      (e^{(mu_k + mu_l) h} - 1)/(mu_k + mu_l).
@@ -524,15 +524,15 @@ private:
             for (int l = 0; l < 2; ++l) {
                 const Cd A = g2 * res_[k] * std::conj(res_[l]) * integ(mu_[k] + std::conj(mu_[l]));
                 const Cd B = g2 * res_[k] * res_[l] * integ(mu_[k] + mu_[l]);
-                Q(2 * k, 2 * l) = static_cast<T>(0.5 * (A + B).real());              // u_k u_l
-                Q(2 * k + 1, 2 * l + 1) = static_cast<T>(0.5 * (A - B).real());      // v_k v_l
-                Q(2 * k, 2 * l + 1) = static_cast<T>(0.5 * (B.imag() - A.imag()));   // u_k v_l
-                Q(2 * k + 1, 2 * l) = static_cast<T>(0.5 * (B.imag() + A.imag()));   // v_k u_l
+                Qo(2 * k, 2 * l) = static_cast<T>(0.5 * (A + B).real());              // u_k u_l
+                Qo(2 * k + 1, 2 * l + 1) = static_cast<T>(0.5 * (A - B).real());      // v_k v_l
+                Qo(2 * k, 2 * l + 1) = static_cast<T>(0.5 * (B.imag() - A.imag()));   // u_k v_l
+                Qo(2 * k + 1, 2 * l) = static_cast<T>(0.5 * (B.imag() + A.imag()));   // v_k u_l
             }
         for (int i = 0; i < NB; ++i)
             for (int j = i + 1; j < NB; ++j) {
-                const T v = T(0.5) * (Q(i,j) + Q(j,i));
-                Q(i,j) = v; Q(j,i) = v;
+                const T v = T(0.5) * (Qo(i,j) + Qo(j,i));
+                Qo(i,j) = v; Qo(j,i) = v;
             }
     }
 
