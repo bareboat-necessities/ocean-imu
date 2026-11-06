@@ -44,6 +44,19 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — CARMA shared-modes headers rebound the whole-`src/` digest.** The
+experimental CARMA work added `src/kalman_carma_shared_modes/` and changed
+three `src/kalman_carma/` headers; the fail-closed validator rejected the
+native secants' `shipping_source_tree_sha256`. Failed quantity: source
+provenance only; classification E. Evidence: the probe's compiler include
+closure (38 `src/` files) is byte-identical to main and contains none of the
+seven changed files; the diagnostic regenerated with clang 18.1.3 reproduces
+every field except that digest. Structures preserved: every shipping
+operation, constant and chronology, bit for bit. Relaxations introduced:
+none. Rebound: the digest, the secant report's blob and this ledger's blob.
+No proof flag, payload or OPEN dependency changes; the current limiter and
+next experiment are unchanged.
+
 **E — header reorganization rebound; no shipping operator changed.**
 The generic attitude, covariance-projection and schedule helpers moved
 verbatim from `KalmanOUCoreMath.h` into `src/kalman_common/`
