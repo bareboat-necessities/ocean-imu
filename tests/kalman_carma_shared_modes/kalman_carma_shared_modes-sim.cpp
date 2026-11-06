@@ -16,8 +16,9 @@
     27-state minimal realization, Cascade), CSM27Q, CSM27Q_OFF (Quotient)
     and CSM27H (QuotientHold) are the same configurations with the core of
     KalmanCarmaSharedModesMinimal.h (docs/kalman-carma-shared-modes-minimal.md).  The regression bars are fitted to CSM's
-    own replays of these records and gate CSM only (default seeds, noise and
-    magnetometer); the other variants are diagnostics.  The CARMA3 baseline
+    own replays of these records and gate CSM (default seeds, noise and
+    magnetometer); CSM27 is gated by its own bars, fitted the same way; the
+    other variants are diagnostics.  The CARMA3 baseline
     on the same records and seeds is tests/kalman_carma/carma3-sim (A41); the
     paired Monte Carlo comparison is kalman_carma_shared_modes-bench.
 */
@@ -80,6 +81,24 @@ constexpr W3dFailureLimits kCsmRegressionBars{
     .acc_z_bias_percent            = 4.187f,  // worst 4.16607 (pmstokes H8.5)
     .bias_3d_percent               = 84.17f,  // worst 83.7517 (pmstokes H8.5, accel)
     .gyro_bias_3d_percent          = 12.71f,  // worst 12.6499 (pmstokes H8.5, gyro)
+};
+
+// Regression bars of CSM27, the 27-state minimal realization (Cascade;
+// KalmanCarmaSharedModesMinimal.h) on the same records, seeds and Evidence
+// excitation, fitted to its own replays with the same convention
+// (tools/carma_shared_modes_minimal_study.py gates ->
+// reports/results/kalman_carma_shared_modes_minimal/csm27_regression_bars.json).
+constexpr W3dFailureLimits kCsm27RegressionBars{
+    .err_limit_percent_z_jonswap   = 2.467f,  // worst 2.45469 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 2.416f,  // worst 2.4032 (pmstokes H0.27)
+    .err_limit_yaw_deg             = 0.7595f, // worst 0.75563 (pmstokes H0.27)
+    .err_limit_roll_deg            = 0.3590f, // worst 0.357147 (pmstokes H8.5)
+    .err_limit_pitch_deg           = 0.2231f, // worst 0.221983 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 4.433f,  // worst 4.4103 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 4.904f,  // worst 4.87922 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.186f,  // worst 4.16433 (pmstokes H8.5)
+    .bias_3d_percent               = 83.99f,  // worst 83.5639 (pmstokes H8.5, accel)
+    .gyro_bias_3d_percent          = 12.71f,  // worst 12.6435 (pmstokes H8.5, gyro)
 };
 
 constexpr float kUngated = 1.0e9f;
@@ -145,9 +164,9 @@ int main(int argc, char* argv[]) {
         // any other replay is a diagnostic, not a regression.
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
-        const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
+        const bool gated = (variant == "CSM" || variant == "CSM27") && add_noise && with_mag && default_seeds &&
                            !std::getenv("W3D_CARMA3_EXCITATION");
-        const W3dFailureLimits& bars = gated ? kCsmRegressionBars : kUngatedBars;
+        const W3dFailureLimits& bars = !gated ? kUngatedBars : variant == "CSM27" ? kCsm27RegressionBars : kCsmRegressionBars;
         for (const auto& f : files) {
             const std::string family = "CARMA_SHARED_MODES_" + variant;
             if (variant == "CSM") run_file<CsmAdapter<0>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);

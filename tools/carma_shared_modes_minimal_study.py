@@ -24,6 +24,8 @@ Stages (resumable; each appends to its own CSV):
               wrong) with and without the confidence, 33 vs 27 states
     traces    10 Hz time series around sea-state changes, seeds 1..10
     dataset   replay of the pinned vessel-RAO records (default seeds)
+    gates     the regression-gate quantities of the default-seed replays: CSM27,
+              CSM (33) and TFG-CARMA3 (T41; Legacy and Evidence), CSM27's bars
     timing    host update time, one job (ranking only, not an ESP32-S3 time)
     size      ESP32-S3 size / stack probe (needs the Xtensa toolchain: --toolchain)
     report    statistics, LaTeX tables, figures (SVG + PGF), manifest.json
@@ -234,6 +236,105 @@ def stage_traces(args):
             out[f"{fl}|{ax}"] = np.sqrt(v[:len(t)] / n)
         pd.DataFrame(out).to_csv(TRACE_DIR / f"{tag}_envelope.csv", index=False, float_format="%.6g")
         print(f"traces {sc}: {n} seeds", flush=True)
+
+
+# ---------------------------------------------------------------------------
+# regression gates of the dataset replay (the quantities print_summary_and_fail_if_needed scores)
+# ---------------------------------------------------------------------------
+
+GATES = OUT / "dataset_gates.csv"
+TFG_SIM = ROOT / "tests" / "kalman_tfg_carma" / "tfg_carma3-sim"
+# label -> (simulator, environment)
+GATE_RUNS = {
+    "CSM27": (SIM, {"W3D_CSM_VARIANT": "CSM27"}),
+    "CSM": (SIM, {"W3D_CSM_VARIANT": "CSM"}),
+    "T41": (TFG_SIM, {}),                                      # TFG-CARMA3, its gated default (Legacy excitation)
+    "T41@C": (TFG_SIM, {"W3D_CARMA3_EXCITATION": "C"}),       # ... Evidence excitation (like for like; diagnostic)
+}
+GATE_KEYS = ["z_pct_hs", "pct_3d", "roll_deg", "pitch_deg", "yaw_deg", "acc_z_bias_pct", "acc_bias_3d_pct",
+             "gyro_bias_3d_pct"]
+
+
+def parse_gates(text):
+    """Per-record gate quantities from a replay's summary blocks."""
+    rows, cur = [], None
+    num = r"([-+0-9.eE]+|nan|inf)"
+    for line in text.splitlines():
+        m = re.match(r"=== Last 900 s RMS summary for \S*w3d_(\S+?)_fusion_", line)
+        if m:
+            cur = {"record": m.group(1)}
+            continue
+        if cur is None:
+            continue
+        if line.startswith("XYZ RMS (%Hs)"):
+            cur["z_pct_hs"] = float(re.search(r"Z=" + num + "%", line).group(1))
+        elif line.startswith("3D RMS (m)"):
+            cur["pct_3d"] = float(re.search(r"3D % of max \|disp_ref\|_3D = " + num + "%", line).group(1))
+        elif line.startswith("Angles RMS (deg)"):
+            for k, n in (("roll_deg", "Roll"), ("pitch_deg", "Pitch"), ("yaw_deg", "Yaw")):
+                cur[k] = float(re.search(n + "=" + num, line).group(1))
+        elif line.startswith("Bias error RMS (% of max TRUE bias) (acc)"):
+            cur["acc_z_bias_pct"] = float(re.search(r" Z=" + num + "%", line).group(1))
+            cur["acc_bias_3d_pct"] = float(re.search(r"\|3D\|=" + num + "%", line).group(1))
+        elif line.startswith("Bias error RMS (% of max TRUE bias) (gyro)"):
+            cur["gyro_bias_3d_pct"] = float(re.search(r"\|3D\|=" + num + "%", line).group(1))
+        elif line.startswith("QUALITY_GATE:"):
+            m = re.search(r"PASS=(\d) REASON=(\S+)", line)
+            cur["pass"], cur["reason"] = int(m.group(1)), m.group(2)
+            rows.append(cur)
+            cur = None
+    return rows
+
+
+def fit_bars(rows, margin=0.005):
+    """The repository's convention: each bar is the worst default-seed value
+    plus about 0.5 %, rounded up at the fourth significant digit."""
+    def up(x):
+        e = 10 ** (np.floor(np.log10(abs(x))) - 3)
+        return float(np.ceil(x * (1 + margin) / e) * e)
+    js = [r for r in rows if r["record"].startswith("jonswap")]
+    pm = [r for r in rows if r["record"].startswith("pmstokes")]
+    w = {}
+    for name, sub, key in (("err_limit_percent_z_jonswap", js, "z_pct_hs"), ("err_limit_percent_z_pmstokes", pm, "z_pct_hs"),
+                           ("err_limit_yaw_deg", rows, "yaw_deg"), ("err_limit_roll_deg", rows, "roll_deg"),
+                           ("err_limit_pitch_deg", rows, "pitch_deg"), ("err_limit_percent_3d_jonswap", js, "pct_3d"),
+                           ("err_limit_percent_3d_pmstokes", pm, "pct_3d"), ("acc_z_bias_percent", rows, "acc_z_bias_pct"),
+                           ("bias_3d_percent", rows, "acc_bias_3d_pct"), ("gyro_bias_3d_percent", rows, "gyro_bias_3d_pct")):
+        worst = max(sub, key=lambda r: r[key])
+        w[name] = {"worst": worst[key], "record": worst["record"], "bar": up(worst[key])}
+    return w
+
+
+def stage_gates(args):
+    """Default-seed replays of the eight scored records: CSM27 (the selected
+    27-state realization), CSM (33 states) and TFG-CARMA3 (T41, Legacy and
+    Evidence excitation); the gate quantities and the CSM27 bars."""
+    rows = []
+    for label, (exe, extra) in GATE_RUNS.items():
+        if not exe.exists():
+            sys.exit(f"missing {exe.relative_to(ROOT)}: make -C {exe.parent.relative_to(ROOT)} build")
+        if args.logs:
+            text = (Path(args.logs) / f"replay_{label.replace('@', '')}.log").read_text()
+        else:
+            env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
+            env.update(extra, W3D_COLLECT_ALL_GATES="1", W3D_WRITE_TIMESERIES="0")
+            text = subprocess.run([str(exe)], cwd=exe.parent, capture_output=True, text=True, env=env).stdout
+        got = parse_gates(text)
+        if len(got) != 8:
+            sys.exit(f"gates: {label}: {len(got)} scored records parsed (expected 8)")
+        for r in got:
+            r["filter"] = label
+        rows += got
+        print(f"gates {label}: {sum(r['pass'] for r in got)}/8 records within the simulator's bars", flush=True)
+    OUT.mkdir(parents=True, exist_ok=True)
+    with GATES.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=["filter", "record"] + GATE_KEYS + ["pass", "reason"])
+        w.writeheader()
+        w.writerows(rows)
+    bars = fit_bars([r for r in rows if r["filter"] == "CSM27"])
+    (OUT / "csm27_regression_bars.json").write_text(json.dumps(bars, indent=1))
+    for k, v in bars.items():
+        print(f"  {k:32s} worst {v['worst']:.6g} ({v['record']}) -> bar {v['bar']:.6g}")
 
 
 def stage_dataset(args):
@@ -779,14 +880,15 @@ def stage_figures(args):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("stage", choices=["smoke", "run", "ablate", "robust", "traces", "dataset", "timing", "size", "cost",
-                                      "report", "figures", "all"])
+    ap.add_argument("stage", choices=["smoke", "run", "ablate", "robust", "traces", "dataset", "gates", "timing", "size",
+                                      "cost", "report", "figures", "all"])
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=30)
     ap.add_argument("--robust-seeds", type=int, default=20)
     ap.add_argument("--trace-seeds", type=int, default=10)
     ap.add_argument("--toolchain", default=None, help="size stage: Espressif xtensa toolchain bin directory")
     ap.add_argument("--outdir", default=None, help="figures stage: output directory")
+    ap.add_argument("--logs", default=None, help="gates stage: parse replay_<label>.log files from this directory")
     ap.add_argument("--ext", default="svg", help="figures stage: comma-separated formats (svg, pgf, png, pdf)")
     args = ap.parse_args(argv)
     OUT.mkdir(parents=True, exist_ok=True)
@@ -798,10 +900,10 @@ def main(argv=None):
             w.writerows(rows)
         print(json.dumps(rows, indent=1))
     stages = {"smoke": stage_smoke, "run": stage_run, "ablate": stage_ablate, "robust": stage_robust, "traces": stage_traces,
-              "dataset": stage_dataset, "timing": stage_timing, "size": stage_size, "report": stage_report,
+              "dataset": stage_dataset, "gates": stage_gates, "timing": stage_timing, "size": stage_size, "report": stage_report,
               "figures": stage_figures}
     if args.stage == "all":
-        for s in ("smoke", "run", "ablate", "robust", "traces", "dataset", "timing", "report"):
+        for s in ("smoke", "run", "ablate", "robust", "traces", "dataset", "gates", "timing", "report"):
             stages[s](args)
     elif args.stage in stages:
         stages[args.stage](args)

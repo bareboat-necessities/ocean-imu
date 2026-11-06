@@ -69,4 +69,9 @@ PY
 # the tracking charts are drawn from these replays.
 sim_status=0
 W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim || sim_status=$?
+
+# The same records, seeds and excitation with CSM27, the 27-state minimal
+# realization (Cascade), against its own regression bars (no time series: the
+# chart gallery is CSM's).
+W3D_COLLECT_ALL_GATES=1 W3D_CSM_VARIANT=CSM27 W3D_WRITE_TIMESERIES=0 ./kalman_carma_shared_modes-sim || sim_status=$?
 exit "$sim_status"
