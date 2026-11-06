@@ -540,7 +540,36 @@ with 95\,\% bootstrap intervals, per sea.}
 \label{fig:paired}
 \end{figure*}
 
-\input{csm27-findings.tex-part}
+\paragraph{The removed directions carry no information}
+The quotient with the regression lift (CSM27Q) is the faithful reduction of
+CSM. Its largest paired 3-D change on any of the 26 seas is $0.12\,\%$
+(heave RAO $\times0.5$). On 24 seas it is below $0.02\,\%$, including every
+gradual, rapid and manoeuvring sea (\cref{tab:scen}, \cref{fig:paired}). The position NEES ratio against CSM has median 0.9999 and
+5--95\,\% range 0.9992--1.0002, and the 95\,\% coverage is identical
+(\cref{tab:cons}). The leakage of \cref{sec:adapt} is therefore real but
+three to four orders below the estimation error: the information the
+33-state filter keeps in its unobservable component is negligible. Holding
+the quotient coordinates instead (CSM27H) is worse on 22 seas, by up to
+$1.25\,\%$ (swell): the lift matters, but little.
+
+\paragraph{The cascade is a different, mostly better, adaptive model}
+CSM27 changes the commit law, not the frozen model, and the differences
+follow. Heave is significantly better on 19 of 26 seas (by at least
+$1\,\%$ on 16), with tight intervals: $+1.49\,\%$ $[1.36,1.63]$ on the spread
+JONSWAP, $+3.33\,\%$ on the regular wave, $+2.15\,\%$ on the short wind sea.
+This is the realization effect of \cref{prop:a41} removed: CSM:off is a
+median $1.2\,\%$ worse than A41 in heave. Heave is worse on six seas: heave
+RAO $\times0.5$ ($-3.27\,\%$), coloured accelerometer noise ($-3.13\,\%$),
+the abrupt change ($-1.35\,\%$), swell ($-1.28\,\%$), bimodal and PM.
+Horizontal RMS is $0.11$--$0.45\,\%$ worse on 17 seas, mostly the
+JONSWAP-type ones, and better on five, the multi-system seas among them
+(mixed swell and wind $+0.90\,\%$, bimodal $+0.72\,\%$). The 3-D RMS is
+better on 20 seas ($+0.13$ to $+0.91\,\%$), statistically equal on four (PM,
+swell, abrupt change, manoeuvring), and worse on two: heave RAO
+$\times0.5$ ($-2.15\,\%$) and coloured accelerometer noise ($-1.61\,\%$). The gradual, rapid, manoeuvring,
+jitter, magnetic and bias-drift seas behave like the spread JONSWAP ($+0.2$
+to $+0.35\,\%$ 3-D). Consistency is unchanged: the NEES ratio median is
+0.990, and the coverage is identical.
 
 \begin{table}[!t]
 \caption{Consistency, pooled over all seas and seeds: medians of the
