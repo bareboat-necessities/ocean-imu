@@ -210,6 +210,11 @@ about 0.05-0.5):
 | rapid (3) | +0.42 | +0.03 | +0.004 | -0.27 | -3.42 |
 | disturbance (7) | +0.69 | -0.01 | -0.002 | -0.15 | -2.29 |
 
+Group means hide the sign structure.  The coupling group is dominated by the
+heave RAO x0.5 sea (CSM27 -2.15 %, A41 +35 %, the over-coupling below); its
+other five seas are +0.27 to +0.35 % for CSM27.  The disturbance group mixes
+coloured accelerometer noise (-1.61 %) with six seas at 0.0 to +0.35 %.
+
 * **Removed directions.**  CSM27Q's largest |change| is 0.12 % (heave RAO
   x0.5); the transient envelopes around the frequency, direction and height
   changes show `|p_27Q - p_33|` at 0.02-0.1 mm against errors of 10-40 mm, 2.5-3
