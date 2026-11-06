@@ -74,14 +74,16 @@ identical to the 33-state filter's, and amplitude, coupling and fallback
 changes keep this exact. A change of the frequency scale $\kappa$ moves the
 unobservable subspace by $0.45^\circ$ per percent, so no 27-state filter is
 exactly equivalent under frequency adaptation. A regression lift at every
-commit reproduces the 33-state filter to within \FirstQuotientBound{} on
+commit reproduces the 33-state filter to within $0.12\,\%$ on
 26 simulated seas $\times$ 30 seeds, so the removed directions carry no
 useful information. Among the six-state realizations we single out a
 cascade: the CARMA3 baseline's own coordinates driven through a two-state
 lossless colouring. It is the baseline exactly in law, adaptation included,
 when the coupling is off. With the coupling on it removes the
-complexified realization's adaptation cost and is better than the 33-state
-filter by \FirstCascadeGain{}. On the ESP32-S3 the 27-state filter needs
+complexified realization's adaptation cost: against the 33-state filter its
+3-D error is lower on 20 seas (by up to $0.9\,\%$, heave by 1--3\,\%) and
+higher on two (by up to $2.2\,\%$). Gated on the pinned dataset, it has
+7--9\,\% lower 3-D error than TFG-CARMA3. On the ESP32-S3 the 27-state filter needs
 42\,\% fewer multiply-adds per sample and \SI{3.2}{kB} (21\,\%) less filter
 memory, at the price of \SI{10.6}{kB} (5\,\%) more code. The minimal
 stochastic order of the three-axis law is $4\operatorname{rank}\Sigma+2\operatorname{rank}\Im\Sigma$,
@@ -747,10 +749,62 @@ object.}
 \label{fig:cost}
 \end{figure}
 
-\input{csm27-cost-text.tex-part}
+Per sample the 27-state filter needs 7\,992 multiply-adds against
+13\,686 (42\,\% fewer), and one 0.1\,s commit needs 13\,932 against
+28\,672 (51\,\% fewer, \cref{tab:cost}). The covariance shrinks from 1089 to
+729 floats. The paired discretization keeps $5+11+11$ series coefficients
+of $6\times6$ against $8+15$ of $8\times8$. Together these make the
+ESP32-S3 filter object 3248\,B (21\,\%) smaller and its largest stack frame
+592\,B smaller, while the worst static call chain of one update is unchanged
+(4864 against 4896\,B; \cref{tab:esp}). The price is 10.6\,kB (5.4\,\%) more
+code: the paired discretization and the closed-form construction. Generic
+Eigen decompositions in that construction had cost 44\,kB before they were
+replaced. The 33-state block also solves, at every commit and in double
+precision (software on the ESP32-S3), a $4\times4$ Lyapunov equation by
+doubling and a complex $4\times4$ inverse. The cascade's $\kappa$ scaling is
+closed form. The quotient needs a dense $6\times6$ re-coordinatization at
+every frequency commit and 29\,kB more code than the cascade.
+HOSTTIMINGTEXT
 
 \section{Conclusions}
-\input{csm27-conclusions.tex-part}
+\paragraph{Equivalence}
+The 27-state realization is mathematically equivalent to the 33-state
+filter at fixed parameters, and through every excitation change: amplitude
+commits, coupling estimates, the confidence and the PSD-preserving
+fallback (\cref{prop:exact,prop:law}). It preserves the three-dimensional
+law, the co- and quadrature spectra, the Hermitian noise structure, the
+$p,v,a$ estimates and the covariance. Frequency adaptation moves the
+unobservable subspace, so no 27-state filter is exactly equivalent under it.
+
+\paragraph{Information in the removed states}
+The removed states carry no useful information during adaptation. With a
+stationary regression lift the quotient stays within $0.12\,\%$ of the
+33-state filter on all 26 seas, and the NEES agrees to a ratio of 0.9999.
+
+\paragraph{Trade-off}
+The trade-off is favourable: 42\,\% fewer multiply-adds per sample, 51\,\%
+less commit work and 21\,\% less filter memory on the ESP32-S3, for 5\,\%
+more code. There is no approximation error to accept. The cascade's
+differences from the 33-state filter are a different, equally exact,
+adaptive model, better on 20 seas and worse on two.
+
+\paragraph{Recommended realization}
+The cascade is recommended. With the coupling off it is the CARMA3 baseline
+exactly, adaptation included, so the fallback model is the baseline. It is
+the best conditioned realization and has the cheapest commits. The quotient
+is the choice when continuity with the validated 33-state filter matters
+more.
+
+\paragraph{State dimension}
+The minimal stochastic order is $4\operatorname{rank}\mat\Sigma+2\operatorname{rank}\Im\mat\Sigma$
+(25 states), but that realization depends on the excitation and is not a
+better operating point; 21 states suffice only without quadrature coupling.
+
+\paragraph{Next experiment}
+The excitation mapping shared by both filters over-couples when the hull's
+heave-to-surge ratio departs from the prior (35\,\% worse than the baseline
+with the heave RAO halved). Capping the applied coherence at the measured
+one is the next falsifiable experiment, independent of the realization.
 
 \begin{thebibliography}{9}
 \bibitem{andersonmoore79}
