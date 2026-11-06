@@ -1,0 +1,5 @@
+variant,code_bytes,rodata_bytes,sizeof_top,sizeof_wrapper,sizeof_qmekf,max_stack_frame,max_stack_function,update_chain_stack,update_chain_depth
+A41,173375,125633,3208,3208,6136,1328,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, D",4832,15
+CSM,196266,133364,3208,3208,15776,2480,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, D",4896,15
+CSM27,206920,134788,3208,3208,12528,1888,"void ocean_imu::kalman::Kalman3D_Wave_CARMA3<T, NHC, SH, NZC, SZ, with_gyro_bias",4864,15
+CSM27Q,235752,144680,3208,3208,13600,4864,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, D",4864,15

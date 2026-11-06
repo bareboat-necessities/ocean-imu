@@ -26,6 +26,10 @@ coupling confidence and fallback that the study showed to be necessary.
 * Articles: `doc/kalman_carma_shared_modes/`
   (`kalman_carma_shared_modes-math.tex`, `kalman_carma_shared_modes-validation.tex`,
   and the replay chart gallery `kalman_carma_shared_modes-charts.tex`).
+* 27-state minimal realization (`KalmanCarmaSharedModesMinimal.h`, two
+  unobservable directions per axis removed, experimental):
+  [kalman-carma-shared-modes-minimal.md](kalman-carma-shared-modes-minimal.md)
+  and `doc/kalman_carma_shared_modes/kalman_carma_shared_modes-minimal.tex`.
 
 RESULTS_SUMMARY_PLACEHOLDER
 

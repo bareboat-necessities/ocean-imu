@@ -1,0 +1,672 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\fi
+\usepackage{amsthm}
+\usepackage{amsmath,bm,amssymb}
+\usepackage{newtxtext,newtxmath}
+\interdisplaylinepenalty=2500
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{pgf}
+\usepackage{array,booktabs,adjustbox}
+\usepackage{mathtools}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\DeclareRobustCommand{\vct}[1]{\bm{#1}}
+\DeclareRobustCommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Hr}{^{\mathsf H}}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\Re}{\operatorname{Re}}
+\newcommand{\Im}{\operatorname{Im}}
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+
+\newtheoremstyle{bodysmall}{3pt}{3pt}{\normalfont\small}{0pt}{\bfseries\small}{.}{0.5em}{}
+\theoremstyle{bodysmall}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
+
+% Figures are PGF drawn by plots/kalman_carma_shared_modes/draw_plots.sh from
+% the committed study data (reports/results/kalman_carma_shared_modes_minimal)
+% and moved here by CI; tables are the generated csm27-*.tex-part files.
+% Every include is guarded so the article compiles from a clean checkout.
+\newcommand{\ChartFigure}[2][\linewidth]{%
+  \IfFileExists{#2}{\resizebox{#1}{!}{\input{#2}}}%
+                   {\fbox{\parbox{0.92\linewidth}{\centering\small
+                     Figure \texttt{\detokenize{#2}} not generated.\\
+                     Run \texttt{plots/kalman\_carma\_shared\_modes/draw\_plots.sh}.}}}}
+\newcommand{\InputPart}[1]{%
+  \IfFileExists{#1}{\input{#1}}{\fbox{\small Table \texttt{\detokenize{#1}} not generated.}}}
+
+\title{A Minimal Realization of the Shared-Modes CARMA QMEKF:
+Unobservable Directions, Sea-State Adaptation and Embedded Cost
+(experimental)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The shared-modes QMEKF carries one complexified CARMA(4,1) mode per
+translational axis, eight real states each, 33 error states in all. We show
+that exactly two directions per axis are unobservable, for every excitation
+and every attitude, and that they lie in the imaginary half of the mode. The
+observable quotient has six states per axis and gives a 27-state filter.
+At fixed model parameters its estimates, covariances and innovations are
+identical to the 33-state filter's, and amplitude, coupling and fallback
+changes keep this exact. A change of the frequency scale $\kappa$ moves the
+unobservable subspace by $0.45^\circ$ per percent, so no 27-state filter is
+exactly equivalent under frequency adaptation. A regression lift at every
+commit reproduces the 33-state filter to within \FirstQuotientBound{} on
+26 simulated seas $\times$ 30 seeds, so the removed directions carry no
+useful information. Among the six-state realizations we single out a
+cascade: the CARMA3 baseline's own coordinates driven through a two-state
+lossless colouring. It is the baseline exactly in law, adaptation included,
+when the coupling is off. With the coupling on it removes the
+complexified realization's adaptation cost and is better than the 33-state
+filter by \FirstCascadeGain{}. On the ESP32-S3 the 27-state filter needs
+42\,\% fewer multiply-adds per sample and \SI{3.2}{kB} (21\,\%) less filter
+memory, at the price of \SI{10.6}{kB} (5\,\%) more code. The minimal
+stochastic order of the three-axis law is $4\operatorname{rank}\Sigma+2\operatorname{rank}\Im\Sigma$,
+which is 16 motion states (25 in all). That realization exists but depends
+on the excitation; we argue why 27 is the better operating point.
+\end{abstract}
+
+\section{Questions}
+The shared-modes QMEKF \texttt{KalmanCarmaSharedModes} (CSM, 33 states:
+attitude error, gyroscope bias, three eight-state motion blocks,
+accelerometer bias) is derived in the companion article
+\texttt{kalman\_carma\_shared\_modes-math}. A preliminary observability
+analysis suggested two unobservable directions per axis. This article
+answers, with proofs where they exist and with paired simulations where
+they do not:
+(i) Is a 27-state realization equivalent to the 33-state filter, and under
+which conditions (fixed parameters; amplitude, coupling and confidence
+changes; frequency adaptation)?
+(ii) Does it preserve the three-dimensional law, the cross-axis co- and
+quadrature spectra, the Hermitian noise structure, the $p,v,a$ estimates
+and covariance consistency?
+(iii) During adaptation, do the removed states carry information, and
+which approximation should replace them?
+(iv) What does the ESP32-S3 gain?
+(v) Is 27 the right dimension?
+
+\section{The 33-State Motion Block}
+Per axis $a\in\{x,y,z\}$ the complex kinematic state is
+$\vct\zeta_a=[\zeta,\dot\zeta,\ddot\zeta,l]\T\in\C^4$,
+$\dot{\vct\zeta}_a=\mat A_c\vct\zeta_a+\vct e_3\xi_a$, with $\zeta=B(s)l$,
+$B(s)=s+\omega_{z0}$, and $\mat A_c$ the companion form of $P_+D$ in these
+coordinates. Here $P=P_+P_-$ is the C41J quartic, $P_+$ holds its
+upper-half-plane roots $\mu_1,\mu_2$, $P_-$ (conjugate coefficients) the
+others, and the real Hurwitz quadratic $D$ satisfies
+$|D(i\omega)|^2=\tfrac12(|P_+(i\omega)|^2+|P_-(i\omega)|^2)$. The real state
+is $\vct x_a=[\Re\vct\zeta_a;\Im\vct\zeta_a]\in\R^8$ with the realified
+$\mat A_8$, and the axes share it: $\mat F=\mat I_3\otimes\mat\Phi_8$,
+\begin{equation}
+\mat Q_{ab}=\Re(\Sigma_{ab})\mat Q_8+\Im(\Sigma_{ab})\mat J\mat Q_8,
+\label{eq:Q33}
+\end{equation}
+$\mat J=\left[\begin{smallmatrix}\mat0&-\mat I\\\mat I&\mat0\end{smallmatrix}\right]$,
+$\mat\Sigma\succeq0$ Hermitian. Every accelerometer row reads $\Re\ddot\zeta$
+of the three axes through $\mat R_{wb}$. For C41J ($\omega_{z0}=0$) the roots
+of $D$ are $-7.93$ and $-1.25$\,rad/s at $\kappa=1$.
+
+\section{Unobservable Directions}
+\label{sec:unobs}
+Write $\vct w(r)=[B(r),rB(r),r^2B(r),1]\T$; it is the eigenvector of
+$\mat A_c$ for the eigenvalue $r$ (with $l=1$).
+\begin{proposition}[Unobservable subspace]
+\label{prop:U}
+Let the roots $\mu_1,\mu_2,\bar\mu_1,\bar\mu_2$ of $P$ and $r_3,r_4$ of $D$
+be distinct and $B(\mu_k)\neq0$. The unobservable subspace of
+$(\mat A_8,[\vct e_3\T,\vct 0\T])$ is
+\begin{equation}
+\mathcal U=\{0\}\times\bigl(\operatorname{span}_{\C}\{\vct w(r_3),\vct w(r_4)\}\cap\R^4\bigr),
+\end{equation}
+of real dimension two. It contains no real-half component, it is
+$\mat A_8$-invariant, and its annihilator in the imaginary half is spanned by
+the rows $\vct n\T$ whose polynomial
+$\nu(s)=n_0B+n_1sB+n_2s^2B+n_3$ is $D(s)(\alpha+\beta s)$.
+\end{proposition}
+\begin{proof}
+A real state is a $\vct z\in\C^4$; expand $\vct z=\sum_k\gamma_k\vct w_k$ in
+the eigenbasis of $\mat A_c$ (eigenvalues $\mu_1,\mu_2,r_3,r_4$). The output
+is $\Re(\vct e_3\T e^{\mat A_ct}\vct z)=\tfrac12\sum_k(\gamma_kc_ke^{\lambda_kt}
++\bar\gamma_k\bar c_ke^{\bar\lambda_kt})$ with $c_k=\lambda_k^2B(\lambda_k)$.
+The exponents $\mu_k,\bar\mu_k$ occur once each, so $\gamma_1=\gamma_2=0$.
+Because $D$ is real, $\{r_3,r_4\}$ is closed under conjugation, and the
+coefficient of $e^{r_3t}$ is $\gamma_3c_3+\bar\gamma_jc_3$ where
+$r_j=\bar r_3$ ($\vct w(\bar r)=\overline{\vct w(r)}$). It vanishes iff
+$\gamma_j=-\bar\gamma_3$, and then $\vct z=\gamma_3\vct w_3-\overline{\gamma_3\vct w_3}=2i\Im(\gamma_3\vct w_3)$
+(for a real root $j=3$ and $\gamma_3\in i\R$). Hence $\Re\vct z=0$ and
+$\Im\vct z$ ranges over the stated two-dimensional real space; conversely
+such states give zero output. Invariance holds because $\mathcal U$ is a sum
+of real eigenspaces. Finally $\vct n\T\vct w(r)=\nu(r)$, a real polynomial
+of degree at most three that vanishes at both roots of $D$ iff $D\mid\nu$.
+\end{proof}
+Each root of $D$ is an eigenvalue of both $\mat A_c$ and $\bar{\mat A}_c$, so
+$\mat A_8$ has it twice with a two-dimensional eigenspace, which one scalar
+output cannot resolve. That is the mechanism. The rows with
+$(\alpha,\beta)=(1,0),(0,1)$ read $\Im m$ and $\Im\dot m$ of the
+\emph{$D$-free mode} $m=D(\tfrac d{dt})l=\xi/P_+$, so the quotient
+coordinates are $[\Re\vct\zeta_a;\Im m;\Im\dot m]$. Numerically
+(\texttt{tools/carma\_shared\_modes\_minimal\_analysis.py}) the normalized
+observability matrix has singular values down to $5\times10^{-4}$ and then
+$4\times10^{-17}$, the numerical null space has no real-half component
+($3\times10^{-14}$), and it agrees with the analytic $\mathcal U$ to
+$3\times10^{-12}$\,degrees.
+
+\begin{remark}[Correction]
+The companion article states that $\Im\vct\zeta$ is unobservable when
+$\mat\Sigma$ is real. Deterministically, two of the four imaginary directions
+are unobservable for \emph{every} $\mat\Sigma$, and the other two are
+observable for every $\mat\Sigma$: they drive $\Re\vct\zeta$ through
+$\Im\mat A_c$. Whether the observable imaginary directions are needed by the
+law of the output is a stochastic question (\cref{prop:order}).
+\end{remark}
+
+\begin{proposition}[Exactness at fixed parameters]
+\label{prop:exact}
+Let $\mat\Pi=\operatorname{blkdiag}(\mat I_6,\mat I_3\otimes\mat\Pi_8,\mat I_3)$
+with $\ker\mat\Pi_8=\mathcal U$. For a fixed $\kappa$ and \emph{any} sequence
+of excitations $\mat\Sigma_k$ (amplitude commits, estimated coupling,
+coupling confidence), the 27-state QMEKF with the quotient block, started
+from $\mat\Pi\mat P_0\mat\Pi\T$, produces the same attitude, bias, $p$, $v$,
+$a$ estimates, the same innovations and NIS, and the covariance
+$\mat\Pi\mat P_k\mat\Pi\T$ of the 33-state filter, including through
+multiplicative resets and the coupling fallback.
+\end{proposition}
+\begin{proof}
+In coordinates adapted to $\mathcal U$ the linear block is lower block
+triangular: $\mathcal U$ is $\mat\Phi_8$-invariant (\cref{prop:U}) and
+$\mat\Phi$ does not depend on $\mat\Sigma$. Every measurement row annihilates
+$\mat I_3\otimes\mathcal U$: the accelerometer rows read $\Re\ddot\zeta$ through
+any rotation, the magnetometer reads no motion state, and readouts of $p,v$
+lie in the row space of the observability matrix (as $\mat A_8$ is
+invertible, $\vct e_1\T=\vct e_3\T\mat A_8^{-2}$ on the motion block). The
+Riccati recursion of the observable coordinates is then closed in
+$\mat\Pi\mat P\mat\Pi\T$ with $\mat\Pi\mat Q\mat\Pi\T$, whatever $\mat Q_k$ is,
+and the gains on the observable coordinates coincide \cite{andersonmoore79}.
+The EKF linearizes at the attitude, bias and acceleration estimates, which
+are observable, so the linearization points agree by induction. The reset
+congruence acts on the attitude rows and columns only. The fallback
+$\mat P_{hz}\leftarrow\mat E+\alpha(\mat P_{hz}-\mat E)$,
+$\mat E=\mat P_{hr}\mat P_{rr}^{-1}\mat P_{rz}$, maps to
+$\mat\Pi_h\mat P_{hz}\mat\Pi_z\T$ and $\mat\Pi_h\mat E\mat\Pi_z\T=(\mat\Pi_h\mat P_{hr})\mat P_{rr}^{-1}(\mat P_{rz}\mat\Pi_z\T)$,
+so it commutes with $\mat\Pi$. The stationary prior at Live entry is
+$\mat\Pi\mat P_\infty\mat\Pi\T$ by uniqueness of the Lyapunov solution.
+\end{proof}
+
+\section{Six-State Realizations}
+\subsection{Quotient}
+The quotient block is $\mat A_6=\mat\Pi_8\mat A_8\mat L$ (any right inverse
+$\mat L$, since $\mathcal U$ is invariant), input $\mat G_6=\mat\Pi_8\mat G_8$,
+$\mat G_8=[\vct e_3,\vct e_7]$. $\mat J$ does not descend to the quotient
+($\mat J\mathcal U\not\subset\mathcal U$), so the Hermitian structure is
+carried by two discretizations instead of \eqref{eq:Q33}:
+\begin{equation}
+\mat Q_{ab}=\Re(\Sigma_{ab})\mat Q_R+\Im(\Sigma_{ab})\mat Q_I,\quad
+\mat W_R=g^2\mat G\mat G\T,\ \mat W_I=g^2\mat G\mat J_2\mat G\T,
+\label{eq:Q27}
+\end{equation}
+$\mat J_2=\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$, with
+$\mat Q_R$ symmetric and $\mat Q_I$ antisymmetric. The block $(b,a)$ receives
+$\Re\Sigma_{ab}\mat Q_R-\Im\Sigma_{ab}\mat Q_I=\mat Q_{ab}\T$, so the
+three-axis $\mat Q$ is symmetric and, being the projection of
+\eqref{eq:Q33}, positive semidefinite.
+
+\subsection{Cascade}
+Write $P_+=N_r+iN_i$ with real $N_r=s^2+\Re b_1s+\Re b_0$,
+$N_i=\Im b_1s+\Im b_0$. Then $P=N_r^2+N_i^2$ and, with $\xi=\xi_r+i\xi_i$,
+\begin{equation}
+\Re\zeta=\frac{B}{P}\,\eta,\qquad \eta=V\begin{bmatrix}\xi_r\\\xi_i\end{bmatrix},\qquad
+V=\frac{[N_r,\ N_i]}{D}.
+\label{eq:cascade}
+\end{equation}
+\begin{lemma}[Lossless colouring]
+\label{lem:coinner}
+$V(i\omega)V(i\omega)\Hr=1$. In input-normal coordinates (controllability
+Gramian $\mat I$) its realization $(\mat A_w,\mat B_w,\mat C_w,[1,0])$
+satisfies $\mat A_w+\mat A_w\T=-\mat B_w\mat B_w\T$ and
+$\mat C_w=-\vct e_1\T\mat B_w\T$. Under the frequency scale,
+$(\mat A_w,\mat B_w,\mat C_w)(\kappa)=(\kappa\mat A_w,\sqrt\kappa\mat B_w,\sqrt\kappa\mat C_w)(1)$.
+\end{lemma}
+\begin{proof}
+$|N_r|^2+|N_i|^2=\tfrac12(|N_r+iN_i|^2+|N_r-iN_i|^2)=|D|^2$ on the imaginary
+axis (parallelogram law). The two identities are the lossless bounded-real
+equalities with $\mat X=\mat I$. $V_\kappa(s)=V_1(s/\kappa)$ gives the
+scaling, and $\mat X=\mat I$ is invariant under it.
+\end{proof}
+The cascade block per axis is the CARMA3 baseline's C41J in its own
+coordinates $[p,v,a,l]$, driven at $a$ by $\eta=\xi_r+\mat C_w\vct w$, and
+the two states $\vct w$:
+\begin{equation}
+\mat A_6=\begin{bmatrix}\mat A_4&\vct e_3\mat C_w\\\mat0&\mat A_w\end{bmatrix},\quad
+\mat G_6=\begin{bmatrix}\vct e_3&\vct0\\\multicolumn{2}{c}{\mat B_w}\end{bmatrix}.
+\end{equation}
+The orthogonal freedom of input-normal coordinates is fixed by making
+$\mat B_w$ upper triangular with a positive diagonal (a Givens rotation),
+which is the same at every $\kappa$. The construction is closed-form at
+$2\times2$.
+
+\begin{proposition}[Fixed-parameter equivalence]
+\label{prop:law}
+For any Hermitian $\mat\Sigma\succeq0$ and fixed $\kappa$, the 33-state block,
+the quotient and the cascade generate the same Gaussian law of
+$(p_a,v_a,a_a)_{a=x,y,z}$: the same three-axis spectral density, hence the
+same co-spectra, quadrature spectra, coherences and phases. All three QMEKFs
+give the same estimates.
+\end{proposition}
+\begin{proof}
+All three realize the same $1\times2$ transfer function per axis (the
+quotient by construction, the cascade by \eqref{eq:cascade}) with the same
+$2\times2$ noise blocks $g^2[\Re\Sigma_{ab}\mat I_2+\Im\Sigma_{ab}\mat J_2]$
+per axis pair, so the spectral densities coincide. A stationary Gaussian law
+is determined by its spectral density. The cascade is related to the
+quotient by a similarity, so \cref{prop:exact} applies to it as well.
+\end{proof}
+Verified to $2\times10^{-13}$ (transfer functions, $\kappa\in\{0.6,1,1.7\}$),
+$9\times10^{-11}$ (stationary law and lag-$h$ cross-covariance, Hermitian
+$\mat\Sigma$) and $7\times10^{-12}$ relative (complete double-precision
+QMEKFs over 400\,s with estimated coupling, confidence, a fallback shrink
+and amplitude commits; \texttt{carma\_shared\_modes\_minimal-test}).
+
+\section{Minimal Stochastic Order}
+\label{sec:order}
+\begin{proposition}[Order of the three-axis law]
+\label{prop:order}
+With the root conditions of \cref{prop:U} and $B(r_j)\neq0$, the minimal
+state dimension of a linear Markov model generating the three-axis
+displacement law is
+\begin{equation}
+n_{\min}=4\operatorname{rank}\mat\Sigma+2\operatorname{rank}\Im\mat\Sigma\ \le 16.
+\end{equation}
+\end{proposition}
+\begin{proof}
+With $\tilde P(s)=P(-s)$, the spectral density is
+\begin{equation*}
+\mat S(s)=\tfrac{g^2}{2}\tfrac{B\tilde B}{D\tilde D}
+\Bigl[\tfrac{\mat\Sigma}{P_+\tilde P_-}+\tfrac{\bar{\mat\Sigma}}{P_-\tilde P_+}\Bigr].
+\end{equation*}
+The minimal order is the McMillan degree of the stable (positive-real)
+part \cite{faurre79,lindquist15}, and for simple poles that is the sum of
+the residue ranks. The residue at a root of $P_+$ is proportional to
+$\mat\Sigma$, and at a root of $P_-$ to $\bar{\mat\Sigma}$. At a root $r$ of $D$,
+$P_-(r)\tilde P_+(r)+P_+(r)\tilde P_-(r)=2D(r)\tilde D(r)=0$, so the bracket
+is $\alpha(\mat\Sigma-\bar{\mat\Sigma})=2i\alpha\Im\mat\Sigma$. A real
+antisymmetric $3\times3$ matrix has rank 0 or 2.
+\end{proof}
+The Hankel singular values of the positive-real part confirm the count for
+a full Hermitian, a wave-like (quadrature), a real, a diagonal and a rank-one
+$\mat\Sigma$ (16, 16, 12, 12, 8; \cref{fig:order}). Three consequences
+follow. With in-phase (real) coupling or none, 12 motion states suffice: the
+CARMA3 baseline A41 and the correlated-noise Experiment~A. Quadrature
+coupling, the $90^\circ$ relation of linear waves, needs four more states, in
+the plane spanned by $\operatorname{range}\Im\mat\Sigma$ (the vertical plane
+of propagation). The 27-state filter is the minimal realization that keeps
+the axes' shared dynamics $\mat F=\mat I_3\otimes\mat\Phi_6$ for every
+$\mat\Sigma$.
+
+A 25-state filter (16 motion states) exists. Write $\Im\mat\Sigma=\lambda(\vct e_1\vct e_2\T-\vct e_2\vct e_1\T)$
+and take the Schur complement $\mat\Lambda$ of $\mat\Sigma$ on the plane
+$\mat E=[\vct e_1,\vct e_2]$. Then $\eta=\vct\rho\,n+\mat E\vct\psi$ splits
+into a rank-one white part and a two-dimensional coloured part $\vct\psi$
+(two copies of $V$, four states). It is not a better operating point.
+\begin{itemize}
+\item Its coordinates depend on $\mat\Sigma$: the plane and $\mat\Lambda$
+  move with every coupling update, every confidence change and every heading
+  change. Every 0.1\,s commit would therefore be a re-coordinatization, and the
+  exactness of \cref{prop:exact} under excitation changes is lost.
+\item It is undefined at $\Im\mat\Sigma=0$, which the confidence crosses at
+  every warm-up and fallback.
+\item The Kronecker structure is lost.
+\item It saves two states, about 14\,\% of the covariance work of the 27-state
+  filter. The smallest Hankel singular values of the extra states are
+  $5$--$7\times10^{-6}$ of the largest (\cref{fig:order}): small, but they
+  carry the quadrature that motivates the model.
+\end{itemize}
+
+\section{Sea-State Adaptation}
+\label{sec:adapt}
+Every 0.1\,s the CARMA3 wrapper commits a frequency scale $\kappa$ (one for
+all axes) and amplitudes $\sigma_a$. The coupling excitation and the
+confidence change $\mat\Sigma$. A commit replaces $\mat F,\mat Q$ and keeps the
+state, so the adaptive model, unlike the frozen one, depends on the
+realization: matching spectra no longer imply matching laws.
+
+\paragraph{Excitation changes are exact}
+$\mathcal U$ and $\mat F$ do not depend on $\mat\Sigma$, so \cref{prop:exact}
+covers amplitude commits, coupling updates, the confidence and the
+fallback. The quotient filter \emph{is} the 33-state filter through all of
+them (test [3]: $5\times10^{-12}$).
+
+\paragraph{Frequency changes are not}
+Every realization scales exactly with $\kappa$:
+$\mat A(\kappa)=\kappa\mat S\mat A(1)\mat S^{-1}$ with
+$\mat S=\operatorname{diag}(\kappa^{0,1,2,-1})$ on the complexified
+coordinates, $\kappa^{0,1,2,1}$ on C41J, $\kappa^{1,2}$ on $(\Im m,\Im\dot m)$,
+and $g^2\propto\kappa$. But $\mathcal U(\kappa)=\mat S\,\mathcal U(1)$ is not
+$\mathcal U(1)$, because the diagonal $\mat S$ does not preserve it
+(\cref{fig:U}: $0.45^\circ$ per percent of $\kappa$, $10^\circ$ at $\pm25\,\%$).
+After a commit $\kappa_1\to\kappa_2$ the 33-state filter's component in
+$\mathcal U(\kappa_1)$, which it carries with a data-dependent posterior,
+leaks into the new observable coordinates through
+$\mat\Pi_8(\kappa_2)|_{\mathcal U(\kappa_1)}\neq0$. A 27-state filter does not
+carry that component, so it cannot reproduce the 33-state filter for every
+data sequence. The double-precision experiments confirm it: the difference
+is small, but it is not rounding (\cref{tab:verify}).
+
+\paragraph{Regression lift (Quotient)}
+At a $\kappa$ commit the quotient replaces the missing component by its
+stationary regression on the quotient,
+$\hat{\vct x}_8=\mat L\hat{\vct x}_6$ with
+$\mat L=\mat P_8\mat\Pi_8\T(\mat\Pi_8\mat P_8\mat\Pi_8\T)^{-1}$ (minimum
+variance under the stationary prior), and maps
+$\vct x\leftarrow\mat M\vct x$, $\mat P\leftarrow\mat M\mat P\mat M\T$,
+$\mat M=\mat\Pi_8(\kappa_2)\mat L(\kappa_1)$ on every axis. The top rows of
+$\mat M$ are $[\mat I_4\ \mat0]$, so $p,v,a$ are continuous. With the
+scaling, $\mat M=\mat S_6(\kappa_2)\mat\Pi_8(1)\mat S_8(\kappa_1/\kappa_2)\mat L(1)\mat S_6(\kappa_1)^{-1}$:
+one double-precision factorization at construction, none on the target.
+\emph{QuotientHold} keeps the coordinates instead (ablation).
+
+\paragraph{Cascade}
+\begin{proposition}[Coupling off: the CARMA3 baseline, adaptation included]
+\label{prop:a41}
+Let $\mat\Sigma(t)=\operatorname{diag}(\sigma_a^2(t))$ and $\kappa(t)$ be
+piecewise constant. At every commit, let the cascade hold $[p,v,a,l]$ and the
+normalized colouring $\tilde{\vct w}_a=\vct w_a/s_a$, $s_a=\sqrt{g^2(\kappa)}\sigma_a$.
+Then its law of $(p,v,a,\text{measurements})$ is the time-varying law of the
+CARMA3 baseline A41, and the two QMEKFs give identical estimates.
+\end{proposition}
+\begin{proof}
+With $\tilde{\vct w}$ driven by unit white noise, $\eta_a=s_a(t)e_a(t)$,
+$e=\nu_r+\mat C_w\tilde{\vct w}$. By \cref{lem:coinner} the Gramian
+equation $\dot{\mat X}=\mat A_w\mat X+\mat X\mat A_w\T+\mat B_w\mat B_w\T$
+keeps $\mat X=\mat I$ for any piecewise-constant $\kappa(t)$. For $u<t$,
+$E[\tilde{\vct w}(t)e(u)]=\mat\Phi_w(t,u)(\mat X\mat C_w\T+\mat B_w[1,0]\T)=0$
+and $E[e(t)e(u)]=0$. So $e$ is unit white noise, and $\tilde{\vct w}(t)$ is
+independent of the past of $e$. At stationarity it is also independent of
+$[p,v,a,l]$, which is a functional of that past. Hence $[p,v,a,l]$ is driven
+by white noise of intensity $g^2(t)\sigma_a^2(t)$, exactly A41's model and
+commit rule (hold the state, replace $\mat F,\mat Q$).
+\end{proof}
+The test reproduces A41 through jittery $\kappa$ and amplitude commits to
+$1.6\times10^{-13}$ relative (double precision), while the 33-state filter
+and the quotient differ from A41 by up to 22\,\% under the same schedule.
+The latter is the ``realization effect'' the shared-modes documentation
+reports between CSM:off and A41. The cascade removes it by construction. With
+the coupling on, its commit rule is a third time-varying model, neither the
+33-state nor A41. Which one is better is decided by the experiments.
+
+\section{Implementation}
+\texttt{CarmaMinimalSharedModeMotion<T,R>}
+(\texttt{src/kalman\_carma\_shared\_modes/CarmaSharedModesMinimalMotion.h})
+implements the Kronecker motion interface of
+\texttt{Kalman3D\_Wave\_CARMA3<\dots,Motion>} with six states per axis and
+$R\in\{$\texttt{Cascade} (default), \texttt{Quotient},
+\texttt{QuotientHold}$\}$. The QMEKF is the shared-modes core with this block,
+\texttt{KalmanCarmaSharedModesMinimal<T,R>}, and the wrapper is
+\texttt{SeaStateFusion\_CarmaSharedModesMinimal<R>}. Attitude, biases, Joseph
+updates, resets, magnetometer, coupling estimate, monitor, confidence and
+fallback are reused unchanged (the core and the shared-modes motion gained a
+defaulted template parameter; the 33-state filter is bit-identical,
+\texttt{carma\_shared\_modes-test} [2]). Four elements are new:
+\begin{itemize}
+\item a paired discretization (\texttt{discretize\_lti\_pair},
+  \texttt{StepDiscretizationPair}) that propagates the symmetric
+  $\mat Q_R$ and the antisymmetric $\mat Q_I$ of \eqref{eq:Q27} through
+  \texttt{discretize\_lti}'s scaled series, doublings and jitter series;
+\item a per-axis re-coordinatization hook in the CARMA3 core
+  (\texttt{take\_axis\_recoordinatization}), applied as
+  $\mat S\mat P\mat S\T$ right after a commit. The cascade scales the two
+  colouring rows by $s_a^{\text{new}}/s_a^{\text{old}}$, and the quotient
+  applies $\mat M$;
+\item exact structural zeros: round-off residue in the projected $\mat A_6$
+  (down to $10^{-19}$) defeated the structural scaling of the
+  discretization and produced denormals, making a refresh $7\times$ slower
+  on x86;
+\item closed-form $2\times2$ algebra in the cascade's construction. Eigen's
+  generic decompositions had added \SI{44}{kB} of code on the ESP32-S3.
+\end{itemize}
+Conditioning favours the cascade. The condition number of the stationary
+correlation matrix per axis is 147 for the 33-state block, 128 for the
+quotient and 5.5 for the cascade, equal to A41's: the colouring states are
+white and uncorrelated with $[p,v,a,l]$.
+
+\begin{table}[!t]
+\caption{Verified identities (double precision unless stated).}
+\label{tab:verify}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{@{}l l@{}}
+\toprule
+property & result \\
+\midrule
+unobservable dimension per axis, real-half component & 2, $3\times10^{-14}$ \\
+transfer functions 27 vs 33 & $2\times10^{-13}$ \\
+stationary 3-axis law (Hermitian $\Sigma$) & $9\times10^{-11}$ \\
+QMEKF 27 = 33, fixed $\kappa$, coupling + shrink & $7\times10^{-12}$ (rel.) \\
+quotient = 33, amplitude commits & $5\times10^{-12}$ (rel.) \\
+cascade:off = A41 through adaptation & $1.6\times10^{-13}$ (rel.) \\
+33 and quotient vs A41, same schedule & 0.22 (rel.) \\
+motion-only KF, $\kappa$ adaptation, $|p_{33}-p_{27Q}|$ & $3\times10^{-5}$\,m \\
+$p,v,a$ jump at a commit & 0 \\
+float wrapper: $P$ symmetric, PSD & exact, min.\ corr.\ eig.\ $>0$ \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\ChartFigure{analysis_unobservable_subspace.pgf}
+\caption{Motion of the unobservable subspace with the frequency scale:
+principal angles between $\mathcal U(\kappa)$ and $\mathcal U(1)$ (left),
+and the leakage gain of $\mathcal U(1)$ into the quotient coordinates at
+$\kappa$ (right).}
+\label{fig:U}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\ChartFigure{analysis_stochastic_order.pgf}
+\caption{Normalized Hankel singular values of the positive-real part of the
+three-axis displacement law for five excitations; the counts above
+$10^{-7}$ match $4\operatorname{rank}\Sigma+2\operatorname{rank}\Im\Sigma$.}
+\label{fig:order}
+\end{figure}
+
+\section{Numerical Experiments}
+\label{sec:exp}
+\paragraph{Setup}
+The Monte Carlo mode of \texttt{kalman\_carma\_shared\_modes-bench} runs the
+carma3\_bench engine: random-phase directional seas through the benchmark
+hull's RAOs (no CARMA model in the truth), one seeded IMU and magnetometer
+stream per row, and every filter of the row on the same stream. The filters
+are the CARMA3 baseline with Evidence excitation (A41, 21 states), the
+33-state CSM in its deployable configuration (estimated coupling and
+confidence), the three 27-state realizations CSM27 (cascade), CSM27Q
+(quotient with lift) and CSM27H (quotient, held), and CSM:off. There are 26
+seas in five groups (\cref{tab:scen}): fixed seas, coupling strength and
+phase (spreading $\cos^2$ to long-crested, following, beam and head seas,
+heave RAO $\times0.5$ and $\times1.5$), a gradual frequency change, rapid
+changes (period, direction and height in 10\,s, direction $90^\circ$ in
+60\,s, onset and cessation), and disturbances (turns, manoeuvring, coloured
+and variance-cycling accelerometer noise, $\pm25\,\%$ sample jitter,
+magnetic disturbances with calibration residuals, accelerometer-bias drift).
+Each sea has 30 seeds, 1200\,s at 200\,Hz, scored from 300\,s. Changes are
+paired over seeds; 95\,\% intervals are bootstrap over seeds, never over the
+autocorrelated samples. Nothing in the 27-state filter is fitted.
+
+\begin{table*}[!t]
+\caption{3-D position RMS of CSM (33 states) and paired changes against it
+(\%, positive: lower error than CSM), mean over 30 seeds per sea.}
+\label{tab:scen}
+\centering\small
+\InputPart{csm27-scenarios.tex-part}
+\end{table*}
+
+\begin{table}[!t]
+\caption{Mean paired change against CSM by group (\%, positive: better).}
+\label{tab:groups}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-groups.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\ChartFigure[0.9\textwidth]{csm27_paired_changes.pgf}
+\caption{Paired changes of heave and horizontal RMS against CSM (33 states)
+with 95\,\% bootstrap intervals, per sea.}
+\label{fig:paired}
+\end{figure*}
+
+\input{csm27-findings.tex-part}
+
+\begin{table}[!t]
+\caption{Consistency, pooled over all seas and seeds: medians of the
+position (3 dof) and position-velocity (6 dof) NEES and of the accelerometer
+NIS, mean 95\,\% coverage of heave, failed runs.}
+\label{tab:cons}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-consistency.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\ChartFigure{csm27_consistency.pgf}
+\caption{Position NEES: distribution per filter (left; 3 is the nominal
+mean) and per run, 27 against 33 states (right).}
+\label{fig:cons}
+\end{figure}
+
+\begin{figure*}[!t]
+\centering
+\ChartFigure[0.9\textwidth]{csm27_transients.pgf}
+\caption{Ensemble RMS over 10 seeds (10\,s moving window) around the sea-state
+changes. Solid: error against the truth. Dotted: difference of each 27-state
+realization from CSM, i.e.\ the effect of the removed directions and of the
+commit rule.}
+\label{fig:trans}
+\end{figure*}
+
+\begin{table}[!t]
+\caption{Wrong coupling priors (external, built from the truth and then
+reversed, turned, phase-shifted or doubled), with and without the
+confidence: 3-D RMS (mm) and median position NEES, 20 seeds.}
+\label{tab:robust}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-robust.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\ChartFigure[0.9\textwidth]{csm27_robustness.pgf}
+\caption{Wrong coupling priors: 3-D RMS of CSM and CSM27 with and without
+confidence; dashed: A41.}
+\label{fig:robust}
+\end{figure*}
+
+\begin{table}[!t]
+\caption{Cascade commit rule: paired change against CSM (\%, 95\,\% interval,
+30 seeds) with the normalized colouring held (default) and with the
+colouring itself held.}
+\label{tab:abl}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-ablation.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{table*}[!t]
+\caption{Dataset replay (pinned oceanography-waves-lib records, default
+seeds, Evidence excitation): heave RMS in \% of $H_s$ / 3-D RMS in \% of the
+reference maximum.}
+\label{tab:dataset}
+\centering\small
+\InputPart{csm27-dataset.tex-part}
+\end{table*}
+
+\section{Embedded Efficiency}
+\label{sec:cost}
+\begin{table}[!t]
+\caption{Analytic multiply-adds (the CARMA3 core's structured
+implementation): prediction plus accelerometer update per sample, the work
+of one 0.1\,s model commit (discretization, re-coordinatization), and the
+total per sample at 200\,Hz.}
+\label{tab:cost}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-cost.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{table}[!t]
+\caption{ESP32-S3 (Espressif GCC esp-14.2.0\_20241119, \texttt{-Os},
+arduino-esp32 flags; object of the complete wrapper): filter object size,
+code, read-only data, largest stack frame and the worst static call chain
+from one update.}
+\label{tab:esp}
+\centering\small
+\begin{adjustbox}{max width=\linewidth}
+\InputPart{csm27-esp32s3.tex-part}
+\end{adjustbox}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\ChartFigure{csm27_cost.pgf}
+\caption{Multiply-adds per sample, covariance storage and ESP32-S3 filter
+object.}
+\label{fig:cost}
+\end{figure}
+
+\input{csm27-cost-text.tex-part}
+
+\section{Conclusions}
+\input{csm27-conclusions.tex-part}
+
+\begin{thebibliography}{9}
+\bibitem{andersonmoore79}
+B. D. O. Anderson and J. B. Moore, \emph{Optimal Filtering}. Prentice-Hall,
+1979.
+\bibitem{faurre79}
+P. Faurre, M. Clerget and F. Germain, \emph{Op\'erateurs rationnels
+positifs}. Dunod, 1979.
+\bibitem{lindquist15}
+A. Lindquist and G. Picci, \emph{Linear Stochastic Systems: A Geometric
+Approach to Modeling, Estimation and Identification}. Springer, 2015.
+\bibitem{kalman63}
+R. E. Kalman, ``Mathematical description of linear dynamical systems,''
+\emph{J. SIAM Control}, vol. 1, no. 2, pp. 152--192, 1963.
+\bibitem{fasen21}
+V. Fasen-Hartmann and M. Scholz, ``Factorization and discrete-time
+representation of multivariate CARMA processes,'' arXiv:2102.11681, 2021.
+\bibitem{vanloan78}
+C. F. Van Loan, ``Computing integrals involving the matrix exponential,''
+\emph{IEEE Trans. Autom. Control}, vol. 23, no. 3, pp. 395--404, 1978.
+\end{thebibliography}
+\end{document}
