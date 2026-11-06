@@ -252,6 +252,15 @@ jobs:
             --output doc/kalman_carma/carma-sim-results-generated.tex-part
           git --no-pager diff --stat -- doc/kalman_carma/carma-sim-results-generated.tex-part
 
+      - name: Regenerate the deterministic 900 s table (kalman_carma_shared_modes)
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        run: |
+          python3 -u tools/carma_shared_modes_sim_table.py \
+            --binary tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim \
+            --data-dir plots/kalman_carma_shared_modes \
+            --output doc/kalman_carma_shared_modes/csm-sim-results-generated.tex-part
+          git --no-pager diff --stat -- doc/kalman_carma_shared_modes/csm-sim-results-generated.tex-part
+
       - name: Regenerate the deterministic 900 s table (kalman_tfg_carma)
         if: matrix.dir == 'kalman_tfg_carma'
         run: |

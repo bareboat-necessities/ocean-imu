@@ -15,7 +15,7 @@
 #include <utility>
 
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
-#include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 
 const float g_std = 9.80665f;
 
@@ -23,8 +23,8 @@ const float g_std = 9.80665f;
 using Top = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false>;
 using Wrapper = Top;
 #else
-using Top = ocean_imu::carma_shared_modes::KalmanCarmaSharedModes;
-using Wrapper = Top::Fusion;
+using Top = ocean_imu::carma_shared_modes::SeaStateFusion_CarmaSharedModes;
+using Wrapper = Top;
 #endif
 using Mekf = typename std::remove_reference<decltype(std::declval<Wrapper&>().raw().mekf())>::type;
 
@@ -39,17 +39,10 @@ const unsigned csm_probe_sizeof_mekf = sizeof(Mekf);
 
 extern "C" Top* csm_probe_make() {
     auto* f = new Top();
-#if CSM_PROBE_VARIANT == 0
     typename Top::Config cfg;
     cfg.sigma_a = Eigen::Vector3f::Constant(0.0294f);
     cfg.sigma_g = Eigen::Vector3f::Constant(3.1e-5f);
     cfg.sigma_m = Eigen::Vector3f::Constant(7.7f);
-#else
-    typename Top::Config cfg;
-    cfg.fusion.sigma_a = Eigen::Vector3f::Constant(0.0294f);
-    cfg.fusion.sigma_g = Eigen::Vector3f::Constant(3.1e-5f);
-    cfg.fusion.sigma_m = Eigen::Vector3f::Constant(7.7f);
-#endif
     f->begin(cfg);
     return f;
 }
@@ -60,7 +53,7 @@ extern "C" float csm_probe_step(Top* f, float dt, const float* gyr, const float*
 #if CSM_PROBE_VARIANT == 0
     return f->raw().mekf().get_position().z();
 #else
-    return f->position().z() + f->couplingConfidence();
+    return f->raw().mekf().get_position().z() + f->raw().mekf().couplingConfidence();
 #endif
 }
 

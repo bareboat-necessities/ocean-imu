@@ -10,8 +10,8 @@ Open the sketch: [`atomS3R_ins_carma_shared_modes.ino`](atomS3R_ins_carma_shared
 
 ## Differences from atomS3R_ins_carma3
 
-- The filter object is `KalmanCarmaSharedModes` (33 error states instead of 21). It owns the same CARMA3 wrapper (startup, magnetic north lock, tuner, wave-excitation evidence, outputs), so every sentence, display and calibration path is unchanged. Only the estimator's per-sample `update`/`updateMag` and its `begin` go through the new class.
-- The coupling is the deployable estimated one. No oracle, RAO or truth information is used.
+- One line: the filter type is `SeaStateFusion_CarmaSharedModes`, the CARMA3 wrapper with [`KalmanCarmaSharedModes<float>`](../../../src/kalman_carma_shared_modes/KalmanCarmaSharedModes.h) as its inner filter (33 error states instead of 21). Startup, magnetic north lock, tuner, wave-excitation evidence, outputs, sentences, display and calibration paths are the CARMA3 sketch's.
+- `begin(cfg)` selects the deployable configuration: the coupling is estimated from the filter's own acceleration, with the coupling confidence. No oracle, RAO or truth information is used.
 
 ## Memory and timing (ESP32-S3, Xtensa GCC 14.2.0, `-Os`)
 

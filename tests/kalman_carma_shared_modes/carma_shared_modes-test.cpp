@@ -31,13 +31,61 @@
 #include <random>
 #include <vector>
 
-#include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 
 extern const float g_std = 9.80665f;   // the application constant the front end reads
 
 namespace csm = ocean_imu::carma_shared_modes;
 namespace kc = ocean_imu::kalman::carma;
 using V3 = Eigen::Vector3f;
+
+// Test-local convenience over the float wrapper SeaStateFusion_CarmaSharedModes
+// (the configuration the simulators use: tuner and clamp on).
+class Csm {
+public:
+    using Fusion = csm::SeaStateFusion_CarmaSharedModes;
+    using Mekf = Fusion::Mekf;
+    static constexpr int kStates = Mekf::kStates;
+    struct Config {
+        ocean_imu::carma::SeaStateFusionConfig_CARMA3 fusion{};
+        csm::CouplingMode mode = csm::CouplingMode::Estimated;
+        csm::CouplingConfidenceConfig<float> confidence{};
+    };
+    struct SeaState { float operating_hz; Eigen::Vector3f accel_std; };
+    Csm() = default;
+    explicit Csm(const Config& c) { begin(c); }
+    void begin(const Config& c) {
+        cfg_ = c;
+        f_ = std::make_unique<Fusion>();
+        Fusion::SharedModes sm;
+        sm.mode = c.mode;
+        sm.confidence = c.confidence;
+        f_->begin(c.fusion, sm);
+        f_->raw().enableTuner(true);
+        f_->raw().enableClamp(true);
+    }
+    void reset() { begin(cfg_); }
+    void update(float dt, const Eigen::Vector3f& g, const Eigen::Vector3f& a, float t) { f_->update(dt, g, a, t); }
+    void updateMag(const Eigen::Vector3f& m) { f_->updateMag(m); }
+    bool isLive() const { return f_->isLive(); }
+    Mekf& mekf() { return f_->raw().mekf(); }
+    const Mekf& mekf() const { return f_->raw().mekf(); }
+    Eigen::Vector3f position() const { return mekf().get_position(); }
+    Eigen::Vector3f velocity() const { return mekf().get_velocity(); }
+    Eigen::Quaternionf attitude() const { return mekf().quaternion_boat(); }
+    Eigen::Matrix<float,6,6> positionVelocityCovariance() const { return mekf().pv_covariance6(); }
+    float couplingConfidence() const { return mekf().couplingConfidence(); }
+    void forceCouplingConfidence(float c) { mekf().forceCouplingConfidence(c); }
+    void setExternalCoupling(const ocean_imu::kalman::carma::Hermitian3<float>& S, float n) { mekf().setExternalCoupling(S, n); }
+    Mekf::CouplingStatus coupling() const { return mekf().coupling(); }
+    Mekf::Health health() const { return mekf().health(); }
+    SeaState seaState() const { return {mekf().motion().operating_frequency_hz(), mekf().motion().accel_std()}; }
+    Fusion& fusion() { return *f_; }
+    const Fusion& fusion() const { return *f_; }
+private:
+    Config cfg_{};
+    std::unique_ptr<Fusion> f_;
+};
 
 static int g_checks = 0, g_failures = 0;
 static void check(bool ok, const char* what, double value = NAN, double limit = NAN) {
@@ -94,8 +142,8 @@ struct Imu {
     V3 mag() { return V3(20.0f, 0.0f, 45.0f) + sm * V3(n01(rng), n01(rng), n01(rng)); }
 };
 
-static csm::KalmanCarmaSharedModes::Config base_config() {
-    csm::KalmanCarmaSharedModes::Config c;
+static Csm::Config base_config() {
+    Csm::Config c;
     c.fusion.with_mag = true;
     c.fusion.sigma_a = V3::Constant(2.8f * 0.0148f * 0.71f);
     c.fusion.sigma_g = V3::Constant(2.0f * 0.00157f * 0.01f);
@@ -111,7 +159,7 @@ struct Research {
     using Mekf = ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, 4, false, 4, false, true, true, kc::CarmaSharedModeMotion<float>>;
     using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, Mekf>;
     std::unique_ptr<Fusion> f = std::make_unique<Fusion>();
-    explicit Research(const csm::KalmanCarmaSharedModes::Config& c) {
+    explicit Research(const Csm::Config& c) {
         f->begin(c.fusion);
         f->raw().enableTuner(true);
         f->raw().enableClamp(true);
@@ -132,7 +180,7 @@ struct RunStats {
 
 // Runs a filter for T seconds on the sea; scores from t_score.
 template<class Hook>
-static RunStats run(csm::KalmanCarmaSharedModes& f, Sea& sea, double T, double t_score, unsigned imu_seed, Hook hook) {
+static RunStats run(Csm& f, Sea& sea, double T, double t_score, unsigned imu_seed, Hook hook) {
     Imu imu;
     imu.rng.seed(imu_seed);
     RunStats r;
@@ -166,7 +214,7 @@ static RunStats run(csm::KalmanCarmaSharedModes& f, Sea& sea, double T, double t
     }
     return r;
 }
-static auto no_hook = [](double, csm::KalmanCarmaSharedModes&, Sea&) {};
+static auto no_hook = [](double, Csm&, Sea&) {};
 
 template<int N>
 static double min_corr_eig(const Eigen::Matrix<float,N,N>& Pf) {
@@ -180,9 +228,9 @@ static double min_corr_eig(const Eigen::Matrix<float,N,N>& Pf) {
 // ---------------------------------------------------------------------------
 void test1_api() {
     std::printf("[1] public API, state count, determinism, reset\n");
-    check(csm::KalmanCarmaSharedModes::kStates == 33, "33 error states (3 + 3 + 24 + 3)",
-          csm::KalmanCarmaSharedModes::kStates, 33);
-    csm::KalmanCarmaSharedModes a(base_config()), b(base_config());
+    check(Csm::kStates == 33, "33 error states (3 + 3 + 24 + 3)",
+          Csm::kStates, 33);
+    Csm a(base_config()), b(base_config());
     Sea sea(30.0);
     run(a, sea, 120.0, 1e9, 3, no_hook);
     run(b, sea, 120.0, 1e9, 3, no_hook);
@@ -203,7 +251,7 @@ void test2_preservation() {
     std::printf("[2] preservation of the validated Option C filter\n");
     auto c = base_config();
     c.confidence.enabled = false;
-    csm::KalmanCarmaSharedModes f(c);
+    Csm f(c);
     Research r(c);
     Sea sea(30.0);
     Imu imu;
@@ -224,7 +272,7 @@ void test2_preservation() {
     check(std::abs(E.im(0,2)) + std::abs(E.re(0,2)) > 0.0f, "... and its coupling is active (nonzero x-z excitation)");
     // Coupling held at zero = CouplingMode::Off.
     auto c0 = base_config();
-    csm::KalmanCarmaSharedModes z(c0), off([&] { auto o = base_config(); o.mode = csm::CouplingMode::Off; return o; }());
+    Csm z(c0), off([&] { auto o = base_config(); o.mode = csm::CouplingMode::Off; return o; }());
     z.forceCouplingConfidence(0.0f);
     Sea s2(30.0);
     run(z, s2, 400.0, 1e9, 5, no_hook);
@@ -237,9 +285,9 @@ void test2_preservation() {
 // ---------------------------------------------------------------------------
 void test3_shrink() {
     std::printf("[3] fallback algebra (shrink_motion_vertical_coupling)\n");
-    using Mekf = csm::KalmanCarmaSharedModes::Mekf;
+    using Mekf = Csm::Mekf;
     constexpr int NX = Mekf::NX;
-    csm::KalmanCarmaSharedModes f(base_config());
+    Csm f(base_config());
     Sea sea(30.0);
     run(f, sea, 300.0, 1e9, 11, no_hook);
     auto& m = f.fusion().raw().mekf();
@@ -249,7 +297,7 @@ void test3_shrink() {
     double worst_psd = 1.0, worst_explained = 0.0;
     bool untouched = true;
     for (float alpha : {0.0f, 0.3f, 0.9f}) {
-        csm::KalmanCarmaSharedModes g(base_config());
+        Csm g(base_config());
         Sea s2(30.0);
         run(g, s2, 300.0, 1e9, 11, no_hook);
         auto& mg = g.fusion().raw().mekf();
@@ -272,7 +320,7 @@ void test3_shrink() {
           "alpha = 1 is a no-op");
     // alpha = 0 leaves exactly the attitude/bias-explained part E.
     {
-        csm::KalmanCarmaSharedModes g(base_config());
+        Csm g(base_config());
         Sea s2(30.0);
         run(g, s2, 300.0, 1e9, 11, no_hook);
         auto& mg = g.fusion().raw().mekf();
@@ -297,17 +345,17 @@ void test3_shrink() {
 // ---------------------------------------------------------------------------
 void test4_confidence() {
     std::printf("[4] coupling-confidence state machine\n");
-    csm::CarmaCouplingConfidence c;
-    csm::CouplingConfidenceConfig cfg;
+    csm::CarmaCouplingConfidence<> c;
+    csm::CouplingConfidenceConfig<> cfg;
     c.configure(cfg);
-    csm::BandRegression good;
+    csm::BandRegression<> good;
     good.valid = true; good.szz = 1.0f; good.gamma2 = 0.9f;
     good.beta[0] = std::complex<float>(0.2f, -0.6f); good.beta[1] = std::complex<float>(0.1f, -0.3f);
     good.var[0] = good.var[1] = 0.002f;
-    csm::BandRegression rev = good;
+    csm::BandRegression<> rev = good;
     rev.beta[0] = -good.beta[0]; rev.beta[1] = -good.beta[1];
     const float dt = 0.005f, f = 0.3f;
-    auto steps = [&](double T, const csm::BandRegression& pr, const csm::BandRegression& mo, float yaw = 0.0f,
+    auto steps = [&](double T, const csm::BandRegression<>& pr, const csm::BandRegression<>& mo, float yaw = 0.0f,
                      float fop = 0.3f, float nis = 0.1f) {
         double max_rate = 0.0;
         for (long k = 0; k < static_cast<long>(T / dt); ++k) {
@@ -327,10 +375,10 @@ void test4_confidence() {
           "reversed prior: fallback, c < 0.05 within 10 s", c.confidence(), 0.05);
     check(r_dn <= 1.0 / cfg.tau_down_s + 1e-6, "rate of fall bounded by 1/tau_down (no step)", r_dn, 1.0 / cfg.tau_down_s);
     // hysteresis: D^2 between d2_low and d2_high keeps the decision
-    csm::BandRegression mid = good;
+    csm::BandRegression<> mid = good;
     mid.beta[0] += std::complex<float>(0.0f, 0.08f);   // D^2 ~ 0.0064 / (0.004 + floor) ~ 1.3 (consistent)
     steps(200.0, good, good);
-    csm::BandRegression edge = good;
+    csm::BandRegression<> edge = good;
     edge.beta[0] += std::complex<float>(0.0f, 0.24f);   // D^2 ~ 10: between the thresholds
     steps(5.0, edge, good);
     const bool kept = c.status().consistent;
@@ -355,7 +403,7 @@ void test4_confidence() {
           c.confidence(), 0.2);
     steps(300.0, good, good, 0.0f, 0.15f);
     // low energy
-    csm::BandRegression calm = good;
+    csm::BandRegression<> calm = good;
     calm.szz = 1e-7f;
     steps(30.0, good, calm);
     check(c.confidence() < 0.05f, "no wave energy above the noise floor: no coupling", c.confidence(), 0.05);
@@ -370,7 +418,7 @@ void test4_confidence() {
     check(c.confidence() == 0.5f, "forced confidence is held", c.confidence(), 0.5);
     c.force(-1.0f);
     // warm-up
-    csm::CarmaCouplingConfidence w;
+    csm::CarmaCouplingConfidence<> w;
     w.configure(cfg);
     for (int k = 0; k < 4000; ++k) w.update(dt, good, good, false, 0.0f, f, 0.1f);
     check(w.status().state == csm::CouplingState::WarmUp && w.confidence() == 0.0f, "warm-up: no coupling");
@@ -384,7 +432,7 @@ void test5_direction() {
     for (double dir : {0.0, 30.0, 135.0, 250.0, 330.0}) {
         const double th = dir * PI / 180.0;
         const std::complex<float> q = std::polar(0.8f, static_cast<float>(-62.0 * PI / 180.0));
-        csm::BandRegression r;
+        csm::BandRegression<> r;
         r.valid = true; r.szz = 1.0f; r.gamma2 = 0.95f;
         r.beta[0] = q * static_cast<float>(std::cos(th));
         r.beta[1] = q * static_cast<float>(std::sin(th));
@@ -406,13 +454,13 @@ void test6_filter() {
         auto c = base_config();
         c.mode = mode;
         c.confidence.enabled = conf;
-        csm::KalmanCarmaSharedModes f(c);
+        Csm f(c);
         Sea sea(40.0, seed);
         kc::CarmaCrossSpectrumEstimator<float> truth_est;
         kc::CarmaCrossSpectrumEstimator<float>::Config ec;
         ec.horizon_s = 600.0f;
         truth_est.configure(ec);
-        auto hook = [&](double t, csm::KalmanCarmaSharedModes& g, Sea& s) {
+        auto hook = [&](double t, Csm& g, Sea& s) {
             if (!ext) return;
             Eigen::Vector3d p, a;
             s.eval(t, p, a);
@@ -450,12 +498,12 @@ void test6_filter() {
     check(rev.finite && est.finite, "finite throughout");
     // Continuity through a forced fallback 1 -> 0 at t = 500 s.
     {
-        csm::KalmanCarmaSharedModes f(base_config());
+        Csm f(base_config());
         Sea sea(40.0, 2);
         double jump_p = 0.0, jump_v = 0.0, jump_q = 0.0, base_p = 0.0, worst_psd = 1.0;
         V3 lp = V3::Zero(), lv = V3::Zero();
         Eigen::Quaternionf lq = Eigen::Quaternionf::Identity();
-        auto hook = [&](double t, csm::KalmanCarmaSharedModes& g, Sea&) {
+        auto hook = [&](double t, Csm& g, Sea&) {
             if (t > 480.0 && t < 520.0) {
                 const double dp = (g.position() - lp).norm(), dv = (g.velocity() - lv).norm();
                 const double dq = g.attitude().angularDistance(lq);
@@ -482,14 +530,14 @@ void test6_filter() {
     {
         auto c = base_config();
         c.mode = csm::CouplingMode::External;
-        csm::KalmanCarmaSharedModes f(c);
+        Csm f(c);
         Sea sea(40.0, 3);
         kc::CarmaCrossSpectrumEstimator<float> te;
         kc::CarmaCrossSpectrumEstimator<float>::Config ec;
         ec.horizon_s = 600.0f;
         te.configure(ec);
         float c_at_450 = 1.0f;
-        auto hook = [&](double t, csm::KalmanCarmaSharedModes& g, Sea& s) {
+        auto hook = [&](double t, Csm& g, Sea& s) {
             Eigen::Vector3d p, a;
             s.eval(t, p, a);
             te.update(a.cast<float>(), 0.005f, g.fusion().raw().mekf().motion().operating_frequency_hz());
@@ -509,6 +557,39 @@ void test6_filter() {
     }
 }
 
+// ---------------------------------------------------------------------------
+void test7_double() {
+    std::printf("[7] the core is templated on the scalar (T = double)\n");
+    using Core = csm::KalmanCarmaSharedModes<double>;
+    check(Core::kStates == 33 && csm::KalmanCarmaSharedModes<>::kStates == 33, "33 states for float (default) and double");
+    using V3d = Eigen::Vector3d;
+    Core f(V3d::Constant(0.03), V3d::Constant(3e-5), V3d::Constant(7.7));
+    f.initialize_from_acc(V3d(0.0, 0.0, -G));
+    Sea sea(40.0, 4);
+    std::mt19937 rng(5);
+    std::normal_distribution<double> n01(0.0, 1.0);
+    bool finite = true;
+    for (long k = 0; k < 200L * 400; ++k) {
+        const double t = static_cast<double>(k) * 0.005;
+        Eigen::Vector3d p, a;
+        sea.eval(t, p, a);
+        if (k % 20 == 0) {   // the schedule's model commits, as the wrapper does them
+            f.set_vertical_carma(0.95, 0.4);
+            f.set_horizontal_carma(0.95, 0.3, 0.3, 0.0);
+        }
+        f.time_update(0.0016 * V3d(n01(rng), n01(rng), n01(rng)), 0.005);
+        f.measurement_update_acc_only(a - V3d(0, 0, G) + 0.0148 * V3d(n01(rng), n01(rng), n01(rng)));
+        finite = finite && f.get_position().allFinite() && f.covariance_full().allFinite();
+    }
+    const auto st = f.coupling();
+    std::printf("    double core after 400 s: c %.3f state %s, applied x-z coherence %.3f\n",
+                st.confidence.confidence, csm::to_string(st.confidence.state), st.applied_coherence_xz);
+    check(finite, "double core: finite state and covariance over 400 s");
+    check(st.confidence.confidence > 0.5 && st.applied_coherence_xz > 0.0,
+          "double core: the coupling confidence rises and the coupling is applied", st.confidence.confidence, 0.5);
+    check(f.health().covariance_asymmetry < 1e-12, "double core: covariance symmetric", f.health().covariance_asymmetry, 1e-12);
+}
+
 int main() {
     test1_api();
     test2_preservation();
@@ -516,6 +597,7 @@ int main() {
     test4_confidence();
     test5_direction();
     test6_filter();
+    test7_double();
     std::printf("carma_shared_modes-test: %d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

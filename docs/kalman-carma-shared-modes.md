@@ -10,14 +10,22 @@ This filter promotes Option C of the coupled-prior study
 directional stochastic modes -- into a standalone QMEKF.  It adds the
 coupling confidence and fallback that the study showed to be necessary.
 
-* Header: `src/kalman_carma_shared_modes/KalmanCarmaSharedModes.h`
-  (`CarmaCouplingConfidence.h`, `CarmaSharedModesMotion.h`).
-* Tests and simulator: `tests/kalman_carma_shared_modes/`
-  (`carma_shared_modes-test`, `kalman_carma_shared_modes-sim`).
+* Core: `src/kalman_carma_shared_modes/KalmanCarmaSharedModes.h`,
+  `KalmanCarmaSharedModes<T = float>`, the QMEKF (scalar `T`, as every
+  Kalman core in the repository), with `CarmaCouplingConfidence.h` and
+  `CarmaSharedModesMotion.h`.
+* Wrapper: `SeaStateFusionFilter_CarmaSharedModes.h`,
+  `SeaStateFusion_CarmaSharedModes`, the unchanged CARMA3 schedule with the
+  core as its inner filter (float, as every wrapper).
+* Tests and simulators: `tests/kalman_carma_shared_modes/`
+  (`carma_shared_modes-test`; `kalman_carma_shared_modes-sim`, the dataset
+  replay; `kalman_carma_shared_modes-bench`, the paired Monte Carlo).
 * Validation: `tools/carma_shared_modes_validation.py` ->
-  `reports/results/kalman_carma_shared_modes/`.
+  `reports/results/kalman_carma_shared_modes/`; deterministic table
+  `tools/carma_shared_modes_sim_table.py`.
 * Articles: `doc/kalman_carma_shared_modes/`
-  (`kalman_carma_shared_modes-math.tex`, `kalman_carma_shared_modes-validation.tex`).
+  (`kalman_carma_shared_modes-math.tex`, `kalman_carma_shared_modes-validation.tex`,
+  and the replay chart gallery `kalman_carma_shared_modes-charts.tex`).
 
 RESULTS_SUMMARY_PLACEHOLDER
 
@@ -32,7 +40,8 @@ RESULTS_SUMMARY_PLACEHOLDER
 | short-horizon monitor of the coupling | `CarmaSharedModesMotion.h` | new |
 | coupling confidence, hysteresis, smoothing | `CarmaCouplingConfidence.h` | new |
 | PSD-preserving decoupling of the covariance | `Kalman3D_Wave_CARMA3::shrink_motion_vertical_coupling` | new member, instantiated only for a motion block |
-| public API, diagnostics, direction estimate | `KalmanCarmaSharedModes.h` | new |
+| QMEKF core `KalmanCarmaSharedModes<T>`: confidence in `time_update` / `measurement_update_acc_only`, diagnostics, direction estimate | `KalmanCarmaSharedModes.h` | new (derives from the CARMA3 core) |
+| float wrapper `SeaStateFusion_CarmaSharedModes` | `SeaStateFusionFilter_CarmaSharedModes.h` | new (the CARMA3 wrapper with the new core) |
 
 With the confidence disabled, the filter is the research filter `SHM:est`.
 `carma_shared_modes-test` [2] finds them bit-identical over 400 s.  In the
@@ -191,28 +200,39 @@ quantify both limitations.
 
 ## 5. Public API
 
+The core is a Kalman core like the others, templated on the scalar:
+
 ```cpp
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
-using ocean_imu::carma_shared_modes::KalmanCarmaSharedModes;
+using ocean_imu::carma_shared_modes::KalmanCarmaSharedModes;   // <T = float>
 
-KalmanCarmaSharedModes::Config cfg;                // sensors in cfg.fusion (as SeaStateFusion_CARMA3)
-cfg.fusion.sigma_a = ...; cfg.fusion.sigma_g = ...; cfg.fusion.sigma_m = ...;
-KalmanCarmaSharedModes f(cfg);                     // or f.begin(cfg); f.reset() restarts
-f.update(dt, gyr_body_ned, acc_body_ned, temp_c);  // every IMU sample
-f.updateMag(mag_body_ned_uT);                      // at the magnetometer rate
-f.isLive(); f.attitude(); f.position(); f.velocity(); f.waveAcceleration();
-f.accelBias(); f.gyroBias(); f.positionVelocityCovariance();
-f.seaState();        // frequency, operating frequency, kappa, committed accel std
-f.waveDirection();   // direction of travel (deg from magnetic north), uncertainty, phase
-f.coupling();        // mode, confidence c, state (warm-up/coupled/reduced/fallback),
-                     // D^2, SNR, NIS ratio, applied coherence / phase
-f.health();          // NIS, covariance finite / symmetric / min diagonal
+KalmanCarmaSharedModes<float> f(sigma_a, sigma_g, sigma_m);    // the CARMA3 core's constructors
+f.configureSharedModes(cfg);   // optional: mode, confidence thresholds, horizon, band
+f.time_update(gyr, dt);        // as Kalman3D_Wave_CARMA3, plus the confidence step
+f.measurement_update_acc_only(acc, temp_c);
+f.measurement_update_mag_only(mag);
+f.get_position(); f.get_velocity(); f.get_world_accel(); f.quaternion_boat();
+f.coupling();       // mode, confidence c, state (warm-up/coupled/reduced/fallback),
+                    // D^2, SNR, NIS ratio, applied coherence / phase, shrink events
+f.waveDirection();  // direction of travel (deg from the filter's north), uncertainty, phase
+f.health();         // NIS, covariance finite / symmetric / min diagonal
+```
+
+Behind the CARMA3 schedule (startup, magnetic north lock, tuner, model commits):
+
+```cpp
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+ocean_imu::carma_shared_modes::SeaStateFusion_CarmaSharedModes fusion;
+fusion.begin(cfg);                          // as SeaStateFusion_CARMA3; shared-modes defaults
+fusion.begin(cfg, shared_modes_cfg);        // ... or an explicit shared-modes configuration
+fusion.update(dt, gyr, acc, temp_c); fusion.updateMag(mag);
+fusion.raw().mekf().coupling();             // the core
 ```
 
 `CouplingMode::Estimated` is the default and the only deployable mode.
-`External` (with `setExternalCoupling`) is for research priors and for the
-robustness tests.  `Off` gives independent axes.  `forceCouplingConfidence`
-is a test hook.  Ground truth and RAO knowledge never enter the class.
+`External` (with `setExternalCoupling`) is for research priors and the
+robustness tests; `Off` gives independent axes; `forceCouplingConfidence` is
+a test hook.  Ground truth and RAO knowledge never enter the classes.
 
 ## 6. Validation
 
@@ -240,7 +260,8 @@ With the confidence, the reversed prior's run is the independent-axis result:
 the coupling was never applied.
 
 `kalman_carma_shared_modes-sim` replays the eight scored records of the pinned
-oceanography-waves-lib v1.2.3 dataset with regression bars, and runs
+oceanography-waves-lib v1.2.3 dataset with regression bars (the CARMA3 replay
+adapter with the shared-modes core); `kalman_carma_shared_modes-bench` runs
 carma3_bench's Monte Carlo engine with this filter registered next to A41 and
 SHM:est.
 

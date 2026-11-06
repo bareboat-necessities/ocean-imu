@@ -4,8 +4,9 @@
     Copyright (c) 2025-2026  Mikhail Grushinskiy
 
     carma3_bench adapter of the standalone shared-modes QMEKF
-    (src/kalman_carma_shared_modes/KalmanCarmaSharedModes.h) for
-    kalman_carma_shared_modes-sim's Monte Carlo mode.  The engine, truth,
+    (src/kalman_carma_shared_modes: KalmanCarmaSharedModes<float> behind
+    the CARMA3 wrapper, SeaStateFusion_CarmaSharedModes) for
+    kalman_carma_shared_modes-bench.  The engine, truth,
     sensors and metrics are carma3_bench's (tests/kalman_carma), so every
     filter of a row -- the CARMA3 baseline A41, the research SHM:est and the
     filters below -- sees the same sea and the same IMU stream.
@@ -37,7 +38,7 @@
 #include <vector>
 
 #include "carma3/FullAdapters.h"
-#include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 
 namespace carma3_bench {
 
@@ -80,24 +81,27 @@ inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
 
 class FullCsm final : public IEstimator3 {
 public:
-    using F = csm::KalmanCarmaSharedModes;
-    using Mekf = F::Mekf;
+    using Fusion = csm::SeaStateFusion_CarmaSharedModes;
+    using Mekf = Fusion::Mekf;
     using H3 = ocean_imu::kalman::carma::Hermitian3<float>;
 
     FullCsm(std::string label, const CsmSpec& sp) : label_(std::move(label)), sp_(sp) {
-        F::Config c;
-        fill_config(c.fusion, MAG_DELAY_SEC);
+        Fusion::Config fc;
+        fill_config(fc, MAG_DELAY_SEC);
+        Fusion::SharedModes c;
         c.mode = sp_.off ? csm::CouplingMode::Off
                : sp_.ext.empty() ? csm::CouplingMode::Estimated : csm::CouplingMode::External;
         c.confidence.enabled = sp_.confidence;
         c.confidence.accel_noise_std = ACC_SIGMA;
-        f_.begin(c);
+        f_.begin(fc, c);
+        f_.raw().enableTuner(true);
+        f_.raw().enableClamp(true);
         typename ocean_imu::kalman::carma::CarmaCrossSpectrumEstimator<float>::Config ec;
         ec.horizon_s = 600.0f;       // oracle prior (as the research ORACLE runs)
         ec.band_frac = c.band_frac;
         oracle_.configure(ec);
         if (sp_.keel) {
-            auto& m = f_.fusion().raw().mekf().motion();
+            auto& m = f_.raw().mekf().motion();
             auto cc = m.coupling().config();
             cc.frame = ocean_imu::kalman::carma::CarmaCouplingConfig::Frame::Keel;
             m.coupling().set_config(cc);
@@ -123,9 +127,9 @@ public:
         f_.update(s.dt, s.gyr_ned, s.acc_ned, s.tempC);
         if (s.mag_tick) {
             f_.updateMag(s.mag_ned);
-            mag_.after_mag(f_.fusion(), f_.fusion().raw().mekf().lastMagDiag().accepted);
+            mag_.after_mag(f_, f_.raw().mekf().lastMagDiag().accepted);
         }
-        auto& m = f_.fusion().raw().mekf().motion();
+        auto& m = f_.raw().mekf().motion();
         if (keel_) {
             auto cc = m.coupling().config();
             if (cc.frame != ocean_imu::kalman::carma::CarmaCouplingConfig::Frame::Keel) {
@@ -135,7 +139,7 @@ public:
         }
         if (!sp_.ext.empty()) {
             oracle_.update(s.a_wave_mag.cast<float>(), s.dt, m.operating_frequency_hz());
-            if (oracle_.elapsed_s() >= 30.0f) f_.setExternalCoupling(wrong_(oracle_.cross()), 0.0f);
+            if (oracle_.elapsed_s() >= 30.0f) f_.raw().mekf().setExternalCoupling(wrong_(oracle_.cross()), 0.0f);
         }
         if (sp_.freeze_at_s >= 0.0f && t_ >= sp_.freeze_at_s && !frozen_) {
             m.coupling().freeze_now();
@@ -143,15 +147,16 @@ public:
         }
         if (trace_ && t_ >= next_trace_) {
             next_trace_ += 1.0f;
-            const auto st = f_.coupling();
-            const auto ss = f_.seaState();
-            const auto wd = f_.waveDirection();
+            const auto& mk = f_.raw().mekf();
+            const auto st = mk.coupling();
+            const auto wd = mk.waveDirection();
+            const double f_op = mk.motion().operating_frequency_hz(), sig_z = mk.motion().accel_std().z();
             std::fprintf(trace_, "%.2f,%d,%.4f,%.4f,%d,%.4g,%.4g,%.4f,%.4f,%.5f,%.5f,%.4f,%.2f,%.4f,%.2f,%.2f,%.2f,%lu\n",
                          static_cast<double>(t_), f_.isLive() ? 1 : 0, static_cast<double>(st.confidence.confidence),
                          static_cast<double>(st.confidence.evidence), static_cast<int>(st.confidence.state),
                          static_cast<double>(st.confidence.mismatch_d2), static_cast<double>(st.confidence.snr),
                          static_cast<double>(st.confidence.nis_ratio), static_cast<double>(st.confidence.monitor_coherence),
-                         static_cast<double>(ss.operating_hz), static_cast<double>(ss.accel_std.z()),
+                         f_op, sig_z,
                          static_cast<double>(st.applied_coherence_xz), static_cast<double>(st.applied_phase_xz_deg),
                          static_cast<double>(st.applied_coherence_yz), static_cast<double>(st.applied_phase_yz_deg),
                          wd.valid ? static_cast<double>(wd.to_deg) : NAN,
@@ -159,7 +164,7 @@ public:
         }
     }
     Eigen::Matrix<double,9,9> native9_() const {
-        const auto& m = f_.fusion().raw().mekf();
+        const auto& m = f_.raw().mekf();
         const Eigen::MatrixXd P = m.covariance_full().template cast<double>();
         Eigen::MatrixXd S = Eigen::MatrixXd::Zero(9, Mekf::NX);
         for (int i = 0; i < 3; ++i) S(i, i) = 1.0;
@@ -168,7 +173,7 @@ public:
     }
     Estimate3 estimate() const override {
         Estimate3 e;
-        const auto& m = f_.fusion().raw().mekf();
+        const auto& m = f_.raw().mekf();
         e.live = f_.isLive();
         e.p = m.get_position().template cast<double>();
         e.v = m.get_velocity().template cast<double>();
@@ -194,7 +199,7 @@ public:
         return e;
     }
     double native_nees9(const Truth9& tr) const override {
-        const auto& m = f_.fusion().raw().mekf();
+        const auto& m = f_.raw().mekf();
         const Eigen::Matrix3d R = m.quaternion_boat().template cast<double>().toRotationMatrix();
         Eigen::Matrix<double,9,1> err;
         const Eigen::AngleAxisd aa(Eigen::Matrix3d(tr.R_bw.transpose() * R));
@@ -205,20 +210,20 @@ public:
         if (l.info() != Eigen::Success || !l.isPositive()) return NAN;
         return err.dot(l.solve(err));
     }
-    double cond_corr() const override { return corr_condition(f_.fusion().raw().mekf().covariance_full()); }
+    double cond_corr() const override { return corr_condition(f_.raw().mekf().covariance_full()); }
     long mag_forwarded() const override { return mag_.forwarded; }
     long mag_applied() const override { return mag_.applied; }
     double op_fz_hz() const override {
-        const auto& fr = f_.fusion().raw();
+        const auto& fr = f_.raw();
         return static_cast<double>(fr.getVerticalKappa()) * fr.mekf().vertical_model().base_zero_crossing_hz();
     }
     size_t memory_bytes() const override {
-        return sizeof(f_) + sizeof(f_.fusion()) + sizeof(f_.fusion().raw().mekf());
+        return sizeof(f_) + sizeof(f_.raw().mekf());
     }
     int states() const override { return Mekf::NX; }
     void set_label(const std::string& l) override { label_ = l; }
     bool coupling_diag(double (&d)[6]) const override {
-        const H3& S = f_.fusion().raw().mekf().motion().excitation();
+        const H3& S = f_.raw().mekf().motion().excitation();
         const int pr[3][2] = {{0, 2}, {1, 2}, {0, 1}};
         for (int k = 0; k < 3; ++k) {
             const int i = pr[k][0], j = pr[k][1];
@@ -255,7 +260,7 @@ private:
 
     std::string label_;
     CsmSpec sp_;
-    F f_;
+    Fusion f_;
     ocean_imu::kalman::carma::CarmaCrossSpectrumEstimator<float> oracle_;
     MagCounter mag_;
     float temp_ = 35.0f, t_ = 0.0f, next_trace_ = 0.0f;

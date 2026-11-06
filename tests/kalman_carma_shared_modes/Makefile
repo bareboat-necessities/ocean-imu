@@ -16,9 +16,9 @@ else
 endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = carma_shared_modes-test kalman_carma_shared_modes-sim
+TARGETS = carma_shared_modes-test kalman_carma_shared_modes-sim kalman_carma_shared_modes-bench
 # carma3_bench's engine and filter units (tests/kalman_carma), compiled here
-# so the Monte Carlo mode pairs the new filter with the same truth and
+# so the Monte Carlo benchmark pairs the new filter with the same truth and
 # sensors; the engine's main() is renamed carma3_bench_main.
 BENCH_OBJS = bench_engine.o bench_carma3_filters_ou.o bench_carma3_filters_c4.o bench_carma3_filters_c5.o \
              bench_carma3_filters_tfg.o bench_carma3_filters_coupled.o
@@ -30,7 +30,9 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 carma_shared_modes-test: carma_shared_modes-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-kalman_carma_shared_modes-sim: kalman_carma_shared_modes-sim.o csm_filters.o $(BENCH_OBJS) W3dSimCommon.o
+kalman_carma_shared_modes-sim: kalman_carma_shared_modes-sim.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+kalman_carma_shared_modes-bench: kalman_carma_shared_modes-bench.o csm_filters.o $(BENCH_OBJS) W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp
 	$(CC) $(CXXFLAGS) -Dmain=carma3_bench_main -MMD -MP -c $< -o $@

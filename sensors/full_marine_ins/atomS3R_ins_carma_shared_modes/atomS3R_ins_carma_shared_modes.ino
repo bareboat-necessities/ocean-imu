@@ -1,9 +1,9 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  AtomS3R EXPERIMENTAL shared-modes QMEKF KalmanCarmaSharedModes
-  (CARMA3 wrapper with shared directional modes and coupling confidence;
-  derived from atomS3R_ins_carma3, + optional IMU Calibration Wizard)
+  AtomS3R EXPERIMENTAL shared-modes QMEKF SeaStateFusion_CarmaSharedModes
+  (atomS3R_ins_carma3 with KalmanCarmaSharedModes<float> as the inner filter:
+  shared directional modes and coupling confidence; + optional IMU Calibration Wizard)
 
   EXPERIMENTAL research sketch.  It runs the three-axis CARMA filter of
   docs/carma-three-axis.md in the configuration that document recommends as
@@ -18,7 +18,7 @@
     - startup compass does not wait for INS; fused filter yaw takes over once Live
 
   Assumptions:
-    - fw_().raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
+    - fusion_.raw().mekf().quaternion_boat() returns BODY->WORLD quaternion (q_bw), world frame is NED (+Z down).
     - runtime_.apply* already includes temperature compensation.
 */
 
@@ -75,8 +75,7 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
-#include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
-#include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 // The OU-III sketch's startup settings (ONLINE_TUNE_WARMUP_SEC,
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateOUFamilyDefaults.h"
@@ -255,9 +254,9 @@ private:
   using UI = atoms3r_ical::M5Ui;
   // CARMA(4,1) X/Y without S_x, S_y; CARMA(4,1) Z without S_z.
   // EXPERIMENTAL shared-modes QMEKF (docs/kalman-carma-shared-modes.md): the
-  // filter owns the CARMA3 wrapper; every wrapper query goes through fw_().
-  using Csm = ocean_imu::carma_shared_modes::KalmanCarmaSharedModes;
-  using Fusion = Csm::Fusion;
+  // CARMA3 wrapper with KalmanCarmaSharedModes<float> as its inner filter;
+  // begin(cfg) selects the estimated coupling with the coupling confidence.
+  using Fusion = ocean_imu::carma_shared_modes::SeaStateFusion_CarmaSharedModes;
 
   bool use_graphics_ = (SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
 
@@ -281,9 +280,7 @@ private:
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_   = 0;
 
-  Csm csm_{};
-  Fusion& fw_() { return csm_.fusion(); }
-  const Fusion& fw_() const { return csm_.fusion(); }
+  Fusion fusion_{};
 
   ins::MagFreshGate mag_gate_{};
 
@@ -431,13 +428,9 @@ private:
 
     fcfg.enable_displacement_detrend = true;
 
-    {
-      Csm::Config cc;
-      cc.fusion = fcfg;
-      csm_.begin(cc);   // estimated coupling + coupling confidence (the deployable default)
-    }
+    fusion_.begin(fcfg);
 
-    auto& ff = fw_().raw();
+    auto& ff = fusion_.raw();
     ff.enableTuner(true);
     // Without S states there is no S = 0 pseudo-measurement, so OU-III's
     // pseudo-update cadence knob has no counterpart here.
@@ -465,7 +458,7 @@ private:
     // IMU installation lever-arm (off-CoG) correction.
     //
     // Set explicitly on every reset, so the adjustment point is visible; the
-    // wrapper keeps it across fw_().begin().  Unlike OU-III, whose
+    // wrapper keeps it across fusion_.begin().  Unlike OU-III, whose
     // correction lives in its MEKF's accelerometer update, the CARMA wrapper
     // removes the term at its input, before the vibration guard: the startup
     // tilt proxy, the magnetic reference it learns, the tuner and the
@@ -597,19 +590,19 @@ private:
     mag_fresh_ = mag_gate_.update(mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
-    csm_.update(dt_, w_cal_, a_cal_);
+    fusion_.update(dt_, w_cal_, a_cal_);
     if (mag_ok_ && mag_fresh_) {
-      csm_.updateMag(m_cal_);
+      fusion_.updateMag(m_cal_);
     }
 
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
     // user-facing heading. Once Live, switch to the fused MEKF attitude.
-    const bool live = fw_().isLive();
+    const bool live = fusion_.isLive();
     Eigen::Quaternionf q_bw = live
-        ? fw_().attitudeQuat()
-        : fw_().raw().startupProxyQuat();
-    const bool have_attitude = live || fw_().raw().startupProxyInitialized();
+        ? fusion_.attitudeQuat()
+        : fusion_.raw().startupProxyQuat();
+    const bool have_attitude = live || fusion_.raw().startupProxyInitialized();
     float roll_est_deg = roll_deg_;
     float pitch_est_deg = pitch_deg_;
     float heading_est_deg = heading_deg_;
@@ -625,28 +618,28 @@ private:
     // proxy's yaw-free tilt so a proxy yaw branch/wrap can never flip north
     // and south.  Live still publishes the fused MEKF yaw.
     Eigen::Quaternionf q_compass_tilt = q_bw;
-    if (!live) q_compass_tilt = fw_().raw().startupProxyTiltQuat();
+    if (!live) q_compass_tilt = fusion_.raw().startupProxyTiltQuat();
     updateCompassHeading_(q_compass_tilt, attitude_ok,
-        live && fw_().hasMagNorthLock(), heading_est_deg);
+        live && fusion_.hasMagNorthLock(), heading_est_deg);
 
     gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
     const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
     rot_.update(w_world.z(), dt_);
 
-    const Vector3f velocity_ned_mps = fw_().raw().mekf().get_velocity();
+    const Vector3f velocity_ned_mps = fusion_.raw().mekf().get_velocity();
     heave_speed_mps_ = -velocity_ned_mps.z();
 
-    const Vector3f displacement_raw_up_m = fw_().displacementUpMeters();
-    const auto& displacement_det_out = fw_().displacementDetrend();
+    const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();
+    const auto& displacement_det_out = fusion_.displacementDetrend();
 
     heave_m_         = displacement_raw_up_m.z();
-    wave_envelope_m_ = fw_().raw().getDisplacementScale();
-    wave_hz_         = fw_().raw().getFreqHz();
+    wave_envelope_m_ = fusion_.raw().getDisplacementScale();
+    wave_hz_         = fusion_.raw().getFreqHz();
 
-    wave_ = WaveDirectionReport::from(fw_().waveDirectionDeg(),
-                                      fw_().raw().getDirSignState(),
-                                      fw_().isLive());
-    acc_bias_estimating_ = fw_().isLive();
+    wave_ = WaveDirectionReport::from(fusion_.waveDirectionDeg(),
+                                      fusion_.raw().getDirSignState(),
+                                      fusion_.isLive());
+    acc_bias_estimating_ = fusion_.isLive();
 
     rates_.update(millis());
 
@@ -733,7 +726,7 @@ private:
     last_serial_ms_ = now_ms;
 
 #if SEA_STATE_SERIAL_NMEA
-    const bool valid = fw_().isLive() && heading_fused_;
+    const bool valid = fusion_.isLive() && heading_fused_;
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
@@ -746,7 +739,7 @@ private:
       nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
       nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
       nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_.sign_raw, wave_.sign_polarity, wave_.sign_ok);
-      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fw_().isLive());
+      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
     }
 
     if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
@@ -758,8 +751,8 @@ private:
       last_status_nmea_ms_ = now_ms;
       nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
                           valid,
-                          fw_().isLive() && std::isfinite(heave_wave_clean_m_),
-                          fw_().hasMagNorthLock(),
+                          fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
+                          fusion_.hasMagNorthLock(),
                           gyro_bias_.learning(),
                           acc_bias_estimating_,
                           rates_.imuHz(),

@@ -3,8 +3,9 @@
 
 Companion of docs/kalman-carma-shared-modes.md and
 doc/kalman_carma_shared_modes/.  Drives
-tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim in both of its
-modes and writes reports/results/kalman_carma_shared_modes/.
+tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim (dataset replay)
+and kalman_carma_shared_modes-bench (paired Monte Carlo, carma3_bench's
+engine) and writes reports/results/kalman_carma_shared_modes/.
 
 Stages (resumable; each appends to its own CSV):
 
@@ -50,7 +51,8 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 TDIR = ROOT / "tests" / "kalman_carma_shared_modes"
-SIM = TDIR / "kalman_carma_shared_modes-sim"
+SIM = TDIR / "kalman_carma_shared_modes-sim"        # dataset replay
+BENCH = TDIR / "kalman_carma_shared_modes-bench"    # paired Monte Carlo
 OUT = ROOT / "reports" / "results" / "kalman_carma_shared_modes"
 RAW = OUT / "raw_runs.csv"
 ROB = OUT / "robustness_runs.csv"
@@ -89,9 +91,10 @@ COLORS = {"A41": "#555555", "SHM:est": "#ff9896", "CSM": "#d62728", "CSM:off": "
 # running
 # ---------------------------------------------------------------------------
 
-def require():
-    if not SIM.exists():
-        sys.exit(f"missing {SIM.relative_to(ROOT)}: make -C tests/kalman_carma_shared_modes build")
+def require(exe=None):
+    for x in ([exe] if exe else [SIM, BENCH]):
+        if not x.exists():
+            sys.exit(f"missing {x.relative_to(ROOT)}: make -C tests/kalman_carma_shared_modes build")
 
 
 def read_rows(path):
@@ -109,7 +112,7 @@ def cmd(sc, seed, filters, score_start=300.0):
 def run_rows(cmds, out_path, jobs, extra=("--extended", "--coupling"), env=None):
     require()
     extra = list(extra)
-    hdr = subprocess.run([str(SIM), "--header"] + extra, capture_output=True, text=True, check=True).stdout.strip()
+    hdr = subprocess.run([str(BENCH), "--header"] + extra, capture_output=True, text=True, check=True).stdout.strip()
     new_file = not out_path.exists()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     failures = 0
@@ -117,7 +120,7 @@ def run_rows(cmds, out_path, jobs, extra=("--extended", "--coupling"), env=None)
         if new_file:
             out.write(hdr + "\n")
         with ThreadPoolExecutor(max_workers=jobs) as ex:
-            futs = {ex.submit(subprocess.run, [str(SIM)] + extra + c, capture_output=True, text=True,
+            futs = {ex.submit(subprocess.run, [str(BENCH)] + extra + c, capture_output=True, text=True,
                               env=env): c for c in cmds}
             for k, fut in enumerate(as_completed(futs), 1):
                 c, p = futs[fut], fut.result()
@@ -180,7 +183,7 @@ def stage_traces(args):
             cmds.append((cmd(sc, 1, fl) + ["--timeseries", str(p), "--decimate", "20"], env))
     require()
     with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-        futs = [ex.submit(subprocess.run, [str(SIM), "--extended", "--coupling"] + c, capture_output=True, text=True,
+        futs = [ex.submit(subprocess.run, [str(BENCH), "--extended", "--coupling"] + c, capture_output=True, text=True,
                           env=e) for c, e in cmds]
         for f in futs:
             p = f.result()
@@ -207,7 +210,7 @@ def stage_spectra(args):
                 p = Path(td) / f"s{s}.csv"
                 cmds.append((p, cmd(sc, s, ",".join(SPEC_FILTERS)) + ["--timeseries", str(p), "--decimate", "10"]))
             with ThreadPoolExecutor(max_workers=args.jobs) as ex:
-                list(ex.map(lambda pc: subprocess.run([str(SIM)] + pc[1], capture_output=True, text=True), cmds))
+                list(ex.map(lambda pc: subprocess.run([str(BENCH)] + pc[1], capture_output=True, text=True), cmds))
             for p, _ in cmds:
                 if not p.exists():
                     continue

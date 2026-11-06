@@ -17,7 +17,7 @@ set -e
 # CARMA(4,1) law (A41 within 3 %: equal in law, the complexified realization
 # re-coordinatizes differently at the 10 Hz model commits), and the deployable CSM runs without
 # failure.  Timing columns are never compared.
-./kalman_carma_shared_modes-sim --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
+./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
     --seed 1 --filters A41,SHM:est,CSM:noconf,CSM,CSM:off --score-start 200 > smoke_csm.csv
 python3 - <<'PY'
 import csv
