@@ -1,18 +1,25 @@
 # OU-III proof research state
 
-## MCU macro repair source binding
+## Native secant source binding
 
-The shared-modes MCU compile failed when Arduino `PI` and Xtensa `MR`
-macros expanded internal matrix identifiers (class E, implementation failure).
-Renaming those identifiers fixes the compile without changing estimator algebra.
-The whole-src digest also invalidated the OU-III finite secant binding. Compiler
-`-MM` inspection confirms the changed header is outside the probe closure;
-every probe src dependency is byte-identical to `ae11b996`. The diagnostic
-retains its numerical payload and original digest in `source_binding_refresh`.
-Structures preserved: the complete shipping OU-III dependency closure and all
-existing diagnostic qualifications. Relaxations introduced: none. No proof
-margin or theorem status changes. The limiter was source identity, not a
-mathematical inequality; the next check is the unchanged provenance validator.
+The evidence publication job in main build `42408605647` failed with
+`finite quotient/secant evidence verification failed: shipping source tree
+changed` (class E, implementation/diagnostic failure). The whole-`src/` digest
+became stale after shared-modes Xtensa constructor isolation changed
+`KalmanCarmaSharedModes.h` and added `KalmanCarmaSharedModes.cpp`. The
+invalidated hypothesis was whole-tree source identity, not OU-III behavior.
+Compiler `g++ -MM` inspection confirms all 38 probe `src/` dependencies are
+byte-identical to `a4f5be1`, whose whole-tree digest matches the stored binding.
+The refreshed binding records that reference, the previous digest, and the
+unchanged dependency closure; the diagnostic numerical payload is retained.
+
+Structures preserved: the complete shipping OU-III dependency closure, inherited
+execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
+Relaxations introduced: none. No shipping counterexample was found; existing
+shipping-level results and open theorem obligations remain valid. The limiter
+was stale source provenance, not a mathematical margin. The next falsifiable
+check is the unchanged provenance and evidence suite, including rejection of
+mutated source bindings; no new replay or relaxed model is needed.
 
 ## Current hypothesis
 
