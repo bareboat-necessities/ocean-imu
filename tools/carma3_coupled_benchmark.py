@@ -75,7 +75,7 @@ TRACE_FILTERS = "A41,MOD:est/nz,COR:est"
 # (tools/carma3_coupled_report.py trace_plots): the J29 record at the bench's
 # 10 Hz inside its plotted 690-770 s window, the others at 2 Hz (30 s rolling
 # RMS and the applied x-z phase).
-TRACE_FIG_FILTERS = ["A41", "COR:est", "MOD:est/nz"]
+TRACE_FIG_FILTERS = ["A41", "COR:est"]
 TRACE_J29_WINDOW = (690.0, 770.0)
 TRACE_EVERY = 5
 TIMING_FILTERS = ["A41", "MOD:est/nz", "COR:est"]

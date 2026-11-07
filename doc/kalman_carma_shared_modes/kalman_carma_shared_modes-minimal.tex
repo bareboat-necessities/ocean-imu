@@ -67,31 +67,31 @@ Unobservable Directions, Sea-State Adaptation, Accuracy and Embedded Cost
 \maketitle
 
 \begin{abstract}
-The shared-modes QMEKF carries one complexified CARMA(4,1) mode per
-translational axis, eight real states each, 33 error states in all. We show
-that exactly two directions per axis are unobservable, for every excitation
-and every attitude, and that they lie in the imaginary half of the mode. The
-observable quotient has six states per axis and gives a 27-state filter.
-At fixed model parameters its estimates, covariances and innovations are
-identical to the 33-state filter's, and amplitude, coupling and fallback
-changes keep this exact. A change of the frequency scale $\kappa$ moves the
-unobservable subspace by $0.45^\circ$ per percent, so no 27-state filter is
-exactly equivalent under frequency adaptation. A regression lift at every
-commit reproduces the 33-state filter to within $0.12\,\%$ on
-26 simulated seas $\times$ 30 seeds, so the removed directions carry no
-useful information. Among the six-state realizations we single out a
-cascade: the CARMA3 baseline's own coordinates driven through a two-state
-lossless colouring. It is the baseline exactly in law, adaptation included,
-when the coupling is off. With the coupling on it removes the
-complexified realization's adaptation cost: against the 33-state filter its
-3-D error is lower on 20 seas (by up to $0.9\,\%$, heave by 1--3\,\%) and
-higher on two (by up to $2.2\,\%$). Gated on the pinned dataset, it has
-7--9\,\% lower 3-D error than TFG-CARMA3. On the ESP32-S3 the 27-state filter needs
-42\,\% fewer multiply-adds per sample and \SI{3.2}{kB} (21\,\%) less filter
-memory, at the price of \SI{10.6}{kB} (5\,\%) more code. The minimal
-stochastic order of the three-axis law is $4\operatorname{rank}\Sigma+2\operatorname{rank}\Im\Sigma$,
-which is 16 motion states (25 in all). That realization exists but depends
-on the excitation; we argue why 27 is the better operating point.
+The shared-modes QMEKF carries, on every translational axis, the real part
+of one complexified CARMA(4,1) mode driven by circular complex noise with a
+Hermitian excitation. Realified, the mode has eight real states per axis. We
+show that exactly two directions per axis are unobservable, for every
+excitation and every attitude, and that they lie in the imaginary half of the
+mode. The observable quotient has six states per axis and gives a 27-state
+filter. At fixed model parameters its estimates, covariances and innovations
+are those of the realified filter, and amplitude, coupling and fallback
+changes keep this exact; a change of the frequency scale $\kappa$ moves the
+unobservable subspace by $0.45^\circ$ per percent, so each six-state
+realization is its own adaptive model. We single out a cascade: the CARMA3
+baseline's own coordinates driven through a two-state lossless colouring.
+With the coupling off it is the baseline exactly in law, adaptation
+included, and it is as well conditioned. In paired simulations on 26 seas
+$\times$ 30 seeds the coupled 27-state filter lowers the 3-D position error
+of the baseline on 25 seas (median $3.2\,\%$, up to $15.8\,\%$), stays
+consistent, and withdraws every deliberately wrong prior; it is $58\,\%$
+worse on a hull whose heave response is half the prior's, an over-coupling
+of the excitation mapping. Gated on the pinned dataset, its 3-D error is
+7--9\,\% below TFG-CARMA3's. On the ESP32-S3 it needs 1.9 times the
+baseline's multiply-adds per sample and \SI{12.5}{kB} of filter memory. The
+minimal stochastic order of the three-axis law is
+$4\operatorname{rank}\Sigma+2\operatorname{rank}\Im\Sigma$, 16 motion states
+(25 in all); that realization depends on the excitation, and we argue why 27
+is the better operating point.
 \end{abstract}
 
 \section{Questions}
@@ -477,87 +477,73 @@ The Monte Carlo mode of \texttt{kalman\_carma\_shared\_modes-bench} runs the
 carma3\_bench engine: random-phase directional seas through the benchmark
 hull's RAOs (no CARMA model in the truth), one seeded IMU and magnetometer
 stream per row, and every filter of the row on the same stream. The filters
-are the CARMA3 baseline with Evidence excitation (A41, 21 states), the
-33-state CSM in its deployable configuration (estimated coupling and
-confidence), the three 27-state realizations CSM27 (cascade), CSM27Q
-(quotient with lift) and CSM27H (quotient, held), and CSM:off. There are 26
-seas in five groups (\cref{tab:scen}): fixed seas, coupling strength and
-phase (spreading $\cos^2$ to long-crested, following, beam and head seas,
-heave RAO $\times0.5$ and $\times1.5$), a gradual frequency change, rapid
-changes (period, direction and height in 10\,s, direction $90^\circ$ in
-60\,s, onset and cessation), and disturbances (turns, manoeuvring, coloured
-and variance-cycling accelerometer noise, $\pm25\,\%$ sample jitter,
-magnetic disturbances with calibration residuals, accelerometer-bias drift).
-Each sea has 30 seeds, 1200\,s at 200\,Hz, scored from 300\,s. Changes are
-paired over seeds; 95\,\% intervals are bootstrap over seeds, never over the
-autocorrelated samples. Nothing in the 27-state filter is fitted.
+are the CARMA3 baseline with Evidence excitation (A41, 21 states) and the
+27-state CSM in its deployable configuration (estimated coupling and
+confidence). With the coupling off CSM \emph{is} A41 (\cref{prop:a41}), so the
+paired difference isolates the directional coupling. There are 26 seas in
+five groups (\cref{tab:scen}): fixed seas, coupling strength and phase
+(spreading $\cos^2$ to long-crested, following, beam and head seas, heave
+RAO $\times0.5$ and $\times1.5$), a gradual frequency change, rapid changes
+(period, direction and height in 10\,s, direction $90^\circ$ in 60\,s, onset
+and cessation), and disturbances (turns, manoeuvring, coloured and
+variance-cycling accelerometer noise, $\pm25\,\%$ sample jitter, magnetic
+disturbances with calibration residuals, accelerometer-bias drift). Each
+sea has 30 seeds, 1200\,s at 200\,Hz, scored from 300\,s. Changes are paired
+over seeds; 95\,\% intervals are bootstrap over seeds, never over the
+autocorrelated samples. Nothing in the filter is fitted.
 
 \begin{table*}[!t]
-\caption{3-D position RMS of CSM (33 states) and paired changes against it
-(\%, positive: lower error than CSM), mean over 30 seeds per sea.}
+\caption{3-D position RMS of A41 and CSM, and the paired changes of CSM
+against A41 (\%, positive: lower error than A41) with 95\,\% bootstrap
+intervals, mean over 30 seeds per sea.}
 \label{tab:scen}
 \centering\small
-\InputPart{csm27-scenarios.tex-part}
+\InputPart{csm-scenarios.tex-part}
 \end{table*}
 
 \begin{table}[!t]
-\caption{Mean paired change against CSM by group (\%, positive: better).
-The coupling group is dominated by heave RAO $\times0.5$ and the disturbance
-group by coloured accelerometer noise (\cref{tab:scen}).}
+\caption{Mean paired change of CSM against A41 by group (\%, positive:
+better), with the range over the seas of the group. The coupling group is
+dominated by heave RAO $\times0.5$ (\cref{tab:scen}).}
 \label{tab:groups}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-groups.tex-part}
+\InputPart{csm-groups.tex-part}
 \end{adjustbox}
 \end{table}
 
 \begin{figure*}[!t]
 \centering
-\ChartFigure[0.9\textwidth]{csm27_paired_changes.pgf}
-\caption{Paired changes of heave and horizontal RMS against CSM (33 states)
+\ChartFigure[0.9\textwidth]{csm_paired_changes.pgf}
+\caption{Paired changes of heave, horizontal and 3-D RMS of CSM against A41
 with 95\,\% bootstrap intervals, per sea.}
 \label{fig:paired}
 \end{figure*}
 
 \begin{figure*}[!t]
 \centering
-\ChartFigure[0.9\textwidth]{csm27_rms3.pgf}
-\caption{3-D position RMS per sea (mean over 30 seeds, log scale) of A41,
-CSM, CSM27, CSM27Q and CSM:off.}
+\ChartFigure[0.9\textwidth]{csm_rms3.pgf}
+\caption{3-D position RMS per sea (mean over 30 seeds, log scale) of A41 and
+CSM.}
 \label{fig:rms3}
 \end{figure*}
 
-\paragraph{The removed directions carry no information}
-The quotient with the regression lift (CSM27Q) is the faithful reduction of
-CSM. Its largest paired 3-D change on any of the 26 seas is $0.12\,\%$
-(heave RAO $\times0.5$). On 24 seas it is below $0.02\,\%$, including every
-gradual, rapid and manoeuvring sea (\cref{tab:scen}, \cref{fig:paired,fig:rms3}). The position NEES ratio against CSM has median 0.9999 and
-5--95\,\% range 0.9992--1.0002, and the 95\,\% coverage is identical
-(\cref{tab:cons}). The leakage of \cref{sec:adapt} is therefore real but
-two and a half to three orders of magnitude below the estimation error
-(\cref{fig:trans}): the information the
-33-state filter keeps in its unobservable component is negligible. Holding
-the quotient coordinates instead (CSM27H) is worse on 22 seas, by up to
-$1.25\,\%$ (swell): the lift matters, but little.
-
-\paragraph{The cascade is a different, mostly better, adaptive model}
-CSM27 changes the commit law, not the frozen model, and the differences
-follow. Heave is significantly better on 19 of 26 seas (by at least
-$1\,\%$ on 16), with tight intervals: $+1.49\,\%$ $[1.36,1.63]$ on the spread
-JONSWAP, $+3.33\,\%$ on the regular wave, $+2.15\,\%$ on the short wind sea.
-This is the realization effect of \cref{prop:a41} removed: CSM:off is a
-median $1.2\,\%$ worse than A41 in heave. Heave is worse on six seas: heave
-RAO $\times0.5$ ($-3.27\,\%$), coloured accelerometer noise ($-3.13\,\%$),
-the abrupt change ($-1.35\,\%$), swell ($-1.28\,\%$), bimodal and PM.
-Horizontal RMS is $0.11$--$0.45\,\%$ worse on 17 seas, mostly the
-JONSWAP-type ones, and better on five, the multi-system seas among them
-(mixed swell and wind $+0.90\,\%$, bimodal $+0.72\,\%$). The 3-D RMS is
-better on 20 seas ($+0.13$ to $+0.91\,\%$), statistically equal on four (PM,
-swell, abrupt change, manoeuvring), and worse on two: heave RAO
-$\times0.5$ ($-2.15\,\%$) and coloured accelerometer noise ($-1.61\,\%$). The gradual, rapid, manoeuvring,
-jitter, magnetic and bias-drift seas behave like the spread JONSWAP ($+0.2$
-to $+0.35\,\%$ 3-D). Consistency is unchanged: the NEES ratio median is
-0.990, and the coverage is identical.
+\paragraph{Accuracy}
+The 3-D RMS of CSM is significantly lower than A41's on 25 of the 26 seas,
+by $+0.1$ to $+15.8\,\%$ (median $+3.2\,\%$ over the 25), and higher on one:
+heave RAO $\times0.5$ ($-58\,\%$, below). Heave is better on 24 seas (spread
+JONSWAP $+5.92\,\%$ $[5.68,6.17]$, regular wave $+13.2\,\%$, swell
+$+17.5\,\%$) and worse on two: heave RAO $\times0.5$ and manoeuvring
+($-6.1\,\%$), where the confidence withdraws the coupling during turns and the
+withdrawal itself costs heave while the 3-D error still improves
+($+0.6\,\%$). Horizontal RMS is better on 24 seas, unchanged under coloured
+accelerometer noise, and worse on the heave RAO $\times0.5$ sea. The
+coupling gains are largest where the sea is most coherent (swell $+15.8\,\%$,
+regular wave $+8.4\,\%$, PM $+5.2\,\%$ in 3-D) and smallest on the very low sea
+($+0.2\,\%$) and under the coloured accelerometer noise ($+0.1\,\%$), whose
+error is dominated by the shared low-frequency disturbance (818 against
+818\,mm). The gradual, rapid, jitter, magnetic and bias-drift seas behave like
+the spread JONSWAP ($+2.6$ to $+5.3\,\%$ 3-D).
 
 \begin{table}[!t]
 \caption{Consistency, pooled over all seas and seeds: medians of the
@@ -566,139 +552,127 @@ NIS, mean 95\,\% coverage of heave, failed runs.}
 \label{tab:cons}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-consistency.tex-part}
+\InputPart{csm-consistency.tex-part}
 \end{adjustbox}
 \end{table}
 
 \begin{figure}[!t]
 \centering
-\ChartFigure{csm27_consistency.pgf}
+\ChartFigure{csm_consistency.pgf}
 \caption{Position NEES: distribution per filter (left; 3 is the nominal
-mean) and per run, 27 against 33 states (right).}
+mean) and per run, CSM against A41 (right).}
 \label{fig:cons}
 \end{figure}
 
+\paragraph{Consistency}
+The pooled median position NEES is 1.652 for CSM against 1.802 for A41, the
+heave 95\,\% coverage 0.912 against 0.918, and no run of either filter
+failed (1560 runs; \cref{tab:cons,fig:cons}). Both filters are
+conservative, as A41 is by design (its accelerometer noise is inflated; the
+median NIS is 0.09 for both). On the heave RAO $\times0.5$ sea CSM is
+overconfident (median NEES 14.3 against 2.8): the over-coupling below.
+
 \begin{figure*}[!t]
 \centering
-\ChartFigure[0.9\textwidth]{csm27_transients.pgf}
+\ChartFigure[0.9\textwidth]{csm_transients.pgf}
 \caption{Ensemble RMS over 10 seeds (10\,s moving window) around the sea-state
-changes. Solid: error against the truth. Dotted: difference of each 27-state
-realization from CSM, i.e.\ the effect of the removed directions and of the
-commit rule.}
+changes (shaded): error against the truth of A41 and CSM.}
 \label{fig:trans}
 \end{figure*}
+
+\paragraph{Transients}
+Around the frequency, period, direction and height changes and the wave
+onset and cessation, CSM's error envelope stays at or below A41's
+(\cref{fig:trans}). During the direction change the two coincide: the
+confidence withdraws the coupling while the monitor disagrees with the
+prior, and the filter is then A41. After the waves stop the residual heave
+error of both decays from below a millimetre. The gradual frequency change
+($+5.3\,\%$ 3-D) and the three rapid changes ($+2.6$ to $+4.6\,\%$) show no
+transient penalty in the scored window.
 
 \begin{table}[!t]
 \caption{Wrong coupling priors (external, built from the truth and then
 reversed, turned, phase-shifted or doubled), with and without the
-confidence: 3-D RMS (mm) and median position NEES, 20 seeds.}
+confidence: 3-D RMS (mm) and median position NEES, 20 seeds; first row of
+each sea: A41.}
 \label{tab:robust}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-robust.tex-part}
+\InputPart{csm-robust.tex-part}
 \end{adjustbox}
 \end{table}
 
 \begin{figure*}[!t]
 \centering
-\ChartFigure[0.9\textwidth]{csm27_robustness.pgf}
-\caption{Wrong coupling priors: 3-D RMS of CSM and CSM27 with and without
-confidence; dashed: A41.}
+\ChartFigure[0.9\textwidth]{csm_robustness.pgf}
+\caption{Wrong coupling priors: 3-D RMS of CSM with and without confidence;
+dashed: A41.}
 \label{fig:robust}
 \end{figure*}
 
 \paragraph{Wrong coupling}
-The reduction does not change the safety behaviour (\cref{tab:robust},
-\cref{fig:robust}). With the confidence on, every wrong prior (reversed,
-turned by $90^\circ$, phase-shifted by $45^\circ$, doubled) is withdrawn on
-all three seas. The 33- and 27-state filters then sit at the baseline's
-error (25.7 against 25.7\,mm on the spread JONSWAP) with the same NEES
-(1.65 and 1.64). Without the confidence, the doubled prior is the worst
-case for both (57.5 and 57.0\,mm, NEES 14.1 and 13.9, against 25\,mm with
-the true prior), followed by the reversed one (29.4\,mm for both). The
-27-state filter's 3-D RMS is within $1.6\,\%$ of the 33-state filter's in
-every cell. A coupling frozen at 400\,s in the keel frame behaves the same
-through 90$^\circ$ turns (25.5 and 25.4\,mm).
-
-\begin{table}[!t]
-\caption{Cascade commit rule: paired change against CSM (\%, 95\,\% interval,
-30 seeds) with the normalized colouring held (default) and with the
-colouring itself held.}
-\label{tab:abl}
-\centering\small
-\begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-ablation.tex-part}
-\end{adjustbox}
-\end{table}
-
-\paragraph{Commit rule of the cascade}
-One hypothesis for the cascade's losses was the rescaling of the colouring
-states at amplitude commits, which is noisy on low-acceleration swell and
-under coloured accelerometer noise. It is refuted (\cref{tab:abl}). Holding
-the colouring states themselves, as the 33-state block holds its imaginary
-half, gives the same or worse results there: swell heave $-1.41$ against
-$-1.28\,\%$, coloured noise $-3.50$ against $-3.13\,\%$. It narrows the
-heave RAO $\times0.5$ loss only partly ($-2.55$ against $-3.27\,\%$). The
-cascade's differences therefore come from its C41J coordinates, the
-baseline's commit law, which also produces its gains. The normalized hold
-is kept: it is the one that makes the coupling-off filter exactly A41.
+With the confidence on, every wrong prior (reversed, turned by $90^\circ$,
+phase-shifted by $45^\circ$, doubled) is withdrawn on all three seas, and CSM
+then has exactly A41's error (25.7\,mm on the spread JONSWAP; the true prior
+gives 24.8\,mm; \cref{tab:robust,fig:robust}). Without the confidence the
+doubled prior is the worst case on the JONSWAP seas (57.0\,mm, NEES 13.9),
+followed by the reversed one (29.4\,mm); on the mixed sea the reversed and
+turned priors cost 21--23\,\%. A coupling frozen at 400\,s in the keel frame
+through $90^\circ$ turns gives 25.4\,mm (estimated: 25.2, A41: 25.7).
 
 \begin{table}[!t]
 \caption{Regression gates of the dataset replay (eight scored records,
-default seeds, magnetometer on): worst value over the records for CSM27,
-its fitted bar (worst plus about 0.5\,\%, the repository's convention, gated
-in \texttt{run\_tests.sh}), TFG-CARMA3 (T41, its gated Legacy excitation;
-and with Evidence excitation, as CSM27 uses), and CSM.}
+default seeds, magnetometer on): worst value over the records for CSM, its
+fitted bar (worst plus about 0.5\,\%, the repository's convention, gated in
+\texttt{run\_tests.sh}), and TFG-CARMA3 (T41, its gated Legacy excitation;
+and with Evidence excitation, as CSM uses).}
 \label{tab:gates}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-gates.tex-part}
+\InputPart{csm-gates.tex-part}
 \end{adjustbox}
 \end{table}
 
 \paragraph{Dataset replay and regression gates}
-The eight scored records of the pinned dataset are replayed with the
-seeds, sensor model and adapter configuration of every CARMA filter
-(\cref{tab:dataset}). CSM27 is gated by its own bars (\cref{tab:gates}), and
+The eight scored records of the pinned dataset are replayed with the seeds,
+sensor model and adapter configuration of every CARMA filter
+(\cref{tab:dataset}). CSM is gated by its own bars (\cref{tab:gates}), and
 all eight records pass. Against TFG-CARMA3 (two-frame Lie group,
 independent axes) the worst heave is 19.7\,\% (JONSWAP) and 25.2\,\%
 (PM-Stokes) lower. That advantage is almost entirely the excitation mode:
 with Evidence excitation TFG-CARMA3 reaches 2.459 and 2.440\,\% of $H_s$,
-against CSM27's 2.455 and 2.403. The 3-D error is 9.4 and 7.1\,\% lower in
-either mode, which is the cross-axis coupling. TFG-CARMA3 is better on pitch
+against CSM's 2.455 and 2.403. The 3-D error is 9.4 and 7.1\,\% lower in
+either mode, which is the coupling. TFG-CARMA3 is better on pitch
 (4.3\,\%) and on the 3-D accelerometer and gyroscope biases (1.8 and
-2.5\,\%): its two-frame Lie group separates the biases slightly better,
-as the shared-modes documentation reports for the 33-state filter. Against
-CSM the dataset shows the Monte Carlo pattern: heave about 2.4\,\% better,
-3-D 0.3--0.6\,\% worse, attitude and biases equal.
+2.5\,\%): its two-frame Lie group separates the biases slightly better.
+Against CSM with the coupling off (A41 in Evidence mode) the replay shows the
+Monte Carlo pattern on every record: heave 0.2--2.8\,\% and 3-D 2--10\,\%
+lower.
 
 \paragraph{An unexpected finding: the excitation mapping over-couples}
-On the sea with the heave RAO halved, every shared-mode filter is far worse
-than the baseline. A41 and CSM:off are 35.4\,\% $[32.6, 37.6]$ better in 3-D
-than CSM, and the heave error exceeds A41's by more than 20\,\% on 28 of 30
-seeds. The reduction is not the cause: CSM27Q is within $0.12\,\%$ of CSM
-there. The measured multiple coherence of $z$ on $(x,y)$ is unchanged by a
-scaling of heave (0.87 on both seas, from the confidence monitor). The
-coherence of the applied excitation, however, rises from 0.13 to 0.38. The
-mapping keeps the measured regression $\vct S_{hz}/S_{zz}$, normalizes the
-vertical to the prior $\sigma_z^2$ and keeps the horizontal block at the
-prior. The applied coherence is therefore
+On the sea with the heave RAO halved CSM is far worse than the baseline:
+A41 is 58.0\,\% $[51.8, 63.5]$ better in 3-D, and CSM is overconfident (median
+NEES 14.3 against 2.8). The six removed directions are not the cause: the
+excitation mapping does not depend on the realization. The measured multiple
+coherence of $z$ on $(x,y)$ is unchanged by a scaling of heave (0.87 on both
+seas, from the confidence monitor). The coherence of the applied excitation,
+however, rises from 0.13 to 0.38. The mapping keeps the measured regression
+$\vct S_{hz}/S_{zz}$, normalizes the vertical to the prior $\sigma_z^2$ and
+keeps the horizontal block at the prior. The applied coherence is therefore
 $\gamma^2(S_{hh}/S_{zz})/(\sigma_h^2/\sigma_z^2)$. It grows when the hull's
 heave-to-surge ratio departs from the prior's, and the PSD cap then lets the
 prior explain almost all horizontal motion through heave. The consistency
-test compares two data-driven regressions and cannot see it. The mapping is
-shared by the 33- and 27-state filters, so it is outside this study's
-change. A candidate fix is to cap the applied coherence at the measured one,
-$|b|^2\le\gamma^2\sigma_h^2\sigma_z^2$; it would change the 33-state filter
-and needs its own validation.
+test compares two data-driven regressions and cannot see it. A candidate fix
+is to cap the applied coherence at the measured one,
+$|b|^2\le\gamma^2\sigma_h^2\sigma_z^2$; it needs its own validation.
 
 \begin{table*}[!t]
 \caption{Dataset replay (pinned oceanography-waves-lib records, default
 seeds, Evidence excitation): heave RMS in \% of $H_s$ / 3-D RMS in \% of the
-reference maximum.}
+reference maximum, CSM and CSM with the coupling off (A41).}
 \label{tab:dataset}
 \centering\small
-\InputPart{csm27-dataset.tex-part}
+\InputPart{csm-dataset.tex-part}
 \end{table*}
 
 \section{Embedded Efficiency}
@@ -711,7 +685,7 @@ total per sample at 200\,Hz.}
 \label{tab:cost}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-cost.tex-part}
+\InputPart{csm-cost.tex-part}
 \end{adjustbox}
 \end{table}
 
@@ -723,89 +697,71 @@ from one update.}
 \label{tab:esp}
 \centering\small
 \begin{adjustbox}{max width=\linewidth}
-\InputPart{csm27-esp32s3.tex-part}
+\InputPart{csm-esp32s3.tex-part}
 \end{adjustbox}
 \end{table}
 
 \begin{figure}[!t]
 \centering
-\ChartFigure{csm27_cost.pgf}
+\ChartFigure{csm_cost.pgf}
 \caption{Multiply-adds per sample, covariance storage and ESP32-S3 filter
 object.}
 \label{fig:cost}
 \end{figure}
 
-Per sample the 27-state filter needs 7\,992 multiply-adds against
-13\,686 (42\,\% fewer), and one 0.1\,s commit needs 19\,440 against
-28\,672 (32\,\% fewer, \cref{tab:cost}). The covariance shrinks from 1089 to
-729 floats. The paired discretization keeps $5+11+11$ series coefficients
-of $6\times6$ against $8+15$ of $8\times8$. Together these make the
-ESP32-S3 filter object 3248\,B (21\,\%) smaller and its largest stack frame
-592\,B smaller, while the worst static call chain of one update is unchanged
-(4864 against 4896\,B; \cref{tab:esp}). The price is 10.6\,kB (5.4\,\%) more
-code: the paired discretization and the closed-form construction. Generic
-Eigen decompositions in that construction had cost 44\,kB before they were
-replaced. The 33-state block also solves, at every commit and in double
-precision (software on the ESP32-S3), a $4\times4$ Lyapunov equation by
-doubling and a complex $4\times4$ inverse. The cascade's $\kappa$ scaling is
-closed form. Both realizations apply their $6\times6$ commit transform
-densely in the core hook, 5\,832 multiply-adds per commit. The cascade's
-transform is diagonal, so a diagonal path would save almost all of that. The
-quotient also forms its lift in double precision and needs 29\,kB more code
-than the cascade.
-On the host (x86-64, one job, ranking only) the QMEKF core with 10\,Hz
-commits takes 6.26\,\textmu s per sample for CSM against 4.04 for CSM27
-($-36\,\%$), 5.14 for CSM27Q and 2.31 for A41. With x86 flush-to-zero the
-figures are 4.16, 3.56 ($-14\,\%$), 4.00 and 2.10: the float discretization
-series underflow into denormals, which x86 handles in microcode. The
-complete wrapper takes 6.90 against 4.99\,\textmu s on average ($-28\,\%$),
-with 99th percentiles of 33.9 against 14.0\,\textmu s ($-59\,\%$). The worst
-case is the commit step. The host saving per sample is smaller than the
-multiply-add count suggests: the front end, the two coupling spectrum
-estimators and the confidence cost the same in both filters, and SIMD
-flattens the difference between $6\times6$ and $8\times8$ blocks. A scalar
-FPU follows the counts more closely.
+Per sample CSM needs 7\,992 multiply-adds against A41's 4\,248, and one
+0.1\,s commit 19\,440 against 4\,608 (\cref{tab:cost}). The covariance grows
+from 441 to 729 floats. The paired discretization keeps $5+11+11$ series
+coefficients of $6\times6$. On the ESP32-S3 the filter object is 12\,504
+against 6\,136\,B, the largest stack frame 1\,888 against 1\,328\,B, and the
+worst static call chain of one update is unchanged (4\,864 against
+4\,832\,B; \cref{tab:esp}). The code is 33\,kB (19\,\%) larger: the paired
+discretization, the closed-form construction, the two coupling spectrum
+estimators and the confidence. Generic Eigen decompositions in the
+construction would cost 44\,kB. Every commit applies the $6\times6$ transform
+of each axis densely in the core hook (5\,832 multiply-adds); the cascade's
+transform is diagonal, so a diagonal path would save almost all of that. On
+the host (x86-64, one job, ranking only) the QMEKF core with 10\,Hz commits
+takes 3.69\,\textmu s per sample against 2.18 for A41; with x86 flush-to-zero
+2.92 against 1.80 (the float discretization series underflow into denormals,
+which x86 handles in microcode). The complete wrapper takes 4.61 against
+3.08\,\textmu s on average, with 99th percentiles of 13.1 against
+5.7\,\textmu s: the worst case is the commit step. A scalar FPU follows the
+multiply-add counts more closely than SIMD x86.
 
 \section{Conclusions}
-\paragraph{Equivalence}
-The 27-state realization is mathematically equivalent to the 33-state
-filter at fixed parameters, and through every excitation change: amplitude
-commits, coupling estimates, the confidence and the PSD-preserving
-fallback (\cref{prop:exact,prop:law}). It preserves the three-dimensional
-law, the co- and quadrature spectra, the Hermitian noise structure, the
-$p,v,a$ estimates and the covariance. Frequency adaptation moves the
-unobservable subspace, so no 27-state filter is exactly equivalent under it.
+\paragraph{Dimension}
+Two of the eight real states per axis of the complexified shared mode are
+unobservable for every excitation and attitude (\cref{prop:U}). The 27-state
+filter carries the six observable ones and is equivalent to the realified
+model at fixed parameters, and through every excitation change: amplitude
+commits, coupling estimates, the confidence and the PSD-preserving fallback
+(\cref{prop:exact,prop:law}). It preserves the three-dimensional law, the co-
+and quadrature spectra, the Hermitian noise structure, the $p,v,a$ estimates
+and the covariance. The minimal stochastic order is
+$4\operatorname{rank}\mat\Sigma+2\operatorname{rank}\Im\mat\Sigma$ (25 states),
+but that realization depends on the excitation and is not a better operating
+point; 21 states suffice only without quadrature coupling.
 
-\paragraph{Information in the removed states}
-The removed states carry no useful information during adaptation. With a
-stationary regression lift the quotient stays within $0.12\,\%$ of the
-33-state filter on all 26 seas, and the NEES agrees to a ratio of 0.9999.
+\paragraph{Realization}
+The cascade (the baseline's own coordinates driven through a lossless
+two-state colouring) is the filter's realization: with the coupling off it is
+the CARMA3 baseline exactly, adaptation included (\cref{prop:a41}), so the
+fallback model is the baseline, and it is as well conditioned as the
+baseline.
 
-\paragraph{Trade-off}
-The trade-off is favourable: 42\,\% fewer multiply-adds per sample, 32\,\%
-less commit work and 21\,\% less filter memory on the ESP32-S3, for 5\,\%
-more code. There is no approximation error to accept. The cascade's
-differences from the 33-state filter are a different, equally exact,
-adaptive model, better on 20 seas and worse on two.
-
-\paragraph{Recommended realization}
-The cascade is recommended. With the coupling off it is the CARMA3 baseline
-exactly, adaptation included, so the fallback model is the baseline. It is
-the best conditioned realization, and its measured worst-case update is
-the shortest. The quotient
-is the choice when continuity with the validated 33-state filter matters
-more.
-
-\paragraph{State dimension}
-The minimal stochastic order is $4\operatorname{rank}\mat\Sigma+2\operatorname{rank}\Im\mat\Sigma$
-(25 states), but that realization depends on the excitation and is not a
-better operating point; 21 states suffice only without quadrature coupling.
+\paragraph{Accuracy and cost}
+Against the baseline, with the same excitation mode, the coupling lowers the
+3-D error on 25 of 26 simulated seas (median $3.2\,\%$, up to $15.8\,\%$),
+keeps the filter consistent and withdraws every deliberately wrong prior. It
+costs 1.9 times the multiply-adds per sample, twice the filter memory and
+19\,\% more code on the ESP32-S3.
 
 \paragraph{Next experiment}
-The excitation mapping shared by both filters over-couples when the hull's
-heave-to-surge ratio departs from the prior (35\,\% worse than the baseline
-with the heave RAO halved). Capping the applied coherence at the measured
-one is the next falsifiable experiment, independent of the realization.
+The excitation mapping over-couples when the hull's heave-to-surge ratio
+departs from the prior ($58\,\%$ worse than the baseline with the heave RAO
+halved). Capping the applied coherence at the measured one is the next
+falsifiable experiment.
 
 \begin{thebibliography}{9}
 \bibitem{andersonmoore79}

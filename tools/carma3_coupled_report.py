@@ -465,7 +465,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
     def tload(sc):
         p = bench.TRACE_DIR / f"{sc.replace('+', '_')}_seed1.csv"
         return pd.read_csv(p) if p.exists() else None
-    names = ["A41", "COR:est", "MOD:est/nz"]
+    names = ["A41", "COR:est"]   # the filters the committed traces keep (carma3_coupled_benchmark.TRACE_FIG_FILTERS)
     t = tload(bench.J29)
     if t is not None:
         # (1) true vs estimated X/Y/Z
@@ -486,7 +486,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
         # (2) 3-D trajectory
         fig = plt.figure(figsize=(10, 4.6))
         w = (t.t >= 700) & (t.t <= 730)
-        for k, (n, title) in enumerate((("A41", "baseline"), ("MOD:est/nz", "modal directional coupling, estimated"))):
+        for k, (n, title) in enumerate((("A41", "baseline"), ("COR:est", "correlated, estimated"))):
             ax = fig.add_subplot(1, 2, k + 1, projection="3d")
             ax.plot(t.x_true[w], t.y_true[w], -t.z_true[w], color="k", lw=1.8, label="truth")
             ax.plot(t[f"x_{n}"][w], t[f"y_{n}"][w], -t[f"z_{n}"][w], color=COLORS[n], lw=1, label=n)

@@ -10,24 +10,23 @@ which is preserved bit for bit (section 4).  The paper
 generated tables are `reports/results/carma3_coupled/summary.md`.
 
 **Result (simulation only; completed Monte Carlo, seeds 1-50, ten wave
-seas plus calm water and a still IMU, complete INS).**  Shared directional
-modes (`SHM:est`, 33 states, coupling estimated from the IMU alone) lower the
-pooled wave-displacement RMS against the baseline A41 by **11.4 % (x), 4.8 %
-(y) and 12.2 % (z)**, 95 % bootstrap intervals within +-0.6 points; the
-oracle coupling adds only 0.5-1.4 points, and calm water and the still IMU
-are unchanged.  Correlated excitation (`COR`) gains nothing (z +0.6 %,
-horizontal -1.3 / -3.3 %): a real coupling can represent 28-41 % of the
-truth's x-z cross-spectral energy, a constant phase 84-94 %.  The
-constrained MCARMA (`MCA`, 35 states) is more accurate still (+14.9 / +9.5 /
-+26.5 %), but its heave RAO is the benchmark hull's: with the RAO natural
-frequency 27 % low it loses up to 25 % against the baseline, its worst host
-update is 824 us (joint 26-state rediscretization) against 35 us, and the
+seas plus calm water and a still IMU, complete INS).**  Correlated
+excitation (`COR`, Experiment A) gains nothing against the baseline A41
+(pooled heave +0.6 %, horizontal -1.3 / -3.3 %): a real coupling can
+represent 28-41 % of the truth's x-z cross-spectral energy, a constant phase
+84-94 %.  The directional numerator form of the exact complex-OU modal
+realization (`MOD:est/nz`, the only kinematically admissible phase coupling
+of four states per axis) gains heave (+6.8 %) and loses 9-23 %
+horizontally.  The quadrature relation needs the complexified shared modes
+(Experiment B), which are the standalone 27-state filter
+`KalmanCarmaSharedModes` with a coupling confidence and fallback
+([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md); there its
+3-D error is lower than A41's on 25 of 26 seas).  The constrained MCARMA
+(Experiment C) is analysed only: it needs the hull's heave RAO, and the
 unrestricted MCARMA is not identifiable (Fisher rank 51 of 54).  A wrong
-coupling is harmful (reversed: -8 to -38 %).  **Recommendation: Option C**
-(shared directional modes) as a separate experimental filter with a coupling
-confidence and fallback, now `KalmanCarmaSharedModes`
-([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)).  Nothing is
-integrated into the production CARMA3 filter (section 8).
+coupling is harmful (the reversed oracle numerator coupling: -5.5 to
+-29.7 %).  Nothing is integrated into the production CARMA3 filter
+(section 8).
 
 ## 1. The baseline, as implemented
 
@@ -440,47 +439,37 @@ one job); ESP32-S3 object code / filter `sizeof` (Xtensa GCC 14.2.0, -Os).
 
 | Model | States | X RMS | Y RMS | Z RMS | NEES / NIS | Cross-spectral error | Host us | ESP32-S3 code / filter (B) |
 |---|---|---|---|---|---|---|---|---|
-| Baseline CARMA3 (A41) | 21 | 4.18 | 2.47 | 3.64 | 15.42 / 0.183 | 0.226 | 3.6 / 7.9 | 141,209 / 6,136 |
-| Complex-OU modal, exact | 21 | 4.18 (-0.0 %) | 2.47 (+0.0 %) | 3.64 (-0.0 %) | 15.42 / 0.183 | -- | 4.2 / 11.6 | -- |
-| Modal, directional numerator, est. | 21 | 4.57 (-9.2 % [-10.7, -8.0]) | 3.03 (-22.6 % [-24.1, -21.3]) | 3.39 (+6.8 % [+6.6, +7.0]) | 12.35 / 0.220 | 0.160 | 4.3 / 12.0 | -- |
-| Correlated (A), estimated | 21 | 4.24 (-1.3 % [-1.4, -1.2]) | 2.55 (-3.3 % [-3.6, -2.9]) | 3.62 (+0.6 % [+0.6, +0.6]) | 15.89 / 0.185 | 0.236 | 4.0 / 10.5 | 144,789 / 5,736 |
+| Baseline CARMA3 (A41) | 21 | 4.18 | 2.47 | 3.64 | 15.42 / 0.183 | 0.226 | 3.3 / 6.1 | 141,209 / 6,136 |
+| Modal, directional numerator, est. | 21 | 4.57 (-9.2 % [-10.7, -7.9]) | 3.03 (-22.6 % [-24.2, -21.3]) | 3.39 (+6.8 % [+6.6, +7.0]) | 12.35 / 0.220 | 0.160 | 3.9 / 10.1 | 160,160 / 5,328 |
+| Correlated (A), estimated | 21 | 4.24 (-1.3 % [-1.4, -1.2]) | 2.55 (-3.3 % [-3.6, -2.9]) | 3.62 (+0.6 % [+0.6, +0.6]) | 15.89 / 0.185 | 0.236 | 3.5 / 8.5 | 144,789 / 5,736 |
 | Correlated (A), oracle | 21 | 4.24 (-1.4 %) | 2.57 (-3.8 %) | 3.62 (+0.6 %) | 15.96 / 0.185 | -- | -- | -- |
-| **Shared modes (B), estimated** | 33 | **3.71 (+11.4 % [+11.2, +11.6])** | **2.36 (+4.8 % [+4.2, +5.4])** | **3.20 (+12.2 % [+12.0, +12.3])** | 13.91 / 0.181 | 0.182 | 7.0 / 34.9 | 153,210 / 15,288 |
-| Shared modes (B), oracle | 33 | 3.66 (+12.6 %) | 2.34 (+5.3 %) | 3.14 (+13.6 %) | 13.84 / 0.182 | -- | -- | -- |
-| Constrained MCARMA (C), estimated | 35 | 3.56 (+14.9 % [+14.7, +15.2]) | 2.24 (+9.5 % [+8.9, +10.0]) | 2.67 (+26.5 % [+26.3, +26.8]) | 13.57 / 0.366 | 0.143 | 26.4 / 824.0 | 160,062 / 19,352 |
 
-Oracle rows feed the same estimator the true wave acceleration (labelled);
-MCARMA's heave RAO is the benchmark hull's in every row of this table.
+Oracle rows feed the same estimator the true wave acceleration (labelled).
+The exact complex-OU modal form with the coupling off is the baseline in law
+(`carma_coupled-test` [16]); `COR:off` reproduces A41 to float rounding
+(`run_tests.sh`).
 
 ### 6.2 Per sea
 
-* Shared modes, heave: long-period swell +23.7 %, two systems at different
-  frequencies +16.1 %, mixed wind sea and swell +11.9 %, regular wave
-  +10.1 %, Pierson-Moskowitz +8.0 %, JONSWAP +5.2 % (spread cos^8 +4.4 %),
-  crossing seas +1.7 %.  The one loss is short-period wind waves, -1.2 %
-  [-1.4, -1.0] (better on 2 % of seeds).  Horizontal: x +1.7 % (wind waves)
-  to +27.4 % (swell); y +0.9 to +21.0 %, except the mixed sea (+0.5 %
-  [-1.1, +2.0]) and the two systems at different frequencies (+0.1 %
-  [-0.1, +0.3]), neither significant.
 * Correlated excitation stays within 3 % of the baseline on every sea and
   axis except the mixed sea's y axis (-20.4 %): a real co-spectrum cannot
   carry the 90 deg x-z relation.
 * The directional numerator form of the exact modal realization gains heave
-  (+6.8 %) but loses 9-23 % horizontally (a constant real numerator puts
-  displacement density at DC on the coupled axes).
-* The exact complex-OU modal form reproduces A41 to the bootstrap resolution
-  on every sea (the realization is exact; section 3.6).
+  on every wave sea (swell +18.6 %, regular wave +14.4 %, PM +7.3 %, spread
+  JONSWAP +5.9 %) but loses horizontally on every sea (15-59 %; short wind
+  waves 0-3 %) except the mixed sea's x axis (+12.6 %): a constant real
+  numerator puts displacement density at DC on the coupled axes.
 
 ### 6.3 Consistency
 
 Pooled NEES is above 6 for every model because of the two-peak seas, which
 a single CARMA mode cannot represent: the mixed wind sea and swell (NEES A41
-62.9, SHM 60.1, MCA 56.1) and the two systems at different frequencies
-(10.0, 8.4, 8.5).  On the single-system seas the coupled models are close to
-consistent (NEES 5.5-6.1, 95 % position-interval coverage 0.97-0.99), the
-shared modes slightly less overconfident than the baseline.  Pooled
-accelerometer NIS: 0.18 for A41, COR and SHM, 0.22 for the numerator form,
-0.37 for MCARMA.
+62.9, numerator form 51.0, COR 66.8) and the two systems at different
+frequencies (10.0, 8.1, 10.2).  On the single-system seas A41 and COR are
+close to consistent (NEES 5.5-6.1, 95 % position-interval coverage
+0.97-0.99); the numerator form is slightly underconfident on them (4.7-5.1)
+and overconfident on the crossing sea (8.1).  Pooled accelerometer NIS: 0.18
+for A41 and COR, 0.22 for the numerator form.
 
 ### 6.4 Analysis (theoretical predictions, not Monte Carlo)
 
@@ -496,51 +485,32 @@ accelerometer NIS: 0.18 for A41, COR and SHM, 0.22 for the numerator form,
 
 3-D RMS change against A41 (`summary.md`, Ablations):
 
-* **Wrong coupling is harmful.**  Shared modes with the oracle coupling
-  reversed: -8.3 to -38.5 %; turned 90 deg: -5.8 to -24.6 %; a 45 deg phase
-  error still gains +1.8 to +3.3 % except on the mixed sea (-3.2 %).  A
-  deployable variant therefore needs shrinkage of the estimate and a
-  validity monitor with fallback to independent axes.
-* **Coupling off.**  The complexified realization without coupling is
-  -0.2 to -0.6 % against A41: equal in law at fixed parameters, slightly
-  apart under adaptation.
-* **Frame.**  A coupling frozen at 400 s keeps +1.5 to +12.9 % when held in
-  NED, also through 90 deg heading zigzags (+3.2 %); frozen in the keel frame
-  it loses the heading-change gain (-0.2 %).  The coupling belongs in the
-  world frame (section 3).
-* **Mapping.**  The first excitation mapping (measured horizontal block) cost
-  22 % in calm water and was replaced (section 3.5); adding the measured
-  horizontal anisotropy loses 4 % on the mixed sea.
-* **MCARMA's RAO.**  With the hull RAO natural frequency 27 % low the
-  constrained MCARMA loses 25.3 % (spread JONSWAP), 12.8 % (PM) and 24.4 %
-  (heading changes), while still gaining 21.9 % on the mixed sea; +36 % and
-  doubled damping keep gains of 8-23 %.  Its RAO prior alone, without
-  coupling, already gains 2.4-7.4 %: part of the MCARMA gain is hull
-  knowledge, not cross-axis coupling.
+* **Wrong coupling is harmful.**  The directional modal coupling with the
+  oracle coupling reversed loses 5.5 to 29.7 %; even the correct oracle
+  coupling loses 6.9 to 25.3 % except on the mixed sea (+8.1 %), because
+  the numerator form trades horizontal accuracy for heave.  A deployable
+  coupling therefore needs shrinkage of the estimate and a validity monitor
+  with fallback to independent axes.
+* **Real coupling.**  The modal form with a real (co-spectrum) coupling,
+  Experiment A in law, stays within -2.3 to +1.0 %.
+* **Horizontal-only coupling.**  Correlated x-y excitation gains 2.8-3.5 %
+  on the single-system seas and loses 8.7 % on the mixed sea.
+* **Calm water.**  Every coupled form leaves calm water unchanged.
 
-## 8. Recommendation
+## 8. Conclusion
 
-**Option C -- shared directional modes**, as a separate experimental filter.
-
-* **A (keep independent CARMA3)** is not chosen: the shared-mode gains are
-  consistent (every wave sea except short-period wind waves, -1.2 % heave),
-  significant (intervals exclude zero) and leave calm water unchanged.
-* **B (correlated CARMA3)** is rejected: no useful gain at any sea, and a
+* **A (correlated CARMA3)** is not adopted: no useful gain at any sea, and a
   real coupling cannot represent the quadrature x-z relation of waves.
-* **C (shared directional modes)** is adopted: +11.4 / +4.8 / +12.2 %
-  pooled, within 1.4 points of the oracle coupling, consistency no worse
-  than the baseline, twice the host cost (7.0 against 3.6 us mean) and a
-  15 KB filter object on the ESP32-S3.  It is fragile to a wrong coupling,
-  so it needs the coupling confidence and fallback that the standalone
-  filter adds.
-* **D (full MCARMA)** is rejected: the unrestricted model is not
-  identifiable; the constrained RAO form's extra gain rests on knowing the
-  hull RAO (oracle here, and a 27 % frequency error turns it into a loss),
-  it doubles the accelerometer NIS, and its worst host update (824 us, 16 %
-  of the 5 ms step before any embedded slowdown) is unsuited to the AtomS3R.
+* **The modal numerator form** trades 9-23 % horizontal error for 7 %
+  heave; it is not adopted.
+* **B (shared directional modes)** carries the quadrature relation and is
+  the standalone experimental 27-state filter with a coupling confidence and
+  fallback, `KalmanCarmaSharedModes`
+  ([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)).
+* **C (constrained MCARMA)** is not implemented: its extra information is
+  the hull's heave RAO (an oracle in the benchmark), and the unrestricted
+  MCARMA is not identifiable.
 
 **What goes into the production QMEKF CARMA3 filter: nothing.**  The
-baseline `Kalman3D_Wave_CARMA3<float, 4, false, 4, false>` is unchanged.  The
-shared-mode model is promoted to the standalone experimental filter
-`KalmanCarmaSharedModes` ([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)),
-which adds the coupling confidence and fallback and is not a default.
+baseline `Kalman3D_Wave_CARMA3<float, 4, false, 4, false>` is unchanged; the
+shared-modes filter is experimental and not a default.
