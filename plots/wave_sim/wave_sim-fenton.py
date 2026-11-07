@@ -1,3 +1,9 @@
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib as mpl
@@ -30,7 +36,7 @@ def plot_fenton_wave():
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
-    plt.savefig("wave_profile.pgf", bbox_inches='tight')
+    save_figure(plt.gcf(), "wave_profile.pgf", bbox_inches='tight')
     plt.close()
 
 def plot_wave_kinematics():
@@ -68,7 +74,7 @@ def plot_wave_kinematics():
              verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.5))
 
     plt.tight_layout()
-    plt.savefig("wave_kinematics.pgf", bbox_inches='tight')
+    save_figure(plt.gcf(), "wave_kinematics.pgf", bbox_inches='tight')
     plt.close()
 
 def plot_wave_profile_path():
@@ -85,7 +91,7 @@ def plot_wave_profile_path():
     plt.title('Wave Profile Along Particle Path')
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("wave_particle_path.pgf", bbox_inches='tight')
+    save_figure(plt.gcf(), "wave_particle_path.pgf", bbox_inches='tight')
     plt.close()
 
 if __name__ == "__main__":

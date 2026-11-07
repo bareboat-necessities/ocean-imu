@@ -11,6 +11,12 @@ realizations across filters and ablations.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import hashlib
@@ -2597,7 +2603,7 @@ def write_metric_plot(
     axis.grid(axis="y", alpha=0.3)
     axis.legend(fontsize=8, ncol=2)
     figure.tight_layout()
-    figure.savefig(path, format="svg", metadata={"Date": None})
+    save_figure(figure, path, format="svg", metadata={"Date": None})
     plt.close(figure)
 
 
@@ -2805,7 +2811,7 @@ def plot_transition_diagnostic(
             window_start_sec, color="#444444", linewidth=0.8, linestyle="-.",
         )
     figure.tight_layout()
-    figure.savefig(svg_path, format="svg", metadata={"Date": None})
+    save_figure(figure, svg_path, format="svg", metadata={"Date": None})
     plt.close(figure)
 
 

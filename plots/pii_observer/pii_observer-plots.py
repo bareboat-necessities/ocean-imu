@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import glob
 import os
 import re
@@ -99,7 +105,7 @@ def finalize_plot(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")):
     """
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     for ext in exts:
-        fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
+        save_figure(fig, f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
     plt.close(fig)
 
 # === Find all *_w3d.csv files ===

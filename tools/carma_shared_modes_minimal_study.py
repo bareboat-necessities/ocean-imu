@@ -38,6 +38,12 @@ Run: python3 tools/carma_shared_modes_minimal_study.py {smoke,run,robust,traces,
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import json
@@ -743,7 +749,7 @@ def figures(st, outdir, exts):
 
     def save(fig, name):
         for e in exts:
-            fig.savefig(outdir / f"{name}.{e}", bbox_inches="tight")
+            save_figure(fig, outdir / f"{name}.{e}", bbox_inches="tight")
         plt.close(fig)
 
     def short(sc):

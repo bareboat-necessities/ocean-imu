@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 from pathlib import Path
 import csv
 import matplotlib as mpl
@@ -75,8 +81,8 @@ def make_plot(rows, wave_type: str, out_name: str) -> None:
 
     pgf_path = SCRIPT_DIR / out_name
     svg_path = pgf_path.with_suffix(".svg")
-    fig.savefig(pgf_path, bbox_inches="tight")
-    fig.savefig(svg_path, bbox_inches="tight")
+    save_figure(fig, pgf_path, bbox_inches="tight")
+    save_figure(fig, svg_path, bbox_inches="tight")
     plt.close(fig)
     print(f"saved {pgf_path}")
 

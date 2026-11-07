@@ -16,6 +16,12 @@ two-column article without relying on the CI-generated PGF gallery.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 from pathlib import Path
 
@@ -173,8 +179,8 @@ def figures(df: pd.DataFrame) -> None:
     b.legend(frameon=False, fontsize=7)
     b.grid(alpha=0.2)
     fig.tight_layout()
-    fig.savefig(DEST / "csm27-paper-startup.pdf", bbox_inches="tight", metadata={"Title": "CSM27 startup and handoff"})
-    fig.savefig(DEST / "csm27-paper-startup.svg", bbox_inches="tight")
+    save_figure(fig, DEST / "csm27-paper-startup.pdf", bbox_inches="tight", metadata={"Title": "CSM27 startup and handoff"})
+    save_figure(fig, DEST / "csm27-paper-startup.svg", bbox_inches="tight")
     plt.close(fig)
 
     # Severity is shown in physical RMS units, not only relative to the
@@ -192,8 +198,8 @@ def figures(df: pd.DataFrame) -> None:
     ax.legend(ncol=3, frameon=False, fontsize=7)
     ax.grid(axis="y", alpha=.2)
     fig.tight_layout()
-    fig.savefig(DEST / "csm27-paper-degradation.pdf", bbox_inches="tight", metadata={"Title": "CSM27 disturbance sensitivity"})
-    fig.savefig(DEST / "csm27-paper-degradation.svg", bbox_inches="tight")
+    save_figure(fig, DEST / "csm27-paper-degradation.pdf", bbox_inches="tight", metadata={"Title": "CSM27 disturbance sensitivity"})
+    save_figure(fig, DEST / "csm27-paper-degradation.svg", bbox_inches="tight")
     plt.close(fig)
 
     # Matched-seed bootstrap, as in carma_shared_modes_validation.paired().
@@ -220,8 +226,8 @@ def figures(df: pd.DataFrame) -> None:
     ax.legend(ncol=3, frameon=False, fontsize=7)
     ax.grid(axis="y", alpha=.2)
     fig.tight_layout()
-    fig.savefig(DEST / "csm27-paper-ablation.pdf", bbox_inches="tight", metadata={"Title": "Realization and commit ablations"})
-    fig.savefig(DEST / "csm27-paper-ablation.svg", bbox_inches="tight")
+    save_figure(fig, DEST / "csm27-paper-ablation.pdf", bbox_inches="tight", metadata={"Title": "Realization and commit ablations"})
+    save_figure(fig, DEST / "csm27-paper-ablation.svg", bbox_inches="tight")
     plt.close(fig)
 
 

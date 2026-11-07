@@ -43,6 +43,12 @@ path
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import json
@@ -739,7 +745,7 @@ def reproducible_pyplot():
 
 def _save_svg(figure: Any, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(path, format="svg", metadata={"Date": None})
+    save_figure(figure, path, format="svg", metadata={"Date": None})
 
 
 def _arm(summaries: list[dict[str, Any]], family: str, arm: str,

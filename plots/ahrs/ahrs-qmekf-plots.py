@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import glob
 import os
 import re
@@ -131,8 +137,8 @@ for fname in files:
     # Save to PGF and SVG
     pgf_out = f"{outbase}.pgf"
     svg_out = f"{outbase}.svg"
-    plt.savefig(pgf_out, format="pgf", bbox_inches="tight")
-    plt.savefig(svg_out, format="svg", bbox_inches="tight")
+    save_figure(plt.gcf(), pgf_out, format="pgf", bbox_inches="tight")
+    save_figure(plt.gcf(), svg_out, format="svg", bbox_inches="tight")
     plt.close(fig)
 
     print(f"Saved {pgf_out} and {svg_out}")

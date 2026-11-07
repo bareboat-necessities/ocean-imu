@@ -131,3 +131,20 @@ reports/results/carma3_benchmark/traces/
 reports/results/tfg_carma3/traces/
 # raw 10 Hz series of the 27-state study; the committed bundle is the reduced *_envelope.csv
 reports/results/kalman_carma_shared_modes_minimal/traces/*_ts.csv
+
+# Regenerable CARMA per-run tables; summaries, manifests and curated plot
+# inputs remain versioned. See reports/results/README.md for regeneration.
+/reports/results/carma3_benchmark/raw_runs.csv
+/reports/results/carma3_coupled/raw_runs.csv
+/reports/results/carma3_coupled/ablation_runs.csv
+/reports/results/carma3_coupled/screen_runs.csv
+/reports/results/carma_excitation/raw_runs.csv
+/reports/results/carma_excitation/tuning_runs.csv
+/reports/results/tfg_carma3/raw_runs.csv
+/reports/results/tfg_carma3/followup_runs.csv
+/reports/results/kalman_carma_shared_modes/raw_runs.csv
+/reports/results/kalman_carma_shared_modes/screen_runs.csv
+/reports/results/kalman_carma_shared_modes/robustness_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/raw_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/ablation_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/robustness_runs.csv

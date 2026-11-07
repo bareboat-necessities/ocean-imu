@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -61,11 +67,11 @@ def parse_filename(fname):
 
 def save_all(fig, base):
     """Save PGF + SVG + PNG (PNG needed for LaTeX sidecar images)."""
-    fig.savefig(f"{base}.pgf", bbox_inches="tight", backend="pgf")
+    save_figure(fig, f"{base}.pgf", bbox_inches="tight", backend="pgf")
     save_svg(fig, f"{base}.svg", bbox_inches="tight", dpi=150)
     # Disable LaTeX temporarily for PNG export to avoid dvipng dependency
     with mpl.rc_context({"text.usetex": False}):
-        fig.savefig(f"{base}.png", bbox_inches="tight", dpi=300)
+        save_figure(fig, f"{base}.png", bbox_inches="tight", dpi=300)
     print(f"  saved {base}.pgf/.svg/.png")
 
 def make_plots(fname, group_label, meta):

@@ -15,6 +15,12 @@ with Holm correction inside each stated family.  "Equivalent" means the whole
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import envelope_indices, save_figure
+
+
 import csv
 import json
 import math
@@ -568,7 +574,7 @@ def mpl():
 
 
 def save(fig, name):
-    fig.savefig(OUT / name, format="svg", bbox_inches="tight", metadata={"Date": None})
+    save_figure(fig, OUT / name, format="svg", bbox_inches="tight", metadata={"Date": None})
     import matplotlib.pyplot as plt
     plt.close(fig)
 
@@ -588,21 +594,9 @@ TRACE_FLT = ["OU3", "A41", "T41"]
 
 
 def thin(t, y, n=2500):
-    """Min/max-preserving decimation for long time-series plots: each bucket
-    of samples contributes its extremes, so the drawn envelope is the full-rate
-    one with a fraction of the points (spectra use the full-rate data)."""
-    if len(t) <= 2 * n:
-        return t, y
-    k = len(t) // n
-    m = (len(t) // k) * k
-    tb, yb = t[:m].reshape(-1, k), y[:m].reshape(-1, k)
-    finite = np.isfinite(yb)
-    lo = np.argmin(np.where(finite, yb, np.inf), axis=1)
-    hi = np.argmax(np.where(finite, yb, -np.inf), axis=1)
-    i1, i2 = np.minimum(lo, hi), np.maximum(lo, hi)
-    r = np.arange(len(tb))
-    return (np.column_stack([tb[r, i1], tb[r, i2]]).ravel(),
-            np.column_stack([yb[r, i1], yb[r, i2]]).ravel())
+    """Use the shared envelope without discarding the final partial bucket."""
+    indices = envelope_indices((t, y), max_points=min(2000, 2 * n))
+    return t[indices], y[indices]
 
 
 def stride(t, y, n=2500):

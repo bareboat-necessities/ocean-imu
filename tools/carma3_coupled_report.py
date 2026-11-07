@@ -16,6 +16,12 @@ Run: python3 tools/carma3_coupled_report.py
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import json
 import math
 import sys
@@ -384,7 +390,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
         fig.suptitle(f"Truth vs estimated displacement spectra, {bench.SCENARIOS.get(sc, sc)} (10 seeds, Welch)")
         fig.tight_layout()
         name = f"spectra_{sc.replace('+', '_')}.{ext}"
-        fig.savefig(outdir / name, dpi=150)
+        save_figure(fig, outdir / name, dpi=150)
         plt.close(fig)
         figs.append(name)
 
@@ -413,7 +419,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
             ax.invert_yaxis()
         axs[0].legend(fontsize=7, loc="lower left")
         fig.tight_layout()
-        fig.savefig(outdir / f"rms_change_by_sea.{ext}", dpi=150)
+        save_figure(fig, outdir / f"rms_change_by_sea.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"rms_change_by_sea.{ext}")
 
@@ -435,7 +441,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
             ax.invert_yaxis()
         axs[0].legend(fontsize=7)
         fig.tight_layout()
-        fig.savefig(outdir / f"consistency_nees_nis.{ext}", dpi=150)
+        save_figure(fig, outdir / f"consistency_nees_nis.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"consistency_nees_nis.{ext}")
 
@@ -459,7 +465,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
         ax.legend(fontsize=7)
         ax.set_title("Wrong, frozen and keel-frame coupling; RAO mismatch; oracles (30 seeds)")
         fig.tight_layout()
-        fig.savefig(outdir / f"ablation_sensitivity.{ext}", dpi=150)
+        save_figure(fig, outdir / f"ablation_sensitivity.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"ablation_sensitivity.{ext}")
 
@@ -498,7 +504,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
             axs[2].set_title("ESP32-S3 (Xtensa GCC 14.2, -Os)")
             axs[2].legend(fontsize=7, loc="upper left")
         fig.tight_layout()
-        fig.savefig(outdir / f"cost_time_memory.{ext}", dpi=150)
+        save_figure(fig, outdir / f"cost_time_memory.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"cost_time_memory.{ext}")
     return figs
@@ -524,7 +530,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
         axs[-1].set_xlabel("time (s)")
         fig.suptitle("Directionally spread JONSWAP 0.29 Hz, 0.8 m, seed 1: truth vs estimates (NED, z down)")
         fig.tight_layout()
-        fig.savefig(outdir / f"timeseries_xyz.{ext}", dpi=150)
+        save_figure(fig, outdir / f"timeseries_xyz.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"timeseries_xyz.{ext}")
         # (2) 3-D trajectory
@@ -539,7 +545,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
             ax.legend(fontsize=7)
         fig.suptitle("Three-dimensional wave displacement, 30 s, JONSWAP seed 1")
         fig.tight_layout()
-        fig.savefig(outdir / f"trajectory_3d.{ext}", dpi=150)
+        save_figure(fig, outdir / f"trajectory_3d.{ext}", dpi=150)
         plt.close(fig)
         figs.append(f"trajectory_3d.{ext}")
 
@@ -575,7 +581,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
         axs[-1].set_xlabel("time (s)")
         fig.suptitle(f"{title} (seed 1)")
         fig.tight_layout()
-        fig.savefig(outdir / fname, dpi=150)
+        save_figure(fig, outdir / fname, dpi=150)
         plt.close(fig)
         figs.append(fname)
     return figs
