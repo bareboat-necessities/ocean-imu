@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.3"
   },
-  "generated_utc": "2026-10-28T18:44:14+00:00",
-  "git_commit": "aa516b3267858f9ce893e0e58717a2726fcf673e",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   12 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   24 +-\n reports/results/tfg_comparison/paired_summary.json | 3788 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  192 +-\n reports/results/tfg_comparison/raw_runs.json       | 1644 ++++-----\n 5 files changed, 2830 insertions(+), 2830 deletions(-)",
+  "generated_utc": "2026-11-07T18:48:29+00:00",
+  "git_commit": "a4f5be152fa8aaff70f765fcdf7a9a89881f54ac",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -192,14 +192,14 @@
     "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
     "tests/kalman_tfg/kalman_tfg-sim.cpp": "32f4f8d63bf12e2e73b457285073bd69827bd2615c26f6719c809233fc40e841",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
-    "tools/ou_validation.py": "891c5c8de1d44f260b15b8ee04c301ea592c3000757d5605dcc1477c5508009a",
+    "tools/ou_validation.py": "483581060d5d2b1f55c096370164d528e6b999056195c1c9209cf8f2dd1dfa9d",
     "tools/sim_dataset.py": "c68e23d1ed393ae5573d1199377000258cadf825f564dbd2ac42526c9878ed53",
     "tools/tfg_comparison.py": "fc334121afd0385606c336a1e5145bf07e8ba63b3427672d7b905dd89016f302"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "40744971308",
+    "run_id": "42399427902",
     "workflow": "build"
   }
 }
