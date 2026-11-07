@@ -32,7 +32,16 @@
 #include <random>
 #include <vector>
 
+// Reproduce Arduino.h and Xtensa specreg.h macros while compiling the full
+// frontend and its stationary/propagation paths on the host.
+#define PI 3.1415926535897932384626433832795
+#define MR 32
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+#if !defined(PI) || MR != 32
+#error "Estimator headers must preserve platform macros"
+#endif
+#undef MR
+#undef PI
 
 extern const float g_std = 9.80665f;   // the application constant the front end reads
 
