@@ -180,24 +180,24 @@ inline bool discretize_lti_pair(const kd::Mat<T,M>& A, const kd::Mat<T,M>& WR, c
 // stationary_covariance_doubling().
 template<typename T, int M>
 inline bool stationary_pair(const kd::Mat<T,M>& A, const kd::Mat<T,M>& WR, const kd::Mat<T,M>& WI,
-                            kd::Mat<T,M>& PR, kd::Mat<T,M>& PI) {
+                            kd::Mat<T,M>& cov_real, kd::Mat<T,M>& cov_imag) {
     using Mat = kd::Mat<T,M>;
     const T norm_a = kd::inf_norm<T,M>(A);
-    PR.setZero();
-    PI.setZero();
+    cov_real.setZero();
+    cov_imag.setZero();
     if (!(norm_a > T(0)) || !std::isfinite(norm_a)) return false;
     Mat Phi;
-    if (!discretize_lti_pair<T,M>(A, WR, WI, T(0.25) / norm_a, Phi, PR, PI)) return false;
+    if (!discretize_lti_pair<T,M>(A, WR, WI, T(0.25) / norm_a, Phi, cov_real, cov_imag)) return false;
     const T tol = T(4) * std::numeric_limits<T>::epsilon();
     Mat FPF, FF;
     for (int it = 0; it < 96; ++it) {
-        kd::congruence<T,M>(Phi, PR, FPF);
-        PR += FPF;
-        congruence_anti<T,M>(Phi, PI, FPF);
-        PI += FPF;
+        kd::congruence<T,M>(Phi, cov_real, FPF);
+        cov_real += FPF;
+        congruence_anti<T,M>(Phi, cov_imag, FPF);
+        cov_imag += FPF;
         kd::mul<T,M>(Phi, Phi, FF);
         Phi = FF;
-        if (kd::max_abs<T,M>(Phi) <= tol) return PR.allFinite() && PI.allFinite();
+        if (kd::max_abs<T,M>(Phi) <= tol) return cov_real.allFinite() && cov_imag.allFinite();
     }
     return false;
 }
@@ -495,13 +495,13 @@ public:
 
     template<class Mat>
     bool stationary(Mat& P, int off) const {
-        MatB PR, PI;
-        if (!minimal_detail::stationary_pair<T,NB>(A_, WR_, WI_, PR, PI)) return false;
+        MatB cov_real, cov_imag;
+        if (!minimal_detail::stationary_pair<T,NB>(A_, WR_, WI_, cov_real, cov_imag)) return false;
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
                 for (int i = 0; i < NB; ++i)
                     for (int j = 0; j < NB; ++j) P(off + a * NB + i, off + b * NB + j) = T(0);
-        add_structured_(P, off, PR, PI);
+        add_structured_(P, off, cov_real, cov_imag);
         return true;
     }
 
@@ -525,10 +525,10 @@ public:
     const MatB& block_QI() const noexcept { return disc_.QI(); }
 
 private:
-    // P_ab += Re(S_ab) MR + Im(S_ab) MI over the upper block triangle, mirrored
-    // (MR symmetric, MI antisymmetric: block (b, a) receives the transpose).
+    // P_ab += Re(S_ab) matrix_real + Im(S_ab) matrix_imag over the upper block triangle, mirrored
+    // (matrix_real symmetric, matrix_imag antisymmetric: block (b, a) receives the transpose).
     template<class Mat>
-    void add_structured_(Mat& P, int off, const MatB& MR, const MatB& MI) const {
+    void add_structured_(Mat& P, int off, const MatB& matrix_real, const MatB& matrix_imag) const {
         for (int a = 0; a < 3; ++a)
             for (int b = a; b < 3; ++b) {
                 const T sr = Sigma_.re(a,b);
@@ -536,7 +536,7 @@ private:
                 if (sr == T(0) && si == T(0)) continue;
                 for (int i = 0; i < NB; ++i)
                     for (int j = (a == b ? i : 0); j < NB; ++j) {
-                        const T v = sr * MR(i,j) + si * MI(i,j);
+                        const T v = sr * matrix_real(i,j) + si * matrix_imag(i,j);
                         const int r = off + a * NB + i, c = off + b * NB + j;
                         P(r, c) += v;
                         if (r != c) P(c, r) += v;

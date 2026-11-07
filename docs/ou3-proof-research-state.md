@@ -1,5 +1,19 @@
 # OU-III proof research state
 
+## MCU macro repair source binding
+
+The shared-modes MCU compile failed when Arduino `PI` and Xtensa `MR`
+macros expanded internal matrix identifiers (class E, implementation failure).
+Renaming those identifiers fixes the compile without changing estimator algebra.
+The whole-src digest also invalidated the OU-III finite secant binding. Compiler
+`-MM` inspection confirms the changed header is outside the probe closure;
+every probe src dependency is byte-identical to `ae11b996`. The diagnostic
+retains its numerical payload and original digest in `source_binding_refresh`.
+Structures preserved: the complete shipping OU-III dependency closure and all
+existing diagnostic qualifications. Relaxations introduced: none. No proof
+margin or theorem status changes. The limiter was source identity, not a
+mathematical inequality; the next check is the unchanged provenance validator.
+
 ## Current hypothesis
 
 **GOVERNING STRATEGY:** symmetry/kernels → justified quotient/tube → exact
