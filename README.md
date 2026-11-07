@@ -40,6 +40,8 @@ Heave-only filters (comparison baselines, see [docs/heave-only.md](docs/heave-on
 
 Research Studies:
 
+- [27-State Directionally Coupled CARMA QMEKF: Model, Startup and Degradation](doc/kalman_carma_shared_modes/kalman_carma_shared_modes-27state.tex) (experimental LaTeX article and reproducible figures)
+
 - [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-wave-dir.pdf)
 
 - [INS Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/ins-startup.pdf)

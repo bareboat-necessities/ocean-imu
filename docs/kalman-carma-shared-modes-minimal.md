@@ -24,6 +24,12 @@ filter stays `SeaStateFusionFilter_OU_III`.  The 33-state shared-modes QMEKF
   traces, dataset, timing, size, report) ->
   `reports/results/kalman_carma_shared_modes_minimal/`.
 * Article: `doc/kalman_carma_shared_modes/kalman_carma_shared_modes-minimal.tex`.
+* System-level scientific article (model, method, startup, paired results,
+  ablations and degradation):
+  `doc/kalman_carma_shared_modes/kalman_carma_shared_modes-27state.tex`.
+  Its startup/degradation tables and vector charts are regenerated without
+  re-running the Monte Carlo study by
+  `python3 tools/csm27_system_paper.py` (`--check` verifies the tables).
 
 **Findings** (details in section 6; every number from the committed study data):
 

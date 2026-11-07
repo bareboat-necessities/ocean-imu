@@ -1,0 +1,670 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+\fi
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{newtxtext,newtxmath}
+\usepackage{graphicx,svg,booktabs,adjustbox}
+\usepackage{siunitx}
+\usepackage[final]{microtype}
+\usepackage{xcolor}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+
+\interdisplaylinepenalty=2500
+\sisetup{detect-weight=true,detect-family=true,per-mode=symbol}
+\emergencystretch=2em
+\allowdisplaybreaks
+\newcommand{\vct}[1]{\bm{#1}}
+\newcommand{\mat}[1]{\bm{#1}}
+\newcommand{\R}{\mathbb R}
+\newcommand{\T}{^{\mathsf T}}
+\newcommand{\Herm}{^{\mathsf H}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Rea}{\operatorname{Re}}
+\newcommand{\Ima}{\operatorname{Im}}
+\newcommand{\InputPart}[1]{\input{#1}}
+
+\title{A 27-State Directionally Coupled CARMA Error-State Kalman Filter for
+Marine Motion: Model, Startup, Ablations, and Degradation}
+\author{\IEEEauthorblockN{Mikhail S. Grushinskiy}
+\IEEEauthorblockA{Independent Researcher, Bareboat Necessities Project, USA\\
+mgrouch@users.github.com}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Independent-axis stochastic wave models discard the phase-coherent
+horizontal--vertical response of a vessel to directional waves. We study an
+experimental quaternion multiplicative extended Kalman filter (QMEKF) with
+a six-state real CARMA motion realization on each axis, three attitude-error
+states, and six sensor-bias states: 27 error states altogether. The
+realization retains the cross-spectral law of a 33-state complexified
+shared-mode filter while removing six deterministically unobservable
+coordinates. Its lossless two-state colouring cascade has an additional
+property: when cross-axis coupling is disabled, its \emph{adaptive} model
+reduces exactly in law to the 21-state independent-axis CARMA(4,1) baseline.
+We document the actual initialization, excitation-confidence logic and
+covariance propagation; then use paired, seeded vessel-response simulations
+to study both normal performance and failures. Across 26 seas and 30 seeds
+per sea, the 27-state cascade improves three-dimensional RMS error over the
+33-state filter in 20 cases, is effectively tied in four and loses in two.
+The shared proxy yields the same Live-entry time for all filters, but
+startup heave error remains markedly larger than steady-state error.
+Coloured accelerometer disturbances and heave-response mismatch reveal
+important limitations shared by the realizations. A model of the embedded
+arithmetic gives 42\% fewer prediction/update multiply-adds and 21\% less
+filter-object memory than the 33-state reference. These are simulation and
+compiled-code results, not a claim of sea-trial accuracy or stability proof.
+\end{abstract}
+
+\begin{IEEEkeywords}
+CARMA processes, directional seas, embedded inertial navigation, marine
+heave, quaternion error-state Kalman filter, stochastic realization.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+An inertial unit on a vessel measures rotational motion and the sum of
+gravity, wave-induced acceleration and sensor error. Two integrations
+recover relative displacement only if low-frequency acceleration errors
+are controlled. Treating surge, sway and heave as three independent scalar
+processes provides such regularization but ignores coherence and phase
+between motions excited by the same travelling waves. In a directional
+sea, the response-amplitude operator (RAO) of a hull generates correlated
+translation even when wave components have random phase \cite{jonswap73}.
+
+The ocean-IMU CARMA family uses the same quaternion error-state update,
+sensor-bias estimation, magnetic aiding and measurement-only sea-state
+tuner as its OU--III family. Its shared-mode extension represents directional
+coupling through a Hermitian three-axis driving covariance. The initial
+complexified model uses eight real wave states per axis and 33 error states
+in total. A prior minimal-realization investigation establishes that two
+states per axis are unobservable and compares quotient and cascade
+coordinates \cite{kalman63,linpicci15}. The present article makes the
+\emph{implemented 27-state filter} the object of a complete system study:
+what is propagated, how it starts, which comparisons isolate state reduction
+from other changes, and where it degrades.
+
+Three distinctions guide the evaluation. First, a fixed-parameter
+stochastic equivalence does not guarantee identical trajectories under
+time-varying coefficients. Second, common startup and sensor-front-end
+errors cannot be credited to a smaller state realization. Third, an
+improvement relative to the 33-state filter may be negligible next to a
+failure shared by both; absolute errors are therefore reported alongside
+paired differences.
+
+\section{Model and Minimal State Representation}
+\label{sec:model}
+\subsection{Physical motion and driving spectrum}
+Let $\vct p(t)\in\R^3$ denote vessel translation relative to a local wave
+equilibrium, $\vct v=\dot{\vct p}$ and $\vct a=\ddot{\vct p}$, expressed in
+the filter's world frame. It is not an Earth-fixed navigation position.
+The prototype independent-axis CARMA(4,1) transfer from a white-noise input
+to each displacement is
+\begin{equation}
+ H_4(s)=\frac{B(s)}{P(s)},\qquad B(s)=s+\omega_{z0},\quad
+ P(s)=P_+(s)\overline{P_+(\bar s)},
+ \label{eq:H4}
+\end{equation}
+where the stable quartic $P$ and the numerator zero are selected by the
+C41J shape and scaled by the measured operating frequency. In the C41J
+configuration $\omega_{z0}=0$. The 4-state real kinematic realization
+$\vct z_a=[p_a,v_a,a_a,\ell_a]\T$ satisfies
+$\mathrm d\vct z_a=\mat A_4\vct z_a\,\mathrm dt+
+\vct e_3\,\mathrm d\eta_a$ with transfer $H_4$.
+
+Directional dependence enters through three circular complex driving
+increments $\mathrm d\xi_a=\mathrm d\xi_{r,a}+i\,\mathrm d\xi_{i,a}$,
+whose joint spectral covariance is a positive-semidefinite Hermitian
+matrix $\mat\Sigma=(\Sigma_{ab})\in\mathbb C^{3\times3}$. The real and
+quadrature cross-terms describe co- and phase-shifted axis responses.
+The original eight-state realification per axis has transfer
+\begin{equation}
+ \zeta_a(s)=\frac{B(s)}{P_+(s)D(s)}\xi_a(s),\qquad
+ p_a=\Rea\zeta_a,
+ \label{eq:complex}
+\end{equation}
+where $D$ is the stable real quadratic satisfying
+$|D(i\omega)|^2=\bigl(|P_+(i\omega)|^2+
+|\overline{P_+(-i\omega)}|^2\bigr)/2$.
+This expression specifies the model transfer, not an additional measured
+wave state. The factorization is a specialized stochastic-realization
+construction; related multivariate CARMA factorization is discussed in
+\cite{fasen21}.
+
+\subsection{Why six states per axis suffice}
+Write $P_+(s)=N_r(s)+iN_i(s)$ for real polynomials $N_r,N_i$. Then
+$P=N_r^2+N_i^2$ and the observed real output of \eqref{eq:complex} is
+\begin{equation}
+ p_a(s)=\frac{B(s)}{P(s)}\eta_a(s),\qquad
+ \eta_a(s)=\frac{[N_r(s)\ \ N_i(s)]}{D(s)}
+ \begin{bmatrix}\xi_{r,a}(s)\\\xi_{i,a}(s)\end{bmatrix}.
+ \label{eq:factor}
+\end{equation}
+Thus four CARMA kinematic states require only two additional colouring
+states. The real quadratic $D$ contributes two repeated eigenvalue
+directions to the eight-state realification; the scalar observation cannot
+distinguish one direction in each repeated eigenspace. The corresponding
+two-dimensional invariant nullspace per axis is independent of $\Sigma$
+and of attitude. For fixed model parameters its removal preserves all
+observable estimates, innovations, and their covariance, including
+three-axis magnetic/acceleration updates. A change in frequency scale
+moves this nullspace, so that statement must \emph{not} be extended without
+qualification to arbitrary adaptation sequences.
+
+The implemented cascade uses the \emph{co-inner} colouring factor
+$\mat V(s)=[N_r(s),N_i(s)]/D(s)$, for which
+$\mat V(i\omega)\mat V(i\omega)\Herm=1$. Its controllability-normalized
+two-state realization $(\mat A_w,\mat B_w,\mat C_w,
+[1,0])$ obeys
+\begin{equation}
+ \mat A_w+\mat A_w\T=-\mat B_w\mat B_w\T,\qquad
+ \mat C_w=-\vct e_1\T\mat B_w\T.
+ \label{eq:inner}
+\end{equation}
+The six-state axis block $\vct x_a=[p_a,v_a,a_a,\ell_a,w_{a1},w_{a2}]\T$
+has
+\begin{equation}
+ \mat A_6=\begin{bmatrix}
+ \mat A_4 & \vct e_3\mat C_w\\
+ \mat 0 & \mat A_w
+ \end{bmatrix},\qquad
+ \mat G_6=\begin{bmatrix}
+ \vct e_3\vct e_1\T\\ \mat B_w
+ \end{bmatrix}.
+ \label{eq:A6}
+\end{equation}
+The full \emph{error} state (the nominal attitude is a separate unit
+quaternion) is
+\begin{equation}
+ \delta\vct x=\left[\delta\vct\theta\T,\ \delta\vct b_g\T,\
+ \vct x_x\T,\ \vct x_y\T,\ \vct x_z\T,\
+ \delta\vct b_a\T\right]\T\in\R^{27}.
+ \label{eq:states}
+\end{equation}
+The 33-state counterpart replaces each $\vct x_a$ by eight real states;
+the 21-state A41 uses only the four-state $\vct z_a$ on each axis.
+Twenty-seven is the fixed-coordinate minimal realization preserving the
+same six-state \emph{per-axis} shape for any Hermitian excitation. It is
+not the minimal stochastic order for one particular excitation: that
+order is $4\operatorname{rank}\Sigma+
+2\operatorname{rank}\Ima\Sigma$ for the motion law, at most 16, or 25
+with the nine attitude/bias coordinates. The latter would require
+excitation-dependent coordinates that become singular at zero quadrature
+coupling and move as coupling confidence changes.
+
+\subsection{Correlated process covariance}
+Let $\mat J_2=\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$.
+For axes $a,b$, the continuous two-input driving cross-covariance is
+$g^2(\Rea\Sigma_{ab}\mat I_2+
+\Ima\Sigma_{ab}\mat J_2)\mathrm dt$.
+The exact discrete model at the IMU interval $h$ is
+\begin{align}
+ \mat\Phi_6(h)&=e^{\mat A_6h},\\
+ \mat Q_{ab}(h)&=\Rea\Sigma_{ab}\mat Q_R(h)
+                   +\Ima\Sigma_{ab}\mat Q_I(h), \label{eq:Qab}\\
+ \mat Q_{R/I}(h)&=\int_0^h e^{\mat A_6t}\mat W_{R/I}
+                                    e^{\mat A_6\Tt}\,\mathrm dt,\\
+ \mat W_R&=g^2\mat G_6\mat G_6\T,\quad
+ \mat W_I=g^2\mat G_6\mat J_2\mat G_6\T.
+\end{align}
+$\mat Q_R$ is symmetric and $\mat Q_I$ skew-symmetric. Consequently
+$\mat Q_{ba}=\mat Q_{ab}\T$; the assembled 18-state motion covariance
+is symmetric positive semidefinite when $\Sigma\succeq0$. Omitting
+$\mat Q_I$ would discard the quadrature coupling whose preservation
+motivates the model. The implementation discretizes both integrals by a
+paired scaled-series/doubling method related to exact linear-SDE
+discretization \cite{vanloan78}; IMU and bias process-noise blocks complete
+the 27-state covariance.
+
+\section{Estimator, Tuning and Directional Confidence}
+\label{sec:method}
+\subsection{Quaternion error-state update}
+The nominal quaternion $q_{bw}$ rotates body coordinates into the filter
+world frame. With angular-rate and accelerometer biases $\vct b_g,\vct b_a$,
+the idealized measurements have the form
+\begin{equation}
+ \vct\omega_m=\vct\omega+\vct b_g+\vct n_g,\quad
+ \vct f_m=R(q_{bw})\T(\vct a-\vct g)+\vct b_a+\vct n_a,
+ \label{eq:imu}
+\end{equation}
+and the magnetometer measures a rotated local field with sensor noise.
+The filter propagates attitude from bias-corrected angular rate and the
+state covariance through the continuous motion model. Accelerometer,
+magnetic and integral-displacement pseudo-measurements update the QMEKF;
+the acceleration update couples attitude, bias and the motion block.
+Given a linearized residual $\vct r=\vct y-h(\hat x)$, a typical
+measurement uses
+\begin{equation}
+ \mat K=\mat P^-\mat H\T(\mat H\mat P^-\mat H\T+
+ \mat R)^{-1},\quad
+ \mat P^+=(\mat I-\mat K\mat H)\mat P^-
+ (\mat I-\mat K\mat H)\T+\mat K\mat R\mat K\T.
+ \label{eq:joseph}
+\end{equation}
+The small attitude correction is injected multiplicatively and its
+error-state covariance is reset. The observed heading reference, gyro and
+accelerometer-bias updates, Joseph covariance step, pseudo-measurement
+schedule and reset are the same core machinery as in the CARMA3 baseline;
+the 27-state variant changes the motion block, not the sensor-update API.
+
+\subsection{Adaptation is part of the model}
+The wrapper estimates a wave-band frequency $f_{\rm op}$ and an
+acceleration-evidence statistic from its \emph{measured} leveled IMU data.
+The frequency scale $\kappa$ places the CARMA displacement zero-crossing
+frequency at the accepted operating frequency; acceleration evidence
+modulates the excitation intensity. In Evidence mode, the nonnegative
+excess wave-band variance $E$ is weighted by a detection confidence
+$p\in[0,1]$, giving an amplitude proportional to
+$\sqrt{p\max(E,0)}$. A small numerical floor maintains a nonsingular
+stochastic model; it is not interpreted as physical wave excitation.
+The motion matrices are normally committed every \SI{0.1}{s}; the IMU
+prediction rate is \SI{200}{Hz}. These constants describe the studied
+configuration, not a derivation-independent necessity.
+
+When $\kappa$ changes, the cascade holds the physical CARMA coordinates
+$[p,v,a,\ell]$ and holds the colouring state after normalization by its
+axis noise scale $s_a=\sqrt{g^2}\,\sigma_a$. The corresponding mapping on
+the unnormalized coordinates is $w_a\leftarrow
+(s_a^{\rm new}/s_a^{\rm old})w_a$. Because \eqref{eq:inner} has a
+frequency-independent unit Gramian, the factor remains lossless through
+piecewise-constant adaptation. With $\Sigma$ diagonal, this produces
+\emph{exactly} the independent-axis A41 stochastic model including
+parameter commits. With nonzero quadrature coupling it is a different
+time-varying realization than the 33-state complex form, despite their
+fixed-parameter equivalence.
+
+\subsection{Coupling estimation, rejection and covariance safety}
+Two band cross-spectral regressions estimate
+$\vct\beta=[S_{xz}/S_{zz},\ S_{yz}/S_{zz}]\T$ from leveled
+acceleration: a long-horizon candidate (nominally \SI{240}{s}) and a
+short-horizon consistency monitor (\SI{60}{s}). Coupling is initially
+withheld. A confidence $c\in[0,1]$ combines regression agreement,
+signal-to-noise, world yaw rate, abrupt frequency change and the
+short/long accelerometer innovation ratio. The mismatch term is
+\begin{equation}
+ D^2=\sum_{j=x,y}\frac{|\beta_{j,\rm cand}-\beta_{j,\rm mon}|^2}
+ {v_{j,\rm cand}+v_{j,\rm mon}+\epsilon_j^2},
+ \label{eq:confidence}
+\end{equation}
+with variance estimates $v_j$, a relative floor $\epsilon_j$ and
+hysteresis. Asymmetric first-order confidence relaxation uses nominal
+time constants of \SI{3}{s} for withdrawal and \SI{60}{s} for recovery.
+The confidence scales the candidate coupling at the next model commit.
+When it falls, the algorithm also contracts the component of
+horizontal--vertical cross-covariance unexplained by common attitude/bias
+states. This is a covariance operation, not a reset of position or heading.
+Confidence is a safety mechanism for \emph{inconsistent} directional priors,
+not a check that the hull RAO used to normalize coupling is correct.
+
+\section{Initialization and Transient Behavior}
+\label{sec:startup}
+\subsection{Actual startup path}
+The 27-state filter is run behind
+\texttt{SeaStateFusion\_CarmaSharedModesMinimal}. It inherits the
+\texttt{SeaStateFusion\_CARMA3} wrapper and the common
+\texttt{ProxyStartupFusion} policy, rather than initializing its wave
+states from a known truth trajectory. In Cold/TunerWarm, a measurement-only
+Mahony-style proxy \cite{mahony08} estimates tilt and assists magnetic-reference
+acquisition while the wave-period tuner collects usable statistics.
+Handoff to Live requires the qualified gravity branch, minimum startup
+duration and usable tuning and magnetic information as applicable; a
+timeout is subject to the gravity-branch gate. The MEKF attitude is seeded
+from the proxy, the motion covariance is set to its stationary prior and
+accelerometer-bias learning remains gated by accepted magnetic service.
+The common implementation also guards excessive tilt and can reinitialize
+the attitude after sustained gross misalignment; initial magnetic lock
+may be refined later. No special six-state startup algorithm is introduced.
+
+Directional coupling starts at zero confidence, independently of the
+Live handoff. Its long candidate/short monitor windows must fill before
+the complex cross-spectra may contribute appreciably. It is consequently
+incorrect to describe the filter as immediately directionally aided at
+Live entry. Equally, the stationarity of the *prior* at initialization is
+not evidence that the vessel's first estimated displacement equals the
+instantaneous true displacement.
+
+\subsection{Measured startup performance}
+The benchmark stores the first Live time $t_L$, the RMS and peak errors in
+$[t_L,t_L+120\,\mathrm{s}]$, and a later convergence diagnostic. We define
+$E_{z,\rm early}$ as the first-window heave RMS and $E_{z,\rm late}$ as
+the RMS after \SI{300}{s}. The convergence statistic uses \SI{30}{s}
+rolling RMS: its first reported time is the earliest one after Live from
+which \emph{every remaining} rolling window is no worse than
+$1.5E_{z,\rm late}$. Its strict whole-future requirement makes it sensitive
+to later events and forbids interpretation as a guaranteed physical
+settling time.
+
+\begin{table*}[!t]
+\caption{Startup in the nine \emph{fixed} seas ($9\times30=270$ paired
+realizations per filter). Each entry is a median across runs, except the
+95th-percentile Live time and the fraction meeting the strict convergence
+criterion within 300 s \emph{after Live}. ``Early/late'' is the median of
+the \emph{within-run} RMS ratios, not a ratio of pooled RMS values.}
+\label{tab:startup}
+\centering\small
+\InputPart{csm27-paper-startup.tex-part}
+\end{table*}
+
+\begin{figure*}[!t]
+\centering
+\includesvg[width=0.96\textwidth]{csm27-paper-startup}
+\caption{Left: heave RMS during the first 120 s after Live versus scored
+RMS on nine fixed seas, each point a 30-seed scenario median (diagonal:
+equality). Right: a separately recorded ten-seed ensemble in a
+changing-frequency sea, showing 10 s-smoothed, per-second ensemble heave
+error. Before Live no QMEKF estimate is plotted.}
+\label{fig:startup}
+\end{figure*}
+
+The Live time agrees \emph{exactly within each paired run} across all six
+filter variants, including the 26-sea evaluation set; the fixed-sea median
+is \SI{31.84}{s} (\cref{tab:startup}). The default cascade's early
+heave RMS is a median \SI{36.74}{cm} against a median late
+\SI{1.93}{cm}; the within-run ratio is 17.3. The large transient is not
+removed by six fewer error states. Only 51.9\% of fixed-sea runs pass the
+stringent heave convergence criterion within 300 s of Live. This is a
+measured limitation of the \emph{common} handoff/low-frequency estimator,
+not evidence for a unique defect in the 27-state motion block. A dedicated
+initial-tilt/magnetic-dropout startup-policy ablation was not performed
+for CSM27 and is not implied by these aggregate numbers.
+
+\section{Evaluation Method}
+\label{sec:protocol}
+The paired numerical study uses random-phase directional incident waves
+and the estimated RAOs of a nominal 28 ft fin-keel vessel at zero forward
+speed. Truth motion comes from the wave/RAO simulator, \emph{not} from
+the CARMA prior being tested. The same seeded \SI{200}{Hz} IMU and
+magnetometer samples feed every estimator in a comparison. The 26 seas
+include fixed JONSWAP, Pierson--Moskowitz, swell, regular, crossing and
+bimodal cases; wave spreading and headings; gradual and abrupt changes;
+and sensor/environmental disturbances. Each has 30 seeds and a nominal
+\SI{1200}{s} run. Normal-performance RMS, NEES and innovation statistics
+are scored from \SI{300}{s} onward; startup uses the separate window
+above. No coefficients of CSM27 are fitted to the evaluation seeds.
+
+The arms are A41@C (21-state CARMA3 baseline with Evidence excitation),
+CSM (33-state complex shared modes), CSM27 (cascade), CSM27Q (27-state
+quotient with stationary regression lift at frequency commits), CSM27H
+(held quotient, ablation) and CSM:off (33-state shared mode with coupling
+disabled). They use the same measurement and startup front end.
+Changes within a sea are evaluated with matched seeds; 95\% intervals in
+the ablation plot are percentile bootstraps of the \emph{paired seed rows},
+not samples from the \SI{200}{Hz} time series. The error measures are
+\begin{equation}
+ E_{3\mathrm D}=\left(\frac1N\sum_k
+ \|\hat{\vct p}_k-\vct p_k\|_2^2\right)^{1/2},\quad
+ \operatorname{NEES}_p=\vct e_p\T\mat P_{pp}^{-1}\vct e_p.
+ \label{eq:metrics}
+\end{equation}
+The study's per-axis RMS aggregation gives an equivalent $E_{3\mathrm D}$
+when all axes use the same scored samples. The nominal NEES reference is
+three for a well-specified 3-D Gaussian posterior; an uncalibrated or
+time-correlated residual invalidates naive independent-sample confidence
+statements. Figures and tables in this article are derived from the
+committed study CSVs, which have a revision manifest, rather than from
+freshly simulated or inferred data.
+
+\section{Numerical Results and Ablations}
+\label{sec:results}
+\subsection{Performance across seas}
+For the 26-sea comparison, the cascade's paired 3-D RMS is lower than the
+33-state filter's on 20 seas by approximately 0.1--0.9\%, statistically
+unresolved on four, and higher on two: halved heave RAO and coloured
+accelerometer noise. The quotient with a regression lift is within
+0.12\% of CSM in 3-D RMS on every sea and within 0.02\% on 24,
+empirically isolating the negligible information lost in the removed
+coordinates during frequency adaptation. CSM27H, which simply holds
+the quotient coordinates at a commit, can lose as much as 1.25\%.
+These results concern parameter-adaptive trajectories; they do not
+contradict fixed-parameter equivalence.
+
+\begin{table}[!t]
+\caption{Mean of scenario-level paired percentage improvements, relative
+to CSM (33 states). Positive means \emph{smaller} RMS; there are 9 fixed,
+6 coupling, 1 gradual, 3 rapid and 7 disturbed seas.}
+\label{tab:groups}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\InputPart{csm27-groups.tex-part}}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\includesvg[width=0.94\textwidth]{csm27-paper-ablation}
+\caption{Matched-seed realization ablation on seven representative seas:
+percentage reduction $100(1-E_f/E_{33})$ of mean 3-D RMS, with 95\%
+paired-bootstrap intervals. Positive is better; no point on this plot
+measures the absolute severity of a disturbed sea.}
+\label{fig:ablation}
+\end{figure*}
+
+\subsection{What is gained by the cascade?}
+The default cascade is more than an algebraic compression. Its normalized
+lossless colouring makes the zero-coupling adaptive law exactly A41,
+whereas the 33-state complex coordinates retain an adaptation-specific
+``realization effect.'' In spread JONSWAP the cascade improves heave RMS
+over CSM by 1.49\% (paired 95\% interval 1.36--1.62\%); on a regular
+wave the heave gain is 3.33\%. However, horizontal RMS is slightly worse
+on many JONSWAP-like seas. Those changes must be attributed to which
+coordinates the tuner holds across frequency commits, not to an
+approximation in the fixed continuous-time transfer function.
+
+Three experiments separate mechanisms. First, CSM27Q retains the
+observable quotient with a stationary-regression lift at changes of
+$\kappa$, closely replicating CSM while using 27 states. Second, CSM27H
+removes that lift and tests the assumption that quotient coordinates may
+simply be held. Third, a separate seven-sea ablation holds the \emph{raw}
+cascade colouring state instead of its noise-normalized value. Raw hold
+does not remove the halved-RAO loss (3-D change $-1.84\%$ versus
+$-2.15\%$ for the normalized hold) or the coloured-noise loss
+($-1.83\%$ versus $-1.61\%$). The default normalized hold is retained
+because it preserves the independent-axis fallback equivalence. None of
+these changes redefines the shared proxy startup.
+
+\subsection{Uncertainty and independent replay}
+\begin{table}[!t]
+\caption{Pooled consistency diagnostics over 26 seas and 30 seeds. Values
+are medians of per-run time-averaged NEES and NIS, mean empirical heave
+95\% interval coverage, and number of failed runs.}
+\label{tab:consistency}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\InputPart{csm27-consistency.tex-part}}
+\end{table}
+
+The 27-state cascade's median position NEES is 1.652 versus 1.670 for CSM,
+and its heave 95\% interval contains truth in 91.2\% of scored samples
+(\cref{tab:consistency}). The small median accelerometer NIS (0.091)
+also indicates that nominal chi-square expectations do not calibrate these
+measurements directly; reporting it is preferable to equating absence of
+numerical failure with statistical optimality. No filter failed in the
+4680-row study. Eight separately pinned wave/RAO replay records also pass
+CSM27's regression limits. These are simulation and regression gates, not
+at-sea validation. In the records, the maximum heave error is 2.455\% of
+incident $H_s$ for JONSWAP and 2.403\% for PM-Stokes, compared with
+2.518\% and 2.458\% for CSM, respectively. The significant gain over
+the legacy-excitation TFG-CARMA3 heave score is largely attributable to
+\emph{Evidence excitation}, not necessarily to the 27-state realization.
+
+\section{Degradation and Failure Modes}
+\label{sec:degrade}
+\begin{table*}[!t]
+\caption{Absolute 3-D position RMS from matched 30-seed simulations.
+Positive values in the last two columns mean \emph{worse} CSM27 error:
+$100(E_{27}/E_{\rm comparator}-1)$. This sign is intentionally opposite
+to the improvement measure in \cref{fig:ablation}. Disturbed scenarios
+alter the data-generating process; they are not controlled one-factor
+parameter variations of an identical truth trajectory.}
+\label{tab:stress}
+\centering\small
+\InputPart{csm27-paper-degradation.tex-part}
+\end{table*}
+
+\begin{figure*}[!t]
+\centering
+\includesvg[width=0.96\textwidth]{csm27-paper-degradation}
+\caption{Absolute error in eight representative seas, plotted on a log
+scale to reveal common-mode failures. The disturbed-scenario error cannot
+be inferred from the tiny differences between 27 and 33 states alone.}
+\label{fig:stress}
+\end{figure*}
+
+\subsection{Noise, motion and measurement disturbances}
+The nominal spread JONSWAP case has mean CSM27 3-D RMS of 25.4 mm.
+An imposed coloured acceleration disturbance of $0.004g_0$ (approximately
+$0.039\,\mathrm{m\,s^{-2}}$), with \SI{2}{s} correlation, changes that
+result to 817.5 mm, while A41 and CSM
+also rise to 818.6 and 804.6 mm, respectively
+(\cref{tab:stress,fig:stress}). This roughly 32-fold CSM27 increase is a
+\emph{shared model/measurement weakness}, not an effect of the six removed
+states. The paired experiment does not identify a unique causal component;
+a noise-floor/colour-model intervention would be needed to do so.
+
+Manoeuvring produces 114.8 mm on CSM27, compared with 115.5 mm on A41,
+and an abrupt change in frequency/direction/height produces 64.2 mm on
+CSM27. By contrast, $\pm25\%$ sample-interval jitter, magnetic
+disturbances with calibration residuals and bias drift leave the observed
+3-D errors near 25--27 mm in their tested settings. These finite stress
+cells do not establish robustness to arbitrary manoeuvres, jitter, magnetic
+outages or calibration error. They identify specific cases in which the
+adaptive 27-state prior is and is not the dominant limitation.
+
+\subsection{Wrong directional prior and loss of coherence}
+A separate 20-seed robustness grid on three seas supplies deliberate
+\emph{external} coupling priors: reversed direction, $90^\circ$ rotated,
+$45^\circ$ phase-shifted and doubled coupling amplitude. With the
+confidence monitor enabled, both shared-mode filters withdraw inconsistent
+coupling and return near the A41 independent-axis error. With confidence
+disabled, the doubled prior yields about 57 mm 3-D RMS and position NEES
+near 14 in the nominal sea, against about 25 mm with correct coupling.
+This ablation demonstrates the value of the confidence state machine, not
+an unconditional guarantee: a confidently wrong prior that also agrees
+with the short monitor could still pass its gates. The study does not
+cover every possible magnetic outage or coherent machinery vibration.
+
+\subsection{A structural heave--surge failure}
+With the benchmark hull's heave RAO scaled by 0.5, CSM27 has mean 3-D
+error 32.5 mm versus A41's 20.6 mm: a \emph{58\% excess} relative to A41
+(\cref{tab:stress}). The same defect affects the 33-state shared mode,
+so removing unobservable directions is not the cause. The current
+excitation mapping preserves the measured band regression
+$\vct\beta=\vct S_{hz}/S_{zz}$ but combines it with independently
+normalized horizontal/vertical priors. Its applied coherence then scales
+approximately as
+\begin{equation}
+ \gamma_{\rm applied}^2\propto
+ \gamma_{\rm measured}^2
+ \frac{S_{hh}/S_{zz}}{\sigma_h^2/\sigma_z^2},
+ \label{eq:overcouple}
+\end{equation}
+so a changed heave-to-horizontal RAO ratio can cause the applied prior to
+over-couple even when the monitor observes self-consistent regression.
+In the recorded test, measured multiple coherence remains about 0.87,
+while applied coherence rises from 0.13 to 0.38 on halving heave. A
+measured-coherence cap is a falsifiable remedy but \emph{has not been
+implemented or validated here}. This failure would be hidden by comparing
+only CSM27 with CSM, whose errors differ by roughly two percent.
+
+\section{Embedded Cost, Scope and Discussion}
+\label{sec:embedded}
+\begin{table}[!t]
+\caption{Structured analytic arithmetic for the model prediction and
+accelerometer update, and for a \SI{0.1}{s} model commit. The final column
+amortizes commits over the \SI{200}{Hz} sample rate.}
+\label{tab:cost}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\InputPart{csm27-cost.tex-part}}
+\end{table}
+
+The dense covariance drops from $33^2=1089$ to $27^2=729$ floats
+(4356 to 2916 bytes). The structured operation count falls from 13,686
+to 7,992 multiply-adds per sample, a 42\% saving; per-commit cost
+falls from 28,672 to 19,440 (32\%). The measured ESP32-S3 compilation
+with Espressif GCC (\texttt{-Os}) gives a 15,776-byte CSM filter object
+against 12,528 bytes for CSM27, a 21\% saving. The trade-off is code
+growth from 196,266 to 206,920 bytes (+5.4\%) for the pair-discretization
+and closed-form two-state construction. The worst static update call chain
+is comparable (4896 versus 4864 bytes). Those are compile-time memory
+and instruction-count results, \emph{not} measured ESP32-S3 deadlines,
+power consumption or endurance. Host timing was sensitive to denormal
+floating-point handling, a reason not to substitute x86 latency for MCU
+latency.
+
+There are important scope restrictions. The vessel response is an
+estimated synthetic RAO, the wave realization is random-phase simulation,
+the test magnetometer and calibration errors are synthetic, and the
+reference records do not measure free-running real-vessel truth. The
+startup comparison is observational across a shared policy, rather than
+a controlled feature-off experiment. The published confidence bounds
+condition on the chosen scenarios and seeded simulator; they do not
+measure model uncertainty over unobserved hulls or sensor installations.
+No formal stability theorem is claimed for the adaptive, nonlinear,
+gated, finite-precision implementation. Only the OU--III filter is the
+project's shipping default; CSM27 remains experimental.
+
+\section{Conclusion}
+The 27-state shared-mode CARMA QMEKF preserves the fixed-parameter
+three-axis stochastic law of the 33-state complexified implementation,
+including quadrature covariance, and substantially reduces its embedded
+covariance work. The cascade is a practical default among the 27-state
+realizations because its zero-coupling adaptive law coincides with the
+independent-axis CARMA3 baseline and its model commits are well conditioned.
+The transient and stress experiments impose a more qualified conclusion:
+startup remains a common front-end limitation; a coloured low-frequency
+acceleration disturbance defeats all three CARMA variants tested; and
+the present coupling normalization can harm estimation on a hull with
+unexpected heave response. Further work should pair a measured-coherence
+cap with a full 26-sea re-test, isolate the colored-noise excitation
+mechanism, test initial-attitude/magnetometer startup ablations, and
+measure timing and behavior on instrumented vessels.
+
+\section*{Reproducibility and Provenance}
+The implementation is in
+\texttt{src/kalman\_carma\_shared\_modes/CarmaSharedModesMinimalMotion.h},
+\texttt{KalmanCarmaSharedModesMinimal.h} and
+\texttt{SeaStateFusionFilter\_CarmaSharedModesMinimal.h}.
+The full experiment driver is
+\texttt{tools/carma\_shared\_modes\_minimal\_study.py} with
+\texttt{tests/kalman\_carma\_shared\_modes/}. The committed study
+\texttt{reports/results/kalman\_carma\_shared\_modes\_minimal/}
+contains the 4680-run primary CSV, 630-run commit-rule ablation,
+1240-run robustness grid, replays, trace envelopes, hardware size probe
+and a manifest identifying the original source revision. This article's
+\texttt{csm27-paper-*.tex-part} tables and vector PDF figures are
+reproducibly regenerated by
+\texttt{python3 tools/csm27\_system\_paper.py} from those committed
+files. The other shared-mode papers in this directory give the full
+observability and state-factorization proofs and the preceding 33-state
+validation; the present article does not present those derivations as
+new experimental results. Project repository:
+\url{https://github.com/bareboat-necessities/ocean-imu}.
+
+\begin{thebibliography}{9}
+\bibitem{kalman63}
+R. E. Kalman, ``Mathematical description of linear dynamical systems,''
+\emph{J. SIAM Control}, vol. 1, no. 2, pp. 152--192, 1963.
+\bibitem{linpicci15}
+A. Lindquist and G. Picci, \emph{Linear Stochastic Systems: A Geometric
+Approach to Modeling, Estimation and Identification}. Springer, 2015.
+\bibitem{vanloan78}
+C. F. Van Loan, ``Computing integrals involving the matrix exponential,''
+\emph{IEEE Trans. Autom. Control}, vol. 23, no. 3, pp. 395--404, 1978.
+\bibitem{jonswap73}
+K. Hasselmann \emph{et al.}, ``Measurements of wind-wave growth and swell
+decay during the Joint North Sea Wave Project (JONSWAP),''
+\emph{Deutsche Hydrographische Zeitschrift, Supplement A}, no. 8, 1973.
+\bibitem{mahony08}
+R. Mahony, T. Hamel, and J.-M. Pflimlin, ``Nonlinear complementary filters
+on the special orthogonal group,'' \emph{IEEE Trans. Autom. Control},
+vol. 53, no. 5, pp. 1203--1218, 2008.
+\bibitem{fasen21}
+V. Fasen-Hartmann and M. Scholz, ``Factorization and discrete-time
+representation of multivariate CARMA processes,'' arXiv:2102.11681, 2021.
+\end{thebibliography}
+
+\end{document}
