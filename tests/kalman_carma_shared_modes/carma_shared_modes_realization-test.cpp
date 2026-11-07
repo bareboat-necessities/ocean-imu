@@ -194,18 +194,19 @@ static Eigen::Matrix<Cd,3,2> tf(const Eigen::Matrix<double,N,N>& A, const Eigen:
 // A X + X A^T + Q = 0 (Kronecker; small N).
 template<int N>
 static Eigen::Matrix<double,N,N> lyap(const Eigen::Matrix<double,N,N>& A, const Eigen::Matrix<double,N,N>& Q) {
+    constexpr Eigen::Index n = N;
     const Eigen::Matrix<double,N,N> I = Eigen::Matrix<double,N,N>::Identity();
-    Eigen::MatrixXd K = Eigen::MatrixXd::Zero(N * N, N * N);
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < N; ++j) K.block(i * N, j * N, N, N) += A(i,j) * I;   // vec(A X), row-major vec
-    for (int i = 0; i < N; ++i) K.block(i * N, i * N, N, N) += A;                  // vec(X A^T)
-    Eigen::VectorXd q(N * N);
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < N; ++j) q(i * N + j) = -Q(i,j);
+    Eigen::MatrixXd K = Eigen::MatrixXd::Zero(n * n, n * n);
+    for (Eigen::Index i = 0; i < n; ++i)
+        for (Eigen::Index j = 0; j < n; ++j) K.block(i * n, j * n, n, n) += A(i,j) * I;   // vec(A X), row-major vec
+    for (Eigen::Index i = 0; i < n; ++i) K.block(i * n, i * n, n, n) += A;                  // vec(X A^T)
+    Eigen::VectorXd q(n * n);
+    for (Eigen::Index i = 0; i < n; ++i)
+        for (Eigen::Index j = 0; j < n; ++j) q(i * n + j) = -Q(i,j);
     const Eigen::VectorXd x = K.fullPivLu().solve(q);
     Eigen::Matrix<double,N,N> X;
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < N; ++j) X(i,j) = x(i * N + j);
+    for (Eigen::Index i = 0; i < n; ++i)
+        for (Eigen::Index j = 0; j < n; ++j) X(i,j) = x(i * n + j);
     return X;
 }
 
@@ -269,7 +270,7 @@ void test2_realization() {
             for (int b = 0; b < 3; ++b) {
                 const double si = a == b ? 0.0 : S.im(a,b);
                 const Eigen::Matrix<double,8,8> P8 = lyap<8>(R.A, S.re(a,b) * WR + si * WI);
-                const Eigen::Matrix<double,6,6> P6ab = P6.block<6,6>(6 * a, 6 * b);
+                const Eigen::Matrix<double,6,6> P6ab = P6.block<6,6>(Eigen::Index{6} * a, Eigen::Index{6} * b);
                 const double sc = std::sqrt(var[a] * var[b]);
                 const Eigen::Matrix3d l8 = R.C * P8 * R.C.transpose(), l6 = C6 * P6ab * C6.transpose();
                 const Eigen::Matrix3d c8 = R.C * F8 * P8 * R.C.transpose(), c6 = C6 * F6 * P6ab * C6.transpose();

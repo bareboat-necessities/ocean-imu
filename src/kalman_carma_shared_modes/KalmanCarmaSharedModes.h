@@ -62,8 +62,8 @@ struct SharedModesConfig {
     CouplingMode mode = CouplingMode::Estimated;
     CouplingConfidenceConfig<T> confidence{};
     T coupling_gain = T(1);       // upper bound of the applied coupling
-    T horizon_s = T(240);         // coupling estimate (screened, seeds 1001-1020)
-    T band_frac = T(0.15);        // envelope band / f_op (screened)
+    T horizon_s = T(240);         // coupling estimate averaging horizon
+    T band_frac = T(0.15);        // envelope band / f_op
     T warmup_s = T(120);          // coupling estimate warm-up
 };
 

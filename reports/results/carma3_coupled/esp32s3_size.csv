@@ -1,6 +1,4 @@
 variant,code_bytes,rodata_bytes,data_bytes,bss_bytes,sizeof_fusion,sizeof_filter,max_stack_frame,max_stack_function
 A41,141209,834,0,20,3208,6136,1344,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
 COR,144789,938,0,20,3208,5736,1344,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-SHM,153210,970,0,20,3208,15288,2480,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
-MCA,160062,970,0,20,3208,19352,24736,"bool ocean_imu::kalman::carma::discretize_lti(const Eigen::Matrix<Scalar, Dim, Dim>&, cons"
 MOD,160160,986,0,20,3208,5328,2304,void ocean_imu::kalman::carma::CarmaModalMotion<T>::rebuild_()

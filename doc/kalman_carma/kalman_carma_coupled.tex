@@ -105,7 +105,10 @@ baseline's identical per-axis dynamics; (B) shared directional modes built
 from a \emph{complexified} CARMA(4,1) whose real part is exactly the
 baseline process and whose imaginary part is its quadrature companion;
 (C) a constrained multivariate CARMA (MCARMA) with the heave RAO in its
-transfer matrix. All are experimental, run behind the unchanged wrapper,
+transfer matrix. A and the modal form of the baseline are evaluated here as
+filters; B is the standalone shared-modes filter, in its six-state-per-axis
+minimal realization, with its own articles; C is analysed only. All are
+experimental, run behind the unchanged wrapper,
 startup, magnetic acquisition and tuner, and leave every default, the
 shipping OU-III filter and the two-frame (TFG) variants untouched. Nothing
 here is hardware evidence or a stability statement.
@@ -235,8 +238,11 @@ which commutes with $\mat F_8,\mat Q_8$. The displacement cross-spectrum is
 $S_{ij}(\omega)=\tfrac{g^2}2[\Sigma_{c,ij}|H(i\omega)|^2+\bar\Sigma_{c,ij}|H(-i\omega)|^2]$:
 $\operatorname{Re}\mat\Sigma_c$ is the co-spectrum, $\operatorname{Im}\mat\Sigma_c$
 the quadrature spectrum. A real $\mat\Sigma_c$ reproduces Experiment A in law
-(\num{6e-15}), a real diagonal one the baseline. The state grows to 33
-(eight motion states per axis). A state-reduced variant (the mode on $z$ only,
+(\num{6e-15}), a real diagonal one the baseline. Two of the eight real
+states per axis are unobservable for every excitation; the filter carries the
+law in its six-state minimal realization (27 error states), the standalone
+shared-modes QMEKF of \texttt{src/kalman\_carma\_shared\_modes}. A
+state-reduced variant (the mode on $z$ only,
 $x,y=\operatorname{Re}(\beta\zeta_z)+$ residual C41J, 16 motion states)
 attains the same steady-state errors within 0.1--1\,mm, but its coupling sits
 in the output map and would move the estimate at every adaptation, so it was
@@ -332,8 +338,8 @@ The complexification of \cref{prop:cx} is consistent with this theory. It
 is not a decomposition of C41J but a complex CARMA with the upper poles
 $\mu_k$ and the two real poles of $D$ ($-7.93$, $-1.25$\,rad/s), and its
 relative degree is three by construction. That is why arbitrary phases need
-its eight states per axis while the four-state modal form admits only the
-family (iv).
+six states per axis (its minimal realization) while the four-state modal form
+admits only the family (iv).
 
 \emph{Validity and numerics.} The form requires distinct (regular) poles.
 The motion block refuses shapes whose two poles nearly coincide
@@ -392,7 +398,7 @@ coefficients. Its Whittle Fisher information \cite{whittle53,fasen22} from
 has rank 51 (the three null directions are the $\mat B\mapsto\mat B\mat U$
 gauge), but 44\,\% of the coefficients have a relative Cram\'er--Rao bound
 above 100\,\% (off-diagonal autoregressive coefficients 60--115\,\%,
-$\mat B_1$ essentially unidentified). The constrained form used here keeps
+$\mat B_1$ essentially unidentified). The constrained form keeps
 the physics and 12 identifiable parameters: complexified modes with Hermitian
 excitation and the vertical output through the heave RAO,
 \begin{equation}
@@ -401,13 +407,11 @@ R_z(s)=\frac{\omega_n^2}{s^2+2\zeta\omega_ns+\omega_n^2},
 \end{equation}
 so that the $x$--$z$ phase follows $\arg\Sigma_{xz}-\arg R_z(i\omega)$
 across frequency (\SI{34}{\degree} between 0.75 and $1.3f_{op}$ for the
-benchmark hull, reproduced to \SI{0.06}{\degree}). The RAO parameters are
-identifiable (relative CRLB 0.8\,\% and 2.9\,\% in \SI{20}{min}). The axes no
-longer share dynamics, so $\mat Q$ is the exact discretization of the joint
-26-state system, redone when $\kappa$ or an excitation entry moves by more
-than 1\,\%; the vertical mode amplitude is the heave requirement divided by
-the RAO variance gain. The RAO of the benchmark hull is oracle knowledge;
-mismatched RAOs are tested.
+benchmark hull). The RAO parameters are identifiable (relative CRLB
+0.8\,\% and 2.9\,\% in \SI{20}{min}). The axes no longer share dynamics, so a
+filter would need the exact discretization of a joint 26-state system and
+hull knowledge (the RAO). The form is analysed (\cref{sec:steady}) but not
+implemented.
 
 \subsection{Two modes, swell and wind sea, crossing seas}
 Two complexified modes per axis (48 motion states) with oracle frequencies
@@ -443,15 +447,15 @@ multiple coherence of $z$ on $(x,y)$ and $N_{\mathrm{eff}}$ the number of
 independent envelope samples. $\vct b$ is scaled down if
 $\vct b\Hr\mat H^{-1}\vct b$ would exceed $0.999\sigma_z^2$, and
 $\mat\Sigma=\mat R^{-1}\mat M\mat R^{-\mathsf H}$ for a model whose axes
-respond with $R_i$ at $f_{op}$ (only C's vertical). $\mat\Sigma$ is positive
+respond with $R_i$ at $f_{op}$ (the identity for every implemented model). $\mat\Sigma$ is positive
 semidefinite by construction and reduces to the baseline diagonal without
 coupling evidence. It is also equivariant under rotations about the vertical
 (to \num{7e-16}), since every factor is an invariant, so the prior does not
-depend on how the waves sit relative to north. A first form of the mapping
-also scaled the \emph{measured} horizontal block by $c$. That form read
-horizontal tilt and bias leakage as wave energy and was abandoned after it
-inflated the calm-water error; it remains as an ablation. The band fraction and horizon were selected on
-screening seeds only (\cref{sec:protocol}). ORACLE runs feed the same
+depend on how the waves sit relative to north. A form that also scales the
+\emph{measured} horizontal block by $c$ reads horizontal tilt and bias
+leakage as wave energy and inflates the calm-water error; it is an ablation
+option. The band fraction (0.15) and horizon (\SI{240}{s}) are the
+estimator's defaults. ORACLE runs feed the same
 estimator with the true wave acceleration; deployable runs use the IMU only.
 The world frame is the physically right one: a wave field is fixed in the
 world, so the coupling survives heading changes, while a coupling held in
@@ -469,19 +473,13 @@ A coupled filter shares the attitude, bias, magnetometer, reset and Joseph
 code line for line and is used as the wrapper's inner filter, so the wrapper
 and every default are untouched. Only the linear block, its readouts (unit
 selectors or dense rows), the accelerometer columns and the modal
-re-coordinatization dispatch. A 102-check numerical test suite covers
+re-coordinatization dispatch. A 54-check numerical test suite covers
 reduction to the baseline (double precision: \num{1e-14}), positive
-semidefiniteness, discretization accuracy, stability, cross-covariance
-propagation, cross-spectral phase, frame consistency, attitude resets,
-changing and near-zero excitation, sensor-noise-only input, long runs, wrong
-coupling and the modal form (\cref{sec:modal}). On data generated by the
-shared-mode model itself, the correctly coupled filter beats independent
-axes (16.8/18.1 against 19.1/22.5\,mm horizontal/heave) with NEES 6.8
-(consistent: 6). Its advantage shrinks monotonically as the coupling gain
-goes to zero, and a reversed coupling degrades monotonically in its gain, to
-71.5/86.3\,mm with NEES 380 at full gain. Every wrong coupling stays finite
-but is worse and markedly overconfident. Through the accelerometer, a wrong
-coupling biases heading and horizontal position.
+semidefiniteness, discretization accuracy, cross-covariance propagation,
+cross-spectral phase, frame consistency, attitude resets, changing and
+near-zero excitation, sensor-noise-only input, long runs and the modal form
+(\cref{sec:modal}). The shared directional modes, model-matched consistency
+and wrong-coupling degradation included, are tested with their filter.
 
 \section{Steady-State Analysis}
 \label{sec:steady}
@@ -501,9 +499,8 @@ bias up to \SI{0.05}{\degree/s}; magnetometer \SI{0.8}{\micro T} at
 \SI{25}{Hz} with hard/soft iron, and in one scenario periodic
 \SI{15}{\micro T} disturbances with scale and misalignment residuals), fed
 identically to every filter (paired). Errors are taken against the wave
-coordinate from \SI{300}{s} to \SI{1200}{s}. Estimator hyper-parameters were
-chosen on 20 screening seeds (1001--1020) by a criterion fixed beforehand;
-the final comparison uses 50 other seeds, the ablations 30. Changes are
+coordinate from \SI{300}{s} to \SI{1200}{s}. The estimator's hyper-parameters
+are its defaults; the final comparison uses 50 seeds, the ablations 30. Changes are
 $1-\overline{\mathrm{RMS}}_{\mathrm{cand}}/\overline{\mathrm{RMS}}_{\mathrm{base}}$
 with 95\,\% bootstrap intervals over seeds.
 
@@ -620,7 +617,7 @@ All results are simulation; no hardware evidence is claimed.
 \texttt{make -C tests/kalman\_carma build test}; then
 \texttt{python3 tools/carma3\_coupled\_analysis.py} and
 \texttt{python3 tools/carma3\_coupled\_benchmark.py}
-\texttt{screen}, \texttt{run}, \texttt{ablate}, \texttt{spectra},
+\texttt{run}, \texttt{ablate}, \texttt{spectra},
 \texttt{traces}, \texttt{timing}, \texttt{report}. Raw rows, spectra, traces
 and generated tables are in \texttt{reports/results/carma3\_coupled}; the
 ESP32-S3 sizes come from

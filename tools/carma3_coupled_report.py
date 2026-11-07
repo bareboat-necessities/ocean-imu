@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Report of the coupled three-axis CARMA benchmark (EXPERIMENTAL research).
 
-Reads reports/results/carma3_coupled/{screen_runs,raw_runs,ablation_runs,
-timing_runs}.csv, spectra/*.csv, traces/*.csv, esp32s3_size.csv and
+Reads reports/results/carma3_coupled/{raw_runs,ablation_runs,timing_runs}.csv, spectra/*.csv, traces/*.csv, esp32s3_size.csv and
 analysis.json (tools/carma3_coupled_benchmark.py, tools/carma3_coupled_analysis.py)
 and writes summary.md, paired_stats.json and the figures.
 
 Paired statistics, as tools/carma3_report.py: change = 1 - mean RMS
-(candidate) / mean RMS (baseline B41) over paired seeds, 95 % bootstrap
+(candidate) / mean RMS (baseline A41) over paired seeds, 95 % bootstrap
 interval (10 000 resamples of seeds, fixed generator seed), win rate (share of
 seeds on which the candidate is better) and the Wilcoxon signed-rank p.
 Positive change = better than the baseline.
@@ -29,23 +28,13 @@ OUT = ROOT / "reports" / "results" / "carma3_coupled"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma3_coupled_benchmark as bench  # noqa: E402
 
-BASE = "B41"
-LABEL = {"B41": "Baseline CARMA3 (A41)", "COR:est": "Correlated, estimated", "COR:orc": "Correlated, oracle",
-         "SHM:est": "Shared modes, estimated", "SHM:orc": "Shared modes, oracle", "MCA:est": "MCARMA (RAO), estimated",
-         "MCA:orc": "MCARMA (RAO), oracle", "MCA:off": "MCARMA RAO prior, no coupling", "SHM:off": "Shared modes, no coupling",
-         "COR:est/xy": "Correlated x-y only, estimated", "SHM:orc/flip": "Shared modes, oracle reversed (180 deg)",
-         "SHM:orc/rot90": "Shared modes, oracle turned 90 deg", "SHM:est/fz400": "Shared modes, frozen at 400 s (NED)",
-         "SHM:est/fz400/keel": "Shared modes, frozen at 400 s (keel frame)",
-         "MCA:est/rao0.40_0.35": "MCARMA, RAO f_n -27 %", "MCA:est/rao0.75_0.35": "MCARMA, RAO f_n +36 %",
-         "MCA:est/rao0.55_0.70": "MCARMA, RAO damping x2", "SHM:est/hm": "Shared modes, measured horizontal block (first mapping)",
-         "SHM:est/an": "Shared modes, measured horizontal anisotropy",
-         "MOD:off": "Complex-OU modal, exact equivalent", "MOD:est/nz": "Complex-OU modal, directional (numerator), estimated",
+BASE = "A41"
+LABEL = {"A41": "Baseline CARMA3 (A41)", "COR:est": "Correlated, estimated", "COR:orc": "Correlated, oracle",
+         "COR:est/xy": "Correlated x-y only, estimated",
+         "MOD:est/nz": "Complex-OU modal, directional (numerator), estimated",
          "MOD:est": "Complex-OU modal, real coupling, estimated", "MOD:orc/nz": "Complex-OU modal, directional, oracle",
-         "MOD:orc/nz/flip": "Complex-OU modal, directional, oracle reversed (180 deg)",
-         "SHM:orc/ph45": "Shared modes, oracle phase +45 deg"}
-COLORS = {"B41": "#555555", "COR:est": "#1f77b4", "COR:orc": "#9ecae1", "SHM:est": "#d62728", "SHM:orc": "#ff9896",
-          "MCA:est": "#2ca02c", "MCA:orc": "#98df8a", "SHM:orc/flip": "#9467bd", "MOD:off": "#8c564b",
-          "MOD:est/nz": "#ff7f0e"}
+         "MOD:orc/nz/flip": "Complex-OU modal, directional, oracle reversed (180 deg)"}
+COLORS = {"A41": "#555555", "COR:est": "#1f77b4", "COR:orc": "#9ecae1", "MOD:est/nz": "#ff7f0e"}
 WAVE_EXCLUDE = {"calm", "stationary"}
 
 
@@ -89,38 +78,6 @@ def fmt_change(r):
     if 0.0 < r["win"] < 1.0:
         s += f", win {100 * r['win']:.0f} %"
     return s
-
-
-# ---------------------------------------------------------------------------
-def screening(md, stats):
-    df = load(bench.SCREEN_RAW)
-    if df.empty:
-        return None
-    df = df.copy()
-    df["rms3"] = rms3(df)
-    base = df[df["filter"] == BASE].set_index(["scenario", "seed"])["rms3"]
-    rows = []
-    for f in sorted(df["filter"].unique()):
-        if f == BASE:
-            continue
-        c = df[df["filter"] == f].set_index(["scenario", "seed"])["rms3"]
-        lr = np.log(c / base.loc[c.index])
-        per_sc = lr.groupby(level=0).mean()
-        rows.append((f, float(lr.mean()), {k: float(v) for k, v in per_sc.items()}))
-    rows.sort(key=lambda r: r[1])
-    best = rows[0][0]
-    stats["screening"] = {"criterion": "mean over (scenario, seed) of log(RMS_3d / RMS_3d(B41))",
-                          "seeds": "1001-1020", "ranking": [(r[0], r[1]) for r in rows], "selected": best}
-    md.append("## Screening (seeds 1001-1020; estimator hyper-parameters)\n")
-    md.append("Criterion (fixed before the run): mean over the screening (scenario, seed) pairs of "
-              "log(RMS_3d candidate / RMS_3d baseline); lower is better.  "
-              "Scenarios: " + ", ".join(bench.SCREEN_SCENARIOS) + ".\n")
-    md.append("| SHM:est configuration | mean log ratio | " + " | ".join(bench.SCREEN_SCENARIOS) + " |")
-    md.append("|---" * (2 + len(bench.SCREEN_SCENARIOS)) + "|")
-    for f, m, per in rows:
-        md.append(f"| {f} | {m:+.4f} | " + " | ".join(f"{per.get(s, float('nan')):+.4f}" for s in bench.SCREEN_SCENARIOS) + " |")
-    md.append(f"\nSelected: **{best}** (used unchanged in every final and ablation run).\n")
-    return best
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +194,7 @@ def summary_table(md, stats, df, spec_acc):
     md.append("| Model | States | X RMS | Y RMS | Z RMS | NEES / NIS | Cross-spectral accuracy | Runtime host (us) | ESP32-S3 code / filter (B) |")
     md.append("|---|---|---|---|---|---|---|---|---|")
     stats["summary"] = {}
-    sz_name = {"B41": "A41", "COR:est": "COR", "COR:orc": "COR", "SHM:est": "SHM", "SHM:orc": "SHM", "MCA:est": "MCA"}
+    sz_name = {"A41": "A41", "COR:est": "COR", "COR:orc": "COR", "MOD:est/nz": "MOD"}
     for f in filters:
         def cell(d, f=f):
             return f"{d[f]['value']:.2f}" + ("" if f == BASE else f" ({100 * d[f]['change']:+.1f} % [{100 * d[f]['ci'][0]:+.1f}, {100 * d[f]['ci'][1]:+.1f}])")
@@ -266,9 +223,8 @@ def ablation_tables(md, stats):
     stats["ablation"] = {}
     md.append("## Ablations (seeds 1-30)\n")
     md.append("3-D RMS (x, y, z) change against the baseline (positive = better) with 95 % bootstrap intervals; "
-              "NEES_pv6 in brackets.  Oracle rows use the true wave acceleration (labelled); flip / rot90 are "
-              "deliberately wrong couplings; fz400 freezes the estimate at 400 s, in NED or in the keel frame; "
-              "rao* are mismatched heave RAOs of the MCARMA (the truth's hull is 0.55 Hz, 0.35).\n")
+              "NEES_pv6 in brackets.  Oracle rows use the true wave acceleration (labelled); flip is the "
+              "deliberately reversed oracle coupling.\n")
     df = df.copy()
     df["rms3"] = rms3(df)
     md.append("| filter | " + " | ".join(bench.SCENARIOS.get(s, s) for s in bench.ABL_SCENARIOS) + " |")
@@ -348,7 +304,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
             ax.set_title(f"{'xyz'[i]} displacement PSD (m^2/Hz)")
         ax = axs[0, 3]
         for i in range(3):
-            for flt in ("B41", "SHM:est"):
+            for flt in ("A41", "MOD:est/nz"):
                 ax.loglog(f[m], np.real(S[(flt, f"err{i}")][m]), color=COLORS.get(flt), ls=["-", "--", ":"][i], lw=1,
                           label=f"{flt} {'xyz'[i]}")
         ax.set_title("error PSD (m^2/Hz)")
@@ -457,7 +413,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
         ax.invert_yaxis()
         ax.set_xlabel("3-D RMS change vs baseline (%), + = better")
         ax.legend(fontsize=7)
-        ax.set_title("Wrong, frozen and keel-frame coupling; RAO mismatch; oracles (30 seeds)")
+        ax.set_title("Co-spectrum only, real modal coupling, oracles and a reversed oracle (30 seeds)")
         fig.tight_layout()
         fig.savefig(outdir / f"ablation_sensitivity.{ext}", dpi=150)
         plt.close(fig)
@@ -486,7 +442,7 @@ def plots(stats, df, abl, outdir=OUT, ext="svg"):
                 ax.set_yscale("log")
             axs[0].legend(fontsize=7)
         if not size.empty:
-            s = size[size.variant.isin(["A41", "COR", "SHM", "MCA", "OU3"])]
+            s = size[size.variant.isin(["OU3", "A41", "COR", "MOD"])]
             x = np.arange(len(s))
             axs[2].bar(x - 0.2, s.code_bytes / 1000, 0.4, label="code (kB)")
             axs[2].bar(x + 0.2, s.sizeof_filter / 1000, 0.4, label="filter object (kB)")
@@ -509,7 +465,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
     def tload(sc):
         p = bench.TRACE_DIR / f"{sc.replace('+', '_')}_seed1.csv"
         return pd.read_csv(p) if p.exists() else None
-    names = ["B41", "COR:est", "SHM:est", "MCA:est", "SHM:orc/flip"]
+    names = ["A41", "COR:est", "MOD:est/nz"]
     t = tload(bench.J29)
     if t is not None:
         # (1) true vs estimated X/Y/Z
@@ -517,10 +473,10 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
         fig, axs = plt.subplots(3, 1, figsize=(11, 7), sharex=True)
         for a, c in enumerate("xyz"):
             axs[a].plot(t.t[w], t[f"{c}_true"][w], color="k", lw=2, label="truth")
-            for n in names[:4]:
+            for n in names:
                 axs[a].plot(t.t[w], t[f"{c}_{n}"][w], color=COLORS.get(n), lw=1, label=n)
             axs[a].set_ylabel(f"{c} (m)")
-        axs[0].legend(ncol=5, fontsize=7)
+        axs[0].legend(ncol=4, fontsize=7)
         axs[-1].set_xlabel("time (s)")
         fig.suptitle("Directionally spread JONSWAP 0.29 Hz, 0.8 m, seed 1: truth vs estimates (NED, z down)")
         fig.tight_layout()
@@ -530,7 +486,7 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
         # (2) 3-D trajectory
         fig = plt.figure(figsize=(10, 4.6))
         w = (t.t >= 700) & (t.t <= 730)
-        for k, (n, title) in enumerate((("B41", "baseline"), ("SHM:est", "shared modes, estimated"))):
+        for k, (n, title) in enumerate((("A41", "baseline"), ("MOD:est/nz", "modal directional coupling, estimated"))):
             ax = fig.add_subplot(1, 2, k + 1, projection="3d")
             ax.plot(t.x_true[w], t.y_true[w], -t.z_true[w], color="k", lw=1.8, label="truth")
             ax.plot(t[f"x_{n}"][w], t[f"y_{n}"][w], -t[f"z_{n}"][w], color=COLORS[n], lw=1, label=n)
@@ -561,12 +517,12 @@ def trace_plots(plt, outdir=OUT, ext="svg"):
             h = np.sqrt(rolling(t, n, "x") ** 2 + rolling(t, n, "y") ** 2)
             axs[0].plot(t.t, 1000 * h, color=COLORS.get(n), lw=1, label=n)
             axs[1].plot(t.t, 1000 * rolling(t, n, "z"), color=COLORS.get(n), lw=1)
-            if f"phxz_{n}" in t.columns and n != "B41":
+            if f"phxz_{n}" in t.columns and n != BASE:
                 axs[2].plot(t.t, t[f"phxz_{n}"], color=COLORS.get(n), lw=1, label=f"{n} applied x-z phase")
-        if "turns" in sc and "dyaw_SHM:est" in t.columns:
+        if "turns" in sc and "dyaw_A41" in t.columns:
             ax2 = axs[2].twinx()
-            ax2.plot(t.t, t["dyaw_B41"], color="#555555", lw=0.6, ls=":")
-            ax2.set_ylabel("yaw error B41 (deg)")
+            ax2.plot(t.t, t["dyaw_A41"], color="#555555", lw=0.6, ls=":")
+            ax2.set_ylabel("yaw error A41 (deg)")
         axs[0].set_ylabel("horizontal 30 s RMS (mm)")
         axs[1].set_ylabel("heave 30 s RMS (mm)")
         axs[2].set_ylabel("x-z phase of Sigma (deg)")
@@ -647,8 +603,7 @@ def analysis_section(md):
 # ---------------------------------------------------------------------------
 
 TEX_DIR = ROOT / "doc" / "kalman_carma"
-SHORT = {"B41": "Baseline", "COR:est": "A est.", "COR:orc": "A oracle", "SHM:est": "B est.", "SHM:orc": "B oracle",
-         "MCA:est": "C est.", "MCA:orc": "C oracle", "MOD:off": "Modal exact", "MOD:est/nz": "Modal dir. est."}
+SHORT = {"A41": "Baseline", "COR:est": "A est.", "COR:orc": "A oracle", "MOD:est/nz": "Modal dir. est."}
 
 
 def tex_escape(t):
@@ -740,8 +695,7 @@ def write_tex_parts(stats, df, abl):
               "Model & States & $x$ RMS & $y$ RMS & $z$ RMS & NEES/NIS & CS err. & host \\si{\\micro s}; ESP32 B \\\\", "\\midrule"]
         tim = load(bench.TIMING_RAW)
         size = load(OUT / "esp32s3_size.csv")
-        sz_name = {"B41": "A41", "COR:est": "COR", "COR:orc": "COR", "SHM:est": "SHM", "SHM:orc": "SHM", "MCA:est": "MCA",
-                   "MOD:off": "MOD", "MOD:est/nz": "MOD"}
+        sz_name = {"A41": "A41", "COR:est": "COR", "COR:orc": "COR", "MOD:est/nz": "MOD"}
         for f in filters:
             r = summ[f]
             def cell(d, f=f):
@@ -811,7 +765,6 @@ def main(argv=None):
     if args.figures_only:
         stats = {}
         quiet = []
-        screening(quiet, stats)
         df = final_tables(quiet, stats)
         abl = ablation_tables(quiet, stats)
         figs = plots(stats, df, abl, Path(args.outdir), args.ext)
@@ -820,7 +773,6 @@ def main(argv=None):
     stats = {}
     md = ["# Coupled three-axis CARMA priors: generated results\n",
           "Generated by tools/carma3_coupled_report.py; do not edit by hand.  Simulation only (no hardware).\n"]
-    screening(md, stats)
     spec_acc = cross_spectral_accuracy()
     stats["cross_spectral_accuracy"] = spec_acc
     df = final_tables(md, stats)

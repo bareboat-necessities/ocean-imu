@@ -22,6 +22,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <random>
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         if (!std::strcmp(argv[i], "--ftz")) ftz = true;
         else if (!std::strcmp(argv[i], "--no-commits")) commits = false;
-        else if (!std::strcmp(argv[i], "--seconds") && i + 1 < argc) seconds = std::atoi(argv[++i]);
+        else if (!std::strcmp(argv[i], "--seconds") && i + 1 < argc) seconds = static_cast<int>(std::strtol(argv[++i], nullptr, 10));
     }
 #if defined(__SSE__)
     if (ftz) {

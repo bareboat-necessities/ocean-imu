@@ -121,7 +121,7 @@ reports/coverage/
 # Experimental CARMA benchmark build and run outputs
 tests/kalman_carma/carma3_bench
 tests/kalman_carma_shared_modes/kalman_carma_shared_modes-bench
-tests/kalman_carma_shared_modes/kalman_carma_shared_modes_minimal-timing
+tests/kalman_carma_shared_modes/kalman_carma_shared_modes-timing
 tests/kalman_carma/process/
 tests/kalman_carma/smoke3_*.csv
 tests/kalman_carma/smoke_coupled*.csv

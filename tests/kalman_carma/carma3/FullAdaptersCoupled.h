@@ -48,7 +48,7 @@ namespace carma3_bench {
 struct CoupledSpec {
     enum class Source { Off, Est, Oracle } source = Source::Off;
     ocean_imu::kalman::carma::CarmaCouplingConfig cfg{};
-    float horizon_s = 240.0f, band_frac = 0.15f, oracle_horizon_s = 600.0f;   // screened (seeds 1001-1020)
+    float horizon_s = 240.0f, band_frac = 0.15f, oracle_horizon_s = 600.0f;   // the estimator defaults
     float freeze_at_s = -1.0f;
     bool keel = false, flip = false;
     float rot_deg = 0.0f, phase_deg = 0.0f;
