@@ -24,6 +24,15 @@ from typing import Any, Mapping, Sequence
 import ou_robustness_core as _core
 from ou_robustness_core import *  # noqa: F401,F403
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 _ORIGINAL_SCALED_TUNING_POINT = _core.scaled_tuning_point
 _ORIGINAL_WRITE_SENSITIVITY_PLOT = _core.write_sensitivity_plot
 _ORIGINAL_WRITE_PUBLICATION_TABLE = _core.write_publication_table

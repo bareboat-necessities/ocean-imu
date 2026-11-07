@@ -18,7 +18,7 @@ from __future__ import annotations
 import sys as _export_sys
 from pathlib import Path as _ExportPath
 _export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
-from vector_export import envelope_indices, save_figure
+from vector_export import save_figure
 
 
 import csv
@@ -28,6 +28,15 @@ import re
 from pathlib import Path
 
 import numpy as np
+
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "reports" / "results" / "tfg_carma3"
@@ -593,17 +602,6 @@ def load_trace(sc, seed=1):
 TRACE_FLT = ["OU3", "A41", "T41"]
 
 
-def thin(t, y, n=2500):
-    """Use the shared envelope without discarding the final partial bucket."""
-    indices = envelope_indices((t, y), max_points=min(2000, 2 * n))
-    return t[indices], y[indices]
-
-
-def stride(t, y, n=2500):
-    k = max(1, len(t) // n)
-    return t[::k], y[::k]
-
-
 def top_legend(fig, ax, title, ncol):
     """Title and a legend row above the first panel, clear of the data."""
     h, lab = ax.get_legend_handles_labels()
@@ -629,7 +627,7 @@ def fig_errors(plt, tr, name, title):
     fig, axes = plt.subplots(3, 1, figsize=(7.2, 6.0), sharex=True)
     for ax, (k, lab) in zip(axes, (("z", "heave error (m)"), ("x", "surge error (m)"), ("y", "sway error (m)"))):
         for f in TRACE_FLT:
-            ax.plot(*thin(tr["t"], tr[f"e{k}_{f}"]), color=COL[f], lw=0.9, label=LABEL[f])
+            ax.plot(tr["t"], tr[f"e{k}_{f}"], color=COL[f], lw=0.9, label=LABEL[f])
         ax.set_ylabel(lab)
     axes[-1].set_xlabel("time (s)")
     top_legend(fig, axes[0], title, 3)
@@ -641,7 +639,7 @@ def fig_attitude(plt, tr, name, title):
     for ax, (k, lab) in zip(axes, (("droll", "roll error (deg)"), ("dpitch", "pitch error (deg)"),
                                    ("dyaw", "heading error (deg)"))):
         for f in TRACE_FLT:
-            ax.plot(*thin(tr["t"], tr[f"{k}_{f}"]), color=COL[f], lw=0.9, label=LABEL[f])
+            ax.plot(tr["t"], tr[f"{k}_{f}"], color=COL[f], lw=0.9, label=LABEL[f])
         ax.set_ylabel(lab)
     axes[-1].set_xlabel("time (s)")
     top_legend(fig, axes[0], title, 3)
@@ -680,8 +678,8 @@ def fig_cov_vs_error(plt, rows, tr):
     ax = axes[0]
     m = tr["t"] >= 300
     for f in ("A41", "T41"):
-        ax.plot(*thin(tr["t"][m], np.abs(tr[f"ez_{f}"][m])), color=COL[f], lw=0.5, alpha=0.5)
-        ax.plot(*stride(tr["t"][m], 1.96 * tr[f"sz_{f}"][m]), color=COL[f], lw=1.8, label=f"{LABEL[f]}: 1.96 sigma")
+        ax.plot(tr["t"][m], np.abs(tr[f"ez_{f}"][m]), color=COL[f], lw=0.5, alpha=0.5)
+        ax.plot(tr["t"][m], 1.96 * tr[f"sz_{f}"][m], color=COL[f], lw=1.8, label=f"{LABEL[f]}: 1.96 sigma")
     ax.set_title("heave |error| and predicted 95 % bound, JONSWAP seed 1")
     ax.set_xlabel("time (s)")
     ax.set_ylabel("m")
@@ -879,9 +877,9 @@ def fig_maggap(plt, tr, name, title, gap0, gap1):
     flts = ["A41", "T41", "T41R0"]
     fig, axes = plt.subplots(len(flts), 1, figsize=(7.2, 6.2), sharex=True, sharey=True)
     for ax, f in zip(axes, flts):
-        ts, s = stride(tr["t"], tr[f"syaw_{f}"])
+        ts, s = _fd.stride_xy(tr["t"], tr[f"syaw_{f}"])
         ax.fill_between(ts, -2 * s, 2 * s, color=COL[f], alpha=0.3, lw=0, label="predicted +-2 sigma")
-        ax.plot(*thin(tr["t"], tr[f"dyaw_{f}"]), color=COL[f], lw=1.0, label="heading error")
+        ax.plot(tr["t"], tr[f"dyaw_{f}"], color=COL[f], lw=1.0, label="heading error")
         ax.axvspan(gap0, gap1, color=GRID, alpha=0.5, lw=0)
         ax.set_ylabel("deg")
         ax.set_title(LABEL[f], fontsize=9, loc="left")

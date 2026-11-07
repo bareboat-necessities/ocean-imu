@@ -30,5 +30,4 @@ for folder, name, configs in [
     for axis in axes:
         axis.grid(alpha=.2)
     fig.suptitle('OU-II · low-wave JONSWAP RAO record · default sensor draw')
-    fig.savefig(root / f'{name}.png', dpi=150)
     fig.savefig(root / f'{name}.svg')

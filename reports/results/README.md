@@ -17,8 +17,7 @@ when reproducing published results; driver defaults can differ.
 | `carma3_coupled` | `carma3_coupled_benchmark.py` | `screen`, `run`, `ablate` |
 | `carma_excitation` | `carma_excitation_study.py` | `tune`, `run` |
 | `tfg_carma3` | `tfg_carma3_benchmark.py` | `run`, `followup` |
-| `kalman_carma_shared_modes` | `carma_shared_modes_validation.py` | `screen`, `run`, `robust` |
-| `kalman_carma_shared_modes_minimal` | `carma_shared_modes_minimal_study.py` | `run`, `ablate`, `robust` |
+| `kalman_carma_shared_modes` | `carma_shared_modes_study.py` | `run`, `robust` |
 
 For example, `python3 tools/carma3_benchmark.py run` recreates `raw_runs.csv`;
 `python3 tools/carma3_benchmark.py traces` recreates the local figure traces;
@@ -33,7 +32,8 @@ make these artifacts redundant.
 
 All Matplotlib exporters in `plots/` and `tools/` use
 `plots/vector_export.py`. Each dense line, 3D trajectory or filled-band polygon
-is reduced to at most 2,000 vertices for export, retaining ordered bucket
+is reduced to at most 2,000 vertices by default (`PLOT_MAX_POINTS` overrides
+this budget), retaining ordered bucket
 coordinate extrema, endpoints and nonfinite breaks. SVG, PGF and PDF receive the
 same reduced geometry, so downstream LaTeX PDFs do not embed full time series.
 Dense overlaid curves share the axes budget, with at least 256 points per

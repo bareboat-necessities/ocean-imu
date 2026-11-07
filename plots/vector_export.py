@@ -43,14 +43,19 @@ def save_figure(figure, *args, **kwargs):
     Restore artists even if a backend fails, so repeated exports use identical
     source data and analysis after saving still sees the full resolution.
     """
+    from figure_decimation import max_line_points
+
+    budget = max_line_points()
     restore = []
     try:
         for axes in figure.axes:
             # Several overlaid filters share the same screen width. Share the
             # budget among dense curves rather than multiplying it per filter.
             dense = sum(len(line.get_xdata()) > 256 for line in axes.lines)
-            line_budget = max(256, MAX_PLOT_POINTS // max(1, dense))
+            line_budget = max(min(256, budget), budget // max(1, dense))
             for line in axes.lines:
+                if line.get_linestyle() in ("None", "none", "", " "):
+                    continue
                 is_3d = hasattr(line, "get_data_3d")
                 original = line.get_data_3d() if is_3d else line.get_data()
                 if len(original[0]) <= line_budget:
@@ -66,10 +71,10 @@ def save_figure(figure, *args, **kwargs):
                 if not isinstance(collection, PolyCollection):
                     continue
                 for path in collection.get_paths():
-                    if len(path.vertices) <= MAX_PLOT_POINTS:
+                    if len(path.vertices) <= budget:
                         continue
                     vertices, codes = path.vertices, path.codes
-                    indices = envelope_indices(vertices.T)
+                    indices = envelope_indices(vertices.T, max_points=budget)
                     restore.append((lambda v, c, p=path: (setattr(p, "vertices", v), setattr(p, "codes", c)),
                                     (vertices, codes)))
                     path.vertices = vertices[indices]

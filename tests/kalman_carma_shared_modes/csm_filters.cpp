@@ -2,9 +2,9 @@
     Copyright (c) 2025-2026  Mikhail Grushinskiy
 
     Filter registry of kalman_carma_shared_modes-sim's Monte Carlo mode: the
-    standalone shared-modes QMEKF (CsmBenchAdapter.h; CSM, and the 27-state
-    minimal realizations CSM27, CSM27Q, CSM27H) next to carma3_bench's
-    own filters (A41, SHM:est, ...), which the engine resolves after these.
+    standalone shared-modes QMEKF (CsmBenchAdapter.h: CSM and its variants)
+    next to carma3_bench's own filters (A41, ...), which the engine resolves
+    after these.
 */
 
 #define EIGEN_NON_ARDUINO

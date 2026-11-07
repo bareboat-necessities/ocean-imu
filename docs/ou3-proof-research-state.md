@@ -44,6 +44,20 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — single 27-state shared-modes filter rebound the whole-`src/` digest.**
+Keeping one shared-modes filter removed three `src/kalman_carma_shared_modes/`
+headers and changed four there and two `src/kalman_carma/` headers
+(experimental blocks removed, comments); the fail-closed validator rejected
+the native secants' `shipping_source_tree_sha256`. Failed quantity: source
+provenance only; classification E. Evidence: the probe's compiler include
+closure (38 `src/` files) is byte-identical to main and contains none of the
+nine changed files; the diagnostic regenerated with clang 18.1.3 reproduces
+every field except that digest. Structures preserved: every shipping
+operation, constant and chronology, bit for bit. Relaxations introduced:
+none. Rebound: the digest, the secant report's blob and this ledger's blob.
+No proof flag, payload or OPEN dependency changes; the current limiter and
+next experiment are unchanged.
+
 **E — 27-state shared-modes headers rebound the whole-`src/` digest.** The
 experimental minimal realization of the shared-modes CARMA QMEKF added three
 `src/kalman_carma_shared_modes/` headers and changed two there and

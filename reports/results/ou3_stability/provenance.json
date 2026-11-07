@@ -168,7 +168,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "52209e24524b17f12b0b7d5bc67df8a24ebb1dd9"
+      "git_blob_sha": "fe832fe1f6bc51567c50176dfa38b86377546922"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -840,7 +840,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "86ffd5d859ea2411147e29c88f74b07bbe9d0064"
+      "git_blob_sha": "1eaa38e0edb66a123ea98ee4a181da5605056423"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1726,6 +1726,18 @@
     "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
     "failed_quantity": "planar-native-secants-diagnostic.json shipping_source_tree_sha256 (whole-src digest) only",
     "changed_source_files_outside_probe_closure": 6,
+    "probe_closure_src_files_byte_identical_to_main": 38,
+    "native_secant_regenerated_with": "clang 18.1.3",
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "carma_shared_modes_single_filter_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "failed_quantity": "planar-native-secants-diagnostic.json shipping_source_tree_sha256 (whole-src digest) only",
+    "changed_source_files_outside_probe_closure": 9,
     "probe_closure_src_files_byte_identical_to_main": 38,
     "native_secant_regenerated_with": "clang 18.1.3",
     "native_secant_payload_identical_except_source_tree_digest": true,

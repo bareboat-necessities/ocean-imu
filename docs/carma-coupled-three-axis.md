@@ -10,24 +10,23 @@ which is preserved bit for bit (section 4).  The paper
 generated tables are `reports/results/carma3_coupled/summary.md`.
 
 **Result (simulation only; completed Monte Carlo, seeds 1-50, ten wave
-seas plus calm water and a still IMU, complete INS).**  Shared directional
-modes (`SHM:est`, 33 states, coupling estimated from the IMU alone) lower the
-pooled wave-displacement RMS against the baseline A41 by **11.4 % (x), 4.8 %
-(y) and 12.2 % (z)**, 95 % bootstrap intervals within +-0.6 points; the
-oracle coupling adds only 0.5-1.4 points, and calm water and the still IMU
-are unchanged.  Correlated excitation (`COR`) gains nothing (z +0.6 %,
-horizontal -1.3 / -3.3 %): a real coupling can represent 28-41 % of the
-truth's x-z cross-spectral energy, a constant phase 84-94 %.  The
-constrained MCARMA (`MCA`, 35 states) is more accurate still (+14.9 / +9.5 /
-+26.5 %), but its heave RAO is the benchmark hull's: with the RAO natural
-frequency 27 % low it loses up to 25 % against the baseline, its worst host
-update is 824 us (joint 26-state rediscretization) against 35 us, and the
+seas plus calm water and a still IMU, complete INS).**  Correlated
+excitation (`COR`, Experiment A) gains nothing against the baseline A41
+(pooled heave +0.6 %, horizontal -1.3 / -3.3 %): a real coupling can
+represent 28-41 % of the truth's x-z cross-spectral energy, a constant phase
+84-94 %.  The directional numerator form of the exact complex-OU modal
+realization (`MOD:est/nz`, the only kinematically admissible phase coupling
+of four states per axis) gains heave (+6.8 %) and loses 9-23 %
+horizontally.  The quadrature relation needs the complexified shared modes
+(Experiment B), which are the standalone 27-state filter
+`KalmanCarmaSharedModes` with a coupling confidence and fallback
+([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md); there its
+3-D error is lower than A41's on 25 of 26 seas).  The constrained MCARMA
+(Experiment C) is analysed only: it needs the hull's heave RAO, and the
 unrestricted MCARMA is not identifiable (Fisher rank 51 of 54).  A wrong
-coupling is harmful (reversed: -8 to -38 %).  **Recommendation: Option C**
-(shared directional modes) as a separate experimental filter with a coupling
-confidence and fallback, now `KalmanCarmaSharedModes`
-([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)).  Nothing is
-integrated into the production CARMA3 filter (section 8).
+coupling is harmful (the reversed oracle numerator coupling: -5.5 to
+-29.7 %).  Nothing is integrated into the production CARMA3 filter
+(section 8).
 
 ## 1. The baseline, as implemented
 
@@ -90,8 +89,8 @@ PSD.  `tools/carma3_coupled_analysis.py` (section 3 of `analysis.json`):
   bimodal sea).  x-y is purely real (co-spectrum `cos th sin th`).
 * Vessel response and water-particle motion differ: the heave RAO changes
   phase by 34 deg across 0.75-1.3 f_op; surge/sway are hull-averaged orbital
-  motion.  No universal RAO is assumed anywhere below: Experiment C uses the
-  benchmark hull's synthetic heave RAO (oracle) and mismatched ones.
+  motion.  No universal RAO is assumed anywhere below; Experiment C's
+  analysis uses the benchmark hull's synthetic heave RAO.
 
 ## 3. Models
 
@@ -117,7 +116,7 @@ frequency: zero (or 180 deg) cross-phase and frequency-independent coherence
 the x-z energy (above).  The best it can do with an x-z quadrature pair is a
 small zero-lag correlation `rho_xz ~ gamma cos(-62 deg)`.
 
-### 3.2 Experiment B -- shared directional modes (`SHM`, 33 states)
+### 3.2 Experiment B -- shared directional modes (the shared-modes filter, 27 states)
 
 **The complexified CARMA mode.**  A damped stochastic oscillator
 `dq = [[-lambda, -w], [w, -lambda]] q dt + G dW` is the real form of a
@@ -157,8 +156,7 @@ covariance `Sigma_c`.  Then
 
     F = I_3 (x) F_8,   Q_ab = Re(Sigma_ab) Q_8 + Im(Sigma_ab) J Q_8,   J = [[0, -I], [I, 0]]
 
-(J commutes with `F_8`, `Q_8`; checked against the joint discretization to
-1.7e-16, float 3e-6 scaled), and the displacement cross-spectrum is
+(J commutes with `F_8`, `Q_8`), and the displacement cross-spectrum is
 
     S_ij(w) = (g^2/2) [Sigma_ij |H(iw)|^2 + conj(Sigma_ij) |H(-iw)|^2]:
 
@@ -167,14 +165,18 @@ covariance `Sigma_c`.  Then
 directional wave component with axis-specific amplitude and phase" in the
 form required by section 3.1 of the brief, plus the incoherent part
 (spreading) carried by the full rank of `Sigma_c`.  Nesting, exact in law:
-`Sigma_c` real gives Experiment A; diagonal real gives the baseline.  State
-count: 8 per axis, 24 motion states.  A state-reduced form (`SHR`: the
+`Sigma_c` real gives Experiment A; diagonal real gives the baseline.  Two of
+the eight real states per axis are unobservable for every excitation, so the
+filter carries this law in its six-state-per-axis minimal realization: the
+standalone shared-modes QMEKF of `src/kalman_carma_shared_modes` (18 motion
+states, 27 in all; [kalman-carma-shared-modes.md](kalman-carma-shared-modes.md),
+which has its tests and numerical study).  A state-reduced form (`SHR`: the
 complexified mode on z, x and y = `Re(beta zeta_z)` + C41J residuals, 16
 motion states) reaches the same steady-state errors to 0.1-1 mm (analysis
 section 5); it is not implemented because its coupling sits in the output
 map, so adapting it would move the displacement estimate at every commit.
 
-### 3.3 Experiment C -- constrained MCARMA (`MCA`, 35 states)
+### 3.3 Experiment C -- constrained MCARMA (analysis only)
 
 The general MCARMA(4,1) `P(s) = s^4 I + A_1 s^3 + ... + A_4`,
 `B(s) = B_0 s + B_1`, `H = P^{-1} B`, `S_p = H Sigma H^*` (Marquardt and
@@ -189,15 +191,11 @@ physics: a complexified mode per axis, Hermitian excitation, and the vertical
 output passed through a second-order heave RAO
 `R_z(s) = wn^2/(s^2 + 2 zeta wn s + wn^2)`, i.e. the transfer matrix
 `H(s) = diag(1, 1, R_z(s)) H_c(s)`.  The x-z phase then follows
-`arg Sigma_xz - arg R_z(iw)` across frequency (test [6]: 34 deg between
-0.75 and 1.3 f_op, to 0.06 deg).  12 parameters, all identifiable (RAO
-`f_n` 0.8 %, `zeta` 2.9 % relative CRLB in 20 min).  The axes no longer share
-dynamics, so Q is the exact discretization of the joint 26-state system
-(`discretize_lti<26>`), redone when kappa or an excitation entry moves by more
-than 1 % (the effect on the RMS error is below 0.1 %); the vertical mode
-amplitude is the heave requirement divided by the RAO variance gain at the
-current kappa.  The RAO is the benchmark hull's (labelled oracle where it
-matters); `rao<fn>_<zeta>` runs mismatched ones.
+`arg Sigma_xz - arg R_z(iw)` across frequency.  12 parameters, all
+identifiable (RAO `f_n` 0.8 %, `zeta` 2.9 % relative CRLB in 20 min).  The
+axes no longer share dynamics, so a filter needs the exact discretization of
+a joint 26-state system and hull knowledge (the RAO).  It is analysed
+(`analysis.json`: steady state and identifiability) but not implemented.
 
 ### 3.4 Two shared modes, swell plus wind sea, crossing systems
 
@@ -229,16 +227,15 @@ shrinks sampling noise, `gamma^2` being the debiased multiple coherence of z
 on (x, y) and `N_eff` the number of independent envelope samples; `b` is
 scaled down if `b^H H^-1 b` would exceed `0.999 sigma_z^2`; finally
 `Sigma = R^-1 M R^-H` for a model whose axes respond with `R_i` at the band
-(only C's vertical).  PSD by construction, the baseline diagonal without
+(identity for every implemented model).  PSD by construction, the baseline diagonal without
 coupling evidence, and equivariant under rotations about the vertical (every
 factor is an invariant; test [7], 7e-16), so the prior does not depend on
 how the waves sit relative to north.  With pure sensor noise the applied
 coherence stays at 0.03 (test [12]).  Ablation forms: `an` adds the measured
 horizontal anisotropy at the baseline trace (shrunk, capped at 90 %); `hm`
-is the first form of this mapping (the measured horizontal block scaled by
-`c`, floored at the prior), which read horizontal leakage as wave energy and
-cost 25 % in calm water; it was replaced for that reason.  The band fraction
-and horizon were chosen on screening seeds 1001-1020 only (section 5).
+is the measured horizontal block scaled by `c`, floored at the prior, which
+reads horizontal leakage as wave energy and cost 25 % in calm water.  The band fraction (0.15) and horizon (240 s) are
+the estimator's defaults.
 
 **Oracle versus deployable.**  `orc` runs feed the *same* estimator with the
 true wave acceleration (labelled ORACLE everywhere); `est` runs use only the
@@ -311,7 +308,8 @@ noise-free readouts (relative degree 3, as in the baseline).
 The complexification of 3.2 is consistent with this.  It is not a
 decomposition of C41J but a complex CARMA with the upper poles and the two
 real poles of `D` (-7.93, -1.25 rad/s), relative degree 3 by construction.
-That is why arbitrary phases need its 8 states per axis.
+That is why arbitrary phases need six states per axis (its minimal
+realization; the realified form has eight).
 
 **Equivalence** (`analysis.json` "modal", `carma_coupled-test` [16]): over
 kappa 0.2-2.5 the transfer function matches C41J to 3e-14, the stationary
@@ -349,7 +347,7 @@ coherence) from the same Hermitian band estimate as B, excitation
 `f_op` the band gain and the phase `atan(rho tan arg S_iz)` match to 4e-16,
 and the excitation stays PSD (test [17]).  The price is a nonzero
 displacement density at DC on the coupled axes.  Steady state (analysis,
-section 5, `MODN`): JONSWAP heave 10.2 -> 9.3 mm (SHM 9.5), horizontal
+section 5, `MODN`): JONSWAP heave 10.2 -> 9.3 mm (shared modes 9.5), horizontal
 7.4 -> 9.7 mm; mixed sea horizontal 89.7 -> 68.6 mm, heave 93.6 -> 92.5 mm.
 `MOD:est` (real coupling) is Experiment A in law and gives identical Monte
 Carlo rows to `COR:est`.
@@ -357,9 +355,9 @@ Carlo rows to `COR:est`.
 ## 4. Implementation
 
 * `src/kalman_carma/CarmaCoupledMotion.h`: the motion blocks
-  (`CarmaCorrelatedMotion`, `CarmaSharedModeMotion` =
-  `CarmaKroneckerMotion<T, false/true>`, `CarmaModalMotion`,
-  `CarmaRaoMcarmaMotion`).
+  `CarmaCorrelatedMotion` (Experiment A) and `CarmaModalMotion` (the modal
+  form); the shared directional modes are the standalone filter of
+  `src/kalman_carma_shared_modes`.
 * `src/kalman_carma/CarmaCrossSpectrumEstimator.h`: estimator, mapping,
   forms (Hermitian / Real / RealXY / Numerator), sources (Off / Estimated /
   External), frames (World / Keel), freeze.
@@ -375,68 +373,51 @@ Carlo rows to `COR:est`.
   names gain the `void` argument).  A Motion instantiation shares the
   attitude, bias, magnetometer, reset and Joseph code line for line; only the
   linear block, its readouts (unit selectors or dense rows: `kDenseReadout`,
-  `pv_readout()`), the accelerometer columns and the modal
+  `pv_readout()`), the accelerometer columns and the per-commit
   re-coordinatization dispatch.  The wrapper (`SeaStateFusionFilter_CARMA3`),
   the TFG headers and every default are untouched: a coupled filter is used
   as the wrapper's `MekfT`, and coupling is configured on the inner filter.
 * `tests/kalman_carma/carma3/FullAdaptersCoupled.h`,
-  `carma3_filters_coupled.cpp`: benchmark adapters `B41` (the baseline through
-  the same adapter) and `MOD|COR|SHM|MCA:<off|est|orc>[/options]`
-  (options in the header: `nz` directional modal coupling, `re`, `xy`, `an`,
-  `hm`, `flip`, `rot<deg>`, `ph<deg>`, `fz<s>`, `keel`, `rao<fn>_<zeta>`, ...).
+  `carma3_filters_coupled.cpp`: benchmark adapters
+  `MOD|COR:<off|est|orc>[/options]` (options in the header: `nz` directional
+  modal coupling, `re`, `xy`, `an`, `hm`, `flip`, `rot<deg>`, `ph<deg>`,
+  `fz<s>`, `keel`, ...).
 * `carma3_bench`: `--coupling` (acceleration error, whitened-innovation
   autocorrelation at 1 s and cross-correlation, applied coherence/phase,
   runtime p99/max), modifiers `sp<s>` (spreading), `magdist`, bases
   `regular_f<Hz>_h<m>`, `crossing`, `swell`, `dir_change`; the true wave
   acceleration reaches only `orc` adapters (`Sensors::a_wave_mag`).
-* `tools/carma3_coupled_analysis.py` (exact analysis),
-  `tools/carma3_coupled_benchmark.py` (Monte Carlo driver),
-  `tools/carma3_coupled_report.py` (statistics, figures, LaTeX tables);
-  data in `reports/results/carma3_coupled/`.
+* `tools/carma3_coupled_analysis.py` (exact analysis, including Experiments
+  B and C as model classes), `tools/carma3_coupled_benchmark.py` (Monte Carlo
+  driver), `tools/carma3_coupled_report.py` (statistics, figures, LaTeX
+  tables); data in `reports/results/carma3_coupled/`.
 
 ## 5. Tests
 
-`tests/kalman_carma/carma_coupled-test.cpp` (102 checks, run by `make all`
-through `run_tests.sh`; the same script checks `B41` = `A41` on every column
-and a calm-water phantom bound for the estimated couplings), numbered as the
+`tests/kalman_carma/carma_coupled-test.cpp` (54 checks, run by `make all`
+through `run_tests.sh`; the same script checks `COR:off` = `A41` and a
+calm-water phantom bound for the estimated coupling), numbered as the
 brief's section 9 plus [16]-[17] for the modal form:
 
 | # | check | result |
 |---|---|---|
-| 1 | COR off = baseline (double / float); SHM off = baseline law; SHM real = COR | 1e-14 / 4e-6 / 4e-5 / 5e-5 relative |
-| 2 | PSD excitation (2000 random Hermitian inputs, every form) and Q | min eig >= 0 |
-| 3 | C2D: Kronecker / Hermitian-Kronecker / joint 26-state vs double joint; semigroup | 1e-6 / 3e-6 / 6e-6 scaled; 3e-14 |
-| 4 | stable dynamics kappa 0.15-3.2; Re-part PSD = C41J | 2e-14 |
-| 5 | stationary cross-covariance vs joint Lyapunov; float prediction invariance | 3e-14; 5e-4 |
-| 6 | COR real; SHM phase = arg Sigma; MCA phase follows the RAO | 3e-17; 0.11 deg; 0.06 deg (of 34 deg) |
+| 1 | COR off = baseline (double / float) | 7e-15 / 4e-6 relative |
+| 2 | PSD excitation (2000 random Hermitian inputs, every form) and COR's Q | min eig >= 0 |
+| 3 | C2D: Kronecker assembly (float) vs double joint discretization; semigroup | 1e-6 scaled; 2e-15 |
+| 6 | COR cross-spectrum real | 3e-17 |
 | 7 | rotation equivariance of the mapping; keel / world freeze under turns | 7e-16; exact |
-| 8 | attitude/bias-motion cross-covariances through 12 deg tilt resets | COR 8e-5, SHM 2e-4 vs baseline |
+| 8 | attitude/bias-motion cross-covariances through 12 deg tilt resets | COR 4e-5 vs baseline |
 | 9 | 10 Hz kappa / amplitude / coupling changes, 600 s | PSD, bounded |
-| 10 | direction turned 90 deg: estimate re-converges, error recovers | yes (17.6 -> 17.2 mm) |
 | 11 | excitation 1e-5 m/s^2 | finite, PSD, no displacement |
 | 12 | sensor noise only: applied coherence; still-IMU phantom vs baseline | 0.03; equal |
-| 13 | 3600 s SHM, 1800 s MCA, float | symmetric, PSD, bounded |
-| 14 | layouts and state counts (21 / 21 / 33 / 35) | yes |
-| 15 | model-matched: data from the SHM model itself | see below |
-| 16 | modal form: \|H\|^2, F, Q, P_inf, autocovariance vs baseline; c G = c A G = 0; rotated readout; cond(T); independent driving; modal filter = baseline (double, fixed and 10 Hz changes); simulation; coalescing poles refused | 1e-14 / 4e-15 / 1e-13 / 3e-14 / 2e-13; 1e-16; lost; 196; Q_pp ~ h; 2.7e-13 / 7.5e-13; 2.1 %; yes |
+| 13 | 3600 s, float | symmetric, PSD, bounded |
+| 14 | layouts and state counts (21 / 21) | yes |
+| 16 | modal form: \|H\|^2, F, Q, P_inf, autocovariance vs baseline; c G = c A G = 0; rotated readout; cond(T); independent driving; modal filter = baseline (double, fixed and 10 Hz changes); simulation; coalescing poles refused | 1e-14 / 4e-15 / 1e-13 / 3e-14 / 2e-13; 1e-16; lost; 196; Q_pp ~ h; 2.7e-13 / 6.8e-13; 2.1 %; yes |
 | 17 | directional modal coupling: zeros on x, y only; relative degree 3; phase and band gain at f_op; zero phase = real coupling; PSD (300 random inputs) | yes; 3e-17; 2e-16 / 4e-16; exact; yes |
 
-Test 15 is the decisive correctness check of Experiment B: data generated by
-the shared-mode model itself (long-crested, isotropic horizontal marginals,
-45 deg wave direction), with the magnetometer.  The correctly coupled filter
-has RMS 16.8 / 18.1 mm (horizontal / z), against 19.1 / 22.5 mm for
-independent axes, with NEES 6.77 (6 = consistent) against 7.24.  The gain
-falls monotonically as the coupling gain goes 1 -> 0.5 -> 0 (18.0 / 20.9 mm
-at 0.5).  A reversed coupling degrades monotonically in its gain
-(21.3 / 25.3 mm at 0.5; 71.5 / 86.3 mm and NEES 380 at 1).  Every wrong
-coupling is worse and more overconfident than the correct one (turned 45 deg:
-46.9 mm, NEES 468; 90 deg: 85.4 mm, NEES 1785) and stays finite, and
-confidently wrong coupling is flagged by the NEES.  Experiment A's form
-(co-spectrum only) gains nothing on this pure-quadrature relation (identical
-to independent axes).  Wrong coupling is an information source with the
-wrong sign: through the accelerometer it biases heading and horizontal
-position, so a deployable variant needs shrinkage and a validity monitor
-(section 7).
+The shared directional modes, model-matched consistency and wrong-coupling
+degradation included, are tested with their filter
+(`tests/kalman_carma_shared_modes`).
 
 ## 6. Results (completed Monte Carlo)
 
@@ -458,47 +439,37 @@ one job); ESP32-S3 object code / filter `sizeof` (Xtensa GCC 14.2.0, -Os).
 
 | Model | States | X RMS | Y RMS | Z RMS | NEES / NIS | Cross-spectral error | Host us | ESP32-S3 code / filter (B) |
 |---|---|---|---|---|---|---|---|---|
-| Baseline CARMA3 (A41) | 21 | 4.18 | 2.47 | 3.64 | 15.42 / 0.183 | 0.226 | 3.6 / 7.9 | 141,209 / 6,136 |
-| Complex-OU modal, exact | 21 | 4.18 (-0.0 %) | 2.47 (+0.0 %) | 3.64 (-0.0 %) | 15.42 / 0.183 | -- | 4.2 / 11.6 | -- |
-| Modal, directional numerator, est. | 21 | 4.57 (-9.2 % [-10.7, -8.0]) | 3.03 (-22.6 % [-24.1, -21.3]) | 3.39 (+6.8 % [+6.6, +7.0]) | 12.35 / 0.220 | 0.160 | 4.3 / 12.0 | -- |
-| Correlated (A), estimated | 21 | 4.24 (-1.3 % [-1.4, -1.2]) | 2.55 (-3.3 % [-3.6, -2.9]) | 3.62 (+0.6 % [+0.6, +0.6]) | 15.89 / 0.185 | 0.236 | 4.0 / 10.5 | 144,789 / 5,736 |
+| Baseline CARMA3 (A41) | 21 | 4.18 | 2.47 | 3.64 | 15.42 / 0.183 | 0.226 | 3.3 / 6.1 | 141,209 / 6,136 |
+| Modal, directional numerator, est. | 21 | 4.57 (-9.2 % [-10.7, -7.9]) | 3.03 (-22.6 % [-24.2, -21.3]) | 3.39 (+6.8 % [+6.6, +7.0]) | 12.35 / 0.220 | 0.160 | 3.9 / 10.1 | 160,160 / 5,328 |
+| Correlated (A), estimated | 21 | 4.24 (-1.3 % [-1.4, -1.2]) | 2.55 (-3.3 % [-3.6, -2.9]) | 3.62 (+0.6 % [+0.6, +0.6]) | 15.89 / 0.185 | 0.236 | 3.5 / 8.5 | 144,789 / 5,736 |
 | Correlated (A), oracle | 21 | 4.24 (-1.4 %) | 2.57 (-3.8 %) | 3.62 (+0.6 %) | 15.96 / 0.185 | -- | -- | -- |
-| **Shared modes (B), estimated** | 33 | **3.71 (+11.4 % [+11.2, +11.6])** | **2.36 (+4.8 % [+4.2, +5.4])** | **3.20 (+12.2 % [+12.0, +12.3])** | 13.91 / 0.181 | 0.182 | 7.0 / 34.9 | 153,210 / 15,288 |
-| Shared modes (B), oracle | 33 | 3.66 (+12.6 %) | 2.34 (+5.3 %) | 3.14 (+13.6 %) | 13.84 / 0.182 | -- | -- | -- |
-| Constrained MCARMA (C), estimated | 35 | 3.56 (+14.9 % [+14.7, +15.2]) | 2.24 (+9.5 % [+8.9, +10.0]) | 2.67 (+26.5 % [+26.3, +26.8]) | 13.57 / 0.366 | 0.143 | 26.4 / 824.0 | 160,062 / 19,352 |
 
-Oracle rows feed the same estimator the true wave acceleration (labelled);
-MCARMA's heave RAO is the benchmark hull's in every row of this table.
+Oracle rows feed the same estimator the true wave acceleration (labelled).
+The exact complex-OU modal form with the coupling off is the baseline in law
+(`carma_coupled-test` [16]); `COR:off` reproduces A41 to float rounding
+(`run_tests.sh`).
 
 ### 6.2 Per sea
 
-* Shared modes, heave: long-period swell +23.7 %, two systems at different
-  frequencies +16.1 %, mixed wind sea and swell +11.9 %, regular wave
-  +10.1 %, Pierson-Moskowitz +8.0 %, JONSWAP +5.2 % (spread cos^8 +4.4 %),
-  crossing seas +1.7 %.  The one loss is short-period wind waves, -1.2 %
-  [-1.4, -1.0] (better on 2 % of seeds).  Horizontal: x +1.7 % (wind waves)
-  to +27.4 % (swell); y +0.9 to +21.0 %, except the mixed sea (+0.5 %
-  [-1.1, +2.0]) and the two systems at different frequencies (+0.1 %
-  [-0.1, +0.3]), neither significant.
 * Correlated excitation stays within 3 % of the baseline on every sea and
   axis except the mixed sea's y axis (-20.4 %): a real co-spectrum cannot
   carry the 90 deg x-z relation.
 * The directional numerator form of the exact modal realization gains heave
-  (+6.8 %) but loses 9-23 % horizontally (a constant real numerator puts
-  displacement density at DC on the coupled axes).
-* The exact complex-OU modal form reproduces A41 to the bootstrap resolution
-  on every sea (the realization is exact; section 3.6).
+  on every wave sea (swell +18.6 %, regular wave +14.4 %, PM +7.3 %, spread
+  JONSWAP +5.9 %) but loses horizontally on every sea (15-59 %; short wind
+  waves 0-3 %) except the mixed sea's x axis (+12.6 %): a constant real
+  numerator puts displacement density at DC on the coupled axes.
 
 ### 6.3 Consistency
 
 Pooled NEES is above 6 for every model because of the two-peak seas, which
 a single CARMA mode cannot represent: the mixed wind sea and swell (NEES A41
-62.9, SHM 60.1, MCA 56.1) and the two systems at different frequencies
-(10.0, 8.4, 8.5).  On the single-system seas the coupled models are close to
-consistent (NEES 5.5-6.1, 95 % position-interval coverage 0.97-0.99), the
-shared modes slightly less overconfident than the baseline.  Pooled
-accelerometer NIS: 0.18 for A41, COR and SHM, 0.22 for the numerator form,
-0.37 for MCARMA.
+62.9, numerator form 51.0, COR 66.8) and the two systems at different
+frequencies (10.0, 8.1, 10.2).  On the single-system seas A41 and COR are
+close to consistent (NEES 5.5-6.1, 95 % position-interval coverage
+0.97-0.99); the numerator form is slightly underconfident on them (4.7-5.1)
+and overconfident on the crossing sea (8.1).  Pooled accelerometer NIS: 0.18
+for A41 and COR, 0.22 for the numerator form.
 
 ### 6.4 Analysis (theoretical predictions, not Monte Carlo)
 
@@ -514,51 +485,32 @@ accelerometer NIS: 0.18 for A41, COR and SHM, 0.22 for the numerator form,
 
 3-D RMS change against A41 (`summary.md`, Ablations):
 
-* **Wrong coupling is harmful.**  Shared modes with the oracle coupling
-  reversed: -8.3 to -38.5 %; turned 90 deg: -5.8 to -24.6 %; a 45 deg phase
-  error still gains +1.8 to +3.3 % except on the mixed sea (-3.2 %).  A
-  deployable variant therefore needs shrinkage of the estimate and a
-  validity monitor with fallback to independent axes.
-* **Coupling off.**  The complexified realization without coupling is
-  -0.2 to -0.6 % against A41: equal in law at fixed parameters, slightly
-  apart under adaptation.
-* **Frame.**  A coupling frozen at 400 s keeps +1.5 to +12.9 % when held in
-  NED, also through 90 deg heading zigzags (+3.2 %); frozen in the keel frame
-  it loses the heading-change gain (-0.2 %).  The coupling belongs in the
-  world frame (section 3).
-* **Mapping.**  The first excitation mapping (measured horizontal block) cost
-  22 % in calm water and was replaced (section 3.5); adding the measured
-  horizontal anisotropy loses 4 % on the mixed sea.
-* **MCARMA's RAO.**  With the hull RAO natural frequency 27 % low the
-  constrained MCARMA loses 25.3 % (spread JONSWAP), 12.8 % (PM) and 24.4 %
-  (heading changes), while still gaining 21.9 % on the mixed sea; +36 % and
-  doubled damping keep gains of 8-23 %.  Its RAO prior alone, without
-  coupling, already gains 2.4-7.4 %: part of the MCARMA gain is hull
-  knowledge, not cross-axis coupling.
+* **Wrong coupling is harmful.**  The directional modal coupling with the
+  oracle coupling reversed loses 5.5 to 29.7 %; even the correct oracle
+  coupling loses 6.9 to 25.3 % except on the mixed sea (+8.1 %), because
+  the numerator form trades horizontal accuracy for heave.  A deployable
+  coupling therefore needs shrinkage of the estimate and a validity monitor
+  with fallback to independent axes.
+* **Real coupling.**  The modal form with a real (co-spectrum) coupling,
+  Experiment A in law, stays within -2.3 to +1.0 %.
+* **Horizontal-only coupling.**  Correlated x-y excitation gains 2.8-3.5 %
+  on the single-system seas and loses 8.7 % on the mixed sea.
+* **Calm water.**  Every coupled form leaves calm water unchanged.
 
-## 8. Recommendation
+## 8. Conclusion
 
-**Option C -- shared directional modes**, as a separate experimental filter.
-
-* **A (keep independent CARMA3)** is not chosen: the shared-mode gains are
-  consistent (every wave sea except short-period wind waves, -1.2 % heave),
-  significant (intervals exclude zero) and leave calm water unchanged.
-* **B (correlated CARMA3)** is rejected: no useful gain at any sea, and a
+* **A (correlated CARMA3)** is not adopted: no useful gain at any sea, and a
   real coupling cannot represent the quadrature x-z relation of waves.
-* **C (shared directional modes)** is adopted: +11.4 / +4.8 / +12.2 %
-  pooled, within 1.4 points of the oracle coupling, consistency no worse
-  than the baseline, twice the host cost (7.0 against 3.6 us mean) and a
-  15 KB filter object on the ESP32-S3.  It is fragile to a wrong coupling,
-  so it needs the coupling confidence and fallback that the standalone
-  filter adds.
-* **D (full MCARMA)** is rejected: the unrestricted model is not
-  identifiable; the constrained RAO form's extra gain rests on knowing the
-  hull RAO (oracle here, and a 27 % frequency error turns it into a loss),
-  it doubles the accelerometer NIS, and its worst host update (824 us, 16 %
-  of the 5 ms step before any embedded slowdown) is unsuited to the AtomS3R.
+* **The modal numerator form** trades 9-23 % horizontal error for 7 %
+  heave; it is not adopted.
+* **B (shared directional modes)** carries the quadrature relation and is
+  the standalone experimental 27-state filter with a coupling confidence and
+  fallback, `KalmanCarmaSharedModes`
+  ([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)).
+* **C (constrained MCARMA)** is not implemented: its extra information is
+  the hull's heave RAO (an oracle in the benchmark), and the unrestricted
+  MCARMA is not identifiable.
 
 **What goes into the production QMEKF CARMA3 filter: nothing.**  The
-baseline `Kalman3D_Wave_CARMA3<float, 4, false, 4, false>` is unchanged.  The
-shared-mode model is promoted to the standalone experimental filter
-`KalmanCarmaSharedModes` ([kalman-carma-shared-modes.md](kalman-carma-shared-modes.md)),
-which adds the coupling confidence and fallback and is not a default.
+baseline `Kalman3D_Wave_CARMA3<float, 4, false, 4, false>` is unchanged; the
+shared-modes filter is experimental and not a default.

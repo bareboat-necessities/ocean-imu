@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Reproduce the startup and degradation evidence in the CSM27 system paper.
+"""Reproduce the startup, coupling-ablation and degradation evidence in the
+27-state system paper (doc/kalman_carma_shared_modes/kalman_carma_shared_modes-27state.tex).
 
 This is a *post-processing* step, not a new Monte Carlo experiment.  Its only
 numerical inputs are the committed, paired runs of
-``carma_shared_modes_minimal_study.py``.  No estimator coefficients are fitted.
+``tools/carma_shared_modes_study.py`` (the 27-state shared-modes filter CSM
+and the CARMA3 baseline A41@C).  No estimator coefficients are fitted.
 
     python3 tools/csm27_system_paper.py
     python3 tools/csm27_system_paper.py --check
@@ -32,12 +34,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 ROOT = Path(__file__).resolve().parent.parent
-EVIDENCE = ROOT / "reports/results/kalman_carma_shared_modes_minimal"
+EVIDENCE = ROOT / "reports/results/kalman_carma_shared_modes"
 DEST = ROOT / "doc/kalman_carma_shared_modes"
 
 J29 = "jonswap_fp0.29_hs0.8_g3.3"
-FILTERS = ("A41@C", "CSM", "CSM27", "CSM27Q", "CSM27H", "CSM:off")
+FILTERS = ("A41@C", "CSM")
 FIXED = (
     J29, "regular_f0.25_h1", "pm_fp0.25_hs1", "swell",
     "jonswap_fp0.45_hs0.4_g3.3", "mixed_swell_wind", "bimodal",
@@ -62,19 +73,17 @@ ABLATION = (
     ("Abrupt change", "abrupt_change"),
     ("Sample jitter", J29 + "+jit"),
 )
-DISPLAY = {"A41@C": "A41 (21)", "CSM": "CSM (33)", "CSM27": "Cascade (27)",
-           "CSM27Q": "Quotient+lift (27)", "CSM27H": "Quotient held (27)"}
-COLORS = {"A41@C": "#626262", "CSM": "#cc503e", "CSM27": "#1768a8",
-          "CSM27Q": "#158466", "CSM27H": "#9765b8"}
+DISPLAY = {"A41@C": "A41 (21)", "CSM": "CSM (27)"}
+COLORS = {"A41@C": "#626262", "CSM": "#1768a8"}
 
 
 def load() -> pd.DataFrame:
     df = pd.read_csv(EVIDENCE / "raw_runs.csv")
     required = set(FILTERS)
     if set(df["filter"].unique()) != required or df.scenario.nunique() != 26:
-        raise ValueError("expected the committed 26-sea, six-arm study")
+        raise ValueError("expected the committed 26-sea, two-arm study")
     counts = df.groupby(["scenario", "filter"]).seed.nunique()
-    if len(df) != 26 * 6 * 30 or not (counts == 30).all():
+    if len(df) != 26 * len(FILTERS) * 30 or not (counts == 30).all():
         raise ValueError("the 30-seed paired experiment is incomplete")
     if df.duplicated(["scenario", "seed", "filter"]).any() or df.failed.ne(0).any():
         raise ValueError("duplicate or failed runs; cannot publish the summaries")
@@ -109,7 +118,7 @@ def startup_table(df: pd.DataFrame, check: bool) -> None:
         r"\midrule",
     ]
     subset = df[df.scenario.isin(FIXED)].copy()
-    for name in FILTERS[:5]:
+    for name in FILTERS:
         d = subset[subset["filter"] == name]
         r = (d.su_rms_z / d.rms_z).median()  # median of within-run ratios
         settled = 100 * np.mean(d.conv_z.le(300).fillna(False))
@@ -124,17 +133,14 @@ def startup_table(df: pd.DataFrame, check: bool) -> None:
 
 def stress_table(df: pd.DataFrame, check: bool) -> None:
     lines = [
-        r"\begin{tabular}{@{}lrrrrr@{}}\toprule",
-        r"& \multicolumn{3}{c}{3-D RMS [mm]} & \multicolumn{2}{c}{CSM27 relative [\%]} \\",
-        r"Case & A41 & CSM & CSM27 & vs CSM & vs A41 \\",
+        r"\begin{tabular}{@{}lrrr@{}}\toprule",
+        r"& \multicolumn{2}{c}{3-D RMS [mm]} & CSM relative [\%] \\",
+        r"Case & A41 & CSM & vs A41 \\",
         r"\midrule",
     ]
     for label, sc in STRESS:
-        a, c, m = [rows_for(df, sc, f).rms_3d.mean() for f in ("A41@C", "CSM", "CSM27")]
-        lines.append(
-            f"{label} & {1000*a:.1f} & {1000*c:.1f} & {1000*m:.1f} & "
-            f"{100*(m/c-1):+.1f} & {100*(m/a-1):+.1f} \\\\"
-        )
+        a, m = [rows_for(df, sc, f).rms_3d.mean() for f in ("A41@C", "CSM")]
+        lines.append(f"{label} & {1000*a:.1f} & {1000*m:.1f} & {100*(m/a-1):+.1f} \\\\")
     lines.extend([r"\bottomrule", r"\end{tabular}"])
     write_table("csm27-paper-degradation.tex-part", "\n".join(lines) + "\n", check)
 
@@ -149,8 +155,8 @@ def figures(df: pd.DataFrame) -> None:
     fig, axes = plt.subplots(1, 2, figsize=(7.15, 2.65), width_ratios=[1, 1.35])
     a = axes[0]
     for sc in FIXED:
-        r = rows_for(df, sc, "CSM27")
-        a.scatter(1000*r.rms_z.median(), 1000*r.su_rms_z.median(), s=20, color=COLORS["CSM27"])
+        r = rows_for(df, sc, "CSM")
+        a.scatter(1000*r.rms_z.median(), 1000*r.su_rms_z.median(), s=20, color=COLORS["CSM"])
     a.plot([1, 3000], [1, 3000], "--", color="0.5", lw=0.8)
     a.set_xscale("log"); a.set_yscale("log")
     a.set_xlabel("Scored heave RMS, 300--1200 s [mm]")
@@ -165,7 +171,7 @@ def figures(df: pd.DataFrame) -> None:
     mask = (ts.t >= 30) & (ts.t <= 280)
     x = ts.t.loc[mask].to_numpy()
     b = axes[1]
-    for f in ("A41@C", "CSM", "CSM27"):
+    for f in FILTERS:
         y = ts.loc[mask, f"{f}|z"].to_numpy() * 1000
         # Ten-second RMS smoothing of the one-second ensemble envelopes.
         norm = np.ones(10) / 10
@@ -179,37 +185,40 @@ def figures(df: pd.DataFrame) -> None:
     b.legend(frameon=False, fontsize=7)
     b.grid(alpha=0.2)
     fig.tight_layout()
-    save_figure(fig, DEST / "csm27-paper-startup.pdf", bbox_inches="tight", metadata={"Title": "CSM27 startup and handoff"})
+    save_figure(fig, DEST / "csm27-paper-startup.pdf", bbox_inches="tight", metadata={"Title": "27-state startup and handoff"})
     save_figure(fig, DEST / "csm27-paper-startup.svg", bbox_inches="tight")
     plt.close(fig)
 
     # Severity is shown in physical RMS units, not only relative to the
-    # 33-state filter: this avoids concealing model-shared failure modes.
+    # baseline: this avoids concealing model-shared failure modes.
     fig, ax = plt.subplots(figsize=(7.15, 3.0))
     xx = np.arange(len(STRESS))
-    for j, f in enumerate(("A41@C", "CSM", "CSM27")):
+    for j, f in enumerate(FILTERS):
         vals = [1000*rows_for(df, sc, f).rms_3d.mean() for _, sc in STRESS]
-        ax.bar(xx + (j-1)*.25, vals, .24, label=DISPLAY[f], color=COLORS[f])
+        ax.bar(xx + (j-0.5)*.36, vals, .34, label=DISPLAY[f], color=COLORS[f])
     ax.set_yscale("log")
     ax.set_xticks(xx)
     ax.set_xticklabels([label.replace("$\\times0.5$", "x0.5").replace("$\\pm25\\%$", "+/-25%")
                         for label, _ in STRESS], rotation=20, ha="right", fontsize=7)
     ax.set_ylabel("3-D position RMS [mm], log scale")
-    ax.legend(ncol=3, frameon=False, fontsize=7)
+    ax.legend(ncol=2, frameon=False, fontsize=7)
     ax.grid(axis="y", alpha=.2)
     fig.tight_layout()
-    save_figure(fig, DEST / "csm27-paper-degradation.pdf", bbox_inches="tight", metadata={"Title": "CSM27 disturbance sensitivity"})
+    save_figure(fig, DEST / "csm27-paper-degradation.pdf", bbox_inches="tight", metadata={"Title": "27-state disturbance sensitivity"})
     save_figure(fig, DEST / "csm27-paper-degradation.svg", bbox_inches="tight")
     plt.close(fig)
 
-    # Matched-seed bootstrap, as in carma_shared_modes_validation.paired().
-    # A positive percentage denotes lower error than the 33-state CSM.
+    # Coupling ablation.  With the coupling off the filter IS A41 in law,
+    # adaptation included (CSM:off = A41@C), so the paired CSM - A41@C change
+    # isolates the directional coupling.  Matched-seed bootstrap, as in
+    # carma_shared_modes_study.paired(); positive = lower error than A41.
     fig, ax = plt.subplots(figsize=(7.15, 3.1))
-    for j, f in enumerate(("CSM27", "CSM27Q", "CSM27H")):
+    for j, (col, name, color) in enumerate((("rms_z", "heave", "#1768a8"), ("rms_h", "horizontal", "#158466"),
+                                            ("rms_3d", "3-D", "#cc503e"))):
         yy, minus, plus = [], [], []
         for _, sc in ABLATION:
-            r0 = rows_for(df, sc, "CSM").rms_3d.to_numpy()
-            r1 = rows_for(df, sc, f).rms_3d.to_numpy()
+            r0 = rows_for(df, sc, "A41@C")[col].to_numpy()
+            r1 = rows_for(df, sc, "CSM")[col].to_numpy()
             rng = np.random.default_rng(20261106)
             ix = rng.integers(0, 30, size=(4000, 30))
             draws = 100 * (1 - r1[ix].mean(axis=1) / r0[ix].mean(axis=1))
@@ -217,16 +226,16 @@ def figures(df: pd.DataFrame) -> None:
             lo, hi = np.quantile(draws, [.025, .975])
             yy.append(score); minus.append(score-lo); plus.append(hi-score)
         ax.errorbar(np.arange(len(ABLATION)) + (j-1)*.2, yy, yerr=[minus, plus],
-                    fmt="o", ms=4, capsize=2, lw=.8, label=DISPLAY[f], color=COLORS[f])
+                    fmt="o", ms=4, capsize=2, lw=.8, label=name, color=color)
     ax.axhline(0, color="0.3", lw=.8)
     ax.set_xticks(np.arange(len(ABLATION)))
     ax.set_xticklabels([label.replace("$\\times0.5$", "x0.5") for label, _ in ABLATION],
                        rotation=19, ha="right", fontsize=7)
-    ax.set_ylabel("Paired 3-D RMS reduction vs CSM (33) [%]")
+    ax.set_ylabel("Paired RMS reduction, coupling on vs off [%]")
     ax.legend(ncol=3, frameon=False, fontsize=7)
     ax.grid(axis="y", alpha=.2)
     fig.tight_layout()
-    save_figure(fig, DEST / "csm27-paper-ablation.pdf", bbox_inches="tight", metadata={"Title": "Realization and commit ablations"})
+    save_figure(fig, DEST / "csm27-paper-ablation.pdf", bbox_inches="tight", metadata={"Title": "Coupling ablation"})
     save_figure(fig, DEST / "csm27-paper-ablation.svg", bbox_inches="tight")
     plt.close(fig)
 
@@ -243,7 +252,7 @@ def main() -> None:
     elif any(not (DEST / f"csm27-paper-{name}.svg").is_file()
              for name in ("startup", "degradation", "ablation")):
         raise ValueError("missing committed vector figures; rerun the generator")
-    print(f"CSM27 system-paper evidence: {26} seas, {30} seeds, {len(df)} rows; {'checked' if args.check else 'generated'}")
+    print(f"27-state system-paper evidence: {26} seas, {30} seeds, {len(df)} rows; {'checked' if args.check else 'generated'}")
 
 
 if __name__ == "__main__":
