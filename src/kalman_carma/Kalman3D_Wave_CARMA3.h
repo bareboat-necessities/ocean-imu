@@ -39,10 +39,11 @@
   the band-limited rate derivative of kalman_common/ImuLeverArm.h.
 
   Motion (last template parameter, default void).  void is the filter
-  described above, unchanged.  A coupled translational block of
-  kalman_carma/CarmaCoupledMotion.h (EXPERIMENTAL: correlated, shared-mode
-  and RAO-structured MCARMA priors, docs/carma-coupled-three-axis.md)
-  replaces the x/y/z CARMA blocks and their discretization; the attitude,
+  described above, unchanged.  A coupled translational block
+  (EXPERIMENTAL: the correlated and modal priors of
+  kalman_carma/CarmaCoupledMotion.h, docs/carma-coupled-three-axis.md, or the
+  shared-mode block of src/kalman_carma_shared_modes) replaces the x/y/z
+  CARMA blocks and their discretization; the attitude,
   bias, magnetometer, reset and Joseph mathematics above are shared, line for
   line.  The coupled block requires NHC = NZC = 4 and no S states.
 */

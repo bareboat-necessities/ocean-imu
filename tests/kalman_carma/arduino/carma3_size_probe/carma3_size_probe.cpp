@@ -21,12 +21,12 @@
     7  SeaStateFusion_TFG_CARMA3<KALMANF, 4>       CARMA(4,1) x/y/z on the two-frame
                                                    Lie group (docs/tfg-carma3-research.md)
     8  CARMA(4,1) x/y/z, correlated excitation     Experiment A
-    9  complexified shared modes                   Experiment B
-   10  RAO-structured MCARMA                       Experiment C
-   11  CARMA(4,1) complex-OU modal representation  Addendum (exact modal
+    9  CARMA(4,1) complex-OU modal representation  Addendum (exact modal
                                                    equivalent + real coupling)
-       (8-11: Kalman3D_Wave_CARMA3<..., Motion> of kalman_carma/CarmaCoupledMotion.h
-       behind the same wrapper, coupling estimator on; docs/carma-coupled-three-axis.md)
+       (8-9: Kalman3D_Wave_CARMA3<..., Motion> of kalman_carma/CarmaCoupledMotion.h
+       behind the same wrapper, coupling estimator on; docs/carma-coupled-three-axis.md;
+       the shared directional modes, Experiment B, are probed by
+       tests/kalman_carma_shared_modes/arduino/csm_size_probe)
 */
 
 // Built only by the Xtensa target compiler or by `build.sh host`; host
@@ -64,10 +64,6 @@ using Fusion = ocean_imu::carma::SeaStateFusion_TFG_CARMA3<TrackerType::KALMANF,
 #define CARMA3_PROBE_COUPLED 1
 #if CARMA3_PROBE_VARIANT == 8
 using Motion = ocean_imu::kalman::carma::CarmaCorrelatedMotion<float>;
-#elif CARMA3_PROBE_VARIANT == 9
-using Motion = ocean_imu::kalman::carma::CarmaSharedModeMotion<float>;
-#elif CARMA3_PROBE_VARIANT == 10
-using Motion = ocean_imu::kalman::carma::CarmaRaoMcarmaMotion<float>;
 #else
 using Motion = ocean_imu::kalman::carma::CarmaModalMotion<float>;
 #endif

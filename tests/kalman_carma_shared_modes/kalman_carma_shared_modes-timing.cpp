@@ -1,20 +1,19 @@
 /*
     Copyright (c) 2025-2026  Mikhail Grushinskiy
 
-    kalman_carma_shared_modes_minimal-timing -- host timing of the QMEKF cores
-    (no wrapper, no front end): the CARMA3 baseline A41 (21 states), the
-    33-state shared-modes core and the 27-state minimal realizations
-    (KalmanCarmaSharedModesMinimal.h), on a synthetic 200 Hz stream with
+    kalman_carma_shared_modes-timing -- host timing of the QMEKF cores (no
+    wrapper, no front end): the CARMA3 baseline A41 (21 states) and the
+    27-state shared-modes core (KalmanCarmaSharedModes.h), on a synthetic 200 Hz stream with
     model commits every 0.1 s (and without, --no-commits) and the
     magnetometer at 25 Hz.  --ftz sets x86 flush-to-zero / denormals-are-zero
     first: the float series of the discretizations underflow into denormals,
     which x86 handles in microcode (tens of times slower), so a host time
     without --ftz overstates the commit cost relative to an FPU without
     denormal support.  Ranking only; not an ESP32-S3 time
-    (docs/kalman-carma-shared-modes-minimal.md section 6).
+    (docs/kalman-carma-shared-modes.md).
 
     Build on demand (not part of `make build`):
-        make -C tests/kalman_carma_shared_modes kalman_carma_shared_modes_minimal-timing
+        make -C tests/kalman_carma_shared_modes kalman_carma_shared_modes-timing
     Output CSV: core,states,commits,ftz,time_update_us,acc_mag_us,commit_us,total_us
 */
 
@@ -33,7 +32,7 @@
 #endif
 
 #include "kalman_carma/Kalman3D_Wave_CARMA3.h"
-#include "kalman_carma_shared_modes/KalmanCarmaSharedModesMinimal.h"
+#include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
 
 namespace csm = ocean_imu::carma_shared_modes;
 using V3 = Eigen::Vector3f;
@@ -96,15 +95,11 @@ int main(int argc, char** argv) {
     ftz = false;
 #endif
     using A41 = ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, 4, false, 4, false, true, true>;
-    using C33 = csm::KalmanCarmaSharedModes<float>;
-    using C27 = csm::KalmanCarmaSharedModesMinimal<float, csm::MinimalRealization::Cascade>;
-    using Q27 = csm::KalmanCarmaSharedModesMinimal<float, csm::MinimalRealization::Quotient>;
+    using CSM = csm::KalmanCarmaSharedModes<float>;
     std::printf("core,states,commits,ftz,time_update_us,acc_mag_us,commit_us,total_us\n");
     for (int rep = 0; rep < 3; ++rep) {   // interleaved repeats: the report takes the median
         run<A41>("A41", commits, ftz, seconds);
-        run<C33>("CSM", commits, ftz, seconds);
-        run<C27>("CSM27", commits, ftz, seconds);
-        run<Q27>("CSM27Q", commits, ftz, seconds);
+        run<CSM>("CSM", commits, ftz, seconds);
     }
     return 0;
 }

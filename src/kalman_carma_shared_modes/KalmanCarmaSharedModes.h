@@ -14,11 +14,12 @@
     The class IS the CARMA3 QMEKF core Kalman3D_Wave_CARMA3<T, 4, false, 4,
     false, true, true, SharedModesMotion<T>> (attitude error, gyroscope bias,
     accelerometer bias, Joseph updates, multiplicative attitude reset, the
-    shared-mode motion block: one complexified CARMA(4,1) mode per axis, eight
-    real states each, axes sharing its dynamics and driven by circular complex
-    noise with a Hermitian excitation estimated from the filter's own
-    world-frame acceleration) -- 33 error states -- extended with the
-    coupling confidence (CarmaCouplingConfidence.h):
+    shared-mode motion block: one complexified CARMA(4,1) mode per axis in its
+    minimal realization, six real states each (CarmaSharedModesMotion.h),
+    axes sharing its dynamics and driven by circular complex noise with a
+    Hermitian excitation estimated from the filter's own world-frame
+    acceleration) -- 27 error states -- extended with the coupling
+    confidence (CarmaCouplingConfidence.h):
 
       time_update(gyr, Ts)                 base prediction; remembers the rate
       measurement_update_acc_only(acc, T)  base update, then one confidence
@@ -30,11 +31,8 @@
 
     so it drops into any schedule that drives a Kalman3D_Wave_CARMA3, the
     CARMA3 wrapper in particular (SeaStateFusionFilter_CarmaSharedModes.h).
-    At c = 0 the prior is the independent-axis CARMA(4,1) law on every axis.
-
-    The second template parameter is the motion block (default: the 33-state
-    SharedModesMotion<T>).  KalmanCarmaSharedModesMinimal.h instantiates the
-    same core with the six-state-per-axis minimal realization (27 states).
+    At c = 0 the filter is the independent-axis CARMA3 baseline exactly, in
+    law and through every model commit.
 
     Scalar T: float on the target (the default), double for analysis.  Fixed
     size throughout; nothing is allocated after construction.  Ground truth,
@@ -67,22 +65,21 @@ struct SharedModesConfig {
     T horizon_s = T(240);         // coupling estimate (screened, seeds 1001-1020)
     T band_frac = T(0.15);        // envelope band / f_op (screened)
     T warmup_s = T(120);          // coupling estimate warm-up
-    T amplitude_tolerance = T(0); // amplitude commit deadband (screened and rejected: keep 0)
 };
 
-template<typename T = float, class MotionBlock = SharedModesMotion<T>>
+template<typename T = float>
 class KalmanCarmaSharedModes
-    : public kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, MotionBlock> {
+    : public kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, SharedModesMotion<T>> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using Base = kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, MotionBlock>;
+    using Base = kalman::Kalman3D_Wave_CARMA3<T, 4, false, 4, false, true, true, SharedModesMotion<T>>;
     using Vector3 = typename Base::Vector3;
-    using Motion = MotionBlock;
+    using Motion = SharedModesMotion<T>;
     using Hermitian = kalman::carma::Hermitian3<T>;
     using CouplingConfig = kalman::carma::CarmaCouplingConfig;
     using Config = SharedModesConfig<T>;
     using Confidence = CarmaCouplingConfidence<T>;
-    static constexpr int kStates = Base::NX;     // 33 (27 with the minimal block)
+    static constexpr int kStates = Base::NX;     // 27
 
     struct CouplingStatus {
         CouplingMode mode = CouplingMode::Estimated;
@@ -126,7 +123,6 @@ public:
         m.coupling().estimator().configure(ec);
         ec.horizon_s = cfg_.confidence.monitor_horizon_s;
         m.monitor().configure(ec);
-        m.set_amplitude_tolerance(cfg_.amplitude_tolerance);
         CouplingConfidenceConfig<T> k = cfg_.confidence;
         if (cfg_.mode == CouplingMode::Off) k.enabled = false;
         conf_.configure(k);

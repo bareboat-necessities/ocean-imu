@@ -9,13 +9,10 @@
   inner filter is Kalman3D_Wave_CARMA3 with a motion block of
   kalman_carma/CarmaCoupledMotion.h.
 
-  Names: B41 (the baseline A41 through this adapter: Motion = void) and
-  <MODEL>:<source>[/opt...] with
+  Names: <MODEL>:<source>[/opt...] with
     MODEL   MOD  the exact complex-OU modal form of the baseline (12 motion
-                 states, real excitation; MOD:off is the baseline by similarity)
+                 states, real excitation)
             COR  Experiment A, real correlated excitation (12 motion states)
-            SHM  Experiment B, complexified shared modes (24)
-            MCA  Experiment C, RAO-structured MCARMA (26)
     source  off  no coupling (independent axes: the reduction check)
             est  DEPLOYABLE: the coupling estimator on the measured world-frame
                  acceleration (CarmaCrossSpectrumEstimator.h)
@@ -32,9 +29,9 @@
             with the hull), flip (oracle: x-z and y-z cross terms negated,
             i.e. the wave direction reversed), rot<deg> (oracle: horizontal
             cross terms turned by deg), ph<deg> (oracle: x-z and y-z cross
-            terms phase-shifted by deg), oh<s> oracle horizon (600 s),
-            rao<fn>_<zeta> MCA heave RAO (0.55 Hz, 0.35: the benchmark hull),
-            tol<x> MCA re-discretization tolerance (default 0.01).
+            terms phase-shifted by deg), oh<s> oracle horizon (600 s).
+  The shared directional modes (Experiment B) are the standalone filter of
+  tests/kalman_carma_shared_modes (CsmBenchAdapter.h).
 */
 
 #include "FullAdapters.h"
@@ -55,8 +52,6 @@ struct CoupledSpec {
     float freeze_at_s = -1.0f;
     bool keel = false, flip = false;
     float rot_deg = 0.0f, phase_deg = 0.0f;
-    float rao_fn = 0.55f, rao_zeta = 0.35f;
-    float refresh_tol = -1.0f;
 };
 
 inline bool parse_coupled_spec(const std::string& s, CoupledSpec& sp) {
@@ -85,15 +80,8 @@ inline bool parse_coupled_spec(const std::string& s, CoupledSpec& sp) {
         else if (o == "ns") sp.cfg.shrink = false;
         else if (o == "keel") sp.keel = true;
         else if (o == "flip") sp.flip = true;
-        else if (o.rfind("rao", 0) == 0) {
-            char* end = nullptr;
-            sp.rao_fn = static_cast<float>(std::strtod(o.c_str() + 3, &end));
-            if (!end || *end != '_') return false;
-            sp.rao_zeta = static_cast<float>(std::strtod(end + 1, nullptr));
-        }
         else if (o.rfind("rot", 0) == 0) sp.rot_deg = num(3);
         else if (o.rfind("ph", 0) == 0) sp.phase_deg = num(2);
-        else if (o.rfind("tol", 0) == 0) sp.refresh_tol = num(3);
         else if (o.rfind("oh", 0) == 0) sp.oracle_horizon_s = num(2);
         else if (o.rfind("fz", 0) == 0) sp.freeze_at_s = num(2);
         else if (o[0] == 'g') sp.cfg.gain = num(1);
@@ -122,10 +110,6 @@ public:
         f.enableClamp(true);
         if constexpr (Mekf::kMotion) {
             auto& m = f.mekf().motion();
-            if constexpr (requires { m.set_rao(0.55f, 0.35f); }) {
-                m.set_rao(sp_.rao_fn, sp_.rao_zeta);
-                if (sp_.refresh_tol >= 0.0f) m.set_refresh_tolerance(sp_.refresh_tol);
-            }
             Cfg c = sp_.cfg;
             c.source = sp_.source == CoupledSpec::Source::Off ? Cfg::Source::Off
                      : sp_.source == CoupledSpec::Source::Est ? Cfg::Source::Estimated : Cfg::Source::External;

@@ -29,10 +29,9 @@
                                   the same wrapper; T41R0, T41RA, T41NW its
                                   reset / covariance-write ablations; T52,
                                   T52R0 the CARMA(5,2) follow-up
-                     B41, COR:<o>, SHM:<o>, MCA:<o>
+                     COR:<o>, MOD:<o>
                                   coupled three-axis priors
-                                  (carma3/FullAdaptersCoupled.h; B41 the
-                                  baseline A41 through the same adapter)
+                                  (carma3/FullAdaptersCoupled.h)
   --level l1       prescribed attitude, per-axis reduced filters on
                    y = R_nb f + g e_z = a + R_nb b + n, one shared
                    measurement-only operating point (the vertical channel's

@@ -82,7 +82,7 @@ inline const char* to_string(CouplingState s) {
 
 template<typename T = float>
 struct CouplingConfidenceConfig {
-    bool  enabled = true;            // false: c = 1 always (the research SHM:est behaviour)
+    bool  enabled = true;            // false: c = 1 always (the estimated coupling, unchecked)
     T monitor_horizon_s = T(60.0); // short estimate the prior is checked against
     T d2_high = T(16.0);           // inconsistent above (E[D^2] ~ 2 when consistent)
     T d2_low = T(6.0);             // consistent again below
