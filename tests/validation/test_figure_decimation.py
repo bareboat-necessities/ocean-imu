@@ -2,6 +2,8 @@ import importlib.util
 from pathlib import Path
 import re
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -70,6 +72,21 @@ class FigureDecimationTests(unittest.TestCase):
         self.assertLessEqual(len(spiral.get_xdata()), 1001)
         self.assertEqual(spiral.get_xdata()[-1], np.cos(theta[-1]) * theta[-1])
         plt.close(fig)
+
+    def test_install_before_pyplot_import(self):
+        # Tools install the hook at import and import pyplot lazily.
+        code = (
+            "import importlib.util, sys\n"
+            f"spec = importlib.util.spec_from_file_location('fd', {str(REPO_ROOT / 'plots' / 'figure_decimation.py')!r})\n"
+            "fd = importlib.util.module_from_spec(spec); spec.loader.exec_module(fd); fd.install()\n"
+            "import matplotlib; matplotlib.use('Agg')\n"
+            "import io, numpy as np, matplotlib.pyplot as plt\n"
+            "fig, ax = plt.subplots(); (l,) = ax.plot(np.arange(10_000.0), np.sin(np.arange(10_000.0)))\n"
+            "plt.savefig(io.BytesIO(), format='svg')\n"
+            "assert len(l.get_xdata()) <= 2002, len(l.get_xdata())\n"
+        )
+        r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr[-2000:])
 
     def test_install_decimates_saved_svg_and_pgf(self):
         figure_decimation.install(matplotlib)

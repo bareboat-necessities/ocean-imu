@@ -28,6 +28,7 @@ decimated figures by construction; the data files are never changed.
 
 from __future__ import annotations
 
+import functools
 import os
 
 import numpy as np
@@ -177,10 +178,12 @@ def install(matplotlib_module=None) -> None:
         return
     original = mfig.Figure.savefig
 
+    # functools.wraps keeps the name ``Figure.savefig``: pyplot, when imported
+    # after this, builds its wrapper from that qualified name.
+    @functools.wraps(original)
     def savefig(self, *args, **kwargs):
         decimate_figure(self)
         return original(self, *args, **kwargs)
 
     setattr(savefig, _INSTALLED_ATTR, True)
-    savefig.__doc__ = original.__doc__
     mfig.Figure.savefig = savefig
