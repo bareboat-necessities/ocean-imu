@@ -118,6 +118,8 @@ configuration $\omega_{z0}=0$. The 4-state real kinematic realization
 $\vct z_a=[p_a,v_a,a_a,\ell_a]\T$ satisfies
 $\mathrm d\vct z_a=\mat A_4\vct z_a\,\mathrm dt+
 \vct e_3\,\mathrm d\eta_a$ with transfer $H_4$.
+Here $\ell_a$ is a CARMA latent coordinate; it is not the OU--III
+displacement integral $S_a=\int p_a\,\mathrm dt$.
 
 Directional dependence enters through three circular complex driving
 increments $\mathrm d\xi_a=\mathrm d\xi_{r,a}+i\,\mathrm d\xi_{i,a}$,
@@ -236,9 +238,15 @@ the idealized measurements have the form
 \end{equation}
 and the magnetometer measures a rotated local field with sensor noise.
 The filter propagates attitude from bias-corrected angular rate and the
-state covariance through the continuous motion model. Accelerometer,
-magnetic and integral-displacement pseudo-measurements update the QMEKF;
-the acceleration update couples attitude, bias and the motion block.
+state covariance through the continuous motion model. Accelerometer and
+magnetometer measurements update the QMEKF; the acceleration update
+couples attitude, bias and the motion block. Importantly, the actual
+shared-mode instantiation sets \texttt{SH=SZ=false}: it has no $S$ states
+and therefore \emph{does not} perform the periodic $S=0$
+pseudo-measurement of OU--III. Its displacement regularization is the
+stable CARMA stochastic prior itself. The general core exposes optional
+position/velocity pseudo-measurement APIs, but they are not an input of
+the evaluated default configuration.
 Given a linearized residual $\vct r=\vct y-h(\hat x)$, a typical
 measurement uses
 \begin{equation}
