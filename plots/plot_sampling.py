@@ -9,7 +9,7 @@ DEFAULT_PLOT_RATE_HZ = BASE_SAMPLE_RATE_HZ / 10
 
 
 def get_plot_rate_hz() -> float:
-    """Return target plot sample rate from env, defaulting to 200 Hz."""
+    """Return target plot sample rate from env, defaulting to 20 Hz."""
     raw = os.getenv("PLOT_SAMPLE_RATE_HZ", "").strip()
     if not raw:
         return DEFAULT_PLOT_RATE_HZ

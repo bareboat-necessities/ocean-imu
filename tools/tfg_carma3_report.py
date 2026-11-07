@@ -15,6 +15,12 @@ with Holm correction inside each stated family.  "Equivalent" means the whole
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import csv
 import json
 import math
@@ -577,7 +583,7 @@ def mpl():
 
 
 def save(fig, name):
-    fig.savefig(OUT / name, format="svg", bbox_inches="tight", metadata={"Date": None})
+    save_figure(fig, OUT / name, format="svg", bbox_inches="tight", metadata={"Date": None})
     import matplotlib.pyplot as plt
     plt.close(fig)
 

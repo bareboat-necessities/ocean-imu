@@ -38,6 +38,12 @@ not estimated rather than scored as a zero estimate.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import os
@@ -224,7 +230,7 @@ def plot_record(record: str, series: dict[str, dict[str, np.ndarray]], out: Path
                  f"truth = vessel motion; startup excursions are clipped; "
                  f"PII is vertical only")
     fig.tight_layout()
-    fig.savefig(out, dpi=90)
+    save_figure(fig, out, dpi=90)
     plt.close(fig)
 
 
@@ -259,7 +265,7 @@ def plot_settle(rows: list[dict], metric: str, title: str, out: Path) -> None:
     axs[-1].set_xticklabels([r.replace("wave_data_", "").split("_L")[0] for r in records],
                             rotation=45, ha="right")
     fig.tight_layout()
-    fig.savefig(out, dpi=90)
+    save_figure(fig, out, dpi=90)
     plt.close(fig)
 
 

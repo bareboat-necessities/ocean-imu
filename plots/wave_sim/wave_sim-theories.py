@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import argparse
 from pathlib import Path
 
@@ -520,7 +526,7 @@ def main():
     saved = []
     for fmt in args.formats:
         out = output_dir / f"{args.basename}.{fmt}"
-        fig.savefig(out, bbox_inches="tight", dpi=220 if fmt == "png" else None)
+        save_figure(fig, out, bbox_inches="tight", dpi=220 if fmt == "png" else None)
         saved.append(out)
 
     plt.close(fig)

@@ -15,6 +15,12 @@ displacement, attitude, and the adaptation schedule.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
+
 import glob
 import os
 import re
@@ -75,7 +81,7 @@ def finalize(fig, outbase: str, suffix: str = "", exts=("pgf", "svg")) -> None:
         if ext == "pgf" and not _PGF_OK:
             continue
         try:
-            fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
+            save_figure(fig, f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")
         except (RuntimeError, FileNotFoundError) as exc:
             if ext != "pgf":
                 raise

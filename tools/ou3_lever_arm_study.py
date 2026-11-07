@@ -39,6 +39,12 @@ question, and the cutoff sweep shows why its one design parameter matters.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import hashlib
@@ -580,7 +586,7 @@ def reproducible_pyplot():
 
 
 def _save(fig: Any, path: Path) -> None:
-    fig.savefig(path, format="svg", metadata={"Date": None})
+    save_figure(fig, path, format="svg", metadata={"Date": None})
 
 
 def pick(

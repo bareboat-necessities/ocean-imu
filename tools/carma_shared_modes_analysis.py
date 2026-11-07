@@ -24,6 +24,12 @@ Run: python3 tools/carma_shared_modes_analysis.py [--ext svg,pgf]
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import json
 from pathlib import Path
@@ -283,7 +289,7 @@ def figures(res, exts, outdir=FIG):
 
     def save(fig, name):
         for e in exts:
-            fig.savefig(outdir / f"{name}.{e}", bbox_inches="tight")
+            save_figure(fig, outdir / f"{name}.{e}", bbox_inches="tight")
         plt.close(fig)
 
     d = res["unobservable_angle_vs_kappa"]

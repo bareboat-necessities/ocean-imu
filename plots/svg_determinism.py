@@ -4,8 +4,12 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from vector_export import save_figure
 
 
 SVG_HASH_SALT = "ocean-imu-published-svg-v1"
@@ -31,4 +35,4 @@ def save_svg(figure: Any, path: str | Path, **kwargs: Any) -> None:
 
     metadata = dict(kwargs.pop("metadata", {}) or {})
     metadata.update(SVG_METADATA)
-    figure.savefig(path, format="svg", metadata=metadata, **kwargs)
+    save_figure(figure, path, format="svg", metadata=metadata, **kwargs)

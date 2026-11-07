@@ -10,6 +10,12 @@ by wave-realization, IMU-noise, and initialization seed.
 
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import csv
 import json
@@ -435,7 +441,7 @@ def write_sensitivity_plot(
     )
     fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.89))
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, format="svg", metadata={"Date": None})
+    save_figure(fig, path, format="svg", metadata={"Date": None})
     plt.close(fig)
 
 
@@ -513,7 +519,7 @@ def write_stress_plot(
     axes[1].legend(frameon=False, loc="upper center", ncol=2)
     fig.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(path, format="svg", metadata={"Date": None})
+    save_figure(fig, path, format="svg", metadata={"Date": None})
     plt.close(fig)
 
 

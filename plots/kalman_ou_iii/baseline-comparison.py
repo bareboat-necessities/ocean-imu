@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import glob
 import hashlib
 import json
@@ -198,7 +204,7 @@ def write_plot(dfs, output_base):
     axes[1].legend(loc="upper right", fontsize=7, ncol=2)
     fig.tight_layout()
     for ext in ("pgf", "svg"):
-        fig.savefig(f"{output_base}.{ext}", format=ext, bbox_inches="tight")
+        save_figure(fig, f"{output_base}.{ext}", format=ext, bbox_inches="tight")
     plt.close(fig)
 
 

@@ -52,6 +52,12 @@ Run: python3 tools/carma3_coupled_analysis.py [--out reports/results/carma3_coup
 """
 from __future__ import annotations
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[1] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import json
 import sys
@@ -961,7 +967,7 @@ def make_plots(res, f, outdir, ext="svg"):
     axs[0, 0].legend(loc="lower left", fontsize=7)
     fig.suptitle("Cross-spectral phase: truth vs oracle-parameterized models (grey: acceleration band weight)", fontsize=10)
     fig.tight_layout()
-    fig.savefig(outdir / f"cross_phase_models.{ext}", dpi=150)
+    save_figure(fig, outdir / f"cross_phase_models.{ext}", dpi=150)
     plt.close(fig)
 
     fig, axs = plt.subplots(3, len(seas), figsize=(12.5, 7.6), sharex=True)
@@ -987,7 +993,7 @@ def make_plots(res, f, outdir, ext="svg"):
     axs[0, 0].legend(loc="lower left", fontsize=7)
     fig.suptitle("Magnitude-squared coherence: truth vs oracle-parameterized models", fontsize=10)
     fig.tight_layout()
-    fig.savefig(outdir / f"coherence_models.{ext}", dpi=150)
+    save_figure(fig, outdir / f"coherence_models.{ext}", dpi=150)
     plt.close(fig)
 
     # Steady-state RMS, x/y/z, h-noise x1 and x3.
@@ -1016,7 +1022,7 @@ def make_plots(res, f, outdir, ext="svg"):
                 ax.set_ylabel("steady-state RMS error (mm)")
     axs[0, 0].legend(fontsize=6, ncol=3)
     fig.tight_layout()
-    fig.savefig(outdir / f"steady_state_rms.{ext}", dpi=150)
+    save_figure(fig, outdir / f"steady_state_rms.{ext}", dpi=150)
     plt.close(fig)
 
     # Complexification: real-part spectrum and mirror leakage.
@@ -1032,7 +1038,7 @@ def make_plots(res, f, outdir, ext="svg"):
     axs[1].semilogx(fq, 10 * np.log10(Hm / Hp), color="#9467bd")
     axs[1].set_xlabel("frequency (Hz, kappa = 1)"); axs[1].set_ylabel("mirror leakage |H-|^2/|H+|^2 (dB)")
     fig.tight_layout()
-    fig.savefig(outdir / f"complexification.{ext}", dpi=150)
+    save_figure(fig, outdir / f"complexification.{ext}", dpi=150)
     plt.close(fig)
 
     # Complex-OU modal form: kinematics of common vs independent driving,
@@ -1074,7 +1080,7 @@ def make_plots(res, f, outdir, ext="svg"):
     axs[2].set_xlabel("frequency (Hz)"); axs[2].set_ylabel("x-z phase (deg)")
     axs[2].set_title("JONSWAP x-z phase, oracle parameters", fontsize=9); axs[2].legend(fontsize=7)
     fig.tight_layout()
-    fig.savefig(outdir / f"modal_decomposition.{ext}", dpi=150)
+    save_figure(fig, outdir / f"modal_decomposition.{ext}", dpi=150)
     plt.close(fig)
 
 

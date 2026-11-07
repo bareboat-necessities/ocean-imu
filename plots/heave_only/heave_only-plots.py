@@ -14,6 +14,12 @@ plus the error) and <method>_<wave>_<group>_zkin.svg for each heave-only filter
 (heave and heave rate against the reference); --png adds PNG previews.
 """
 
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
+
 import argparse
 import re
 import sys
@@ -89,7 +95,7 @@ def save(fig, base: Path):
     fig.tight_layout()
     save_svg(fig, base.with_suffix(".svg"), bbox_inches="tight")
     if WRITE_PNG:
-        fig.savefig(base.with_suffix(".png"), dpi=110, bbox_inches="tight")
+        save_figure(fig, base.with_suffix(".png"), dpi=110, bbox_inches="tight")
     plt.close(fig)
 
 

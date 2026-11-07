@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 from pathlib import Path
 
 import matplotlib as mpl
@@ -75,8 +81,8 @@ if __name__ == "__main__":
     axes[1].legend(loc="upper left", ncol=2, fontsize="small")
 
     plt.tight_layout()
-    fig.savefig(OUT_BASE.with_suffix(".pgf"), bbox_inches="tight")
-    fig.savefig(OUT_BASE.with_suffix(".svg"), bbox_inches="tight")
+    save_figure(fig, OUT_BASE.with_suffix(".pgf"), bbox_inches="tight")
+    save_figure(fig, OUT_BASE.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
 
     print(f"saved {OUT_BASE.with_suffix('.pgf')} / {OUT_BASE.with_suffix('.svg')}")

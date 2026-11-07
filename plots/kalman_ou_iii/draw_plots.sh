@@ -24,11 +24,11 @@ if source.count(old_backend) != 1:
     raise RuntimeError("OU-III Matplotlib backend anchor not found exactly once")
 source = source.replace(old_backend, new_backend, 1)
 
-old_save = '        fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'
+old_save = '        save_figure(fig, f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'
 new_save = '''        if ext == "svg":
             save_svg(fig, f"{outbase}{suffix}.{ext}", bbox_inches="tight")
         else:
-            fig.savefig(f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'''
+            save_figure(fig, f"{outbase}{suffix}.{ext}", format=ext, bbox_inches="tight")'''
 if source.count(old_save) != 1:
     raise RuntimeError("OU-III SVG save anchor not found exactly once")
 source = source.replace(old_save, new_save, 1)

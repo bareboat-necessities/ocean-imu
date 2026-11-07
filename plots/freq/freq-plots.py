@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import os
 import re
 import glob
@@ -97,8 +103,8 @@ def load_all_data(folder):
 
 # === Save function (PGF, SVG) ===
 def save_all(fig, base):
-    fig.savefig(f"{base}.pgf", bbox_inches="tight")
-    fig.savefig(f"{base}.svg", bbox_inches="tight", dpi=150)
+    save_figure(fig, f"{base}.pgf", bbox_inches="tight")
+    save_figure(fig, f"{base}.svg", bbox_inches="tight", dpi=150)
     print(f"  saved {base}.pgf/.svg")
 
 # === Plot for each (wave, H) scenario ===

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+
+import sys as _export_sys
+from pathlib import Path as _ExportPath
+_export_sys.path.insert(0, str(_ExportPath(__file__).resolve().parents[2] / "plots"))
+from vector_export import save_figure
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -136,8 +142,8 @@ def plot_wave_type(wave_type):
     axes[-1].set_xlabel("Time [s]")
     axes[0].legend(fontsize="small", ncol=3)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    fig.savefig(f"{wave_type}_worldframe.pgf", bbox_inches="tight")
-    fig.savefig(f"{wave_type}_worldframe.svg", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_worldframe.pgf", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_worldframe.svg", bbox_inches="tight")
     plt.close(fig)
 
     # Skip IMU/Euler plots for wave types without them
@@ -166,8 +172,8 @@ def plot_wave_type(wave_type):
     axes[-1].set_xlabel("Time [s]")
     axes[0].legend(fontsize="small", ncol=3)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    fig.savefig(f"{wave_type}_imu_acc.pgf", bbox_inches="tight")
-    fig.savefig(f"{wave_type}_imu_acc.svg", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_imu_acc.pgf", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_imu_acc.svg", bbox_inches="tight")
     plt.close(fig)
 
     # --- Chart 3: IMU gyro ---
@@ -192,8 +198,8 @@ def plot_wave_type(wave_type):
     axes[-1].set_xlabel("Time [s]")
     axes[0].legend(fontsize="small", ncol=3)
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    fig.savefig(f"{wave_type}_imu_gyro.pgf", bbox_inches="tight")
-    fig.savefig(f"{wave_type}_imu_gyro.svg", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_imu_gyro.pgf", bbox_inches="tight")
+    save_figure(fig, f"{wave_type}_imu_gyro.svg", bbox_inches="tight")
     plt.close(fig)
 
     # --- Chart 4: Euler angles (yaw removed) ---
@@ -224,8 +230,8 @@ def plot_wave_type(wave_type):
         axes[-1].set_xlabel("Time [s]")
         axes[0].legend(fontsize="small", ncol=3)
         plt.tight_layout(rect=[0, 0, 1, 0.95])
-        fig.savefig(f"{wave_type}_euler.pgf", bbox_inches="tight")
-        fig.savefig(f"{wave_type}_euler.svg", bbox_inches="tight")
+        save_figure(fig, f"{wave_type}_euler.pgf", bbox_inches="tight")
+        save_figure(fig, f"{wave_type}_euler.svg", bbox_inches="tight")
         plt.close(fig)
 
 

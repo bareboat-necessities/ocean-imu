@@ -130,3 +130,22 @@ reports/results/carma3_benchmark/traces/
 reports/results/tfg_carma3/traces/
 # raw 10 Hz series of the shared-modes study; the committed bundle is the reduced *_envelope.csv
 reports/results/kalman_carma_shared_modes/traces/*_ts.csv
+
+# Regenerable per-run CARMA tables; see reports/results/README.md.
+/reports/results/carma3_benchmark/raw_runs.csv
+/reports/results/carma3_coupled/raw_runs.csv
+/reports/results/carma3_coupled/ablation_runs.csv
+/reports/results/carma_excitation/raw_runs.csv
+/reports/results/carma_excitation/tuning_runs.csv
+/reports/results/tfg_carma3/raw_runs.csv
+/reports/results/tfg_carma3/followup_runs.csv
+/reports/results/kalman_carma_shared_modes/raw_runs.csv
+/reports/results/kalman_carma_shared_modes/robustness_runs.csv
+
+# Local leftovers from retired study stages are also regenerable.
+/reports/results/carma3_coupled/screen_runs.csv
+/reports/results/kalman_carma_shared_modes/screen_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/raw_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/ablation_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/robustness_runs.csv
+/reports/results/kalman_carma_shared_modes_minimal/
