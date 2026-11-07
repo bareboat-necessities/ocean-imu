@@ -49,6 +49,20 @@
 #include "kalman_carma_shared_modes/CarmaSharedModesMotion.h"
 #include "kalman_carma_shared_modes/CarmaCouplingConfidence.h"
 
+#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+namespace ocean_imu::kalman {
+// Emit the target's constructor in its own library object. In the large
+// Arduino sketch object its literal pool can land beyond Xtensa L32R reach.
+// Other scalar types and motion configurations remain header-only.
+extern template Kalman3D_Wave_CARMA3<
+    float, 4, false, 4, false, true, true,
+    carma_shared_modes::SharedModesMotion<float>>::Kalman3D_Wave_CARMA3(
+        const Eigen::Matrix<float,3,1>&, const Eigen::Matrix<float,3,1>&,
+        const Eigen::Matrix<float,3,1>&, float, float, float, float, float,
+        const carma::CarmaShape&, const carma::CarmaShape&);
+}  // namespace ocean_imu::kalman
+#endif
+
 namespace ocean_imu::carma_shared_modes {
 
 enum class CouplingMode : unsigned char {
