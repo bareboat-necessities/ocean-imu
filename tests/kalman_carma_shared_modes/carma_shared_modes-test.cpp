@@ -3,13 +3,14 @@
 
     carma_shared_modes-test -- unit and numerical tests of the EXPERIMENTAL
     standalone shared-modes QMEKF (src/kalman_carma_shared_modes,
-    docs/kalman-carma-shared-modes.md section 6).
+    docs/kalman-carma-shared-modes.md section 7; its motion realization is
+    tested in carma_shared_modes_realization-test).
 
     Groups:
       [1] public API, state count, determinism, reset
-      [2] preservation of the validated Option C filter: confidence held at
-          one reproduces the research filter (SHM:est construction) bit for
-          bit; coupling held at zero reproduces CouplingMode::Off bit for bit
+      [2] the two limits of the confidence: disabled, the estimated coupling
+          is applied; held at zero, the filter is CouplingMode::Off bit for
+          bit
       [3] fallback algebra: shrink_motion_vertical_coupling keeps P positive
           semidefinite, keeps the attitude/bias-explained part, is a no-op at
           alpha = 1 and never touches the state
@@ -153,25 +154,6 @@ static Csm::Config base_config() {
     return c;
 }
 
-// The research filter (coupled-prior study, SHM:est) built as its benchmark
-// adapter builds it.
-struct Research {
-    using Mekf = ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, 4, false, 4, false, true, true, kc::CarmaSharedModeMotion<float>>;
-    using Fusion = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, Mekf>;
-    std::unique_ptr<Fusion> f = std::make_unique<Fusion>();
-    explicit Research(const Csm::Config& c) {
-        f->begin(c.fusion);
-        f->raw().enableTuner(true);
-        f->raw().enableClamp(true);
-        f->raw().setCarmaExcitationMode(ocean_imu::carma::CarmaExcitationMode::Evidence);   // as the CSM default
-        kc::CarmaCouplingConfig cc;
-        cc.source = kc::CarmaCouplingConfig::Source::Estimated;
-        f->raw().mekf().motion().coupling().set_config(cc);
-        kc::CarmaCrossSpectrumEstimator<float>::Config ec;
-        f->raw().mekf().motion().coupling().estimator().configure(ec);
-    }
-};
-
 struct RunStats {
     double rms_h = 0, rms_z = 0, nees_p = 0;
     long n = 0;
@@ -229,8 +211,8 @@ static double min_corr_eig(const Eigen::Matrix<float,N,N>& Pf) {
 // ---------------------------------------------------------------------------
 void test1_api() {
     std::printf("[1] public API, state count, determinism, reset\n");
-    check(Csm::kStates == 33, "33 error states (3 + 3 + 24 + 3)",
-          Csm::kStates, 33);
+    check(Csm::kStates == 27, "27 error states (3 + 3 + 18 + 3)",
+          Csm::kStates, 27);
     Csm a(base_config()), b(base_config());
     Sea sea(30.0);
     run(a, sea, 120.0, 1e9, 3, no_hook);
@@ -248,29 +230,15 @@ void test1_api() {
 }
 
 // ---------------------------------------------------------------------------
-void test2_preservation() {
-    std::printf("[2] preservation of the validated Option C filter\n");
+void test2_limits() {
+    std::printf("[2] the limits of the confidence\n");
     auto c = base_config();
     c.confidence.enabled = false;
     Csm f(c);
-    Research r(c);
     Sea sea(30.0);
-    Imu imu;
-    double dmax = 0.0;
-    for (long k = 0; k < 400L * 200L; ++k) {
-        const double t = static_cast<double>(k) * 0.005;
-        Eigen::Vector3d p, a;
-        sea.eval(t, p, a);
-        V3 acc, gyr;
-        imu.sample(a, acc, gyr);
-        f.update(0.005f, gyr, acc, 35.0f);
-        r.f->update(0.005f, gyr, acc, 35.0f);
-        if (k % 8 == 0) { const V3 m = imu.mag(); f.updateMag(m); r.f->updateMag(m); }
-        dmax = std::max(dmax, static_cast<double>((f.position() - r.f->raw().mekf().get_position()).cwiseAbs().maxCoeff()));
-    }
-    check(dmax == 0.0, "confidence disabled: identical to the research SHM:est filter (400 s, bit for bit)", dmax, 0.0);
+    run(f, sea, 400.0, 1e9, 3, no_hook);
     const auto& E = f.fusion().raw().mekf().motion().excitation();
-    check(std::abs(E.im(0,2)) + std::abs(E.re(0,2)) > 0.0f, "... and its coupling is active (nonzero x-z excitation)");
+    check(std::abs(E.im(0,2)) + std::abs(E.re(0,2)) > 0.0f, "confidence disabled: the estimated coupling is applied (nonzero x-z excitation)");
     // Coupling held at zero = CouplingMode::Off.
     auto c0 = base_config();
     Csm z(c0), off([&] { auto o = base_config(); o.mode = csm::CouplingMode::Off; return o; }());
@@ -309,8 +277,8 @@ void test3_shrink() {
         untouched = untouched && (mg.get_position() - p0).norm() == 0.0f;
         // Unchanged outside the horizontal-vertical motion blocks.
         Eigen::Matrix<float,NX,NX> D = Pa - Pb;
-        D.block<16,8>(6, 22).setZero();
-        D.block<8,16>(22, 6).setZero();
+        D.block<12,6>(6, 18).setZero();
+        D.block<6,12>(18, 6).setZero();
         worst_explained = std::max(worst_explained, static_cast<double>(D.cwiseAbs().maxCoeff()));
     }
     (void)P0;
@@ -328,17 +296,17 @@ void test3_shrink() {
         const Eigen::MatrixXd P = mg.covariance_full().cast<double>();
         std::vector<int> r;
         for (int i = 0; i < 6; ++i) r.push_back(i);
-        for (int i = 30; i < 33; ++i) r.push_back(i);
-        Eigen::MatrixXd Prr(9, 9), Phr(16, 9), Prz(9, 8);
+        for (int i = 24; i < 27; ++i) r.push_back(i);
+        Eigen::MatrixXd Prr(9, 9), Phr(12, 9), Prz(9, 6);
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) Prr(i,j) = P(r[i], r[j]);
-            for (int j = 0; j < 8; ++j) Prz(i,j) = P(r[i], 22 + j);
+            for (int j = 0; j < 6; ++j) Prz(i,j) = P(r[i], 18 + j);
         }
-        for (int i = 0; i < 16; ++i) for (int j = 0; j < 9; ++j) Phr(i,j) = P(6 + i, r[j]);
+        for (int i = 0; i < 12; ++i) for (int j = 0; j < 9; ++j) Phr(i,j) = P(6 + i, r[j]);
         const Eigen::MatrixXd E = Phr * Prr.ldlt().solve(Prz);
         mg.shrink_motion_vertical_coupling(0.0f);
-        const Eigen::MatrixXd Phz = mg.covariance_full().cast<double>().block(6, 22, 16, 8);
-        const double rel = (Phz - E).cwiseAbs().maxCoeff() / std::max(1e-30, P.block(6, 22, 16, 8).cwiseAbs().maxCoeff());
+        const Eigen::MatrixXd Phz = mg.covariance_full().cast<double>().block(6, 18, 12, 6);
+        const double rel = (Phz - E).cwiseAbs().maxCoeff() / std::max(1e-30, P.block(6, 18, 12, 6).cwiseAbs().maxCoeff());
         check(rel < 2e-3, "alpha = 0 keeps the attitude/bias-explained cross-covariance only", rel, 2e-3);
     }
 }
@@ -510,7 +478,7 @@ void test6_filter() {
                 const double dq = g.attitude().angularDistance(lq);
                 if (t >= 500.0 && t < 501.0) { jump_p = std::max(jump_p, dp); jump_v = std::max(jump_v, dv); jump_q = std::max(jump_q, dq); }
                 else if (t < 500.0) base_p = std::max(base_p, dp);
-                if (std::fmod(t, 1.0) < 0.005) worst_psd = std::min(worst_psd, min_corr_eig<33>(g.fusion().raw().mekf().covariance_full()));
+                if (std::fmod(t, 1.0) < 0.005) worst_psd = std::min(worst_psd, min_corr_eig<Csm::kStates>(g.fusion().raw().mekf().covariance_full()));
             }
             if (t >= 500.0) g.forceCouplingConfidence(0.0f);
             else g.forceCouplingConfidence(1.0f);
@@ -562,7 +530,7 @@ void test6_filter() {
 void test7_double() {
     std::printf("[7] the core is templated on the scalar (T = double)\n");
     using Core = csm::KalmanCarmaSharedModes<double>;
-    check(Core::kStates == 33 && csm::KalmanCarmaSharedModes<>::kStates == 33, "33 states for float (default) and double");
+    check(Core::kStates == 27 && csm::KalmanCarmaSharedModes<>::kStates == 27, "27 states for float (default) and double");
     using V3d = Eigen::Vector3d;
     Core f(V3d::Constant(0.03), V3d::Constant(3e-5), V3d::Constant(7.7));
     f.initialize_from_acc(V3d(0.0, 0.0, -G));
@@ -593,7 +561,7 @@ void test7_double() {
 
 int main() {
     test1_api();
-    test2_preservation();
+    test2_limits();
     test3_shrink();
     test4_confidence();
     test5_direction();

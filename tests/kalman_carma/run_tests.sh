@@ -20,8 +20,8 @@ python3 ../../tools/carma_process_validation.py --input process --check
 # zero, still IMU and repeated wave / no-wave transitions on both wrappers
 # (docs/carma-wave-excitation.md).
 ./carma_excitation-test
-# Coupled three-axis priors (docs/carma-coupled-three-axis.md): Kronecker and
-# Hermitian-Kronecker discretization, PSD excitation, phase, frames, resets,
+# Coupled three-axis priors (docs/carma-coupled-three-axis.md): Kronecker
+# discretization, PSD excitation, phase, frames, resets,
 # model-matched consistency and wrong-coupling degradation.
 ./carma_coupled-test
 ./carma3_bench --header --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" --seed 1 \
@@ -48,23 +48,17 @@ for a in "xyz":
     print(f"T41/A41 RMS {a}: {ratio:.5f}")
 PY
 
-# Coupled-prior adapters: B41 is the unchanged baseline A41 through the
-# coupled adapter (identical rows), COR:off and the exact complex-OU modal form
-# MOD:off reduce to it, and the coupled variants run without failure.
+# Coupled-prior adapters: COR:off reduces to the baseline A41 and the coupled
+# variants run without failure.
 ./carma3_bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T400" --seed 2 \
-    --filters A41,B41,COR:off,MOD:off,COR:est,SHM:est,MCA:est,MOD:est/nz --score-start 200 > smoke_coupled.csv
+    --filters A41,COR:off,COR:est,MOD:est/nz --score-start 200 > smoke_coupled.csv
 python3 - <<'PY'
 import csv
 rows = {r["filter"]: r for r in csv.DictReader(open("smoke_coupled.csv"))}
-skip = {"filter", "runtime_ns", "memory_bytes", "states"}
-same = [k for k in rows["A41"] if k not in skip and not k.startswith(("cpl_", "wi_", "runtime_")) and rows["A41"][k] != rows["B41"][k]]
-assert not same, ("B41 differs from A41", same[:5])
 for a in "xyz":
     r = float(rows["COR:off"]["rms_" + a]) / float(rows["A41"]["rms_" + a])
     assert abs(r - 1.0) < 1e-4, ("COR:off/A41", a, r)
-    r = float(rows["MOD:off"]["rms_" + a]) / float(rows["A41"]["rms_" + a])
-    assert abs(r - 1.0) < 5e-4, ("MOD:off/A41 (float, modal coordinates)", a, r)
-for f in ("COR:est", "SHM:est", "MCA:est", "MOD:est/nz"):
+for f in ("COR:est", "MOD:est/nz"):
     assert rows[f]["failed"] == "0", f
     for a in "xyz":
         assert 0.0 < float(rows[f]["pct_" + a]) < 25.0, (f, a)
@@ -74,14 +68,13 @@ PY
 # the estimated coupling must not read sensor noise or tilt / bias leakage
 # as wave energy (no phantom beyond the baseline's, docs/carma-coupled-three-axis.md).
 ./carma3_bench --header --level full --scenario "calm+T600" --seed 3 \
-    --filters B41,COR:est,SHM:est,MCA:est --score-start 200 > smoke_coupled_calm.csv
+    --filters A41,COR:est --score-start 200 > smoke_coupled_calm.csv
 python3 - <<'PY'
 import csv
 rows = {r["filter"]: r for r in csv.DictReader(open("smoke_coupled_calm.csv"))}
-for f in ("COR:est", "SHM:est", "MCA:est"):
-    r = float(rows[f]["rms_h"]) / float(rows["B41"]["rms_h"])
-    assert r < 1.05, ("calm-water horizontal phantom", f, r)
-    print(f"calm smoke: {f} horizontal phantom / baseline {r:.4f}")
+r = float(rows["COR:est"]["rms_h"]) / float(rows["A41"]["rms_h"])
+assert r < 1.05, ("calm-water horizontal phantom", "COR:est", r)
+print(f"calm smoke: COR:est horizontal phantom / baseline {r:.4f}")
 PY
 
 # Deterministic replay of the eight scored dataset records with the default

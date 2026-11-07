@@ -3,7 +3,8 @@
 
   AtomS3R EXPERIMENTAL shared-modes QMEKF SeaStateFusion_CarmaSharedModes
   (atomS3R_ins_carma3 with KalmanCarmaSharedModes<float> as the inner filter:
-  shared directional modes and coupling confidence; + optional IMU Calibration Wizard)
+  shared directional modes in their six-state-per-axis minimal realization,
+  27 error states, and coupling confidence; + optional IMU Calibration Wizard)
 
   EXPERIMENTAL research sketch.  It runs the three-axis CARMA filter of
   docs/carma-three-axis.md in the configuration that document recommends as

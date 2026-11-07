@@ -6,21 +6,20 @@ doc/kalman_carma/kalman_carma_coupled.tex.  Every row runs
 tests/kalman_carma/carma3_bench on one (scenario, seed): one truth and one
 sensor stream fed identically to every filter of the row (paired design).
 
-Seeds: screening uses 1001..1020 (estimator hyper-parameters are chosen
-there and nowhere else); the final and ablation runs use 1..50 / 1..30, which
-never enter a choice.  Every subcommand is resumable.
+Seeds: the final and ablation runs use 1..50 / 1..30, which never enter a
+choice.  Every subcommand is resumable.  The shared directional modes
+(Experiment B) are the standalone filter of tools/carma_shared_modes_study.py.
 
-    screen     estimator horizon / band grid, SHM:est, seeds 1001..1020
     run        final comparison, 18 scenarios x 50 seeds
-    ablate     wrong / frozen / keel-frame / phase-shifted coupling, RAO
-               mismatch, oracles, seven seas x 30 seeds
+    ablate     co-spectrum only, modal coupling with oracle and reversed
+               oracle priors, seven seas x 30 seeds
     spectra    time series (20 Hz) of seeds 1..10 on five seas, reduced to
                Welch auto- and cross-spectra of truth and estimates
     traces     time series of seed 1 for the figures
     timing     host update time, one job on an otherwise idle machine
     report     summary.md, paired_stats.json, figures (tools/carma3_coupled_report.py)
 
-Run: python3 tools/carma3_coupled_benchmark.py {screen,run,ablate,spectra,traces,timing,report} [--jobs 4]
+Run: python3 tools/carma3_coupled_benchmark.py {run,ablate,spectra,traces,timing,report} [--jobs 4]
 """
 from __future__ import annotations
 
@@ -37,7 +36,6 @@ ROOT = Path(__file__).resolve().parents[1]
 TDIR = ROOT / "tests" / "kalman_carma"
 BENCH = TDIR / "carma3_bench"
 OUT = ROOT / "reports" / "results" / "carma3_coupled"
-SCREEN_RAW = OUT / "screen_runs.csv"
 RAW = OUT / "raw_runs.csv"
 ABL_RAW = OUT / "ablation_runs.csv"
 TIMING_RAW = OUT / "timing_runs.csv"
@@ -66,25 +64,21 @@ SCENARIOS = {
     "small_amplitude": "very low sea state (5 cm)",
     f"{J29}+magdist+scal": "magnetic disturbances, calibration residuals",
 }
-FINAL_FILTERS = "B41,MOD:off,MOD:est/nz,COR:est,COR:orc,SHM:est,SHM:orc,MCA:est"
+FINAL_FILTERS = "A41,MOD:est/nz,COR:est,COR:orc"
 ABL_SCENARIOS = [J29, "pm_fp0.25_hs1", "mixed_swell_wind", "bimodal", "crossing", f"{J29}+turns", "calm"]
-ABL_FILTERS = ("B41,SHM:off,COR:est/xy,SHM:est/an,SHM:est/hm,SHM:orc/flip,SHM:orc/rot90,SHM:est/fz400,"
-               "SHM:est/fz400/keel,SHM:orc/ph45,MCA:off,MCA:orc,MCA:est/rao0.40_0.35,MCA:est/rao0.75_0.35,MCA:est/rao0.55_0.70,"
-               "MOD:est,MOD:orc/nz,MOD:orc/nz/flip")
-SCREEN_SCENARIOS = [J29, "pm_fp0.25_hs1", "mixed_swell_wind", "dir_change", f"{J29}+turns", "calm"]
-SCREEN_GRID = [(h, b) for h in (120, 240, 480) for b in (0.15, 0.25, 0.40)]
+ABL_FILTERS = "A41,COR:est/xy,MOD:est,MOD:orc/nz,MOD:orc/nz/flip"
 SPEC_SCENARIOS = [f"{J29}+sp10000", J29, "mixed_swell_wind", "bimodal", "crossing"]
-SPEC_FILTERS = ["B41", "MOD:est/nz", "COR:est", "SHM:est", "MCA:est"]
+SPEC_FILTERS = ["A41", "MOD:est/nz", "COR:est"]
 TRACE_SCENARIOS = [J29, "dir_change", f"{J29}+on400w60+off900w60", f"{J29}+turns"]
-TRACE_FILTERS = "B41,MOD:est/nz,COR:est,SHM:est,MCA:est,SHM:orc/flip"
+TRACE_FILTERS = "A41,MOD:est/nz,COR:est"
 # The committed traces keep only what the report's figures read
 # (tools/carma3_coupled_report.py trace_plots): the J29 record at the bench's
 # 10 Hz inside its plotted 690-770 s window, the others at 2 Hz (30 s rolling
 # RMS and the applied x-z phase).
-TRACE_FIG_FILTERS = ["B41", "COR:est", "SHM:est", "MCA:est", "SHM:orc/flip"]
+TRACE_FIG_FILTERS = ["A41", "COR:est"]
 TRACE_J29_WINDOW = (690.0, 770.0)
 TRACE_EVERY = 5
-TIMING_FILTERS = ["B41", "MOD:off", "MOD:est/nz", "COR:est", "SHM:est", "MCA:est"]
+TIMING_FILTERS = ["A41", "MOD:est/nz", "COR:est"]
 
 
 def require(path):
@@ -138,14 +132,6 @@ def pending(rows, work):
 def cmd(sc, seed, filters, score_start=300.0):
     return ["--level", "full", "--scenario", sc, "--seed", str(seed), "--filters", filters,
             "--score-start", f"{score_start:g}"]
-
-
-def screen(args):
-    filters = "B41," + ",".join(f"SHM:est/h{h}/b{b:g}" for h, b in SCREEN_GRID)
-    work = [(sc, s) for sc in SCREEN_SCENARIOS for s in range(1001, 1001 + args.screen_seeds)]
-    todo = pending(read_rows(SCREEN_RAW), work)
-    print(f"screen: {len(todo)} of {len(work)} rows to run", flush=True)
-    run_bench([cmd(sc, s, filters) for sc, s in todo], SCREEN_RAW, args.jobs)
 
 
 def final(args):
@@ -253,7 +239,7 @@ def trim_trace(full: Path, out: Path, scenario: str) -> None:
     t = pd.read_csv(full)
     keep = ["t", "x_true", "y_true", "z_true"]
     keep += [f"{c}_{n}" for n in TRACE_FIG_FILTERS for c in "xyz"]
-    keep += [f"phxz_{n}" for n in TRACE_FIG_FILTERS] + ["dyaw_B41", "dyaw_SHM:est"]
+    keep += [f"phxz_{n}" for n in TRACE_FIG_FILTERS] + ["dyaw_A41"]
     t = t[[k for k in keep if k in t.columns]]
     if scenario == J29:
         t = t[(t.t >= TRACE_J29_WINDOW[0]) & (t.t <= TRACE_J29_WINDOW[1])]
@@ -295,10 +281,9 @@ def timing(args):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("stage", choices=["screen", "run", "ablate", "spectra", "traces", "timing", "report"])
+    ap.add_argument("stage", choices=["run", "ablate", "spectra", "traces", "timing", "report"])
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--seeds", type=int, default=50)
-    ap.add_argument("--screen-seeds", type=int, default=20)
     ap.add_argument("--ablation-seeds", type=int, default=30)
     ap.add_argument("--spectra-seeds", type=int, default=10)
     args = ap.parse_args(argv)
@@ -306,7 +291,7 @@ def main(argv=None):
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import carma3_coupled_report as rep
         return rep.main([])
-    {"screen": screen, "run": final, "ablate": ablate, "spectra": spectra, "traces": traces, "timing": timing}[args.stage](args)
+    {"run": final, "ablate": ablate, "spectra": spectra, "traces": traces, "timing": timing}[args.stage](args)
     return 0
 
 

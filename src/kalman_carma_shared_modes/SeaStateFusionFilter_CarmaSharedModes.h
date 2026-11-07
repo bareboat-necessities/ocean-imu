@@ -40,8 +40,8 @@ public:
     // The wave excitation defaults to Evidence mode (kalman_carma/CarmaWaveEvidence.h,
     // docs/carma-wave-excitation.md), the mode the AtomS3R sketches deploy:
     // the Legacy floor and stillness attenuation make the amplitude jump on
-    // small seas, which the complexified realization tolerates worse than
-    // the CARMA3 baseline (docs/kalman-carma-shared-modes.md section 2).
+    // small seas, and Evidence is the mode the filter's regression bars and
+    // studies use (docs/kalman-carma-shared-modes.md).
     void begin(const Config& cfg, const SharedModes& shared_modes = SharedModes{},
                carma::CarmaExcitationMode excitation = carma::CarmaExcitationMode::Evidence) {
         Base::begin(cfg);

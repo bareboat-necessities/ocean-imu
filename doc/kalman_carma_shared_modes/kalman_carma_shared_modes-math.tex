@@ -56,11 +56,14 @@ every axis a complexified CARMA(4,1) process whose real part has exactly the
 law of the independent-axis prior and whose imaginary part is its quadrature
 companion. The axes share these dynamics and are driven by circular complex
 noise with a Hermitian excitation, so the quadrature between horizontal and
-vertical wave motion can be represented. The excitation is estimated from
+vertical wave motion can be represented. The filter carries this law in its
+minimal realization, six real states per axis and 27 error states in all,
+whose coupling-off model is the independent-axis filter exactly, adaptation
+included. The excitation is estimated from
 the filter's own world-frame acceleration. A coupling-confidence state
 machine scales it, and a covariance decoupling that provably preserves
 positive semidefiniteness withdraws it. We give the continuous-time model,
-the exact discretization, the measurement update and error-state reset, the
+its minimal realization, the exact discretization, the measurement update and error-state reset, the
 coupling-confidence and fallback procedure with its positivity proof, and
 stability, observability and cost arguments. We also place the model within
 multivariate CARMA theory, including the complex Ornstein--Uhlenbeck
@@ -97,8 +100,8 @@ frequency. It can carry only the co-spectrum, 35--47\,\% of the
 $x$--$z$ cross-spectral energy on single-system seas, while the physical
 relation is mainly quadrature. A model that represents quadrature needs
 different dynamics on the coupled axes or complex excitation. The shared
-modes below are the second option, at the cost of eight instead of four
-states per axis.
+modes below are the second option, at the cost of six instead of four
+states per axis (\cref{sec:minimal}).
 
 \section{Shared Stochastic Wave-Mode Formulation}
 Let $P(s)=(s^2+2\zeta_1\omega_1s+\omega_1^2)(s^2+2\zeta_2\omega_2s+\omega_2^2)$
@@ -170,7 +173,7 @@ rank 51, and 44\,\% of them have a relative Cram\'er--Rao bound above
 identifiable parameters (frequency scale, three amplitudes, six cross
 terms). It is preferred here because its structure is the physics, a
 single directional wave field seen on three axes, and because it is
-identifiable online and costs a fixed 24 motion states.
+identifiable online and costs a fixed 18 motion states.
 
 \section{Continuous-Time Stochastic State-Space Model}
 Per axis $a\in\{x,y,z\}$ the complex kinematic state is
@@ -219,14 +222,56 @@ and the coherence is $|\Sigma_{ab}|^2/(\Sigma_{aa}\Sigma_{bb})$. A real
 $\mat\Sigma$ reproduces correlated excitation in law; a real diagonal one the
 independent baseline.
 
+\section{Minimal Realization}
+\label{sec:minimal}
+The realified mode carries two directions per axis that no measurement sees.
+Each root $r$ of $D$ is an eigenvalue of both $\mat A_c$ and $\bar{\mat A}_c$,
+so $\mat A_8$ has it twice with a two-dimensional eigenspace, which the
+scalar output $\operatorname{Re}\ddot\zeta$ cannot resolve. The unobservable
+subspace is
+\begin{equation}
+\mathcal U=\{\vct 0\}\times\bigl(\operatorname{span}_\C\{\vct w(r_3),\vct w(r_4)\}\cap\R^4\bigr),\quad
+\vct w(r)=[B(r),rB(r),r^2B(r),1]\T,
+\end{equation}
+two real directions in the imaginary half, independent of $\mat\Sigma$, of the
+attitude and of every QMEKF operation. The observable quotient has six
+states per axis and the same law of $p,v,a$ on all three axes, every co- and
+quadrature spectrum included. The filter uses the following realization of
+it. With $P_+=N_r+iN_i$ ($N_r,N_i$ real polynomials),
+\begin{equation}
+\operatorname{Re}\zeta=\frac BP\,\eta,\quad\eta=\mat V\begin{bmatrix}\xi_r\\\xi_i\end{bmatrix},\quad
+\mat V=\frac{[N_r,\;N_i]}D,
+\label{eq:cascade}
+\end{equation}
+and $|D|^2=|N_r|^2+|N_i|^2$ makes $\mat V$ lossless (co-inner). The six states
+of an axis are the baseline's own $[p,v,a,l]$, driven at $a$ by
+$\eta=\xi_r+\mat C_w\vct w$, and the two states $\vct w$ of $\mat V$ in
+input-normal coordinates: $\mat A_w+\mat A_w\T=-\mat B_w\mat B_w\T$,
+$\mat C_w=-\mat B_w\vct e_1\T$, $\mat B_w$ upper triangular. Its noise
+input is $\mat G=[\vct e_3,\vct 0;\mat B_w]$, and the Hermitian excitation
+enters through two intensities,
+\begin{equation}
+\mat W_{ab}=\operatorname{Re}(\Sigma_{ab})\mat W_R+\operatorname{Im}(\Sigma_{ab})\mat W_I,\quad
+\mat W_R=g^2\mat G\mat G\T,\ \mat W_I=g^2\mat G\mat J_2\mat G\T,
+\label{eq:W6}
+\end{equation}
+$\mat J_2=\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$, $\mat W_I$
+antisymmetric. Every quantity scales exactly with $\kappa$
+($\mat V_\kappa(s)=\mat V_1(s/\kappa)$), so one closed-form $2\times2$
+construction at $\kappa=1$ is the only factorization. The derivations, the
+minimal stochastic order of the three-axis law ($4\operatorname{rank}\mat\Sigma
++2\operatorname{rank}\operatorname{Im}\mat\Sigma$) and the reasons for this
+realization are in the companion article on the minimal realization.
+
 \section{State-Vector Definition}
 The error state of the QMEKF is
 \begin{equation}
-\delta\vct x=[\delta\vct\theta,\;\delta\vct b_g,\;\delta\vct x_x,\;\delta\vct x_y,\;\delta\vct x_z,\;\delta\vct b_a]\in\R^{33},
+\delta\vct x=[\delta\vct\theta,\;\delta\vct b_g,\;\delta\vct x_x,\;\delta\vct x_y,\;\delta\vct x_z,\;\delta\vct b_a]\in\R^{27},
 \end{equation}
 with $\delta\vct\theta$ the body-frame attitude error of
 $\vct q=\hat{\vct q}\otimes\exp(\delta\vct\theta/2)$, the gyroscope and
-accelerometer bias errors, and the 24 motion states in NED with $z$ down. The
+accelerometer bias errors, and the 18 motion states
+$\vct x_a=[p_a,v_a,a_a,l_a,\vct w_a\T]\T$ of \cref{sec:minimal} in NED with $z$ down. The
 motion states are additive; they are world-frame quantities, because a wave
 field is fixed in the world.
 
@@ -268,7 +313,7 @@ $\sqrt{(1-\gamma^2)/(2N\gamma^2)}$.
 
 \section{Process-Noise Covariance}
 The full process noise is block-diagonal across the attitude, bias and
-motion groups. The motion block is $\mat W$ of \eqref{eq:W}. Sensor noise
+motion groups. The motion block is $\mat W$ of \eqref{eq:W6}. Sensor noise
 (accelerometer, gyroscope, magnetometer white noise) enters only the
 measurement and the attitude propagation. The wave excitation $\mat\Sigma$
 models the hull's motion, not the sensor, so it is not double-counted: the
@@ -279,20 +324,21 @@ diagonal keeps the wrapper's amplitude law, which has its own noise
 handling.
 
 \section{Exact Discrete-Time Propagation}
-With $\mat F_8=e^{\mat A_8h}$ and
-$\mat Q_8=\int_0^he^{\mat A_8t}\mat Ee^{\mat A_8\T t}dt$ (unit intensity),
-\cref{lem:W} gives the exact discretization of \eqref{eq:sde}:
+With $\mat A_6$ the dynamics of one axis, $\mat F_6=e^{\mat A_6h}$ and
+$\mat Q_X=\int_0^he^{\mat A_6t}\mat W_Xe^{\mat A_6\T t}dt$ for $X\in\{R,I\}$, the
+exact discretization is
 \begin{equation}
-\mat F_L=\mat I_3\otimes\mat F_8,\quad
-\mat Q_{L,ab}=g^2\bigl(\operatorname{Re}(\Sigma_{ab})\mat Q_8+\operatorname{Im}(\Sigma_{ab})\mat J\mat Q_8\bigr),
+\mat F_L=\mat I_3\otimes\mat F_6,\quad
+\mat Q_{L,ab}=\operatorname{Re}(\Sigma_{ab})\mat Q_R+\operatorname{Im}(\Sigma_{ab})\mat Q_I,
 \label{eq:disc}
 \end{equation}
-because $e^{\mat A_8t}\mat J=\mat Je^{\mat A_8t}$ and $\mat J\mat E\mat J\T=\mat E$.
-$\mat F_8,\mat Q_8$ are computed by the scaled Taylor series and doublings of
-the baseline (exact up to a controlled truncation below float rounding), and
-by the Taylor extension on a jittered clock. $\mat Q_L\succeq0$ follows from
-\cref{lem:W} applied to the integrand. The dynamics are stable: the poles of
-$\mat A_8$ are $\mu_1,\mu_2$ and the roots of $D$, all in the open left
+$\mat Q_R$ symmetric and $\mat Q_I$ antisymmetric. Both are computed by one
+paired scaled Taylor series and doublings (the baseline's, exact up to a
+controlled truncation below float rounding), and by its Taylor extension on a
+jittered clock. $\mat Q_L\succeq0$ follows from \cref{lem:W}: the six-state
+block is the observable quotient of \eqref{eq:sde}, and its noise is the
+image of $\mat W$. The dynamics are stable: the poles of $\mat A_6$ are
+$\mu_1,\bar\mu_1,\mu_2,\bar\mu_2$ and the roots of $D$, all in the open left
 half-plane for every $\kappa>0$.
 
 \section{Measurement Model}
@@ -328,12 +374,17 @@ rows exactly as in the baseline.
 \section{Sea-State Adaptation}
 Every \SI{0.1}{s} the wrapper commits the frequency scale
 $\kappa=f_{\mathrm{tune}}/f_{z,\mathrm{base}}$ and isotropic amplitudes from
-OU-III's tuner. The motion block then rebuilds $\mat A_8(\kappa)$,
-$\mat F_8,\mat Q_8$ and $\mat\Sigma$. The state coordinates
-$[\operatorname{Re},\operatorname{Im}](p,v,a,l)$ keep their kinematic meaning
-across $\kappa$. The covariance is never reset during adaptation (only on
-entering Live, to the stationary prior), so a commit changes the next
-prediction, not the posterior.
+OU-III's tuner. The motion block then rebuilds $\mat A_6(\kappa)$,
+$\mat F_6,\mat Q_R,\mat Q_I$ and $\mat\Sigma$. A commit holds $[p,v,a,l]$,
+as the baseline does, and the normalized colouring states
+$\vct w_a/s_a$, $s_a=\sqrt{g^2\sigma_a^2}$: $\vct w_a\leftarrow(s_a'/s_a)\vct w_a$ and
+the covariance transforms with the same diagonal congruence. $\mat V$ is
+lossless with a constant Gramian, so $\eta$ stays exactly white under any
+change of $\kappa$ and $\sigma$: with the coupling off the motion block
+\emph{is} the independent-axis CARMA(4,1) filter in law, adaptation
+included. The covariance is never reset during adaptation (only on entering
+Live, to the stationary prior), so a commit changes the next prediction, not
+the posterior.
 
 \section{Coupling-Confidence Estimation}
 \label{sec:conf}
@@ -367,7 +418,7 @@ excitation, which is the independent-axis CARMA(4,1) law on every axis. The
 state is not modified, so position, velocity and attitude are continuous.
 The covariance, however, still carries horizontal--vertical correlation built
 by the coupled prior. Partition the error state into $\vct r$ (attitude and
-biases, 9 states) and the motion states $\vct m=(\vct h,\vct z)$ (16 + 8).
+biases, 9 states) and the motion states $\vct m=(\vct h,\vct z)$ (12 + 6).
 \begin{proposition}[Positive decoupling]
 \label{prop:shrink}
 Let $\mat P\succeq0$ with $\mat P_{rr}\succ0$,
@@ -400,13 +451,13 @@ rises with \SI{60}{s} and the cross-covariance rebuilds through
 For fixed parameters the prediction is the exact transition of a stable
 linear system \eqref{eq:disc}. The accelerometer observes
 the three $a$ readouts and, through gravity, two tilt angles; the
-magnetometer observes heading. Within the motion block, $\operatorname{Re}\zeta$
-is observed through $\ddot\zeta$ and the CARMA(4,1) structure exactly as in
-the baseline. $\operatorname{Im}\zeta$ is observed through the cross terms
-of $\mat\Sigma$ only: with $\mat\Sigma$ real it is unobservable but stable
-(detectable), and its covariance stays at the stationary prior. The pair is
-therefore detectable for every $\mat\Sigma$, and the Riccati recursion has a
-bounded solution for fixed parameters \cite{andersonmoore79}. Two
+magnetometer observes heading. Within the motion block, each axis is a
+minimal realization of the transfer function \eqref{eq:cascade}
+(McMillan degree six), hence observable from its acceleration readout for
+every $\mat\Sigma$; the directions $\mathcal U$ that the realified mode could
+not resolve are not carried at all. The pair is therefore detectable for
+every $\mat\Sigma$, and the Riccati recursion has a bounded solution for fixed
+parameters \cite{andersonmoore79}. Two
 qualifications apply. Displacement is observable only through the prior's
 low-frequency behaviour (the zero of $B$ at DC), as for the baseline. With
 complex $\mat\Sigma$ the $x$--$z$ quadrature also makes heading weakly
@@ -418,16 +469,16 @@ filter.
 
 \section{Computational Complexity}
 The prediction costs the attitude and bias blocks plus the motion block:
-three $8\times8$ congruences per axis pair (block-diagonal $\mat F_L$), the
-Kronecker-structured $\mat Q_L$, and the $6\times24$ attitude--motion
-cross-covariances, about 13\,400 multiply-adds against 3\,900 for the
-baseline. The accelerometer update is a Joseph update with a three-row
-measurement on 33 states. The confidence adds two envelope estimators
+$6\times6$ congruences per axis pair (block-diagonal $\mat F_L$), the
+structured $\mat Q_L$ \eqref{eq:disc}, and the $6\times18$ attitude--motion
+cross-covariances. With the accelerometer update, a Joseph update with a
+three-row measurement on 27 states, a sample costs about 8\,000
+multiply-adds against 4\,200 for the baseline. The confidence adds two envelope estimators
 (36 multiply-adds per sample) and, at most at \SI{10}{Hz} while $c$ falls, one
-$9\times9$ LDLT and a $16\times9\times8$ product. The model rebuild
-(\SI{10}{Hz}) computes $\mat F_8,\mat Q_8$ once for all axes. All matrices
-are fixed size, nothing is allocated per update, and the 33-state QMEKF is
-one heap allocation at start-up. Measured sizes and times are in the
+$9\times9$ LDLT and a $12\times9\times6$ product. The model rebuild
+(\SI{10}{Hz}) computes $\mat F_6,\mat Q_R,\mat Q_I$ once for all axes. All
+matrices are fixed size, nothing is allocated per update, and the 27-state
+QMEKF is one heap allocation at start-up. Measured sizes and times are in the
 companion article.
 
 \section{Limitations and Future Research}
@@ -437,7 +488,7 @@ RAO. Two-system seas with different directions are represented only by the
 rank of $\mat\Sigma$, and a two-mode extension needs a second-peak frequency
 estimator that does not exist yet. The confidence detects only mismatches
 that the IMU's own band statistics can contradict, and it reacts after
-seconds to a minute of evidence. The complex mode costs four extra states per
+seconds to a minute of evidence. The complex mode costs two extra states per
 axis. A constrained MCARMA with the heave RAO in the transfer matrix gave
 larger gains in the study but needs hull knowledge and more stack, and is not
 pursued here. Hardware runtime and stack high-water marks remain to be

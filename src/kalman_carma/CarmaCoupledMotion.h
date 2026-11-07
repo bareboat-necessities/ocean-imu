@@ -17,7 +17,7 @@
   the cross-axis part.  The excitation is rebuilt at the wrapper's commits,
   never by resetting the posterior covariance: only F and Q change.
 
-  CarmaKroneckerMotion<T, false>  Experiment A, "correlated CARMA(4,1)".
+  CarmaCorrelatedMotion<T>        Experiment A, "correlated CARMA(4,1)".
       State [x block, y block, z block], each the library's C41J
       [p, v, a, l] (CarmaVerticalModel<T,4>).  All three axes share A_C and
       the unit-acceleration-variance intensity W_1, so with the real 3 x 3
@@ -26,23 +26,8 @@
       (axis-major ordering).  The cross-spectral matrix of p is
       Sigma_w |H(iw)|^2: real at every frequency, constant coherence.
 
-  CarmaKroneckerMotion<T, true>   Experiment B, "shared directional modes".
-      Each axis carries the COMPLEXIFIED C41J mode zeta (8 real states
-      [Re(p, v, a, l), Im(p, v, a, l)]): the poles of P(s) in the upper half
-      plane, P+(s), times the real Hurwitz quadratic D(s) with
-      |D(iw)|^2 = (|P+(iw)|^2 + |P+(-iw)|^2) / 2, numerator B(s), driven by
-      circular complex white noise.  Then |B/(P+ D)|^2(iw) + |B/(P+ D)|^2(-iw)
-      = 2 |B/P|^2(iw): the real part of the mode has EXACTLY the C41J law,
-      its imaginary part is its (approximate) Hilbert transform -- the mode
-      is a damped stochastic oscillator rotating at positive frequency, the
-      relative degree stays 3 (p, v, a consistent).  The axes share the mode
-      dynamics and are driven by noise with Hermitian covariance Sigma_c, so
-          F = I_3 (x) F_8,  Q_ab = Re(Sigma_ab) Q_8 + Im(Sigma_ab) J Q_8,
-      J = [[0, -I], [I, 0]] (J commutes with F_8 and Q_8).  The p cross-
-      spectrum at w > 0 is (g^2/2)[Sigma |H+|^2 + conj(Sigma) |H-|^2]:
-      Re(Sigma) the co-spectrum, Im(Sigma) the quadrature spectrum (the
-      90 deg x-z relation of linear waves).  A real Sigma_c gives Experiment A
-      in law, a real diagonal one the baseline in law.
+  Experiment B (shared directional modes) is the shared-modes QMEKF of
+  src/kalman_carma_shared_modes (six states per axis, 27 error states).
 
   CarmaModalMotion<T>              the EXACT complex-OU modal form of the
       baseline (correctness benchmark).  Partial fractions of the C41J
@@ -73,29 +58,16 @@
       D = diag(1/u_x, 1/u_y, 1), u_i = 1 - i b0_i/w_op: the band gain and
       phase at f_op match, at the price of a nonzero displacement density at
       DC on that axis.  Arbitrary cross-axis phase needs the complexified
-      mode of CarmaSharedModeMotion instead.  configure() refuses shapes whose two
-      poles nearly coincide (an ill-conditioned modal transformation); the
-      baseline realization is the fallback.  Adaptation: the modal
+      shared-mode block (src/kalman_carma_shared_modes) instead.
+      configure() refuses shapes whose two poles nearly coincide (an
+      ill-conditioned modal transformation); the baseline realization is the
+      fallback.  Adaptation: the modal
       coordinates depend on kappa (v = c_p A(kappa) x), so a model change at a
       commit would silently re-mean velocity and acceleration; every rebuild
       therefore hands the filter the re-coordinatization
       M = T_new^-1 T_old (T: modal -> baseline coordinates), which it applies
       to the state and to the rows and columns of the covariance, so the
       baseline coordinates -- and the posterior -- are continuous.
-
-  CarmaRaoMcarmaMotion<T>          Experiment C, "constrained MCARMA".
-      Experiment B with the vertical axis's mode passed through a second-order
-      heave RAO wn^2/(s^2 + 2 zeta wn s + wn^2) (two more states [z, z']), so
-      the x-z and y-z phases follow the RAO phase across frequency: a
-      physically structured transfer matrix H(s) = diag(1, 1, R_z(s)) H_c(s)
-      with Hermitian excitation.  The axes no longer share dynamics, so Q is
-      the exact discretization of the joint 26-state system (no Kronecker
-      shortcut); the vertical mode amplitude is the heave requirement divided
-      by the RAO variance gain at the current kappa.  That discretization is
-      the cost of this model: it is redone only when kappa or an excitation
-      entry (relative to sqrt(Sigma_ii Sigma_jj)) has moved by more than
-      refresh_tolerance (default 1 %) since the last one, or the step
-      changes; set_refresh_tolerance(0) redoes it at every commit.
 */
 
 #ifdef EIGEN_NON_ARDUINO
@@ -115,49 +87,6 @@
 namespace ocean_imu::kalman::carma {
 
 namespace coupled_detail {
-
-// Complexified CARMA(4,1) at frequency scale kappa, kinematic coordinates
-// [zeta, zeta', zeta'', l] (l the first companion state), realified to
-// [[Re A, -Im A], [Im A, Re A]] on [Re z; Im z].  Unit noise: W = e_a e_a' on
-// both halves.  Returns false for a shape without two underdamped pole pairs.
-inline bool complexified_c41(const CarmaShape& sh, double kappa, Eigen::Matrix<double,8,8>& A8) {
-    using C = std::complex<double>;
-    constexpr double k2Pi = 6.283185307179586476925286766559;
-    const double w1 = k2Pi * kappa * sh.f1_hz, z1 = sh.zeta1;
-    const double w2 = k2Pi * kappa * sh.f2_hz, z2 = sh.zeta2;
-    const double wz0 = k2Pi * kappa * sh.fz_hz;
-    if (!(z1 > 0.0 && z1 < 1.0 && z2 > 0.0 && z2 < 1.0 && w1 > 0.0 && w2 > 0.0)) return false;
-    const C p1(-z1 * w1, w1 * std::sqrt(1.0 - z1 * z1));
-    const C p2(-z2 * w2, w2 * std::sqrt(1.0 - z2 * z2));
-    const C b1 = -(p1 + p2), b0 = p1 * p2;          // P+(s) = s^2 + b1 s + b0
-    auto pplus = [&](double w) { const C s(0.0, w); return s * s + b1 * s + b0; };
-    auto q = [&](double w) { return std::norm(pplus(w)) + std::norm(pplus(-w)); };
-    // q / 2 = u^2 + beta u + gamma, u = w^2 (odd powers cancel).
-    const double gamma = 0.5 * q(0.0);
-    const double wr = std::max(w1, w2), u1 = wr * wr;
-    const double beta = (0.5 * q(wr) - u1 * u1 - gamma) / u1;
-    const double d0 = std::sqrt(gamma);
-    const double d1sq = beta + 2.0 * d0;
-    if (!(d1sq > 0.0) || !std::isfinite(d1sq)) return false;
-    const double d1 = std::sqrt(d1sq);                // D(s) = s^2 + d1 s + d0
-    const C c3 = b1 + d1, c2 = b0 + b1 * d1 + d0, c1 = b0 * d1 + b1 * d0, c0 = b0 * d0;
-    Eigen::Matrix<C,4,4> Ac = Eigen::Matrix<C,4,4>::Zero();
-    Ac(0,1) = Ac(1,2) = Ac(2,3) = C(1.0);
-    Ac(3,0) = -c0; Ac(3,1) = -c1; Ac(3,2) = -c2; Ac(3,3) = -c3;
-    Eigen::Matrix<C,1,4> cv;
-    cv << C(wz0), C(1.0), C(0.0), C(0.0);             // zeta = B(s)/Pc(s) xi, B = s + w_z0
-    Eigen::Matrix<C,4,4> T;
-    T.row(0) = cv;
-    T.row(1) = cv * Ac;
-    T.row(2) = cv * Ac * Ac;
-    T.row(3) << C(1.0), C(0.0), C(0.0), C(0.0);
-    const Eigen::Matrix<C,4,4> Az = T * Ac * T.inverse();
-    A8.topLeftCorner<4,4>() = Az.real();
-    A8.topRightCorner<4,4>() = -Az.imag();
-    A8.bottomLeftCorner<4,4>() = Az.imag();
-    A8.bottomRightCorner<4,4>() = Az.real();
-    return A8.allFinite();
-}
 
 // P block (ra, rb) <- Fa P_ab Fb^T, mirrored; diagonal blocks upper triangle.
 template<typename T, int NA, int NB, class Mat>
@@ -181,13 +110,12 @@ inline void congruence_block(Mat& P, int ra, int rb, const Eigen::Matrix<T,NA,NA
 
 }  // namespace coupled_detail
 
-// Experiment A (Complex = false) and B (Complex = true).
-template<typename T, bool Complex>
-class CarmaKroneckerMotion {
+// Experiment A (file header).
+template<typename T>
+class CarmaCorrelatedMotion {
 public:
-    static constexpr bool kComplex = Complex;
     static constexpr bool kUnitReadout = true;   // p, v are states
-    static constexpr int NB = Complex ? 8 : 4;
+    static constexpr int NB = 4;
     static constexpr int NL = 3 * NB;
     static constexpr int MAX_ACC_TERMS = 1;
     using Vector3 = Eigen::Matrix<T,3,1>;
@@ -203,7 +131,7 @@ public:
         return 1;
     }
 
-    explicit CarmaKroneckerMotion(const CarmaShape& shape = CARMA41_JONSWAP_SHAPE)
+    explicit CarmaCorrelatedMotion(const CarmaShape& shape = CARMA41_JONSWAP_SHAPE)
         : vmodel_(shape), hmodel_(shape) {
         vmodel_.configure(T(1), T(1));
         hmodel_.configure(T(1), T(1));
@@ -292,20 +220,16 @@ public:
     const MatB& block_Q() const noexcept { return disc_.Q(); }
 
 private:
-    // P_ab += Re(S_ab) M + Im(S_ab) J M over the upper block triangle, mirrored.
+    // P_ab += Re(S_ab) M over the upper block triangle, mirrored.
     template<class Mat>
     void add_structured_(Mat& P, int off, const MatB& M) const {
         for (int a = 0; a < 3; ++a)
             for (int b = a; b < 3; ++b) {
                 const T sr = Sigma_.re(a,b);
-                const T si = Complex ? Sigma_.im(a,b) : T(0);
-                if (sr == T(0) && si == T(0)) continue;
+                if (sr == T(0)) continue;
                 for (int i = 0; i < NB; ++i)
                     for (int j = (a == b ? i : 0); j < NB; ++j) {
-                        T v = sr * M(i,j);
-                        if constexpr (Complex) {
-                            if (si != T(0)) v += si * (i < 4 ? -M(i + 4, j) : M(i - 4, j));
-                        }
+                        const T v = sr * M(i,j);
                         const int r = off + a * NB + i, c = off + b * NB + j;
                         P(r, c) += v;
                         if (r != c) P(c, r) += v;
@@ -315,11 +239,7 @@ private:
 
     void rebuild_() {
         const T kappa = vmodel_.kappa();
-        if constexpr (Complex) {
-            Eigen::Matrix<double,8,8> A8;
-            if (!coupled_detail::complexified_c41(vmodel_.shape(), static_cast<double>(kappa), A8)) return;
-            A_ = A8.template cast<T>();
-        } else {
+        {
             Model unit(vmodel_.shape());
             unit.configure(kappa, T(1));
             A_ = unit.A();
@@ -330,10 +250,9 @@ private:
         const T g2 = unit.noise_gain2();
         W_.setZero();
         W_(2,2) = g2;
-        if constexpr (Complex) W_(6,6) = g2;
         const std::complex<T> R[3] = {T(1), T(1), T(1)};
         Hermitian3<T> S = coupling_.excitation(sig_, R);
-        if constexpr (!Complex) S.im.setZero();
+        S.im.setZero();
         Sigma_ = S;
         ++gen_;
         dirty_ = false;
@@ -349,9 +268,6 @@ private:
     bool dirty_ = true;
     CarmaCoupling<T> coupling_;
 };
-
-template<typename T> using CarmaCorrelatedMotion = CarmaKroneckerMotion<T, false>;
-template<typename T> using CarmaSharedModeMotion = CarmaKroneckerMotion<T, true>;
 
 // Exact complex-OU modal form of the baseline C41J (file header).
 template<typename T>
@@ -658,228 +574,6 @@ private:
     uint32_t gen_ = 0, disc_gen_ = 0xffffffffu;
     T dt_ = T(0.005), disc_h_ = T(-1);
     bool dirty_ = true, valid_ = false;
-    CarmaCoupling<T> coupling_;
-};
-
-// Experiment C: RAO-structured MCARMA (file header).
-template<typename T>
-class CarmaRaoMcarmaMotion {
-public:
-    static constexpr bool kUnitReadout = true;
-    static constexpr int NH = 8, NZB = 10, NL = 2 * NH + NZB;
-    static constexpr int OZ = 2 * NH;
-    static constexpr int MAX_ACC_TERMS = 3;
-    using Vector3 = Eigen::Matrix<T,3,1>;
-    using MatL = Eigen::Matrix<T,NL,NL>;
-    using Model = CarmaVerticalModel<T,4>;
-
-    static constexpr int pos_local(int ax) { return ax < 2 ? NH * ax : OZ + 8; }
-    static constexpr int vel_local(int ax) { return ax < 2 ? NH * ax + 1 : OZ + 9; }
-    int accel_terms(int ax, int (&idx)[4], T (&w)[4]) const {
-        if (ax < 2) { idx[0] = NH * ax + 2; w[0] = T(1); return 1; }
-        // z'' = wn^2 (p_mode - z) - 2 zeta wn z'
-        idx[0] = OZ; w[0] = wn2_;
-        idx[1] = OZ + 8; w[1] = -wn2_;
-        idx[2] = OZ + 9; w[2] = -c_;
-        return 3;
-    }
-
-    explicit CarmaRaoMcarmaMotion(const CarmaShape& shape = CARMA41_JONSWAP_SHAPE)
-        : vmodel_(shape), hmodel_(shape) {
-        vmodel_.configure(T(1), T(1));
-        hmodel_.configure(T(1), T(1));
-        set_rao(T(0.55), T(0.35));
-        rebuild_();
-    }
-
-    // Heave RAO wn^2 / (s^2 + 2 zeta wn s + wn^2), fn in Hz.
-    bool set_rao(T fn_hz, T zeta) {
-        if (!(fn_hz > T(0)) || !(zeta > T(0)) || !std::isfinite(fn_hz) || !std::isfinite(zeta)) return false;
-        constexpr T k2Pi = T(6.283185307179586476925286766559);
-        fn_ = fn_hz; zeta_ = zeta;
-        const T wn = k2Pi * fn_hz;
-        wn2_ = wn * wn;
-        c_ = T(2) * zeta * wn;
-        rao_changed_ = true;
-        dirty_ = true;
-        return true;
-    }
-    T rao_fn_hz() const noexcept { return fn_; }
-    T rao_zeta() const noexcept { return zeta_; }
-    void set_refresh_tolerance(T tol) { if (std::isfinite(tol) && tol >= T(0)) tol_ = tol; }
-    T refresh_tolerance() const noexcept { return tol_; }
-    uint32_t rediscretizations() const noexcept { return n_disc_; }
-
-    bool set_vertical(T kappa, T accel_std) {
-        if (!vmodel_.configure(kappa, accel_std)) return false;
-        sig_(2) = accel_std;
-        dirty_ = true;
-        return true;
-    }
-    bool set_horizontal(T kappa, T sx, T sy, T) {
-        if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
-        if (!hmodel_.configure(kappa, T(1))) return false;
-        sig_(0) = sx; sig_(1) = sy;
-        dirty_ = true;
-        return true;
-    }
-    bool set_shape(const CarmaShape& sh) {
-        if (!vmodel_.set_shape(sh) || !hmodel_.set_shape(sh)) return false;
-        dirty_ = true;
-        return true;
-    }
-    const Model& vertical_model() const noexcept { return vmodel_; }
-    const Model& horizontal_model() const noexcept { return hmodel_; }
-    Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_.re.template topLeftCorner<2,2>(); }
-    Vector3 accel_std() const { return sig_; }
-    const Hermitian3<T>& excitation() const noexcept { return Sigma_; }
-    T rao_variance_gain() const noexcept { return vg_; }
-    CarmaCoupling<T>& coupling() noexcept { return coupling_; }
-    const CarmaCoupling<T>& coupling() const noexcept { return coupling_; }
-    T operating_frequency_hz() const {
-        return static_cast<T>(static_cast<double>(vmodel_.kappa()) * vmodel_.base_zero_crossing_hz());
-    }
-    void observe(const Vector3& a_world) { coupling_.observe(a_world, dt_, operating_frequency_hz()); }
-    void set_heading(T yaw) { coupling_.set_heading(yaw); }
-    T step() const noexcept { return dt_; }
-
-    void refresh(T Ts) {
-        if (Ts > T(0) && std::isfinite(Ts)) dt_ = Ts;
-        if (dirty_) rebuild_();
-        if (gen_ == disc_gen_ && Ts == disc_h_) return;
-        if (!discretize_lti<T,NL>(A_, W_, Ts, F_, Q_)) { F_.setIdentity(); Q_.setZero(); }
-        disc_gen_ = gen_;
-        disc_h_ = Ts;
-        ++n_disc_;
-    }
-
-    void apply_F(const T (&in)[NL], T (&out)[NL]) const {
-        for (int b = 0; b < 3; ++b) {
-            const int o = kOff[b], n = kSize[b];
-            for (int i = 0; i < n; ++i) {
-                T acc = T(0);
-                for (int j = 0; j < n; ++j) acc += F_(o + i, o + j) * in[o + j];
-                out[o + i] = acc;
-            }
-        }
-    }
-
-    template<class Mat>
-    void propagate(Mat& P, int off) const {
-        const Eigen::Matrix<T,NH,NH> Fh = F_.template block<NH,NH>(0, 0);
-        const Eigen::Matrix<T,NZB,NZB> Fz = F_.template block<NZB,NZB>(OZ, OZ);
-        coupled_detail::congruence_block<T,NH,NH>(P, off, off, Fh, Fh, true);
-        coupled_detail::congruence_block<T,NH,NH>(P, off, off + NH, Fh, Fh, false);
-        coupled_detail::congruence_block<T,NH,NZB>(P, off, off + OZ, Fh, Fz, false);
-        coupled_detail::congruence_block<T,NH,NH>(P, off + NH, off + NH, Fh, Fh, true);
-        coupled_detail::congruence_block<T,NH,NZB>(P, off + NH, off + OZ, Fh, Fz, false);
-        coupled_detail::congruence_block<T,NZB,NZB>(P, off + OZ, off + OZ, Fz, Fz, true);
-        for (int i = 0; i < NL; ++i)
-            for (int j = i; j < NL; ++j) {
-                const T q = Q_(i,j);
-                if (q == T(0)) continue;
-                P(off + i, off + j) += q;
-                if (i != j) P(off + j, off + i) += q;
-            }
-    }
-
-    template<class Mat>
-    bool stationary(Mat& P, int off) const {
-        MatL P0;
-        if (!stationary_covariance_doubling<T,NL>(A_, W_, P0)) return false;
-        for (int i = 0; i < NL; ++i)
-            for (int j = 0; j < NL; ++j) P(off + i, off + j) = P0(i,j);
-        return true;
-    }
-
-    const MatL& joint_A() const noexcept { return A_; }
-    const MatL& joint_W() const noexcept { return W_; }
-    const MatL& joint_F() const noexcept { return F_; }
-    const MatL& joint_Q() const noexcept { return Q_; }
-
-private:
-    static constexpr int kOff[3] = {0, NH, OZ};
-    static constexpr int kSize[3] = {NH, NH, NZB};
-
-    void rebuild_() {
-        dirty_ = false;
-        const T kappa = vmodel_.kappa();
-        // Hold the current model while kappa and the excitation stay within
-        // the tolerance of the discretized one (file header).
-        const bool kappa_moved = gen_ == 0 || rao_changed_ || std::abs(kappa - kappa_applied_) > tol_ * kappa_applied_;
-        if (!kappa_moved && !sigma_moved_(excitation_for_(kappa, vg_))) return;
-        Eigen::Matrix<double,8,8> A8;
-        if (!coupled_detail::complexified_c41(vmodel_.shape(), static_cast<double>(kappa), A8)) return;
-        Model unit(vmodel_.shape());
-        unit.configure(kappa, T(1));
-        const double g2 = static_cast<double>(unit.noise_gain2());
-        // z block in double: mode (8) + RAO (2).
-        Eigen::Matrix<double,NZB,NZB> Az = Eigen::Matrix<double,NZB,NZB>::Zero();
-        Az.topLeftCorner<8,8>() = A8;
-        const double wn2 = static_cast<double>(wn2_), c = static_cast<double>(c_);
-        Az(8,9) = 1.0;
-        Az(9,0) = wn2; Az(9,8) = -wn2; Az(9,9) = -c;
-        Eigen::Matrix<double,NZB,NZB> Wz = Eigen::Matrix<double,NZB,NZB>::Zero(), Pz;
-        Wz(2,2) = Wz(6,6) = 1.0;
-        double vg = 1.0;
-        if (stationary_covariance_doubling<double,NZB>(Az, Wz, Pz) && Pz(2,2) > 0.0) {
-            const double var_z2 = wn2 * wn2 * (Pz(0,0) - 2.0 * Pz(0,8) + Pz(8,8))
-                                  + c * c * Pz(9,9) - 2.0 * wn2 * c * (Pz(0,9) - Pz(8,9));
-            vg = var_z2 / Pz(2,2);
-        }
-        vg_ = static_cast<T>(vg);
-        Sigma_ = excitation_for_(kappa, vg_);
-        kappa_applied_ = kappa;
-        rao_changed_ = false;
-        A_.setZero();
-        W_.setZero();
-        const Eigen::Matrix<T,8,8> A8t = A8.template cast<T>();
-        A_.template block<8,8>(0, 0) = A8t;
-        A_.template block<8,8>(NH, NH) = A8t;
-        A_.template block<NZB,NZB>(OZ, OZ) = Az.template cast<T>();
-        const T g2t = static_cast<T>(g2);
-        for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b) {
-                const T sr = Sigma_.re(a,b) * g2t, si = Sigma_.im(a,b) * g2t;
-                const int oa = kOff[a], ob = kOff[b];
-                W_(oa + 2, ob + 2) = sr; W_(oa + 6, ob + 6) = sr;
-                W_(oa + 6, ob + 2) = si; W_(oa + 2, ob + 6) = -si;
-            }
-        ++gen_;
-    }
-
-    // Excitation at kappa: the heave requirement through the RAO at f_op.
-    Hermitian3<T> excitation_for_(T kappa, T vg) const {
-        constexpr double k2Pi = 6.283185307179586476925286766559;
-        const double w = k2Pi * static_cast<double>(kappa) * vmodel_.base_zero_crossing_hz();
-        const double wn2 = static_cast<double>(wn2_), c = static_cast<double>(c_);
-        const std::complex<double> rz = wn2 / std::complex<double>(wn2 - w * w, c * w);
-        const std::complex<T> R[3] = {T(1), T(1), std::complex<T>(static_cast<T>(rz.real()), static_cast<T>(rz.imag()))};
-        Vector3 sig_mode = sig_;
-        sig_mode(2) = sig_(2) / std::sqrt(std::max(vg, T(1e-6)));
-        return coupling_.excitation(sig_mode, R);
-    }
-    bool sigma_moved_(const Hermitian3<T>& S) const {
-        for (int i = 0; i < 3; ++i)
-            for (int j = i; j < 3; ++j) {
-                const T ref = std::sqrt(std::max(Sigma_.re(i,i) * Sigma_.re(j,j), T(1e-30)));
-                const T d = std::hypot(S.re(i,j) - Sigma_.re(i,j), S.im(i,j) - Sigma_.im(i,j));
-                if (d > tol_ * ref) return true;
-            }
-        return false;
-    }
-
-    Model vmodel_, hmodel_;
-    Vector3 sig_ = Vector3::Ones();
-    Hermitian3<T> Sigma_{};
-    T fn_ = T(0.55), zeta_ = T(0.35), wn2_ = T(0), c_ = T(0), vg_ = T(1);
-    T tol_ = T(0.01), kappa_applied_ = T(1), dt_ = T(0.005);
-    bool rao_changed_ = true;
-    uint32_t n_disc_ = 0;
-    MatL A_ = MatL::Zero(), W_ = MatL::Zero(), F_ = MatL::Identity(), Q_ = MatL::Zero();
-    uint32_t gen_ = 0, disc_gen_ = 0xffffffffu;
-    T disc_h_ = T(-1);
-    bool dirty_ = true;
     CarmaCoupling<T> coupling_;
 };
 

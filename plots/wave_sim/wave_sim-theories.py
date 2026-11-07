@@ -10,6 +10,15 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from scipy import special, ndimage
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 
 AREA_LABELS = [
     "Beyond breaking / invalid",
