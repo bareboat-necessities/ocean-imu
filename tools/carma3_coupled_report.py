@@ -28,6 +28,15 @@ OUT = ROOT / "reports" / "results" / "carma3_coupled"
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma3_coupled_benchmark as bench  # noqa: E402
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 BASE = "A41"
 LABEL = {"A41": "Baseline CARMA3 (A41)", "COR:est": "Correlated, estimated", "COR:orc": "Correlated, oracle",
          "COR:est/xy": "Correlated x-y only, estimated",

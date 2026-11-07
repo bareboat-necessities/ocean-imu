@@ -16,6 +16,15 @@ import numpy as np
 
 from carma_excitation_report import LABEL, aligned, bootstrap_ci, fnum, load_trace, rms_h, style
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 C = {"A41@C": "#2a78d6", "A41@B": "#eb6834", "T41@C": "#1baf7a", "A41@B0": "#eda100", "A41@Cng": "#e87ba4",
      "A41@Cnf": "#008300", "T41@A": "#6250d6", "A41@A": "#e34948", "OU3": "#8a8984", "T41@B": "#e87ba4"}
 LS = {"A41@A": "--", "T41@A": "--", "OU3": ":"}
@@ -197,8 +206,10 @@ def fig_detection(r, plt, svgd, out):
     t = load_trace(tr)
     fig, axs = plt.subplots(3, 1, figsize=(10, 6.6), sharex=True)
     env = envelope(t["t"], sc)
+    on = np.flatnonzero(np.diff(np.r_[0, (env > 0.01).astype(int), 0]))   # wave-on runs [start, stop)
     for ax in axs:
-        ax.fill_between(t["t"], 0, 1, where=env > 0.01, color="#eeeeea", transform=ax.get_xaxis_transform(), lw=0)
+        for a, b in zip(on[::2], on[1::2]):
+            ax.axvspan(t["t"][a], t["t"][b - 1], color="#eeeeea", lw=0, zorder=0)
     axs[0].plot(t["t"], t["pw_A41@C"], color=C["A41@C"], lw=1.4, label="evidence weight p")
     axs[0].plot(t["t"], t["cf_A41@C"], color=C["A41@Cnf"], lw=1.0, label="period confidence c_f")
     axs[0].set_ylabel("weight")

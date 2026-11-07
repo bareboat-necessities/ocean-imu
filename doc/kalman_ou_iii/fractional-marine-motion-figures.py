@@ -46,6 +46,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import least_squares
 
+import importlib.util as _ilu  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", Path(__file__).resolve().parents[2] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 OUT = Path(__file__).resolve().parent
 RNG_SEED = 20261029
 TWOPI = 2.0 * np.pi

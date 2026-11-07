@@ -63,6 +63,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma3_analysis as ca  # noqa: E402
 import carma_mismatch_analysis as mma  # noqa: E402
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "plots" / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 ROOT = Path(__file__).resolve().parents[1]
 TWO_PI = 2.0 * np.pi
 DT = ca.DT

@@ -2,6 +2,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib as mpl
 
+import importlib.util as _ilu  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+
+# Uniform decimation of long lines in every saved figure, SVG and PGF alike (plots/figure_decimation.py).
+_fd_spec = _ilu.spec_from_file_location("figure_decimation", _Path(__file__).resolve().parents[1] / "figure_decimation.py")
+_fd = _ilu.module_from_spec(_fd_spec)
+_fd_spec.loader.exec_module(_fd)
+_fd.install()
+
 # Configure matplotlib to use LaTeX fonts and export PGF
 mpl.use("pgf")
 plt.rcParams.update({
