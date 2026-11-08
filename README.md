@@ -28,7 +28,7 @@ INS Filters:
 
 - [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_tfg_carma.pdf)
 
-- [Adaptive Shared-Mode CARMA(4,1) QMEKF Filtering for Marine Motion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.3/kalman_carma_shared_modes.pdf)
+- [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.3/kalman_carma_shared_modes.pdf)
 
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/pii_observer-model.pdf)
 
