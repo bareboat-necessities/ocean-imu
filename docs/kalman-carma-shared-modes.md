@@ -30,7 +30,13 @@ to be necessary.
   `reports/results/kalman_carma_shared_modes/`; deterministic table
   `tools/carma_shared_modes_sim_table.py`.
 * Articles: `doc/kalman_carma_shared_modes/`
-  (`kalman_carma_shared_modes-math.tex`, the model;
+  ([`kalman_carma_shared_modes.tex`](../doc/kalman_carma_shared_modes/kalman_carma_shared_modes.tex),
+  the standalone presentation of the 27-state method: CARMA motivation,
+  absence of an integral pseudo-measurement, spectral fitting, shared modes,
+  state reduction, scaling, adaptation, proxy, period estimation, magnetic
+  aiding and startup;
+  `kalman_carma_shared_modes-27state.tex`, the numerical system-validation article;
+  `kalman_carma_shared_modes-math.tex`, the model;
   `kalman_carma_shared_modes-minimal.tex`, the minimal realization and the
   numerical study; `kalman_carma_shared_modes-charts.tex`, the replay chart
   gallery).
