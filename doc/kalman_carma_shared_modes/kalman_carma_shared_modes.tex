@@ -7,6 +7,7 @@
 \usepackage{amsmath,amssymb,bm,mathtools}
 \usepackage{newtxtext,newtxmath}
 \usepackage{booktabs,array,graphicx}
+\usepackage{placeins}
 \usepackage{tikz,pgfplots}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \pgfplotsset{compat=1.18}
@@ -17,6 +18,20 @@
 \interdisplaylinepenalty=2500
 \emergencystretch=2em
 \allowdisplaybreaks
+\raggedbottom
+\setcounter{topnumber}{5}
+\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@dblfptop}{0pt}
+\makeatother
+\providecommand{\mathdefault}[1]{#1}
+\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
 \newcommand{\vc}[1]{\bm{#1}}
 \newcommand{\mt}[1]{\bm{#1}}
 \newcommand{\R}{\mathbb R}
@@ -65,7 +80,9 @@ noise-aware excitation adaptation, coupling confidence and magnetic startup.
 The method estimates translation about a local wave equilibrium. Its
 stationary prior regularizes displacement; informative magnetic aiding and
 suitable motion remain necessary to distinguish attitude errors from
-physical acceleration. The implementation is experimental, and neither
+physical acceleration. Paired vessel-response comparisons, engine-vibration
+controls and a low--high--low sea-state transition characterize displacement,
+attitude and sensor-bias errors. The implementation is experimental, and neither
 universal hull response nor nonlinear adaptive stability is assumed.
 \end{abstract}
 
@@ -1115,7 +1132,9 @@ is realized on the next motion-model refresh. The acceleration-band
 frequency tracker also serves wave-direction reporting; its carrier is
 not substituted for the zero-crossing period in \cref{eq:kappa}.
 
-\section{Scope and Evidence}
+\input{csm-validation.tex-part}
+
+\section{Scope and Limitations}
 \label{sec:scope}
 The stationary displacement and acceleration marginals, the six-state
 realization and the positive-semidefinite excitation are algebraic
@@ -1166,6 +1185,16 @@ gravity leakage distinguishable from physical wave motion. These roles
 are complementary and are all needed to understand the implemented
 estimator.
 
+On the declared vessel-response ensemble, the paired comparisons favor the
+CARMA displacement priors over OU--III for heave and three-dimensional
+error, with a smaller additional contribution from shared excitation.
+Machinery vibration nevertheless produces large errors, and the fixed
+covariance-inflation gain is not uniformly helpful. The bias and transition
+plots expose residual ambiguity and adaptation behavior alongside the
+aggregate scores. These findings concern the prescribed hull, corruption
+model and tuning settings; they do not establish sea-trial performance.
+
+\FloatBarrier
 \appendices
 \section{Constructing the Two-State Colouring Filter}
 \label{app:colour}
@@ -1256,11 +1285,17 @@ source revision \texttt{08f9900032b5} (full hash in the manifest),
 with 30 seeds and a 300~s scoring start. They are existing evidence,
 not new runs generated for this explanatory article.
 
-The present manuscript is self-contained: its figure uses analytic
-PGFPlots expressions and its derivations and tables are inline. From this
-directory it builds with two runs of \texttt{lualatex} on
-\path{kalman_carma_shared_modes.tex}. No simulation CSV or generated table
-fragment is needed to typeset it. Project source and evidence are available
+The method's derivations and spectral-fit figure are self-contained.
+The comparative and degradation studies are reproduced with
+\path{tools/carma_shared_modes_validation.py}. Its \texttt{run} stage reads
+the pinned dataset and built simulators; its \texttt{figures} stage rebuilds
+the charts and tables from the committed scores and compact drawing traces,
+without rerunning the simulations. The ordinary
+\path{plots/kalman_carma_shared_modes/draw_plots.sh} pipeline also generates
+these figures. From this
+directory the complete article builds with two runs of \texttt{lualatex} on
+\path{kalman_carma_shared_modes.tex} after that generation step.
+Project source and evidence are available
 at \url{https://github.com/bareboat-necessities/ocean-imu}.
 
 \section*{Acknowledgments}
@@ -1287,5 +1322,10 @@ F. L. Markley, ``Attitude error representations for Kalman filtering,''
 R. Mahony, T. Hamel and J.-M. Pflimlin, ``Nonlinear complementary filters
 on the special orthogonal group,'' \emph{IEEE Trans. Autom. Control},
 vol. 53, no. 5, pp. 1203--1218, 2008.
+\bibitem{tvg-nlo}
+T. H. Bryne, T. I. Fossen and T. A. Johansen, ``Nonlinear observer with
+time-varying gains for inertial navigation aided by satellite reference
+systems in dynamic positioning,'' in \emph{Proc. Mediterranean Conf.
+Control and Automation}, 2014, pp. 1353--1360.
 \end{thebibliography}
 \end{document}

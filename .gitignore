@@ -149,3 +149,7 @@ reports/results/kalman_carma_shared_modes/traces/*_ts.csv
 /reports/results/kalman_carma_shared_modes_minimal/ablation_runs.csv
 /reports/results/kalman_carma_shared_modes_minimal/robustness_runs.csv
 /reports/results/kalman_carma_shared_modes_minimal/
+
+# Append-only restart checkpoint; scores.csv is the publication evidence.
+/reports/results/carma_shared_modes_validation/runs.jsonl
+/doc/kalman_carma_shared_modes/csm_validation_*.pgf
