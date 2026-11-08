@@ -28,6 +28,8 @@ INS Filters:
 
 - [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_tfg_carma.pdf)
 
+- [Adaptive Shared-Mode CARMA(4,1) QMEKF Filtering for Marine Motion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.3/kalman_carma_shared_modes.pdf)
+
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/pii_observer-model.pdf)
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
@@ -39,9 +41,6 @@ Heave-only filters (comparison baselines, see [docs/heave-only.md](docs/heave-on
 - [Küchler Harmonic-Mode EKF](https://skoge.folk.ntnu.no/prost/proceedings/ifac11-proceedings/data/html/papers/1935.pdf)
 
 Research Studies:
-
-- [Adaptive Shared-Mode CARMA Filtering for Marine Motion](doc/kalman_carma_shared_modes/kalman_carma_shared_modes.tex) (standalone method article: 27 states, spectral fit, adaptation and startup)
-- [27-State Directionally Coupled CARMA QMEKF: Model, Startup and Degradation](doc/kalman_carma_shared_modes/kalman_carma_shared_modes-27state.tex) (experimental validation article and reproducible figures)
 
 - [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-wave-dir.pdf)
 
