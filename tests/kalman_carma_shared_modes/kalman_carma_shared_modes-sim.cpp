@@ -52,6 +52,15 @@ public:
         // selects another mode for a diagnostic replay.
         if (!std::getenv("W3D_CARMA3_EXCITATION"))
             impl_.fusion().raw().setCarmaExcitationMode(ocean_imu::carma::CarmaExcitationMode::Evidence);
+        // Controlled sensor-path ablations for the article's machinery study.
+        // Unset variables retain the deployed wrapper configuration.
+        auto& filter = impl_.fusion().raw();
+        if (const char* hz = std::getenv("W3D_CSM_GUARD_HZ"))
+            filter.setAccelVibrationGuard(std::stof(hz));
+        if (const char* gain = std::getenv("W3D_CSM_GUARD_RACC_GAIN"))
+            filter.setAccelVibrationRaccGain(std::stof(gain));
+        std::cout << "CSM_GUARD cutoff_hz=" << filter.accelVibrationGuardCutoffHz()
+                  << " racc_gain=" << filter.accelVibrationRaccGain() << '\n';
     }
     void updateMag(const Vector3f& b) override { impl_.updateMag(b); }
     void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }

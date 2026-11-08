@@ -22,3 +22,8 @@ python3 kalman_carma_shared_modes-plots.py
 #    tools/carma_shared_modes_study.py).
 python3 ../../tools/carma_shared_modes_analysis.py --figures-only --outdir . --ext pgf,svg
 python3 ../../tools/carma_shared_modes_study.py figures --outdir . --ext pgf,svg
+
+# 3. Comparisons, machinery degradation and low--high--low transition in the
+# standalone method article. Uses compact committed traces, not a new replay.
+python3 ../../tools/carma_shared_modes_validation.py figures --outdir .
+cp csm-validation-tables-generated.tex-part ../../doc/kalman_carma_shared_modes/

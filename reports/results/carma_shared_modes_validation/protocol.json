@@ -1,0 +1,139 @@
+{
+  "dataset": {
+    "release": "v1.2.3",
+    "archive": "sim-data-files-vessel-rao-28ft.zip",
+    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+    "motion_model": "VESSEL_RAO_28FT",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+    }
+  },
+  "seed_triplets": [
+    [
+      11,
+      101,
+      1009
+    ],
+    [
+      29,
+      211,
+      1103
+    ],
+    [
+      47,
+      307,
+      1201
+    ],
+    [
+      71,
+      401,
+      1301
+    ],
+    [
+      97,
+      503,
+      1409
+    ],
+    [
+      131,
+      601,
+      1511
+    ],
+    [
+      173,
+      701,
+      1601
+    ],
+    [
+      211,
+      809,
+      1709
+    ],
+    [
+      257,
+      907,
+      1801
+    ],
+    [
+      307,
+      1009,
+      1901
+    ]
+  ],
+  "source_revision": "63365bd762974360f37345993f8f8232ccc21f6e",
+  "binary_sha256": {
+    "CSM": "3b12bd5f37a69b814a0a8e36a297c1acee8319e4cbc06c8111eebd971f3bc5ef",
+    "Independent": "3b12bd5f37a69b814a0a8e36a297c1acee8319e4cbc06c8111eebd971f3bc5ef",
+    "OU-II": "acb0cfbe725103ec389d214418ac0c20bda497329fa966655a2a25990a003ccc",
+    "OU-III": "7416bf3f6f5731b2b16e225d306d741a536e6d05bcc057dd70148b3efe98d860",
+    "TFG": "331edf1eac1cfeb73b9672c3f08819ed9def54bb50413dca3dabe952311e2a3d",
+    "PII": "7abf66e0279ab503193bea55827c3a40a2c61490f8d6089777bbc4fdb1392716",
+    "TVG-NLO": "a7f0d3d08bc067bbd950c3529a85c5f0125df62a15633a4ec1f9a9a3f2362fdd"
+  },
+  "source_hashes": {
+    "tools/carma_shared_modes_validation.py": "f4f602904742c73d5b090d187d8b7c5b5811f3049b61752e644d10d1ebae831d",
+    "tools/ou_validation.py": "483581060d5d2b1f55c096370164d528e6b999056195c1c9209cf8f2dd1dfa9d",
+    "tools/ou_roundtrip_transition.py": "99d9693d10d49ce2ba312b1e68668c28112c2b9d8236cf234ea1cae9a0753a4a",
+    "tools/engine_noise_degradation.py": "86a4b1361c3ff41f349c5292d36fcd5beed38916e4b06c013150116e3a6c0a67",
+    "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim.cpp": "7a599bbb95ada97a4b51cbb9d663805e8fe17f80ffc358c11a2081b0c59b7c76",
+    "src/util/W3dSimCommon.cpp": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45"
+  },
+  "stationary_methods": [
+    "CSM",
+    "Independent",
+    "OU-II",
+    "OU-III",
+    "TFG"
+  ],
+  "observers": [
+    "PII",
+    "TVG-NLO"
+  ],
+  "scored_seconds": 900,
+  "sample_rate_hz": 200,
+  "transition_segments": [
+    [
+      "low_start",
+      300.0,
+      400.0
+    ],
+    [
+      "rise",
+      400.0,
+      520.0
+    ],
+    [
+      "high_recover",
+      520.0,
+      640.0
+    ],
+    [
+      "high",
+      640.0,
+      800.0
+    ],
+    [
+      "fall",
+      800.0,
+      920.0
+    ],
+    [
+      "low_recover",
+      920.0,
+      1040.0
+    ],
+    [
+      "low_return",
+      1040.0,
+      1200.0
+    ]
+  ],
+  "plot_geometry": "plots/vector_export.py; 2000-point drawing traces; full-rate scores"
+}

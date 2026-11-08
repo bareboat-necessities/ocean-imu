@@ -1,0 +1,349 @@
+\section{Comparative Validation on Vessel-Response Records}
+\label{sec:csm-validation}
+\subsection{Protocol, comparators and scoring}
+The following experiments evaluate the complete shared-mode estimator,
+including its proxy, magnetic acquisition, bias release and adaptation.
+They use the same simulation machinery as the OU--III article: the
+versioned \texttt{oceanography-waves-lib} v1.2.3 estimated 28~ft fin-keel
+vessel-response records. JONSWAP and PM--Stokes each supply four stationary
+incident significant heights, $H_s=0.27,1.5,4.0,8.5$~m. The response of
+this one prescribed hull is not a measured sea trial or a population of
+unseen vessels.
+The corresponding peak periods are $T_p=3.0,5.7,8.5,11.4$~s.
+Each height retains the released record's associated wave period and
+direction. These are comparisons of complete sea conditions, not an
+amplitude-only sweep at fixed period and direction.
+
+Each replay lasts 1200~s at 200~Hz. The Kalman comparators use 25~Hz magnetic
+input. The common corruption includes accelerometer white noise of
+$1.51\times10^{-3}g$, gyro white noise of $1.57\times10^{-3}$~rad/s,
+initial residual biases, and bias random walks of
+$5\times10^{-4}~\mathrm{m\,s^{-2}}/\sqrt{\mathrm{s}}$ and
+$10^{-5}~\mathrm{rad\,s^{-1}}/\sqrt{\mathrm{s}}$, respectively. Magnetometer noise is
+0.60~$\mu$T, with residual hard iron and scale/cross-axis error. Temperature
+is held at $35^\circ$C. The published simulator adapters retain their
+existing sensor-covariance scales, startup and tuning coefficients; no
+coefficient is retuned for the experiments reported here. Existing settings
+can reflect earlier development on the same hull model.
+
+Ten independent wave/IMU/initialization seed triplets are reused across
+methods. A common random phase is applied to the world-velocity and Euler
+spectra; displacement and acceleration are derived consistently from
+velocity, and body specific force and gyro are rebuilt. Each method sees
+the same phase-randomized motion and the same inertial-error realization
+within a paired draw. The scored interval is the final 900~s, or 180000
+samples. We report
+\begin{equation}
+ E_z=\sqrt{\langle(\hat z-z)^2\rangle},\qquad
+ E_{3D}=\sqrt{\langle\|\hat{\vc p}-\vc p\|^2\rangle},
+\end{equation}
+and $100E/H_s$ when normalizing across heights. Attitude errors use wrapped
+Euler differences; bias scores use the norm of the three-axis error.
+Startup transients remain in the displayed full-run traces but are outside
+the scored stationary interval.
+
+The principal comparisons are shared CARMA, uncoupled CARMA(4,1), OU--II,
+OU--III and the two-frame Lie-group filter (TFG). The uncoupled arm uses the
+same six-state cascade with cross-axis excitation disabled. It retains the
+27-coordinate implementation while realizing the independent CARMA law;
+thus it isolates sharing without changing the frontend or spectral shape.
+It is not a timing measurement of a separate 21-state implementation.
+
+For the primary JONSWAP summary, each seed first averages the four
+height-normalized errors. The ten resulting seed-level values determine
+the reported mean and sample standard deviation. PM--Stokes is kept as a
+separate spectral family. Paired intervals resample the ten seed-level
+shared-CARMA-minus-OU--III differences 10000 times, retaining the pairing
+across all four heights. These exploratory 95\% percentile intervals do
+not have a multiple-endpoint correction.
+
+Adaptive PII and the repository's time-varying-gain nonlinear observer
+(TVG--NLO, based on \cite{tvg-nlo}) are additional single-draw common-output
+comparisons. Their vertical displacement and tilt are scored. PII uses its
+existing 20~Hz magnetic path; TVG--NLO omits compass and horizontal GNSS
+aiding, so its yaw and horizontal position are unscored. These aiding
+differences preclude treating all seven methods as identical sensor-fusion
+architectures. In particular, a zero-filled unavailable output is never
+counted as a successful estimate.
+
+\input{csm-validation-tables-generated.tex-part}
+
+\subsection{Displacement, attitude and sensor-bias reconstruction}
+Figures~\ref{fig:csm-validation-kinematics}--\ref{fig:csm-validation-bias}
+use the medium JONSWAP record, $H_s=1.5$~m, and wave/IMU/initialization
+seeds 11/101/1009. The position, velocity, acceleration and attitude examples
+show the final 60~s. Bias and adaptation plots retain the complete 1200~s
+to expose convergence and the startup holds. The plotting harness uses a
+vertical-up convention; the method equations use NED. The released records
+have constant yaw, and the harness expresses the plotted reference in its
+magnetic heading gauge. The yaw panel therefore tests magnetic alignment
+and drift on that heading, not arbitrary vessel-turn performance.
+\CSMValidationNominalTable
+
+\begin{figure*}[tp]\centering
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_xy.pgf}
+\small (a) Horizontal motion.
+\end{minipage}\hfill
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_z.pgf}
+\small (b) Vertical motion.
+\end{minipage}
+\caption{Shared-CARMA position, velocity and acceleration on the final
+60~s of one medium-JONSWAP draw. Solid curves are truth; dashed curves are
+estimates. All tabulated RMS values use the complete final 900~s rather
+than only the displayed minute.}
+\label{fig:csm-validation-kinematics}
+\end{figure*}
+
+\begin{figure*}[tp]\centering
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_attitude.pgf}
+\small (a) Final-minute attitude reconstruction.
+\end{minipage}\hfill
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_tuning.pgf}
+\small (b) Full-run adaptation.
+\end{minipage}
+\caption{Attitude and adaptation for the same draw. The plotted carrier
+period is the reciprocal frequency-tracker period in the shared harness;
+it is not the separate spectral-moment zero-crossing period. Applied
+$\sigma_a$ and $\kappa$ show the process scales actually used by the filter.
+The harness column \texttt{R\_p0\_applied} carries $\kappa$ in this adapter;
+it is not an integral-displacement pseudo-measurement.}
+\label{fig:csm-validation-attitude}
+\end{figure*}
+
+\begin{figure*}[tp]\centering
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_acc_bias.pgf}
+\small (a) Accelerometer-bias tracking.
+\end{minipage}\hfill
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_gyro_bias.pgf}
+\small (b) Gyroscope-bias tracking.
+\end{minipage}
+\caption{Complete bias histories, including startup, for the same draw.
+The random-walk truth differs from the estimator's slow accelerometer-bias
+prior. Smooth estimates alone do not establish physical bias
+identifiability: the bias states can also absorb residual tilt and
+motion-model error.}
+\label{fig:csm-validation-bias}
+\end{figure*}
+In this illustrative draw the horizontal accelerometer-bias estimates
+remain close to zero despite nonzero physical biases. Vertical
+accelerometer bias and the gyro biases exhibit different tracking behavior.
+The plots therefore document residual bias and attitude ambiguity as well
+as successful tracking; they do not demonstrate recovery of every physical
+bias component. Table~\ref{tab:csm-validation-nominal} quantifies these
+errors across all ten medium-sea draws.
+
+\subsection{Comparative results}
+Table~\ref{tab:csm-validation-comparison} gives the two spectral ensembles;
+Fig.~\ref{fig:csm-validation-comparison} retains the individual heights.
+Table~\ref{tab:csm-validation-paired} quantifies the paired contrast with
+OU--III. Both heave and full three-dimensional error are reported because
+an improvement in the vertical channel need not improve horizontal
+reconstruction or attitude. The uncoupled arm distinguishes the contribution
+of shared excitation from that of a stationary CARMA displacement prior.
+The shared-CARMA-minus-OU--III heave contrast is
+$\CSMJonswapHeaveDifference$ percentage points of $H_s$ for JONSWAP
+(95\% interval $\CSMJonswapHeaveInterval$), and
+$\CSMPmStokesHeaveDifference$ for PM--Stokes
+($\CSMPmStokesHeaveInterval$). These contrasts measure the complete
+estimators on the declared synthetic ensemble, not universal superiority
+of a stochastic prior.
+The uncoupled CARMA prior also captures much of the advantage over OU--III
+on these records. The difference between the two CARMA arms isolates the
+smaller additional contribution of sharing; the entire CARMA-versus-OU
+difference cannot be attributed to directional coupling.
+The paired shared-minus-uncoupled 3-D contrasts are
+$\CSMJonswapThreeDUncoupledDifference$ percentage points for JONSWAP
+($\CSMJonswapThreeDUncoupledInterval$) and
+$\CSMPmStokesThreeDUncoupledDifference$ for PM--Stokes
+($\CSMPmStokesThreeDUncoupledInterval$). Table~\ref{tab:csm-validation-paired}
+also retains the corresponding heave contrasts.
+\CSMValidationComparisonTable
+\CSMValidationPairedTable
+
+\begin{figure*}[tp]\centering
+\IncludePGF{csm_validation_comparison.pgf}
+\caption{Ten-seed stationary reconstruction by significant height. Bars
+are percentile-bootstrap 95\% intervals of the seed mean within each cell.
+JONSWAP and PM--Stokes remain separate. The paired ensemble contrasts in
+Table~\ref{tab:csm-validation-paired} resample seed-level differences and
+cannot be inferred from overlap of these individual-method intervals.}
+\label{fig:csm-validation-comparison}
+\end{figure*}
+
+Table~\ref{tab:csm-validation-observers} and
+Fig.~\ref{fig:csm-validation-observers} retain PII and TVG--NLO alongside
+the Kalman methods on the first common draw. These deterministic comparisons
+are distinct from the ten-seed statistical comparisons and use only the
+common observable outputs.
+\CSMValidationObserversTable
+\begin{figure*}[tp]\centering
+\IncludePGF{csm_validation_observers.pgf}
+\caption{Final-minute vertical reconstruction on the same medium-JONSWAP
+draw. The two panels share the truth curve and split the methods for
+legibility. PII and TVG--NLO retain their own existing aiding policies.}
+\label{fig:csm-validation-observers}
+\end{figure*}
+
+\section{Degradation Under Engine Vibration}
+\label{sec:csm-engine}
+\subsection{Sensor-path stress and controls}
+The engine experiment uses the same prescribed three-cylinder four-stroke
+diesel, flexible mounts, $2.6\!:\!1$ reduction gear and three-blade propeller
+as the OU--III study. Crank orders, shaft/blade lines, broadband vibration,
+governor variation, accelerometer rectification and gyro acceleration
+sensitivity perturb the sensor path. Mount transmissibility is
+\begin{equation}
+ T(f)=\sqrt{\frac{1+(2\zeta r)^2}{(1-r^2)^2+(2\zeta r)^2}},\qquad r=f/f_n.
+\end{equation}
+The mount uses $f_n=10$~Hz and $\zeta=0.12$. The gyro terms use a 1.5~m
+effective lever arm and acceleration sensitivity
+$1.78\times10^{-4}$~(rad/s)/(m/s$^2$); accelerometer rectification is
+1~mg per $g^2$. These are declared stress-model parameters, not fitted
+measurements from the IMU installation.
+The nominal condition is 2400~rpm, hull acceleration RMS 0.60~m/s$^2$, and
+two-pole sensor bandwidth 80~Hz before 200~Hz sampling. The vibration model
+reports recorded RMS 0.454334~m/s$^2$. Vessel rigid-body motion and magnetic
+input remain unchanged; this is not a propulsion or encounter-frequency
+model, and the prescribed engine installation is not a measured hull.
+
+All eight stationary records use the first paired seed triplet. The raw
+degradation arm disables both the vibration guard and its accelerometer
+covariance inflation in shared CARMA, uncoupled CARMA and OU--III. The
+speed sweep uses 800, 1600, 2400 and 3200~rpm. Hull levels are
+0.30, 0.60 and 1.20~m/s$^2$ at cruise; sensor bandwidths are
+20, 40, 80 and 160~Hz. A matched-power control rescales the hull level so
+all four bandwidth cells have the nominal recorded vibration RMS. A further
+cruise cell removes the modeled gyro-vibration and acceleration-sensitivity
+terms while retaining the accelerometer perturbation.
+
+Every error is scored at full rate over the final 900~s. An engine-table
+RMS pools records as $\sqrt{\frac18\sum_{j=1}^8 E_j^2}$; it is not the
+arithmetic mean of the record RMS values. The displacement offset pools
+the norm of each record's mean error. This separates persistent error
+from fluctuating error without implying that either has a unique physical
+cause. The single engine draw per record supplies a controlled stress
+comparison, not an ensemble confidence interval.
+
+\begin{figure*}[tp]\centering
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_engine_speed.pgf}
+\small (a) Speed and fixed mitigation.
+\end{minipage}\hfill
+\begin{minipage}[t]{.49\textwidth}\centering
+\IncludePGF{csm_validation_engine_mechanism.pgf}
+\small (b) Raw-input machinery controls.
+\end{minipage}
+\caption{Machinery degradation pooled over eight records. Left: raw-input
+curves compare shared CARMA, uncoupled CARMA and OU--III. Dashed and dotted
+shared-CARMA curves show the fixed guard and guard-plus-covariance arms;
+horizontal dotted lines mark engine-off raw-input baselines. Logarithmic
+error axes retain both the baseline and severe degradation.
+Right: hull vibration level, sensor
+bandwidth, and bandwidth at matched recorded power. The matched control
+separates a change in recorded vibration power from changes in spectral
+placement and folding. Equal recorded RMS does not require equal estimator
+error.}
+\label{fig:csm-validation-engine-speed}
+\label{fig:csm-validation-engine-mechanism}
+\end{figure*}
+
+\subsection{Fixed mitigation settings}
+The mitigation arms use the existing two-pole 14~Hz guard, followed either
+by the ordinary accelerometer covariance or by the existing vibration-aware
+gain 0.75. Engagement uses the common two-pole 25~Hz high-pass detector,
+0.03--0.08~m/s$^2$ rails and 5~s engagement scale. Thus the three arms are
+raw input, guard only, and guard plus covariance; coefficients and quality
+thresholds are not retuned for this experiment.
+Table~\ref{tab:csm-validation-engine} includes the nominal condition and
+engine-off baseline. Figure~\ref{fig:csm-validation-engine-speed} shows
+whether the mitigation holds across speed. An improvement in displacement
+must be considered together with pitch and yaw: rejecting high-frequency
+input can change phase delay and the distribution of the accelerometer
+residual among tilt, bias and inferred translation.
+At nominal cruise shared-CARMA 3-D RMS changes from the engine-off
+$\CSMEngineBaselineThreeD$~m to $\CSMEngineRawThreeD$~m on raw vibration
+(a factor $\CSMEngineRawRatio$). The fixed guard-plus-covariance arm gives
+$\CSMEngineDeployedThreeD$~m, or $\CSMEngineDeployedRatio$ times the
+engine-off value. The speed and bandwidth controls show why this one
+condition is insufficient to establish robustness over an installation.
+Guard alone gives $\CSMEngineGuardOnlyThreeD$~m at nominal cruise. Thus,
+in this condition, the fixed covariance-inflation gain further reduces
+shared-CARMA 3-D error. The benefit is not uniform across outputs:
+at 800~rpm it increases pitch RMS from $\CSMEngineIdleGuardPitch$ to
+$\CSMEngineIdleDeployedPitch$ degrees. The common gain is retained rather
+than optimized on these evaluation records.
+Removing the modeled gyro perturbation changes nominal shared-CARMA 3-D
+RMS by $\CSMEngineGyroPathChange\%$ while the accelerometer perturbation is
+retained. This attributes error within the declared machinery model; it
+does not assert insensitivity to arbitrary gyro errors.
+\CSMValidationEngineTable
+
+\section{Low--High--Low Sea-State Transition}
+\label{sec:csm-roundtrip}
+The bidirectional test exactly reuses the OU--III transition construction.
+The low sea has $(H_s,T_p)=(1.5~\mathrm{m},5.7~\mathrm{s})$. A quintic
+$C^2$ crossfade begins at 400~s and reaches the independent high-sea
+realization $(4.0~\mathrm{m},11.4~\mathrm{s})$ at 520~s. The high sea is
+held to 800~s; an identical 120~s crossfade returns to the \emph{same}
+phase-randomized low-sea realization at 920~s.
+
+For a blending weight $w$, consistent kinematics require
+\begin{align}
+ \vc p&=(1-w)\vc p_L+w\vc p_H,\nonumber\\
+ \vc v&=(1-w)\vc v_L+w\vc v_H+\dot w(\vc p_H-\vc p_L),\nonumber\\
+ \vc a&=(1-w)\vc a_L+w\vc a_H
+       +2\dot w(\vc v_H-\vc v_L)\nonumber\\
+      &\quad+\ddot w(\vc p_H-\vc p_L).
+\end{align}
+Attitude is blended and body IMU channels are rebuilt. No state,
+covariance, bias, magnetic reference, adaptation memory or coupling monitor
+is reset at either transition. Shared CARMA, uncoupled CARMA and OU--III
+each run one continuous replay for each of the ten common seed triplets.
+
+The scored window is divided into low-start (300--400~s), rise
+(400--520~s), high-recovery (520--640~s), high-settled (640--800~s), fall
+(800--920~s), low-recovery (920--1040~s), and low-return (1040--1200~s).
+Table~\ref{tab:csm-validation-roundtrip} reports heave and three-dimensional
+RMS in every interval. Separate rise and fall scores prevent opposite
+adaptation lags from being hidden in a pooled transition average. Unequal
+window lengths, phase and evolving sensor bias mean that low-start and
+low-return errors need not coincide even though the low-sea realization
+is the same.
+For shared CARMA, the ten-seed low-start, high-settled and low-return heave
+RMS means are $\CSMTransitionLowStartHeave$, $\CSMTransitionHighHeave$ and
+$\CSMTransitionLowReturnHeave$~m. The rise, fall and recovery scores remain
+visible in the table rather than being replaced by a single aggregate.
+\CSMValidationRoundtripTable
+
+\begin{figure*}[tp]\centering
+\IncludePGF{csm_validation_roundtrip.pgf}
+\caption{One continuous low--high--low replay (seeds 11/101/1009).
+Top left: incident-height guide
+$\sqrt{(1-w)^2H_L^2+w^2H_H^2}$, not a measured wave-height estimate.
+Top right: truth and shared-CARMA vertical displacement. Middle left:
+vertical errors of the three methods; middle right: applied shared-CARMA
+frequency scale. Bottom: shared-CARMA attitude errors and applied process
+amplitude. Shading marks both 120~s crossfades; the dash-dotted line opens
+the scored interval. Full-rate interval scores, rather than this one
+illustrative trace, support Table~\ref{tab:csm-validation-roundtrip}.}
+\label{fig:csm-validation-roundtrip}
+\end{figure*}
+
+\subsection{Rendering and reproducibility}
+All metrics and seed resampling precede plot decimation. Drawing traces
+retain ordered coordinate extrema and endpoints using
+\path{plots/vector_export.py}; they are capped at 2000 points per stored
+trace. The same project exporter shares the point budget among overlaid
+curves at SVG and PGF export. No score, spectrum, covariance statistic or
+bootstrap sample is computed from those drawing traces. The compact traces
+and full-rate per-run scores are committed; the original long replay CSVs
+are regenerated when needed.
+The run matrix, source and binary hashes, dataset checksums, fixed seed
+triplets and scoring intervals are recorded in
+\path{reports/results/carma_shared_modes_validation/protocol.json}.
