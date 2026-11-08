@@ -1,12 +1,11 @@
-\documentclass[10pt,journal]{IEEEtran}
-\usepackage[letterpaper,top=1in,bottom=1in,left=0.7in,right=0.7in,columnsep=0.2in]{geometry}
+\documentclass[conference]{IEEEtran}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[utf8]{inputenc}
   \usepackage[T1]{fontenc}
 \fi
 \usepackage{amsmath,amssymb,bm,mathtools}
-\usepackage{mathptmx}
+\usepackage{newtxtext,newtxmath}
 \usepackage{booktabs,array,graphicx}
 \usepackage{tikz,pgfplots}
 \usetikzlibrary{arrows.meta,positioning,calc}
@@ -35,8 +34,14 @@
 \DeclareMathOperator{\clip}{clip}
 \pdfstringdefDisableCommands{\def\bm#1{#1}\def\vc#1{#1}\def\mt#1{#1}}
 
-\title{Adaptive Shared-Mode CARMA Kalman Filtering for Marine Motion (draft)}
-\author{Mikhail S. Grushinskiy}
+\title{Adaptive Shared-Mode CARMA\\
+Kalman Filtering for Marine Motion (draft)}
+\author{%
+  \IEEEauthorblockN{Mikhail S. Grushinskiy}
+  \IEEEauthorblockA{Independent Researcher, USA, Fair Lawn\\
+  Bareboat Necessities GitHub Project\\
+  Email: mgrouch@users.github.com}%
+}
 
 \begin{document}
 \maketitle
@@ -398,8 +403,10 @@ $3\times8+3+3+3=33$ error states.
 Only the real output and its derivatives enter the sensors. Rationalizing
 the complex denominator yields the \emph{real}, two-input transfer
 \begin{equation}
- p_i(s)=g_0\frac{B(s)}{P(s)}\eta_i(s),\qquad
- \eta_i(s)=\frac{N_r(s)\xi_{r,i}(s)+N_i(s)\xi_{i,i}(s)}{D(s)}.
+ \begin{aligned}
+ p_i(s)&=g_0\frac{B(s)}{P(s)}\eta_i(s),\\
+ \eta_i(s)&=\frac{N_r(s)\xi_{r,i}(s)+N_i(s)\xi_{i,i}(s)}{D(s)}.
+ \end{aligned}
  \label{eq:realtransfer}
 \end{equation}
 Both inputs share the real denominator $PD$, of degree six. For the
