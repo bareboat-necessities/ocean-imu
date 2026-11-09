@@ -11,7 +11,8 @@ import argparse,json,subprocess,tempfile
 import numpy as np
 import pandas as pd
 from tfg_shared_modes_study import ROOT,OUT,BINARY,SCENARIOS,PRIMARY,clean_env,sha,ci
-ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=2);args=ap.parse_args()
+ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=2)
+ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 cases=('roundtrip','direction_step');seeds=list(range(1001,1025));cache=OUT/'transient_cache';cache.mkdir(exist_ok=True)
 protocol=dict(binary_sha256=sha(BINARY),runner_sha256=sha(__file__),seeds=seeds,cases=cases,
  filters=PRIMARY,sample_rate_hz=200,position_export_resolution_m=1e-5,

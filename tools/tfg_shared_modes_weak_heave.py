@@ -13,7 +13,8 @@ import pandas as pd
 from tfg_shared_modes_study import ROOT,OUT,BINARY,SCENARIOS,clean_env,sha,ci,save_trace
 ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=2)
 ap.add_argument('--analysis-only',action='store_true',help='Reanalyse completed immutable simulation caches after an analysis-only edit.')
-args=ap.parse_args()
+ap.add_argument('--results',type=Path,default=OUT)
+args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 filters=('A41@C','T41@C','CSM','TCSM','CSM:off','TCSM:off','CSM:noconf','TCSM:noconf',
  'CSM/real','TCSM/real','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset')
 seeds=list(range(1001,1013));cache=OUT/'weak_cache';cache.mkdir(exist_ok=True)

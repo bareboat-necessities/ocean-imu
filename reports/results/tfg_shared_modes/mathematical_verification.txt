@@ -1,0 +1,61 @@
+CHECK 27-state group inverse                                 value=5.27441224e-17 limit=1e-12 PASS
+CHECK 27-state exp/log                                       value=7.11923836e-17 limit=1e-12 PASS
+CHECK 27-state associativity                                 value=1.33288897e-15 limit=1e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=2.22044619e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=9.9879015e-17 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=4.51461188e-16 limit=2e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=2.52596721e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=6.76568558e-17 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=8.96434254e-16 limit=2e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=1.94409256e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=7.73992469e-17 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=4.79739184e-16 limit=2e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=2.81566326e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=2.90686633e-16 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=6.89309964e-16 limit=2e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=2.22044591e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=6.96025137e-18 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=8.33688828e-16 limit=2e-12 PASS
+CHECK prediction Jacobian vs nonlinear finite difference     value=3.22791349e-10 limit=2e-08 PASS
+CHECK structured 27-state covariance vs dense reference      value=2.24014426e-18 limit=2e-11 PASS
+CHECK cached motion prediction vs independent exponential    value=7.80544499e-15 limit=2e-12 PASS
+CHECK full group reset Jacobian vs finite difference         value=3.27136096e-11 limit=2e-09 PASS
+CHECK left correction Exp(-a) X                              value=3.87214014e-16 limit=1e-12 PASS
+CHECK accelerometer Jacobian vs finite difference            value=1.02795639e-09 limit=3e-09 PASS
+CHECK magnetometer Jacobian vs finite difference             value=6.8710051e-09 limit=1e-08 PASS
+CHECK Joseph and covariance transport vs dense reference     value=1.32912802e-16 limit=2e-12 PASS
+CHECK measurement group injection                            value=2.5068396e-16 limit=1e-12 PASS
+CHECK transition vs independent continuous RK4               value=3.32833362e-16 limit=2e-09 PASS
+CHECK Hermitian Qd incl gyro/bias correlations vs RK4        value=6.22917375e-16 limit=2e-08 PASS
+CHECK process covariance PSD                                 value=1.77178996e-19 limit=1e-12 PASS
+CHECK transition vs independent continuous RK4               value=4.82827418e-15 limit=2e-09 PASS
+CHECK Hermitian Qd incl gyro/bias correlations vs RK4        value=7.48031238e-13 limit=2e-08 PASS
+CHECK process covariance PSD                                 value=0 limit=1e-12 PASS
+CHECK transition vs independent continuous RK4               value=1.87882804e-12 limit=2e-09 PASS
+CHECK Hermitian Qd incl gyro/bias correlations vs RK4        value=6.26873055e-11 limit=2e-08 PASS
+CHECK process covariance PSD                                 value=0 limit=1e-12 PASS
+CHECK quadrature process component is retained               value=0 limit=0 PASS
+CHECK imaginary covariance is antisymmetric                  value=0 limit=1e-14 PASS
+CHECK anisotropic latent map attitude shear is nonzero       value=0 limit=0 PASS
+CHECK adaptive coordinate covariance vs nonlinear FD         value=8.51585185e-11 limit=2e-09 PASS
+CHECK adaptive coordinate nominal state                      value=2.95227046e-16 limit=1e-12 PASS
+CHECK Schur fallback accepted                                value=0 limit=0 PASS
+CHECK Schur fallback full covariance PSD                     value=0 limit=1e-11 PASS
+CHECK Schur fallback keeps common-state covariance           value=0 limit=1e-14 PASS
+CHECK heading rotation prediction mean                       value=2.48453843e-15 limit=1e-11 PASS
+CHECK heading rotation covariance                            value=5.7456076e-16 limit=2e-10 PASS
+CHECK mag outage yaw gauge specific-force invariance         value=1.96456152e-14 limit=1e-11 PASS
+CHECK coupling off exact stationary observable CARMA law     value=1.50888156e-14 limit=1e-11 PASS
+CHECK coupling off exact lag covariance CARMA law            value=1.48896059e-14 limit=1e-11 PASS
+DIAG initial observable cov diff 4.99600361081e-15, cross latent 1.3557007585e-15, gains 5.18109645279 5.18109645279
+DIAG step 0 pos 1.67504500509e-16 rot 5.29229265555e-17 latent 2.09328799839e-16
+DIAG step 1 pos 1.28596165583e-09 rot 1.15575432519e-10 latent 2.019005007e-06
+DIAG step 10 pos 8.59248703297e-08 rot 3.71756112017e-09 latent 1.0197704012e-05
+REPORT finite-reset off position discrepancy 0.000341873886637 m
+REPORT finite-reset off attitude discrepancy 3.36713090765e-05 rad-matrix
+REPORT finite-reset off covariance discrepancy 2.52299693308e-06
+CHECK allocation-guarded confidence fallback exercised       value=0 limit=0 PASS
+CHECK float variable-dt adaptive/outage path finite          value=0 limit=0 PASS
+CHECK float full covariance symmetry                         value=0 limit=1e-06 PASS
+CHECK float full covariance PSD                              value=8.08736278e-09 limit=2e-07 PASS
+FAILURES 0

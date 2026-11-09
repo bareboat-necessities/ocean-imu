@@ -1,0 +1,111 @@
+{
+  "platform": "esp32:esp32@3.3.7",
+  "libraries": {
+    "M5Unified": "0.2.13",
+    "M5GFX": "0.2.19",
+    "Eigen": "0.3.2",
+    "ArxTypeTraits": "0.3.2"
+  },
+  "compiler": "Espressif GCC 14.2.0_20251107",
+  "on_device_timing": false,
+  "builds": [
+    {
+      "variant": "qmekf",
+      "exit_code": 0,
+      "command": [
+        "/tmp/tfgsm-arduino/arduino-cli",
+        "compile",
+        "--fqbn",
+        "esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc",
+        "--config-file",
+        "/tmp/tfgsm-arduino/config.yaml",
+        "--jobs",
+        "1",
+        "--library",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research",
+        "--build-path",
+        "/tmp/tfgsm-firmware-release-qmekf",
+        "--output-dir",
+        "/tmp/tfgsm-firmware-release-qmekf/output",
+        "--build-property",
+        "compiler.cpp.extra_flags=-g0 -funroll-loops -fno-finite-math-only ",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research/sensors/full_marine_ins/atomS3R_ins_carma_shared_modes"
+      ],
+      "elapsed_seconds": 339.5247118820007,
+      "flash_bytes": 1094467,
+      "static_ram_bytes": 31660,
+      "log_tail": "Sketch uses 1094467 bytes (83%) of program storage space. Maximum is 1310720 bytes.\nGlobal variables use 31660 bytes (9%) of dynamic memory, leaving 296020 bytes for local variables. Maximum is 327680 bytes.\n"
+    },
+    {
+      "variant": "tfg",
+      "exit_code": 0,
+      "command": [
+        "/tmp/tfgsm-arduino/arduino-cli",
+        "compile",
+        "--fqbn",
+        "esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc",
+        "--config-file",
+        "/tmp/tfgsm-arduino/config.yaml",
+        "--jobs",
+        "1",
+        "--library",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research",
+        "--build-path",
+        "/tmp/tfgsm-firmware-release-tfg",
+        "--output-dir",
+        "/tmp/tfgsm-firmware-release-tfg/output",
+        "--build-property",
+        "compiler.cpp.extra_flags=-g0 -funroll-loops -fno-finite-math-only -DOCEAN_IMU_TFG_SHARED_MODES=1",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research/sensors/full_marine_ins/atomS3R_ins_carma_shared_modes"
+      ],
+      "elapsed_seconds": 316.10610678100056,
+      "flash_bytes": 1029687,
+      "static_ram_bytes": 31660,
+      "log_tail": "Sketch uses 1029687 bytes (78%) of program storage space. Maximum is 1310720 bytes.\nGlobal variables use 31660 bytes (9%) of dynamic memory, leaving 296020 bytes for local variables. Maximum is 327680 bytes.\n"
+    },
+    {
+      "variant": "probe",
+      "exit_code": 0,
+      "command": [
+        "/tmp/tfgsm-arduino/arduino-cli",
+        "compile",
+        "--fqbn",
+        "esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc",
+        "--config-file",
+        "/tmp/tfgsm-arduino/config.yaml",
+        "--jobs",
+        "1",
+        "--library",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research",
+        "--build-path",
+        "/tmp/tfgsm-firmware-release-probe",
+        "--output-dir",
+        "/tmp/tfgsm-firmware-release-probe/output",
+        "--build-property",
+        "compiler.cpp.extra_flags=-g0 -funroll-loops -fno-finite-math-only -DPROBE_VARIANT=3",
+        "/workspace/scratch/e484c23b7f4f/ocean-imu-research/tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe"
+      ],
+      "elapsed_seconds": 221.18379228899903,
+      "log_tail": "Sketch uses 571907 bytes (43%) of program storage space. Maximum is 1310720 bytes.\nGlobal variables use 74308 bytes (22%) of dynamic memory, leaving 253372 bytes for local variables. Maximum is 327680 bytes.\n",
+      "flash_bytes": 571907,
+      "static_ram_bytes": 74308
+    }
+  ],
+  "environment_note": "Earlier concurrent attempts exhausted compiler memory; these attempts use one compiler job.",
+  "cli": {
+    "Application": "arduino-cli",
+    "VersionString": "1.3.1",
+    "Commit": "08ff7e2b",
+    "Status": "",
+    "Date": "2025-08-28T13:51:45Z"
+  },
+  "installed_cores": {
+    "esp32:esp32": "3.3.7"
+  },
+  "installed_libraries": {
+    "ArxTypeTraits": "0.3.2",
+    "Eigen": "0.3.2",
+    "M5GFX": "0.2.19",
+    "M5Unified": "0.2.13"
+  }
+}

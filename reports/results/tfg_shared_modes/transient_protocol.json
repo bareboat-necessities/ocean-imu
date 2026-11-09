@@ -1,0 +1,68 @@
+{
+  "binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
+  "runner_sha256": "3ff860ecada17449d695be8d1ed6daae5ba575b8299ab44e0a6ad324b724d140",
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024
+  ],
+  "cases": [
+    "roundtrip",
+    "direction_step"
+  ],
+  "filters": [
+    "A41@C",
+    "T41@C",
+    "CSM",
+    "TCSM"
+  ],
+  "sample_rate_hz": 200,
+  "position_export_resolution_m": 1e-05,
+  "criterion": "first 20 consecutive 1-Hz evaluations of trailing 10-s RMS below 1.25 times the post-transition steady-window RMS; time measured from transition end; otherwise censored",
+  "events": {
+    "roundtrip": {
+      "up": [
+        410,
+        780,
+        600,
+        780
+      ],
+      "down": [
+        810,
+        1200,
+        1000,
+        1200
+      ]
+    },
+    "direction_step": {
+      "direction": [
+        601.5,
+        1200,
+        900,
+        1200
+      ]
+    }
+  },
+  "role": "secondary paired transient diagnostic; primary inference unchanged"
+}

@@ -1,0 +1,83 @@
+{
+  "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
+  "status": "PASS_AFTER_WORKSPACE_AND_DEPENDENCY_REPAIR_AND_FRESH_FINITE_EVIDENCE",
+  "full_build": {
+    "command": "make all EIGEN_DIR=<Eigen-root>",
+    "build_phase_completed": true,
+    "uninterrupted_whole_command_exit_zero": false,
+    "notes": "The full build completed. Initial full-suite invocations stopped on workspace executable artifacts (one empty new math executable; one non-executable existing PII gravity test). The artifacts were repaired/relinked, and all 19 suite scripts were completed with their original thresholds via resumed make run-tests groups. Missing mpmath/Eigen discovery and CMake were supplied locally. The whole-src OU-III finite diagnostic was regenerated rather than weakening its provenance check."
+  },
+  "suite_scripts": {
+    "ahrs": "PASS",
+    "detrend": "PASS",
+    "freq": "PASS",
+    "heave_only": "PASS",
+    "imu_calibrate": "PASS",
+    "kalman_carma": "PASS",
+    "kalman_carma_shared_modes": "PASS",
+    "kalman_ou_ii": "PASS",
+    "kalman_ou_iii": "PASS",
+    "kalman_tfg": "PASS",
+    "kalman_tfg_carma": "PASS",
+    "nlo": "PASS",
+    "pii_observer": "PASS",
+    "spectrum": "PASS",
+    "spike_filter": "PASS",
+    "util": "PASS",
+    "validation": "PASS",
+    "wave_dir": "PASS",
+    "wave_sim": "PASS"
+  },
+  "validation_unittests": 1152,
+  "validation_skipped": 0,
+  "post_refresh_provenance_unittests": 3,
+  "cmake_contract_unittests": 4,
+  "mathematical_checks_27_state": 53,
+  "baseline_math": [
+    {
+      "filter": "TFG-CARMA",
+      "log_sha256": "9fa54e7e6838d8d1355538a83fedd190fbbcfdd7630e0d5983a2e6c209d00f48",
+      "result": "tfg_carma3-test: 199/199 checks passed"
+    },
+    {
+      "filter": "QMEKF-CARMA",
+      "log_sha256": "266864ca6830cd7f7c305a561ca973fb5cb6b2ccebf7c0605eceff8fa915df60",
+      "result": "carma3-test: 74 checks, 0 failures"
+    }
+  ],
+  "existing_estimator_trace_comparison": "refactor_regression.json: all four original estimators identical, 6000 samples each",
+  "estimator_source_tree_matches_registered_execution": true,
+  "thresholds_changed": false,
+  "optional_hardware_measurements": {
+    "on_device_200hz_timing": false,
+    "actual_peak_stack": false,
+    "actual_minimum_heap": false
+  },
+  "logs_sha256": {
+    "tfgsm-make-all-final.log": "32025e4f4f19be29a16b0802b1c06a955ae873d1645a5fb476d5269a7b5f7af5",
+    "tfgsm-remaining-0.log": "44d84b8a4e0b98df214f3065c2122ee2b96bcbf0e78db2ec9afc019c518596f1",
+    "tfgsm-remaining-1.log": "e3a71550e8c372247fc66385c25444d2aa41fc9a5f78303671e82cfbd812a24a",
+    "tfgsm-last-wave-suites.log": "97f3cae5af1bc4ce8a699ef5ddde8552c2db921a723f417023fc161c47c5092e",
+    "tfgsm-validation-release.log": "43f5c995810f1336dbf58794c906da2f25f40546a4199b24e5bb2294bb09cda3",
+    "tfgsm-frozen-provenance.log": "753b88ea5ee3c4006f2094630a862a2d49ca807ab99c6a989b1eb5fa84c20d09",
+    "tfgsm-cmake-check.log": "bed566291a34ec98a5586d9d19677817c001add3781fce7a93a35c613e0637d2"
+  },
+  "clean_rebuild_replay": {
+    "cases": [
+      "jonswap",
+      "maneuver",
+      "weak_heave"
+    ],
+    "seed": 1001,
+    "filters": [
+      "A41@C",
+      "T41@C",
+      "CSM",
+      "TCSM"
+    ],
+    "all_non_runtime_printed_metrics_identical": true,
+    "rebuilt_binary_sha256": "658030654aa7f9f0dd4c1122731858241a696d1906d4b65645cddc7e01daa3b7",
+    "registered_binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
+    "scope": "Controlled clean-rebuild replay check; timings excluded; all final estimator source bytes match the registered execution revision."
+  }
+}

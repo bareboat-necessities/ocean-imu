@@ -1,0 +1,27 @@
+{
+  "execution_source_revision": "cb1af3b53abde4fed07dda87871dba0cba7db78b",
+  "registered_runner_path": "tools/tfg_shared_modes_study.py",
+  "registered_runner_sha256": "1cff6ea86cce414f4671b4aaf4bf9789a59157f5e9856aa47b69a4b440ea533a",
+  "note": "All final src files are byte-identical to the registered execution revision. Later runner changes only permit choosing a fresh output directory and reanalysis from committed scores. The whole-src OU-III diagnostic fingerprint is renewed by an actual shipping replay, without changing the verifier or estimator.",
+  "local_execution_source_revision": "33a571d2c20b01a85fe3015c59935bcd5c4e0307",
+  "execution_tree_sha": "2dfd4596efa765e4f6e6964f6c45a94e44a61133",
+  "final_estimator_tree_identical_to_registered_execution": true,
+  "clean_rebuild_replay": {
+    "cases": [
+      "jonswap",
+      "maneuver",
+      "weak_heave"
+    ],
+    "seed": 1001,
+    "filters": [
+      "A41@C",
+      "T41@C",
+      "CSM",
+      "TCSM"
+    ],
+    "all_non_runtime_printed_metrics_identical": true,
+    "rebuilt_binary_sha256": "658030654aa7f9f0dd4c1122731858241a696d1906d4b65645cddc7e01daa3b7",
+    "registered_binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
+    "scope": "Controlled clean-rebuild replay check; timings excluded; all final estimator source bytes match the registered execution revision."
+  }
+}

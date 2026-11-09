@@ -1,0 +1,21 @@
+cache/
+runs.csv
+dataset_cache/
+transient_cache/
+weak_cache/
+reset_runs.csv
+# Keep only the compact drawing inputs consumed by the article generator.
+traces/*
+!traces/jonswap_tail_position.csv.gz
+!traces/jonswap_tail_velocity.csv.gz
+!traces/jonswap_tail_attitude.csv.gz
+!traces/jonswap_gyro_bias.csv.gz
+!traces/jonswap_accel_bias.csv.gz
+!traces/roundtrip_position.csv.gz
+!traces/direction_step_position.csv.gz
+!traces/mag_outage_attitude.csv.gz
+!traces/weak_attitude.csv.gz
+!traces/weak_confidence_CSM.csv.gz
+!traces/weak_confidence_TCSM.csv.gz
+!traces/weak_confidence_CSM_real.csv.gz
+!traces/weak_confidence_TCSM_real.csv.gz

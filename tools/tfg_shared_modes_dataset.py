@@ -17,7 +17,8 @@ BIN={
  'T independent':ROOT/'tests/kalman_carma/carma3-sim',
  'Q shared':ROOT/'tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim',
  'T shared':ROOT/'tests/kalman_carma_shared_modes/kalman_tfg_shared_modes-sim'}
-ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--data-dir',type=Path,default=ROOT/'tests/kalman_carma_shared_modes');ap.add_argument('--seeds',type=int,default=8);ap.add_argument('--jobs',type=int,default=2);args=ap.parse_args()
+ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--data-dir',type=Path,default=ROOT/'tests/kalman_carma_shared_modes');ap.add_argument('--seeds',type=int,default=8);ap.add_argument('--jobs',type=int,default=2)
+ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 inputs=[args.data_dir/n for n in REFERENCE_CSV_SHA256]
 protocol=dict(inputs=input_provenance(inputs),seeds=list(range(1001,1001+args.seeds)),
  binaries={k:sha(v) for k,v in BIN.items()},runner_sha256=sha(__file__),sample_rate_hz=200,score_window_s='last 900 seconds',wave_excitation='Evidence on all four wrappers',role='fixed-record conditional paired sensor and initialization resampling')

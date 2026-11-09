@@ -1,0 +1,16 @@
+{
+  "os": "Linux-6.18.57-x86_64-with-glibc2.39",
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8573C",
+  "logical_cpus": 9,
+  "cgroup_memory_gib": 8.0,
+  "host_compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+  "python": "3.12.14",
+  "eigen_header_sha256": "b8ae5f77a30d48bcaf622a56f7047baa8b2fb790f5db7361aa1d57f424fa3c1e",
+  "timing_scope": "single thread pinned to one allowed CPU, other live repository jobs temporarily excluded from that CPU; core only; no FTZ; three interleaved 120-second simulated repetitions; scheduling tails retained; no device inference",
+  "timing_affinity_cpu": 8,
+  "validation_dependencies": {
+    "mpmath": "1.3.0",
+    "cmake": "3.31.6",
+    "Eigen_discovery_environment": "EIGEN_INCLUDE_DIR points to the same Eigen root used by make"
+  }
+}

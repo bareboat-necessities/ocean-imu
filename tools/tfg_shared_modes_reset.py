@@ -5,10 +5,12 @@ This includes the existing T41R0 research variant as well as the new shared
 variant. It does not change the primary 2x2 estimands or their multiplicity set.
 """
 import argparse,json,hashlib
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import pandas as pd
 from tfg_shared_modes_study import ROOT,OUT,BINARY,AB_SCENARIOS,execute_one,ci,sha
-ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=1);args=ap.parse_args()
+ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=1)
+ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 filters=('T41@C','T41R0@C','TCSM','TCSM/noreset');seeds=list(range(1001,1013))
 protocol=dict(binary_sha256=sha(BINARY),runner_sha256=sha(ROOT/'tools/tfg_shared_modes_study.py'),
  source_sha256=sha(__file__),filters=filters,seeds=seeds,cases=AB_SCENARIOS,role='exploratory reset-transport diagnostic; paired and independent of the primary inference family')

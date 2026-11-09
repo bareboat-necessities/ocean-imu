@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <algorithm>
 #include <ArduinoEigenDense.h>
+#include <ArduinoOceanImu.h>
 #include "kalman_carma/Kalman3D_Wave_CARMA3.h"
 #include "kalman_carma/Kalman3D_Wave_TFG_CARMA3.h"
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"

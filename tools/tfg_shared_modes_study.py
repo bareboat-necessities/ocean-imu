@@ -147,6 +147,12 @@ def collect(out):
  for p in sorted((out/'cache').glob('*.json')):
   r=json.loads(p.read_text())
   for row in r['rows']:rows.append(dict(stage=r['stage'],case=r['case'],**row))
+ if not rows:
+  # Publication bundles retain compact scores, not restart caches. Reanalysis
+  # must not truncate those scores to an empty CSV on a clean checkout.
+  for name in ('runs.csv','runs.csv.gz'):
+   if (out/name).exists():return pd.read_csv(out/name)
+  raise RuntimeError('No experiment caches or published per-run scores in '+str(out))
  df=pd.DataFrame(rows)
  for c in df:
   if c not in ('level','scenario','filter','stage','case'):df[c]=pd.to_numeric(df[c],errors='coerce')
