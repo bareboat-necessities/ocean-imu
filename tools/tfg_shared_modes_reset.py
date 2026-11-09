@@ -4,7 +4,7 @@
 This includes the existing T41R0 research variant as well as the new shared
 variant. It does not change the primary 2x2 estimands or their multiplicity set.
 """
-import argparse,json,hashlib
+import argparse,json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import pandas as pd

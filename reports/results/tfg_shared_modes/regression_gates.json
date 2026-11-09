@@ -46,7 +46,7 @@
     }
   ],
   "existing_estimator_trace_comparison": "refactor_regression.json: all four original estimators identical, 6000 samples each",
-  "estimator_source_tree_matches_registered_execution": true,
+  "estimator_source_tree_matches_registered_execution": false,
   "thresholds_changed": false,
   "optional_hardware_measurements": {
     "on_device_200hz_timing": false,
@@ -79,5 +79,6 @@
     "rebuilt_binary_sha256": "658030654aa7f9f0dd4c1122731858241a696d1906d4b65645cddc7e01daa3b7",
     "registered_binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
     "scope": "Controlled clean-rebuild replay check; timings excluded; all final estimator source bytes match the registered execution revision."
-  }
+  },
+  "review_validation": "review_validation.json records the post-publication constructor lint repairs and repeated checks; the original validation receipts above remain historical execution evidence."
 }

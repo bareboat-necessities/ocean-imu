@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
+ """Build matched target variants and record linked sizes and toolchain versions."""
  ap=argparse.ArgumentParser(description=__doc__)
  ap.add_argument('--arduino-cli',default='arduino-cli')
  ap.add_argument('--config-file',type=Path)
@@ -19,6 +20,7 @@ def main():
  cli=[args.arduino_cli]
  if args.config_file:cli+=['--config-file',str(args.config_file)]
  def inventory(command):
+  """Read the Arduino CLI toolchain inventory as structured JSON."""
   r=subprocess.run(cli+command,capture_output=True,text=True,check=True)
   return json.loads(r.stdout)
  cores={x['id']:x.get('installed_version') for x in inventory(['core','list','--format','json'])['platforms']}

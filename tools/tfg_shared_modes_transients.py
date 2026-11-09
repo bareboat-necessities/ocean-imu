@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor,as_completed
 import argparse,json,subprocess,tempfile
 import numpy as np
 import pandas as pd
-from tfg_shared_modes_study import ROOT,OUT,BINARY,SCENARIOS,PRIMARY,clean_env,sha,ci
+from tfg_shared_modes_study import OUT,BINARY,SCENARIOS,PRIMARY,clean_env,sha,ci
 ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=2)
 ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 cases=('roundtrip','direction_step');seeds=list(range(1001,1025));cache=OUT/'transient_cache';cache.mkdir(exist_ok=True)
@@ -22,8 +22,11 @@ protocol=dict(binary_sha256=sha(BINARY),runner_sha256=sha(__file__),seeds=seeds,
 p=OUT/'transient_protocol.json'
 if p.exists() and json.loads(p.read_text())!=json.loads(json.dumps(protocol)):raise RuntimeError('Transient protocol changed')
 p.write_text(json.dumps(protocol,indent=2)+'\n')
-def rms(x):return float(np.sqrt(np.mean(np.asarray(x)**2)))
+def rms(x):
+ """Compute RMS from the supplied full-rate error samples."""
+ return float(np.sqrt(np.mean(np.asarray(x)**2)))
 def recovery(t,sq,start,stop,ref_start,ref_stop):
+ """Find sustained return below the registered baseline-relative error threshold."""
  reference=np.mean(sq[(t>=ref_start)&(t<ref_stop)]);threshold=1.25*np.sqrt(reference)
  # Exact 200 Hz box sums, then 1 Hz evaluations; never score drawing traces.
  power=np.r_[0.,np.cumsum(np.nan_to_num(sq))];i=np.arange(2000,len(t)+1,200)
@@ -33,6 +36,7 @@ def recovery(t,sq,start,stop,ref_start,ref_stop):
   if under[j:j+20].all():return float(rt[j]-start),0,float(threshold)
  return float('nan'),1,float(threshold)
 def run(task):
+ """Score transient and recovery windows from a full-rate paired simulation."""
  case,seed=task;target=cache/f'{case}_{seed}.json'
  if target.exists():return json.loads(target.read_text())
  with tempfile.TemporaryDirectory(prefix='tfg-transients-') as td:

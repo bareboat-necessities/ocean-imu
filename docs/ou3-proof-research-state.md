@@ -2,24 +2,25 @@
 
 ## Native secant source binding
 
-The evidence publication job in main build `42408605647` failed with
-`finite quotient/secant evidence verification failed: shipping source tree
-changed` (class E, implementation/diagnostic failure). The whole-`src/` digest
-became stale after shared-modes Xtensa constructor isolation changed
-`KalmanCarmaSharedModes.h` and added `KalmanCarmaSharedModes.cpp`. The
-invalidated hypothesis was whole-tree source identity, not OU-III behavior.
-Compiler `g++ -MM` inspection confirms all 38 probe `src/` dependencies are
-byte-identical to `a4f5be1`, whose whole-tree digest matches the stored binding.
-The refreshed binding records that reference, the previous digest, and the
-unchanged dependency closure; the diagnostic numerical payload is retained.
+The finite native diagnostic is bound to the current complete `src/` tree.
+Experimental TFG constructor lint repairs changed the broad source fingerprint,
+so the unchanged shipping OU-III probe was actually rebuilt and replayed at both
+registered perturbation sizes. Both raw native byte hashes match main and both
+finite diagnostic run summaries match the preceding replay exactly. See
+`reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
-Relaxations introduced: none. No shipping counterexample was found; existing
-shipping-level results and open theorem obligations remain valid. The limiter
-was stale source provenance, not a mathematical margin. The next falsifiable
-check is the unchanged provenance and evidence suite, including rejection of
-mutated source bindings; no new replay or relaxed model is needed.
+Relaxations introduced: none; the inherited off-orbit finite secants remain
+non-promoting diagnostics, not reachable or uniform derivative certificates.
+The source-binding invalidation and local verification processes killed by
+concurrent compiler memory exhaustion are class E implementation/diagnostic
+failures. They invalidate source identity or test completion, not estimator
+stability. Heavy checks are rerun with reduced concurrency. No shipping
+counterexample was found; established shipping-level results and open theorem
+obligations remain unchanged. The next falsifiable control is the original
+source-provenance rejection tests and full regression suite, with their
+thresholds unchanged.
 
 ## Current hypothesis
 

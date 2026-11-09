@@ -153,7 +153,7 @@ void equivariance() {
     S.re=(U*S.re*U.transpose()).eval();S.im=(U*S.im*U.transpose()).eval();
     q.setExternalCoupling(S);q.set_vertical_carma(.8,.6);q.reset_aw_covariance_to_stationary();
     f.state()=state();q.state()=f.state();q.state().R=U*f.state().R;q.state().X=U*f.state().X;
-    MX T=MX::Zero();for(int b=0;b<9;++b)T.block<3,3>(3*b,3*b)=U;
+    MX T=MX::Zero();for(Eigen::Index b=0;b<9;++b)T.block<3,3>(3*b,3*b)=U;
     f.covariance_full()=MX::Identity()*.001;q.covariance_full()=T*f.covariance_full()*T.transpose();
     f.set_mag_world_ref(V(18,1.5,43));q.set_mag_world_ref(U*V(18,1.5,43));
     for(int k=0;k<50;++k){f.time_update(V(.1,-.2,.4),.005);q.time_update(V(.1,-.2,.4),.005);}

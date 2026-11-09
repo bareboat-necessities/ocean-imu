@@ -8,9 +8,8 @@ references. The operational estimator is not retuned on these outcomes.
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import argparse,json,subprocess,tempfile
-import numpy as np
 import pandas as pd
-from tfg_shared_modes_study import ROOT,OUT,BINARY,SCENARIOS,clean_env,sha,ci,save_trace
+from tfg_shared_modes_study import OUT,BINARY,SCENARIOS,clean_env,sha,ci,save_trace
 ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--jobs',type=int,default=2)
 ap.add_argument('--analysis-only',action='store_true',help='Reanalyse completed immutable simulation caches after an analysis-only edit.')
 ap.add_argument('--results',type=Path,default=OUT)
@@ -30,6 +29,7 @@ if p.exists():
  elif old!=new:raise RuntimeError('Weak-heave protocol changed')
 else:p.write_text(json.dumps(protocol,indent=2)+'\n')
 def run(seed):
+ """Replay one weak-heave diagnostic seed without changing operational tuning."""
  target=cache/f'{seed}.json'
  if target.exists():return json.loads(target.read_text())
  if args.analysis_only:raise RuntimeError('Missing simulation cache in analysis-only mode')

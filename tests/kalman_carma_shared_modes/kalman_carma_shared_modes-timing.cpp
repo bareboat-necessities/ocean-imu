@@ -1,7 +1,7 @@
 /*
     Copyright (c) 2025-2026  Mikhail Grushinskiy
 
-    kalman_carma_shared_modes-timing -- host timing of the QMEKF cores (no
+    kalman_carma_shared_modes-timing -- host timing of the QMEKF and TFG cores (no
     wrapper, no front end): the CARMA3 baseline A41 (21 states) and the
     27-state shared-modes core (KalmanCarmaSharedModes.h), on a synthetic 200 Hz stream with
     model commits every 0.1 s (and without, --no-commits) and the
@@ -14,7 +14,8 @@
 
     Build on demand (not part of `make build`):
         make -C tests/kalman_carma_shared_modes kalman_carma_shared_modes-timing
-    Output CSV: core,states,commits,ftz,time_update_us,acc_mag_us,commit_us,total_us
+    Four repetitions rotate each core through every execution position.
+    Output CSV includes rep/order so host-order sensitivity can be inspected.
 */
 
 #define EIGEN_NON_ARDUINO
@@ -28,6 +29,7 @@
 #include <random>
 #include <vector>
 #include <algorithm>
+#include <array>
 
 #if defined(__SSE__)
 #include <pmmintrin.h>
@@ -42,7 +44,8 @@ namespace csm = ocean_imu::carma_shared_modes;
 using V3 = Eigen::Vector3f;
 
 template<class F>
-static void run(const char* name, bool commits, bool ftz, int seconds, bool jitter) {
+static void run(const char* name, bool commits, bool ftz, int seconds, bool jitter,
+                size_t repetition, size_t position) {
     const V3 sa = V3::Constant(0.0294f), sg = V3::Constant(3.1e-5f), sm = V3::Constant(7.7f);
     auto f = std::make_unique<F>(sa, sg, sm);
     std::mt19937 rng(1);
@@ -80,8 +83,8 @@ static void run(const char* name, bool commits, bool ftz, int seconds, bool jitt
     }
     const double nn = static_cast<double>(N);
     std::sort(times.begin(),times.end());
-    std::printf("%s,%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%d,%.4f,%.4f,%zu\n", name, F::NX, commits ? 1 : 0, ftz ? 1 : 0, t_tu / nn, t_acc / nn,
-                t_com / nn, (t_tu + t_acc + t_com) / nn,jitter?1:0,times[static_cast<size_t>(.99*(N-1))],times.back(),sizeof(F));
+    std::printf("%s,%d,%d,%d,%.4f,%.4f,%.4f,%.4f,%d,%.4f,%.4f,%zu,%zu,%zu\n", name, F::NX, commits ? 1 : 0, ftz ? 1 : 0, t_tu / nn, t_acc / nn,
+                t_com / nn, (t_tu + t_acc + t_com) / nn,jitter?1:0,times[static_cast<size_t>(.99*(N-1))],times.back(),sizeof(F),repetition,position);
     if (!std::isfinite(pz)) std::printf("# non-finite position\n");
 }
 
@@ -94,6 +97,10 @@ int main(int argc, char** argv) {
         else if (!std::strcmp(argv[i], "--no-commits")) commits = false;
         else if (!std::strcmp(argv[i], "--seconds") && i + 1 < argc) seconds = static_cast<int>(std::strtol(argv[++i], nullptr, 10));
     }
+    if (seconds <= 0) {
+        std::fprintf(stderr, "--seconds must be positive\n");
+        return 2;
+    }
 #if defined(__SSE__)
     if (ftz) {
         _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -104,12 +111,17 @@ int main(int argc, char** argv) {
 #endif
     using A41 = ocean_imu::kalman::Kalman3D_Wave_CARMA3<float, 4, false, 4, false, true, true>;
     using CSM = csm::KalmanCarmaSharedModes<float>;
-    std::printf("core,states,commits,ftz,time_update_us,acc_mag_us,commit_us,total_us,jitter,p99_us,max_us,core_bytes\n");
-    for (int rep = 0; rep < 3; ++rep) {   // interleaved repeats: the report takes the median
-        run<A41>("A41", commits, ftz, seconds,jitter);
-        run<CSM>("CSM", commits, ftz, seconds,jitter);
-        run<ocean_imu::kalman::Kalman3D_Wave_TFG_CARMA3<float,4>>("T41",commits,ftz,seconds,jitter);
-        run<csm::KalmanTfgCarmaSharedModes<float>>("TCSM",commits,ftz,seconds,jitter);
+    using Runner = void (*)(const char*, bool, bool, int, bool, size_t, size_t);
+    const std::array<Runner,4> runners = {run<A41>, run<CSM>,
+        run<ocean_imu::kalman::Kalman3D_Wave_TFG_CARMA3<float,4>>,
+        run<csm::KalmanTfgCarmaSharedModes<float>>};
+    const std::array<const char*,4> names = {"A41", "CSM", "T41", "TCSM"};
+    std::printf("core,states,commits,ftz,time_update_us,acc_mag_us,commit_us,total_us,jitter,p99_us,max_us,core_bytes,rep,order\n");
+    for (size_t rep = 0; rep < runners.size(); ++rep) {
+        for (size_t position = 0; position < runners.size(); ++position) {
+            const size_t index = (rep + position) % runners.size();
+            runners[index](names[index], commits, ftz, seconds, jitter, rep, position);
+        }
     }
     return 0;
 }

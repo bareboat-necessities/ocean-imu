@@ -4,7 +4,7 @@
 The wave realization is fixed by each published record. Unlike the primary
 synthetic study, these intervals are conditional on that fixed wave history.
 """
-import argparse,json,os,subprocess,tempfile,hashlib
+import argparse,json,subprocess,tempfile
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import pandas as pd
@@ -26,6 +26,7 @@ p=OUT/'dataset_protocol.json'
 if p.exists() and json.loads(p.read_text())!=json.loads(json.dumps(protocol)):raise RuntimeError('Dataset replay protocol changed')
 p.write_text(json.dumps(protocol,indent=2)+'\n');cache=OUT/'dataset_cache';cache.mkdir(exist_ok=True)
 def run(task):
+ """Replay one pinned wave record with a common sensor/initialization seed."""
  path,seed,method=task;key=f'{path.stem}_{seed}_{method.replace(" ","_")}'
  saved=cache/(key+'.json')
  if saved.exists():return json.loads(saved.read_text())
@@ -43,7 +44,8 @@ rows=[]
 with ThreadPoolExecutor(max_workers=args.jobs) as pool:
  futures=[pool.submit(run,t) for t in tasks]
  for i,f in enumerate(as_completed(futures),1):rows.append(f.result());print(f'{i}/{len(tasks)}',flush=True)
-df=pd.DataFrame(rows);df.to_csv(OUT/'dataset_runs.csv',index=False,float_format='%.9g');paired=[]
+df=pd.DataFrame(rows).sort_values(['record','seed','method']).reset_index(drop=True)
+df.to_csv(OUT/'dataset_runs.csv',index=False,float_format='%.9g');paired=[]
 for record,g in df.groupby('record'):
  a=g[g.method=='T shared'].set_index('seed');b=g[g.method=='Q shared'].set_index('seed')
  for metric in ['disp_x_rms_m','disp_y_rms_m','disp_z_rms_m','disp_3d_rms_m','roll_rms_deg','pitch_rms_deg','yaw_rms_deg','accel_bias_3d_rms_mps2','gyro_bias_3d_rms_radps']:

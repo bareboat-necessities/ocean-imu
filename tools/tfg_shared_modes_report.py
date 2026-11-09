@@ -27,19 +27,28 @@ CASE={'jonswap':'JONSWAP','pm_long':'PM, long period','regular':'Regular waves',
  'changing_period':'Changing period','maneuver':'Vessel maneuvers','rapid_rotation':'Rapid rotations',
  'mag_outage':'Magnetic outage','bias_temperature':'Bias / temperature drift','jitter':'Interval jitter'}
 OUT=ROOT/'reports/results/tfg_shared_modes';DOC=ROOT/'doc/kalman_tfg_shared_modes'
-def tex(s):return str(s).replace('_',r'\_').replace('%',r'\%').replace('&',r'\&')
-def fmt(x,n=2):return '--' if not np.isfinite(x) else f'{x:.{n}f}'
+def tex(s):
+ """Escape plain text used in generated LaTeX cells."""
+ return str(s).replace('_',r'\_').replace('%',r'\%').replace('&',r'\&')
+def fmt(x,n=2):
+ """Format finite measurements, marking missing values explicitly."""
+ return '--' if not np.isfinite(x) else f'{x:.{n}f}'
 def interval(r,percent=True):
+ """Render a paired percent change with its marginal confidence interval."""
  return f"{r['percent']:+.2f} [{r['pct_ci_low']:+.2f}, {r['pct_ci_high']:+.2f}]" if percent else ''
 def save(fig,out,name):
+ """Export the same bounded figure geometry to deterministic SVG and PGF."""
  fig.align_ylabels();fig.tight_layout(pad=.65)
  for ext in ('svg','pgf'):
   path=out/f'{name}.{ext}'
   save_figure(fig,path,bbox_inches='tight',**({'metadata':{'Date':None}} if ext=='svg' else {}))
   path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
  plt.close(fig)
-def trace(results,name):return pd.read_csv(results/'traces'/f'{name}.csv.gz')
+def trace(results,name):
+ """Load a decimated publication trace, never a scoring input."""
+ return pd.read_csv(results/'traces'/f'{name}.csv.gz')
 def paired_figures(results,out,pairs,interactions):
+ """Plot paired position changes and geometry/prior interactions by condition."""
  cases=list(CASE);d=pairs[(pairs.comparison=='TFG geometry, shared')&pairs.metric.isin(['rms_z','rms_h'])]
  fig,axs=plt.subplots(1,2,figsize=(7.1,5.15),sharey=True)
  for ax,m,title in zip(axs,['rms_z','rms_h'],['Heave RMS','Horizontal RMS']):
@@ -55,6 +64,7 @@ def paired_figures(results,out,pairs,interactions):
   ax.set_yticks(y,[CASE[x] for x in cases]);ax.set_title(title);ax.set_xlabel('Difference in differences [mm]');ax.set_ylim(len(cases)-.5,-.5)
  save(fig,out,'factorial_interaction')
 def tracking(results,out):
+ """Plot final position, velocity, attitude and bias tracking samples."""
  d=trace(results,'jonswap_tail_position');fig,axs=plt.subplots(3,1,figsize=(3.45,4.3),sharex=True)
  for ax,a in zip(axs,'xyz'):
   ax.plot(d.t,d[a+'_true'],color='black',lw=.9,label='Truth')
@@ -82,6 +92,7 @@ def tracking(results,out):
    ax.set_ylabel(f'{name} {a.upper()} [{unit}]')
   axs[0].legend(ncol=2);axs[-1].set_xlabel('Time [s]');save(fig,out,family)
 def degradation(results,out,df):
+ """Plot engine and sea-transition degradation using the registered scores."""
  fig,axs=plt.subplots(2,1,figsize=(3.45,3.8),sharex=True)
  for f in LABEL:
   for ax,m in zip(axs,['rms_z','rms_h']):
@@ -106,6 +117,7 @@ def degradation(results,out,df):
  for f in LABEL:axs[1].plot(d.t,d['dyaw_'+f],lw=.65,color=COLOR[f])
  axs[1].axvspan(400,700,color='#999999',alpha=.18);axs[1].set_ylabel('Outage: heading error [deg]');axs[1].set_xlabel('Time [s]');save(fig,out,'direction_outage')
 def ablations_and_consistency(results,out,df,ab):
+ """Plot coupling ablations and uncertainty consistency diagnostics."""
  variants=['TCSM:off','TCSM/real','CSM/real','TCSM/noreset','TCSM:noconf/ext-true','TCSM:noconf/ext-true/real','TCSM/ext-flip','TCSM:noconf/ext-flip']
  short=['Coupling off','Real only (TFG)','Real only (QMEKF)','No reset transport','Known coupling','Known, real only','Wrong + confidence','Wrong, unchecked']
  fig,axs=plt.subplots(2,1,figsize=(3.45,4.7),sharex=True)
@@ -124,6 +136,7 @@ def ablations_and_consistency(results,out,df,ab):
  axs[0].axhline(9,color='black',ls=':',lw=.7);axs[0].set_yscale('log');axs[0].set_ylabel('Joint physical NEES (9 states)');axs[0].legend(ncol=2)
  axs[1].axhline(95,color='black',ls=':',lw=.7);axs[1].set_ylabel('Mean marginal coverage [%]');axs[1].set_xticks(range(len(cases)),[CASE[c] for c in cases],rotation=40,ha='right');save(fig,out,'consistency')
 def supplemental_figures(results,out):
+ """Plot the replay, reset, transition and weak-heave supplements."""
  d=pd.read_csv(results/'weak_runs.csv')
  names=['A41@C','T41@C','CSM:off','TCSM:off','CSM','TCSM','CSM/real','TCSM/real',
         'CSM:noconf','TCSM:noconf','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset']
@@ -146,6 +159,7 @@ def supplemental_figures(results,out):
  axs[0].set_ylabel('Heading error [deg]');axs[0].legend(ncol=2);axs[1].set_ylabel('Applied confidence');axs[1].set_xlabel('Time [s]');save(fig,out,'weak_feedback')
 
 def supplemental_tables(results,main):
+ """Summarize supplementary scores without pooling independent wave records."""
  weak=pd.read_csv(results/'weak_summary.csv').set_index('filter');wr=pd.read_csv(results/'weak_runs.csv')
  ds=pd.read_csv(results/'dataset_runs.csv');dp=pd.read_csv(results/'dataset_paired.csv')
  reset=pd.read_csv(results/'reset_comparison.csv');tr=pd.read_csv(results/'transient_runs.csv');tp=pd.read_csv(results/'transient_paired.csv')
@@ -194,16 +208,23 @@ def supplemental_tables(results,main):
  diagnostic={'weak':weak,'heading_failures':failures,'transient_censored':cens,'replay_heave_min':dp[dp.metric=='disp_z_rms_m'].percent.min(),'replay_heave_max':dp[dp.metric=='disp_z_rms_m'].percent.max()}
  return rows,diagnostic
 def tables_and_macros(results,df,pairs,agg,ab):
+ """Validate the complete study and derive article tables, claims and input hashes."""
  protocol=json.loads((results/'protocol.json').read_text());ns=len(protocol['primary_seeds']);na=len(protocol['ablation_seeds']);nc=len(protocol['scenarios'])
  complete=all(len(df[(df.stage=='primary')&(df.case==c)])==ns*4 for c in protocol['scenarios']) and len(df[df.stage=='ablation'])==na*len(protocol['ablation_scenarios'])*len(protocol['ablation_filters'])
  if not complete:raise RuntimeError('The scientific article requires the complete registered experiment.')
  target=pd.read_csv(results/'esp32s3_size_stack.csv').set_index('variant')
- def aggregate(m):return agg[(agg.metric==m)&(agg.comparison=='TFG geometry, shared')].iloc[0]
+ def aggregate(m):
+  """Select the condition-balanced shared-TFG geometry comparison for one metric."""
+  return agg[(agg.metric==m)&(agg.comparison=='TFG geometry, shared')].iloc[0]
  z=aggregate('rms_z');h=aggregate('rms_h');bad=int(df.failed.sum());main=df[df.stage=='primary']
  extra_rows,diagnostic=supplemental_tables(results,main)
- htime=pd.read_csv(results/'host_timing.csv');jtime=pd.read_csv(results/'host_jitter.csv');ftime=pd.read_csv(results/'host_fixed.csv')
+ htime=pd.read_csv(results/'host_timing.csv');jtime=pd.read_csv(results/'host_jitter.csv')
+ # Validate the fixed-model timing input even though this table uses commits.
+ pd.read_csv(results/'host_fixed.csv')
  t=htime.groupby('core').median(numeric_only=True);jt=jtime.groupby('core').median(numeric_only=True)
- def eff(r):return f"{r.geomean_pct:+.2f}\\% (95\\% CI {r.ci_low_pct:+.2f} to {r.ci_high_pct:+.2f}\\%)"
+ def eff(r):
+  """Render a measured aggregate effect and its paired confidence interval."""
+  return f"{r.geomean_pct:+.2f}\\% (95\\% CI {r.ci_low_pct:+.2f} to {r.ci_high_pct:+.2f}\\%)"
  best=pairs[(pairs.comparison=='TFG geometry, shared')&pairs.metric.isin(['rms_z','rms_h'])]
  practical=best[(best.pct_ci_high<-5)&(best.p_holm<.05)]
  adverse=best[(best.percent>0)&(best.p_holm<.05)]
@@ -211,19 +232,19 @@ def tables_and_macros(results,df,pairs,agg,ab):
  'ResultsFigureDirectory':os.path.relpath(results/'figures',DOC).replace(os.sep,'/'),
  'PrimarySeeds':str(ns),'AblationSeeds':str(na),'ScenarioCount':str(nc),
  'AbstractResults':f"The condition-balanced TFG change relative to shared QMEKF is {eff(z)} for heave and {eff(h)} for horizontal position. There are {bad} flagged estimator trajectories across all registered operational and diagnostic cells.",
- 'VerificationResults':"The measured prediction finite-difference discrepancy is below $4.4\\times10^{-10}$; the independent continuous-covariance discrepancy is below $6.3\\times10^{-11}$. The anisotropic model-coordinate covariance discrepancy is $9.2\\times10^{-11}$ relative to its numerical reference. Float adaptive/outage execution remains finite with symmetric covariance; small negative round-off eigenvalues are retained in the audit report.",
  'RegressionResults':"The accompanying regression record lists the original and post-refactor gates and exact paired numerical differences. Existing thresholds are retained. The full-wrapper coupling-off smoke uses the existing TFG/CARMA 1\\% agreement criterion; the process-law identities use $10^{-11}$ relative tolerance.",
  'ResultsDiscussion':f"Condition-balanced heave changes by {eff(z)} and horizontal position by {eff(h)} when replacing shared QMEKF with shared TFG. Only {len(practical)} scenario/endpoints meet both the predeclared 5\\% improvement margin and the Holm significance criterion; {len(adverse)} show statistically supported worsening. The complete per-condition table prevents small aggregate changes from hiding different behavior in weak excitation, maneuvers or outages. The interaction table and figure evaluate nonadditivity directly. There are {bad} flagged trajectories; their identities and the remaining consistency defects are retained below. Exact conditional-prior algebra does not make the inherited wave/bias/attitude approximation statistically calibrated.",
  'PerformanceResults':f"On this host, the median of three repetitions is {t.loc['TCSM','total_us']:.2f} us per 200 Hz core step for shared TFG, versus {t.loc['CSM','total_us']:.2f} us for shared QMEKF (ratio {t.loc['TCSM','total_us']/t.loc['CSM','total_us']:.2f}). With 25\\% interval jitter the corresponding times are {jt.loc['TCSM','total_us']:.2f} and {jt.loc['CSM','total_us']:.2f} us. Timings include 0.1 s model commits and magnetic updates at 25 Hz; percentiles and maxima are reported separately, and host scheduling can affect their tails.",
  'FirmwareResults':f"The Xtensa probe gives {int(target.loc['TCSM','sizeof_qmekf'])} bytes for the shared TFG core versus {int(target.loc['CSM','sizeof_qmekf'])} for shared QMEKF. Their largest emitted function stack frames are {int(target.loc['TCSM','max_stack_frame'])} and {int(target.loc['CSM','max_stack_frame'])} bytes; the static update-chain lower bounds are {int(target.loc['TCSM','update_chain_stack'])} and {int(target.loc['CSM','update_chain_stack'])} bytes. The compiler used for this probe is Espressif GCC esp-14.2.0\\_20241119 with \\texttt{{-Os}}. A full Arduino firmware build is recorded separately in the reproducibility bundle.",
- 'Recommendation':"Retain shared QMEKF as the experimental accuracy/cost reference. The TFG implementation is useful as a reusable research vehicle for geometry, reset and observability studies, but promotion requires a practically meaningful advantage under the relevant vessel conditions, calibrated uncertainty, and on-device timing/stack validation. The present decision must be read with the quantitative paired results and failure cases, not inferred from successful compilation or Lie-group structure alone."
  }
  verification=(results/'mathematical_verification.txt').read_text()
  def largest_check(fragment):
+  """Require and summarize a named mathematical verification diagnostic."""
   vals=[float(x) for name,x in re.findall(r'CHECK (.*?)value=([0-9.eE+-]+)',verification) if fragment in name]
   if not vals:raise RuntimeError('Missing mathematical verification: '+fragment)
   return max(vals)
  def sci(x):
+  """Render a measured numerical discrepancy in scientific LaTeX notation."""
   a,b=f'{x:.2e}'.split('e');return a+r'\times10^{'+str(int(b))+'}'
  pred=largest_check('prediction Jacobian');cov=largest_check('Hermitian Qd');coords=largest_check('adaptive coordinate covariance')
  macro['VerificationResults']=f"Measured maximum prediction finite-difference discrepancy is ${sci(pred)}$; the relative independent continuous-covariance discrepancy is ${sci(cov)}$. The anisotropic model-coordinate covariance discrepancy is ${sci(coords)}$. Allocation-guarded float execution explicitly forces a falling-confidence fallback and remains finite with symmetric covariance; round-off eigenvalues are recorded rather than hidden."
@@ -238,15 +259,25 @@ def tables_and_macros(results,df,pairs,agg,ab):
   macro['Recommendation'] = "The measured position benefit does not justify a general replacement of the shared QMEKF at the added host runtime. Retain shared QMEKF as the experimental accuracy/cost reference. The shared TFG implementation merits retention as a reusable research vehicle for geometry, covariance-reset and outage studies. It remains experimental; calibrated uncertainty and actual ESP32 timing/stack validation are prerequisites to promotion. The shipping OU-III default remains unchanged."
  weak=main[main.case=='weak_heave'].groupby('filter').mean(numeric_only=True)
  failures=diagnostic['heading_failures'];w=diagnostic['weak']
- macro['AbstractResults']+=f" However, reduced heave causes RMS heading above 30 degrees in {int(failures.loc[('weak_heave','CSM'),'heading_over30'])}/{ns} shared-QMEKF and {int(failures.loc[('weak_heave','TCSM'),'heading_over30'])}/{ns} shared-TFG runs, despite no divergence/nonfinite flag. Real-only coupling removes this heading failure in a separate 12-seed diagnosis."
- macro['FailureDiscussion']=f"Reduced heave is the decisive adverse case. Mean heave/horizontal errors are {1000*weak.loc['CSM','rms_z']:.1f}/{1000*weak.loc['CSM','rms_h']:.1f} mm for shared QMEKF and {1000*weak.loc['TCSM','rms_z']:.1f}/{1000*weak.loc['TCSM','rms_h']:.1f} mm for shared TFG; independent TFG achieves {1000*weak.loc['T41@C','rms_z']:.1f}/{1000*weak.loc['T41@C','rms_h']:.1f} mm. Shared heading RMS averages {weak.loc['CSM','yaw_rms_deg']:.1f} and {weak.loc['TCSM','yaw_rms_deg']:.1f} degrees. The apparent practically large horizontal geometry gain is therefore a comparison of two poor estimators, accompanied by worse heave. In the separate exploratory diagnosis, real-only coupling lowers heading RMS to {w.loc['CSM/real','heading_deg']:.2f} and {w.loc['TCSM/real','heading_deg']:.2f} degrees with zero 30-degree exceedances. Coupling-off results also return to the independent-axis reference. Known quadrature coupling still produces severe heading error, so this cannot be attributed solely to online coupling-estimation error. Confidence falls and invokes the PSD fallback, but does not prevent the failure. This implicates quadrature-prior interaction with the weak-heave attitude/bias ambiguity; it is an experimental diagnosis, not a proof of a unique causal mechanism. No operational prior was retuned after observing these outcomes."
- macro['SupplementDiscussion']=f"The pinned eight-record replay gives heave changes between {diagnostic['replay_heave_min']:+.4f}\\% and {diagnostic['replay_heave_max']:+.4f}\\%, too small to justify a geometry switch. These intervals condition on each wave record and resample only sensors/initialization. The 24-seed full-rate transition supplement finds no practically meaningful recovery advantage; {diagnostic['transient_censored']} transition recoveries are censored. Its exported positions have 10-micrometre resolution, so sub-resolution differences are not evidence for useful improvement. The six-condition reset supplement shows small ordinary-case position changes for both geometries; in reduced heave, omitting reset transport changes the failure mode substantially rather than fixing the prior. Reversed unchecked coupling degrades horizontal error by 7.55\\% in rapid rotations, while confidence reduces that diagnostic to the uncoupled response. Confidence is useful but does not guarantee robustness."
+ real_failures=int(w.loc[['CSM/real','TCSM/real'],'heading_over30'].sum())
+ real_n=int(w.loc['CSM/real','n'])
+ real_result=(f"Real-only coupling removes this heading failure in a separate {real_n}-seed diagnosis."
+              if real_failures==0 else f"Real-only coupling retains {real_failures} heading failures across the two filters in a separate {real_n}-seed diagnosis.")
+ real_detail=('with zero 30-degree exceedances' if real_failures==0
+              else f'with {real_failures} total 30-degree exceedances')
+ flipped=ab[(ab.case=='rapid_rotation')&(ab['filter']=='TCSM:noconf/ext-flip')&(ab.metric=='rms_h')]
+ if len(flipped)!=1:raise RuntimeError('Missing or ambiguous reversed-coupling ablation')
+ flipped_change=float(flipped.iloc[0].percent)
+ macro['AbstractResults']+=f" However, reduced heave causes RMS heading above 30 degrees in {int(failures.loc[('weak_heave','CSM'),'heading_over30'])}/{ns} shared-QMEKF and {int(failures.loc[('weak_heave','TCSM'),'heading_over30'])}/{ns} shared-TFG runs, despite no divergence/nonfinite flag. {real_result}"
+ macro['FailureDiscussion']=f"Reduced heave is the decisive adverse case. Mean heave/horizontal errors are {1000*weak.loc['CSM','rms_z']:.1f}/{1000*weak.loc['CSM','rms_h']:.1f} mm for shared QMEKF and {1000*weak.loc['TCSM','rms_z']:.1f}/{1000*weak.loc['TCSM','rms_h']:.1f} mm for shared TFG; independent TFG achieves {1000*weak.loc['T41@C','rms_z']:.1f}/{1000*weak.loc['T41@C','rms_h']:.1f} mm. Shared heading RMS averages {weak.loc['CSM','yaw_rms_deg']:.1f} and {weak.loc['TCSM','yaw_rms_deg']:.1f} degrees. The apparent practically large horizontal geometry gain is therefore a comparison of two poor estimators, accompanied by worse heave. In the separate exploratory diagnosis, real-only coupling lowers heading RMS to {w.loc['CSM/real','heading_deg']:.2f} and {w.loc['TCSM/real','heading_deg']:.2f} degrees {real_detail}. Coupling-off results also return to the independent-axis reference. Known quadrature coupling still produces severe heading error, so this cannot be attributed solely to online coupling-estimation error. Confidence falls and invokes the PSD fallback, but does not prevent the failure. This implicates quadrature-prior interaction with the weak-heave attitude/bias ambiguity; it is an experimental diagnosis, not a proof of a unique causal mechanism. No operational prior was retuned after observing these outcomes."
+ macro['SupplementDiscussion']=f"The pinned eight-record replay gives heave changes between {diagnostic['replay_heave_min']:+.4f}\\% and {diagnostic['replay_heave_max']:+.4f}\\%, too small to justify a geometry switch. These intervals condition on each wave record and resample only sensors/initialization. The 24-seed full-rate transition supplement finds no practically meaningful recovery advantage; {diagnostic['transient_censored']} transition recoveries are censored. Its exported positions have 10-micrometre resolution, so sub-resolution differences are not evidence for useful improvement. The six-condition reset supplement shows small ordinary-case position changes for both geometries; in reduced heave, omitting reset transport changes the failure mode substantially rather than fixing the prior. Reversed unchecked coupling degrades horizontal error by {flipped_change:.2f}\\% in rapid rotations, while confidence reduces that diagnostic to the uncoupled response. Confidence is useful but does not guarantee robustness."
  engine=main[main.case=='engine800'].groupby('filter').mean(numeric_only=True)
  turn=main[main.case=='maneuver'].groupby('filter').mean(numeric_only=True)
  colored=main[main.case=='colored_noise'].groupby('filter').mean(numeric_only=True)
  yaw=pairs[(pairs.case=='maneuver')&(pairs.comparison=='TFG geometry, shared')&(pairs.metric=='yaw_rms_deg')].iloc[0]
  macro['SecondaryDiscussion']=f"Secondary attitude and bias results are condition dependent. At 800 rpm, shared TFG reduces mean tilt RMS from {engine.loc['CSM','tilt_rms_deg']:.2f} to {engine.loc['TCSM','tilt_rms_deg']:.2f} degrees, heading from {engine.loc['CSM','yaw_rms_deg']:.2f} to {engine.loc['TCSM','yaw_rms_deg']:.2f} degrees, and accelerometer-bias error from {engine.loc['CSM','ba_rms_mg']:.2f} to {engine.loc['TCSM','ba_rms_mg']:.2f} mg. Under colored noise, heading also improves from {colored.loc['CSM','yaw_rms_deg']:.2f} to {colored.loc['TCSM','yaw_rms_deg']:.2f} degrees while horizontal position worsens. Conversely, maneuvering worsens heading from {turn.loc['CSM','yaw_rms_deg']:.2f} to {turn.loc['TCSM','yaw_rms_deg']:.2f} degrees: paired absolute change {yaw.delta:+.2f} degrees, marginal 95\\% CI [{yaw.ci_low:+.2f}, {yaw.ci_high:+.2f}]. Gyro-bias RMS also worsens there. These secondary intervals are exploratory and are not part of the Holm-controlled primary position family. They motivate focused vibration/attitude research, not a claim of a general TFG accuracy gain."
- macro['Recommendation']="Do not replace shared QMEKF generally with shared TFG. The condition-balanced position changes are small, the added host cost is substantial, and the only greater-than-5\\% supported position gain occurs inside a severe reduced-heave failure of both shared filters. Retain the reusable TFG implementation as an experimental research vehicle. Further accuracy work should first investigate quadrature coupling, confidence and attitude/bias consistency under reduced heave; the independent-axis and real-only diagnostics are useful controls, not validated operational replacements. Full reset transport remains the mathematically verified default. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged."
+ if set(practical.case)=={'weak_heave'} and all(int(failures.loc[('weak_heave',f),'heading_over30'])>0 for f in ['CSM','TCSM']):
+  macro['Recommendation']="Do not replace shared QMEKF generally with shared TFG. The condition-balanced position changes are small, the added host cost is substantial, and the only greater-than-5\\% supported position gain occurs inside a severe reduced-heave failure of both shared filters. Retain the reusable TFG implementation as an experimental research vehicle. Further accuracy work should first investigate quadrature coupling, confidence and attitude/bias consistency under reduced heave; the independent-axis and real-only diagnostics are useful controls, not validated operational replacements. Full reset transport remains the mathematically verified default. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged."
  firmware=json.loads((results/'firmware_builds.json').read_text())
  builds={r['variant']:r for r in firmware['builds']}
  if any(v not in builds or builds[v]['exit_code'] for v in ['qmekf','tfg','probe']):
@@ -287,11 +318,12 @@ def tables_and_macros(results,df,pairs,agg,ab):
  with (results/'runs.csv.gz').open('wb') as raw,gzip.GzipFile(filename='',mode='wb',fileobj=raw,mtime=0) as gz:
   gz.write(df.to_csv(index=False,float_format='%.9g').encode())
  manifest={'generator_sha256':__import__('hashlib').sha256(Path(__file__).read_bytes()).hexdigest(),
-           'inputs':{p.name:__import__('hashlib').sha256(p.read_bytes()).hexdigest() for p in results.iterdir() if p.is_file() and p.name not in ('analysis_manifest.json','runs.csv','reset_runs.csv') and (p.suffix in ('.csv','.json','.txt') or p.name=='runs.csv.gz')}}
+           'inputs':{p.name:__import__('hashlib').sha256(p.read_bytes()).hexdigest() for p in sorted(results.iterdir()) if p.is_file() and p.name not in ('analysis_manifest.json','runs.csv','reset_runs.csv') and (p.suffix in ('.csv','.json','.txt') or p.name=='runs.csv.gz')}}
  (results/'analysis_manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
  print('Article tables complete; practical improvements:',len(practical),'adverse endpoints:',len(adverse))
 
 def main():
+ """Generate publication figures and tables from committed study scores."""
  ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();r=args.results;out=r/'figures';out.mkdir(parents=True,exist_ok=True)
  df=pd.read_csv(r/('runs.csv' if (r/'runs.csv').exists() else 'runs.csv.gz'));p=pd.read_csv(r/'paired.csv');a=pd.read_csv(r/'aggregate.csv');ab=pd.read_csv(r/'ablations.csv');inter=pd.read_csv(r/'interactions.csv')
  paired_figures(r,out,p,inter);tracking(r,out);degradation(r,out,df);ablations_and_consistency(r,out,df,ab);supplemental_figures(r,out);tables_and_macros(r,df,p,a,ab)

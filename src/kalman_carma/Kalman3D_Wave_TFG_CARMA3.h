@@ -263,7 +263,7 @@ public:
                              Vector3 const& sigma_m,
                              T Pq0 = T(5e-4), T Pb0 = T(1e-6), T b0 = T(1e-11), T R_S_noise_var = T(1.5),
                              T gravity_magnitude = T(STD_GRAVITY),
-                             const carma::CarmaShape& shape = carma::CarmaDefaultShape<kMotion ? 4 : NC>::value);
+                             const carma::CarmaShape& shape = carma::CarmaDefaultShape<Model::ORDER>::value);
 
     bool initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     bool initialize_from_acc(Vector3 const& acc);
@@ -688,14 +688,13 @@ TFGC3_CLS::Kalman3D_Wave_TFG_CARMA3(
     Vector3 const& sigma_a, Vector3 const& gyro_noise_density_rad_sqrt_s, Vector3 const& sigma_m,
     T Pq0, T Pb0, T b0, T R_S_noise_var, T gravity_magnitude, const carma::CarmaShape& shape)
   : gravity_magnitude_(gravity_magnitude),
+    Q_gyro_(gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal()),
+    Q_bg_(Matrix3::Identity() * b0),
     Racc_(sigma_a.array().square().matrix().asDiagonal()),
     Rmag_(sigma_m.array().square().matrix().asDiagonal()),
+    R_S_(Matrix3::Identity() * R_S_noise_var),
     model_(shape), motion_(shape)
 {
-    Q_gyro_ = gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal();
-    Q_bg_ = Matrix3::Identity() * b0;
-    R_S_ = Matrix3::Identity() * R_S_noise_var;
-
     // CARMA3's constructor covariance; at the identity state the coordinate
     // map only flips signs, so it is written directly.
     P_.setZero();

@@ -15,9 +15,11 @@ primary study uses 24 seeds, 27 conditions, 1200 seconds at 200 Hz, scored from
 300 seconds. There are 4,204 estimator trajectories including registered
 ablations, reset diagnostics, pinned replays, transition diagnostics and the
 exploratory reduced-heave study. See `experiment_counts.json` for the accounting.
-The source is frozen for the simulations; subsequent runner changes only add
-output routing and reanalysis from committed scores. Original source is
-recoverable at the revision in `execution_provenance.json`.
+The registered simulation source and original protocols remain recoverable at
+the revision in `execution_provenance.json`. Subsequent constructor lint repairs
+retain the same expressions; repeated equivalence checks and counterbalanced
+host timing are recorded in `review_validation.json`. Runner updates make replay
+row ordering deterministic and derive report claims from the measured tables.
 
 ## Failure and condition dependence
 
@@ -55,6 +57,12 @@ recoverable at the revision in `execution_provenance.json`.
 | ESP32-S3 core object | 12,504 bytes | 14,472 bytes |
 | Matched full AtomS3R application flash | 1,094,467 bytes | 1,029,687 bytes |
 | Full application globals | 31,660 bytes | 31,660 bytes |
+
+A separate four-repetition counterbalanced check rotates every core through
+each execution position (`host_order_*.csv`). Its shared-QMEKF/TFG medians are
+3.946/8.720 us at fixed intervals (ratio 2.21), and 6.733/11.660 us with interval
+jitter (ratio 1.73). Host variation remains substantial; this check retains the
+original publication timings and supports the same additional-cost conclusion.
 
 Core objects are allocated at construction, separately from firmware globals.
 The Xtensa stack figures are compiler call-chain lower bounds, **not** measured

@@ -98,10 +98,13 @@ in `reports/results/tfg_shared_modes/protocol.json`. Oracle cross spectra
 appear only in names containing `ext-true` or another explicit external prior;
 they never enter an operational default.
 The original registered runner and implementation are preserved at the
-revision in `execution_provenance.json`. Later runner-only changes permit
-score-only reanalysis and choosing a fresh output directory; they do not
-change the estimator or benchmark used for the experiment.
-The final estimator source tree is identical to the registered execution.
+revision in `execution_provenance.json`. Later runner changes permit
+score-only reanalysis, fresh output directories and deterministic replay CSV
+ordering; article claims are calculated from the measured result tables. They
+do not alter the preserved experiment scores.
+The registered revision preserves the simulation sources. Subsequent constructor
+lint repairs use the same model order and covariance expressions; repeated
+numerical equivalence checks are recorded in `review_validation.json`.
 The existing OU-III finite secant
 diagnostic binds the entire `src` tree, including experimental modules, so
 it was rerun rather than weakening its verifier. Both perturbation sizes
@@ -165,6 +168,11 @@ make -C tests/kalman_carma_shared_modes kalman_carma_shared_modes-timing
 EIGEN_DIR=/path/to/eigen bash tests/kalman_carma_shared_modes/arduino/csm_size_probe/build.sh /path/to/xtensa/bin /tmp/size-probe
 python3 tools/tfg_shared_modes_firmware.py --build-root /tmp/tfg-shared-firmware
 ```
+
+The timing driver runs four repetitions, rotating each core through all four
+execution positions and recording `rep`/`order`. The committed `host_order_*`
+files provide this sensitivity check separately from the original publication
+timings; `review_validation.json` summarizes both.
 
 The Xtensa probe covers all four factorial cores. Its stack-chain result is
 a compiler-derived lower bound, not an observed peak stack. Code/literal and

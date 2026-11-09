@@ -1,0 +1,107 @@
+{
+  "scope": "Post-review quality and reproducibility checks; original registered experiment scores and protocols are preserved.",
+  "checks": {
+    "python_quality_gate": "PASS: Ruff and py_compile",
+    "cppcheck": "PASS: same 2.13.0 release as CI",
+    "clang_tidy_reported_findings": "PASS: bugprone-branch-clone and bugprone-misplaced-widening-cast on the 27-state test TU",
+    "full_clang_tidy_local": "INCOMPLETE: concurrent local compilation exceeded the 8 GiB memory limit; complete gate is delegated to the existing PR CI, with no suppressed checks.",
+    "mathematical_checks_27_state": 53,
+    "mathematical_failures_27_state": 0,
+    "original_estimator_traces": {
+      "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
+      "harness_sha256": "16e170863c923b6162b51a9bf1ab03b4ef3c31569cd320c4c49ee50141e76ca1",
+      "absolute_tolerance": 1e-06,
+      "relative_tolerance": 2e-06,
+      "filters": {
+        "QMEKF-CARMA": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "TFG-CARMA": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "QMEKF-shared": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "OU-III": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        }
+      }
+    },
+    "shipping_provenance_unittests": {
+      "tests": 3,
+      "result": "PASS"
+    },
+    "replay_csv_sorted_values": "EXACTLY IDENTICAL: all original cells preserved after record/seed/method ordering",
+    "article_macros": "ALL VALUES IDENTICAL after deriving claims from ablation and failure-count tables"
+  },
+  "full_build": {
+    "command": "make all EIGEN_DIR=<Eigen-root>",
+    "status_at_publication": "RUNNING; original all-19-suite validation remains recorded in regression_gates.json. Follow the existing PR build jobs for the complete new-head gate.",
+    "thresholds_changed": false
+  },
+  "resource_failures": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "symptoms": [
+      "One isolated 27-state compilation was killed while too many large checks ran concurrently; its subsequent rebuild and all 53 checks pass.",
+      "Two full clang-tidy attempts were killed during concurrent Eigen-heavy compilation. Targeted checks pass; no lint configuration or threshold is weakened."
+    ],
+    "conclusion": "These are incomplete local checks, not estimator failures or evidence for instability."
+  },
+  "timing_supplement": {
+    "order_sensitivity": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.3427,
+        "CSM": 3.94565,
+        "T41": 4.9306,
+        "TCSM": 8.71995
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 2.210016093672779
+    },
+    "order_jitter": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.83655,
+        "CSM": 6.73295,
+        "T41": 5.32855,
+        "TCSM": 11.66005
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 1.731789186018016
+    },
+    "order_fixed": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.3305,
+        "CSM": 3.33095,
+        "T41": 4.924250000000001,
+        "TCSM": 8.14695
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 2.44583377114637
+    },
+    "interpretation": "Host ordering does not remove the additional TFG cost. This is a four-repetition sensitivity check, not an embedded deadline or a precise hardware-independent cost estimate. Original publication timings are retained."
+  },
+  "source_hashes": {
+    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "bbd185b1ebf999299f476d3d350d4ca43258cd710a0e74b13f7dfcaa49a7ecbb",
+    "tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp": "03f11eb56cfe9817945e14ed466a7c40a2bda01442b76e8d2cbcaa2efce27553",
+    "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-timing.cpp": "878494587ba18992fc24c282675ec940b8805ae00511049a9bac08eb79b35565"
+  }
+}

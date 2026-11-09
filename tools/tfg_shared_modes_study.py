@@ -66,16 +66,21 @@ SOURCES=('src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h',
          'src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h',
          'tests/kalman_carma/carma3_bench.cpp','tests/kalman_carma/CarmaBenchTruth.h',
          'tests/kalman_carma_shared_modes/CsmBenchAdapter.h','tools/tfg_shared_modes_study.py')
-def sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+def sha(p):
+ """Hash exact file bytes for experiment source and binary provenance."""
+ return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 def clean_env():
+ """Remove inherited filter overrides before running controlled simulations."""
  return {k:v for k,v in os.environ.items() if not k.startswith(('W3D_','CSM_','OU_','SF_','TFG_'))}
 def save_trace(frame,path):
+ """Preserve joint extrema in bounded traces shared by SVG and PGF exports."""
  # A single shared extrema selection bounds both SVG and PGF geometry.
  idx=envelope_indices(tuple(frame[c].to_numpy() for c in frame),max_points=2000)
  path.parent.mkdir(parents=True,exist_ok=True)
  with path.open('wb') as raw,gzip.GzipFile(filename='',mode='wb',fileobj=raw,mtime=0) as z:
   z.write(frame.iloc[idx].to_csv(index=False,float_format='%.8g').encode())
 def execute_one(task,out):
+ """Run one paired scenario/seed cell and cache scores plus selected traces."""
  stage,name,seed,filters=task;sc=SCENARIOS[name]+'+T1200'
  key=f'{stage}_{name}_{seed}'
  trace=seed==1001 and name in ('jonswap','roundtrip','direction_step','mag_outage','rapid_rotation','engine2400') and stage=='primary'
@@ -116,6 +121,7 @@ def execute_one(task,out):
   return record
 
 def run(args):
+ """Register a fresh study protocol and execute all missing paired cells."""
  out=args.results;out.mkdir(parents=True,exist_ok=True)
  protocol=dict(baseline_revision='1fe4711b489ad92f3eef8ab560da904af741df9d',
    binary_sha256=sha(BINARY),source_hashes={p:sha(ROOT/p) for p in SOURCES},
@@ -143,6 +149,7 @@ def run(args):
  collect(out)
 
 def collect(out):
+ """Collect cached scores or retain the published compact scores on clean checkouts."""
  rows=[]
  for p in sorted((out/'cache').glob('*.json')):
   r=json.loads(p.read_text())
@@ -162,6 +169,7 @@ def collect(out):
  return df
 
 def ci(x):
+ """Compute a paired Student interval and zero-mean test over finite seed differences."""
  x=np.asarray(x,float);x=x[np.isfinite(x)];n=len(x)
  if n<2:return n,float('nan'),float('nan'),float('nan'),float('nan')
  mean=float(np.mean(x));se=float(stats.sem(x));half=float(stats.t.ppf(.975,n-1)*se)
@@ -169,6 +177,7 @@ def ci(x):
  return n,mean,mean-half,mean+half,p
 
 def analyse(args):
+ """Derive paired comparisons, multiplicity corrections and condition-balanced effects."""
  out=args.results;df=collect(out);primary=df[df.stage=='primary'];summ=[];paired=[];inter=[]
  comparisons=(('TFG geometry, shared','TCSM','CSM'),('Shared prior, TFG','TCSM','T41@C'),
               ('TFG geometry, independent','T41@C','A41@C'),('Shared prior, QMEKF','CSM','A41@C'))
