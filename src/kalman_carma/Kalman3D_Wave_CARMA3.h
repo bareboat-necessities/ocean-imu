@@ -65,6 +65,7 @@
 #include "kalman_common/CovarianceProjection.h"
 #include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/MekfAttitudeMath.h"
+#include "kalman_common/ConditionalCovariance.h"
 #include "kalman_common/PeriodicSchedule.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 
@@ -443,35 +444,12 @@ public:
     bool shrink_motion_vertical_coupling(T alpha) {
         static_assert(NL % 3 == 0, "three equal axis-major motion blocks");
         constexpr int NBk = NL / 3, NHk = 2 * NBk, NR = NX - NL;
-        if (!(alpha >= T(0)) || !(alpha < T(1))) return false;
-        int ridx[NR];
+        int ridx[NR], hidx[NHk], zidx[NBk];
         for (int i = 0; i < OFF_L; ++i) ridx[i] = i;
         for (int i = OFF_L; i < NR; ++i) ridx[i] = i + NL;
-        Eigen::Matrix<T,NR,NR> Prr;
-        Eigen::Matrix<T,NR,NBk> Prz;
-        for (int i = 0; i < NR; ++i) {
-            for (int j = 0; j < NR; ++j) Prr(i,j) = Pext(ridx[i], ridx[j]);
-            for (int j = 0; j < NBk; ++j) Prz(i,j) = Pext(ridx[i], OFF_L + NHk + j);
-        }
-        // Correlation scaling keeps the factorization well conditioned.
-        Eigen::Matrix<T,NR,1> d;
-        for (int i = 0; i < NR; ++i) {
-            if (!(Prr(i,i) > T(0))) return false;
-            d(i) = T(1) / std::sqrt(Prr(i,i));
-        }
-        const Eigen::LDLT<Eigen::Matrix<T,NR,NR>> ldlt(d.asDiagonal() * Prr * d.asDiagonal());
-        if (ldlt.info() != Eigen::Success || !(ldlt.vectorD().minCoeff() > T(0))) return false;
-        const Eigen::Matrix<T,NR,NBk> X = d.asDiagonal() * ldlt.solve(d.asDiagonal() * Prz);   // P_rr^-1 P_rz
-        for (int i = 0; i < NHk; ++i)
-            for (int j = 0; j < NBk; ++j) {
-                T e = T(0);
-                for (int k = 0; k < NR; ++k) e += Pext(OFF_L + i, ridx[k]) * X(k,j);
-                const int r = OFF_L + i, c = OFF_L + NHk + j;
-                const T v = e + alpha * (T(0.5) * (Pext(r,c) + Pext(c,r)) - e);
-                Pext(r,c) = v;
-                Pext(c,r) = v;
-            }
-        return true;
+        for (int i = 0; i < NHk; ++i) hidx[i] = OFF_L + i;
+        for (int i = 0; i < NBk; ++i) zidx[i] = OFF_L + NHk + i;
+        return filter_detail::shrink_conditional_cross<T>(Pext, ridx, hidx, zidx, alpha);
     }
 
     void reset_vertical_covariance_to_stationary() {

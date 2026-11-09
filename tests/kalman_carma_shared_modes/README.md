@@ -37,3 +37,13 @@ python3 ../../tools/carma_shared_modes_sim_table.py          # deterministic 900
 Filter names in the Monte Carlo benchmark: `CSM` (deployable default: estimated coupling + confidence), `CSM:noconf` (confidence disabled), `CSM:off` (coupling off: the CARMA3 baseline A41 exactly), with the robustness options `ext-true|ext-flip|ext-rot90|ext-ph45|ext-amp2` (an external coupling prior built from the truth, deliberately wrong except `ext-true`) and `fz<s>`/`keel` (freeze the coupling, optionally in the keel frame). The bench's own filters (`A41`, `A41@C`, ...) are available alongside; see [`CsmBenchAdapter.h`](CsmBenchAdapter.h).
 
 The ESP32-S3 size and stack probe is [`arduino/csm_size_probe/build.sh`](arduino/csm_size_probe/build.sh) (Espressif Xtensa toolchain; variants A41 and CSM); the AtomS3R sketch is [`sensors/full_marine_ins/atomS3R_ins_carma_shared_modes`](../../sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/README.md).
+
+## Experimental TFG shared modes
+
+The same shared-mode motion and confidence code can now use the TFG geometry.
+See [the implementation and reproducibility guide](../../docs/tfg-carma-shared-modes.md).
+`TCSM` and its ablations are registered beside `CSM` in the existing paired
+benchmark. `kalman_tfg_shared_modes-sim` reuses this directory's replay source
+with the TFG core policy. `tfg_shared_modes-test` checks the 27-state geometry,
+Hermitian covariance and adaptive coordinate maps against independent references.
+The size/stack probe includes A41, CSM, T41 and TCSM.

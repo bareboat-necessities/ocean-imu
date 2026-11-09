@@ -451,6 +451,7 @@ public:
     const Model& horizontal_model() const noexcept { return hmodel_; }
     Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_.re.template topLeftCorner<2,2>(); }
     Vector3 accel_std() const { return sig_; }
+    void set_quadrature_enabled(bool enabled) { quadrature_enabled_ = enabled; dirty_ = true; }
     const Hermitian& excitation() const noexcept { return Sigma_; }
     Coupling& coupling() noexcept { return coupling_; }
     const Coupling& coupling() const noexcept { return coupling_; }
@@ -514,6 +515,15 @@ public:
         return true;
     }
 
+    bool discretize(T h, MatB& F, MatB& QR, MatB& QI) const {
+        return minimal_detail::discretize_lti_pair<T,NB>(A_, WR_, WI_, h, F, QR, QI);
+    }
+    bool stationary_pair(MatB& PR, MatB& Pimag) const {
+        return minimal_detail::stationary_pair<T,NB>(A_, WR_, WI_, PR, Pimag);
+    }
+    const MatB& block_WR() const noexcept { return WR_; }
+    const MatB& block_WI() const noexcept { return WI_; }
+
     // Diagnostics (tests, analysis): continuous dynamics, noise input
     // (columns: Re and Im of the circular noise), unit-acceleration noise
     // gain, the step discretization.
@@ -576,6 +586,7 @@ private:
         g2_ = static_cast<T>(g2);
         const std::complex<T> Rr[3] = {T(1), T(1), T(1)};
         Sigma_ = coupling_.excitation(sig_, Rr);
+        if (!quadrature_enabled_) Sigma_.im.setZero();
 
         // Commit re-coordinatization: hold the normalized colouring (file header).
         bool any = false;
@@ -611,7 +622,7 @@ private:
     bool have_prev_ = false, pending_ = false;
     uint32_t gen_ = 0;
     T dt_ = T(0.005);
-    bool dirty_ = true, valid_ = false;
+    bool dirty_ = true, valid_ = false, quadrature_enabled_ = true;
     Coupling coupling_;
     Estimator monitor_;
 };

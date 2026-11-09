@@ -77,6 +77,9 @@ public:
     virtual double native_nees9(const Truth9&) const { return NAN; }
     // Correlation-scaled condition number of the full covariance.
     virtual double cond_corr() const { return NAN; }
+    // Full covariance audit sampled by the host engine, outside timed updates:
+    // relative asymmetry, minimum correlation eigenvalue, finite indicator.
+    virtual bool covariance_audit(double (&)[3]) const { return false; }
     // Magnetometer samples that reached the estimator and the updates it
     // applied (rejected = forwarded - applied).
     virtual long mag_forwarded() const { return -1; }

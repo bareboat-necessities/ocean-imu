@@ -28,14 +28,15 @@
 
 namespace ocean_imu::carma_shared_modes {
 
-class SeaStateFusion_CarmaSharedModes
-    : public carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, KalmanCarmaSharedModes<float>> {
+template<class Core>
+class SharedModesFusion
+    : public carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, Core> {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using Base = carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, KalmanCarmaSharedModes<float>>;
+    using Base = carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, false, 4, false, Core>;
     using Config = typename Base::Config;
-    using Mekf = KalmanCarmaSharedModes<float>;
-    using SharedModes = Mekf::Config;
+    using Mekf = Core;
+    using SharedModes = typename Mekf::Config;
 
     // The wave excitation defaults to Evidence mode (kalman_carma/CarmaWaveEvidence.h,
     // docs/carma-wave-excitation.md), the mode the AtomS3R sketches deploy:
@@ -52,5 +53,7 @@ public:
     Mekf& sharedModes() { return this->raw().mekf(); }
     const Mekf& sharedModes() const { return this->raw().mekf(); }
 };
+
+using SeaStateFusion_CarmaSharedModes = SharedModesFusion<KalmanCarmaSharedModes<float>>;
 
 }  // namespace ocean_imu::carma_shared_modes

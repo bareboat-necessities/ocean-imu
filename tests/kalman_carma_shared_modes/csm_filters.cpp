@@ -13,7 +13,10 @@
 
 namespace carma3_bench {
 
+std::unique_ptr<IEstimator3> make_tfg_csm(const std::string&);
+
 std::unique_ptr<IEstimator3> make_full_extra(const std::string& n) {
+    if (auto f = make_tfg_csm(n)) return f;
     CsmSpec sp;
     if (!parse_csm_spec(n, sp)) return nullptr;
     return make_csm(n, sp);

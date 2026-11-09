@@ -212,6 +212,7 @@ ScenarioX make_scenario(const std::string& full) {
             for (auto* v : {&sc.parts, &sc.parts_b})
                 for (auto& part : *v) part.spread_s = spread;
         }
+        else if (m == "rapid_direction") sc.fade.width = 3.0;
         else if (m == "magdist") x.magdist = true;
         else throw std::invalid_argument("unknown scenario modifier " + m);
     }
@@ -458,7 +459,8 @@ struct Series {
     // --coupling: acceleration error, whitened accelerometer innovation,
     // applied coupling (coherence, phase deg; x-z, y-z, x-y).
     std::vector<float> ea[3], wi[3], cpl[6], rt;
-    double cond_max = NAN;
+    double cond_max = NAN, cov_asym_max = 0, cov_corr_min = INFINITY;
+    long cov_checks = 0, cov_nonfinite = 0;
     // --excitation: CARMA sigma, p, z, c_f, V, E[V | 0], f_op, tau (Bench3.h).
     std::vector<float> exc[8];
 };
@@ -578,7 +580,8 @@ const char* const kExtendedColumns =
     ",rms_3d,rmsv_h,att_nees,att_nees_in95,yaw_nees,yaw_nees_in95,nees9_phys,nees9_native,cov95_x,cov95_y,cov95_z,"
     "tilt_rms_deg,tilt_max_deg,yaw_w_rms_deg,yaw_w_max_deg,att_max_deg,pred_yaw_deg,su_tilt_rms_deg,su_yaw_rms_deg,"
     "bg_rms_dph,ba_rms_mg,bg_f60_dph,ba_f60_mg,cond_max,mag_forwarded,mag_applied,yaw_gap_rms_deg,yaw_gap_nees,"
-    "pred_yaw_gap_end_deg,yaw_post_rms_deg,yaw_recover_s,turn_peak_deg,turn_recover_s";
+    "pred_yaw_gap_end_deg,yaw_post_rms_deg,yaw_recover_s,turn_peak_deg,turn_recover_s,"
+    "cov_asym_max,cov_corr_min,cov_checks,cov_nonfinite";
 
 const char* const kExcitationColumns =
     ",exc_sig_mean,exc_sig_med,exc_p_mean,exc_p_frac50,exc_z_med,exc_cf_mean,exc_fz_med,exc_fz_p05,exc_fz_p95,"
@@ -803,6 +806,12 @@ int main(int argc, char** argv) {
             for (const auto& e : est)
                 for (const char* c : {"cohxz", "phxz"})
                     ts_out << "," << c << "_" << e->name();
+        if (args.extended && full) {
+            ts_out << ",roll_true,pitch_true,yaw_true,vx_true,vy_true,vz_true";
+            for (const char* c : {"bgx","bgy","bgz","bax","bay","baz"}) ts_out << "," << c << "_true";
+            for (const auto& e : est)
+                for (const char* c : {"vx","vy","vz","bgx","bgy","bgz","bax","bay","baz"}) ts_out << "," << c << "_" << e->name();
+        }
         ts_out << "\n";
     }
 
@@ -976,6 +985,11 @@ int main(int argc, char** argv) {
                     if (k % 200 == 0) {
                         const double c = est[i]->cond_corr();
                         se.cond_max = std::isfinite(se.cond_max) ? std::max(se.cond_max, c) : c;
+                        double d[3];if(est[i]->covariance_audit(d)) {
+                            ++se.cov_checks;se.cov_nonfinite+=d[2]==0.;
+                            se.cov_asym_max=std::max(se.cov_asym_max,d[0]);
+                            if(std::isfinite(d[1]))se.cov_corr_min=std::min(se.cov_corr_min,d[1]);
+                        }
                     }
                 }
                 se.natt.push_back(natt); se.nyaw.push_back(nyaw); se.n9p.push_back(n9p); se.n9n.push_back(n9n);
@@ -1049,6 +1063,18 @@ int main(int argc, char** argv) {
                     std::snprintf(buf, sizeof buf, ",%.4f,%.2f", se.cpl[0][j], se.cpl[1][j]);
                     ts_out << buf;
                 }
+            if (args.extended && full) {
+                ts_out << ',' << ts.roll*180/PI << ',' << ts.pitch*180/PI << ',' << ts.yaw*180/PI;
+                for (int a=0;a<3;++a) ts_out << ',' << ts.v_wave(a);
+                for (int a=0;a<3;++a) ts_out << ',' << bg_true(a);
+                for (int a=0;a<3;++a) ts_out << ',' << ba_true(a);
+                for (const auto& filter : est) {
+                    const auto e = filter->estimate(); const Vector3d v=R_mg*e.v;
+                    for(int a=0;a<3;++a) ts_out << ',' << v(a);
+                    for(int a=0;a<3;++a) ts_out << ',' << e.b_g(a);
+                    for(int a=0;a<3;++a) ts_out << ',' << e.b_a(a);
+                }
+            }
             ts_out << "\n";
         }
     }
@@ -1173,6 +1199,7 @@ int main(int argc, char** argv) {
                         rms(se.baerr, sc.duration_s - 60.0, sc.duration_s) / 9.80665 * 1000.0,
                         se.cond_max, est[i]->mag_forwarded(), est[i]->mag_applied(),
                         gap_rms, gap_nees, gap_pred, post_rms, recover, turn_peak, turn_rec);
+            std::printf(",%.6g,%.6g,%ld,%ld",se.cov_asym_max,se.cov_corr_min,se.cov_checks,se.cov_nonfinite);
         }
         if (args.excitation) {
             const double w0 = args.score_start, w1 = sc.duration_s;

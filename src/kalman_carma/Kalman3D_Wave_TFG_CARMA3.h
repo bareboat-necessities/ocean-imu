@@ -118,9 +118,11 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <type_traits>
 
 #include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/MekfAttitudeMath.h"
+#include "kalman_common/ConditionalCovariance.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 #include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
@@ -128,6 +130,11 @@
 namespace ocean_imu::kalman {
 
 namespace tfg_carma_detail {
+// Empty policy storage; the default estimator retains its original model.
+struct EmptyMotion {
+    explicit EmptyMotion(const carma::CarmaShape& = carma::CARMA41_JONSWAP_SHAPE) {}
+};
+
 
 /*
     Off-diagonal (vector <- attitude) block of the right Jacobian of the
@@ -191,9 +198,15 @@ inline constexpr double kGL5Weights[5] = {
 
 }  // namespace tfg_carma_detail
 
-template <typename T = float, int NC = 4>
+// NC counts world columns, not necessarily the CARMA autoregressive order.
+// Motion=void retains the original independent NC-state realization. A motion
+// policy provides its exact common dynamics and Hermitian covariance pair;
+// SharedModesMotion has six columns but still models CARMA(4,1).
+template <typename T = float, int NC = 4, class Motion = void>
 class Kalman3D_Wave_TFG_CARMA3 {
-    static_assert(NC >= 3 && NC <= 5, "CARMA order 3..5");
+    static constexpr bool kMotion = !std::is_void_v<Motion>;
+    static_assert((!kMotion && NC >= 3 && NC <= 5) || (kMotion && NC == 6),
+                  "Independent CARMA order 3..5, or six-state shared CARMA(4,1)");
 public:
     using Group = lie::TwoFrameGroup<T, NC, 2>;
     static constexpr int NX = Group::NX;          // 3 + 3 NC + 6
@@ -218,7 +231,7 @@ public:
     using MatrixNX3 = Eigen::Matrix<T,NX,3>;
     using Tangent = Eigen::Matrix<T,NX,1>;
     using MatC = Eigen::Matrix<T,NC,NC>;
-    using Model = carma::CarmaVerticalModel<T,NC>;
+    using Model = carma::CarmaVerticalModel<T, kMotion ? 4 : NC>;
 
     static constexpr T STD_GRAVITY = T(9.80665);
     static constexpr T tempC_ref = T(35.0);
@@ -250,7 +263,7 @@ public:
                              Vector3 const& sigma_m,
                              T Pq0 = T(5e-4), T Pb0 = T(1e-6), T b0 = T(1e-11), T R_S_noise_var = T(1.5),
                              T gravity_magnitude = T(STD_GRAVITY),
-                             const carma::CarmaShape& shape = carma::CarmaDefaultShape<NC>::value);
+                             const carma::CarmaShape& shape = carma::CarmaDefaultShape<kMotion ? 4 : NC>::value);
 
     bool initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag);
     bool initialize_from_acc(Vector3 const& acc);
@@ -303,7 +316,8 @@ public:
 
     [[nodiscard]] T get_aw_time_constant() const { return tau_aw_; }
     [[nodiscard]] Vector3 get_aw_stationary_std() const {
-        return Sigma_s_.diagonal().cwiseMax(T(0)).cwiseSqrt();
+        if constexpr (kMotion) return motion_.accel_std();
+        else return Sigma_s_.diagonal().cwiseMax(T(0)).cwiseSqrt();
     }
     [[nodiscard]] Vector3 get_RS_noise_std() const { return R_S_.diagonal().cwiseMax(T(0)).cwiseSqrt(); }
     void set_aw_time_constant(T tau_seconds) { tau_aw_ = std::max(T(1e-3), tau_seconds); }
@@ -324,15 +338,19 @@ public:
     // equal the common scale.
     bool set_horizontal_carma(T kappa, T sx, T sy, T r = T(0));
     // One shape serves every axis.
-    bool set_carma_shape(const carma::CarmaShape& shape) { return model_.set_shape(shape); }
-    bool set_horizontal_shape(const carma::CarmaShape& shape) { return same_shape_(shape); }
-    bool set_vertical_shape(const carma::CarmaShape& shape) { return same_shape_(shape); }
-    [[nodiscard]] const Model& vertical_model() const noexcept { return model_; }
-    [[nodiscard]] const Model& horizontal_model() const noexcept { return model_; }
+    bool set_carma_shape(const carma::CarmaShape& shape) { if constexpr (kMotion) return motion_.set_shape(shape);
+        else return model_.set_shape(shape); }
+    bool set_horizontal_shape(const carma::CarmaShape& shape) { if constexpr (kMotion) return motion_.set_shape(shape);
+        else return same_shape_(shape); }
+    bool set_vertical_shape(const carma::CarmaShape& shape) { if constexpr (kMotion) return motion_.set_shape(shape);
+        else return same_shape_(shape); }
+    [[nodiscard]] const Model& vertical_model() const noexcept { if constexpr (kMotion) return motion_.vertical_model(); else return model_; }
+    [[nodiscard]] const Model& horizontal_model() const noexcept { if constexpr (kMotion) return motion_.horizontal_model(); else return model_; }
     [[nodiscard]] Eigen::Matrix<T,2,2> horizontal_sigma() const {
-        return Sigma_s_.template topLeftCorner<2,2>();
+        if constexpr (kMotion) return motion_.horizontal_sigma();
+        else return Sigma_s_.template topLeftCorner<2,2>();
     }
-    [[nodiscard]] const Matrix3& spatial_sigma() const noexcept { return Sigma_s_; }
+    [[nodiscard]] const Matrix3& spatial_sigma() const noexcept { if constexpr (kMotion) return motion_.excitation().re; else return Sigma_s_; }
     // Count of horizontal configurations whose frequency scale differed from
     // the common one (not representable here; see the header).
     [[nodiscard]] uint32_t rejected_anisotropic_configurations() const noexcept { return kappa_rejects_; }
@@ -411,6 +429,48 @@ public:
     // nominal state, in place through `scratch`.
     void map_coordinates_(MatrixNX& P, MatrixNX& scratch, bool to_invariant) const;
 
+    // Shared motion policy; not available on the independent estimator.
+    auto& motion() noexcept requires(kMotion) { return motion_; }
+    const auto& motion() const noexcept requires(kMotion) { return motion_; }
+
+    // Conditional Schur shrink is independent of the error representation:
+    // conditioning on attitude and biases removes rho's attitude shear.
+    bool shrink_motion_vertical_coupling(T alpha) requires(kMotion) {
+        int r[9], h[2*NC], z[NC];
+        for (int i = 0; i < 6; ++i) r[i] = i;
+        for (int i = 0; i < 3; ++i) r[6+i] = OFF_BA+i;
+        for (int i = 0; i < NC; ++i) {
+            h[i] = world_index(i,0); h[NC+i] = world_index(i,1); z[i] = world_index(i,2);
+        }
+        return filter_detail::shrink_conditional_cross<T>(P_, r, h, z, alpha);
+    }
+
+    // x_axis <- M_axis x_axis, P transported through the physical additive
+    // coordinates. This includes [w'_i]x - M_axis [w_i]x in the invariant
+    // attitude column when the axis maps do not commute with rotations.
+    // Only 6-vectors are on the stack; the covariance scratch is a member.
+    void apply_motion_recoordinatization(const MatC (&maps)[3]) requires(kMotion) {
+        map_coordinates_(P_, M_scratch_, false);
+        for (int ax = 0; ax < 3; ++ax) {
+            const Eigen::Matrix<T,NC,1> x = X_.X.row(ax).transpose();
+            X_.X.row(ax) = (maps[ax] * x).transpose();
+            for (int c = 0; c < NX; ++c) {
+                Eigen::Matrix<T,NC,1> row;
+                for (int i = 0; i < NC; ++i) row(i) = P_(world_index(i,ax),c);
+                const Eigen::Matrix<T,NC,1> y = maps[ax] * row;
+                for (int i = 0; i < NC; ++i) P_(world_index(i,ax),c) = y(i);
+            }
+        }
+        for (int ax = 0; ax < 3; ++ax)
+            for (int r = 0; r < NX; ++r) {
+                Eigen::Matrix<T,NC,1> col;
+                for (int i = 0; i < NC; ++i) col(i) = P_(r,world_index(i,ax));
+                const Eigen::Matrix<T,NC,1> y = maps[ax] * col;
+                for (int i = 0; i < NC; ++i) P_(r,world_index(i,ax)) = y(i);
+            }
+        map_coordinates_(P_, M_scratch_, true);
+    }
+
 private:
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
@@ -437,9 +497,10 @@ private:
 
     // One CARMA model at unit acceleration variance and its discretization;
     // Sigma_s scales the driving noise per world axis.
-    Model model_;
+    [[no_unique_address]] std::conditional_t<kMotion, tfg_carma_detail::EmptyMotion, Model> model_;
+    [[no_unique_address]] std::conditional_t<kMotion, Motion, tfg_carma_detail::EmptyMotion> motion_;
     Matrix3 Sigma_s_ = Matrix3::Identity();
-    carma::StepDiscretization<T,NC> disc_;
+    [[no_unique_address]] std::conditional_t<kMotion, tfg_carma_detail::EmptyMotion, carma::StepDiscretization<T,NC>> disc_;
     uint32_t kappa_rejects_ = 0;
 
     bool acc_bias_updates_enabled_ = true;
@@ -520,8 +581,35 @@ private:
     static void decorrelate_attitude_(MatrixNX& Pe);
 
     void refresh_discretization_(T Ts) {
+    if constexpr (kMotion) {
+        motion_.set_heading(std::atan2(X_.R(1,0), X_.R(0,0)));
+        motion_.refresh(Ts);
+        recoordinate_motion_();
+    } else {
         if (disc_.advance(model_.generation(), Ts)) return;
         disc_.refresh(model_.A(), model_.W(), model_.generation(), Ts);
+
+    }
+}
+
+    void recoordinate_motion_() {
+        if constexpr (kMotion) {
+            MatC maps[3];
+            if (motion_.take_axis_recoordinatization(maps)) apply_motion_recoordinatization(maps);
+        }
+    }
+    const MatC& motion_F_() const {
+        if constexpr (kMotion) return motion_.block_F(); else return disc_.Phi();
+    }
+    const MatC& motion_Q_() const {
+        if constexpr (kMotion) return motion_.block_QR(); else return disc_.Q();
+    }
+    const MatC* motion_QI_() const {
+        if constexpr (kMotion) return &motion_.block_QI(); else return nullptr;
+    }
+    bool discretize_motion_(T h, MatC& F, MatC& QR, MatC& QI) const {
+        if constexpr (kMotion) return motion_.discretize(h, F, QR, QI);
+        else return carma::discretize_lti<T,NC>(model_.A(), model_.W(), h, F, QR);
     }
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
@@ -530,7 +618,7 @@ private:
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
                     MatrixNX& out) const;
-    void add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q, const MatC& Qc) const;
+    void add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q, const MatC& Qc, const MatC* Qi = nullptr) const;
 
     bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) {
         ldlt.compute(S);
@@ -592,8 +680,8 @@ private:
 // Implementation
 // ------------------------------------------------------------------------
 
-#define TFGC3_TPL template <typename T, int NC>
-#define TFGC3_CLS Kalman3D_Wave_TFG_CARMA3<T,NC>
+#define TFGC3_TPL template <typename T, int NC, class Motion>
+#define TFGC3_CLS Kalman3D_Wave_TFG_CARMA3<T,NC,Motion>
 
 TFGC3_TPL
 TFGC3_CLS::Kalman3D_Wave_TFG_CARMA3(
@@ -602,7 +690,7 @@ TFGC3_CLS::Kalman3D_Wave_TFG_CARMA3(
   : gravity_magnitude_(gravity_magnitude),
     Racc_(sigma_a.array().square().matrix().asDiagonal()),
     Rmag_(sigma_m.array().square().matrix().asDiagonal()),
-    model_(shape)
+    model_(shape), motion_(shape)
 {
     Q_gyro_ = gyro_noise_density_rad_sqrt_s.array().square().matrix().asDiagonal();
     Q_bg_ = Matrix3::Identity() * b0;
@@ -614,21 +702,32 @@ TFGC3_CLS::Kalman3D_Wave_TFG_CARMA3(
     P_.template block<3,3>(OFF_PHI, OFF_PHI) = Matrix3::Identity() * Pq0;
     P_.template block<3,3>(OFF_BG, OFF_BG) = Matrix3::Identity() * Pb0;
     P_.template block<3,3>(OFF_BA, OFF_BA) = Matrix3::Identity() * (sigma_bacc0_ * sigma_bacc0_);
-    model_.configure(T(1), T(1));
+    if constexpr (kMotion) {
+        motion_.set_horizontal(T(1), T(1), T(1), T(0));
+        motion_.set_vertical(T(1), T(1));
+    } else model_.configure(T(1), T(1));
     Sigma_s_.setIdentity();
     reset_aw_covariance_to_stationary();
 }
 
 TFGC3_TPL
 bool TFGC3_CLS::set_vertical_carma(T kappa, T accel_std) {
+    if constexpr (kMotion) {
+        return motion_.set_vertical(kappa, accel_std);
+    } else {
     if (!(accel_std > T(0)) || !std::isfinite(accel_std)) return false;
     if (!model_.configure(kappa, T(1))) return false;
     Sigma_s_(2,2) = accel_std * accel_std;
     return true;
+
+    }
 }
 
 TFGC3_TPL
 bool TFGC3_CLS::set_horizontal_carma(T kappa, T sx, T sy, T r) {
+    if constexpr (kMotion) {
+        return motion_.set_horizontal(kappa, sx, sy, r);
+    } else {
     if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
     if (!(std::abs(r) <= T(1))) return false;
     if (!(kappa > T(0)) || !std::isfinite(kappa)) return false;
@@ -640,6 +739,8 @@ bool TFGC3_CLS::set_horizontal_carma(T kappa, T sx, T sy, T r) {
         return false;
     }
     return true;
+
+    }
 }
 
 TFGC3_TPL
@@ -699,6 +800,24 @@ Eigen::Matrix<T,6,6> TFGC3_CLS::physical_pv_covariance() const {
 
 TFGC3_TPL
 void TFGC3_CLS::reset_aw_covariance_to_stationary() {
+    if constexpr (kMotion) {
+        motion_.refresh(motion_.step());
+        recoordinate_motion_();
+        MatC PR, Pimag;
+        if (!motion_.stationary_pair(PR, Pimag)) return;
+        begin_write_();
+        for (int i = 0; i < NX; ++i) {
+            if (i >= OFF_W && i < OFF_BA) continue;
+            for (int j = OFF_W; j < OFF_BA; ++j) P_(i,j) = P_(j,i) = T(0);
+        }
+        for (int i = 0; i < NC; ++i)
+            for (int j = 0; j < NC; ++j)
+                for (int a = 0; a < 3; ++a)
+                    for (int b = 0; b < 3; ++b)
+                        P_(world_index(i,a),world_index(j,b)) =
+                            PR(i,j) * motion_.excitation().re(a,b) + Pimag(i,j) * motion_.excitation().im(a,b);
+        end_write_();
+    } else {
     MatC P1;
     if (!model_.stationary_covariance(P1)) return;
     begin_write_();
@@ -715,6 +834,8 @@ void TFGC3_CLS::reset_aw_covariance_to_stationary() {
                 for (int l = 0; l < 3; ++l)
                     P_(world_index(a, k), world_index(b, l)) = P1(a, b) * Sigma_s_(k, l);
     end_write_();
+
+    }
 }
 
 TFGC3_TPL
@@ -979,7 +1100,7 @@ void TFGC3_CLS::apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks
 }
 
 TFGC3_TPL
-void TFGC3_CLS::add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q, const MatC& Qc) const {
+void TFGC3_CLS::add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q, const MatC& Qc, const MatC* Qi) const {
     auto add3 = [&](int r, int c, const Matrix3& M) {
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) P(r + i, c + j) += M(i,j);
@@ -1001,7 +1122,10 @@ void TFGC3_CLS::add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q,
         add3(OFF_BG, oi, Matrix3(GQb[i].transpose()));
         for (int j = 0; j < NC; ++j) {
             const int oj = OFF_W + 3 * j;
-            const Matrix3 M = GQp[i] * b.Xs[j].transpose() + Qc(i,j) * Sigma_s_;
+            Matrix3 M = GQp[i] * b.Xs[j].transpose();
+            if constexpr (kMotion)
+                M += Qc(i,j) * motion_.excitation().re + (*Qi)(i,j) * motion_.excitation().im;
+            else M += Qc(i,j) * Sigma_s_;
             add3(oi, oj, M);
         }
     }
@@ -1012,8 +1136,8 @@ TFGC3_TPL
 void TFGC3_CLS::build_transition(const Vector3& gyr, T Ts, MatrixNX& Phi) const {
     Phi.setIdentity();
     if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-    MatC Fc, Qc;
-    if (!carma::discretize_lti<T,NC>(model_.A(), model_.W(), Ts, Fc, Qc)) return;
+    MatC Fc, Qc, Qi;
+    if (!discretize_motion_(Ts, Fc, Qc, Qi)) return;
     const Vector3 w = gyr - X_.B.col(0);
     const Eigen::Matrix<T,3,NC> W1 = X_.X * Fc.transpose();
     StepBlocks b;
@@ -1026,15 +1150,15 @@ TFGC3_TPL
 void TFGC3_CLS::build_process_noise(const Vector3& gyr, T Ts, MatrixNX& Qd) const {
     Qd.setZero();
     if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-    MatC Fc, Qc;
-    if (!carma::discretize_lti<T,NC>(model_.A(), model_.W(), Ts, Fc, Qc)) return;
+    MatC Fc, Qc, Qi;
+    if (!discretize_motion_(Ts, Fc, Qc, Qi)) return;
     const Vector3 w = gyr - X_.B.col(0);
     const Eigen::Matrix<T,3,NC> W1 = X_.X * Fc.transpose();
     StepBlocks b;
     step_blocks_(w, Ts, X_.R, Fc, W1, b);
     StepNoise q;
     step_noise_(w, Ts, X_.R, b, q);
-    add_noise_(Qd, b, q, Qc);
+    add_noise_(Qd, b, q, Qc, kMotion ? &Qi : nullptr);
 }
 
 TFGC3_TPL
@@ -1048,8 +1172,8 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     const Matrix3 R0 = X_.R;
 
     refresh_discretization_(Ts);
-    const MatC& Fc = disc_.Phi();
-    const MatC& Qc = disc_.Q();
+    const MatC& Fc = motion_F_();
+    const MatC& Qc = motion_Q_();
 
     // Mean: attitude by the bias-corrected rate, every world axis by the exact
     // CARMA transition, the accelerometer bias by its OU decay (held: frozen).
@@ -1067,7 +1191,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     apply_phi_(M, true, b, Fc, P_);
     StepNoise q;
     step_noise_(w, Ts, R0, b, q);
-    add_noise_(P_, b, q, Qc);
+    add_noise_(P_, b, q, Qc, motion_QI_());
     symmetrize_P_();
 }
 
@@ -1175,6 +1299,7 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     // Off-CoG IMU: remove the rotational term L at the sensor (see the header).
     const bool lever = lever_.enabled();
     const Vector3 f_cog = lever ? Vector3(acc_meas - lever_.acceleration()) : acc_meas;
+    if constexpr (kMotion) motion_.observe(R * (f_cog - ba_term) + g_world);
     const Vector3 r = R * (f_cog - ba_term) - (Vector3(X_.X.col(IA)) - g_world);
     last_acc_diag_.r = r;
     const Matrix3 Rw = R * Racc_ * R.transpose();

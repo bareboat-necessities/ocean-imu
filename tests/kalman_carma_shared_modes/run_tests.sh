@@ -9,6 +9,7 @@ set -e
 # and of its 27-state motion realization, a paired Monte Carlo smoke row and
 # the gated replay of the scored dataset records.  The full study is
 # tools/carma_shared_modes_study.py.
+./tfg_shared_modes-test
 ./carma_shared_modes-test
 ./carma_shared_modes_realization-test
 
@@ -38,3 +39,21 @@ PY
 # its bar fails the run after all eight are scored.  The chart gallery and
 # the tracking charts are drawn from these replays.
 W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim
+
+# Controlled geometry comparison with the same Evidence schedule and data.
+./kalman_carma_shared_modes-bench --header --extended --level full \
+    --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" --seed 1 --score-start 200 \
+    --filters A41@C,T41@C,CSM,TCSM,TCSM:off > smoke_tfg_shared.csv
+python3 - <<'CHECK'
+import csv,math
+rows={r['filter']:r for r in csv.DictReader(open('smoke_tfg_shared.csv'))}
+for f in ('TCSM','TCSM:off'):
+    assert rows[f]['failed']=='0',f
+    assert rows[f]['states']=='27',f
+# Same physical process; finite group resets are Gaussian approximations in
+# different latent dimensions. Use the existing TFG/CARMA 1% equivalence bar.
+for axis in 'xyz':
+    ratio=float(rows['TCSM:off']['rms_'+axis])/float(rows['T41@C']['rms_'+axis])
+    assert abs(ratio-1)<.01,(axis,ratio)
+print('TFG shared smoke:',{f:float(r['rms_h']) for f,r in rows.items()})
+CHECK
