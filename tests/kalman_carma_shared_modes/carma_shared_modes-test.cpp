@@ -23,6 +23,11 @@
           without confidence (bounded error and NEES with it); continuity of
           p, v, attitude and covariance through a forced fallback; recovery
           after the prior is corrected
+      [8] PSD-cap policy of the excitation mapping (double): legacy
+          cross-term shrinkage is unchanged; cap_coherence keeps the measured
+          regression, holds the applied coherence at rho, stays positive
+          semidefinite, equals the legacy mapping where the cap does not bind,
+          and rescales the horizontal colouring by sqrt(lambda)
 */
 
 #define EIGEN_NON_ARDUINO
@@ -568,6 +573,88 @@ void test7_double() {
     check(f.health().covariance_asymmetry < 1e-12, "double core: covariance symmetric", f.health().covariance_asymmetry, 1e-12);
 }
 
+// [8] PSD-cap policy.  An external band cross-spectrum whose horizontal
+// motion is three times the vertical one, in quadrature (a weak heave RAO).
+static kc::Hermitian3<double> band_matrix(double horizontal_ratio) {
+    using C = std::complex<double>;
+    const double az = 0.5236;   // 30 deg
+    const C v[3] = {C(0.0, horizontal_ratio * std::cos(az)), C(0.0, horizontal_ratio * std::sin(az)), C(1.0, 0.0)};
+    kc::Hermitian3<double> S;
+    for (int i = 0; i < 3; ++i)
+        for (int j = i; j < 3; ++j) S.set(i, j, v[i] * std::conj(v[j]) + (i == j ? C(0.02, 0.0) : C(0.0, 0.0)));
+    return S;
+}
+static double hermitian_min_eig(const kc::Hermitian3<double>& E) {
+    Eigen::Matrix<double,6,6> Mr;
+    Mr << E.re, -E.im, E.im, E.re;
+    return Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,6,6>>(Mr).eigenvalues().minCoeff();
+}
+void test8_cap_policy() {
+    std::printf("[8] PSD-cap policy of the excitation mapping\n");
+    using Cpl = kc::CarmaCoupling<double>;
+    using C = std::complex<double>;
+    const Eigen::Vector3d sig(0.4, 0.4, 0.4);
+    const C R[3] = {C(1.0), C(1.0), C(1.0)};
+    auto mapping = [&](double ratio, float rho, double* gain) {
+        Cpl c;
+        auto cfg = c.config();
+        cfg.source = kc::CarmaCouplingConfig::Source::External;
+        cfg.cap_coherence = rho;
+        c.set_config(cfg);
+        c.set_external(band_matrix(ratio), 0.0);
+        return c.excitation(sig, R, gain);
+    };
+    auto coherence = [](const kc::Hermitian3<double>& E) {   // multiple coherence of z on (x, y)
+        Eigen::Matrix2cd H;
+        H << E(0,0), E(0,1), E(1,0), E(1,1);
+        Eigen::Vector2cd b(E(0,2), E(1,2));
+        return (b.adjoint() * H.inverse() * b)(0).real() / E.re(2,2);
+    };
+    const kc::Hermitian3<double> S = band_matrix(3.0);
+    const C reg_x = S(0,2) / S.re(2,2), reg_y = S(1,2) / S.re(2,2);
+    double g_old = 0.0, g_new = 0.0;
+    const auto E_old = mapping(3.0, 0.0f, &g_old);
+    const auto E_new = mapping(3.0, 0.95f, &g_new);
+    const double reg_old = std::abs(E_old(0,2) / E_old.re(2,2) - reg_x) / std::abs(reg_x);
+    const double reg_new = std::max(std::abs(E_new(0,2) / E_new.re(2,2) - reg_x), std::abs(E_new(1,2) / E_new.re(2,2) - reg_y)) / std::abs(reg_x);
+    check(std::abs(coherence(E_old) - 0.999) < 1e-9 && reg_old > 0.5 && g_old == 1.0,
+          "legacy cap: applied coherence 0.999 by shrinking the cross term (measured regression lost)", reg_old, 0.5);
+    check(reg_new < 1e-12, "cap_coherence: measured horizontal-on-vertical regression kept exactly", reg_new, 1e-12);
+    const double rho = static_cast<double>(0.95f);   // the configured float
+    check(std::abs(coherence(E_new) - rho) < 1e-12, "cap_coherence: applied coherence held at rho = 0.95",
+          std::abs(coherence(E_new) - rho), 1e-12);
+    check(g_new > 1.0 && std::abs(E_new.re(0,0) - g_new * sig(0) * sig(0)) < 1e-12 * g_new &&
+          std::abs(E_new.re(2,2) - sig(2) * sig(2)) < 1e-15,
+          "cap_coherence: horizontal block enlarged by the reported lambda, vertical prior unchanged", g_new, 1.0);
+    check(hermitian_min_eig(E_new) >= -1e-12, "cap_coherence: excitation positive semidefinite", hermitian_min_eig(E_new), -1e-12);
+    double g_weak_old = 0.0, g_weak_new = 0.0;
+    const auto W_old = mapping(0.3, 0.0f, &g_weak_old);
+    const auto W_new = mapping(0.3, 0.95f, &g_weak_new);
+    check(W_old.re == W_new.re && W_old.im == W_new.im && g_weak_new == 1.0,
+          "cap_coherence: identical to the legacy mapping where the cap does not bind");
+    // Latent colouring of the motion block: an enlarged horizontal prior
+    // rescales the horizontal w states by sqrt(lambda), the vertical not at all.
+    csm::SharedModesMotion<double> m;
+    auto cfg = m.coupling().config();
+    cfg.source = kc::CarmaCouplingConfig::Source::External;
+    cfg.cap_coherence = 0.95f;
+    m.coupling().set_config(cfg);
+    m.coupling().set_external(band_matrix(0.3), 0.0);
+    m.set_vertical(1.0, 0.4);
+    m.set_horizontal(1.0, 0.4, 0.4, 0.0);
+    m.refresh(0.005);
+    Eigen::Matrix<double,6,6> Mx[3];
+    m.take_axis_recoordinatization(Mx);   // the sigma change from construction
+    m.coupling().set_external(band_matrix(3.0), 0.0);
+    m.set_vertical(1.0, 0.4);             // a model commit with unchanged sigma
+    m.refresh(0.005);
+    const bool pending = m.take_axis_recoordinatization(Mx);
+    const double lam = m.excitation().re(0,0) / (0.4 * 0.4);
+    const double err = std::max(std::abs(Mx[0](4,4) - std::sqrt(lam)), std::abs(Mx[1](5,5) - std::sqrt(lam)));
+    check(pending && lam > 1.0 && err < 1e-12 && Mx[2].isIdentity(0.0),
+          "cap_coherence: horizontal latent colouring rescaled by sqrt(lambda), vertical untouched", err, 1e-12);
+}
+
 int main() {
     test1_api();
     test2_limits();
@@ -576,6 +663,7 @@ int main() {
     test5_direction();
     test6_filter();
     test7_double();
+    test8_cap_policy();
     std::printf("carma_shared_modes-test: %d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

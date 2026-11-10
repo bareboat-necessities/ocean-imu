@@ -44,6 +44,12 @@
   independent envelope samples, and scaled down if needed so that
   b^H H^-1 b <= sigma_z^2: Sigma is Hermitian positive semidefinite by
   construction and equals the baseline diagonal without coupling evidence.
+  With cap_coherence = rho > 0 the cap instead keeps b and enlarges the
+  horizontal block by lambda = b^H H^-1 b / (rho sigma_z^2) when that ratio
+  exceeds one: the prior keeps the measured regression E[h | z] = b z /
+  sigma_z^2 and a horizontal innovation of at least (1 - rho) H.  Shrinking
+  b at the cap understates the regression when horizontal motion exceeds the
+  baseline prior (a weak heave RAO) and leaves a singular prior.
   With the wrapper's equal horizontal priors the mapping is equivariant under
   rotations about the vertical (sigma_h^2 I is invariant, the cross vector
   rotates, every factor is an invariant), so the prior does not depend on how
@@ -69,6 +75,7 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <limits>
@@ -206,6 +213,10 @@ struct CarmaCouplingConfig {
     float warmup_s = 120.0f;            // Estimated: no coupling before this
     float freeze_at_s = std::numeric_limits<float>::infinity();
     bool shrink = true;                 // debiased-coherence shrinkage
+    // PSD cap policy: 0 scales the cross term down to applied coherence
+    // 0.999; rho in (0, 0.999] keeps it and enlarges the horizontal block to
+    // applied coherence rho (file header).
+    float cap_coherence = 0.0f;
 };
 
 template<typename T>
@@ -272,7 +283,11 @@ public:
 
     // Hermitian excitation (file header) for prior stds sig and axis
     // responses R at f_op.  Without coupling evidence: diag(sig^2).
-    Hermitian3<T> excitation(const Vector3& sig, const std::complex<T> (&R)[3]) const {
+    // horizontal_gain, if given, receives the factor applied to the
+    // horizontal block (1 unless cap_coherence enlarged it).
+    Hermitian3<T> excitation(const Vector3& sig, const std::complex<T> (&R)[3],
+                             T* horizontal_gain = nullptr) const {
+        if (horizontal_gain) *horizontal_gain = T(1);
         using C = std::complex<T>;
         Hermitian3<T> out = Hermitian3<T>::diagonal(sig.array().square().matrix());
         Hermitian3<T> S;
@@ -340,16 +355,28 @@ public:
             hxy = (real_form ? C(m.real(), T(0)) : m) * (px * k / h);
         }
         // Positive semidefinite: b^H H^-1 b <= m_zz, else b scaled down
-        // (a rotation-invariant factor).
+        // (a rotation-invariant factor), or H enlarged (cap_coherence).
         const T dh = hxx * hyy - std::norm(hxy);
         if (dh > T(0)) {
             const C ib0 = (hyy * b0 - hxy * b1) / dh, ib1 = (hxx * b1 - std::conj(hxy) * b0) / dh;
             const T q = (std::conj(b0) * ib0 + std::conj(b1) * ib1).real();
-            const T qmax = T(0.999) * mzz;
-            if (q > qmax) {
-                const T f = std::sqrt(qmax / q);
-                b0 *= f;
-                b1 *= f;
+            const T rho = static_cast<T>(cfg_.cap_coherence);
+            if (rho > T(0)) {
+                const T qcap = std::min(rho, T(0.999)) * mzz;
+                if (q > qcap) {
+                    const T lambda = q / qcap;
+                    hxx *= lambda;
+                    hyy *= lambda;
+                    hxy *= lambda;
+                    if (horizontal_gain) *horizontal_gain = lambda;
+                }
+            } else {
+                const T qmax = T(0.999) * mzz;
+                if (q > qmax) {
+                    const T f = std::sqrt(qmax / q);
+                    b0 *= f;
+                    b1 *= f;
+                }
             }
         }
         Hermitian3<T> Sm;

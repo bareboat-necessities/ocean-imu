@@ -585,14 +585,18 @@ private:
         WI_ = (g2 * G * J2 * G.transpose()).template cast<T>();
         g2_ = static_cast<T>(g2);
         const std::complex<T> Rr[3] = {T(1), T(1), T(1)};
-        Sigma_ = coupling_.excitation(sig_, Rr);
+        T h_gain = T(1);
+        Sigma_ = coupling_.excitation(sig_, Rr, &h_gain);
         if (!quadrature_enabled_) Sigma_.im.setZero();
 
         // Commit re-coordinatization: hold the normalized colouring (file header).
         bool any = false;
         for (int a = 0; a < 3; ++a) {
             M_[a].setIdentity();
-            const double s = std::sqrt(g2) * static_cast<double>(sig_(a));
+            // An enlarged horizontal block (coupling cap) scales its
+            // colouring like a larger sigma; otherwise exactly as before.
+            double s = std::sqrt(g2) * static_cast<double>(sig_(a));
+            if (a < 2 && h_gain > T(1)) s *= std::sqrt(static_cast<double>(h_gain));
             if (have_prev_ && s != scale_[a] && scale_[a] > 0.0 && s > 0.0) {
                 const T r = static_cast<T>(s / scale_[a]);
                 M_[a](4,4) = r;

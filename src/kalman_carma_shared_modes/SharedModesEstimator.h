@@ -26,6 +26,10 @@ struct SharedModesConfig {
     T horizon_s = T(240);         // coupling estimate averaging horizon
     T band_frac = T(0.15);        // envelope band / f_op
     T warmup_s = T(120);          // coupling estimate warm-up
+    // Applied coherence kept at the PSD cap by enlarging the horizontal prior
+    // (CarmaCouplingConfig::cap_coherence); 0 restores cross-term shrinkage,
+    // which understates the measured regression under a weak heave RAO.
+    T cap_coherence = T(0.95);
 };
 
 template<typename T, class Core>
@@ -76,6 +80,7 @@ public:
         cc.gain = static_cast<float>(cfg_.coupling_gain);
         cc.warmup_s = static_cast<float>(cfg_.warmup_s);
         cc.shrink = cfg_.mode != CouplingMode::External;
+        cc.cap_coherence = static_cast<float>(cfg_.cap_coherence);
         m.coupling().set_config(cc);
         typename Motion::Estimator::Config ec;
         ec.horizon_s = cfg_.horizon_s;
