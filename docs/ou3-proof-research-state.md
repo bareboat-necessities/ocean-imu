@@ -3,37 +3,37 @@
 ## Native secant source binding
 
 The finite native diagnostic is bound to the current complete `src/` tree.
-Experimental TFG constructor lint repairs changed the broad source fingerprint,
-so the unchanged shipping OU-III probe was actually rebuilt and replayed at both
-registered perturbation sizes. Both raw native byte hashes match main and both
-finite diagnostic run summaries match the preceding replay exactly. See
-`reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
+The experimental shared-mode excitation cap
+(`src/kalman_carma/CarmaCrossSpectrumEstimator.h`,
+`src/kalman_carma_shared_modes/`) changed the broad source fingerprint, so the
+unchanged shipping OU-III probe was rebuilt and replayed at both registered
+perturbation sizes. Both raw native byte hashes match main; the run summaries
+differ from the committed replay only by host round-off (at most 1.4e-14).
+See `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the
+receipt. The four existing wrapper traces, OU-III included, stay bit-identical
+to main over 6,000 samples.
 
-Validation: the three shipping-provenance tests and the complete 1,152-test
-Python suite pass. All six repository quality jobs passed on `a975b41` and on
-`ac84741` (Clang-Tidy 34 min 36 s). Uninterrupted local `make all` exits 0 on a
-pristine `ac84741` tree and on the follow-up branch `29730fa`: all 19 suite
-scripts with original thresholds (`regression_gates.json`). The post-review
-receipt's running build and incomplete local Clang-Tidy are historical.
+Validation: Uninterrupted `make all` exits 0 after a clean rebuild of `tests/` on the
+tree of `7315475`: all 19 suite scripts with original thresholds and 1,152
+validation tests with no skips (`regression_gates.json`). The rebuilt bench
+binary is byte-identical to the one that produced the published scores.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
 Relaxations introduced: none; the inherited off-orbit finite secants remain
 non-promoting diagnostics, not reachable or uniform derivative certificates.
-The invalidated source binding, local compiler memory exhaustion, disconnected
-validation session, Windows CI timeout, apt-mirror timeouts in eight `ac84741`
-build jobs, and earlier local `make all` exits (report edits made during a run
-and a shadowed `mpl_toolkits`; then four archive-copy tests at the session disk
-limit) are class E implementation/diagnostic failures; none establishes
-estimator instability. Windows linked 12 of 13
-sketches before the 60-minute limit; compilation now uses two workers with the
-same sketches, flags, toolchain and limit. Historical source-identity records
-are preserved in `planar-native-secants-source-binding-archive.json` and the
-provenance references resolve to their respective archived records. No shipping
+The invalidated source binding, apt-mirror timeouts in CI build jobs, a
+Windows CI timeout (compilation now uses two workers), a local
+driver-script ordering error (sweep analysis before the compact scores existed;
+rerun from cache) and earlier workspace exits (report edits during a run, a
+shadowed `mpl_toolkits`, archive-copy tests at the session disk limit) are
+class E implementation/diagnostic failures; none establishes estimator
+instability. Historical source-identity records are preserved in
+`planar-native-secants-source-binding-archive.json` and the provenance
+references resolve to their respective archived records. No shipping
 counterexample was found; established shipping-level results and open theorem
-obligations remain unchanged. The apt-failed CI build jobs need a rerun;
-device runtime and peak stack/heap measurements still require physical
-hardware.
+obligations remain unchanged. Device runtime and peak stack/heap measurements
+still require physical hardware.
 
 ## Current hypothesis
 
