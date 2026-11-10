@@ -124,6 +124,33 @@ Post-outage yaw [deg]&2.03&1.97&2.02&1.96\\
 Yaw recovery [s]&26.55&25.16&26.46&25.24\\
 Observed / 24&22&22&22&22\\
 \bottomrule\end{tabular}\end{table}
+\begin{table*}[!t]\centering
+\caption{Exploratory heave-RAO dose response, 12 paired seeds per cell (primary seeds 1001--1012). $k$ scales the heave RAO only; horizontal motion and every sensor stream are unchanged within a seed. Broad and long-crested cells change only the $\cos^{2s}$ spreading ($s=1$, $s=10^4$; default $s=4$). $\gamma^2$ is the applied multiple coherence of the known diagnostic prior (cap 0.999). Heave is the mean RMS; heading is the median RMS with runs above 30$^\circ$ in parentheses.}
+\footnotesize\begin{tabular}{lrrrrrrrrrrr}\toprule
+&&\multicolumn{4}{c}{Heave RMS [mm]}&\multicolumn{6}{c}{Heading RMS [deg]}\\
+$k$&$\gamma^2$&Q ind.&Q shared&T shared&Q real&Q shared&T shared&Q real&T known&T known real&T no reset\\\midrule
+1&0.334&14.6&13.8&13.8&14.6&1.8&1.7&1.7&1.7&1.7&1.7\\
+0.8&0.523&12.7&11.5&11.5&12.6&1.8&1.7&1.7&1.8&1.7&1.7\\
+0.7&0.685&11.7&10.2&10.2&11.6&1.8&1.8&1.7&1.8&1.7&1.7\\
+0.6&0.936&10.6&8.8&8.8&10.5&2.0&1.9&1.7&1.8&1.7&1.7\\
+0.5&0.999&9.6&15.2&15.2&9.4&2.3&2.2&1.7&2.5&1.7&1.7\\
+0.4&0.999&8.4&22.5&22.2&8.1&7.0&2.9&1.6&4.3&1.7&2.0\\
+0.3&0.999&7.2&24.4&29.7&6.8&52.5 (11)&16.5&1.5&24.0 (2)&1.6&1.7\\
+0.25&0.999&6.6&21.9&29.0&6.2&102.5 (11)&34.5 (7)&1.4&43.6 (12)&1.5&2.6\\
+0.2&0.999&6.0&22.5&26.4&5.6&103.0 (12)&86.8 (9)&1.4&56.6 (12)&1.5&2.9\\
+0.15&0.999&5.5&21.7&25.7&5.3&96.3 (12)&56.6 (7)&1.7&66.4 (12)&1.5&3.2\\
+0.15 broad&0.999&5.5&26.8&29.7&5.3&72.1 (11)&38.9 (7)&1.8&51.2 (12)&1.8&2.9\\
+0.15 long&0.999&5.4&13.9&20.3&5.3&102.1 (12)&82.3 (11)&1.7&70.3 (12)&1.8&3.9\\
+\bottomrule\end{tabular}\label{tab:heave-sweep}\end{table*}
+\begin{table}[!t]\centering
+\caption{Horizontal-prior intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S=2$ (same seeds). Heave change relative to real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above 30$^\circ$ in parentheses.}
+\footnotesize\begin{tabular}{lrllrr}\toprule $k$&$\gamma^2$&Q shared [\%]&T shared [\%]&Q [deg]&T [deg]\\\midrule
+1&0.083&-1.5 [-1.6, -1.4]&-1.5 [-1.6, -1.4]&1.8&1.8\\
+0.5&0.339&-7.1 [-7.5, -6.7]&-7.1 [-7.6, -6.7]&1.8&1.8\\
+0.3&0.960&-22.0 [-23.3, -20.8]&-22.1 [-23.4, -20.8]&1.9&1.9\\
+0.25&0.999&+50.1 [+40.6, +59.7]&+50.8 [+41.3, +60.4]&3.3&2.3\\
+0.2&0.999&+139.7 [+118.3, +161.0]&+137.3 [+117.0, +157.6]&5.6&3.0\\
+\bottomrule\end{tabular}\label{tab:heave-sf2}\end{table}
 \paragraph{Flagged trajectories.}
 No registered estimator trajectory triggered the benchmark divergence/nonfinite flag. This flag does not test useful heading accuracy: the separately counted reduced-heave heading failures are severe practical estimation failures, even though position remains bounded.
 \paragraph{Covariance audits.}

@@ -3,6 +3,7 @@ runs.csv
 dataset_cache/
 transient_cache/
 weak_cache/
+heave_sweep_cache/
 reset_runs.csv
 # Keep only the compact drawing inputs consumed by the article generator.
 traces/*

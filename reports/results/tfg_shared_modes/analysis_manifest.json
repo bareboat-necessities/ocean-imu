@@ -1,5 +1,5 @@
 {
-  "generator_sha256": "a3e181df42cba95941f795ece4d8a46a7721e53cad4aae248d0d1f60dbe3b92c",
+  "generator_sha256": "5782dbf2503c768032aab1715621498b67b16e3f7537c850a7e18f19f84404e7",
   "inputs": {
     "ablations.csv": "6e77558632c8da016d8221d004be39e01449835cf2cef20297f196eb4be331fd",
     "aggregate.csv": "3c367da2cac3429a788499c81315d7298d676fbcc0ea408e74c09dbff401ba56",
@@ -13,6 +13,11 @@
     "experiment_counts.json": "97707d7198f3ff227810a0008032d5a804ce3760226e4d981d5841d91c429ed4",
     "firmware_builds.json": "bdf370d1b48665a8a48e019996675fc240933b5c6bce75befef5b56433a33a79",
     "heading_failures.csv": "47c6130bfc0d58a98ee3f4e0226e8bdd63abe0f5cc54d569f1a37b62e5e033cb",
+    "heave_sweep_analysis.json": "5d90aa02360f7fddd76d523ee7b70065b7efe1382386d07e1860e712a20c1169",
+    "heave_sweep_paired.csv": "88ad406c6cc5414614e4291ca4b3c1a308fe5c012341c6a9fa6d2900e65b2c71",
+    "heave_sweep_protocol.json": "126d75b4af207209bef3dc25d3cab62ed1fc5d5f2b01504998e62dae1eabf574",
+    "heave_sweep_runs.csv": "e9c9f3230671860f746b91fcc773a58f759d4e37784168c16baeb087cdb800dc",
+    "heave_sweep_summary.csv": "56b89140d5bf9bc4027fab7a83c7d7c6966e33ac2e136eeeda5aed77eaaa741e",
     "host_fixed.csv": "d1ec382af9fa528bcad49cd63b03c90c3a89e945dd2a2701dbbcbc24896291b7",
     "host_jitter.csv": "d299cecb6687adb0a4a8cbd994fb7e79aa24121da7bb00d97606bed570dbfd0b",
     "host_order_environment.json": "ffaa5a37b160c8b77b2cdc880a43aedeb27e81da871d6b04dff17cb1ead8bc15",

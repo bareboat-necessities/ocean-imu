@@ -432,6 +432,7 @@ the primary finding, uses 12 paired seeds and is explicitly exploratory.
 \section{Results, Ablations and Degradation}
 \ResultsDiscussion
 \FailureDiscussion
+\HeaveSweepDiscussion
 \SupplementDiscussion
 \SecondaryDiscussion
 \input{tfg-shared-tables.tex-part}
@@ -481,6 +482,13 @@ Bars are means and error bars are marginal 95\% intervals across seeds.}
 curves remove imaginary coupling. Falling confidence and PSD fallback do not
 guarantee that the attitude/bias estimate remains useful.}
 \end{figure*}
+\begin{figure}[!t]\centering\fig{heave_sweep}
+\caption{Exploratory heave-RAO dose response on the first 12 primary seeds.
+Horizontal motion and sensor streams are unchanged within a seed. Top: heave
+RMS change relative to real-only coupling (paired 95\% intervals), including
+the horizontal-prior intervention $S=2$; middle: median heading RMS and
+quartiles; bottom: share of runs above 30 degrees. Known coupling is a
+diagnostic input, never an operational one.}\end{figure}
 \section{Computational Cost and Embedded Evidence}
 The implementation uses one common TFG core parameterized by a motion policy;
 its original two-template-argument interface remains valid. It uses the same

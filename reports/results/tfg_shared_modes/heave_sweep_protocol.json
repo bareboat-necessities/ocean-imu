@@ -1,0 +1,79 @@
+{
+  "binary_sha256": "519b769f1e18fc8db786e6e3dc9aa3c9c40a978656476924dd01f6db3228d9c9",
+  "filters": [
+    "A41@C",
+    "CSM",
+    "TCSM",
+    "CSM/real",
+    "TCSM/real",
+    "CSM:noconf/ext-true",
+    "TCSM:noconf/ext-true",
+    "TCSM:noconf/ext-true/real",
+    "TCSM/noreset"
+  ],
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012
+  ],
+  "score_start_s": 300,
+  "cells": {
+    "h1.00": "jonswap_fp0.29_hs0.8_g3.3+T1200",
+    "h0.80": "jonswap_fp0.29_hs0.8_g3.3+hscale0.8+T1200",
+    "h0.70": "jonswap_fp0.29_hs0.8_g3.3+hscale0.7+T1200",
+    "h0.60": "jonswap_fp0.29_hs0.8_g3.3+hscale0.6+T1200",
+    "h0.50": "jonswap_fp0.29_hs0.8_g3.3+hscale0.5+T1200",
+    "h0.40": "jonswap_fp0.29_hs0.8_g3.3+hscale0.4+T1200",
+    "h0.30": "jonswap_fp0.29_hs0.8_g3.3+hscale0.3+T1200",
+    "h0.25": "jonswap_fp0.29_hs0.8_g3.3+hscale0.25+T1200",
+    "h0.20": "jonswap_fp0.29_hs0.8_g3.3+hscale0.2+T1200",
+    "h0.15": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+T1200",
+    "h0.15_broad": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+sp1+T1200",
+    "h0.15_long": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+sp10000+T1200"
+  },
+  "heading_failure_deg": 30.0,
+  "role": "exploratory dose-response diagnosis; no estimator retuning; outside the primary multiplicity family",
+  "extension": {
+    "cells": [
+      "h0.80",
+      "h0.70",
+      "h0.60"
+    ],
+    "registered": "after the first analysis of the other cells",
+    "prediction": "cap: the 0.999 PSD cap of the known prior binds for k < 0.58 (from coherence 0.334 at x1); shared-prior heave harm relative to real-only coupling begins only where the cap binds"
+  },
+  "intervention": {
+    "s_factor": 2.0,
+    "cells": [
+      "h1.00",
+      "h0.50",
+      "h0.30",
+      "h0.25",
+      "h0.20"
+    ],
+    "filters": [
+      "A41@C/sf2",
+      "CSM/sf2",
+      "TCSM/sf2",
+      "CSM/real/sf2",
+      "TCSM/real/sf2",
+      "CSM:noconf/ext-true/sf2",
+      "TCSM:noconf/ext-true/sf2"
+    ],
+    "registered": "after the extension analysis",
+    "prediction": "intervention: with S_factor 2 the known prior reaches the cap only for k < 0.29; shared heave harm relative to real-only coupling and the heading collapse are absent at k >= 0.3 and return at k <= 0.25"
+  },
+  "predictions": {
+    "dose": "shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal",
+    "spreading": "at x0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse"
+  }
+}

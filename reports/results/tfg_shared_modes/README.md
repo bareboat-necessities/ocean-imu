@@ -2,8 +2,9 @@
 
 The reusable 27-state TFG implementation works, but the evidence does **not**
 support a general replacement of shared QMEKF. Keep it experimental and keep
-the shipping OU-III default. The main practical problem is quadrature coupling
-under reduced heave, affecting both shared geometries.
+the shipping OU-III default. The main practical problem affects both shared
+geometries: under reduced heave the shared excitation mapping caps the
+quadrature coupling into a singular prior (see the dose response below).
 
 | TFG shared versus QMEKF shared | Condition-balanced change | Paired 95% interval |
 |---|---:|---:|
@@ -12,9 +13,9 @@ under reduced heave, affecting both shared geometries.
 
 Each condition has equal log-ratio weight within each independent seed. The
 primary study uses 24 seeds, 27 conditions, 1200 seconds at 200 Hz, scored from
-300 seconds. There are 4,204 estimator trajectories including registered
+300 seconds. There are 5,920 estimator trajectories including registered
 ablations, reset diagnostics, pinned replays, transition diagnostics and the
-exploratory reduced-heave study. See `experiment_counts.json` for the accounting.
+two exploratory reduced-heave studies. See `experiment_counts.json` for the accounting.
 The registered simulation source and original protocols remain recoverable at
 the revision in `execution_provenance.json`. Subsequent constructor lint repairs
 retain the same expressions; repeated equivalence checks and counterbalanced
@@ -35,6 +36,8 @@ row ordering deterministic and derive report claims from the measured tables.
   fails; confidence and its PSD fallback only partly contain the problem.
   This implicates prior/attitude/bias interaction rather than establishing a
   unique cause or validating a replacement policy.
+- The exploratory heave-RAO sweep (below) traces this failure to the shared
+  excitation mapping, not to TFG geometry.
 - Ordinary position improvements are mostly tiny. At 800 rpm the geometry
   improves tilt, heading and accelerometer-bias tracking, but maneuvering
   worsens heading (1.75 to 2.28 degrees) and gyro-bias tracking. These are
@@ -48,6 +51,51 @@ row ordering deterministic and derive report claims from the measured tables.
   recovery differences are practically small. Reset transport is retained as
   the verified default even though omitting it changes the reduced-heave
   failure mode.
+
+## Reduced-heave dose response and mechanism
+
+`tools/tfg_shared_modes_heave_sweep.py` scales the heave RAO by `k` on the
+first 12 primary seeds; horizontal motion and sensor streams are unchanged.
+The repeated `k=1` and `k=0.15` cells reproduce all 132 overlapping published
+runs exactly, and a rebuilt binary reproduces every first-run row.
+
+| k | Known-prior coherence | QMEKF shared heave vs real-only | Heading > 30 deg (Q/T) |
+|---:|---:|---:|---:|
+| 1 | 0.334 | -5.5% [-5.8, -5.1] | 0/0 of 12 |
+| 0.6 | 0.936 | -16.5% [-17.6, -15.5] | 0/0 |
+| 0.5 | 0.999 (cap) | +62.5% [+55.9, +69.0] | 0/0 |
+| 0.3 | 0.999 (cap) | +257% [+234, +280] | 11/0 |
+| 0.25 | 0.999 (cap) | +255% [+229, +280] | 11/7 |
+
+- The wrapper's horizontal prior is `S_factor` times the vertical one
+  (default 1). The excitation mapping scales the measured horizontal-on-
+  vertical regression by the vertical prior variance, so the applied multiple
+  coherence grows as 0.334/k^2 (measured 0.523, 0.685, 0.936 at k=0.8, 0.7,
+  0.6). From k=0.5 it is pinned at the 0.999 positive-semidefinite cap. The
+  capped prior is singular: no horizontal acceleration remains independent
+  of heave.
+- Up to the cap the quadrature prior helps more as coherence rises. At the cap
+  it turns into heave harm (+62% at k=0.5), while mean coupling confidence is
+  still 0.96. Heading fails later: k=0.4 for QMEKF and k=0.3 for TFG.
+- Intervention: raising only `S_factor` to 2 (`CSM/sf2`, `TCSM/sf2`) divides
+  the coherence by four and predicts a boundary at k=0.29. Observed:
+  -22.0% [-23.3, -20.8] at k=0.3 and +50.1% [+40.6, +59.7] at k=0.25, with no
+  heading failure in any intervention cell. At k=1 the oversized prior cuts
+  the shared gain to -1.5%.
+- TFG geometry delays but does not prevent the collapse. At k=0.3 it changes
+  heading by -48.5 [-65.5, -31.4] degrees and horizontal error by -70 mm
+  relative to shared QMEKF, but heave by +5.3 mm. Both stay far worse than the
+  independent-axis filters, whose heading is 1.8 degrees at every factor.
+- At k=0.15, broad spreading reduces and long-crested seas increase the
+  shared-QMEKF heading error. The estimated-coupling TFG intervals include
+  zero.
+
+Implication: the reduced-heave failure belongs to the shared excitation
+mapping used by both geometries. Further shared-mode work should first
+replace cross-term shrinkage at the cap by a horizontal prior consistent with
+the measured amplitude ratio, and make cap binding visible to the confidence.
+It should then re-register the complete study, including calm water, where
+horizontal band power is dominated by leakage. This sweep retunes nothing.
 
 ## Computation and hardware limits
 
@@ -78,8 +126,9 @@ sizes are recorded separately.
 - `runs.csv.gz`: compact full-rate per-run scores; no raw sample streams.
 - `paired.csv`, `aggregate.csv`, `interactions.csv`, `ablations.csv`: paired
   statistics including negative and insignificant changes.
-- `dataset_*`, `reset_*`, `transient_*`, `weak_*`: diagnostic protocols and
-  results. Pinned replay intervals condition on fixed wave records.
+- `dataset_*`, `reset_*`, `transient_*`, `weak_*`, `heave_sweep_*`: diagnostic
+  protocols and results. Pinned replay intervals condition on fixed wave
+  records.
 - `regression_gates.json`: all 19 original suite scripts completed, including
   1,152 validation tests, with original thresholds; execution repairs and
   resumed command groups are recorded explicitly.

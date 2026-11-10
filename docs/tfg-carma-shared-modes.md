@@ -133,6 +133,20 @@ The executable registry is shared with the existing CARMA benchmark:
 | `TCSM:noconf/ext-true` | Diagnostic truth-derived coupling reference |
 | `TCSM/ext-flip` | Deliberately reversed coupling, confidence enabled |
 | `TCSM:noconf/ext-flip` | Deliberately reversed coupling, unchecked |
+| `TCSM/sf2`, `CSM/sf2` | Diagnostic horizontal prior factor 2 (default 1) |
+
+The exploratory reduced-heave dose response reuses the same benchmark and the
+first 12 primary seeds:
+
+```sh
+python3 tools/tfg_shared_modes_heave_sweep.py run --jobs 3
+python3 tools/tfg_shared_modes_heave_sweep.py analyse   # committed scores only
+```
+
+It scales the heave RAO by `k` with horizontal motion unchanged, records the
+applied multiple coherence of each coupling prior and repeats the cap-binding
+cells with the horizontal prior factor raised to 2. Its repeated `k=1` and
+`k=0.15` cells must reproduce the published per-run scores exactly.
 
 The pinned replay is also shared source: `kalman_tfg_shared_modes-sim` compiles
 `kalman_carma_shared_modes-sim.cpp` with the TFG core policy. Its results use a
