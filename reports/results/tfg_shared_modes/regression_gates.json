@@ -1,11 +1,37 @@
 {
   "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
-  "status": "PASS_AFTER_WORKSPACE_AND_DEPENDENCY_REPAIR_AND_FRESH_FINITE_EVIDENCE",
+  "status": "PASS_WITH_FRESH_FINITE_EVIDENCE",
   "full_build": {
     "command": "make all EIGEN_DIR=<Eigen-root>",
     "build_phase_completed": true,
-    "uninterrupted_whole_command_exit_zero": false,
-    "notes": "The full build completed. Initial full-suite invocations stopped on workspace executable artifacts (one empty new math executable; one non-executable existing PII gravity test). The artifacts were repaired/relinked, and all 19 suite scripts were completed with their original thresholds via resumed make run-tests groups. Missing mpmath/Eigen discovery and CMake were supplied locally. The whole-src OU-III finite diagnostic was regenerated rather than weakening its provenance check."
+    "uninterrupted_whole_command_exit_zero": true,
+    "notes": "Uninterrupted `make all` exits 0 on a pristine tree of the PR head and on the follow-up branch, with every suite script and its original thresholds. Earlier attempts are class E workspace failures, not estimator failures: the original session resumed command groups after workspace artifact repairs; a later PR-head run read report edits made while it ran and a shadowed mpl_toolkits; and the first pristine full build passed 18 suite scripts before four archive-copy validation tests hit the session disk limit.",
+    "verified_runs": [
+      {
+        "revision": "ac84741645227593e9cb3fc492b90216da7415b6",
+        "tree": "pristine detached worktree, no local changes",
+        "command": "make all SIM_DATA_ZIP=<pinned archive>",
+        "exit_code": 0,
+        "suite_scripts": 19,
+        "validation_tests": 1152,
+        "validation_skipped": 0,
+        "wall_s": 1267,
+        "build": "complete; every target built by the immediately preceding full build in the same tree",
+        "log_sha256": "e01fb368f4c40dbbe57c3c9f9a1651c703443e292f6e4e39367c4109a2a4b016"
+      },
+      {
+        "revision": "29730fa735238ba3281773d5da87ca5dd42ad575",
+        "tree": "follow-up branch checkout, no local changes",
+        "command": "make all",
+        "exit_code": 0,
+        "suite_scripts": 19,
+        "validation_tests": 1152,
+        "validation_skipped": 0,
+        "wall_s": 1409,
+        "build": "incremental after a complete build of the same sources",
+        "log_sha256": "8d213537a080e4e94b84d33f96ac94335511487dccae00548517d04780cbf067"
+      }
+    ]
   },
   "suite_scripts": {
     "ahrs": "PASS",

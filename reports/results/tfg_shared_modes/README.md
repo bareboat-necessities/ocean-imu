@@ -129,9 +129,9 @@ sizes are recorded separately.
 - `dataset_*`, `reset_*`, `transient_*`, `weak_*`, `heave_sweep_*`: diagnostic
   protocols and results. Pinned replay intervals condition on fixed wave
   records.
-- `regression_gates.json`: all 19 original suite scripts completed, including
-  1,152 validation tests, with original thresholds; execution repairs and
-  resumed command groups are recorded explicitly.
+- `regression_gates.json`: uninterrupted `make all` exits 0 on a pristine PR
+  head and on the follow-up branch (all 19 suite scripts, 1,152 validation
+  tests, original thresholds); earlier workspace failures are recorded.
 - `shipping_faithfulness.json`: fresh OU-III finite diagnostic reproduces both
   original raw byte hashes; only its source binding and rounding-level summary
   values change. No theorem claim or shipping behavior is changed.

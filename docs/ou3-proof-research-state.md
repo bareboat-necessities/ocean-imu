@@ -9,32 +9,31 @@ registered perturbation sizes. Both raw native byte hashes match main and both
 finite diagnostic run summaries match the preceding replay exactly. See
 `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
 
-Validation: the three shipping-provenance tests and the separate complete
-1,152-test Python suite pass. Full Clang-Tidy 18.1.8 passes both affected
-translation units locally; all six repository quality jobs and all host/firmware
-build jobs passed on the code-identical automated evidence commit `a975b41`.
-The post-review receipt records its publication-time incomplete full local
-Clang-Tidy and running build; those historical statuses are not final results.
-An additional local `make all` rebuilt every target and passed the filter and
-observer suites, then became unobservable when the execution environment
-disconnected during validation. Its whole-command exit remains unverified.
-Current-head workflow results and the article build are linked in PR #739.
+Validation: the three shipping-provenance tests and the complete 1,152-test
+Python suite pass. All six repository quality jobs passed on `a975b41` and on
+`ac84741` (Clang-Tidy 34 min 36 s). Uninterrupted local `make all` exits 0 on a
+pristine `ac84741` tree and on the follow-up branch `29730fa`: all 19 suite
+scripts with original thresholds (`regression_gates.json`). The post-review
+receipt's running build and incomplete local Clang-Tidy are historical.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
 Relaxations introduced: none; the inherited off-orbit finite secants remain
 non-promoting diagnostics, not reachable or uniform derivative certificates.
 The invalidated source binding, local compiler memory exhaustion, disconnected
-validation session and Windows CI timeout are class E implementation/diagnostic
-failures; none establishes estimator instability. Windows linked 12 of 13
+validation session, Windows CI timeout, apt-mirror timeouts in eight `ac84741`
+build jobs, and earlier local `make all` exits (report edits made during a run
+and a shadowed `mpl_toolkits`; then four archive-copy tests at the session disk
+limit) are class E implementation/diagnostic failures; none establishes
+estimator instability. Windows linked 12 of 13
 sketches before the 60-minute limit; compilation now uses two workers with the
 same sketches, flags, toolchain and limit. Historical source-identity records
 are preserved in `planar-native-secants-source-binding-archive.json` and the
 provenance references resolve to their respective archived records. No shipping
 counterexample was found; established shipping-level results and open theorem
-obligations remain unchanged. The remaining validation control is the PR CI
-completion with its original thresholds; device runtime and peak stack/heap
-measurements still require physical hardware.
+obligations remain unchanged. The apt-failed CI build jobs need a rerun;
+device runtime and peak stack/heap measurements still require physical
+hardware.
 
 ## Current hypothesis
 
