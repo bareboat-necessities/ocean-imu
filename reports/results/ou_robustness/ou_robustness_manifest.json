@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "claude/happy-gates-3p8t1o",
-  "git_commit": "731547531764caed757aa4b837b707912f7437f6",
+  "git_commit": "f7dbe79ea187c1679d06002aa9ea6fa4d7424ed1",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -341,8 +341,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-10T22:41:23+00:00",
-    "git_commit": "731547531764caed757aa4b837b707912f7437f6",
+    "generated_at": "2026-11-10T23:49:55+00:00",
+    "git_commit": "f7dbe79ea187c1679d06002aa9ea6fa4d7424ed1",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,7 +541,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "42909688724",
+      "run_id": "42921120005",
       "workflow": "ou-full-evidence-branch"
     }
   },
