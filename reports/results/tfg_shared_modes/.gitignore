@@ -18,5 +18,5 @@ traces/*
 !traces/weak_attitude.csv.gz
 !traces/weak_confidence_CSM.csv.gz
 !traces/weak_confidence_TCSM.csv.gz
-!traces/weak_confidence_CSM_real.csv.gz
-!traces/weak_confidence_TCSM_real.csv.gz
+!traces/weak_confidence_CSM_cap0.csv.gz
+!traces/weak_confidence_TCSM_cap0.csv.gz

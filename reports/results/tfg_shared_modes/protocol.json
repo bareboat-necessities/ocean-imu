@@ -1,16 +1,17 @@
 {
   "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
-  "binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
+  "binary_sha256": "c2f0b565d8e6b9d308ec38adecd04bc9235694dbe885b53509ff0abd19140d1d",
   "source_hashes": {
-    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "aed33f17b22b63db9a9be2c51bad5f02b0dcce4f68cf6274429bdf0ed6117ae4",
+    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "bbd185b1ebf999299f476d3d350d4ca43258cd710a0e74b13f7dfcaa49a7ecbb",
     "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "321c313d9cf4b23e5b1d047c06d330073c235c5ea71802164b974f8ee5db9658",
-    "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h": "ff503ddad29f788f687788d0897653afd02d9c1ea712e31f2bb81347c66dc16e",
-    "src/kalman_carma_shared_modes/SharedModesEstimator.h": "4ac3f1c3d066f73537f9a5dec1479dda22fe04c8ead4408aaff189c53d4b95b8",
+    "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h": "42fc7dbc587bcc61840733d9a9bf8a9737970b5de572bdc9d555bce1ed42d29e",
+    "src/kalman_carma/CarmaCrossSpectrumEstimator.h": "96c390fa1668c53e78e93aa7fb6909cf3a8cfd0f1cb525ac37112b509b3d01e6",
+    "src/kalman_carma_shared_modes/SharedModesEstimator.h": "da5508c63d7fca743ba7a1ceb728b3c19ad1f8689960a3392e7ecdf78cfe6002",
     "src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h": "6942b5de9ad401173456d77f67c98884f98f6b2837c8706022f2f4c5e01a47dd",
     "tests/kalman_carma/carma3_bench.cpp": "e44181541ce3be61fafa1512ecca02ede5df2b90b470c31f62d53f5bbb22c1ba",
     "tests/kalman_carma/CarmaBenchTruth.h": "15de09b92e27aa44a9121d3c7798a0da9cdecbbb334465ed29de5dd395b6507d",
-    "tests/kalman_carma_shared_modes/CsmBenchAdapter.h": "e65f008b4edb4f295214061ab4fd011b214f8b9e3b341ae6c1a1829174b656e8",
-    "tools/tfg_shared_modes_study.py": "1cff6ea86cce414f4671b4aaf4bf9789a59157f5e9856aa47b69a4b440ea533a"
+    "tests/kalman_carma_shared_modes/CsmBenchAdapter.h": "562cf3492be848007d5a708d05cd625b519821835a5a95bc45ef660d9369bc48",
+    "tools/tfg_shared_modes_study.py": "058e095faafd1dd892ffdb0e6e38f9313cc310f8935ebadf4a3ea3d37270798b"
   },
   "sample_rate_hz": 200,
   "duration_s": 1200,

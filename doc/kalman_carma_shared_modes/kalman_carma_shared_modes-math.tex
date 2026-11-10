@@ -302,8 +302,10 @@ with $s=\max(0,1-1/(N_{\mathrm{eff}}\gamma^2))$ the debiased-coherence
 shrinkage, $\kappa_c$ the configured coupling gain, $c$ the coupling
 confidence (\cref{sec:conf}). If
 $q=\vct b\Hr(\sigma_h^2\mat I_2)^{-1}\vct b>\rho\sigma_z^2$ ($\rho=0.8$), the
-horizontal block is enlarged by $q/(\rho\sigma_z^2)$, keeping the measured
-regression (an earlier policy scaled $\vct b$ down to $0.999\sigma_z^2$). The
+horizontal block is enlarged along the coupling,
+$\sigma_h^2\mat I_2+\frac{\lambda-1}{q}\vct b\vct b\Hr$ with
+$\lambda=q/(\rho\sigma_z^2)$, keeping the measured regression and the
+cross-wave prior (an earlier policy scaled $\vct b$ down to $0.999\sigma_z^2$). The
 Schur complement of the horizontal block is then nonnegative, so
 $\mat\Sigma\succeq0$ by construction. Every factor is invariant under rotations about the
 vertical, so the prior does not depend on how the waves sit relative to

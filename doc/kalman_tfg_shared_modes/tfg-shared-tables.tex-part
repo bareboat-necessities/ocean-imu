@@ -14,7 +14,7 @@ Heading +90 deg&1.45&1.45&1.37&1.37&-0.04 [-0.04, -0.03]&-0.02 [-0.06, +0.02]\\
 Head seas&1.46&1.46&1.39&1.39&-0.03 [-0.04, -0.03]&-0.02 [-0.07, +0.03]\\
 Directional swell&6.58&6.58&5.47&5.47&-0.00 [-0.01, +0.00]&-0.01 [-0.03, +0.01]\\
 Mixed seas&1.68&1.68&1.65&1.65&+0.03 [+0.02, +0.04]&+0.08 [+0.00, +0.15]\\
-Reduced heave&0.54&0.54&2.18&2.50&+16.31 [+9.75, +22.87]&-21.85 [-32.77, -10.94]\\
+Reduced heave&0.54&0.54&0.43&0.43&-0.24 [-0.35, -0.14]&-0.15 [-0.55, +0.24]\\
 Calm water&0.00&0.00&0.00&0.00&+0.00 [+0.00, +0.00]&+0.00 [-0.00, +0.00]\\
 Low wave energy&0.44&0.44&0.43&0.43&+0.00 [+0.00, +0.00]&-0.00 [-0.01, +0.01]\\
 Engine 800 rpm&1.88&1.87&1.80&1.79&-0.26 [-0.51, -0.02]&-3.80 [-5.24, -2.37]\\
@@ -34,13 +34,13 @@ Interval jitter&1.46&1.46&1.38&1.38&-0.03 [-0.04, -0.03]&+0.00 [-0.05, +0.05]\\
 \label{tab:primary}\end{table*}
 \begin{table}[!t]\centering\caption{Condition-balanced paired TFG/shared versus QMEKF/shared changes. Seeds are independent; each condition has equal log-ratio weight.}
 \footnotesize\begin{tabular}{lrr}\toprule Metric&Change [\%]&95\% CI [\%]\\\midrule
-Heave&+0.499&[+0.305, +0.694]\\
-Horizontal&-1.433&[-2.025, -0.838]\\
-3-D position&-1.248&[-1.790, -0.702]\\
-Tilt&-3.845&[-5.235, -2.434]\\
-Heading&-4.298&[-6.058, -2.505]\\
-Gyro bias&-3.041&[-4.166, -1.902]\\
-Accel. bias&-3.965&[-5.494, -2.411]\\
+Heave&-0.043&[-0.063, -0.023]\\
+Horizontal&-0.279&[-0.402, -0.156]\\
+3-D position&-0.197&[-0.280, -0.114]\\
+Tilt&-3.596&[-4.932, -2.242]\\
+Heading&-2.534&[-4.424, -0.606]\\
+Gyro bias&-1.256&[-1.783, -0.726]\\
+Accel. bias&-3.866&[-5.291, -2.419]\\
 \bottomrule\end{tabular}\end{table}
 \begin{table}[!t]\centering\caption{Host core and Xtensa compile-time measurements. Static stack bounds exclude opaque and indirect calls.}
 \footnotesize\begin{tabular}{lrrrr}\toprule &Q ind.&T ind.&Q shared&T shared\\\midrule
@@ -56,25 +56,29 @@ Stack-chain bound [B]&4832.0&3328.0&4864.0&3664.0\\
 \footnotesize\begin{tabular}{lrrrrrrrr}\toprule Filter&Heave [cm]&H [cm]&V RMS [cm/s]&Tilt [deg]&Heading [deg]&NIS&NEES$_9$&Coverage [\%]\\\midrule
 QMEKF independent&4.04&5.71&3.62&0.27&2.33&0.21&86.80&93.99\\
 TFG independent&4.04&5.71&3.60&0.26&2.25&0.21&81.60&94.01\\
-QMEKF shared&3.95&6.08&4.74&0.35&5.78&0.25&8287.67&92.64\\
-TFG shared&3.96&5.96&4.45&0.33&4.80&0.26&3264.39&92.83\\
+QMEKF shared&3.89&5.55&3.57&0.27&2.33&0.20&86.38&94.87\\
+TFG shared&3.88&5.55&3.56&0.26&2.25&0.20&81.14&94.89\\
 \bottomrule\end{tabular}\end{table*}
 \begin{table*}[!t]\centering
-\caption{Exploratory reduced-heave diagnosis, 12 paired seeds. Q = QMEKF, T = TFG. Known coupling is a diagnostic input. The 30-degree count is separate from the inherited divergence flag.}
+\caption{Exploratory reduced-heave diagnosis, 12 paired seeds. Q = QMEKF, T = TFG. Legacy cap: the cross term is scaled down at the PSD cap; cap 0.7/0.9 bracket the default target 0.8. Known coupling is a diagnostic input. The 30-degree count is separate from the inherited divergence flag.}
 \footnotesize\begin{tabular}{lrrrrrrr}\toprule Variant&Heave [mm]&H [mm]&Heading [deg]&Heading $>30^\circ$&NEES$_9$&Confidence&Shrinks\\\midrule
 Q independent&5.48&23.47&1.84&0/12&66&--&--\\
 T independent&5.48&23.46&1.81&0/12&63&--&--\\
-Q shared off&5.48&23.47&1.84&0/12&66&1.00&0\\
-T shared off&5.48&23.46&1.81&0/12&63&1.00&0\\
-Q shared&21.73&156.79&90.11&12/12&198061&0.52&2091\\
-T shared&25.65&111.93&56.32&7/12&61605&0.41&2640\\
-Q shared real only&5.33&24.15&2.02&0/12&122&0.68&1469\\
-T shared real only&5.19&24.00&1.89&0/12&89&0.68&1469\\
-Q shared unchecked&27.17&180.90&107.11&12/12&326057&1.00&0\\
-T shared unchecked&28.84&187.16&111.46&12/12&173046&1.00&0\\
-Q shared known&23.75&147.61&70.43&12/12&125255&1.00&0\\
-T shared known&25.61&144.34&66.30&12/12&48912&1.00&0\\
-T shared no reset&33.47&54.31&3.53&0/12&1607&0.27&3087\\
+Q off&5.48&23.47&1.84&0/12&66&1.00&0\\
+T off&5.48&23.46&1.81&0/12&63&1.00&0\\
+Q shared&4.39&21.24&1.91&0/12&61&0.68&1469\\
+T shared&4.38&21.19&1.83&0/12&57&0.68&1469\\
+Q legacy cap&21.73&156.79&90.11&12/12&198061&0.52&2091\\
+T legacy cap&25.65&111.93&56.32&7/12&61605&0.41&2640\\
+T cap 0.7&4.21&20.94&1.82&0/12&54&0.68&1469\\
+T cap 0.9&5.10&22.10&1.86&0/12&70&0.68&1469\\
+Q real only&7.39&24.19&3.15&0/12&410&0.68&1469\\
+T real only&6.98&23.64&2.52&0/12&282&0.68&1469\\
+Q unchecked&3.72&19.89&1.94&0/12&56&1.00&0\\
+T unchecked&3.71&19.78&1.84&0/12&53&1.00&0\\
+Q known&3.79&19.70&1.54&0/12&49&1.00&0\\
+T known&3.79&19.74&1.63&0/12&50&1.00&0\\
+T no reset&4.37&21.18&1.81&0/12&58&0.68&1469\\
 \bottomrule\end{tabular}\label{tab:weak}\end{table*}
 \begin{table*}[!t]\centering
 \caption{Pinned vessel-RAO replay, eight sensor/initialization seeds conditional on each fixed wave record. Heave RMS in cm. T/Q shared change has a paired 95\% interval; wave realizations are not independently resampled.}
@@ -125,31 +129,31 @@ Yaw recovery [s]&26.55&25.16&26.46&25.24\\
 Observed / 24&22&22&22&22\\
 \bottomrule\end{tabular}\end{table}
 \begin{table*}[!t]\centering
-\caption{Exploratory heave-RAO dose response, 12 paired seeds per cell (primary seeds 1001--1012). $k$ scales the heave RAO only; horizontal motion and every sensor stream are unchanged within a seed. Broad and long-crested cells change only the $\cos^{2s}$ spreading ($s=1$, $s=10^4$; default $s=4$). $\gamma^2$ is the applied multiple coherence of the known diagnostic prior (cap 0.999). Heave is the mean RMS; heading is the median RMS with runs above 30$^\circ$ in parentheses.}
-\footnotesize\begin{tabular}{lrrrrrrrrrrr}\toprule
-&&\multicolumn{4}{c}{Heave RMS [mm]}&\multicolumn{6}{c}{Heading RMS [deg]}\\
-$k$&$\gamma^2$&Q ind.&Q shared&T shared&Q real&Q shared&T shared&Q real&T known&T known real&T no reset\\\midrule
-1&0.334&14.6&13.8&13.8&14.6&1.8&1.7&1.7&1.7&1.7&1.7\\
-0.8&0.523&12.7&11.5&11.5&12.6&1.8&1.7&1.7&1.8&1.7&1.7\\
-0.7&0.685&11.7&10.2&10.2&11.6&1.8&1.8&1.7&1.8&1.7&1.7\\
-0.6&0.936&10.6&8.8&8.8&10.5&2.0&1.9&1.7&1.8&1.7&1.7\\
-0.5&0.999&9.6&15.2&15.2&9.4&2.3&2.2&1.7&2.5&1.7&1.7\\
-0.4&0.999&8.4&22.5&22.2&8.1&7.0&2.9&1.6&4.3&1.7&2.0\\
-0.3&0.999&7.2&24.4&29.7&6.8&52.5 (11)&16.5&1.5&24.0 (2)&1.6&1.7\\
-0.25&0.999&6.6&21.9&29.0&6.2&102.5 (11)&34.5 (7)&1.4&43.6 (12)&1.5&2.6\\
-0.2&0.999&6.0&22.5&26.4&5.6&103.0 (12)&86.8 (9)&1.4&56.6 (12)&1.5&2.9\\
-0.15&0.999&5.5&21.7&25.7&5.3&96.3 (12)&56.6 (7)&1.7&66.4 (12)&1.5&3.2\\
-0.15 broad&0.999&5.5&26.8&29.7&5.3&72.1 (11)&38.9 (7)&1.8&51.2 (12)&1.8&2.9\\
-0.15 long&0.999&5.4&13.9&20.3&5.3&102.1 (12)&82.3 (11)&1.7&70.3 (12)&1.8&3.9\\
+\caption{Heave-RAO dose response, 12 paired seeds per cell. $k$ scales the heave RAO only; horizontal motion and every sensor stream are unchanged within a seed; broad and long-crested cells change only the $\cos^{2s}$ spreading ($s=1$, $s=10^4$; default $s=4$). $\gamma^2$: applied multiple coherence of the known diagnostic prior with the legacy cap (0.999 ceiling) and the default cap (0.8). RMS errors are means; heading is the median RMS with runs above 30$^\circ$ in parentheses. Legacy: cross term scaled down at the cap.}
+\footnotesize\begin{tabular}{lrrrrrrrrrrrr}\toprule
+&\multicolumn{2}{c}{$\gamma^2$}&\multicolumn{5}{c}{Heave RMS [mm]}&\multicolumn{3}{c}{Horizontal RMS [mm]}&\multicolumn{2}{c}{Heading [deg]}\\
+$k$&legacy&default&T ind.&Q legacy&T legacy&Q shared&T shared&T ind.&Q shared&T shared&T legacy&T shared\\\midrule
+1&0.334&0.334&14.6&13.8&13.8&13.8&13.8&21.7&21.3&21.3&1.7&1.7\\
+0.8&0.523&0.523&12.7&11.5&11.5&11.5&11.5&20.1&19.5&19.5&1.7&1.7\\
+0.7&0.685&0.685&11.7&10.2&10.2&10.2&10.2&19.3&18.7&18.7&1.8&1.8\\
+0.6&0.936&0.861&10.6&8.8&8.8&8.8&8.8&18.6&18.2&18.2&1.9&1.8\\
+0.5&0.999&1.003&9.6&15.2&15.2&7.7&7.7&18.0&17.8&17.8&2.2&1.8\\
+0.4&0.999&1.160&8.4&22.5&22.2&6.6&6.6&17.8&17.5&17.5&2.9&1.8\\
+0.3&0.999&1.321&7.2&24.4&29.7&5.4&5.4&18.2&17.4&17.4&16.5&1.7\\
+0.25&0.999&1.398&6.6&21.9&29.0&4.8&4.8&18.9&17.7&17.7&34.5 (7)&1.7\\
+0.2&0.999&1.467&6.0&22.5&26.4&4.4&4.3&20.3&18.6&18.5&86.8 (9)&1.6\\
+0.15&0.999&1.525&5.5&21.7&25.7&4.4&4.4&23.5&21.2&21.2&56.6 (7)&1.6\\
+0.15 broad&0.999&1.502&5.5&26.8&29.7&4.4&4.4&23.7&22.2&22.1&38.9 (7)&1.5\\
+0.15 long&0.999&1.532&5.4&13.9&20.3&4.5&4.5&23.2&20.7&20.7&82.3 (11)&2.1\\
 \bottomrule\end{tabular}\label{tab:heave-sweep}\end{table*}
 \begin{table}[!t]\centering
-\caption{Horizontal-prior intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S=2$ (same seeds). Heave change relative to real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above 30$^\circ$ in parentheses.}
-\footnotesize\begin{tabular}{lrllrr}\toprule $k$&$\gamma^2$&Q shared [\%]&T shared [\%]&Q [deg]&T [deg]\\\midrule
+\caption{Legacy-cap intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S=2$ (same seeds). Heave change relative to legacy real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above 30$^\circ$ in parentheses.}
+\footnotesize\begin{tabular}{lrllrr}\toprule $k$&$\gamma^2$&Q legacy [\%]&T legacy [\%]&Q [deg]&T [deg]\\\midrule
 1&0.083&-1.5 [-1.6, -1.4]&-1.5 [-1.6, -1.4]&1.8&1.8\\
 0.5&0.339&-7.1 [-7.5, -6.7]&-7.1 [-7.6, -6.7]&1.8&1.8\\
 0.3&0.960&-22.0 [-23.3, -20.8]&-22.1 [-23.4, -20.8]&1.9&1.9\\
-0.25&0.999&+50.1 [+40.6, +59.7]&+50.8 [+41.3, +60.4]&3.3&2.3\\
-0.2&0.999&+139.7 [+118.3, +161.0]&+137.3 [+117.0, +157.6]&5.6&3.0\\
+0.25&0.999&+49.9 [+40.3, +59.5]&+50.6 [+41.0, +60.1]&3.3&2.3\\
+0.2&0.999&+134.2 [+114.6, +153.9]&+132.5 [+113.5, +151.4]&5.6&3.0\\
 \bottomrule\end{tabular}\label{tab:heave-sf2}\end{table}
 \paragraph{Flagged trajectories.}
 No registered estimator trajectory triggered the benchmark divergence/nonfinite flag. This flag does not test useful heading accuracy: the separately counted reduced-heave heading failures are severe practical estimation failures, even though position remains bounded.

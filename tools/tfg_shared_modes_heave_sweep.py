@@ -5,7 +5,8 @@ The heave RAO is scaled by k with horizontal motion unchanged, on the first 12
 primary seeds. `/cap0` rows restore the legacy cap (the cross term scaled
 down to applied coherence 0.999); unsuffixed shared rows are the operational
 estimators, which keep the measured regression and enlarge the horizontal
-prior at the cap (CarmaCouplingConfig::cap_coherence = 0.8).
+prior along the coupling direction at the cap
+(CarmaCouplingConfig::cap_coherence = 0.8).
 
 Legacy mechanism, registered in sequence on the legacy estimator:
   Dose        shared heading error grows as the heave RAO shrinks, while
@@ -17,7 +18,10 @@ Legacy mechanism, registered in sequence on the legacy estimator:
   Intervention  S_factor 2 moves that boundary to k = 0.29.
 The cap policy was then changed: its target was chosen on seeds 1001-1003
 of the k = 1, 0.5, 0.3 and 0.15 cells (0.7-0.8 equivalent, 0.95 and the
-measured-coherence shrinkage worse). These cells compare it with the legacy
+measured-coherence shrinkage worse). Enlarging the whole horizontal block
+instead of the coupling direction cost 3-5 % horizontal RMS against the
+independent filter at k = 0.25-0.4 on seeds 1001-1012; the target was not
+retuned for the directional repair. These cells compare it with the legacy
 cap and both independent-axis filters on identical data. Known coupling is a
 diagnostic input only; results are outside the primary multiplicity family.
 
@@ -64,7 +68,8 @@ def protocol():
   legacy_predictions={'dose':'shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal',
    'spreading':'at k = 0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse',
    'cap':'the known prior is pinned at the 0.999 cap for k < 0.58; shared heave harm relative to real-only coupling begins only there'},
-  fixed_policy=dict(cap_coherence=FIXED_CAP,development='seeds 1001-1003 of the k = 1, 0.5, 0.3 and 0.15 cells'))
+  fixed_policy=dict(cap_coherence=FIXED_CAP,repair='rank-one horizontal enlargement along the coupling direction',
+   development='target: seeds 1001-1003 of the k = 1, 0.5, 0.3 and 0.15 cells; direction: seeds 1001-1012 of the k = 0.15, 0.25, 0.3, 0.4, 0.6 and 1 cells'))
 
 def run_cell(stage,cell,scale,spread,seed,cache,filters):
  """Run one paired process (every filter sees the same truth and sensors)."""

@@ -244,16 +244,30 @@ confidence. For $s=\kappa=1$ its applied multiple coherence is
 which grows when the hull's horizontal-to-vertical amplitude ratio exceeds the
 prior's, for example under a weak heave RAO. Positive semidefiniteness needs
 $q\le1$. Scaling $b$ down to $q=0.999$, the legacy mapping, understates the
-regression and leaves a singular prior that explains all horizontal motion
-through heave. The shared estimators instead keep $b$ and, when $q>\rho$,
-enlarge the horizontal block, $H\leftarrow(q/\rho)H$. The applied coherence is
-then $\rho$, $\Sigma\succeq0$, and at least $(1-\rho)H$ of horizontal
-innovation remains. One $\Sigma$ serves the whole spectrum while $\gamma^2$ is
+regression and leaves a nearly singular prior: only $0.1\%$ of the
+horizontal variance along the coupling direction remains independent of heave,
+although the cross-wave direction keeps its full variance. The shared estimators instead keep $b$ and, when $q>\rho$,
+enlarge the horizontal block along the coupling only,
+\begin{equation}
+ H\leftarrow H+\frac{\lambda-1}{q\,\sigma_z^2}\,b\,b^{\mathsf H},\qquad
+ \lambda=\frac{q}{\rho}.
+ \label{eq:cap-repair}
+\end{equation}
+By the Sherman--Morrison identity the applied coherence is then $\rho$ and
+$\Sigma\succeq0$. Along the coupling the horizontal variance is
+$\lambda\sigma_h^2$, of which $(1-\rho)\lambda\sigma_h^2$ is innovation
+independent of heave; across it the prior stays $\sigma_h^2$. Enlarging the
+whole block by $\lambda$ also inflates the cross-wave prior, and in the
+heave-RAO sweep below it made horizontal error 3--5\% worse than the
+independent filter at $k=0.25$--$0.4$ (a development diagnostic on seeds
+1001--1012). One $\Sigma$ serves the whole spectrum while $\gamma^2$ is
 measured in the band, so $\rho=0.8$ is a broadband target below the band
-coherence. It was chosen on three development seeds; targets 0.7 and 0.9 are
-reported on held-out seeds. The horizontal latent colouring is rescaled by
-$\sqrt{q/\rho}$ in the same exact re-coordinatization as an amplitude commit,
-and where the cap does not bind the mapping is unchanged.
+coherence. It was chosen on seeds 1001--1003, which are also primary and
+diagnostic seeds; targets 0.7 and 0.9 are reported for sensitivity, not as an
+independent validation. Each horizontal axis rescales its latent colouring by
+the square root of its variance gain in the same exact re-coordinatization as
+an amplitude commit, and where the cap does not bind the mapping is
+unchanged.
 
 \section{Measurements and Finite Corrections}
 Specific force and magnetic measurements obey

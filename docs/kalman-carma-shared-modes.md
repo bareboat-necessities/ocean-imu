@@ -165,8 +165,10 @@ terms:
 
 Here `gamma^2` is the debiased multiple coherence of z on (x, y).  If
 `b^H H^-1 b` would exceed `rho sigma_z^2` (`rho = 0.8`,
-`SharedModesConfig::cap_coherence`), `H` is enlarged by that ratio, which keeps
-the measured regression; `cap_coherence = 0` restores the earlier cross-term
+`SharedModesConfig::cap_coherence`), `H` is enlarged along the coupling,
+`H <- H + ((lambda - 1) / q) b b^H` with `q = b^H H^-1 b` and
+`lambda = q / (rho sigma_z^2)`.  This keeps the measured regression and the
+cross-wave prior; `cap_coherence = 0` restores the earlier cross-term
 shrinkage to `0.999 sigma_z^2`, which understates the regression under a weak
 heave RAO.  The study bundle in `reports/results/kalman_carma_shared_modes/`
 predates this policy; `reports/results/tfg_shared_modes/` compares both.  The excitation is

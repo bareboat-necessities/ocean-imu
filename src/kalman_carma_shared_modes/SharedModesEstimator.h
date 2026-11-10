@@ -27,10 +27,11 @@ struct SharedModesConfig {
     T band_frac = T(0.15);        // envelope band / f_op
     T warmup_s = T(120);          // coupling estimate warm-up
     // Applied coherence kept at the PSD cap by enlarging the horizontal prior
-    // (CarmaCouplingConfig::cap_coherence); 0 restores cross-term shrinkage,
-    // which understates the measured regression under a weak heave RAO.
-    // 0.8 from a development sensitivity (0.7-0.8 equivalent, 0.95 worse);
-    // reports/results/tfg_shared_modes records it on held-out seeds.
+    // along the coupling direction (CarmaCouplingConfig::cap_coherence); 0
+    // restores cross-term shrinkage, which understates the measured
+    // regression under a weak heave RAO.  0.8 from a development sensitivity
+    // on three seeds (0.7-0.8 equivalent, 0.95 worse); see
+    // reports/results/tfg_shared_modes.
     T cap_coherence = T(0.8);
 };
 

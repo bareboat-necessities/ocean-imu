@@ -1,15 +1,16 @@
 {
-  "binary_sha256": "519b769f1e18fc8db786e6e3dc9aa3c9c40a978656476924dd01f6db3228d9c9",
+  "binary_sha256": "c2f0b565d8e6b9d308ec38adecd04bc9235694dbe885b53509ff0abd19140d1d",
   "filters": [
     "A41@C",
+    "T41@C",
     "CSM",
     "TCSM",
-    "CSM/real",
-    "TCSM/real",
-    "CSM:noconf/ext-true",
-    "TCSM:noconf/ext-true",
-    "TCSM:noconf/ext-true/real",
-    "TCSM/noreset"
+    "CSM/cap0",
+    "TCSM/cap0",
+    "CSM/real/cap0",
+    "TCSM/real/cap0",
+    "CSM:noconf/ext-true/cap0",
+    "CSM:noconf/ext-true"
   ],
   "seeds": [
     1001,
@@ -41,16 +42,7 @@
     "h0.15_long": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+sp10000+T1200"
   },
   "heading_failure_deg": 30.0,
-  "role": "exploratory dose-response diagnosis; no estimator retuning; outside the primary multiplicity family",
-  "extension": {
-    "cells": [
-      "h0.80",
-      "h0.70",
-      "h0.60"
-    ],
-    "registered": "after the first analysis of the other cells",
-    "prediction": "cap: the 0.999 PSD cap of the known prior binds for k < 0.58 (from coherence 0.334 at x1); shared-prior heave harm relative to real-only coupling begins only where the cap binds"
-  },
+  "role": "exploratory dose response; legacy-cap rows are paired controls; outside the primary multiplicity family",
   "intervention": {
     "s_factor": 2.0,
     "cells": [
@@ -62,18 +54,22 @@
     ],
     "filters": [
       "A41@C/sf2",
-      "CSM/sf2",
-      "TCSM/sf2",
-      "CSM/real/sf2",
-      "TCSM/real/sf2",
-      "CSM:noconf/ext-true/sf2",
-      "TCSM:noconf/ext-true/sf2"
+      "CSM/cap0/sf2",
+      "TCSM/cap0/sf2",
+      "CSM/real/cap0/sf2",
+      "TCSM/real/cap0/sf2",
+      "CSM:noconf/ext-true/cap0/sf2"
     ],
-    "registered": "after the extension analysis",
-    "prediction": "intervention: with S_factor 2 the known prior reaches the cap only for k < 0.29; shared heave harm relative to real-only coupling and the heading collapse are absent at k >= 0.3 and return at k <= 0.25"
+    "prediction": "legacy cap with S_factor 2 reaches the cap only for k < 0.29"
   },
-  "predictions": {
+  "legacy_predictions": {
     "dose": "shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal",
-    "spreading": "at x0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse"
+    "spreading": "at k = 0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse",
+    "cap": "the known prior is pinned at the 0.999 cap for k < 0.58; shared heave harm relative to real-only coupling begins only there"
+  },
+  "fixed_policy": {
+    "cap_coherence": 0.8,
+    "repair": "rank-one horizontal enlargement along the coupling direction",
+    "development": "target: seeds 1001-1003 of the k = 1, 0.5, 0.3 and 0.15 cells; direction: seeds 1001-1012 of the k = 0.15, 0.25, 0.3, 0.4, 0.6 and 1 cells"
   }
 }

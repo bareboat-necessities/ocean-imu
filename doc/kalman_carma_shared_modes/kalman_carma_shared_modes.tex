@@ -923,7 +923,10 @@ horizontal amplitudes. No measured horizontal autospectrum is promoted
 directly to wave energy: horizontal tilt leakage would contaminate it.
 The real and imaginary horizontal--vertical terms are retained.
 If $q=\vc b\herm\mt H^{-1}\vc b>\rho\sigma_z^2$ ($\rho=0.8$), enlarge
-$\mt H$ by $q/(\rho\sigma_z^2)$; the measured regression is kept and the
+$\mt H$ along the coupling only,
+$\mt H\leftarrow\mt H+\frac{\lambda-1}{q}\vc b\vc b\herm$ with
+$\lambda=q/(\rho\sigma_z^2)$, so that $\vc b\herm\mt H^{-1}\vc b=\rho\sigma_z^2$;
+the measured regression and the cross-wave prior are kept and the
 Schur-complement condition guarantees $\mt\Sigma\succeq0$. The study in this
 article used the earlier policy, which instead scaled $\vc b$ down to
 $q=0.999\sigma_z^2$; that understates the regression under a weak heave RAO

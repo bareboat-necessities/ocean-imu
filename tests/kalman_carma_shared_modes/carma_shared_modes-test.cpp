@@ -32,6 +32,7 @@
 
 #define EIGEN_NON_ARDUINO
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <random>
@@ -612,28 +613,40 @@ void test8_cap_policy() {
     };
     const kc::Hermitian3<double> S = band_matrix(3.0);
     const C reg_x = S(0,2) / S.re(2,2), reg_y = S(1,2) / S.re(2,2);
-    double g_old = 0.0, g_new = 0.0;
-    const auto E_old = mapping(3.0, 0.0f, &g_old);
-    const auto E_new = mapping(3.0, 0.95f, &g_new);
+    double g_old[2] = {0.0, 0.0}, g_new[2] = {0.0, 0.0};
+    const auto E_old = mapping(3.0, 0.0f, g_old);
+    const auto E_new = mapping(3.0, 0.95f, g_new);
     const double reg_old = std::abs(E_old(0,2) / E_old.re(2,2) - reg_x) / std::abs(reg_x);
     const double reg_new = std::max(std::abs(E_new(0,2) / E_new.re(2,2) - reg_x), std::abs(E_new(1,2) / E_new.re(2,2) - reg_y)) / std::abs(reg_x);
-    check(std::abs(coherence(E_old) - 0.999) < 1e-9 && reg_old > 0.5 && g_old == 1.0,
+    check(std::abs(coherence(E_old) - 0.999) < 1e-9 && reg_old > 0.5 && g_old[0] == 1.0 && g_old[1] == 1.0,
           "legacy cap: applied coherence 0.999 by shrinking the cross term (measured regression lost)", reg_old, 0.5);
     check(reg_new < 1e-12, "cap_coherence: measured horizontal-on-vertical regression kept exactly", reg_new, 1e-12);
     const double rho = static_cast<double>(0.95f);   // the configured float
     check(std::abs(coherence(E_new) - rho) < 1e-12, "cap_coherence: applied coherence held at rho = 0.95",
           std::abs(coherence(E_new) - rho), 1e-12);
-    check(g_new > 1.0 && std::abs(E_new.re(0,0) - g_new * sig(0) * sig(0)) < 1e-12 * g_new &&
-          std::abs(E_new.re(2,2) - sig(2) * sig(2)) < 1e-15,
-          "cap_coherence: horizontal block enlarged by the reported lambda, vertical prior unchanged", g_new, 1.0);
+    // Enlarged only along the coupling direction u: the cross-wave variance
+    // v^H H' v (v orthogonal to u) keeps the baseline prior sigma_h^2.
+    const double s2 = sig(0) * sig(0);
+    Eigen::Matrix2cd Hn;
+    Hn << E_new(0,0), E_new(0,1), E_new(1,0), E_new(1,1);
+    Eigen::Vector2cd u(E_new(0,2), E_new(1,2));
+    u.normalize();
+    const Eigen::Vector2cd v(std::conj(u(1)), -std::conj(u(0)));
+    const double cross = (v.adjoint() * Hn * v)(0).real(), along = (u.adjoint() * Hn * u)(0).real();
+    check(std::abs(cross - s2) < 1e-12 && along > 1.5 * s2, "cap_coherence: horizontal prior enlarged along the coupling only",
+          std::abs(cross - s2), 1e-12);
+    check(g_new[0] > 1.0 && g_new[1] > 1.0 && std::abs(E_new.re(0,0) - g_new[0] * s2) < 1e-12 * g_new[0] &&
+          std::abs(E_new.re(1,1) - g_new[1] * s2) < 1e-12 * g_new[1] && std::abs(E_new.re(2,2) - sig(2) * sig(2)) < 1e-15,
+          "cap_coherence: reported per-axis gains match the enlarged variances, vertical prior unchanged", g_new[0], 1.0);
     check(hermitian_min_eig(E_new) >= -1e-12, "cap_coherence: excitation positive semidefinite", hermitian_min_eig(E_new), -1e-12);
-    double g_weak_old = 0.0, g_weak_new = 0.0;
-    const auto W_old = mapping(0.3, 0.0f, &g_weak_old);
-    const auto W_new = mapping(0.3, 0.95f, &g_weak_new);
-    check(W_old.re == W_new.re && W_old.im == W_new.im && g_weak_new == 1.0,
+    double g_weak_old[2] = {0.0, 0.0}, g_weak_new[2] = {0.0, 0.0};
+    const auto W_old = mapping(0.3, 0.0f, g_weak_old);
+    const auto W_new = mapping(0.3, 0.95f, g_weak_new);
+    check(W_old.re == W_new.re && W_old.im == W_new.im && g_weak_new[0] == 1.0 && g_weak_new[1] == 1.0,
           "cap_coherence: identical to the legacy mapping where the cap does not bind");
     // Latent colouring of the motion block: an enlarged horizontal prior
-    // rescales the horizontal w states by sqrt(lambda), the vertical not at all.
+    // variance rescales that axis' w states by the square root of its gain,
+    // the vertical not at all.
     csm::SharedModesMotion<double> m;
     auto cfg = m.coupling().config();
     cfg.source = kc::CarmaCouplingConfig::Source::External;
@@ -649,10 +662,12 @@ void test8_cap_policy() {
     m.set_vertical(1.0, 0.4);             // a model commit with unchanged sigma
     m.refresh(0.005);
     const bool pending = m.take_axis_recoordinatization(Mx);
-    const double lam = m.excitation().re(0,0) / (0.4 * 0.4);
-    const double err = std::max(std::abs(Mx[0](4,4) - std::sqrt(lam)), std::abs(Mx[1](5,5) - std::sqrt(lam)));
-    check(pending && lam > 1.0 && err < 1e-12 && Mx[2].isIdentity(0.0),
-          "cap_coherence: horizontal latent colouring rescaled by sqrt(lambda), vertical untouched", err, 1e-12);
+    const double gx = m.excitation().re(0,0) / s2, gy = m.excitation().re(1,1) / s2;
+    double err = 0.0;
+    for (int i = 4; i < 6; ++i)
+        err = std::max({err, std::abs(Mx[0](i,i) - std::sqrt(gx)), std::abs(Mx[1](i,i) - std::sqrt(gy))});
+    check(pending && gx > gy && gy > 1.0 && err < 1e-12 && Mx[2].isIdentity(0.0),
+          "cap_coherence: horizontal latent colouring rescaled per axis by sqrt(gain), vertical untouched", err, 1e-12);
     // Real-only prior: the cap sees only the co-spectrum.  This sea's
     // horizontal-vertical terms are pure quadrature, so nothing is enlarged.
     csm::SharedModesMotion<double> r;

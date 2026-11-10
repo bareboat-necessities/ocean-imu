@@ -231,6 +231,9 @@ def heave_sweep_claims(results):
  kcap=(cap['h1.00']['known_legacy']/(sf*sf*0.999))**.5
  below=[c for c in iv_cells if iv_a[c]['known_coherence']<0.999-5e-4];at=[c for c in iv_cells if c not in below]
  shift=all(iv_a[c][f]['ci_high']<0 for c in below for f in ('CSM/cap0/sf2','TCSM/cap0/sf2')) and all(iv_a[c][f]['ci_low']>0 for c in at for f in ('CSM/cap0/sf2','TCSM/cap0/sf2'))
+ four=('A41@C','T41@C','CSM','TCSM')
+ excess=lambda cs,m:max(0.,max(100*(mean(c,'TCSM',m)/min(mean(c,f,m) for f in four)-1) for c in cs))
+ margin=lambda best,m:'' if best==len(cells) else f" (at most {excess(cells,m):.2f}\\% above the lowest elsewhere)"
  best_z=sum(min(('A41@C','T41@C','CSM','TCSM'),key=lambda f:mean(c,f,'rms_z'))=='TCSM' for c in cells)
  best_h=sum(min(('A41@C','T41@C','CSM','TCSM'),key=lambda f:mean(c,f,'rms_h'))=='TCSM' for c in cells)
  rz=[paired_pct(d,c,'TCSM','T41@C','rms_z')[0] for c in dose];rh=[paired_pct(d,c,'TCSM','T41@C','rms_h')[0] for c in dose]
@@ -246,9 +249,9 @@ def heave_sweep_claims(results):
   +(f"but {pct(harm['CSM/cap0'][hq])} at $k={dose[hq]:g}$, where the cap binds; " if hq else "and never turns into harm; ")
   +(f"the legacy heading interval first exceeds the independent filter by one degree at $k={dose[onset['CSM/cap0']]:g}$ (QMEKF) and $k={dose[onset['TCSM/cap0']]:g}$ (TFG). " if onset['CSM/cap0'] and onset['TCSM/cap0'] else "")
   +(f"Raising only the horizontal prior factor to {sf:g} moves the predicted binding boundary to $k={kcap:.2f}$ and the observed one to between {min(dose[c] for c in below):g} and {max(dose[c] for c in at):g}. " if shift and at else "The intervention does not move the boundary as predicted. ")
-  +"The capped legacy prior is singular: it explains all horizontal acceleration through heave with an understated regression. "
-  +f"The default policy keeps the regression and holds the applied coherence at {p['fixed_policy']['cap_coherence']:g} by enlarging the horizontal prior. "
-  +f"Across the {len(cells)} cells, shared TFG then has the lowest mean heave RMS of the four filters in {best_z} and the lowest horizontal RMS in {best_h}; "
+  +"The capped legacy prior is nearly singular along the coupling direction: 99.9\\% of the along-wave horizontal variance is tied to heave through an understated regression, while the cross-wave direction keeps its full variance. "
+  +f"The default policy keeps the regression and holds the applied coherence at {p['fixed_policy']['cap_coherence']:g} by enlarging the horizontal prior along the coupling direction only. "
+  +f"Across the {len(cells)} cells, shared TFG then has the lowest mean heave RMS of the four filters in {best_z}{margin(best_z,'rms_z')} and the lowest horizontal RMS in {best_h}{margin(best_h,'rms_h')}; "
   +f"relative to independent TFG its heave changes by {min(rz):+.1f}\\% to {max(rz):+.1f}\\% and its horizontal error by {min(rh):+.1f}\\% to {max(rh):+.1f}\\% over the default-spreading factors, "
   +f"and {fixed_fail} shared runs exceed {fail:g} degrees heading.")
  return rows,text,dict(cap_shift=shift,best_z=best_z,best_h=best_h,cells=len(cells))
@@ -323,12 +326,13 @@ def tables_and_macros(results,df,pairs,agg,ab):
  best=pairs[(pairs.comparison=='TFG geometry, shared')&pairs.metric.isin(['rms_z','rms_h'])]
  practical=best[(best.pct_ci_high<-5)&(best.p_holm<.05)]
  adverse=best[(best.percent>0)&(best.p_holm<.05)]
+ adverse_txt=f", at most {adverse.percent.max():+.2f}\\%" if len(adverse) else ''
  macro={
  'ResultsFigureDirectory':os.path.relpath(results/'figures',DOC).replace(os.sep,'/'),
  'PrimarySeeds':str(ns),'AblationSeeds':str(na),'ScenarioCount':str(nc),
  'AbstractResults':f"The condition-balanced TFG change relative to shared QMEKF is {eff(z)} for heave and {eff(h)} for horizontal position. There are {bad} flagged estimator trajectories across all registered operational and diagnostic cells.",
  'RegressionResults':"The accompanying regression record lists the original and post-refactor gates and exact paired numerical differences. Existing thresholds are retained. The full-wrapper coupling-off smoke uses the existing TFG/CARMA 1\\% agreement criterion; the process-law identities use $10^{-11}$ relative tolerance.",
- 'ResultsDiscussion':f"Condition-balanced heave changes by {eff(z)} and horizontal position by {eff(h)} when replacing shared QMEKF with shared TFG. Only {len(practical)} scenario/endpoints meet both the predeclared 5\\% improvement margin and the Holm significance criterion; {len(adverse)} show statistically supported worsening. The complete per-condition table prevents small aggregate changes from hiding different behavior in weak excitation, maneuvers or outages. The interaction table and figure evaluate nonadditivity directly. There are {bad} flagged trajectories; their identities and the remaining consistency defects are retained below. Exact conditional-prior algebra does not make the inherited wave/bias/attitude approximation statistically calibrated.",
+ 'ResultsDiscussion':f"Condition-balanced heave changes by {eff(z)} and horizontal position by {eff(h)} when replacing shared QMEKF with shared TFG. {len(practical) or 'No'} scenario/endpoint{'' if len(practical)==1 else 's'} meet{'s' if len(practical)==1 else ''} both the predeclared 5\\% improvement margin and the Holm significance criterion; {len(adverse)} show{'s' if len(adverse)==1 else ''} statistically supported worsening{adverse_txt}. The complete per-condition table prevents small aggregate changes from hiding different behavior in weak excitation, maneuvers or outages. The interaction table and figure evaluate nonadditivity directly. There are {bad} flagged trajectories; their identities and the remaining consistency defects are retained below. Exact conditional-prior algebra does not make the inherited wave/bias/attitude approximation statistically calibrated.",
  'PerformanceResults':f"On this host, the median of three repetitions is {t.loc['TCSM','total_us']:.2f} us per 200 Hz core step for shared TFG, versus {t.loc['CSM','total_us']:.2f} us for shared QMEKF (ratio {t.loc['TCSM','total_us']/t.loc['CSM','total_us']:.2f}). With 25\\% interval jitter the corresponding times are {jt.loc['TCSM','total_us']:.2f} and {jt.loc['CSM','total_us']:.2f} us. Timings include 0.1 s model commits and magnetic updates at 25 Hz; percentiles and maxima are reported separately, and host scheduling can affect their tails.",
  'FirmwareResults':f"The Xtensa probe gives {int(target.loc['TCSM','sizeof_qmekf'])} bytes for the shared TFG core versus {int(target.loc['CSM','sizeof_qmekf'])} for shared QMEKF. Their largest emitted function stack frames are {int(target.loc['TCSM','max_stack_frame'])} and {int(target.loc['CSM','max_stack_frame'])} bytes; the static update-chain lower bounds are {int(target.loc['TCSM','update_chain_stack'])} and {int(target.loc['CSM','update_chain_stack'])} bytes. The compiler used for this probe is Espressif GCC esp-14.2.0\\_20241119 with \\texttt{{-Os}}. A full Arduino firmware build is recorded separately in the reproducibility bundle.",
  }
@@ -361,6 +365,8 @@ def tables_and_macros(results,df,pairs,agg,ab):
   f"relative to independent QMEKF, shared TFG changes them by {eff(best_z)} and {eff(best_h)}. "
   f"Under reduced heave shared TFG has {mm('TCSM','rms_z'):.1f}/{mm('TCSM','rms_h'):.1f} mm heave/horizontal error against {mm('T41@C','rms_z'):.1f}/{mm('T41@C','rms_h'):.1f} mm independently, "
   f"with {over('TCSM')}/{ns} heading failures; the legacy excitation cap gives {1000*w.loc['TCSM/cap0','heave_m']:.1f}/{1000*w.loc['TCSM/cap0','horizontal_m']:.1f} mm and {int(w.loc['TCSM/cap0','heading_over30'])}/{nw} heading failures in a paired {nw}-seed diagnosis.")
+ real_worse=min(w.loc['CSM/real','heave_m'],w.loc['TCSM/real','heave_m'])>max(w.loc['A41@C','heave_m'],w.loc['T41@C','heave_m'])
+ real_vs_independent=', worse than the independent filters, so the quadrature term is required here' if real_worse else ''
  macro['FailureDiscussion']=(f"Reduced heave is the condition that separates the cap policies. With the default policy, mean heave/horizontal errors are "
   f"{mm('CSM','rms_z'):.1f}/{mm('CSM','rms_h'):.1f} mm for shared QMEKF and {mm('TCSM','rms_z'):.1f}/{mm('TCSM','rms_h'):.1f} mm for shared TFG, against "
   f"{mm('A41@C','rms_z'):.1f}/{mm('A41@C','rms_h'):.1f} and {mm('T41@C','rms_z'):.1f}/{mm('T41@C','rms_h'):.1f} mm independently; "
@@ -368,23 +374,38 @@ def tables_and_macros(results,df,pairs,agg,ab):
   f"In the paired {nw}-seed diagnosis (Table~\\ref{{tab:weak}}) the legacy cap, which scales the cross term down, gives {1000*w.loc['CSM/cap0','heave_m']:.1f} and {1000*w.loc['TCSM/cap0','heave_m']:.1f} mm heave, "
   f"{w.loc['CSM/cap0','heading_deg']:.1f} and {w.loc['TCSM/cap0','heading_deg']:.1f} degrees mean heading RMS and {int(w.loc['CSM/cap0','heading_over30'])} and {int(w.loc['TCSM/cap0','heading_over30'])} heading failures. "
   f"Cap targets 0.7 and 0.9 give {1000*w.loc['TCSM/cap0.7','heave_m']:.1f} and {1000*w.loc['TCSM/cap0.9','heave_m']:.1f} mm heave for shared TFG, against {1000*w.loc['TCSM','heave_m']:.1f} mm at the default 0.8. "
-  f"Known coupling with the default cap gives {w.loc['CSM:noconf/ext-true','heading_deg']:.1f} and {w.loc['TCSM:noconf/ext-true','heading_deg']:.1f} degrees heading, so the remaining gap to the independent filters is not an online coupling-estimation error. "
-  f"Omitting reset transport changes shared-TFG heave to {1000*w.loc['TCSM/noreset','heave_m']:.1f} mm.")
+  f"Without confidence weighting the estimated coupling gives {1000*w.loc['CSM:noconf','heave_m']:.1f} and {1000*w.loc['TCSM:noconf','heave_m']:.1f} mm and the known coupling {1000*w.loc['CSM:noconf/ext-true','heave_m']:.1f} and {1000*w.loc['TCSM:noconf/ext-true','heave_m']:.1f} mm, "
+  f"so the estimator recovers the known-coupling benefit and confidence weighting gives up part of it in this condition. "
+  f"The real-only control maps only the co-spectrum and gives {1000*w.loc['CSM/real','heave_m']:.1f} and {1000*w.loc['TCSM/real','heave_m']:.1f} mm{real_vs_independent}. "
+  f"Omitting reset transport gives {1000*w.loc['TCSM/noreset','heave_m']:.1f} mm shared-TFG heave, so the transport is immaterial in this condition.")
  macro['HeaveSweepDiscussion']=sweep_text
  macro['SupplementDiscussion']=f"The pinned eight-record replay gives heave changes between {diagnostic['replay_heave_min']:+.4f}\\% and {diagnostic['replay_heave_max']:+.4f}\\%, too small to justify a geometry switch. These intervals condition on each wave record and resample only sensors/initialization. The 24-seed full-rate transition supplement finds no practically meaningful recovery advantage; {diagnostic['transient_censored']} transition recoveries are censored. Its exported positions have 10-micrometre resolution, so sub-resolution differences are not evidence for useful improvement. The six-condition reset supplement shows small ordinary-case position changes for both geometries. Reversed unchecked coupling degrades horizontal error by {flipped_change:.2f}\\% in rapid rotations, while confidence reduces that diagnostic to the uncoupled response. Confidence is useful but does not guarantee robustness."
  engine=main[main.case=='engine800'].groupby('filter').mean(numeric_only=True)
  turn=main[main.case=='maneuver'].groupby('filter').mean(numeric_only=True)
  colored=main[main.case=='colored_noise'].groupby('filter').mean(numeric_only=True)
  yaw=pairs[(pairs.case=='maneuver')&(pairs.comparison=='TFG geometry, shared')&(pairs.metric=='yaw_rms_deg')].iloc[0]
- macro['SecondaryDiscussion']=f"Secondary attitude and bias results are condition dependent. At 800 rpm, shared TFG reduces mean tilt RMS from {engine.loc['CSM','tilt_rms_deg']:.2f} to {engine.loc['TCSM','tilt_rms_deg']:.2f} degrees, heading from {engine.loc['CSM','yaw_rms_deg']:.2f} to {engine.loc['TCSM','yaw_rms_deg']:.2f} degrees, and accelerometer-bias error from {engine.loc['CSM','ba_rms_mg']:.2f} to {engine.loc['TCSM','ba_rms_mg']:.2f} mg. Under colored noise, heading also improves from {colored.loc['CSM','yaw_rms_deg']:.2f} to {colored.loc['TCSM','yaw_rms_deg']:.2f} degrees while horizontal position worsens. Conversely, maneuvering worsens heading from {turn.loc['CSM','yaw_rms_deg']:.2f} to {turn.loc['TCSM','yaw_rms_deg']:.2f} degrees: paired absolute change {yaw.delta:+.2f} degrees, marginal 95\\% CI [{yaw.ci_low:+.2f}, {yaw.ci_high:+.2f}]. Gyro-bias RMS also worsens there. These secondary intervals are exploratory and are not part of the Holm-controlled primary position family. They motivate focused vibration/attitude research, not a claim of a general TFG accuracy gain."
+ def worded(frame,m,what,unit):
+  """Shared QMEKF to shared TFG, worded by the sign of the measured change."""
+  a,b=frame.loc['CSM',m],frame.loc['TCSM',m]
+  return f"{'reduces' if b<a else 'increases'} {what} from {a:.2f} to {b:.2f} {unit}"
+ horizontal=pairs[(pairs.case=='colored_noise')&(pairs.comparison=='TFG geometry, shared')&(pairs.metric=='rms_h')].iloc[0]
+ bg=pairs[(pairs.case=='maneuver')&(pairs.comparison=='TFG geometry, shared')&(pairs.metric=='bg_rms_dph')].iloc[0]
+ macro['SecondaryDiscussion']=(f"Secondary attitude and bias results are condition dependent. At 800 rpm, shared TFG {worded(engine,'tilt_rms_deg','mean tilt RMS','degrees')}, "
+  f"{worded(engine,'yaw_rms_deg','heading','degrees')} and {worded(engine,'ba_rms_mg','accelerometer-bias error','mg')}. "
+  f"Under colored noise it {worded(colored,'yaw_rms_deg','heading','degrees')}, while horizontal position changes by {horizontal.percent:+.2f}\\% [{horizontal.pct_ci_low:+.2f}, {horizontal.pct_ci_high:+.2f}]. "
+  f"During maneuvers it {worded(turn,'yaw_rms_deg','heading','degrees')}: paired absolute change {yaw.delta:+.2f} degrees, marginal 95\\% CI [{yaw.ci_low:+.2f}, {yaw.ci_high:+.2f}]; "
+  f"gyro-bias RMS changes by {bg.percent:+.2f}\\% [{bg.pct_ci_low:+.2f}, {bg.pct_ci_high:+.2f}]. "
+  "These secondary intervals are exploratory and are not part of the Holm-controlled primary position family.")
  geo_z,geo_h=comparison('rms_z','TFG geometry, shared'),comparison('rms_h','TFG geometry, shared')
+ vs_ind=pairs[(pairs.comparison=='TFG shared vs QMEKF independent')&pairs.metric.isin(['rms_z','rms_h'])&(pairs.case!='calm')]
+ worst=vs_ind.loc[vs_ind.percent.idxmax()]
  best_all=all(r.ci_high_pct<0 for r in (geo_z,geo_h,prior_z,prior_h,best_z,best_h))
  ratio=t.loc['TCSM','total_us']/t.loc['CSM','total_us']
  macro['Recommendation']=(("Shared TFG is the most accurate of the four estimators in the condition-balanced position comparison: it improves on shared QMEKF, independent TFG and independent QMEKF with paired intervals excluding zero for heave and horizontal position. "
    if best_all else "Shared TFG is not uniformly the most accurate of the four estimators: at least one condition-balanced position comparison has an interval that includes zero or favours another filter. ")
   +f"Most of the gain comes from the shared prior ({eff(prior_z)} heave, {eff(prior_h)} horizontal); the geometry adds {eff(geo_z)} and {eff(geo_h)} at {ratio:.1f} times the host cost of shared QMEKF. "
   +"The shared prior is worth keeping in both geometries with the cap policy; TFG is the better choice only where its small accuracy and attitude gains justify the added computation. "
-  +"Reduced heave remains the weakest condition for both shared filters. Nominal joint NEES remains poorly calibrated. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged.")
+  +f"The largest condition-specific cost against independent QMEKF is {worst.percent:+.2f}\\% {('heave' if worst.metric=='rms_z' else 'horizontal')} RMS ({tex(CASE[worst.case])}). Nominal joint NEES remains poorly calibrated. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged.")
  firmware=json.loads((results/'firmware_builds.json').read_text())
  builds={r['variant']:r for r in firmware['builds']}
  if any(v not in builds or builds[v]['exit_code'] for v in ['qmekf','tfg','probe']):
