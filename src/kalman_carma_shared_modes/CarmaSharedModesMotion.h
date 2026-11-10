@@ -451,7 +451,16 @@ public:
     const Model& horizontal_model() const noexcept { return hmodel_; }
     Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_.re.template topLeftCorner<2,2>(); }
     Vector3 accel_std() const { return sig_; }
-    void set_quadrature_enabled(bool enabled) { quadrature_enabled_ = enabled; dirty_ = true; }
+    // Real-only research prior: the mapping keeps only the co-spectrum, so the
+    // PSD cap sees exactly the coupling that is applied.
+    void set_quadrature_enabled(bool enabled) {
+        auto c = coupling_.config();
+        c.form = enabled ? kalman::carma::CarmaCouplingConfig::Form::Hermitian
+                         : kalman::carma::CarmaCouplingConfig::Form::Real;
+        coupling_.set_config(c);
+        quadrature_enabled_ = enabled;
+        dirty_ = true;
+    }
     const Hermitian& excitation() const noexcept { return Sigma_; }
     Coupling& coupling() noexcept { return coupling_; }
     const Coupling& coupling() const noexcept { return coupling_; }

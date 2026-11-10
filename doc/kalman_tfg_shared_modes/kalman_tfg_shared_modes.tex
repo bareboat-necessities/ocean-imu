@@ -223,7 +223,37 @@ when every per-axis spectrum still looks correct. The code reuses the shared
 pair discretizer, including its local variable-step series and scaling/doubling
 fallback. Dense continuous Lyapunov integration provides an independent
 numerical reference. The real-only ablation keeps the same six-state dynamics
-and sets $S_I=0$; since $\Rea\Sigma\succeq0$, it preserves covariance validity.
+and maps only the co-spectrum, so $S_I=0$ and the cap below acts on the
+coupling that is actually applied.
+
+The excitation is formed from the band cross-spectral matrix $\hat S$ that the
+coupling estimator measures around the operating frequency. With horizontal
+prior $\sigma_h=S_f\sigma_z$ ($S_f=1$) it keeps the vertical prior and the
+measured regression of horizontal on vertical motion,
+\begin{equation}
+ \Sigma=\begin{bmatrix}H&b\\b^{\mathsf H}&\sigma_z^2\end{bmatrix},\quad
+ b=s\,\kappa\,\frac{\sigma_z^2}{\hat S_{zz}}\hat S_{hz},\quad H=\sigma_h^2I_2,
+ \label{eq:excitation-map}
+\end{equation}
+with $s$ the debiased-coherence shrinkage and $\kappa$ the applied coupling
+confidence. For $s=\kappa=1$ its applied multiple coherence is
+\begin{equation}
+ q=\frac{b^{\mathsf H}H^{-1}b}{\sigma_z^2}
+  =\gamma^2\,\frac{\hat S_{hh}/\hat S_{zz}}{\sigma_h^2/\sigma_z^2},
+\end{equation}
+which grows when the hull's horizontal-to-vertical amplitude ratio exceeds the
+prior's, for example under a weak heave RAO. Positive semidefiniteness needs
+$q\le1$. Scaling $b$ down to $q=0.999$, the legacy mapping, understates the
+regression and leaves a singular prior that explains all horizontal motion
+through heave. The shared estimators instead keep $b$ and, when $q>\rho$,
+enlarge the horizontal block, $H\leftarrow(q/\rho)H$. The applied coherence is
+then $\rho$, $\Sigma\succeq0$, and at least $(1-\rho)H$ of horizontal
+innovation remains. One $\Sigma$ serves the whole spectrum while $\gamma^2$ is
+measured in the band, so $\rho=0.8$ is a broadband target below the band
+coherence. It was chosen on three development seeds; targets 0.7 and 0.9 are
+reported on held-out seeds. The horizontal latent colouring is rescaled by
+$\sqrt{q/\rho}$ in the same exact re-coordinatization as an amplitude commit,
+and where the cap does not bind the mapping is unchanged.
 
 \section{Measurements and Finite Corrections}
 Specific force and magnetic measurements obey
@@ -473,22 +503,20 @@ filter. Oracle coupling is never supplied to an operational cell.}\end{figure}
 \caption{Joint physical NEES and marginal position coverage. Nominal values
 are reference levels, not assumptions that the wave-mismatched model is calibrated.}\end{figure}
 \begin{figure*}[!t]\centering\fig{weak_diagnostics}
-\caption{Reduced-heave diagnosis, 12 seeds. Both geometries fail with estimated
-and known quadrature coupling. Real-only and uncoupled controls restore heading.
+\caption{Reduced-heave diagnosis, 12 seeds: the default cap policy, the legacy
+cap, cap targets 0.7 and 0.9, and controls. Heading is on a logarithmic axis.
 Bars are means and error bars are marginal 95\% intervals across seeds.}
 \end{figure*}
 \begin{figure*}[!t]\centering\fig{weak_feedback}
-\caption{A reduced-heave realization: heading and applied confidence. Dashed
-curves remove imaginary coupling. Falling confidence and PSD fallback do not
-guarantee that the attitude/bias estimate remains useful.}
+\caption{A reduced-heave realization: heading error and applied confidence with
+the default cap policy (solid) and the legacy cap (dashed).}
 \end{figure*}
 \begin{figure}[!t]\centering\fig{heave_sweep}
-\caption{Exploratory heave-RAO dose response on the first 12 primary seeds.
-Horizontal motion and sensor streams are unchanged within a seed. Top: heave
-RMS change relative to real-only coupling (paired 95\% intervals), including
-the horizontal-prior intervention $S=2$; middle: median heading RMS and
-quartiles; bottom: share of runs above 30 degrees. Known coupling is a
-diagnostic input, never an operational one.}\end{figure}
+\caption{Heave-RAO dose response, 12 paired seeds per cell; horizontal motion
+and sensor streams are unchanged within a seed. Top two: heave and horizontal
+RMS change relative to independent TFG (paired 95\% intervals, symmetric-log
+axis). Bottom: median heading RMS and quartiles. Solid: default cap policy;
+dashed: legacy cap.}\label{fig:heave-sweep}\end{figure}
 \section{Computational Cost and Embedded Evidence}
 The implementation uses one common TFG core parameterized by a motion policy;
 its original two-template-argument interface remains valid. It uses the same

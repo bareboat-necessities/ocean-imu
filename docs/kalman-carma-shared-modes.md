@@ -163,8 +163,13 @@ terms:
 
     b = s gain c S_hat_hz,   c = sigma_z^2 / S_hat_zz,   s = max(0, 1 - 1/(N_eff gamma^2))
 
-Here `gamma^2` is the debiased multiple coherence of z on (x, y), and `b` is
-scaled down if `b^H H^-1 b` would exceed `0.999 sigma_z^2`.  The excitation is
+Here `gamma^2` is the debiased multiple coherence of z on (x, y).  If
+`b^H H^-1 b` would exceed `rho sigma_z^2` (`rho = 0.8`,
+`SharedModesConfig::cap_coherence`), `H` is enlarged by that ratio, which keeps
+the measured regression; `cap_coherence = 0` restores the earlier cross-term
+shrinkage to `0.999 sigma_z^2`, which understates the regression under a weak
+heave RAO.  The study bundle in `reports/results/kalman_carma_shared_modes/`
+predates this policy; `reports/results/tfg_shared_modes/` compares both.  The excitation is
 PSD by construction, equivariant under rotations about the vertical, and the
 baseline diagonal without coupling evidence.  `gain` is the coupling
 confidence `c in [0, 1]` of section 4.

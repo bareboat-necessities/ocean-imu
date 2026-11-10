@@ -181,7 +181,8 @@ def analyse(args):
  """Derive paired comparisons, multiplicity corrections and condition-balanced effects."""
  out=args.results;df=collect(out);primary=df[df.stage=='primary'];summ=[];paired=[];inter=[]
  comparisons=(('TFG geometry, shared','TCSM','CSM'),('Shared prior, TFG','TCSM','T41@C'),
-              ('TFG geometry, independent','T41@C','A41@C'),('Shared prior, QMEKF','CSM','A41@C'))
+              ('TFG geometry, independent','T41@C','A41@C'),('Shared prior, QMEKF','CSM','A41@C'),
+              ('TFG shared vs QMEKF independent','TCSM','A41@C'))
  for (case,f),g in primary.groupby(['case','filter']):
   row=dict(case=case,filter=f,n=len(g),failures=int(g.failed.sum()))
   for m in METRICS:row[m]=g[m].mean()

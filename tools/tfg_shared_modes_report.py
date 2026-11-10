@@ -135,156 +135,136 @@ def ablations_and_consistency(results,out,df,ab):
   axs[1].plot(x,[100*g[['cov95_x','cov95_y','cov95_z']].mean().mean() for g in gs],'o',ms=3,color=COLOR[f])
  axs[0].axhline(9,color='black',ls=':',lw=.7);axs[0].set_yscale('log');axs[0].set_ylabel('Joint physical NEES (9 states)');axs[0].legend(ncol=2)
  axs[1].axhline(95,color='black',ls=':',lw=.7);axs[1].set_ylabel('Mean marginal coverage [%]');axs[1].set_xticks(range(len(cases)),[CASE[c] for c in cases],rotation=40,ha='right');save(fig,out,'consistency')
+# Reduced-heave diagnosis rows (filter, label); cap0 is the legacy PSD cap.
+WEAK=(('A41@C','Q independent'),('T41@C','T independent'),('CSM:off','Q off'),('TCSM:off','T off'),
+ ('CSM','Q shared'),('TCSM','T shared'),('CSM/cap0','Q legacy cap'),('TCSM/cap0','T legacy cap'),
+ ('TCSM/cap0.7','T cap 0.7'),('TCSM/cap0.9','T cap 0.9'),('CSM/real','Q real only'),('TCSM/real','T real only'),
+ ('CSM:noconf','Q unchecked'),('TCSM:noconf','T unchecked'),('CSM:noconf/ext-true','Q known'),
+ ('TCSM:noconf/ext-true','T known'),('TCSM/noreset','T no reset'))
 def supplemental_figures(results,out):
  """Plot the replay, reset, transition and weak-heave supplements."""
- d=pd.read_csv(results/'weak_runs.csv')
- names=['A41@C','T41@C','CSM:off','TCSM:off','CSM','TCSM','CSM/real','TCSM/real',
-        'CSM:noconf','TCSM:noconf','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset']
- labels=['Q independent','T independent','Q off','T off','Q estimated','T estimated','Q real only','T real only',
-         'Q unchecked','T unchecked','Q known','T known','T no reset']
+ d=pd.read_csv(results/'weak_runs.csv');names=[f for f,_ in WEAK];labels=[x for _,x in WEAK]
  fig,axs=plt.subplots(2,1,figsize=(7.1,4.0),sharex=True)
  for ax,m,scale,label in zip(axs,['rms_z','yaw_rms_deg'],[1000,1],['Heave RMS [mm]','Heading RMS [deg]']):
   gs=[d[d['filter']==f][m]*scale for f in names]
   ax.bar(np.arange(len(names)),[g.mean() for g in gs],color=['#0072b2' if f.startswith(('CSM','A41')) else '#d55e00' for f in names],alpha=.8)
   ax.errorbar(np.arange(len(names)),[g.mean() for g in gs],yerr=[stats.sem(g)*stats.t.ppf(.975,len(g)-1) for g in gs],fmt='none',color='black',lw=.7,capsize=2)
   ax.set_ylabel(label)
- axs[1].axhline(30,color='black',ls=':',lw=.7);axs[1].set_xticks(range(len(names)),labels,rotation=45,ha='right');save(fig,out,'weak_diagnostics')
+ axs[1].axhline(30,color='black',ls=':',lw=.7);axs[1].set_yscale('log');axs[1].set_xticks(range(len(names)),labels,rotation=45,ha='right');save(fig,out,'weak_diagnostics')
  d=trace(results,'weak_attitude');fig,axs=plt.subplots(2,1,figsize=(7.1,3.5),sharex=True)
- for f in ['CSM','TCSM','CSM/real','TCSM/real']:
-  color=COLOR['TCSM' if f.startswith('TCSM') else 'CSM'];ls='--' if '/real' in f else '-'
-  label=LABEL['TCSM' if f.startswith('TCSM') else 'CSM']+(' real only' if '/real' in f else '')
+ for f in ['CSM','TCSM','CSM/cap0','TCSM/cap0']:
+  color=COLOR['TCSM' if f.startswith('TCSM') else 'CSM'];ls='--' if '/cap0' in f else '-'
+  label=LABEL['TCSM' if f.startswith('TCSM') else 'CSM']+(', legacy cap' if '/cap0' in f else '')
   axs[0].plot(d.t,d['dyaw_'+f],color=color,ls=ls,lw=.7,label=label)
   c=trace(results,'weak_confidence_'+f.replace('/','_'))
   axs[1].plot(c.t,c.confidence,color=color,ls=ls,lw=.7)
  axs[0].set_ylabel('Heading error [deg]');axs[0].legend(ncol=2);axs[1].set_ylabel('Applied confidence');axs[1].set_xlabel('Time [s]');save(fig,out,'weak_feedback')
 
-SWEEP={'A41@C':('Q independent',COLOR['A41@C'],'-','o'),'CSM':('Q shared',COLOR['CSM'],'-','o'),
- 'TCSM':('T shared',COLOR['TCSM'],'-','s'),'CSM/real':('Q real only',COLOR['CSM'],'--','o'),
- 'TCSM/real':('T real only',COLOR['TCSM'],'--','s'),'TCSM:noconf/ext-true':('T known coupling','#cc79a7',':','^')}
+# Dose-response series: (filter, label, colour, line, marker); cap0 = legacy cap.
+SWEEP=(('TCSM','T shared',COLOR['TCSM'],'-','s'),('CSM','Q shared',COLOR['CSM'],'-','o'),
+ ('TCSM/cap0','T legacy cap',COLOR['TCSM'],'--','s'),('CSM/cap0','Q legacy cap',COLOR['CSM'],'--','o'))
 def load_heave_sweep(results):
- """Committed sweep scores, protocol and default-spreading heave factors."""
+ """Committed sweep scores, protocol, analysis and default-spreading heave factors."""
  runs=pd.read_csv(results/'heave_sweep_runs.csv');p=json.loads((results/'heave_sweep_protocol.json').read_text())
  d=runs[runs.stage=='dose'];iv=runs[runs.stage=='sf2'];ip=p['intervention']
  if len(d)!=len(p['cells'])*len(p['seeds'])*len(p['filters']) or len(iv)!=len(ip['cells'])*len(p['seeds'])*len(ip['filters']):
   raise RuntimeError('Incomplete heave sweep')
  dose={c:float(re.search(r'hscale([0-9.]+)',s)[1]) if 'hscale' in s else 1. for c,s in p['cells'].items() if '+sp' not in s}
- return d,p,dose,iv
+ a=json.loads((results/'heave_sweep_analysis.json').read_text())
+ return d,iv,p,a,dose
+def paired_pct(d,cell,f,b,m):
+ """Paired percent change of filter f against b (mean and 95% half-width)."""
+ v=d[d.cell==cell].pivot(index='seed',columns='filter',values=m);x=100*(v[f]/v[b]-1)
+ return x.mean(),stats.sem(x)*stats.t.ppf(.975,len(x)-1)
 def heave_sweep(results,out):
- """Plot the exploratory heave-RAO dose response from its committed per-run scores."""
- d,p,dose,iv=load_heave_sweep(results);ks=list(dose.values())
+ """Plot heave, horizontal and heading against the heave RAO for both cap policies."""
+ d,_,p,_,dose=load_heave_sweep(results);ks=list(dose.values())
  fig,axs=plt.subplots(3,1,figsize=(3.45,5.2),sharex=True)
- for f,(label,color,ls,marker) in SWEEP.items():
-  g=[d[(d.cell==c)&(d['filter']==f)].set_index('seed') for c in dose]
-  if f in ('CSM','TCSM','TCSM:noconf/ext-true'):
-   base={'CSM':'CSM/real','TCSM':'TCSM/real','TCSM:noconf/ext-true':'TCSM:noconf/ext-true/real'}[f]
-   r=[100*(x.rms_z/d[(d.cell==c)&(d['filter']==base)].set_index('seed').rms_z-1) for c,x in zip(dose,g)]
-   m=np.array([x.mean() for x in r]);h=np.array([stats.sem(x)*stats.t.ppf(.975,len(x)-1) for x in r])
-   axs[0].errorbar(ks,m,yerr=h,color=color,ls=ls,marker=marker,ms=3,lw=.8,capsize=1.5,label=label)
-  q=np.array([np.percentile(x.yaw_rms_deg,[25,50,75]) for x in g])
-  axs[1].errorbar(ks,q[:,1],yerr=[q[:,1]-q[:,0],q[:,2]-q[:,1]],color=color,ls=ls,marker=marker,ms=3,lw=.8,capsize=1.5,label=label)
-  axs[2].plot(ks,[100*np.mean(x.yaw_rms_deg>p['heading_failure_deg']) for x in g],color=color,ls=ls,marker=marker,ms=3,lw=.8,label=label)
- sf=p['intervention']['s_factor'];kv=[dose[c] for c in p['intervention']['cells']]
- for f,color in (('CSM',COLOR['CSM']),('TCSM',COLOR['TCSM'])):
-  g=[iv[(iv.cell==c)&(iv['filter']==f+'/sf2')].set_index('seed') for c in p['intervention']['cells']]
-  r=[100*(x.rms_z/iv[(iv.cell==c)&(iv['filter']==f+'/real/sf2')].set_index('seed').rms_z-1) for c,x in zip(p['intervention']['cells'],g)]
-  style=dict(color=color,ls='-.',marker='D',ms=2.6,lw=.8,mfc='white')
-  axs[0].errorbar(kv,[x.mean() for x in r],yerr=[stats.sem(x)*stats.t.ppf(.975,len(x)-1) for x in r],capsize=1.5,label=('Q' if f=='CSM' else 'T')+f' shared, $S={sf:g}$',**style)
-  axs[1].plot(kv,[x.yaw_rms_deg.median() for x in g],**style)
-  axs[2].plot(kv,[100*np.mean(x.yaw_rms_deg>p['heading_failure_deg']) for x in g],**style)
- axs[0].axhline(0,color='black',lw=.6);axs[0].set_ylabel('Heave vs real only [%]');axs[0].legend(fontsize=5.5,loc='upper left')
- axs[1].axhline(p['heading_failure_deg'],color='black',ls=':',lw=.7);axs[1].set_yscale('log');axs[1].set_ylabel('Heading RMS [deg]')
- axs[2].legend(fontsize=5.5,ncol=1,loc='upper left')
- axs[2].set_ylabel(f"Runs over {p['heading_failure_deg']:g} deg [%]");axs[2].set_ylim(-5,105)
+ for f,label,color,ls,marker in SWEEP:
+  for ax,m in zip(axs[:2],('rms_z','rms_h')):
+   r=[paired_pct(d,c,f,'T41@C',m) for c in dose]
+   ax.errorbar(ks,[x for x,_ in r],yerr=[h for _,h in r],color=color,ls=ls,marker=marker,ms=3,lw=.8,capsize=1.5,label=label)
+  q=np.array([np.percentile(d[(d.cell==c)&(d['filter']==f)].yaw_rms_deg,[25,50,75]) for c in dose])
+  axs[2].errorbar(ks,q[:,1],yerr=[q[:,1]-q[:,0],q[:,2]-q[:,1]],color=color,ls=ls,marker=marker,ms=3,lw=.8,capsize=1.5)
+ q=[d[(d.cell==c)&(d['filter']=='T41@C')].yaw_rms_deg.median() for c in dose]
+ axs[2].plot(ks,q,color=COLOR['T41@C'],marker='^',ms=3,lw=.8,label='T independent')
+ for ax in axs[:2]:ax.axhline(0,color='black',lw=.6);ax.set_yscale('symlog',linthresh=20)
+ axs[0].set_ylabel('Heave vs T indep. [%]');axs[1].set_ylabel('Horizontal vs T indep. [%]');axs[0].legend(fontsize=5.5,ncol=2,loc='upper left')
+ axs[2].axhline(p['heading_failure_deg'],color='black',ls=':',lw=.7);axs[2].set_yscale('log');axs[2].set_ylabel('Heading RMS [deg]');axs[2].legend(fontsize=5.5,loc='upper left')
  axs[2].set_xscale('log');axs[2].set_xlim(1.12,.135);axs[2].set_xticks(ks,[f'{x:g}' for x in ks]);axs[2].minorticks_off()
  axs[2].set_xlabel('Heave RAO factor $k$ (horizontal motion unchanged)');save(fig,out,'heave_sweep')
 
 def heave_sweep_claims(results):
  """Tabulate the sweep and derive its discussion only from measured cells."""
- d,p,dose,iv=load_heave_sweep(results);a=json.loads((results/'heave_sweep_analysis.json').read_text())
- pr=pd.read_csv(results/'heave_sweep_paired.csv');n=len(p['seeds']);fail=p['heading_failure_deg']
- heave=['A41@C','CSM','TCSM','CSM/real'];heading=['CSM','TCSM','CSM/real','TCSM:noconf/ext-true','TCSM:noconf/ext-true/real','TCSM/noreset']
- rows=[r'\begin{table*}[!t]\centering',
-  r'\caption{Exploratory heave-RAO dose response, '+str(n)+r' paired seeds per cell (primary seeds 1001--'+str(1000+n)+r'). $k$ scales the heave RAO only; horizontal motion and every sensor stream are unchanged within a seed. Broad and long-crested cells change only the $\cos^{2s}$ spreading ($s=1$, $s=10^4$; default $s=4$). $\gamma^2$ is the applied multiple coherence of the known diagnostic prior (cap 0.999). Heave is the mean RMS; heading is the median RMS with runs above '+f'{fail:g}'+r'$^\circ$ in parentheses.}',
-  r'\footnotesize\begin{tabular}{lr'+'r'*len(heave)+'r'*len(heading)+r'}\toprule',
-  r'&&\multicolumn{'+str(len(heave))+r'}{c}{Heave RMS [mm]}&\multicolumn{'+str(len(heading))+r'}{c}{Heading RMS [deg]}\\',
-  r'$k$&$\gamma^2$&Q ind.&Q shared&T shared&Q real&Q shared&T shared&Q real&T known&T known real&T no reset\\\midrule']
+ d,iv,p,a,dose=load_heave_sweep(results);n=len(p['seeds']);fail=p['heading_failure_deg'];cells=list(p['cells'])
+ cap=a['cap_binding'];harm=a['legacy_heave_vs_real_only']
  label={c:f'{x:g}' for c,x in dose.items()}
- label.update({c:'0.15 broad' for c in p['cells'] if c.endswith('broad')});label.update({c:'0.15 long' for c in p['cells'] if c.endswith('long')})
- for c in p['cells']:
-  g=d[d.cell==c];coh=(g[g['filter']=='CSM:noconf/ext-true'].cpl_coh_xz+g[g['filter']=='CSM:noconf/ext-true'].cpl_coh_yz).mean()
-  vals=[f'{coh:.3f}']+[fmt(1000*g[g['filter']==f].rms_z.mean(),1) for f in heave]
-  for f in heading:
-   x=g[g['filter']==f].yaw_rms_deg;k=int((x>fail).sum());vals.append(f'{x.median():.1f}'+(f' ({k})' if k else ''))
+ label.update({c:'0.15 broad' for c in cells if c.endswith('broad')});label.update({c:'0.15 long' for c in cells if c.endswith('long')})
+ mean=lambda c,f,m:d[(d.cell==c)&(d['filter']==f)][m].mean()
+ coh=lambda c,f:(d[(d.cell==c)&(d['filter']==f)].cpl_coh_xz+d[(d.cell==c)&(d['filter']==f)].cpl_coh_yz).mean()
+ rows=[r'\begin{table*}[!t]\centering',
+  r'\caption{Heave-RAO dose response, '+str(n)+r' paired seeds per cell. $k$ scales the heave RAO only; horizontal motion and every sensor stream are unchanged within a seed; broad and long-crested cells change only the $\cos^{2s}$ spreading ($s=1$, $s=10^4$; default $s=4$). $\gamma^2$: applied multiple coherence of the known diagnostic prior with the legacy cap (0.999 ceiling) and the default cap ('+f"{p['fixed_policy']['cap_coherence']:g}"+r'). RMS errors are means; heading is the median RMS with runs above '+f'{fail:g}'+r'$^\circ$ in parentheses. Legacy: cross term scaled down at the cap.}',
+  r'\footnotesize\begin{tabular}{lrrrrrrrrrrrr}\toprule',
+  r'&\multicolumn{2}{c}{$\gamma^2$}&\multicolumn{5}{c}{Heave RMS [mm]}&\multicolumn{3}{c}{Horizontal RMS [mm]}&\multicolumn{2}{c}{Heading [deg]}\\',
+  r'$k$&legacy&default&T ind.&Q legacy&T legacy&Q shared&T shared&T ind.&Q shared&T shared&T legacy&T shared\\\midrule']
+ for c in cells:
+  vals=[f"{coh(c,'CSM:noconf/ext-true/cap0'):.3f}",f"{coh(c,'CSM:noconf/ext-true'):.3f}"]
+  vals+=[fmt(1000*mean(c,f,'rms_z'),1) for f in ('T41@C','CSM/cap0','TCSM/cap0','CSM','TCSM')]
+  vals+=[fmt(1000*mean(c,f,'rms_h'),1) for f in ('T41@C','CSM','TCSM')]
+  for f in ('TCSM/cap0','TCSM'):
+   x=d[(d.cell==c)&(d['filter']==f)].yaw_rms_deg;k=int((x>fail).sum());vals.append(f'{x.median():.1f}'+(f' ({k})' if k else ''))
   rows.append(label[c]+'&'+'&'.join(vals)+r'\\')
  rows.append(r'\bottomrule\end{tabular}\label{tab:heave-sweep}\end{table*}')
- def paired(cell,f,b,m):
-  """One paired sweep contrast as text with its 95% interval."""
-  r=pr[(pr.cell==cell)&(pr['filter']==f)&(pr.baseline==b)&(pr.metric==m)].iloc[0];sc=1000 if m!='yaw_rms_deg' else 1
-  return f'{sc*r.delta:+.1f} [{sc*r.ci_low:+.1f}, {sc*r.ci_high:+.1f}]'
- cap=a['cap_binding'];harm=a['heave_vs_real_only'];capped=[c for c in dose if cap[c]['known_at_cap']]
- first_cap=max(dose[c] for c in capped) if capped else None
- hq=harm['CSM']['first_harm_cell'];ht=harm['TCSM']['first_harm_cell']
- def pct(f,c):
-  """Shared versus real-only heave change for one factor."""
-  r=harm[f][c];return f"{r['percent']:+.1f}\\% [{r['ci_low']:+.1f}, {r['ci_high']:+.1f}]"
- within=hq is not None and cap[hq]['known_at_cap']
- conf=d[(d.cell==hq)&(d['filter']=='CSM')].mean_confidence.mean() if hq else float('nan')
- onset=a['onset_cell'];q30=lambda f,c:int((d[(d.cell==c)&(d['filter']==f)].yaw_rms_deg>fail).sum())
- sp=lambda f,c:pr[(pr.cell==c)&(pr['filter']==f)&(pr.metric=='yaw_rms_deg')].iloc[0]
- bq,lq,bt,lt=sp('CSM','h0.15_broad-h0.15'),sp('CSM','h0.15_long-h0.15'),sp('TCSM','h0.15_broad-h0.15'),sp('TCSM','h0.15_long-h0.15')
- p2q=bq.ci_high<0 and lq.ci_low>0;p2t=bt.ci_high<0 and lt.ci_low>0
- noreset=d[d['filter']=='TCSM/noreset'].groupby('cell').yaw_rms_deg.mean().max()
- ctrl=max(a['control_heading_max_deg'].values())
- iv_a=a['intervention_sf2'];sf=p['intervention']['s_factor'];kcap=(cap['h1.00']['known']/(sf*sf*0.999))**.5
- iv_cells=p['intervention']['cells'];below=[c for c in iv_cells if iv_a[c]['known_coherence']<0.999-5e-4];at=[c for c in iv_cells if c not in below]
- hp=lambda c,f:iv_a[c][f]
- cap_shift=all(hp(c,f)['ci_high']<0 for c in below for f in ('CSM/sf2','TCSM/sf2')) and all(hp(c,f)['ci_low']>0 for c in at for f in ('CSM/sf2','TCSM/sf2'))
- sf_failures=sum(hp(c,f)['heading_over30'] for c in iv_cells for f in ('CSM/sf2','TCSM/sf2'))
- kb=min(dose[c] for c in below);ka=max(dose[c] for c in at) if at else None
- ivtxt=lambda c:f"{hp(c,'CSM/sf2')['heave_vs_real_pct']:+.1f}\\% [{hp(c,'CSM/sf2')['ci_low']:+.1f}, {hp(c,'CSM/sf2')['ci_high']:+.1f}]"
- intervention=(f"Raising only the horizontal prior factor from 1 to {sf:g} divides the applied coherence by {sf*sf:g} (known prior {iv_a['h1.00']['known_coherence']:.3f}, {iv_a['h0.50']['known_coherence']:.3f} and {iv_a['h0.30']['known_coherence']:.3f} at $k=1$, 0.5 and 0.3), so the cap should bind only below $k={kcap:.2f}$. "
-  +(f"The shared QMEKF heave change relative to real-only coupling then remains a benefit down to $k={kb:g}$ ({ivtxt(below[-1])}) and becomes harm only where the cap binds again ($k={ka:g}$: {ivtxt(at[0])}); shared TFG matches it. " if cap_shift and ka else "The predicted boundary shift is not fully reproduced. ")
-  +(f"No intervention run exceeds {fail:g} degrees heading. " if sf_failures==0 else f"{sf_failures} intervention runs still exceed {fail:g} degrees heading. ")
-  +f"The intervention has a cost at $k=1$, where the oversized horizontal prior reduces the shared heave gain to {ivtxt('h1.00')}. ")
- rep=a['reproduction'];rows_rep=sum(v['rows'] for v in rep.values());exact=all(v['max_relative_difference']==0 for v in rep.values())
- text=(f"An exploratory dose-response sweep (Tables~\\ref{{tab:heave-sweep}} and~\\ref{{tab:heave-sf2}}) repeats the first {n} primary seeds with the heave RAO scaled by $k$; horizontal motion and every sensor stream are unchanged within a seed. "
-  +(f"Its repeated $k=1$ and $k=0.15$ cells reproduce the heave, horizontal, heading, tilt and NEES scores of all {rows_rep} overlapping published runs exactly. " if exact else f"Its repeated cells differ from the published scores by up to {max(v['max_relative_difference'] for v in rep.values()):.2g} relative. ")
-  +f"At $k=1$ the shared quadrature prior changes heave RMS relative to real-only coupling by {pct('CSM','h1.00')} (QMEKF). "
-  +f"The applied multiple coherence of the known prior is {cap['h1.00']['known']:.3f} there; "
-  +(f"for every $k\\le{first_cap:g}$ it is pinned at the 0.999 positive-semidefinite cap of the excitation mapping, whose cross term scales the measured horizontal-on-vertical regression by the vertical prior variance. The capped prior is singular: it leaves no horizontal acceleration that is independent of heave. " if capped else "the cap does not bind in this sweep. ")
-  +(f"Shared heave harm relative to real-only coupling first appears at $k={dose[hq]:g}$ for QMEKF ({pct('CSM',hq)}) and $k={dose[ht]:g}$ for TFG ({pct('TCSM',ht)}), "+("where the known prior is already capped" if within else "before the known prior reaches the cap")+f", while mean coupling confidence is still {conf:.2f}. " if hq and ht else "No shared heave harm relative to real-only coupling is resolved. ")
-  +f"Heading degrades later: the paired shared-minus-independent heading interval first exceeds one degree at $k={dose[onset['CSM']]:g}$ for QMEKF and $k={dose[onset['TCSM']]:g}$ for TFG, and {q30('CSM','h0.30')}/{n} and {q30('TCSM','h0.30')}/{n} runs exceed {fail:g} degrees at $k=0.3$. Heading saturates near the random-heading level below that, so it is not strictly monotone in $k$. "
-  +f"Real-only, known real-only and independent controls stay below {ctrl:.1f} degrees mean heading RMS at every factor. "
-  +intervention
-  +f"In the collapse band TFG geometry changes heading by {paired('h0.30','TCSM','CSM','yaw_rms_deg')} degrees and horizontal error by {paired('h0.30','TCSM','CSM','rms_h')} mm relative to shared QMEKF at $k=0.3$, but heave by {paired('h0.30','TCSM','CSM','rms_z')} mm; neither shared filter approaches the independent-axis reference. "
-  +f"Omitting reset transport keeps TFG mean heading RMS below {noreset:.1f} degrees at every factor but worsens heave at small $k$. "
-  +f"At $k=0.15$, broad spreading changes shared-QMEKF heading by {bq.delta:+.1f} [{bq.ci_low:+.1f}, {bq.ci_high:+.1f}] and long-crested seas by {lq.delta:+.1f} [{lq.ci_low:+.1f}, {lq.ci_high:+.1f}] degrees"
-  +(", as predicted" if p2q else ", only partly as predicted")+f"; the shared-TFG intervals are {bt.delta:+.1f} [{bt.ci_low:+.1f}, {bt.ci_high:+.1f}] and {lt.delta:+.1f} [{lt.ci_low:+.1f}, {lt.ci_high:+.1f}]"+("." if p2t else " and include zero.")
-  +" This localizes the failure to a capped, singular horizontal-vertical quadrature prior under heave/horizontal amplitude mismatch, which the confidence monitor does not detect. It does not validate a replacement policy, and no estimator was retuned.")
+ iv_a=a['intervention_sf2'];sf=p['intervention']['s_factor'];iv_cells=p['intervention']['cells']
  rows.extend([r'\begin{table}[!t]\centering',
-  r'\caption{Horizontal-prior intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S='+f'{sf:g}'+r'$ (same seeds). Heave change relative to real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above '+f'{fail:g}'+r'$^\circ$ in parentheses.}',
-  r'\footnotesize\begin{tabular}{lrllrr}\toprule $k$&$\gamma^2$&Q shared [\%]&T shared [\%]&Q [deg]&T [deg]\\\midrule'])
+  r'\caption{Legacy-cap intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S='+f'{sf:g}'+r'$ (same seeds). Heave change relative to legacy real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above '+f'{fail:g}'+r'$^\circ$ in parentheses.}',
+  r'\footnotesize\begin{tabular}{lrllrr}\toprule $k$&$\gamma^2$&Q legacy [\%]&T legacy [\%]&Q [deg]&T [deg]\\\midrule'])
  for c in iv_cells:
-  e=iv_a[c];cells=[f"{e[f]['heave_vs_real_pct']:+.1f} [{e[f]['ci_low']:+.1f}, {e[f]['ci_high']:+.1f}]" for f in ('CSM/sf2','TCSM/sf2')]
-  cells+=[f"{e[f]['heading_mean_deg']:.1f}"+(f" ({e[f]['heading_over30']})" if e[f]['heading_over30'] else '') for f in ('CSM/sf2','TCSM/sf2')]
-  rows.append(f"{dose[c]:g}&{e['known_coherence']:.3f}&"+'&'.join(cells)+r'\\')
+  e=iv_a[c];vals=[f"{e[f]['heave_vs_real_pct']:+.1f} [{e[f]['ci_low']:+.1f}, {e[f]['ci_high']:+.1f}]" for f in ('CSM/cap0/sf2','TCSM/cap0/sf2')]
+  vals+=[f"{e[f]['heading_mean_deg']:.1f}"+(f" ({e[f]['heading_over30']})" if e[f]['heading_over30'] else '') for f in ('CSM/cap0/sf2','TCSM/cap0/sf2')]
+  rows.append(f"{dose[c]:g}&{e['known_coherence']:.3f}&"+'&'.join(vals)+r'\\')
  rows.append(r'\bottomrule\end{tabular}\label{tab:heave-sf2}\end{table}')
- info=dict(cap_shift=cap_shift,kb=kb,ka=ka,sf=sf,first_cap=first_cap,gain_before=harm['CSM'][[c for c in dose if not cap[c]['known_at_cap']][-1]],
-           harm_at=harm['CSM'][hq] if hq else None,hq=dose[hq] if hq else None)
- return rows,text,info
+ rep=a['reproduction'];rows_rep=sum(v['rows'] for v in rep.values());exact=all(v['max_relative_difference']==0 for v in rep.values())
+ capped=[c for c in dose if cap[c]['known_at_cap']];first_cap=max(dose[c] for c in capped) if capped else None
+ uncapped=[c for c in dose if not cap[c]['known_at_cap']]
+ hq=harm['CSM/cap0']['first_harm_cell'];onset=a['heading_onset']
+ kcap=(cap['h1.00']['known_legacy']/(sf*sf*0.999))**.5
+ below=[c for c in iv_cells if iv_a[c]['known_coherence']<0.999-5e-4];at=[c for c in iv_cells if c not in below]
+ shift=all(iv_a[c][f]['ci_high']<0 for c in below for f in ('CSM/cap0/sf2','TCSM/cap0/sf2')) and all(iv_a[c][f]['ci_low']>0 for c in at for f in ('CSM/cap0/sf2','TCSM/cap0/sf2'))
+ best_z=sum(min(('A41@C','T41@C','CSM','TCSM'),key=lambda f:mean(c,f,'rms_z'))=='TCSM' for c in cells)
+ best_h=sum(min(('A41@C','T41@C','CSM','TCSM'),key=lambda f:mean(c,f,'rms_h'))=='TCSM' for c in cells)
+ rz=[paired_pct(d,c,'TCSM','T41@C','rms_z')[0] for c in dose];rh=[paired_pct(d,c,'TCSM','T41@C','rms_h')[0] for c in dose]
+ fixed_fail=int(sum((d[(d['filter'].isin(['CSM','TCSM']))].yaw_rms_deg>fail)))
+ pct=lambda r:f"{r['percent']:+.1f}\\% [{r['ci_low']:+.1f}, {r['ci_high']:+.1f}]"
+ legacy_coh=', '.join(f"{cap[c]['known_legacy']:.3f}" for c in uncapped[1:]);legacy_k=', '.join(label[c] for c in uncapped[1:])
+ text=(f"A heave-RAO dose response (Tables~\\ref{{tab:heave-sweep}} and~\\ref{{tab:heave-sf2}}, Fig.~\\ref{{fig:heave-sweep}}) repeats the first {n} primary seeds with the heave RAO scaled by $k$; horizontal motion and every sensor stream are unchanged within a seed. "
+  +(f"Its repeated $k=1$ and $k=0.15$ cells reproduce the heave, horizontal, heading, tilt and NEES scores of all {rows_rep} overlapping primary and diagnosis runs exactly. " if exact else "")
+  +f"With the legacy cap the known prior's applied multiple coherence is {cap['h1.00']['known_legacy']:.3f} at $k=1$ and grows as $1/k^2$ "
+  +f"({legacy_coh} at $k={legacy_k}$), "
+  +(f"reaching the 0.999 cap for $k\\le{first_cap:g}$. " if capped else "without reaching the cap. ")
+  +f"The legacy shared-QMEKF heave change relative to legacy real-only coupling is {pct(harm['CSM/cap0']['h1.00'])} at $k=1$ and {pct(harm['CSM/cap0'][uncapped[-1]])} at $k={label[uncapped[-1]]}$, "
+  +(f"but {pct(harm['CSM/cap0'][hq])} at $k={dose[hq]:g}$, where the cap binds; " if hq else "and never turns into harm; ")
+  +(f"the legacy heading interval first exceeds the independent filter by one degree at $k={dose[onset['CSM/cap0']]:g}$ (QMEKF) and $k={dose[onset['TCSM/cap0']]:g}$ (TFG). " if onset['CSM/cap0'] and onset['TCSM/cap0'] else "")
+  +(f"Raising only the horizontal prior factor to {sf:g} moves the predicted binding boundary to $k={kcap:.2f}$ and the observed one to between {min(dose[c] for c in below):g} and {max(dose[c] for c in at):g}. " if shift and at else "The intervention does not move the boundary as predicted. ")
+  +"The capped legacy prior is singular: it explains all horizontal acceleration through heave with an understated regression. "
+  +f"The default policy keeps the regression and holds the applied coherence at {p['fixed_policy']['cap_coherence']:g} by enlarging the horizontal prior. "
+  +f"Across the {len(cells)} cells, shared TFG then has the lowest mean heave RMS of the four filters in {best_z} and the lowest horizontal RMS in {best_h}; "
+  +f"relative to independent TFG its heave changes by {min(rz):+.1f}\\% to {max(rz):+.1f}\\% and its horizontal error by {min(rh):+.1f}\\% to {max(rh):+.1f}\\% over the default-spreading factors, "
+  +f"and {fixed_fail} shared runs exceed {fail:g} degrees heading.")
+ return rows,text,dict(cap_shift=shift,best_z=best_z,best_h=best_h,cells=len(cells))
 
 def supplemental_tables(results,main):
  """Summarize supplementary scores without pooling independent wave records."""
  weak=pd.read_csv(results/'weak_summary.csv').set_index('filter');wr=pd.read_csv(results/'weak_runs.csv')
  ds=pd.read_csv(results/'dataset_runs.csv');dp=pd.read_csv(results/'dataset_paired.csv')
  reset=pd.read_csv(results/'reset_comparison.csv');tr=pd.read_csv(results/'transient_runs.csv');tp=pd.read_csv(results/'transient_paired.csv')
- if len(wr)!=12*13 or len(ds)!=8*8*4 or len(tr)!=24*3*4 or len(reset)!=6*2*7:
+ if len(wr)!=12*len(WEAK) or len(ds)!=8*8*4 or len(tr)!=24*3*4 or len(reset)!=6*2*7:
   raise RuntimeError('Incomplete supplementary experiments')
  failures=main.groupby(['case','filter']).agg(n=('seed','size'),heading_over30=('yaw_rms_deg',lambda x:int((x>30).sum())),heading_mean_deg=('yaw_rms_deg','mean'),benchmark_flags=('failed','sum'))
  failures.to_csv(results/'heading_failures.csv',float_format='%.9g')
- rows=[r'\begin{table*}[!t]\centering',r'\caption{Exploratory reduced-heave diagnosis, 12 paired seeds. Q = QMEKF, T = TFG. Known coupling is a diagnostic input. The 30-degree count is separate from the inherited divergence flag.}',r'\footnotesize\begin{tabular}{lrrrrrrr}\toprule Variant&Heave [mm]&H [mm]&Heading [deg]&Heading $>30^\circ$&NEES$_9$&Confidence&Shrinks\\\midrule']
- for f in ['A41@C','T41@C','CSM:off','TCSM:off','CSM','TCSM','CSM/real','TCSM/real','CSM:noconf','TCSM:noconf','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset']:
-  r=weak.loc[f];label={'A41@C':'Q independent','T41@C':'T independent'}.get(f,f.replace('TCSM','T shared').replace('CSM','Q shared').replace(':noconf/ext-true',' known').replace(':noconf',' unchecked').replace('/noreset',' no reset').replace('/real',' real only').replace(':off',' off'))
+ rows=[r'\begin{table*}[!t]\centering',r'\caption{Exploratory reduced-heave diagnosis, 12 paired seeds. Q = QMEKF, T = TFG. Legacy cap: the cross term is scaled down at the PSD cap; cap 0.7/0.9 bracket the default target 0.8. Known coupling is a diagnostic input. The 30-degree count is separate from the inherited divergence flag.}',r'\footnotesize\begin{tabular}{lrrrrrrr}\toprule Variant&Heave [mm]&H [mm]&Heading [deg]&Heading $>30^\circ$&NEES$_9$&Confidence&Shrinks\\\midrule']
+ for f,label in WEAK:
+  r=weak.loc[f]
   vals=[fmt(r.heave_m*1000),fmt(r.horizontal_m*1000),fmt(r.heading_deg),f'{int(r.heading_over30)}/12',fmt(r.nees9,0),fmt(r.mean_confidence),fmt(r.shrinks,0)]
   rows.append(tex(label)+'&'+'&'.join(vals)+r'\\')
  rows.extend([r'\bottomrule\end{tabular}\label{tab:weak}\end{table*}'])
@@ -365,36 +345,46 @@ def tables_and_macros(results,df,pairs,agg,ab):
  macro['VerificationResults']=f"Measured maximum prediction finite-difference discrepancy is ${sci(pred)}$; the relative independent continuous-covariance discrepancy is ${sci(cov)}$. The anisotropic model-coordinate covariance discrepancy is ${sci(coords)}$. Allocation-guarded float execution explicitly forces a falling-confidence fallback and remains finite with symmetric covariance; round-off eigenvalues are recorded rather than hidden."
  nominal=main[main.case=='jonswap'].groupby('filter').mean(numeric_only=True)
  macro['ResultsDiscussion'] += f" In the nominal case, joint physical NEES is {nominal.loc['TCSM','nees9_phys']:.1f} for shared TFG and {nominal.loc['CSM','nees9_phys']:.1f} for shared QMEKF, against a 9-state reference mean of 9. This diagnostic is not repaired by the geometry change."
- if z.ci_high_pct < -5 and h.ci_high_pct < -5:
-  macro['Recommendation'] = "The paired aggregate position results support further development of shared TFG. It should remain experimental until the observed uncertainty defects are addressed and the target's measured timing and stack high-water evidence are available. The magnitude and condition dependence of the benefit, rather than the group construction alone, justify this recommendation."
- elif len(practical):
-  conditions=', '.join(CASE[c] for c in sorted(set(practical.case)))
-  macro['Recommendation'] = "Further TFG development should focus on the conditions with measured practically meaningful gains: "+tex(conditions)+". A general replacement of the shared QMEKF is not supported by the aggregate evidence and added runtime. Keep both research geometries available and retain the existing shipping OU-III default."
- else:
-  macro['Recommendation'] = "The measured position benefit does not justify a general replacement of the shared QMEKF at the added host runtime. Retain shared QMEKF as the experimental accuracy/cost reference. The shared TFG implementation merits retention as a reusable research vehicle for geometry, covariance-reset and outage studies. It remains experimental; calibrated uncertainty and actual ESP32 timing/stack validation are prerequisites to promotion. The shipping OU-III default remains unchanged."
  weak=main[main.case=='weak_heave'].groupby('filter').mean(numeric_only=True)
- failures=diagnostic['heading_failures'];w=diagnostic['weak']
- real_failures=int(w.loc[['CSM/real','TCSM/real'],'heading_over30'].sum())
- real_n=int(w.loc['CSM/real','n'])
- real_result=(f"Real-only coupling removes this heading failure in a separate {real_n}-seed diagnosis."
-              if real_failures==0 else f"Real-only coupling retains {real_failures} heading failures across the two filters in a separate {real_n}-seed diagnosis.")
- real_detail=('with zero 30-degree exceedances' if real_failures==0
-              else f'with {real_failures} total 30-degree exceedances')
+ failures=diagnostic['heading_failures'];w=diagnostic['weak'];nw=int(w.loc['CSM','n'])
+ over=lambda f:int(failures.loc[('weak_heave',f),'heading_over30'])
  flipped=ab[(ab.case=='rapid_rotation')&(ab['filter']=='TCSM:noconf/ext-flip')&(ab.metric=='rms_h')]
  if len(flipped)!=1:raise RuntimeError('Missing or ambiguous reversed-coupling ablation')
  flipped_change=float(flipped.iloc[0].percent)
- macro['AbstractResults']+=f" However, reduced heave causes RMS heading above 30 degrees in {int(failures.loc[('weak_heave','CSM'),'heading_over30'])}/{ns} shared-QMEKF and {int(failures.loc[('weak_heave','TCSM'),'heading_over30'])}/{ns} shared-TFG runs, despite no divergence/nonfinite flag. {real_result}"
- if sweep['cap_shift']:macro['AbstractResults']+=f" A heave-RAO dose-response sweep traces the failure to the positive-semidefinite cap of the shared excitation mapping: once the cap binds ($k\\le{sweep['first_cap']:g}$), the shared heave change relative to real-only coupling turns from {sweep['gain_before']['percent']:+.1f}\\% to {sweep['harm_at']['percent']:+.1f}\\%, and doubling only the horizontal prior moves that boundary to between $k={sweep['kb']:g}$ and $k={sweep['ka']:g}$, as predicted."
- macro['FailureDiscussion']=f"Reduced heave is the decisive adverse case. Mean heave/horizontal errors are {1000*weak.loc['CSM','rms_z']:.1f}/{1000*weak.loc['CSM','rms_h']:.1f} mm for shared QMEKF and {1000*weak.loc['TCSM','rms_z']:.1f}/{1000*weak.loc['TCSM','rms_h']:.1f} mm for shared TFG; independent TFG achieves {1000*weak.loc['T41@C','rms_z']:.1f}/{1000*weak.loc['T41@C','rms_h']:.1f} mm. Shared heading RMS averages {weak.loc['CSM','yaw_rms_deg']:.1f} and {weak.loc['TCSM','yaw_rms_deg']:.1f} degrees. The apparent practically large horizontal geometry gain is therefore a comparison of two poor estimators, accompanied by worse heave. In the separate exploratory diagnosis, real-only coupling lowers heading RMS to {w.loc['CSM/real','heading_deg']:.2f} and {w.loc['TCSM/real','heading_deg']:.2f} degrees {real_detail}. Coupling-off results also return to the independent-axis reference. Known quadrature coupling still produces severe heading error, so this cannot be attributed solely to online coupling-estimation error. Confidence falls and invokes the PSD fallback, but does not prevent the failure. This implicates quadrature-prior interaction with the weak-heave attitude/bias ambiguity; it is an experimental diagnosis, not a proof of a unique causal mechanism. No operational prior was retuned after observing these outcomes."
+ def comparison(m,label):
+  """Condition-balanced aggregate row for one metric and comparison."""
+  return agg[(agg.metric==m)&(agg.comparison==label)].iloc[0]
+ prior_z,prior_h=comparison('rms_z','Shared prior, TFG'),comparison('rms_h','Shared prior, TFG')
+ best_z,best_h=comparison('rms_z','TFG shared vs QMEKF independent'),comparison('rms_h','TFG shared vs QMEKF independent')
+ mm=lambda f,m:1000*weak.loc[f,m]
+ macro['AbstractResults']+=(f" Relative to independent-axis TFG, the shared prior changes heave by {eff(prior_z)} and horizontal position by {eff(prior_h)}; "
+  f"relative to independent QMEKF, shared TFG changes them by {eff(best_z)} and {eff(best_h)}. "
+  f"Under reduced heave shared TFG has {mm('TCSM','rms_z'):.1f}/{mm('TCSM','rms_h'):.1f} mm heave/horizontal error against {mm('T41@C','rms_z'):.1f}/{mm('T41@C','rms_h'):.1f} mm independently, "
+  f"with {over('TCSM')}/{ns} heading failures; the legacy excitation cap gives {1000*w.loc['TCSM/cap0','heave_m']:.1f}/{1000*w.loc['TCSM/cap0','horizontal_m']:.1f} mm and {int(w.loc['TCSM/cap0','heading_over30'])}/{nw} heading failures in a paired {nw}-seed diagnosis.")
+ macro['FailureDiscussion']=(f"Reduced heave is the condition that separates the cap policies. With the default policy, mean heave/horizontal errors are "
+  f"{mm('CSM','rms_z'):.1f}/{mm('CSM','rms_h'):.1f} mm for shared QMEKF and {mm('TCSM','rms_z'):.1f}/{mm('TCSM','rms_h'):.1f} mm for shared TFG, against "
+  f"{mm('A41@C','rms_z'):.1f}/{mm('A41@C','rms_h'):.1f} and {mm('T41@C','rms_z'):.1f}/{mm('T41@C','rms_h'):.1f} mm independently; "
+  f"{over('CSM')} and {over('TCSM')} of {ns} shared runs exceed 30 degrees RMS heading. "
+  f"In the paired {nw}-seed diagnosis (Table~\\ref{{tab:weak}}) the legacy cap, which scales the cross term down, gives {1000*w.loc['CSM/cap0','heave_m']:.1f} and {1000*w.loc['TCSM/cap0','heave_m']:.1f} mm heave, "
+  f"{w.loc['CSM/cap0','heading_deg']:.1f} and {w.loc['TCSM/cap0','heading_deg']:.1f} degrees mean heading RMS and {int(w.loc['CSM/cap0','heading_over30'])} and {int(w.loc['TCSM/cap0','heading_over30'])} heading failures. "
+  f"Cap targets 0.7 and 0.9 give {1000*w.loc['TCSM/cap0.7','heave_m']:.1f} and {1000*w.loc['TCSM/cap0.9','heave_m']:.1f} mm heave for shared TFG, against {1000*w.loc['TCSM','heave_m']:.1f} mm at the default 0.8. "
+  f"Known coupling with the default cap gives {w.loc['CSM:noconf/ext-true','heading_deg']:.1f} and {w.loc['TCSM:noconf/ext-true','heading_deg']:.1f} degrees heading, so the remaining gap to the independent filters is not an online coupling-estimation error. "
+  f"Omitting reset transport changes shared-TFG heave to {1000*w.loc['TCSM/noreset','heave_m']:.1f} mm.")
  macro['HeaveSweepDiscussion']=sweep_text
- macro['SupplementDiscussion']=f"The pinned eight-record replay gives heave changes between {diagnostic['replay_heave_min']:+.4f}\\% and {diagnostic['replay_heave_max']:+.4f}\\%, too small to justify a geometry switch. These intervals condition on each wave record and resample only sensors/initialization. The 24-seed full-rate transition supplement finds no practically meaningful recovery advantage; {diagnostic['transient_censored']} transition recoveries are censored. Its exported positions have 10-micrometre resolution, so sub-resolution differences are not evidence for useful improvement. The six-condition reset supplement shows small ordinary-case position changes for both geometries; in reduced heave, omitting reset transport changes the failure mode substantially rather than fixing the prior. Reversed unchecked coupling degrades horizontal error by {flipped_change:.2f}\\% in rapid rotations, while confidence reduces that diagnostic to the uncoupled response. Confidence is useful but does not guarantee robustness."
+ macro['SupplementDiscussion']=f"The pinned eight-record replay gives heave changes between {diagnostic['replay_heave_min']:+.4f}\\% and {diagnostic['replay_heave_max']:+.4f}\\%, too small to justify a geometry switch. These intervals condition on each wave record and resample only sensors/initialization. The 24-seed full-rate transition supplement finds no practically meaningful recovery advantage; {diagnostic['transient_censored']} transition recoveries are censored. Its exported positions have 10-micrometre resolution, so sub-resolution differences are not evidence for useful improvement. The six-condition reset supplement shows small ordinary-case position changes for both geometries. Reversed unchecked coupling degrades horizontal error by {flipped_change:.2f}\\% in rapid rotations, while confidence reduces that diagnostic to the uncoupled response. Confidence is useful but does not guarantee robustness."
  engine=main[main.case=='engine800'].groupby('filter').mean(numeric_only=True)
  turn=main[main.case=='maneuver'].groupby('filter').mean(numeric_only=True)
  colored=main[main.case=='colored_noise'].groupby('filter').mean(numeric_only=True)
  yaw=pairs[(pairs.case=='maneuver')&(pairs.comparison=='TFG geometry, shared')&(pairs.metric=='yaw_rms_deg')].iloc[0]
  macro['SecondaryDiscussion']=f"Secondary attitude and bias results are condition dependent. At 800 rpm, shared TFG reduces mean tilt RMS from {engine.loc['CSM','tilt_rms_deg']:.2f} to {engine.loc['TCSM','tilt_rms_deg']:.2f} degrees, heading from {engine.loc['CSM','yaw_rms_deg']:.2f} to {engine.loc['TCSM','yaw_rms_deg']:.2f} degrees, and accelerometer-bias error from {engine.loc['CSM','ba_rms_mg']:.2f} to {engine.loc['TCSM','ba_rms_mg']:.2f} mg. Under colored noise, heading also improves from {colored.loc['CSM','yaw_rms_deg']:.2f} to {colored.loc['TCSM','yaw_rms_deg']:.2f} degrees while horizontal position worsens. Conversely, maneuvering worsens heading from {turn.loc['CSM','yaw_rms_deg']:.2f} to {turn.loc['TCSM','yaw_rms_deg']:.2f} degrees: paired absolute change {yaw.delta:+.2f} degrees, marginal 95\\% CI [{yaw.ci_low:+.2f}, {yaw.ci_high:+.2f}]. Gyro-bias RMS also worsens there. These secondary intervals are exploratory and are not part of the Holm-controlled primary position family. They motivate focused vibration/attitude research, not a claim of a general TFG accuracy gain."
- if set(practical.case)=={'weak_heave'} and all(int(failures.loc[('weak_heave',f),'heading_over30'])>0 for f in ['CSM','TCSM']):
-  macro['Recommendation']="Do not replace shared QMEKF generally with shared TFG. The condition-balanced position changes are small, the added host cost is substantial, and the only greater-than-5\\% supported position gain occurs inside a severe reduced-heave failure of both shared filters. Retain the reusable TFG implementation as an experimental research vehicle. "+("The reduced-heave sweep traces that failure to the shared excitation mapping, not the group geometry: its cross term reaches the positive-semidefinite cap once the horizontal/vertical amplitude ratio exceeds the fixed horizontal prior, and doubling only that prior moves the failure boundary as predicted. Further shared-mode work in either geometry should first replace cross-term shrinkage at the cap by a horizontal prior consistent with the measured amplitude ratio, make cap binding visible to the coupling confidence, and re-register the complete study, including calm water. " if sweep['cap_shift'] else "Further accuracy work should first investigate quadrature coupling, confidence and attitude/bias consistency under reduced heave. ")+"The independent-axis and real-only diagnostics are useful controls, not validated operational replacements. Full reset transport remains the mathematically verified default. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged."
+ geo_z,geo_h=comparison('rms_z','TFG geometry, shared'),comparison('rms_h','TFG geometry, shared')
+ best_all=all(r.ci_high_pct<0 for r in (geo_z,geo_h,prior_z,prior_h,best_z,best_h))
+ ratio=t.loc['TCSM','total_us']/t.loc['CSM','total_us']
+ macro['Recommendation']=(("Shared TFG is the most accurate of the four estimators in the condition-balanced position comparison: it improves on shared QMEKF, independent TFG and independent QMEKF with paired intervals excluding zero for heave and horizontal position. "
+   if best_all else "Shared TFG is not uniformly the most accurate of the four estimators: at least one condition-balanced position comparison has an interval that includes zero or favours another filter. ")
+  +f"Most of the gain comes from the shared prior ({eff(prior_z)} heave, {eff(prior_h)} horizontal); the geometry adds {eff(geo_z)} and {eff(geo_h)} at {ratio:.1f} times the host cost of shared QMEKF. "
+  +"The shared prior is worth keeping in both geometries with the cap policy; TFG is the better choice only where its small accuracy and attitude gains justify the added computation. "
+  +"Reduced heave remains the weakest condition for both shared filters. Nominal joint NEES remains poorly calibrated. Actual ESP32 timing and stack high-water measurements are still required. The shipping OU-III default remains unchanged.")
  firmware=json.loads((results/'firmware_builds.json').read_text())
  builds={r['variant']:r for r in firmware['builds']}
  if any(v not in builds or builds[v]['exit_code'] for v in ['qmekf','tfg','probe']):

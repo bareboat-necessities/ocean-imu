@@ -49,7 +49,10 @@
   exceeds one: the prior keeps the measured regression E[h | z] = b z /
   sigma_z^2 and a horizontal innovation of at least (1 - rho) H.  Shrinking
   b at the cap understates the regression when horizontal motion exceeds the
-  baseline prior (a weak heave RAO) and leaves a singular prior.
+  baseline prior (a weak heave RAO) and leaves a singular prior; capping b at
+  the measured coherence instead still understates it.  One Sigma serves the
+  whole spectrum while gamma^2 is measured in the band around f_op, so rho is
+  a broadband target below the band coherence (shared modes: 0.8).
   With the wrapper's equal horizontal priors the mapping is equivariant under
   rotations about the vertical (sigma_h^2 I is invariant, the cross vector
   rotates, every factor is an invariant), so the prior does not depend on how

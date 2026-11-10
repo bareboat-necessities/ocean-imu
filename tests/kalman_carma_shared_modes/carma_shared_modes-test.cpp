@@ -653,6 +653,21 @@ void test8_cap_policy() {
     const double err = std::max(std::abs(Mx[0](4,4) - std::sqrt(lam)), std::abs(Mx[1](5,5) - std::sqrt(lam)));
     check(pending && lam > 1.0 && err < 1e-12 && Mx[2].isIdentity(0.0),
           "cap_coherence: horizontal latent colouring rescaled by sqrt(lambda), vertical untouched", err, 1e-12);
+    // Real-only prior: the cap sees only the co-spectrum.  This sea's
+    // horizontal-vertical terms are pure quadrature, so nothing is enlarged.
+    csm::SharedModesMotion<double> r;
+    auto rc = r.coupling().config();
+    rc.source = kc::CarmaCouplingConfig::Source::External;
+    rc.cap_coherence = 0.95f;
+    r.coupling().set_config(rc);
+    r.set_quadrature_enabled(false);
+    r.coupling().set_external(band_matrix(3.0), 0.0);
+    r.set_vertical(1.0, 0.4);
+    r.set_horizontal(1.0, 0.4, 0.4, 0.0);
+    r.refresh(0.005);
+    check(std::abs(r.excitation().re(0,0) - 0.16) < 1e-15 && r.excitation().im.isZero(0.0),
+          "real-only prior: no imaginary excitation and no horizontal enlargement from quadrature evidence",
+          r.excitation().re(0,0), 0.16);
 }
 
 int main() {

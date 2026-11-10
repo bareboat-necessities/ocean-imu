@@ -29,7 +29,9 @@ struct SharedModesConfig {
     // Applied coherence kept at the PSD cap by enlarging the horizontal prior
     // (CarmaCouplingConfig::cap_coherence); 0 restores cross-term shrinkage,
     // which understates the measured regression under a weak heave RAO.
-    T cap_coherence = T(0.95);
+    // 0.8 from a development sensitivity (0.7-0.8 equivalent, 0.95 worse);
+    // reports/results/tfg_shared_modes records it on held-out seeds.
+    T cap_coherence = T(0.8);
 };
 
 template<typename T, class Core>

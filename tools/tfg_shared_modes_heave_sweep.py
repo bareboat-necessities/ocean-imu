@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
-"""Exploratory reduced-heave dose-response for the shared-mode filters.
+"""Reduced-heave dose response: the shared-mode excitation cap, before and after.
 
-The primary study finds shared-mode heading collapse at heave RAO x0.15 and
-none at x1. This sweep locates the onset on the primary seeds and tests two
-predictions of the working hypothesis that the vertical-horizontal quadrature
-prior, not the TFG geometry, drives the collapse:
+The heave RAO is scaled by k with horizontal motion unchanged, on the first 12
+primary seeds. `/cap0` rows restore the legacy cap (the cross term scaled
+down to applied coherence 0.999); unsuffixed shared rows are the operational
+estimators, which keep the measured regression and enlarge the horizontal
+prior at the cap (CarmaCouplingConfig::cap_coherence = 0.8).
 
-  Dose       shared heading error grows as the heave RAO shrinks, while real-only
-             and independent-axis controls stay near the nominal level;
-  Spreading  at x0.15, broad spreading (lower vertical-horizontal coherence) weakens
-             the collapse and long-crested seas strengthen it.
+Legacy mechanism, registered in sequence on the legacy estimator:
+  Dose        shared heading error grows as the heave RAO shrinks, while
+              real-only and independent-axis controls stay near nominal;
+  Spreading   at k = 0.15 broad spreading weakens and long-crested seas
+              strengthen the collapse;
+  Cap         the known prior's applied coherence follows 0.334 / k^2 and is
+              pinned at the cap for k < 0.58, where heave harm begins;
+  Intervention  S_factor 2 moves that boundary to k = 0.29.
+The cap policy was then changed: its target was chosen on seeds 1001-1003
+of the k = 1, 0.5, 0.3 and 0.15 cells (0.7-0.8 equivalent, 0.95 and the
+measured-coherence shrinkage worse). These cells compare it with the legacy
+cap and both independent-axis filters on identical data. Known coupling is a
+diagnostic input only; results are outside the primary multiplicity family.
 
-Two later predictions were registered from the first analysis (EXTENSION and
-INTERVENTION below): the positive-semidefinite cap of the excitation mapping
-binds below a computable heave factor, and raising only the horizontal prior
-moves that boundary.
-
-Known coupling is a diagnostic input only. No estimator is retuned and the
-results are outside the primary multiplicity family. The x1 and default x0.15
-cells repeat registered seeds, so the overlapping per-run scores must
-reproduce the published tables exactly.
-
-Run:        python3 tools/tfg_shared_modes_heave_sweep.py run --jobs 4
+Run:        python3 tools/tfg_shared_modes_heave_sweep.py run --jobs 3
 Reanalyse:  python3 tools/tfg_shared_modes_heave_sweep.py analyse
 """
 from __future__ import annotations
@@ -32,28 +32,19 @@ import numpy as np
 import pandas as pd
 from tfg_shared_modes_study import OUT,BINARY,BASE,clean_env,sha,ci
 
-FILTERS=('A41@C','CSM','TCSM','CSM/real','TCSM/real','CSM:noconf/ext-true','TCSM:noconf/ext-true',
-         'TCSM:noconf/ext-true/real','TCSM/noreset')
+OPERATIONAL=('A41@C','T41@C','CSM','TCSM')
+LEGACY=('CSM/cap0','TCSM/cap0','CSM/real/cap0','TCSM/real/cap0','CSM:noconf/ext-true/cap0')
+FILTERS=OPERATIONAL+LEGACY+('CSM:noconf/ext-true',)
+KNOWN_LEGACY,KNOWN_FIXED='CSM:noconf/ext-true/cap0','CSM:noconf/ext-true'
 SEEDS=list(range(1001,1013))
 # (cell, heave RAO factor, spreading exponent s; None keeps the default s=4)
 CELLS=(('h1.00',1.,None),('h0.80',.8,None),('h0.70',.7,None),('h0.60',.6,None),('h0.50',.5,None),('h0.40',.4,None),('h0.30',.3,None),('h0.25',.25,None),
        ('h0.20',.2,None),('h0.15',.15,None),('h0.15_broad',.15,1),('h0.15_long',.15,10000))
 DOSE=[c for c,_,s in CELLS if s is None]
-# Registered after the first analysis: the known prior's applied multiple
-# coherence is 0.334 at x1 and pinned at the 0.999 PSD cap for every factor
-# <= 0.5. With the cross term scaled by the vertical prior variance, the
-# uncapped coherence grows like 0.334 / k^2, so the cap binds for
-# k < sqrt(0.334 / 0.999) = 0.58. These cells test whether shared-prior heave
-# harm begins only where the cap binds.
-EXTENSION=('h0.80','h0.70','h0.60')
 CAP=.999
-# Registered after the extension confirmed the 1/k^2 law (0.523, 0.685, 0.936
-# at k = 0.8, 0.7, 0.6): an intervention on the cap alone. The wrapper's
-# horizontal prior is S_factor times the vertical one (default 1); S_factor 2
-# divides the applied coherence by four, so the cap should bind only for
-# k < sqrt(0.334 / (4 * 0.999)) = 0.29. Same seeds, cells across the boundary.
+FIXED_CAP=.8
 INTERVENTION=dict(s_factor=2.,cells=('h1.00','h0.50','h0.30','h0.25','h0.20'),
- filters=('A41@C/sf2','CSM/sf2','TCSM/sf2','CSM/real/sf2','TCSM/real/sf2','CSM:noconf/ext-true/sf2','TCSM:noconf/ext-true/sf2'))
+ filters=('A41@C/sf2','CSM/cap0/sf2','TCSM/cap0/sf2','CSM/real/cap0/sf2','TCSM/real/cap0/sf2','CSM:noconf/ext-true/cap0/sf2'))
 HEADING_FAILURE_DEG=30.
 REPRODUCE={'h1.00':('runs.csv.gz','jonswap'),'h0.15':('weak_runs.csv',None)}
 SCORES=('rms_z','rms_h','yaw_rms_deg','yaw_mean_deg','tilt_rms_deg','ba_rms_mg','bg_rms_dph','nees9_phys','nis','failed',
@@ -68,13 +59,12 @@ def protocol():
  """Execution identity: any change requires a fresh results directory."""
  return dict(binary_sha256=sha(BINARY),filters=FILTERS,seeds=SEEDS,score_start_s=300,
   cells={c:scenario(h,s) for c,h,s in CELLS},heading_failure_deg=HEADING_FAILURE_DEG,
-  role='exploratory dose-response diagnosis; no estimator retuning; outside the primary multiplicity family',
-  extension=dict(cells=EXTENSION,registered='after the first analysis of the other cells',
-   prediction='cap: the 0.999 PSD cap of the known prior binds for k < 0.58 (from coherence 0.334 at x1); shared-prior heave harm relative to real-only coupling begins only where the cap binds'),
-  intervention=dict(INTERVENTION,registered='after the extension analysis',
-   prediction='intervention: with S_factor 2 the known prior reaches the cap only for k < 0.29; shared heave harm relative to real-only coupling and the heading collapse are absent at k >= 0.3 and return at k <= 0.25'),
-  predictions={'dose':'shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal',
-               'spreading':'at x0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse'})
+  role='exploratory dose response; legacy-cap rows are paired controls; outside the primary multiplicity family',
+  intervention=dict(INTERVENTION,prediction='legacy cap with S_factor 2 reaches the cap only for k < 0.29'),
+  legacy_predictions={'dose':'shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal',
+   'spreading':'at k = 0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse',
+   'cap':'the known prior is pinned at the 0.999 cap for k < 0.58; shared heave harm relative to real-only coupling begins only there'},
+  fixed_policy=dict(cap_coherence=FIXED_CAP,development='seeds 1001-1003 of the k = 1, 0.5, 0.3 and 0.15 cells'))
 
 def run_cell(stage,cell,scale,spread,seed,cache,filters):
  """Run one paired process (every filter sees the same truth and sensors)."""
@@ -144,7 +134,7 @@ def reproduction(out,df):
  return res
 
 def analyse(args):
- """Summaries, paired contrasts against controls, and the onset of collapse."""
+ """Legacy mechanism, the fixed cap policy and its comparison with every filter."""
  out=args.results;runs=load(out);runs.to_csv(out/'heave_sweep_runs.csv',index=False,float_format='%.9g')
  df=runs[runs.stage=='dose'].drop(columns='stage');iv=runs[runs.stage=='sf2'].drop(columns='stage')
  if len(df)!=len(CELLS)*len(SEEDS)*len(FILTERS) or len(iv)!=len(INTERVENTION['cells'])*len(SEEDS)*len(INTERVENTION['filters']):
@@ -155,59 +145,68 @@ def analyse(args):
   ba_mg=('ba_rms_mg','mean'),nees9=('nees9_phys','median'),flagged=('failed','sum'),
   applied_coherence_xz=('cpl_coh_xz','mean'),mean_confidence=('mean_confidence','mean'))
  summary.to_csv(out/'heave_sweep_summary.csv',float_format='%.9g')
+ def pct(c,f,b,m):
+  """Paired percent change of filter f against b in one cell."""
+  v=df[df.cell==c].pivot(index='seed',columns='filter',values=m);n,d,lo,hi,_=ci(100*(v[f]/v[b]-1))
+  return dict(percent=d,ci_low=lo,ci_high=hi)
  paired=[]
  for cell,g in df.groupby('cell'):
   for metric in ('yaw_rms_deg','rms_z','rms_h'):
    v=g.pivot(index='seed',columns='filter',values=metric)
-   for a,b in (('CSM','A41@C'),('TCSM','A41@C'),('TCSM','CSM'),('CSM','CSM/real'),('TCSM','TCSM/real'),
-               ('TCSM/noreset','TCSM'),('TCSM:noconf/ext-true','CSM:noconf/ext-true'),
-               ('TCSM:noconf/ext-true','TCSM:noconf/ext-true/real')):
+   for a,b in (('CSM','A41@C'),('TCSM','A41@C'),('TCSM','T41@C'),('TCSM','CSM'),('CSM','CSM/cap0'),('TCSM','TCSM/cap0'),
+               ('CSM/cap0','A41@C'),('TCSM/cap0','A41@C'),('TCSM/cap0','CSM/cap0'),
+               ('CSM/cap0','CSM/real/cap0'),('TCSM/cap0','TCSM/real/cap0')):
     n,d,lo,hi,p=ci(v[a]-v[b]);paired.append(dict(cell=cell,filter=a,baseline=b,metric=metric,n=n,delta=d,ci_low=lo,ci_high=hi,p=p))
- # Spreading contrasts at x0.15 pair each seed across the three sea cells.
  for f in FILTERS:
   for other in ('h0.15_broad','h0.15_long'):
    v=df[df['filter']==f].pivot(index='seed',columns='cell',values='yaw_rms_deg')
    n,d,lo,hi,p=ci(v[other]-v['h0.15']);paired.append(dict(cell=other+'-h0.15',filter=f,baseline=f,metric='yaw_rms_deg',n=n,delta=d,ci_low=lo,ci_high=hi,p=p))
- pd.DataFrame(paired).to_csv(out/'heave_sweep_paired.csv',index=False,float_format='%.9g')
- s=summary.reset_index()
- # Onset: first heave factor (default spreading) whose paired shared-minus-
- # independent heading interval excludes zero by more than one degree.
- pr=pd.DataFrame(paired);onset={}
- for f in ('CSM','TCSM'):
+ pr=pd.DataFrame(paired);pr.to_csv(out/'heave_sweep_paired.csv',index=False,float_format='%.9g')
+ s=summary.reset_index();s=s[s.stage=='dose']
+ def mean(cell,f,col='heading_deg'):return float(s[(s.cell==cell)&(s['filter']==f)][col].iloc[0])
+ onset={}
+ for f in ('CSM/cap0','TCSM/cap0','CSM','TCSM'):
   hit=[c for c in DOSE if pr[(pr.cell==c)&(pr['filter']==f)&(pr.baseline=='A41@C')&(pr.metric=='yaw_rms_deg')].ci_low.iloc[0]>1.]
   onset[f]=hit[0] if hit else None
- def mean(cell,f):return float(s[(s.cell==cell)&(s['filter']==f)].heading_deg.iloc[0])
- shared_mono={f:bool(np.all(np.diff([mean(c,f) for c in DOSE])>0)) for f in ('CSM','TCSM')}
- controls_max={f:max(mean(c,f) for c in DOSE) for f in ('A41@C','CSM/real','TCSM/real')}
  mc=df.assign(mc=df.cpl_coh_xz+df.cpl_coh_yz).groupby(['cell','filter']).mc.mean()
- cap={c:dict(known=float(mc[(c,'CSM:noconf/ext-true')]),estimated_qmekf=float(mc[(c,'CSM')]),estimated_tfg=float(mc[(c,'TCSM')]),
-            known_at_cap=bool(mc[(c,'CSM:noconf/ext-true')]>=CAP-5e-4)) for c in DOSE}
+ cap={c:dict(known_legacy=float(mc[(c,KNOWN_LEGACY)]),known_fixed=float(mc[(c,KNOWN_FIXED)]),
+            estimated_legacy=float(mc[(c,'CSM/cap0')]),estimated_fixed=float(mc[(c,'CSM')]),
+            known_at_cap=bool(mc[(c,KNOWN_LEGACY)]>=CAP-5e-4)) for c in DOSE}
  harm={}
- for f,b in (('CSM','CSM/real'),('TCSM','TCSM/real')):
-  hit=[]
-  for c in DOSE:
-   v=df[df.cell==c].pivot(index='seed',columns='filter',values='rms_z')
-   n,d,lo,hi,_=ci(100*(v[f]/v[b]-1));harm.setdefault(f,{})[c]=dict(percent=d,ci_low=lo,ci_high=hi)
-   if lo>0:hit.append(c)
-  harm[f]['first_harm_cell']=hit[0] if hit else None
+ for f,b in (('CSM/cap0','CSM/real/cap0'),('TCSM/cap0','TCSM/real/cap0')):
+  harm[f]={c:pct(c,f,b,'rms_z') for c in DOSE}
+  hit=[c for c in DOSE if harm[f][c]['ci_low']>0];harm[f]['first_harm_cell']=hit[0] if hit else None
+ # The fixed policy against every other filter: who has the lowest mean RMS.
+ fixed={}
+ for c in [x for x,_,_ in CELLS]:
+  e={}
+  for m in ('rms_z','rms_h'):
+   e[m]={f:1000*mean(c,f,'heave_mm' if m=='rms_z' else 'horizontal_mm')/1000 for f in OPERATIONAL}
+   e[m+'_best']=min(OPERATIONAL,key=lambda f:e[m][f])
+   for f in ('CSM','TCSM'):e[m+'_'+f+'_vs_A41']=pct(c,f,'A41@C',m);e[m+'_'+f+'_vs_legacy']=pct(c,f,f+'/cap0',m)
+   e[m+'_TCSM_vs_T41']=pct(c,'TCSM','T41@C',m);e[m+'_TCSM_vs_CSM']=pct(c,'TCSM','CSM',m)
+  e['heading_deg']={f:mean(c,f) for f in OPERATIONAL+('CSM/cap0','TCSM/cap0')}
+  e['heading_over30']={f:int(mean(c,f,'heading_over30')) for f in OPERATIONAL+('CSM/cap0','TCSM/cap0')}
+  fixed[c]=e
  inter={}
  for c in INTERVENTION['cells']:
-  g=iv[iv.cell==c];v=g.pivot(index='seed',columns='filter',values='rms_z');k=g[g['filter']=='CSM:noconf/ext-true/sf2']
+  g=iv[iv.cell==c];v=g.pivot(index='seed',columns='filter',values='rms_z');k=g[g['filter']=='CSM:noconf/ext-true/cap0/sf2']
   e=dict(known_coherence=float((k.cpl_coh_xz+k.cpl_coh_yz).mean()))
-  for f,b in (('CSM/sf2','CSM/real/sf2'),('TCSM/sf2','TCSM/real/sf2')):
+  for f,b in (('CSM/cap0/sf2','CSM/real/cap0/sf2'),('TCSM/cap0/sf2','TCSM/real/cap0/sf2')):
    n,d,lo,hi,_=ci(100*(v[f]/v[b]-1));e[f]=dict(heave_vs_real_pct=d,ci_low=lo,ci_high=hi)
-  for f in ('A41@C/sf2','CSM/sf2','TCSM/sf2','CSM/real/sf2','TCSM/real/sf2','CSM:noconf/ext-true/sf2','TCSM:noconf/ext-true/sf2'):
+  for f in INTERVENTION['filters']:
    x=g[g['filter']==f].yaw_rms_deg;e.setdefault(f,{}).update(heading_mean_deg=float(x.mean()),heading_over30=int((x>HEADING_FAILURE_DEG).sum()))
   inter[c]=e
- analysis=dict(analysis_sha256=sha(__file__),cap_binding=cap,heave_vs_real_only=harm,intervention_sf2=inter,protocol_sha256=sha(out/'heave_sweep_protocol.json'),
-  reproduction=reproduction(out,df),onset_cell=onset,shared_heading_strictly_increasing=shared_mono,
-  control_heading_max_deg=controls_max,
-  spreading_at_015={f:{c:mean(c,f) for c in ('h0.15_broad','h0.15','h0.15_long')} for f in ('CSM','TCSM')})
+ analysis=dict(analysis_sha256=sha(__file__),protocol_sha256=sha(out/'heave_sweep_protocol.json'),
+  reproduction=reproduction(out,df),cap_binding=cap,legacy_heave_vs_real_only=harm,heading_onset=onset,
+  control_heading_max_deg={f:max(mean(c,f) for c in DOSE) for f in ('A41@C','T41@C','CSM/real/cap0','TCSM/real/cap0')},
+  intervention_sf2=inter,fixed_policy=fixed,
+  spreading_at_015={f:{c:mean(c,f) for c in ('h0.15_broad','h0.15','h0.15_long')} for f in ('CSM/cap0','TCSM/cap0','CSM','TCSM')})
  (out/'heave_sweep_analysis.json').write_text(json.dumps(analysis,indent=2)+'\n')
- with pd.option_context('display.width',200):print(summary.to_string())
- print(json.dumps(analysis,indent=1))
+ with pd.option_context('display.width',220):print(s.pivot(index='cell',columns='filter',values='heave_mm').round(2).to_string())
+ print(json.dumps({k:analysis[k] for k in ('reproduction','heading_onset')},indent=1))
 
 if __name__=='__main__':
  ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('stage',choices=['run','analyse'])
- ap.add_argument('--results',type=Path,default=OUT);ap.add_argument('--jobs',type=int,default=4)
+ ap.add_argument('--results',type=Path,default=OUT);ap.add_argument('--jobs',type=int,default=3)
  a=ap.parse_args();{'run':run,'analyse':analyse}[a.stage](a)
