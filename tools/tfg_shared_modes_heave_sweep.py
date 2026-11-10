@@ -134,7 +134,7 @@ def reproduction(out,df):
  return res
 
 def analyse(args):
- """Legacy mechanism, the fixed cap policy and its comparison with every filter."""
+ """Summaries, paired contrasts, and the legacy-cap mechanism checks."""
  out=args.results;runs=load(out);runs.to_csv(out/'heave_sweep_runs.csv',index=False,float_format='%.9g')
  df=runs[runs.stage=='dose'].drop(columns='stage');iv=runs[runs.stage=='sf2'].drop(columns='stage')
  if len(df)!=len(CELLS)*len(SEEDS)*len(FILTERS) or len(iv)!=len(INTERVENTION['cells'])*len(SEEDS)*len(INTERVENTION['filters']):
@@ -176,18 +176,6 @@ def analyse(args):
  for f,b in (('CSM/cap0','CSM/real/cap0'),('TCSM/cap0','TCSM/real/cap0')):
   harm[f]={c:pct(c,f,b,'rms_z') for c in DOSE}
   hit=[c for c in DOSE if harm[f][c]['ci_low']>0];harm[f]['first_harm_cell']=hit[0] if hit else None
- # The fixed policy against every other filter: who has the lowest mean RMS.
- fixed={}
- for c in [x for x,_,_ in CELLS]:
-  e={}
-  for m in ('rms_z','rms_h'):
-   e[m]={f:1000*mean(c,f,'heave_mm' if m=='rms_z' else 'horizontal_mm')/1000 for f in OPERATIONAL}
-   e[m+'_best']=min(OPERATIONAL,key=lambda f:e[m][f])
-   for f in ('CSM','TCSM'):e[m+'_'+f+'_vs_A41']=pct(c,f,'A41@C',m);e[m+'_'+f+'_vs_legacy']=pct(c,f,f+'/cap0',m)
-   e[m+'_TCSM_vs_T41']=pct(c,'TCSM','T41@C',m);e[m+'_TCSM_vs_CSM']=pct(c,'TCSM','CSM',m)
-  e['heading_deg']={f:mean(c,f) for f in OPERATIONAL+('CSM/cap0','TCSM/cap0')}
-  e['heading_over30']={f:int(mean(c,f,'heading_over30')) for f in OPERATIONAL+('CSM/cap0','TCSM/cap0')}
-  fixed[c]=e
  inter={}
  for c in INTERVENTION['cells']:
   g=iv[iv.cell==c];v=g.pivot(index='seed',columns='filter',values='rms_z');k=g[g['filter']=='CSM:noconf/ext-true/cap0/sf2']
@@ -200,7 +188,7 @@ def analyse(args):
  analysis=dict(analysis_sha256=sha(__file__),protocol_sha256=sha(out/'heave_sweep_protocol.json'),
   reproduction=reproduction(out,df),cap_binding=cap,legacy_heave_vs_real_only=harm,heading_onset=onset,
   control_heading_max_deg={f:max(mean(c,f) for c in DOSE) for f in ('A41@C','T41@C','CSM/real/cap0','TCSM/real/cap0')},
-  intervention_sf2=inter,fixed_policy=fixed,
+  intervention_sf2=inter,
   spreading_at_015={f:{c:mean(c,f) for c in ('h0.15_broad','h0.15','h0.15_long')} for f in ('CSM/cap0','TCSM/cap0','CSM','TCSM')})
  (out/'heave_sweep_analysis.json').write_text(json.dumps(analysis,indent=2)+'\n')
  with pd.option_context('display.width',220):print(s.pivot(index='cell',columns='filter',values='heave_mm').round(2).to_string())
