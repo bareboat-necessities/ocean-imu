@@ -9,18 +9,32 @@ registered perturbation sizes. Both raw native byte hashes match main and both
 finite diagnostic run summaries match the preceding replay exactly. See
 `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
 
+Validation: the three shipping-provenance tests and the separate complete
+1,152-test Python suite pass. Full Clang-Tidy 18.1.8 passes both affected
+translation units locally; all six repository quality jobs and all host/firmware
+build jobs passed on the code-identical automated evidence commit `a975b41`.
+The post-review receipt records its publication-time incomplete full local
+Clang-Tidy and running build; those historical statuses are not final results.
+An additional local `make all` rebuilt every target and passed the filter and
+observer suites, then became unobservable when the execution environment
+disconnected during validation. Its whole-command exit remains unverified.
+Current-head workflow results and the article build are linked in PR #739.
+
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
 Relaxations introduced: none; the inherited off-orbit finite secants remain
 non-promoting diagnostics, not reachable or uniform derivative certificates.
-The source-binding invalidation and local verification processes killed by
-concurrent compiler memory exhaustion are class E implementation/diagnostic
-failures. They invalidate source identity or test completion, not estimator
-stability. Heavy checks are rerun with reduced concurrency. No shipping
+The invalidated source binding, local compiler memory exhaustion, disconnected
+validation session and Windows CI timeout are class E implementation/diagnostic
+failures; none establishes estimator instability. Windows linked 12 of 13
+sketches before the 60-minute limit; compilation now uses two workers with the
+same sketches, flags, toolchain and limit. Historical source-identity records
+are preserved in `planar-native-secants-source-binding-archive.json` and the
+provenance references resolve to their respective archived records. No shipping
 counterexample was found; established shipping-level results and open theorem
-obligations remain unchanged. The next falsifiable control is the original
-source-provenance rejection tests and full regression suite, with their
-thresholds unchanged.
+obligations remain unchanged. The remaining validation control is the PR CI
+completion with its original thresholds; device runtime and peak stack/heap
+measurements still require physical hardware.
 
 ## Current hypothesis
 
