@@ -16,7 +16,7 @@ BIN={
  'Q independent':ROOT/'tests/kalman_carma/carma3-sim',
  'T independent':ROOT/'tests/kalman_carma/carma3-sim',
  'Q shared':ROOT/'tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim',
- 'T shared':ROOT/'tests/kalman_carma_shared_modes/kalman_tfg_shared_modes-sim'}
+ 'T shared':ROOT/'tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim'}
 ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--data-dir',type=Path,default=ROOT/'tests/kalman_carma_shared_modes');ap.add_argument('--seeds',type=int,default=8);ap.add_argument('--jobs',type=int,default=2)
 ap.add_argument('--results',type=Path,default=OUT);args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 inputs=[args.data_dir/n for n in REFERENCE_CSV_SHA256]
