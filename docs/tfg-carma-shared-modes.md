@@ -89,7 +89,7 @@ make all
 
 # Reanalyse the committed compact scores without regenerating simulations.
 python3 tools/tfg_shared_modes_study.py analyse
-bash plots/kalman_tfg_shared_modes/draw_plots.sh
+bash plots/kalman_tfg_shared_modes/draw_plots.sh --study-only
 (cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 
 # A fresh directory avoids mixing the published executable/protocol hashes

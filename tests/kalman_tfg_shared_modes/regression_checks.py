@@ -17,6 +17,7 @@ from sim_dataset import REFERENCE_CSV_SHA256, input_provenance
 
 
 def main() -> None:
+    """Verify default replay scores and distinguish each rejected protocol."""
     binary = HERE / 'kalman_tfg_shared_modes-sim'
     records = [HERE / name for name in REFERENCE_CSV_SHA256]
     input_provenance(records)
@@ -45,15 +46,21 @@ def main() -> None:
         diagnostic = {**env, 'W3D_WRITE_TIMESERIES': '0'}
 
         def run(args=(), changes=None):
+            """Run the strict replay in an isolated directory with controlled overrides."""
             return subprocess.run([str(binary), '--regression', *args], cwd=work,
                                   env={**diagnostic, **(changes or {})}, text=True,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        for args, changes in [([], {}), (['--no-noise'], {}), (['--nomag'], {}),
-                              ([], {'W3D_SEED': '7'}), ([], {'W3D_CSM_VARIANT': 'CSM_OFF'}),
-                              ([], {'W3D_ENGINE_RPM': '1600'})]:
-            r = run(args, changes)
-            assert r.returncode == 2, (args, changes, r.stdout[-1000:])
+        r = run()
+        assert r.returncode == 2 and 'no scored wave records found' in r.stdout, r.stdout[-1000:]
+        protocol_error = '--regression requires default variant, noise, magnetometer, seeds and excitation'
+        for args, changes, error in [
+                (['--no-noise'], {}, protocol_error), (['--nomag'], {}, protocol_error),
+                ([], {'W3D_SEED': '7'}, protocol_error),
+                ([], {'W3D_CSM_VARIANT': 'CSM_OFF'}, protocol_error),
+                ([], {'W3D_ENGINE_RPM': '1600'}, '--regression forbids W3D_ENGINE_RPM')]:
+            r = run(['--input', str(records[0]), *args], changes)
+            assert r.returncode == 2 and error in r.stdout, (args, changes, r.stdout[-1000:])
 
         # A missing or short file must not be reported as a passing regression.
         bad = work / records[0].name

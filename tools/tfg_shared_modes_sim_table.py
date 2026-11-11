@@ -6,6 +6,7 @@ from carma_sim_table import main
 
 
 def write_gate_table() -> None:
+    """Write the published gate thresholds and their locked measured maxima."""
     root = Path(__file__).resolve().parents[1]
     baseline = json.loads((root / "reports/results/tfg_shared_modes/deterministic_regression.json").read_text())
     names = {

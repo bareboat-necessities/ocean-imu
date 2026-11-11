@@ -1183,8 +1183,10 @@ The first 300~s are excluded from the scored window. Statistics use all
 180,000 remaining samples; rendering decimation never changes the gate or
 reported RMS. Displacement X/Y/Z are normalized by incident $H_s$. The 3-D
 error is normalized by the maximum norm of the reference displacement in the
-same trailing window, and bias percentages use the maximum norm of the
-corresponding true residual bias. These denominators are different and must
+same trailing window. The accelerometer Z-bias percentage uses the maximum
+absolute true Z-bias component; the 3-D accelerometer and gyroscope bias
+percentages use the maximum norm of the corresponding true residual
+bias vector, all over that window. These denominators are different and must
 not be interpreted as interchangeable percentages.
 
 \input{tfg-shared-sim-results-generated.tex-part}
@@ -1384,31 +1386,30 @@ is \path{SeaStateFusion_TfgCarmaSharedModes}; it uses the common CARMA schedule,
 wave evidence and magnetic startup. The group equations here use body-to-world
 $R$; the public quaternion accessors retain the project's world-to-body convention.
 
-The dedicated replay source is
+The dedicated replay is
 \path{tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp}.
-It and the quaternion replay instantiate
-\path{tests/common/SharedModesReplay.h}, which delegates sensor generation,
-metrics and the numerical threshold checks to the common simulation runner.
-The TFG limits are backed by
+Both geometries reuse \path{tests/common/SharedModesReplay.h}; TFG limits are in
 \path{reports/results/tfg_shared_modes/deterministic_regression.json}.
-The independent mathematical checks remain in
+Independent mathematical checks are in
 \path{tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp}.
 
-From the repository root, \texttt{make all} builds and tests every registered
-module. For a focused run use \texttt{make -C tests/kalman\_tfg\_shared\_modes all}.
-Then \path{tools/tfg_shared_modes_sim_table.py} regenerates the deterministic
-table and locked-gate table; \path{plots/kalman_tfg_shared_modes/draw_plots.sh}
-generates the replay gallery and the shared study figures. The method builds
-with \texttt{latexmk -lualatex} on
+From the repository root, run \texttt{make all}, or
+\texttt{make -C tests/kalman\_tfg\_shared\_modes all} for this replay.
+Regenerate tables with \path{tools/tfg_shared_modes_sim_table.py} and figures
+with \path{plots/kalman_tfg_shared_modes/draw_plots.sh}. Stage PGFs as CI does:
+\begin{verbatim}
+cp plots/kalman_tfg_shared_modes/*.pgf \
+   doc/kalman_tfg_shared_modes/
+\end{verbatim}
+Build with \texttt{latexmk -lualatex} on
 \path{doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex} from its
-directory. CI performs the same replay, table, plot, compilation, retry and PDF
-publication steps as for the other full estimator modules.
+directory.
 
 The comparative study remains \path{kalman_tfg_shared_modes.tex}; the complete
-per-record gallery is \path{kalman_tfg_shared_modes-charts.tex}. The spectral
-fit is reproduced by \path{tools/carma_fit.py}; full paired experiments use
-\path{tools/tfg_shared_modes_study.py}. Statistics always use full-rate data;
-PGF and SVG use the existing bounded, peak-preserving drawing helpers.
+per-record gallery is \path{kalman_tfg_shared_modes-charts.tex}. The fit and
+paired experiments use \path{tools/carma_fit.py} and
+\path{tools/tfg_shared_modes_study.py}. Statistics use full-rate data;
+drawing uses bounded, peak-preserving decimation.
 Source and declared evidence are available at
 \url{https://github.com/bareboat-necessities/ocean-imu}.
 

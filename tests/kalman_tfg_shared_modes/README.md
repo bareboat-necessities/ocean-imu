@@ -10,6 +10,7 @@ make -C tests/kalman_tfg_shared_modes all
 (cd tests/kalman_tfg_shared_modes && ./kalman_tfg_shared_modes-sim --regression)
 python3 tools/tfg_shared_modes_sim_table.py
 (cd plots/kalman_tfg_shared_modes && bash draw_plots.sh)
+cp plots/kalman_tfg_shared_modes/*.pgf doc/kalman_tfg_shared_modes/
 ```
 
 The pinned v1.2.3 vessel-RAO inputs contain eight scored JONSWAP/PM-Stokes
