@@ -128,7 +128,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_carma_shared_modes, kalman_tfg_carma, imu_calibrate, detrend, nlo]
+        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_carma_shared_modes, kalman_tfg_carma, kalman_tfg_shared_modes, imu_calibrate, detrend, nlo]
+        include:
+          # This article uses the committed paired-study evidence. Its figures
+          # and PDF use the standard build steps without a dataset replay.
+          - dir: kalman_tfg_shared_modes
+            document_only: true
 
     steps:
       - name: Checkout
@@ -141,12 +146,14 @@ jobs:
           ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}
 
       - name: Download sim data from oceanography-waves-lib GitHub repo release
+        if: matrix.document_only != true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
 
       - name: Unpack simulation data (${{ matrix.dir }})
+        if: matrix.document_only != true
         run: |
           unzip -o sim-data-files-vessel-rao-28ft.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
@@ -201,15 +208,18 @@ jobs:
           exit 1
 
       - name: Compile tests (${{ matrix.dir }})
+        if: matrix.document_only != true
         run: |
           cd tests/${{ matrix.dir }}
           make build
 
       - name: Copy test data (${{ matrix.dir }})
+        if: matrix.document_only != true
         run: |
           cp ${{ github.workspace }}/plots/${{ matrix.dir }}/*.csv tests/${{ matrix.dir }}
 
       - name: Run tests (${{ matrix.dir }})
+        if: matrix.document_only != true
         id: regression
         continue-on-error: true
         env:
@@ -220,6 +230,7 @@ jobs:
           ./run_tests.sh
 
       - name: Retain simulation output even when a regression gate fails
+        if: matrix.document_only != true
         run: cp tests/${{ matrix.dir }}/*.csv plots/${{ matrix.dir }}/
 
       # Regenerated while the simulator still exists and before the document is
@@ -271,6 +282,7 @@ jobs:
           git --no-pager diff --stat -- doc/kalman_tfg_carma/tfg-carma-sim-results-generated.tex-part
 
       - name: Clean test build (${{ matrix.dir }})
+        if: matrix.document_only != true
         run: make -C tests/${{ matrix.dir }} clean
 
       - name: Generate PGF plots (${{ matrix.dir }})
@@ -335,27 +347,6 @@ jobs:
           path: doc/${{ matrix.dir }}/**/*.pdf
           if-no-files-found: error
 
-      - name: Generate experimental TFG shared-mode article figures
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        run: python3 tools/tfg_shared_modes_report.py
-
-      - name: Compile experimental TFG shared-mode article
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        uses: xu-cheng/latex-action@v4
-        with:
-          root_file: kalman_tfg_shared_modes.tex
-          work_in_root_file_dir: true
-          working_directory: doc/kalman_tfg_shared_modes
-          latexmk_use_lualatex: true
-
-      - name: Upload experimental TFG shared-mode article
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        uses: actions/upload-artifact@v6
-        with:
-          name: latex-pdfs-kalman_tfg_shared_modes
-          path: doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes.pdf
-          if-no-files-found: error
-
       - name: Find SVGs (${{ matrix.dir }})
         id: find_svgs
         shell: bash
@@ -385,7 +376,7 @@ jobs:
           if-no-files-found: error
 
       - name: Preserve regression and plot failures after producing review artifacts
-        if: steps.regression.outcome != 'success' || steps.plots.outcome != 'success'
+        if: (matrix.document_only != true && steps.regression.outcome != 'success') || steps.plots.outcome != 'success'
         run: |
           echo "Simulation regression or plot generation failed; see the original step logs."
           exit 1

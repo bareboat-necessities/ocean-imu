@@ -89,7 +89,8 @@ make all
 
 # Reanalyse the committed compact scores without regenerating simulations.
 python3 tools/tfg_shared_modes_study.py analyse
-python3 tools/tfg_shared_modes_report.py
+bash plots/kalman_tfg_shared_modes/draw_plots.sh
+(cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 
 # A fresh directory avoids mixing the published executable/protocol hashes
 # with a different compiler or later source revision.
@@ -110,6 +111,11 @@ python3 tools/tfg_shared_modes_study.py analyse --results "$TFG_STUDY_RESULTS"
 python3 tools/tfg_shared_modes_report.py --results "$TFG_STUDY_RESULTS"
 (cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 ```
+
+CI builds this article in the `kalman_tfg_shared_modes` matrix entry. It runs
+the same plotting script, LaTeX compilation and retry, PDF artifact upload,
+and release publication as the other articles, using the committed study
+evidence without downloading or replaying the wave dataset.
 
 `run` rejects caches from a different source/executable/protocol. Do not mix
 runs after modifying an estimator. Independent paired seeds, score windows,
