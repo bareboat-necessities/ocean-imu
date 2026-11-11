@@ -1026,7 +1026,7 @@ void CARMA3_CLS::refresh_horizontal_discretization_(T Ts) {
 CARMA3_TPL
 void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
-    if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
+    if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
 
     Vector3 gyro_bias = Vector3::Zero();
     if constexpr (GB) gyro_bias = xext.template segment<3>(3);

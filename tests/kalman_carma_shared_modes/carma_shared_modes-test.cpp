@@ -26,8 +26,15 @@
       [8] PSD-cap policy of the excitation mapping (double): legacy
           cross-term shrinkage is unchanged; cap_coherence keeps the measured
           regression, holds the applied coherence at rho, stays positive
-          semidefinite, equals the legacy mapping where the cap does not bind,
-          and rescales the horizontal colouring by sqrt(lambda)
+          semidefinite, enlarges only the coupling direction, equals the
+          legacy mapping where the cap does not bind, and rescales each
+          horizontal colouring by the square root of its variance gain
+      [9] review fixes on the standalone core: the confidence engages and
+          withdraws the coupling without model commits; slow declines still
+          shrink; copies and moves keep the configuration; attitude
+          re-initialization restarts the coupling evidence; a NaN gyro sample
+          is rejected by the core and dropped by the wrapper; the keel-frame
+          horizontal correlation reaches the excitation
 */
 
 #define EIGEN_NON_ARDUINO
@@ -35,6 +42,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -685,6 +693,99 @@ void test8_cap_policy() {
           r.excitation().re(0,0), 0.16);
 }
 
+// [9] Review fixes, each reproduced on the double core without the
+// wrapper's 0.1 s model commits (the standalone use the tuner masks).
+void test9_review_fixes() {
+    std::printf("[9] standalone confidence, copies, re-initialization, non-finite samples\n");
+    using Core = csm::KalmanCarmaSharedModes<double>;
+    using V3d = Eigen::Vector3d;
+    const V3d grav(0.0, 0.0, -G);
+    auto make = [&](csm::CouplingMode mode) {
+        Core f(V3d::Constant(0.03), V3d::Constant(3e-5), V3d::Constant(7.7));
+        auto sm = f.sharedModesConfig();
+        sm.mode = mode;
+        f.configureSharedModes(sm);
+        f.initialize_from_acc(grav);
+        f.setExternalCoupling(kc::Hermitian3<double>(), 0.0);
+        return f;
+    };
+    auto steps = [&](Core& f, double seconds) {
+        for (long k = 0; k < static_cast<long>(seconds * 200.0); ++k) {
+            f.time_update(V3d::Zero(), 0.005);
+            f.measurement_update_acc_only(grav);
+        }
+    };
+    // Confidence alone engages and withdraws the coupling (no model commit).
+    Core f = make(csm::CouplingMode::External);
+    f.setExternalCoupling([] {
+        kc::Hermitian3<double> S;
+        const std::complex<double> v[3] = {{0.0, 0.3 * std::cos(0.5236)}, {0.0, 0.3 * std::sin(0.5236)}, {1.0, 0.0}};
+        for (int i = 0; i < 3; ++i)
+            for (int j = i; j < 3; ++j) S.set(i, j, v[i] * std::conj(v[j]) + (i == j ? 0.02 : 0.0));
+        return S;
+    }(), 0.0);
+    f.forceCouplingConfidence(1.0);
+    steps(f, 1.0);
+    const double on = f.coupling().applied_coherence_xz;
+    f.forceCouplingConfidence(0.0);
+    steps(f, 1.0);
+    const double off = f.coupling().applied_coherence_xz;
+    check(on > 0.01 && off == 0.0, "confidence engages and withdraws the coupling without model commits", on, 0.01);
+    // A slow decline (0.05 % per commit) accumulates into shrinks.
+    f.forceCouplingConfidence(1.0);
+    steps(f, 1.0);
+    const unsigned long ev0 = f.coupling().shrink_events;
+    double c = 1.0;
+    for (int k = 0; k < 100; ++k) {
+        c *= 0.9995;
+        f.forceCouplingConfidence(c);
+        steps(f, 0.1);
+    }
+    check(f.coupling().shrink_events > ev0, "slow confidence declines still shrink the cross-covariance",
+          static_cast<double>(f.coupling().shrink_events - ev0), 1.0);
+    // Copies and moves keep configuration and confidence.
+    auto sm = f.sharedModesConfig();
+    sm.coupling_gain = 0.5;
+    f.configureSharedModes(sm);
+    f.forceCouplingConfidence(0.7);
+    Core copy(f);
+    Core moved(std::move(copy));
+    check(moved.sharedModesConfig().mode == csm::CouplingMode::External && moved.sharedModesConfig().coupling_gain == 0.5 &&
+          moved.couplingConfidence() == 0.7 && moved.get_position() == f.get_position(),
+          "non-const copy and move keep mode, gain, confidence and state");
+    // Attitude re-initialization restarts the coupling evidence.
+    Core e = make(csm::CouplingMode::Estimated);
+    steps(e, 5.0);
+    const double before = e.motion().coupling().estimator().elapsed_s();
+    const bool ok = e.initialize_from_attitude(Eigen::Quaterniond::Identity(), 0.03, 0.03);
+    const double after = e.motion().coupling().estimator().elapsed_s();
+    check(ok && before > 4.9 && after == 0.0 && e.couplingConfidence() == 0.0,
+          "attitude re-initialization restarts the coupling estimate and confidence", after, 0.0);
+    // A non-finite gyro sample is rejected by the core.
+    Core n = make(csm::CouplingMode::Estimated);
+    steps(n, 1.0);
+    n.time_update(V3d(std::numeric_limits<double>::quiet_NaN(), 0.0, 0.0), 0.005);
+    n.measurement_update_acc_only(grav);
+    steps(n, 1.0);
+    check(n.get_position().allFinite() && n.quaternion_boat().coeffs().allFinite() && n.covariance_full().allFinite(),
+          "core: a NaN gyro sample is rejected and the state stays finite");
+    // ... and dropped whole by the float wrapper.
+    Csm w(base_config());
+    for (int k = 0; k < 2000; ++k) {
+        const V3 gy = k == 1000 ? V3(std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f) : V3::Zero();
+        w.update(0.005f, gy, V3(0.0f, 0.0f, -static_cast<float>(G)), 35.0f);
+    }
+    check(w.position().allFinite() && w.attitude().coeffs().allFinite() && w.health().covariance_finite,
+          "wrapper: a NaN gyro sample is dropped and the state stays finite");
+    // The keel-frame horizontal correlation reaches the excitation.
+    csm::SharedModesMotion<double> m;
+    m.set_vertical(1.0, 0.4);
+    const bool accepted = m.set_horizontal(1.0, 0.4, 0.2, 0.5) && !m.set_horizontal(1.0, 0.4, 0.2, 1.0);
+    m.refresh(0.005);
+    check(accepted && std::abs(m.excitation().re(0,1) - 0.5 * 0.4 * 0.2) < 1e-15 && m.cap_gain(0) == 1.0,
+          "horizontal baseline correlation applied (|r| < 1 required), cap not binding", m.excitation().re(0,1), 0.04);
+}
+
 int main() {
     test1_api();
     test2_limits();
@@ -694,6 +795,7 @@ int main() {
     test6_filter();
     test7_double();
     test8_cap_policy();
+    test9_review_fixes();
     std::printf("carma_shared_modes-test: %d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

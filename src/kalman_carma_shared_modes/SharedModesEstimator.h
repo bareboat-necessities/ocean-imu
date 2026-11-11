@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <type_traits>
 #include <utility>
 #include "CarmaSharedModesMotion.h"
 #include "CarmaCouplingConfidence.h"
@@ -53,6 +54,9 @@ public:
         CouplingConfidenceStatus<T> confidence{};
         T applied_coherence_xz = T(0), applied_coherence_yz = T(0);   // |Sigma_iz|^2/(Sigma_ii Sigma_zz)
         T applied_phase_xz_deg = T(0), applied_phase_yz_deg = T(0);
+        // Factors on the x / y horizontal prior variances from the PSD cap
+        // (CarmaCouplingConfig::cap_coherence); 1 where it does not bind.
+        T cap_gain_x = T(1), cap_gain_y = T(1);
         unsigned long shrink_events = 0;
     };
 
@@ -66,8 +70,10 @@ public:
 
     // The constructors of the CARMA3 core (noise densities, initial
     // covariances, ...); the shared-modes configuration defaults to the
-    // deployable one until configureSharedModes() is called.
+    // deployable one until configureSharedModes() is called.  Copies and
+    // moves keep the implicit members (and so the configuration and state).
     template<class... Args>
+        requires (!(sizeof...(Args) == 1 && (std::is_base_of_v<SharedModesEstimator, std::remove_cvref_t<Args>> && ...)))
     explicit SharedModesEstimator(Args&&... args) : Base(std::forward<Args>(args)...) {
         configureSharedModes(Config{});
     }
@@ -94,6 +100,7 @@ public:
         CouplingConfidenceConfig<T> k = cfg_.confidence;
         if (cfg_.mode == CouplingMode::Off) k.enabled = false;
         conf_.configure(k);
+        held_ = T(-1);
         conf_.set_band_fraction(cfg_.band_frac);
         shrunk_c_ = k.enabled ? T(0) : T(1);
         prior_ = BandRegression<T>{};
@@ -108,20 +115,42 @@ public:
     // ---- per-sample interface (the CARMA3 core's, extended) ----
     void time_update(Vector3 const& gyr, T Ts) {
         Base::time_update(gyr, Ts);
-        last_gyr_ = gyr;
-        last_dt_ = Ts;
+        // A rejected sample (non-finite rate or step) skips the confidence step.
+        const bool ok = gyr.allFinite() && Ts > T(0) && std::isfinite(Ts);
+        last_dt_ = ok ? Ts : T(0);
+        if (ok) last_gyr_ = gyr;
     }
     void measurement_update_acc_only(Vector3 const& acc, T tempC = Base::tempC_ref) {
         Base::measurement_update_acc_only(acc, tempC);
         step_confidence_();
     }
 
+    // Attitude (re)initialization restarts the coupling evidence: the band
+    // cross-spectrum, the monitor and the confidence are world-frame
+    // statistics of the previous attitude.  The core's own covariance reset
+    // is unchanged; a confidence drop removes the coupling-induced
+    // cross-covariance at the next confidence commit.
+    bool initialize_from_acc_mag(Vector3 const& acc, Vector3 const& mag) {
+        return restart_coupling_(Base::initialize_from_acc_mag(acc, mag));
+    }
+    bool initialize_from_acc(Vector3 const& acc) { return restart_coupling_(Base::initialize_from_acc(acc)); }
+    bool initialize_from_acc_preserve_yaw(Vector3 const& acc) {
+        return restart_coupling_(Base::initialize_from_acc_preserve_yaw(acc));
+    }
+    bool initialize_from_attitude(Eigen::Quaternion<T> const& q_bw, T tilt_sigma_rad, T yaw_sigma_rad) {
+        return restart_coupling_(Base::initialize_from_attitude(q_bw, tilt_sigma_rad, yaw_sigma_rad));
+    }
+
     // Research: a coupling prior from outside (CouplingMode::External).
     void setExternalCoupling(const Hermitian& S, T n_eff = T(0)) {
         this->motion().coupling().set_external(S, n_eff);
     }
-    // Research / tests: hold the confidence (negative: release).
-    void forceCouplingConfidence(T c) { conf_.force(c); }
+    // Research / tests: hold the confidence (negative: release); the hold
+    // survives attitude re-initialization.
+    void forceCouplingConfidence(T c) {
+        held_ = c;
+        conf_.force(c);
+    }
 
     // ---- diagnostics ----
     T couplingConfidence() const noexcept { return conf_.confidence(); }
@@ -144,6 +173,8 @@ public:
             (i == 0 ? c.applied_coherence_xz : c.applied_coherence_yz) = coh;
             (i == 0 ? c.applied_phase_xz_deg : c.applied_phase_yz_deg) = ph;
         }
+        c.cap_gain_x = this->motion().cap_gain(0);
+        c.cap_gain_y = this->motion().cap_gain(1);
         c.shrink_events = shrink_events_;
         return c;
     }
@@ -160,11 +191,30 @@ public:
     }
 
 private:
+    // Only the gain changes; a changed gain rebuilds the excitation at the
+    // next refresh, with or without a model commit.
     void apply_gain_(T c) {
         auto& m = this->motion();
-        CouplingConfig cc = m.coupling().config();   // only the gain changes
-        cc.gain = static_cast<float>(cfg_.coupling_gain * std::min(T(1), std::max(T(0), c)));
+        CouplingConfig cc = m.coupling().config();
+        const float g = static_cast<float>(cfg_.coupling_gain * std::min(T(1), std::max(T(0), c)));
+        if (g == cc.gain) return;
+        cc.gain = g;
         m.coupling().set_config(cc);
+        m.invalidate_excitation();
+    }
+
+    bool restart_coupling_(bool initialized) {
+        if (!initialized) return false;
+        auto& m = this->motion();
+        m.coupling().reset();
+        m.monitor().reset();
+        conf_.reset();
+        if (held_ >= T(0)) conf_.force(held_);
+        prior_ = BandRegression<T>{};
+        prior_neff_ = T(0);
+        commit_clock_ = T(0);
+        apply_gain_(cfg_.mode == CouplingMode::Off ? T(0) : conf_.confidence());
+        return true;
     }
 
     void step_confidence_() {
@@ -198,17 +248,22 @@ private:
         const Vector3 w_world = this->quaternion_boat() * (last_gyr_ - this->gyroscope_bias());
         conf_.update(last_dt_, prior, monitor, full, w_world.z(), m.operating_frequency_hz(), this->lastAccDiag().nis);
         // Commit at the model cadence (0.1 s): the excitation is rebuilt at
-        // the schedule's next model commit; a falling confidence also shrinks
-        // the unexplained horizontal-vertical cross-covariance by c_new / c_old.
+        // the next refresh; a falling confidence also shrinks the
+        // unexplained horizontal-vertical cross-covariance by c_new / c_old.
+        // Declines below 0.1 % accumulate until they reach it.
         commit_clock_ += last_dt_;
         if (commit_clock_ < T(0.1)) return;
         commit_clock_ = T(0);
         const T c = conf_.confidence();
         if (c < shrunk_c_ && shrunk_c_ > T(0)) {
             const T ratio = c / shrunk_c_;
-            if (ratio < T(0.999) && this->shrink_motion_vertical_coupling(ratio)) ++shrink_events_;
+            if (ratio < T(0.999)) {
+                if (this->shrink_motion_vertical_coupling(ratio)) ++shrink_events_;
+                shrunk_c_ = c;
+            }
+        } else {
+            shrunk_c_ = c;
         }
-        shrunk_c_ = c;
         apply_gain_(c);
     }
 
@@ -220,6 +275,7 @@ private:
     T last_dt_ = T(0);
     T shrunk_c_ = T(0);
     T commit_clock_ = T(0);
+    T held_ = T(-1);
     unsigned long shrink_events_ = 0;
 };
 

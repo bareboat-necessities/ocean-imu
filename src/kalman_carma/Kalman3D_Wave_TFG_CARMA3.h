@@ -1163,7 +1163,7 @@ void TFGC3_CLS::build_process_noise(const Vector3& gyr, T Ts, MatrixNX& Qd) cons
 TFGC3_TPL
 void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
-    if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
+    if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
 
     const Vector3 w = gyr - X_.B.col(0);
     last_gyr_bias_corrected_ = w;

@@ -5,7 +5,7 @@
     "command": "make all EIGEN_DIR=<Eigen-root>",
     "build_phase_completed": true,
     "uninterrupted_whole_command_exit_zero": true,
-    "notes": "Uninterrupted `make all` exits 0 on a pristine tree of the #739 head, on the earlier follow-up branch and, after a clean rebuild of tests/, on the cap-policy head, with every suite script and its original thresholds. Earlier attempts are class E workspace failures, not estimator failures: the original session resumed command groups after workspace artifact repairs; a later PR-head run read report edits made while it ran and a shadowed mpl_toolkits; and the first pristine full build passed 18 suite scripts before four archive-copy validation tests hit the session disk limit.",
+    "notes": "Uninterrupted `make all` exits 0 on a pristine tree of the #739 head, on the earlier follow-up branch and, after a clean rebuild of tests/, on the cap-policy head and on the review-fix head, with every suite script and its original thresholds. Earlier attempts are class E workspace failures, not estimator failures: the original session resumed command groups after workspace artifact repairs; a later PR-head run read report edits made while it ran and a shadowed mpl_toolkits; and the first pristine full build passed 18 suite scripts before four archive-copy validation tests hit the session disk limit.",
     "verified_runs": [
       {
         "revision": "ac84741645227593e9cb3fc492b90216da7415b6",
@@ -42,6 +42,18 @@
         "wall_s": 5089,
         "build": "clean: every ignored output under tests/ removed first",
         "log_sha256": "cd5983f8a81a2fb30931e1a3ee7beb5d94d49baf7fdc05d128ad827311a422a4"
+      },
+      {
+        "revision": "review-fix commit following f7dbe79",
+        "tree": "working tree of the review-fix commit; only post-build receipts (this record, review_validation.json, analysis_manifest.json, the research ledger and its provenance blob) changed afterwards",
+        "command": "make all",
+        "exit_code": 0,
+        "suite_scripts": 19,
+        "validation_tests": 1152,
+        "validation_skipped": 0,
+        "wall_s": 2485,
+        "build": "incremental after the clean build of 7315475 (dependency-tracked rebuild of every target including a changed header)",
+        "log_sha256": "4894cdfbf98487f1395afe374404104811983365587885ef599490c66e6a7179"
       }
     ]
   },
@@ -101,9 +113,9 @@
     "tfgsm-cmake-check.log": "bed566291a34ec98a5586d9d19677817c001add3781fce7a93a35c613e0637d2"
   },
   "clean_rebuild_replay": {
-    "scope": "make all rebuilt the bench from a clean tests/ tree; the binary is byte-identical to the one that produced the published scores.",
-    "registered_binary_sha256": "c2f0b565d8e6b9d308ec38adecd04bc9235694dbe885b53509ff0abd19140d1d",
-    "rebuilt_binary_sha256": "c2f0b565d8e6b9d308ec38adecd04bc9235694dbe885b53509ff0abd19140d1d",
+    "scope": "the bench binary that produced the published scores is unchanged by make all.",
+    "registered_binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
+    "rebuilt_binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
     "binary_identical": true
   },
   "review_validation": "review_validation.json records the post-review checks of the cap policy; the original validation receipts above remain historical execution evidence."

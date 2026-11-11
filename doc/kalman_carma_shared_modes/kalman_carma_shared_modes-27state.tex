@@ -335,8 +335,10 @@ The common implementation also guards excessive tilt and can reinitialize
 the attitude after sustained gross misalignment; initial magnetic lock
 may be refined later. No special six-state startup algorithm is introduced.
 
-Directional coupling starts at zero confidence, independently of the
-Live handoff. Its long candidate/short monitor windows must fill before
+Directional coupling starts at zero confidence. Every attitude
+(re)initialization, including the Live handoff and a tilt-watchdog reset,
+restarts the coupling estimate, monitor and confidence, because they are
+world-frame statistics of the previous attitude. Its long candidate/short monitor windows must fill before
 the complex cross-spectra may contribute appreciably. It is consequently
 incorrect to describe the filter as immediately directionally aided at
 Live entry. Equally, the stationarity of the *prior* at initialization is

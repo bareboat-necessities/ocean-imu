@@ -39,7 +39,7 @@ horizontal-on-vertical regression in `b`, with the horizontal prior
   understates the regression and leaves a nearly singular prior: only 0.1% of
   the along-wave horizontal variance stays independent of heave. Under reduced
   heave (`k = 0.15`) this costs both shared filters their heading. In the
-  12-seed diagnosis shared QMEKF/TFG reach 21.7/25.7 mm heave, 90.1/56.3
+  12-seed diagnosis shared QMEKF/TFG reach 21.8/25.7 mm heave, 90.0/56.4
   degrees mean heading RMS and 12/12 and 7/12 heading failures above 30
   degrees.
 - **Default policy.** Keep `b` and, when `q > 0.8`, enlarge `H` only along the
@@ -80,9 +80,9 @@ published runs exactly.
 | 0.6 | 0.936 | 8.8 / 18.4, 1.8 | 8.8 / 18.2, 1.8 | 10.6 / 18.6, 1.8 |
 | 0.5 | 0.999 (cap) | 15.2 / 27.4, 2.5 | 7.7 / 17.8, 1.8 | 9.6 / 18.0, 1.8 |
 | 0.4 | 0.999 (cap) | 22.2 / 35.8, 3.9 | 6.6 / 17.5, 1.8 | 8.4 / 17.8, 1.8 |
-| 0.3 | 0.999 (cap) | 29.7 / 57.3, 15.6 | 5.4 / 17.4, 1.8 | 7.3 / 18.2, 1.8 |
+| 0.3 | 0.999 (cap) | 29.9 / 57.5, 15.7 | 5.4 / 17.4, 1.8 | 7.3 / 18.2, 1.8 |
 | 0.25 | 0.999 (cap) | 29.0 / 85.8, 33.7 | 4.8 / 17.7, 1.8 | 6.6 / 18.9, 1.8 |
-| 0.15 | 0.999 (cap) | 25.7 / 111.9, 56.3 | 4.4 / 21.2, 1.8 | 5.5 / 23.5, 1.8 |
+| 0.15 | 0.999 (cap) | 25.7 / 112.0, 56.4 | 4.4 / 21.2, 1.8 | 5.5 / 23.5, 1.8 |
 
 Means over 12 seeds; heading is mean RMS.
 

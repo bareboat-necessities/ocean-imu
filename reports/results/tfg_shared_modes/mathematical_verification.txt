@@ -57,5 +57,5 @@ REPORT finite-reset off covariance discrepancy 2.52299693308e-06
 CHECK allocation-guarded confidence fallback exercised       value=0 limit=0 PASS
 CHECK float variable-dt adaptive/outage path finite          value=0 limit=0 PASS
 CHECK float full covariance symmetry                         value=0 limit=1e-06 PASS
-CHECK float full covariance PSD                              value=8.08736278e-09 limit=2e-07 PASS
+CHECK float full covariance PSD                              value=9.03783093e-09 limit=2e-07 PASS
 FAILURES 0

@@ -7,7 +7,7 @@ JONSWAP&1.45&1.45&1.37&1.37&-0.03 [-0.04, -0.03]&+0.00 [-0.04, +0.05]\\
 PM, long period&4.06&4.05&3.67&3.67&-0.01 [-0.02, -0.01]&-0.02 [-0.06, +0.01]\\
 Regular waves&2.38&2.38&2.08&2.08&+0.00 [-0.00, +0.01]&+0.02 [-0.03, +0.06]\\
 Short, low waves&0.59&0.59&0.58&0.58&-0.01 [-0.02, -0.01]&+0.03 [-0.00, +0.07]\\
-High, long waves&8.74&8.74&7.76&7.76&-0.01 [-0.02, -0.01]&-0.03 [-0.06, +0.01]\\
+High, long waves&8.74&8.74&7.76&7.76&-0.01 [-0.02, -0.01]&-0.02 [-0.06, +0.02]\\
 Broad spreading&1.45&1.45&1.39&1.39&-0.03 [-0.04, -0.02]&+0.01 [-0.03, +0.06]\\
 Long crested&1.45&1.45&1.36&1.36&-0.03 [-0.03, -0.03]&+0.00 [-0.04, +0.05]\\
 Heading +90 deg&1.45&1.45&1.37&1.37&-0.04 [-0.04, -0.03]&-0.02 [-0.06, +0.02]\\
@@ -22,12 +22,12 @@ Engine 1600 rpm&1.98&1.98&1.89&1.89&-0.08 [-0.21, +0.05]&-1.05 [-1.66, -0.44]\\
 Engine 2400 rpm&2.11&2.11&2.00&2.00&-0.06 [-0.15, +0.04]&-0.59 [-1.16, -0.02]\\
 Engine 3200 rpm&2.27&2.27&2.15&2.15&-0.11 [-0.27, +0.06]&-1.80 [-2.79, -0.81]\\
 Colored sensor noise&55.29&55.30&55.25&55.25&+0.01 [-0.02, +0.03]&+0.48 [+0.34, +0.62]\\
-Sea-state round trip&2.99&2.99&2.98&2.98&-0.01 [-0.02, -0.01]&-0.03 [-0.08, +0.02]\\
+Sea-state round trip&2.99&2.99&2.98&2.98&-0.01 [-0.02, -0.01]&-0.04 [-0.09, +0.02]\\
 Direction step&1.47&1.47&1.40&1.40&-0.00 [-0.01, -0.00]&-0.00 [-0.03, +0.02]\\
 Changing period&1.38&1.38&1.25&1.25&-0.04 [-0.04, -0.03]&-0.02 [-0.08, +0.04]\\
 Vessel maneuvers&1.46&1.46&1.45&1.45&-0.09 [-0.14, -0.04]&-0.40 [-0.45, -0.34]\\
 Rapid rotations&1.45&1.45&1.45&1.45&-0.00 [-0.00, -0.00]&+0.00 [-0.05, +0.05]\\
-Magnetic outage&1.45&1.45&1.37&1.37&-0.03 [-0.04, -0.03]&+0.03 [-0.05, +0.12]\\
+Magnetic outage&1.45&1.45&1.37&1.37&-0.03 [-0.04, -0.03]&+0.04 [-0.05, +0.12]\\
 Bias / temperature drift&1.70&1.70&1.60&1.60&-0.03 [-0.03, -0.02]&-0.04 [-0.08, -0.00]\\
 Interval jitter&1.46&1.46&1.38&1.38&-0.03 [-0.04, -0.03]&+0.00 [-0.05, +0.05]\\
 \bottomrule\end{tabular}
@@ -39,8 +39,8 @@ Horizontal&-0.279&[-0.402, -0.156]\\
 3-D position&-0.197&[-0.280, -0.114]\\
 Tilt&-3.596&[-4.932, -2.242]\\
 Heading&-2.534&[-4.424, -0.606]\\
-Gyro bias&-1.256&[-1.783, -0.726]\\
-Accel. bias&-3.866&[-5.291, -2.419]\\
+Gyro bias&-1.255&[-1.782, -0.725]\\
+Accel. bias&-3.866&[-5.292, -2.419]\\
 \bottomrule\end{tabular}\end{table}
 \begin{table}[!t]\centering\caption{Host core and Xtensa compile-time measurements. Static stack bounds exclude opaque and indirect calls.}
 \footnotesize\begin{tabular}{lrrrr}\toprule &Q ind.&T ind.&Q shared&T shared\\\midrule
@@ -68,8 +68,8 @@ Q off&5.48&23.47&1.84&0/12&66&1.00&0\\
 T off&5.48&23.46&1.81&0/12&63&1.00&0\\
 Q shared&4.39&21.24&1.91&0/12&61&0.68&1469\\
 T shared&4.38&21.19&1.83&0/12&57&0.68&1469\\
-Q legacy cap&21.73&156.79&90.11&12/12&198061&0.52&2091\\
-T legacy cap&25.65&111.93&56.32&7/12&61605&0.41&2640\\
+Q legacy cap&21.77&156.62&89.95&12/12&197894&0.52&2092\\
+T legacy cap&25.68&112.02&56.37&7/12&61671&0.41&2642\\
 T cap 0.7&4.21&20.94&1.82&0/12&54&0.68&1469\\
 T cap 0.9&5.10&22.10&1.86&0/12&70&0.68&1469\\
 Q real only&7.39&24.19&3.15&0/12&410&0.68&1469\\
@@ -96,17 +96,17 @@ PM-Stokes, H=8.500 m&20.486&20.485&19.888&19.887&-0.0038 [-0.0192, +0.0117]\\
 \caption{Reset diagnostic: change when covariance transport is omitted, percent with paired 95\% intervals (12 seeds). The default retains full transport.}
 \footnotesize\begin{tabular}{llrr}\toprule Condition&Prior&Heave [\%]&Horizontal [\%]\\\midrule
 Direction step&Independent&-0.002 [-0.004, +0.000]&+0.005 [-0.007, +0.017]\\
-Direction step&Shared&-0.004 [-0.010, +0.002]&-0.007 [-0.056, +0.042]\\
+Direction step&Shared&-0.004 [-0.010, +0.003]&-0.005 [-0.055, +0.045]\\
 Long crested&Independent&-0.001 [-0.003, +0.001]&-0.002 [-0.014, +0.010]\\
-Long crested&Shared&-0.030 [-0.036, -0.024]&+0.031 [-0.032, +0.094]\\
+Long crested&Shared&-0.030 [-0.035, -0.024]&+0.027 [-0.036, +0.091]\\
 Magnetic outage&Independent&+0.002 [-0.001, +0.005]&+0.127 [-0.093, +0.347]\\
-Magnetic outage&Shared&-0.029 [-0.038, -0.019]&+0.325 [+0.028, +0.623]\\
+Magnetic outage&Shared&-0.028 [-0.038, -0.019]&+0.327 [+0.028, +0.627]\\
 Mixed seas&Independent&+0.002 [+0.001, +0.003]&+0.011 [+0.002, +0.019]\\
-Mixed seas&Shared&+0.035 [+0.021, +0.050]&+0.107 [+0.003, +0.212]\\
+Mixed seas&Shared&+0.035 [+0.021, +0.050]&+0.108 [+0.004, +0.212]\\
 Rapid rotations&Independent&+0.002 [+0.000, +0.003]&-0.003 [-0.035, +0.029]\\
 Rapid rotations&Shared&+0.002 [-0.000, +0.003]&-0.003 [-0.037, +0.030]\\
 Sea-state round trip&Independent&+0.003 [-0.002, +0.008]&-0.044 [-0.076, -0.011]\\
-Sea-state round trip&Shared&-0.011 [-0.016, -0.006]&-0.041 [-0.084, +0.002]\\
+Sea-state round trip&Shared&-0.011 [-0.017, -0.006]&-0.034 [-0.075, +0.008]\\
 \bottomrule\end{tabular}\end{table*}
 \begin{table*}[!t]\centering
 \caption{Transition recovery (24 seeds). Mean times in seconds; paired TFG/shared minus QMEKF/shared intervals. Recovery is relative to each filter\textquotesingle s own post-event RMS and does not establish absolute accuracy.}
@@ -125,7 +125,7 @@ Heave convergence [s]&99.60&99.60&124.06&124.06\\
 Observed / 24&24&24&23&23\\
 Outage yaw [deg]&4.20&4.18&4.03&4.06\\
 Post-outage yaw [deg]&2.03&1.97&2.02&1.96\\
-Yaw recovery [s]&26.55&25.16&26.46&25.24\\
+Yaw recovery [s]&26.55&25.16&26.46&25.23\\
 Observed / 24&22&22&22&22\\
 \bottomrule\end{tabular}\end{table}
 \begin{table*}[!t]\centering
@@ -139,12 +139,12 @@ $k$&legacy&default&T ind.&Q legacy&T legacy&Q shared&T shared&T ind.&Q shared&T 
 0.6&0.936&0.861&10.6&8.8&8.8&8.8&8.8&18.6&18.2&18.2&1.9&1.8\\
 0.5&0.999&1.003&9.6&15.2&15.2&7.7&7.7&18.0&17.8&17.8&2.2&1.8\\
 0.4&0.999&1.160&8.4&22.5&22.2&6.6&6.6&17.8&17.5&17.5&2.9&1.8\\
-0.3&0.999&1.321&7.2&24.4&29.7&5.4&5.4&18.2&17.4&17.4&16.5&1.7\\
-0.25&0.999&1.398&6.6&21.9&29.0&4.8&4.8&18.9&17.7&17.7&34.5 (7)&1.7\\
-0.2&0.999&1.467&6.0&22.5&26.4&4.4&4.3&20.3&18.6&18.5&86.8 (9)&1.6\\
-0.15&0.999&1.525&5.5&21.7&25.7&4.4&4.4&23.5&21.2&21.2&56.6 (7)&1.6\\
+0.3&0.999&1.321&7.2&24.3&29.8&5.4&5.4&18.2&17.4&17.4&16.5&1.7\\
+0.25&0.999&1.398&6.6&21.9&29.0&4.8&4.8&18.9&17.7&17.7&34.4 (7)&1.7\\
+0.2&0.999&1.467&6.0&22.5&26.4&4.4&4.3&20.3&18.6&18.5&86.7 (9)&1.6\\
+0.15&0.999&1.525&5.5&21.8&25.7&4.4&4.4&23.5&21.2&21.2&56.9 (7)&1.6\\
 0.15 broad&0.999&1.502&5.5&26.8&29.7&4.4&4.4&23.7&22.2&22.1&38.9 (7)&1.5\\
-0.15 long&0.999&1.532&5.4&13.9&20.3&4.5&4.5&23.2&20.7&20.7&82.3 (11)&2.1\\
+0.15 long&0.999&1.532&5.4&13.9&20.5&4.5&4.5&23.2&20.7&20.7&83.8 (10)&2.1\\
 \bottomrule\end{tabular}\label{tab:heave-sweep}\end{table*}
 \begin{table}[!t]\centering
 \caption{Legacy-cap intervention: the cells of Table~\ref{tab:heave-sweep} near the cap with only the horizontal prior factor raised to $S=2$ (same seeds). Heave change relative to legacy real-only coupling at the same $S$, with paired 95\% intervals; mean heading RMS with runs above 30$^\circ$ in parentheses.}
@@ -152,7 +152,7 @@ $k$&legacy&default&T ind.&Q legacy&T legacy&Q shared&T shared&T ind.&Q shared&T 
 1&0.083&-1.5 [-1.6, -1.4]&-1.5 [-1.6, -1.4]&1.8&1.8\\
 0.5&0.339&-7.1 [-7.5, -6.7]&-7.1 [-7.6, -6.7]&1.8&1.8\\
 0.3&0.960&-22.0 [-23.3, -20.8]&-22.1 [-23.4, -20.8]&1.9&1.9\\
-0.25&0.999&+49.9 [+40.3, +59.5]&+50.6 [+41.0, +60.1]&3.3&2.3\\
+0.25&0.999&+49.9 [+40.3, +59.5]&+50.6 [+41.0, +60.2]&3.3&2.3\\
 0.2&0.999&+134.2 [+114.6, +153.9]&+132.5 [+113.5, +151.4]&5.6&3.0\\
 \bottomrule\end{tabular}\label{tab:heave-sf2}\end{table}
 \paragraph{Flagged trajectories.}

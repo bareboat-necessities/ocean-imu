@@ -1,6 +1,6 @@
 {
   "analysis_sha256": "3011f54f403651171ea00c7762435a4db9457e5d02fbf2b18624560ab9a946fb",
-  "protocol_sha256": "fc2d1beee5c38a85b82e745c12bb4a9d07a4d36b6281ea95c7e2191dd02b634c",
+  "protocol_sha256": "74a690722c09841a7f82432ecd0126c7db2b1ef5cf00e914f0eed13c665fa0a6",
   "reproduction": {
     "h1.00": {
       "reference": "runs.csv.gz",
@@ -32,178 +32,178 @@
     "h1.00": {
       "known_legacy": 0.33363241666666665,
       "known_fixed": 0.33363241666666665,
-      "estimated_legacy": 0.29088908333333335,
-      "estimated_fixed": 0.29088908333333335,
+      "estimated_legacy": 0.29089133333333334,
+      "estimated_fixed": 0.29089133333333334,
       "known_at_cap": false
     },
     "h0.80": {
       "known_legacy": 0.5233655,
       "known_fixed": 0.5233655,
-      "estimated_legacy": 0.456019,
-      "estimated_fixed": 0.456019,
+      "estimated_legacy": 0.45602325000000005,
+      "estimated_fixed": 0.45602325000000005,
       "known_at_cap": false
     },
     "h0.70": {
       "known_legacy": 0.6854922499999999,
       "known_fixed": 0.6854922499999999,
-      "estimated_legacy": 0.5971483333333333,
-      "estimated_fixed": 0.5971483333333333,
+      "estimated_legacy": 0.5971534166666667,
+      "estimated_fixed": 0.5971534166666667,
       "known_at_cap": false
     },
     "h0.60": {
       "known_legacy": 0.93578375,
       "known_fixed": 0.8613949166666667,
-      "estimated_legacy": 0.8156641666666666,
-      "estimated_fixed": 0.7878224166666666,
+      "estimated_legacy": 0.8156708333333333,
+      "estimated_fixed": 0.7878265833333334,
       "known_at_cap": false
     },
     "h0.50": {
       "known_legacy": 0.999,
       "known_fixed": 1.0032236666666667,
-      "estimated_legacy": 0.9621132499999999,
-      "estimated_fixed": 0.9316315833333334,
+      "estimated_legacy": 0.9621127500000001,
+      "estimated_fixed": 0.9316346666666666,
       "known_at_cap": true
     },
     "h0.40": {
       "known_legacy": 0.999,
       "known_fixed": 1.159991,
-      "estimated_legacy": 0.9782505,
-      "estimated_fixed": 1.1009019166666667,
+      "estimated_legacy": 0.9782520833333334,
+      "estimated_fixed": 1.1009050833333334,
       "known_at_cap": true
     },
     "h0.30": {
       "known_legacy": 0.999,
       "known_fixed": 1.32116775,
-      "estimated_legacy": 0.9498373333333333,
-      "estimated_fixed": 1.2612013333333334,
+      "estimated_legacy": 0.95244675,
+      "estimated_fixed": 1.261204,
       "known_at_cap": true
     },
     "h0.25": {
       "known_legacy": 0.9990000833333333,
       "known_fixed": 1.3977505833333332,
-      "estimated_legacy": 0.8717154166666666,
-      "estimated_fixed": 1.3098838333333334,
+      "estimated_legacy": 0.8738848333333333,
+      "estimated_fixed": 1.3098878333333335,
       "known_at_cap": true
     },
     "h0.20": {
       "known_legacy": 0.999,
       "known_fixed": 1.4670498333333333,
-      "estimated_legacy": 0.8277956666666667,
-      "estimated_fixed": 1.30509375,
+      "estimated_legacy": 0.8215301666666667,
+      "estimated_fixed": 1.30510325,
       "known_at_cap": true
     },
     "h0.15": {
       "known_legacy": 0.999,
       "known_fixed": 1.5246678333333332,
-      "estimated_legacy": 0.6366895833333334,
-      "estimated_fixed": 1.1767200833333333,
+      "estimated_legacy": 0.6366134166666667,
+      "estimated_fixed": 1.17673225,
       "known_at_cap": true
     }
   },
   "legacy_heave_vs_real_only": {
     "CSM/cap0": {
       "h1.00": {
-        "percent": -5.456492943207976,
-        "ci_low": -5.837401582513835,
-        "ci_high": -5.075584303902116
+        "percent": -5.456372871419586,
+        "ci_low": -5.837276221215863,
+        "ci_high": -5.07546952162331
       },
       "h0.80": {
-        "percent": -9.032730521857134,
-        "ci_low": -9.64310600194192,
-        "ci_high": -8.422355041772349
+        "percent": -9.033042588017706,
+        "ci_low": -9.643339991768757,
+        "ci_high": -8.422745184266654
       },
       "h0.70": {
-        "percent": -12.375351263366682,
-        "ci_low": -13.205579624670218,
-        "ci_high": -11.545122902063145
+        "percent": -12.375470467594868,
+        "ci_low": -13.205414179761997,
+        "ci_high": -11.545526755427739
       },
       "h0.60": {
-        "percent": -16.54384069498313,
-        "ci_low": -17.631026712191282,
-        "ci_high": -15.456654677774972
+        "percent": -16.543632020704894,
+        "ci_low": -17.630389686275105,
+        "ci_high": -15.456874355134683
       },
       "h0.50": {
-        "percent": 62.35027866832041,
-        "ci_low": 55.79382570443753,
-        "ci_high": 68.90673163220329
+        "percent": 62.351510758283744,
+        "ci_low": 55.795795272964725,
+        "ci_high": 68.90722624360276
       },
       "h0.40": {
-        "percent": 175.94416227279157,
-        "ci_low": 166.83345553460555,
-        "ci_high": 185.0548690109776
+        "percent": 175.9384200451274,
+        "ci_low": 166.82220079412923,
+        "ci_high": 185.05463929612557
       },
       "h0.30": {
-        "percent": 114.9495679341016,
-        "ci_low": 82.55277448522361,
-        "ci_high": 147.34636138297958
+        "percent": 112.78496924571051,
+        "ci_low": 79.87790241601357,
+        "ci_high": 145.69203607540746
       },
       "h0.25": {
-        "percent": 72.56530260505298,
-        "ci_low": 52.408203816982265,
-        "ci_high": 92.72240139312369
+        "percent": 72.74297464428537,
+        "ci_low": 52.76552683301852,
+        "ci_high": 92.72042245555221
       },
       "h0.20": {
-        "percent": 74.40145453318847,
-        "ci_low": 45.98057893773534,
-        "ci_high": 102.8223301286416
+        "percent": 73.77377432143781,
+        "ci_low": 47.92486180929326,
+        "ci_high": 99.62268683358236
       },
       "h0.15": {
-        "percent": 78.27501247001217,
-        "ci_low": 53.31369873313993,
-        "ci_high": 103.23632620688441
+        "percent": 81.161543818253,
+        "ci_low": 56.801606098845085,
+        "ci_high": 105.5214815376609
       },
       "first_harm_cell": "h0.50"
     },
     "TCSM/cap0": {
       "h1.00": {
-        "percent": -5.464342753639247,
-        "ci_low": -5.847653312704494,
-        "ci_high": -5.081032194574001
+        "percent": -5.464398031056763,
+        "ci_low": -5.847682471131794,
+        "ci_high": -5.081113590981731
       },
       "h0.80": {
-        "percent": -9.045581778263688,
-        "ci_low": -9.661170977386414,
-        "ci_high": -8.429992579140963
+        "percent": -9.045547295093252,
+        "ci_low": -9.6609800667882,
+        "ci_high": -8.430114523398304
       },
       "h0.70": {
-        "percent": -12.38945936035366,
-        "ci_low": -13.22929117909848,
-        "ci_high": -11.54962754160884
+        "percent": -12.389668832657833,
+        "ci_low": -13.229367344180746,
+        "ci_high": -11.54997032113492
       },
       "h0.60": {
-        "percent": -16.544380598813813,
-        "ci_low": -17.657970589832132,
-        "ci_high": -15.430790607795494
+        "percent": -16.544697376171055,
+        "ci_low": -17.657844177276193,
+        "ci_high": -15.431550575065916
       },
       "h0.50": {
-        "percent": 62.28919528191395,
-        "ci_low": 55.664101725567704,
-        "ci_high": 68.91428883826019
+        "percent": 62.28983891007073,
+        "ci_low": 55.66517740995904,
+        "ci_high": 68.91450041018241
       },
       "h0.40": {
-        "percent": 172.37401461083346,
-        "ci_low": 162.94727711865073,
-        "ci_high": 181.80075210301618
+        "percent": 172.37203859227154,
+        "ci_low": 162.94089457978464,
+        "ci_high": 181.80318260475843
       },
       "h0.30": {
-        "percent": 172.32895005883628,
-        "ci_low": 139.28540601482945,
-        "ci_high": 205.37249410284312
+        "percent": 173.61867998407368,
+        "ci_low": 139.85722675132644,
+        "ci_high": 207.38013321682092
       },
       "h0.25": {
-        "percent": 109.42565447876332,
-        "ci_low": 86.5902711892761,
-        "ci_high": 132.26103776825056
+        "percent": 108.39094611983643,
+        "ci_low": 84.46549645923409,
+        "ci_high": 132.31639578043877
       },
       "h0.20": {
-        "percent": 79.06373955989064,
-        "ci_low": 48.90240238710134,
-        "ci_high": 109.22507673267992
+        "percent": 81.67251763841271,
+        "ci_low": 50.80839432427955,
+        "ci_high": 112.53664095254588
       },
       "h0.15": {
-        "percent": 85.48422832208534,
-        "ci_low": 59.979650894214686,
-        "ci_high": 110.988805749956
+        "percent": 85.012465055916,
+        "ci_low": 53.0121444453832,
+        "ci_high": 117.01278566644879
       },
       "first_harm_cell": "h0.50"
     }
@@ -217,24 +217,24 @@
   "control_heading_max_deg": {
     "A41@C": 1.8411196666666667,
     "T41@C": 1.8103795833333332,
-    "CSM/real/cap0": 67.35295833333333,
-    "TCSM/real/cap0": 38.085159166666664
+    "CSM/real/cap0": 65.46466666666667,
+    "TCSM/real/cap0": 39.233559166666666
   },
   "intervention_sf2": {
     "h1.00": {
       "known_coherence": 0.0834081,
       "CSM/cap0/sf2": {
-        "heave_vs_real_pct": -1.492804432575646,
-        "ci_low": -1.596078909470091,
-        "ci_high": -1.389529955681201,
-        "heading_mean_deg": 1.7717612499999997,
+        "heave_vs_real_pct": -1.4929220419931768,
+        "ci_low": -1.5961846461735487,
+        "ci_high": -1.3896594378128049,
+        "heading_mean_deg": 1.7717603333333332,
         "heading_over30": 0
       },
       "TCSM/cap0/sf2": {
-        "heave_vs_real_pct": -1.495861432573219,
-        "ci_low": -1.6000780270830353,
-        "ci_high": -1.3916448380634026,
-        "heading_mean_deg": 1.7674130833333328,
+        "heave_vs_real_pct": -1.4957521060428338,
+        "ci_low": -1.599801680870396,
+        "ci_high": -1.3917025312152715,
+        "heading_mean_deg": 1.7674185,
         "heading_over30": 0
       },
       "A41@C/sf2": {
@@ -242,11 +242,11 @@
         "heading_over30": 0
       },
       "CSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.772015416666667,
+        "heading_mean_deg": 1.7720115833333336,
         "heading_over30": 0
       },
       "TCSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.7675345833333331,
+        "heading_mean_deg": 1.7675408333333331,
         "heading_over30": 0
       },
       "CSM:noconf/ext-true/cap0/sf2": {
@@ -257,17 +257,17 @@
     "h0.50": {
       "known_coherence": 0.33908391666666665,
       "CSM/cap0/sf2": {
-        "heave_vs_real_pct": -7.104467737121735,
-        "ci_low": -7.535208297069551,
-        "ci_high": -6.673727177173919,
-        "heading_mean_deg": 1.7958928333333333,
+        "heave_vs_real_pct": -7.104553778729102,
+        "ci_low": -7.5351457788443055,
+        "ci_high": -6.673961778613898,
+        "heading_mean_deg": 1.795895916666667,
         "heading_over30": 0
       },
       "TCSM/cap0/sf2": {
-        "heave_vs_real_pct": -7.120288035614872,
-        "ci_low": -7.55984433738439,
-        "ci_high": -6.680731733845355,
-        "heading_mean_deg": 1.78629425,
+        "heave_vs_real_pct": -7.1203143514390135,
+        "ci_low": -7.559815446059008,
+        "ci_high": -6.680813256819019,
+        "heading_mean_deg": 1.7863049166666662,
         "heading_over30": 0
       },
       "A41@C/sf2": {
@@ -275,11 +275,11 @@
         "heading_over30": 0
       },
       "CSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.7931922499999997,
+        "heading_mean_deg": 1.7931946666666667,
         "heading_over30": 0
       },
       "TCSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.7850460000000001,
+        "heading_mean_deg": 1.7850450833333336,
         "heading_over30": 0
       },
       "CSM:noconf/ext-true/cap0/sf2": {
@@ -290,17 +290,17 @@
     "h0.30": {
       "known_coherence": 0.9600051666666666,
       "CSM/cap0/sf2": {
-        "heave_vs_real_pct": -22.03428717168842,
-        "ci_low": -23.315967579267372,
-        "ci_high": -20.752606764109466,
-        "heading_mean_deg": 1.941703666666667,
+        "heave_vs_real_pct": -22.033214200651965,
+        "ci_low": -23.315159978661796,
+        "ci_high": -20.751268422642134,
+        "heading_mean_deg": 1.9417229999999999,
         "heading_over30": 0
       },
       "TCSM/cap0/sf2": {
-        "heave_vs_real_pct": -22.09516145913687,
-        "ci_low": -23.362378673797174,
-        "ci_high": -20.82794424447657,
-        "heading_mean_deg": 1.8556226666666664,
+        "heave_vs_real_pct": -22.094158021230722,
+        "ci_low": -23.36196846964553,
+        "ci_high": -20.826347572815916,
+        "heading_mean_deg": 1.8556559166666666,
         "heading_over30": 0
       },
       "A41@C/sf2": {
@@ -308,11 +308,11 @@
         "heading_over30": 0
       },
       "CSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.8093873333333332,
+        "heading_mean_deg": 1.809385166666667,
         "heading_over30": 0
       },
       "TCSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.7955440833333336,
+        "heading_mean_deg": 1.7955719166666666,
         "heading_over30": 0
       },
       "CSM:noconf/ext-true/cap0/sf2": {
@@ -323,17 +323,17 @@
     "h0.25": {
       "known_coherence": 0.9990000833333333,
       "CSM/cap0/sf2": {
-        "heave_vs_real_pct": 49.89936959244282,
-        "ci_low": 40.28925564554754,
-        "ci_high": 59.50948353933809,
-        "heading_mean_deg": 3.298151666666666,
+        "heave_vs_real_pct": 49.90169411690989,
+        "ci_low": 40.29133754334245,
+        "ci_high": 59.512050690477324,
+        "heading_mean_deg": 3.2981008333333333,
         "heading_over30": 0
       },
       "TCSM/cap0/sf2": {
-        "heave_vs_real_pct": 50.5800215140674,
-        "ci_low": 41.010556421710426,
-        "ci_high": 60.14948660642437,
-        "heading_mean_deg": 2.339790166666667,
+        "heave_vs_real_pct": 50.58178855181904,
+        "ci_low": 41.01236173525859,
+        "ci_high": 60.15121536837949,
+        "heading_mean_deg": 2.3398435,
         "heading_over30": 0
       },
       "A41@C/sf2": {
@@ -341,11 +341,11 @@
         "heading_over30": 0
       },
       "CSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.8143156666666667,
+        "heading_mean_deg": 1.814312666666667,
         "heading_over30": 0
       },
       "TCSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.7986651666666669,
+        "heading_mean_deg": 1.7986659166666668,
         "heading_over30": 0
       },
       "CSM:noconf/ext-true/cap0/sf2": {
@@ -356,17 +356,17 @@
     "h0.20": {
       "known_coherence": 0.9990000000000001,
       "CSM/cap0/sf2": {
-        "heave_vs_real_pct": 134.22169588022598,
-        "ci_low": 114.55762086424288,
-        "ci_high": 153.8857708962091,
-        "heading_mean_deg": 5.554552500000001,
+        "heave_vs_real_pct": 134.23244221060088,
+        "ci_low": 114.57504955640967,
+        "ci_high": 153.88983486479208,
+        "heading_mean_deg": 5.5546725,
         "heading_over30": 0
       },
       "TCSM/cap0/sf2": {
-        "heave_vs_real_pct": 132.4641087223055,
-        "ci_low": 113.5203618348633,
-        "ci_high": 151.40785560974768,
-        "heading_mean_deg": 3.0300425,
+        "heave_vs_real_pct": 132.47651348040785,
+        "ci_low": 113.53891344597993,
+        "ci_high": 151.41411351483575,
+        "heading_mean_deg": 3.0302675000000003,
         "heading_over30": 0
       },
       "A41@C/sf2": {
@@ -374,11 +374,11 @@
         "heading_over30": 0
       },
       "CSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.8299374166666666,
+        "heading_mean_deg": 1.8299314999999998,
         "heading_over30": 0
       },
       "TCSM/real/cap0/sf2": {
-        "heading_mean_deg": 1.80705175,
+        "heading_mean_deg": 1.8070681666666666,
         "heading_over30": 0
       },
       "CSM:noconf/ext-true/cap0/sf2": {
@@ -389,24 +389,24 @@
   },
   "spreading_at_015": {
     "CSM/cap0": {
-      "h0.15_broad": 71.3661,
-      "h0.15": 90.11141666666667,
-      "h0.15_long": 102.96759166666668
+      "h0.15_broad": 71.48371666666667,
+      "h0.15": 89.94593333333334,
+      "h0.15_long": 102.98734999999999
     },
     "TCSM/cap0": {
-      "h0.15_broad": 45.30865,
-      "h0.15": 56.32342666666667,
-      "h0.15_long": 79.03984416666667
+      "h0.15_broad": 45.395035,
+      "h0.15": 56.369504166666665,
+      "h0.15_long": 75.61408
     },
     "CSM": {
-      "h0.15_broad": 1.9674860833333334,
-      "h0.15": 1.90948575,
-      "h0.15_long": 2.0378480833333334
+      "h0.15_broad": 1.9669750833333335,
+      "h0.15": 1.9093994166666668,
+      "h0.15_long": 2.037742833333333
     },
     "TCSM": {
-      "h0.15_broad": 1.6939298333333335,
-      "h0.15": 1.8260101666666666,
-      "h0.15_long": 2.0103835833333332
+      "h0.15_broad": 1.6936385833333334,
+      "h0.15": 1.8259429166666665,
+      "h0.15_long": 2.0103396666666664
     }
   }
 }

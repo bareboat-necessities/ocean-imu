@@ -196,7 +196,9 @@ private:
     void updateCore_(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                      float tempC, bool drive_mekf) {
         if (!mekf_) return;
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
+        // A non-finite sample is dropped whole: the frontend, tuner and
+        // trackers share it with the core.
+        if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
         apply_pending_online_tune_();
         time_ += dt;
         startup_stage_t_ += dt;

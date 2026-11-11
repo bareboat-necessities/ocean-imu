@@ -3,20 +3,24 @@
 ## Native secant source binding
 
 The finite native diagnostic is bound to the current complete `src/` tree.
-The experimental shared-mode excitation cap
-(`src/kalman_carma/CarmaCrossSpectrumEstimator.h`,
+The experimental shared-mode excitation cap and the review fixes to the
+shared-mode and CARMA cores (`src/kalman_carma/`,
 `src/kalman_carma_shared_modes/`) changed the broad source fingerprint, so the
 unchanged shipping OU-III probe was rebuilt and replayed at both registered
 perturbation sizes. Both raw native byte hashes match main; the run summaries
-differ from the committed replay only by host round-off (at most 1.4e-14).
+differ from the committed CI replay only by host round-off (at most 1.4e-14).
 See `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the
 receipt. The four existing wrapper traces, OU-III included, stay bit-identical
-to main over 6,000 samples.
+to main over 6,000 samples. The review also found that a non-finite gyro
+sample leaves the state non-finite; the CARMA cores now reject it. The
+shipping OU-III wrapper has the same exposure; it is not changed here and
+remains an open implementation item for a shipping change.
 
-Validation: Uninterrupted `make all` exits 0 after a clean rebuild of `tests/` on the
-tree of `7315475`: all 19 suite scripts with original thresholds and 1,152
-validation tests with no skips (`regression_gates.json`). The rebuilt bench
-binary is byte-identical to the one that produced the published scores.
+Validation: Uninterrupted `make all` exits 0 on the review-fix tree (incremental
+after a clean build of the cap-policy tree): all 19 suite scripts with original
+thresholds and 1,152 validation tests with no skips (`regression_gates.json`).
+The bench binary that produced the published scores is unchanged by the
+build.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.

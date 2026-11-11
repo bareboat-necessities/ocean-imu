@@ -991,7 +991,9 @@ Confidence is smoothed every sample:
  T_c=\begin{cases}3~\mathrm s,&e_c<c,\\60~\mathrm s,&e_c\ge c.\end{cases}
  \label{eq:confidence}
 \end{equation}
-The applied gain changes at the approximately 0.1~s model cadence. This
+The applied gain changes at the approximately 0.1~s confidence cadence
+and the excitation is rebuilt at the next step, with or without a model
+commit. This
 withdraws dependence quickly and restores it slowly. The process tends
 toward diagonal excitation smoothly; ordinary smoothing does not snap
 $c$ to exactly zero in finite time.
@@ -999,7 +1001,8 @@ $c$ to exactly zero in finite time.
 Reducing future process correlation leaves stale posterior motion
 cross-covariance. Partition the remaining attitude and bias states as
 $r$, horizontal motion as $h$, and vertical motion as $z$. On a confidence
-decrease let $\alpha_c=c_{\rm new}/c_{\rm old}$ and use
+decrease of at least 0.1\% since the last shrink (smaller declines
+accumulate) let $\alpha_c=c_{\rm new}/c_{\rm old}$ and use
 \begin{align}
  \mt E_{hz}&=\mt\Pi_{hr}\mt\Pi_{rr}^{-1}\mt\Pi_{rz},\nonumber\\
  \mt\Pi_{hz}^+&=\mt E_{hz}+

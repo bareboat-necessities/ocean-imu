@@ -33,7 +33,11 @@ cross-axis phase relationships; they do not mean CARMA(6,3).
   reference-discretization accessors let TFG use the same algorithms.
 - `SharedModesEstimator.h` is the existing confidence facade extracted from
   `KalmanCarmaSharedModes.h`. Both geometries use it. The old public name is
-  an alias of the same QMEKF core plus this facade.
+  an alias of the same QMEKF core plus this facade. A changed confidence
+  rebuilds the excitation at the next step without waiting for a model
+  commit, slow declines accumulate into covariance shrinks, attitude
+  re-initialization restarts the coupling evidence, and copies keep the
+  configuration.
 - `kalman_common/ConditionalCovariance.h` contains the existing conditional Schur fallback,
   parameterized by index sets. TFG uses column-major world-vector indices;
   QMEKF retains axis-major indices. Both preserve the common-state-explained
@@ -49,7 +53,9 @@ along the coupling direction instead of shrinking `b`:
 `H <- H + ((lambda - 1) / q) b b^H` with `q = b^H H^-1 b` and
 `lambda = q / (0.8 sigma_z^2)`. The cross-wave prior is unchanged, and each
 horizontal axis rescales its latent colouring by the square root of its
-variance gain, exactly like an amplitude commit. Enlarging the whole block
+variance gain, exactly like an amplitude commit; `CouplingStatus` reports
+those gains. The keel-frame horizontal correlation enters the baseline `H`.
+Enlarging the whole block
 instead inflates the cross-wave prior and costs horizontal accuracy where the
 cap binds. `cap_coherence = 0` restores the earlier
 cross-term shrinkage, which understates the regression and leaves only 0.1% of

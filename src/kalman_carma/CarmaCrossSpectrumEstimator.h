@@ -33,7 +33,8 @@
       S_m = [[sigma_h^2 I, s c S_hat_hz], [s c S_hat_hz^H, |R_z|^2 sigma_z^2]],
       Sigma = R^-1 S_m R^-H.
 
-  The diagonal is the baseline prior: horizontal band power is not used as
+  The diagonal is the baseline prior (with an optional baseline x-y
+  correlation, the keel-frame anisotropy): horizontal band power is not used as
   wave energy, because in calm water and on small seas it is dominated by
   tilt and bias leakage (an earlier form that scaled the horizontal block by
   c raised the calm-water horizontal phantom by a quarter; it is kept as the
@@ -297,12 +298,15 @@ public:
     // responses R at f_op.  Without coupling evidence: diag(sig^2).
     // horizontal_gain, if given, points to two values that receive the
     // factors applied to the x and y prior variances (1 unless
-    // cap_coherence enlarged them).
+    // cap_coherence enlarged them).  horizontal_corr is the baseline
+    // correlation of the x and y prior amplitudes (|r| < 1).
     Hermitian3<T> excitation(const Vector3& sig, const std::complex<T> (&R)[3],
-                             T* horizontal_gain = nullptr) const {
+                             T* horizontal_gain = nullptr, T horizontal_corr = T(0)) const {
         if (horizontal_gain) { horizontal_gain[0] = T(1); horizontal_gain[1] = T(1); }
         using C = std::complex<T>;
         Hermitian3<T> out = Hermitian3<T>::diagonal(sig.array().square().matrix());
+        if (horizontal_corr != T(0) && std::abs(horizontal_corr) < T(1))
+            out.set(0, 1, C(horizontal_corr * sig(0) * sig(1)));
         Hermitian3<T> S;
         T n_eff = T(0);
         if (!band_cross(S, n_eff)) return out;
@@ -339,7 +343,7 @@ public:
         // with the measured anisotropy at the same trace.
         const T px = std::norm(R[0]) * sig(0) * sig(0), py = std::norm(R[1]) * sig(1) * sig(1);
         T hxx = px, hyy = py;
-        C hxy(T(0));
+        C hxy(std::abs(horizontal_corr) < T(1) ? horizontal_corr * std::sqrt(px * py) : T(0));
         const bool iso = std::abs(px - py) <= T(1e-6) * std::max(px, py);
         if (cfg_.horizontal == Config::Horizontal::Measured) {
             // Ablation only: the measured horizontal block scaled by c and
