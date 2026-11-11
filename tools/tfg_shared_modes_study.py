@@ -62,6 +62,7 @@ METRICS=('rms_z','rms_h','rms_3d','rmsv_x','rmsv_y','rmsv_z','rmsv_h',
 SOURCES=('src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h',
          'src/kalman_carma/Kalman3D_Wave_CARMA3.h',
          'src/kalman_carma_shared_modes/CarmaSharedModesMotion.h',
+         'src/kalman_carma/CarmaCrossSpectrumEstimator.h',
          'src/kalman_carma_shared_modes/SharedModesEstimator.h',
          'src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h',
          'tests/kalman_carma/carma3_bench.cpp','tests/kalman_carma/CarmaBenchTruth.h',
@@ -180,7 +181,8 @@ def analyse(args):
  """Derive paired comparisons, multiplicity corrections and condition-balanced effects."""
  out=args.results;df=collect(out);primary=df[df.stage=='primary'];summ=[];paired=[];inter=[]
  comparisons=(('TFG geometry, shared','TCSM','CSM'),('Shared prior, TFG','TCSM','T41@C'),
-              ('TFG geometry, independent','T41@C','A41@C'),('Shared prior, QMEKF','CSM','A41@C'))
+              ('TFG geometry, independent','T41@C','A41@C'),('Shared prior, QMEKF','CSM','A41@C'),
+              ('TFG shared vs QMEKF independent','TCSM','A41@C'))
  for (case,f),g in primary.groupby(['case','filter']):
   row=dict(case=case,filter=f,n=len(g),failures=int(g.failed.sum()))
   for m in METRICS:row[m]=g[m].mean()

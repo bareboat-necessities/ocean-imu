@@ -662,9 +662,11 @@ keeps the horizontal block at the prior. The applied coherence is therefore
 $\gamma^2(S_{hh}/S_{zz})/(\sigma_h^2/\sigma_z^2)$. It grows when the hull's
 heave-to-surge ratio departs from the prior's, and the PSD cap then lets the
 prior explain almost all horizontal motion through heave. The consistency
-test compares two data-driven regressions and cannot see it. A candidate fix
-is to cap the applied coherence at the measured one,
-$|b|^2\le\gamma^2\sigma_h^2\sigma_z^2$; it needs its own validation.
+test compares two data-driven regressions and cannot see it. These numbers
+use that earlier cap. Capping $b$ at the measured coherence still understates
+the regression; the estimator now keeps $b$ and enlarges the horizontal block
+along the coupling to applied coherence 0.8, and the TFG companion study
+compares the policies.
 
 \begin{table*}[!t]
 \caption{Dataset replay (pinned oceanography-waves-lib records, default

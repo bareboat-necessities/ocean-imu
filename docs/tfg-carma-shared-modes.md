@@ -33,7 +33,11 @@ cross-axis phase relationships; they do not mean CARMA(6,3).
   reference-discretization accessors let TFG use the same algorithms.
 - `SharedModesEstimator.h` is the existing confidence facade extracted from
   `KalmanCarmaSharedModes.h`. Both geometries use it. The old public name is
-  an alias of the same QMEKF core plus this facade.
+  an alias of the same QMEKF core plus this facade. A changed confidence
+  rebuilds the excitation at the next step without waiting for a model
+  commit, slow declines accumulate into covariance shrinks, attitude
+  re-initialization restarts the coupling evidence, and copies keep the
+  configuration.
 - `kalman_common/ConditionalCovariance.h` contains the existing conditional Schur fallback,
   parameterized by index sets. TFG uses column-major world-vector indices;
   QMEKF retains axis-major indices. Both preserve the common-state-explained
@@ -41,6 +45,23 @@ cross-axis phase relationships; they do not mean CARMA(6,3).
 - `SharedModesFusion<Core>` uses the existing CARMA schedule and startup.
   Its original QMEKF public name remains available. No second tuner or
   magnetic-acquisition policy is introduced.
+
+The excitation keeps the vertical prior and the measured horizontal-on-vertical
+regression `b`. When its applied coherence `b^H H^-1 b / sigma_z^2` would exceed
+`SharedModesConfig::cap_coherence` (0.8), the horizontal prior is enlarged
+along the coupling direction instead of shrinking `b`:
+`H <- H + ((lambda - 1) / q) b b^H` with `q = b^H H^-1 b` and
+`lambda = q / (0.8 sigma_z^2)`. The cross-wave prior is unchanged, and each
+horizontal axis rescales its latent colouring by the square root of its
+variance gain, exactly like an amplitude commit; `CouplingStatus` reports
+those gains. The keel-frame horizontal correlation enters the baseline `H`.
+Enlarging the whole block
+instead inflates the cross-wave prior and costs horizontal accuracy where the
+cap binds. `cap_coherence = 0` restores the earlier
+cross-term shrinkage, which understates the regression and leaves only 0.1% of
+the along-wave horizontal variance independent of heave when horizontal motion
+exceeds the prior (a weak heave RAO). Where the
+cap does not bind, nothing changes.
 
 The motion process contribution between world columns is
 `QR(i,j)*Re(Sigma) + QI(i,j)*Im(Sigma)`. TFG's gyro and gyro-bias cross terms
@@ -80,15 +101,14 @@ python3 tools/tfg_shared_modes_reset.py --jobs 2 --results "$TFG_STUDY_RESULTS"
 # Eight pinned vessel records; conditional sensor/initialization resampling.
 python3 tools/tfg_shared_modes_dataset.py --seeds 8 --jobs 2 --results "$TFG_STUDY_RESULTS"
 python3 tools/tfg_shared_modes_transients.py --jobs 2 --results "$TFG_STUDY_RESULTS"
-# Exploratory diagnosis of the observed reduced-heave failure.
+# Reduced-heave diagnosis: default cap, legacy cap and cap-target brackets.
 python3 tools/tfg_shared_modes_weak_heave.py --jobs 2 --results "$TFG_STUDY_RESULTS"
 python3 tools/tfg_shared_modes_study.py analyse --results "$TFG_STUDY_RESULTS"
 # Copy the measured host_timing/host_jitter/host_fixed, ESP size/stack,
 # firmware_builds, mathematical_verification and refactor_regression records
 # into the fresh directory after repeating the measurement commands below.
 python3 tools/tfg_shared_modes_report.py --results "$TFG_STUDY_RESULTS"
-(cd doc/kalman_tfg_shared_modes && pdflatex -halt-on-error kalman_tfg_shared_modes.tex)
-(cd doc/kalman_tfg_shared_modes && pdflatex -halt-on-error kalman_tfg_shared_modes.tex)
+(cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 ```
 
 `run` rejects caches from a different source/executable/protocol. Do not mix
@@ -133,6 +153,24 @@ The executable registry is shared with the existing CARMA benchmark:
 | `TCSM:noconf/ext-true` | Diagnostic truth-derived coupling reference |
 | `TCSM/ext-flip` | Deliberately reversed coupling, confidence enabled |
 | `TCSM:noconf/ext-flip` | Deliberately reversed coupling, unchecked |
+| `TCSM/cap0`, `CSM/cap0` | Legacy PSD cap (cross term scaled down) |
+| `TCSM/cap0.7`, `TCSM/cap0.9` | Cap-target brackets around the default 0.8 |
+| `.../sf2` | Diagnostic horizontal prior factor 2 (default 1) |
+
+The exploratory reduced-heave dose response reuses the same benchmark and the
+first 12 primary seeds:
+
+```sh
+python3 tools/tfg_shared_modes_heave_sweep.py run --jobs 3
+python3 tools/tfg_shared_modes_heave_sweep.py analyse   # committed scores only
+```
+
+It scales the heave RAO by `k` with horizontal motion unchanged and runs both
+cap policies and both independent filters on the same data. It records the
+applied multiple coherence of the known prior, and repeats the legacy-cap
+cells near the boundary with the horizontal prior factor raised to 2. Its
+repeated `k=1` and `k=0.15` cells must reproduce the primary and diagnosis
+scores exactly.
 
 The pinned replay is also shared source: `kalman_tfg_shared_modes-sim` compiles
 `kalman_carma_shared_modes-sim.cpp` with the TFG core policy. Its results use a

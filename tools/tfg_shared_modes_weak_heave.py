@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Targeted diagnosis of the primary study's reduced-heave failure.
+"""Targeted diagnosis of the primary study's reduced-heave condition.
 
-Exploratory, triggered by the registered primary result. Both geometries use
-known coupling, real-only coupling, unchecked estimation and coupling-off
-references. The operational estimator is not retuned on these outcomes.
+Exploratory. Both geometries use known coupling, real-only coupling,
+unchecked estimation and coupling-off references; `/cap0` rows restore
+the legacy excitation cap and `/cap0.7`, `/cap0.9` bracket the cap target, so
+the cap policy is compared on identical data.
 """
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,as_completed
@@ -15,10 +16,10 @@ ap.add_argument('--analysis-only',action='store_true',help='Reanalyse completed 
 ap.add_argument('--results',type=Path,default=OUT)
 args=ap.parse_args();OUT=args.results;OUT.mkdir(parents=True,exist_ok=True)
 filters=('A41@C','T41@C','CSM','TCSM','CSM:off','TCSM:off','CSM:noconf','TCSM:noconf',
- 'CSM/real','TCSM/real','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset')
+ 'CSM/real','TCSM/real','CSM:noconf/ext-true','TCSM:noconf/ext-true','TCSM/noreset','CSM/cap0','TCSM/cap0','TCSM/cap0.7','TCSM/cap0.9')
 seeds=list(range(1001,1013));cache=OUT/'weak_cache';cache.mkdir(exist_ok=True)
 protocol=dict(binary_sha256=sha(BINARY),runner_sha256=sha(__file__),filters=filters,seeds=seeds,
- scenario=SCENARIOS['weak_heave']+'+T1200',role='exploratory failure diagnosis; no estimator retuning; primary multiplicity family unchanged',
+ scenario=SCENARIOS['weak_heave']+'+T1200',role='exploratory diagnosis; cap0 rows are paired legacy-cap controls and cap0.7/cap0.9 bracket the cap target; the cap target was chosen on seeds 1001-1003; primary multiplicity family unchanged',
  heading_diagnostic='RMS heading above 30 deg is reported separately from the inherited position/nonfinite divergence flag')
 p=OUT/'weak_protocol.json'
 if p.exists():
@@ -50,10 +51,10 @@ def run(seed):
     diags.append(dict(filter=f,seed=seed,mean_confidence=float(w.confidence.mean()),
       min_confidence=float(w.confidence.min()),max_confidence=float(w.confidence.max()),shrinks=int(d.shrinks.iloc[-1]),
       mean_coherence_xz=float(w.coh_xz.mean()),mean_nis_ratio=float(w.nis_ratio.mean())))
-    if seed==1001 and f in ('CSM','TCSM','CSM/real','TCSM/real'):
+    if seed==1001 and f in ('CSM','TCSM','CSM/cap0','TCSM/cap0'):
      save_trace(d,OUT/'traces'/('weak_confidence_'+f.replace('/','_')+'.csv.gz'))
   if seed==1001:
-   d=pd.read_csv(tr);cols=['t']+[c for c in d if c.startswith(('dyaw_','droll_','dpitch_')) and c.split('_',1)[1] in ('A41@C','T41@C','CSM','TCSM','CSM/real','TCSM/real')]
+   d=pd.read_csv(tr);cols=['t']+[c for c in d if c.startswith(('dyaw_','droll_','dpitch_')) and c.split('_',1)[1] in ('A41@C','T41@C','CSM','TCSM','CSM/cap0','TCSM/cap0')]
    save_trace(d[cols],OUT/'traces'/'weak_attitude.csv.gz')
   record=dict(seed=seed,rows=rows,diagnostics=diags);target.write_text(json.dumps(record)+'\n');return record
 records=[]
@@ -70,7 +71,7 @@ summary=df.groupby('filter').agg(n=('seed','size'),heave_m=('rms_z','mean'),hori
  tilt_deg=('tilt_rms_deg','mean'),nees9=('nees9_phys','mean'),nis=('nis','mean'),flagged=('failed','sum'))
 summary=summary.join(diag.groupby('filter')[['mean_confidence','shrinks']].mean())
 summary.to_csv(OUT/'weak_summary.csv',float_format='%.9g');paired=[]
-for a,b in [('TCSM','CSM'),('TCSM:noconf/ext-true','CSM:noconf/ext-true'),('TCSM/real','CSM/real'),
+for a,b in [('CSM','CSM/cap0'),('TCSM','TCSM/cap0'),('TCSM/cap0.7','TCSM'),('TCSM/cap0.9','TCSM'),('TCSM','CSM'),('TCSM:noconf/ext-true','CSM:noconf/ext-true'),('TCSM/real','CSM/real'),
  ('TCSM:off','CSM:off'),('TCSM/noreset','TCSM'),('CSM/real','CSM'),('TCSM/real','TCSM')]:
  aa=df[df['filter']==a].set_index('seed');bb=df[df['filter']==b].set_index('seed')
  for metric in ('rms_z','rms_h','yaw_rms_deg','tilt_rms_deg','nees9_phys'):

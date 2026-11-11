@@ -33,7 +33,8 @@
       S_m = [[sigma_h^2 I, s c S_hat_hz], [s c S_hat_hz^H, |R_z|^2 sigma_z^2]],
       Sigma = R^-1 S_m R^-H.
 
-  The diagonal is the baseline prior: horizontal band power is not used as
+  The diagonal is the baseline prior (with an optional baseline x-y
+  correlation, the keel-frame anisotropy): horizontal band power is not used as
   wave energy, because in calm water and on small seas it is dominated by
   tilt and bias leakage (an earlier form that scaled the horizontal block by
   c raised the calm-water horizontal phantom by a quarter; it is kept as the
@@ -44,6 +45,24 @@
   independent envelope samples, and scaled down if needed so that
   b^H H^-1 b <= sigma_z^2: Sigma is Hermitian positive semidefinite by
   construction and equals the baseline diagonal without coupling evidence.
+  With cap_coherence = rho > 0 the cap instead keeps b and, when
+  q = b^H H^-1 b exceeds rho sigma_z^2, enlarges the horizontal block only
+  along the coupling direction:
+
+      H' = H + ((lambda - 1) / q) b b^H,   lambda = q / (rho sigma_z^2),
+
+  so that b^H H'^-1 b = rho sigma_z^2.  The prior keeps the measured
+  regression E[h | z] = b z / sigma_z^2; for H = sigma_h^2 I the along-wave
+  variance becomes lambda sigma_h^2 with innovation (1 - rho) lambda
+  sigma_h^2, and the cross-wave variance stays sigma_h^2.  Enlarging the
+  whole block by lambda instead inflates the cross-wave prior as well and
+  costs horizontal accuracy where the cap binds.  Shrinking
+  b at the cap understates the regression when horizontal motion exceeds the
+  baseline prior (a weak heave RAO) and leaves only 0.1 % of the along-wave
+  horizontal variance independent of heave; capping b at the measured
+  coherence instead still understates it.  One Sigma serves the
+  whole spectrum while gamma^2 is measured in the band around f_op, so rho is
+  a broadband target below the band coherence (shared modes: 0.8).
   With the wrapper's equal horizontal priors the mapping is equivariant under
   rotations about the vertical (sigma_h^2 I is invariant, the cross vector
   rotates, every factor is an invariant), so the prior does not depend on how
@@ -69,6 +88,7 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <limits>
@@ -206,6 +226,10 @@ struct CarmaCouplingConfig {
     float warmup_s = 120.0f;            // Estimated: no coupling before this
     float freeze_at_s = std::numeric_limits<float>::infinity();
     bool shrink = true;                 // debiased-coherence shrinkage
+    // PSD cap policy: 0 scales the cross term down to applied coherence
+    // 0.999; rho in (0, 0.999] keeps it and enlarges the horizontal block
+    // along the coupling direction to applied coherence rho (file header).
+    float cap_coherence = 0.0f;
 };
 
 template<typename T>
@@ -272,9 +296,17 @@ public:
 
     // Hermitian excitation (file header) for prior stds sig and axis
     // responses R at f_op.  Without coupling evidence: diag(sig^2).
-    Hermitian3<T> excitation(const Vector3& sig, const std::complex<T> (&R)[3]) const {
+    // horizontal_gain, if given, points to two values that receive the
+    // factors applied to the x and y prior variances (1 unless
+    // cap_coherence enlarged them).  horizontal_corr is the baseline
+    // correlation of the x and y prior amplitudes (|r| < 1).
+    Hermitian3<T> excitation(const Vector3& sig, const std::complex<T> (&R)[3],
+                             T* horizontal_gain = nullptr, T horizontal_corr = T(0)) const {
+        if (horizontal_gain) { horizontal_gain[0] = T(1); horizontal_gain[1] = T(1); }
         using C = std::complex<T>;
         Hermitian3<T> out = Hermitian3<T>::diagonal(sig.array().square().matrix());
+        if (horizontal_corr != T(0) && std::abs(horizontal_corr) < T(1))
+            out.set(0, 1, C(horizontal_corr * sig(0) * sig(1)));
         Hermitian3<T> S;
         T n_eff = T(0);
         if (!band_cross(S, n_eff)) return out;
@@ -311,7 +343,7 @@ public:
         // with the measured anisotropy at the same trace.
         const T px = std::norm(R[0]) * sig(0) * sig(0), py = std::norm(R[1]) * sig(1) * sig(1);
         T hxx = px, hyy = py;
-        C hxy(T(0));
+        C hxy(std::abs(horizontal_corr) < T(1) ? horizontal_corr * std::sqrt(px * py) : T(0));
         const bool iso = std::abs(px - py) <= T(1e-6) * std::max(px, py);
         if (cfg_.horizontal == Config::Horizontal::Measured) {
             // Ablation only: the measured horizontal block scaled by c and
@@ -340,16 +372,31 @@ public:
             hxy = (real_form ? C(m.real(), T(0)) : m) * (px * k / h);
         }
         // Positive semidefinite: b^H H^-1 b <= m_zz, else b scaled down
-        // (a rotation-invariant factor).
+        // (a rotation-invariant factor), or H enlarged along b
+        // (cap_coherence).
         const T dh = hxx * hyy - std::norm(hxy);
         if (dh > T(0)) {
             const C ib0 = (hyy * b0 - hxy * b1) / dh, ib1 = (hxx * b1 - std::conj(hxy) * b0) / dh;
             const T q = (std::conj(b0) * ib0 + std::conj(b1) * ib1).real();
-            const T qmax = T(0.999) * mzz;
-            if (q > qmax) {
-                const T f = std::sqrt(qmax / q);
-                b0 *= f;
-                b1 *= f;
+            const T rho = static_cast<T>(cfg_.cap_coherence);
+            if (rho > T(0)) {
+                const T qcap = std::min(rho, T(0.999)) * mzz;
+                if (q > qcap) {
+                    // Rank-one repair along b: b^H H'^-1 b = q / (1 + al q).
+                    const T al = (q / qcap - T(1)) / q;
+                    const T hx0 = hxx, hy0 = hyy;
+                    hxx += al * std::norm(b0);
+                    hyy += al * std::norm(b1);
+                    hxy += al * b0 * std::conj(b1);
+                    if (horizontal_gain) { horizontal_gain[0] = hxx / hx0; horizontal_gain[1] = hyy / hy0; }
+                }
+            } else {
+                const T qmax = T(0.999) * mzz;
+                if (q > qmax) {
+                    const T f = std::sqrt(qmax / q);
+                    b0 *= f;
+                    b1 *= f;
+                }
             }
         }
         Hermitian3<T> Sm;

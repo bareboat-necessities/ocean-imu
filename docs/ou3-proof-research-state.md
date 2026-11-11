@@ -3,38 +3,41 @@
 ## Native secant source binding
 
 The finite native diagnostic is bound to the current complete `src/` tree.
-Experimental TFG constructor lint repairs changed the broad source fingerprint,
-so the unchanged shipping OU-III probe was actually rebuilt and replayed at both
-registered perturbation sizes. Both raw native byte hashes match main and both
-finite diagnostic run summaries match the preceding replay exactly. See
-`reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
+The experimental shared-mode excitation cap and the review fixes to the
+shared-mode and CARMA cores (`src/kalman_carma/`,
+`src/kalman_carma_shared_modes/`) changed the broad source fingerprint, so the
+unchanged shipping OU-III probe was rebuilt and replayed at both registered
+perturbation sizes. Both raw native byte hashes match main; the run summaries
+differ from the committed CI replay only by host round-off (at most 1.4e-14).
+See `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the
+receipt. The four existing wrapper traces, OU-III included, stay bit-identical
+to main over 6,000 samples. The review also found that a non-finite gyro
+sample leaves the state non-finite; the CARMA cores now reject it. The
+shipping OU-III wrapper has the same exposure; it is not changed here and
+remains an open implementation item for a shipping change.
 
-Validation: the three shipping-provenance tests and the separate complete
-1,152-test Python suite pass. Full Clang-Tidy 18.1.8 passes both affected
-translation units locally; all six repository quality jobs and all host/firmware
-build jobs passed on the code-identical automated evidence commit `a975b41`.
-The post-review receipt records its publication-time incomplete full local
-Clang-Tidy and running build; those historical statuses are not final results.
-An additional local `make all` rebuilt every target and passed the filter and
-observer suites, then became unobservable when the execution environment
-disconnected during validation. Its whole-command exit remains unverified.
-Current-head workflow results and the article build are linked in PR #739.
+Validation: Uninterrupted `make all` exits 0 on the review-fix tree (incremental
+after a clean build of the cap-policy tree): all 19 suite scripts with original
+thresholds and 1,152 validation tests with no skips (`regression_gates.json`).
+The bench binary that produced the published scores is unchanged by the
+build.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
 Relaxations introduced: none; the inherited off-orbit finite secants remain
 non-promoting diagnostics, not reachable or uniform derivative certificates.
-The invalidated source binding, local compiler memory exhaustion, disconnected
-validation session and Windows CI timeout are class E implementation/diagnostic
-failures; none establishes estimator instability. Windows linked 12 of 13
-sketches before the 60-minute limit; compilation now uses two workers with the
-same sketches, flags, toolchain and limit. Historical source-identity records
-are preserved in `planar-native-secants-source-binding-archive.json` and the
-provenance references resolve to their respective archived records. No shipping
+The invalidated source binding, apt-mirror timeouts in CI build jobs, a
+Windows CI timeout (compilation now uses two workers), a local
+driver-script ordering error (sweep analysis before the compact scores existed;
+rerun from cache) and earlier workspace exits (report edits during a run, a
+shadowed `mpl_toolkits`, archive-copy tests at the session disk limit) are
+class E implementation/diagnostic failures; none establishes estimator
+instability. Historical source-identity records are preserved in
+`planar-native-secants-source-binding-archive.json` and the provenance
+references resolve to their respective archived records. No shipping
 counterexample was found; established shipping-level results and open theorem
-obligations remain unchanged. The remaining validation control is the PR CI
-completion with its original thresholds; device runtime and peak stack/heap
-measurements still require physical hardware.
+obligations remain unchanged. Device runtime and peak stack/heap measurements
+still require physical hardware.
 
 ## Current hypothesis
 

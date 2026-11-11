@@ -27,13 +27,20 @@
       ext-amp2   x-z and y-z terms doubled (wrong amplitude; capped PSD by the mapping)
       fz<s>      freeze the estimated coupling at scenario time s ...
       keel       ... in the keel frame (it turns with the hull)
+      sf<x>      horizontal prior amplitude factor S_factor on both keel axes
+                 (diagnostic; default 1 keeps the horizontal prior equal to
+                 the vertical one)
+      cap<x>     PSD-cap target coherence x in [0, 1) (cap_coherence;
+                 default 0.8): cap0 restores the legacy cross-term shrinkage
     Environment: CSM_TRACE=<path prefix> writes <prefix><label>.csv at 1 Hz
     (confidence, evidence, state, D^2, SNR, NIS ratio, f_op, sigma_z,
     applied coherence / phase, estimated direction).
 */
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -54,6 +61,8 @@ struct CsmSpec {
     bool keel = false;
     bool no_transport = false;
     bool real_only = false;
+    float s_factor = 0.0f;        // 0: the wrapper default
+    float cap = std::numeric_limits<float>::quiet_NaN();   // NaN: the estimator default
 };
 
 inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
@@ -80,6 +89,15 @@ inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
         else if (o == "noreset") sp.no_transport = true;
         else if (o == "real") sp.real_only = true;
         else if (o == "keel") sp.keel = true;
+        else if (o.rfind("cap", 0) == 0) {
+            char* end = nullptr;
+            sp.cap = std::strtof(o.c_str() + 3, &end);
+            if (end == o.c_str() + 3 || *end != '\0' || !(sp.cap >= 0.0f && sp.cap < 1.0f)) return false;
+        }
+        else if (o.rfind("sf", 0) == 0) {
+            sp.s_factor = static_cast<float>(std::strtod(o.c_str() + 2, nullptr));
+            if (!(sp.s_factor > 0.0f)) return false;
+        }
         else return false;
     }
     return !(sp.off && !sp.ext.empty());
@@ -100,9 +118,11 @@ public:
                : sp_.ext.empty() ? csm::CouplingMode::Estimated : csm::CouplingMode::External;
         c.confidence.enabled = sp_.confidence;
         c.confidence.accel_noise_std = ACC_SIGMA;
+        if (!std::isnan(sp_.cap)) c.cap_coherence = sp_.cap;
         f_.begin(fc, c);
         f_.raw().enableTuner(true);
         f_.raw().enableClamp(true);
+        if (sp_.s_factor > 0.0f) f_.raw().setSFactor(sp_.s_factor);
         if constexpr (requires { f_.raw().mekf().set_reset_mode(Mekf::ResetMode::None); })
             if (sp_.no_transport) f_.raw().mekf().set_reset_mode(Mekf::ResetMode::None);
         f_.raw().mekf().motion().set_quadrature_enabled(!sp_.real_only);

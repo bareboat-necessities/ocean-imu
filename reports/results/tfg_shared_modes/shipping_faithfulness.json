@@ -160,12 +160,14 @@
   "established_results": "Existing shipping-level results and qualifications unchanged; this only renews finite diagnostic provenance after adding experimental CARMA source.",
   "next_calculation": "Run the original shipping-provenance and complete validation suites against the refreshed finite evidence; no proof gate or numerical threshold is changed.",
   "final_source_tree_matches_registered_execution_revision": false,
-  "final_source_tree_sha256": "728adf7a6c8067daf476aaccb6dddc5613229809e3fc1453f0d7236c39a18016",
+  "final_source_tree_sha256": "edf66bc1da145c57199a52c05c0e7ea48f5ced9bb9f96f9e6757dc7a59d8b981",
   "review_refresh": {
-    "reason": "TFG constructor lint fixes change the broad all-src binding; shipping OU-III source and algorithms remain untouched.",
-    "previous_shipping_source_tree_sha256": "3f1d5002f6fca8035b2e2d090bffd9f4c80a0d9cb971cebc02dff5152b1550e7",
+    "reason": "The shared-mode excitation cap and the review fixes (confidence gain, re-initialization, non-finite samples, keel correlation; src/kalman_carma, src/kalman_carma_shared_modes) change the broad all-src binding; shipping OU-III source and algorithms remain untouched.",
+    "previous_shipping_source_tree_sha256": "75c6da2db9ad3b181416384f7f53daadeeaae0951ae1f384914a840c1b411cc0",
     "raw_native_hashes_match_main": true,
-    "finite_diagnostic_run_summaries_identical_to_previous_replay": true,
+    "finite_diagnostic_run_summaries_identical_to_previous_replay": false,
+    "maximum_summary_difference_to_previous_replay": 1.4210854715202004e-14,
+    "summary_difference_cause": "host numerical-library round-off in the Python analysis; the native byte records are identical",
     "theorem_closed": false
   }
 }

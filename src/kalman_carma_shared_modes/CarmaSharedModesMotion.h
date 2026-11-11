@@ -432,11 +432,19 @@ public:
         dirty_ = true;
         return true;
     }
-    bool set_horizontal(T kappa, T sx, T sy, T /*r: the coupling source supplies it*/) {
+    // The shared realization has one frequency scale: every axis follows the
+    // vertical kappa, and the horizontal kappa only configures
+    // horizontal_model() (the wrapper derives both from one tune and one
+    // shape, so they agree).  r is the baseline correlation of the two
+    // horizontal amplitudes (the keel-frame anisotropy rotated to NED); the
+    // coupling source adds the measured horizontal-vertical terms.
+    bool set_horizontal(T kappa, T sx, T sy, T r) {
         if (!(sx > T(0)) || !(sy > T(0)) || !std::isfinite(sx) || !std::isfinite(sy)) return false;
+        if (!std::isfinite(r) || !(std::abs(r) < T(1))) return false;
         if (!hmodel_.configure(kappa, T(1))) return false;
         sig_(0) = sx;
         sig_(1) = sy;
+        h_corr_ = r;
         dirty_ = true;
         return true;
     }
@@ -451,8 +459,23 @@ public:
     const Model& horizontal_model() const noexcept { return hmodel_; }
     Eigen::Matrix<T,2,2> horizontal_sigma() const { return Sigma_.re.template topLeftCorner<2,2>(); }
     Vector3 accel_std() const { return sig_; }
-    void set_quadrature_enabled(bool enabled) { quadrature_enabled_ = enabled; dirty_ = true; }
+    // Real-only research prior: the mapping keeps only the co-spectrum, so the
+    // PSD cap sees exactly the coupling that is applied.
+    void set_quadrature_enabled(bool enabled) {
+        auto c = coupling_.config();
+        c.form = enabled ? kalman::carma::CarmaCouplingConfig::Form::Hermitian
+                         : kalman::carma::CarmaCouplingConfig::Form::Real;
+        coupling_.set_config(c);
+        quadrature_enabled_ = enabled;
+        dirty_ = true;
+    }
     const Hermitian& excitation() const noexcept { return Sigma_; }
+    // Factors on the x and y horizontal prior variances from the coupling
+    // cap (1 where it does not bind).
+    T cap_gain(int axis) const noexcept { return h_gain_[axis == 0 ? 0 : 1]; }
+    // Rebuild the excitation at the next refresh (a coupling configuration
+    // change, such as the confidence gain).
+    void invalidate_excitation() noexcept { dirty_ = true; }
     Coupling& coupling() noexcept { return coupling_; }
     const Coupling& coupling() const noexcept { return coupling_; }
     T operating_frequency_hz() const {
@@ -585,14 +608,21 @@ private:
         WI_ = (g2 * G * J2 * G.transpose()).template cast<T>();
         g2_ = static_cast<T>(g2);
         const std::complex<T> Rr[3] = {T(1), T(1), T(1)};
-        Sigma_ = coupling_.excitation(sig_, Rr);
+        T h_gain[2] = {T(1), T(1)};
+        Sigma_ = coupling_.excitation(sig_, Rr, h_gain, h_corr_);
+        h_gain_[0] = h_gain[0];
+        h_gain_[1] = h_gain[1];
         if (!quadrature_enabled_) Sigma_.im.setZero();
 
         // Commit re-coordinatization: hold the normalized colouring (file header).
         bool any = false;
         for (int a = 0; a < 3; ++a) {
             M_[a].setIdentity();
-            const double s = std::sqrt(g2) * static_cast<double>(sig_(a));
+            // An enlarged horizontal prior variance (coupling cap) scales
+            // that axis' colouring like a larger sigma; otherwise exactly as
+            // before.
+            double s = std::sqrt(g2) * static_cast<double>(sig_(a));
+            if (a < 2 && h_gain[a] > T(1)) s *= std::sqrt(static_cast<double>(h_gain[a]));
             if (have_prev_ && s != scale_[a] && scale_[a] > 0.0 && s > 0.0) {
                 const T r = static_cast<T>(s / scale_[a]);
                 M_[a](4,4) = r;
@@ -608,6 +638,8 @@ private:
 
     Model vmodel_, hmodel_;
     Vector3 sig_ = Vector3::Ones();
+    T h_corr_ = T(0);
+    T h_gain_[2] = {T(1), T(1)};
     Hermitian Sigma_{};
     MatB A_ = MatB::Zero(), WR_ = MatB::Zero(), WI_ = MatB::Zero();
     Eigen::Matrix<T,NB,2> G_ = Eigen::Matrix<T,NB,2>::Zero();

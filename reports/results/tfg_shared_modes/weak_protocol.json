@@ -1,6 +1,6 @@
 {
-  "binary_sha256": "7af8dce6b9eceb26af80bb6db3a3ee1b377f02a4a4d61fdfc4159ebaf1a102e5",
-  "runner_sha256": "bd9c3354325b226da68589cdd27bef665189ae85d6fd5672d31ad63573f872f7",
+  "binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
+  "runner_sha256": "a1718872c01688ecdf6f65e556bd7de731680cf94ceadfd39011331baf400251",
   "filters": [
     "A41@C",
     "T41@C",
@@ -14,7 +14,11 @@
     "TCSM/real",
     "CSM:noconf/ext-true",
     "TCSM:noconf/ext-true",
-    "TCSM/noreset"
+    "TCSM/noreset",
+    "CSM/cap0",
+    "TCSM/cap0",
+    "TCSM/cap0.7",
+    "TCSM/cap0.9"
   ],
   "seeds": [
     1001,
@@ -31,6 +35,6 @@
     1012
   ],
   "scenario": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+T1200",
-  "role": "exploratory failure diagnosis; no estimator retuning; primary multiplicity family unchanged",
+  "role": "exploratory diagnosis; cap0 rows are paired legacy-cap controls and cap0.7/cap0.9 bracket the cap target; the cap target was chosen on seeds 1001-1003; primary multiplicity family unchanged",
   "heading_diagnostic": "RMS heading above 30 deg is reported separately from the inherited position/nonfinite divergence flag"
 }

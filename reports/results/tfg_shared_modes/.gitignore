@@ -3,6 +3,7 @@ runs.csv
 dataset_cache/
 transient_cache/
 weak_cache/
+heave_sweep_cache/
 reset_runs.csv
 # Keep only the compact drawing inputs consumed by the article generator.
 traces/*
@@ -17,5 +18,5 @@ traces/*
 !traces/weak_attitude.csv.gz
 !traces/weak_confidence_CSM.csv.gz
 !traces/weak_confidence_TCSM.csv.gz
-!traces/weak_confidence_CSM_real.csv.gz
-!traces/weak_confidence_TCSM_real.csv.gz
+!traces/weak_confidence_CSM_cap0.csv.gz
+!traces/weak_confidence_TCSM_cap0.csv.gz

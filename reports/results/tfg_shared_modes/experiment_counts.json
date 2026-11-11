@@ -4,8 +4,9 @@
   "reset_trajectories": 288,
   "pinned_replay_trajectories": 256,
   "transient_trajectories": 192,
-  "exploratory_weak_heave_trajectories": 156,
-  "total_trajectories": 4204,
+  "exploratory_weak_heave_trajectories": 204,
+  "exploratory_heave_sweep_trajectories": 1800,
+  "total_trajectories": 6052,
   "primary_duration_seconds": 1200,
   "primary_rate_hz": 200
 }
