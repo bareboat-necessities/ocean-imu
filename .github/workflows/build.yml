@@ -335,6 +335,27 @@ jobs:
           path: doc/${{ matrix.dir }}/**/*.pdf
           if-no-files-found: error
 
+      - name: Generate experimental TFG shared-mode article figures
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        run: python3 tools/tfg_shared_modes_report.py
+
+      - name: Compile experimental TFG shared-mode article
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: kalman_tfg_shared_modes.tex
+          work_in_root_file_dir: true
+          working_directory: doc/kalman_tfg_shared_modes
+          latexmk_use_lualatex: true
+
+      - name: Upload experimental TFG shared-mode article
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        uses: actions/upload-artifact@v6
+        with:
+          name: latex-pdfs-kalman_tfg_shared_modes
+          path: doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes.pdf
+          if-no-files-found: error
+
       - name: Find SVGs (${{ matrix.dir }})
         id: find_svgs
         shell: bash

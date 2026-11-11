@@ -2,24 +2,42 @@
 
 ## Native secant source binding
 
-The evidence publication job in main build `42408605647` failed with
-`finite quotient/secant evidence verification failed: shipping source tree
-changed` (class E, implementation/diagnostic failure). The whole-`src/` digest
-became stale after shared-modes Xtensa constructor isolation changed
-`KalmanCarmaSharedModes.h` and added `KalmanCarmaSharedModes.cpp`. The
-invalidated hypothesis was whole-tree source identity, not OU-III behavior.
-Compiler `g++ -MM` inspection confirms all 38 probe `src/` dependencies are
-byte-identical to `a4f5be1`, whose whole-tree digest matches the stored binding.
-The refreshed binding records that reference, the previous digest, and the
-unchanged dependency closure; the diagnostic numerical payload is retained.
+The finite native diagnostic is bound to the current complete `src/` tree.
+The experimental shared-mode excitation cap and the review fixes to the
+shared-mode and CARMA cores (`src/kalman_carma/`,
+`src/kalman_carma_shared_modes/`) changed the broad source fingerprint, so the
+unchanged shipping OU-III probe was rebuilt and replayed at both registered
+perturbation sizes. Both raw native byte hashes match main; the run summaries
+differ from the committed CI replay only by host round-off (at most 1.4e-14).
+See `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the
+receipt. The four existing wrapper traces, OU-III included, stay bit-identical
+to main over 6,000 samples. The review also found that a non-finite gyro
+sample leaves the state non-finite; the CARMA cores now reject it. The
+shipping OU-III wrapper has the same exposure; it is not changed here and
+remains an open implementation item for a shipping change.
+
+Validation: Uninterrupted `make all` exits 0 on the review-fix tree (incremental
+after a clean build of the cap-policy tree): all 19 suite scripts with original
+thresholds and 1,152 validation tests with no skips (`regression_gates.json`).
+The bench binary that produced the published scores is unchanged by the
+build.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
-Relaxations introduced: none. No shipping counterexample was found; existing
-shipping-level results and open theorem obligations remain valid. The limiter
-was stale source provenance, not a mathematical margin. The next falsifiable
-check is the unchanged provenance and evidence suite, including rejection of
-mutated source bindings; no new replay or relaxed model is needed.
+Relaxations introduced: none; the inherited off-orbit finite secants remain
+non-promoting diagnostics, not reachable or uniform derivative certificates.
+The invalidated source binding, apt-mirror timeouts in CI build jobs, a
+Windows CI timeout (compilation now uses two workers), a local
+driver-script ordering error (sweep analysis before the compact scores existed;
+rerun from cache) and earlier workspace exits (report edits during a run, a
+shadowed `mpl_toolkits`, archive-copy tests at the session disk limit) are
+class E implementation/diagnostic failures; none establishes estimator
+instability. Historical source-identity records are preserved in
+`planar-native-secants-source-binding-archive.json` and the provenance
+references resolve to their respective archived records. No shipping
+counterexample was found; established shipping-level results and open theorem
+obligations remain unchanged. Device runtime and peak stack/heap measurements
+still require physical hardware.
 
 ## Current hypothesis
 

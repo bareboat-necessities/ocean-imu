@@ -1,0 +1,604 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifPDFTeX\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\fi
+\usepackage{amsmath,amssymb,bm,mathtools,newtxtext,newtxmath}
+\usepackage{booktabs,array,graphicx,tikz,pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\hypersetup{pdftitle={Shared-Mode CARMA on the Two-Frame Lie Group},pdfauthor={Mikhail S. Grushinskiy}}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\interdisplaylinepenalty=2500
+\emergencystretch=2em\allowdisplaybreaks\raggedbottom
+\setcounter{topnumber}{5}\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{0.95}\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}\renewcommand{\floatpagefraction}{0.8}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{10pt plus 2pt minus 2pt}
+\makeatletter\setlength{\@fptop}{0pt}\setlength{\@dblfptop}{0pt}\makeatother
+\providecommand{\mathdefault}[1]{#1}
+\newcommand{\fig}[1]{\resizebox{\linewidth}{!}{\input{\ResultsFigureDirectory/#1.pgf}}}
+\newcommand{\vct}[1]{\bm{#1}}\newcommand{\sk}[1]{[#1]_\times}
+\newcommand{\T}{^{\mathsf T}}\newcommand{\Hh}{^{\mathsf H}}
+\newcommand{\dd}{\mathrm d}\newcommand{\R}{\mathbb R}
+\DeclareMathOperator{\diag}{diag}\DeclareMathOperator{\Rea}{Re}\DeclareMathOperator{\Ima}{Im}
+\DeclareMathOperator{\Exp}{Exp}\DeclareMathOperator{\Log}{Log}
+\input{tfg-shared-results.tex-part}
+\title{Shared-Mode CARMA on the Two-Frame Lie Group:\\A Controlled Marine Inertial Estimation Study}
+\author{\IEEEauthorblockN{Mikhail S. Grushinskiy}
+\IEEEauthorblockA{Independent Researcher, Fair Lawn, NJ, USA\\
+Bareboat Necessities GitHub Project\\mgrouch@users.github.com}}
+\begin{document}\maketitle
+\begin{abstract}
+Directional wave motion and attitude error geometry are different sources of
+structure in an inertial estimator. We combine the existing six-state minimal
+shared-mode CARMA(4,1) realization on each spatial axis with a right-invariant
+two-frame Lie-group filter, obtaining 27 error states. The implementation shares
+its motion realization, exact discrete covariance pair, spectral adaptation,
+coupling confidence and fallback with the quaternion multiplicative EKF (QMEKF),
+and shares its prediction, sensor updates and group correction with the existing
+TFG estimator. We derive the imaginary cross-axis process covariance and the
+attitude shear required when adaptive latent coordinates are rescaled by axis.
+A paired $2\times2$ experiment separates stochastic-prior effects from geometry
+effects using \PrimarySeeds\ independent seeds in \ScenarioCount\ conditions,
+with additional diagnostic ablations. \AbstractResults
+This is simulation evidence for an experimental estimator, with explicit
+finite-reset, consistency and hardware-validation limitations.
+\end{abstract}
+\begin{IEEEkeywords}marine inertial estimation, two-frame group, CARMA,
+Hermitian excitation, adaptive filtering, paired Monte Carlo\end{IEEEkeywords}
+
+\section{Motivation and Question}
+Wave displacement about a local equilibrium is inferred from specific force,
+angular rate and magnetic field. It is not geographic position: constant
+translation, ocean current and a permanent displacement offset are not
+observable from these measurements. A stationary stochastic wave prior can
+regularize displacement without an artificial integral-displacement
+measurement. Shared complex excitation can also express the phase relationships
+between surge, sway and heave. Separately, the two-frame group (TFG) represents
+world vectors and body biases in one group structure \cite{barrau}.
+Neither observation implies that their accuracy improvements add.
+
+The research question is whether changing the error geometry improves the
+\emph{existing shared-mode QMEKF}, after holding data, tuning, startup and
+coupling policy fixed. The primary endpoints are heave and horizontal position
+RMS. A change below 5\% is treated as practically small, even when a paired
+interval excludes zero. We also test the interaction between geometry and prior.
+The shipping OU-III filter and its default selection are unchanged.
+
+\section{Stochastic Motion and the 27-State Group}
+\subsection{The CARMA(4,1) marginal law}
+For each axis the fitted displacement transfer is
+\begin{equation}
+ H_p(s)=g_c\frac{s+\omega_z}
+ {(s^2+2\zeta_1\omega_1s+\omega_1^2)
+  (s^2+2\zeta_2\omega_2s+\omega_2^2)} .
+ \label{eq:transfer}
+\end{equation}
+The repository's JONSWAP shape has base frequencies
+$f_1=0.306945$ Hz, $f_2=0.815318$ Hz, damping ratios
+$\zeta_1=0.104191$, $\zeta_2=0.478188$, and $\omega_z=0$.
+All poles are stable. The zero at DC and the stable displacement model bound
+the displacement variance; the acceleration is not blindly double integrated.
+The coefficients come from the existing offline, band-limited spectral fitting
+procedure, not a fit to the test trajectories. Online adaptation changes
+frequency and amplitude scales, not all polynomial coefficients.
+
+One real four-state realization uses $u=(p,v,a,l)\T$, $l=r$ in the cascade
+\begin{align}
+ \ddot r+2\zeta_2\omega_2\dot r+\omega_2^2 r&=\xi,\\
+ \ddot p+2\zeta_1\omega_1\dot p+\omega_1^2 p&=\dot r+\omega_z r.
+\end{align}
+Let $d=\omega_z-2\zeta_2\omega_2$. Eliminating $\dot r$ gives
+\begin{equation}
+ \resizebox{.98\columnwidth}{!}{$A_4=\begin{bmatrix}
+ 0&1&0&0\\0&0&1&0\\
+ d\omega_1^2&2d\zeta_1\omega_1-\omega_1^2&d-2\zeta_1\omega_1&-\omega_2^2-d\omega_z\\
+ \omega_1^2&2\zeta_1\omega_1&1&-\omega_z
+ \end{bmatrix}$}
+ \label{eq:a4}
+\end{equation}
+Frequency scaling is $\omega_i=2\pi\kappa f_i$. If $V_{a,1}$ is the
+unit-gain base acceleration variance, the unit-acceleration driving intensity
+is $g_c^2=\kappa/V_{a,1}$. Per-axis target acceleration standard deviations
+are carried by the spatial excitation, so all axes have the same dynamics.
+
+\subsection{Minimal shared modes}
+A complex directional mode carries both in-phase and quadrature relationships.
+The existing realization factors the upper-half-plane pole polynomial $P_+$
+and a real Hurwitz spectral factor $D$, with
+\begin{equation}
+ |D(i\omega)|^2=\tfrac12\bigl(|P_+(i\omega)|^2+|P_+(-i\omega)|^2\bigr).
+\end{equation}
+Its real co-inner coloring filter has two states $w=(w_1,w_2)\T$,
+input-normal matrices $(A_w,B_w,C_w)$ and feedthrough $(1,0)$:
+\begin{equation}
+ A_w+A_w\T+B_wB_w\T=0,\qquad C_w=-e_1\T B_w\T .
+\end{equation}
+The realization uses an upper-triangular $B_w$ with positive diagonal to
+fix its orthogonal coordinate freedom. In polynomial terms,
+$P_+(s)=s^2+b_1s+b_0$ has the two upper-half-plane poles, and the co-inner
+transfer is $[s^2+\Rea b_1s+\Rea b_0,\;\Ima b_1s+\Ima b_0]/D(s)$,
+with coefficientwise real and imaginary parts. At scale $\kappa$,
+the six-state realization and two real noise inputs are
+\begin{align}
+ A_6&=\begin{bmatrix}A_4&\sqrt\kappa\,e_a C_w\\0&\kappa A_w\end{bmatrix},&
+ G_6&=\begin{bmatrix}e_a e_1\T\\\sqrt\kappa B_w\end{bmatrix},
+ \label{eq:a6}
+\end{align}
+where $e_a=(0,0,1,0)\T$ and $A_w,B_w,C_w$ here are the unit-scale matrices.
+This is the repository's existing minimal realization: the original eight
+real coordinates contain two blind directions per spatial axis; eliminating
+them leaves six. The marginal process remains CARMA(4,1). Six stored real
+states do not make it CARMA(6,3). Continuous state-space reasoning is consistent
+with the MCARMA framework, including its published correction \cite{schlemm,stelzer}.
+No realization or factorization is independently reimplemented in the TFG core.
+
+\subsection{State and error convention}
+The estimator carries
+\begin{align}
+ X&=(R,W,B),& B&=[b_g,b_a],\\
+ W&=[p,v,a,l,w_1,w_2]\in\R^{3\times6}.
+\end{align}
+$R$ rotates body to NED; $b_g,b_a$ are body-frame biases. The group law is
+\begin{align}
+ R_{12}&=R_1R_2,& W_{12}&=W_1+R_1W_2,\\
+ B_{12}&=B_2+R_2\T B_1.
+\end{align}
+This is $\operatorname{TwoFrameGroup}(3,6,2)$: three attitude errors,
+18 world-column errors and six bias errors, hence 27. The error is right
+invariant, $\eta=\hat X X^{-1}=\Exp_G(\xi)$, and corrections act on the left:
+$\hat X^+=\Exp_G(-\hat\xi)\hat X^-$. Tangent coordinates are
+\begin{equation}
+ \xi=(\phi,\beta_g,\rho_p,\rho_v,\rho_a,\rho_l,\rho_{w_1},\rho_{w_2},\beta_a),
+\end{equation}
+with $\delta R=\hat R R\T$, $\rho_i=\hat w_i-\delta Rw_i$ and
+$\beta=R(\hat b-b)$ to first order. The group logarithm uses the SO(3)
+Jacobian on vector slots; it is not just a componentwise subtraction.
+
+\section{Invariant Prediction and Process Noise}
+With measured rate $\omega_m$, $\omega=\omega_m-\hat b_g$ and
+$\omega_W=\hat R\omega$, the nominal deterministic prediction is
+\begin{align}
+ \dot R&=R\sk{\omega}, &\dot W&=WA_6\T, &
+ \dot b_a&=-b_a/\tau_b,
+\end{align}
+with accelerometer bias held when the common schedule disables its updates.
+The linearized invariant equations are
+\begin{align}
+ \dot\phi&=-\beta_g+\hat Rn_g,\\
+ \dot\beta_g&=\sk{\omega_W}\beta_g-\hat Rn_{bg},\\
+ \dot\rho_i&=\sum_j A_{6,ij}\rho_j-\sk{\hat w_i}\beta_g
+             +\sk{\hat w_i}\hat Rn_g-n_{c,i},\\
+ \dot\beta_a&=(\sk{\omega_W}-\tau_b^{-1}I)\beta_a-\hat Rn_{ba}.
+ \label{eq:continuous}
+\end{align}
+One $A_6$ on all axes commutes with rotation, cancelling the
+attitude-to-motion deterministic term. Bias-to-motion terms still depend on
+the estimated columns: this is an invariant-coordinate error-state EKF,
+not a claim of exact autonomous log-linear error dynamics.
+
+The exact motion transition is $F_c(h)=e^{A_6h}$. Defining
+$E=R_1R_0\T$, $F_b=-R_0hJ_l(\omega h)R_0\T$ and
+$W_1=W_0F_c\T$, the transition blocks are
+\begin{align}
+ \Phi_{\phi,b_g}&=F_b,&\Phi_{b_g,b_g}&=E,\\
+ \Phi_{\rho_i,\rho_j}&=F_{c,ij}I,&
+ \Phi_{\rho_i,b_g}&=\sk{w_{1,i}}F_b,\\
+ \Phi_{b_a,b_a}&=e^{-h/\tau_b}E .
+\end{align}
+The identity $F_c(h-t)W(t)\T=W(h)\T$ collapses the gyro impulse response:
+its motion noise columns are $\sk{w_{1,i}}$ times the attitude columns.
+Consequently $Q_{\rho_i,\phi}=\sk{w_{1,i}}Q_{\phi\phi}$,
+$Q_{\rho_i,b_g}=\sk{w_{1,i}}Q_{\phi b_g}$ and the gyro contribution to
+$Q_{\rho_i,\rho_j}$ is
+$\sk{w_{1,i}}Q_{\phi\phi}\sk{w_{1,j}}\T$.
+These correlations are retained, not replaced by a standalone motion covariance.
+The existing five-point quadrature computes the small bias/noise integrals;
+structured two-pass covariance propagation avoids a dense $27^3$ product.
+
+\subsection{Hermitian spatial excitation}
+Write $\Sigma=S_R+iS_I\succeq0$, with $S_R=S_R\T$ and
+$S_I=-S_I\T$. For
+$J_2=\left[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\right]$ define
+\begin{align}
+ D_R&=g_c^2G_6G_6\T,&D_I&=g_c^2G_6J_2G_6\T,\\
+ Q_R(h)&=\int_0^h e^{A_6t}D_Re^{A_6\T t}\dd t,\\
+ Q_I(h)&=\int_0^h e^{A_6t}D_Ie^{A_6\T t}\dd t .
+\end{align}
+The $3\times3$ spatial block between motion columns $i,j$ is exactly
+\begin{equation}
+ Q^{\mathrm{motion}}_{ij}=Q_R(i,j)S_R+Q_I(i,j)S_I.
+ \label{eq:hermitian}
+\end{equation}
+The paired real noises have covariance
+$S_R(k,l)I_2+S_I(k,l)J_2$ between spatial axes $k,l$; the convention gives
+unit variance to each real channel when $\Sigma=I$.
+$Q_R$ is symmetric and $Q_I$ antisymmetric, so the complete covariance is
+symmetric. Omitting the imaginary term discards quadrature coupling even
+when every per-axis spectrum still looks correct. The code reuses the shared
+pair discretizer, including its local variable-step series and scaling/doubling
+fallback. Dense continuous Lyapunov integration provides an independent
+numerical reference. The real-only ablation keeps the same six-state dynamics
+and maps only the co-spectrum, so $S_I=0$ and the cap below acts on the
+coupling that is actually applied.
+
+The excitation is formed from the band cross-spectral matrix $\hat S$ that the
+coupling estimator measures around the operating frequency. With horizontal
+prior $\sigma_h=S_f\sigma_z$ ($S_f=1$) it keeps the vertical prior and the
+measured regression of horizontal on vertical motion,
+\begin{equation}
+ \Sigma=\begin{bmatrix}H&b\\b^{\mathsf H}&\sigma_z^2\end{bmatrix},\quad
+ b=s\,\kappa\,\frac{\sigma_z^2}{\hat S_{zz}}\hat S_{hz},\quad H=\sigma_h^2I_2,
+ \label{eq:excitation-map}
+\end{equation}
+with $s$ the debiased-coherence shrinkage and $\kappa$ the applied coupling
+confidence. For $s=\kappa=1$ its applied multiple coherence is
+\begin{equation}
+ q=\frac{b^{\mathsf H}H^{-1}b}{\sigma_z^2}
+  =\gamma^2\,\frac{\hat S_{hh}/\hat S_{zz}}{\sigma_h^2/\sigma_z^2},
+\end{equation}
+which grows when the hull's horizontal-to-vertical amplitude ratio exceeds the
+prior's, for example under a weak heave RAO. Positive semidefiniteness needs
+$q\le1$. Scaling $b$ down to $q=0.999$, the legacy mapping, understates the
+regression and leaves a nearly singular prior: only $0.1\%$ of the
+horizontal variance along the coupling direction remains independent of heave,
+although the cross-wave direction keeps its full variance. The shared estimators instead keep $b$ and, when $q>\rho$,
+enlarge the horizontal block along the coupling only,
+\begin{equation}
+ H\leftarrow H+\frac{\lambda-1}{q\,\sigma_z^2}\,b\,b^{\mathsf H},\qquad
+ \lambda=\frac{q}{\rho}.
+ \label{eq:cap-repair}
+\end{equation}
+By the Sherman--Morrison identity the applied coherence is then $\rho$ and
+$\Sigma\succeq0$. Along the coupling the horizontal variance is
+$\lambda\sigma_h^2$, of which $(1-\rho)\lambda\sigma_h^2$ is innovation
+independent of heave; across it the prior stays $\sigma_h^2$. Enlarging the
+whole block by $\lambda$ also inflates the cross-wave prior, and in the
+heave-RAO sweep below it made horizontal error 3--5\% worse than the
+independent filter at $k=0.25$--$0.4$ (a development diagnostic on seeds
+1001--1012). One $\Sigma$ serves the whole spectrum while $\gamma^2$ is
+measured in the band, so $\rho=0.8$ is a broadband target below the band
+coherence. It was chosen on seeds 1001--1003, which are also primary and
+diagnostic seeds; targets 0.7 and 0.9 are reported for sensitivity, not as an
+independent validation. Each horizontal axis rescales its latent colouring by
+the square root of its variance gain in the same exact re-coordinatization as
+an amplitude commit, and where the cap does not bind the mapping is
+unchanged.
+
+\section{Measurements and Finite Corrections}
+Specific force and magnetic measurements obey
+\begin{align}
+ f_m&=R\T(a-g)+b_a+k_a(T-T_0)+n_a,\\
+ m_m&=R\T B_W+n_m.
+\end{align}
+There is no $S=0$ measurement or other artificial integral state. The inherited
+accelerometer residual is world referred,
+$r_a=\hat R(f_m-\hat b_a-k_a\Delta T)-(\hat a-g)$, and
+$r_m=\hat Rm_m-B_W$. Its invariant Jacobians are
+\begin{align}
+ H_a&=[\sk g\;0\;0\;0\;-I\;0\;0\;0\;-I],\\
+ H_m&=[-\sk{B_W}\;0\;\cdots\;0].
+\end{align}
+Noise is rotated by $\hat R$ into the same residual frame. The inherited
+lever-arm option subtracts rotational specific force and adds its existing
+gyro-bias Jacobian. Bias projection, held-bias semantics and magnetometer
+semantics are unchanged; no new innovation gate is introduced.
+
+The gain and Joseph update use the same sensor residual and covariance.
+For $a=Kr$, the Joseph covariance is transported by $J_r(a)$, then the
+nominal state is corrected by $\Exp_G(-a)$, using
+\begin{align}
+ P^+&=J_r(a)P^{\mathrm{Joseph}}J_r(a)\T,\\
+ J_r(a)&=\frac{\partial}{\partial\epsilon}
+ \Log_G\!\left(\Exp_G(-a)\Exp_G(a+\epsilon)\right)\Big|_0 .
+\end{align}
+The full right Jacobian transports every world vector and both biases. A
+research-only no-transport ablation sets this matrix to identity; it is not the
+new filter's default.
+
+\section{Adaptation, Confidence and Startup}
+\subsection{Shared causal schedule}
+The CARMA wrapper, including its private measurement-only attitude proxy,
+period estimator, sensor-noise-aware Evidence excitation, staged model commits,
+vibration conditioning, magnetic acquisition and tilt watchdog, is reused
+without a second TFG-specific adaptation path. Excess band energy, its
+uncertainty and frequency confidence determine wave excitation; the Legacy
+noise floor is not used in any comparison cell. Commit cadence is 0.1 s.
+The slower complex cross-spectrum estimates directional coherence and phase
+from measured world acceleration reconstructed with the current attitude and
+bias. No truth, vessel RAO or prescribed wave direction enters the operational
+core.
+
+\subsection{Adaptive coordinate changes}
+The input-normal coloring coordinates scale with
+$s_k=\sigma_{a,k}\sqrt{g_c^2}$. A commit changes the last two latent states by
+$M_k=\diag(1,1,1,1,s_{k,\mathrm{new}}/s_{k,\mathrm{old}},
+s_{k,\mathrm{new}}/s_{k,\mathrm{old}})$; $p,v,a,l$ retain their physical
+mean values. Simply applying these axis maps to invariant covariance rows is
+incorrect when the maps differ between axes.
+
+For an axis map $\hat w'_{i,k}=\sum_jM_k(i,j)\hat w_{j,k}$,
+the invariant linearization contains
+\begin{equation}
+ \begin{split}
+ \rho'_{i,k}={}&\sum_jM_k(i,j)\rho_{j,k}\\
+ &+\left(\bigl(\sk{\hat w'_i}\bigr)_{k,:}
+ -\sum_jM_k(i,j)\bigl(\sk{\hat w_j}\bigr)_{k,:}\right)\phi .
+ \end{split}
+ \label{eq:shear}
+\end{equation}
+The implementation transports covariance into physical additive coordinates,
+applies the existing maps to the mean and covariance, then maps back at the
+new nominal state. This evaluates \cref{eq:shear} without a covariance-sized
+stack temporary. A central finite difference of the complete nonlinear map
+tests the attitude shear, including nonzero latent means and unequal axis scales.
+
+\subsection{Confidence and fallback}
+The same confidence state machine used by the shared QMEKF monitors band
+regression mismatch, effective sample size, signal-to-noise ratio, innovation
+change and maneuvering. Its hysteresis and recovery smoothing attenuate the
+applied coupling gain. If confidence falls, let $r$ denote attitude and bias
+errors, and partition motion into horizontal $h$ and vertical $z$. The fallback
+changes only
+\begin{equation}
+ P_{hz}\leftarrow E+\alpha(P_{hz}-E),\quad
+ E=P_{hr}P_{rr}^{-1}P_{rz},\quad 0\leq\alpha<1.
+\end{equation}
+The conditional covariance becomes
+$C\leftarrow\alpha C+(1-\alpha)\diag(C_{hh},C_{zz})$.
+Thus it preserves positive semidefiniteness in exact arithmetic and keeps
+uncertainty explained by common attitude and bias states. Conditioning removes
+the invariant attitude shear, so the same indexed Schur algorithm works in the
+TFG column-major and QMEKF axis-major layouts. A failed positive factorization
+leaves the covariance untouched. Both implementations call the extracted common
+algorithm.
+
+\subsection{Startup and magnetic requirements}
+The proxy initializes tilt while the vessel may already be moving. The common
+wrapper acquires a magnetic reference and transfers attitude to the live filter;
+there is no startup truth reset in the experiments. A horizontal magnetic
+component is required for heading information. During an outage, gravity and
+wave structure alone do not supply absolute yaw; a simultaneous yaw rotation of
+$R,W$ leaves predicted specific force unchanged. The simulation measures outage
+uncertainty and heading recovery rather than assuming continued observability.
+A tilt error can also mimic horizontal wave acceleration at scale
+$g\,\delta\theta$, or be traded against an accelerometer bias. Magnetic
+observations supply a direction independent of the instantaneous specific
+force and help separate tilt from motion, but do not remove every bias/motion
+gauge. Field inclination and vessel excitation still matter. Magnetic
+anomalies and field-reference error remain limitations of the inherited
+measurement policy.
+
+\section{Verification and Regression Control}
+The baseline revision is \texttt{1fe4711}; all runs use the same pinned host
+compiler and Eigen installation. The existing TFG core passes 199 mathematical
+checks and the existing CARMA QMEKF passes 74 before the refactor.
+The independent 27-state references cover group inverse/composition/logarithm,
+nonlinear prediction finite differences, continuous-time RK4 transition and
+Lyapunov covariance integration, sensor Jacobians, dense Joseph updates,
+finite-correction right Jacobians, adaptive coordinate maps, Schur fallback,
+yaw equivariance and the outage yaw gauge. Double precision is used for these
+references, with float for variable-step adaptive/outage execution and
+allocation guarding. Structured 27-state propagation is checked against a
+dense transition/covariance reference, including steps inside the cached
+Taylor neighborhood. The yaw-equivariance test rotates state, covariance,
+excitation and magnetic reference consistently with isotropic horizontal
+amplitudes; a hull rotation under a fixed magnetic field is instead a
+changed physical experiment, included among the Monte Carlo scenarios. \VerificationResults
+
+At zero coupling, the observable stationary covariance and lag covariance
+agree with the four-state CARMA process to numerical precision. This does
+\emph{not} imply bitwise agreement of the nonlinear EKFs after finite group
+corrections. The additional coloring-state covariance is also transported by
+$J_r$; a Gaussian tangent approximation in two different latent dimensions can
+therefore differ at second order. In a deliberately inconsistent 15 s stress
+input (fixed magnetic vector while prescribing rotation), maximum position
+difference is 0.342 mm. This diagnostic is explicitly reported rather than
+misrepresented as a process-law failure or hidden by a changed existing gate.
+The physically consistent full-wrapper coupling-off ablation is the relevant
+operational comparison. \RegressionResults
+
+\section{Controlled Comparative Experiment}
+\begin{table}[!t]\centering\caption{Factorial design. All CARMA cells use Evidence excitation.}
+\begin{tabular}{lll}\toprule
+Geometry&Independent (21)&Shared (27)\\\midrule
+QMEKF&CARMA3&Shared modes\\
+TFG&TFG-CARMA3&New shared TFG\\\bottomrule
+\end{tabular}\end{table}
+The existing directional spectral synthesis produces physically consistent
+position, velocity, acceleration, attitude and angular rate. Every filter in a
+run receives the same seeded sensor stream, time intervals, calibration error
+and magnetic service. JONSWAP and PM spectra, regular waves, swell, mixed seas,
+wave heights, peak periods, spreading and vessel orientations vary across
+\ScenarioCount\ scenarios. Explicit response-amplitude operators distinguish
+incident elevation from vessel heave; reduced heave is tested separately.
+Further conditions cover calm and low-energy water, four engine speeds,
+colored accelerometer noise, frequency drift, sea-state growth and decay,
+three-second direction changes, maneuvers, rapid rotations, gyro/accelerometer
+bias drift and temperature, magnetic outage/reacquisition, and 25\% interval
+jitter. Every non-calm trajectory starts in motion.
+
+There are \PrimarySeeds\ independent primary seeds per scenario, each with
+1200 s at 200 Hz; the primary score window is 300--1200 s. Startup errors and
+convergence use their own earlier windows. The low--high--low scenario scales
+wave amplitude from $0.5$ to $4$ at 400 s and back to $0.5$ at 800 s, using
+20 s smooth transitions and differentiated physical kinematics.
+The test sea is not generated by the estimator's CARMA law.
+
+Ablations use \AblationSeeds\ independent seeds in six challenging scenarios:
+coupling off; estimated coupling with confidence; a truth-derived band coupling
+reference with confidence disabled; the same reference with quadrature removed;
+estimated real-only coupling for both geometries; no covariance-reset transport;
+and reversed coupling with and without confidence. Truth-derived references are
+diagnostic inputs only. They are not an operational model or a guaranteed best
+value under a frequency-dependent RAO mismatch.
+
+\subsection{Metrics and statistics}
+Per-run summaries use all 200 Hz samples, not rendering traces. We report heave,
+horizontal and 3-D position RMS; velocity RMS; roll, pitch, tilt and heading;
+sensor-bias RMS; accelerometer NIS; common physical and native joint NEES;
+position coverage; startup, turn and outage recovery; nonfinite/divergence
+flags; covariance symmetry and the minimum correlation-scaled eigenvalue at
+one-second audits. A negative eigenvalue within float rounding is reported,
+not silently converted into positive-definite evidence.
+
+All comparisons pair the same seed and condition. For difference $d_s$,
+$\bar d\pm t_{n-1,.975}\operatorname{sd}(d_s)/\sqrt n$ is the marginal 95\%
+interval. Holm-adjusted $p$ values cover all primary scenario/heave-horizontal
+TFG-versus-shared-QMEKF tests. Both absolute differences and per-seed relative
+differences are retained. The aggregate first averages log ratios across
+conditions within seed, then constructs a seed-level interval: 200 Hz samples
+are never treated as independent replications. Interactions are tested directly:
+\begin{equation}
+ I_s=(E_{\mathrm{TFG,shared}}-E_{\mathrm{Q,shared}})
+      -(E_{\mathrm{TFG,ind}}-E_{\mathrm{Q,ind}}).
+\end{equation}
+Recovery measurements can be censored when the required settling window is
+not reached; missing values and estimator failures remain visible in per-run
+results. Failure counts accompany comparisons so selection cannot disappear
+inside an average.
+The separate transition diagnostic uses trailing 10 s RMS, evaluated each
+second, below 1.25 times the post-transition steady RMS for 20 consecutive
+evaluations. It measures time from the transition end, with explicit censoring.
+The inherited startup convergence statistic instead requires every remaining
+30 s rolling RMS to stay below 1.5 times the scored RMS. Outage recovery requires
+30 s continuously below the larger of 0.5 degrees and twice the pre-gap RMS.
+These relative criteria are reported alongside absolute errors.
+An additional replay uses eight pinned vessel-RAO records from release v1.2.3
+and eight sensor/initialization seeds per record; inference there is conditional
+on each fixed wave realization. The reduced-heave diagnostic was added after
+the primary finding, uses 12 paired seeds and is explicitly exploratory.
+
+\section{Results, Ablations and Degradation}
+\ResultsDiscussion
+\FailureDiscussion
+\HeaveSweepDiscussion
+\SupplementDiscussion
+\SecondaryDiscussion
+\input{tfg-shared-tables.tex-part}
+\begin{figure*}[!t]\centering\fig{paired_position}
+\caption{Paired TFG versus shared-QMEKF position changes (negative is better).
+The shaded band marks changes within 5\%; intervals use independent seeds.}
+\end{figure*}
+\begin{figure*}[!t]\centering\fig{factorial_interaction}
+\caption{Factorial interactions, measured directly as differences in
+differences. Geometry and prior effects are not assumed to add.}\end{figure*}
+\begin{figure}[!t]\centering\fig{tail_xyz}
+\caption{Last 30 s of the nominal realization: true and estimated surge, sway
+and heave. All four filters see identical data.}\end{figure}
+\begin{figure}[!t]\centering\fig{tail_velocity}
+\caption{Nominal velocity tracking in the last 30 s.}\end{figure}
+\begin{figure}[!t]\centering\fig{attitude}
+\caption{Roll, pitch and heading tracking; estimates are reconstructed from
+recorded wrapped angular errors.}\end{figure}
+\begin{figure}[!t]\centering\fig{gyro_bias}
+\caption{Gyroscope bias tracking at the same body coordinates and sample times.}\end{figure}
+\begin{figure}[!t]\centering\fig{accel_bias}
+\caption{Accelerometer bias tracking, including the common temperature convention.}\end{figure}
+\begin{figure}[!t]\centering\fig{engine_degradation}
+\caption{Engine vibration degradation. Error bars show uncertainty across
+independent seeds; the engine-off nominal case uses the same seeds.}\end{figure}
+\begin{figure*}[!t]\centering\fig{roundtrip}
+\caption{Sea-state growth and decay with the same physical realization and
+sensor stream for all four filters. Full-rate metrics precede drawing decimation.}
+\end{figure*}
+\begin{figure*}[!t]\centering\fig{direction_outage}
+\caption{Abrupt direction change and magnetic outage/reacquisition. Drawing
+traces preserve coordinate extrema and do not supply scoring statistics.}
+\end{figure*}
+\begin{figure}[!t]\centering\fig{ablations}
+\caption{Diagnostic ablations relative to the new operational TFG/shared
+filter. Oracle coupling is never supplied to an operational cell.}\end{figure}
+\begin{figure}[!t]\centering\fig{consistency}
+\caption{Joint physical NEES and marginal position coverage. Nominal values
+are reference levels, not assumptions that the wave-mismatched model is calibrated.}\end{figure}
+\begin{figure*}[!t]\centering\fig{weak_diagnostics}
+\caption{Reduced-heave diagnosis, 12 seeds: the default cap policy, the legacy
+cap, cap targets 0.7 and 0.9, and controls. Heading is on a logarithmic axis.
+Bars are means and error bars are marginal 95\% intervals across seeds.}
+\end{figure*}
+\begin{figure*}[!t]\centering\fig{weak_feedback}
+\caption{A reduced-heave realization: heading error and applied confidence with
+the default cap policy (solid) and the legacy cap (dashed).}
+\end{figure*}
+\begin{figure}[!t]\centering\fig{heave_sweep}
+\caption{Heave-RAO dose response, 12 paired seeds per cell; horizontal motion
+and sensor streams are unchanged within a seed. Top two: heave and horizontal
+RMS change relative to independent TFG (paired 95\% intervals, symmetric-log
+axis). Bottom: median heading RMS and quartiles. Solid: default cap policy;
+dashed: legacy cap.}\label{fig:heave-sweep}\end{figure}
+\section{Computational Cost and Embedded Evidence}
+The implementation uses one common TFG core parameterized by a motion policy;
+its original two-template-argument interface remains valid. It uses the same
+minimal realization and confidence facade as the shared QMEKF. Only the
+small spatial process-noise blocks and coordinate adaptation depend on the
+motion policy. Prediction, gyro/bias correlations, gain/Joseph calculation,
+measurement semantics, group injection and covariance reset are shared.
+
+For $n$ world columns and $N=9+3n$ error states, the two structured
+$\Phi P$ passes perform $2N[30+3n(n+3)]$ scalar multiplications and
+$2N[21+3n(n+2)]$ additions in their explicit loops. These counts cover the
+covariance transport kernel, not matrix discretization, trigonometric functions,
+process-noise assembly or measurement updates. They are 4788/3906 for the
+21-state TFG and 10368/8910 for the 27-state TFG. This is a structured
+$O(N^2n)$ calculation rather than a generic dense matrix product. Reset
+transport similarly exploits the attitude-column structure.
+
+\PerformanceResults
+Fixed-size member scratch replaces covariance-sized real-time stack arrays.
+Eigen's allocation guard exercises prediction, sensor updates and adaptation;
+the wrapper allocates its estimator at construction as before. There is no
+new heap allocation in the real-time sample path. Double arithmetic in model
+commits and spectral factorization is retained for numerical fidelity.
+Target measurements use the actual Xtensa compiler for code/data size,
+\texttt{sizeof} and compiler stack/callgraph reports. These are build-time
+measurements. A static call-chain estimate excludes opaque library and
+indirect-call frames and is a lower bound on actual peak stack, not a measured
+high-water mark. No connected ESP32-S3 was available: neither on-device
+200 Hz deadlines nor actual peak stack have been validated. Host timing cannot
+establish either claim. \FirmwareResults
+
+\section{Reproduction, Limitations and Recommendation}
+The runner \texttt{tools/tfg\_shared\_modes\_study.py} records the executable
+hash, source hashes, exact commands, seed lists, cases, policies and score
+windows. Its per-run summaries and statistical tables are compact; large raw
+sample streams are regenerated. Seed-one plot traces are explicitly drawing
+data. The same peak-preserving helper bounds both SVG and PGF output; all
+statistics and transient windows precede drawing decimation. Committed figures
+are regenerated by \texttt{tools/tfg\_shared\_modes\_report.py}.
+
+This experiment does not establish sea-trial performance, absolute navigation,
+a global convergence theorem, robustness to arbitrary magnetic disturbance,
+or embedded deadline compliance. Stationary/marginal process equivalence is
+stronger than bitwise equivalence of nonlinear Gaussian finite-correction
+implementations. The synthetic directional RAOs and sensor processes cover
+specified mismatch modes but cannot replace measured vessel histories.
+The inherited motion/bias ambiguity can produce large joint NEES even when
+position RMS is small; changing group geometry alone cannot remove a physical
+information deficit. Practical recommendations therefore consider consistency,
+recovery and computation alongside RMS.
+\Recommendation
+
+\begin{thebibliography}{9}
+\bibitem{barrau} A. Barrau and S. Bonnabel, ``The geometry of navigation
+problems,'' \emph{IEEE Transactions on Automatic Control}, 2022,
+doi:10.1109/TAC.2022.3144328. \url{https://arxiv.org/abs/2201.04426}.
+\bibitem{schlemm} E. Schlemm and R. Stelzer, ``Multivariate CARMA processes,
+continuous-time state space models and complete regularity of the innovations
+of the sampled processes,'' \emph{Bernoulli}, vol. 18, no. 1, pp. 46--63,
+2012, doi:10.3150/10-BEJ329.
+\bibitem{stelzer} R. Stelzer, ``Correction to: Multivariate CARMA processes,
+continuous-time state space models and complete regularity of the innovations
+of the sampled processes,'' 2024. \url{https://arxiv.org/abs/2411.06935}.
+\bibitem{jonswap} K. Hasselmann et al., ``Measurements of wind-wave growth
+and swell decay during the Joint North Sea Wave Project (JONSWAP),''
+\emph{Deutsche Hydrographische Zeitschrift}, suppl. A8, no. 12, 1973.
+\bibitem{repo} Bareboat Necessities, \emph{ocean-IMU}, baseline revision
+\texttt{1fe4711b489ad92f3eef8ab560da904af741df9d}, 2026.
+\url{https://github.com/bareboat-necessities/ocean-imu}.
+\end{thebibliography}
+\end{document}

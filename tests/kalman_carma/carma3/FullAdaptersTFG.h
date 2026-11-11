@@ -91,6 +91,7 @@ public:
         return x.dot(l.solve(x));
     }
     double cond_corr() const override { return corr_condition(fusion_.raw().mekf().covariance_full()); }
+    bool covariance_audit(double (&d)[3]) const override { return audit_covariance(fusion_.raw().mekf().covariance_full(),d); }
     long mag_forwarded() const override { return mag_.forwarded; }
     long mag_applied() const override { return mag_.applied; }
     double op_fz_hz() const override {

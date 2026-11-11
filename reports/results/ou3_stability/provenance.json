@@ -168,7 +168,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b78197044d03e576abf57ff5085a658b1ebafd07"
+      "git_blob_sha": "f4761346986e36466e6122fd5f8b0bbda7b61162"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -840,7 +840,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "549aeb0d417c999dbbcce3734ca59c3398cc726a"
+      "git_blob_sha": "8b5f90ce3a7c1ec3ee8bb19c86918fa465a7c37d"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -997,6 +997,10 @@
     {
       "path": "docs/ou3-linked-word-score.md",
       "git_blob_sha": "a84aee1789219d2d4f7d4f0de121a96f2c8b0935"
+    },
+    {
+      "path": "reports/results/ou3_stability/planar-native-secants-source-binding-archive.json",
+      "git_blob_sha": "81551f3925a5f8622ba57c17c3aabcc8433e040f"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1242,7 +1246,7 @@
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
     "certificate": "measurement-frame-loss-certificate.json",
-    "result_type": "PROVED \u2014 analytical identities and qualified uniform operation inequalities",
+    "result_type": "PROVED — analytical identities and qualified uniform operation inequalities",
     "complete_21_state_frame_and_mask_congruence": true,
     "moving_frame_derivative_retained": true,
     "radial_magnetic_feedback_and_square_charge_retained": true,
@@ -1638,7 +1642,7 @@
     "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
     "starting_pr_head": "108ce145623f98d4fb6269172ef26d173b9bcb41",
     "incorporated_main": "cafdc627797b11fdb3bb14ab964d7184c63733e4",
-    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-diagnostic.json:source_binding_refresh",
+    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-source-binding-archive.json:source_binding_refresh.earlier_refresh",
     "shipping_dependencies_byte_identical": 34,
     "replay_performed": false,
     "validation_gate_changed": false,
@@ -1663,7 +1667,7 @@
     "incorporated_main": "8cecdf39e60e0802182f0c1b5bc9bab74d4cb558",
     "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
     "starting_exact_head_workflows": "six action_required; no check runs",
-    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-diagnostic.json:source_binding_refresh",
+    "source_identity_record": "reports/results/ou3_stability/planar-native-secants-source-binding-archive.json:source_binding_refresh",
     "original_source_commit": "108ce145623f98d4fb6269172ef26d173b9bcb41",
     "shipping_dependencies_byte_identical": 34,
     "changed_source_files_outside_probe_closure": 8,

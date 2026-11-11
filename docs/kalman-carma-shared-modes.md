@@ -163,8 +163,16 @@ terms:
 
     b = s gain c S_hat_hz,   c = sigma_z^2 / S_hat_zz,   s = max(0, 1 - 1/(N_eff gamma^2))
 
-Here `gamma^2` is the debiased multiple coherence of z on (x, y), and `b` is
-scaled down if `b^H H^-1 b` would exceed `0.999 sigma_z^2`.  The excitation is
+Here `gamma^2` is the debiased multiple coherence of z on (x, y).  If
+`b^H H^-1 b` would exceed `rho sigma_z^2` (`rho = 0.8`,
+`SharedModesConfig::cap_coherence`), `H` is enlarged along the coupling
+(`CouplingStatus::cap_gain_x/y` report the variance factors),
+`H <- H + ((lambda - 1) / q) b b^H` with `q = b^H H^-1 b` and
+`lambda = q / (rho sigma_z^2)`.  This keeps the measured regression and the
+cross-wave prior; `cap_coherence = 0` restores the earlier cross-term
+shrinkage to `0.999 sigma_z^2`, which understates the regression under a weak
+heave RAO.  The study bundle in `reports/results/kalman_carma_shared_modes/`
+predates this policy; `reports/results/tfg_shared_modes/` compares both.  The excitation is
 PSD by construction, equivariant under rotations about the vertical, and the
 baseline diagonal without coupling evidence.  `gain` is the coupling
 confidence `c in [0, 1]` of section 4.
@@ -255,10 +263,12 @@ prior is inconsistent) drives
 
 so `|dc/dt| <= 1/tau` and `c` never steps (test [4]).
 
-**Applying c.**  At the wrapper's 0.1 s commit the excitation is rebuilt
-with `gain = c`, so `c = 0` is the independent-axis law exactly (test [2]).
-The state is never touched, so position, velocity and attitude are
-continuous through every change (test [6]).
+**Applying c.**  Every 0.1 s a changed `c` sets `gain = c` and the excitation
+is rebuilt at the next step, with or without a model commit, so the
+standalone core engages and withdraws the coupling on its own (test [9]).
+`c = 0` is the independent-axis law exactly (test [2]).  The state is never
+touched, so position, velocity and attitude are continuous through every
+change (test [6]).
 
 **Removing stale cross-covariance.**  When `c` falls, the covariance still
 carries horizontal-vertical correlation that the reduced prior no longer
@@ -273,8 +283,16 @@ this is `C <- alpha C + (1 - alpha) blockdiag(C_hh, C_zz)`, a convex
 combination of PSD matrices, while `P_rr` and `P_rm` are unchanged.  `P`
 therefore stays positive semidefinite (proof in the mathematical article,
 test [3]), and the correlation induced by the shared attitude and bias errors
-is kept.  The cost is one 9 x 9 LDLT and a 12 x 9 x 6 product, at most at
-10 Hz and only while `c` falls.
+is kept.  A decline below 0.1 % per commit accumulates until it reaches
+0.1 %, so slow declines also shrink (test [9]).  The cost is one 9 x 9 LDLT
+and a 12 x 9 x 6 product, at most at 10 Hz and only while `c` falls.
+
+**Attitude re-initialization.**  The band cross-spectrum, the monitor and the
+confidence are world-frame statistics of the attitude they were measured
+with.  Every `initialize_from_*` call therefore restarts them (a research hold
+from `forceCouplingConfidence` survives); the coupling returns after the
+usual warm-up.  A non-finite gyro sample is rejected by the core, and the
+CARMA wrappers drop any sample with a non-finite rate or specific force.
 
 **Recovery.**  Recovery is automatic.  Once the evidence returns, `c` rises
 with `tau = 60 s` and the cross-covariance rebuilds through the dynamics and

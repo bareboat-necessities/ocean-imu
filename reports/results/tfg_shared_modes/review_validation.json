@@ -1,0 +1,120 @@
+{
+  "scope": "Post-review quality and reproducibility checks of the shared-mode cap policy and the external-review fixes; registered protocols and scores are in the study files.",
+  "checks": {
+    "python_quality_gate": "PASS: Ruff and py_compile",
+    "mathematical_checks_27_state": 53,
+    "mathematical_failures_27_state": 0,
+    "original_estimator_traces": {
+      "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
+      "harness_sha256": "16e170863c923b6162b51a9bf1ab03b4ef3c31569cd320c4c49ee50141e76ca1",
+      "absolute_tolerance": 1e-06,
+      "relative_tolerance": 2e-06,
+      "filters": {
+        "QMEKF-CARMA": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "TFG-CARMA": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "QMEKF-shared": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        },
+        "OU-III": {
+          "samples": 6000,
+          "identical": true,
+          "max_absolute_difference": 0.0,
+          "max_scaled_difference": 0.0,
+          "passed": true
+        }
+      }
+    },
+    "shipping_provenance_unittests": {
+      "tests": 3,
+      "result": "PASS"
+    },
+    "cap_policy_unit_checks": {
+      "test": "tests/kalman_carma_shared_modes/carma_shared_modes-test.cpp [8], [9]",
+      "checks_total": 62,
+      "failures": 0
+    },
+    "mathematical_verification_output_identical": false,
+    "heave_sweep_reproduction": "EXACT: 132 overlapping primary and weak-heave rows",
+    "supplements_identical_without_cap_binding": "reset, pinned replay and transition scores identical to the previous execution (runtime columns excluded)",
+    "clang_tidy": "Delegated to the PR CI quality job, with no suppressed checks.",
+    "review_fixes": {
+      "confidence_gain_without_model_commit": "PASS: forced c = 1 engages and c = 0 withdraws the coupling on the standalone core",
+      "copy_and_move": "PASS: non-const copy and move keep mode, gain, confidence and state",
+      "attitude_reinitialization": "PASS: coupling estimate, monitor and confidence restart; an explicit hold survives",
+      "slow_confidence_decline": "PASS: 0.05 % per commit declines accumulate into shrinks",
+      "non_finite_gyro": "PASS: rejected by the core, dropped whole by the CARMA wrapper",
+      "keel_correlation": "PASS: baseline horizontal correlation reaches the excitation (|r| < 1)",
+      "held_zero_confidence_equals_off": "PASS: unchanged bit-identical identity"
+    },
+    "score_change_from_review_fixes": "operational shared-filter scores move by at most 0.2 % against the previous execution; legacy-cap collapse rows move more",
+    "mathematical_verification_note": "53 checks pass; only the float stress test's rounding eigenvalue changes (8.09e-9 to 9.04e-9, limit 2e-7) because its forced fallback now applies the gain at the next step"
+  },
+  "full_build": {
+    "command": "make all",
+    "status": "PASS: exit 0 on the review-fix tree (see regression_gates.json)",
+    "thresholds_changed": false
+  },
+  "timing_supplement": {
+    "order_sensitivity": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.3427,
+        "CSM": 3.94565,
+        "T41": 4.9306,
+        "TCSM": 8.71995
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 2.210016093672779
+    },
+    "order_jitter": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.83655,
+        "CSM": 6.73295,
+        "T41": 5.32855,
+        "TCSM": 11.66005
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 1.731789186018016
+    },
+    "order_fixed": {
+      "repetitions": 4,
+      "each_core_occurs_once_in_each_execution_position": true,
+      "median_mean_us": {
+        "A41": 2.3305,
+        "CSM": 3.33095,
+        "T41": 4.924250000000001,
+        "TCSM": 8.14695
+      },
+      "TFG_shared_to_QMEKF_shared_ratio": 2.44583377114637
+    },
+    "interpretation": "Host ordering does not remove the additional TFG cost. This is a four-repetition sensitivity check, not an embedded deadline or a precise hardware-independent cost estimate. Original publication timings are retained."
+  },
+  "source_hashes": {
+    "src/kalman_carma/CarmaCrossSpectrumEstimator.h": "979819f06d7a801af23575691a8f269b2b58b5b957dfffd241ef00c6fd252d66",
+    "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "e46e05a6d885879e855c412550bba442cc73ad56b380c2336b57689b7acbaca5",
+    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "16191415c3e691c70678b974f99ed30c5554ee7c7c91cd00d4cc0babd77443e4",
+    "src/kalman_carma/SeaStateFusionFilter_CARMA3.h": "9a57c3c1b75c11204a3b518fc5b8b0871d3ac46e305092c89756422827adc4c4",
+    "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h": "643ba68f76640a7b999fea8c1550046828dd45503a08524079abe9bd373efb46",
+    "src/kalman_carma_shared_modes/SharedModesEstimator.h": "1df1e8274a91ae60ddc1e356dcf80adf7e5218d36a4c423eb130918637b90bb1",
+    "tests/kalman_carma_shared_modes/carma_shared_modes-test.cpp": "0c45918ccaf607496eebd9889fab6a47e68c7d6a809748d7379199c73422cd18",
+    "tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp": "03f11eb56cfe9817945e14ed466a7c40a2bda01442b76e8d2cbcaa2efce27553",
+    "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-timing.cpp": "878494587ba18992fc24c282675ec940b8805ae00511049a9bac08eb79b35565"
+  }
+}

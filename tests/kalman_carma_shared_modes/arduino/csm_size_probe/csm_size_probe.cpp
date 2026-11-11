@@ -16,6 +16,8 @@
 
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
+#include "kalman_carma/SeaStateFusionFilter_TFG_CARMA3.h"
 
 const float g_std = 9.80665f;
 
@@ -24,6 +26,12 @@ using Top = ocean_imu::carma::SeaStateFusion_CARMA3<TrackerType::KALMANF, 4, fal
 using Wrapper = Top;
 #elif CSM_PROBE_VARIANT == 1
 using Top = ocean_imu::carma_shared_modes::SeaStateFusion_CarmaSharedModes;
+using Wrapper = Top;
+#elif CSM_PROBE_VARIANT == 2
+using Top = ocean_imu::carma::SeaStateFusion_TFG_CARMA3<TrackerType::KALMANF,4>;
+using Wrapper = Top;
+#elif CSM_PROBE_VARIANT == 3
+using Top = ocean_imu::carma_shared_modes::SeaStateFusion_TfgCarmaSharedModes;
 using Wrapper = Top;
 #endif
 using Mekf = typename std::remove_reference<decltype(std::declval<Wrapper&>().raw().mekf())>::type;
@@ -50,7 +58,7 @@ extern "C" Top* csm_probe_make() {
 extern "C" float csm_probe_step(Top* f, float dt, const float* gyr, const float* acc, const float* mag) {
     f->update(dt, Eigen::Vector3f(gyr[0], gyr[1], gyr[2]), Eigen::Vector3f(acc[0], acc[1], acc[2]));
     if (mag) f->updateMag(Eigen::Vector3f(mag[0], mag[1], mag[2]));
-#if CSM_PROBE_VARIANT == 0
+#if CSM_PROBE_VARIANT == 0 || CSM_PROBE_VARIANT == 2
     return f->raw().mekf().get_position().z();
 #else
     return f->raw().mekf().get_position().z() + f->raw().mekf().couplingConfidence();

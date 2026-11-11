@@ -15,7 +15,7 @@ ROOT=$(cd "$HERE/../../../.." && pwd)
 EIGEN=${EIGEN_DIR:-$ROOT/third_party/eigen}
 [ -f "$EIGEN/Eigen/Dense" ] || EIGEN=/usr/include/eigen3
 CXX="$TC/xtensa-esp32s3-elf-g++"; OBJDUMP="$TC/xtensa-esp32s3-elf-objdump"
-for v in 0 1; do
+for v in 0 1 2 3; do
   (cd "$OUT" && "$CXX" -std=gnu++2a -Os -mlongcalls -ffunction-sections -fdata-sections \
       -fexceptions -fno-rtti -fstack-usage -fcallgraph-info=su -DCSM_PROBE_VARIANT=$v \
       -I"$ROOT/src" -isystem "$EIGEN" -c "$HERE/csm_size_probe.cpp" -o "$OUT/v$v.o")
@@ -32,7 +32,7 @@ out = Path(sys.argv[1])
 wr = csv.writer(sys.stdout, lineterminator="\n")
 wr.writerow(["variant", "code_bytes", "rodata_bytes", "sizeof_top", "sizeof_wrapper", "sizeof_qmekf",
              "max_stack_frame", "max_stack_function", "update_chain_stack", "update_chain_depth"])
-for v, n in enumerate(["A41", "CSM"]):
+for v, n in enumerate(["A41", "CSM", "T41", "TCSM"]):
     tot = {"code": 0, "rodata": 0}
     for line in (out / f"v{v}.h.txt").read_text().splitlines():
         f = line.split()

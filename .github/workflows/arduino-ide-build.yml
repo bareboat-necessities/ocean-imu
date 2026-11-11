@@ -17,8 +17,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    # Windows links each sketch in 2-6 min; eleven sketches plus the
-    # toolchain install run close to 45 min there.
+    # Compile every discovered sketch with Arduino IDE default flags.
+    # Use two compile workers without changing the 60-minute job budget.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
           while IFS= read -r -d '' sketch; do
             echo "Compiling $sketch"
-            arduino-cli compile --jobs 1 --warnings default \
+            arduino-cli compile --jobs 2 --warnings default \
               --fqbn esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcdc \
               --library "$GITHUB_WORKSPACE" "$(dirname "$sketch")"
           done < <(find sensors examples -name '*.ino' -print0 | sort -z)

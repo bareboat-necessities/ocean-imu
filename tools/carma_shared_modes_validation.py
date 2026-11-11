@@ -9,10 +9,8 @@ low--high--low construction are shared with the OU-III publication tools.
 from __future__ import annotations
 
 import argparse
-import csv
 import gzip
 import hashlib
-import io
 import json
 import os
 import re

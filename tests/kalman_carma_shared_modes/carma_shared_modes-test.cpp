@@ -23,12 +23,26 @@
           without confidence (bounded error and NEES with it); continuity of
           p, v, attitude and covariance through a forced fallback; recovery
           after the prior is corrected
+      [8] PSD-cap policy of the excitation mapping (double): legacy
+          cross-term shrinkage is unchanged; cap_coherence keeps the measured
+          regression, holds the applied coherence at rho, stays positive
+          semidefinite, enlarges only the coupling direction, equals the
+          legacy mapping where the cap does not bind, and rescales each
+          horizontal colouring by the square root of its variance gain
+      [9] review fixes on the standalone core: the confidence engages and
+          withdraws the coupling without model commits; slow declines still
+          shrink; copies and moves keep the configuration; attitude
+          re-initialization restarts the coupling evidence; a NaN gyro sample
+          is rejected by the core and dropped by the wrapper; the keel-frame
+          horizontal correlation reaches the excitation
 */
 
 #define EIGEN_NON_ARDUINO
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -568,6 +582,210 @@ void test7_double() {
     check(f.health().covariance_asymmetry < 1e-12, "double core: covariance symmetric", f.health().covariance_asymmetry, 1e-12);
 }
 
+// [8] PSD-cap policy.  An external band cross-spectrum whose horizontal
+// motion is three times the vertical one, in quadrature (a weak heave RAO).
+static kc::Hermitian3<double> band_matrix(double horizontal_ratio) {
+    using C = std::complex<double>;
+    const double az = 0.5236;   // 30 deg
+    const C v[3] = {C(0.0, horizontal_ratio * std::cos(az)), C(0.0, horizontal_ratio * std::sin(az)), C(1.0, 0.0)};
+    kc::Hermitian3<double> S;
+    for (int i = 0; i < 3; ++i)
+        for (int j = i; j < 3; ++j) S.set(i, j, v[i] * std::conj(v[j]) + (i == j ? C(0.02, 0.0) : C(0.0, 0.0)));
+    return S;
+}
+static double hermitian_min_eig(const kc::Hermitian3<double>& E) {
+    Eigen::Matrix<double,6,6> Mr;
+    Mr << E.re, -E.im, E.im, E.re;
+    return Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double,6,6>>(Mr).eigenvalues().minCoeff();
+}
+void test8_cap_policy() {
+    std::printf("[8] PSD-cap policy of the excitation mapping\n");
+    using Cpl = kc::CarmaCoupling<double>;
+    using C = std::complex<double>;
+    const Eigen::Vector3d sig(0.4, 0.4, 0.4);
+    const C R[3] = {C(1.0), C(1.0), C(1.0)};
+    auto mapping = [&](double ratio, float rho, double* gain) {
+        Cpl c;
+        auto cfg = c.config();
+        cfg.source = kc::CarmaCouplingConfig::Source::External;
+        cfg.cap_coherence = rho;
+        c.set_config(cfg);
+        c.set_external(band_matrix(ratio), 0.0);
+        return c.excitation(sig, R, gain);
+    };
+    auto coherence = [](const kc::Hermitian3<double>& E) {   // multiple coherence of z on (x, y)
+        Eigen::Matrix2cd H;
+        H << E(0,0), E(0,1), E(1,0), E(1,1);
+        Eigen::Vector2cd b(E(0,2), E(1,2));
+        return (b.adjoint() * H.inverse() * b)(0).real() / E.re(2,2);
+    };
+    const kc::Hermitian3<double> S = band_matrix(3.0);
+    const C reg_x = S(0,2) / S.re(2,2), reg_y = S(1,2) / S.re(2,2);
+    double g_old[2] = {0.0, 0.0}, g_new[2] = {0.0, 0.0};
+    const auto E_old = mapping(3.0, 0.0f, g_old);
+    const auto E_new = mapping(3.0, 0.95f, g_new);
+    const double reg_old = std::abs(E_old(0,2) / E_old.re(2,2) - reg_x) / std::abs(reg_x);
+    const double reg_new = std::max(std::abs(E_new(0,2) / E_new.re(2,2) - reg_x), std::abs(E_new(1,2) / E_new.re(2,2) - reg_y)) / std::abs(reg_x);
+    check(std::abs(coherence(E_old) - 0.999) < 1e-9 && reg_old > 0.5 && g_old[0] == 1.0 && g_old[1] == 1.0,
+          "legacy cap: applied coherence 0.999 by shrinking the cross term (measured regression lost)", reg_old, 0.5);
+    check(reg_new < 1e-12, "cap_coherence: measured horizontal-on-vertical regression kept exactly", reg_new, 1e-12);
+    const double rho = static_cast<double>(0.95f);   // the configured float
+    check(std::abs(coherence(E_new) - rho) < 1e-12, "cap_coherence: applied coherence held at rho = 0.95",
+          std::abs(coherence(E_new) - rho), 1e-12);
+    // Enlarged only along the coupling direction u: the cross-wave variance
+    // v^H H' v (v orthogonal to u) keeps the baseline prior sigma_h^2.
+    const double s2 = sig(0) * sig(0);
+    Eigen::Matrix2cd Hn;
+    Hn << E_new(0,0), E_new(0,1), E_new(1,0), E_new(1,1);
+    Eigen::Vector2cd u(E_new(0,2), E_new(1,2));
+    u.normalize();
+    const Eigen::Vector2cd v(std::conj(u(1)), -std::conj(u(0)));
+    const double cross = (v.adjoint() * Hn * v)(0).real(), along = (u.adjoint() * Hn * u)(0).real();
+    check(std::abs(cross - s2) < 1e-12 && along > 1.5 * s2, "cap_coherence: horizontal prior enlarged along the coupling only",
+          std::abs(cross - s2), 1e-12);
+    check(g_new[0] > 1.0 && g_new[1] > 1.0 && std::abs(E_new.re(0,0) - g_new[0] * s2) < 1e-12 * g_new[0] &&
+          std::abs(E_new.re(1,1) - g_new[1] * s2) < 1e-12 * g_new[1] && std::abs(E_new.re(2,2) - sig(2) * sig(2)) < 1e-15,
+          "cap_coherence: reported per-axis gains match the enlarged variances, vertical prior unchanged", g_new[0], 1.0);
+    check(hermitian_min_eig(E_new) >= -1e-12, "cap_coherence: excitation positive semidefinite", hermitian_min_eig(E_new), -1e-12);
+    double g_weak_old[2] = {0.0, 0.0}, g_weak_new[2] = {0.0, 0.0};
+    const auto W_old = mapping(0.3, 0.0f, g_weak_old);
+    const auto W_new = mapping(0.3, 0.95f, g_weak_new);
+    check(W_old.re == W_new.re && W_old.im == W_new.im && g_weak_new[0] == 1.0 && g_weak_new[1] == 1.0,
+          "cap_coherence: identical to the legacy mapping where the cap does not bind");
+    // Latent colouring of the motion block: an enlarged horizontal prior
+    // variance rescales that axis' w states by the square root of its gain,
+    // the vertical not at all.
+    csm::SharedModesMotion<double> m;
+    auto cfg = m.coupling().config();
+    cfg.source = kc::CarmaCouplingConfig::Source::External;
+    cfg.cap_coherence = 0.95f;
+    m.coupling().set_config(cfg);
+    m.coupling().set_external(band_matrix(0.3), 0.0);
+    m.set_vertical(1.0, 0.4);
+    m.set_horizontal(1.0, 0.4, 0.4, 0.0);
+    m.refresh(0.005);
+    Eigen::Matrix<double,6,6> Mx[3];
+    m.take_axis_recoordinatization(Mx);   // the sigma change from construction
+    m.coupling().set_external(band_matrix(3.0), 0.0);
+    m.set_vertical(1.0, 0.4);             // a model commit with unchanged sigma
+    m.refresh(0.005);
+    const bool pending = m.take_axis_recoordinatization(Mx);
+    const double gx = m.excitation().re(0,0) / s2, gy = m.excitation().re(1,1) / s2;
+    double err = 0.0;
+    for (int i = 4; i < 6; ++i)
+        err = std::max({err, std::abs(Mx[0](i,i) - std::sqrt(gx)), std::abs(Mx[1](i,i) - std::sqrt(gy))});
+    check(pending && gx > gy && gy > 1.0 && err < 1e-12 && Mx[2].isIdentity(0.0),
+          "cap_coherence: horizontal latent colouring rescaled per axis by sqrt(gain), vertical untouched", err, 1e-12);
+    // Real-only prior: the cap sees only the co-spectrum.  This sea's
+    // horizontal-vertical terms are pure quadrature, so nothing is enlarged.
+    csm::SharedModesMotion<double> r;
+    auto rc = r.coupling().config();
+    rc.source = kc::CarmaCouplingConfig::Source::External;
+    rc.cap_coherence = 0.95f;
+    r.coupling().set_config(rc);
+    r.set_quadrature_enabled(false);
+    r.coupling().set_external(band_matrix(3.0), 0.0);
+    r.set_vertical(1.0, 0.4);
+    r.set_horizontal(1.0, 0.4, 0.4, 0.0);
+    r.refresh(0.005);
+    check(std::abs(r.excitation().re(0,0) - 0.16) < 1e-15 && r.excitation().im.isZero(0.0),
+          "real-only prior: no imaginary excitation and no horizontal enlargement from quadrature evidence",
+          r.excitation().re(0,0), 0.16);
+}
+
+// [9] Review fixes, each reproduced on the double core without the
+// wrapper's 0.1 s model commits (the standalone use the tuner masks).
+void test9_review_fixes() {
+    std::printf("[9] standalone confidence, copies, re-initialization, non-finite samples\n");
+    using Core = csm::KalmanCarmaSharedModes<double>;
+    using V3d = Eigen::Vector3d;
+    const V3d grav(0.0, 0.0, -G);
+    auto make = [&](csm::CouplingMode mode) {
+        Core f(V3d::Constant(0.03), V3d::Constant(3e-5), V3d::Constant(7.7));
+        auto sm = f.sharedModesConfig();
+        sm.mode = mode;
+        f.configureSharedModes(sm);
+        f.initialize_from_acc(grav);
+        f.setExternalCoupling(kc::Hermitian3<double>(), 0.0);
+        return f;
+    };
+    auto steps = [&](Core& f, double seconds) {
+        for (long k = 0; k < static_cast<long>(seconds * 200.0); ++k) {
+            f.time_update(V3d::Zero(), 0.005);
+            f.measurement_update_acc_only(grav);
+        }
+    };
+    // Confidence alone engages and withdraws the coupling (no model commit).
+    Core f = make(csm::CouplingMode::External);
+    f.setExternalCoupling([] {
+        kc::Hermitian3<double> S;
+        const std::complex<double> v[3] = {{0.0, 0.3 * std::cos(0.5236)}, {0.0, 0.3 * std::sin(0.5236)}, {1.0, 0.0}};
+        for (int i = 0; i < 3; ++i)
+            for (int j = i; j < 3; ++j) S.set(i, j, v[i] * std::conj(v[j]) + (i == j ? 0.02 : 0.0));
+        return S;
+    }(), 0.0);
+    f.forceCouplingConfidence(1.0);
+    steps(f, 1.0);
+    const double on = f.coupling().applied_coherence_xz;
+    f.forceCouplingConfidence(0.0);
+    steps(f, 1.0);
+    const double off = f.coupling().applied_coherence_xz;
+    check(on > 0.01 && off == 0.0, "confidence engages and withdraws the coupling without model commits", on, 0.01);
+    // A slow decline (0.05 % per commit) accumulates into shrinks.
+    f.forceCouplingConfidence(1.0);
+    steps(f, 1.0);
+    const unsigned long ev0 = f.coupling().shrink_events;
+    double c = 1.0;
+    for (int k = 0; k < 100; ++k) {
+        c *= 0.9995;
+        f.forceCouplingConfidence(c);
+        steps(f, 0.1);
+    }
+    check(f.coupling().shrink_events > ev0, "slow confidence declines still shrink the cross-covariance",
+          static_cast<double>(f.coupling().shrink_events - ev0), 1.0);
+    // Copies and moves keep configuration and confidence.
+    auto sm = f.sharedModesConfig();
+    sm.coupling_gain = 0.5;
+    f.configureSharedModes(sm);
+    f.forceCouplingConfidence(0.7);
+    Core copy(f);
+    Core moved(std::move(copy));
+    check(moved.sharedModesConfig().mode == csm::CouplingMode::External && moved.sharedModesConfig().coupling_gain == 0.5 &&
+          moved.couplingConfidence() == 0.7 && moved.get_position() == f.get_position(),
+          "non-const copy and move keep mode, gain, confidence and state");
+    // Attitude re-initialization restarts the coupling evidence.
+    Core e = make(csm::CouplingMode::Estimated);
+    steps(e, 5.0);
+    const double before = e.motion().coupling().estimator().elapsed_s();
+    const bool ok = e.initialize_from_attitude(Eigen::Quaterniond::Identity(), 0.03, 0.03);
+    const double after = e.motion().coupling().estimator().elapsed_s();
+    check(ok && before > 4.9 && after == 0.0 && e.couplingConfidence() == 0.0,
+          "attitude re-initialization restarts the coupling estimate and confidence", after, 0.0);
+    // A non-finite gyro sample is rejected by the core.
+    Core n = make(csm::CouplingMode::Estimated);
+    steps(n, 1.0);
+    n.time_update(V3d(std::numeric_limits<double>::quiet_NaN(), 0.0, 0.0), 0.005);
+    n.measurement_update_acc_only(grav);
+    steps(n, 1.0);
+    check(n.get_position().allFinite() && n.quaternion_boat().coeffs().allFinite() && n.covariance_full().allFinite(),
+          "core: a NaN gyro sample is rejected and the state stays finite");
+    // ... and dropped whole by the float wrapper.
+    Csm w(base_config());
+    for (int k = 0; k < 2000; ++k) {
+        const V3 gy = k == 1000 ? V3(std::numeric_limits<float>::quiet_NaN(), 0.0f, 0.0f) : V3::Zero();
+        w.update(0.005f, gy, V3(0.0f, 0.0f, -static_cast<float>(G)), 35.0f);
+    }
+    check(w.position().allFinite() && w.attitude().coeffs().allFinite() && w.health().covariance_finite,
+          "wrapper: a NaN gyro sample is dropped and the state stays finite");
+    // The keel-frame horizontal correlation reaches the excitation.
+    csm::SharedModesMotion<double> m;
+    m.set_vertical(1.0, 0.4);
+    const bool accepted = m.set_horizontal(1.0, 0.4, 0.2, 0.5) && !m.set_horizontal(1.0, 0.4, 0.2, 1.0);
+    m.refresh(0.005);
+    check(accepted && std::abs(m.excitation().re(0,1) - 0.5 * 0.4 * 0.2) < 1e-15 && m.cap_gain(0) == 1.0,
+          "horizontal baseline correlation applied (|r| < 1 required), cap not binding", m.excitation().re(0,1), 0.04);
+}
+
 int main() {
     test1_api();
     test2_limits();
@@ -576,6 +794,8 @@ int main() {
     test5_direction();
     test6_filter();
     test7_double();
+    test8_cap_policy();
+    test9_review_fixes();
     std::printf("carma_shared_modes-test: %d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;
 }

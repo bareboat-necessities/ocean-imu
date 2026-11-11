@@ -1,0 +1,75 @@
+{
+  "binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
+  "filters": [
+    "A41@C",
+    "T41@C",
+    "CSM",
+    "TCSM",
+    "CSM/cap0",
+    "TCSM/cap0",
+    "CSM/real/cap0",
+    "TCSM/real/cap0",
+    "CSM:noconf/ext-true/cap0",
+    "CSM:noconf/ext-true"
+  ],
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012
+  ],
+  "score_start_s": 300,
+  "cells": {
+    "h1.00": "jonswap_fp0.29_hs0.8_g3.3+T1200",
+    "h0.80": "jonswap_fp0.29_hs0.8_g3.3+hscale0.8+T1200",
+    "h0.70": "jonswap_fp0.29_hs0.8_g3.3+hscale0.7+T1200",
+    "h0.60": "jonswap_fp0.29_hs0.8_g3.3+hscale0.6+T1200",
+    "h0.50": "jonswap_fp0.29_hs0.8_g3.3+hscale0.5+T1200",
+    "h0.40": "jonswap_fp0.29_hs0.8_g3.3+hscale0.4+T1200",
+    "h0.30": "jonswap_fp0.29_hs0.8_g3.3+hscale0.3+T1200",
+    "h0.25": "jonswap_fp0.29_hs0.8_g3.3+hscale0.25+T1200",
+    "h0.20": "jonswap_fp0.29_hs0.8_g3.3+hscale0.2+T1200",
+    "h0.15": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+T1200",
+    "h0.15_broad": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+sp1+T1200",
+    "h0.15_long": "jonswap_fp0.29_hs0.8_g3.3+hscale0.15+sp10000+T1200"
+  },
+  "heading_failure_deg": 30.0,
+  "role": "exploratory dose response; legacy-cap rows are paired controls; outside the primary multiplicity family",
+  "intervention": {
+    "s_factor": 2.0,
+    "cells": [
+      "h1.00",
+      "h0.50",
+      "h0.30",
+      "h0.25",
+      "h0.20"
+    ],
+    "filters": [
+      "A41@C/sf2",
+      "CSM/cap0/sf2",
+      "TCSM/cap0/sf2",
+      "CSM/real/cap0/sf2",
+      "TCSM/real/cap0/sf2",
+      "CSM:noconf/ext-true/cap0/sf2"
+    ],
+    "prediction": "legacy cap with S_factor 2 reaches the cap only for k < 0.29"
+  },
+  "legacy_predictions": {
+    "dose": "shared heading error increases as heave RAO decreases; real-only and independent controls stay nominal",
+    "spreading": "at k = 0.15 broad spreading weakens and long-crested seas strengthen the shared heading collapse",
+    "cap": "the known prior is pinned at the 0.999 cap for k < 0.58; shared heave harm relative to real-only coupling begins only there"
+  },
+  "fixed_policy": {
+    "cap_coherence": 0.8,
+    "repair": "rank-one horizontal enlargement along the coupling direction",
+    "development": "target: seeds 1001-1003 of the k = 1, 0.5, 0.3 and 0.15 cells; direction: seeds 1001-1012 of the k = 0.15, 0.25, 0.3, 0.4, 0.6 and 1 cells"
+  }
+}

@@ -76,7 +76,11 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
+#if defined(OCEAN_IMU_TFG_SHARED_MODES)
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
+#else
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+#endif
 // The OU-III sketch's startup settings (ONLINE_TUNE_WARMUP_SEC,
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateOUFamilyDefaults.h"
@@ -257,7 +261,11 @@ private:
   // EXPERIMENTAL shared-modes QMEKF (docs/kalman-carma-shared-modes.md): the
   // CARMA3 wrapper with KalmanCarmaSharedModes<float> as its inner filter;
   // begin(cfg) selects the estimated coupling with the coupling confidence.
+#if defined(OCEAN_IMU_TFG_SHARED_MODES)
+  using Fusion = ocean_imu::carma_shared_modes::SeaStateFusion_TfgCarmaSharedModes;
+#else
   using Fusion = ocean_imu::carma_shared_modes::SeaStateFusion_CarmaSharedModes;
+#endif
 
   bool use_graphics_ = (SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
 

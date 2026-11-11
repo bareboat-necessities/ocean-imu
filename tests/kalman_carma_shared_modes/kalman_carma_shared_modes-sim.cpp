@@ -29,6 +29,9 @@
 
 #include "../kalman_carma/carma3/SimAdapters.h"
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
+#if defined(TFG_SHARED_REPLAY)
+#include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"
+#endif
 
 using Eigen::Vector3f;
 
@@ -36,7 +39,15 @@ namespace {
 
 using namespace carma3_sim;
 namespace csm = ocean_imu::carma_shared_modes;
+#if defined(TFG_SHARED_REPLAY)
+using CsmCore = csm::KalmanTfgCarmaSharedModes<float>;
+constexpr bool kTfgReplay = true;
+constexpr const char* kReplayFamily = "TFG_CARMA_SHARED_MODES_";
+#else
 using CsmCore = csm::KalmanCarmaSharedModes<float>;
+constexpr bool kTfgReplay = false;
+constexpr const char* kReplayFamily = "CARMA_SHARED_MODES_";
+#endif
 
 // process_wave_file_for_tracker<> constructs the adapter from four arguments.
 template<int Variant>   // 0 CSM, 1 CSM_NOCONF, 2 CSM_OFF
@@ -151,11 +162,11 @@ int main(int argc, char* argv[]) {
         // any other replay is a diagnostic, not a regression.
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
-        const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
+        const bool gated = !kTfgReplay && variant == "CSM" && add_noise && with_mag && default_seeds &&
                            !std::getenv("W3D_CARMA3_EXCITATION");
         const W3dFailureLimits& bars = gated ? kCsmRegressionBars : kUngatedBars;
         for (const auto& f : files) {
-            const std::string family = "CARMA_SHARED_MODES_" + variant;
+            const std::string family = std::string(kReplayFamily) + variant;
             if (variant == "CSM") run_file<CsmAdapter<0>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_NOCONF") run_file<CsmAdapter<1>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
             else if (variant == "CSM_OFF") run_file<CsmAdapter<2>>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);

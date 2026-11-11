@@ -1,0 +1,36 @@
+{
+  "baseline_revision": "1fe4711b489ad92f3eef8ab560da904af741df9d",
+  "harness_sha256": "16e170863c923b6162b51a9bf1ab03b4ef3c31569cd320c4c49ee50141e76ca1",
+  "absolute_tolerance": 1e-06,
+  "relative_tolerance": 2e-06,
+  "filters": {
+    "QMEKF-CARMA": {
+      "samples": 6000,
+      "identical": true,
+      "max_absolute_difference": 0.0,
+      "max_scaled_difference": 0.0,
+      "passed": true
+    },
+    "TFG-CARMA": {
+      "samples": 6000,
+      "identical": true,
+      "max_absolute_difference": 0.0,
+      "max_scaled_difference": 0.0,
+      "passed": true
+    },
+    "QMEKF-shared": {
+      "samples": 6000,
+      "identical": true,
+      "max_absolute_difference": 0.0,
+      "max_scaled_difference": 0.0,
+      "passed": true
+    },
+    "OU-III": {
+      "samples": 6000,
+      "identical": true,
+      "max_absolute_difference": 0.0,
+      "max_scaled_difference": 0.0,
+      "passed": true
+    }
+  }
+}

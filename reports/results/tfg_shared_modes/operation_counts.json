@@ -1,0 +1,17 @@
+{
+  "scope": "Explicit loops of the two-pass structured Phi covariance kernel only; excludes noise assembly, discretization, trigonometry, measurement updates, compiler fusion and total instruction counts.",
+  "counts": [
+    {
+      "world_columns": 4,
+      "error_states": 21,
+      "structured_phi_covariance_multiplications": 4788,
+      "structured_phi_covariance_additions": 3906
+    },
+    {
+      "world_columns": 6,
+      "error_states": 27,
+      "structured_phi_covariance_multiplications": 10368,
+      "structured_phi_covariance_additions": 8910
+    }
+  ]
+}

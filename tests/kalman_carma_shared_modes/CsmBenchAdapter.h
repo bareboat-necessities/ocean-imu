@@ -27,18 +27,26 @@
       ext-amp2   x-z and y-z terms doubled (wrong amplitude; capped PSD by the mapping)
       fz<s>      freeze the estimated coupling at scenario time s ...
       keel       ... in the keel frame (it turns with the hull)
+      sf<x>      horizontal prior amplitude factor S_factor on both keel axes
+                 (diagnostic; default 1 keeps the horizontal prior equal to
+                 the vertical one)
+      cap<x>     PSD-cap target coherence x in [0, 1) (cap_coherence;
+                 default 0.8): cap0 restores the legacy cross-term shrinkage
     Environment: CSM_TRACE=<path prefix> writes <prefix><label>.csv at 1 Hz
     (confidence, evidence, state, D^2, SNR, NIS ratio, f_op, sigma_z,
     applied coherence / phase, estimated direction).
 */
 
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "../kalman_carma/carma3/FullAdapters.h"
+#include "lie/SO3Jacobians.h"
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
 
 namespace carma3_bench {
@@ -51,6 +59,10 @@ struct CsmSpec {
     std::string ext;              // "", true, flip, rot90, ph45, amp2
     float freeze_at_s = -1.0f;
     bool keel = false;
+    bool no_transport = false;
+    bool real_only = false;
+    float s_factor = 0.0f;        // 0: the wrapper default
+    float cap = std::numeric_limits<float>::quiet_NaN();   // NaN: the estimator default
 };
 
 inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
@@ -74,29 +86,46 @@ inline bool parse_csm_spec(const std::string& name, CsmSpec& sp) {
             if (sp.ext != "true" && sp.ext != "flip" && sp.ext != "rot90" && sp.ext != "ph45" && sp.ext != "amp2")
                 return false;
         } else if (o.rfind("fz", 0) == 0) sp.freeze_at_s = static_cast<float>(std::strtod(o.c_str() + 2, nullptr));
+        else if (o == "noreset") sp.no_transport = true;
+        else if (o == "real") sp.real_only = true;
         else if (o == "keel") sp.keel = true;
+        else if (o.rfind("cap", 0) == 0) {
+            char* end = nullptr;
+            sp.cap = std::strtof(o.c_str() + 3, &end);
+            if (end == o.c_str() + 3 || *end != '\0' || !(sp.cap >= 0.0f && sp.cap < 1.0f)) return false;
+        }
+        else if (o.rfind("sf", 0) == 0) {
+            sp.s_factor = static_cast<float>(std::strtod(o.c_str() + 2, nullptr));
+            if (!(sp.s_factor > 0.0f)) return false;
+        }
         else return false;
     }
     return !(sp.off && !sp.ext.empty());
 }
 
-class FullCsm final : public IEstimator3 {
+template<class FusionType>
+class FullSharedModes final : public IEstimator3 {
 public:
-    using Fusion = csm::SeaStateFusion_CarmaSharedModes;
-    using Mekf = Fusion::Mekf;
+    using Fusion = FusionType;
+    using Mekf = typename Fusion::Mekf;
     using H3 = ocean_imu::kalman::carma::Hermitian3<float>;
 
-    FullCsm(std::string label, const CsmSpec& sp) : label_(std::move(label)), sp_(sp) {
-        Fusion::Config fc;
+    FullSharedModes(std::string label, const CsmSpec& sp) : label_(std::move(label)), sp_(sp) {
+        typename Fusion::Config fc;
         fill_config(fc, MAG_DELAY_SEC);
-        Fusion::SharedModes c;
+        typename Fusion::SharedModes c;
         c.mode = sp_.off ? csm::CouplingMode::Off
                : sp_.ext.empty() ? csm::CouplingMode::Estimated : csm::CouplingMode::External;
         c.confidence.enabled = sp_.confidence;
         c.confidence.accel_noise_std = ACC_SIGMA;
+        if (!std::isnan(sp_.cap)) c.cap_coherence = sp_.cap;
         f_.begin(fc, c);
         f_.raw().enableTuner(true);
         f_.raw().enableClamp(true);
+        if (sp_.s_factor > 0.0f) f_.raw().setSFactor(sp_.s_factor);
+        if constexpr (requires { f_.raw().mekf().set_reset_mode(Mekf::ResetMode::None); })
+            if (sp_.no_transport) f_.raw().mekf().set_reset_mode(Mekf::ResetMode::None);
+        f_.raw().mekf().motion().set_quadrature_enabled(!sp_.real_only);
         typename ocean_imu::kalman::carma::CarmaCrossSpectrumEstimator<float>::Config ec;
         ec.horizon_s = 600.0f;       // oracle prior (as the research ORACLE runs)
         ec.band_frac = c.band_frac;
@@ -118,9 +147,10 @@ public:
                                      "coh_xz,ph_xz,coh_yz,ph_yz,dir_to_deg,dir_unc_deg,shrinks\n");
         }
     }
-    ~FullCsm() override { if (trace_) std::fclose(trace_); }
+    ~FullSharedModes() override { if (trace_) std::fclose(trace_); }
 
     std::string name() const override { return label_; }
+    Fusion& fusion() { return f_; }
     void step(const Sensors& s) override {
         temp_ = s.tempC;
         t_ += s.dt;
@@ -166,11 +196,19 @@ public:
     }
     Eigen::Matrix<double,9,9> native9_() const {
         const auto& m = f_.raw().mekf();
-        const Eigen::MatrixXd P = m.covariance_full().template cast<double>();
-        Eigen::MatrixXd S = Eigen::MatrixXd::Zero(9, Mekf::NX);
-        for (int i = 0; i < 3; ++i) S(i, i) = 1.0;
-        S.bottomRows(6) = m.pv_readout().template cast<double>();
-        return S * P * S.transpose();
+        if constexpr (requires { m.state(); }) {
+            const int idx[9] = {0,1,2,Mekf::OFF_P,Mekf::OFF_P+1,Mekf::OFF_P+2,
+                               Mekf::OFF_V,Mekf::OFF_V+1,Mekf::OFF_V+2};
+            Eigen::Matrix<double,9,9> P;
+            for(int i=0;i<9;++i) for(int j=0;j<9;++j) P(i,j)=m.covariance_full()(idx[i],idx[j]);
+            return P;
+        } else {
+            const Eigen::MatrixXd P = m.covariance_full().template cast<double>();
+            Eigen::MatrixXd S = Eigen::MatrixXd::Zero(9, Mekf::NX);
+            for (int i = 0; i < 3; ++i) S(i, i) = 1.0;
+            S.bottomRows(6) = m.pv_readout().template cast<double>();
+            return S * P * S.transpose();
+        }
     }
     Estimate3 estimate() const override {
         Estimate3 e;
@@ -180,15 +218,23 @@ public:
         e.v = m.get_velocity().template cast<double>();
         e.a = m.get_world_accel().template cast<double>();
         const Eigen::Matrix<double,9,9> M9 = native9_();
-        e.Ppv = M9.bottomRightCorner<6,6>();
+        if constexpr (requires { m.physical_pv_covariance(); })
+            e.Ppv = m.physical_pv_covariance().template cast<double>();
+        else e.Ppv = M9.bottomRightCorner<6,6>();
         e.nis = m.lastAccDiag().nis;
         e.has_att = true;
         e.q_bw = m.quaternion_boat().template cast<double>();
         e.has_ext = true;
         Eigen::Matrix<double,9,9> J = Eigen::Matrix<double,9,9>::Zero();
-        J.topLeftCorner<3,3>() = e.q_bw.toRotationMatrix();
-        J.block<3,3>(3,3) = -Eigen::Matrix3d::Identity();
-        J.block<3,3>(6,6) = -Eigen::Matrix3d::Identity();
+        if constexpr (requires { m.state(); }) {
+            J.setIdentity();
+            J.block<3,3>(3,0) = -ocean_imu::lie::skew<double>(e.p);
+            J.block<3,3>(6,0) = -ocean_imu::lie::skew<double>(e.v);
+        } else {
+            J.topLeftCorner<3,3>() = e.q_bw.toRotationMatrix();
+            J.block<3,3>(3,3) = -Eigen::Matrix3d::Identity();
+            J.block<3,3>(6,6) = -Eigen::Matrix3d::Identity();
+        }
         e.P9 = J * M9 * J.transpose();
         e.b_g = m.gyroscope_bias().template cast<double>();
         e.b_a = m.get_acc_bias_body_at_temperature(temp_).template cast<double>();
@@ -203,15 +249,24 @@ public:
         const auto& m = f_.raw().mekf();
         const Eigen::Matrix3d R = m.quaternion_boat().template cast<double>().toRotationMatrix();
         Eigen::Matrix<double,9,1> err;
-        const Eigen::AngleAxisd aa(Eigen::Matrix3d(tr.R_bw.transpose() * R));
-        err.head<3>() = aa.angle() * aa.axis();
-        err.segment<3>(3) = tr.p - m.get_position().template cast<double>();
-        err.segment<3>(6) = tr.v - m.get_velocity().template cast<double>();
+        if constexpr (requires { m.state(); }) {
+            const Eigen::Vector3d phi=ocean_imu::lie::Log<double>(Eigen::Matrix3d(R*tr.R_bw.transpose()));
+            const Eigen::Matrix3d dR=ocean_imu::lie::Exp<double>(phi), Ji=ocean_imu::lie::inv_left_jacobian<double>(phi);
+            err.head<3>()=phi;
+            err.segment<3>(3)=Ji*(m.get_position().template cast<double>()-dR*tr.p);
+            err.segment<3>(6)=Ji*(m.get_velocity().template cast<double>()-dR*tr.v);
+        } else {
+            const Eigen::AngleAxisd aa(Eigen::Matrix3d(tr.R_bw.transpose() * R));
+            err.head<3>() = aa.angle() * aa.axis();
+            err.segment<3>(3) = tr.p - m.get_position().template cast<double>();
+            err.segment<3>(6) = tr.v - m.get_velocity().template cast<double>();
+        }
         Eigen::LDLT<Eigen::Matrix<double,9,9>> l(native9_());
         if (l.info() != Eigen::Success || !l.isPositive()) return NAN;
         return err.dot(l.solve(err));
     }
     double cond_corr() const override { return corr_condition(f_.raw().mekf().covariance_full()); }
+    bool covariance_audit(double (&d)[3]) const override { return audit_covariance(f_.raw().mekf().covariance_full(),d); }
     long mag_forwarded() const override { return mag_.forwarded; }
     long mag_applied() const override { return mag_.applied; }
     double op_fz_hz() const override {
@@ -273,7 +328,7 @@ private:
 };
 
 inline std::unique_ptr<IEstimator3> make_csm(const std::string& n, const CsmSpec& sp) {
-    return std::make_unique<FullCsm>(n, sp);
+    return std::make_unique<FullSharedModes<csm::SeaStateFusion_CarmaSharedModes>>(n, sp);
 }
 
 }  // namespace carma3_bench

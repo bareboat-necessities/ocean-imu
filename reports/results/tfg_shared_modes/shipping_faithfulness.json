@@ -1,0 +1,173 @@
+{
+  "failure_classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE: pre-refresh broad all-src fingerprint changed; not a filter instability result",
+  "structures_preserved": "Literal unmodified shipping OU-III wrapper and full state; prediction/correction/Joseph/reset; physical and sensor history; gyro and accel bias handling; Mahony/reference/tuner; jointly generated tau,sigma_aw,R_S,T_S; S cadence; all clocks and magnetic service",
+  "relaxations_introduced": "None added. The inherited finite diagnostic still uses off-orbit root perturbations; they are not asserted reachable, and finite secants are not uniform derivative bounds.",
+  "refresh_command": "PYTHONPATH=<mpmath-path> OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen <Eigen-root> --output reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+  "raw_native_hashes_identical_to_main": true,
+  "native_byte_hashes": [
+    "73952fb8f74f93781415c9d5e1d618320097e77386a040fa15a2fe1c7e1e955c",
+    "383854dd1c8b6eddd72d7c374a33522f228ad66a8ec78c24b0e8e392e0ff4a50"
+  ],
+  "maximum_changed_float_roundoff": 1.4210854715202004e-14,
+  "changes": [
+    {
+      "path": "/runs/0/b_quotient_to_covariance_secant",
+      "old": 0.002511685311338147,
+      "new": 0.0025116853113381467
+    },
+    {
+      "path": "/runs/0/c_covariance_to_quotient_secant",
+      "old": 0.05855739942275281,
+      "new": 0.05855739942275285
+    },
+    {
+      "path": "/runs/0/common_root_metric/b_Q_secant",
+      "old": 0.002417136147961958,
+      "new": 0.002417136147961957
+    },
+    {
+      "path": "/runs/0/common_root_metric/determinant_diagnostic",
+      "old": 0.0013719195696751396,
+      "new": 0.0013719195696751405
+    },
+    {
+      "path": "/runs/0/common_root_metric/optimistic_zero_gauge_P_radius_diagnostic",
+      "old": 68.0892388915754,
+      "new": 68.08923889157539
+    },
+    {
+      "path": "/runs/0/common_root_metric/rho_Q_secant",
+      "old": 0.8263390622006285,
+      "new": 0.8263390622006284
+    },
+    {
+      "path": "/runs/0/comparison_determinant_diagnostic",
+      "old": 0.015940215270140754,
+      "new": 0.015940215270140726
+    },
+    {
+      "path": "/runs/0/full_mean_secant_gain",
+      "old": 0.934805439559721,
+      "new": 0.9348054395597206
+    },
+    {
+      "path": "/runs/0/quotient_mean_secant_gain",
+      "old": 0.8731227416329638,
+      "new": 0.873122741632964
+    },
+    {
+      "path": "/runs/1/b_quotient_to_covariance_secant",
+      "old": 0.004474113327113436,
+      "new": 0.004474113327113439
+    },
+    {
+      "path": "/runs/1/c_covariance_to_quotient_secant",
+      "old": 0.058557189519442394,
+      "new": 0.05855718951944238
+    },
+    {
+      "path": "/runs/1/common_root_metric/b_Q_secant",
+      "old": 0.004283558734002618,
+      "new": 0.004283558734002623
+    },
+    {
+      "path": "/runs/1/common_root_metric/c_Q_secant",
+      "old": 0.05541957769163243,
+      "new": 0.05541957769163246
+    },
+    {
+      "path": "/runs/1/common_root_metric/determinant_diagnostic",
+      "old": 0.0013468606349258498,
+      "new": 0.0013468606349258546
+    },
+    {
+      "path": "/runs/1/common_root_metric/optimistic_zero_gauge_P_radius_diagnostic",
+      "old": 69.3642531060651,
+      "new": 69.36425310606509
+    },
+    {
+      "path": "/runs/1/common_root_metric/rho_Q_secant",
+      "old": 0.8263390620522637,
+      "new": 0.8263390620522632
+    },
+    {
+      "path": "/runs/1/full_mean_secant_gain",
+      "old": 0.9348054371893451,
+      "new": 0.9348054371893447
+    },
+    {
+      "path": "/shipping_source_tree_sha256",
+      "old": "7870b8fe97c924a47f90689ee0d668cd795103d816c176f5d261da99e480b66f",
+      "new": "3f1d5002f6fca8035b2e2d090bffd9f4c80a0d9cb971cebc02dff5152b1550e7"
+    },
+    {
+      "path": "/source_binding_refresh",
+      "old": {
+        "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+        "diagnostic_payload_preserved": true,
+        "mathematical_margin_promoted": false,
+        "previous_shipping_source_tree_sha256": "2b9dbb400f82addab43ad5553b65be72d41a2faf8c678e885ead761cec0f855a",
+        "reason": "Shared-modes Xtensa constructor isolation changes two files outside the OU-III native probe dependency closure.",
+        "reference_commit": "a4f5be152fa8aaff70f765fcdf7a9a89881f54ac",
+        "unchanged_probe_src_dependencies": [
+          "src/ahrs/Mahony_AHRS.h",
+          "src/detrend/AdaptiveWaveDetrender3D.h",
+          "src/freq/AranovskiyFreqTracker.h",
+          "src/freq/FirstOrderIIRSmoother.h",
+          "src/freq/FrequencyTrackerPolicy.h",
+          "src/freq/KalmANFFreqTracker.h",
+          "src/freq/PLLFreqTracker.h",
+          "src/freq/SchmittTriggerZCFreqTracker.h",
+          "src/kalman_common/AccelVibrationConditioning.h",
+          "src/kalman_common/CovarianceProjection.h",
+          "src/kalman_common/MagneticStartupCommon.h",
+          "src/kalman_common/MarineWaveFrontEnd.h",
+          "src/kalman_common/MekfAttitudeMath.h",
+          "src/kalman_common/PeriodicSchedule.h",
+          "src/kalman_common/ProxyStartupFusion.h",
+          "src/kalman_common/SeaStateAdaptationCommon.h",
+          "src/kalman_common/SeaStateFusionDefaults.h",
+          "src/kalman_common/SeaStateFusionFilterCommon.h",
+          "src/kalman_common/SeaStateOUFamilyDefaults.h",
+          "src/kalman_common/SeaStateTuning.h",
+          "src/kalman_ou_common/KalmanOUCoreMath.h",
+          "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
+          "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
+          "src/tuner/AccelVibrationGuard.h",
+          "src/tuner/AdaptiveWaveBandPass.h",
+          "src/tuner/ContinuousMagHardIronEstimator.h",
+          "src/tuner/MagAutoTuner.h",
+          "src/tuner/SeaStateAdaptationLimits.h",
+          "src/tuner/SeaStateAutoTuner.h",
+          "src/tuner/SeaStateFusionTunerCommon.h",
+          "src/tuner/VerticalAccelComplementary.h",
+          "src/tuner/WavePeriodEstimator.h",
+          "src/util/WaveFilesSupport.h",
+          "src/wave_dir/KalmanWaveDirection.h",
+          "src/wave_dir/VesselRaoEqualizer.h",
+          "src/wave_dir/VesselRaoNoiseWeighting.h",
+          "src/wave_dir/WaveDirectionDetector.h",
+          "src/wave_dir/WaveDirectionFrame.h"
+        ],
+        "validation_gate_changed": false,
+        "verification": "g++ -MM dependency closure; every src dependency byte-identical to reference commit"
+      },
+      "new": null
+    }
+  ],
+  "genuine_shipping_counterexample_found": false,
+  "theorem_closed": false,
+  "established_results": "Existing shipping-level results and qualifications unchanged; this only renews finite diagnostic provenance after adding experimental CARMA source.",
+  "next_calculation": "Run the original shipping-provenance and complete validation suites against the refreshed finite evidence; no proof gate or numerical threshold is changed.",
+  "final_source_tree_matches_registered_execution_revision": false,
+  "final_source_tree_sha256": "edf66bc1da145c57199a52c05c0e7ea48f5ced9bb9f96f9e6757dc7a59d8b981",
+  "review_refresh": {
+    "reason": "The shared-mode excitation cap and the review fixes (confidence gain, re-initialization, non-finite samples, keel correlation; src/kalman_carma, src/kalman_carma_shared_modes) change the broad all-src binding; shipping OU-III source and algorithms remain untouched.",
+    "previous_shipping_source_tree_sha256": "75c6da2db9ad3b181416384f7f53daadeeaae0951ae1f384914a840c1b411cc0",
+    "raw_native_hashes_match_main": true,
+    "finite_diagnostic_run_summaries_identical_to_previous_replay": false,
+    "maximum_summary_difference_to_previous_replay": 1.4210854715202004e-14,
+    "summary_difference_cause": "host numerical-library round-off in the Python analysis; the native byte records are identical",
+    "theorem_closed": false
+  }
+}

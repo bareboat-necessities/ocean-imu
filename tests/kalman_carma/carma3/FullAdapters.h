@@ -50,6 +50,17 @@ double corr_condition(const Mat& Pin) {
     return lo > 0 ? hi / lo : INFINITY;
 }
 
+template<class Mat>
+bool audit_covariance(const Mat& Pin, double (&d)[3]) {
+    const Eigen::MatrixXd P=Pin.template cast<double>();d[2]=P.allFinite()?1.0:0.0;
+    d[0]=(P-P.transpose()).cwiseAbs().maxCoeff()/std::max(1e-300,P.cwiseAbs().maxCoeff());
+    if(!P.allFinite() || P.diagonal().minCoeff()<=0){d[1]=NAN;return true;}
+    const Eigen::VectorXd s=P.diagonal().cwiseSqrt().cwiseInverse();
+    const Eigen::MatrixXd C=s.asDiagonal()*P*s.asDiagonal();
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> es(C,Eigen::EigenvaluesOnly);
+    d[1]=es.info()==Eigen::Success?es.eigenvalues().minCoeff():NAN;return true;
+}
+
 // Quaternion-MEKF error e = [dtheta_b (C_true = Exp(dtheta) Chat), p - phat,
 // v - vhat]: the common e9 = [Log(Rhat R^T), phat - p, vhat - v] covariance is
 // J P J^T with J = blkdiag(Rhat, -I, -I).
@@ -203,6 +214,7 @@ public:
                                  m.get_position().cast<double>(), m.get_velocity().cast<double>(), tr, kIp, kIv);
     }
     double cond_corr() const override { return corr_condition(fusion_.raw().mekf().covariance_full()); }
+    bool covariance_audit(double (&d)[3]) const override { return audit_covariance(fusion_.raw().mekf().covariance_full(),d); }
     long mag_forwarded() const override { return mag_.forwarded; }
     long mag_applied() const override { return mag_.applied; }
     size_t memory_bytes() const override { return sizeof(fusion_) + sizeof(fusion_.raw().mekf()); }
@@ -271,6 +283,7 @@ public:
                                  tr, kIp, kIv);
     }
     double cond_corr() const override { return corr_condition(fusion_.raw().mekf().covariance_full()); }
+    bool covariance_audit(double (&d)[3]) const override { return audit_covariance(fusion_.raw().mekf().covariance_full(),d); }
     long mag_forwarded() const override { return mag_.forwarded; }
     long mag_applied() const override { return mag_.applied; }
     double op_fz_hz() const override {

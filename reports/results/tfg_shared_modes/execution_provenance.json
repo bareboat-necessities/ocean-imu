@@ -1,0 +1,10 @@
+{
+  "execution_base_revision": "f7dbe79",
+  "execution_tree": "the commit that publishes these results: src/, tests/ and the registered runner are byte-identical to the tree that ran them (whole-src digest edf66bc1da145c57199a52c05c0e7ea48f5ced9bb9f96f9e6757dc7a59d8b981)",
+  "registered_runner_path": "tools/tfg_shared_modes_study.py",
+  "registered_runner_sha256": "058e095faafd1dd892ffdb0e6e38f9313cc310f8935ebadf4a3ea3d37270798b",
+  "binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
+  "note": "Every registered and diagnostic study was regenerated after the review fixes (confidence gain applied without a model commit, coupling evidence restarted on attitude re-initialization, accumulated shrink of slow confidence declines) with the default cap policy (cap_coherence 0.8, horizontal prior enlarged along the coupling direction). Operational shared-filter scores move by at most 0.2 % against the previous execution; legacy-cap rows in the collapse regime move more. Earlier executions are preserved in git history.",
+  "not_repeated": "host timing (host_*.csv), the Xtensa size/stack probe and the AtomS3R firmware builds were measured before the cap policy, which adds one float to the coupling configuration and a few operations to the 0.1 s model commit.",
+  "final_estimator_binary_identical_to_registered_execution": true
+}
