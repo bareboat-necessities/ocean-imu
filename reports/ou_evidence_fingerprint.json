@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "950e367505b5fd1994ea08689dae59925ae718d5b7cd9b6f3f45a5102ec81500",
+  "replay_fingerprint": "d6e76fccbd6d8bc08e3fdc37ca32fb892934d7ff717dfad22b942121e4c82185",
   "results_file_count": 766,
   "results_files": [
     {
@@ -1981,7 +1981,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "fc2cf58248fe149a33876dd48f14bf0a4155b423b7f663f4e3e065e1795b4cc5"
+      "sha256": "5501de426792a00ed99fce3778591f9c8785cec24608f4fb91e379ab9a552a81"
     },
     {
       "kind": "file",
@@ -2051,57 +2051,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "b7b0d765e090810fbe117072851bb76f53d796bdb82f6d9f6db0140f1f251939"
+      "sha256": "f388db448b9d4f77ae53ff08fe39a1bf973165de3968929121e44af787b6b38a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "ccbed690a9a9e049655066d5fb68ace0b73aadb6fb4228776e2f721166ea1734"
+      "sha256": "bed5430a561c6fc58b41a77d18f3cef502bd5771f22e727a73dfc154a44bf9f2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "74cac7aa296f52ea5a0586d8927c58a31c62cb3d4a0dc114bb5bded2a92b62b4"
+      "sha256": "7f27b2f3ab5639cfa17dcfa1da9f746d423167e52af1ea0e6bb2456ce97f8722"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "0b1adab778f76a4506f52fe68882127e15dfa63a860dac31a86064d0ca01da66"
+      "sha256": "75ccb6c177720f5395b4256d7719717a02bdc8f59ba0c6cb0af51d009546800a"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "592eb8597364aaf9a5a2ec2a64cf1c37e200d2f4da26e515690c805455a88ac3"
+      "sha256": "159ec3376e5659d4ebef74d0199a5c35adb4b73eab51141c24066958bbc22e69"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "25a6b41a367a59d724d6be90afd144c48b9c54a4af24df6894ff47622ea0e43b"
+      "sha256": "2a7a94cc2b5a6d1ec24048984473a86629aff92a4966970ce4a7c161f4d95f63"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "28f7baf56407e35de83290db3f21c25d634cfc7daddf89670e726d56092e1372"
+      "sha256": "5f38acecb8638d0be8ff95eb6a141c0699997d111b7f3884c98c85c45993c079"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "0c7801b699ea3531cca2a5190b12a13ca4a18ca79e0bcfa17f4019c45e12c90e"
+      "sha256": "900185c74529f5e5b1d373fa65858d5987f230806757a08eb6876e3e379d8db2"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "819f2c1b9828bb884df35a00af1b77336c3eb528e88b7cdc475aad8a47644db7"
+      "sha256": "7df2e12a3edb44ec6d3343f2b4b32097965ecf3c92d3784f67534fd1b6b3d971"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "c09a8738c773956c39f70e6d1b5426585922d78af683cacf8bc260e43a5c1696"
+      "sha256": "8c0d0eefe752105aebef46d7678ea6caf8cbdb6aa2fa415b84080372b14e1e73"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "c97e3002ccb4b13e1453eb2ff5a456049fa8aed7a037a388a4a0d88d39ef2e6a"
+      "sha256": "56fccd880ba83d1bb8df7c15e7c14ae85f227722aaf1cc6d12b758b5353cd06c"
     },
     {
       "kind": "file",
@@ -2121,7 +2121,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "6da1d29e72accbdf8f38c0ed76263d7f2e1afb548ae08ef3b66e185961f5d4ee"
+      "sha256": "f246a002d4c2fb24945aab81cd0c8ab658bb047178481c58da69783e3a15adb1"
     },
     {
       "kind": "file",
@@ -3834,13 +3834,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "d7d5ff3f6b2739ff8452786a9a86f14051bbb673338cf60c559d42289563459d",
+  "results_fingerprint": "c05b5e7e7c50f499b81bd3655ab45fc293c5dbca53a472a1eb7e7df442d17655",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 906,
+  "tracked_replay_file_count": 907,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -3860,7 +3860,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "f8c16c455ba8c0dbfac71f838985544bc2d713572bb42673189d644c166d8340"
+      "sha256": "6d916f04336aa30e9b3731342386b6fad7f9e00e266aecff90876ad5a0b6d1c6"
     },
     {
       "mode": "100644",
@@ -4101,6 +4101,11 @@
       "mode": "100644",
       "path": "plots/kalman_tfg_carma/kalman_tfg_carma-plots.py",
       "sha256": "bcafe8e76bb9496447b2ca67164b515b7b5b5a06c9991327cd550ce5ef5e1de8"
+    },
+    {
+      "mode": "100755",
+      "path": "plots/kalman_tfg_shared_modes/draw_plots.sh",
+      "sha256": "a445d22570d55e2466a3cf183292f3834363468e43daa8e8faa37ae99769730b"
     },
     {
       "mode": "100644",
