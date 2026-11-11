@@ -135,11 +135,14 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]], table: dict[str,
     return "\n".join(lines)
 
 
-def main() -> int:
+def main(*, table: dict[str, str] = CARMA3_TABLE,
+         binary_default: str = "tests/kalman_carma/carma3-sim",
+         data_default: str = "plots/kalman_carma",
+         output_default: str = "doc/kalman_carma/carma-sim-results-generated.tex-part") -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--binary", default="tests/kalman_carma/carma3-sim")
-    parser.add_argument("--data-dir", default="plots/kalman_carma")
-    parser.add_argument("--output", default="doc/kalman_carma/carma-sim-results-generated.tex-part")
+    parser.add_argument("--binary", default=binary_default)
+    parser.add_argument("--data-dir", default=data_default)
+    parser.add_argument("--output", default=output_default)
     args = parser.parse_args()
 
     def resolve(p: str) -> Path:
@@ -158,7 +161,7 @@ def main() -> int:
         rows.append((label, hs, run_record(binary, record)))
         print(f"scored {name}", file=sys.stderr)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(format_table(rows), encoding="utf-8")
+    output.write_text(format_table(rows, table), encoding="utf-8")
     print(f"wrote {output}")
     return 0
 

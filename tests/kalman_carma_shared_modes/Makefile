@@ -16,7 +16,7 @@ else
 endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = kalman_tfg_shared_modes-sim tfg_shared_modes-test carma_shared_modes-test carma_shared_modes_realization-test kalman_carma_shared_modes-sim kalman_carma_shared_modes-bench
+TARGETS = tfg_shared_modes-test carma_shared_modes-test carma_shared_modes_realization-test kalman_carma_shared_modes-sim kalman_carma_shared_modes-bench
 # carma3_bench's engine and filter units (tests/kalman_carma), compiled here
 # so the Monte Carlo benchmark pairs the new filter with the same truth and
 # sensors; the engine's main() is renamed carma3_bench_main.
@@ -39,10 +39,6 @@ carma_shared_modes_realization-test: carma_shared_modes_realization-test.o
 # Host timing of the QMEKF cores (on demand; not part of build):
 # tools/carma_shared_modes_study.py timing.
 kalman_carma_shared_modes-timing: kalman_carma_shared_modes-timing.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-kalman_tfg_shared_modes-sim.o: kalman_carma_shared_modes-sim.cpp
-	$(CC) $(CXXFLAGS) -DTFG_SHARED_REPLAY=1 -MMD -MP -c $< -o $@
-kalman_tfg_shared_modes-sim: kalman_tfg_shared_modes-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 kalman_carma_shared_modes-sim: kalman_carma_shared_modes-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

@@ -112,10 +112,19 @@ python3 tools/tfg_shared_modes_report.py --results "$TFG_STUDY_RESULTS"
 (cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 ```
 
-CI builds this article in the `kalman_tfg_shared_modes` matrix entry. It runs
-the same plotting script, LaTeX compilation and retry, PDF artifact upload,
-and release publication as the other articles, using the committed study
-evidence without downloading or replaying the wave dataset.
+The `kalman_tfg_shared_modes` CI entry builds and runs its dedicated
+`tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp` on the pinned
+vessel-RAO data. Its test script verifies eight real quality-gate passes and
+demonstrates failure on corrupted displacement truth. The measured limits and
+baseline provenance are in `reports/results/tfg_shared_modes/deterministic_regression.json`.
+The replay table, bounded plots, LaTeX compilation/retry, PDF uploads and
+release publication follow the standard estimator pipeline.
+
+`doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex` is the standalone
+method presentation, covering the shared CARMA model, invariant geometry,
+prediction, full group reset, adaptive transport, frontend, startup and results.
+The original `kalman_tfg_shared_modes.tex` remains the controlled comparative
+study; `kalman_tfg_shared_modes-charts.tex` is the deterministic replay gallery.
 
 `run` rejects caches from a different source/executable/protocol. Do not mix
 runs after modifying an estimator. Independent paired seeds, score windows,
@@ -178,10 +187,10 @@ cells near the boundary with the horizontal prior factor raised to 2. Its
 repeated `k=1` and `k=0.15` cells must reproduce the primary and diagnosis
 scores exactly.
 
-The pinned replay is also shared source: `kalman_tfg_shared_modes-sim` compiles
-`kalman_carma_shared_modes-sim.cpp` with the TFG core policy. Its results use a
-distinct family label and do not reuse or modify the QMEKF's fitted regression
-bars. The existing QMEKF replay retains its gating and public environment
+The dedicated TFG and QMEKF replay sources instantiate the same
+`tests/common/SharedModesReplay.h` adapter and protocol. TFG uses a distinct
+family label and its own measured regression bars. The QMEKF replay retains
+its existing bars and public environment
 variables. `W3D_CSM_VARIANT=CSM_OFF` selects the diagnostic uncoupled replay
 for either binary. Independent-axis TFG can also be replayed with
 `W3D_CARMA3_VARIANT=T41 tests/kalman_carma/carma3-sim`.
