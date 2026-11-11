@@ -35,6 +35,8 @@ Expand **Assets** and choose the ZIP for exactly one sketch:
 | `atomS3R_ins_kalman_ou3` | OU-III marine INS |
 | `atomS3R_ins_carma3` | Experimental three-axis CARMA marine INS |
 | `atomS3R_ins_tfg_carma3` | Experimental TFG-CARMA3 (CARMA3 on the two-frame Lie group) marine INS |
+| `atomS3R_ins_carma_shared_modes` | Experimental shared-modes CARMA QMEKF marine INS |
+| `atomS3R_ins_tfg_carma_shared_modes` | Experimental shared-modes CARMA TFG marine INS |
 | `atomS3R_ins_tfg` | Two-frame Lie-group marine INS |
 | `atomS3R_ins_pii_observer` | PII marine motion observer |
 | `atomS3R_ins_nlo` | Time-varying-gain nonlinear observer |

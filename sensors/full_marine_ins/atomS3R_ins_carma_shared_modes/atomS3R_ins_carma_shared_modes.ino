@@ -76,6 +76,9 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
+// OCEAN_IMU_TFG_SHARED_MODES swaps in the TFG core for the matched
+// firmware-size comparison (tools/tfg_shared_modes_firmware.py).  To run the
+// shared-modes TFG filter use atomS3R_ins_tfg_carma_shared_modes.
 #if defined(OCEAN_IMU_TFG_SHARED_MODES)
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
 #else

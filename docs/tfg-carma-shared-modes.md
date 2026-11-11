@@ -219,9 +219,13 @@ sizes are recorded separately. Host execution time does not establish ESP32
 real-time deadlines. No new sample-path heap allocation is introduced; the
 existing wrapper constructs its estimator on the heap at `begin()`.
 
-For the full AtomS3R application, compile the existing shared-mode sketch with
-`-DOCEAN_IMU_TFG_SHARED_MODES=1` in `compiler.cpp.extra_flags`. The default of
-that experimental sketch remains its existing QMEKF. The optional `tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe`
+The full AtomS3R application is the sketch
+`sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes`: the TFG-CARMA3
+sketch with the shared-mode TFG filter as its inner filter. The matched
+firmware-size comparison (`tools/tfg_shared_modes_firmware.py`) instead
+compiles the QMEKF shared-mode sketch with `-DOCEAN_IMU_TFG_SHARED_MODES=1` in
+`compiler.cpp.extra_flags`, so that both builds share one application; that
+sketch's default remains its QMEKF. The optional `tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe`
 measures one selected core at 200 Hz for 60 s, including 0.1 s model commits
 and 100 Hz magnetic updates. `PROBE_VARIANT=0..3` selects the four cells. It
 prints mean/99th/max update time, missed 5 ms deadlines, minimum free heap,

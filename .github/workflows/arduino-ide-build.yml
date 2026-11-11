@@ -17,9 +17,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    # Compile every discovered sketch with Arduino IDE default flags.
-    # Use two compile workers without changing the 60-minute job budget.
-    timeout-minutes: 60
+    # Compile every discovered sketch with Arduino IDE default flags and two
+    # compile workers.  Thirteen sketches took 54 minutes on windows-latest
+    # and each full INS sketch adds about five, so fourteen need more than the
+    # earlier 60-minute budget.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v6
       - uses: arduino/setup-arduino-cli@v2
