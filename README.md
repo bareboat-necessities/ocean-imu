@@ -18,19 +18,21 @@ The articles describing the math behind the methods:
 
 INS Filters:
 
-- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_ou-w3d.pdf)
+- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_ou-w3d.pdf)
 
-- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_ou-w3d-stability-study.pdf)
+- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_ou-w3d-stability-study.pdf)
 
-- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman_tfg.pdf)
+- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_tfg.pdf)
 
-- [CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_carma.pdf)
+- [CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_carma.pdf)
 
-- [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/kalman_tfg_carma.pdf)
+- [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_tfg_carma.pdf)
 
-- [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.3/kalman_carma_shared_modes.pdf)
+- [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_carma_shared_modes.pdf)
 
-- [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/pii_observer-model.pdf)
+- [Adaptive Shared-Mode CARMA(4,1) Lie Group](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman_tfg_shared_modes-method.pdf)
+
+- [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/pii_observer-model.pdf)
 
 - [Non-Linear Observer NLO](https://torarnj.folk.ntnu.no/TimeVarGain.pdf)
 
@@ -42,43 +44,43 @@ Heave-only filters (comparison baselines, see [docs/heave-only.md](docs/heave-on
 
 Research Studies:
 
-- [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-wave-dir.pdf)
+- [Wave Direction](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman-wave-dir.pdf)
 
-- [INS Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/ins-startup.pdf)
+- [INS Filters Startup](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/ins-startup.pdf)
 
-- [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/kalman-gnss-fusion.pdf)
+- [GNSS Fusion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/kalman-gnss-fusion.pdf)
 
-- [Stochastic Marine Motion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.1/stochastic-marine-motion.pdf)
+- [Stochastic Marine Motion](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/stochastic-marine-motion.pdf)
 
 IMU Calibration:
 
-- [IMU Calibration Method](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/imu_calibrate-method.pdf)
+- [IMU Calibration Method](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/imu_calibrate-method.pdf)
 
 Frequency tracking:
 
-- [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_adaptive_notch_kalman.pdf)
+- [KalmANF Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/freq-tracking_adaptive_notch_kalman.pdf)
 
-- [Aranovskiy Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_aranovskiy.pdf)
+- [Aranovskiy Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/freq-tracking_aranovskiy.pdf)
 
-- [PLL Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_pll.pdf)
+- [PLL Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/freq-tracking_pll.pdf)
 
-- [Zero Crossing Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/freq-tracking_zero_crossing.pdf)
+- [Zero Crossing Frequency Tracker](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/freq-tracking_zero_crossing.pdf)
 
 Wave Models:
 
-- [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-waves.pdf)
+- [Wave Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/wave_sim-waves.pdf)
 
-- [Fenton Waves](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-fenton.pdf)
+- [Fenton Waves](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/wave_sim-fenton.pdf)
 
-- [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-spectral.pdf)
+- [Spectral Models](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/wave_sim-spectral.pdf)
 
-- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/spectrum-sea_metrics.pdf)
+- [Sea Metrics](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/spectrum-sea_metrics.pdf)
 
-- [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/wave_sim-vessel-RAO.pdf)
+- [Vessel RAO](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/wave_sim-vessel-RAO.pdf)
 
 Autopilot Use Cases:
 
-- [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.0/autopilots-methods.pdf)
+- [Algorithmic Methods in Open Source Marine Autopilots](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.4/autopilots-methods.pdf)
 
 There are several versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
 
