@@ -133,8 +133,10 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const c
                                    && !std::getenv("W3D_INIT_SEED");
         const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
                            !std::getenv("W3D_CARMA3_EXCITATION") && !std::getenv("W3D_CSM_GYRO_INPUT");
+        if (require_gates && std::getenv("W3D_CSM_GYRO_INPUT"))
+            throw std::invalid_argument("--regression forbids W3D_CSM_GYRO_INPUT");
         if (require_gates && !gated)
-            throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds, excitation and gyro contract");
+            throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds and excitation");
         if (require_gates) {
             for (const char* key : {"W3D_ENGINE_RPM", "W3D_CSM_GUARD_HZ", "W3D_CSM_GUARD_RACC_GAIN",
                                     "W3D_IMU_LEVER_ARM_M", "W3D_IMU_LEVER_ARM_MODEL",

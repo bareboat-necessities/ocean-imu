@@ -58,6 +58,8 @@ def main() -> None:
                 (['--no-noise'], {}, protocol_error), (['--nomag'], {}, protocol_error),
                 ([], {'W3D_SEED': '7'}, protocol_error),
                 ([], {'W3D_CSM_VARIANT': 'CSM_OFF'}, protocol_error),
+                ([], {'W3D_CSM_GYRO_INPUT': 'instantaneous'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
+                ([], {'W3D_CSM_GYRO_INPUT': 'interval'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
                 ([], {'W3D_ENGINE_RPM': '1600'}, '--regression forbids W3D_ENGINE_RPM')]:
             r = run(['--input', str(records[0]), *args], changes)
             assert r.returncode == 2 and error in r.stdout, (args, changes, r.stdout[-1000:])

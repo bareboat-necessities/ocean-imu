@@ -44,16 +44,18 @@
   },
   "initial_build_failures": [
     {
-      "command": "make -j3 all EIGEN_DIR=\"$EIGEN_DIR\"",
+      "command": "make -j3 all EIGEN_DIR=/workspace/scratch/c5be0639f4c3/eigen-3.4.0",
       "tree": "untouched baseline",
       "error": "./run_tests.sh: line 3: ./qmekf_geometry-test: No such file or directory",
-      "explanation": "parallel root all starts build and test concurrently; rerun serially"
+      "explanation": "parallel root all starts build and test concurrently; rerun serially",
+      "workdir": "/workspace/scratch/447eaed1ad46/ocean-imu-baseline"
     },
     {
-      "command": "g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I<baseline>/src -isystem <Eigen-3.4.0> -march=native -MMD -MP -c carma_excitation-test.cpp -o carma_excitation-test.o",
+      "command": "g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I/workspace/scratch/447eaed1ad46/ocean-imu-baseline/src -isystem /workspace/scratch/c5be0639f4c3/eigen-3.4.0  -march=native -MMD -MP -c carma_excitation-test.cpp -o carma_excitation-test.o",
       "tree": "untouched baseline",
       "error": "g++: fatal error: Killed signal terminated program cc1plus",
-      "explanation": "resource failure during overlapping heavy compilation; changed-tree serial build compiled the same target successfully"
+      "explanation": "resource failure during overlapping heavy compilation; changed-tree serial build compiled the same target successfully",
+      "workdir": "/workspace/scratch/447eaed1ad46/ocean-imu-baseline/tests/kalman_carma"
     }
   ],
   "test_build_hygiene": "Affected startup/recovery evidence was discarded and rerun after a forced TFG harness rebuild. Configuration/setter parity is now checked through activation; runners freeze the executable before dispatch.",
@@ -77,8 +79,9 @@
     "src/kalman_carma_shared_modes/SharedModesEstimator.h": "0c2630b815d9bb787463050ff6d681bba4734286874156b592dda0907c9ac1ce",
     "src/kalman_common/GyroInterval.h": "0739b1764f7950db37f3c9670d86ca3d1f6007f2cc0ce8e5a930310e2b358a19",
     "src/kalman_common/ProxyStartupFusion.h": "3733671802221c4d5ff3d9c2ad943cfa4269919b2009aee5207117de7398a3b4",
-    "tests/common/SharedModesReplay.h": "d3a4d9f71f4e6c58af998dc17d3afcda5eab9bd262c81236c8a3b3058c1d695b",
+    "tests/common/SharedModesReplay.h": "f46dd9f76076bfac1c590a1c454b09d49d08afa40a1439a978e84d4afd4031b1",
     "tests/kalman_carma/CarmaBenchTruth.h": "41aa544c28f8bff7a2da6ea790b93fe32704e06507e141c19d46ceacff4c7bad",
+    "tests/kalman_tfg_shared_modes/regression_checks.py": "69835071553abef5227a8ce05c383bac8a9a88b9df5941f7bf6d0739fe3f657e",
     "tests/live_bias_consistency/Adapter.h": "752c72de9e63d03315a4821be65b7773d02fa85a1481a3d6f0b99c4fc167f16c",
     "tests/live_bias_consistency/Experiment.h": "ab30e8d02a661c1242445f404b5b14170c426c1d4fe41f3abcc238d51d3fe7f8",
     "tests/live_bias_consistency/Makefile": "0fe81d30cbc00542191396b1cfbe0f4c8e830fd434e40f6f710ef32f7dd12208",
@@ -98,5 +101,15 @@
     "tools/live_bias_csv_timing.py": "8a33ee9b225991b2348474b7a5a3f629477cbf24f339d88ba67dce79a87d473b",
     "tools/live_bias_window.py": "9014bbe434e73ed08cc6dbf2109270359ea5d3f88d45a1114f1a9695be92ec8c",
     "tools/live_bias_window_batch.py": "38d1d326912f1970a937a53ec1e164b2d798c50e192ff1004aaef538821f3a83"
-  }
+  },
+  "corrected_check_failures": [
+    {
+      "command": "make all EIGEN_DIR=/workspace/scratch/c5be0639f4c3/eigen-3.4.0",
+      "underlying_command": "python3 regression_checks.py",
+      "exit_code": 2,
+      "error": "legacy --no-noise admission check expected the original protocol-error message",
+      "correction": "Preserve the legacy message and reject gyro-contract overrides separately; add both explicit contracts to admission regression coverage.",
+      "workdir": "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg_shared_modes"
+    }
+  ]
 }
