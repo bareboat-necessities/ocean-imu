@@ -258,7 +258,8 @@ public:
                 float tempC = 35.0f)
     {
         if (!begun_) return;
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
+        if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro_body_ned.allFinite() ||
+            !acc_body_ned.allFinite() || !std::isfinite(tempC)) return;
 
         t_ += dt;
 

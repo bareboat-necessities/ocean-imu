@@ -1,0 +1,16 @@
+{
+  "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "binary_sha256": "38689e6f27d8e0cd9ddfcf3431eded3372b766b22096d64531b8150ff895b7f9",
+  "stage": "noise",
+  "runs": 192,
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006
+  ],
+  "paired": true,
+  "commands": "tools/live_bias_consistency.py --stage noise --binary /tmp/ocean-bias-frozen --jobs 3"
+}

@@ -64,6 +64,7 @@
 
 #include "kalman_common/CovarianceProjection.h"
 #include "kalman_common/ImuLeverArm.h"
+#include "kalman_common/GyroInterval.h"
 #include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_common/ConditionalCovariance.h"
 #include "kalman_common/PeriodicSchedule.h"
@@ -165,6 +166,11 @@ public:
 
     void set_mag_world_ref(const Vector3& B_world) { v2ref = B_world; }
 
+    // Default: a rate constant over the preceding interval. Opt in only for
+    // timestamped instantaneous samples; never average delta-angle inputs.
+    void set_gyro_sample_mode(filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
+    void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
+    void prime_gyro_sample(const Vector3& gyr, T dt) { gyro_interval_.prime(gyr, dt); }
     void time_update(Vector3 const& gyr, T Ts);
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
@@ -199,6 +205,9 @@ public:
     }
 
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
+    // Schmidt hold: keep the bias mean fixed but retain its persistent
+    // uncertainty and correlations. Legacy hold remains the default.
+    void set_schmidt_acc_bias_hold(bool enabled) { schmidt_acc_bias_hold_ = enabled; }
     void set_acc_bias_updates_enabled(bool en);
 
     [[nodiscard]] Vector3 get_velocity() const {
@@ -549,9 +558,11 @@ private:
     Eigen::Matrix<T,NX,1> xext;
     MatrixNX Pext;
 
+    filter_detail::GyroInterval<Vector3> gyro_interval_;
     Vector3 last_gyr_bias_corrected{};
     filter_detail::ImuLeverArm<T> lever_;
 
+    bool schmidt_acc_bias_hold_ = false;
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
     T tau_bacc_ = T(5000.0);
@@ -857,12 +868,12 @@ CARMA3_TPL
 void CARMA3_CLS::set_acc_bias_updates_enabled(bool en) {
     if (acc_bias_updates_enabled_ == en) return;
     if constexpr (AB) {
-        if (!en) {
+        if (!en && !schmidt_acc_bias_hold_) {
             Pext.template block<3,BASE_N>(OFF_BA, 0).setZero();
             Pext.template block<BASE_N,3>(0, OFF_BA).setZero();
             Pext.template block<3,NL>(OFF_BA, OFF_L).setZero();
             Pext.template block<NL,3>(OFF_L, OFF_BA).setZero();
-        } else {
+        } else if (en) {
             const T target = sigma_bacc0_ * sigma_bacc0_;
             for (int i = 0; i < 3; ++i)
                 Pext(OFF_BA + i, OFF_BA + i) = std::max(Pext(OFF_BA + i, OFF_BA + i), target);
@@ -1027,11 +1038,16 @@ CARMA3_TPL
 void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
+    const auto input = gyro_interval_.prepare(gyr, Ts);
+    if (!input.predict) return;
+
 
     Vector3 gyro_bias = Vector3::Zero();
     if constexpr (GB) gyro_bias = xext.template segment<3>(3);
-    last_gyr_bias_corrected = gyr - gyro_bias;
-    lever_.update_rate(last_gyr_bias_corrected, Ts);
+    last_gyr_bias_corrected = input.rate - gyro_bias;
+    // Lever-arm specific force is measured at the endpoint, whereas attitude
+    // prediction uses the preceding interval. Keep their rate inputs distinct.
+    lever_.update_rate(Vector3(gyr - gyro_bias), Ts);
 
     const Eigen::Quaternion<T> dq_wb = filter_detail::quat_from_delta_theta((-last_gyr_bias_corrected * Ts).eval());
     qref = dq_wb * qref;
@@ -1064,8 +1080,9 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     Q_AA.setZero();
     if (!use_exact_att_bias_Qd_) {
         Q_AA = Qbase * Ts;
+        Q_AA.template topLeftCorner<3,3>() *= input.noise_scale;
     } else {
-        const Matrix3 Qg = Qbase.template topLeftCorner<3,3>();
+        const Matrix3 Qg = Qbase.template topLeftCorner<3,3>() * input.noise_scale;
         Matrix3 Qbg = Matrix3::Zero();
         if constexpr (GB) Qbg = Qbase.template bottomRightCorner<3,3>();
         Matrix3 I_R;
@@ -1331,7 +1348,7 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         }
 
     if constexpr (AB) {
-        if (!use_ba) {
+        if (!use_ba && !schmidt_acc_bias_hold_) {
             for (int i = 0; i < NX; ++i)
                 for (int k = 0; k < 3; ++k) PCt(i,k) -= Pext(i, OFF_BA + k);
             freeze_acc_bias_rows_(PCt);
@@ -1371,7 +1388,7 @@ void CARMA3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     MatrixNX3& PCt = PCt_scratch_;
     PCt.noalias() = Pext.template block<NX,3>(0,0) * J_att.transpose();
     if constexpr (AB) {
-        if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(PCt);
+        if (!acc_bias_updates_enabled_ && !schmidt_acc_bias_hold_) freeze_acc_bias_rows_(PCt);
     }
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, Rmag.norm())) {
@@ -1403,7 +1420,7 @@ void CARMA3_CLS::select_update_(const int (&idx)[M], const Vector3& r, const Mat
     PCt.setZero();
     for (int i = 0; i < NX; ++i)
         for (int k = 0; k < M; ++k) PCt(i,k) = Pext(i, idx[k]);
-    if (freeze_ba) freeze_acc_bias_rows_(PCt);
+    if (freeze_ba && !schmidt_acc_bias_hold_) freeze_acc_bias_rows_(PCt);
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, R.norm())) return;
     MatrixNX3& K = K_scratch_;

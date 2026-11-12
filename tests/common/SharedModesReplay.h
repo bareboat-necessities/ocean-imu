@@ -30,6 +30,18 @@ public:
         // Controlled sensor-path ablations for the article's machinery study.
         // Unset variables retain the deployed wrapper configuration.
         auto& filter = impl_.fusion().raw();
+        // Explicit sensor contract for diagnostic replays. Keep the original
+        // interval-rate regression protocol and its thresholds unchanged.
+        const char* gyro_input = std::getenv("W3D_CSM_GYRO_INPUT");
+        const std::string gyro_mode = gyro_input ? gyro_input : "interval";
+        if (gyro_mode == "instantaneous") {
+            using Mode = ocean_imu::kalman::filter_detail::GyroSampleMode;
+            filter.setGyroSampleMode(Mode::Instantaneous, Mode::Instantaneous);
+            filter.mekf().set_gyro_sample_period(1.0f / 200.0f);
+        } else if (gyro_mode != "interval") {
+            throw std::invalid_argument("W3D_CSM_GYRO_INPUT must be interval or instantaneous");
+        }
+        std::cout << "CSM_GYRO_INPUT convention=" << gyro_mode << '\n';
         if (const char* hz = std::getenv("W3D_CSM_GUARD_HZ"))
             filter.setAccelVibrationGuard(std::stof(hz));
         if (const char* gain = std::getenv("W3D_CSM_GUARD_RACC_GAIN"))
@@ -120,9 +132,9 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const c
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
         const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
-                           !std::getenv("W3D_CARMA3_EXCITATION");
+                           !std::getenv("W3D_CARMA3_EXCITATION") && !std::getenv("W3D_CSM_GYRO_INPUT");
         if (require_gates && !gated)
-            throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds and excitation");
+            throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds, excitation and gyro contract");
         if (require_gates) {
             for (const char* key : {"W3D_ENGINE_RPM", "W3D_CSM_GUARD_HZ", "W3D_CSM_GUARD_RACC_GAIN",
                                     "W3D_IMU_LEVER_ARM_M", "W3D_IMU_LEVER_ARM_MODEL",

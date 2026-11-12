@@ -152,6 +152,13 @@ public:
         conf_.force(c);
     }
 
+    // Hold learned cross-spectrum, monitor, confidence and applied gain without
+    // reinitializing state/covariance or reconfiguring the motion realization.
+    void setCouplingAdaptationEnabled(bool enabled) {
+        coupling_adaptation_enabled_ = enabled;
+        this->motion().set_learning_enabled(enabled);
+    }
+
     // ---- diagnostics ----
     T couplingConfidence() const noexcept { return conf_.confidence(); }
 
@@ -218,7 +225,7 @@ private:
     }
 
     void step_confidence_() {
-        if (cfg_.mode == CouplingMode::Off || !(last_dt_ > T(0))) return;
+        if (!coupling_adaptation_enabled_ || cfg_.mode == CouplingMode::Off || !(last_dt_ > T(0))) return;
         auto& m = this->motion();
         // The candidate prior (what the coupling would apply at c = 1): the
         // coupling reports nothing while its gain is zero, so read it with
@@ -267,6 +274,7 @@ private:
         apply_gain_(c);
     }
 
+    bool coupling_adaptation_enabled_ = true;
     Config cfg_{};
     Confidence conf_{};
     BandRegression<T> prior_{};

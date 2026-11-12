@@ -148,6 +148,7 @@ public:
     void initialize(const Eigen::Vector3f& sigma_a, const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m) {
         lever_.reset_kinematics();
+        frontend_gyro_interval_.reset();
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });
@@ -158,6 +159,7 @@ public:
                         float R_S_noise, float gravity_magnitude) {
         gravity_mps2_ = gravity_magnitude;
         lever_.reset_kinematics();  // a restart may follow a gap in the samples
+        frontend_gyro_interval_.reset();
         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,
                                        gravity_magnitude);
         seastate::common::finalizeInitialization(
@@ -167,6 +169,17 @@ public:
     bool initialize_from_acc(const Eigen::Vector3f& acc_body_ned) {
         return mekf_ ? mekf_->initialize_from_acc(acc_body_ned) : false;
     }
+
+    // Separate selectors support controlled core/frontend ablations. Normal
+    // endpoint-sample callers select Instantaneous for BOTH paths.
+    void setGyroSampleMode(kalman::filter_detail::GyroSampleMode core,
+                           kalman::filter_detail::GyroSampleMode frontend) {
+        if (mekf_) mekf_->set_gyro_sample_mode(core);
+        frontend_gyro_interval_.set_mode(frontend);
+    }
+    // A diagnostic freeze preserves live state, covariance and all learned
+    // statistics. The already staged commit is consumed once, then held.
+    void setSeaStateAdaptationEnabled(bool enabled) { enable_tuner_ = enabled; }
 
     void updateTime(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                     float tempC = 35.0f) {
@@ -205,7 +218,9 @@ private:
 
         const Eigen::Vector3f acc_in = lever_.enabled() ? conditionAccel_(cogSpecificForce_(acc, gyro, dt), dt)
                                                         : conditionAccel_(acc, dt);
-        levelVertical_(dt, gyro, acc_in);
+        const auto frontend = frontend_gyro_interval_.prepare(gyro, dt);
+        levelVertical_(dt, frontend.rate, acc_in);
+        if (!drive_mekf) mekf_->prime_gyro_sample(gyro, dt);
         if (drive_mekf) apply_racc_vibration_inflation_();
         if (drive_mekf) {
             mekf_->time_update(gyro, dt);
@@ -618,11 +633,16 @@ private:
     CarmaWaveEvidence evidence_{};
     float carma_accel_std_applied_ = NAN;
 
+    kalman::filter_detail::GyroInterval<Eigen::Vector3f> frontend_gyro_interval_;
     std::unique_ptr<Mekf> mekf_;
 };
 
 struct SeaStateFusionConfig_CARMA3 : seastate::common::ProxyStartupFusionConfig {
     float R_S_noise = 1.5f;
+    float gyro_sample_period_sec = 0.0f;
+    bool schmidt_acc_bias_hold = false;
+    float initial_acc_bias_std = NAN; // calibrated residual uncertainty, m/s^2; NaN keeps native prior
+    kalman::filter_detail::GyroSampleMode gyro_sample_mode = kalman::filter_detail::GyroSampleMode::IntervalRate;
 };
 
 template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ,
@@ -641,6 +661,11 @@ public:
         this->beginStartup_(cfg, [](Impl& impl, const Config& c) {
             impl.initialize_ext(c.sigma_a, c.sigma_g, c.sigma_m, c.Pq0, c.Pb0, c.b0, c.R_S_noise,
                                 c.gravity_magnitude);
+            impl.setGyroSampleMode(c.gyro_sample_mode, c.gyro_sample_mode);
+            impl.mekf().set_gyro_sample_period(c.gyro_sample_period_sec);
+            impl.mekf().set_schmidt_acc_bias_hold(c.schmidt_acc_bias_hold);
+            if (std::isfinite(c.initial_acc_bias_std) && c.initial_acc_bias_std > 0.0f)
+                impl.mekf().set_initial_acc_bias_std(c.initial_acc_bias_std);
         });
     }
 };

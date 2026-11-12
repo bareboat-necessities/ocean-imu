@@ -121,6 +121,7 @@
 #include <type_traits>
 
 #include "kalman_common/ImuLeverArm.h"
+#include "kalman_common/GyroInterval.h"
 #include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_common/ConditionalCovariance.h"
 #include "kalman_carma/CarmaVerticalModel.h"
@@ -343,6 +344,11 @@ public:
     void set_mag_world_ref(const Vector3& B_world) { B_w_ = B_world; }
     [[nodiscard]] const Vector3& mag_world_ref() const noexcept { return B_w_; }
 
+    // Default: a rate constant over the preceding interval. Opt in only for
+    // timestamped instantaneous samples; never average delta-angle inputs.
+    void set_gyro_sample_mode(filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
+    void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
+    void prime_gyro_sample(const Vector3& gyr, T dt) { gyro_interval_.prime(gyr, dt); }
     void time_update(Vector3 const& gyr, T Ts);
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
@@ -365,6 +371,9 @@ public:
     [[nodiscard]] Vector3 gyroscope_bias() const { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const { return X_.B.col(1); }
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
+    // Schmidt hold: keep the bias mean fixed but retain its persistent
+    // uncertainty and correlations. Legacy hold remains the default.
+    void set_schmidt_acc_bias_hold(bool enabled) { schmidt_acc_bias_hold_ = enabled; }
     void set_acc_bias_updates_enabled(bool en);
 
     [[nodiscard]] Vector3 get_position() const { return X_.X.col(IP); }
@@ -555,9 +564,11 @@ private:
     Group X_{};
     MatrixNX P_;
     Vector3 B_w_ = Vector3::UnitX();
+    filter_detail::GyroInterval<Vector3> gyro_interval_;
     Vector3 last_gyr_bias_corrected_ = Vector3::Zero();
     filter_detail::ImuLeverArm<T> lever_;
 
+    bool schmidt_acc_bias_hold_ = false;
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
     T tau_bacc_ = T(5000.0);
@@ -692,7 +703,7 @@ private:
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                       const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const;
-    void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q) const;
+    void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
                     MatrixNX& out) const;
@@ -949,7 +960,7 @@ TFGC3_TPL
 void TFGC3_CLS::set_acc_bias_updates_enabled(bool en) {
     if (acc_bias_updates_enabled_ == en) return;
     begin_write_();
-    if (!en) {
+    if (!en && !schmidt_acc_bias_hold_) {
         for (int i = 0; i < NX; ++i) {
             if (i >= OFF_BA) continue;
             for (int k = 0; k < 3; ++k) {
@@ -957,7 +968,7 @@ void TFGC3_CLS::set_acc_bias_updates_enabled(bool en) {
                 P_(OFF_BA + k, i) = T(0);
             }
         }
-    } else {
+    } else if (en) {
         const T target = sigma_bacc0_ * sigma_bacc0_;
         for (int i = 0; i < 3; ++i) P_(OFF_BA + i, OFF_BA + i) = std::max(P_(OFF_BA + i, OFF_BA + i), target);
     }
@@ -1158,7 +1169,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
 
 TFGC3_TPL
 void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
-                            StepNoise& q) const {
+                            StepNoise& q, T gyro_noise_scale) const {
     namespace d = tfg_carma_detail;
     // With W = [w]x, s J_l(w s) = int_0^s Exp(w t) dt = s I + a s^2 W + b s^3 W^2,
     // (a, b) the J_l coefficients at |w| s.  The rotation R0 factors out of
@@ -1166,7 +1177,7 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
     T R0a[3][3], R1a[3][3], Qg[3][3], Qb[3][3];
     d::rows3<T>(R0, R0a);
     d::rows3<T>(b.R1, R1a);
-    d::rows3<T>(Q_gyro_, Qg);
+    d::rows3<T>(Matrix3(Q_gyro_ * gyro_noise_scale), Qg);
     d::rows3<T>(Q_bg_, Qb);
     const T wv[3] = {w(0), w(1), w(2)};
     const T n2 = wv[0] * wv[0] + wv[1] * wv[1] + wv[2] * wv[2];
@@ -1326,10 +1337,15 @@ TFGC3_TPL
 void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
+    const auto input = gyro_interval_.prepare(gyr, Ts);
+    if (!input.predict) return;
 
-    const Vector3 w = gyr - X_.B.col(0);
+
+    const Vector3 w = input.rate - X_.B.col(0);
     last_gyr_bias_corrected_ = w;
-    lever_.update_rate(w, Ts);
+    // The rotational acceleration correction belongs to the current sensor
+    // sample; it must not inherit the attitude integrator's half-step delay.
+    lever_.update_rate(Vector3(gyr - X_.B.col(0)), Ts);
     const Matrix3 R0 = X_.R;
 
     refresh_discretization_(Ts);
@@ -1358,7 +1374,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     if (acc_bias_updates_enabled_) X_.B.col(1) *= b.phi_b;
 
     StepNoise q;
-    step_noise_(w, Ts, R0, b, q);
+    step_noise_(w, Ts, R0, b, q, input.noise_scale);
     propagate_covariance_(b, q, Fc, Qc, motion_QI_());
 }
 
@@ -1728,7 +1744,7 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
             S(a,b) = v;
             S(b,a) = v;
         }
-    if (!use_ba) {
+    if (!use_ba && !schmidt_acc_bias_hold_) {
         // CARMA3's held bias: in S, not in the cross-covariance or the gain.
         for (int k = 0; k < 3; ++k)
             for (int i = 0; i < NX; ++i) ht[i + NX * k] += p[i + NX * (OFF_BA + k)];
@@ -1761,7 +1777,7 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
         for (int b = 0; b < 3; ++b)
             S(a,b) += Hphi(a,0) * PHt(OFF_PHI, b) + Hphi(a,1) * PHt(OFF_PHI + 1, b) + Hphi(a,2) * PHt(OFF_PHI + 2, b);
     const bool freeze = !acc_bias_updates_enabled_;
-    if (freeze) freeze_acc_bias_rows_(PHt);
+    if (freeze && !schmidt_acc_bias_hold_) freeze_acc_bias_rows_(PHt);
     correct3_(r, S, PHt, Rmag_.norm(), freeze, last_mag_diag_);
 }
 

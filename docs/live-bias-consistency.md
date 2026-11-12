@@ -1,0 +1,328 @@
+# Accelerometer-bias estimation: timing and live information
+
+Source baseline: [`9018fa4b57d9bd10983ae4e77ff95ce509551e17`](https://github.com/bareboat-necessities/ocean-imu/commit/9018fa4b57d9bd10983ae4e77ff95ce509551e17).
+This was main when the investigation began. The implementation also incorporates
+main's subsequent evidence-only commit `4cd80215006523861da06ee55a78801880347a0f`;
+its production sources are identical to the scored baseline.
+Both experimental 27-state shared-mode geometries are evaluated. Since the
+cited `c2ae63b2` study, main optimized TFG propagation/reset kernels and shared
+SO(3) coefficients; it did not replace the measurement model or startup
+architecture. Those numerical paths are checked again against native Jacobian,
+dense covariance and integration references.
+
+## Decision
+
+Use the explicit instantaneous-sample mode when that is the delivered gyro
+contract. Its correction belongs in live prediction, not just in sensor
+simulation. Preserve interval-rate/delta-angle callers. The correction removes
+a demonstrated integration-induced accelerometer-bias floor when independent
+acceleration information is available, and improves rocking attitude accuracy.
+It does not reliably remove the latent-wave tilt/bias floor.
+
+Retain the existing bias-learning schedule and calibrated defaults. Neither a
+magnetic packet count, a new gate, an optimistic covariance nor this window
+fit demonstrates the missing directional information. The controlled freezes
+and noise-model changes do not justify a new adaptive estimator or a shipping
+tuning change. A window-calibration update is not qualified for deployment.
+
+## Sensor and prediction contract
+
+`CarmaBenchTruth::omega_b` is the analytic instantaneous body rate at `t_k`.
+The replay constructs force and magnetic samples at that same time, calls the
+IMU update, then magnetic correction on packet ticks. The legacy predictor
+uses `Exp((gyro-b_g)*dt)` over the preceding interval. It is correct for its
+constant-rate contract; giving it the endpoint of a changing rate is first
+order. A noiseless rotation-equivalent signal is
+`Log(R_(k-1)^T R_k)/dt`; it is generated as sensor truth only in diagnostics.
+An angular-rate average and this rotation-equivalent rate differ under
+noncommuting rotations. A hardware delta-angle packet additionally needs its
+own frame, bias and noise convention, rather than another averaging operation.
+
+The new `GyroInterval` helper is shared by both native CARMA cores and their
+common frontend. Its instantaneous mode uses the two measured endpoints as a
+second-order approximation over the preceding interval. The native gyro-bias
+Jacobian and covariance kernels use that same effective rate. There is no
+additional truth input and no extra Kalman state. The first native sample
+primes the cache instead of inventing a preceding rotation. The bootstrap
+primes the live core from actual samples, so handoff does not lose an interval.
+A wrapper restart clears the frontend cache. Lever-arm force compensation
+continues to use the endpoint rate; it must not acquire the integrator's
+half-step delay.
+
+Select the convention explicitly, for either shared-mode geometry:
+
+```cpp
+Fusion::Config cfg;
+cfg.gyro_sample_mode =
+    ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+cfg.gyro_sample_period_sec = 1.0f / 200.0f; // fixed sensor ODR/exposure
+cfg.schmidt_acc_bias_hold = true; // persistent uncertainty while mean is held
+cfg.initial_acc_bias_std = calibrated_residual_sd; // m/s^2; use qualified uncertainty
+// cfg.sigma_g is a noise density [rad/sqrt(s)], not per-sample SD.
+fusion.begin(cfg);
+```
+
+The pinned CSV replay also uses the supplied 200 Hz index interval, not
+successive printed `time` differences. The eight scored records have 240000
+rows each; their six-significant-digit time column develops duplicate times
+and 10-ms jumps near the end. Its maximum deviation from the 5-ms index grid
+is 5 ms. It is unsuitable as a high-resolution acquisition clock. Using the
+index grid and the stored quaternion convention, centering measured rates
+reduces disagreement with rotation increments by about 14–30×; remaining
+error includes quaternion rounding. The reproducible CSV audit records these
+values. Do not infer dropped records or a variable sensor interval from that
+rounded column.
+
+The existing QMEKF/TFG shared-mode replay exposes
+`W3D_CSM_GYRO_INPUT=instantaneous` for corrected diagnostic replay, using the
+same native/helper/frontend path. The default interval-rate regression
+protocol, input hashes and quality bars are preserved; `--regression` rejects
+contract overrides rather than silently claiming a baseline quality result.
+
+The default remains `IntervalRate`. Direct native-core users have matching
+`set_gyro_sample_mode`, `set_gyro_sample_period` and `prime_gyro_sample` APIs.
+Do not pre-average upstream and also select instantaneous mode. Separate raw
+wrapper selectors exist to isolate the core/frontend contribution in tests.
+
+### Covariance and timing limits
+
+Two adjacent averaged gyro intervals share one endpoint noise sample. At a
+fixed rate, each interval's gyro-noise variance is half the raw endpoint
+variance but its neighbor covariance is one quarter. Halving native process
+noise while ignoring that covariance is inconsistent. This implementation
+retains a conservative covariance envelope, rather than claiming independent
+averaged noise or changing the state size to track a correlated nuisance.
+
+For a linearized output, each raw noise sample has two propagated
+contributions. Applying `(u+v)(u+v)^T <= 2(uu^T+vv^T)` before summing samples
+bounds the whole correlated history. Jensen's inequality connects the
+constant-rate sensitivity to the native integrated white-noise covariance.
+For a fixed exposure `h0`, the gyro process-noise multiplier is
+`max(1, dt/h0)`. With exposure unspecified, the declared model is
+`Var(n_k)=Q_g/dt_k`, giving `max(1, (1+dt/dt_prev)/2)`. Gyro-bias driving noise
+and its cross-covariance remain native. This is a local bound under the
+configured noise model, not proof of nonlinear EKF consistency or compensation
+for interpolation/model error. The exact independent colored-noise test with
+measurement feedback verifies the bound and demonstrates the failure of the
+naive half-noise alternative.
+
+Variable-interval and missed-sample tests retain second-order behavior for the
+smooth admitted test trajectory. Missing rotations cannot be reconstructed
+from two endpoints in general. Callers must supply elapsed time from the last
+accepted sample and qualify gaps/rate bandwidth. The shared startup wrapper
+now rejects invalid gyro/force/temperature packets *before* advancing clocks,
+last-sample state, frontend statistics or magnetic acquisition.
+
+The firmware reads mapped BMI270 data in rad/s, timestamps the host poll, applies
+spike and calibration processing, and calls `fusion.update(dt,w,a)` followed
+by fresh magnetic updates. This supports a rate interface; the repository does
+not establish an interval average, sensor conversion timestamp or effective
+filter group delay. `SampleDtTracker` substitutes nominal dt on configured
+long gaps; that is a fallback, not measured elapsed-time recovery. Existing
+firmware behavior is not switched by this experiment. Qualification needs
+sensor/FIFO timing, ODR/filter settings, dropped-frame accounting, and relative
+accel/gyro delay before enabling an instantaneous convention on hardware.
+
+Magnetic updates are asynchronous in cadence but apply to the current estimator
+time. Synthetic default packets are time-aligned with that state. The dormant vibration guard is transparent below its detector threshold;
+when engaged it adds a separate accelerometer delay (up to the configured
+22.7 ms), which gyro centering does not compensate. The hardware
+AUX metadata explicitly records host observation, not a BMM150 conversion
+instant. Its cache/freshness policy does not establish zero latency. Runtime magnetic timing calibration is stored with its configuration and
+explicitly logged as `applied=0`. There is no out-of-sequence
+update/repropagation API here. Delay controls quantify this
+separate mismatch; they do not infer a hardware delay or justify a guessed
+compensation. Reference and hard-iron errors are persistent calibration
+uncertainties, not additional independent white noise at every packet.
+
+### Persistent uncertainty while bias is held
+
+A separate native covariance audit found that legacy CARMA holding removes
+bias terms from `P H^T` while retaining their contribution in innovation
+covariance. It also clears cross-covariance on entering hold. This does not
+implement a Schmidt update for an uncertain persistent bias. Repeated samples
+can then treat that nuisance uncertainty as fresh measurement noise.
+
+The optional `schmidt_acc_bias_hold` policy retains the complete `P H^T`, sets
+only the bias rows of the **gain** to zero, and uses the existing full Joseph
+and attitude/group reset kernels. Thus the bias mean is held, its uncertainty
+remains persistent, and its cross-covariance evolves. Entering hold preserves
+those correlations. This applies to accelerometer, magnetic and applicable
+QMEKF pseudo-updates; active bias learning retains its existing equations.
+Dense independent Joseph checks at nontrivial covariances agree below 2e-18
+for both geometries and verify unchanged held means and preserved correlations.
+The legacy policy remains the compatibility default; the new policy is explicit.
+
+`initial_acc_bias_std` makes calibrated residual uncertainty available at the
+common wrapper boundary. Leaving it NaN preserves the native prior. The
+synthetic turn-on uniform bias has per-axis SD 45.3 mm/s², versus the native
+initial 4 mm/s². Tests distinguish correcting this prior from correcting white
+sensor noise, and from changing its covariance only at 600 s without resetting
+the mean or other state. A justified uncertainty is required; larger covariance
+is not independently measured acceleration or a bias-identifiability gate.
+
+The gyro-noise envelope assumes valid starting uncertainty and fixed linearized
+gains. It does not retroactively qualify proxy handoff covariance, reference
+correlations, calibration errors, clipped samples or nonlinear model mismatch.
+
+## Remaining tilt, bias and acceleration coupling
+
+The actual force model is `f_b = R^T(a_w-g_w)+b_a`. Its local perturbation for
+`R' = Exp(dphi)R` is
+
+`df_b = R^T[da_w - dphi x (a_w-g_w)] + db_a`.
+
+An uncertain acceleration history can therefore absorb a tilt/bias change.
+The full magnetic vector constrains two attitude directions; a constant world
+rotation about that vector leaves its ideal readings unchanged. Gyro rates
+alone do not determine that global rotation. Whether force, changing roll/pitch
+and physical motion constraints separate the remaining mode is a **joint**
+history question. It is not determined by constant yaw, and rocking supplies a
+counterexample to the claim that yaw changes are always necessary.
+
+In the wave records, bias-induced changes can occupy the same oscillatory band
+as genuine translation, while a compensating tilt/bias change suppresses their
+DC component. The CARMA prior then supplies much of the separation. Its
+translation covariance models acceleration correlations, not a separately
+qualified attitude/translation vessel RAO. A plausible motion history can fit
+force while retaining the wrong tilt/bias. The acceleration oracle removes
+that nuisance; the rocking control's near-zero motion strongly constrains it.
+These controls establish a poorly conditioned/model-dependent regime, not
+structural non-observability for every admissible marine history.
+
+The primary sea-state leveling observer uses measurements independently of the
+live EKF. It cannot be described as directly feeding the EKF's estimated
+acceleration back into its own period. In contrast, the shared-mode coupling
+learner observes `R*(f-b_a)+g`; its statistics can depend on tentative attitude
+and bias. New independent freeze APIs hold sea-state commits or coupling
+learning/confidence without resetting state, covariance, history or learned
+statistics. The small measured freeze effects do not support adaptation feedback as the
+controlling cause of the tested late windows. Freezing at 600 s does not
+exclude earlier acquisition feedback or invalidate the need for qualified
+adaptation models.
+
+The offline 60-s reference spans 600–660 s and uses known synthetic white-noise parameters and a
+separately declared population bias prior; it is not the live filter's identical
+likelihood. These fits use labelled exact-magnetic-reference diagnostic histories.
+Their first linearized solution and iterated solution share exactly
+the same objective, isolating further relinearization. A change from the live
+initialization also includes windowing and different noise/prior weights.
+The reference keeps uncertain motion and gyro bias, relinearizes
+all poses, and eliminates those nuisances before evaluating scaled tilt/bias
+information. Sensor-only, motion-prior and bias-prior contributions are reported
+separately. Free acceleration makes sensor-only bias information vanish by
+construction; that relaxation is not a theorem about bounded marine motion.
+Adding CARMA dynamics supplies information but leaves a weak wave direction.
+Changing prior strength changes recovery. All window solutions are diagnostic
+and never feed back into the live covariance, avoiding double-counted samples.
+
+A practical next source of independent information is time-aligned GNSS/Doppler
+velocity (with its own uncertainty), independently qualified attitude, or
+verified stationary/multi-pose calibration. A qualified hull-response model
+would be a stronger physical assumption requiring separate validation. Tuning
+or gating alone cannot manufacture that information.
+
+## Comparative results
+
+<!-- RESULTS_START -->
+
+Six independent seeds; means [Student 95% intervals]. Bias units are mm/s².
+
+| Condition | QMEKF | TFG |
+| --- | ---: | ---: |
+| Wave, latent acceleration, unchanged main | 59.82 [25.73, 93.90] | 43.69 [5.99, 81.39] |
+| Wave, latent acceleration, centered prediction | 55.85 [23.54, 88.15] | 45.73 [3.67, 87.80] |
+| Wave, acceleration oracle, unchanged main | 22.41 [21.37, 23.46] | 22.38 [21.34, 23.41] |
+| Wave, acceleration oracle, centered prediction | 1.70 [1.49, 1.92] | 1.70 [1.48, 1.93] |
+| Independent rocking, no oracle, centered prediction | 2.16 [1.69, 2.63] | 2.16 [1.69, 2.63] |
+
+Wave windows are 5400–7200 s; rocking is 2400–3600 s. Exact magnetic reference and fixed correct calibration are diagnostic controls. The oracle is artificial.
+
+The paired centered-minus-endpoint effect with acceleration latent is QMEKF: -3.97 [-14.14, 6.20]; TFG: 2.05 [-10.42, 14.51]. Both intervals include zero.
+
+![Late bias errors](../reports/results/live_bias_consistency/figures/late_bias.svg)
+
+![Core versus frontend localization](../reports/results/live_bias_consistency/figures/timing_localization.svg)
+The core-only correction reproduces the oracle benefit; the frontend-only correction does not.
+
+![Independent adaptation freezes](../reports/results/live_bias_consistency/figures/adaptation_freezes.svg)
+
+![Representative two-hour trace](../reports/results/live_bias_consistency/figures/long_traces.svg)
+
+Covariance diagnostics remain conditional on the model. Late oracle coverage changes from 0% to 100% in these serial samples when timing is corrected; the latent-wave errors remain inconsistently covered. A 100% serial coverage fraction is not a calibration guarantee. Actual bias gates are open in scored live windows. Magnetic NIS is accumulated only at packets, and applied-correction counters are recorded separately.
+
+| 60-s window, QMEKF initialization | Live initialization | First linearized solve | Relinearized |
+| --- | ---: | ---: | ---: |
+| wave; native_prior | 52.99 [26.85, 79.14] | 47.16 [17.74, 76.57] | 46.26 [15.09, 77.43] |
+| wave; motion4 | 52.99 [26.85, 79.14] | 49.89 [22.94, 76.83] | 49.72 [22.26, 77.19] |
+| wave; bias3 | 52.99 [26.85, 79.14] | 61.20 [4.92, 117.48] | 55.93 [22.36, 89.49] |
+| rocking; native_prior | 5.98 [2.11, 9.85] | 15.44 [10.62, 20.25] | 15.45 [10.60, 20.31] |
+| rocking; motion4 | 5.98 [2.11, 9.85] | 17.59 [11.87, 23.32] | 17.60 [11.82, 23.38] |
+| rocking; bias3 | 5.98 [2.11, 9.85] | 14.66 [8.91, 20.41] | 14.70 [8.94, 20.45] |
+
+TFG initializations give nearly identical window solutions. The window uses the known synthetic white-noise parameters and its declared population bias prior. A change from live initialization includes that changed window objective; only first-solve versus converged results isolate further relinearization. All 72 fits converge; PSD floors are unused. Weak information and its regularizer sensitivity are retained in JSON. The five-dimensional tilt/bias analysis eliminates world yaw as well as all other poses, gyro bias and motion. Prior sensitivity and degraded rocking recovery do not qualify window feedback.
+
+![Window prior sensitivity](../reports/results/live_bias_consistency/figures/window_relinearization.svg)
+
+![Window information and prior contribution](../reports/results/live_bias_consistency/figures/window_information.svg)
+Eigenvalues at or below 1e-10 are plotted at that numerical floor. The sensor-only model in this plot deliberately frees the motion history.
+
+![Calibration uncertainty controls](../reports/results/live_bias_consistency/figures/calibration_controls.svg)
+
+| Timing from startup; two-hour tail | QMEKF | TFG |
+| --- | ---: | ---: |
+| exact_fixed; native | 55.81 [23.50, 88.12] | 45.73 [3.65, 87.80] |
+| exact_fixed; schmidt | 55.84 [23.57, 88.11] | 45.75 [3.63, 87.87] |
+| exact_fixed; schmidt_prior | 60.51 [25.52, 95.50] | 48.08 [-16.05, 112.21] |
+| learned_fixed; native | 68.51 [44.93, 92.09] | 56.88 [15.56, 98.20] |
+| learned_fixed; schmidt | 68.51 [44.91, 92.10] | 56.88 [15.50, 98.27] |
+| learned_fixed; schmidt_prior | 73.56 [51.13, 96.00] | 59.37 [-2.81, 121.56] |
+
+These rows distinguish actual bias recovery from corrected covariance handling; the learned-reference rows use no truth for estimation.
+
+![Covariance consistency and nuisance conditioning](../reports/results/live_bias_consistency/figures/covariance_diagnostics.svg)
+The variance ratio is a posterior-covariance diagnostic, not an observability Gramian.
+
+![Innovations under independently changed white-noise models](../reports/results/live_bias_consistency/figures/innovations.svg)
+Matching magnetic white-noise SD can bring magnetic NIS near its dimension reference without resolving bias error. The prior/reference and motion assumptions remain separate.
+
+| One-hour shock; 5400–7200 s bias RMS | QMEKF | TFG |
+| --- | ---: | ---: |
+| wave; exact_fixed | 55.84 [23.57, 88.11] | 45.75 [3.63, 87.87] |
+| wave; bias | 52.97 [22.51, 83.43] | 48.90 [1.01, 96.78] |
+| wave; tilt | 57.24 [27.84, 86.65] | 45.82 [3.41, 88.23] |
+| rocking; bias | 2.32 [1.86, 2.78] | 2.31 [1.86, 2.77] |
+| rocking; tilt | 2.32 [1.86, 2.78] | 2.31 [1.86, 2.77] |
+| wave; learned_fixed | 68.51 [44.91, 92.10] | 56.88 [15.50, 98.27] |
+| wave; correct_reference | 55.80 [23.44, 88.16] | 45.74 [3.76, 87.72] |
+
+All these runs use centered gyro from startup and Schmidt holding with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.
+
+![One-hour shock recovery](../reports/results/live_bias_consistency/figures/late_recovery.svg)
+Recovery counts distinguish a first qualifying trailing 30-s window, sustained for another 30 s, from the independent late-window threshold. They are retained by seed in the summary.
+
+![Startup and actual learning gates](../reports/results/live_bias_consistency/figures/startup_gates.svg)
+
+The untouched-main binary and the modified binary in compatibility mode match horizontal-bias RMS exactly on all 168 overlapping scored windows. The baseline was separately compiled against untouched production headers.
+
+<!-- RESULTS_END -->
+
+## Validation and scope
+
+[Reproduction commands and experimental definitions](../tests/live_bias_consistency/README.md)
+are part of the implementation. Seed tables, binary hashes and bounded plot
+vertices are under `reports/results/live_bias_consistency/`. Existing baseline
+thresholds are preserved. The report separates estimated errors, conditional
+covariance, actual applied magnetic corrections and actual native bias gates.
+The [validation record](../reports/results/live_bias_consistency/validation.json)
+records check commands, environment versions and build outcomes.
+
+The selected code changes improve integration consistency and reject malformed
+samples consistently across the shared startup/frontend boundary. Conservative
+handling of reused gyro noise improves uncertainty honesty; it is not itself a
+bias-recovery mechanism. The Schmidt policy corrects the treatment of a held, uncertain bias; it does
+not certify identifiability. No magnetic-uncertainty estimator, information
+gate, window feedback, new sea-state rule or shipping noise tuning is promoted.
+Hardware performance and delayed-measurement compensation remain unvalidated.
+The finite simulations are neither a shipping OU-III stability proof nor a
+shipping counterexample; existing theorem status is unchanged.

@@ -1,0 +1,102 @@
+{
+  "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "parent_main": "4cd80215006523861da06ee55a78801880347a0f",
+  "main_source_delta": [],
+  "python": "3.12.14",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "eigen": "3.4.0",
+  "versions": {
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scipy": "1.17.0",
+    "matplotlib": "3.10.8"
+  },
+  "focused_checks": {
+    "command": "make -C tests/live_bias_consistency EIGEN_DIR=\"$EIGEN_DIR\" && (cd tests/live_bias_consistency && bash run_tests.sh)",
+    "exit_code": 0,
+    "output": "focused_checks.txt",
+    "binary_sha256": "243e6c9a1b4a8334c5204c986fadd589809da5be44478b29a1ad02783f9b645c"
+  },
+  "csv_audit": {
+    "inputs": 8,
+    "cadence_seconds": 0.005,
+    "pinned_release": "v1.2.3",
+    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
+  },
+  "existing_csv_replays": {
+    "runs": 4,
+    "exit_code": 0,
+    "thresholds_changed": false,
+    "instantaneous_override_is_gated": false,
+    "regression_override_rejection_exit_code": 2
+  },
+  "scope": {
+    "default_gyro_convention": "IntervalRate",
+    "default_schmidt_hold": false,
+    "truth_oracles": "explicit diagnostic arms only",
+    "hardware_timing_qualified": false
+  },
+  "research": {
+    "independent_seeds": 6,
+    "paired_runs": 1020,
+    "offline_windows": 72
+  },
+  "initial_build_failures": [
+    {
+      "command": "make -j3 all EIGEN_DIR=\"$EIGEN_DIR\"",
+      "tree": "untouched baseline",
+      "error": "./run_tests.sh: line 3: ./qmekf_geometry-test: No such file or directory",
+      "explanation": "parallel root all starts build and test concurrently; rerun serially"
+    },
+    {
+      "command": "g++ -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I<baseline>/src -isystem <Eigen-3.4.0> -march=native -MMD -MP -c carma_excitation-test.cpp -o carma_excitation-test.o",
+      "tree": "untouched baseline",
+      "error": "g++: fatal error: Killed signal terminated program cc1plus",
+      "explanation": "resource failure during overlapping heavy compilation; changed-tree serial build compiled the same target successfully"
+    }
+  ],
+  "test_build_hygiene": "Affected startup/recovery evidence was discarded and rerun after a forced TFG harness rebuild. Configuration/setter parity is now checked through activation; runners freeze the executable before dispatch.",
+  "compatibility": {
+    "windows": 168,
+    "max_bias_rms_difference": 0.0
+  },
+  "configuration_control": {
+    "windows": 120,
+    "max_bias_rms_difference": 0.0
+  },
+  "required_check": {
+    "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
+    "status": "running"
+  },
+  "source_sha256": {
+    "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "3190b3c07a7e600b80503c017aae9173f5e833721fb503134a2a1aa6c6e3e06e",
+    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "e5e2c6a50c6e2409ffa0c0c9a907135cdb98819156bd12bfcc2a1f795da2014b",
+    "src/kalman_carma/SeaStateFusionFilter_CARMA3.h": "dc5615f007fc73f7347305552a744322ea68e5fe1b052466ce01a490a82d6179",
+    "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h": "dd51df2e100db3ff6d19eb6d6d01f4ac459e534ebeed2292094122bf7de8fdc6",
+    "src/kalman_carma_shared_modes/SharedModesEstimator.h": "0c2630b815d9bb787463050ff6d681bba4734286874156b592dda0907c9ac1ce",
+    "src/kalman_common/GyroInterval.h": "0739b1764f7950db37f3c9670d86ca3d1f6007f2cc0ce8e5a930310e2b358a19",
+    "src/kalman_common/ProxyStartupFusion.h": "3733671802221c4d5ff3d9c2ad943cfa4269919b2009aee5207117de7398a3b4",
+    "tests/common/SharedModesReplay.h": "d3a4d9f71f4e6c58af998dc17d3afcda5eab9bd262c81236c8a3b3058c1d695b",
+    "tests/kalman_carma/CarmaBenchTruth.h": "41aa544c28f8bff7a2da6ea790b93fe32704e06507e141c19d46ceacff4c7bad",
+    "tests/live_bias_consistency/Adapter.h": "752c72de9e63d03315a4821be65b7773d02fa85a1481a3d6f0b99c4fc167f16c",
+    "tests/live_bias_consistency/Experiment.h": "ab30e8d02a661c1242445f404b5b14170c426c1d4fe41f3abcc238d51d3fe7f8",
+    "tests/live_bias_consistency/Makefile": "0fe81d30cbc00542191396b1cfbe0f4c8e830fd434e40f6f710ef32f7dd12208",
+    "tests/live_bias_consistency/README.md": "5259fea8db1bc18355feca38cac0d9ab164f8185bd9c2c04342a8ae3905f0299",
+    "tests/live_bias_consistency/StandardHeaders.h": "0b5df120c68b798448fa15046e1c179f355c827a730c68553d1671165f729390",
+    "tests/live_bias_consistency/audit_sensors.cpp": "9074c2561fd2dab003f086909330354adb8492c4855cc34353bec90cae1b4a52",
+    "tests/live_bias_consistency/main.cpp": "846f350ddb9c49f09dd095ad0fae067ce2707a5b859e7b93c00bcbb23875d689",
+    "tests/live_bias_consistency/noise-bound.py": "eaa92ea33a56f810d17a8317b9771906bb14b5685647f483201858fba76f731a",
+    "tests/live_bias_consistency/qmekf.cpp": "6c50c7602750f252cf3e56596434cee73022b9126b1ca46f80a3f303b2d0c67f",
+    "tests/live_bias_consistency/run_tests.sh": "93e36b4634f64323ffa8c3f7993dd8b38da22c86870e9f146d9f87a671778930",
+    "tests/live_bias_consistency/schmidt-test.cpp": "38e596345172c49208e1f6f0f80889ef6fcf6a7e0c5cc3cb04e9f589cb5d0417",
+    "tests/live_bias_consistency/tfg.cpp": "3d94ff0107ff7786b97bdee00783d2b99d1e1ec8a9bad7217a4bcdab88f7b986",
+    "tests/live_bias_consistency/timing-test.cpp": "533489af3c0ef0a33bf864f2c9d6dcf05b3b6a5ef90219c98b099242a5f442d3",
+    "tools/live_bias_consistency.py": "5d697e66dd26cd49052612cd5704d5b9e35f536f7b398df44d16d14a507fe3d3",
+    "tools/live_bias_consistency_analysis.py": "bb9b3315d3ba70318ed4b24f1f24b24d2ea96ed7377ebd085b304ba4b98221fd",
+    "tools/live_bias_csv_replay.py": "1bd46a70cedcc94ca0d4c1fcec0e8b5fd42cb9852fd83c78239d60fc08a3206c",
+    "tools/live_bias_csv_timing.py": "8a33ee9b225991b2348474b7a5a3f629477cbf24f339d88ba67dce79a87d473b",
+    "tools/live_bias_window.py": "9014bbe434e73ed08cc6dbf2109270359ea5d3f88d45a1114f1a9695be92ec8c",
+    "tools/live_bias_window_batch.py": "38d1d326912f1970a937a53ec1e164b2d798c50e192ff1004aaef538821f3a83"
+  }
+}
