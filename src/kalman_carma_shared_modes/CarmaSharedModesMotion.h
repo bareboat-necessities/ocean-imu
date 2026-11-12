@@ -79,13 +79,16 @@ template<typename T, int M>
 inline void congruence_anti(const kd::Mat<T,M>& X, const kd::Mat<T,M>& Y, kd::Mat<T,M>& Z) {
     kd::Mat<T,M> XY;
     kd::mul<T,M>(X, Y, XY);
+    const T* const x = X.data();
+    const T* const xy = XY.data();
+    T* const z = Z.data();
     for (int i = 0; i < M; ++i) {
-        Z(i,i) = T(0);
+        z[i + M * i] = T(0);
         for (int j = i + 1; j < M; ++j) {
             T s = T(0);
-            for (int k = 0; k < M; ++k) s += XY(i,k) * X(j,k);
-            Z(i,j) = s;
-            Z(j,i) = -s;
+            for (int k = 0; k < M; ++k) s += xy[i + M * k] * x[j + M * k];
+            z[i + M * j] = s;
+            z[j + M * i] = -s;
         }
     }
 }
@@ -284,21 +287,30 @@ private:
         series_ready_ = true;
     }
     void evaluate_(T d) {
+        // Plain column-major storage (kd::mul).
+        T* const f_out = F_.data();
+        T* const qr_out = QR_.data();
+        T* const qi_out = QI_.data();
         for (int i = 0; i < M; ++i)
             for (int j = 0; j < M; ++j) {
-                T f = Fc_[KF](i,j);
-                for (int k = KF - 1; k >= 0; --k) f = Fc_[k](i,j) + d * f;
-                F_(i,j) = f;
+                const int e = i + M * j;
+                T f = Fc_[KF].data()[e];
+                for (int k = KF - 1; k >= 0; --k) f = Fc_[k].data()[e] + d * f;
+                f_out[e] = f;
             }
         for (int i = 0; i < M; ++i)
             for (int j = i; j < M; ++j) {
-                T qr = QRc_[KQ](i,j), qi = QIc_[KQ](i,j);
-                for (int k = KQ - 1; k >= 1; --k) { qr = QRc_[k](i,j) + d * qr; qi = QIc_[k](i,j) + d * qi; }
-                qr = QRc_[0](i,j) + d * qr;
-                qi = QIc_[0](i,j) + d * qi;
-                QR_(i,j) = qr; QR_(j,i) = qr;
-                QI_(i,j) = (i == j) ? T(0) : qi;
-                QI_(j,i) = (i == j) ? T(0) : -qi;
+                const int e = i + M * j, et = j + M * i;
+                T qr = QRc_[KQ].data()[e], qi = QIc_[KQ].data()[e];
+                for (int k = KQ - 1; k >= 1; --k) {
+                    qr = QRc_[k].data()[e] + d * qr;
+                    qi = QIc_[k].data()[e] + d * qi;
+                }
+                qr = QRc_[0].data()[e] + d * qr;
+                qi = QIc_[0].data()[e] + d * qi;
+                qr_out[e] = qr; qr_out[et] = qr;
+                qi_out[e] = (i == j) ? T(0) : qi;
+                qi_out[et] = (i == j) ? T(0) : -qi;
             }
     }
 

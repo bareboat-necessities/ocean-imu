@@ -47,18 +47,13 @@ template<typename T>
 inline constexpr T kSmallAngle = T(1e-2);
 
 /*
-    Exp: so(3) -> SO(3).
+    Coefficients of Exp(phi) = I + a [phi]x + b [phi]x^2 from t2 = |phi|^2:
 
-        R = I + (sin t / t) [phi]x + ((1 - cos t) / t^2) [phi]x^2,  t = |phi|
+        a = sin t / t,  b = (1 - cos t) / t^2,  t = |phi|
 */
 template<typename T>
-inline Eigen::Matrix<T,3,3> Exp(const Eigen::Matrix<T,3,1>& phi) {
-    using Matrix3 = Eigen::Matrix<T,3,3>;
-    const T t2 = phi.squaredNorm();
+inline void exp_coefficients(T t2, T& a, T& b) {
     const T t = std::sqrt(t2);
-    const Matrix3 W = skew<T>(phi);
-
-    T a, b;  // coefficients of [phi]x and [phi]x^2
     if (t < kSmallAngle<T>) {
         const T t4 = t2 * t2;
         // sin(t)/t
@@ -73,6 +68,19 @@ inline Eigen::Matrix<T,3,3> Exp(const Eigen::Matrix<T,3,1>& phi) {
         a = std::sin(t) / t;
         b = (T(1) - std::cos(t)) / t2;
     }
+}
+
+/*
+    Exp: so(3) -> SO(3).
+
+        R = I + (sin t / t) [phi]x + ((1 - cos t) / t^2) [phi]x^2,  t = |phi|
+*/
+template<typename T>
+inline Eigen::Matrix<T,3,3> Exp(const Eigen::Matrix<T,3,1>& phi) {
+    using Matrix3 = Eigen::Matrix<T,3,3>;
+    const Matrix3 W = skew<T>(phi);
+    T a, b;  // coefficients of [phi]x and [phi]x^2
+    exp_coefficients<T>(phi.squaredNorm(), a, b);
     return Matrix3::Identity() + a * W + b * (W * W);
 }
 
@@ -103,22 +111,13 @@ inline Eigen::Matrix<T,3,1> Log(const Eigen::Matrix<T,3,3>& R) {
 }
 
 /*
-    Left Jacobian of SO(3).
+    Coefficients of J_l(phi) = I + a [phi]x + b [phi]x^2 from t2 = |phi|^2:
 
-        J_l(phi) = I + ((1-cos t)/t^2) [phi]x + ((t - sin t)/t^3) [phi]x^2
-                 = int_0^1 Exp(u phi) du
-
-    This is the factor coupling an attitude correction into the world vectors
-    of the group exponential: E_X = J_l(phi) [rho_v rho_p rho_S rho_a].
+        a = (1 - cos t) / t^2,  b = (t - sin t) / t^3,  t = |phi|
 */
 template<typename T>
-inline Eigen::Matrix<T,3,3> left_jacobian(const Eigen::Matrix<T,3,1>& phi) {
-    using Matrix3 = Eigen::Matrix<T,3,3>;
-    const T t2 = phi.squaredNorm();
+inline void left_jacobian_coefficients(T t2, T& a, T& b) {
     const T t = std::sqrt(t2);
-    const Matrix3 W = skew<T>(phi);
-
-    T a, b;
     if (t < kSmallAngle<T>) {
         const T t4 = t2 * t2;
         // (1-cos t)/t^2
@@ -133,7 +132,43 @@ inline Eigen::Matrix<T,3,3> left_jacobian(const Eigen::Matrix<T,3,1>& phi) {
         a = (T(1) - std::cos(t)) / t2;
         b = (t - std::sin(t)) / (t2 * t);
     }
+}
+
+/*
+    Left Jacobian of SO(3).
+
+        J_l(phi) = I + ((1-cos t)/t^2) [phi]x + ((t - sin t)/t^3) [phi]x^2
+                 = int_0^1 Exp(u phi) du
+
+    This is the factor coupling an attitude correction into the world vectors
+    of the group exponential: E_X = J_l(phi) [rho_v rho_p rho_S rho_a].
+*/
+template<typename T>
+inline Eigen::Matrix<T,3,3> left_jacobian(const Eigen::Matrix<T,3,1>& phi) {
+    using Matrix3 = Eigen::Matrix<T,3,3>;
+    const Matrix3 W = skew<T>(phi);
+    T a, b;
+    left_jacobian_coefficients<T>(phi.squaredNorm(), a, b);
     return Matrix3::Identity() + a * W + b * (W * W);
+}
+
+/*
+    out = I + a [v]x + b [v]x^2 on a plain row-major array, using
+    [v]x^2 = v v^T - |v|^2 I.  With the coefficients above this is Exp(v) or
+    J_l(v); (-a, b) gives Exp(-v) or J_l(-v), and (a s, b s^2) the same series
+    at s v.  For sample-path code that avoids Eigen's fixed-size expression
+    temporaries: a size-optimized firmware build keeps them out of line.
+*/
+template<typename T>
+inline void so3_series(const T (&v)[3], T a, T b, T (&out)[3][3]) {
+    const T n2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) out[i][j] = b * (v[i] * v[j]);
+    const T d = T(1) - b * n2;
+    out[0][0] += d; out[1][1] += d; out[2][2] += d;
+    out[0][1] -= a * v[2]; out[0][2] += a * v[1];
+    out[1][0] += a * v[2]; out[1][2] -= a * v[0];
+    out[2][0] -= a * v[1]; out[2][1] += a * v[0];
 }
 
 /*

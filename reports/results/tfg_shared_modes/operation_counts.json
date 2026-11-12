@@ -1,17 +1,19 @@
 {
-  "scope": "Explicit loops of the two-pass structured Phi covariance kernel only; excludes noise assembly, discretization, trigonometry, measurement updates, compiler fusion and total instruction counts.",
+  "scope": "Explicit loops of the structured Phi covariance kernel only (M = Phi P, then the upper block triangle of M Phi^T, mirrored), and of the in-place reset transport on the upper block triangle; excludes noise assembly, discretization, trigonometry, measurement updates, compiler fusion and total instruction counts.",
   "counts": [
     {
       "world_columns": 4,
       "error_states": 21,
-      "structured_phi_covariance_multiplications": 4788,
-      "structured_phi_covariance_additions": 3906
+      "structured_phi_covariance_multiplications": 3465,
+      "structured_phi_covariance_additions": 2790,
+      "reset_transport_multiplications": 3159
     },
     {
       "world_columns": 6,
       "error_states": 27,
-      "structured_phi_covariance_multiplications": 10368,
-      "structured_phi_covariance_additions": 8910
+      "structured_phi_covariance_multiplications": 7515,
+      "structured_phi_covariance_additions": 6399,
+      "reset_transport_multiplications": 5049
     }
   ]
 }

@@ -1,0 +1,146 @@
+{
+  "scope": "Processor cost of the TFG-CARMA sample path with structured, plain-array covariance kernels. The estimator model, noises, gains, thresholds and public interface are unchanged. Instruction counts and numerical comparisons only: no ESP32 board was connected and no Xtensa code was executed.",
+  "baseline_revision": "7221db4443de972eb408040fb726376b51e9157b",
+  "instruction_proxy": {
+    "meaning": "x86-64 instructions per 200 Hz core step, including 0.1 s model commits and 25 Hz magnetic updates, with the firmware's optimization flags and Eigen assertions enabled as in the Arduino build. Deterministic; not Xtensa cycles and not a deadline measurement.",
+    "source": "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-timing.cpp",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "flags": "-std=c++20 -Os -funroll-loops -fno-finite-math-only -fno-tree-vectorize -mfma -DEIGEN_DONT_VECTORIZE -g",
+    "counter": "valgrind-3.22.0 callgrind, inclusive cost of each run<Core>() over --seconds 10",
+    "samples_per_core": 8000,
+    "instructions_per_step": {
+      "baseline": {
+        "A41": 157174,
+        "CSM": 258278,
+        "T41": 621103,
+        "TCSM": 1121828
+      },
+      "current": {
+        "A41": 151467,
+        "CSM": 245555,
+        "T41": 68368,
+        "TCSM": 124345
+      }
+    },
+    "baseline_to_current_ratio": {
+      "A41": 1.04,
+      "CSM": 1.05,
+      "T41": 9.08,
+      "TCSM": 9.02
+    }
+  },
+  "numerical_equivalence": {
+    "binary64_core": {
+      "meaning": "Maximum absolute difference between baseline and current cores over 300 s at 200 Hz (60,000 steps, 0.1 s commits, 100 Hz magnetic updates, 2% interval jitter), every 20th step printed with nine significant digits.",
+      "TCSM": {
+        "position_m": 0.0,
+        "velocity_mps": 4e-19,
+        "quaternion": 1e-15,
+        "gyro_bias_radps": 0.0,
+        "accel_bias_mps2": 1e-15,
+        "accel_nis": 0.0,
+        "covariance_trace": 0.0
+      },
+      "T41": {
+        "position_m": 0.0,
+        "velocity_mps": 2.4e-19,
+        "quaternion": 1e-13,
+        "gyro_bias_radps": 0.0,
+        "accel_bias_mps2": 1e-13,
+        "accel_nis": 0.0,
+        "covariance_trace": 0.0
+      }
+    },
+    "binary32_wrapper": {
+      "meaning": "Maximum / RMS absolute difference of the tests/kalman_carma_shared_modes/refactor_trace.cpp wrapper trace (600 s, 6,000 printed rows). The control changes only compiler rounding of the baseline (-O2 -mfma -ffp-contract=fast against -O1).",
+      "TFG_CARMA": {
+        "baseline_vs_current": {
+          "position_m": [
+            0.000173,
+            2.4e-05
+          ],
+          "quaternion": [
+            0.000144,
+            2.16e-05
+          ],
+          "accel_bias_mps2": [
+            4.04e-05,
+            9.85e-06
+          ],
+          "accel_nis": [
+            0.000854,
+            2.9e-05
+          ]
+        },
+        "baseline_rounding_control": {
+          "position_m": [
+            0.000107,
+            1.28e-05
+          ],
+          "quaternion": [
+            4.6e-05,
+            8.51e-06
+          ],
+          "accel_bias_mps2": [
+            1.84e-05,
+            4.37e-06
+          ],
+          "accel_nis": [
+            0.00128,
+            2.6e-05
+          ]
+        }
+      },
+      "TFG_shared": {
+        "harness": "the same trace with SeaStateFusion_TfgCarmaSharedModes",
+        "baseline_vs_current": {
+          "position_m": [
+            0.000183,
+            2.34e-05
+          ],
+          "quaternion": [
+            0.000142,
+            2.07e-05
+          ],
+          "accel_bias_mps2": [
+            3.74e-05,
+            8.4e-06
+          ],
+          "accel_nis": [
+            0.000305,
+            2.49e-05
+          ]
+        },
+        "baseline_rounding_control": {
+          "position_m": [
+            5.68e-05,
+            1.11e-05
+          ],
+          "quaternion": [
+            3.54e-05,
+            6.74e-06
+          ],
+          "accel_bias_mps2": [
+            1.97e-05,
+            4.73e-06
+          ],
+          "accel_nis": [
+            0.000233,
+            2.18e-05
+          ]
+        }
+      },
+      "bit_identical_to_baseline": [
+        "QMEKF-CARMA",
+        "QMEKF-shared",
+        "OU-III",
+        "TFG (SeaStateFusionFilter_TFG on the same stream; also with -O2 -mfma -ffp-contract=fast)"
+      ]
+    }
+  },
+  "not_repeated": [
+    "esp32s3_size_stack.csv and firmware_builds.json (Xtensa object sizes, stack-chain bounds and linked firmware sizes) predate the restructured kernels",
+    "the on-device 200 Hz probe: no board",
+    "the registered study scores (runs.csv.gz and derived tables): produced by the registered executable; the restructured kernels change binary32 rounding only"
+  ]
+}
