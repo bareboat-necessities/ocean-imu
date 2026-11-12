@@ -27,6 +27,18 @@ cross-axis phase relationships; they do not mean CARMA(6,3).
   interface and independent model when `Motion=void`. The motion-policy path
   shares prediction, gyro/bias noise correlations, sensor updates, Joseph
   covariance correction, group injection and full covariance-reset transport.
+- The sample path of that core is structured and indexes plain arrays.
+  Prediction forms `M = Phi P` and only the upper block triangle of
+  `M Phi^T + Qd`, mirrored. A correction's reset transports each upper
+  3 x 3 block in place as `Jr P_ij Jr^T + W_i C_j^T + C_i W_j^T` with
+  `W_i = Jr P_{i,phi} + C_i P_{phi,phi} / 2`; the cross blocks `C_i` come from
+  a closed form whose coefficients are evaluated once per reset. The
+  process-noise quadrature factors the initial attitude out of its five
+  nodes, and the step geometry and the group injection use the same
+  small-angle series as `lie/SO3Jacobians.h`. `build_transition()`,
+  `build_process_noise()`, `build_reset_jacobian()` and the group law of
+  `lie/TwoFrameGroup.h` remain the dense references that
+  `tfg_shared_modes-test` and `tfg_carma3-test` compare the sample path with.
 - `CarmaSharedModesMotion.h` owns the existing minimal realization,
   input-normal factorization, stationary covariances, paired real/imaginary
   discretization, coupling estimator and model-coordinate maps. Its public
@@ -223,9 +235,26 @@ python3 tools/tfg_shared_modes_firmware.py --build-root /tmp/tfg-shared-firmware
 ```
 
 The timing driver runs four repetitions, rotating each core through all four
-execution positions and recording `rep`/`order`. The committed `host_order_*`
-files provide this sensitivity check separately from the original publication
-timings; `review_validation.json` summarizes both.
+execution positions and recording `rep`/`order`; the committed `host_*.csv`
+files are its output.
+
+A firmware build is size-optimized and keeps Eigen's assertions, so Eigen's
+checked coefficient accessors and small fixed-size products stay out of line;
+the host `-O3` time does not show that cost. The same driver compiled with the
+firmware's optimization flags and run under an instruction counter gives a
+deterministic proxy for it (x86-64 instructions, not Xtensa cycles):
+
+```sh
+g++ -std=c++20 -Os -funroll-loops -fno-finite-math-only -fno-tree-vectorize -mfma \
+    -DEIGEN_DONT_VECTORIZE -g -Isrc -Itests/kalman_carma -isystem /path/to/eigen \
+    tests/kalman_carma_shared_modes/kalman_carma_shared_modes-timing.cpp -o /tmp/timing-os
+valgrind --tool=callgrind --callgrind-out-file=/tmp/timing-os.out /tmp/timing-os --seconds 10
+callgrind_annotate --inclusive=yes /tmp/timing-os.out | grep 'void run<'
+```
+
+Each `run<Core>` line divided by 8000 (four repetitions of 2000 samples) is
+the instruction count of one 200 Hz step with 0.1 s model commits and 25 Hz
+magnetic updates; `sample_path_cost.json` records it for the four cores.
 
 The Xtensa probe covers all four factorial cores. Its stack-chain result is
 a compiler-derived lower bound, not an observed peak stack. Code/literal and

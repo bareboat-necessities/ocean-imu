@@ -539,14 +539,21 @@ small spatial process-noise blocks and coordinate adaptation depend on the
 motion policy. Prediction, gyro/bias correlations, gain/Joseph calculation,
 measurement semantics, group injection and covariance reset are shared.
 
-For $n$ world columns and $N=9+3n$ error states, the two structured
-$\Phi P$ passes perform $2N[30+3n(n+3)]$ scalar multiplications and
-$2N[21+3n(n+2)]$ additions in their explicit loops. These counts cover the
+For $n$ world columns and $N=9+3n$ error states, prediction forms
+$M=\Phi P$ and then only the upper block triangle of $M\Phi\T$, which is
+mirrored. Its explicit loops perform
+$N[27+3n(n+2)]+\tfrac92 n(n+2)(n+5)+54n+198$ scalar multiplications and
+$N[21+3n(n+1)]+\tfrac92 n(n+1)(n+5)+36n+135$ additions. These counts cover the
 covariance transport kernel, not matrix discretization, trigonometric functions,
-process-noise assembly or measurement updates. They are 4788/3906 for the
-21-state TFG and 10368/8910 for the 27-state TFG. This is a structured
+process-noise assembly or measurement updates. They are 3465/2790 for the
+21-state TFG and 7515/6399 for the 27-state TFG. This is a structured
 $O(N^2n)$ calculation rather than a generic dense matrix product. Reset
-transport similarly exploits the attitude-column structure.
+transport uses the attitude-column structure of $J=I\otimes J_r+C e_\phi\T$:
+with $W_i=J_rP_{i\phi}+\tfrac12C_iP_{\phi\phi}$, each upper $3\times3$ block
+is $J_rP_{ij}J_r\T+W_iC_j\T+C_iW_j\T$, evaluated in place in 3159 and 5049
+multiplications. The sample-path kernels index plain arrays, because a
+size-optimized firmware build with Eigen assertions enabled keeps the checked
+coefficient accessors out of line.
 
 \PerformanceResults
 Fixed-size member scratch replaces covariance-sized real-time stack arrays.

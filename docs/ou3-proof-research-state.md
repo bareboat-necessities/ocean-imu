@@ -3,41 +3,36 @@
 ## Native secant source binding
 
 The finite native diagnostic is bound to the current complete `src/` tree.
-The experimental shared-mode excitation cap and the review fixes to the
-shared-mode and CARMA cores (`src/kalman_carma/`,
-`src/kalman_carma_shared_modes/`) changed the broad source fingerprint, so the
-unchanged shipping OU-III probe was rebuilt and replayed at both registered
-perturbation sizes. Both raw native byte hashes match main; the run summaries
-differ from the committed CI replay only by host round-off (at most 1.4e-14).
-See `reports/results/tfg_shared_modes/shipping_faithfulness.json` for the
-receipt. The four existing wrapper traces, OU-III included, stay bit-identical
-to main over 6,000 samples. The review also found that a non-finite gyro
-sample leaves the state non-finite; the CARMA cores now reject it. The
-shipping OU-III wrapper has the same exposure; it is not changed here and
-remains an open implementation item for a shipping change.
-
-Validation: Uninterrupted `make all` exits 0 on the review-fix tree (incremental
-after a clean build of the cap-policy tree): all 19 suite scripts with original
-thresholds and 1,152 validation tests with no skips (`regression_gates.json`).
-The bench binary that produced the published scores is unchanged by the
-build.
+The sample-path covariance kernels of the experimental TFG-CARMA cores were
+restructured to lower microcontroller processor load
+(`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`, with plain-array access in the
+discretization helpers of `src/kalman_carma/CarmaVerticalModel.h` and
+`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`). That changed the
+broad source fingerprint, so the unchanged shipping OU-III probe was rebuilt
+and replayed at both registered perturbation sizes. Both raw native byte
+hashes and every other field of the committed report are reproduced; only the
+digest is rebound. See
+`reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
+The QMEKF-CARMA, QMEKF-shared and OU-III wrapper traces stay bit-identical to
+the previous tree over 6,000 samples. The two TFG-CARMA wrapper traces change
+by binary32 rounding only: their binary64 cores agree with the previous tree
+to print precision over 300 s, and the binary32 differences are of the size
+that compiler multiply-add contraction alone produces on the previous tree
+(`reports/results/tfg_shared_modes/sample_path_cost.json`). A non-finite gyro
+sample still leaves the shipping OU-III wrapper state non-finite; that open
+implementation item for a shipping change is unchanged.
 
 Structures preserved: the complete shipping OU-III dependency closure, inherited
 execution, covariance, frontend/tuner, scheduler and diagnostic qualifications.
 Relaxations introduced: none; the inherited off-orbit finite secants remain
 non-promoting diagnostics, not reachable or uniform derivative certificates.
-The invalidated source binding, apt-mirror timeouts in CI build jobs, a
-Windows CI timeout (compilation now uses two workers), a local
-driver-script ordering error (sweep analysis before the compact scores existed;
-rerun from cache) and earlier workspace exits (report edits during a run, a
-shadowed `mpl_toolkits`, archive-copy tests at the session disk limit) are
-class E implementation/diagnostic failures; none establishes estimator
-instability. Historical source-identity records are preserved in
-`planar-native-secants-source-binding-archive.json` and the provenance
-references resolve to their respective archived records. No shipping
-counterexample was found; established shipping-level results and open theorem
-obligations remain unchanged. Device runtime and peak stack/heap measurements
-still require physical hardware.
+The invalidated source binding is a class E implementation/diagnostic failure;
+it does not establish estimator instability. Historical source-identity
+records are preserved in `planar-native-secants-source-binding-archive.json`
+and the provenance references resolve to their respective archived records.
+No shipping counterexample was found; established shipping-level results and
+open theorem obligations remain unchanged. Device runtime and peak stack/heap
+measurements still require physical hardware.
 
 ## Current hypothesis
 
@@ -82,6 +77,22 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**E — TFG-CARMA sample-path kernels rebound the whole-`src/` digest.** The
+experimental TFG-CARMA covariance prediction, reset transport, process-noise
+quadrature and group injection were restructured for processor load in
+`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`, with plain-array access in
+`src/kalman_carma/CarmaVerticalModel.h` and
+`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`; the fail-closed
+validator rejected the native secants' `shipping_source_tree_sha256`. Failed
+quantity: source provenance only; classification E. Evidence: none of the
+three files is in the shipping OU-III dependency closure; the diagnostic
+regenerated with g++ 13.3.0 reproduces every field, both native byte hashes
+included, except that digest. Structures preserved: every shipping operation,
+constant and chronology, bit for bit. Relaxations introduced: none. Rebound:
+the digest, the secant report's blob and this ledger's blob. No proof flag,
+payload or OPEN dependency changes; the current limiter and next experiment
+are unchanged.
 
 **E — single 27-state shared-modes filter rebound the whole-`src/` digest.**
 Keeping one shared-modes filter removed three `src/kalman_carma_shared_modes/`

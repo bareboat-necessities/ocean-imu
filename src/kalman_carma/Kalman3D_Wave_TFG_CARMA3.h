@@ -149,15 +149,58 @@ struct EmptyMotion {
     alternating series below |phi| = 1, where the closed forms cancel in
     float.
 */
+/*
+    Q_r(phi, .) is linear in z and its matrix products collapse: with
+    P = [-phi]x, Z = [-z]x, s = phi . z, t2 = |phi|^2 and
+    [a]x [b]x = b a^T - (a . b) I,
+
+        P Z + Z P = z phi^T + phi z^T - 2 s I,   P Z P = -s P,
+        P P Z + Z P P = 2 s P - t2 Z,            P Z P P + P P Z P = -2 s P^2,
+
+    so
+
+        Q_r = -(1/2 - c2 t2) [z]x + c1 (z phi^T + phi z^T) + s N,
+        N   = -2 c1 I - (2 c2 - c1) [phi]x - 2 c3 (phi phi^T - t2 I).
+
+    The coefficients and N depend on phi alone: one reset evaluates them once
+    for all of its vector blocks.  Plain arrays, as the sample path below.
+*/
 template<typename T>
-inline Eigen::Matrix<T,3,3> right_jacobian_cross(const Eigen::Matrix<T,3,1>& phi,
-                                                 const Eigen::Matrix<T,3,1>& z) {
-    using Matrix3 = Eigen::Matrix<T,3,3>;
-    using Vector3 = Eigen::Matrix<T,3,1>;
-    const Matrix3 P = lie::skew<T>(Vector3(-phi));
-    const Matrix3 Z = lie::skew<T>(Vector3(-z));
-    const T t2 = phi.squaredNorm();
-    T c1, c2, c3;
+class RightJacobianCross {
+public:
+    explicit RightJacobianCross(const Eigen::Matrix<T,3,1>& phi) {
+        const T x = phi(0), y = phi(1), z = phi(2);
+        const T t2 = x * x + y * y + z * z;
+        T c1, c2, c3;
+        coefficients_(t2, c1, c2, c3);
+        phi_[0] = x; phi_[1] = y; phi_[2] = z;
+        k0_ = T(0.5) - c2 * t2;
+        k1_ = c1;
+        const T k2 = T(2) * c2 - c1, k3 = T(2) * c3;
+        const T d = -T(2) * c1 + k3 * t2;
+        n_[0][0] = d - k3 * x * x;       n_[0][1] = k2 * z - k3 * x * y;  n_[0][2] = -k2 * y - k3 * x * z;
+        n_[1][0] = -k2 * z - k3 * x * y; n_[1][1] = d - k3 * y * y;       n_[1][2] = k2 * x - k3 * y * z;
+        n_[2][0] = k2 * y - k3 * x * z;  n_[2][1] = -k2 * x - k3 * y * z; n_[2][2] = d - k3 * z * z;
+    }
+    // out = Q_r(phi, z), row-major.
+    void operator()(const T* z, T (&out)[3][3]) const {
+        const T s = phi_[0] * z[0] + phi_[1] * z[1] + phi_[2] * z[2];
+        const T y[3] = {k1_ * z[0], k1_ * z[1], k1_ * z[2]};
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) out[i][j] = y[i] * phi_[j] + phi_[i] * y[j] + s * n_[i][j];
+        const T h[3] = {k0_ * z[0], k0_ * z[1], k0_ * z[2]};
+        out[0][1] += h[2]; out[0][2] -= h[1];
+        out[1][0] -= h[2]; out[1][2] += h[0];
+        out[2][0] += h[1]; out[2][1] -= h[0];
+    }
+
+private:
+    static void coefficients_(T t2, T& c1, T& c2, T& c3);
+    T phi_[3], n_[3][3], k0_, k1_;
+};
+
+template<typename T>
+void RightJacobianCross<T>::coefficients_(T t2, T& c1, T& c2, T& c3) {
     if (t2 < T(1)) {
         // c1 = sum (-1)^k t^2k/(2k+3)!, c2 = sum (-1)^k t^2k/(2k+4)!,
         // c3 = sum (-1)^k (k+1) t^2k/(2k+5)!; nine terms leave < 1e-19.
@@ -183,10 +226,86 @@ inline Eigen::Matrix<T,3,3> right_jacobian_cross(const Eigen::Matrix<T,3,1>& phi
         c2 = (t2 + T(2) * c - T(2)) / (T(2) * t2 * t2);
         c3 = (T(2) * t - T(3) * s + t * c) / (T(2) * t2 * t2 * t);
     }
-    const Matrix3 PZ = P * Z, ZP = Z * P, PZP = PZ * P;
-    return T(0.5) * Z + c1 * (PZ + ZP + PZP)
-         + c2 * (P * PZ + ZP * P - T(3) * PZP)
-         + c3 * (PZP * P + P * PZP);
+}
+
+template<typename T>
+inline Eigen::Matrix<T,3,3> right_jacobian_cross(const Eigen::Matrix<T,3,1>& phi,
+                                                 const Eigen::Matrix<T,3,1>& z) {
+    T q[3][3];
+    RightJacobianCross<T>{phi}(z.data(), q);
+    Eigen::Matrix<T,3,3> Q;
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) Q(i,j) = q[i][j];
+    return Q;
+}
+
+// Row-major plain copy of a 3 x 3 matrix.  The sample-path covariance kernels
+// index plain arrays: a firmware build (-Os, Eigen assertions on) keeps
+// Eigen's checked coefficient accessors and small products out of line.
+template<typename T>
+inline void rows3(const Eigen::Matrix<T,3,3>& M, T (&out)[3][3]) {
+    const T* m = M.data();
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) out[i][j] = m[i + 3 * j];
+}
+
+// Coefficients of J_l(phi) = I + a [phi]x + b [phi]x^2 from t2 = |phi|^2:
+// lie::left_jacobian()'s own expressions and small-angle branch.
+template<typename T>
+inline void left_jacobian_coefficients(T t2, T& a, T& b) {
+    const T t = std::sqrt(t2);
+    if (t < lie::kSmallAngle<T>) {
+        const T t4 = t2 * t2;
+        a = T(0.5);
+        a = std::fma(-t2, T(1)/T(24), a);
+        a = std::fma( t4, T(1)/T(720), a);
+        b = T(1)/T(6);
+        b = std::fma(-t2, T(1)/T(120), b);
+        b = std::fma( t4, T(1)/T(5040), b);
+    } else {
+        a = (T(1) - std::cos(t)) / t2;
+        b = (t - std::sin(t)) / (t2 * t);
+    }
+}
+
+// Coefficients of Exp(phi) = I + a [phi]x + b [phi]x^2, as lie::Exp().
+template<typename T>
+inline void exp_coefficients(T t2, T& a, T& b) {
+    const T t = std::sqrt(t2);
+    if (t < lie::kSmallAngle<T>) {
+        const T t4 = t2 * t2;
+        a = T(1);
+        a = std::fma(-t2, T(1)/T(6), a);
+        a = std::fma( t4, T(1)/T(120), a);
+        b = T(0.5);
+        b = std::fma(-t2, T(1)/T(24), b);
+        b = std::fma( t4, T(1)/T(720), b);
+    } else {
+        a = std::sin(t) / t;
+        b = (T(1) - std::cos(t)) / t2;
+    }
+}
+
+// out = I + a [v]x + b [v]x^2, with [v]x^2 = v v^T - |v|^2 I.
+template<typename T>
+inline void so3_series(const T (&v)[3], T a, T b, T (&out)[3][3]) {
+    const T n2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) out[i][j] = b * (v[i] * v[j]);
+    const T d = T(1) - b * n2;
+    out[0][0] += d; out[1][1] += d; out[2][2] += d;
+    out[0][1] -= a * v[2]; out[0][2] += a * v[1];
+    out[1][0] += a * v[2]; out[1][2] -= a * v[0];
+    out[2][0] -= a * v[1]; out[2][1] += a * v[0];
+}
+
+// out = A B, or A B^T when `transposed`.
+template<typename T>
+inline void mul3(const T (&A)[3][3], const T (&B)[3][3], bool transposed, T (&out)[3][3]) {
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            out[i][j] = transposed ? A[i][0] * B[j][0] + A[i][1] * B[j][1] + A[i][2] * B[j][2]
+                                   : A[i][0] * B[0][j] + A[i][1] * B[1][j] + A[i][2] * B[2][j];
 }
 
 // Five-point Gauss-Legendre nodes and weights on [-1, 1].
@@ -451,23 +570,32 @@ public:
     // Only 6-vectors are on the stack; the covariance scratch is a member.
     void apply_motion_recoordinatization(const MatC (&maps)[3]) requires(kMotion) {
         map_coordinates_(P_, M_scratch_, false);
+        T* const p = P_.data();
+        T* const xw = X_.X.data();                 // X(ax, i) = xw[ax + 3 i]
         for (int ax = 0; ax < 3; ++ax) {
-            const Eigen::Matrix<T,NC,1> x = X_.X.row(ax).transpose();
-            X_.X.row(ax) = (maps[ax] * x).transpose();
+            const T* const mp = maps[ax].data();   // map(i, j) = mp[i + NC j]
+            T v[NC], y[NC];
+            auto apply = [&] {
+                for (int i = 0; i < NC; ++i) {
+                    T s = T(0);
+                    for (int j = 0; j < NC; ++j) s += mp[i + NC * j] * v[j];
+                    y[i] = s;
+                }
+            };
+            for (int i = 0; i < NC; ++i) v[i] = xw[ax + 3 * i];
+            apply();
+            for (int i = 0; i < NC; ++i) xw[ax + 3 * i] = y[i];
             for (int c = 0; c < NX; ++c) {
-                Eigen::Matrix<T,NC,1> row;
-                for (int i = 0; i < NC; ++i) row(i) = P_(world_index(i,ax),c);
-                const Eigen::Matrix<T,NC,1> y = maps[ax] * row;
-                for (int i = 0; i < NC; ++i) P_(world_index(i,ax),c) = y(i);
+                for (int i = 0; i < NC; ++i) v[i] = p[world_index(i,ax) + NX * c];
+                apply();
+                for (int i = 0; i < NC; ++i) p[world_index(i,ax) + NX * c] = y[i];
+            }
+            for (int r = 0; r < NX; ++r) {
+                for (int i = 0; i < NC; ++i) v[i] = p[r + NX * world_index(i,ax)];
+                apply();
+                for (int i = 0; i < NC; ++i) p[r + NX * world_index(i,ax)] = y[i];
             }
         }
-        for (int ax = 0; ax < 3; ++ax)
-            for (int r = 0; r < NX; ++r) {
-                Eigen::Matrix<T,NC,1> col;
-                for (int i = 0; i < NC; ++i) col(i) = P_(r,world_index(i,ax));
-                const Eigen::Matrix<T,NC,1> y = maps[ax] * col;
-                for (int i = 0; i < NC; ++i) P_(r,world_index(i,ax)) = y(i);
-            }
         map_coordinates_(P_, M_scratch_, true);
     }
 
@@ -619,6 +747,11 @@ private:
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
                     MatrixNX& out) const;
     void add_noise_(MatrixNX& P, const StepBlocks& b, const StepNoise& q, const MatC& Qc, const MatC* Qi = nullptr) const;
+    // P_ <- Phi P_ Phi^T + Qd, the sample path's form of apply_phi_() twice
+    // and add_noise_(): M = Phi P, then only the upper block triangle of
+    // M Phi^T + Qd, mirrored.
+    void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
+                               const MatC* Qi);
 
     bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) {
         ldlt.compute(S);
@@ -643,28 +776,39 @@ private:
             const Vector3 c = ldlt.solve(e);
             Sinv(0,k) = c(0); Sinv(1,k) = c(1); Sinv(2,k) = c(2);
         }
-        for (int i = 0; i < NX; ++i)
-            for (int b = 0; b < 3; ++b)
-                K(i,b) = PHt(i,0) * Sinv(0,b) + PHt(i,1) * Sinv(1,b) + PHt(i,2) * Sinv(2,b);
+        T Si[3][3];
+        tfg_carma_detail::rows3<T>(Sinv, Si);
+        const T* const h = PHt.data();
+        T* const k = K.data();
+        for (int b = 0; b < 3; ++b)
+            for (int i = 0; i < NX; ++i)
+                k[i + NX * b] = h[i] * Si[0][b] + h[i + NX] * Si[1][b] + h[i + 2 * NX] * Si[2][b];
     }
     // CARMA3's Joseph form P + K S K^T - K PHt^T - PHt K^T, exactly symmetric.
     void joseph_update_(const MatrixNX3& K, const Matrix3& S, const MatrixNX3& PHt) {
-        T Kl[NX][3], G[NX][3];
+        T Kl[NX][3], G[NX][3], Sl[3][3];
+        tfg_carma_detail::rows3<T>(S, Sl);
+        const T* const k = K.data();
+        const T* const h = PHt.data();
+        for (int i = 0; i < NX; ++i)
+            for (int b = 0; b < 3; ++b) Kl[i][b] = k[i + NX * b];
         for (int i = 0; i < NX; ++i)
             for (int b = 0; b < 3; ++b) {
-                Kl[i][b] = K(i,b);
-                T g = -PHt(i,b);
-                for (int a = 0; a < 3; ++a) g += K(i,a) * S(a,b);
+                T g = -h[i + NX * b];
+                for (int a = 0; a < 3; ++a) g += Kl[i][a] * Sl[a][b];
                 G[i][b] = g;
             }
+        T* const p = P_.data();
         for (int i = 0; i < NX; ++i) {
-            const T pi[3] = {PHt(i,0), PHt(i,1), PHt(i,2)};
+            const T k0 = Kl[i][0], k1 = Kl[i][1], k2 = Kl[i][2];
+            const T h0 = h[i], h1 = h[i + NX], h2 = h[i + 2 * NX];
             for (int j = i; j < NX; ++j) {
-                T d = T(0);
-                for (int l = 0; l < 3; ++l) d += Kl[i][l] * G[j][l] - pi[l] * Kl[j][l];
-                const T v = P_(i,j) + d;
-                P_(i,j) = v;
-                P_(j,i) = v;
+                T d = k0 * G[j][0] - h0 * Kl[j][0];
+                d += k1 * G[j][1] - h1 * Kl[j][1];
+                d += k2 * G[j][2] - h2 * Kl[j][2];
+                const T v = p[i + NX * j] + d;
+                p[i + NX * j] = v;
+                p[j + NX * i] = v;
             }
         }
     }
@@ -746,14 +890,17 @@ TFGC3_TPL
 void TFGC3_CLS::apply_T_rows_(const MatrixNX& in, bool transposed, bool to_invariant, MatrixNX& out) const {
     // T   = [phi <- dtheta: R], [bg: -R], [w_i: -I, w_i <- dtheta: [w_i]x R], [ba: -R];
     // T^-1 = [dtheta <- phi: R^T], [bg: -R^T], [w_i: -I, w_i <- phi: [w_i]x], [ba: -R^T].
-    const Matrix3 A = to_invariant ? Matrix3(X_.R) : Matrix3(X_.R.transpose());
-    Matrix3 Sx[NC];
+    T A[3][3], Sx[NC][3][3];
+    tfg_carma_detail::rows3<T>(to_invariant ? Matrix3(X_.R) : Matrix3(X_.R.transpose()), A);
     for (int i = 0; i < NC; ++i) {
         const Matrix3 S = lie::skew<T>(Vector3(X_.X.col(i)));
-        Sx[i] = to_invariant ? Matrix3(S * X_.R) : S;
+        tfg_carma_detail::rows3<T>(to_invariant ? Matrix3(S * X_.R) : S, Sx[i]);
     }
-    auto at = [&](int r, int c) { return transposed ? in(c, r) : in(r, c); };
+    const T* const ip = in.data();
+    T* const op = out.data();
+    auto at = [&](int r, int c) { return transposed ? ip[c + NX * r] : ip[r + NX * c]; };
     for (int c = 0; c < NX; ++c) {
+        T* const oc = op + NX * c;
         T ph[3], bg[3], ba[3];
         for (int k = 0; k < 3; ++k) {
             ph[k] = at(OFF_PHI + k, c);
@@ -761,14 +908,14 @@ void TFGC3_CLS::apply_T_rows_(const MatrixNX& in, bool transposed, bool to_invar
             ba[k] = at(OFF_BA + k, c);
         }
         for (int k = 0; k < 3; ++k) {
-            out(OFF_PHI + k, c) = A(k,0) * ph[0] + A(k,1) * ph[1] + A(k,2) * ph[2];
-            out(OFF_BG + k, c) = -(A(k,0) * bg[0] + A(k,1) * bg[1] + A(k,2) * bg[2]);
-            out(OFF_BA + k, c) = -(A(k,0) * ba[0] + A(k,1) * ba[1] + A(k,2) * ba[2]);
+            oc[OFF_PHI + k] = A[k][0] * ph[0] + A[k][1] * ph[1] + A[k][2] * ph[2];
+            oc[OFF_BG + k] = -(A[k][0] * bg[0] + A[k][1] * bg[1] + A[k][2] * bg[2]);
+            oc[OFF_BA + k] = -(A[k][0] * ba[0] + A[k][1] * ba[1] + A[k][2] * ba[2]);
         }
         for (int i = 0; i < NC; ++i)
             for (int k = 0; k < 3; ++k)
-                out(world_index(i, k), c) = Sx[i](k,0) * ph[0] + Sx[i](k,1) * ph[1] + Sx[i](k,2) * ph[2]
-                                          - at(world_index(i, k), c);
+                oc[world_index(i, k)] = Sx[i][k][0] * ph[0] + Sx[i][k][1] * ph[1] + Sx[i][k][2] * ph[2]
+                                      - at(world_index(i, k), c);
     }
 }
 
@@ -777,11 +924,12 @@ void TFGC3_CLS::map_coordinates_(MatrixNX& P, MatrixNX& scratch, bool to_invaria
     // P' = T P T^T = T (T P)^T for symmetric P: two row passes.
     apply_T_rows_(P, false, to_invariant, scratch);
     apply_T_rows_(scratch, true, to_invariant, P);
+    T* const p = P.data();
     for (int i = 0; i < NX; ++i)
         for (int j = i + 1; j < NX; ++j) {
-            const T v = T(0.5) * (P(i,j) + P(j,i));
-            P(i,j) = v;
-            P(j,i) = v;
+            const T v = T(0.5) * (p[i + NX * j] + p[j + NX * i]);
+            p[i + NX * j] = v;
+            p[j + NX * i] = v;
         }
 }
 
@@ -1025,12 +1173,36 @@ TFGC3_TPL
 void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                              const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const {
     (void)Fc;
-    const Vector3 wh = w * Ts;
-    const Matrix3 Rinc = lie::Exp<T>(wh);
-    b.R1 = R0 * Rinc;
-    b.E = b.R1 * R0.transpose();
-    b.Phi_pb = -(R0 * (Ts * lie::left_jacobian<T>(wh)) * R0.transpose());
-    for (int i = 0; i < NC; ++i) b.Xs[i] = lie::skew<T>(Vector3(W1.col(i)));
+    namespace d = tfg_carma_detail;
+    const T wh[3] = {w(0) * Ts, w(1) * Ts, w(2) * Ts};
+    const T t2 = wh[0] * wh[0] + wh[1] * wh[1] + wh[2] * wh[2];
+    T ea, eb, ja, jb, R0a[3][3], Rinc[3][3], Jh[3][3], R1[3][3], X[3][3], Y[3][3];
+    d::exp_coefficients<T>(t2, ea, eb);
+    d::left_jacobian_coefficients<T>(t2, ja, jb);
+    d::rows3<T>(R0, R0a);
+    d::so3_series<T>(wh, ea, eb, Rinc);            // Exp(w h)
+    d::so3_series<T>(wh, ja, jb, Jh);              // J_l(w h)
+    d::mul3<T>(R0a, Rinc, false, R1);
+    d::mul3<T>(R1, R0a, true, X);                  // E = R1 R0^T
+    d::mul3<T>(R0a, Jh, false, Y);
+    d::mul3<T>(Y, R0a, true, Jh);                  // R0 J_l R0^T
+    T* const r1 = b.R1.data();
+    T* const e = b.E.data();
+    T* const pb = b.Phi_pb.data();
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) {
+            r1[i + 3 * j] = R1[i][j];
+            e[i + 3 * j] = X[i][j];
+            pb[i + 3 * j] = -(Ts * Jh[i][j]);
+        }
+    const T* const w1 = W1.data();
+    for (int i = 0; i < NC; ++i) {
+        const T x = w1[3 * i], y = w1[3 * i + 1], z = w1[3 * i + 2];
+        T* const xs = b.Xs[i].data();              // [w_i]x, column-major
+        xs[0] = T(0); xs[1] = z;    xs[2] = -y;
+        xs[3] = -z;   xs[4] = T(0); xs[5] = x;
+        xs[6] = y;    xs[7] = -x;   xs[8] = T(0);
+    }
     b.phi_b = acc_bias_updates_enabled_ ? std::exp(-Ts / std::max(T(1e-3), tau_bacc_)) : T(1);
 }
 
@@ -1038,34 +1210,74 @@ TFGC3_TPL
 void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
                             StepNoise& q) const {
     namespace d = tfg_carma_detail;
-    const Matrix3 Jh = Ts * lie::left_jacobian<T>(Vector3(w * Ts));   // int_0^h Exp(w t) dt
-    Matrix3 Ig = Matrix3::Zero();   // int R Qg R^T
-    Matrix3 Ib = Matrix3::Zero();   // int C Qbg C^T,  C(s) = int_s^h R
-    Matrix3 IC = Matrix3::Zero();   // int C
+    // With W = [w]x, s J_l(w s) = int_0^s Exp(w t) dt = s I + a s^2 W + b s^3 W^2,
+    // (a, b) the J_l coefficients at |w| s.  The rotation R0 factors out of
+    // every integral: C(s) = int_s^h R = R0 K(s), R(s) = R0 Exp(w s).
+    T R0a[3][3], R1a[3][3], Qg[3][3], Qb[3][3];
+    d::rows3<T>(R0, R0a);
+    d::rows3<T>(b.R1, R1a);
+    d::rows3<T>(Q_gyro_, Qg);
+    d::rows3<T>(Q_bg_, Qb);
+    const T wv[3] = {w(0), w(1), w(2)};
+    const T n2 = wv[0] * wv[0] + wv[1] * wv[1] + wv[2] * wv[2];
+    const T W[3][3] = {{T(0), -wv[2], wv[1]}, {wv[2], T(0), -wv[0]}, {-wv[1], wv[0], T(0)}};
+    T W2[3][3];
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) W2[i][j] = wv[i] * wv[j] - (i == j ? n2 : T(0));
+    T ah, bh;
+    d::left_jacobian_coefficients<T>(n2 * Ts * Ts, ah, bh);
+    const T h1 = ah * Ts * Ts, h2 = bh * Ts * Ts * Ts;
+    T Ig[3][3] = {}, Ib[3][3] = {}, IK[3][3] = {}, K[3][3], X[3][3], Y[3][3];
     const bool iso = filter_detail::is_isotropic3<T>(Q_gyro_);
     for (int k = 0; k < 5; ++k) {
         const T s = T(0.5) * Ts * (T(1) + T(d::kGL5Nodes[k]));
         const T wq = T(0.5) * Ts * T(d::kGL5Weights[k]);
-        const Vector3 ws = w * s;
-        const Matrix3 Cs = R0 * (Jh - s * lie::left_jacobian<T>(ws));
+        T as, bs;
+        d::left_jacobian_coefficients<T>(n2 * s * s, as, bs);
+        const T k0 = Ts - s, k1 = h1 - as * s * s, k2 = h2 - bs * s * s * s;
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) K[i][j] = (i == j ? k0 : T(0)) + k1 * W[i][j] + k2 * W2[i][j];
+        d::mul3<T>(K, Qb, false, X);
+        d::mul3<T>(X, K, true, Y);
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) {
+                Ib[i][j] += wq * Y[i][j];          // int K Qbg K^T
+                IK[i][j] += wq * K[i][j];          // int K
+            }
         if (!iso) {
-            const Matrix3 Rs = R0 * lie::Exp<T>(ws);
-            Ig.noalias() += wq * (Rs * Q_gyro_ * Rs.transpose());
+            d::rows3<T>(lie::Exp<T>(Vector3(w * s)), K);
+            d::mul3<T>(K, Qg, false, X);
+            d::mul3<T>(X, K, true, Y);
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j) Ig[i][j] += wq * Y[i][j];   // int Exp Qg Exp^T
         }
-        Ib.noalias() += wq * (Cs * Q_bg_ * Cs.transpose());
-        IC.noalias() += wq * Cs;
     }
-    if (iso) Ig = Matrix3::Identity() * (Q_gyro_(0,0) * Ts);
-    q.Qpp = Ig + Ib;
-    q.Qpp = T(0.5) * (q.Qpp + q.Qpp.transpose()).eval();
-    q.Qpb = -(IC * Q_bg_ * b.R1.transpose());
-    q.Qbb = Ts * (b.R1 * Q_bg_ * b.R1.transpose());
-    q.Qbb = T(0.5) * (q.Qbb + q.Qbb.transpose()).eval();
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) Ib[i][j] += Ig[i][j];
+    T Qpp[3][3], Qpb[3][3], Qbb[3][3];
+    d::mul3<T>(R0a, Ib, false, X);
+    d::mul3<T>(X, R0a, true, Qpp);
+    if (iso)
+        for (int i = 0; i < 3; ++i) Qpp[i][i] += Qg[0][0] * Ts;
+    d::mul3<T>(R0a, IK, false, X);
+    d::mul3<T>(X, Qb, false, Y);
+    d::mul3<T>(Y, R1a, true, Qpb);
+    d::mul3<T>(R1a, Qb, false, X);
+    d::mul3<T>(X, R1a, true, Qbb);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) {
+            q.Qpp(i,j) = T(0.5) * (Qpp[i][j] + Qpp[j][i]);
+            q.Qpb(i,j) = -Qpb[i][j];
+            q.Qbb(i,j) = T(0.5) * Ts * (Qbb[i][j] + Qbb[j][i]);
+        }
     if (acc_bias_updates_enabled_) {
         const T tau_b = std::max(T(1e-3), tau_bacc_);
         const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);
-        q.Qaa = (b.R1 * Q_bacc_ * b.R1.transpose()) * qd_scale;
-        q.Qaa = T(0.5) * (q.Qaa + q.Qaa.transpose()).eval();
+        d::rows3<T>(Q_bacc_, Qb);
+        d::mul3<T>(R1a, Qb, false, X);
+        d::mul3<T>(X, R1a, true, Y);
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) q.Qaa(i,j) = T(0.5) * qd_scale * (Y[i][j] + Y[j][i]);
     } else {
         q.Qaa.setZero();
     }
@@ -1177,21 +1389,178 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     // Mean: attitude by the bias-corrected rate, every world axis by the exact
     // CARMA transition, the accelerometer bias by its OU decay (held: frozen).
     StepBlocks b;
-    const Eigen::Matrix<T,3,NC> W1 = X_.X * Fc.transpose();
+    Eigen::Matrix<T,3,NC> W1;
+    {
+        const T* const x = X_.X.data();            // X(ax, j) = x[ax + 3 j]
+        const T* const f = Fc.data();
+        T* const o = W1.data();
+        for (int i = 0; i < NC; ++i)
+            for (int ax = 0; ax < 3; ++ax) {
+                T s = T(0);
+                for (int j = 0; j < NC; ++j) s += x[ax + 3 * j] * f[i + NC * j];
+                o[ax + 3 * i] = s;
+            }
+    }
     step_blocks_(w, Ts, R0, Fc, W1, b);
     X_.R = b.R1;
     reorthonormalize_();
     X_.X = W1;
     if (acc_bias_updates_enabled_) X_.B.col(1) *= b.phi_b;
 
-    // P <- Phi P Phi^T + Qd, with the structured Phi (two passes of Phi * .).
-    MatrixNX& M = M_scratch_;
-    apply_phi_(P_, false, b, Fc, M);
-    apply_phi_(M, true, b, Fc, P_);
     StepNoise q;
     step_noise_(w, Ts, R0, b, q);
-    add_noise_(P_, b, q, Qc, motion_QI_());
-    symmetrize_P_();
+    propagate_covariance_(b, q, Fc, Qc, motion_QI_());
+}
+
+TFGC3_TPL
+void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc,
+                                      const MatC& Qc, const MatC* Qi) {
+    namespace d = tfg_carma_detail;
+    // Phi by rows: phi' = phi + B bg, bg' = E bg, rho_i' = w_i x (B bg) +
+    // sum_j F_ij rho_j ([w_i]x is b.Xs[i]), ba' = phi_b E ba.
+    T B[3][3], E[3][3], Eb[3][3], F[NC][NC], w[NC][3];
+    d::rows3<T>(b.Phi_pb, B);
+    d::rows3<T>(b.E, E);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) Eb[i][j] = b.phi_b * E[i][j];
+    for (int i = 0; i < NC; ++i) {
+        for (int j = 0; j < NC; ++j) F[i][j] = Fc.data()[i + NC * j];
+        const T* x = b.Xs[i].data();
+        w[i][0] = x[2 + 3 * 1];
+        w[i][1] = x[0 + 3 * 2];
+        w[i][2] = x[1 + 3 * 0];
+    }
+    T* const p = P_.data();
+    T* const m = M_scratch_.data();
+
+    // M = Phi P, column by column.
+    for (int c = 0; c < NX; ++c) {
+        const T* pc = p + NX * c;
+        T* mc = m + NX * c;
+        const T g0 = pc[OFF_BG], g1 = pc[OFF_BG + 1], g2 = pc[OFF_BG + 2];
+        const T f0 = B[0][0] * g0 + B[0][1] * g1 + B[0][2] * g2;
+        const T f1 = B[1][0] * g0 + B[1][1] * g1 + B[1][2] * g2;
+        const T f2 = B[2][0] * g0 + B[2][1] * g1 + B[2][2] * g2;
+        mc[OFF_PHI] = pc[OFF_PHI] + f0;
+        mc[OFF_PHI + 1] = pc[OFF_PHI + 1] + f1;
+        mc[OFF_PHI + 2] = pc[OFF_PHI + 2] + f2;
+        for (int k = 0; k < 3; ++k) mc[OFF_BG + k] = E[k][0] * g0 + E[k][1] * g1 + E[k][2] * g2;
+        for (int i = 0; i < NC; ++i) {
+            T a0 = w[i][1] * f2 - w[i][2] * f1;
+            T a1 = w[i][2] * f0 - w[i][0] * f2;
+            T a2 = w[i][0] * f1 - w[i][1] * f0;
+            for (int j = 0; j < NC; ++j) {
+                const T fij = F[i][j];
+                const T* x = pc + OFF_W + 3 * j;
+                a0 += fij * x[0];
+                a1 += fij * x[1];
+                a2 += fij * x[2];
+            }
+            mc[OFF_W + 3 * i] = a0;
+            mc[OFF_W + 3 * i + 1] = a1;
+            mc[OFF_W + 3 * i + 2] = a2;
+        }
+        const T h0 = pc[OFF_BA], h1 = pc[OFF_BA + 1], h2 = pc[OFF_BA + 2];
+        for (int k = 0; k < 3; ++k) mc[OFF_BA + k] = Eb[k][0] * h0 + Eb[k][1] * h1 + Eb[k][2] * h2;
+    }
+
+    // Upper block triangle of M Phi^T, row by row: row r of block rb needs the
+    // column blocks cb >= rb only.
+    for (int r = 0; r < NX; ++r) {
+        const int rb = r / 3;
+        const T* mr = m + r;                       // M(r, c) = mr[NX * c]
+        T* pr = p + r;
+        if (rb < BLK_BA) {
+            const T g0 = mr[NX * OFF_BG], g1 = mr[NX * (OFF_BG + 1)], g2 = mr[NX * (OFF_BG + 2)];
+            const T t0 = g0 * B[0][0] + g1 * B[0][1] + g2 * B[0][2];
+            const T t1 = g0 * B[1][0] + g1 * B[1][1] + g2 * B[1][2];
+            const T t2 = g0 * B[2][0] + g1 * B[2][1] + g2 * B[2][2];
+            if (rb == BLK_PHI) {
+                pr[NX * OFF_PHI] = mr[NX * OFF_PHI] + t0;
+                pr[NX * (OFF_PHI + 1)] = mr[NX * (OFF_PHI + 1)] + t1;
+                pr[NX * (OFF_PHI + 2)] = mr[NX * (OFF_PHI + 2)] + t2;
+            }
+            if (rb <= BLK_BG)
+                for (int k = 0; k < 3; ++k) pr[NX * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
+            for (int j = rb > BLK_W ? rb - BLK_W : 0; j < NC; ++j) {
+                T a0 = w[j][1] * t2 - w[j][2] * t1;
+                T a1 = w[j][2] * t0 - w[j][0] * t2;
+                T a2 = w[j][0] * t1 - w[j][1] * t0;
+                for (int l = 0; l < NC; ++l) {
+                    const T fjl = F[j][l];
+                    const T* x = mr + NX * (OFF_W + 3 * l);
+                    a0 += fjl * x[0];
+                    a1 += fjl * x[NX];
+                    a2 += fjl * x[2 * NX];
+                }
+                T* y = pr + NX * (OFF_W + 3 * j);
+                y[0] = a0;
+                y[NX] = a1;
+                y[2 * NX] = a2;
+            }
+        }
+        const T h0 = mr[NX * OFF_BA], h1 = mr[NX * (OFF_BA + 1)], h2 = mr[NX * (OFF_BA + 2)];
+        for (int k = 0; k < 3; ++k) pr[NX * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
+    }
+
+    // Qd on the same blocks (add_noise_()): a product with [w_j]x^T is a cross
+    // product of every row with w_j.
+    T Qpp[3][3], Qpb[3][3], Qbb[3][3], Qaa[3][3], Sre[3][3], Sim[3][3];
+    d::rows3<T>(q.Qpp, Qpp);
+    d::rows3<T>(q.Qpb, Qpb);
+    d::rows3<T>(q.Qbb, Qbb);
+    d::rows3<T>(q.Qaa, Qaa);
+    if constexpr (kMotion) {
+        d::rows3<T>(motion_.excitation().re, Sre);
+        d::rows3<T>(motion_.excitation().im, Sim);
+    } else {
+        d::rows3<T>(Sigma_s_, Sre);
+    }
+    auto add3 = [p](int r, int c, const T (&M)[3][3]) {
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j) p[r + i + NX * (c + j)] += M[i][j];
+    };
+    // out(r, .) = w x a(r, .), or w x a(., r) when `transposed`.
+    auto cross_rows = [](const T (&a)[3][3], bool transposed, const T* wv, T (&out)[3][3]) {
+        for (int r = 0; r < 3; ++r) {
+            const T x = transposed ? a[0][r] : a[r][0];
+            const T y = transposed ? a[1][r] : a[r][1];
+            const T z = transposed ? a[2][r] : a[r][2];
+            out[r][0] = wv[1] * z - wv[2] * y;
+            out[r][1] = wv[2] * x - wv[0] * z;
+            out[r][2] = wv[0] * y - wv[1] * x;
+        }
+    };
+    add3(OFF_PHI, OFF_PHI, Qpp);
+    add3(OFF_PHI, OFF_BG, Qpb);
+    add3(OFF_BG, OFF_BG, Qbb);
+    add3(OFF_BA, OFF_BA, Qaa);
+    T GQp[NC][3][3], M3[3][3];                     // GQp[i] = [w_i]x Qpp
+    for (int i = 0; i < NC; ++i) {
+        cross_rows(Qpp, false, w[i], M3);          // Qpp [w_i]x^T = GQp[i]^T
+        add3(OFF_PHI, OFF_W + 3 * i, M3);
+        for (int r = 0; r < 3; ++r)
+            for (int c = 0; c < 3; ++c) GQp[i][r][c] = M3[c][r];
+        cross_rows(Qpb, true, w[i], M3);           // Qpb^T [w_i]x^T
+        add3(OFF_BG, OFF_W + 3 * i, M3);
+    }
+    for (int i = 0; i < NC; ++i)
+        for (int j = i; j < NC; ++j) {
+            cross_rows(GQp[i], false, w[j], M3);
+            const T qr = Qc.data()[i + NC * j];
+            if constexpr (kMotion) {
+                const T qi = Qi->data()[i + NC * j];
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c) M3[r][c] += qr * Sre[r][c] + qi * Sim[r][c];
+            } else {
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c) M3[r][c] += qr * Sre[r][c];
+            }
+            add3(OFF_W + 3 * i, OFF_W + 3 * j, M3);
+        }
+
+    for (int c = 1; c < NX; ++c)
+        for (int r = 0; r < c; ++r) p[c + NX * r] = p[r + NX * c];
 }
 
 TFGC3_TPL
@@ -1213,48 +1582,110 @@ void TFGC3_CLS::build_reset_jacobian(const Tangent& a, MatrixNX& J) const {
 TFGC3_TPL
 void TFGC3_CLS::transport_(const Tangent& a) {
     if (reset_mode_ == ResetMode::None) return;
-    // P <- J P J^T with J = blockdiag(Jr) + C (C only in the attitude column):
-    // (J P)_k = Jr P_k + C_k P_phi;  P'_{.,k} = (JP)_{.,k} Jr^T + (JP)_{.,phi} C_k^T.
-    const Vector3 phi = a.template segment<3>(OFF_PHI);
-    const Matrix3 Jr = lie::left_jacobian<T>(Vector3(-phi));
-    Matrix3 C[NBLK];
-    C[0].setZero();
+    // P <- J P J^T with J = blockdiag(Jr) + C e_phi^T (C_0 = 0).  In 3 x 3
+    // blocks, with W_i = Jr P_{i,phi} + C_i P_{phi,phi} / 2,
+    //     P'_ij = Jr P_ij Jr^T + W_i C_j^T + C_i W_j^T,
+    // evaluated in place on the upper block triangle and mirrored.
+    // AttitudeOnly is J = blockdiag(Jr, I, ..): the attitude block row alone.
+    namespace d = tfg_carma_detail;
     const bool full = reset_mode_ == ResetMode::Full;
-    for (int blk = 1; blk < NBLK; ++blk)
-        C[blk] = full ? tfg_carma_detail::right_jacobian_cross<T>(phi, Vector3(a.template segment<3>(3 * blk)))
-                      : Matrix3::Zero();
-    auto diag_of = [&](int blk) -> Matrix3 {
-        return (full || blk == 0) ? Jr : Matrix3::Identity();
-    };
-    MatrixNX& M = M_scratch_;
-    for (int blk = 0; blk < NBLK; ++blk) {
-        const Matrix3 D = diag_of(blk);
-        const int o = 3 * blk;
-        for (int c = 0; c < NX; ++c)
-            for (int k = 0; k < 3; ++k) {
-                T acc = D(k,0) * P_(o, c) + D(k,1) * P_(o + 1, c) + D(k,2) * P_(o + 2, c);
-                if (blk != 0)
-                    acc += C[blk](k,0) * P_(0, c) + C[blk](k,1) * P_(1, c) + C[blk](k,2) * P_(2, c);
-                M(o + k, c) = acc;
-            }
+    const T* const av = a.data();
+    const T nphi[3] = {-av[OFF_PHI], -av[OFF_PHI + 1], -av[OFF_PHI + 2]};
+    T ja, jb, Jr[3][3], C[NBLK][3][3];
+    d::left_jacobian_coefficients<T>(nphi[0] * nphi[0] + nphi[1] * nphi[1] + nphi[2] * nphi[2], ja, jb);
+    d::so3_series<T>(nphi, ja, jb, Jr);            // J_l(-phi)
+    T* const p = P_.data();
+    // W in the measurement scratch, free once the gain is applied.
+    T* const wm = PHt_scratch_.data();             // W_i(r, k) = wm[3 i + r + NX k]
+    if (full) {
+        const d::RightJacobianCross<T> cross(Vector3(a.template segment<3>(OFF_PHI)));
+        for (int blk = 1; blk < NBLK; ++blk) cross(av + 3 * blk, C[blk]);
+        T Pff[3][3];
+        for (int r = 0; r < 3; ++r)
+            for (int c = 0; c < 3; ++c) Pff[r][c] = T(0.5) * p[r + NX * c];
+        for (int i = 0; i < NBLK; ++i) {
+            const T* const x = p + 3 * i;          // P block (i, phi)
+            for (int r = 0; r < 3; ++r)
+                for (int k = 0; k < 3; ++k) {
+                    T v = Jr[r][0] * x[NX * k] + Jr[r][1] * x[1 + NX * k] + Jr[r][2] * x[2 + NX * k];
+                    if (i != 0) v += C[i][r][0] * Pff[0][k] + C[i][r][1] * Pff[1][k] + C[i][r][2] * Pff[2][k];
+                    wm[3 * i + r + NX * k] = v;
+                }
+        }
     }
-    for (int blk = 0; blk < NBLK; ++blk) {
-        const Matrix3 D = diag_of(blk);
-        const int o = 3 * blk;
-        for (int r = 0; r < NX; ++r)
-            for (int k = 0; k < 3; ++k) {
-                T acc = M(r, o) * D(k,0) + M(r, o + 1) * D(k,1) + M(r, o + 2) * D(k,2);
-                if (blk != 0)
-                    acc += M(r, 0) * C[blk](k,0) + M(r, 1) * C[blk](k,1) + M(r, 2) * C[blk](k,2);
-                P_(r, o + k) = acc;
+    const int rows = full ? NBLK : 1;
+    for (int i = 0; i < rows; ++i)
+        for (int j = i; j < NBLK; ++j) {
+            T* const x = p + 3 * i + NX * 3 * j;   // P block (i, j)
+            T Y[3][3], X[3][3];
+            for (int r = 0; r < 3; ++r)
+                for (int c = 0; c < 3; ++c)
+                    Y[r][c] = Jr[r][0] * x[NX * c] + Jr[r][1] * x[1 + NX * c] + Jr[r][2] * x[2 + NX * c];
+            if (full || j == 0) {
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c)
+                        X[r][c] = Y[r][0] * Jr[c][0] + Y[r][1] * Jr[c][1] + Y[r][2] * Jr[c][2];
+            } else {
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c) X[r][c] = Y[r][c];
             }
-    }
-    symmetrize_P_();
+            if (full && j != 0) {
+                const T* const wi = wm + 3 * i;
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c)
+                        X[r][c] += wi[r] * C[j][c][0] + wi[r + NX] * C[j][c][1] + wi[r + 2 * NX] * C[j][c][2];
+            }
+            if (full && i != 0) {
+                const T* const wj = wm + 3 * j;
+                for (int r = 0; r < 3; ++r)
+                    for (int c = 0; c < 3; ++c)
+                        X[r][c] += C[i][r][0] * wj[c] + C[i][r][1] * wj[c + NX] + C[i][r][2] * wj[c + 2 * NX];
+            }
+            // The block and its mirror; a diagonal block keeps its upper triangle.
+            T* const xt = p + 3 * j + NX * 3 * i;
+            for (int r = 0; r < 3; ++r)
+                for (int c = (i == j ? r : 0); c < 3; ++c) {
+                    x[r + NX * c] = X[r][c];
+                    xt[c + NX * r] = X[r][c];
+                }
+        }
 }
 
 TFGC3_TPL
 void TFGC3_CLS::inject(const Tangent& a) {
-    X_ = Group::Exp_G(Tangent(-a)).compose(X_);
+    // Xhat <- Exp_G(-a) o Xhat (lie/TwoFrameGroup.h), on plain storage:
+    //     R <- Exp(-phi) R,   w_i <- Exp(-phi) w_i - J_l(-phi) rho_i,
+    //     b_j <- b_j - R^T J_l(phi) beta_j     (R before its update).
+    namespace d = tfg_carma_detail;
+    const T* const av = a.data();
+    const T phi[3] = {av[OFF_PHI], av[OFF_PHI + 1], av[OFF_PHI + 2]};
+    const T t2 = phi[0] * phi[0] + phi[1] * phi[1] + phi[2] * phi[2];
+    T ea, eb, ja, jb, Em[3][3], Jm[3][3], Jp[3][3];
+    d::exp_coefficients<T>(t2, ea, eb);
+    d::left_jacobian_coefficients<T>(t2, ja, jb);
+    d::so3_series<T>(phi, -ea, eb, Em);            // Exp(-phi)
+    d::so3_series<T>(phi, -ja, jb, Jm);            // J_l(-phi)
+    d::so3_series<T>(phi, ja, jb, Jp);             // J_l(phi)
+    T* const R = X_.R.data();                      // column-major
+    T* const B = X_.B.data();
+    for (int j = 0; j < Group::kBiasCols; ++j) {
+        const T* const beta = av + Group::bias_offset(j);
+        T v[3];
+        for (int k = 0; k < 3; ++k) v[k] = Jp[k][0] * beta[0] + Jp[k][1] * beta[1] + Jp[k][2] * beta[2];
+        for (int k = 0; k < 3; ++k) B[k + 3 * j] -= R[3 * k] * v[0] + R[1 + 3 * k] * v[1] + R[2 + 3 * k] * v[2];
+    }
+    T* const W = X_.X.data();
+    for (int i = 0; i < NC; ++i) {
+        const T* const rho = av + Group::world_offset(i);
+        const T x = W[3 * i], y = W[3 * i + 1], z = W[3 * i + 2];
+        for (int k = 0; k < 3; ++k)
+            W[k + 3 * i] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z
+                         - (Jm[k][0] * rho[0] + Jm[k][1] * rho[1] + Jm[k][2] * rho[2]);
+    }
+    for (int c = 0; c < 3; ++c) {
+        const T x = R[3 * c], y = R[3 * c + 1], z = R[3 * c + 2];
+        for (int k = 0; k < 3; ++k) R[k + 3 * c] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z;
+    }
     reorthonormalize_();
 }
 
@@ -1272,7 +1703,12 @@ bool TFGC3_CLS::correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_
     gain3_(PHt, ldlt, K);
     if (freeze_ba) freeze_acc_bias_rows_(K);
     Tangent a;
-    for (int i = 0; i < NX; ++i) a(i) = K(i,0) * r(0) + K(i,1) * r(1) + K(i,2) * r(2);
+    {
+        const T r0 = r(0), r1 = r(1), r2 = r(2);
+        const T* const k = K.data();
+        T* const av = a.data();
+        for (int i = 0; i < NX; ++i) av[i] = k[i] * r0 + k[i + NX] * r1 + k[i + 2 * NX] * r2;
+    }
     if (!a.allFinite()) {
         ++skipped_updates_;
         return false;
@@ -1307,24 +1743,29 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     // H_bg = -R J_L R^T with a lever arm, 0 without.
     const T g = gravity_magnitude_;
     MatrixNX3& PHt = PHt_scratch_;
+    const T* const p = P_.data();
+    T* const ht = PHt.data();
     for (int i = 0; i < NX; ++i) {
-        PHt(i,0) = -g * P_(i, OFF_PHI + 1) - P_(i, OFF_A + 0) - P_(i, OFF_BA + 0);
-        PHt(i,1) =  g * P_(i, OFF_PHI + 0) - P_(i, OFF_A + 1) - P_(i, OFF_BA + 1);
-        PHt(i,2) = -P_(i, OFF_A + 2) - P_(i, OFF_BA + 2);
+        ht[i] = -g * p[i + NX * (OFF_PHI + 1)] - p[i + NX * OFF_A] - p[i + NX * OFF_BA];
+        ht[i + NX] = g * p[i + NX * OFF_PHI] - p[i + NX * (OFF_A + 1)] - p[i + NX * (OFF_BA + 1)];
+        ht[i + 2 * NX] = -p[i + NX * (OFF_A + 2)] - p[i + NX * (OFF_BA + 2)];
     }
     Matrix3 H_bg = Matrix3::Zero();
     if (lever) {
         H_bg = -(R * lever_.bias_jacobian() * R.transpose());
-        for (int i = 0; i < NX; ++i)
-            for (int b = 0; b < 3; ++b)
-                PHt(i,b) += P_(i, OFF_BG) * H_bg(b,0) + P_(i, OFF_BG + 1) * H_bg(b,1) +
-                            P_(i, OFF_BG + 2) * H_bg(b,2);
+        T Hb[3][3];
+        tfg_carma_detail::rows3<T>(H_bg, Hb);
+        for (int b = 0; b < 3; ++b)
+            for (int i = 0; i < NX; ++i)
+                ht[i + NX * b] += p[i + NX * OFF_BG] * Hb[b][0] + p[i + NX * (OFF_BG + 1)] * Hb[b][1] +
+                                  p[i + NX * (OFF_BG + 2)] * Hb[b][2];
     }
     Matrix3 S = Rw;
     for (int b = 0; b < 3; ++b) {
-        S(0,b) += -g * PHt(OFF_PHI + 1, b) - PHt(OFF_A + 0, b) - PHt(OFF_BA + 0, b);
-        S(1,b) +=  g * PHt(OFF_PHI + 0, b) - PHt(OFF_A + 1, b) - PHt(OFF_BA + 1, b);
-        S(2,b) += -PHt(OFF_A + 2, b) - PHt(OFF_BA + 2, b);
+        const T* const hb = ht + NX * b;
+        S(0,b) += -g * hb[OFF_PHI + 1] - hb[OFF_A] - hb[OFF_BA];
+        S(1,b) += g * hb[OFF_PHI] - hb[OFF_A + 1] - hb[OFF_BA + 1];
+        S(2,b) += -hb[OFF_A + 2] - hb[OFF_BA + 2];
     }
     if (lever) {
         for (int a = 0; a < 3; ++a)
@@ -1340,8 +1781,8 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         }
     if (!use_ba) {
         // CARMA3's held bias: in S, not in the cross-covariance or the gain.
-        for (int i = 0; i < NX; ++i)
-            for (int k = 0; k < 3; ++k) PHt(i,k) += P_(i, OFF_BA + k);
+        for (int k = 0; k < 3; ++k)
+            for (int i = 0; i < NX; ++i) ht[i + NX * k] += p[i + NX * (OFF_BA + k)];
         freeze_acc_bias_rows_(PHt);
     }
     correct3_(r, S, PHt, Racc_.norm(), !use_ba, last_acc_diag_);
@@ -1358,9 +1799,14 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     const Matrix3 Hphi = -lie::skew<T>(B_w_);
     const Matrix3 Rw = R * Rmag_ * R.transpose();
     MatrixNX3& PHt = PHt_scratch_;
-    for (int i = 0; i < NX; ++i)
-        for (int b = 0; b < 3; ++b)
-            PHt(i,b) = P_(i, OFF_PHI) * Hphi(b,0) + P_(i, OFF_PHI + 1) * Hphi(b,1) + P_(i, OFF_PHI + 2) * Hphi(b,2);
+    T Hp[3][3];
+    tfg_carma_detail::rows3<T>(Hphi, Hp);
+    const T* const p = P_.data();
+    T* const ht = PHt.data();
+    for (int b = 0; b < 3; ++b)
+        for (int i = 0; i < NX; ++i)
+            ht[i + NX * b] = p[i + NX * OFF_PHI] * Hp[b][0] + p[i + NX * (OFF_PHI + 1)] * Hp[b][1] +
+                             p[i + NX * (OFF_PHI + 2)] * Hp[b][2];
     Matrix3 S = Rw;
     for (int a = 0; a < 3; ++a)
         for (int b = 0; b < 3; ++b)

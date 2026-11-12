@@ -122,11 +122,16 @@ using Mat = Eigen::Matrix<T, M, M>;
 // the ESP32-S3 toolchain (see the loop comments in Kalman3D_Wave_OU_III).
 template<typename T, int M>
 inline void mul(const Mat<T,M>& X, const Mat<T,M>& Y, Mat<T,M>& Z) {
+    // Plain column-major storage: a firmware build (-Os, Eigen assertions
+    // on) keeps the checked coefficient accessors out of line.
+    const T* const x = X.data();
+    const T* const y = Y.data();
+    T* const z = Z.data();
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < M; ++j) {
             T s = T(0);
-            for (int k = 0; k < M; ++k) s += X(i,k) * Y(k,j);
-            Z(i,j) = s;
+            for (int k = 0; k < M; ++k) s += x[i + M * k] * y[k + M * j];
+            z[i + M * j] = s;
         }
     }
 }
@@ -136,12 +141,15 @@ template<typename T, int M>
 inline void congruence(const Mat<T,M>& X, const Mat<T,M>& Y, Mat<T,M>& Z) {
     Mat<T,M> XY;
     mul<T,M>(X, Y, XY);
+    const T* const x = X.data();
+    const T* const xy = XY.data();
+    T* const z = Z.data();
     for (int i = 0; i < M; ++i) {
         for (int j = i; j < M; ++j) {
             T s = T(0);
-            for (int k = 0; k < M; ++k) s += XY(i,k) * X(j,k);
-            Z(i,j) = s;
-            Z(j,i) = s;
+            for (int k = 0; k < M; ++k) s += xy[i + M * k] * x[j + M * k];
+            z[i + M * j] = s;
+            z[j + M * i] = s;
         }
     }
 }
