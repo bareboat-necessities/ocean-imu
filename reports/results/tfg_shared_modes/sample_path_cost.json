@@ -133,7 +133,8 @@
       "bit_identical_to_baseline": [
         "QMEKF-CARMA",
         "QMEKF-shared",
-        "OU-III"
+        "OU-III",
+        "TFG (SeaStateFusionFilter_TFG on the same stream; also with -O2 -mfma -ffp-contract=fast)"
       ]
     }
   },

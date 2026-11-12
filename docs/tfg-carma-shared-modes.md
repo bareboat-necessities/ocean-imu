@@ -34,8 +34,9 @@ cross-axis phase relationships; they do not mean CARMA(6,3).
   `W_i = Jr P_{i,phi} + C_i P_{phi,phi} / 2`; the cross blocks `C_i` come from
   a closed form whose coefficients are evaluated once per reset. The
   process-noise quadrature factors the initial attitude out of its five
-  nodes, and the step geometry and the group injection use the same
-  small-angle series as `lie/SO3Jacobians.h`. `build_transition()`,
+  nodes, and the step geometry and the group injection use the series
+  coefficients and plain-array series of `lie/SO3Jacobians.h`, which
+  `lie::Exp()` and `lie::left_jacobian()` share. `build_transition()`,
   `build_process_noise()`, `build_reset_jacobian()` and the group law of
   `lie/TwoFrameGroup.h` remain the dense references that
   `tfg_shared_modes-test` and `tfg_carma3-test` compare the sample path with.

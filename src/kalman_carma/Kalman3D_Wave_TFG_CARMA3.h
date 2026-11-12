@@ -249,56 +249,6 @@ inline void rows3(const Eigen::Matrix<T,3,3>& M, T (&out)[3][3]) {
         for (int j = 0; j < 3; ++j) out[i][j] = m[i + 3 * j];
 }
 
-// Coefficients of J_l(phi) = I + a [phi]x + b [phi]x^2 from t2 = |phi|^2:
-// lie::left_jacobian()'s own expressions and small-angle branch.
-template<typename T>
-inline void left_jacobian_coefficients(T t2, T& a, T& b) {
-    const T t = std::sqrt(t2);
-    if (t < lie::kSmallAngle<T>) {
-        const T t4 = t2 * t2;
-        a = T(0.5);
-        a = std::fma(-t2, T(1)/T(24), a);
-        a = std::fma( t4, T(1)/T(720), a);
-        b = T(1)/T(6);
-        b = std::fma(-t2, T(1)/T(120), b);
-        b = std::fma( t4, T(1)/T(5040), b);
-    } else {
-        a = (T(1) - std::cos(t)) / t2;
-        b = (t - std::sin(t)) / (t2 * t);
-    }
-}
-
-// Coefficients of Exp(phi) = I + a [phi]x + b [phi]x^2, as lie::Exp().
-template<typename T>
-inline void exp_coefficients(T t2, T& a, T& b) {
-    const T t = std::sqrt(t2);
-    if (t < lie::kSmallAngle<T>) {
-        const T t4 = t2 * t2;
-        a = T(1);
-        a = std::fma(-t2, T(1)/T(6), a);
-        a = std::fma( t4, T(1)/T(120), a);
-        b = T(0.5);
-        b = std::fma(-t2, T(1)/T(24), b);
-        b = std::fma( t4, T(1)/T(720), b);
-    } else {
-        a = std::sin(t) / t;
-        b = (T(1) - std::cos(t)) / t2;
-    }
-}
-
-// out = I + a [v]x + b [v]x^2, with [v]x^2 = v v^T - |v|^2 I.
-template<typename T>
-inline void so3_series(const T (&v)[3], T a, T b, T (&out)[3][3]) {
-    const T n2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j) out[i][j] = b * (v[i] * v[j]);
-    const T d = T(1) - b * n2;
-    out[0][0] += d; out[1][1] += d; out[2][2] += d;
-    out[0][1] -= a * v[2]; out[0][2] += a * v[1];
-    out[1][0] += a * v[2]; out[1][2] -= a * v[0];
-    out[2][0] -= a * v[1]; out[2][1] += a * v[0];
-}
-
 // out = A B, or A B^T when `transposed`.
 template<typename T>
 inline void mul3(const T (&A)[3][3], const T (&B)[3][3], bool transposed, T (&out)[3][3]) {
@@ -1177,11 +1127,11 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
     const T wh[3] = {w(0) * Ts, w(1) * Ts, w(2) * Ts};
     const T t2 = wh[0] * wh[0] + wh[1] * wh[1] + wh[2] * wh[2];
     T ea, eb, ja, jb, R0a[3][3], Rinc[3][3], Jh[3][3], R1[3][3], X[3][3], Y[3][3];
-    d::exp_coefficients<T>(t2, ea, eb);
-    d::left_jacobian_coefficients<T>(t2, ja, jb);
+    lie::exp_coefficients<T>(t2, ea, eb);
+    lie::left_jacobian_coefficients<T>(t2, ja, jb);
     d::rows3<T>(R0, R0a);
-    d::so3_series<T>(wh, ea, eb, Rinc);            // Exp(w h)
-    d::so3_series<T>(wh, ja, jb, Jh);              // J_l(w h)
+    lie::so3_series<T>(wh, ea, eb, Rinc);            // Exp(w h)
+    lie::so3_series<T>(wh, ja, jb, Jh);              // J_l(w h)
     d::mul3<T>(R0a, Rinc, false, R1);
     d::mul3<T>(R1, R0a, true, X);                  // E = R1 R0^T
     d::mul3<T>(R0a, Jh, false, Y);
@@ -1225,7 +1175,7 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j) W2[i][j] = wv[i] * wv[j] - (i == j ? n2 : T(0));
     T ah, bh;
-    d::left_jacobian_coefficients<T>(n2 * Ts * Ts, ah, bh);
+    lie::left_jacobian_coefficients<T>(n2 * Ts * Ts, ah, bh);
     const T h1 = ah * Ts * Ts, h2 = bh * Ts * Ts * Ts;
     T Ig[3][3] = {}, Ib[3][3] = {}, IK[3][3] = {}, K[3][3], X[3][3], Y[3][3];
     const bool iso = filter_detail::is_isotropic3<T>(Q_gyro_);
@@ -1233,7 +1183,7 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
         const T s = T(0.5) * Ts * (T(1) + T(d::kGL5Nodes[k]));
         const T wq = T(0.5) * Ts * T(d::kGL5Weights[k]);
         T as, bs;
-        d::left_jacobian_coefficients<T>(n2 * s * s, as, bs);
+        lie::left_jacobian_coefficients<T>(n2 * s * s, as, bs);
         const T k0 = Ts - s, k1 = h1 - as * s * s, k2 = h2 - bs * s * s * s;
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) K[i][j] = (i == j ? k0 : T(0)) + k1 * W[i][j] + k2 * W2[i][j];
@@ -1592,8 +1542,8 @@ void TFGC3_CLS::transport_(const Tangent& a) {
     const T* const av = a.data();
     const T nphi[3] = {-av[OFF_PHI], -av[OFF_PHI + 1], -av[OFF_PHI + 2]};
     T ja, jb, Jr[3][3], C[NBLK][3][3];
-    d::left_jacobian_coefficients<T>(nphi[0] * nphi[0] + nphi[1] * nphi[1] + nphi[2] * nphi[2], ja, jb);
-    d::so3_series<T>(nphi, ja, jb, Jr);            // J_l(-phi)
+    lie::left_jacobian_coefficients<T>(nphi[0] * nphi[0] + nphi[1] * nphi[1] + nphi[2] * nphi[2], ja, jb);
+    lie::so3_series<T>(nphi, ja, jb, Jr);            // J_l(-phi)
     T* const p = P_.data();
     // W in the measurement scratch, free once the gain is applied.
     T* const wm = PHt_scratch_.data();             // W_i(r, k) = wm[3 i + r + NX k]
@@ -1656,16 +1606,15 @@ void TFGC3_CLS::inject(const Tangent& a) {
     // Xhat <- Exp_G(-a) o Xhat (lie/TwoFrameGroup.h), on plain storage:
     //     R <- Exp(-phi) R,   w_i <- Exp(-phi) w_i - J_l(-phi) rho_i,
     //     b_j <- b_j - R^T J_l(phi) beta_j     (R before its update).
-    namespace d = tfg_carma_detail;
     const T* const av = a.data();
     const T phi[3] = {av[OFF_PHI], av[OFF_PHI + 1], av[OFF_PHI + 2]};
     const T t2 = phi[0] * phi[0] + phi[1] * phi[1] + phi[2] * phi[2];
     T ea, eb, ja, jb, Em[3][3], Jm[3][3], Jp[3][3];
-    d::exp_coefficients<T>(t2, ea, eb);
-    d::left_jacobian_coefficients<T>(t2, ja, jb);
-    d::so3_series<T>(phi, -ea, eb, Em);            // Exp(-phi)
-    d::so3_series<T>(phi, -ja, jb, Jm);            // J_l(-phi)
-    d::so3_series<T>(phi, ja, jb, Jp);             // J_l(phi)
+    lie::exp_coefficients<T>(t2, ea, eb);
+    lie::left_jacobian_coefficients<T>(t2, ja, jb);
+    lie::so3_series<T>(phi, -ea, eb, Em);            // Exp(-phi)
+    lie::so3_series<T>(phi, -ja, jb, Jm);            // J_l(-phi)
+    lie::so3_series<T>(phi, ja, jb, Jp);             // J_l(phi)
     T* const R = X_.R.data();                      // column-major
     T* const B = X_.B.data();
     for (int j = 0; j < Group::kBiasCols; ++j) {
