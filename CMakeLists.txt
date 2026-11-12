@@ -67,3 +67,8 @@ add_executable(tfg_handoff_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_han
 add_executable(tfg_device_heave-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_heave-test.cpp")
 add_executable(tfg_device_tempcomp-test "${OCEAN_IMU_TESTS_DIR}/kalman_tfg/tfg_device_tempcomp-test.cpp")
 add_executable(detrend-log-frequency-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-log-frequency-test.cpp")
+
+# Deterministic shared-mode TFG replay, including its own measured quality gates.
+add_executable(kalman_tfg_shared_modes-sim
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp"
+  ${W3D_SIM_COMMON})

@@ -128,7 +128,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_carma_shared_modes, kalman_tfg_carma, imu_calibrate, detrend, nlo]
+        dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_carma_shared_modes, kalman_tfg_carma, kalman_tfg_shared_modes, imu_calibrate, detrend, nlo]
 
     steps:
       - name: Checkout
@@ -270,6 +270,14 @@ jobs:
             --output doc/kalman_tfg_carma/tfg-carma-sim-results-generated.tex-part
           git --no-pager diff --stat -- doc/kalman_tfg_carma/tfg-carma-sim-results-generated.tex-part
 
+      - name: Regenerate the deterministic 900 s table (kalman_tfg_shared_modes)
+        if: matrix.dir == 'kalman_tfg_shared_modes'
+        run: |
+          python3 -u tools/tfg_shared_modes_sim_table.py \
+            --binary tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim \
+            --data-dir plots/kalman_tfg_shared_modes \
+            --output doc/kalman_tfg_shared_modes/tfg-shared-sim-results-generated.tex-part
+
       - name: Clean test build (${{ matrix.dir }})
         run: make -C tests/${{ matrix.dir }} clean
 
@@ -333,27 +341,6 @@ jobs:
         with:
           name: latex-pdfs-${{ matrix.dir }}
           path: doc/${{ matrix.dir }}/**/*.pdf
-          if-no-files-found: error
-
-      - name: Generate experimental TFG shared-mode article figures
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        run: python3 tools/tfg_shared_modes_report.py
-
-      - name: Compile experimental TFG shared-mode article
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        uses: xu-cheng/latex-action@v4
-        with:
-          root_file: kalman_tfg_shared_modes.tex
-          work_in_root_file_dir: true
-          working_directory: doc/kalman_tfg_shared_modes
-          latexmk_use_lualatex: true
-
-      - name: Upload experimental TFG shared-mode article
-        if: matrix.dir == 'kalman_carma_shared_modes'
-        uses: actions/upload-artifact@v6
-        with:
-          name: latex-pdfs-kalman_tfg_shared_modes
-          path: doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes.pdf
           if-no-files-found: error
 
       - name: Find SVGs (${{ matrix.dir }})

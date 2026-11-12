@@ -43,7 +43,7 @@ The ESP32-S3 size and stack probe is [`arduino/csm_size_probe/build.sh`](arduino
 The same shared-mode motion and confidence code can now use the TFG geometry.
 See [the implementation and reproducibility guide](../../docs/tfg-carma-shared-modes.md).
 `TCSM` and its ablations are registered beside `CSM` in the existing paired
-benchmark. `kalman_tfg_shared_modes-sim` reuses this directory's replay source
-with the TFG core policy. `tfg_shared_modes-test` checks the 27-state geometry,
+benchmark. `tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp` is the dedicated
+gated replay. Both geometries reuse `tests/common/SharedModesReplay.h`. `tfg_shared_modes-test` checks the 27-state geometry,
 Hermitian covariance and adaptive coordinate maps against independent references.
 The size/stack probe includes A41, CSM, T41 and TCSM.

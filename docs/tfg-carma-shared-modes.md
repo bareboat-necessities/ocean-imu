@@ -89,7 +89,8 @@ make all
 
 # Reanalyse the committed compact scores without regenerating simulations.
 python3 tools/tfg_shared_modes_study.py analyse
-python3 tools/tfg_shared_modes_report.py
+bash plots/kalman_tfg_shared_modes/draw_plots.sh --study-only
+(cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 
 # A fresh directory avoids mixing the published executable/protocol hashes
 # with a different compiler or later source revision.
@@ -110,6 +111,20 @@ python3 tools/tfg_shared_modes_study.py analyse --results "$TFG_STUDY_RESULTS"
 python3 tools/tfg_shared_modes_report.py --results "$TFG_STUDY_RESULTS"
 (cd doc/kalman_tfg_shared_modes && latexmk -lualatex -halt-on-error kalman_tfg_shared_modes.tex)
 ```
+
+The `kalman_tfg_shared_modes` CI entry builds and runs its dedicated
+`tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp` on the pinned
+vessel-RAO data. Its test script verifies eight real quality-gate passes and
+demonstrates failure on corrupted displacement truth. The measured limits and
+baseline provenance are in `reports/results/tfg_shared_modes/deterministic_regression.json`.
+The replay table, bounded plots, LaTeX compilation/retry, PDF uploads and
+release publication follow the standard estimator pipeline.
+
+`doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex` is the standalone
+method presentation, covering the shared CARMA model, invariant geometry,
+prediction, full group reset, adaptive transport, frontend, startup and results.
+The original `kalman_tfg_shared_modes.tex` remains the controlled comparative
+study; `kalman_tfg_shared_modes-charts.tex` is the deterministic replay gallery.
 
 `run` rejects caches from a different source/executable/protocol. Do not mix
 runs after modifying an estimator. Independent paired seeds, score windows,
@@ -172,10 +187,10 @@ cells near the boundary with the horizontal prior factor raised to 2. Its
 repeated `k=1` and `k=0.15` cells must reproduce the primary and diagnosis
 scores exactly.
 
-The pinned replay is also shared source: `kalman_tfg_shared_modes-sim` compiles
-`kalman_carma_shared_modes-sim.cpp` with the TFG core policy. Its results use a
-distinct family label and do not reuse or modify the QMEKF's fitted regression
-bars. The existing QMEKF replay retains its gating and public environment
+The dedicated TFG and QMEKF replay sources instantiate the same
+`tests/common/SharedModesReplay.h` adapter and protocol. TFG uses a distinct
+family label and its own measured regression bars. The QMEKF replay retains
+its existing bars and public environment
 variables. `W3D_CSM_VARIANT=CSM_OFF` selects the diagnostic uncoupled replay
 for either binary. Independent-axis TFG can also be replayed with
 `W3D_CARMA3_VARIANT=T41 tests/kalman_carma/carma3-sim`.
@@ -219,9 +234,13 @@ sizes are recorded separately. Host execution time does not establish ESP32
 real-time deadlines. No new sample-path heap allocation is introduced; the
 existing wrapper constructs its estimator on the heap at `begin()`.
 
-For the full AtomS3R application, compile the existing shared-mode sketch with
-`-DOCEAN_IMU_TFG_SHARED_MODES=1` in `compiler.cpp.extra_flags`. The default of
-that experimental sketch remains its existing QMEKF. The optional `tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe`
+The full AtomS3R application is the sketch
+`sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes`: the TFG-CARMA3
+sketch with the shared-mode TFG filter as its inner filter. The matched
+firmware-size comparison (`tools/tfg_shared_modes_firmware.py`) instead
+compiles the QMEKF shared-mode sketch with `-DOCEAN_IMU_TFG_SHARED_MODES=1` in
+`compiler.cpp.extra_flags`, so that both builds share one application; that
+sketch's default remains its QMEKF. The optional `tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe`
 measures one selected core at 200 Hz for 60 s, including 0.1 s model commits
 and 100 Hz magnetic updates. `PROBE_VARIANT=0..3` selects the four cells. It
 prints mean/99th/max update time, missed 5 ms deadlines, minimum free heap,

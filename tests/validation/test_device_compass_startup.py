@@ -16,7 +16,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 SKETCHES = tuple(ROOT / "sensors/full_marine_ins" / name / (name + ".ino") for name in (
     "atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_carma3", "atomS3R_ins_tfg_carma3",
-    "atomS3R_ins_carma_shared_modes",
+    "atomS3R_ins_carma_shared_modes", "atomS3R_ins_tfg_carma_shared_modes",
     "atomS3R_ins_tfg",
 ))
 
