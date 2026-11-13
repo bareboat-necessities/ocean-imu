@@ -1048,7 +1048,12 @@ the invariant coordinates that T41R0 already shows at lower cost.
   CARMA3's 7.4 us and OU-III's 22.3 us (1.5 and 0.51 times), 8.1 us
   without the reset transport.  Time grows less than the multiply-add
   count (1.5x against 3.4x) because both share the wrapper's front end,
-  tuner and schedule, which the counts exclude.  This host is about three
+  tuner and schedule, which the counts exclude.
+  These cost figures describe the study's executable.  The TFG-CARMA3 sample
+  path has since been restructured (block-structured covariance kernels,
+  plain storage access) and both cores index plain storage; current
+  measurements are in `docs/tfg-carma-shared-modes.md` and
+  `reports/results/tfg_shared_modes/sample_path_cost.json`.  This host is about three
   times slower than the one of `docs/carma-three-axis.md` (OU-III 7.07 us
   there): ratios carry over, absolute times do not.
 * **ESP32-S3** (Espressif GCC `esp-14.2.0_20241119`, the GCC of
