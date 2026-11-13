@@ -101,8 +101,8 @@ public:
             cfg.gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
             if(o.timing=="both_start"||o.timing=="core_start")cfg.gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
             if(o.timing=="both_start")cfg.frontend_gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
-            cfg.schmidt_acc_bias_hold=o.noise=="schmidt"||o.noise=="schmidt_prior";
         }
+        cfg.schmidt_acc_bias_hold=o.noise=="schmidt"||o.noise=="schmidt_prior";
         if(o.noise=="schmidt_prior")cfg.initial_acc_bias_std=.008f*9.80665f/std::sqrt(3.f);
 #endif
         cfg.mag_continuous_hard_iron=o.arm.find("cont")!=std::string::npos;

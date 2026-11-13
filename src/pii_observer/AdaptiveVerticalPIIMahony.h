@@ -36,7 +36,10 @@ public:
     };
 
     struct Config {
-        ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+        // Mahony combines gyro propagation with current-sample feedback. Keep
+        // its qualified endpoint rule; centered sampling is an explicit option
+        // until that complete feedback path passes the heave regressions.
+        ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
         // Shared core defaults are also used by the simulation adapter.
         CoreConfig core{};
 

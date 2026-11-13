@@ -25,8 +25,10 @@ template<class Fusion>void sampling_check(const char* name,bool centered_fronten
   sampled.update(.005f,w,a);interval.update(.005f,avg,a);
   if(k%8==7){sampled.updateMag(m);interval.updateMag(m);}
   auto& x=live_core(sampled);auto& y=live_core(interval);
-  worst_q=std::max(worst_q,double((body_quaternion(x).coeffs()-body_quaternion(y).coeffs()).norm()));
-  worst_p=std::max(worst_p,double((x.covariance_full()-y.covariance_full()).norm()));
+  const double q_error=(body_quaternion(x).coeffs()-body_quaternion(y).coeffs()).norm();
+  const double p_error=(x.covariance_full()-y.covariance_full()).norm();
+  check(std::isfinite(q_error)&&std::isfinite(p_error),"nonfinite sampling comparison");
+  worst_q=std::max(worst_q,q_error);worst_p=std::max(worst_p,p_error);
  }
  check(worst_q<1e-6&&worst_p<1e-6,"default path disagrees with external interval reference");
  std::cout<<name<<(centered_frontend?" optional frontend":" actual defaults")<<" q_error="<<worst_q<<" P_error="<<worst_p<<" PASS\n";

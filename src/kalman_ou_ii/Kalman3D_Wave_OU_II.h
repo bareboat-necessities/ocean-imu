@@ -1606,6 +1606,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_tr
     Pext.diagonal().array() = p_0;
 
     // Reset cached angular kinematics used by lever-arm logic
+    gyro_interval_.reset();
     last_gyr_bias_corrected.setZero();
     prev_omega_b_.setZero();
     alpha_b_.setZero();

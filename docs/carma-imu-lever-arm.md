@@ -93,42 +93,42 @@ committed evidence and the table below against each other.
 
 | IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea | Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 30 cm forward | 1.01 | 1.35 | 0.999 | 1.005 | 1.00 | 1.00 | 1.09 | 1.23 |
-| 30 cm starboard | 1.02 | 1.42 | 1.001 | 1.002 | 1.01 | 1.00 | 1.03 | 1.03 |
-| 30 cm above | 1.03 | 1.37 | 1.001 | 1.002 | 1.01 | 0.98 | 1.06 | 0.98 |
-| 100 cm forward | 1.09 | 2.50 | 1.000 | 1.013 | 0.99 | 1.03 | 1.35 | 2.00 |
-| 100 cm starboard | 1.14 | 2.81 | 1.007 | 1.008 | 1.01 | 1.02 | 1.03 | 1.25 |
-| 100 cm above | 1.21 | 3.00 | 1.002 | 1.015 | 1.04 | 1.03 | 1.37 | 0.95 |
-| 200 cm forward | 1.32 | 4.27 | 1.017 | 1.068 | 1.05 | 1.06 | 1.71 | 4.03 |
-| 200 cm starboard | 1.42 | 4.98 | 1.033 | 1.038 | 1.02 | 1.06 | 0.99 | 4.20 |
-| 200 cm above | 1.64 | 5.61 | 1.021 | 1.065 | 1.08 | 1.18 | 1.87 | 0.95 |
+| 30 cm forward | 1.01 | 1.35 | 1.000 | 1.005 | 1.00 | 1.00 | 1.10 | 1.24 |
+| 30 cm starboard | 1.02 | 1.42 | 1.002 | 1.002 | 1.01 | 0.99 | 1.03 | 1.03 |
+| 30 cm above | 1.03 | 1.37 | 1.001 | 1.004 | 1.01 | 0.98 | 1.11 | 0.98 |
+| 100 cm forward | 1.09 | 2.50 | 1.000 | 1.013 | 1.00 | 1.03 | 1.38 | 2.02 |
+| 100 cm starboard | 1.14 | 2.81 | 1.007 | 1.008 | 1.04 | 1.02 | 1.03 | 1.28 |
+| 100 cm above | 1.21 | 3.00 | 1.002 | 1.019 | 1.04 | 1.04 | 1.48 | 0.96 |
+| 200 cm forward | 1.32 | 4.27 | 1.011 | 1.066 | 1.05 | 1.06 | 1.77 | 4.08 |
+| 200 cm starboard | 1.43 | 4.97 | 1.026 | 1.030 | 1.02 | 1.05 | 1.03 | 4.27 |
+| 200 cm above | 1.64 | 5.61 | 1.014 | 1.070 | 1.08 | 1.18 | 2.00 | 0.95 |
 
 **TFG-CARMA3** (RMS / CG baseline: eight seas pooled, and the worst single sea)
 
 | IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea | Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 30 cm forward | 1.01 | 1.35 | 0.999 | 1.005 | 1.01 | 1.00 | 1.09 | 1.24 |
-| 30 cm starboard | 1.02 | 1.42 | 1.001 | 1.002 | 1.00 | 1.00 | 1.03 | 1.03 |
-| 30 cm above | 1.03 | 1.37 | 1.001 | 1.002 | 1.01 | 0.99 | 1.05 | 0.98 |
-| 100 cm forward | 1.09 | 2.50 | 0.999 | 1.013 | 1.02 | 1.01 | 1.35 | 2.00 |
-| 100 cm starboard | 1.14 | 2.81 | 1.007 | 1.008 | 1.00 | 1.01 | 1.03 | 1.22 |
-| 100 cm above | 1.21 | 3.00 | 1.002 | 1.015 | 1.02 | 0.99 | 1.35 | 0.95 |
-| 200 cm forward | 1.32 | 4.27 | 1.016 | 1.067 | 1.10 | 1.01 | 1.72 | 2.48 |
-| 200 cm starboard | 1.42 | 4.98 | 1.032 | 1.037 | 1.05 | 1.01 | 0.98 | 2.53 |
-| 200 cm above | 1.64 | 5.61 | 1.021 | 1.065 | 1.06 | 1.05 | 1.84 | 0.94 |
+| 30 cm forward | 1.01 | 1.35 | 0.999 | 1.005 | 1.01 | 1.00 | 1.10 | 1.24 |
+| 30 cm starboard | 1.02 | 1.42 | 1.001 | 1.002 | 1.01 | 1.00 | 1.03 | 1.03 |
+| 30 cm above | 1.03 | 1.37 | 1.001 | 1.004 | 1.01 | 0.99 | 1.11 | 0.98 |
+| 100 cm forward | 1.09 | 2.50 | 1.000 | 1.013 | 1.02 | 1.01 | 1.38 | 2.02 |
+| 100 cm starboard | 1.14 | 2.81 | 1.007 | 1.008 | 1.03 | 1.00 | 1.04 | 1.24 |
+| 100 cm above | 1.21 | 3.00 | 1.002 | 1.019 | 1.02 | 0.99 | 1.46 | 0.95 |
+| 200 cm forward | 1.32 | 4.27 | 1.011 | 1.066 | 1.11 | 1.01 | 1.78 | 2.51 |
+| 200 cm starboard | 1.43 | 4.97 | 1.025 | 1.029 | 1.03 | 1.00 | 1.00 | 2.59 |
+| 200 cm above | 1.64 | 5.61 | 1.014 | 1.070 | 1.06 | 1.05 | 1.97 | 0.95 |
 
 Derivative corner of the corrected arm, IMU 100 cm above the CG (3-D RMS / CG baseline):
 
 | Corner [Hz] | CARMA3 | TFG-CARMA3 |
 | ---: | ---: | ---: |
-| 1 | 1.129 | 1.129 |
-| 2 | 1.030 | 1.030 |
-| 5 | 1.007 | 1.007 |
+| 1 | 1.123 | 1.123 |
+| 2 | 1.029 | 1.029 |
+| 5 | 1.006 | 1.006 |
 | 10 | 1.003 | 1.003 |
 | 15 | 1.002 | 1.002 |
-| 25 | 1.021 | 1.021 |
-| 50 | 1.114 | 1.114 |
-| 100 | 1.106 | 1.106 |
+| 25 | 1.013 | 1.013 |
+| 50 | 1.092 | 1.092 |
+| 100 | 1.090 | 1.089 |
 <!-- END carma_lever_arm_headline -->
 
 The table is rendered from `reports/results/carma_lever_arm_study/lever_arm_summary.csv`
@@ -219,3 +219,5 @@ a rigid hull, and an offset known exactly.  A mis-measured offset was not
 studied; a wrong sign doubles the term instead of removing it.  No hardware,
 on-target timing or sea data stands behind any of this, and the CARMA filters
 remain research estimators.
+
+The gyro-prediction correction refresh was replayed in full by Actions run [43347750720](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43347750720) on PR merge `f8618df08cd9c2854dd1632be1a7a3728a562863` (source head `573a0f8`). The previous summaries and manifest are retained under `baseline-063017d4`; the unchanged study comparison tolerance detected genuine numerical changes, so these regenerated results replace the current publication rather than relabeling the old run.

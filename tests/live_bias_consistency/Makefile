@@ -12,7 +12,7 @@ common.o: ../../src/util/W3dSimCommon.cpp
 -include *.d
 .PHONY: all build clean
 clean:
-	rm -f *.o *.d live-bias-followup live-bias-baseline audit-sensors timing-test schmidt-test main-filter-timing-test defaults-*-test observer-defaults-test main-gyro-rollout reinitialization-test finite-mean-test
+	rm -f *.o *.d live-bias-followup live-bias-baseline audit-sensors timing-test schmidt-test main-filter-timing-test defaults-*-test observer-defaults-test main-gyro-rollout reinitialization-test finite-mean-test packet-rejection-test
 
 audit-sensors: audit_sensors.o
 	$(CXX) $(CXXFLAGS) $^ -o $@

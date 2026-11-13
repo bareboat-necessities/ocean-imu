@@ -1,0 +1,102 @@
+{
+  "arms": {
+    "exact": {
+      "estimator_placement": null,
+      "input_stage_model": "exact"
+    },
+    "mekf": {
+      "estimator_placement": "mekf",
+      "input_stage_model": "none"
+    },
+    "mekf_ou3": {
+      "estimator_placement": "ou3",
+      "input_stage_model": "none"
+    },
+    "unmodeled": {
+      "estimator_placement": null,
+      "input_stage_model": "none"
+    },
+    "wrapper": {
+      "estimator_placement": "wrapper",
+      "input_stage_model": "none"
+    }
+  },
+  "axes_body_ned": {
+    "x-forward": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "y-starboard": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "z-up": [
+      0.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "cutoff_sweep_case": {
+    "axis": "z-up",
+    "distance_m": 1.0
+  },
+  "cutoff_sweep_hz": [
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+    15.0,
+    25.0,
+    50.0,
+    100.0
+  ],
+  "derivative_cutoff_hz": 15.0,
+  "distances_m": [
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    1.0,
+    2.0
+  ],
+  "files": {
+    "carma_lever_arm_cutoff.svg": "5fb688372a4eb32a6f44cbb81fdc423c0b9c5088196d2c2a6eb5124a5d1ac512",
+    "carma_lever_arm_penalty.svg": "7af167fcc76f55aec99651b3cec677283c21f8dd265479e943c1d47ae956c36a",
+    "carma_lever_arm_sea_state.svg": "86be3389a9807ac449217acbd6ace06c68335a2230eeec1e78f8aca89c19713b",
+    "carma_lever_arm_tilt.svg": "f707b0ceab9206fc13196132a80648cac013c64aa99ac094771230509098c38f",
+    "carma_lever_arm_yaw.svg": "d3cf1889969594d1dc7f58fda35bb8692b298c1cf3587cac74b3c6d094d063dc",
+    "lever_arm_cutoff_runs.csv": "f0b7788114ef93487157bf3be6550d58ba05455c2c7c8f528c7aee2e99781441",
+    "lever_arm_cutoff_summary.csv": "47881b936e7aa82d966e5229c9f206b2450eba6f46314be6c8a632db9a4554b7",
+    "lever_arm_report.md": "07e1c022eca3339b8cfe9287296007ba1b6299f045e438e1667b2b8acf5277bb",
+    "lever_arm_runs.csv": "0bbf703e6e0b522774a513317434dada1c9d1390bf8286bfabc07ee426972a45",
+    "lever_arm_summary.csv": "d66c76df89f3190711c65102937d931a5f9184d9b43138ca94307826c02aef7e"
+  },
+  "filters": {
+    "carma3": "A41",
+    "tfg_carma3": "T41"
+  },
+  "mode": "full",
+  "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
+  "scoring_window_sec": 900.0,
+  "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft.zip",
+    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+    },
+    "motion_model": "VESSEL_RAO_28FT",
+    "release": "v1.2.3"
+  },
+  "source_commit": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "study": "CARMA IMU lever-arm installation"
+}

@@ -1,6 +1,6 @@
 {
   "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
-  "parent_main": "063017d44e3c422621a7f7b260f950cacb43a616",
+  "parent_main": "b915b0470911a49de6ddcf2ff6dad79cb966f295",
   "main_source_delta": [],
   "python": "3.12.14",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
@@ -46,9 +46,9 @@
       "TFG",
       "CARMA",
       "shared-mode CARMA",
-      "NLO",
-      "PII"
-    ]
+      "NLO"
+    ],
+    "PII": "endpoint feedback retained after unchanged Kuchler heave sentinel failed with centered input; centering remains optional"
   },
   "research": {
     "independent_seeds": 6,
@@ -93,29 +93,29 @@
     "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
     "src/kalman_common/MarineWaveFrontEnd.h": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
     "src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
-    "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": "267a1886931cf36eedd1db9a55498493e0b700a9c2a888ec3b6f99cd1755e4e4",
+    "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": "19c68149683be53f55f2c4966c844d7147c9f4dda321252a277b050eaff523c5",
     "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "debb06ba1c75a3bb2ceac097494bd32c77bff734d33bcb09eae3a90772361c59",
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "549a541e14cb544e39b9c513fd073526f752fdc4525a4b6846a4165aa114f622",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "6250cb51948718e8a2f4962bfec5a92a8e855efe60d7d4c7ae7f7f8585244ede",
     "src/nlo/TimeVarGainNLO_Adapter.h": "9f95aa26e1345da1488ef4febc93f1ce6060bed28319a431eb12bd9d1c4d5e21",
-    "src/pii_observer/AdaptiveVerticalPIIMahony.h": "72aa474cfe0f4a4e650931d92cca1c4fad4af11e53e0250e47f74460ef239cfb",
+    "src/pii_observer/AdaptiveVerticalPIIMahony.h": "a8dd9ce49e48950155e11d9b9c8d666f53b386bcc63626ee65bab3c8a72505cd",
     "tests/common/FiniteMean.h": "2e55e0c80980a47ec7612755adce3063cece6b06a84767af55c8b304a02b3dc5",
     "tests/common/SharedModesReplay.h": "32618c3b5906895964f2e1245c1c66e7b45316ebaffb117a04252d74b19a1d2f",
     "tests/kalman_carma/CarmaBenchTruth.h": "41aa544c28f8bff7a2da6ea790b93fe32704e06507e141c19d46ceacff4c7bad",
     "tests/kalman_carma_shared_modes/run_tests.sh": "80017438ac0934add72b2de2758d2f99c3fd4efc1aba3e3bc23088fe834d91d9",
     "tests/kalman_tfg_shared_modes/regression_checks.py": "14e56de5087725fd4c802604ba9c7603103a272c4b097d5addcf1e2b147e6783",
-    "tests/live_bias_consistency/Adapter.h": "a508281a4fc2e88156419f65deda2b3a9d4cfecbe41376d8d49579e4102533ae",
-    "tests/live_bias_consistency/DefaultSamplingChecks.h": "bb502e2a2380ae3c2c2257054a000e4a4f700769a2e3bb75f3becb16b5bb332e",
+    "tests/live_bias_consistency/Adapter.h": "8ad2a72fb70ae947f06c38f4b4258b6fd65fc09c1c8dbb08d5e69d7e4374e6a0",
+    "tests/live_bias_consistency/DefaultSamplingChecks.h": "2bf5cb15f1280cb8d368c2d3f3870186710d6676df5f6500a37220f7131e33a2",
     "tests/live_bias_consistency/Experiment.h": "ab30e8d02a661c1242445f404b5b14170c426c1d4fe41f3abcc238d51d3fe7f8",
-    "tests/live_bias_consistency/GyroPredictionChecks.h": "8aec934d106348f934245a6afbe3bd04bdbd86c42410c6e8a5d32e2c42844096",
-    "tests/live_bias_consistency/MainGyroRollout.h": "7ddb3e8f3ae82420862039eebbde1a73a21b4053d896f34c881856a460d2c4aa",
-    "tests/live_bias_consistency/Makefile": "e89a28a0b6aa671ed5bd58afe3ecbc164960e011ba7ec0efa058ffa2b1f55e42",
-    "tests/live_bias_consistency/README.md": "2b8622d69ba9ef64bfcd54d3db83b8a48d87ce5062be09429cb19450319b8c21",
+    "tests/live_bias_consistency/GyroPredictionChecks.h": "e63ab7f0349c046ac51658bff8b614cb23691b78249febea8a5228f376a81c2c",
+    "tests/live_bias_consistency/MainGyroRollout.h": "7d94e189a3896106400def8de0065c563e5919aa2f8ab86afa58ed3215289c9a",
+    "tests/live_bias_consistency/Makefile": "b497c2b4b780046f28da961aa3feeddd33f3e83534548a26502abbbfc66a168a",
+    "tests/live_bias_consistency/README.md": "37637ec7b8f74ef3cbd7eabcbbeff50a92addd75c3a888d03bb24d4b6085fee9",
     "tests/live_bias_consistency/StandardHeaders.h": "0b5df120c68b798448fa15046e1c179f355c827a730c68553d1671165f729390",
     "tests/live_bias_consistency/audit_sensors.cpp": "aaf053eae87511d02cc142de5c10b120b2dceb841d03f91b932b9b4ba7857c89",
-    "tests/live_bias_consistency/defaults-ou2-test.cpp": "f37683c456ec62835890e9a70274bb727a0be4c42db3cc8854bf603173fbdc26",
+    "tests/live_bias_consistency/defaults-ou2-test.cpp": "d8553acebc6cd723b4feb02265f744d1428cc55cf1460e3d27ba0f2bbad1aeae",
     "tests/live_bias_consistency/defaults-ou3-test.cpp": "d25079665bf841f44acca7a6e48583f14da6e3d068a5a16a703eeefd0a7fd00c",
     "tests/live_bias_consistency/defaults-tfg-test.cpp": "644f13e7fce26066cd9aded956e96eb6d8660fc43cf638c205a932421ea1c999",
     "tests/live_bias_consistency/finite-mean-test.cpp": "ced6907fe024c999a87274b262293f51c03fa0588b4c8db74962e3fce597de44",
@@ -126,7 +126,7 @@
     "tests/live_bias_consistency/main-gyro-tfg.cpp": "7c7def7ba09aaf4c2c5e299651668d4c0944deea92f26cc56995e9b77eed554b",
     "tests/live_bias_consistency/main.cpp": "7c02b7c01f198dcd189d3cbbabb6f6a2a21d96a2173b767d454634f7e3f26910",
     "tests/live_bias_consistency/noise-bound.py": "eaa92ea33a56f810d17a8317b9771906bb14b5685647f483201858fba76f731a",
-    "tests/live_bias_consistency/observer-defaults-test.cpp": "08d57b284be772358d62e44f92c89575934fededdb9141c64eaa36662c17b620",
+    "tests/live_bias_consistency/observer-defaults-test.cpp": "7cd8591dc3ce9415e6e869a3543bfa420050d3a6eb9ab1bd17726a21adbf5e91",
     "tests/live_bias_consistency/packet-rejection-test.cpp": "6f6c53800cce66b4b601215bb0ba90884b5259b2ec02820ad994361445f83970",
     "tests/live_bias_consistency/qmekf.cpp": "30090a3085a25bc01e4a6f3ed5d5b77c764ad3ddbf60392fa114d65c26205e6c",
     "tests/live_bias_consistency/reinitialization-test.cpp": "8dd44c355e86ca31398d229fd483c55fd083248ab641b370d7e9be491e20f586",
@@ -135,7 +135,7 @@
     "tests/live_bias_consistency/tfg.cpp": "25a7ffe9fddbd914674baf2b0a30e8a6d85f700e0989bedeaa631cc46b075490",
     "tests/live_bias_consistency/timing-test.cpp": "aa0f725b09ecb8f2bacc209d9ad21eed082435858af4bbb12b80dc4cdadf03ef",
     "tools/live_bias_consistency.py": "a14a501d1bb7b2a6adbd97c48ba7332f785c4168a1b51b9d77250ffb54f90883",
-    "tools/live_bias_consistency_analysis.py": "6327f92a2f3ba261f0b8f949c0926a91d2fe35e8a42ff9faf5732313fda96d98",
+    "tools/live_bias_consistency_analysis.py": "a422d3502bac56c0f8554a1ec9832fa6b02df1fb3909f8a1f2487bc7d1a0101a",
     "tools/live_bias_csv_replay.py": "799e1ff8ec3fda1a16191b9c6e353988bce62a4806e1d32bd724707b1ad61aec",
     "tools/live_bias_csv_timing.py": "55222510ac6e2b63a85666a7cb4d15baf80fb5838aa67a5e567e72bc587d932f",
     "tools/live_bias_window.py": "032ccf4f7390c4ba2bd393d36894dcc51eae9a77fd382d01a614ebeb2f39e8c4",
@@ -154,7 +154,7 @@
     }
   ],
   "review_checks": {
-    "main_synced_to": "063017d44e3c422621a7f7b260f950cacb43a616",
+    "main_synced_to": "b915b0470911a49de6ddcf2ff6dad79cb966f295",
     "focused_suite": {
       "exit_code": 0,
       "command": "make -C tests/live_bias_consistency && (cd tests/live_bias_consistency && bash run_tests.sh)"
@@ -181,7 +181,15 @@
       "theorem_closed": false,
       "note": "Actual source diagnostics regenerated before binding refresh; no theorem promotion"
     },
-    "full_statistical_evidence": "genuine full branch regeneration queued in GitHub Actions"
+    "full_statistical_evidence": "genuine full branch regeneration queued in GitHub Actions",
+    "followup": "OU-II reinitialization, independent Schmidt selector, finite comparison errors, rollout stream failures/counts/duration admission and non-localized replay admission corrected; focused rerun in progress",
+    "carma_lever_arm_full_refresh": {
+      "workflow_run": 43347750720,
+      "artifact_id": 14003119369,
+      "source_head": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
+      "contract_checks": 9,
+      "prior_summaries_retained": "reports/results/carma_lever_arm_study/baseline-063017d4"
+    }
   },
   "resource_build_failure": {
     "command": "make -j2 build EIGEN_DIR=/workspace/scratch/c5be0639f4c3/eigen-3.4.0",

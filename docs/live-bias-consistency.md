@@ -2,10 +2,10 @@
 
 Source baseline: [`9018fa4b57d9bd10983ae4e77ff95ce509551e17`](https://github.com/bareboat-necessities/ocean-imu/commit/9018fa4b57d9bd10983ae4e77ff95ce509551e17).
 This was main when the investigation began. The implementation also incorporates
-main through `063017d44e3c422621a7f7b260f950cacb43a616`, including its publication-only follow-up;
+main through `b915b0470911a49de6ddcf2ff6dad79cb966f295`, including its publication-only follow-up;
 its production sources are identical to the scored baseline.
 The comparative section retains the original controlled study and adds fresh production-default and broader rollout tables for this source revision. Both 27-state shared-mode geometries are evaluated.
-The default rollout additionally covers live OU-II, OU-III, TFG, NLO and PII;
+The default rollout additionally covers live OU-II, OU-III, TFG and NLO;
 its native integration tests and paired wave results are reported separately. Since the
 cited `c2ae63b2` study, main optimized TFG propagation/reset kernels and shared
 SO(3) coefficients; it did not replace the measurement model or startup
@@ -15,7 +15,7 @@ dense covariance and integration references.
 ## Decision
 
 Live prediction defaults to instantaneous-sample integration in OU-II, OU-III,
-TFG, CARMA/shared-mode, NLO and PII. Native Kalman prediction uses the effective
+TFG, CARMA/shared-mode and NLO. Native Kalman prediction uses the effective
 interval rate consistently in its mean, gyro-bias sensitivity and process
 covariance. Direct mathematical kernels retain their interval-rate API.
 
@@ -25,7 +25,7 @@ centering it worsens pinned-record yaw while adding no oracle recovery benefit.
 The core-only correction meets the original replay bars in the localization;
 final default-path gates and the required full build are recorded below.
 `frontend_gyro_sample_mode` makes that distinction explicit. This is not a
-blanket average of every gyro stream.
+blanket average of every gyro stream. The combined Mahony/PII feedback path also retains its qualified endpoint default: enabling centering makes the unchanged high-wave Kuchler heave sentinel fail (17.58% versus its 15.66% limit). Its centered path remains optional and independently tested; this is a failed rollout, not a lowered threshold.
 
 Schmidt holding is available as an opt-in covariance correction with independent
 dense-Joseph tests. It is not selected as the production default: although it

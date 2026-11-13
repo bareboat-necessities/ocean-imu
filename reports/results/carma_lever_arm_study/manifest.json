@@ -62,16 +62,16 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "5fb688372a4eb32a6f44cbb81fdc423c0b9c5088196d2c2a6eb5124a5d1ac512",
-    "carma_lever_arm_penalty.svg": "7af167fcc76f55aec99651b3cec677283c21f8dd265479e943c1d47ae956c36a",
-    "carma_lever_arm_sea_state.svg": "86be3389a9807ac449217acbd6ace06c68335a2230eeec1e78f8aca89c19713b",
-    "carma_lever_arm_tilt.svg": "f707b0ceab9206fc13196132a80648cac013c64aa99ac094771230509098c38f",
-    "carma_lever_arm_yaw.svg": "d3cf1889969594d1dc7f58fda35bb8692b298c1cf3587cac74b3c6d094d063dc",
-    "lever_arm_cutoff_runs.csv": "f0b7788114ef93487157bf3be6550d58ba05455c2c7c8f528c7aee2e99781441",
-    "lever_arm_cutoff_summary.csv": "47881b936e7aa82d966e5229c9f206b2450eba6f46314be6c8a632db9a4554b7",
-    "lever_arm_report.md": "07e1c022eca3339b8cfe9287296007ba1b6299f045e438e1667b2b8acf5277bb",
-    "lever_arm_runs.csv": "0bbf703e6e0b522774a513317434dada1c9d1390bf8286bfabc07ee426972a45",
-    "lever_arm_summary.csv": "d66c76df89f3190711c65102937d931a5f9184d9b43138ca94307826c02aef7e"
+    "carma_lever_arm_cutoff.svg": "8beef6b9fe95c5ab823794ea0b2f7b7436c8159917efcec6daf456a5eda8cdf9",
+    "carma_lever_arm_penalty.svg": "a20c8ab93c29a3d337a91f271b496aa96a17f76431ca6709c7f8a330f2368b4c",
+    "carma_lever_arm_sea_state.svg": "1eb328af30dd77135d31c5dc1bcc19412e9c8eb539d0314578088372a5dd5ec1",
+    "carma_lever_arm_tilt.svg": "167e547ccdd04d8101def970b4451d6ed5f5f3efdaa64b892764a1aec1a453eb",
+    "carma_lever_arm_yaw.svg": "824fc94e01f14adae063a40f8c4f5c7d803857ea6d308cd0e54b9ca02d3f1c6f",
+    "lever_arm_cutoff_runs.csv": "9204263ff9fa0e0afb381bec520cd7b80caadac11e2e04c3d12cfda9db5ac09e",
+    "lever_arm_cutoff_summary.csv": "5606635d4bdc0dcd4629fbcab34746425c24b8e959f2f1b4d85f89b3d2850dca",
+    "lever_arm_report.md": "512ef1d7614d81b8f1acc2688122d2b7268ca87d6a09b859e4945f3750525937",
+    "lever_arm_runs.csv": "82cd5f8284ea9c35d8ca006395f824656516bb39dd5f4505de4088aa20b0bced",
+    "lever_arm_summary.csv": "e2e570131f3f3dd76e3872057dbe766449d3b0c3c90ec2ca554aa719235b0355"
   },
   "filters": {
     "carma3": "A41",
@@ -79,6 +79,13 @@
   },
   "mode": "full",
   "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
+  "regeneration_receipt": {
+    "artifact_id": 14003119369,
+    "presentation_normalization": "SVG trailing whitespace removed; numerical replay rows unchanged",
+    "prior_summaries": "baseline-063017d4",
+    "source_head": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
+    "workflow_run": 43347750720
+  },
   "scoring_window_sec": 900.0,
   "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
   "simulation_provenance": {
@@ -97,6 +104,6 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.3"
   },
-  "source_commit": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "source_commit": "f8618df08cd9c2854dd1632be1a7a3728a562863",
   "study": "CARMA IMU lever-arm installation"
 }

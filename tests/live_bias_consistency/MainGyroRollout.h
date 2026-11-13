@@ -5,11 +5,12 @@
 #include "util/W3dSimCommon.h"
 #include "../kalman_carma/CarmaBenchTruth.h"
 #include "../kalman_carma/carma3/Bench3.h"
+#include "../common/FiniteMean.h"
 namespace gyro_rollout {
 using V=Eigen::Vector3f;using D=Eigen::Vector3d;
 template<class F>decltype(auto) core(F& f){if constexpr(requires{f.raw();})return f.raw().mekf();else return f.mekf();}
 template<class C>auto quat(const C& c){if constexpr(requires{c.quaternion_boat();})return c.quaternion_boat();else return c.quaternion();}
-struct Stats{long n=0,enabled=0,mag=0;double ba2=0,bg2=0,tilt2=0,nis=0,nees=0,covered=0;};
+struct Stats{long n=0,enabled=0,mag=0,nees_count=0;double ba2=0,bg2=0,tilt2=0,nees=0,covered=0;FiniteMean nis;};
 template<class Fusion,bool Invariant>int run(int seed,double duration,const std::string& prefix){
  using namespace carma_bench;using namespace carma3_bench;
  typename Fusion::Config cfg;
@@ -23,7 +24,8 @@ template<class Fusion,bool Invariant>int run(int seed,double duration,const std:
  auto gn=make_imu_noise_model(GYR_SIGMA,.05f*float(PI/180),0.f,w3d_expand_seed(seed,13u),w3d_expand_seed(seed,14u));
  auto mn=make_mag_noise_model(MAG_SIGMA_UT,0.f,0.f,0.f,0.f,0.f,w3d_expand_seed(seed,15u),w3d_expand_seed(seed,16u));
  const Eigen::Matrix3d gauge=Eigen::AngleAxisd(-MagSim_WMM::default_declination_deg*PI/180,D::UnitZ()).toRotationMatrix();
- std::ofstream trace(prefix+"_trace.csv");trace<<"t,profile,ba_h_error,tilt_deg,h_nees,enabled,acc_nis\n"<<std::setprecision(10);
+ std::ofstream trace,scores;trace.exceptions(std::ios::failbit|std::ios::badbit);scores.exceptions(std::ios::failbit|std::ios::badbit);
+ trace.open(prefix+"_trace.csv");scores.open(prefix+"_scores.csv");trace<<"t,profile,ba_h_error,tilt_deg,h_nees,enabled,acc_nis\n"<<std::setprecision(10);
  Stats stats[2];Fusion* filters[2]={&legacy,&improved};float phase=0;std::uint64_t hash=1469598103934665603ull;
  auto digest=[&](const V& v){for(int j=0;j<3;++j){float x=v[j];unsigned char b[4];std::memcpy(b,&x,4);for(auto c:b){hash^=c;hash*=1099511628211ull;}}};
  const double start=std::max(150.,.75*duration);
@@ -39,14 +41,15 @@ template<class Fusion,bool Invariant>int run(int seed,double duration,const std:
    if(k%200==0){Eigen::Matrix3d pb=c.covariance_full().template bottomRightCorner<3,3>().template cast<double>();if constexpr(Invariant)pb=R.transpose()*pb*R;
     const Eigen::Matrix2d h=pb.topLeftCorner<2,2>();hn=err.head<2>().dot(h.ldlt().solve(err.head<2>()));
     if(!std::isfinite(hn)||!c.covariance_full().allFinite())throw std::runtime_error("invalid covariance");
-    if(t>=start){stats[i].nees+=hn;stats[i].covered+=hn<=5.99146;}
+    if(t>=start){stats[i].nees+=hn;stats[i].covered+=hn<=5.99146;++stats[i].nees_count;}
     if(k%2000==0)trace<<t<<','<<(i?"default":"legacy")<<','<<err.head<2>().norm()<<','<<tilt<<','<<hn<<','<<c.acc_bias_updates_enabled()<<','<<c.lastAccDiag().nis<<'\n';
    }
-   if(t>=start){auto& s=stats[i];++s.n;s.ba2+=err.head<2>().squaredNorm();s.bg2+=(c.gyroscope_bias()-gn.turn_on_bias).squaredNorm();s.tilt2+=tilt*tilt;s.enabled+=c.acc_bias_updates_enabled();s.nis+=c.lastAccDiag().nis;}
+   if(t>=start){auto& s=stats[i];++s.n;s.ba2+=err.head<2>().squaredNorm();s.bg2+=(c.gyroscope_bias()-gn.turn_on_bias).squaredNorm();s.tilt2+=tilt*tilt;s.enabled+=c.acc_bias_updates_enabled();s.nis.add(c.lastAccDiag().nis);}
   }
  }
- std::ofstream scores(prefix+"_scores.csv");scores<<"profile,seed,duration,start,n,ba_h_rms,bg_rms,tilt_rms,enabled_fraction,acc_nis,h_nees,coverage,applied_mag,sensor_hash\n"<<std::setprecision(12);
- for(int i=0;i<2;++i){auto&s=stats[i];double nd=std::ceil((duration-start));scores<<(i?"default":"legacy")<<','<<seed<<','<<duration<<','<<start<<','<<s.n<<','<<std::sqrt(s.ba2/s.n)<<','<<std::sqrt(s.bg2/s.n)<<','<<std::sqrt(s.tilt2/s.n)<<','<<double(s.enabled)/s.n<<','<<s.nis/s.n<<','<<s.nees/nd<<','<<s.covered/nd<<','<<s.mag<<','<<std::hex<<hash<<std::dec<<'\n';}
+ scores<<"profile,seed,duration,start,n,ba_h_rms,bg_rms,tilt_rms,enabled_fraction,acc_nis,h_nees,coverage,applied_mag,sensor_hash,nees_count,nis_count\n"<<std::setprecision(12);
+ for(int i=0;i<2;++i){auto&s=stats[i];const double nd=double(s.nees_count);scores<<(i?"default":"legacy")<<','<<seed<<','<<duration<<','<<start<<','<<s.n<<','<<std::sqrt(s.ba2/s.n)<<','<<std::sqrt(s.bg2/s.n)<<','<<std::sqrt(s.tilt2/s.n)<<','<<double(s.enabled)/s.n<<','<<s.nis.mean()<<','<<s.nees/nd<<','<<s.covered/nd<<','<<s.mag<<','<<std::hex<<hash<<std::dec<<','<<s.nees_count<<','<<s.nis.count<<'\n';}
+ trace.close();scores.close();
  std::cout<<"paired samples="<<std::lround(duration/dt)<<" sensor_hash="<<std::hex<<hash<<std::dec<<'\n';return 0;
 }
 int ou2(int,double,const std::string&);int ou3(int,double,const std::string&);int tfg(int,double,const std::string&);

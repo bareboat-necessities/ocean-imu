@@ -18,7 +18,8 @@ template<class F>double trajectory(double h,bool centered,bool irregular,bool de
  for(int k=0;t<12.;++k){double dt=irregular?h*(k%17==0?3.:k%2?.7:1.3):h;if(t+dt>12)dt=12-t;
   V input=rate(t+dt);if(delta){Eigen::AngleAxisd a(rotation(t).transpose()*rotation(t+dt));input=a.angle()*a.axis()/dt;}
   f.time_update(input,dt);t+=dt;
-  worst=std::max(worst,Eigen::AngleAxisd(rotation(t).transpose()*f.quaternion_boat().toRotationMatrix()).angle());
+  const double error=Eigen::AngleAxisd(rotation(t).transpose()*f.quaternion_boat().toRotationMatrix()).angle();
+  check(std::isfinite(error),"nonfinite attitude prediction");worst=std::max(worst,error);
  }
  return worst;
 }

@@ -189,6 +189,7 @@ def main():
   q=pd.read_csv(OUT/'main_rollout_scores.csv',dtype={'sensor_hash':str})
   manifest=json.loads((OUT/'main_rollout_manifest.json').read_text())
   assert len(q)==manifest['filter_runs']==36 and (q.groupby(['family','seed']).sensor_hash.nunique()==1).all()
+  assert manifest['duration']==7200 and (q.duration==7200).all() and (q.start==5400).all(),'rollout requires the full 5400–7200 s scoring window'
   sections+=['| Other live filters: acquired reference, unknown acceleration | Legacy RMS | Default RMS | Paired default minus legacy |','| --- | ---: | ---: | ---: |']
   rollout=[];fig,axs=plt.subplots(1,2,figsize=(9,3.4))
   for i,f in enumerate(('OU2','OU3','TFG')):
@@ -221,6 +222,7 @@ def main():
   sections+=['| Pinned replay profile | QMEKF records exceeding old bars | TFG records exceeding old bars |','| --- | ---: | ---: |']
   summaries=[]
   for profile in ('interval','defaults','core','frontend','instantaneous','core_schmidt','both_schmidt'):
+   if profile not in ('interval','defaults') and not (cs.profile==profile).any():continue
    counts=[]
    for f in ('qmekf','tfg'):
     g=cs[(cs['filter']==f)&(cs.profile==profile)];assert len(g)==8

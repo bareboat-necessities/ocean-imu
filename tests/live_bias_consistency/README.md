@@ -173,7 +173,7 @@ records. An irregular/dropped real recording needs actual acquisition timing.
 
 ## Live defaults and broader rollout
 
-OU-II, OU-III, TFG, CARMA/shared-mode, NLO and PII live paths default to
+OU-II, OU-III, TFG, CARMA/shared-mode and NLO live paths default to
 instantaneous sampling. Their Config exposes `gyro_sample_mode`; select
 `IntervalRate` explicitly for interval averages/preintegrated inputs. Native
 Kalman `time_update` mathematical kernels keep their interval-rate compatibility
@@ -187,7 +187,7 @@ constant-rate default startup and the optional centered frontend under changing
 rotation; samplewise Config/setter parity checks the selected default path.
 `production_recovery` repeats the one-hour injections/reference repair with
 these actual defaults, keeping covariance and physical histories continuous.
-NLO/PII get the same reference-path check. NLO's handoff test requires the first
+NLO gets the same default reference-path check; PII retains endpoint feedback by default after a heave replay regression, and its optional centered path gets a reference check. NLO's handoff test requires the first
 live attitude to equal the current bootstrap seed, without a second prediction.
 
 `production` uses unmodified live Config defaults (core centering, endpoint
