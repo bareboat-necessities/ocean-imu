@@ -16,6 +16,8 @@
 #endif
 
 #include "util/W3dSimCommon.h"
+#include "../common/GyroReplayContract.h"
+#include "../common/CurrentReplayLimits.h"
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
 using namespace ocean_imu::ou2;
 
@@ -67,6 +69,7 @@ public:
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         apply_env_overrides();
+        gyro_replay::configure(cfg_);
         load_fixed_tuning();
 
         fusion_.begin(cfg_);
@@ -692,7 +695,8 @@ static void process_wave_file_for_tracker(const std::string& filename,
     if (validation_window_sec > 0.0f) {
         print_validation_metrics(*result, dt, validation_window_sec, "OU_II");
     }
-    print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
+    print_summary_and_fail_if_needed(*result, dt,
+        gyro_replay::legacy ? FAIL_LIMITS : ocean_imu::sim::current_limits::ou2, SUMMARY_LABELS);
 }
 
 int main(int argc, char* argv[]) {
@@ -707,6 +711,8 @@ int main(int argc, char* argv[]) {
             with_mag = false;
         } else if (arg == "--no-noise") {
             add_noise = false;
+        } else if (arg == "--regression") {
+            gyro_replay::legacy = true;
         } else if (arg == "--input") {
             if (++i >= argc) {
                 std::cerr << "ERROR: --input requires a CSV path\n";
@@ -715,7 +721,7 @@ int main(int argc, char* argv[]) {
             requested_files.emplace_back(argv[i]);
         } else if (arg == "--help") {
             std::cout << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--input PATH]...\n";
+                      << " [--regression] [--nomag] [--no-noise] [--input PATH]...\n";
             return 0;
         } else {
             std::cerr << "ERROR: unknown argument: " << arg << "\n";
@@ -726,6 +732,7 @@ int main(int argc, char* argv[]) {
     W3dRandomSeeds seeds;
     try {
         seeds = w3d_random_seeds_from_env();
+        gyro_replay::require_regression(with_mag && add_noise && gyro_replay::default_seeds());
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";
         return 2;
@@ -738,6 +745,7 @@ int main(int argc, char* argv[]) {
     float validation_window_sec = 0.0f;
     env_float("W3D_VALIDATION_WINDOW_SEC", validation_window_sec);
 
+    std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
     std::cout << "Simulation starting with_mag=" << (with_mag ? "true" : "false")
               << ", mag_delay=" << MAG_DELAY_SEC
               << " sec, noise=" << (add_noise ? "true" : "false")

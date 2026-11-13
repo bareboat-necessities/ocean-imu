@@ -8,6 +8,7 @@ uncertain and free magnetic-reference cases are separate assumptions.
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import numpy as np
@@ -120,7 +121,10 @@ def analyze(prefix, start=600., length=60., prior_scale=1., field_sd=0., sensor_
                 bias_only=projected_information(J, np.arange(ba, ba+3)),
                 assumptions=['frozen exported CARMA parameters over window',
                              'constant slow biases in window', 'one-second pose/gyro quadrature',
-                             'no accelerometer-bias prior', 'estimated trajectory linearization'])
+                             'no accelerometer-bias prior', 'estimated trajectory linearization'],
+                input_sha256={suffix:hashlib.sha256(Path(str(prefix)+suffix).read_bytes()).hexdigest()
+                              for suffix in ('_trace.csv', '_model.json')},
+                analysis_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
 
 
 def structural_checks():

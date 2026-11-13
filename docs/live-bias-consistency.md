@@ -469,22 +469,26 @@ The broader native replay exposes small yaw increases after correcting predictio
 These increases remain reported; they are not bias-estimation improvements.
 `--regression` runs the historical endpoint integration against every original
 threshold, unchanged. Ordinary invocations use the corrected live defaults and
-a separately versioned numerical fixture. Only its yaw limit differs, using
-the same approximately 0.5% margin above the measured corrected maximum; all
-other limits remain original. These are regression references, not estimation
-quality targets. The independent rotation, bias-Jacobian, noise/covariance and
+a separately versioned numerical fixture. Current full-channel production
+limits and their measurements are documented in
+[Filter simulator regression gates](filter-simulator-gates.md). These are
+regression references, not estimation quality targets. The independent rotation, bias-Jacobian, noise/covariance and
 artificial-oracle tests establish the integration benefit.
 
-| Native replay | Legacy maximum yaw | Corrected maximum yaw | Original limit | Corrected fixture limit |
+The following table records the source-bound rollout study, rather than the
+active production limits:
+
+| Native replay | Legacy maximum yaw | Corrected maximum yaw | Original limit | Rollout fixture limit |
 | --- | ---: | ---: | ---: | ---: |
 | CARMA3 | 0.753640° | 0.760895° | 0.75750° | 0.76470° |
 | OU3 | 0.814511° | 0.824166° | 0.81870° | 0.82829° |
 | TFG | 0.933212° | 0.949967° | 0.94300° | 0.95472° |
 | TFG-CARMA | 0.762213° | 0.769657° | 0.76620° | 0.77351° |
 
-Both profiles pass all eight pinned histories for each of these four families
-(64 gated replays). OU-II and NLO also pass their unchanged default replay limits.
-Shared-mode default and legacy profiles already pass the same original limits.
+At the rollout revision, both profiles passed all eight pinned histories for
+each of these four families (64 gated replays). OU-II and NLO also passed
+their then-existing default replay limits. Shared-mode default and legacy
+profiles passed the same original limits.
 Corrected native profiles' common-old-limit violations remain in
 `native_replay_scores.csv`; no score or covariance was changed to hide them.
 The six-seed shared-mode and broader live comparisons remain the estimation

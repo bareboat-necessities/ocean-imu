@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
 ./geometry-test
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
@@ -21,3 +22,9 @@ for r in rows:
     assert max(float(r['ba_'+a]) for a in 'xyz')<.5,r
 print('paired 7-filter finite/PSD/live smoke PASS')
 PY
+# Share the full pinned-record and fail-closed protocol tests with TFG.
+if ! python3 ../kalman_tfg_shared_modes/regression_checks.py --binary ./tangent-replay --data-dir . > tangent-replay-checks.log 2>&1; then
+    cat tangent-replay-checks.log
+    exit 1
+fi
+echo 'Tangent replay: eight historical and current gates plus fail-closed protocol checks PASS (tangent-replay-checks.log).'

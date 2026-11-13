@@ -8,6 +8,7 @@ make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 ./local_gravity-test
 
 sim_status=0
+W3D_COLLECT_ALL_GATES=1 ./kalman_ou_ii-sim --regression || sim_status=$?
 W3D_COLLECT_ALL_GATES=1 ./kalman_ou_ii-sim || sim_status=$?
 ./tuner_schedule-test
 ./iss_contract-test

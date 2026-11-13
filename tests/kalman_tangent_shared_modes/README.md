@@ -18,6 +18,7 @@ correction, covariance write or benchmark code.
 ## Build and native tests
 
 ```sh
+make ensure-sim-data
 make -C tests/kalman_tangent_shared_modes build
 make -C tests/kalman_tangent_shared_modes test
 make all
@@ -30,6 +31,9 @@ reset derivatives, structured versus dense covariance reset, PSD, the
 fixed-heading rocking information control and the Joseph penalty for a
 nonoptimal gain. The smoke envelope is fixed before holdout evaluation;
 it rejects gross numerical/accuracy failures and is not an adoption claim.
+The same test command also runs the eight pinned native replay records and
+the existing TFG checks for rejected protocols, missing/truncated input and
+corrupted truth. Their numerical thresholds are shared and unchanged.
 
 ## Controlled cohort
 
@@ -42,7 +46,7 @@ python3 tools/tangent_shared_modes_report.py --raw /tmp/tangent-holdout
 ```
 
 Development seeds are 7301–7302; untouched holdout seeds are 4101–4106.
-The acceptance profile uses 24 physical conditions, six independent seeds,
+The acceptance profile uses 26 physical conditions, six independent seeds,
 and two additional wave noise/prior controls. Normal rows run 900 s;
 `long` runs 7200 s. Every variant in a row consumes the same measured
 history. Sensor hashes are required to agree, and binary/source hashes and
@@ -72,7 +76,7 @@ retraction while a bias is held, avoiding a second-order shift of that mean.
 
 Early perturbation arms apply a fixed estimated-state error at first Live;
 late arms do so at 300 s. Thus startup is shared and live convergence is
-separable. A convergence time is the first 30 s continuously below 1 degree
+separable. A convergence time is the first 30 s of evaluated samples below 1 degree
 attitude or 0.01 m/s² three-dimensional bias error; missing convergence is
 reported as missing, not averaged as a negative time.
 
@@ -138,6 +142,10 @@ comparisons and bounded SVG/PGF charts using the repository's shared
 `plots/vector_export.py`. Raw traces stay outside git. A focused CI workflow
 builds native tests and the article from committed, source-bound evidence.
 The full cohort is separately reproducible; routine CI runs a fixed smoke.
+Historical publication checks fetch the recorded producer commit and verify
+every source hash against that Git tree, plus the complete score matrix and
+publication hashes. They do not relabel old numerical evidence as a new run
+of a changed estimator.
 
 Runtime is instrumented **process CPU time** per filter update, not elapsed
 wall time from parallel runs. Object storage includes the heap-owned core,

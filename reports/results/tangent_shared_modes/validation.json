@@ -1,0 +1,295 @@
+{
+  "baseline_commit": "7712a0e046bb653839a4d582ec893d7671ac1e5f",
+  "implementation_commit": "1e2642b",
+  "group_and_reset": {
+    "status": "pass",
+    "maximum_group_round_trip_error": 4.31835e-16,
+    "maximum_reset_finite_difference_error": 1.89063e-10
+  },
+  "untouched_main_parity": {
+    "duration_s": 900,
+    "seed": 7301,
+    "filters": [
+      "QSM",
+      "TFG",
+      "CARMA"
+    ],
+    "trace_bytes_identical": true,
+    "all_score_fields_identical_except_runtime_and_memory": true,
+    "sensor_hash": "813f3a22b7d9b5d2"
+  },
+  "tangent_vessel_replay": {
+    "records": 8,
+    "unchanged_tfg_bars": true,
+    "passed": true,
+    "log_sha256": "b6ffe80063a4dba3e8d090238c52b4459b895e929ca2e28223f76343ed9817ef"
+  },
+  "make_all": {
+    "status": "restarting after interrupted serial run and main integration",
+    "initial_failure": "g++ compiling tests/kalman_carma/carma3-test.cpp: fatal error: Killed signal terminated program cc1plus (concurrent template compilation)",
+    "interrupted_log": "make-all-retry.log ended during tests/kalman_ou_iii/rs_law-test.cpp compilation, with no completion receipt"
+  },
+  "hardware": {
+    "esp32_board_measurement": false
+  },
+  "published_source_checkpoint": "5ad4f1469d9038a0c0e38a424e8b048be005d74e",
+  "local_source_checkpoint": "d75e61bf3992628e133d6b2ea9b9a78f86554a42",
+  "published_tree_identical_to_local_checkpoint": true,
+  "cmake_geometry": {
+    "status": "pass",
+    "maximum_group_round_trip_error": 4.04221e-16,
+    "maximum_reset_finite_difference_error": 1.84357e-10,
+    "log": "cmake-build-final.log"
+  },
+  "post_start_main": {
+    "commit": "480d78f0fa35724800d7a70a96ea9a6355d5605d",
+    "changes": "tighter simulator limits and rejection of invalid scored histories; estimator propagation and measurement mathematics unchanged",
+    "integration_status": "merged, gates preserved"
+  },
+  "final_cohort": {
+    "histories": 168,
+    "score_rows": 4962,
+    "nonzero_exits": 0,
+    "source_snapshot_completed_without_mutation": true
+  },
+  "instrumentation_parity": {
+    "initial_score_rows_compared": 4626,
+    "all_physical_and_covariance_metrics_identical": true,
+    "fields": [
+      "att_rms",
+      "att_max",
+      "p_x",
+      "p_y",
+      "heave_rms",
+      "v_x",
+      "v_y",
+      "v_z",
+      "ba_x",
+      "ba_y",
+      "ba_z",
+      "bg_x",
+      "bg_y",
+      "bg_z",
+      "nees15",
+      "bias_nees",
+      "sensor_hash"
+    ]
+  },
+  "post_main_wave_parity": {
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "all_score_fields_identical_except_runtime_and_memory": true,
+    "sensor_hash": "8f0516979dd3c02d",
+    "source_change": "Only scored-history validation code in src/util/W3dSimCommon.cpp differs from the cohort source checkpoint."
+  },
+  "startup_and_late_gate_parity": [
+    {
+      "seed": 4101,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    }
+  ],
+  "article": {
+    "pages": 12,
+    "lualatex_passes": 2,
+    "overfull_boxes": false,
+    "source_sha256": "6838367813f88a39171e07fec99720a60589f2015e3678c278a764d96cf72ec5"
+  },
+  "shared_table_formatter": {
+    "default_output_byte_identical": true,
+    "wide_layout_checked": true
+  },
+  "storage_delta_host_bytes": {
+    "QSM": 320,
+    "TFG": 320,
+    "independent_CARMA": 32
+  }
+}

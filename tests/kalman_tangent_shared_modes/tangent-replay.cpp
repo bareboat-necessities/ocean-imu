@@ -8,5 +8,6 @@
 #include "../common/TfgSharedRegressionBars.h"
 int main(int argc, char* argv[]) {
     return ocean_imu::sim::shared_modes::run<ocean_imu::carma_shared_modes::KalmanTangentCarmaSharedModes<float>>(
-        argc, argv, kTfgSharedRegressionBars, "TANGENT_CARMA_SHARED_MODES_");
+        argc, argv, kTfgSharedRegressionBars, ocean_imu::sim::current_limits::tcsm,
+        "TANGENT_CARMA_SHARED_MODES_");
 }
