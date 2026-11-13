@@ -511,11 +511,11 @@ public:
     }
 
     void apply_F(const T (&in)[NL], T (&out)[NL]) const {
-        const MatB& Phi = disc_.Phi();
+        const T* const phi = disc_.Phi().data();   // Phi(i, j) = phi[i + NB j]
         for (int ax = 0; ax < 3; ++ax)
             for (int i = 0; i < NB; ++i) {
                 T acc = T(0);
-                for (int j = 0; j < NB; ++j) acc += Phi(i,j) * in[ax * NB + j];
+                for (int j = 0; j < NB; ++j) acc += phi[i + NB * j] * in[ax * NB + j];
                 out[ax * NB + i] = acc;
             }
     }
@@ -574,6 +574,10 @@ private:
     // (matrix_real symmetric, matrix_imag antisymmetric: block (b, a) receives the transpose).
     template<class Mat>
     void add_structured_(Mat& P, int off, const MatB& matrix_real, const MatB& matrix_imag) const {
+        const int n = static_cast<int>(P.rows());
+        auto* const p = P.data();
+        const T* const mr = matrix_real.data();
+        const T* const mi = matrix_imag.data();
         for (int a = 0; a < 3; ++a)
             for (int b = a; b < 3; ++b) {
                 const T sr = Sigma_.re(a,b);
@@ -581,10 +585,10 @@ private:
                 if (sr == T(0) && si == T(0)) continue;
                 for (int i = 0; i < NB; ++i)
                     for (int j = (a == b ? i : 0); j < NB; ++j) {
-                        const T v = sr * matrix_real(i,j) + si * matrix_imag(i,j);
+                        const T v = sr * mr[i + NB * j] + si * mi[i + NB * j];
                         const int r = off + a * NB + i, c = off + b * NB + j;
-                        P(r, c) += v;
-                        if (r != c) P(c, r) += v;
+                        p[r + n * c] += v;
+                        if (r != c) p[c + n * r] += v;
                     }
             }
     }

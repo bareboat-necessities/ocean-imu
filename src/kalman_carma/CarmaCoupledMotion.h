@@ -92,19 +92,25 @@ namespace coupled_detail {
 template<typename T, int NA, int NB, class Mat>
 inline void congruence_block(Mat& P, int ra, int rb, const Eigen::Matrix<T,NA,NA>& Fa,
                              const Eigen::Matrix<T,NB,NB>& Fb, bool diag) {
+    // Plain column-major storage: a firmware build (-Os, Eigen assertions
+    // on) keeps the checked coefficient accessors out of line.
+    const int n = static_cast<int>(P.rows());
+    T* const p = P.data();
+    const T* const fa = Fa.data();
+    const T* const fb = Fb.data();
     T X[NA][NB];
     for (int i = 0; i < NA; ++i)
         for (int j = 0; j < NB; ++j) {
             T acc = T(0);
-            for (int k = 0; k < NA; ++k) acc += Fa(i,k) * P(ra + k, rb + j);
+            for (int k = 0; k < NA; ++k) acc += fa[i + NA * k] * p[ra + k + n * (rb + j)];
             X[i][j] = acc;
         }
     for (int i = 0; i < NA; ++i)
         for (int j = diag ? i : 0; j < NB; ++j) {
             T acc = T(0);
-            for (int k = 0; k < NB; ++k) acc += X[i][k] * Fb(j,k);
-            P(ra + i, rb + j) = acc;
-            P(rb + j, ra + i) = acc;
+            for (int k = 0; k < NB; ++k) acc += X[i][k] * fb[j + NB * k];
+            p[ra + i + n * (rb + j)] = acc;
+            p[rb + j + n * (ra + i)] = acc;
         }
 }
 

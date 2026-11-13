@@ -3,23 +3,23 @@
 ## Native secant source binding
 
 The finite native diagnostic is bound to the current complete `src/` tree.
-The sample-path covariance kernels of the experimental TFG-CARMA cores were
-restructured to lower microcontroller processor load
-(`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`, with plain-array access in the
-discretization helpers of `src/kalman_carma/CarmaVerticalModel.h` and
-`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`), and the series
-coefficients of `Exp` and `J_l` were factored out of
-`src/lie/SO3Jacobians.h` for both TFG families. That changed the
-broad source fingerprint, so the unchanged shipping OU-III probe was rebuilt
-and replayed at both registered perturbation sizes. Both raw native byte
-hashes and every other field of the committed report are reproduced; only the
-digest is rebound. See
-`reports/results/tfg_shared_modes/shipping_faithfulness.json` for the receipt.
-The QMEKF-CARMA, QMEKF-shared, TFG and OU-III wrapper traces stay bit-identical
-to the previous tree over 6,000 samples. The two TFG-CARMA wrapper traces change
-by binary32 rounding only: their binary64 cores agree with the previous tree
-to print precision over 300 s, and the binary32 differences are of the size
-that compiler multiply-add contraction alone produces on the previous tree
+The sample paths of the experimental CARMA cores were restructured to lower
+microcontroller processor load: the TFG-CARMA covariance kernels use their
+block structure, and both the TFG-CARMA and the QMEKF CARMA cores index plain
+storage (`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`,
+`Kalman3D_Wave_CARMA3.h`, `CarmaCoupledMotion.h` and `CarmaVerticalModel.h`,
+`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`, and the `Exp`/`J_l`
+series coefficients in `src/lie/SO3Jacobians.h`). Each change moved the broad
+source fingerprint, so the unchanged shipping OU-III probe was rebuilt and
+replayed at both registered perturbation sizes. Both raw native byte hashes
+and every other field of the committed report are reproduced; only the digest
+is rebound. See `reports/results/tfg_shared_modes/shipping_faithfulness.json`
+for the receipt. The QMEKF-CARMA, QMEKF-shared, TFG and OU-III wrapper traces
+stay bit-identical to the tree before these changes over 6,000 samples. The two
+TFG-CARMA wrapper traces changed by binary32 rounding only when their kernels
+were restructured: their binary64 cores agree with the earlier tree to print
+precision over 300 s, and the binary32 differences are of the size that
+compiler multiply-add contraction alone produces
 (`reports/results/tfg_shared_modes/sample_path_cost.json`). A non-finite gyro
 sample still leaves the shipping OU-III wrapper state non-finite; that open
 implementation item for a shipping change is unchanged.
@@ -79,6 +79,22 @@ not verified here and no constant is changed. The
 provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
+
+**E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
+The experimental QMEKF CARMA cores index plain storage in their sample-path
+loops (`src/kalman_carma/Kalman3D_Wave_CARMA3.h`, `CarmaCoupledMotion.h`,
+`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`) with every
+arithmetic expression and its order unchanged; the fail-closed validator
+rejected the native secants' `shipping_source_tree_sha256`. Failed quantity:
+source provenance only; classification E. Evidence: none of the three files is
+in the shipping OU-III dependency closure; the diagnostic regenerated with
+g++ 13.3.0 reproduces every field, both native byte hashes included, except
+that digest; the QMEKF-CARMA, QMEKF-shared and OU-III wrapper traces are
+bit-identical to the previous tree, also with compiler contraction enabled.
+Structures preserved: every shipping operation, constant and chronology, bit
+for bit. Relaxations introduced: none. Rebound: the digest, the secant
+report's blob and this ledger's blob. No proof flag, payload or OPEN
+dependency changes; the current limiter and next experiment are unchanged.
 
 **E — TFG-CARMA sample-path kernels rebound the whole-`src/` digest.** The
 experimental TFG-CARMA covariance prediction, reset transport, process-noise

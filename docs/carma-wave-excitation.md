@@ -837,7 +837,10 @@ size.
 
 **Host time.**  Mean update time per sample, one filter per process on an
 otherwise idle host (x86-64, GCC `-O3 -march=native`), 600 s records,
-3 seeds:
+3 seeds, with the study's executable (the CARMA and TFG-CARMA sample paths
+have since been restructured for processor load;
+`reports/results/tfg_shared_modes/sample_path_cost.json` has current core
+measurements):
 
 | record | CARMA3 A | CARMA3 C | TFG A | TFG C | OU-III |
 |---|---|---|---|---|---|

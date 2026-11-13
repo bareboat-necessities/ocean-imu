@@ -599,12 +599,16 @@ private:
     // the default instantiation keeps its layout and size).
     [[no_unique_address]] std::conditional_t<kMotion, Motion, carma3_detail::EmptyMember> motion_;
 
+    // The sample path indexes Pext, the gain and the small matrices as plain
+    // column-major storage: a firmware build (-Os, Eigen assertions on) keeps
+    // the checked coefficient accessors out of line.
     void symmetrize_Pext_() {
+        T* const p = Pext.data();
         for (int i = 0; i < NX; ++i)
             for (int j = i + 1; j < NX; ++j) {
-                const T v = T(0.5) * (Pext(i,j) + Pext(j,i));
-                Pext(i,j) = v;
-                Pext(j,i) = v;
+                const T v = T(0.5) * (p[i + NX * j] + p[j + NX * i]);
+                p[i + NX * j] = v;
+                p[j + NX * i] = v;
             }
     }
 
@@ -645,27 +649,31 @@ private:
     static Matrix3 simpson_B_Q_BT_(const Vector3& w, T Ts, const Matrix3& Q, const Matrix3& B1) {
         Matrix3 Rm, Bm;
         filter_detail::rot_and_B_from_wt(w, T(0.5) * Ts, Rm, Bm);
+        const T* const bm = Bm.data();
+        const T* const b1 = B1.data();
+        const T* const q = Q.data();
         T BQm[3][3], BQ1[3][3];
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) {
                 T am = T(0), a1 = T(0);
                 for (int k = 0; k < 3; ++k) {
-                    am += Bm(i,k) * Q(k,j);
-                    a1 += B1(i,k) * Q(k,j);
+                    am += bm[i + 3 * k] * q[k + 3 * j];
+                    a1 += b1[i + 3 * k] * q[k + 3 * j];
                 }
                 BQm[i][j] = am;
                 BQ1[i][j] = a1;
             }
         const T c = Ts / T(6);
         Matrix3 out;
+        T* const o = out.data();
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j) {
                 T am = T(0), a1 = T(0);
                 for (int k = 0; k < 3; ++k) {
-                    am += BQm[i][k] * Bm(j,k);
-                    a1 += BQ1[i][k] * B1(j,k);
+                    am += BQm[i][k] * bm[j + 3 * k];
+                    a1 += BQ1[i][k] * b1[j + 3 * k];
                 }
-                out(i,j) = c * (T(4) * am + a1);
+                o[i + 3 * j] = c * (T(4) * am + a1);
             }
         return out;
     }
@@ -699,9 +707,12 @@ private:
             const Vector3 c = ldlt.solve(e);
             Sinv(0,k) = c(0); Sinv(1,k) = c(1); Sinv(2,k) = c(2);
         }
-        for (int i = 0; i < NX; ++i)
-            for (int b = 0; b < 3; ++b)
-                K(i,b) = PCt(i,0) * Sinv(0,b) + PCt(i,1) * Sinv(1,b) + PCt(i,2) * Sinv(2,b);
+        const T* const si = Sinv.data();
+        const T* const pc = PCt.data();
+        T* const k = K.data();
+        for (int b = 0; b < 3; ++b)
+            for (int i = 0; i < NX; ++i)
+                k[i + NX * b] = pc[i] * si[3 * b] + pc[i + NX] * si[1 + 3 * b] + pc[i + 2 * NX] * si[2 + 3 * b];
     }
 
     // Joseph form P - K C P - (K C P)^T + K S K^T, with C P = PCt^T for the
@@ -712,23 +723,36 @@ private:
     // stores into Pext cannot alias.
     template<int M>
     void joseph_update_(const MatrixNX3& K, const Matrix3& S, const MatrixNX3& PCt) {
+        const T* const k = K.data();
+        const T* const pc = PCt.data();
+        const T* const sm = S.data();
         T Kl[NX][M], G[NX][M];
         for (int i = 0; i < NX; ++i)
+            for (int b = 0; b < M; ++b) Kl[i][b] = k[i + NX * b];
+        for (int i = 0; i < NX; ++i)
             for (int b = 0; b < M; ++b) {
-                Kl[i][b] = K(i,b);
-                T g = -PCt(i,b);
-                for (int a = 0; a < M; ++a) g += K(i,a) * S(a,b);
+                T g = -pc[i + NX * b];
+                for (int a = 0; a < M; ++a) g += Kl[i][a] * sm[a + 3 * b];
                 G[i][b] = g;
             }
+        T* const p = Pext.data();
         for (int i = 0; i < NX; ++i) {
-            T pi[M];
-            for (int l = 0; l < M; ++l) pi[l] = PCt(i,l);
+            T ki[M], pi[M];
+            for (int l = 0; l < M; ++l) { ki[l] = Kl[i][l]; pi[l] = pc[i + NX * l]; }
             for (int j = i; j < NX; ++j) {
                 T d = T(0);
-                for (int l = 0; l < M; ++l) d += Kl[i][l] * G[j][l] - pi[l] * Kl[j][l];
-                const T v = Pext(i,j) + d;
-                Pext(i,j) = v;
-                Pext(j,i) = v;
+                if constexpr (M == 3) {
+                    // The loop below, written out: a size-optimized build
+                    // does not unroll it.
+                    d += ki[0] * G[j][0] - pi[0] * Kl[j][0];
+                    d += ki[1] * G[j][1] - pi[1] * Kl[j][1];
+                    d += ki[2] * G[j][2] - pi[2] * Kl[j][2];
+                } else {
+                    for (int l = 0; l < M; ++l) d += ki[l] * G[j][l] - pi[l] * Kl[j][l];
+                }
+                const T v = p[i + NX * j] + d;
+                p[i + NX * j] = v;
+                p[j + NX * i] = v;
             }
         }
     }
@@ -763,19 +787,22 @@ private:
     template<int NA, int NB>
     void propagate_block_(int ra, int rb, const Eigen::Matrix<T,NA,NA>& Fa,
                           const Eigen::Matrix<T,NB,NB>& Fb, bool diag) {
+        T* const p = Pext.data();
+        const T* const fa = Fa.data();
+        const T* const fb = Fb.data();
         T X[NA][NB];
         for (int i = 0; i < NA; ++i)
             for (int j = 0; j < NB; ++j) {
                 T acc = T(0);
-                for (int k = 0; k < NA; ++k) acc += Fa(i,k) * Pext(ra + k, rb + j);
+                for (int k = 0; k < NA; ++k) acc += fa[i + NA * k] * p[ra + k + NX * (rb + j)];
                 X[i][j] = acc;
             }
         for (int i = 0; i < NA; ++i)
             for (int j = diag ? i : 0; j < NB; ++j) {
                 T acc = T(0);
-                for (int k = 0; k < NB; ++k) acc += X[i][k] * Fb(j,k);
-                Pext(ra + i, rb + j) = acc;
-                Pext(rb + j, ra + i) = acc;
+                for (int k = 0; k < NB; ++k) acc += X[i][k] * fb[j + NB * k];
+                p[ra + i + NX * (rb + j)] = acc;
+                p[rb + j + NX * (ra + i)] = acc;
             }
     }
 
@@ -784,17 +811,17 @@ private:
         if constexpr (kMotion) {
             motion_.apply_F(in, out);
         } else {
-            const MatrixHA& F_H = disc_h_.Phi();
-            const MatrixZZ& F_Z = disc_z_.Phi();
+            const T* const fh = disc_h_.Phi().data();
+            const T* const fz = disc_z_.Phi().data();
             for (int ax = 0; ax < 2; ++ax)
                 for (int i = 0; i < NHA; ++i) {
                     T acc = T(0);
-                    for (int j = 0; j < NHA; ++j) acc += F_H(i,j) * in[ax * NHA + j];
+                    for (int j = 0; j < NHA; ++j) acc += fh[i + NHA * j] * in[ax * NHA + j];
                     out[ax * NHA + i] = acc;
                 }
             for (int i = 0; i < NZ; ++i) {
                 T acc = T(0);
-                for (int j = 0; j < NZ; ++j) acc += F_Z(i,j) * in[NH + j];
+                for (int j = 0; j < NZ; ++j) acc += fz[i + NZ * j] * in[NH + j];
                 out[NH + i] = acc;
             }
         }
@@ -1088,26 +1115,30 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     // Every block below is written to both triangles with one value, so the
     // propagated covariance is exactly symmetric.  Unit rows of F_AA are
     // applied as copies.
+    T* const p = Pext.data();
+    T* const x = xext.data();
+    const T* const faa = F_AA.data();
     {
-        MatrixBaseN& tmpAA = tmpAA_scratch_;
+        T* const taa = tmpAA_scratch_.data();
+        const T* const qaa = Q_AA.data();
         for (int i = 0; i < BASE_N; ++i)
             for (int j = 0; j < BASE_N; ++j) {
-                if (aa_unit_row_(i)) { tmpAA(i,j) = Pext(i,j); continue; }
+                if (aa_unit_row_(i)) { taa[i + BASE_N * j] = p[i + NX * j]; continue; }
                 T acc = T(0);
-                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k,j);
-                tmpAA(i,j) = acc;
+                for (int k = 0; k < BASE_N; ++k) acc += faa[i + BASE_N * k] * p[k + NX * j];
+                taa[i + BASE_N * j] = acc;
             }
         for (int i = 0; i < BASE_N; ++i)
             for (int j = i; j < BASE_N; ++j) {
                 T acc;
                 if (aa_unit_row_(j)) {
-                    acc = Q_AA(i,j) + tmpAA(i,j);
+                    acc = qaa[i + BASE_N * j] + taa[i + BASE_N * j];
                 } else {
-                    acc = Q_AA(i,j);
-                    for (int k = 0; k < BASE_N; ++k) acc += tmpAA(i,k) * F_AA(j,k);
+                    acc = qaa[i + BASE_N * j];
+                    for (int k = 0; k < BASE_N; ++k) acc += taa[i + BASE_N * k] * faa[j + BASE_N * k];
                 }
-                Pext(i,j) = acc;
-                Pext(j,i) = acc;
+                p[i + NX * j] = acc;
+                p[j + NX * i] = acc;
             }
     }
 
@@ -1124,30 +1155,30 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
 
     {
         T in[NL], out[NL];
-        for (int k = 0; k < NL; ++k) in[k] = xext(OFF_L + k);
+        for (int k = 0; k < NL; ++k) in[k] = x[OFF_L + k];
         apply_F_LL_(in, out);
-        for (int k = 0; k < NL; ++k) xext(OFF_L + k) = out[k];
+        for (int k = 0; k < NL; ++k) x[OFF_L + k] = out[k];
     }
 
     if constexpr (kMotion) {
         // P_LL <- F_LL P_LL F_LL^T + Q_LL (the motion block's structure).
         motion_.propagate(Pext, OFF_L);
         // P_AL <- F_AA P_AL F_LL^T, row by row through F_LL.
-        Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
+        T* const tal = tmpAL_scratch_.data();      // tmpAL(i, j) = tal[i + BASE_N j]
         for (int i = 0; i < BASE_N; ++i)
             for (int j = 0; j < NL; ++j) {
-                if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
+                if (aa_unit_row_(i)) { tal[i + BASE_N * j] = p[i + NX * (OFF_L + j)]; continue; }
                 T acc = T(0);
-                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
-                tmpAL(i,j) = acc;
+                for (int k = 0; k < BASE_N; ++k) acc += faa[i + BASE_N * k] * p[k + NX * (OFF_L + j)];
+                tal[i + BASE_N * j] = acc;
             }
         for (int i = 0; i < BASE_N; ++i) {
             T in[NL], out[NL];
-            for (int k = 0; k < NL; ++k) in[k] = tmpAL(i,k);
+            for (int k = 0; k < NL; ++k) in[k] = tal[i + BASE_N * k];
             apply_F_LL_(in, out);
             for (int j = 0; j < NL; ++j) {
-                Pext(i, OFF_L + j) = out[j];
-                Pext(OFF_L + j, i) = out[j];
+                p[i + NX * (OFF_L + j)] = out[j];
+                p[OFF_L + j + NX * i] = out[j];
             }
         }
     } else {
@@ -1163,42 +1194,44 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         propagate_block_<NHA,NZ>(LY, OFF_Z, F_H, F_Z, false);
         propagate_block_<NZ,NZ>(OFF_Z, OFF_Z, F_Z, F_Z, true);
         // Q_H = Sigma_h (x) Q_1.
-        const MatrixHA& Q_H1 = disc_h_.Q();
-        const MatrixZZ& Q_Z = disc_z_.Q();
+        const T* const qh = disc_h_.Q().data();
+        const T* const qz = disc_z_.Q().data();
+        const T* const fh = F_H.data();
+        const T* const fz = F_Z.data();
         for (int ax = 0; ax < 2; ++ax)
             for (int bx = 0; bx < 2; ++bx) {
                 const T s = Sigma_h_(ax, bx);
                 if (s == T(0)) continue;
                 for (int a = 0; a < NHA; ++a)
                     for (int b = 0; b < NHA; ++b)
-                        Pext(OFF_L + ax * NHA + a, OFF_L + bx * NHA + b) += s * Q_H1(a, b);
+                        p[OFF_L + ax * NHA + a + NX * (OFF_L + bx * NHA + b)] += s * qh[a + NHA * b];
             }
         for (int a = 0; a < NZ; ++a)
             for (int b = 0; b < NZ; ++b)
-                Pext(OFF_Z + a, OFF_Z + b) += Q_Z(a, b);
+                p[OFF_Z + a + NX * (OFF_Z + b)] += qz[a + NZ * b];
 
         // P_AL <- F_AA P_AL F_LL^T.
-        Eigen::Matrix<T,BASE_N,NL>& tmpAL = tmpAL_scratch_;
+        T* const tal = tmpAL_scratch_.data();      // tmpAL(i, j) = tal[i + BASE_N j]
         for (int i = 0; i < BASE_N; ++i)
             for (int j = 0; j < NL; ++j) {
-                if (aa_unit_row_(i)) { tmpAL(i,j) = Pext(i, OFF_L + j); continue; }
+                if (aa_unit_row_(i)) { tal[i + BASE_N * j] = p[i + NX * (OFF_L + j)]; continue; }
                 T acc = T(0);
-                for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_L + j);
-                tmpAL(i,j) = acc;
+                for (int k = 0; k < BASE_N; ++k) acc += faa[i + BASE_N * k] * p[k + NX * (OFF_L + j)];
+                tal[i + BASE_N * j] = acc;
             }
         for (int i = 0; i < BASE_N; ++i) {
             for (int ax = 0; ax < 2; ++ax)
                 for (int j = 0; j < NHA; ++j) {
                     T acc = T(0);
-                    for (int k = 0; k < NHA; ++k) acc += F_H(j,k) * tmpAL(i, ax * NHA + k);
-                    Pext(i, OFF_L + ax * NHA + j) = acc;
-                    Pext(OFF_L + ax * NHA + j, i) = acc;
+                    for (int k = 0; k < NHA; ++k) acc += fh[j + NHA * k] * tal[i + BASE_N * (ax * NHA + k)];
+                    p[i + NX * (OFF_L + ax * NHA + j)] = acc;
+                    p[OFF_L + ax * NHA + j + NX * i] = acc;
                 }
             for (int j = 0; j < NZ; ++j) {
                 T acc = T(0);
-                for (int k = 0; k < NZ; ++k) acc += F_Z(j,k) * tmpAL(i, NH + k);
-                Pext(i, OFF_Z + j) = acc;
-                Pext(OFF_Z + j, i) = acc;
+                for (int k = 0; k < NZ; ++k) acc += fz[j + NZ * k] * tal[i + BASE_N * (NH + k)];
+                p[i + NX * (OFF_Z + j)] = acc;
+                p[OFF_Z + j + NX * i] = acc;
             }
         }
     }
@@ -1215,29 +1248,32 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
         }
         Pext.template block<3,3>(OFF_BA, OFF_BA) = P_BB;
 
-        Eigen::Matrix<T,BASE_N,3> tmpAB;
+        T tmpAB[BASE_N][3];
         for (int i = 0; i < BASE_N; ++i)
             for (int j = 0; j < 3; ++j) {
                 T acc;
                 if (aa_unit_row_(i)) {
-                    acc = Pext(i, OFF_BA + j);
+                    acc = p[i + NX * (OFF_BA + j)];
                 } else {
                     acc = T(0);
-                    for (int k = 0; k < BASE_N; ++k) acc += F_AA(i,k) * Pext(k, OFF_BA + j);
+                    for (int k = 0; k < BASE_N; ++k) acc += faa[i + BASE_N * k] * p[k + NX * (OFF_BA + j)];
                 }
-                tmpAB(i,j) = acc * phi_b;
+                tmpAB[i][j] = acc * phi_b;
             }
-        Pext.template block<BASE_N,3>(0, OFF_BA) = tmpAB;
-        Pext.template block<3,BASE_N>(OFF_BA, 0) = tmpAB.transpose();
+        for (int i = 0; i < BASE_N; ++i)
+            for (int j = 0; j < 3; ++j) {
+                p[i + NX * (OFF_BA + j)] = tmpAB[i][j];
+                p[OFF_BA + j + NX * i] = tmpAB[i][j];
+            }
 
         // P_LB <- F_LL P_LB phi_b.
         for (int j = 0; j < 3; ++j) {
             T in[NL], out[NL];
-            for (int k = 0; k < NL; ++k) in[k] = Pext(OFF_L + k, OFF_BA + j);
+            for (int k = 0; k < NL; ++k) in[k] = p[OFF_L + k + NX * (OFF_BA + j)];
             apply_F_LL_(in, out);
             for (int k = 0; k < NL; ++k) {
-                Pext(OFF_L + k, OFF_BA + j) = out[k] * phi_b;
-                Pext(OFF_BA + j, OFF_L + k) = out[k] * phi_b;
+                p[OFF_L + k + NX * (OFF_BA + j)] = out[k] * phi_b;
+                p[OFF_BA + j + NX * (OFF_L + k)] = out[k] * phi_b;
             }
         }
     }
@@ -1310,30 +1346,35 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     }
 
     MatrixNX3& PCt = PCt_scratch_;
+    const T* const p = Pext.data();
+    T* const pct = PCt.data();
+    T cv[NCOL_MAX][3];
+    for (int c = 0; c < ncol; ++c) { cv[c][0] = cvec[c](0); cv[c][1] = cvec[c](1); cv[c][2] = cvec[c](2); }
     for (int i = 0; i < NX; ++i) {
         T pc0 = T(0), pc1 = T(0), pc2 = T(0);
         for (int c = 0; c < ncol; ++c) {
-            const T v = Pext(i, col[c]);
-            pc0 += v * cvec[c](0); pc1 += v * cvec[c](1); pc2 += v * cvec[c](2);
+            const T v = p[i + NX * col[c]];
+            pc0 += v * cv[c][0]; pc1 += v * cv[c][1]; pc2 += v * cv[c][2];
         }
-        PCt(i,0) = pc0; PCt(i,1) = pc1; PCt(i,2) = pc2;
+        pct[i] = pc0; pct[i + NX] = pc1; pct[i + 2 * NX] = pc2;
     }
     Matrix3& S_mat = S_scratch_;
     S_mat = Racc;
+    T* const sm = S_mat.data();
     for (int c = 0; c < ncol; ++c)
         for (int a = 0; a < 3; ++a)
-            for (int b = 0; b < 3; ++b) S_mat(a,b) += cvec[c](a) * PCt(col[c], b);
+            for (int b = 0; b < 3; ++b) sm[a + 3 * b] += cv[c][a] * pct[col[c] + NX * b];
     for (int a = 0; a < 3; ++a)
         for (int b = a + 1; b < 3; ++b) {
-            const T v = T(0.5) * (S_mat(a,b) + S_mat(b,a));
-            S_mat(a,b) = v;
-            S_mat(b,a) = v;
+            const T v = T(0.5) * (sm[a + 3 * b] + sm[b + 3 * a]);
+            sm[a + 3 * b] = v;
+            sm[b + 3 * a] = v;
         }
 
     if constexpr (AB) {
         if (!use_ba) {
-            for (int i = 0; i < NX; ++i)
-                for (int k = 0; k < 3; ++k) PCt(i,k) -= Pext(i, OFF_BA + k);
+            for (int k = 0; k < 3; ++k)
+                for (int i = 0; i < NX; ++i) pct[i + NX * k] -= p[i + NX * (OFF_BA + k)];
             freeze_acc_bias_rows_(PCt);
         }
     }
@@ -1397,22 +1438,29 @@ void CARMA3_CLS::select_update_(const int (&idx)[M], const Vector3& r, const Mat
     for (int k = 0; k < M; ++k) if (!std::isfinite(r(k))) return;
     Matrix3& S_mat = S_scratch_;
     S_mat.setIdentity();
+    const T* const p = Pext.data();
     for (int a = 0; a < M; ++a)
-        for (int b = 0; b < M; ++b) S_mat(a,b) = Pext(idx[a], idx[b]) + R(a,b);
+        for (int b = 0; b < M; ++b) S_mat(a,b) = p[idx[a] + NX * idx[b]] + R(a,b);
     MatrixNX3& PCt = PCt_scratch_;
     PCt.setZero();
-    for (int i = 0; i < NX; ++i)
-        for (int k = 0; k < M; ++k) PCt(i,k) = Pext(i, idx[k]);
+    T* const pct = PCt.data();
+    for (int k = 0; k < M; ++k)
+        for (int i = 0; i < NX; ++i) pct[i + NX * k] = p[i + NX * idx[k]];
     if (freeze_ba) freeze_acc_bias_rows_(PCt);
     Eigen::LDLT<Matrix3> ldlt;
     if (!safe_ldlt3_(S_mat, ldlt, R.norm())) return;
     MatrixNX3& K = K_scratch_;
     gain3_(PCt, ldlt, K);
     if (freeze_ba) freeze_acc_bias_rows_(K);
-    for (int i = 0; i < NX; ++i) {
-        T s = T(0);
-        for (int k = 0; k < M; ++k) s += K(i,k) * r(k);
-        xext(i) += s;
+    {
+        const T* const kd = K.data();
+        const T* const rd = r.data();
+        T* const x = xext.data();
+        for (int i = 0; i < NX; ++i) {
+            T s = T(0);
+            for (int k = 0; k < M; ++k) s += kd[i + NX * k] * rd[k];
+            x[i] += s;
+        }
     }
     joseph_update_<M>(K, S_mat, PCt);
     applyQuaternionCorrectionFromErrorState();
