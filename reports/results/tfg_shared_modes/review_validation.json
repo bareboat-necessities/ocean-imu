@@ -70,42 +70,6 @@
     "status": "PASS: exit 0 on the review-fix tree (see regression_gates.json)",
     "thresholds_changed": false
   },
-  "timing_supplement": {
-    "order_sensitivity": {
-      "repetitions": 4,
-      "each_core_occurs_once_in_each_execution_position": true,
-      "median_mean_us": {
-        "A41": 2.3427,
-        "CSM": 3.94565,
-        "T41": 4.9306,
-        "TCSM": 8.71995
-      },
-      "TFG_shared_to_QMEKF_shared_ratio": 2.210016093672779
-    },
-    "order_jitter": {
-      "repetitions": 4,
-      "each_core_occurs_once_in_each_execution_position": true,
-      "median_mean_us": {
-        "A41": 2.83655,
-        "CSM": 6.73295,
-        "T41": 5.32855,
-        "TCSM": 11.66005
-      },
-      "TFG_shared_to_QMEKF_shared_ratio": 1.731789186018016
-    },
-    "order_fixed": {
-      "repetitions": 4,
-      "each_core_occurs_once_in_each_execution_position": true,
-      "median_mean_us": {
-        "A41": 2.3305,
-        "CSM": 3.33095,
-        "T41": 4.924250000000001,
-        "TCSM": 8.14695
-      },
-      "TFG_shared_to_QMEKF_shared_ratio": 2.44583377114637
-    },
-    "interpretation": "Host ordering does not remove the additional TFG cost. This is a four-repetition sensitivity check, not an embedded deadline or a precise hardware-independent cost estimate. Original publication timings are retained."
-  },
   "source_hashes": {
     "src/kalman_carma/CarmaCrossSpectrumEstimator.h": "979819f06d7a801af23575691a8f269b2b58b5b957dfffd241ef00c6fd252d66",
     "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "e46e05a6d885879e855c412550bba442cc73ad56b380c2336b57689b7acbaca5",

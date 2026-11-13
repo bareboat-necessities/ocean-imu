@@ -118,5 +118,41 @@
     "rebuilt_binary_sha256": "cf9c04efbaaea95837eec53e08b2c14f15e2b3a82e9d00f99ba0bacb25c065b6",
     "binary_identical": true
   },
-  "review_validation": "review_validation.json records the post-review checks of the cap policy; the original validation receipts above remain historical execution evidence."
+  "review_validation": "review_validation.json records the post-review checks of the cap policy; the original validation receipts above remain historical execution evidence.",
+  "sample_path_restructuring": {
+    "source_tree": "src/ of 50609d7 (merged as 9fb2dbe); only receipts, documentation, the lever-arm study outputs and the report generator's wording changed afterwards",
+    "build": {
+      "command": "make -j2 build",
+      "exit_code": 0
+    },
+    "suite_scripts": {
+      "passed": 20,
+      "failed": 0,
+      "run": "every tests/*/run_tests.sh in the root Makefile's order, each exit code recorded, original thresholds",
+      "note": "The validation suite first stopped at 'python3 ../../tools/tfg_comparison.py --check --require-ci' (ValueError: TFG comparison source provenance is stale), because src/lie/SO3Jacobians.h is in the OU-III/TFG companion study's source binding. It exits 0 on 4cd8021, where CI replayed that bundle; the 19 other suites ran on the same src tree."
+    },
+    "validation_unittests": {
+      "tests": 1152,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "mathematical_checks_27_state": {
+      "failures": 0,
+      "record": "mathematical_verification.txt"
+    },
+    "deterministic_replay": "eight pinned records, eight quality gates pass with the committed limits; largest gated-metric change 0.02%",
+    "estimator_trace_comparison": "sample_path_cost.json: QMEKF-CARMA, QMEKF-shared, TFG and OU-III wrapper traces bit-identical to the previous tree; TFG-CARMA and shared-TFG differ by binary32 rounding",
+    "carma_lever_arm_study": "reports/results/carma_lever_arm_study regenerated in full; one summary cell had moved beyond the study's 0.01 comparison tolerance (tfg_carma3/mekf_ou3/y-starboard/2 yaw ratio 8.3851 to 8.3987)",
+    "target_build": "CI on 9018fa4: build and Arduino IDE default build succeeded (ESP32-S3 firmware compiles)",
+    "target_execution": "none: no ESP32 board and no Xtensa execution",
+    "thresholds_changed": false,
+    "logs_sha256": {
+      "suite_status.txt": "e68a295711322193e4342d7cc013490fe800599e2d0246b8a9d97eefbae891d8",
+      "suite_build.log": "76863f8f8d32bd7997bd3818146c2199ca3285c2afe2bb983f94cb65020b557a",
+      "suite_validation_final.log": "87011f1c067b0265cda41fa1368d3d821af2e0e56a730dc2cf0e90ff53eeb4f6",
+      "suite_kalman_tfg_shared_modes.log": "7b8674237a29f19f9a7d872681f7f044de0b4adfbba2f3fa7968f1fc4d69ed30",
+      "lever_study.log": "9651690fcbca518dff39baedc7a5d29aae1ba3e7d0d0883f5c6a8aefa7632143"
+    }
+  }
 }

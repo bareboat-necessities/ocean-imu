@@ -142,5 +142,126 @@
     "esp32s3_size_stack.csv and firmware_builds.json (Xtensa object sizes, stack-chain bounds and linked firmware sizes) predate the restructured kernels",
     "the on-device 200 Hz probe: no board",
     "the registered study scores (runs.csv.gz and derived tables): produced by the registered executable; the restructured kernels change binary32 rounding only"
-  ]
+  ],
+  "host_timing": {
+    "meaning": "Median over four counterbalanced repetitions of the mean and 99th-percentile time of one 200 Hz core step at the test suite's flags (-O3 -funroll-loops -march=native), same container and pinned CPU for both trees, measured in alternation. Ranking only; not an ESP32 time.",
+    "fixed_interval": {
+      "baseline": {
+        "A41": {
+          "mean_us": 1.885,
+          "p99_us": 3.338
+        },
+        "CSM": {
+          "mean_us": 2.902,
+          "p99_us": 10.765
+        },
+        "T41": {
+          "mean_us": 3.652,
+          "p99_us": 7.055
+        },
+        "TCSM": {
+          "mean_us": 6.539,
+          "p99_us": 18.521
+        }
+      },
+      "current": {
+        "A41": {
+          "mean_us": 1.647,
+          "p99_us": 3.084
+        },
+        "CSM": {
+          "mean_us": 2.68,
+          "p99_us": 8.492
+        },
+        "T41": {
+          "mean_us": 2.072,
+          "p99_us": 3.381
+        },
+        "TCSM": {
+          "mean_us": 4.277,
+          "p99_us": 12.331
+        }
+      }
+    },
+    "interval_jitter": {
+      "baseline": {
+        "A41": {
+          "mean_us": 2.353,
+          "p99_us": 3.957
+        },
+        "CSM": {
+          "mean_us": 4.961,
+          "p99_us": 13.306
+        },
+        "T41": {
+          "mean_us": 3.926,
+          "p99_us": 7.341
+        },
+        "TCSM": {
+          "mean_us": 8.603,
+          "p99_us": 20.871
+        }
+      },
+      "current": {
+        "A41": {
+          "mean_us": 1.925,
+          "p99_us": 3.487
+        },
+        "CSM": {
+          "mean_us": 4.033,
+          "p99_us": 9.638
+        },
+        "T41": {
+          "mean_us": 2.212,
+          "p99_us": 3.556
+        },
+        "TCSM": {
+          "mean_us": 5.732,
+          "p99_us": 14.656
+        }
+      }
+    },
+    "no_model_commits": {
+      "baseline": {
+        "A41": {
+          "mean_us": 1.891,
+          "p99_us": 2.431
+        },
+        "CSM": {
+          "mean_us": 2.599,
+          "p99_us": 3.258
+        },
+        "T41": {
+          "mean_us": 3.596,
+          "p99_us": 6.799
+        },
+        "TCSM": {
+          "mean_us": 6.207,
+          "p99_us": 11.319
+        }
+      },
+      "current": {
+        "A41": {
+          "mean_us": 1.5,
+          "p99_us": 1.974
+        },
+        "CSM": {
+          "mean_us": 2.301,
+          "p99_us": 2.954
+        },
+        "T41": {
+          "mean_us": 1.9,
+          "p99_us": 2.729
+        },
+        "TCSM": {
+          "mean_us": 3.834,
+          "p99_us": 5.252
+        }
+      }
+    }
+  },
+  "deterministic_replay": {
+    "meaning": "Largest change of a gated metric over the eight pinned vessel records against measured_worst in deterministic_regression.json (which was produced by a different compiler); all eight quality gates pass with the committed limits.",
+    "largest_relative_change_percent": 0.02
+  }
 }
