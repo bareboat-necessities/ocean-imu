@@ -20,6 +20,7 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
         # Zenodo artifacts, and ordinary copied source trees.
         for relative in (
             "src",
+            "tests/common",
             "tests/kalman_ou_ii",
             "tests/kalman_ou_iii",
             "reports/results/ou_validation",

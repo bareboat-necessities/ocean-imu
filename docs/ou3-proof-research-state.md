@@ -74,6 +74,16 @@ map is OPEN. Next falsifiable proof calculation: qualify the cache-augmented phy
 forcing against SF3--SF9 and the still-open construction/release and all-time
 magnetic-service obligations, without deleting inherited sample memory.
 
+The final replay publisher exposed a class E archive-fixture failure:
+`test_source_archive_provenance.py` copied estimator sources but omitted
+`tests/common/GyroReplayContract.h`. The fixture now copies the shared test
+headers, preserving the requirement to verify their recorded hashes in source
+archives. All six fresh replay shards and the companion study completed on
+81d16672; their publication failed at this fixture check, not a numerical gate.
+Because the conservative replay fingerprint includes tests, the repaired
+revision requires a new full replay before final publication. No source-bound
+proof receipt or mathematical result is promoted by this test repair.
+
 ## Historical native secant source binding
 
 The following receipt describes its archived source revision; the runtime

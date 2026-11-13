@@ -388,6 +388,58 @@ The untouched-main binary and the modified binary in compatibility mode match ho
 
 <!-- RESULTS_END -->
 
+## Ordinary acquired-reference comparison
+
+The additional untouched-main comparison uses an ordinarily acquired magnetic
+reference, correct fixed hard iron and unknown acceleration. Neither estimator
+receives truth as a measurement. Both binaries consume identical sensor histories
+for seeds 1001–1006, run for 7200 s, and score 5400–7200 s. All late bias-learning
+gates are open. Values are horizontal accelerometer-bias RMS in mm/s²; intervals
+are 95% Student intervals across six seeds, including paired differences.
+
+| Shared-mode filter | Untouched main | Corrected default | Paired change |
+| --- | ---: | ---: | ---: |
+| QMEKF | 72.80 [50.72, 94.88] | 68.52 [44.95, 92.09] | −4.28 [−13.68, 5.11] |
+| TFG | 55.22 [18.21, 92.23] | 56.88 [15.55, 98.21] | 1.66 [−9.96, 13.27] |
+
+Both paired intervals include zero. These results do not establish a reliable
+live bias-RMS gain. The large demonstrated gain with an artificial acceleration
+oracle diagnoses integration-induced error under independent motion information;
+it is not a deployed-sensor result. Ordinary unknown-wave estimation retains a
+substantial tilt/bias/motion floor.
+
+![Ordinary acquired-reference comparison](../reports/results/live_bias_consistency/figures/ordinary_reference_comparison.svg)
+
+The 12 additional baseline runs bring the logical study cohort to 1212 runs.
+`ordinary_reference_paired_scores.csv` retains all 60 matched scoring windows,
+including sensor hashes, attitude errors, innovations, learning gates and
+covariance diagnostics. `ordinary_reference_manifest.json` records the verified
+untouched binary hash and seed-level confidence calculations. The corrected
+counterpart is the existing `production_runs.csv` cohort, reused without
+double-counting it as a new experiment.
+
+After building the untouched baseline binary using the recipe in the test
+README, reproduce the additional baseline cohort with:
+
+```sh
+mkdir -p /tmp/ordinary-reference-baseline
+for seed in 1001 1002 1003 1004 1005 1006; do
+  for geometry in qmekf tfg; do
+    tests/live_bias_consistency/live-bias-baseline \
+      --seed "$seed" --filter "$geometry" --motion wave \
+      --arm learned_fixed --timing endpoint --noise native --change 0 \
+      --duration 7200 \
+      --output "/tmp/ordinary-reference-baseline/${seed}_${geometry}"
+  done
+done
+```
+
+Pair each `_scores.csv` row with `production_runs.csv` by seed, filter, motion,
+arm, start and end; require equal sensor hashes from the native logs. For the
+late window multiply `ba_h_rms` by 1000 and compute the mean and Student interval
+with five degrees of freedom. Compute paired intervals from each seed's
+default-minus-baseline difference, not from independent marginal intervals.
+
 ## Validation and scope
 
 [Reproduction commands and experimental definitions](../tests/live_bias_consistency/README.md)
@@ -442,3 +494,6 @@ full eight-record run exceeds a gyro-bias limit (12.785% versus 12.78%). The
 shared-mode ablation also exceeds existing yaw/bias bars. The core-only
 correction remains the default; frontend and Schmidt changes remain explicit
 diagnostics.
+
+Detailed [validation status](live-bias-validation-final.md) records the resumed
+local checks, source-archive repair and final CI publication requirements.
