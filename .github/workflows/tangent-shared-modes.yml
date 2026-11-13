@@ -1,0 +1,58 @@
+name: tangent shared-mode research
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/lie/**'
+      - 'src/kalman_carma/**'
+      - 'src/kalman_carma_shared_modes/**'
+      - 'src/kalman_common/BiasLearningGate.h'
+      - 'tests/kalman_tangent_shared_modes/**'
+      - 'tests/common/CarmaModelExport.h'
+      - 'tools/tangent_shared_modes_*.py'
+      - 'doc/kalman_tangent_shared_modes/**'
+      - '.github/workflows/tangent-shared-modes.yml'
+  push:
+    branches: [main, 'research/tangent-carma-observability']
+    paths:
+      - 'src/lie/**'
+      - 'src/kalman_carma/**'
+      - 'src/kalman_carma_shared_modes/**'
+      - 'src/kalman_common/BiasLearningGate.h'
+      - 'tests/kalman_tangent_shared_modes/**'
+      - 'tools/tangent_shared_modes_*.py'
+      - 'doc/kalman_tangent_shared_modes/**'
+      - '.github/workflows/tangent-shared-modes.yml'
+concurrency:
+  group: tangent-research-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-and-article:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libeigen3-dev
+      - name: Build without concurrent template-instantiation memory spikes
+        run: make -C tests/kalman_tangent_shared_modes build
+      - name: Group, reset, covariance and seven-filter live smoke
+        run: make -C tests/kalman_tangent_shared_modes test
+      - name: Verify committed evidence structure
+        run: python3 tools/tangent_shared_modes_report.py --check-only
+      - name: Compile standalone research article
+        uses: xu-cheng/latex-action@v4
+        with:
+          working_directory: doc/kalman_tangent_shared_modes
+          root_file: kalman_tangent_shared_modes.tex
+          latexmk_use_lualatex: true
+      - uses: actions/upload-artifact@v6
+        with:
+          name: tangent-shared-modes-research
+          path: |
+            doc/kalman_tangent_shared_modes/kalman_tangent_shared_modes.pdf
+            reports/results/tangent_shared_modes/*.json
+            reports/results/tangent_shared_modes/*.csv
+          if-no-files-found: error

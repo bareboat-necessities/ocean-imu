@@ -9,6 +9,7 @@
 #include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"
 #undef private
 #include "Experiment.h"
+#include "../common/CarmaModelExport.h"
 #include "../kalman_carma/carma3/Bench3.h"
 namespace followup {
 inline Eigen::Matrix3f skew(const V& v) {Eigen::Matrix3f s;s<<0,-v.z(),v.y(),v.z(),0,-v.x(),-v.y(),v.x(),0;return s;}
@@ -158,14 +159,9 @@ public:
         return out;
     }
     void write_model(std::ostream& out) override {
-        const auto& m=f.raw().mekf();const auto& motion=m.motion();
-        auto matrix=[&](const char* key,const auto& M,bool comma=true){out<<"\""<<key<<"\":[";for(int i=0;i<M.rows();++i){if(i)out<<',';out<<'[';for(int j=0;j<M.cols();++j){if(j)out<<',';out<<M(i,j);}out<<']';}out<<']';if(comma)out<<',';};
-        Eigen::Matrix<float,18,18> W,P;W.setZero();P.setZero();motion.stationary(P,0);
-        const auto& E=motion.excitation();
-        for(int a=0;a<3;++a)for(int b=0;b<3;++b)W.template block<6,6>(6*a,6*b)=E.re(a,b)*motion.block_WR()+E.im(a,b)*motion.block_WI();
-        out<<std::setprecision(12)<<'{';matrix("A6",motion.block_A());matrix("W18",W);matrix("stationary18",P);
-        Eigen::Matrix<float,1,3> field=m.applied_field().transpose();matrix("field",field);
-        out<<"\"acc_sigma\":"<<carma3_bench::ACC_SIGMA<<",\"gyro_sigma\":"<<carma3_bench::GYR_SIGMA<<",\"mag_sigma\":"<<carma3_bench::MAG_SIGMA_UT<<'}';
+        const auto& m=f.raw().mekf();
+        ocean_imu::sim::write_carma6_model(out,m.motion(),m.applied_field(),
+            carma3_bench::ACC_SIGMA,carma3_bench::GYR_SIGMA,carma3_bench::MAG_SIGMA_UT);
     }
     void self_test() override {
         // A rejected IMU packet must not advance startup, magnetic timing,

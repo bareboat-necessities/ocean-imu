@@ -165,6 +165,10 @@ public:
     static Eigen::Quaternion<T> quaternion_from_acc(Vector3 const& acc);
 
     void set_mag_world_ref(const Vector3& B_world) { v2ref = B_world; }
+    const Vector3& mag_world_ref() const noexcept { return v2ref; }
+    void set_acc_bias_gain_scale(const Matrix3& body_scale, bool enabled) {
+        bias_gain_scale_ = body_scale; bias_gain_scaling_ = enabled;
+    }
 
     // Default: a rate constant over the preceding interval. Opt in only for
     // timestamped instantaneous samples; never average delta-angle inputs.
@@ -565,6 +569,8 @@ private:
     // Preserve direct native-kernel callers; live fusion Config selects the
     // audited persistent-bias policy explicitly at startup.
     bool schmidt_acc_bias_hold_ = false;
+    bool bias_gain_scaling_ = false;
+    Matrix3 bias_gain_scale_ = Matrix3::Identity();
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
     T tau_bacc_ = T(5000.0);
@@ -1410,6 +1416,10 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     if constexpr (AB) {
         if (!use_ba) freeze_acc_bias_rows_(K);
     }
+    if constexpr (AB) {
+        if (bias_gain_scaling_ && acc_bias_updates_enabled_)
+            K.template block<3,3>(OFF_BA,0)=(bias_gain_scale_*K.template block<3,3>(OFF_BA,0)).eval();
+    }
     xext.noalias() += K * r;
     joseph_update_<3>(K, S_mat, PCt);
     applyQuaternionCorrectionFromErrorState();
@@ -1444,6 +1454,10 @@ void CARMA3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     gain3_(PCt, ldlt, K);
     if constexpr (AB) {
         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);
+    }
+    if constexpr (AB) {
+        if (bias_gain_scaling_ && acc_bias_updates_enabled_)
+            K.template block<3,3>(OFF_BA,0)=(bias_gain_scale_*K.template block<3,3>(OFF_BA,0)).eval();
     }
     xext.noalias() += K * r;
     joseph_update_<3>(K, S_mat, PCt);

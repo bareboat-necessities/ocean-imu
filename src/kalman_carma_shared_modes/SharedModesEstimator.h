@@ -10,6 +10,7 @@
 #include <utility>
 #include "CarmaSharedModesMotion.h"
 #include "CarmaCouplingConfidence.h"
+#include "kalman_common/BiasLearningGate.h"
 
 namespace ocean_imu::carma_shared_modes {
 
@@ -34,6 +35,8 @@ struct SharedModesConfig {
     // on three seeds (0.7-0.8 equivalent, 0.95 worse); see
     // reports/results/tfg_shared_modes.
     T cap_coherence = T(0.8);
+    // Append optional research settings: preserve existing aggregate order.
+    kalman::filter_detail::BiasLearningConfig<T> bias_learning{};
 };
 
 template<typename T, class Core>
@@ -80,6 +83,8 @@ public:
 
     void configureSharedModes(const Config& c) {
         cfg_ = c;
+        bias_learning_.configure(c.bias_learning);
+        this->set_acc_bias_gain_scale(bias_learning_.scale(),false);
         auto& m = this->motion();
         CouplingConfig cc = m.coupling().config();
         cc.source = cfg_.mode == CouplingMode::Off ? CouplingConfig::Source::Off
@@ -111,6 +116,11 @@ public:
         apply_gain_(cfg_.mode == CouplingMode::Off ? T(0) : shrunk_c_);
     }
     const Config& sharedModesConfig() const noexcept { return cfg_; }
+    const auto& biasLearning() const noexcept { return bias_learning_; }
+    void configureBiasLearning(const kalman::filter_detail::BiasLearningConfig<T>& c) {
+        cfg_.bias_learning=c; bias_learning_.configure(c);
+        this->set_acc_bias_gain_scale(bias_learning_.scale(),false);
+    }
 
     // ---- per-sample interface (the CARMA3 core's, extended) ----
     void time_update(Vector3 const& gyr, T Ts) {
@@ -121,6 +131,11 @@ public:
         if (ok) last_gyr_ = gyr;
     }
     void measurement_update_acc_only(Vector3 const& acc, T tempC = Base::tempC_ref) {
+        if (cfg_.bias_learning.enabled && acc.allFinite() && std::isfinite(tempC)) {
+            bias_learning_.observe(this->quaternion_boat().toRotationMatrix(),this->mag_world_ref(),
+                this->get_world_accel(),last_dt_,Base::STD_GRAVITY);
+            this->set_acc_bias_gain_scale(bias_learning_.scale(),true);
+        }
         Base::measurement_update_acc_only(acc, tempC);
         step_confidence_();
     }
@@ -212,6 +227,8 @@ private:
 
     bool restart_coupling_(bool initialized) {
         if (!initialized) return false;
+        bias_learning_.reset();
+        this->set_acc_bias_gain_scale(bias_learning_.scale(),false);
         auto& m = this->motion();
         m.coupling().reset();
         m.monitor().reset();
@@ -275,6 +292,7 @@ private:
     }
 
     bool coupling_adaptation_enabled_ = true;
+    kalman::filter_detail::BiasLearningGate<T> bias_learning_{};
     Config cfg_{};
     Confidence conf_{};
     BandRegression<T> prior_{};
