@@ -3,7 +3,7 @@
 The 27-state shared-mode TFG filter is the most accurate of the four
 estimators in the condition-balanced position comparison. Most of its gain
 comes from the shared stochastic prior; the TFG geometry adds a small further
-improvement at about twice the host cost of shared QMEKF. It remains an
+improvement at about 1.6 times the host cost of shared QMEKF. It remains an
 experimental estimator: the shipping OU-III default is unchanged.
 
 | Shared TFG versus | Heave RMS change | Horizontal RMS change |
@@ -121,24 +121,41 @@ Means over 12 seeds; heading is mean RMS.
 
 | Measurement | QMEKF shared | TFG shared |
 |---|---:|---:|
-| Host core mean, median of 3 repeats | 3.981 us | 7.987 us |
+| Host core mean, median of 4 repeats | 2.680 us | 4.277 us |
+| Host core mean with 25% interval jitter | 4.033 us | 5.732 us |
+| Instructions per step at firmware flags | 245,555 | 124,345 |
 | ESP32-S3 core object | 12,504 bytes | 14,472 bytes |
 | Matched full AtomS3R application flash | 1,094,467 bytes | 1,029,687 bytes |
 | Full application globals | 31,660 bytes | 31,660 bytes |
 
-A separate four-repetition counterbalanced check rotates every core through
-each execution position (`host_order_*.csv`). Its shared-QMEKF/TFG medians are
-3.946/8.720 us at fixed intervals (ratio 2.21), and 6.733/11.660 us with
-interval jitter (ratio 1.73). Host variation remains substantial.
+The host timing driver rotates every core through each execution position
+over four repetitions (`host_timing.csv`, `host_jitter.csv`, `host_fixed.csv`;
+`environment.json` names the host). Host variation remains substantial.
 
-These timings, the Xtensa probe and the firmware builds were measured before
-the cap policy. The policy adds one float to the coupling configuration and a
-few operations to the 0.1 s model commit; the measurements have not been
-repeated. Core objects are allocated at construction, separately from firmware
+A firmware build is size-optimized and keeps Eigen's assertions, which leaves
+Eigen's checked coefficient accessors and small fixed-size products out of
+line; host `-O3` timing does not show that cost. The instruction row is the
+same timing driver compiled with the firmware's optimization flags and run
+under an instruction counter: x86-64 instructions per 200 Hz step, including
+0.1 s model commits and 25 Hz magnetic updates. It is a deterministic proxy,
+**not** an Xtensa cycle count or a deadline measurement. The TFG sample path
+indexes plain arrays and uses the block structure and symmetry of its
+covariance kernels; the QMEKF cores still use Eigen accessors there.
+`sample_path_cost.json` holds the four cores, the command and the numerical
+comparison with the previous kernels: binary64 cores agree to print precision
+over 300 s, the eight gated replay records move by at most 0.02%, and the
+binary32 wrapper traces differ by rounding of the size that compiler
+multiply-add contraction alone produces. The registered study scores were
+produced by the registered executable and are not rerun.
+
+The Xtensa probe and the firmware builds were measured before the cap policy
+and before the structured sample-path kernels; they have not been repeated.
+Core objects are allocated at construction, separately from firmware
 globals. The Xtensa stack figures are compiler call-chain lower bounds, **not**
 measured peak stack. The on-device 200 Hz probe compiles, but no connected
 board was available: actual deadline, minimum heap and peak-stack measurements
-remain unverified. Host timing cannot establish those properties.
+remain unverified. Host timing and instruction counts cannot establish those
+properties.
 
 ## Files and reproduction
 
@@ -158,11 +175,14 @@ remain unverified. Host timing cannot establish those properties.
   original raw byte hashes; only its source binding and rounding-level summary
   values change. No theorem claim or shipping behavior is changed.
 - `mathematical_verification.txt`, `refactor_regression.json`: independent
-  27-state checks and exact original/post-refactor four-wrapper traces.
+  27-state checks, and the four-wrapper trace comparison of the refactor that
+  introduced the shared TFG core; `sample_path_cost.json` compares the
+  structured sample-path kernels with their predecessors.
 - `figures/` and `traces/`: bounded SVG/PGF figures and their compact drawing
   inputs. Scores and transient recovery use full-rate data before decimation.
-- `environment.json`, `host_*.csv`, `esp32s3_size_stack.csv`,
-  `operation_counts.json`, `firmware_builds.json`: computational evidence.
+- `environment.json`, `host_*.csv`, `sample_path_cost.json`,
+  `esp32s3_size_stack.csv`, `operation_counts.json`, `firmware_builds.json`:
+  computational evidence.
 
 From the repository root, reanalyse the committed scores without simulations:
 

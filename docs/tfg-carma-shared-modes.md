@@ -215,7 +215,12 @@ The baseline is main at `1fe4711b489ad92f3eef8ab560da904af741df9d`.
 <Eigen-root>` compiles the same deterministic wrapper trace against both
 header trees. It covers startup, changing excitation, bias handling, magnetic
 updates and an outage; timings are excluded. Its results and the 27-state
-independent-reference checks are committed beside the study.
+independent-reference checks are committed beside the study. That record is
+the comparison of the refactor that introduced the shared TFG core. The
+structured sample-path kernels leave the QMEKF-CARMA, QMEKF-shared and OU-III
+traces bit-identical and move the TFG-CARMA trace by binary32 rounding, which
+exceeds the tool's refactor tolerance for that one wrapper;
+`sample_path_cost.json` holds its comparison, including binary64 agreement.
 
 The new mathematical target is `tfg_shared_modes-test`. It checks nonlinear
 finite differences, independent continuous Lyapunov integration, full group
