@@ -41,6 +41,17 @@ def main() -> None:
     assert {r['input'] for r in parsed} == set(REFERENCE_CSV_SHA256)
     assert all(r['samples'] == '180000' and r['window_s'] == '900' for r in parsed)
 
+    # Production defaults must meet all eight original numeric bars as well.
+    current = subprocess.run([str(binary)], cwd=HERE,
+                             env={**env, 'W3D_WRITE_TIMESERIES': '0'}, text=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    assert current.returncode == 0, current.stdout[-3000:]
+    assert 'SAMPLING=production_defaults' in current.stdout
+    assert 'CSM_GYRO_INPUT convention=defaults schmidt_hold=0' in current.stdout
+    assert current.stdout.count('QUALITY_GATE: PASS=1 REASON=ok') == 8
+    assert 'REPLAY_COMPLETE: records=8 gated=1' in current.stdout
+    print('TFG production defaults: all eight unchanged numeric gates pass.', flush=True)
+
     with tempfile.TemporaryDirectory(prefix='tfg-shared-gates-') as tmp:
         work = Path(tmp)
         diagnostic = {**env, 'W3D_WRITE_TIMESERIES': '0'}
@@ -58,6 +69,8 @@ def main() -> None:
                 (['--no-noise'], {}, protocol_error), (['--nomag'], {}, protocol_error),
                 ([], {'W3D_SEED': '7'}, protocol_error),
                 ([], {'W3D_CSM_VARIANT': 'CSM_OFF'}, protocol_error),
+                ([], {'W3D_CSM_GYRO_INPUT': 'instantaneous'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
+                ([], {'W3D_CSM_GYRO_INPUT': 'interval'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
                 ([], {'W3D_ENGINE_RPM': '1600'}, '--regression forbids W3D_ENGINE_RPM')]:
             r = run(['--input', str(records[0]), *args], changes)
             assert r.returncode == 2 and error in r.stdout, (args, changes, r.stdout[-1000:])

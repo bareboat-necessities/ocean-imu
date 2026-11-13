@@ -121,6 +121,7 @@
 #include <type_traits>
 
 #include "kalman_common/ImuLeverArm.h"
+#include "kalman_common/GyroInterval.h"
 #include "kalman_common/MekfAttitudeMath.h"
 #include "kalman_common/ConditionalCovariance.h"
 #include "kalman_carma/CarmaVerticalModel.h"
@@ -343,6 +344,11 @@ public:
     void set_mag_world_ref(const Vector3& B_world) { B_w_ = B_world; }
     [[nodiscard]] const Vector3& mag_world_ref() const noexcept { return B_w_; }
 
+    // Default: a rate constant over the preceding interval. Opt in only for
+    // timestamped instantaneous samples; never average delta-angle inputs.
+    void set_gyro_sample_mode(filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
+    void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
+    void prime_gyro_sample(const Vector3& gyr, T dt) { gyro_interval_.prime(gyr, dt); }
     void time_update(Vector3 const& gyr, T Ts);
     void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
@@ -365,6 +371,9 @@ public:
     [[nodiscard]] Vector3 gyroscope_bias() const { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const { return X_.B.col(1); }
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
+    // Schmidt hold: keep the bias mean fixed but retain its persistent
+    // uncertainty and correlations. Legacy hold is an explicit compatibility option.
+    void set_schmidt_acc_bias_hold(bool enabled) { schmidt_acc_bias_hold_ = enabled; }
     void set_acc_bias_updates_enabled(bool en);
 
     [[nodiscard]] Vector3 get_position() const { return X_.X.col(IP); }
@@ -524,7 +533,7 @@ public:
         T* const xw = X_.X.data();                 // X(ax, i) = xw[ax + 3 i]
         for (int ax = 0; ax < 3; ++ax) {
             const T* const mp = maps[ax].data();   // map(i, j) = mp[i + NC j]
-            T v[NC], y[NC];
+            T v[NC]{}, y[NC]{};
             auto apply = [&] {
                 for (int i = 0; i < NC; ++i) {
                     T s = T(0);
@@ -555,9 +564,13 @@ private:
     Group X_{};
     MatrixNX P_;
     Vector3 B_w_ = Vector3::UnitX();
+    filter_detail::GyroInterval<Vector3> gyro_interval_;
     Vector3 last_gyr_bias_corrected_ = Vector3::Zero();
     filter_detail::ImuLeverArm<T> lever_;
 
+    // Preserve direct native-kernel callers; live fusion Config selects the
+    // audited persistent-bias policy explicitly at startup.
+    bool schmidt_acc_bias_hold_ = false;
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
     T tau_bacc_ = T(5000.0);
@@ -692,7 +705,7 @@ private:
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                       const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const;
-    void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q) const;
+    void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
                     MatrixNX& out) const;
@@ -949,7 +962,7 @@ TFGC3_TPL
 void TFGC3_CLS::set_acc_bias_updates_enabled(bool en) {
     if (acc_bias_updates_enabled_ == en) return;
     begin_write_();
-    if (!en) {
+    if (!en && !schmidt_acc_bias_hold_) {
         for (int i = 0; i < NX; ++i) {
             if (i >= OFF_BA) continue;
             for (int k = 0; k < 3; ++k) {
@@ -957,7 +970,7 @@ void TFGC3_CLS::set_acc_bias_updates_enabled(bool en) {
                 P_(OFF_BA + k, i) = T(0);
             }
         }
-    } else {
+    } else if (en) {
         const T target = sigma_bacc0_ * sigma_bacc0_;
         for (int i = 0; i < 3; ++i) P_(OFF_BA + i, OFF_BA + i) = std::max(P_(OFF_BA + i, OFF_BA + i), target);
     }
@@ -1146,7 +1159,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
             pb[i + 3 * j] = -(Ts * Jh[i][j]);
         }
     const T* const w1 = W1.data();
-    for (int i = 0; i < NC; ++i) {
+    for (Eigen::Index i = 0; i < NC; ++i) {
         const T x = w1[3 * i], y = w1[3 * i + 1], z = w1[3 * i + 2];
         T* const xs = b.Xs[i].data();              // [w_i]x, column-major
         xs[0] = T(0); xs[1] = z;    xs[2] = -y;
@@ -1158,7 +1171,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
 
 TFGC3_TPL
 void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
-                            StepNoise& q) const {
+                            StepNoise& q, T gyro_noise_scale) const {
     namespace d = tfg_carma_detail;
     // With W = [w]x, s J_l(w s) = int_0^s Exp(w t) dt = s I + a s^2 W + b s^3 W^2,
     // (a, b) the J_l coefficients at |w| s.  The rotation R0 factors out of
@@ -1166,7 +1179,7 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
     T R0a[3][3], R1a[3][3], Qg[3][3], Qb[3][3];
     d::rows3<T>(R0, R0a);
     d::rows3<T>(b.R1, R1a);
-    d::rows3<T>(Q_gyro_, Qg);
+    d::rows3<T>(Matrix3(Q_gyro_ * gyro_noise_scale), Qg);
     d::rows3<T>(Q_bg_, Qb);
     const T wv[3] = {w(0), w(1), w(2)};
     const T n2 = wv[0] * wv[0] + wv[1] * wv[1] + wv[2] * wv[2];
@@ -1326,10 +1339,15 @@ TFGC3_TPL
 void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
+    const auto input = gyro_interval_.prepare(gyr, Ts);
+    if (!input.predict) return;
 
-    const Vector3 w = gyr - X_.B.col(0);
+
+    const Vector3 w = input.rate - X_.B.col(0);
     last_gyr_bias_corrected_ = w;
-    lever_.update_rate(w, Ts);
+    // The rotational acceleration correction belongs to the current sensor
+    // sample; it must not inherit the attitude integrator's half-step delay.
+    lever_.update_rate(Vector3(gyr - X_.B.col(0)), Ts);
     const Matrix3 R0 = X_.R;
 
     refresh_discretization_(Ts);
@@ -1358,7 +1376,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     if (acc_bias_updates_enabled_) X_.B.col(1) *= b.phi_b;
 
     StepNoise q;
-    step_noise_(w, Ts, R0, b, q);
+    step_noise_(w, Ts, R0, b, q, input.noise_scale);
     propagate_covariance_(b, q, Fc, Qc, motion_QI_());
 }
 
@@ -1417,40 +1435,41 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     // Upper block triangle of M Phi^T, row by row: row r of block rb needs the
     // column blocks cb >= rb only.
     for (int r = 0; r < NX; ++r) {
+        constexpr Eigen::Index row_stride = NX;
         const int rb = r / 3;
-        const T* mr = m + r;                       // M(r, c) = mr[NX * c]
+        const T* mr = m + r;                       // M(r, c) = mr[row_stride * c]
         T* pr = p + r;
         if (rb < BLK_BA) {
-            const T g0 = mr[NX * OFF_BG], g1 = mr[NX * (OFF_BG + 1)], g2 = mr[NX * (OFF_BG + 2)];
+            const T g0 = mr[row_stride * OFF_BG], g1 = mr[row_stride * (OFF_BG + 1)], g2 = mr[row_stride * (OFF_BG + 2)];
             const T t0 = g0 * B[0][0] + g1 * B[0][1] + g2 * B[0][2];
             const T t1 = g0 * B[1][0] + g1 * B[1][1] + g2 * B[1][2];
             const T t2 = g0 * B[2][0] + g1 * B[2][1] + g2 * B[2][2];
             if (rb == BLK_PHI) {
-                pr[NX * OFF_PHI] = mr[NX * OFF_PHI] + t0;
-                pr[NX * (OFF_PHI + 1)] = mr[NX * (OFF_PHI + 1)] + t1;
-                pr[NX * (OFF_PHI + 2)] = mr[NX * (OFF_PHI + 2)] + t2;
+                pr[row_stride * OFF_PHI] = mr[row_stride * OFF_PHI] + t0;
+                pr[row_stride * (OFF_PHI + 1)] = mr[row_stride * (OFF_PHI + 1)] + t1;
+                pr[row_stride * (OFF_PHI + 2)] = mr[row_stride * (OFF_PHI + 2)] + t2;
             }
             if (rb <= BLK_BG)
-                for (int k = 0; k < 3; ++k) pr[NX * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
+                for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
             for (int j = rb > BLK_W ? rb - BLK_W : 0; j < NC; ++j) {
                 T a0 = w[j][1] * t2 - w[j][2] * t1;
                 T a1 = w[j][2] * t0 - w[j][0] * t2;
                 T a2 = w[j][0] * t1 - w[j][1] * t0;
                 for (int l = 0; l < NC; ++l) {
                     const T fjl = F[j][l];
-                    const T* x = mr + NX * (OFF_W + 3 * l);
+                    const T* x = mr + row_stride * (OFF_W + 3 * l);
                     a0 += fjl * x[0];
                     a1 += fjl * x[NX];
-                    a2 += fjl * x[2 * NX];
+                    a2 += fjl * x[Eigen::Index(2) * NX];
                 }
-                T* y = pr + NX * (OFF_W + 3 * j);
+                T* y = pr + row_stride * (OFF_W + 3 * j);
                 y[0] = a0;
                 y[NX] = a1;
-                y[2 * NX] = a2;
+                y[Eigen::Index(2) * NX] = a2;
             }
         }
-        const T h0 = mr[NX * OFF_BA], h1 = mr[NX * (OFF_BA + 1)], h2 = mr[NX * (OFF_BA + 2)];
-        for (int k = 0; k < 3; ++k) pr[NX * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
+        const T h0 = mr[row_stride * OFF_BA], h1 = mr[row_stride * (OFF_BA + 1)], h2 = mr[row_stride * (OFF_BA + 2)];
+        for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
     }
 
     // Qd on the same blocks (add_noise_()): a product with [w_j]x^T is a cross
@@ -1557,7 +1576,7 @@ void TFGC3_CLS::transport_(const Tangent& a) {
             const T* const x = p + 3 * i;          // P block (i, phi)
             for (int r = 0; r < 3; ++r)
                 for (int k = 0; k < 3; ++k) {
-                    T v = Jr[r][0] * x[NX * k] + Jr[r][1] * x[1 + NX * k] + Jr[r][2] * x[2 + NX * k];
+                    T v = Jr[r][0] * x[Eigen::Index(NX) * k] + Jr[r][1] * x[1 + NX * k] + Jr[r][2] * x[2 + NX * k];
                     if (i != 0) v += C[i][r][0] * Pff[0][k] + C[i][r][1] * Pff[1][k] + C[i][r][2] * Pff[2][k];
                     wm[3 * i + r + NX * k] = v;
                 }
@@ -1570,7 +1589,7 @@ void TFGC3_CLS::transport_(const Tangent& a) {
             T Y[3][3], X[3][3];
             for (int r = 0; r < 3; ++r)
                 for (int c = 0; c < 3; ++c)
-                    Y[r][c] = Jr[r][0] * x[NX * c] + Jr[r][1] * x[1 + NX * c] + Jr[r][2] * x[2 + NX * c];
+                    Y[r][c] = Jr[r][0] * x[Eigen::Index(NX) * c] + Jr[r][1] * x[1 + NX * c] + Jr[r][2] * x[2 + NX * c];
             if (full || j == 0) {
                 for (int r = 0; r < 3; ++r)
                     for (int c = 0; c < 3; ++c)
@@ -1621,18 +1640,18 @@ void TFGC3_CLS::inject(const Tangent& a) {
         const T* const beta = av + Group::bias_offset(j);
         T v[3];
         for (int k = 0; k < 3; ++k) v[k] = Jp[k][0] * beta[0] + Jp[k][1] * beta[1] + Jp[k][2] * beta[2];
-        for (int k = 0; k < 3; ++k) B[k + 3 * j] -= R[3 * k] * v[0] + R[1 + 3 * k] * v[1] + R[2 + 3 * k] * v[2];
+        for (int k = 0; k < 3; ++k) B[k + 3 * j] -= R[Eigen::Index(3) * k] * v[0] + R[1 + 3 * k] * v[1] + R[2 + 3 * k] * v[2];
     }
     T* const W = X_.X.data();
     for (int i = 0; i < NC; ++i) {
         const T* const rho = av + Group::world_offset(i);
-        const T x = W[3 * i], y = W[3 * i + 1], z = W[3 * i + 2];
+        const T x = W[Eigen::Index(3) * i], y = W[3 * i + 1], z = W[3 * i + 2];
         for (int k = 0; k < 3; ++k)
             W[k + 3 * i] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z
                          - (Jm[k][0] * rho[0] + Jm[k][1] * rho[1] + Jm[k][2] * rho[2]);
     }
     for (int c = 0; c < 3; ++c) {
-        const T x = R[3 * c], y = R[3 * c + 1], z = R[3 * c + 2];
+        const T x = R[Eigen::Index(3) * c], y = R[3 * c + 1], z = R[3 * c + 2];
         for (int k = 0; k < 3; ++k) R[k + 3 * c] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z;
     }
     reorthonormalize_();
@@ -1728,7 +1747,7 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
             S(a,b) = v;
             S(b,a) = v;
         }
-    if (!use_ba) {
+    if (!use_ba && !schmidt_acc_bias_hold_) {
         // CARMA3's held bias: in S, not in the cross-covariance or the gain.
         for (int k = 0; k < 3; ++k)
             for (int i = 0; i < NX; ++i) ht[i + NX * k] += p[i + NX * (OFF_BA + k)];
@@ -1761,7 +1780,7 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
         for (int b = 0; b < 3; ++b)
             S(a,b) += Hphi(a,0) * PHt(OFF_PHI, b) + Hphi(a,1) * PHt(OFF_PHI + 1, b) + Hphi(a,2) * PHt(OFF_PHI + 2, b);
     const bool freeze = !acc_bias_updates_enabled_;
-    if (freeze) freeze_acc_bias_rows_(PHt);
+    if (freeze && !schmidt_acc_bias_hold_) freeze_acc_bias_rows_(PHt);
     correct3_(r, S, PHt, Rmag_.norm(), freeze, last_mag_diag_);
 }
 

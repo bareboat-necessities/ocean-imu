@@ -15,6 +15,7 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/kalman_tfg \
 	$(REPO_ROOT)/tests/kalman_tfg_carma \
 	$(REPO_ROOT)/tests/kalman_tfg_shared_modes \
+	$(REPO_ROOT)/tests/live_bias_consistency \
 	$(REPO_ROOT)/tests/nlo \
 	$(REPO_ROOT)/tests/pii_observer \
 	$(REPO_ROOT)/tests/spectrum \

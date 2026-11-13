@@ -5,6 +5,8 @@
 */
 
 #include <algorithm>
+#include <array>
+#include "kalman_common/GyroInterval.h"
 #include <cmath>
 #include <limits>
 #include <type_traits>
@@ -34,6 +36,10 @@ public:
     };
 
     struct Config {
+        // Mahony combines gyro propagation with current-sample feedback. Keep
+        // its qualified endpoint rule; centered sampling is an explicit option
+        // until that complete feedback path passes the heave regressions.
+        ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
         // Shared core defaults are also used by the simulation adapter.
         CoreConfig core{};
 
@@ -95,6 +101,8 @@ public:
 
     void configure(const Config& cfg) {
         cfg_ = sanitizeConfig_(cfg);
+        gyro_interval_.reset();
+        gyro_interval_.set_mode(cfg_.gyro_sample_mode);
 
         core_.configure(cfg_.core);
 
@@ -121,6 +129,7 @@ public:
                T d0 = T(0),
                T b0 = T(0))
     {
+        gyro_interval_.reset();
         mahony_ = Mahony_AHRS<T>{};
 
         mahony_twoKp_active_ = cfg_.mahony_twoKp;
@@ -162,6 +171,9 @@ public:
             return core_.displacement();
         }
 
+        if (!std::isfinite(gx_rad_s) || !std::isfinite(gy_rad_s) || !std::isfinite(gz_rad_s) ||
+            !std::isfinite(ax_mps2) || !std::isfinite(ay_mps2) || !std::isfinite(az_mps2)) return core_.displacement();
+        const auto interval = gyro_interval_.prepare(std::array<T,3>{gx_rad_s,gy_rad_s,gz_rad_s}, dt_s);
         adaptMahonyGains_(ax_mps2, ay_mps2, az_mps2, dt_s);
 
         T pitch_deg = T(0);
@@ -169,7 +181,7 @@ public:
         T yaw_deg   = T(0);
 
         mahony_AHRS_update(&mahony_,
-                           gx_rad_s, gy_rad_s, gz_rad_s,
+                           interval.rate[0], interval.rate[1], interval.rate[2],
                            ax_mps2, ay_mps2, az_mps2,
                            &pitch_deg, &roll_deg, &yaw_deg,
                            dt_s);
@@ -192,6 +204,9 @@ public:
             return core_.displacement();
         }
 
+        if (!std::isfinite(gx_rad_s) || !std::isfinite(gy_rad_s) || !std::isfinite(gz_rad_s) ||
+            !std::isfinite(ax_mps2) || !std::isfinite(ay_mps2) || !std::isfinite(az_mps2)) return core_.displacement();
+        const auto interval = gyro_interval_.prepare(std::array<T,3>{gx_rad_s,gy_rad_s,gz_rad_s}, dt_s);
         adaptMahonyGains_(ax_mps2, ay_mps2, az_mps2, dt_s);
 
         T pitch_deg = T(0);
@@ -199,7 +214,7 @@ public:
         T yaw_deg   = T(0);
 
         mahony_AHRS_update_mag(&mahony_,
-                               gx_rad_s, gy_rad_s, gz_rad_s,
+                               interval.rate[0], interval.rate[1], interval.rate[2],
                                ax_mps2, ay_mps2, az_mps2,
                                mx, my, mz,
                                &pitch_deg, &roll_deg, &yaw_deg,
@@ -522,6 +537,7 @@ private:
     }
 
 private:
+    ocean_imu::kalman::filter_detail::GyroInterval<std::array<T,3>> gyro_interval_;
     Config cfg_{};
 
     Core core_;

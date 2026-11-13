@@ -1,7 +1,7 @@
 {
   "AW_target_minus_prior_eigenvalue_range": [
-    0.0008455758215859532,
-    0.0013998093879384295
+    0.0008455759380012751,
+    0.0013998096211800624
   ],
   "all_time_magnetic_service_verified": false,
   "counts": {
@@ -76,45 +76,45 @@
     "actually_S_due_tested_predictions": {
       "even": {
         "absolute": {
-          "max": 2.0991496840865758e-05,
+          "max": 2.0991484027937305e-05,
           "sample": 40438
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.001630021175508416,
+          "max": 0.001630020523814717,
           "sample": 40438
         },
         "linked_point_bound": {
-          "max": 0.0015919626580097115,
+          "max": 0.0015919620219002843,
           "sample": 40438
         },
         "relative": {
-          "max": 0.0008993007742083997,
+          "max": 0.0008993004641522171,
           "sample": 40438
         },
         "two_term_bound": {
-          "max": 0.015503704593650008,
+          "max": 0.015503704649121413,
           "sample": 40138
         }
       },
       "odd": {
         "absolute": {
-          "max": 4.0547844645801906e-05,
+          "max": 4.054780797898666e-05,
           "sample": 40138
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.002579576472899799,
+          "max": 0.0025795756141747976,
           "sample": 40138
         },
         "linked_point_bound": {
-          "max": 0.002518081276995106,
+          "max": 0.0025180804447435855,
           "sample": 40138
         },
         "relative": {
-          "max": 0.0016318964965438404,
+          "max": 0.001631896053660824,
           "sample": 40138
         },
         "two_term_bound": {
-          "max": 0.013399896210416665,
+          "max": 0.013399884719375223,
           "sample": 40138
         }
       },
@@ -123,45 +123,45 @@
     "all_tested_predictions": {
       "even": {
         "absolute": {
-          "max": 2.0991496840865758e-05,
+          "max": 2.0991484027937305e-05,
           "sample": 40438
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.001630021175508416,
+          "max": 0.001630020523814717,
           "sample": 40438
         },
         "linked_point_bound": {
-          "max": 0.0015919626580097115,
+          "max": 0.0015919620219002843,
           "sample": 40438
         },
         "relative": {
-          "max": 0.0008993007742083997,
+          "max": 0.0008993004641522171,
           "sample": 40438
         },
         "two_term_bound": {
-          "max": 0.015503704593650008,
+          "max": 0.015503704649121413,
           "sample": 40138
         }
       },
       "odd": {
         "absolute": {
-          "max": 4.0547844645801906e-05,
+          "max": 4.054780797898666e-05,
           "sample": 40138
         },
         "linked_one_percent_cell_bound": {
-          "max": 0.002579576472899799,
+          "max": 0.0025795756141747976,
           "sample": 40138
         },
         "linked_point_bound": {
-          "max": 0.002518081276995106,
+          "max": 0.0025180804447435855,
           "sample": 40138
         },
         "relative": {
-          "max": 0.0016318964965438404,
+          "max": 0.001631896053660824,
           "sample": 40138
         },
         "two_term_bound": {
-          "max": 0.013399896210416665,
+          "max": 0.013399884719375223,
           "sample": 40138
         }
       },
@@ -170,17 +170,17 @@
   },
   "local_commutator_is_complete_scheduler_word_defect": false,
   "maximum_absolute_operation_residuals": {
-    "PHt": 4.160178672905912e-10,
+    "PHt": 3.801573274925252e-10,
     "aw_sync": 4.656612877414201e-10,
     "correction_input": 1.4210854715202004e-14,
-    "gain_solve": 1.0412429425621372e-09,
-    "innovation": 3.121931668736977e-08,
-    "joseph": 1.3246088739760076e-09,
-    "linked_even_identity": 1.1189305233229307e-17,
-    "linked_odd_identity": 5.827586677109586e-18,
+    "gain_solve": 1.0258221390391231e-09,
+    "innovation": 3.192273201335638e-08,
+    "joseph": 1.2596895124228347e-09,
+    "linked_even_identity": 1.1338383031946064e-17,
+    "linked_odd_identity": 6.4764139147063804e-18,
     "next_prediction_input": 0.0,
-    "prediction": 1.8467235900210266e-09,
-    "reset_congruence": 2.7732804388450744e-12,
+    "prediction": 1.8506247506655527e-09,
+    "reset_congruence": 2.7639500117890986e-12,
     "sample_output": 0.0
   },
   "qualification": "OU3_PLANAR_SERVICE_OPERATION_AUDIT_V1",
@@ -190,8 +190,8 @@
     48000
   ],
   "scheduler_phase_cell_forward_invariant": false,
-  "smallest_covariance_eigenvalue_observed": 1.6741008656555163e-08,
+  "smallest_covariance_eigenvalue_observed": 1.674100696726703e-08,
   "smallest_innovation_eigenvalue_observed": 0.040976330637931824,
-  "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9",
+  "stream_sha256": "123ca8a3f96649c56b8606f5785ccccd18fe05bb7dcc95c58b192c640c308445",
   "theorem_closed": false
 }

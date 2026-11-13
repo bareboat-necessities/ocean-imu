@@ -1,0 +1,16 @@
+{
+  "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "binary_sha256": "170717d527ef8859d8b5f80443d0dc53bb79c1919d0e929f09444b6aa7763e50",
+  "stage": "production",
+  "runs": 48,
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006
+  ],
+  "paired": true,
+  "commands": "tools/live_bias_consistency.py --stage production --jobs 4"
+}

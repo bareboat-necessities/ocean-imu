@@ -10,15 +10,15 @@
   "finite_actual_P_physical_arc_coordinates": {
     "central_physical_chart_gauge_amplitude": {
       "sample": 40001,
-      "value": 16.631625411396925
+      "value": 16.631625467270847
     },
     "central_physical_chart_transverse_curvature": {
       "sample": 47992,
-      "value": 0.18490992200711698
+      "value": 0.18490995631075777
     },
     "gauge_coordinate_derivative_lower": {
       "sample": 48000,
-      "value": 1476.0879831797863
+      "value": 1476.087987332298
     }
   },
   "initial_phase": {
@@ -27,7 +27,7 @@
     "S_period": 0.1363605111837387
   },
   "joint_cell_forward_invariant": false,
-  "maximum_sample_relative_center_defect": 0.0006178005591755742,
+  "maximum_sample_relative_center_defect": 0.0006171937857595893,
   "nonlinear_mean_covariance_cell_verified": false,
   "physical_arc_metric_amplitude_uniform_in_time": false,
   "qualification": "OU3_PLANAR_CONDITIONAL_MOVING_CENTER_V1",
@@ -37,7 +37,7 @@
     40000,
     48000
   ],
-  "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9",
+  "stream_sha256": "123ca8a3f96649c56b8606f5785ccccd18fe05bb7dcc95c58b192c640c308445",
   "structures_preserved": "all 21 covariance coordinates, inherited center, actual ordered prediction/correction/reset/AW events and joint S/AW chronology",
   "theorem_closed": false,
   "uniform_center_defect_bound_verified": false,
@@ -45,14 +45,14 @@
   "words": [
     {
       "AW_variances_over_initial": [
-        0.7847462701539772,
-        0.8515503338887107,
+        0.7847461993090065,
+        0.8515504794236235,
         0.7369687868021696
       ],
       "BA_y_variance_over_initial": 1.1351017930158174,
       "end_sample": 44000,
-      "fixed_initial_center_drift": 0.5378220661462014,
-      "inherited_center_defect": 0.00036874188463660796,
+      "fixed_initial_center_drift": 0.5378239151723889,
+      "inherited_center_defect": 0.00036837298051601615,
       "operation_counts_so_far": {
         "AW": 190,
         "S": 147,
@@ -69,13 +69,13 @@
     {
       "AW_variances_over_initial": [
         1.029340586346984,
-        1.0069851500919074,
+        1.006985151781846,
         1.0376261594867195
       ],
       "BA_y_variance_over_initial": 1.2691389992173385,
       "end_sample": 48000,
-      "fixed_initial_center_drift": 0.4473738005158542,
-      "inherited_center_defect": 0.0006158338089080871,
+      "fixed_initial_center_drift": 0.44737361566598977,
+      "inherited_center_defect": 0.0006150214806315635,
       "operation_counts_so_far": {
         "AW": 381,
         "S": 294,

@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "util/W3dSimCommon.h"
+#include "../../common/GyroReplayContract.h"
 #include "FullAdapters.h"
 #include "kalman_carma/Kalman3D_Wave_TFG_CARMA3.h"
 
@@ -43,6 +44,7 @@ public:
         cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
+        gyro_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
         wave_direction::VesselRaoEqualizer::Config direction_rao;

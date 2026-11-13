@@ -186,7 +186,7 @@ struct TruthSample {
     Eigen::Vector3d a_ned = Eigen::Vector3d::Zero();
     double roll = 0.0, pitch = 0.0, yaw = 0.0;   // rad, ZYX aerospace, body->NED
     Eigen::Matrix3d R_nb = Eigen::Matrix3d::Identity();
-    Eigen::Vector3d omega_b = Eigen::Vector3d::Zero();   // body rate, rad/s
+    Eigen::Vector3d omega_b = Eigen::Vector3d::Zero();   // INSTANTANEOUS body rate at t, rad/s; not delta-angle / dt
     Eigen::Vector3d f_b = Eigen::Vector3d::Zero();       // specific force, body
     Eigen::Vector3d extra_acc_bias_b = Eigen::Vector3d::Zero();
     Eigen::Vector3d extra_gyro_bias_b = Eigen::Vector3d::Zero();

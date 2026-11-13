@@ -144,6 +144,7 @@ public:
                     const Eigen::Vector3f& sigma_g,
                     const Eigen::Vector3f& sigma_m)
     {
+        this->resetFrontendGyroHistory();
         mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_,
@@ -159,6 +160,7 @@ public:
                         float gravity_magnitude)
     {
         gravity_mps2_ = gravity_magnitude;
+        this->resetFrontendGyroHistory();
         mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
         seastate::common::finalizeInitialization(
             mekf_,

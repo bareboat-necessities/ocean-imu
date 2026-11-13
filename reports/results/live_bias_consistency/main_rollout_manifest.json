@@ -1,0 +1,18 @@
+{
+  "binary_sha256": "1ea557db5f45cd4107c47c04bda210cd837e7555a014b2afcfb3c343add1c613",
+  "pairs": 18,
+  "filter_runs": 36,
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006
+  ],
+  "duration": 7200,
+  "paired": true,
+  "ordinary_learned_magnetic_reference": true,
+  "fixed_zero_hard_iron": true,
+  "command": "tools/main_gyro_rollout.py --jobs 2"
+}

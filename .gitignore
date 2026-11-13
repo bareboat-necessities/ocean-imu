@@ -116,7 +116,7 @@ reports/coverage/
 *.gcno
 *.gcov
 
-.sim-data/
+.sim-data
 
 # Experimental CARMA benchmark build and run outputs
 tests/kalman_carma/carma3_bench
@@ -162,3 +162,13 @@ tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe/build/
 # Dedicated TFG shared-mode replay plots moved into the manuscript.
 /doc/kalman_tfg_shared_modes/w3d_tfg_csm_*.pgf
 /doc/kalman_tfg_shared_modes/w3d_tfg_csm_*.svg
+
+# Regenerable live-bias consistency builds and full-rate diagnostic histories.
+tests/live_bias_consistency/live-bias-followup
+tests/live_bias_consistency/live-bias-baseline
+tests/live_bias_consistency/audit-sensors
+tests/live_bias_consistency/timing-test
+tests/live_bias_consistency/schmidt-test
+reports/results/live_bias_consistency/runs/
+
+tests/live_bias_consistency/main-gyro-rollout

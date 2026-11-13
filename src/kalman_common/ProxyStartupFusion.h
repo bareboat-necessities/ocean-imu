@@ -40,6 +40,7 @@
 
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/MagneticStartupCommon.h"
+#include "kalman_common/GyroInterval.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
@@ -107,6 +108,18 @@ struct ProxyStartupFusionConfig {
 
     float mag_delay_sec          = defaults::MAG_DELAY_SEC;
     float online_tune_warmup_sec = defaults::STARTUP_ONLINE_TUNE_WARMUP_SEC;
+
+    // Public live sensor path: timestamped rates. Preintegrated/interval
+    // callers explicitly select IntervalRate. A positive exposure period
+    // specifies sensor ODR independently of host delivery jitter.
+    ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode =
+        ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+    // Frontend timing is a separate observer/tuner change. Retain its
+    // validated endpoint rule; paired replay does not support promoting
+    // centered frontend forcing with the existing feedback/calibration.
+    ocean_imu::kalman::filter_detail::GyroSampleMode frontend_gyro_sample_mode =
+        ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
+    float gyro_sample_period_sec = 0.0f;
 
     // Magnetometer updates that must land after the filter goes live before
     // the accelerometer-bias gate opens.
@@ -258,7 +271,8 @@ public:
                 float tempC = 35.0f)
     {
         if (!begun_) return;
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
+        if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro_body_ned.allFinite() ||
+            !acc_body_ned.allFinite() || !std::isfinite(tempC)) return;
 
         t_ += dt;
 
@@ -272,6 +286,7 @@ public:
         if (stage_ != Stage::Live) {
             // Bootstrap: front end only, MEKF held.
             impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
+            impl_.mekf().prime_gyro_sample(gyro_body_ned, dt);
         } else {
             impl_.updateTime(dt, gyro_body_ned, acc_body_ned, tempC);
         }
@@ -592,6 +607,17 @@ protected:
                                        cfg_.sigma_band_max_hz);
 
         seed(impl_, cfg_);
+        if constexpr (requires { impl_.setGyroSampleMode(cfg_.gyro_sample_mode, cfg_.frontend_gyro_sample_mode); })
+            impl_.setGyroSampleMode(cfg_.gyro_sample_mode, cfg_.frontend_gyro_sample_mode);
+        else {
+            impl_.setFrontendGyroSampleMode(cfg_.frontend_gyro_sample_mode);
+            impl_.mekf().set_gyro_sample_mode(cfg_.gyro_sample_mode);
+        }
+        if constexpr (requires { impl_.setGyroSamplePeriod(cfg_.gyro_sample_period_sec); })
+            impl_.setGyroSamplePeriod(cfg_.gyro_sample_period_sec);
+        else impl_.mekf().set_gyro_sample_period(cfg_.gyro_sample_period_sec);
+        if constexpr (requires { cfg_.schmidt_acc_bias_hold; impl_.mekf().set_schmidt_acc_bias_hold(true); })
+            impl_.mekf().set_schmidt_acc_bias_hold(cfg_.schmidt_acc_bias_hold);
         last_impl_startup_stage_ = impl_.getStartupStage();
 
         impl_.setNominalRaccStd(cfg_.sigma_a);

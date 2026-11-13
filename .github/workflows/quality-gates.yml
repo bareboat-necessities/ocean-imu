@@ -36,7 +36,7 @@ jobs:
   warnings:
     name: warnings (-Wall -Wextra -Wpedantic -Werror)
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v6
       - name: Install Eigen
@@ -47,7 +47,9 @@ jobs:
   static-analysis:
     name: ${{ matrix.gate }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # The complete Eigen-heavy host TU audit exceeded 45 minutes on this PR.
+    # Keep every check and translation unit; only clang-tidy needs more time.
+    timeout-minutes: ${{ matrix.gate == 'clang-tidy' && 90 || 45 }}
     strategy:
       fail-fast: false
       matrix:

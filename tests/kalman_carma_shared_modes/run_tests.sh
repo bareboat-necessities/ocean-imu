@@ -38,7 +38,9 @@ PY
 # deployable variant CSM against CSM's own regression bars; a record above
 # its bar fails the run after all eight are scored.  The chart gallery and
 # the tracking charts are drawn from these replays.
-W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim
+W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim --regression
+# The actual default live path must meet the same eight unchanged bars.
+W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./kalman_carma_shared_modes-sim
 
 # Controlled geometry comparison with the same Evidence schedule and data.
 ./kalman_carma_shared_modes-bench --header --extended --level full \

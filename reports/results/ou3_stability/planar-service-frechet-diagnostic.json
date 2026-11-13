@@ -5,35 +5,35 @@
   "end_sample": 44000,
   "forward_invariant_cell_certified": false,
   "generated_mean_coefficient_variations_included": false,
-  "observed_active_AW_floor_gap_min": 0.0008455758215859532,
+  "observed_active_AW_floor_gap_min": 0.0008455759380012751,
   "parity_blocks": {
     "even": {
       "leading_singular_values": [
-        0.7426143368805092,
-        0.5979905927891069,
-        0.4815316122480813,
-        0.4617434540095977,
-        0.37181883439041896,
-        0.2871031285456226,
-        0.016189812625591986,
-        0.013036848342237124
+        0.7426142896214794,
+        0.5979905146480634,
+        0.48153151704456176,
+        0.46174345347952295,
+        0.37181880903763287,
+        0.28710314615663857,
+        0.016189821124054118,
+        0.013036854311705839
       ],
-      "relative_Frobenius_gain": 0.7426143368805092,
+      "relative_Frobenius_gain": 0.7426142896214794,
       "same_root_end_covariance_used": false,
       "symmetric_dimension": 78
     },
     "odd": {
       "leading_singular_values": [
-        0.8738212970667968,
-        0.8161382206004816,
-        0.805498293127492,
-        0.7622742895444832,
-        0.7523253695123177,
-        0.7425173801705798,
-        0.004872959517950433,
-        0.004554089100330136
+        0.8738212985428235,
+        0.8161381664157679,
+        0.805498299511563,
+        0.7622741871869261,
+        0.7523253242560775,
+        0.7425173906861623,
+        0.004872961606564264,
+        0.004554090772574555
       ],
-      "relative_Frobenius_gain": 0.8738212970667968,
+      "relative_Frobenius_gain": 0.8738212985428235,
       "same_root_end_covariance_used": false,
       "symmetric_dimension": 45
     }
@@ -54,6 +54,6 @@
   "root_sample": 40000,
   "rounding_certified": false,
   "scheduler_branch_coverage_certified": false,
-  "stream_sha256": "d1d511551e3ddeb25adcf9fa1c742533d3d9fed2710842f2dbc0be29471c8be9",
+  "stream_sha256": "123ca8a3f96649c56b8606f5785ccccd18fe05bb7dcc95c58b192c640c308445",
   "theorem_closed": false
 }

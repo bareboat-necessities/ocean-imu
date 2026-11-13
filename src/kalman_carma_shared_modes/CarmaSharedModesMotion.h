@@ -494,7 +494,9 @@ public:
         return static_cast<T>(static_cast<double>(vmodel_.kappa()) * vmodel_.base_zero_crossing_hz());
     }
     // The QMEKF's accelerometer update: the coupling estimator and the monitor.
+    void set_learning_enabled(bool enabled) { learning_enabled_ = enabled; }
     void observe(const Vector3& a_world) {
+        if (!learning_enabled_) return;
         monitor_.update(a_world, dt_, operating_frequency_hz());
         coupling_.observe(a_world, dt_, operating_frequency_hz());
     }
@@ -570,6 +572,7 @@ public:
     const MatB& block_QI() const noexcept { return disc_.QI(); }
 
 private:
+    bool learning_enabled_ = true;
     // P_ab += Re(S_ab) matrix_real + Im(S_ab) matrix_imag over the upper block triangle, mirrored
     // (matrix_real symmetric, matrix_imag antisymmetric: block (b, a) receives the transpose).
     template<class Mat>

@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman_common/GyroInterval.h"
 
 /*
   Copyright (c) 2025-2026 Mikhail Grushinskiy
@@ -102,6 +103,9 @@ class Kalman3D_Wave_OU_II {
         v2ref = B_world;    // keep µT magnitude
     }
 
+    void set_gyro_sample_mode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
+    void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
+    void prime_gyro_sample(const Vector3& rate, T dt) { gyro_interval_.prime(rate, dt); }
     void time_update(Vector3 const& gyr, T Ts);
 
     // Measurement updates (operate on extended state internally)
@@ -615,6 +619,7 @@ class Kalman3D_Wave_OU_II {
     Eigen::Matrix<T, NX, 1> xext; // [ δθ(3), (gyro bias 3 optional), v(3), p(3), a_w(3), (accel bias 3 optional) ]
     MatrixNX Pext;
 
+    ocean_imu::kalman::filter_detail::GyroInterval<Vector3> gyro_interval_;
     Vector3 last_gyr_bias_corrected{};  // last bias-corrected gyro in B'
 
     T sigma_bacc0_ = T(0.004);          // initial accel bias std
@@ -1601,6 +1606,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::initialize_from_tr
     Pext.diagonal().array() = p_0;
 
     // Reset cached angular kinematics used by lever-arm logic
+    gyro_interval_.reset();
     last_gyr_bias_corrected.setZero();
     prev_omega_b_.setZero();
     alpha_b_.setZero();
@@ -1611,6 +1617,9 @@ template<typename T, bool with_gyro_bias, bool with_accel_bias>
 void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     Vector3 const& gyr_body, T Ts)
 {
+    if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr_body.allFinite()) return;
+    const auto interval = gyro_interval_.prepare(gyr_body, Ts);
+    if (!interval.predict) return;
     project_gyro_bias_();
     last_dt_ = Ts;   // Remember last dt
 
@@ -1618,7 +1627,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     param_rw_predict_(Ts);
 
     // De-heel gyro into virtual frame B' using current wind_heel_rad_
-    const Vector3 gyr = deheel_vector_(gyr_body);   // ω^{B'}
+    const Vector3 gyr = deheel_vector_(interval.rate);   // ω^{B'}
 
     // Attitude propagation
     Vector3 gyro_bias;
@@ -1630,7 +1639,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     last_gyr_bias_corrected = gyr - gyro_bias;
 
     // IMU lever-arm: estimate angular acceleration α^{B'} (from bias-corrected ω^{B'})
-    const Vector3 omega_b = last_gyr_bias_corrected;
+    const Vector3 omega_b = deheel_vector_(gyr_body) - gyro_bias;
     if (have_prev_omega_ && Ts > T(0)) {
         const Vector3 alpha_raw = (omega_b - prev_omega_b_) / Ts;
         if (alpha_smooth_tau_ > T(0)) {
@@ -1689,9 +1698,10 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     if (!use_exact_att_bias_Qd_) {
         // fast path
         Q_AA = Qbase * Ts;
+        Q_AA.template topLeftCorner<3,3>() *= interval.noise_scale;
     } else {
         // Structured/closed-form path for [δθ, b_g] with constant ω over the step
-        const Matrix3 Qg  = Qbase.template topLeftCorner<3,3>();
+        const Matrix3 Qg  = Qbase.template topLeftCorner<3,3>() * interval.noise_scale;
         [[maybe_unused]] Matrix3 Qbg; Qbg.setZero();
         if constexpr (with_gyro_bias) {
             Qbg = Qbase.template bottomRightCorner<3,3>();
@@ -1919,7 +1929,7 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::measurement_update
     if constexpr (with_gyro_bias) {
         if (use_imu_lever_arm_) {
             const Vector3 r_imu_bprime = deheel_vector_(r_imu_wrt_cog_body_phys_);
-            const Vector3& w = last_gyr_bias_corrected; // ω = gyr - b_g
+            const Vector3& w = prev_omega_b_; // endpoint rate for lever-arm force
 
             // dω/db_g = -I
             // dα/db_g ≈ -(kα) I, with kα ~ 1/dt (or smoothed)

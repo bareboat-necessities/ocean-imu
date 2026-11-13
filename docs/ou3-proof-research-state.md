@@ -1,8 +1,96 @@
 # OU-III proof research state
 
-## Native secant source binding
+## Gyro-sampling runtime rollout
 
-The finite native diagnostic is bound to the current complete `src/` tree.
+Finite rollout selection: simultaneous frontend centering plus Schmidt holding
+exceeded the unchanged shared-mode replay attitude/bias bars. This invalidated
+the diagnostic assumption that integration accuracy alone preserves every RMS
+bar (class E validation/rollout failure). It is not an OU-III theorem
+counterexample. Separate core/frontend/holding experiments retain noiseless
+rotation/covariance facts and support the narrower core-only default. The
+frontend, held-bias policy and calibrated tuning remain native. No threshold
+is enlarged. The final gated profiles and full-build result are recorded in
+`reports/results/live_bias_consistency/validation.json`.
+
+A separate native-API compatibility attempt also failed (class E): changing
+raw CARMA holding defaults broke the historical dense-FD covariance fixture
+(error up to 1.335 versus 1e-6) and a sinusoid bound (0.10019 versus 0.1).
+Raw holding defaults are restored; the optional Schmidt policy retains its
+independent dense-Joseph audit. The restored CARMA suite passes 74/74.
+
+The broader 820-test source audit exposed two stale carried-history native records
+and the whole-source-tree fingerprint on the native secant diagnostic (class E).
+The invalidated hypothesis was completeness of the first provenance refresh, not
+a mathematical bound. The 240-s and 1200-s histories are genuinely replayed;
+all-time service/admission and theorem flags remain false. The complete native
+secant replay is repeated after freezing source, before rerunning the audit.
+A concurrent local build was killed in `bench_carma3_filters_ou.o` (class E
+resource failure); serial compilation without other compilers is the next check.
+The host warning gate additionally found three missing aggregate member initializers
+for `Window::{an,mn,on}` in the test driver (class E build failure). Explicit empty
+initializers preserve their existing zero-initialized `FiniteMean` semantics; the
+same strict compile flags pass locally. No shipping operation or theorem premise
+changes. The broad evidence fingerprint still requires a genuine full replay.
+The native default replay also exceeds four legacy yaw fixtures by 0.003--0.007
+degrees (class E numerical-contract mismatch); the measured increases are kept.
+The historical integrator and every original limit now run under `--regression`.
+A separate corrected-default fixture uses the existing ~0.5% margin rule; this
+is not a claim of improved yaw or latent-bias recovery. Both profiles pass all
+64 native record checks. The all-source publication test exposed three old
+source-text guard assertions; the unchanged conditioned-accelerometer route
+through the gyro helper is now checked, and all 30 article contract tests pass.
+Clang-tidy exceeded its 45-minute infrastructure budget; every TU/check is
+retained with a 90-minute budget. No shipping source or theorem premise changes
+in these fixture/test repairs.
+
+
+The live OU-II/OU-III/TFG and CARMA sample paths now default to measured-endpoint
+gyro integration. OU-III prediction uses the same effective interval rate in
+the mean, gyro-bias Jacobian and covariance kernel. The measurement-only
+frontend retains its endpoint rule, with optional centering isolated behind
+a separate configuration field. Bootstrap primes the live core;
+endpoint lever-arm force terms retain endpoint rates. Invalid IMU packets are
+rejected before the shared startup clock/history advances. This is an explicitly
+authorized runtime change, not a source-only reorganization.
+
+Structures preserved: OU/S state equations, covariance and gain chronology,
+parameter adaptation, magnetic-reference acquisition, BA activation/mean
+reversion/projection, scheduler and reset chronology. The prior instantaneous
+endpoint-as-interval forcing map is replaced. Previous raw gyro, previous
+interval and the sampling-mode/exposure configuration are persistent execution
+memory and must be carried through proof-word boundaries. Internal attitude
+resets retain physical sample history; a new acquisition clears it.
+
+Relaxations introduced: none in runtime. The finite rotation/replay diagnostics
+and the linearized white-noise covariance envelope do not qualify hardware
+phase delays, SLOW+FAST physical envelopes, regional capture or end-to-end
+stability. Prior source-bound native receipts are archived. The finite native/observer
+records are regenerated against the changed complete execution, with the
+cache and noise-map audit in `ou3-gyro-sampling-audit.md`. Classification E applies to stale
+source bindings, not to the mathematical theorem. No shipping counterexample
+was found. Existing algebraic identities for unchanged kernels remain
+available; lifting their physical execution qualifications to this sampling
+map is OPEN. Next falsifiable proof calculation: qualify the cache-augmented physical
+forcing against SF3--SF9 and the still-open construction/release and all-time
+magnetic-service obligations, without deleting inherited sample memory.
+
+The final replay publisher exposed a class E archive-fixture failure:
+`test_source_archive_provenance.py` copied estimator sources but omitted
+`tests/common/GyroReplayContract.h`. The fixture now copies the shared test
+headers, preserving the requirement to verify their recorded hashes in source
+archives. All six fresh replay shards and the companion study completed on
+81d16672; their publication failed at this fixture check, not a numerical gate.
+Because the conservative replay fingerprint includes tests, the repaired
+revision requires a new full replay before final publication. No source-bound
+proof receipt or mathematical result is promoted by this test repair.
+
+## Historical native secant source binding
+
+The following receipt describes its archived source revision; the runtime
+rollout above supersedes its current-tree binding. It does not certify the new
+sampling map.
+
+The finite native diagnostic was bound to that complete `src/` tree.
 The sample-path covariance kernels of the experimental TFG-CARMA cores were
 restructured to lower microcontroller processor load
 (`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`, with plain-array access in the

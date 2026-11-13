@@ -1,0 +1,96 @@
+{
+  "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "binary_sha256": "96d37bfa3b77c4ac9ca6d1e9f4a12122b838e3dc25e2968c7d0de9025cb24e6f",
+  "runs": 12,
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006
+  ],
+  "duration": 7200,
+  "ordinary_learned_reference": true,
+  "fixed_correct_hard_iron": true,
+  "paired_windows": 60,
+  "paired_sensor_hashes_equal": true,
+  "default_source": "production_manifest.json",
+  "summary": [
+    {
+      "filter": "qmekf",
+      "legacy": {
+        "n": 6,
+        "mean": 72.80064317166666,
+        "low": 50.71975293554878,
+        "high": 94.88153340778454
+      },
+      "default": {
+        "n": 6,
+        "mean": 68.51737442833333,
+        "low": 44.94958072281309,
+        "high": 92.08516813385356
+      },
+      "paired_change": {
+        "n": 6,
+        "mean": -4.283268743333333,
+        "low": -13.676970855185793,
+        "high": 5.110433368519126
+      },
+      "learning_legacy": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "learning_default": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "filter": "tfg",
+      "legacy": {
+        "n": 6,
+        "mean": 55.22216229899999,
+        "low": 18.2143986082108,
+        "high": 92.22992598978918
+      },
+      "default": {
+        "n": 6,
+        "mean": 56.88007842166667,
+        "low": 15.549638367754646,
+        "high": 98.21051847557868
+      },
+      "paired_change": {
+        "n": 6,
+        "mean": 1.657916122666668,
+        "low": -9.956219775209897,
+        "high": 13.272052020543233
+      },
+      "learning_legacy": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "learning_default": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "baseline_binary_verified": true
+}

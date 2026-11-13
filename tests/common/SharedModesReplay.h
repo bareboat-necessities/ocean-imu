@@ -7,12 +7,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include "../kalman_carma/carma3/SimAdapters.h"
 #include "kalman_carma_shared_modes/SharedModesEstimator.h"
 namespace ocean_imu::sim::shared_modes {
 using namespace carma3_sim;
 namespace csm = ocean_imu::carma_shared_modes;
+inline bool legacy_sampling_protocol = false;
 // process_wave_file_for_tracker<> constructs the adapter from four arguments.
 template<class Core, int Variant>   // 0 CSM, 1 CSM_NOCONF, 2 CSM_OFF
 class CsmAdapter final : public IW3dFusionAdapter {
@@ -30,6 +32,24 @@ public:
         // Controlled sensor-path ablations for the article's machinery study.
         // Unset variables retain the deployed wrapper configuration.
         auto& filter = impl_.fusion().raw();
+        // Explicit sensor contract for diagnostic replays. Keep the original
+        // interval-rate regression protocol and its thresholds unchanged.
+        const char* gyro_input = std::getenv("W3D_CSM_GYRO_INPUT");
+        const std::string gyro_mode = gyro_input ? gyro_input : (legacy_sampling_protocol ? "interval" : "defaults");
+        using Mode = ocean_imu::kalman::filter_detail::GyroSampleMode;
+        if (gyro_mode == "interval") filter.setGyroSampleMode(Mode::IntervalRate, Mode::IntervalRate);
+        using Config = typename std::remove_reference_t<decltype(impl_.fusion())>::Config;
+        const bool schmidt = gyro_mode == "defaults" ? Config{}.schmidt_acc_bias_hold
+            : gyro_mode == "both_schmidt" || gyro_mode == "core_schmidt";
+        if (gyro_mode != "defaults") filter.mekf().set_schmidt_acc_bias_hold(schmidt);
+        if (gyro_mode == "instantaneous" || gyro_mode == "core" || gyro_mode == "frontend" || schmidt) {
+            filter.setGyroSampleMode(gyro_mode == "frontend" ? Mode::IntervalRate : Mode::Instantaneous,
+                                    gyro_mode == "core" || gyro_mode == "core_schmidt" ? Mode::IntervalRate : Mode::Instantaneous);
+            filter.mekf().set_gyro_sample_period(1.0f / 200.0f);
+        } else if (gyro_mode != "interval" && gyro_mode != "defaults") {
+            throw std::invalid_argument("W3D_CSM_GYRO_INPUT must be interval, instantaneous, core, frontend, both_schmidt, core_schmidt or defaults");
+        }
+        std::cout << "CSM_GYRO_INPUT convention=" << gyro_mode << " schmidt_hold=" << schmidt << '\n';
         if (const char* hz = std::getenv("W3D_CSM_GUARD_HZ"))
             filter.setAccelVibrationGuard(std::stof(hz));
         if (const char* gain = std::getenv("W3D_CSM_GUARD_RACC_GAIN"))
@@ -119,8 +139,11 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const c
         // any other replay is a diagnostic, not a regression.
         const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
                                    && !std::getenv("W3D_INIT_SEED");
+        legacy_sampling_protocol = require_gates;
         const bool gated = variant == "CSM" && add_noise && with_mag && default_seeds &&
-                           !std::getenv("W3D_CARMA3_EXCITATION");
+                           !std::getenv("W3D_CARMA3_EXCITATION") && !std::getenv("W3D_CSM_GYRO_INPUT");
+        if (require_gates && std::getenv("W3D_CSM_GYRO_INPUT"))
+            throw std::invalid_argument("--regression forbids W3D_CSM_GYRO_INPUT");
         if (require_gates && !gated)
             throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds and excitation");
         if (require_gates) {
@@ -130,7 +153,7 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const c
                 if (std::getenv(key)) throw std::invalid_argument(std::string("--regression forbids ") + key);
             if (window != 900.0f) throw std::invalid_argument("--regression requires a 900 s score window");
         }
-        std::cout << "REGRESSION_PROTOCOL: GATED=" << (gated ? 1 : 0) << " FAMILY=" << family_prefix << '\n';
+        std::cout << "REGRESSION_PROTOCOL: GATED=" << (gated ? 1 : 0) << " FAMILY=" << family_prefix << " SAMPLING=" << (legacy_sampling_protocol ? "legacy_interval" : "production_defaults") << '\n';
         std::size_t scored = 0;
         const W3dFailureLimits& bars = gated ? regression_bars : kUngatedBars;
         for (const auto& f : files) {

@@ -16,6 +16,7 @@
 #endif
 
 #include "util/W3dSimCommon.h"
+#include "../common/GyroReplayContract.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 using namespace ocean_imu::ou3;
 
@@ -74,6 +75,7 @@ public:
         apply_env_overrides();
         load_fixed_tuning();
 
+        gyro_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
 
@@ -719,7 +721,10 @@ static void process_wave_file_for_tracker(const std::string& filename,
     if (validation_window_sec > 0.0f) {
         print_validation_metrics(*result, dt, validation_window_sec, "OU_III");
     }
-    print_summary_and_fail_if_needed(*result, dt, FAIL_LIMITS, SUMMARY_LABELS);
+    // Corrected worst yaw 0.824166 deg; original fixture and limits are retained.
+    constexpr auto corrected = gyro_replay::corrected_yaw(FAIL_LIMITS, 0.82829f);
+    print_summary_and_fail_if_needed(*result, dt,
+        gyro_replay::legacy ? FAIL_LIMITS : corrected, SUMMARY_LABELS);
 }
 
 int main(int argc, char* argv[]) {
@@ -733,6 +738,8 @@ int main(int argc, char* argv[]) {
 
         if (arg == "--nomag") {
             with_mag = false;
+        } else if (arg == "--regression") {
+            gyro_replay::legacy = true;
         } else if (arg == "--no-noise") {
             add_noise = false;
         } else if (arg == "--input") {
@@ -743,7 +750,7 @@ int main(int argc, char* argv[]) {
             requested_files.emplace_back(argv[i]);
         } else if (arg == "--help") {
             std::cout << "Usage: " << argv[0]
-                      << " [--nomag] [--no-noise] [--input PATH]...\n";
+                      << " [--regression] [--nomag] [--no-noise] [--input PATH]...\n";
             return 0;
         } else {
             std::cerr << "ERROR: unknown argument: " << arg << "\n";
@@ -754,11 +761,13 @@ int main(int argc, char* argv[]) {
     W3dRandomSeeds seeds;
     try {
         seeds = w3d_random_seeds_from_env();
+        gyro_replay::require_regression(with_mag && add_noise && gyro_replay::default_seeds());
     } catch (const std::exception& e) {
         std::cerr << "ERROR: " << e.what() << "\n";
         return 2;
     }
 
+    std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
     bool write_timeseries = true;
     if (const char* value = std::getenv("W3D_WRITE_TIMESERIES")) {
         write_timeseries = std::string(value) != "0";

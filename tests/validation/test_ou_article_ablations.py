@@ -471,7 +471,8 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         # One conditioning point, feeding every consumer.
         self.assertIn("const Eigen::Vector3f acc_in = conditionAccel_(acc, dt);", layer)
         self.assertIn("return accel_guard_.step(acc, dt);", filt)
-        self.assertIn("vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);", filt)
+        self.assertIn("frontend_gyro_interval_.prepare(gyro, dt)", filt)
+        self.assertIn("vertical_accel_comp_.update(dt, interval.rate, acc_in, gravity_mps2_);", filt)
         self.assertIn("mekf_->measurement_update_acc_only(acc_in, tempC);", filt)
         self.assertNotIn("measurement_update_acc_only(acc,", filt)
 
@@ -488,10 +489,10 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
         for family, key, mekf, gravity in (
             ("OU-II", "ou2",
              "mekf_->measurement_update_acc_only(acc_in, tempC);",
-             "vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);"),
+             "vertical_accel_comp_.update(dt, interval.rate, acc_in, gravity_mps2_);"),
             ("TFG", "tfg",
              "mekf_.measurement_update_acc_only(acc_in, tempC);",
-             "vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);"),
+             "vertical_complementary_.update(dt, interval.rate, acc_in, cfg_.gravity_magnitude);"),
         ):
             with self.subTest(family=family):
                 filt = wrapper_source(key)
@@ -512,6 +513,7 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
                 # One conditioning point ahead of the whole attitude loop.
                 self.assertIn("conditionAccel_(acc, dt);", filt)
                 self.assertIn("accel_guard_.step(acc, dt);", filt)
+                self.assertIn("frontend_gyro_interval_.prepare(gyro, dt)", filt)
                 self.assertIn(gravity, filt)
                 self.assertIn(mekf, filt)
                 self.assertNotIn("measurement_update_acc_only(acc,", filt)

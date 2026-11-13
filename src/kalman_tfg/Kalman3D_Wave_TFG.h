@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman_common/GyroInterval.h"
 
 /*
     Copyright (c) 2025-2026  Mikhail Grushinskiy
@@ -381,7 +382,7 @@ class Kalman3D_Wave_TFG {
         Phi.template block<12,3>(OFF_V, OFF_BG) = -D * bg0_to_body;
     }
 
-    void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd) const {
+    void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd, T gyro_noise_scale = T(1)) const {
         Qd.setZero();
         if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
 
@@ -427,7 +428,7 @@ class Kalman3D_Wave_TFG {
                 }
                 Lg.template block<3,3>(OFF_V + 3*i, 0) = M;
             }
-            q_scratch_nx3_.noalias() = Lg * Q_gyro_;
+            q_scratch_nx3_.noalias() = Lg * (Q_gyro_ * gyro_noise_scale);
             q_scratch_nn_.noalias() = q_scratch_nx3_ * Lg.transpose();
             Qd.noalias() += wq * q_scratch_nn_;
 
@@ -492,13 +493,19 @@ class Kalman3D_Wave_TFG {
         return xi;
     }
 
+    void set_gyro_sample_mode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
+    void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
+    void prime_gyro_sample(const Vector3& rate, T dt) { gyro_interval_.prime(rate, dt); }
+
     void time_update(const Vector3& gyro_meas, T Ts) {
-        if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
+        if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyro_meas.allFinite()) return;
+        const auto interval = gyro_interval_.prepare(gyro_meas, Ts);
+        if (!interval.predict) return;
         MatrixNX& Phi = scratch_a_;
         MatrixNX& Qd  = scratch_b_;
-        build_transition(Ts, gyro_meas, Phi);
-        build_process_noise(Ts, gyro_meas, Qd);
-        propagate_mean(gyro_meas, Ts);
+        build_transition(Ts, interval.rate, Phi);
+        build_process_noise(Ts, interval.rate, Qd, interval.noise_scale);
+        propagate_mean(interval.rate, Ts);
         P_ = (Phi * P_ * Phi.transpose()).eval();
         P_ += Qd;
         apply_pending_aw_covariance_inflation_();
@@ -956,6 +963,7 @@ class Kalman3D_Wave_TFG {
     Matrix3 Sigma_aw_{Matrix3::Identity()};
     Matrix3 aw_cov_floor_target_{Matrix3::Identity()};
     bool aw_cov_floor_pending_{false};
+    ocean_imu::kalman::filter_detail::GyroInterval<Vector3> gyro_interval_;
     Matrix3 Q_gyro_{Matrix3::Identity() * T(2.5e-5)};
     Matrix3 Q_bg_{Matrix3::Identity() * T(1e-10)};
     Matrix3 Q_ba_{Matrix3::Identity() * T(2.5e-7)};
