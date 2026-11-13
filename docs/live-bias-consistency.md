@@ -447,8 +447,10 @@ are part of the implementation. Seed tables, binary hashes and bounded plot
 vertices are under `reports/results/live_bias_consistency/`. Existing baseline
 thresholds are preserved. The report separates estimated errors, conditional
 covariance, actual applied magnetic corrections and actual native bias gates.
-The [validation record](../reports/results/live_bias_consistency/validation.json)
-records check commands, environment versions and build outcomes.
+The [study receipt](../reports/results/live_bias_consistency/validation.json)
+records environment versions and experiment source bindings. The
+[validation receipt](live-bias-validation-final.md) records the completed serial
+`make all` and subsequent CI/publication checks.
 
 The selected default code changes improve integration consistency and reject malformed
 samples consistently across the shared startup/frontend boundary. Conservative
@@ -495,5 +497,5 @@ shared-mode ablation also exceeds existing yaw/bias bars. The core-only
 correction remains the default; frontend and Schmidt changes remain explicit
 diagnostics.
 
-Detailed [validation status](live-bias-validation-final.md) records the resumed
-local checks, source-archive repair and final CI publication requirements.
+Detailed [validation results](live-bias-validation-final.md) record the complete
+serial run, source-archive repair and final evidence publication.
