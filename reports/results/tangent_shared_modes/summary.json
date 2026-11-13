@@ -1467,6 +1467,8 @@
     }
   ],
   "failures": 0,
+  "failed_processes": 0,
+  "incomplete_experiments": 0,
   "structural_observability": {
     "stationary_constant_bias_rank": 8,
     "dimension": 9,

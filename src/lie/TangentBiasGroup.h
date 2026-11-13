@@ -10,29 +10,33 @@
 
 namespace ocean_imu::lie {
 template<typename T, int NW = 6, int VCOL = 1>
-struct TangentBiasGroup : TwoFrameGroup<T,NW,2> {
+struct TangentBiasGroup {
     using Base = TwoFrameGroup<T,NW,2>;
-    using typename Base::Vector3;
-    using typename Base::Matrix3;
-    using typename Base::Tangent;
-    using typename Base::AdjointMat;
-    using Base::R; using Base::X; using Base::B;
-    using Base::OFF_PHI; using Base::OFF_BG; using Base::OFF_BA;
-    using Base::world_offset;
-    using Base::Base;
+    using Vector3 = typename Base::Vector3;
+    using Matrix3 = typename Base::Matrix3;
+    using Tangent = typename Base::Tangent;
+    using AdjointMat = typename Base::AdjointMat;
+    static constexpr int NX = Base::NX;
+    static constexpr int OFF_PHI = Base::OFF_PHI;
+    static constexpr int OFF_BG = Base::OFF_BG;
+    static constexpr int OFF_BA = Base::OFF_BA;
+    static constexpr int world_offset(int i) { return Base::world_offset(i); }
+    // Reuse the physical storage and two-frame algebra without a subtype
+    // conversion: the tangent group has a different inverse and adjoint.
+    Base state;
     TangentBiasGroup() = default;
-    explicit TangentBiasGroup(const Base& x) : Base(x) {}
+    explicit TangentBiasGroup(const Base& x) : state(x) {}
     static TangentBiasGroup Identity() { return TangentBiasGroup(); }
 
     TangentBiasGroup compose(const TangentBiasGroup& y) const {
-        TangentBiasGroup z(Base::compose(y));
-        z.B.col(1) -= y.R.transpose() * Vector3(y.X.col(VCOL)).cross(Vector3(B.col(0)));
+        TangentBiasGroup z(state.compose(y.state));
+        z.state.B.col(1) -= y.state.R.transpose() * Vector3(y.state.X.col(VCOL)).cross(Vector3(state.B.col(0)));
         return z;
     }
     TangentBiasGroup operator*(const TangentBiasGroup& y) const { return compose(y); }
     TangentBiasGroup inverse() const {
-        TangentBiasGroup z(Base::inverse());
-        z.B.col(1) -= Vector3(X.col(VCOL)).cross(Vector3(R * B.col(0)));
+        TangentBiasGroup z(state.inverse());
+        z.state.B.col(1) -= Vector3(state.X.col(VCOL)).cross(Vector3(state.R * state.B.col(0)));
         return z;
     }
     static TangentBiasGroup Exp_G(const Tangent& x) {
@@ -42,29 +46,29 @@ struct TangentBiasGroup : TwoFrameGroup<T,NW,2> {
         const Vector3 bg = x.template segment<3>(OFF_BG);
         const Vector3 jbg = left_jacobian<T>(p) * bg;
         const Matrix3 Ql = right_jacobian_cross<T>(Vector3(-p),Vector3(-v));
-        z.B.col(1) += z.R.transpose() * (Ql * bg - Vector3(z.X.col(VCOL)).cross(jbg));
+        z.state.B.col(1) += z.state.R.transpose() * (Ql * bg - Vector3(z.state.X.col(VCOL)).cross(jbg));
         return z;
     }
     static Tangent Log_G(const TangentBiasGroup& z) {
-        Tangent x = Base::Log_G(z);
+        Tangent x = Base::Log_G(z.state);
         const Vector3 p = x.template segment<3>(OFF_PHI);
         const Vector3 v = x.template segment<3>(world_offset(VCOL));
         const Vector3 bg = x.template segment<3>(OFF_BG);
         const Matrix3 Ql = right_jacobian_cross<T>(Vector3(-p),Vector3(-v));
         x.template segment<3>(OFF_BA) = inv_left_jacobian<T>(p) *
-            (z.R * z.B.col(1) + Vector3(z.X.col(VCOL)).cross(Vector3(z.R*z.B.col(0))) - Ql*bg);
+            (z.state.R * z.state.B.col(1) + Vector3(z.state.X.col(VCOL)).cross(Vector3(z.state.R*z.state.B.col(0))) - Ql*bg);
         return x;
     }
     TangentBiasGroup retract(const Tangent& x) const { return Exp_G(x).compose(*this); }
     Tangent local(const TangentBiasGroup& ref) const { return Log_G(compose(ref.inverse())); }
     AdjointMat Adjoint() const {
-        AdjointMat A=Base::Adjoint();
-        const Vector3 g=R*B.col(0);
-        const Vector3 a=R*B.col(1)+Vector3(X.col(VCOL)).cross(g);
-        const Matrix3 Vs=skew<T>(Vector3(X.col(VCOL))),Gs=skew<T>(g);
-        A.template block<3,3>(OFF_BA,OFF_PHI)=(skew<T>(a)+Gs*Vs)*R;
-        A.template block<3,3>(OFF_BA,OFF_BG)=Vs*R;
-        A.template block<3,3>(OFF_BA,world_offset(VCOL))=Gs*R;
+        AdjointMat A=state.Adjoint();
+        const Vector3 g=state.R*state.B.col(0);
+        const Vector3 a=state.R*state.B.col(1)+Vector3(state.X.col(VCOL)).cross(g);
+        const Matrix3 Vs=skew<T>(Vector3(state.X.col(VCOL))),Gs=skew<T>(g);
+        A.template block<3,3>(OFF_BA,OFF_PHI)=(skew<T>(a)+Gs*Vs)*state.R;
+        A.template block<3,3>(OFF_BA,OFF_BG)=Vs*state.R;
+        A.template block<3,3>(OFF_BA,world_offset(VCOL))=Gs*state.R;
         return A;
     }
 

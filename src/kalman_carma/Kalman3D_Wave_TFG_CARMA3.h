@@ -1463,7 +1463,7 @@ void TFGC3_CLS::build_reset_jacobian(const Tangent& a, MatrixNX& J) const {
         J.template block<3,3>(OFF_BA,OFF_BG)=lie::right_jacobian_cross<T>(phi,Vector3(d.template segment<3>(OFF_V)));
         J.template block<3,3>(OFF_BA,OFF_V)=lie::right_jacobian_cross<T>(phi,Vector3(d.template segment<3>(OFF_BG)));
         J.template block<3,3>(OFF_BA,0)+=TG::reset_extra(d);
-        const Matrix3 Sv=lie::skew<T>(v),Sn=lie::skew<T>(Vector3(next.X.col(IV)));
+        const Matrix3 Sv=lie::skew<T>(v),Sn=lie::skew<T>(Vector3(next.state.X.col(IV)));
         // Right-multiply S_old, then left-multiply S_new^{-1}.
         for(int o=0;o<NX;o+=3) J.template block<3,3>(o,OFF_BG)+=J.template block<3,3>(o,OFF_BA)*Sv;
         for(int c=0;c<NX;c+=3) J.template block<3,3>(OFF_BA,c)-=Sn*J.template block<3,3>(OFF_BG,c);
@@ -1503,7 +1503,7 @@ void TFGC3_CLS::transport_(const Tangent& a) {
     TG::bias_row_congruence(P_,Z,Matrix3(lie::skew<T>(v)),Z);
     transport_two_frame_(d);
     TG::bias_row_congruence(P_,Cp,Cg,Cv);
-    TG::bias_row_congruence(P_,Z,Matrix3(-lie::skew<T>(Vector3(next.X.col(IV)))),Z);
+    TG::bias_row_congruence(P_,Z,Matrix3(-lie::skew<T>(Vector3(next.state.X.col(IV)))),Z);
 }
 
 TFGC3_TPL
@@ -1584,7 +1584,7 @@ void TFGC3_CLS::inject(const Tangent& a) {
         using TG=lie::TangentBiasGroup<T,NC,IV>;
         const Tangent d=TG::from_two_frame(a,Vector3(X_.X.col(IV)));
         const TG next=TG::Exp_G(Tangent(-d)).compose(TG(X_));
-        X_.R=next.R; X_.X=next.X; X_.B=next.B;
+        X_.R=next.state.R; X_.X=next.state.X; X_.B=next.state.B;
         reorthonormalize_();
         return;
     }

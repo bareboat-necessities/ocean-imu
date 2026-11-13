@@ -39,12 +39,12 @@ position measurements. The existing minimal shared-mode CARMA(4,1) prior
 models wave-relative motion. We implement a 27-state tangent-bias hybrid on
 $T\mathrm{SE}(3)$ extended by Euclidean wave coordinates, preserving the
 current process model, startup, measured-endpoint gyro integration,
-adaptation and covariance writes. The full tangent group of
+adaptation and covariance updates. The full tangent group of
 $\mathrm{SE}_2(3)$ instead introduces an additional virtual bias; its exact
 standard-INS navigation-error result is not asserted for this CARMA hybrid.
 A shared directional bias-gain veto tests a conditional excitation monitor
 with full Joseph covariance updates. Matched sensor histories separate
-geometry, bias weighting, startup and live recovery. \StudyHeadline
+geometry, bias weighting, startup and live recovery. \StudyHeadline{}
 Nonlinear sensor symmetries and nuisance-eliminated window information
 explain why magnetic aiding and fixed-heading roll/pitch excitation can
 help, while low-frequency motion and reference uncertainty retain weak
@@ -496,6 +496,8 @@ horizontal wave-position error change, heave-error slope, all six bias
 components, first sustained sampled convergence, innovations, numerical failures,
 CPU update cost and object storage. Plots use the established shared vector
 export/decimation path and are never scoring input.
+Signed heave plots are positive upward; vertical error slopes in the score
+CSV retain the stated NED down convention.
 
 NEES uses common errors
 $[\log(\hat RR\tr),\hat p-p,\hat v-v,\hat b_g-b_g,\hat b_a-b_a]$ and the

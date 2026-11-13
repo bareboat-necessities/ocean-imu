@@ -19,6 +19,7 @@ int main() try {
     check(legacy.mode==ocean_imu::carma_shared_modes::CouplingMode::Off && !legacy.bias_learning.enabled,"legacy aggregate configuration");
     std::mt19937 gen(48031);std::normal_distribution<double> normal;
     auto random=[&](double s){G::Tangent x;for(int i=0;i<27;++i)x(i)=s*normal(gen);return x;};
+    static_assert(sizeof(G)==sizeof(G::Base),"geometry adds no physical storage");
     double worst_reset=0,worst_group=0;
     for(int trial=0;trial<25;++trial) {
         const auto a=random(.35),b=random(.2),c=random(.3);
@@ -29,20 +30,20 @@ int main() try {
         check(G::Log_G(A*G::Exp_G(G::Tangent(1e-5*b))*A.inverse()).isApprox(A.Adjoint()*(1e-5*b),1e-5),"adjoint");
         check(G::Exp_G(G::Tangent(.4*a)).compose(G::Exp_G(G::Tangent(.6*a))).local(A).norm()<1e-10,"one parameter subgroup");
         F f(V::Constant(.02),V::Constant(.0002),V::Constant(.8));
-        f.state().R=B.R;f.state().X=B.X;f.state().B=B.B;
+        f.state().R=B.state.R;f.state().X=B.state.X;f.state().B=B.state.B;
         f.set_acc_bias_updates_enabled(true);
         M J;f.build_reset_jacobian(a,J);
-        const auto at=G::from_two_frame(a,V(B.X.col(1)));
+        const auto at=G::from_two_frame(a,V(B.state.X.col(1)));
         G next=G::Exp_G(G::Tangent(-at))*B;
         const double h=2e-6;
         for(int j=0;j<27;++j) {
             G::Tangent d=G::Tangent::Zero();d(j)=h;
-            auto sd=G::from_two_frame(d,V(B.X.col(1)));
+            auto sd=G::from_two_frame(d,V(B.state.X.col(1)));
             // Transport residual tangent coordinates through Exp(-at)Exp(at+sd).
             auto residual=[&](const G::Tangent& e) {
                 const G z=G::Exp_G(G::Tangent(-at))*G::Exp_G(e);
                 auto y=G::Log_G(z);
-                y.template segment<3>(G::OFF_BA)-=V(next.X.col(1)).cross(V(y.template segment<3>(G::OFF_BG)));
+                y.template segment<3>(G::OFF_BA)-=V(next.state.X.col(1)).cross(V(y.template segment<3>(G::OFF_BG)));
                 return y;
             };
             const G::Tangent num=(residual(G::Tangent(at+sd))-residual(G::Tangent(at-sd)))/(2*h);
@@ -69,7 +70,9 @@ int main() try {
     Gate quiet,rock;Config cfg;cfg.enabled=true;quiet.configure(cfg);rock.configure(cfg);
     for(int k=0;k<3000;++k) {
         const double t=k*.02;
-        Eigen::Matrix3d R=(Eigen::AngleAxisd(.3*std::sin(.4*t),V::UnitX())*Eigen::AngleAxisd(.2*std::sin(.7*t),V::UnitY())).toRotationMatrix();
+        // Body-to-world ZYX attitude: Ry(pitch) Rx(roll) has zero heading.
+        Eigen::Matrix3d R=(Eigen::AngleAxisd(.2*std::sin(.7*t),V::UnitY())*Eigen::AngleAxisd(.3*std::sin(.4*t),V::UnitX())).toRotationMatrix();
+        check(std::abs(R(1,0))<1e-14 && R(0,0)>0,"rocking heading remains zero");
         quiet.observe(Eigen::Matrix3d::Identity(),V(20,0,40),V::Zero(),.02,9.80665);
         rock.observe(R,V(20,0,40),V::Zero(),.02,9.80665);
     }

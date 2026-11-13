@@ -1,4 +1,5 @@
 .PHONY: all build test clean ensure-sim-data
+.DEFAULT_GOAL := all
 CC = g++
 TEST_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 REPO_ROOT := $(abspath $(TEST_DIR)/../..)

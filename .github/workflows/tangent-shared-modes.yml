@@ -38,7 +38,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends g++ libeigen3-dev
       - name: Build without concurrent template-instantiation memory spikes
         run: make -C tests/kalman_tangent_shared_modes build
+      - name: Preserve failed experiment receipts and module default validation
+        run: python3 -m unittest discover -s tests/validation -p test_tangent_study_failures.py -v
       - name: Group, reset, covariance and seven-filter live smoke
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/sim_dataset.py --dest tests/kalman_tangent_shared_modes
           make -C tests/kalman_tangent_shared_modes test

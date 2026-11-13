@@ -20,6 +20,7 @@ def check_evidence(verify_current=True):
     manifest = json.loads((OUT/'manifest.json').read_text())
     rows = list(csv.DictReader((OUT/'scores.csv').open()))
     assert rows and manifest['profile'] == 'acceptance'
+    assert not manifest.get('source_changed_during_run', False)
     tree = manifest.get('implementation_source_tree', manifest['implementation_commit'])
     assert re.fullmatch(r'[0-9a-f]{40}', tree)
     if not verify_current:
@@ -173,6 +174,8 @@ def main():
     pairs = [paired(primary, b, c, metric) for b, c in comparisons for metric in metrics]
     summary = dict(primary={f:{m:ci(primary[primary['filter'] == f][m]) for m in metrics} for f in ORDER},
                    paired=pairs, failures=int(df.groupby(['scenario', 'seed', 'noise_profile', 'filter']).failed.max().sum()),
+                   failed_processes=sum(r['exit_code'] != 0 for r in manifest['commands']),
+                   incomplete_experiments=manifest.get('incomplete_experiments', 0),
                    structural_observability=structural_checks())
     rows = []
     for f in ORDER:
@@ -338,7 +341,7 @@ def main():
         data = trace(a.raw, case)
         for f in chosen:
             d = data[data['filter'] == f]
-            axes[0, j].plot(d.t, d.pz-d.true_pz, label=f, color=COLORS[f], lw=.8)
+            axes[0, j].plot(d.t, d.true_pz-d.pz, label=f, color=COLORS[f], lw=.8)
             axes[1, j].plot(d.t, 1000*np.hypot(d.bax-d.true_bax, d.bay-d.true_bay), color=COLORS[f], lw=.8)
         axes[0, j].set_title(case); axes[0, j].set_ylabel('Heave error [m]'); axes[1, j].set_ylabel('Horizontal bias error [mm/s²]'); axes[1, j].set_xlabel('Time [s]')
         for ax in axes[:, j]:
@@ -408,7 +411,9 @@ def main():
     headline = ('On acquired-reference waves, the paired TAN versus TFG horizontal-bias RMS change is '
                 +number(tangent_gain['mean'], 4)+'\\% improvement [95\\% interval '
                 +number(tangent_gain['low'], 4)+', '+number(tangent_gain['high'], 4)+'\\%].')
-    reliable = tangent_gain['low'] > 0 and summary['failures'] == 0 and summary['endpoint_consistency']['TAN']['nees15'] <= bounds[1]
+    reliable = (tangent_gain['low'] > 0 and summary['failures'] == 0
+                and summary['failed_processes'] == 0 and summary['incomplete_experiments'] == 0
+                and summary['endpoint_consistency']['TAN']['nees15'] <= bounds[1])
     recommendation = ('The measured cohort warrants further evaluation of the tangent-bias candidate, subject to independent replay and target qualification.' if reliable else
                       'Do not promote the tangent-bias geometry or the conditional gain veto as a new production default from this evidence. Retain the experimental implementation and transfer only independently validated shared corrections. Geometry and a conservative gain policy have not jointly established the required accuracy, consistency, robustness and target qualification.')
     interpretation = ('The paired tables isolate a finite-retraction/reset effect from the bias-gain effect. '
@@ -432,7 +437,8 @@ def main():
     interpretation += f' At the unadjusted 5\\% level, {summary["whiteness_rejections_at_05"]} of {len(whiteness)} axis/seed/method whiteness tests reject; these correlated multiple tests are not independent acceptance votes.'
     macros = [write_macro('StudyHeadline', headline), write_macro('StudyCohort',
               f'The cohort contains {len(manifest["commands"])} paired sensor histories, with '+str(len(manifest['seeds']))+
-              ' independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly.'),
+              ' independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly. '+
+              f'Numerically failed filter/history pairs: {summary["failures"]}; failed native processes: {summary["failed_processes"]}; incomplete experiments: {summary["incomplete_experiments"]}.'),
               write_macro('PrimaryResultsTable', main_table), write_macro('BiasResultsTable', bias_table),
               write_macro('PairedResultsTable', paired_table), write_macro('ConsistencyResultsTable', consistency_table),
               write_macro('RecoveryResultsTable', recovery_table), write_macro('CostResultsTable', cost_table),

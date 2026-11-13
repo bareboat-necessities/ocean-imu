@@ -3,7 +3,7 @@
 On acquired-reference waves, the paired TAN versus TFG horizontal-bias RMS change is -0.0051\% improvement [95\% interval -0.0180, 0.0078\%].%
 }
 \newcommand{\StudyCohort}{%
-The cohort contains 168 paired sensor histories, with 6 independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly.%
+The cohort contains 168 paired sensor histories, with 6 independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly. Numerically failed filter/history pairs: 0; failed native processes: 0; incomplete experiments: 0.%
 }
 \newcommand{\PrimaryResultsTable}{%
 \begin{table*}[t]\centering\footnotesize

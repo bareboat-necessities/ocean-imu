@@ -1,5 +1,61 @@
 # OU-III proof research state
 
+Tangent research quality-gate repair (class E): Ruff found an unused import,
+and CI cppcheck found three inherited group-operation name collisions. The
+import is removed; tangent geometry now composes the existing physical storage
+and two-frame algebra instead of permitting conversion to a different group law.
+No operation formula or gate threshold changes. Structures preserved: existing
+shipping OU3 source closure and all physical filter equations. Relaxations
+introduced: none. The ten-filter 900-s seed-4101 traces are byte-identical and
+all 40 score rows agree except host runtime. Latest local cppcheck 2.22 reports
+the same 47 pre-existing findings on this tree and producer main; no finding is
+added. CI's older cppcheck remains the deployment gate. No mathematical or
+shipping instability conclusion follows. Next check: the unchanged hosted gate
+and full repository regressions using rebuilt binaries.
+
+Tangent-CARMA integration evidence recovery (class E): the PR evidence-contract
+and OU-validation jobs reject seven stale replay dependency records predating the
+current timing fixes. The completed full validation, robustness and TFG artifacts
+from main run 43501064300 are recovered by their GitHub SHA256 archive digests.
+OU manifests are normalized by the existing contract in the original 480d78f
+producer checkout, then their immutable replay closure is checked unchanged here.
+No fresh replay at this integration revision is claimed. Structures preserved:
+all original full-cohort rows, physical histories, producer identities, covariance
+and shipping operation results. Relaxations introduced: none. No shipping
+counterexample is inferred from this publication failure. Existing theorem flags
+and local results are retained; the limiter is evidence freshness. Next check:
+full repository tests and hosted publication contracts on the recovered bundles.
+
+Tangent-CARMA integration source-binding maintenance (class E): new CARMA and
+Lie-group files invalidate the conservative whole-src digest of the native OU3
+secant diagnostic. The 40-file compiler dependency closure is byte-identical to
+main c897c92. Both complete inherited 252-direction words were rerun at epsilon
+0.01 and 0.005; both native secant byte hashes match the previous report exactly.
+Fresh Python/BLAS norm calculations differ only in final floating-point digits.
+The invalidated hypothesis is source-digest freshness, not a stability inequality.
+Structures preserved: the physical record, all 21 states/full covariance, gains,
+Joseph updates, resets, projections, frontend/tuner, forcing, scheduler and clocks.
+Relaxations introduced: none beyond the existing diagnostic off-orbit perturbations;
+finite secants remain neither derivative enclosures nor reachable-history proofs.
+The common-root SPD-ball sufficient-bound failure remains class D; no genuine
+shipping counterexample is found. Existing operation identities and qualified
+local results remain valid. The all-time physical-service and finite-error theorem
+limiters remain open. Next falsifiable check: provenance/evidence tests and full
+repository validation with this refreshed source binding and unchanged gates.
+
+Post-merge CI source-binding repair (class E): run 43501064300 completed the
+full OU/robustness and TFG studies, then failed publication on the native secant
+whole-src digest. The only src change since a053a1d2 is W3dSimCommon.cpp, outside
+the compiler -MM closure of planar_native_secant_probe.cpp. Every probe closure
+file is byte-identical; the original whole-src digest was independently
+reconstructed from that commit before refreshing identity metadata. No replay
+is claimed. Native results/byte hashes and all theorem/qualification flags are
+retained. Structures preserved: complete original diagnostic execution and
+shipping operations. Relaxations introduced: none. This repairs source identity,
+not a mathematical inequality; theorem completion and existing physical-service
+limiters remain open. Next falsifiable check: proof provenance and all evidence
+tests against the refreshed binding, followed by CI publication of fresh bundles.
+
 ## Gyro-sampling runtime rollout
 
 Finite rollout selection: simultaneous frontend centering plus Schmidt holding

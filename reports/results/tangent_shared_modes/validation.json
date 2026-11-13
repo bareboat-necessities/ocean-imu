@@ -25,9 +25,10 @@
     "log_sha256": "b6ffe80063a4dba3e8d090238c52b4459b895e929ca2e28223f76343ed9817ef"
   },
   "make_all": {
-    "status": "restarting after interrupted serial run and main integration",
+    "status": "serial full repository run in progress; no passing completion claimed",
     "initial_failure": "g++ compiling tests/kalman_carma/carma3-test.cpp: fatal error: Killed signal terminated program cc1plus (concurrent template compilation)",
-    "interrupted_log": "make-all-retry.log ended during tests/kalman_ou_iii/rs_law-test.cpp compilation, with no completion receipt"
+    "interrupted_log": "make-all-retry.log ended during tests/kalman_ou_iii/rs_law-test.cpp compilation, with no completion receipt",
+    "live_log": "make-all-final.log"
   },
   "hardware": {
     "esp32_board_measurement": false
@@ -39,11 +40,17 @@
     "status": "pass",
     "maximum_group_round_trip_error": 4.04221e-16,
     "maximum_reset_finite_difference_error": 1.84357e-10,
-    "log": "cmake-build-final.log"
+    "log": "cmake-geometry-review.log",
+    "rocking_information_eigenvalues": [
+      0.0757344,
+      0.132968,
+      2.88222
+    ],
+    "storage_composition_rebuild": "pass"
   },
   "post_start_main": {
-    "commit": "480d78f0fa35724800d7a70a96ea9a6355d5605d",
-    "changes": "tighter simulator limits and rejection of invalid scored histories; estimator propagation and measurement mathematics unchanged",
+    "commit": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
+    "changes": "Includes 480d78f tighter current replay limits and c897c92 source-binding repair. No OU3 shipping process was changed.",
     "integration_status": "merged, gates preserved"
   },
   "final_cohort": {
@@ -281,7 +288,16 @@
     "pages": 12,
     "lualatex_passes": 2,
     "overfull_boxes": false,
-    "source_sha256": "6838367813f88a39171e07fec99720a60589f2015e3678c278a764d96cf72ec5"
+    "source_sha256": "315862e03f9fc2624dd332f4102cc34765ff602638517b861fc743e3291b5d80",
+    "pdf_sha256": "24db851beb53f1483874bbaa377db9b7c6dad22ee73effbf516ff1517481d09d",
+    "rendered_review_pages": [
+      1,
+      6,
+      10,
+      11,
+      12
+    ],
+    "visual_review": "title, equations, tables, time histories, diagnostics and final-page references checked"
   },
   "shared_table_formatter": {
     "default_output_byte_identical": true,
@@ -291,5 +307,41 @@
     "QSM": 320,
     "TFG": 320,
     "independent_CARMA": 32
+  },
+  "composition_storage_parity": {
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "score_rows": 40,
+    "trace_bytes_identical": true,
+    "all_score_fields_identical_except_runtime": true,
+    "trace_sha256": "3375c8f3afc622cbec264c44180599e9b15c135ce50a3e04a1071896850defc8",
+    "geometry_adds_no_physical_storage": true,
+    "log_sha256": "00f2a7dd40334a701b0428dbd2823326cdf859cb681b96d79a26e80284af9941"
+  },
+  "ou_ci_evidence_recovery": {
+    "workflow_run": 43501064300,
+    "producer_commit": "480d78f0fa35724800d7a70a96ea9a6355d5605d",
+    "full_artifact_ids": [
+      14078465349,
+      14076393097,
+      14075418119
+    ],
+    "archive_sha256_verified": true,
+    "immutable_replay_closure_matches_current_source": true,
+    "fresh_replay_here": false,
+    "method": "Existing --auto normalization in original producer checkout, then --check in integration checkout."
+  },
+  "review_fixes": {
+    "module_default_build_and_test_goal": "restored",
+    "crash_partial_unpaired_launch_and_resume_receipts": "five regression tests pass",
+    "python_ruff_and_pycompile": "pass",
+    "tangent_group_storage": "composition preserves public group operations and prevents accidental base-group conversion",
+    "cppcheck_2_22_baseline_comparison": {
+      "baseline_findings": 47,
+      "current_findings": 47,
+      "added_findings": 0,
+      "gate_thresholds_unchanged": true
+    }
   }
 }

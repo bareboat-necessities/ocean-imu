@@ -12,7 +12,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import hashlib
 import json
-import os
 from pathlib import Path
 import platform
 import subprocess
@@ -30,6 +29,12 @@ CASES = ['stationary', 'rocking', 'wave', 'low', 'high', 'transition', 'yaw',
 
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+def optional_digest(path):
+    try:
+        return digest(path)
+    except OSError:
+        return None
 
 
 def main():
@@ -72,26 +77,55 @@ def main():
         if model == 'population': command += ['--population-prior']
         if case == 'wave': command += ['--filters', 'QSM,TFG,TAN,QSM-G,TFG-G,TAN-G,CARMA,QSM-LG,TFG-LG,TAN-LG']
         receipt_path = Path(str(prefix)+'_receipt.json')
+        artifacts = {'scores_sha256': str(prefix)+'_scores.csv',
+                     'trace_sha256': str(prefix)+'_trace.csv',
+                     'model_sha256': str(prefix)+'_model.json'}
         if a.resume and receipt_path.exists():
             receipt = json.loads(receipt_path.read_text())
             if (receipt['binary_sha256'] != binary_hash or receipt['command'] != command
-                    or receipt['scores_sha256'] != digest(str(prefix)+'_scores.csv')
-                    or receipt['trace_sha256'] != digest(str(prefix)+'_trace.csv')):
+                    or any(receipt.get(key) != optional_digest(path) for key, path in artifacts.items())):
                 raise RuntimeError(f'stale resume receipt {receipt_path}')
         else:
             begin = time.time()
-            result = subprocess.run(command, capture_output=True, text=True)
-            receipt = dict(command=command, binary_sha256=binary_hash, exit_code=result.returncode,
-                           seconds=time.time()-begin, stdout=result.stdout, stderr=result.stderr,
-                           scores_sha256=digest(str(prefix)+'_scores.csv'),
-                           trace_sha256=digest(str(prefix)+'_trace.csv'),
-                           model_sha256=digest(str(prefix)+'_model.json'))
+            receipt = dict(command=command, binary_sha256=binary_hash)
+            try:
+                result = subprocess.run(command, capture_output=True, text=True)
+                receipt.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
+            except OSError as error:
+                receipt.update(exit_code=None, stdout='', stderr=str(error),
+                               launch_error=type(error).__name__)
+            receipt['seconds'] = time.time()-begin
+            # Preserve termination diagnostics before inspecting any output:
+            # a crashed process may not have opened even its score file.
             receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')
-        with Path(str(prefix)+'_scores.csv').open() as f: rows = list(csv.DictReader(f))
-        if len({r['sensor_hash'] for r in rows}) != 1:
-            raise RuntimeError(f'unpaired sensors: {prefix}')
+        receipt.update({key:optional_digest(path) for key, path in artifacts.items()})
+        errors = []
+        for key, path in artifacts.items():
+            if receipt[key] is None:
+                errors.append('unavailable output: '+Path(path).name)
+        rows = []
+        try:
+            with Path(artifacts['scores_sha256']).open() as f:
+                rows = list(csv.DictReader(f))
+            required = {'scenario', 'seed', 'filter', 'start', 'end', 'sensor_hash', 'failed'}
+            if not rows or any(not required.issubset(row) for row in rows):
+                raise ValueError('empty or incomplete score schema')
+            for row in rows:
+                if row['scenario'] != case or int(row['seed']) != seed:
+                    raise ValueError('score condition/seed differs from command')
+                float(row['start']); float(row['end']); int(row['failed'])
+        except (OSError, ValueError, TypeError, csv.Error) as error:
+            errors.append('unreadable scores: '+str(error))
+            rows = []
+        if rows and len({r['sensor_hash'] for r in rows}) != 1:
+            errors.append('unpaired sensors')
         for r in rows: r['noise_profile'] = model
-        print(f'{case} {seed} {model}: exit={receipt["exit_code"]}', flush=True)
+        receipt['errors'] = errors
+        receipt['outputs_complete'] = not errors
+        receipt['failed'] = (receipt['exit_code'] != 0 or bool(errors)
+                             or any(int(row['failed']) != 0 for row in rows))
+        receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')
+        print(f'{case} {seed} {model}: exit={receipt["exit_code"]}, failed={receipt["failed"]}', flush=True)
         return rows, receipt
 
     rows, receipts = [], []
@@ -101,20 +135,30 @@ def main():
             rr, receipt = future.result(); rows.extend(rr); receipts.append(receipt)
     rows.sort(key=lambda r:(r['scenario'], int(r['seed']), r['noise_profile'], r['filter'], float(r['start']), float(r['end'])))
     with (a.output/'scores.csv').open('w') as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
-    if {str(p.relative_to(ROOT)):digest(p) for p in source_paths} != source_hashes:
-        raise RuntimeError('study sources changed while the cohort was running')
+        fields = list(dict.fromkeys(key for row in rows for key in row))
+        writer = csv.DictWriter(f, fieldnames=fields or ['scenario', 'seed', 'filter', 'failed', 'noise_profile'],
+                                lineterminator='\n')
+        writer.writeheader(); writer.writerows(rows)
+    after = {str(p.relative_to(ROOT)):optional_digest(p) for p in source_paths}
+    source_changed = after != source_hashes
+    failed_runs = sum(r['failed'] for r in receipts)
     manifest = dict(baseline_commit=BASELINE, implementation_commit=implementation_commit, profile=a.profile, seeds=seeds, cases=cases,
                     binary_sha256=binary_hash, source_sha256=source_hashes,
                     commands=sorted(receipts, key=lambda r:r['command']), seconds=time.time()-started,
+                    failed_experiments=failed_runs,
+                    incomplete_experiments=sum(not r['outputs_complete'] for r in receipts),
+                    source_changed_during_run=source_changed,
                     python=sys.version, platform=platform.platform(),
                     compiler=subprocess.check_output(['g++', '--version'], text=True).splitlines()[0],
                     score_rate_hz=20, trace_rate_hz=1,
                     interpretation='TG(SE3) tangent-bias hybrid, not full TG(SE2(3)); no autonomous CARMA error theorem',
                     runtime='per-filter process CPU time; host proxy, not ESP32 board measurement',
-                    thresholds='unchanged TFG native replay bars; experimental smoke only is in make all')
+                    thresholds='unchanged historical and current TFG replay bars; native replay and paired smoke are in make all')
+    if source_changed:
+        manifest['source_sha256_after_run'] = after
     (a.output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
-    print(f'Completed {len(jobs)} paired sensor histories, {len(rows)} score rows')
+    print(f'Recorded {len(jobs)} paired experiments, {len(rows)} score rows; failed={failed_runs}')
+    return 2 if failed_runs or source_changed else 0
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': raise SystemExit(main())
