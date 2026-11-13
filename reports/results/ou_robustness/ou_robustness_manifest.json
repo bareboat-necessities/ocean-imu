@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "a053a1d2e571b4e4f39c566107c35154db1f3242",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 35000 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1616 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1964 +-\n 6 files changed, 20181 insertions(+), 20183 deletions(-)",
+  "git_commit": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 31722 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1616 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   520 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1946 +-\n 6 files changed, 18483 insertions(+), 18485 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -182,8 +182,8 @@
       "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 102294,
-      "sha256": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45"
+      "bytes": 104081,
+      "sha256": "78db6ea2fb36b7231a2a9a129c6645e79577427983f1539448fb9e7d5dbd67f9"
     },
     "src/util/W3dSimCommon.h": {
       "bytes": 34360,
@@ -213,17 +213,21 @@
       "bytes": 2765,
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
+    "tests/common/CurrentReplayLimits.h": {
+      "bytes": 6472,
+      "sha256": "5716fd61e5f86b895cdb20fbd7fb5ac98e665a9fb0a98e5d1be929722c8d347b"
+    },
     "tests/common/GyroReplayContract.h": {
-      "bytes": 1155,
-      "sha256": "2e9784b7f72c9cfa3138cfba59044b69fc7ec2bb87a34722e165cb4fdba4c40f"
+      "bytes": 1002,
+      "sha256": "9e6fd444e60f490821f274ea7b695a8710170224b76877bdcfbb52a8480c28d6"
     },
     "tests/kalman_ou_iii/Makefile": {
       "bytes": 808,
       "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 35269,
-      "sha256": "3e9a13454f8adf8595921800ab0631a03c57fc689924cdc9b8d58c84e3e2eb3d"
+      "bytes": 35257,
+      "sha256": "abca38a7219f7509b1f113a879ab634f9cbf3dfaeea5814b4ca22e3c534cc293"
     }
   },
   "matplotlib": "3.6.3",
@@ -235,7 +239,7 @@
     "tau_s": 2.50470543
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -346,11 +350,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-13T17:32:48+00:00",
-    "git_commit": "a053a1d2e571b4e4f39c566107c35154db1f3242",
+    "generated_at": "2026-11-13T23:52:25+00:00",
+    "git_commit": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -489,8 +493,8 @@
         "size_bytes": 12170
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "67295d71862932c6ebba34c761715043a855cbe9aa663159209b8bdb70578b45",
-        "size_bytes": 102294
+        "sha256": "78db6ea2fb36b7231a2a9a129c6645e79577427983f1539448fb9e7d5dbd67f9",
+        "size_bytes": 104081
       },
       "src/util/W3dSimCommon.h": {
         "sha256": "c77405168b00581f7fa66ea7d59159576ec3e98b1f8b5f9645d939e587b143b2",
@@ -520,17 +524,21 @@
         "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
         "size_bytes": 2765
       },
+      "tests/common/CurrentReplayLimits.h": {
+        "sha256": "5716fd61e5f86b895cdb20fbd7fb5ac98e665a9fb0a98e5d1be929722c8d347b",
+        "size_bytes": 6472
+      },
       "tests/common/GyroReplayContract.h": {
-        "sha256": "2e9784b7f72c9cfa3138cfba59044b69fc7ec2bb87a34722e165cb4fdba4c40f",
-        "size_bytes": 1155
+        "sha256": "9e6fd444e60f490821f274ea7b695a8710170224b76877bdcfbb52a8480c28d6",
+        "size_bytes": 1002
       },
       "tests/kalman_ou_iii/Makefile": {
         "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6",
         "size_bytes": 808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "3e9a13454f8adf8595921800ab0631a03c57fc689924cdc9b8d58c84e3e2eb3d",
-        "size_bytes": 35269
+        "sha256": "abca38a7219f7509b1f113a879ab634f9cbf3dfaeea5814b4ca22e3c534cc293",
+        "size_bytes": 35257
       }
     },
     "input_files": {
@@ -552,47 +560,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "7f5f1a7b6b4356c05a277ac3303fd8ef1f00e91eb793933382573343f2a66d60",
-    "raw_rows_size_bytes": 210826,
+    "raw_rows_sha256": "3c52303e23cad7e285e717d96917b53e024b9184fda8f2ea76aa1f25eca56ffd",
+    "raw_rows_size_bytes": 210855,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43464724795",
+      "run_id": "43519105497",
       "workflow": "build"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1578869,
-      "sha256": "13dab65d7ae3968a10848f5350b6b9bfe3b3a8c5f3995361250368fc530219b4"
+      "bytes": 1578941,
+      "sha256": "f0f485063f254d5d0615f9ffe449052eaea5dd5a414b06dd20dda3c8a100e0d9"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
       "sha256": "851db959b7ac01eb0c0b47115a1d77a8fa69b665c6cf97cee707ab7e7c83659d"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 165200,
-      "sha256": "72328eee0fbcd4b00c7fd9a6a97942d8b7d5c8713e67ef0010c4a41a59fcf1fd"
+      "bytes": 165318,
+      "sha256": "462b98d0695abd9eebdb90cae5009d745a3330879aa1e893d5cfad6c76196b55"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "59e2843251b945277556686773c8237f0f372acb477a26da2fb5ba6249e5307e"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 210826,
-      "sha256": "7f5f1a7b6b4356c05a277ac3303fd8ef1f00e91eb793933382573343f2a66d60"
+      "bytes": 210855,
+      "sha256": "3c52303e23cad7e285e717d96917b53e024b9184fda8f2ea76aa1f25eca56ffd"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114750,
-      "sha256": "e7b759880013268ed37d27a9291836362d6d0f14a2057137528bd59f0fdb2191"
+      "bytes": 114767,
+      "sha256": "97a07b8a8294cb60019b3774ef2b440efd0092117d9336638141205c03322d79"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 44848,
-      "sha256": "098d6ed8b5b490debbe391086653faa6e202ff67665b19609427b72e33dc9648"
+      "bytes": 44846,
+      "sha256": "2a28764438f791fc941db096d2f467d9f31d3df1920bd66ffe1280d55936e7a0"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 148244,
-      "sha256": "4c75eddbd1a9b5f66cf565bb0f1624a6aae37031826a829e4bec9222456b5c3d"
+      "bytes": 148169,
+      "sha256": "ce7b48d606d0d04e2814c123d27d750dc9088146f017aaef4c08bbb933db8955"
     }
   },
   "schema_version": 2,
