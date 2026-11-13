@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "fix/live-bias-consistency-20261112",
-  "git_commit": "81d16672fa4ff398f9d84247ccb2201f18f29e62",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 38676 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    16 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1632 +-\n .../ou_robustness/ou_robustness_publication.tex    |    12 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  2012 +-\n 8 files changed, 22065 insertions(+), 22067 deletions(-)",
+  "git_commit": "60bbf96bd4a9d3e24f3df37896d5759648a113ac",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 23208 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1584 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   242 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   168 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1820 +-\n 6 files changed, 14008 insertions(+), 14010 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -349,8 +349,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-13T04:50:16+00:00",
-    "git_commit": "81d16672fa4ff398f9d84247ccb2201f18f29e62",
+    "generated_at": "2026-11-13T05:51:43+00:00",
+    "git_commit": "60bbf96bd4a9d3e24f3df37896d5759648a113ac",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -552,42 +552,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "9f5001567004f2dae370db4e89870a6ed9a832fe30d67bd08690a75988feada3",
-    "raw_rows_size_bytes": 210813,
-    "workflow_run": null
+    "raw_rows_sha256": "de6747a4483d8481c1105051a8d2d591b29aecf553a0221d5e8899167cd29288",
+    "raw_rows_size_bytes": 210840,
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "1",
+      "run_id": "43370428471",
+      "workflow": "ou-full-evidence-branch"
+    }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1578804,
-      "sha256": "5682f45f54cbd821862cf3c935debf40cab3ccc1367417e21389daea1d63953d"
+      "bytes": 1578612,
+      "sha256": "7bdf702e8d38ef5015acca61d0b5d94ecaf89dcccdc2bbbf707b4e50fb18ac68"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
       "sha256": "851db959b7ac01eb0c0b47115a1d77a8fa69b665c6cf97cee707ab7e7c83659d"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 165279,
-      "sha256": "1bb026e602dad66acdd22b71e0e3af314b62dd8d5434e4756af985b140a5897a"
+      "bytes": 165220,
+      "sha256": "25cf45e4c6433bf437f99eea166f8bf472ac7ef943803ef80ea423ae90411128"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "59e2843251b945277556686773c8237f0f372acb477a26da2fb5ba6249e5307e"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 210813,
-      "sha256": "9f5001567004f2dae370db4e89870a6ed9a832fe30d67bd08690a75988feada3"
+      "bytes": 210840,
+      "sha256": "de6747a4483d8481c1105051a8d2d591b29aecf553a0221d5e8899167cd29288"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 114732,
-      "sha256": "3da40a7a109b84d26896fe72cb57a2a47218c0728e588ec96a7a69af3f08455a"
+      "bytes": 114745,
+      "sha256": "949e3fea3c365c57659d603e9ea2b1f100d7336291637763a1981a4eaa57a283"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 44845,
-      "sha256": "f02d165f2ec4a1344e86f3fd68b1e66fca809f2da626ff919bf56c7a02178b19"
+      "bytes": 44850,
+      "sha256": "8592952d878b0682cd41c85da0f63bc21c8e82e1e299986b86221817acd3102b"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 148113,
-      "sha256": "e0526c2b0397a78c2d0180195f9151bb71eeb2799e41840463b74e1afa464f49"
+      "bytes": 147953,
+      "sha256": "6ec0eae2c854dac72b88b097c21338d61de5cb56b281bd4b0faa404268738a49"
     }
   },
   "schema_version": 2,
