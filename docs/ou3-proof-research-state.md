@@ -26,6 +26,23 @@ all-time service/admission and theorem flags remain false. The complete native
 secant replay is repeated after freezing source, before rerunning the audit.
 A concurrent local build was killed in `bench_carma3_filters_ou.o` (class E
 resource failure); serial compilation without other compilers is the next check.
+The host warning gate additionally found three missing aggregate member initializers
+for `Window::{an,mn,on}` in the test driver (class E build failure). Explicit empty
+initializers preserve their existing zero-initialized `FiniteMean` semantics; the
+same strict compile flags pass locally. No shipping operation or theorem premise
+changes. The broad evidence fingerprint still requires a genuine full replay.
+The native default replay also exceeds four legacy yaw fixtures by 0.003--0.007
+degrees (class E numerical-contract mismatch); the measured increases are kept.
+The historical integrator and every original limit now run under `--regression`.
+A separate corrected-default fixture uses the existing ~0.5% margin rule; this
+is not a claim of improved yaw or latent-bias recovery. Both profiles pass all
+64 native record checks. The all-source publication test exposed three old
+source-text guard assertions; the unchanged conditioned-accelerometer route
+through the gyro helper is now checked, and all 30 article contract tests pass.
+Clang-tidy exceeded its 45-minute infrastructure budget; every TU/check is
+retained with a 90-minute budget. No shipping source or theorem premise changes
+in these fixture/test repairs.
+
 
 The live OU-II/OU-III/TFG and CARMA sample paths now default to measured-endpoint
 gyro integration. OU-III prediction uses the same effective interval rate in

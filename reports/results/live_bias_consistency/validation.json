@@ -82,7 +82,7 @@
   },
   "required_check": {
     "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
-    "status": "serial retry running without overlapping compilers"
+    "status": "rerun required after native replay fixture repair; previous serial run exposed the legacy yaw mismatch"
   },
   "source_sha256": {
     "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "63a91fa019b3ac6cd0f9a249db891b36aa6e6621917a44ab1ec404aa29aded28",
@@ -112,7 +112,7 @@
     "tests/live_bias_consistency/GyroPredictionChecks.h": "e63ab7f0349c046ac51658bff8b614cb23691b78249febea8a5228f376a81c2c",
     "tests/live_bias_consistency/MainGyroRollout.h": "7d94e189a3896106400def8de0065c563e5919aa2f8ab86afa58ed3215289c9a",
     "tests/live_bias_consistency/Makefile": "b497c2b4b780046f28da961aa3feeddd33f3e83534548a26502abbbfc66a168a",
-    "tests/live_bias_consistency/README.md": "18c5cf0f32dfbf482deacdbeda8fdf87b39ff1b0804f06e51cdfe32f4765ddc2",
+    "tests/live_bias_consistency/README.md": "e72cf773d930c0ae9556e4b96abc484a4940d0dc91cc8e559f8f42081c2305a3",
     "tests/live_bias_consistency/StandardHeaders.h": "0b5df120c68b798448fa15046e1c179f355c827a730c68553d1671165f729390",
     "tests/live_bias_consistency/audit_sensors.cpp": "aaf053eae87511d02cc142de5c10b120b2dceb841d03f91b932b9b4ba7857c89",
     "tests/live_bias_consistency/defaults-ou2-test.cpp": "d8553acebc6cd723b4feb02265f744d1428cc55cf1460e3d27ba0f2bbad1aeae",
@@ -124,7 +124,7 @@
     "tests/live_bias_consistency/main-gyro-ou3.cpp": "1da0c8ec6a7848a14bc58bac54f8305adaf586b6f88a1c0bb27c005e8e00c1fd",
     "tests/live_bias_consistency/main-gyro-rollout.cpp": "ed52a8e4a2c22b5a9563dad898e4782aab1d8c8e6dbfa9ce13d077cdcdabf79d",
     "tests/live_bias_consistency/main-gyro-tfg.cpp": "7c7def7ba09aaf4c2c5e299651668d4c0944deea92f26cc56995e9b77eed554b",
-    "tests/live_bias_consistency/main.cpp": "7c02b7c01f198dcd189d3cbbabb6f6a2a21d96a2173b767d454634f7e3f26910",
+    "tests/live_bias_consistency/main.cpp": "4a3f5b830422cbdd0a6f40dd6734e0229e8b3635cb3e807b39d4a31ce1e440c4",
     "tests/live_bias_consistency/noise-bound.py": "eaa92ea33a56f810d17a8317b9771906bb14b5685647f483201858fba76f731a",
     "tests/live_bias_consistency/observer-defaults-test.cpp": "7cd8591dc3ce9415e6e869a3543bfa420050d3a6eb9ab1bd17726a21adbf5e91",
     "tests/live_bias_consistency/packet-rejection-test.cpp": "6f6c53800cce66b4b601215bb0ba90884b5259b2ec02820ad994361445f83970",
@@ -141,7 +141,8 @@
     "tools/live_bias_window.py": "032ccf4f7390c4ba2bd393d36894dcc51eae9a77fd382d01a614ebeb2f39e8c4",
     "tools/live_bias_window_batch.py": "38d1d326912f1970a937a53ec1e164b2d798c50e192ff1004aaef538821f3a83",
     "tools/main_gyro_rollout.py": "e52340b60edf01279cb0dec199719567eb44c594fb40e5a12eeab9b4b37bdef5",
-    "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py": "7e2111afdd01b3dace8eee1b070a04885308f192bd2568ac77c8d830dd48e743"
+    "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py": "7e2111afdd01b3dace8eee1b070a04885308f192bd2568ac77c8d830dd48e743",
+    "tests/common/GyroReplayContract.h": "2e9784b7f72c9cfa3138cfba59044b69fc7ec2bb87a34722e165cb4fdba4c40f"
   },
   "corrected_check_failures": [
     {
@@ -182,7 +183,7 @@
       "note": "Actual source diagnostics regenerated before binding refresh; no theorem promotion",
       "source_revision": "ad827d450e87ad9dae903978b4dcfc260878b3c0"
     },
-    "full_statistical_evidence": "genuine full branch regeneration queued in GitHub Actions",
+    "full_statistical_evidence": "source42 full replay/combination completed, publisher refused stale guard source assertions; repaired tests now require a fresh full source-fingerprinted regeneration",
     "followup": "passed: complete focused run_tests.sh on frozen source ad827d45",
     "carma_lever_arm_full_refresh": {
       "workflow_run": 43347750720,
@@ -223,6 +224,37 @@
       "nees_count_each": 1800,
       "all_scored_NIS_values_finite": true,
       "max_difference_in_original_numerical_metrics": 0.0
+    },
+    "harness_strict_warning_fix": {
+      "command": "g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror -I src -isystem \"$EIGEN_DIR\" -isystem third_party/Lie-plusplus/include -c tests/live_bias_consistency/main.cpp -o /tmp/ocean-harness-warnings.o",
+      "exit_code": 0,
+      "correction": "Explicit empty initializers for the three FiniteMean members; no estimator or measurement change"
+    },
+    "harness_window_initializer_parity": {
+      "exit_code": 0,
+      "geometries": [
+        "qmekf",
+        "tfg"
+      ],
+      "arms": [
+        "exact_fixed",
+        "oracle"
+      ],
+      "duration": 180,
+      "scores_state_traces_covariance_diagnostics": "byte-identical before and after explicit initialization"
+    },
+    "native_versioned_replay": {
+      "exit_code": 0,
+      "records": 64,
+      "original_limits_unchanged": true,
+      "separate_corrected_yaw_fixtures": true,
+      "metadata": "native_replay.json",
+      "scores": "native_replay_scores.csv",
+      "strict_legacy_admission_checks": 12
+    },
+    "article_guard_contracts": {
+      "exit_code": 0,
+      "tests": 30
     }
   },
   "resource_build_failure": {

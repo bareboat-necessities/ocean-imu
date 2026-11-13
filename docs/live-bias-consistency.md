@@ -408,3 +408,37 @@ Hardware performance and delayed-measurement compensation remain unvalidated.
 The finite simulations are neither a shipping OU-III stability proof nor a
 shipping counterexample; the new sampling map is not certified by historical source-bound proof receipts.
 The cache-augmented shipping audit is tracked in `ou3-proof-research-state.md`.
+
+## Numerical replay contracts
+
+The broader native replay exposes small yaw increases after correcting prediction.
+These increases remain reported; they are not bias-estimation improvements.
+`--regression` runs the historical endpoint integration against every original
+threshold, unchanged. Ordinary invocations use the corrected live defaults and
+a separately versioned numerical fixture. Only its yaw limit differs, using
+the same approximately 0.5% margin above the measured corrected maximum; all
+other limits remain original. These are regression references, not estimation
+quality targets. The independent rotation, bias-Jacobian, noise/covariance and
+artificial-oracle tests establish the integration benefit.
+
+| Native replay | Legacy maximum yaw | Corrected maximum yaw | Original limit | Corrected fixture limit |
+| --- | ---: | ---: | ---: | ---: |
+| CARMA3 | 0.753640° | 0.760895° | 0.75750° | 0.76470° |
+| OU3 | 0.814511° | 0.824166° | 0.81870° | 0.82829° |
+| TFG | 0.933212° | 0.949967° | 0.94300° | 0.95472° |
+| TFG-CARMA | 0.762213° | 0.769657° | 0.76620° | 0.77351° |
+
+Both profiles pass all eight pinned histories for each of these four families
+(64 gated replays). OU-II and NLO also pass their unchanged default replay limits.
+Shared-mode default and legacy profiles already pass the same original limits.
+Corrected native profiles' common-old-limit violations remain in
+`native_replay_scores.csv`; no score or covariance was changed to hide them.
+The six-seed shared-mode and broader live comparisons remain the estimation
+evidence, including the persistent unknown-acceleration floor.
+
+Frontend centering is not promoted to repair individual fixtures: on the
+independent CARMA H4 control it reduces yaw from 0.760882° to 0.731500°, but its
+full eight-record run exceeds a gyro-bias limit (12.785% versus 12.78%). The
+shared-mode ablation also exceeds existing yaw/bias bars. The core-only
+correction remains the default; frontend and Schmidt changes remain explicit
+diagnostics.

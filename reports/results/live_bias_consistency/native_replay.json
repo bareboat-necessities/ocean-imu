@@ -1,0 +1,129 @@
+{
+  "source_base": "42f53441d07f262dd984c4d671bd12e535951377",
+  "shipping_source_tree_unchanged": true,
+  "profiles": [
+    {
+      "family": "CARMA3",
+      "profile": "legacy",
+      "exit_code": 0,
+      "binary_sha256": "a09740972e4862ce168b710e2cbca351e1453c563102c86dc2c3f8b2c25e9eb9",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_carma/carma3-sim",
+        "--regression"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE legacy_interval"
+      ],
+      "records": 8
+    },
+    {
+      "family": "CARMA3",
+      "profile": "default",
+      "exit_code": 0,
+      "binary_sha256": "a09740972e4862ce168b710e2cbca351e1453c563102c86dc2c3f8b2c25e9eb9",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_carma/carma3-sim"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE instantaneous_default"
+      ],
+      "records": 8
+    },
+    {
+      "family": "OU3",
+      "profile": "legacy",
+      "exit_code": 0,
+      "binary_sha256": "b2b0c46ba988477f33c2c78e3ff38e693f44656f83de44e1d2761d3890ed881a",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_ou_iii/kalman_ou_iii-sim",
+        "--regression"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE legacy_interval",
+        "RANDOM_SEEDS accel_noise=1234 gyro_noise=5678 mag_noise=9012 accel_initialization=1234 gyro_initialization=5678 mag_initialization=9012"
+      ],
+      "records": 8
+    },
+    {
+      "family": "OU3",
+      "profile": "default",
+      "exit_code": 0,
+      "binary_sha256": "b2b0c46ba988477f33c2c78e3ff38e693f44656f83de44e1d2761d3890ed881a",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_ou_iii/kalman_ou_iii-sim"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE instantaneous_default",
+        "RANDOM_SEEDS accel_noise=1234 gyro_noise=5678 mag_noise=9012 accel_initialization=1234 gyro_initialization=5678 mag_initialization=9012"
+      ],
+      "records": 8
+    },
+    {
+      "family": "TFG",
+      "profile": "legacy",
+      "exit_code": 0,
+      "binary_sha256": "4991be694ed7a1ae284e371c2df73a63d03bfcfc27324a496a3810f872230a4a",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg/kalman_tfg-sim",
+        "--regression"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE legacy_interval",
+        "RANDOM_SEEDS accel_noise=1234 gyro_noise=5678 mag_noise=9012 accel_initialization=1234 gyro_initialization=5678 mag_initialization=9012"
+      ],
+      "records": 8
+    },
+    {
+      "family": "TFG",
+      "profile": "default",
+      "exit_code": 0,
+      "binary_sha256": "4991be694ed7a1ae284e371c2df73a63d03bfcfc27324a496a3810f872230a4a",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg/kalman_tfg-sim"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE instantaneous_default",
+        "RANDOM_SEEDS accel_noise=1234 gyro_noise=5678 mag_noise=9012 accel_initialization=1234 gyro_initialization=5678 mag_initialization=9012"
+      ],
+      "records": 8
+    },
+    {
+      "family": "TFG-CARMA",
+      "profile": "legacy",
+      "exit_code": 0,
+      "binary_sha256": "3703f5b04a2c40ec4236c9da58ea3e1e60b00231a1b50e47e48ea7bfabdd23c5",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg_carma/tfg_carma3-sim",
+        "--regression"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE legacy_interval"
+      ],
+      "records": 8
+    },
+    {
+      "family": "TFG-CARMA",
+      "profile": "default",
+      "exit_code": 0,
+      "binary_sha256": "3703f5b04a2c40ec4236c9da58ea3e1e60b00231a1b50e47e48ea7bfabdd23c5",
+      "command": [
+        "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg_carma/tfg_carma3-sim"
+      ],
+      "protocol_lines": [
+        "GYRO_REPLAY_PROFILE instantaneous_default"
+      ],
+      "records": 8
+    }
+  ],
+  "source_sha256": {
+    "tests/common/GyroReplayContract.h": "2e9784b7f72c9cfa3138cfba59044b69fc7ec2bb87a34722e165cb4fdba4c40f",
+    "tests/kalman_carma/carma3-sim.cpp": "3368488773440b6c76ba6e11eac1a5b6e1f6f1838411d086ee66c0e5a2e3d535",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "3e9a13454f8adf8595921800ab0631a03c57fc689924cdc9b8d58c84e3e2eb3d",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "eb1611fb3b47ee8e82f009c58259fe90bfbd14fe22b7565ee52a5f1a05f73d71",
+    "tests/kalman_tfg_carma/tfg_carma3-sim.cpp": "c3bc9cdfd898960c2a30040ceea021e205378a43be4939516ac6465af1fd3239"
+  },
+  "original_threshold_blocks_equal_to_9018fa4": true,
+  "strict_legacy_admission_checks": 12,
+  "rule": "Original limits retained for legacy; corrected default yaw fixture uses measured maximum plus approximately 0.5%; other original limits retained",
+  "note": "Numerical regression references are not estimation-quality targets; common-old-limit violations retained in native_replay_scores.csv"
+}

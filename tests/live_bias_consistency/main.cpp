@@ -14,7 +14,7 @@ using namespace carma_bench;
 using namespace carma3_bench;
 using VD=Eigen::Vector3d;
 using MD=Eigen::Matrix3d;
-struct Window {double start,end; long n=0,nm=0; VD ba2=VD::Zero();double tilt2=0,att2=0,aw2=0;FiniteMean an,mn,on;long en=0,applied=0;};
+struct Window {double start,end; long n=0,nm=0; VD ba2=VD::Zero();double tilt2=0,att2=0,aw2=0;FiniteMean an{},mn{},on{};long en=0,applied=0;};
 int main(int argc,char** argv) try {
     std::string geometry="qmekf",motion="wave",prefix="run"; Options opt;opt.arm="exact_fixed";int seed=1001;double duration=3600,maglag=0;bool test=false,config_parity=false;
     for(int i=1;i<argc;++i) {std::string k=argv[i];if(k=="--config-parity"){config_parity=true;continue;}if(k=="--parity"){opt.parity=true;continue;}if(k=="--self-test"){test=true;continue;}

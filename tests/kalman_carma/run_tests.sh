@@ -82,5 +82,6 @@ PY
 # these replays; a record above its regression bar fails the run after all
 # eight are scored.
 sim_status=0
+W3D_COLLECT_ALL_GATES=1 ./carma3-sim --regression || sim_status=$?
 W3D_COLLECT_ALL_GATES=1 ./carma3-sim || sim_status=$?
 exit "$sim_status"

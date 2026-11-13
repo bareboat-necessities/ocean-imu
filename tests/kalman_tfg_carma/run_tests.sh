@@ -12,5 +12,6 @@ set -e
 # eight are scored.  The filter's mathematical checks and the paired Monte
 # Carlo comparison live in tests/kalman_carma (tfg_carma3-test, carma3_bench).
 sim_status=0
+W3D_COLLECT_ALL_GATES=1 ./tfg_carma3-sim --regression || sim_status=$?
 W3D_COLLECT_ALL_GATES=1 ./tfg_carma3-sim || sim_status=$?
 exit "$sim_status"

@@ -203,3 +203,16 @@ this is a within-family timing comparison, not retuning between motion models.
 Bare shared-mode replay now uses and gates production defaults. `--regression`
 selects the unchanged historical baseline explicitly. The CSV comparison
 runs both plus the isolated timing-only arm; no baseline threshold is weakened.
+
+Independent CARMA, OU-III, TFG and TFG-CARMA also expose `--regression` for
+the locked historical integrator. Their test scripts run that fixture with
+every original limit and the corrected-default fixture. The report lists the
+distinct yaw references and retains common-limit comparisons. Reproduce with
+`W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0`; run each binary first with
+`--regression`, then without it. Legacy replay rejects `--no-noise`, `--nomag`
+and non-default seeds.
+
+After rendering figures, retain the ignored full-rate `runs/` directory outside
+`reports/results` before checking the published evidence fingerprint: the gate
+intentionally fingerprints every protected results file, including ignored
+files. Restore the directory temporarily for history re-analysis.

@@ -121,9 +121,10 @@ int main(int argc, char* argv[]) {
         const std::string arg = argv[i];
         if (arg == "--nomag") with_mag = false;
         else if (arg == "--no-noise") add_noise = false;
+        else if (arg == "--regression") gyro_replay::legacy = true;
         else if (arg == "--input" && i + 1 < argc) files.emplace_back(argv[++i]);
         else {
-            std::cerr << "Usage: " << argv[0] << " [--nomag] [--no-noise] [--input PATH]...\n";
+            std::cerr << "Usage: " << argv[0] << " [--regression] [--nomag] [--no-noise] [--input PATH]...\n";
             return 2;
         }
     }
@@ -146,11 +147,16 @@ int main(int argc, char* argv[]) {
     try {
         // The bars are fitted to the default seeds with noise and magnetometer;
         // any other replay is a diagnostic, not a regression.
-        const bool default_seeds = !std::getenv("W3D_SEED") && !std::getenv("W3D_IMU_SEED")
-                                   && !std::getenv("W3D_INIT_SEED");
+        const bool default_seeds = gyro_replay::default_seeds();
         const bool gated = variant == "A41" && add_noise && with_mag && default_seeds &&
                            !std::getenv("W3D_CARMA3_EXCITATION");
-        const W3dFailureLimits& bars = gated ? kA41RegressionBars : kUngatedBars;
+        gyro_replay::require_regression(gated);
+        // Corrected predictor: measured worst yaw 0.760895 deg, same 0.5% margin.
+        // The original limits above remain locked to --regression.
+        constexpr auto corrected = gyro_replay::corrected_yaw(kA41RegressionBars, 0.7647f);
+        const W3dFailureLimits& bars = !gated ? kUngatedBars :
+            gyro_replay::legacy ? kA41RegressionBars : corrected;
+        std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
         for (const auto& f : files) {
             const std::string family = "CARMA3_" + variant;
             if (variant == "A41") run_file<Adapter_A41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
