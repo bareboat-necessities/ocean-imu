@@ -123,7 +123,7 @@ Means over 12 seeds; heading is mean RMS.
 |---|---:|---:|
 | Host core mean, median of 4 repeats | 2.680 us | 4.277 us |
 | Host core mean with 25% interval jitter | 4.033 us | 5.732 us |
-| Instructions per step at firmware flags | 245,555 | 124,345 |
+| Instructions per step at firmware flags | 119,827 | 124,077 |
 | ESP32-S3 core object | 12,504 bytes | 14,472 bytes |
 | Matched full AtomS3R application flash | 1,094,467 bytes | 1,029,687 bytes |
 | Full application globals | 31,660 bytes | 31,660 bytes |
@@ -140,7 +140,10 @@ under an instruction counter: x86-64 instructions per 200 Hz step, including
 0.1 s model commits and 25 Hz magnetic updates. It is a deterministic proxy,
 **not** an Xtensa cycle count or a deadline measurement. The TFG sample path
 indexes plain arrays and uses the block structure and symmetry of its
-covariance kernels; the QMEKF cores still use Eigen accessors there.
+covariance kernels (1,121,828 instructions before). The QMEKF cores were
+already block-structured and now index plain storage with unchanged
+arithmetic (245,861 before; bit-identical wrapper traces). At host `-O3`
+the accessors are inline, so that change does not move the host timing rows.
 `sample_path_cost.json` holds the four cores, the command and the numerical
 comparison with the previous kernels: binary64 cores agree to print precision
 over 300 s, the eight gated replay records move by at most 0.02%, and the

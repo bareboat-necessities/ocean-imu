@@ -480,6 +480,14 @@ biases and pitch slightly better.
   implementation (`carma3_analysis.cost_model`, extended: Kronecker motion
   block, paired `Q_R`/`Q_I` additions, commit discretization and the dense
   per-axis re-coordinatization).
+* The sample path indexes the covariance, the gain and the small transition
+  matrices as plain column-major storage: a size-optimized firmware build
+  with Eigen assertions enabled keeps the checked coefficient accessors out
+  of line.  With the timing driver compiled at the firmware's optimization
+  flags and run under an instruction counter (x86-64 instructions per 200 Hz
+  step, not Xtensa cycles; `docs/tfg-carma-shared-modes.md` has the
+  command), A41 takes 76,627 and CSM 119,827
+  (`reports/results/tfg_shared_modes/sample_path_cost.json`).
 * ESP32-S3 sizes: Espressif GCC `esp-14.2.0_20241119`, `-Os`, arduino-esp32
   flags, object of the complete wrapper (`csm_size_probe/build.sh`).  The
   filter object holds `P` (729 floats) and the motion discretization (the

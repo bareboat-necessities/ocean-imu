@@ -1,5 +1,5 @@
 {
-  "scope": "Processor cost of the TFG-CARMA sample path with structured, plain-array covariance kernels. The estimator model, noises, gains, thresholds and public interface are unchanged. Instruction counts and numerical comparisons only: no ESP32 board was connected and no Xtensa code was executed.",
+  "scope": "Processor cost of the CARMA sample paths: the TFG-CARMA cores use structured, plain-array covariance kernels, and the QMEKF CARMA cores index plain storage with unchanged arithmetic. The estimator models, noises, gains, thresholds and public interfaces are unchanged. Instruction counts and numerical comparisons only: no ESP32 board was connected and no Xtensa code was executed.",
   "baseline_revision": "7221db4443de972eb408040fb726376b51e9157b",
   "instruction_proxy": {
     "meaning": "x86-64 instructions per 200 Hz core step, including 0.1 s model commits and 25 Hz magnetic updates, with the firmware's optimization flags and Eigen assertions enabled as in the Arduino build. Deterministic; not Xtensa cycles and not a deadline measurement.",
@@ -16,18 +16,19 @@
         "TCSM": 1121828
       },
       "current": {
-        "A41": 151467,
-        "CSM": 245555,
-        "T41": 68368,
-        "TCSM": 124345
+        "A41": 76627,
+        "CSM": 119827,
+        "T41": 68359,
+        "TCSM": 124077
       }
     },
     "baseline_to_current_ratio": {
-      "A41": 1.04,
-      "CSM": 1.05,
-      "T41": 9.08,
-      "TCSM": 9.02
-    }
+      "A41": 2.05,
+      "CSM": 2.16,
+      "T41": 9.09,
+      "TCSM": 9.04
+    },
+    "current_revision_note": "current: main after the measured-endpoint gyro integration (#746) with the QMEKF storage-access change; baseline: baseline_revision"
   },
   "numerical_equivalence": {
     "binary64_core": {
@@ -136,6 +137,24 @@
         "OU-III",
         "TFG (SeaStateFusionFilter_TFG on the same stream; also with -O2 -mfma -ffp-contract=fast)"
       ]
+    },
+    "qmekf_cores": {
+      "meaning": "The QMEKF CARMA cores changed storage access only. Wrapper traces of tests/kalman_carma_shared_modes/refactor_trace.cpp (600 s, 6,000 printed rows) against the tree before that change.",
+      "bit_identical": [
+        "QMEKF-CARMA",
+        "QMEKF-shared",
+        "OU-III",
+        "TFG-CARMA",
+        "TFG-shared"
+      ],
+      "also_with_compiler_contraction": [
+        "QMEKF-CARMA",
+        "QMEKF-shared"
+      ],
+      "instructions_per_step_before": {
+        "A41": 151834,
+        "CSM": 245861
+      }
     }
   },
   "not_repeated": [
@@ -256,6 +275,51 @@
         "TCSM": {
           "mean_us": 3.834,
           "p99_us": 5.252
+        }
+      }
+    },
+    "qmekf_storage_access": {
+      "meaning": "Median mean time per step in a later session on the tree before #746, the tree before and after the QMEKF storage-access change measured in alternation on one pinned CPU. At -O3 the accessors are already inline, so host time does not change beyond run-to-run variation; host_timing.csv, host_jitter.csv and host_fixed.csv are not re-measured. Absolute times differ between sessions.",
+      "fixed_interval": {
+        "before": {
+          "A41": 1.918,
+          "CSM": 2.965,
+          "T41": 2.512,
+          "TCSM": 4.751
+        },
+        "after": {
+          "A41": 2.004,
+          "CSM": 2.902,
+          "T41": 2.487,
+          "TCSM": 4.818
+        }
+      },
+      "interval_jitter": {
+        "before": {
+          "A41": 1.869,
+          "CSM": 4.288,
+          "T41": 2.478,
+          "TCSM": 5.345
+        },
+        "after": {
+          "A41": 2.54,
+          "CSM": 4.465,
+          "T41": 2.114,
+          "TCSM": 5.811
+        }
+      },
+      "no_model_commits": {
+        "before": {
+          "A41": 1.876,
+          "CSM": 2.803,
+          "T41": 2.327,
+          "TCSM": 4.569
+        },
+        "after": {
+          "A41": 2.024,
+          "CSM": 3.1,
+          "T41": 2.321,
+          "TCSM": 4.581
         }
       }
     }
