@@ -18,6 +18,15 @@ raw CARMA holding defaults broke the historical dense-FD covariance fixture
 Raw holding defaults are restored; the optional Schmidt policy retains its
 independent dense-Joseph audit. The restored CARMA suite passes 74/74.
 
+The broader 820-test source audit exposed two stale carried-history native records
+and the whole-source-tree fingerprint on the native secant diagnostic (class E).
+The invalidated hypothesis was completeness of the first provenance refresh, not
+a mathematical bound. The 240-s and 1200-s histories are genuinely replayed;
+all-time service/admission and theorem flags remain false. The complete native
+secant replay is repeated after freezing source, before rerunning the audit.
+A concurrent local build was killed in `bench_carma3_filters_ou.o` (class E
+resource failure); serial compilation without other compilers is the next check.
+
 The live OU-II/OU-III/TFG and CARMA sample paths now default to measured-endpoint
 gyro integration. OU-III prediction uses the same effective interval rate in
 the mean, gyro-bias Jacobian and covariance kernel. The measurement-only

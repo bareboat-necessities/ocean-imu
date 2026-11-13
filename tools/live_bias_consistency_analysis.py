@@ -184,7 +184,7 @@ def main():
     production_stats.append(dict(filter=f,motion=motion,arm=arm,bias=ci(g.ba_h_rms*1000),tilt=ci(g.tilt_rms),h_nees=ci(g.h_nees),coverage=ci(g.coverage),enabled=ci(g.enabled_fraction),mag_applied=ci(g.mag_applied_fraction)))
    sections.append('| '+motion+'; '+arm+' | '+' | '.join(vals)+' |')
   summary['production_defaults']=production_stats
-  sections+=['','These runs leave Config defaults untouched: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.','']
+  sections+=['','These runs leave sampling and held-bias Config defaults untouched under the common benchmark tuning: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.','']
  if (OUT/'main_rollout_scores.csv').exists():
   q=pd.read_csv(OUT/'main_rollout_scores.csv',dtype={'sensor_hash':str})
   manifest=json.loads((OUT/'main_rollout_manifest.json').read_text())
@@ -231,7 +231,7 @@ def main():
     if profile in ('interval','defaults'):assert (g.exit_code==0).all() and (g.failed_limits=='').all(),'gated replay regressed'
    sections.append('| '+profile+' | '+' | '.join(counts)+' |')
   summary['csv_rollout']=summaries
-  sections+=['','Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` is the actual untouched Config; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.','']
+  sections+=['','Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` retains the actual sampling and held-bias Config defaults; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.','']
  # Covariance diagnostics use serial samples and their actual marginal P.
  fig,axs=plt.subplots(2,2,figsize=(9,5),sharex=True)
  for col,f in enumerate(('qmekf','tfg')):

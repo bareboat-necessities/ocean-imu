@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "a1352aeca23b9e4c1051ef713bf5568440c39ef7"
+      "git_blob_sha": "fdd99fc89e4a64eff18a851737e38dba44c560a0"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "b0fc845779e14521cc71afb324ae0f5dae82a3a5"
+      "git_blob_sha": "b55351cb8dd441bd656e13f106f91ac6f70c5042"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1763,5 +1763,20 @@
     "generator_shipping_behavior_changed_flag_scope": "the diagnostic generator does not alter shipping code; this is not an assertion that this PR leaves runtime unchanged",
     "new_source_uniform_stability_claim": false,
     "theorem_closed": false
+  },
+  "sampling_refresh_followup": {
+    "source_revision": "ad827d450e87ad9dae903978b4dcfc260878b3c0",
+    "class": "E_STALE_EVIDENCE_BINDING",
+    "native_carried_replays_seconds": [
+      240,
+      1200
+    ],
+    "native_secant_columns": 252,
+    "native_secant_epsilons": [
+      0.01,
+      0.005
+    ],
+    "theorem_promoted": false,
+    "note": "Repeated complete native secants after the final OU-II and PII source changes; no hash-only substitution"
   }
 }

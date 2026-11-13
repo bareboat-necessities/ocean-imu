@@ -16,7 +16,7 @@
     "command": "make -C tests/live_bias_consistency EIGEN_DIR=\"$EIGEN_DIR\" && (cd tests/live_bias_consistency && bash run_tests.sh)",
     "exit_code": 0,
     "output": "focused_checks.txt",
-    "binary_sha256": "243e6c9a1b4a8334c5204c986fadd589809da5be44478b29a1ad02783f9b645c"
+    "binary_sha256": "4a96824800dfa3d98280d57ec4f03ccf1b354d0f699d5f180d292eefe33ab915"
   },
   "csv_audit": {
     "inputs": 8,
@@ -82,7 +82,7 @@
   },
   "required_check": {
     "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
-    "status": "serial make all in progress"
+    "status": "serial retry running without overlapping compilers"
   },
   "source_sha256": {
     "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "63a91fa019b3ac6cd0f9a249db891b36aa6e6621917a44ab1ec404aa29aded28",
@@ -112,7 +112,7 @@
     "tests/live_bias_consistency/GyroPredictionChecks.h": "e63ab7f0349c046ac51658bff8b614cb23691b78249febea8a5228f376a81c2c",
     "tests/live_bias_consistency/MainGyroRollout.h": "7d94e189a3896106400def8de0065c563e5919aa2f8ab86afa58ed3215289c9a",
     "tests/live_bias_consistency/Makefile": "b497c2b4b780046f28da961aa3feeddd33f3e83534548a26502abbbfc66a168a",
-    "tests/live_bias_consistency/README.md": "37637ec7b8f74ef3cbd7eabcbbeff50a92addd75c3a888d03bb24d4b6085fee9",
+    "tests/live_bias_consistency/README.md": "18c5cf0f32dfbf482deacdbeda8fdf87b39ff1b0804f06e51cdfe32f4765ddc2",
     "tests/live_bias_consistency/StandardHeaders.h": "0b5df120c68b798448fa15046e1c179f355c827a730c68553d1671165f729390",
     "tests/live_bias_consistency/audit_sensors.cpp": "aaf053eae87511d02cc142de5c10b120b2dceb841d03f91b932b9b4ba7857c89",
     "tests/live_bias_consistency/defaults-ou2-test.cpp": "d8553acebc6cd723b4feb02265f744d1428cc55cf1460e3d27ba0f2bbad1aeae",
@@ -135,7 +135,7 @@
     "tests/live_bias_consistency/tfg.cpp": "25a7ffe9fddbd914674baf2b0a30e8a6d85f700e0989bedeaa631cc46b075490",
     "tests/live_bias_consistency/timing-test.cpp": "aa0f725b09ecb8f2bacc209d9ad21eed082435858af4bbb12b80dc4cdadf03ef",
     "tools/live_bias_consistency.py": "a14a501d1bb7b2a6adbd97c48ba7332f785c4168a1b51b9d77250ffb54f90883",
-    "tools/live_bias_consistency_analysis.py": "a422d3502bac56c0f8554a1ec9832fa6b02df1fb3909f8a1f2487bc7d1a0101a",
+    "tools/live_bias_consistency_analysis.py": "f3911e3e7b6492dae7d69e602538ea33a2e0f8373173b07be2d389ffd6dcf526",
     "tools/live_bias_csv_replay.py": "799e1ff8ec3fda1a16191b9c6e353988bce62a4806e1d32bd724707b1ad61aec",
     "tools/live_bias_csv_timing.py": "55222510ac6e2b63a85666a7cb4d15baf80fb5838aa67a5e567e72bc587d932f",
     "tools/live_bias_window.py": "032ccf4f7390c4ba2bd393d36894dcc51eae9a77fd382d01a614ebeb2f39e8c4",
@@ -177,18 +177,52 @@
     },
     "source_bound_proof_refresh": {
       "exit_code": 0,
-      "command": "python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-refreshed-proof-check.json",
+      "command": "python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-final-proof-check.json",
       "theorem_closed": false,
-      "note": "Actual source diagnostics regenerated before binding refresh; no theorem promotion"
+      "note": "Actual source diagnostics regenerated before binding refresh; no theorem promotion",
+      "source_revision": "ad827d450e87ad9dae903978b4dcfc260878b3c0"
     },
     "full_statistical_evidence": "genuine full branch regeneration queued in GitHub Actions",
-    "followup": "OU-II reinitialization, independent Schmidt selector, finite comparison errors, rollout stream failures/counts/duration admission and non-localized replay admission corrected; focused rerun in progress",
+    "followup": "passed: complete focused run_tests.sh on frozen source ad827d45",
     "carma_lever_arm_full_refresh": {
       "workflow_run": 43347750720,
       "artifact_id": 14003119369,
       "source_head": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
       "contract_checks": 9,
       "prior_summaries_retained": "reports/results/carma_lever_arm_study/baseline-063017d4"
+    },
+    "heave_only": {
+      "exit_code": 0,
+      "command": "make -B -C tests/heave_only build && (cd tests/heave_only && W3D_COLLECT_ALL_GATES=1 bash run_tests.sh)",
+      "thresholds_changed": false
+    },
+    "rollout_fractional_window": {
+      "duration": 201,
+      "start": 150.75,
+      "nees_observations": 50,
+      "exit_code": 0
+    },
+    "rollout_missing_output_parent_exit_code": 1,
+    "Schmidt_selector_defaults_vs_core_start": {
+      "duration_sec": 180,
+      "noise": "schmidt",
+      "max_numeric_score_difference": 0.0
+    },
+    "source_bound_proof_followup_units": {
+      "exit_code": 0,
+      "tests": 12,
+      "command": "python3 -m unittest tests.validation.test_ou3_moving_quiet_compatibility tests.validation.test_ou3_provenance"
+    },
+    "rollout_short_duration_admission": "passed: 201 s / 150.75 s cohort rejected before full-study publication",
+    "replay_without_localization_admission": "passed: interval/instantaneous/defaults accepted; missing optional profiles skipped",
+    "main_rollout_rerun": {
+      "exit_code": 0,
+      "filter_runs": 36,
+      "duration_sec": 7200,
+      "score_start_sec": 5400,
+      "nees_count_each": 1800,
+      "all_scored_NIS_values_finite": true,
+      "max_difference_in_original_numerical_metrics": 0.0
     }
   },
   "resource_build_failure": {
@@ -198,5 +232,11 @@
     "action": "retry serially after the evidence generators finish"
   },
   "new_default_comparison": "complete: 48 production, 96 production_recovery and 36 main_rollout runs; six paired seeds",
-  "source_revision": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a"
+  "source_revision": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
+  "resource_build_failure_followup": {
+    "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
+    "failed_target": "tests/kalman_carma_shared_modes/bench_carma3_filters_ou.o",
+    "reason": "cc1plus killed during overlapping independent compilers",
+    "retry": "serial compiler pipeline after all focused/proof compilations finish"
+  }
 }

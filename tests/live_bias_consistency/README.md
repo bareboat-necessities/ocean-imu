@@ -190,7 +190,7 @@ these actual defaults, keeping covariance and physical histories continuous.
 NLO gets the same default reference-path check; PII retains endpoint feedback by default after a heave replay regression, and its optional centered path gets a reference check. NLO's handoff test requires the first
 live attitude to equal the current bootstrap seed, without a second prediction.
 
-`production` uses unmodified live Config defaults (core centering, endpoint
+`production` uses the unmodified sampling/held-bias Config defaults with common benchmark tuning (core centering, endpoint
 frontend, legacy holding), for six seeds of wave/rocking and labelled oracle controls. `main_gyro_rollout`
 runs OU-II, OU-III and TFG on identical continuous constant-yaw wave histories;
 each run steps both an explicit interval-rate control and the actual default

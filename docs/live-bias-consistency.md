@@ -318,7 +318,7 @@ These rows distinguish actual bias recovery from corrected covariance handling; 
 | wave; oracle | 1.70 [1.49, 1.92] | 1.70 [1.48, 1.93] |
 | rocking; exact_fixed | 2.16 [1.69, 2.63] | 2.16 [1.69, 2.63] |
 
-These runs leave Config defaults untouched: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.
+These runs leave sampling and held-bias Config defaults untouched under the common benchmark tuning: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.
 
 | Other live filters: acquired reference, unknown acceleration | Legacy RMS | Default RMS | Paired default minus legacy |
 | --- | ---: | ---: | ---: |
@@ -340,7 +340,7 @@ Six paired seeds, 7200 s each, scoring 5400–7200 s. Each legacy/default pair c
 | core_schmidt | 3/8 | 3/8 |
 | both_schmidt | 3/8 | 3/8 |
 
-Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` is the actual untouched Config; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.
+Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` retains the actual sampling and held-bias Config defaults; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.
 
 ![Covariance consistency and nuisance conditioning](../reports/results/live_bias_consistency/figures/covariance_diagnostics.svg)
 The variance ratio is a posterior-covariance diagnostic, not an observability Gramian.

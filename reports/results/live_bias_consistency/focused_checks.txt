@@ -12,7 +12,7 @@ OU-III actual defaults q_error=0 P_error=0 PASS
 OU-III optional frontend q_error=0 P_error=0 PASS
 TFG actual defaults q_error=0 P_error=0 PASS
 TFG optional frontend q_error=0 P_error=0 PASS
-NLO and PII default sampling and NLO handoff PASS
+NLO default, PII optional centered sampling and NLO handoff PASS
 core mode and exposure survive both reinitialization APIs PASS
 finite-only diagnostic means PASS
 OU-III malformed-packet startup/live control PASS
