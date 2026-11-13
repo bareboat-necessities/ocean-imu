@@ -17,6 +17,7 @@
 
 #include "util/W3dSimCommon.h"
 #include "../common/GyroReplayContract.h"
+#include "../common/CurrentReplayLimits.h"
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 using namespace ocean_imu::ou3;
 
@@ -721,10 +722,9 @@ static void process_wave_file_for_tracker(const std::string& filename,
     if (validation_window_sec > 0.0f) {
         print_validation_metrics(*result, dt, validation_window_sec, "OU_III");
     }
-    // Corrected worst yaw 0.824166 deg; original fixture and limits are retained.
-    constexpr auto corrected = gyro_replay::corrected_yaw(FAIL_LIMITS, 0.82829f);
+    // Historical interval-rate fixtures and current production gates are separate.
     print_summary_and_fail_if_needed(*result, dt,
-        gyro_replay::legacy ? FAIL_LIMITS : corrected, SUMMARY_LABELS);
+        gyro_replay::legacy ? FAIL_LIMITS : ocean_imu::sim::current_limits::ou3, SUMMARY_LABELS);
 }
 
 int main(int argc, char* argv[]) {

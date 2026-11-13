@@ -25,7 +25,7 @@ HEADERS = \
 	$(REPO_ROOT)/src/wave_dir/WaveDirectionReport.h \
 	$(REPO_ROOT)/src/detrend/AdaptiveWaveDetrender.h
 
-TARGETS = ins-helpers-test
+TARGETS = ins-helpers-test replay-gates-test
 
 all: build test
 build: $(TARGETS)
@@ -34,6 +34,9 @@ test: $(TARGETS)
 
 ins-helpers-test: ins-helpers-test.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $<
+
+replay-gates-test: replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(REPO_ROOT)/src/util/W3dSimCommon.h
+	$(CXX) $(CXXFLAGS) -o $@ replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp
 
 clean:
 	rm -f $(TARGETS) $(addsuffix .exe,$(TARGETS)) *.o

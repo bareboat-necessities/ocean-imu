@@ -41,7 +41,7 @@ def main() -> None:
     assert {r['input'] for r in parsed} == set(REFERENCE_CSV_SHA256)
     assert all(r['samples'] == '180000' and r['window_s'] == '900' for r in parsed)
 
-    # Production defaults must meet all eight original numeric bars as well.
+    # Production defaults must meet their current, tighter numeric bars.
     current = subprocess.run([str(binary)], cwd=HERE,
                              env={**env, 'W3D_WRITE_TIMESERIES': '0'}, text=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -50,7 +50,8 @@ def main() -> None:
     assert 'CSM_GYRO_INPUT convention=defaults schmidt_hold=0' in current.stdout
     assert current.stdout.count('QUALITY_GATE: PASS=1 REASON=ok') == 8
     assert 'REPLAY_COMPLETE: records=8 gated=1' in current.stdout
-    print('TFG production defaults: all eight unchanged numeric gates pass.', flush=True)
+    print(current.stdout, end='', flush=True)
+    print('TFG production defaults: all eight current numeric gates pass.', flush=True)
 
     with tempfile.TemporaryDirectory(prefix='tfg-shared-gates-') as tmp:
         work = Path(tmp)

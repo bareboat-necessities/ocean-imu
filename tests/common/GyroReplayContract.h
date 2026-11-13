@@ -22,9 +22,5 @@ inline void require_regression(bool default_protocol) {
     if (legacy && !default_protocol)
         throw std::invalid_argument("--regression requires default seeds, noise, magnetometer and variant");
 }
-template<class Limits> constexpr Limits corrected_yaw(Limits original, float yaw_deg) {
-    original.err_limit_yaw_deg = yaw_deg;
-    return original;
-}
 inline const char* name() { return legacy ? "legacy_interval" : "instantaneous_default"; }
 }

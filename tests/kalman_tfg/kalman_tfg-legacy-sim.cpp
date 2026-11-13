@@ -25,6 +25,7 @@
 #endif
 
 #include "util/W3dSimCommon.h"
+#include "../common/CurrentReplayLimits.h"
 #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
 
 using Eigen::Quaternionf;
@@ -123,23 +124,11 @@ void process_one(const std::string& filename,
         print_validation_metrics(*result, dt, validation_window_sec, "TFG_LEGACY");
     }
 
-    // These are the pre-PR deterministic TFG bars.  This executable is an
-    // ablation/comparison instrument, so callers normally leave
-    // W3D_COLLECT_ALL_GATES unset; the bars still make regressions visible in
-    // the log without converting expected comparison differences into CI
-    // failures.
-    static constexpr W3dFailureLimits kOldBars{
-        .err_limit_percent_z_jonswap   = 4.812f,
-        .err_limit_percent_z_pmstokes  = 4.71f,
-        .err_limit_yaw_deg             = 1.352f,
-        .err_limit_percent_3d_jonswap  = 20.43f,
-        .err_limit_percent_3d_pmstokes = 19.64f,
-        .acc_z_bias_percent            = 5.12f,
-        .bias_3d_percent               = 164.9f,
-    };
+    // LegacyCubic is a separate estimator configuration with its own
+    // measured default-seed bars, independent of SpectralMSE's envelope.
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
-    print_summary_and_fail_if_needed(*result, dt, kOldBars, kLabels);
+    print_summary_and_fail_if_needed(*result, dt, ocean_imu::sim::current_limits::tfg_legacy, kLabels);
 }
 
 }  // namespace

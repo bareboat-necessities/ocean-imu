@@ -33,28 +33,27 @@ static constexpr float RMS_WINDOW_SEC = 900.0f;
 static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 
 // RAW (not de-meaned) Z-RMS regression limits for the pinned 28 ft vessel
-// dataset and the trailing 900 s window. Keep the low-wave PM/Stokes allowance
-// separate: at Hs=0.27 m its 7.52444% baseline is 20.316 mm, only 1.065 mm
-// above the 7.13% larger-sea limit. A 0.5% relative margin, rounded upward to
-// hundredths, gives 7.57%. All JONSWAP and larger PM/Stokes limits stay fixed.
+// dataset and the trailing 900 s window, main a053a1d2. Measured maxima:
+// JONSWAP 6.93681%, low-wave PM/Stokes 7.32231%, other PM/Stokes 6.98315%.
+// Keep their separate envelopes; add 0.5% relative and round up to hundredths.
 static constexpr float vertical_rms_limit_percent(WaveType wave_type, float hs)
 {
-    if (wave_type == WaveType::JONSWAP) return 7.26f;
-    if (wave_type == WaveType::PMSTOKES && hs > 0.0f && hs <= 0.30f) return 7.57f;
-    return 7.13f;
+    if (wave_type == WaveType::JONSWAP) return 6.98f;
+    if (wave_type == WaveType::PMSTOKES && hs > 0.0f && hs <= 0.30f) return 7.36f;
+    return 7.02f;
 }
 
 // Compile-time regressions protect the scope and strict breach comparison.
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f) == 7.57f);
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.30f) == 7.57f);
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.31f) == 7.13f);
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f) == 7.13f);
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 8.50f) == 7.13f);
-static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 0.27f) == 7.26f);
-static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 8.50f) == 7.26f);
-static_assert(7.52444f < vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
-static_assert(7.58f > vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
-static_assert(7.14f > vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f));
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f) == 7.36f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.30f) == 7.36f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.31f) == 7.02f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f) == 7.02f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 8.50f) == 7.02f);
+static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 0.27f) == 6.98f);
+static_assert(vertical_rms_limit_percent(WaveType::JONSWAP, 8.50f) == 6.98f);
+static_assert(7.32231f < vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(7.37f > vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(7.03f > vertical_rms_limit_percent(WaveType::PMSTOKES, 1.50f));
 
 class FusionAdapterTimeVarGainNLO_NoGnssNoMag final
     : public IW3dFusionAdapterTyped<TvgNloFilterSnapshot> {
@@ -393,7 +392,12 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
         }
     }
 
-    if (n_z == 0) return;
+    if (n_z != result.errs_z.size() - start) {
+        std::cerr << "ERROR: nonfinite scored NLO heave error. Failing.\n";
+        any_vertical_gate_failed = true;
+        if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
+        return;
+    }
 
     mean_z_err /= static_cast<float>(n_z);
 
@@ -416,7 +420,7 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
     const float z_limit = vertical_rms_limit_percent(
         result.wave_type, result.wave_params.height);
 
-    if (z_pct > z_limit) {
+    if (!(z_pct <= z_limit)) {
         std::cerr << "ERROR: raw Z RMS above limit (" << z_pct << "% > "
                   << z_limit << "%). Mean Z error was " << mean_z_err
                   << " m. Failing.\n";

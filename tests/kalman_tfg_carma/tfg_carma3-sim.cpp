@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "../kalman_carma/carma3/SimAdapters.h"
+#include "../common/CurrentReplayLimits.h"
 
 namespace {
 
@@ -115,10 +116,8 @@ int main(int argc, char* argv[]) {
         const bool default_seeds = gyro_replay::default_seeds();
         const bool gated = variant == "T41" && add_noise && with_mag && default_seeds;
         gyro_replay::require_regression(gated);
-        // Corrected worst yaw 0.769657 deg, with the same 0.5% margin rule.
-        constexpr auto corrected = gyro_replay::corrected_yaw(kT41RegressionBars, 0.77351f);
         const W3dFailureLimits& bars = !gated ? kUngatedBars :
-            gyro_replay::legacy ? kT41RegressionBars : corrected;
+            gyro_replay::legacy ? kT41RegressionBars : ocean_imu::sim::current_limits::tcarma;
         std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
         for (const auto& f : files) {
             const std::string family = "TFG_CARMA3_" + variant;

@@ -124,7 +124,7 @@ struct HeaveLimits { float jonswap; float pmstokes; };
 constexpr HeaveLimits PII_LIMITS{7.55f, 8.80f};           // worst 7.51 / 8.75 (H8.5)
 constexpr HeaveLimits GODHAVN_LIMITS{356.8f, 388.4f};     // worst 355.0 / 386.4 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_LIMITS{22.50f, 28.77f}; // worst 22.39 / 28.63 (H8.5)
-constexpr HeaveLimits KUCHLER_LIMITS{15.66f, 18.96f};     // worst 15.58 / 18.87 (H8.5)
+constexpr HeaveLimits KUCHLER_LIMITS{15.66f, 17.50f};     // current worst 15.5707 / 17.4088 (H8.5)
 constexpr HeaveLimits RICHTER_ZD_LIMITS{19.21f, 24.68f};    // worst 19.11 / 24.56 (H8.5)
 // Shared proxy Mahony (--frontend proxy).
 constexpr HeaveLimits PII_PROXY_LIMITS{6.02f, 5.90f};          // worst 5.99 / 5.87
@@ -135,7 +135,7 @@ constexpr HeaveLimits RICHTER_ZD_PROXY_LIMITS{5.34f, 5.78f};    // worst 5.31 / 
 // Ideal vertical reference (--frontend truth).
 constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
 constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{9.03f, 9.70f};  // worst 8.98 / 9.65 (H8.5)
-constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.23f};    // worst 16.53 / 20.12 (H8.5)
+constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.13f};    // current worst 16.5265 / 20.0231 (H8.5)
 constexpr HeaveLimits RICHTER_ZD_TRUTH_LIMITS{5.21f, 5.36f};   // worst 5.18 / 5.33
 
 template <Method M>
