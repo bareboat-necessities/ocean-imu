@@ -168,6 +168,24 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
+The experimental QMEKF CARMA cores index plain storage in their sample-path
+loops (`src/kalman_carma/Kalman3D_Wave_CARMA3.h`, `CarmaCoupledMotion.h`,
+`src/kalman_carma_shared_modes/CarmaSharedModesMotion.h`) with every
+arithmetic expression and its order unchanged; the fail-closed validator
+rejected the native secants' `shipping_source_tree_sha256`. Failed quantity:
+source provenance only; classification E. Evidence: none of the three files is
+in the shipping OU-III dependency closure; the diagnostic regenerated with
+g++ 13.3.0 reproduces both native byte hashes and every field except that
+digest (run summaries to 4.4e-16, host library round-off); the QMEKF-CARMA,
+QMEKF-shared, TFG-CARMA, TFG-shared and OU-III wrapper traces are
+bit-identical to the previous tree, the two QMEKF wrappers also with compiler
+contraction enabled. Structures preserved: every shipping operation, constant
+and chronology, bit for bit. Relaxations introduced: none. Rebound: the
+digest, the secant report's blob and this ledger's blob. No proof flag,
+payload or OPEN dependency changes; the current limiter and next experiment
+are unchanged.
+
 **E — TFG-CARMA sample-path kernels rebound the whole-`src/` digest.** The
 experimental TFG-CARMA covariance prediction, reset transport, process-noise
 quadrature and group injection were restructured for processor load in

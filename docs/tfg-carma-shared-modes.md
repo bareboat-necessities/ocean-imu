@@ -261,6 +261,8 @@ callgrind_annotate --inclusive=yes /tmp/timing-os.out | grep 'void run<'
 Each `run<Core>` line divided by 8000 (four repetitions of 2000 samples) is
 the instruction count of one 200 Hz step with 0.1 s model commits and 25 Hz
 magnetic updates; `sample_path_cost.json` records it for the four cores.
+The QMEKF CARMA cores index plain storage in the same loops with unchanged
+arithmetic, so their wrapper traces are bit-identical to the accessor form.
 
 The Xtensa probe covers all four factorial cores. Its stack-chain result is
 a compiler-derived lower bound, not an observed peak stack. Code/literal and

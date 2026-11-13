@@ -608,7 +608,10 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   plausible (the multiply-add counts are the layout-independent comparison)
   but not measured.  The size of the gap is not robust: the unchanged
   OU-III filter's host time depends on how GCC compiles the benchmark
-  adapter's translation unit.
+  adapter's translation unit.  The CARMA3 times are those of the study's
+  executable; its sample-path loops have since moved to plain storage
+  access with unchanged arithmetic, which only lowers them
+  (`reports/results/tfg_shared_modes/sample_path_cost.json`).
 * **ESP32-S3 numbers** are from the target compiler (Espressif Xtensa GCC
   14.2.0, `-Os`, arduino-esp32 flags) on one translation unit per variant
   holding the complete fusion wrapper's sample path
