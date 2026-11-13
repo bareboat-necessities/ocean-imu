@@ -1,5 +1,18 @@
 # OU-III proof research state
 
+Post-merge CI source-binding repair (class E): run 43501064300 completed the
+full OU/robustness and TFG studies, then failed publication on the native secant
+whole-src digest. The only src change since a053a1d2 is W3dSimCommon.cpp, outside
+the compiler -MM closure of planar_native_secant_probe.cpp. Every probe closure
+file is byte-identical; the original whole-src digest was independently
+reconstructed from that commit before refreshing identity metadata. No replay
+is claimed. Native results/byte hashes and all theorem/qualification flags are
+retained. Structures preserved: complete original diagnostic execution and
+shipping operations. Relaxations introduced: none. This repairs source identity,
+not a mathematical inequality; theorem completion and existing physical-service
+limiters remain open. Next falsifiable check: proof provenance and all evidence
+tests against the refreshed binding, followed by CI publication of fresh bundles.
+
 ## Gyro-sampling runtime rollout
 
 Finite rollout selection: simultaneous frontend centering plus Schmidt holding
