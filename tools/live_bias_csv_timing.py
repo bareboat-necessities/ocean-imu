@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Audit the actual pinned CSV clock and gyro sampling representation."""
-from pathlib import Path
 import json
 import numpy as np
 import pandas as pd

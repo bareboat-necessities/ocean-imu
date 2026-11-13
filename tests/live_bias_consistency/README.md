@@ -61,11 +61,15 @@ python tools/live_bias_consistency.py --stage late_recovery --noise schmidt \
   --label late_recovery --jobs 6
 python tools/live_bias_consistency.py --stage calibration --jobs 4
 python tools/live_bias_consistency.py --stage combined --jobs 3
+python tools/live_bias_consistency.py --stage production --jobs 3
+python tools/live_bias_consistency.py --stage production_recovery --jobs 4
+python tools/main_gyro_rollout.py --jobs 3
 python tools/live_bias_consistency.py --stage startup --jobs 2
 python tools/live_bias_consistency.py --stage latency --jobs 2
 OPENBLAS_NUM_THREADS=1 python tools/live_bias_window_batch.py --jobs 2
 python tools/live_bias_csv_timing.py
 python tools/live_bias_csv_replay.py --jobs 2
+python tools/live_bias_csv_replay.py --all-records --localize --jobs 4
 python tools/live_bias_consistency_analysis.py
 ```
 
@@ -165,3 +169,37 @@ This is labelled diagnostic (`GATED=0`); `--regression` requires the unchanged
 baseline contract. Rounded CSV timestamps are audited by
 `live_bias_csv_timing.py`; fixed index cadence is authoritative for the pinned
 records. An irregular/dropped real recording needs actual acquisition timing.
+
+
+## Live defaults and broader rollout
+
+OU-II, OU-III, TFG, CARMA/shared-mode, NLO and PII live paths default to
+instantaneous sampling. Their Config exposes `gyro_sample_mode`; select
+`IntervalRate` explicitly for interval averages/preintegrated inputs. Native
+Kalman `time_update` mathematical kernels keep their interval-rate compatibility
+contract; normal live wrappers set the corrected mode automatically. The marine frontend retains its endpoint integration by default, with a separate
+`frontend_gyro_sample_mode` diagnostic selector. Held-bias policies retain their
+existing defaults; CARMA Schmidt handling is an explicit audited option.
+
+The extended focused tests run independent multi-axis rotation/covariance
+checks through native OU-II/OU-III/TFG. Whole-wrapper interval references cover
+constant-rate default startup and the optional centered frontend under changing
+rotation; samplewise Config/setter parity checks the selected default path.
+`production_recovery` repeats the one-hour injections/reference repair with
+these actual defaults, keeping covariance and physical histories continuous.
+NLO/PII get the same reference-path check. NLO's handoff test requires the first
+live attitude to equal the current bootstrap seed, without a second prediction.
+
+`production` uses unmodified live Config defaults (core centering, endpoint
+frontend, legacy holding), for six seeds of wave/rocking and labelled oracle controls. `main_gyro_rollout`
+runs OU-II, OU-III and TFG on identical continuous constant-yaw wave histories;
+each run steps both an explicit interval-rate control and the actual default
+wrapper on the same sensor samples. It uses the shared `CarmaBenchTruth` and
+sensor-noise infrastructure, keeps the acquired magnetic reference, fixes the
+correct zero hard iron, and never supplies acceleration or attitude truth to
+estimation. Runs last 7200 s and score 5400–7200 s. Family priors are retained;
+this is a within-family timing comparison, not retuning between motion models.
+
+Bare shared-mode replay now uses and gates production defaults. `--regression`
+selects the unchanged historical baseline explicitly. The CSV comparison
+runs both plus the isolated timing-only arm; no baseline threshold is weakened.

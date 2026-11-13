@@ -6,11 +6,19 @@
   "host_compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
   "python": "3.12.14",
   "eigen_header_sha256": "b8ae5f77a30d48bcaf622a56f7047baa8b2fb790f5db7361aa1d57f424fa3c1e",
-  "timing_scope": "single thread pinned to one allowed CPU, other live repository jobs temporarily excluded from that CPU; core only; no FTZ; three interleaved 120-second simulated repetitions; scheduling tails retained; no device inference",
-  "timing_affinity_cpu": 8,
+  "timing_scope": "host_timing below; the other fields describe the registered study execution",
   "validation_dependencies": {
     "mpmath": "1.3.0",
     "cmake": "3.31.6",
     "Eigen_discovery_environment": "EIGEN_INCLUDE_DIR points to the same Eigen root used by make"
+  },
+  "host_timing": {
+    "os": "Linux-6.18.44-fc-v378-x86_64-with-glibc2.39",
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+    "logical_cpus": 4,
+    "host_compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+    "affinity_cpu": 3,
+    "scope": "single thread pinned to one CPU of an otherwise idle 4-CPU container; core only; no FTZ; four repetitions of 120 simulated seconds, each core once in every execution position; scheduling tails retained; no device inference",
+    "binary_sha256": "df9f1ad8c1a8b156895140e55dfe5e85f47202694fdfcad187ebb3455b1a780f"
   }
 }

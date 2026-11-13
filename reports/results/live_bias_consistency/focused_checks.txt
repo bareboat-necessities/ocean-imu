@@ -2,6 +2,21 @@ QMEKF centered bias Jacobian error=8.26374e-12
 QMEKF endpoint=0.0114632 centered=9.1787e-05 half_step=2.29478e-05 irregular_and_drops=5.77805e-05 delta_angle=8.44866e-16
 TFG endpoint=0.0114632 centered=9.1787e-05 half_step=2.29478e-05 irregular_and_drops=5.77805e-05 delta_angle=3.76493e-15
 timing tests PASS
+OU-II endpoint=0.0114632 centered=9.1787e-05 half_step=2.29478e-05 irregular_and_drops=5.77805e-05 delta_angle=7.92645e-16
+OU-III endpoint=0.0114632 centered=9.1787e-05 half_step=2.29478e-05 irregular_and_drops=5.77805e-05 delta_angle=7.92645e-16
+TFG-OU endpoint=0.0114632 centered=9.1787e-05 half_step=2.29478e-05 irregular_and_drops=5.77805e-05 delta_angle=3.21697e-15
+main-filter timing tests PASS
+OU-II actual defaults q_error=0 P_error=0 PASS
+OU-II optional frontend q_error=0 P_error=0 PASS
+OU-III actual defaults q_error=0 P_error=0 PASS
+OU-III optional frontend q_error=0 P_error=0 PASS
+TFG actual defaults q_error=0 P_error=0 PASS
+TFG optional frontend q_error=0 P_error=0 PASS
+NLO and PII default sampling and NLO handoff PASS
+core mode and exposure survive both reinitialization APIs PASS
+finite-only diagnostic means PASS
+OU-III malformed-packet startup/live control PASS
+CARMA shared malformed-packet startup/live control PASS
 QMEKF Schmidt covariance vs dense Joseph error=1.0941e-18 PASS
 TFG Schmidt covariance vs dense Joseph error=8.76685e-19 PASS
 {'variable_dt': False, 'fixed_exposure': False, 'largest_actual_to_bound': np.float64(0.9766191709844553), 'actual_to_naive_half_noise': np.float64(1.8344282238442808)}
@@ -13,5 +28,10 @@ oracle Jacobian, correction direction and covariance PASS
 oracle Jacobian, correction direction and covariance PASS
 samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=1
 samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0
+samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0
 samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=1
 samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0
+samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0
+paired samples=36000 sensor_hash=d7d03b57361a438d
+paired samples=36000 sensor_hash=d7d03b57361a438d
+paired samples=36000 sensor_hash=d7d03b57361a438d

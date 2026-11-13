@@ -1,6 +1,6 @@
 {
   "baseline": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
-  "parent_main": "4cd80215006523861da06ee55a78801880347a0f",
+  "parent_main": "063017d44e3c422621a7f7b260f950cacb43a616",
   "main_source_delta": [],
   "python": "3.12.14",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
@@ -35,7 +35,20 @@
     "default_gyro_convention": "IntervalRate",
     "default_schmidt_hold": false,
     "truth_oracles": "explicit diagnostic arms only",
-    "hardware_timing_qualified": false
+    "hardware_timing_qualified": false,
+    "default_live_gyro_convention": "Instantaneous",
+    "default_frontend_gyro_rule": "endpoint",
+    "raw_kernel_gyro_convention": "IntervalRate",
+    "default_schmidt_hold_carma": false,
+    "rollout_families": [
+      "OU2",
+      "OU3",
+      "TFG",
+      "CARMA",
+      "shared-mode CARMA",
+      "NLO",
+      "PII"
+    ]
   },
   "research": {
     "independent_seeds": 6,
@@ -69,38 +82,66 @@
   },
   "required_check": {
     "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
-    "status": "running"
+    "status": "serial_retry_required_after_resource_failure"
   },
   "source_sha256": {
-    "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "3190b3c07a7e600b80503c017aae9173f5e833721fb503134a2a1aa6c6e3e06e",
-    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "e5e2c6a50c6e2409ffa0c0c9a907135cdb98819156bd12bfcc2a1f795da2014b",
-    "src/kalman_carma/SeaStateFusionFilter_CARMA3.h": "dc5615f007fc73f7347305552a744322ea68e5fe1b052466ce01a490a82d6179",
+    "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "63a91fa019b3ac6cd0f9a249db891b36aa6e6621917a44ab1ec404aa29aded28",
+    "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h": "6f00745e6680a535c810b5623a9ea2c0725b10761cf497eb4e761341390e92ea",
+    "src/kalman_carma/SeaStateFusionFilter_CARMA3.h": "9d64c52e4212445efc82df1336a4c1271c7b98f6e69b9997b6f222ea762c60e7",
     "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h": "dd51df2e100db3ff6d19eb6d6d01f4ac459e534ebeed2292094122bf7de8fdc6",
     "src/kalman_carma_shared_modes/SharedModesEstimator.h": "0c2630b815d9bb787463050ff6d681bba4734286874156b592dda0907c9ac1ce",
-    "src/kalman_common/GyroInterval.h": "0739b1764f7950db37f3c9670d86ca3d1f6007f2cc0ce8e5a930310e2b358a19",
-    "src/kalman_common/ProxyStartupFusion.h": "3733671802221c4d5ff3d9c2ad943cfa4269919b2009aee5207117de7398a3b4",
-    "tests/common/SharedModesReplay.h": "f46dd9f76076bfac1c590a1c454b09d49d08afa40a1439a978e84d4afd4031b1",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MarineWaveFrontEnd.h": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
+    "src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
+    "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": "267a1886931cf36eedd1db9a55498493e0b700a9c2a888ec3b6f99cd1755e4e4",
+    "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "debb06ba1c75a3bb2ceac097494bd32c77bff734d33bcb09eae3a90772361c59",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "549a541e14cb544e39b9c513fd073526f752fdc4525a4b6846a4165aa114f622",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "6250cb51948718e8a2f4962bfec5a92a8e855efe60d7d4c7ae7f7f8585244ede",
+    "src/nlo/TimeVarGainNLO_Adapter.h": "9f95aa26e1345da1488ef4febc93f1ce6060bed28319a431eb12bd9d1c4d5e21",
+    "src/pii_observer/AdaptiveVerticalPIIMahony.h": "72aa474cfe0f4a4e650931d92cca1c4fad4af11e53e0250e47f74460ef239cfb",
+    "tests/common/FiniteMean.h": "2e55e0c80980a47ec7612755adce3063cece6b06a84767af55c8b304a02b3dc5",
+    "tests/common/SharedModesReplay.h": "32618c3b5906895964f2e1245c1c66e7b45316ebaffb117a04252d74b19a1d2f",
     "tests/kalman_carma/CarmaBenchTruth.h": "41aa544c28f8bff7a2da6ea790b93fe32704e06507e141c19d46ceacff4c7bad",
-    "tests/kalman_tfg_shared_modes/regression_checks.py": "69835071553abef5227a8ce05c383bac8a9a88b9df5941f7bf6d0739fe3f657e",
-    "tests/live_bias_consistency/Adapter.h": "752c72de9e63d03315a4821be65b7773d02fa85a1481a3d6f0b99c4fc167f16c",
+    "tests/kalman_carma_shared_modes/run_tests.sh": "80017438ac0934add72b2de2758d2f99c3fd4efc1aba3e3bc23088fe834d91d9",
+    "tests/kalman_tfg_shared_modes/regression_checks.py": "14e56de5087725fd4c802604ba9c7603103a272c4b097d5addcf1e2b147e6783",
+    "tests/live_bias_consistency/Adapter.h": "a508281a4fc2e88156419f65deda2b3a9d4cfecbe41376d8d49579e4102533ae",
+    "tests/live_bias_consistency/DefaultSamplingChecks.h": "bb502e2a2380ae3c2c2257054a000e4a4f700769a2e3bb75f3becb16b5bb332e",
     "tests/live_bias_consistency/Experiment.h": "ab30e8d02a661c1242445f404b5b14170c426c1d4fe41f3abcc238d51d3fe7f8",
-    "tests/live_bias_consistency/Makefile": "0fe81d30cbc00542191396b1cfbe0f4c8e830fd434e40f6f710ef32f7dd12208",
-    "tests/live_bias_consistency/README.md": "5259fea8db1bc18355feca38cac0d9ab164f8185bd9c2c04342a8ae3905f0299",
+    "tests/live_bias_consistency/GyroPredictionChecks.h": "8aec934d106348f934245a6afbe3bd04bdbd86c42410c6e8a5d32e2c42844096",
+    "tests/live_bias_consistency/MainGyroRollout.h": "7ddb3e8f3ae82420862039eebbde1a73a21b4053d896f34c881856a460d2c4aa",
+    "tests/live_bias_consistency/Makefile": "e89a28a0b6aa671ed5bd58afe3ecbc164960e011ba7ec0efa058ffa2b1f55e42",
+    "tests/live_bias_consistency/README.md": "2b8622d69ba9ef64bfcd54d3db83b8a48d87ce5062be09429cb19450319b8c21",
     "tests/live_bias_consistency/StandardHeaders.h": "0b5df120c68b798448fa15046e1c179f355c827a730c68553d1671165f729390",
-    "tests/live_bias_consistency/audit_sensors.cpp": "9074c2561fd2dab003f086909330354adb8492c4855cc34353bec90cae1b4a52",
-    "tests/live_bias_consistency/main.cpp": "846f350ddb9c49f09dd095ad0fae067ce2707a5b859e7b93c00bcbb23875d689",
+    "tests/live_bias_consistency/audit_sensors.cpp": "aaf053eae87511d02cc142de5c10b120b2dceb841d03f91b932b9b4ba7857c89",
+    "tests/live_bias_consistency/defaults-ou2-test.cpp": "f37683c456ec62835890e9a70274bb727a0be4c42db3cc8854bf603173fbdc26",
+    "tests/live_bias_consistency/defaults-ou3-test.cpp": "d25079665bf841f44acca7a6e48583f14da6e3d068a5a16a703eeefd0a7fd00c",
+    "tests/live_bias_consistency/defaults-tfg-test.cpp": "644f13e7fce26066cd9aded956e96eb6d8660fc43cf638c205a932421ea1c999",
+    "tests/live_bias_consistency/finite-mean-test.cpp": "ced6907fe024c999a87274b262293f51c03fa0588b4c8db74962e3fce597de44",
+    "tests/live_bias_consistency/main-filter-timing-test.cpp": "3c06e8326794632a3002735f1156fc845a856200d79b1e84a7bfab98b1cd27a8",
+    "tests/live_bias_consistency/main-gyro-ou2.cpp": "e154ee5cb24ce4012ea3d7ad25b10281059dfe9cb0292bdc1b3bea5d60fd5808",
+    "tests/live_bias_consistency/main-gyro-ou3.cpp": "1da0c8ec6a7848a14bc58bac54f8305adaf586b6f88a1c0bb27c005e8e00c1fd",
+    "tests/live_bias_consistency/main-gyro-rollout.cpp": "ed52a8e4a2c22b5a9563dad898e4782aab1d8c8e6dbfa9ce13d077cdcdabf79d",
+    "tests/live_bias_consistency/main-gyro-tfg.cpp": "7c7def7ba09aaf4c2c5e299651668d4c0944deea92f26cc56995e9b77eed554b",
+    "tests/live_bias_consistency/main.cpp": "7c02b7c01f198dcd189d3cbbabb6f6a2a21d96a2173b767d454634f7e3f26910",
     "tests/live_bias_consistency/noise-bound.py": "eaa92ea33a56f810d17a8317b9771906bb14b5685647f483201858fba76f731a",
-    "tests/live_bias_consistency/qmekf.cpp": "6c50c7602750f252cf3e56596434cee73022b9126b1ca46f80a3f303b2d0c67f",
-    "tests/live_bias_consistency/run_tests.sh": "93e36b4634f64323ffa8c3f7993dd8b38da22c86870e9f146d9f87a671778930",
-    "tests/live_bias_consistency/schmidt-test.cpp": "38e596345172c49208e1f6f0f80889ef6fcf6a7e0c5cc3cb04e9f589cb5d0417",
-    "tests/live_bias_consistency/tfg.cpp": "3d94ff0107ff7786b97bdee00783d2b99d1e1ec8a9bad7217a4bcdab88f7b986",
-    "tests/live_bias_consistency/timing-test.cpp": "533489af3c0ef0a33bf864f2c9d6dcf05b3b6a5ef90219c98b099242a5f442d3",
-    "tools/live_bias_consistency.py": "5d697e66dd26cd49052612cd5704d5b9e35f536f7b398df44d16d14a507fe3d3",
-    "tools/live_bias_consistency_analysis.py": "bb9b3315d3ba70318ed4b24f1f24b24d2ea96ed7377ebd085b304ba4b98221fd",
-    "tools/live_bias_csv_replay.py": "1bd46a70cedcc94ca0d4c1fcec0e8b5fd42cb9852fd83c78239d60fc08a3206c",
-    "tools/live_bias_csv_timing.py": "8a33ee9b225991b2348474b7a5a3f629477cbf24f339d88ba67dce79a87d473b",
-    "tools/live_bias_window.py": "9014bbe434e73ed08cc6dbf2109270359ea5d3f88d45a1114f1a9695be92ec8c",
-    "tools/live_bias_window_batch.py": "38d1d326912f1970a937a53ec1e164b2d798c50e192ff1004aaef538821f3a83"
+    "tests/live_bias_consistency/observer-defaults-test.cpp": "08d57b284be772358d62e44f92c89575934fededdb9141c64eaa36662c17b620",
+    "tests/live_bias_consistency/packet-rejection-test.cpp": "6f6c53800cce66b4b601215bb0ba90884b5259b2ec02820ad994361445f83970",
+    "tests/live_bias_consistency/qmekf.cpp": "30090a3085a25bc01e4a6f3ed5d5b77c764ad3ddbf60392fa114d65c26205e6c",
+    "tests/live_bias_consistency/reinitialization-test.cpp": "8dd44c355e86ca31398d229fd483c55fd083248ab641b370d7e9be491e20f586",
+    "tests/live_bias_consistency/run_tests.sh": "609a20030a534db7c13a8531dacac33c3d3e881086d80061046022971464135a",
+    "tests/live_bias_consistency/schmidt-test.cpp": "c06f0fcbef7c01e5a06ba6bddee9e5a4defca1201c4aac693f1529ba99be91b5",
+    "tests/live_bias_consistency/tfg.cpp": "25a7ffe9fddbd914674baf2b0a30e8a6d85f700e0989bedeaa631cc46b075490",
+    "tests/live_bias_consistency/timing-test.cpp": "aa0f725b09ecb8f2bacc209d9ad21eed082435858af4bbb12b80dc4cdadf03ef",
+    "tools/live_bias_consistency.py": "a14a501d1bb7b2a6adbd97c48ba7332f785c4168a1b51b9d77250ffb54f90883",
+    "tools/live_bias_consistency_analysis.py": "6327f92a2f3ba261f0b8f949c0926a91d2fe35e8a42ff9faf5732313fda96d98",
+    "tools/live_bias_csv_replay.py": "799e1ff8ec3fda1a16191b9c6e353988bce62a4806e1d32bd724707b1ad61aec",
+    "tools/live_bias_csv_timing.py": "55222510ac6e2b63a85666a7cb4d15baf80fb5838aa67a5e567e72bc587d932f",
+    "tools/live_bias_window.py": "032ccf4f7390c4ba2bd393d36894dcc51eae9a77fd382d01a614ebeb2f39e8c4",
+    "tools/live_bias_window_batch.py": "38d1d326912f1970a937a53ec1e164b2d798c50e192ff1004aaef538821f3a83",
+    "tools/main_gyro_rollout.py": "e52340b60edf01279cb0dec199719567eb44c594fb40e5a12eeab9b4b37bdef5",
+    "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py": "7e2111afdd01b3dace8eee1b070a04885308f192bd2568ac77c8d830dd48e743"
   },
   "corrected_check_failures": [
     {
@@ -111,5 +152,37 @@
       "correction": "Preserve the legacy message and reject gyro-contract overrides separately; add both explicit contracts to admission regression coverage.",
       "workdir": "/workspace/scratch/447eaed1ad46/ocean-imu/tests/kalman_tfg_shared_modes"
     }
-  ]
+  ],
+  "review_checks": {
+    "main_synced_to": "063017d44e3c422621a7f7b260f950cacb43a616",
+    "focused_suite": {
+      "exit_code": 0,
+      "command": "make -C tests/live_bias_consistency && (cd tests/live_bias_consistency && bash run_tests.sh)"
+    },
+    "CLI_nonfinite_output_fractional_epoch": "passed",
+    "reinitialization_mode_and_exposure": "passed",
+    "malformed_packet_startup_live_control": "passed",
+    "finite_NIS_mean": "passed",
+    "python_quality_gate": {
+      "exit_code": 0
+    },
+    "clang_tidy_TFG_TU": {
+      "version": "19.1.7",
+      "exit_code": 0
+    },
+    "cppcheck": {
+      "version": "2.17.1",
+      "mode": "exhaustive",
+      "exit_code": 0
+    },
+    "source_bound_proof_refresh": "in progress; stale bindings remain fail-closed",
+    "full_statistical_evidence": "must be genuinely regenerated on this source"
+  },
+  "resource_build_failure": {
+    "command": "make -j2 build EIGEN_DIR=/workspace/scratch/c5be0639f4c3/eigen-3.4.0",
+    "failing_target": "tests/kalman_carma/tfg_carma3-test.o",
+    "error": "g++: fatal error: Killed signal terminated program cc1plus",
+    "action": "retry serially after the evidence generators finish"
+  },
+  "new_default_comparison": "running; retained research rows are historical controlled arms, not newly certified final-default runs"
 }

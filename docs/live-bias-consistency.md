@@ -2,9 +2,11 @@
 
 Source baseline: [`9018fa4b57d9bd10983ae4e77ff95ce509551e17`](https://github.com/bareboat-necessities/ocean-imu/commit/9018fa4b57d9bd10983ae4e77ff95ce509551e17).
 This was main when the investigation began. The implementation also incorporates
-main's subsequent evidence-only commit `4cd80215006523861da06ee55a78801880347a0f`;
+main through `063017d44e3c422621a7f7b260f950cacb43a616`, including its publication-only follow-up;
 its production sources are identical to the scored baseline.
-Both experimental 27-state shared-mode geometries are evaluated. Since the
+The retained comparative section is the original controlled study. Fresh production-default and broader rollout tables are being regenerated for this source revision. Both 27-state shared-mode geometries are evaluated in the retained study.
+The default rollout additionally covers live OU-II, OU-III, TFG, NLO and PII;
+its native integration tests and paired wave results are reported separately. Since the
 cited `c2ae63b2` study, main optimized TFG propagation/reset kernels and shared
 SO(3) coefficients; it did not replace the measurement model or startup
 architecture. Those numerical paths are checked again against native Jacobian,
@@ -12,18 +14,36 @@ dense covariance and integration references.
 
 ## Decision
 
-Use the explicit instantaneous-sample mode when that is the delivered gyro
-contract. Its correction belongs in live prediction, not just in sensor
-simulation. Preserve interval-rate/delta-angle callers. The correction removes
-a demonstrated integration-induced accelerometer-bias floor when independent
-acceleration information is available, and improves rocking attitude accuracy.
-It does not reliably remove the latent-wave tilt/bias floor.
+Live prediction defaults to instantaneous-sample integration in OU-II, OU-III,
+TFG, CARMA/shared-mode, NLO and PII. Native Kalman prediction uses the effective
+interval rate consistently in its mean, gyro-bias sensitivity and process
+covariance. Direct mathematical kernels retain their interval-rate API.
 
-Retain the existing bias-learning schedule and calibrated defaults. Neither a
-magnetic packet count, a new gate, an optimistic covariance nor this window
-fit demonstrates the missing directional information. The controlled freezes
-and noise-model changes do not justify a new adaptive estimator or a shipping
-tuning change. A window-calibration update is not qualified for deployment.
+The measurement-only marine frontend retains its existing endpoint rule.
+Its integration/feedback/reference path is a separate numerical change:
+centering it worsens pinned-record yaw while adding no oracle recovery benefit.
+The core-only correction meets the original replay bars in the localization;
+final default-path gates and the required full build are recorded below.
+`frontend_gyro_sample_mode` makes that distinction explicit. This is not a
+blanket average of every gyro stream.
+
+Schmidt holding is available as an opt-in covariance correction with independent
+dense-Joseph tests. It is not selected as the production default: although it
+correctly treats a persistent uncertain bias under its declared model, it
+worsens several existing attitude/bias replay metrics. Initial/reference
+uncertainty and nonlinear acquisition remain unqualified. The original held-bias
+policy and calibrated noise/prior values are retained by default.
+
+Correct prediction removes a demonstrated integration-induced bias error when
+independent acceleration information is available. It does not reliably remove
+the latent-wave tilt/bias error. The NLO adapter also avoids predicting an
+interval again after bootstrap has seeded the observer at its endpoint.
+
+Retain the existing bias-learning schedule. Neither a magnetic packet count,
+a new gate, an optimistic covariance nor this window fit demonstrates the
+missing directional information. Controlled freezes and noise-model changes
+do not justify a new adaptive estimator or a shipping tuning change. Window
+calibration feedback is not qualified for deployment.
 
 ## Sensor and prediction contract
 
@@ -38,25 +58,28 @@ An angular-rate average and this rotation-equivalent rate differ under
 noncommuting rotations. A hardware delta-angle packet additionally needs its
 own frame, bias and noise convention, rather than another averaging operation.
 
-The new `GyroInterval` helper is shared by both native CARMA cores and their
-common frontend. Its instantaneous mode uses the two measured endpoints as a
+The `GyroInterval` helper is shared by the native OU/CARMA/TFG cores, the optional
+centered frontend path, and the NLO/PII live adapters. Its instantaneous mode uses
+the two measured endpoints as a
 second-order approximation over the preceding interval. The native gyro-bias
 Jacobian and covariance kernels use that same effective rate. There is no
 additional truth input and no extra Kalman state. The first native sample
 primes the cache instead of inventing a preceding rotation. The bootstrap
 primes the live core from actual samples, so handoff does not lose an interval.
-A wrapper restart clears the frontend cache. Lever-arm force compensation
+A new acquisition clears the frontend cache; internal attitude/statistics resets
+retain physical sample history. Lever-arm force compensation
 continues to use the endpoint rate; it must not acquire the integrator's
 half-step delay.
 
-Select the convention explicitly, for either shared-mode geometry:
+Corrected live prediction requires no enable flag in either shared-mode
+wrapper or the OU/TFG live wrappers. For a deployment with independently known
+exposure and calibrated residual bias uncertainty:
 
 ```cpp
 Fusion::Config cfg;
-cfg.gyro_sample_mode =
-    ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+// cfg.gyro_sample_mode already defaults to Instantaneous.
 cfg.gyro_sample_period_sec = 1.0f / 200.0f; // fixed sensor ODR/exposure
-cfg.schmidt_acc_bias_hold = true; // persistent uncertainty while mean is held
+// The frontend and held-bias policy retain their existing defaults.
 cfg.initial_acc_bias_std = calibrated_residual_sd; // m/s^2; use qualified uncertainty
 // cfg.sigma_g is a noise density [rad/sqrt(s)], not per-sample SD.
 fusion.begin(cfg);
@@ -73,13 +96,18 @@ error includes quaternion rounding. The reproducible CSV audit records these
 values. Do not infer dropped records or a variable sensor interval from that
 rounded column.
 
-The existing QMEKF/TFG shared-mode replay exposes
-`W3D_CSM_GYRO_INPUT=instantaneous` for corrected diagnostic replay, using the
-same native/helper/frontend path. The default interval-rate regression
-protocol, input hashes and quality bars are preserved; `--regression` rejects
-contract overrides rather than silently claiming a baseline quality result.
+The existing QMEKF/TFG shared-mode replay uses production defaults on an
+ordinary invocation. The same unchanged numeric bars apply. `--regression`
+explicitly reproduces the locked historical interval-rate/legacy-hold baseline.
+`W3D_CSM_GYRO_INPUT=instantaneous` centers both core and frontend with legacy holding;
+it is a diagnostic, not needed to enable corrected live prediction. `core`
+reproduces the selected production sampling path; `both_schmidt` and
+`core_schmidt` isolate held-bias handling. Strict baseline regression
+rejects contract overrides. Both profiles and input hashes are recorded.
 
-The default remains `IntervalRate`. Direct native-core users have matching
+The live configuration default is `Instantaneous`. Low-level mathematical
+`time_update` kernels retain the interval-rate contract for compatibility; the
+live wrappers configure them automatically. Direct native-core users have matching
 `set_gyro_sample_mode`, `set_gyro_sample_period` and `prime_gyro_sample` APIs.
 Do not pre-average upstream and also select instantaneous mode. Separate raw
 wrapper selectors exist to isolate the core/frontend contribution in tests.
@@ -118,10 +146,11 @@ spike and calibration processing, and calls `fusion.update(dt,w,a)` followed
 by fresh magnetic updates. This supports a rate interface; the repository does
 not establish an interval average, sensor conversion timestamp or effective
 filter group delay. `SampleDtTracker` substitutes nominal dt on configured
-long gaps; that is a fallback, not measured elapsed-time recovery. Existing
-firmware behavior is not switched by this experiment. Qualification needs
+long gaps; that is a fallback, not measured elapsed-time recovery. The marine firmware wrappers inherit the corrected live defaults. This is a
+rate-sample model assumption, not a measured conversion-time or group-delay
+qualification. Qualification needs
 sensor/FIFO timing, ODR/filter settings, dropped-frame accounting, and relative
-accel/gyro delay before enabling an instantaneous convention on hardware.
+accel/gyro delay to verify or override this default on specific hardware.
 
 Magnetic updates are asynchronous in cadence but apply to the current estimator
 time. Synthetic default packets are time-aligned with that state. The dormant vibration guard is transparent below its detector threshold;
@@ -143,7 +172,7 @@ covariance. It also clears cross-covariance on entering hold. This does not
 implement a Schmidt update for an uncertain persistent bias. Repeated samples
 can then treat that nuisance uncertainty as fresh measurement noise.
 
-The optional `schmidt_acc_bias_hold` policy retains the complete `P H^T`, sets
+The optional CARMA `schmidt_acc_bias_hold=true` policy retains the complete `P H^T`, sets
 only the bias rows of the **gain** to zero, and uses the existing full Joseph
 and attitude/group reset kernels. Thus the bias mean is held, its uncertainty
 remains persistent, and its cross-covariance evolves. Entering hold preserves
@@ -151,7 +180,9 @@ those correlations. This applies to accelerometer, magnetic and applicable
 QMEKF pseudo-updates; active bias learning retains its existing equations.
 Dense independent Joseph checks at nontrivial covariances agree below 2e-18
 for both geometries and verify unchanged held means and preserved correlations.
-The legacy policy remains the compatibility default; the new policy is explicit.
+The legacy CARMA policy remains the default pending broader acquisition and
+calibration qualification. The native
+OU/TFG held-bias policies have not been replaced by this CARMA-specific audit.
 
 `initial_acc_bias_std` makes calibrated residual uncertainty available at the
 common wrapper boundary. Leaving it NaN preserves the native prior. The
@@ -317,12 +348,13 @@ covariance, actual applied magnetic corrections and actual native bias gates.
 The [validation record](../reports/results/live_bias_consistency/validation.json)
 records check commands, environment versions and build outcomes.
 
-The selected code changes improve integration consistency and reject malformed
+The selected default code changes improve integration consistency and reject malformed
 samples consistently across the shared startup/frontend boundary. Conservative
 handling of reused gyro noise improves uncertainty honesty; it is not itself a
-bias-recovery mechanism. The Schmidt policy corrects the treatment of a held, uncertain bias; it does
-not certify identifiability. No magnetic-uncertainty estimator, information
+bias-recovery mechanism. The optional CARMA Schmidt policy corrects the treatment of a held, uncertain bias
+under the stated model; it does not certify identifiability or improved RMS. No magnetic-uncertainty estimator, information
 gate, window feedback, new sea-state rule or shipping noise tuning is promoted.
 Hardware performance and delayed-measurement compensation remain unvalidated.
 The finite simulations are neither a shipping OU-III stability proof nor a
-shipping counterexample; existing theorem status is unchanged.
+shipping counterexample; the new sampling map is not certified by historical source-bound proof receipts.
+The cache-augmented shipping audit is tracked in `ou3-proof-research-state.md`.

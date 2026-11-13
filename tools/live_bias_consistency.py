@@ -10,18 +10,27 @@ import pandas as pd
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'reports/results/live_bias_consistency'
 BIN=ROOT/'tests/live_bias_consistency/live-bias-followup'
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--jobs',type=int,default=4);p.add_argument('--stage',choices=['screen','long','recovery','noise','baseline','startup','latency','calibration','combined','late_recovery'],default='screen');p.add_argument('--seeds',type=int,nargs='+',default=list(range(1001,1007)));p.add_argument('--label');p.add_argument('--binary',type=Path,default=BIN);p.add_argument('--noise',choices=['native','gyro','mag','all','prior','late_prior','all_prior','schmidt','schmidt_prior'],default='native');a=p.parse_args()
-    binary=a.binary
+    p=argparse.ArgumentParser();p.add_argument('--jobs',type=int,default=4);p.add_argument('--stage',choices=['screen','long','recovery','noise','baseline','startup','latency','calibration','combined','late_recovery','production','production_recovery'],default='screen');p.add_argument('--seeds',type=int,nargs='+',default=list(range(1001,1007)));p.add_argument('--label');p.add_argument('--binary',type=Path);p.add_argument('--noise',choices=['native','gyro','mag','all','prior','late_prior','all_prior','schmidt','schmidt_prior'],default='native');a=p.parse_args()
+    if a.stage=='baseline' and a.binary is None:p.error('--stage baseline requires an explicit --binary')
+    if a.stage=='late_recovery' and a.noise!='schmidt':p.error('--stage late_recovery requires --noise schmidt')
+    if a.stage=='production_recovery' and a.noise!='native':p.error('production_recovery uses native production defaults')
+    if a.stage=='baseline' and a.label!='compatibility' and a.binary.resolve()==BIN.resolve():p.error('baseline must use the untouched baseline binary')
+    binary=a.binary or BIN
     stage_label=a.label or (a.stage if a.noise=='native' else a.stage+'_'+a.noise)
     records=[]
     for seed in a.seeds:
       for f in ('qmekf','tfg'):
-        if a.stage=='late_recovery':
+        if a.stage=='production':
+          for arm in ('exact_fixed','learned_fixed','oracle'):
+            records.append((seed,f,'wave',arm,'defaults','none','none',7200))
+          records.append((seed,f,'rocking','exact_fixed','defaults','none','none',3600))
+        elif a.stage in ('late_recovery','production_recovery'):
+          timing='defaults' if a.stage=='production_recovery' else 'both_start'
           for motion in ('wave','rocking'):
             for injection in ('none','bias','tilt'):
-              records.append((seed,f,motion,'exact_fixed','both_start','none',injection,7200))
+              records.append((seed,f,motion,'exact_fixed',timing,'none',injection,7200))
           for arm in ('learned_fixed','correct_reference'):
-            records.append((seed,f,'wave',arm,'both_start','none','none',7200))
+            records.append((seed,f,'wave',arm,timing,'none','none',7200))
         elif a.stage=='combined':
           for arm in ('exact_fixed','learned_fixed'):
             for noise in ('native','schmidt','schmidt_prior'):
@@ -68,8 +77,8 @@ def main():
       key=f'{seed}_{f}_{motion}_{arm}_{timing}_{freeze}_{inj}_{duration}';key+=('_'+noise if noise!='native' else '');key+=('_lag'+str(lag) if lag else '');prefix=runroot/key
       cmd=[str(binary),'--noise',noise,'--seed',str(seed),'--filter',f,'--motion',motion,'--arm',arm,'--timing',timing,'--freeze',freeze,'--injection',inj,'--duration',str(duration),'--sigma','.001','--output',str(prefix)]
       if lag:cmd+=['--mag-lag',str(lag)]
-      if a.stage in ('startup','combined'):cmd+=['--change','0']
-      if a.stage=='late_recovery':cmd+=['--change','3600']
+      if a.stage in ('startup','combined','production') and arm!='oracle':cmd+=['--change','0']
+      if a.stage in ('late_recovery','production_recovery'):cmd+=['--change','3600']
       if a.stage=='screen' and timing=='both' and arm=='exact_fixed' and freeze=='none':cmd+=['--window','1']
       start=time.monotonic();r=subprocess.run(cmd,text=True,capture_output=True);prefix.with_suffix('.log').write_text(r.stdout+r.stderr)
       if r.returncode:raise RuntimeError(key+': '+r.stderr)

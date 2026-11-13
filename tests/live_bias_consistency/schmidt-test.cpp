@@ -1,3 +1,6 @@
+#ifndef EIGEN_NON_ARDUINO
+#define EIGEN_NON_ARDUINO
+#endif
 // Dense Joseph reference for a held, uncertain bias. Zero innovations isolate
 // the covariance operation; the bias mean must remain exactly held.
 #include "StandardHeaders.h"

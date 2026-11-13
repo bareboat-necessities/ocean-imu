@@ -37,6 +37,7 @@
 #include "freq/FirstOrderIIRSmoother.h"
 #include "freq/FrequencyTrackerPolicy.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
+#include "kalman_common/GyroInterval.h"
 #include "tuner/SeaStateFusionTunerCommon.h"
 #include "tuner/VerticalAccelComplementary.h"
 #include "tuner/WavePeriodEstimator.h"
@@ -68,6 +69,9 @@ public:
         freq_input_lpf_.setCutoff(max_freq_hz_);
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
     }
+
+    void resetFrontendGyroHistory() { frontend_gyro_interval_.reset(); }
+    void setFrontendGyroSampleMode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) { frontend_gyro_interval_.set_mode(mode); }
 
     // Attitude of the startup Mahony observer, BODY -> NED.  Only its tilt is
     // meaningful; yaw is unobservable to it and drifts.
@@ -198,7 +202,8 @@ protected:
     // input source is switched at runtime.
     void levelVertical_(float dt, const Eigen::Vector3f& gyro,
                         const Eigen::Vector3f& acc_in) {
-        vertical_accel_comp_.update(dt, gyro, acc_in, gravity_mps2_);
+        const auto interval = frontend_gyro_interval_.prepare(gyro, dt);
+        vertical_accel_comp_.update(dt, interval.rate, acc_in, gravity_mps2_);
     }
 
     // The one levelled vertical measurement every consumer in the filter
@@ -343,6 +348,8 @@ protected:
     float frontEndStillTimeSec_() const { return freq_stillness_.getStillTime(); }
 
     void resetFrontEnd_() {
+        // Attitude/statistics resets retain physical sensor history. A new
+        // acquisition calls resetFrontendGyroHistory() explicitly.
         tracker_policy_ = TrackingPolicy{};
         wave_period_    = WavePeriodEstimator{};
         vertical_accel_comp_.reset();
@@ -385,6 +392,7 @@ protected:
     // tilt error in the startup attitude or levelled acceleration.
     // two_kp keeps the correction corner below the wave band, so the observer
     // does not level itself against orbital specific force instead of gravity.
+    ocean_imu::kalman::filter_detail::GyroInterval<Eigen::Vector3f> frontend_gyro_interval_;
     VerticalAccelComplementary   vertical_accel_comp_{
         defaults::STARTUP_PROXY_TWO_KP,
         defaults::STARTUP_PROXY_TWO_KI};

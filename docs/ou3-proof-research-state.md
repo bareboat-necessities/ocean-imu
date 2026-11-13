@@ -1,8 +1,59 @@
 # OU-III proof research state
 
-## Native secant source binding
+## Gyro-sampling runtime rollout
 
-The finite native diagnostic is bound to the current complete `src/` tree.
+Finite rollout selection: simultaneous frontend centering plus Schmidt holding
+exceeded the unchanged shared-mode replay attitude/bias bars. This invalidated
+the diagnostic assumption that integration accuracy alone preserves every RMS
+bar (class E validation/rollout failure). It is not an OU-III theorem
+counterexample. Separate core/frontend/holding experiments retain noiseless
+rotation/covariance facts and support the narrower core-only default. The
+frontend, held-bias policy and calibrated tuning remain native. No threshold
+is enlarged. The final gated profiles and full-build result are recorded in
+`reports/results/live_bias_consistency/validation.json`.
+
+A separate native-API compatibility attempt also failed (class E): changing
+raw CARMA holding defaults broke the historical dense-FD covariance fixture
+(error up to 1.335 versus 1e-6) and a sinusoid bound (0.10019 versus 0.1).
+Raw holding defaults are restored; the optional Schmidt policy retains its
+independent dense-Joseph audit. The restored CARMA suite passes 74/74.
+
+The live OU-II/OU-III/TFG and CARMA sample paths now default to measured-endpoint
+gyro integration. OU-III prediction uses the same effective interval rate in
+the mean, gyro-bias Jacobian and covariance kernel. The measurement-only
+frontend retains its endpoint rule, with optional centering isolated behind
+a separate configuration field. Bootstrap primes the live core;
+endpoint lever-arm force terms retain endpoint rates. Invalid IMU packets are
+rejected before the shared startup clock/history advances. This is an explicitly
+authorized runtime change, not a source-only reorganization.
+
+Structures preserved: OU/S state equations, covariance and gain chronology,
+parameter adaptation, magnetic-reference acquisition, BA activation/mean
+reversion/projection, scheduler and reset chronology. The prior instantaneous
+endpoint-as-interval forcing map is replaced. Previous raw gyro, previous
+interval and the sampling-mode/exposure configuration are persistent execution
+memory and must be carried through proof-word boundaries. Internal attitude
+resets retain physical sample history; a new acquisition clears it.
+
+Relaxations introduced: none in runtime. The finite rotation/replay diagnostics
+and the linearized white-noise covariance envelope do not qualify hardware
+phase delays, SLOW+FAST physical envelopes, regional capture or end-to-end
+stability. Prior source-bound native receipts are historical until audited
+against this changed complete execution. Classification E applies to stale
+source bindings, not to the mathematical theorem. No shipping counterexample
+was found. Existing algebraic identities for unchanged kernels remain
+available; lifting their physical execution qualifications to this sampling
+map is OPEN. Next falsifiable proof calculation: audit the cache-augmented
+same-history gyro forcing against SF3--SF9 and recheck construction/release and
+actual magnetic-service receipts without deleting the new sample memory.
+
+## Historical native secant source binding
+
+The following receipt describes its archived source revision; the runtime
+rollout above supersedes its current-tree binding. It does not certify the new
+sampling map.
+
+The finite native diagnostic was bound to that complete `src/` tree.
 The sample-path covariance kernels of the experimental TFG-CARMA cores were
 restructured to lower microcontroller processor load
 (`src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h`, with plain-array access in the

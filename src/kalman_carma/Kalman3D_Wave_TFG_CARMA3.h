@@ -372,7 +372,7 @@ public:
     [[nodiscard]] Vector3 get_acc_bias() const { return X_.B.col(1); }
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
     // Schmidt hold: keep the bias mean fixed but retain its persistent
-    // uncertainty and correlations. Legacy hold remains the default.
+    // uncertainty and correlations. Legacy hold is an explicit compatibility option.
     void set_schmidt_acc_bias_hold(bool enabled) { schmidt_acc_bias_hold_ = enabled; }
     void set_acc_bias_updates_enabled(bool en);
 
@@ -533,7 +533,7 @@ public:
         T* const xw = X_.X.data();                 // X(ax, i) = xw[ax + 3 i]
         for (int ax = 0; ax < 3; ++ax) {
             const T* const mp = maps[ax].data();   // map(i, j) = mp[i + NC j]
-            T v[NC], y[NC];
+            T v[NC]{}, y[NC]{};
             auto apply = [&] {
                 for (int i = 0; i < NC; ++i) {
                     T s = T(0);
@@ -568,6 +568,8 @@ private:
     Vector3 last_gyr_bias_corrected_ = Vector3::Zero();
     filter_detail::ImuLeverArm<T> lever_;
 
+    // Preserve direct native-kernel callers; live fusion Config selects the
+    // audited persistent-bias policy explicitly at startup.
     bool schmidt_acc_bias_hold_ = false;
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);
@@ -1157,7 +1159,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
             pb[i + 3 * j] = -(Ts * Jh[i][j]);
         }
     const T* const w1 = W1.data();
-    for (int i = 0; i < NC; ++i) {
+    for (Eigen::Index i = 0; i < NC; ++i) {
         const T x = w1[3 * i], y = w1[3 * i + 1], z = w1[3 * i + 2];
         T* const xs = b.Xs[i].data();              // [w_i]x, column-major
         xs[0] = T(0); xs[1] = z;    xs[2] = -y;
@@ -1433,40 +1435,41 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     // Upper block triangle of M Phi^T, row by row: row r of block rb needs the
     // column blocks cb >= rb only.
     for (int r = 0; r < NX; ++r) {
+        constexpr Eigen::Index row_stride = NX;
         const int rb = r / 3;
-        const T* mr = m + r;                       // M(r, c) = mr[NX * c]
+        const T* mr = m + r;                       // M(r, c) = mr[row_stride * c]
         T* pr = p + r;
         if (rb < BLK_BA) {
-            const T g0 = mr[NX * OFF_BG], g1 = mr[NX * (OFF_BG + 1)], g2 = mr[NX * (OFF_BG + 2)];
+            const T g0 = mr[row_stride * OFF_BG], g1 = mr[row_stride * (OFF_BG + 1)], g2 = mr[row_stride * (OFF_BG + 2)];
             const T t0 = g0 * B[0][0] + g1 * B[0][1] + g2 * B[0][2];
             const T t1 = g0 * B[1][0] + g1 * B[1][1] + g2 * B[1][2];
             const T t2 = g0 * B[2][0] + g1 * B[2][1] + g2 * B[2][2];
             if (rb == BLK_PHI) {
-                pr[NX * OFF_PHI] = mr[NX * OFF_PHI] + t0;
-                pr[NX * (OFF_PHI + 1)] = mr[NX * (OFF_PHI + 1)] + t1;
-                pr[NX * (OFF_PHI + 2)] = mr[NX * (OFF_PHI + 2)] + t2;
+                pr[row_stride * OFF_PHI] = mr[row_stride * OFF_PHI] + t0;
+                pr[row_stride * (OFF_PHI + 1)] = mr[row_stride * (OFF_PHI + 1)] + t1;
+                pr[row_stride * (OFF_PHI + 2)] = mr[row_stride * (OFF_PHI + 2)] + t2;
             }
             if (rb <= BLK_BG)
-                for (int k = 0; k < 3; ++k) pr[NX * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
+                for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
             for (int j = rb > BLK_W ? rb - BLK_W : 0; j < NC; ++j) {
                 T a0 = w[j][1] * t2 - w[j][2] * t1;
                 T a1 = w[j][2] * t0 - w[j][0] * t2;
                 T a2 = w[j][0] * t1 - w[j][1] * t0;
                 for (int l = 0; l < NC; ++l) {
                     const T fjl = F[j][l];
-                    const T* x = mr + NX * (OFF_W + 3 * l);
+                    const T* x = mr + row_stride * (OFF_W + 3 * l);
                     a0 += fjl * x[0];
                     a1 += fjl * x[NX];
-                    a2 += fjl * x[2 * NX];
+                    a2 += fjl * x[Eigen::Index(2) * NX];
                 }
-                T* y = pr + NX * (OFF_W + 3 * j);
+                T* y = pr + row_stride * (OFF_W + 3 * j);
                 y[0] = a0;
                 y[NX] = a1;
-                y[2 * NX] = a2;
+                y[Eigen::Index(2) * NX] = a2;
             }
         }
-        const T h0 = mr[NX * OFF_BA], h1 = mr[NX * (OFF_BA + 1)], h2 = mr[NX * (OFF_BA + 2)];
-        for (int k = 0; k < 3; ++k) pr[NX * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
+        const T h0 = mr[row_stride * OFF_BA], h1 = mr[row_stride * (OFF_BA + 1)], h2 = mr[row_stride * (OFF_BA + 2)];
+        for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
     }
 
     // Qd on the same blocks (add_noise_()): a product with [w_j]x^T is a cross
@@ -1573,7 +1576,7 @@ void TFGC3_CLS::transport_(const Tangent& a) {
             const T* const x = p + 3 * i;          // P block (i, phi)
             for (int r = 0; r < 3; ++r)
                 for (int k = 0; k < 3; ++k) {
-                    T v = Jr[r][0] * x[NX * k] + Jr[r][1] * x[1 + NX * k] + Jr[r][2] * x[2 + NX * k];
+                    T v = Jr[r][0] * x[Eigen::Index(NX) * k] + Jr[r][1] * x[1 + NX * k] + Jr[r][2] * x[2 + NX * k];
                     if (i != 0) v += C[i][r][0] * Pff[0][k] + C[i][r][1] * Pff[1][k] + C[i][r][2] * Pff[2][k];
                     wm[3 * i + r + NX * k] = v;
                 }
@@ -1586,7 +1589,7 @@ void TFGC3_CLS::transport_(const Tangent& a) {
             T Y[3][3], X[3][3];
             for (int r = 0; r < 3; ++r)
                 for (int c = 0; c < 3; ++c)
-                    Y[r][c] = Jr[r][0] * x[NX * c] + Jr[r][1] * x[1 + NX * c] + Jr[r][2] * x[2 + NX * c];
+                    Y[r][c] = Jr[r][0] * x[Eigen::Index(NX) * c] + Jr[r][1] * x[1 + NX * c] + Jr[r][2] * x[2 + NX * c];
             if (full || j == 0) {
                 for (int r = 0; r < 3; ++r)
                     for (int c = 0; c < 3; ++c)
@@ -1637,18 +1640,18 @@ void TFGC3_CLS::inject(const Tangent& a) {
         const T* const beta = av + Group::bias_offset(j);
         T v[3];
         for (int k = 0; k < 3; ++k) v[k] = Jp[k][0] * beta[0] + Jp[k][1] * beta[1] + Jp[k][2] * beta[2];
-        for (int k = 0; k < 3; ++k) B[k + 3 * j] -= R[3 * k] * v[0] + R[1 + 3 * k] * v[1] + R[2 + 3 * k] * v[2];
+        for (int k = 0; k < 3; ++k) B[k + 3 * j] -= R[Eigen::Index(3) * k] * v[0] + R[1 + 3 * k] * v[1] + R[2 + 3 * k] * v[2];
     }
     T* const W = X_.X.data();
     for (int i = 0; i < NC; ++i) {
         const T* const rho = av + Group::world_offset(i);
-        const T x = W[3 * i], y = W[3 * i + 1], z = W[3 * i + 2];
+        const T x = W[Eigen::Index(3) * i], y = W[3 * i + 1], z = W[3 * i + 2];
         for (int k = 0; k < 3; ++k)
             W[k + 3 * i] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z
                          - (Jm[k][0] * rho[0] + Jm[k][1] * rho[1] + Jm[k][2] * rho[2]);
     }
     for (int c = 0; c < 3; ++c) {
-        const T x = R[3 * c], y = R[3 * c + 1], z = R[3 * c + 2];
+        const T x = R[Eigen::Index(3) * c], y = R[3 * c + 1], z = R[3 * c + 2];
         for (int k = 0; k < 3; ++k) R[k + 3 * c] = Em[k][0] * x + Em[k][1] * y + Em[k][2] * z;
     }
     reorthonormalize_();

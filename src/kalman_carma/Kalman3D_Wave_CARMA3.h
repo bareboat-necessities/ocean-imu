@@ -206,7 +206,7 @@ public:
 
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
     // Schmidt hold: keep the bias mean fixed but retain its persistent
-    // uncertainty and correlations. Legacy hold remains the default.
+    // uncertainty and correlations. Legacy hold is an explicit compatibility option.
     void set_schmidt_acc_bias_hold(bool enabled) { schmidt_acc_bias_hold_ = enabled; }
     void set_acc_bias_updates_enabled(bool en);
 
@@ -562,6 +562,8 @@ private:
     Vector3 last_gyr_bias_corrected{};
     filter_detail::ImuLeverArm<T> lever_;
 
+    // Preserve direct native-kernel callers; live fusion Config selects the
+    // audited persistent-bias policy explicitly at startup.
     bool schmidt_acc_bias_hold_ = false;
     T sigma_bacc0_ = T(0.004);
     Matrix3 Q_bacc_ = Matrix3::Identity() * T(2.5e-7);

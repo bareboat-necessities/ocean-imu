@@ -1,3 +1,6 @@
+#ifndef EIGEN_NON_ARDUINO
+#define EIGEN_NON_ARDUINO
+#endif
 #include "Adapter.h"
 using namespace followup;
 template<class Native,bool TFG>void audit() {

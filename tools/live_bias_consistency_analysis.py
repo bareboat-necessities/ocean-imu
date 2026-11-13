@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Seed-level comparisons and bounded scientific figures; never scores plots."""
 from pathlib import Path
-import json,sys
+import json,re,sys
 import numpy as np
 import pandas as pd
 from scipy.stats import t as student
@@ -171,6 +171,65 @@ def main():
     for f in ('qmekf','tfg'):vals.append(label(q[(q['filter']==f)&(q.arm==arm)&(q.noise==noise)].ba_h_rms*1000))
     sections.append('| '+arm+'; '+noise+' | '+' | '.join(vals)+' |')
   sections+=['','These rows distinguish actual bias recovery from corrected covariance handling; the learned-reference rows use no truth for estimation.','']
+ if 'production' in stages:
+  q=stages['production'];tail=q[(q.start==5400)|((q.motion=='rocking')&(q.start==2400))]
+  sections+=['| Actual default configuration | QMEKF | TFG |','| --- | ---: | ---: |']
+  production_stats=[]
+  for motion,arm in [('wave','exact_fixed'),('wave','learned_fixed'),('wave','oracle'),('rocking','exact_fixed')]:
+   vals=[]
+   for f in ('qmekf','tfg'):
+    g=tail[(tail['filter']==f)&(tail.motion==motion)&(tail.arm==arm)]
+    assert len(g)==6
+    vals.append(label(g.ba_h_rms*1000))
+    production_stats.append(dict(filter=f,motion=motion,arm=arm,bias=ci(g.ba_h_rms*1000),tilt=ci(g.tilt_rms),h_nees=ci(g.h_nees),coverage=ci(g.coverage),enabled=ci(g.enabled_fraction),mag_applied=ci(g.mag_applied_fraction)))
+   sections.append('| '+motion+'; '+arm+' | '+' | '.join(vals)+' |')
+  summary['production_defaults']=production_stats
+  sections+=['','These runs leave Config defaults untouched: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.','']
+ if (OUT/'main_rollout_scores.csv').exists():
+  q=pd.read_csv(OUT/'main_rollout_scores.csv',dtype={'sensor_hash':str})
+  manifest=json.loads((OUT/'main_rollout_manifest.json').read_text())
+  assert len(q)==manifest['filter_runs']==36 and (q.groupby(['family','seed']).sensor_hash.nunique()==1).all()
+  sections+=['| Other live filters: acquired reference, unknown acceleration | Legacy RMS | Default RMS | Paired default minus legacy |','| --- | ---: | ---: | ---: |']
+  rollout=[];fig,axs=plt.subplots(1,2,figsize=(9,3.4))
+  for i,f in enumerate(('OU2','OU3','TFG')):
+   g=q[q.family==f];p=g.pivot(index='seed',columns='profile',values='ba_h_rms')*1000
+   sections.append('| '+f+' | '+label(p.legacy)+' | '+label(p.default)+' | '+label(p.default-p.legacy)+' |')
+   row=dict(family=f,bias_legacy=ci(p.legacy),bias_default=ci(p.default),paired_bias_change=ci(p.default-p.legacy))
+   for metric in ('tilt_rms','bg_rms','h_nees','coverage','acc_nis','enabled_fraction','applied_mag'):
+    row[metric]={profile:ci(g[g.profile==profile][metric]) for profile in ('legacy','default')}
+   rollout.append(row)
+   for j,profile in enumerate(('legacy','default')):
+    point(axs[0],i+(j-.5)*.15,p[profile],('#596579','#0a8292')[j],profile.capitalize() if i==0 else None)
+    point(axs[1],i+(j-.5)*.15,g[g.profile==profile].tilt_rms,('#596579','#0a8292')[j],profile.capitalize() if i==0 else None)
+  for ax in axs:ax.set_xticks(range(3),['OU-II','OU-III','TFG']);ax.grid(axis='y',alpha=.2);ax.legend()
+  axs[0].set_ylabel('Horizontal bias RMS [mm/s²]');axs[1].set_ylabel('Tilt RMS [deg]');save(fig,'main_filter_rollout')
+  summary['main_filter_rollout']=rollout
+  sections+=['','Six paired seeds, 7200 s each, scoring 5400–7200 s. Each legacy/default pair consumes identical sensors from one continuous physical history. Magnetic reference is acquired ordinarily; fixed hard iron is correct. These are within-family timing comparisons with existing family priors, not cross-family rankings or exact-reference CARMA controls. The timing correction slightly worsens this particular floor in all three families. Covariance remains overconfident (zero late 95% horizontal coverage here), and actual bias learning is enabled throughout. Correct integration does not create missing independent motion/reference information.','', '![Other live filter rollout](../reports/results/live_bias_consistency/figures/main_filter_rollout.svg)','']
+ if (OUT/'csv_rollout_all.json').exists():
+  records=json.loads((OUT/'csv_rollout_all.json').read_text());csvstats=[]
+  for r in records:
+   source=ROOT/'tests'/('kalman_carma_shared_modes/kalman_carma_shared_modes-sim.cpp' if r['filter']=='qmekf' else 'kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp')
+   limits={k:float(v) for k,v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f',source.read_text())}
+   line=next(x for x in r['metrics'] if x.startswith('VALIDATION_METRICS '));v=dict(x.split('=',1) for x in line.split()[1:])
+   acc=next(x for x in r['metrics'] if x.startswith('Bias error RMS (% of max TRUE bias) (acc)'))
+   gyro=next(x for x in r['metrics'] if x.startswith('Bias error RMS (% of max TRUE bias) (gyro)'))
+   kind='jonswap' if 'jonswap' in r['input'] else 'pmstokes'
+   metrics={'err_limit_percent_z_'+kind:float(v['disp_z_pct_hs']),'err_limit_percent_3d_'+kind:float(v['disp_3d_pct_refmax']),**{'err_limit_'+k+'_deg':float(v[k+'_rms_deg']) for k in ('roll','pitch','yaw')},'acc_z_bias_percent':float(re.search(r'Z=([0-9.]+)%',acc)[1]),'bias_3d_percent':float(re.search(r'\|3D\|=([0-9.]+)%',acc)[1]),'gyro_bias_3d_percent':float(re.search(r'\|3D\|=([0-9.]+)%',gyro)[1])}
+   failures=[k for k,x in metrics.items() if x>limits[k]]
+   csvstats.append(dict(filter=r['filter'],profile=r['contract'],input=r['input'],exit_code=r['exit_code'],failed_limits=';'.join(failures),roll=float(v['roll_rms_deg']),pitch=float(v['pitch_rms_deg']),yaw=float(v['yaw_rms_deg']),bias_mm=float(v['accel_bias_3d_rms_mps2'])*1000,gyro_bias=float(v['gyro_bias_3d_rms_radps'])))
+  cs=pd.DataFrame(csvstats);cs.to_csv(OUT/'csv_rollout_statistics.csv',index=False,float_format='%.10g')
+  sections+=['| Pinned replay profile | QMEKF records exceeding old bars | TFG records exceeding old bars |','| --- | ---: | ---: |']
+  summaries=[]
+  for profile in ('interval','defaults','core','frontend','instantaneous','core_schmidt','both_schmidt'):
+   counts=[]
+   for f in ('qmekf','tfg'):
+    g=cs[(cs['filter']==f)&(cs.profile==profile)];assert len(g)==8
+    counts.append(str(int((g.failed_limits!='').sum()))+'/8')
+    summaries.append(dict(filter=f,profile=profile,failed_records=g[g.failed_limits!=''].input.to_list(),max_roll=float(g.roll.max()),max_pitch=float(g.pitch.max()),max_yaw=float(g.yaw.max()),max_bias_mm=float(g.bias_mm.max())))
+    if profile in ('interval','defaults'):assert (g.exit_code==0).all() and (g.failed_limits=='').all(),'gated replay regressed'
+   sections.append('| '+profile+' | '+' | '.join(counts)+' |')
+  summary['csv_rollout']=summaries
+  sections+=['','Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` is the actual untouched Config; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.','']
  # Covariance diagnostics use serial samples and their actual marginal P.
  fig,axs=plt.subplots(2,2,figsize=(9,5),sharex=True)
  for col,f in enumerate(('qmekf','tfg')):
@@ -193,40 +252,47 @@ def main():
    ax.axhline(3,color='#bd7b2a',lw=.8,label='Dimension reference');ax.set_xticks(range(4),['Native weights','Gyro matched','Mag matched','All matched']);ax.set_title(metric.replace('_',' ').upper());ax.grid(axis='y',alpha=.2);ax.legend(fontsize=7)
   axs[0].set_ylabel('900–1200 s mean NIS');save(fig,'innovations')
   sections+=['![Innovations under independently changed white-noise models](../reports/results/live_bias_consistency/figures/innovations.svg)','Matching magnetic white-noise SD can bring magnetic NIS near its dimension reference without resolving bias error. The prior/reference and motion assumptions remain separate.','']
- if 'late_recovery' in stages:
-  controls=stages['late_recovery'].query('injection=="none" and arm in ["exact_fixed","learned_fixed"]')
-  common_controls=controls.merge(stages['combined'].query('noise=="schmidt"'),on=['seed','filter','motion','arm','duration','start','end'],suffixes=('_recovery','_combined'))
-  control_difference=float(np.max(abs(common_controls.ba_h_rms_recovery-common_controls.ba_h_rms_combined)))
-  assert len(common_controls)==120 and control_difference==0,'startup configuration/setter controls differ'
-  summary['startup_configuration_crosscheck']=dict(windows=len(common_controls),max_bias_rms_difference=control_difference)
-  q=stages['late_recovery'];late=q[q.start==5400];sections+=['| One-hour shock; 5400–7200 s bias RMS | QMEKF | TFG |','| --- | ---: | ---: |']
+ for recovery_stage in ('late_recovery','production_recovery'):
+  if recovery_stage not in stages:continue
+  controls=stages[recovery_stage].query('injection=="none" and arm in ["exact_fixed","learned_fixed"]')
+  reference_stage='combined' if recovery_stage=='late_recovery' else 'production'
+  if reference_stage in stages:
+   reference=stages['combined'].query('noise=="schmidt"') if recovery_stage=='late_recovery' else stages['production']
+   common_controls=controls.merge(reference,on=['seed','filter','motion','arm','duration','start','end'],suffixes=('_recovery','_combined'))
+   control_difference=float(np.max(abs(common_controls.ba_h_rms_recovery-common_controls.ba_h_rms_combined)))
+   assert len(common_controls)==120 and control_difference==0,'startup configuration/setter controls differ'
+   summary['startup_configuration_crosscheck' if recovery_stage=='late_recovery' else 'production_recovery_control']=dict(windows=len(common_controls),max_bias_rms_difference=control_difference)
+  q=stages[recovery_stage];late=q[q.start==5400];sections+=['**Recovery profile: '+recovery_stage+'.**','', '| One-hour shock; 5400–7200 s bias RMS | QMEKF | TFG |','| --- | ---: | ---: |']
   for motion,arm,inj in [('wave','exact_fixed','none'),('wave','exact_fixed','bias'),('wave','exact_fixed','tilt'),('rocking','exact_fixed','bias'),('rocking','exact_fixed','tilt'),('wave','learned_fixed','none'),('wave','correct_reference','none')]:
    vals=[]
    for f in ('qmekf','tfg'):
     g=late[(late['filter']==f)&(late.motion==motion)&(late.arm==arm)&(late.injection==inj)];vals.append(label(g.ba_h_rms*1000))
    sections.append('| '+motion+'; '+(inj if inj!='none' else arm)+' | '+' | '.join(vals)+' |')
-  sections+=['','All these runs use centered gyro from startup and Schmidt holding with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.','']
+  profile='centered core/frontend and Schmidt holding' if recovery_stage=='late_recovery' else 'the actual core-only production defaults'
+  sections+=['','All these runs use '+profile+' from startup with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.','']
   recovery=[]
   for key,g in late.groupby(['filter','motion','arm','injection']):
    if key[3]=='none' and key[2]!='correct_reference':continue
    crossing=pd.to_numeric(g.recovery_bias,errors='coerce')
    recovery.append(dict(zip(['filter','motion','arm','injection'],key))|dict(first_qualifying_count=int(crossing.notna().sum()),late_below_10mm=int((g.ba_h_rms<.01).sum()),first_qualifying_seconds=ci(crossing)))
-  summary['late_recovery_counts']=recovery
+  summary[recovery_stage+'_counts']=recovery
   fig,axs=plt.subplots(2,2,figsize=(9,5.3),sharex=True)
   for col,f in enumerate(('qmekf','tfg')):
    for row,motion in enumerate(('wave','rocking')):
+    timing,noise=('both_start','_schmidt') if recovery_stage=='late_recovery' else ('defaults','')
     for inj,color in [('none','#596579'),('bias','#bd7b2a'),('tilt','#0a8292')]:
-     path=OUT/'runs/late_recovery'/f'1001_{f}_{motion}_exact_fixed_both_start_none_{inj}_7200_schmidt_trace.csv';trace=pd.read_csv(path)
+     path=OUT/'runs'/recovery_stage/f'1001_{f}_{motion}_exact_fixed_{timing}_none_{inj}_7200{noise}_trace.csv';trace=pd.read_csv(path)
      error=np.hypot(trace.ba_x-trace.true_x,trace.ba_y-trace.true_y)*1000
      axs[row,col].plot(trace.t/60,error,color=color,lw=.9,label={'none':'Control','bias':'Bias shock','tilt':'Tilt shock'}[inj])
     axs[row,col].axvline(60,color='#999',ls='--',lw=.8);axs[row,col].axhline(10,color='#6b529a',ls=':',lw=.8);axs[row,col].set_xlim(55,120);axs[row,col].set_yscale('log');axs[row,col].grid(alpha=.2);axs[row,col].set_title(f.upper()+' / '+motion+' — seed 1001');axs[row,col].legend(fontsize=7)
   axs[0,0].set_ylabel('Horizontal bias error [mm/s²]');axs[1,0].set_ylabel('Horizontal bias error [mm/s²]')
   for ax in axs[1]:ax.set_xlabel('Time [min]')
-  save(fig,'late_recovery')
-  sections+=['![One-hour shock recovery](../reports/results/live_bias_consistency/figures/late_recovery.svg)','Recovery counts distinguish a first qualifying trailing 30-s window, sustained for another 30 s, from the independent late-window threshold. They are retained by seed in the summary.','']
+  save(fig,recovery_stage)
+  sections+=['![One-hour shock recovery](../reports/results/live_bias_consistency/figures/'+recovery_stage+'.svg)','Recovery counts distinguish a first qualifying trailing 30-s window, sustained for another 30 s, from the independent late-window threshold. They are retained by seed in the summary.','']
  # Startup trace includes actual magnetic packet events near handoff.
  if 'startup' in stages:
-  path=OUT/'runs/startup'/'1001_qmekf_wave_learned_fixed_both_none_none_1200_trace.csv'
+  path=OUT/'runs/production'/'1001_qmekf_wave_learned_fixed_defaults_none_none_7200_trace.csv'
+  if not path.exists():path=OUT/'runs/startup'/'1001_qmekf_wave_learned_fixed_both_none_none_1200_trace.csv'
   q=pd.read_csv(path);q=q[q.t<=180]
   fig,axs=plt.subplots(2,2,figsize=(9,5),sharex=True)
   axs[0,0].plot(q.t,q.tilt,color='#0a8292');axs[0,0].set_ylabel('Tilt error [deg]')
@@ -243,7 +309,8 @@ def main():
   save(fig,'startup_gates')
   sections+=['![Startup and actual learning gates](../reports/results/live_bias_consistency/figures/startup_gates.svg)','']
  # Validate unchanged default on the long common prefixes/tails.
- comparison=stages.get('compatibility',d[d.timing=='endpoint'])
+ assert 'compatibility' in stages,'compatibility_runs.csv is required for baseline preservation'
+ comparison=stages['compatibility']
  common=comparison.merge(b,on=['seed','filter','motion','arm','start','end'],suffixes=('_new','_base'))
  summary['default_preservation']=dict(rows=len(common),max_bias_rms_difference=float(np.max(abs(common.ba_h_rms_new-common.ba_h_rms_base))))
  assert len(common)==168 and summary['default_preservation']['max_bias_rms_difference']==0,'default regression changed'

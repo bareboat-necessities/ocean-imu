@@ -21,14 +21,16 @@ def whiten(cov):
     floor=max(d.max()*1e-13,1e-18)
     return (U/np.sqrt(np.maximum(d,floor))).T,dict(min_eigenvalue=float(d.min()),floor=float(floor),floored=int((d<floor).sum()))
 
-def run(prefix,prior_scale=1.,max_nfev=30,bias_prior_sd=.008*9.80665/np.sqrt(3)):
+BIAS_PRIOR_SD=.008*9.80665/np.sqrt(3)
+
+def run(prefix,prior_scale=1.,max_nfev=30,bias_prior_sd=BIAS_PRIOR_SD):
     data=pd.read_csv(str(prefix)+'_window.csv');model=json.loads(Path(str(prefix)+'_model.json').read_text())
     # Use actual magnetic timestamps, ten packets per node (~0.4 s).
     ix=np.flatnonzero(data.mag_tick.to_numpy())[::10];d=data.iloc[ix].reset_index(drop=True);n=len(d)
     assert n>40
     dt=np.diff(d.t.to_numpy());assert np.max(abs(dt-dt[0]))<1e-6
     h=dt[0];A=np.kron(np.eye(3),model['A6']);W=np.array(model['W18']);W=(W+W.T)/2
-    P=linalg.solve_continuous_lyapunov(A,-W);scale=np.sqrt(np.maximum(P.diagonal(),1e-15));D=np.diag(scale)
+    P=linalg.solve_continuous_lyapunov(A,-W);scale=np.sqrt(np.maximum(P.diagonal(),1e-15))
     As=(A*scale[None,:])/scale[:,None];Ws=(W/scale[None,:])/scale[:,None]
     F=linalg.expm(As*h)
     E=linalg.expm(np.block([[As,Ws],[np.zeros_like(As),-As.T]])*h)
@@ -74,8 +76,9 @@ def run(prefix,prior_scale=1.,max_nfev=30,bias_prior_sd=.008*9.80665/np.sqrt(3))
     pat[-3:,baidx:]=1
     structure=pat.tocsr();groups=group_columns(structure)
     def solve(x,steps):
-        x=x.copy();history=[];status=0
-        for iteration in range(steps):
+        x=x.copy();history=[];status=0;nfev=0
+        for _ in range(steps):
+            nfev+=1
             r=residual(x);cost=float(r@r/2)
             J=approx_derivative(residual,x,method='3-point',sparsity=(structure,groups))
             gradient=np.asarray(J.T@r).ravel();optimality=float(np.max(abs(gradient)))
@@ -93,7 +96,7 @@ def run(prefix,prior_scale=1.,max_nfev=30,bias_prior_sd=.008*9.80665/np.sqrt(3))
             if np.linalg.norm(alpha*delta)<1e-7*(1+np.linalg.norm(x)):
                 status=2;break
         r=residual(x);J=approx_derivative(residual,x,method='3-point',sparsity=(structure,groups))
-        return SimpleNamespace(x=x,cost=float(r@r/2),jac=J,optimality=float(np.max(abs(J.T@r))),nfev=iteration+1,status=status,message='sparse Gauss-Newton with line search; 1e-10 step ridge',history=history)
+        return SimpleNamespace(x=x,cost=float(r@r/2),jac=J,optimality=float(np.max(abs(J.T@r))),nfev=nfev,status=status,message='sparse Gauss-Newton with line search; 1e-10 step ridge',history=history)
     first=solve(x,1);fit=solve(first.x,max_nfev)
     def score(x):
         # Only this function reads truth. No truth initializes or enters residuals.
@@ -111,7 +114,6 @@ def run(prefix,prior_scale=1.,max_nfev=30,bias_prior_sd=.008*9.80665/np.sqrt(3))
         S[:,j]=((decode(xp)[0][0]*baseR.inv()).as_rotvec()-(decode(xm)[0][0]*baseR.inv()).as_rotvec())/(2*eps)
     transform=np.linalg.solve(S,np.eye(3)*ps)
     J=sparse.hstack([J[:,:3]@transform,J[:,3:]],format='csc')
-    targets=np.r_[np.arange(3),np.arange(baidx,N)]
     def information(rows,chosen=None):
         targets=np.r_[np.arange(3),np.arange(baidx,N)] if chosen is None else chosen
         nuisance=np.setdiff1d(np.arange(N),targets)

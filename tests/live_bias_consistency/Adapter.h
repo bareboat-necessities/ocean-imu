@@ -96,9 +96,13 @@ public:
     Adapter(const Options& o,const V& B):opt(o) {
         typename Fusion::Config cfg;carma3_bench::fill_config(cfg,3.f);
 #ifndef BIAS_UNCHANGED_BASELINE
-        cfg.gyro_sample_period_sec=.005f;
-        if(o.timing=="both_start")cfg.gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
-        cfg.schmidt_acc_bias_hold=o.noise=="schmidt"||o.noise=="schmidt_prior";
+        if(o.timing!="defaults") {
+            cfg.gyro_sample_period_sec=.005f;
+            cfg.gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
+            if(o.timing=="both_start"||o.timing=="core_start")cfg.gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+            if(o.timing=="both_start")cfg.frontend_gyro_sample_mode=ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+            cfg.schmidt_acc_bias_hold=o.noise=="schmidt"||o.noise=="schmidt_prior";
+        }
         if(o.noise=="schmidt_prior")cfg.initial_acc_bias_std=.008f*9.80665f/std::sqrt(3.f);
 #endif
         cfg.mag_continuous_hard_iron=o.arm.find("cont")!=std::string::npos;
@@ -116,9 +120,9 @@ public:
         if(s.t>=opt.change && !injected) {
 #ifndef BIAS_UNCHANGED_BASELINE
             using Mode=ocean_imu::kalman::filter_detail::GyroSampleMode;
-            const Mode live=(opt.timing=="core"||opt.timing=="both"||opt.timing=="both_start")?Mode::Instantaneous:Mode::IntervalRate;
+            const Mode live=(opt.timing=="core"||opt.timing=="core_start"||opt.timing=="both"||opt.timing=="both_start")?Mode::Instantaneous:Mode::IntervalRate;
             const Mode front=(opt.timing=="frontend"||opt.timing=="both"||opt.timing=="both_start")?Mode::Instantaneous:Mode::IntervalRate;
-            f.raw().setGyroSampleMode(live,front);
+            if(opt.timing!="defaults") f.raw().setGyroSampleMode(live,front);
             if(opt.freeze=="sea"||opt.freeze=="both")f.raw().setSeaStateAdaptationEnabled(false);
             if(opt.freeze=="coupling"||opt.freeze=="both")m.setCouplingAdaptationEnabled(false);
 #else

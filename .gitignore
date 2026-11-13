@@ -170,3 +170,5 @@ tests/live_bias_consistency/audit-sensors
 tests/live_bias_consistency/timing-test
 tests/live_bias_consistency/schmidt-test
 reports/results/live_bias_consistency/runs/
+
+tests/live_bias_consistency/main-gyro-rollout

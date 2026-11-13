@@ -57,6 +57,7 @@
 #include <limits>
 
 #include "nlo/TimeVaryingGainNLO.h"
+#include "kalman_common/GyroInterval.h"
 #include "freq/FrequencyTrackerPolicy.h"
 
 template <bool WithGNSS = false,
@@ -139,6 +140,7 @@ public:
     };
 
     struct Config {
+        ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
         R gravity_mps2 = R(9.80665);
 
         typename Filter::Config filter{};
@@ -518,6 +520,9 @@ public:
     }
 
     void reset() {
+        gyro_interval_.reset();
+        gyro_interval_.set_mode(cfg_.gyro_sample_mode);
+        interval_gyro_.setZero();
         filter_ = Filter(cfg_.filter);
         filter_.reset();
 
@@ -705,14 +710,19 @@ public:
                 const Vec3& specific_force_b_mps2,
                 const Aux& aux)
     {
-        if (!(dt > R(0)) || !isFinite_(dt)) {
+        if (!(dt > R(0)) || !isFinite_(dt) || !gyro_b_rad_s.allFinite() || !specific_force_b_mps2.allFinite()) {
             return false;
         }
+        interval_gyro_ = gyro_interval_.prepare(gyro_b_rad_s, dt).rate;
 
         time_s_ += dt;
 
         if (!initialized_) {
             updateInitialization_(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+
+            // Bootstrap/averaging has just seeded the observer at this
+            // sample's epoch. Do not predict the preceding interval again.
+            if (initialized_) return true;
 
             if (!initialized_ && !cfg_.run_filter_before_initialized) {
                 return false;
@@ -737,7 +747,7 @@ public:
 
         updateThetaSchedule_(dt);
 
-        filter_.update(dt, gyro_b_rad_s, specific_force_b_mps2, aux);
+        filter_.update(dt, interval_gyro_, specific_force_b_mps2, aux);
 
         updateReportHighpass_(dt, hasUsableGNSS_(aux));
 
@@ -829,6 +839,8 @@ public:
 
 private:
     Config cfg_;
+    ocean_imu::kalman::filter_detail::GyroInterval<Vec3> gyro_interval_;
+    Vec3 interval_gyro_ = Vec3::Zero();
     Filter filter_;
     Aux aux_{};
 
@@ -1421,7 +1433,7 @@ private:
             }
         }
 
-        Vec3 omega_b = gyro_b_rad_s - boot_bias_b_ + correction_b;
+        Vec3 omega_b = interval_gyro_ - boot_bias_b_ + correction_b;
 
         if constexpr (Mag == NloMagType::None) {
             boot_bias_b_.z() = R(0);

@@ -115,6 +115,9 @@ public:
     using RSLaw = RSAdaptationLaw;
 
     struct Config {
+        ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
+        ocean_imu::kalman::filter_detail::GyroSampleMode frontend_gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
+        float gyro_sample_period_sec = 0.0f;
         Vector3f sigma_a{Vector3f::Constant(0.5f)};
         float    gyro_noise_density = 0.005f;
         Vector3f sigma_m{Vector3f::Constant(0.1f)};
@@ -206,6 +209,10 @@ public:
         cfg_ = cfg;
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
         mekf_.initialize_identity(cfg.initial_covariance);
+        mekf_.set_gyro_sample_mode(cfg.gyro_sample_mode);
+        mekf_.set_gyro_sample_period(cfg.gyro_sample_period_sec);
+        frontend_gyro_interval_.reset();
+        frontend_gyro_interval_.set_mode(cfg.frontend_gyro_sample_mode);
         mekf_.set_Racc_std(cfg.sigma_a);
         mekf_.set_Rmag_std(cfg.sigma_m);
         mekf_.set_Q_bgyro_rw(Vector3f::Constant(cfg.gyro_bias_rw_var));
@@ -265,7 +272,8 @@ public:
         // in which case acc_in is acc unchanged.
         const Vector3f acc_in = conditionAccel_(acc, dt);
 
-        vertical_complementary_.update(dt, gyro, acc_in, cfg_.gravity_magnitude);
+        const auto interval = frontend_gyro_interval_.prepare(gyro, dt);
+        vertical_complementary_.update(dt, interval.rate, acc_in, cfg_.gravity_magnitude);
         last_acc_body_ = acc;
         last_gyro_body_ = gyro;
         have_last_imu_ = true;
@@ -285,10 +293,11 @@ public:
         }
 
         if (stage_ == StartupStage::Cold) {
+            mekf_.prime_gyro_sample(gyro, dt);
             if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
                 tryProxyHandoff_();
             } else {
-                stagedColdStep_(gyro, acc_in, dt);
+                stagedColdStep_(interval.rate, acc_in, dt);
             }
             return;
         }
@@ -1029,6 +1038,7 @@ private:
     static constexpr float kPseudoPeriodMaxS = 0.25f;
 
     Config cfg_{};
+    ocean_imu::kalman::filter_detail::GyroInterval<Vector3f> frontend_gyro_interval_;
     Mekf mekf_{};
     StartupStage stage_{StartupStage::Cold};
     ::SeaStateAutoTuner tuner_{TUNER_SIGMA_VAR_K_PERIODS_DEFAULT, 1.0f};

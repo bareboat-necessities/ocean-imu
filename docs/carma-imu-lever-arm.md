@@ -114,7 +114,7 @@ committed evidence and the table below against each other.
 | 100 cm starboard | 1.14 | 2.81 | 1.007 | 1.008 | 1.00 | 1.01 | 1.03 | 1.22 |
 | 100 cm above | 1.21 | 3.00 | 1.002 | 1.015 | 1.02 | 0.99 | 1.35 | 0.95 |
 | 200 cm forward | 1.32 | 4.27 | 1.016 | 1.067 | 1.10 | 1.01 | 1.72 | 2.48 |
-| 200 cm starboard | 1.42 | 4.98 | 1.032 | 1.037 | 1.05 | 1.01 | 0.98 | 2.54 |
+| 200 cm starboard | 1.42 | 4.98 | 1.032 | 1.037 | 1.05 | 1.01 | 0.98 | 2.53 |
 | 200 cm above | 1.64 | 5.61 | 1.021 | 1.065 | 1.06 | 1.05 | 1.84 | 0.94 |
 
 Derivative corner of the corrected arm, IMU 100 cm above the CG (3-D RMS / CG baseline):
