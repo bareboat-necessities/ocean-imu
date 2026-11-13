@@ -1,15 +1,15 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "8cecdf39e60e0802182f0c1b5bc9bab74d4cb558",
+  "base_main_commit": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "300fe9a8d448479d069358d97877fffd46b963c1"
+      "git_blob_sha": "fd433a84ada303cd5afe6e67b57bf452aea2c879"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "9c522d7b2d50b40af478847cb1ce1d8541c6b500"
+      "git_blob_sha": "2efa28418a4dc26ea20093adde2d5198f483c4fd"
     },
     {
       "path": "src/kalman_common/SeaStateTuning.h",
@@ -29,7 +29,7 @@
     },
     {
       "path": "src/kalman_common/MarineWaveFrontEnd.h",
-      "git_blob_sha": "9bdb44c2a6b00466e528b714153884e4426f7bbf"
+      "git_blob_sha": "d594a15e9c2690026e07f714e114a385ad1a388c"
     },
     {
       "path": "src/kalman_common/SeaStateAdaptationCommon.h",
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "7dd0a689bb27a366ac9246e493ea6f8c1f674971"
+      "git_blob_sha": "0510597886cf16a04de3a8436f0ce436f243659a"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -46,6 +46,10 @@
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
       "git_blob_sha": "bcc5c095bce2c923ccc19824372ba4d316ec1256"
+    },
+    {
+      "path": "src/kalman_common/GyroInterval.h",
+      "git_blob_sha": "29ad1646785b0c8aa16d2894193e74c58ec30115"
     }
   ],
   "semantic_bindings": {
@@ -123,7 +127,8 @@
     "aw_covariance_ceiling": "Default profile, real arithmetic: the isotropic pending sync is the spectral max of P_aw and sigma^2 I, prediction maps the AW block to phi^2 P_aw+Q_aa with Q_aa<=(1+eps)(1-phi^2)sigma^2 I, and applied corrections subtract K_a S K_a', so lambda_max(P_aw)<=(1+eps)16 with excess decaying as exp(-t/6). Every applied sync floors P_aw at sigma^2 I, so the ceiling is tight; S_factor!=1 breaks it. Covariance-normalized storage cannot carry the AW error uniformly (carried collinear ratios 6.68 and 6.91); the physical AW tracking bound remains open.",
     "so3_coefficient_transfer": "Shipping SO(3) covariance/integral coefficients use degree-18 alternating Taylor series for |omega|h<1 and closed forms otherwise. Exact historical row factorization retains actual Rs and Bs in W and Gamma. Ideal rotation-integral simplification and norm-one inverse bounds require the deterministic coefficient remainder as well as mean-quaternion and floating-point defects; source-uniform implementation transfer remains open and finite replays are non-promoting.",
     "physical_compatibility_scope": "Homogeneous kernel exclusion is not physical tilt/BA identifiability. Exact planar MOVING sensor-compatible pair satisfies current source spans with constant SLOW BA; all-time applied magnetic-service admission remains OPEN.",
-    "quiet_entry_scope": "Universal absolute V<.0225 entry on indefinite STILL is refuted. Quiet constant-record fibre uses B_s+C/H, not B_s+B_f; a uniform covariance-metric practical tube remains OPEN."
+    "quiet_entry_scope": "Universal absolute V<.0225 entry on indefinite STILL is refuted. Quiet constant-record fibre uses B_s+C/H, not B_s+B_f; a uniform covariance-metric practical tube remains OPEN.",
+    "gyro_sampling": "Live prediction uses measured endpoint centering, retains the endpoint frontend and legacy held-bias defaults, and carries previous raw sample, previous dt, mode and exposure through execution boundaries. See docs/ou3-gyro-sampling-audit.md; finite source records are regenerated, physical continuation and hardware qualification remain open."
   },
   "operation_lemma_sources": [
     {
@@ -168,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "159da4549ed08893fbeb0b16506ab60bbabdcd7a"
+      "git_blob_sha": "a1352aeca23b9e4c1051ef713bf5568440c39ef7"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -216,19 +221,19 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "eba3766d8532535ad2fdea85230a9b3db11ec2da"
+      "git_blob_sha": "1a015d47ac86318637a6000cf3fa8fa1ab44d152"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
-      "git_blob_sha": "feb16af672bd86ea13da47e219878b62343315eb"
+      "git_blob_sha": "4d4ffed3aed1dade0d362545f436b04d89e489d8"
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "28ba73e5cc0297f41c16be35bf9f931846e2e7fa"
+      "git_blob_sha": "45c3695a11cef772536ea0efc4bdb1dc30dcf7bd"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "99678b2eb85c0eb2b3e410192242ad8664450a62"
+      "git_blob_sha": "5c9eac5b503f8cfc279ab6c2f6c64bc28d0bb089"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -240,7 +245,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "987bd08b43f3f276eca287a8baa36337af11688b"
+      "git_blob_sha": "b0abaf781b067b50302ded65e3433bb78c4f13ee"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -252,11 +257,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "0907bc38e517134667b3e88c41891aadc318b5e4"
+      "git_blob_sha": "32e7c36c39e0ff3d9b6aadf2e94328ba65a6f000"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "8ba128d746624c65d9ad122f829eb9c30908310a"
+      "git_blob_sha": "305d1f9b67e6596f8a817658149b87d7c2cc4335"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -280,7 +285,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "30137e23f9f8626c9c58030b5de372c175341cf1"
+      "git_blob_sha": "358c424243c3d7ba5f9327fec596d9e3504edab5"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -504,7 +509,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "f269537bbd8a56beaafd01d0061e215a25f11af6"
+      "git_blob_sha": "14b136aa0dc860889e6771d7cd584e49f9f15e35"
     },
     {
       "path": "tools/stability/ou3_theorem/aggregate_floor.py",
@@ -760,7 +765,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-joint-phase-cell-threshold.json",
-      "git_blob_sha": "818183a89b3b411b393e5c69186cbc0024888582"
+      "git_blob_sha": "581197ce5385a2b787fe9b4449beae7680e5a4e2"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
@@ -772,7 +777,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "6419531ea7f5cd012e250304098a08b43540e2b8"
+      "git_blob_sha": "db3054e11cbe2b4fb2d0d02b147f094e02792dcc"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -840,23 +845,23 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "b295045dadf8c72f415e180ef1905c21d14557dd"
+      "git_blob_sha": "b0fc845779e14521cc71afb324ae0f5dae82a3a5"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
-      "git_blob_sha": "7a0317b3a074175ddbec9974501816109783148c"
+      "git_blob_sha": "d9559683c9dc723d34f46ac7acdb78f7d5359c12"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
-      "git_blob_sha": "59f6338e9779c9f45c7c9f631f75bb8d959c477a"
+      "git_blob_sha": "86bd4273abfcd05a680e80589d304b56966a0205"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
-      "git_blob_sha": "db44e5eb6423a6d135911aff9b3d6a87a930300a"
+      "git_blob_sha": "bac575a65574db27b2e7ac66d119e2901c3ba85d"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "eb57f6b5e0db084a694540a5628973b9d75d6d77"
+      "git_blob_sha": "3e1814ee7d1fd2a6f289401d6e6f51bb18f0eefb"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -888,7 +893,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
-      "git_blob_sha": "e0e4434820c0d1f1984f7bbf121ce3e9bfdababc"
+      "git_blob_sha": "b1816438aac8eb8feb5c72a3f20f1fe81c4fb56f"
     },
     {
       "path": "tests/validation/test_ou3_planar_moving_center.py",
@@ -1246,7 +1251,7 @@
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
     "certificate": "measurement-frame-loss-certificate.json",
-    "result_type": "PROVED — analytical identities and qualified uniform operation inequalities",
+    "result_type": "PROVED \u2014 analytical identities and qualified uniform operation inequalities",
     "complete_21_state_frame_and_mask_congruence": true,
     "moving_frame_derivative_retained": true,
     "radial_magnetic_feedback_and_square_charge_retained": true,
@@ -1749,5 +1754,14 @@
     "validation_gate_changed": false,
     "mathematical_margin_promoted": false,
     "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "runtime_change_audit": {
+    "baseline_main": "063017d44e3c422621a7f7b260f950cacb43a616",
+    "implementation_commit": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
+    "audit": "docs/ou3-gyro-sampling-audit.md",
+    "runtime_changed": true,
+    "generator_shipping_behavior_changed_flag_scope": "the diagnostic generator does not alter shipping code; this is not an assertion that this PR leaves runtime unchanged",
+    "new_source_uniform_stability_claim": false,
+    "theorem_closed": false
   }
 }

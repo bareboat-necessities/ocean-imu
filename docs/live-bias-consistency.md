@@ -4,7 +4,7 @@ Source baseline: [`9018fa4b57d9bd10983ae4e77ff95ce509551e17`](https://github.com
 This was main when the investigation began. The implementation also incorporates
 main through `063017d44e3c422621a7f7b260f950cacb43a616`, including its publication-only follow-up;
 its production sources are identical to the scored baseline.
-The retained comparative section is the original controlled study. Fresh production-default and broader rollout tables are being regenerated for this source revision. Both 27-state shared-mode geometries are evaluated in the retained study.
+The comparative section retains the original controlled study and adds fresh production-default and broader rollout tables for this source revision. Both 27-state shared-mode geometries are evaluated.
 The default rollout additionally covers live OU-II, OU-III, TFG, NLO and PII;
 its native integration tests and paired wave results are reported separately. Since the
 cited `c2ae63b2` study, main optimized TFG propagation/reset kernels and shared
@@ -311,11 +311,44 @@ Eigenvalues at or below 1e-10 are plotted at that numerical floor. The sensor-on
 
 These rows distinguish actual bias recovery from corrected covariance handling; the learned-reference rows use no truth for estimation.
 
+| Actual default configuration | QMEKF | TFG |
+| --- | ---: | ---: |
+| wave; exact_fixed | 55.80 [23.50, 88.11] | 45.73 [3.66, 87.80] |
+| wave; learned_fixed | 68.52 [44.95, 92.09] | 56.88 [15.55, 98.21] |
+| wave; oracle | 1.70 [1.49, 1.92] | 1.70 [1.48, 1.93] |
+| rocking; exact_fixed | 2.16 [1.69, 2.63] | 2.16 [1.69, 2.63] |
+
+These runs leave Config defaults untouched: centered live prediction, the existing endpoint frontend, and legacy held-bias handling. The focused 180-s samplewise Config/setter control checks full state and covariance through startup and activation. Only the oracle arm supplies acceleration truth. The corrected implementation still has a large unknown-acceleration floor.
+
+| Other live filters: acquired reference, unknown acceleration | Legacy RMS | Default RMS | Paired default minus legacy |
+| --- | ---: | ---: | ---: |
+| OU2 | 220.66 [106.46, 334.86] | 227.41 [112.47, 342.35] | 6.75 [5.28, 8.22] |
+| OU3 | 373.06 [321.55, 424.57] | 377.89 [325.51, 430.27] | 4.83 [-0.94, 10.59] |
+| TFG | 184.39 [118.10, 250.68] | 192.96 [125.89, 260.03] | 8.57 [6.22, 10.93] |
+
+Six paired seeds, 7200 s each, scoring 5400–7200 s. Each legacy/default pair consumes identical sensors from one continuous physical history. Magnetic reference is acquired ordinarily; fixed hard iron is correct. These are within-family timing comparisons with existing family priors, not cross-family rankings or exact-reference CARMA controls. The timing correction slightly worsens this particular floor in all three families. Covariance remains overconfident (zero late 95% horizontal coverage here), and actual bias learning is enabled throughout. Correct integration does not create missing independent motion/reference information.
+
+![Other live filter rollout](../reports/results/live_bias_consistency/figures/main_filter_rollout.svg)
+
+| Pinned replay profile | QMEKF records exceeding old bars | TFG records exceeding old bars |
+| --- | ---: | ---: |
+| interval | 0/8 | 0/8 |
+| defaults | 0/8 | 0/8 |
+| core | 0/8 | 0/8 |
+| frontend | 1/8 | 1/8 |
+| instantaneous | 2/8 | 2/8 |
+| core_schmidt | 3/8 | 3/8 |
+| both_schmidt | 3/8 | 3/8 |
+
+Each profile uses the same eight pinned histories and default noise seeds. `interval` is the locked baseline; `defaults` is the actual untouched Config; `core` selects that sampling path explicitly. `instantaneous` centers both paths, and the two Schmidt profiles add held-bias handling. Diagnostic profiles are compared offline to the original bars, without claiming their ungated exit status certifies those bars. Production and legacy profiles are gated natively. This evidence selects core-only prediction and retains the original frontend/holding defaults. It does not establish the exact mechanism of the frontend/reference regression.
+
 ![Covariance consistency and nuisance conditioning](../reports/results/live_bias_consistency/figures/covariance_diagnostics.svg)
 The variance ratio is a posterior-covariance diagnostic, not an observability Gramian.
 
 ![Innovations under independently changed white-noise models](../reports/results/live_bias_consistency/figures/innovations.svg)
 Matching magnetic white-noise SD can bring magnetic NIS near its dimension reference without resolving bias error. The prior/reference and motion assumptions remain separate.
+
+**Recovery profile: late_recovery.**
 
 | One-hour shock; 5400–7200 s bias RMS | QMEKF | TFG |
 | --- | ---: | ---: |
@@ -327,9 +360,26 @@ Matching magnetic white-noise SD can bring magnetic NIS near its dimension refer
 | wave; learned_fixed | 68.51 [44.91, 92.10] | 56.88 [15.50, 98.27] |
 | wave; correct_reference | 55.80 [23.44, 88.16] | 45.74 [3.76, 87.72] |
 
-All these runs use centered gyro from startup and Schmidt holding with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.
+All these runs use centered core/frontend and Schmidt holding from startup with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.
 
 ![One-hour shock recovery](../reports/results/live_bias_consistency/figures/late_recovery.svg)
+Recovery counts distinguish a first qualifying trailing 30-s window, sustained for another 30 s, from the independent late-window threshold. They are retained by seed in the summary.
+
+**Recovery profile: production_recovery.**
+
+| One-hour shock; 5400–7200 s bias RMS | QMEKF | TFG |
+| --- | ---: | ---: |
+| wave; exact_fixed | 55.80 [23.50, 88.11] | 45.73 [3.66, 87.80] |
+| wave; bias | 52.94 [22.43, 83.45] | 48.91 [1.15, 96.66] |
+| wave; tilt | 57.22 [27.79, 86.65] | 45.81 [3.46, 88.15] |
+| rocking; bias | 2.32 [1.86, 2.78] | 2.31 [1.86, 2.77] |
+| rocking; tilt | 2.32 [1.86, 2.78] | 2.31 [1.86, 2.77] |
+| wave; learned_fixed | 68.52 [44.95, 92.09] | 56.88 [15.55, 98.21] |
+| wave; correct_reference | 55.78 [23.40, 88.17] | 45.72 [3.80, 87.64] |
+
+All these runs use the actual core-only production defaults from startup with the common native prior. At 3600 s, bias/tilt shocks are additive estimated-state perturbations; the reference-repair arm instead changes only the magnetic reference. No live covariance reset accompanies an intervention.
+
+![One-hour shock recovery](../reports/results/live_bias_consistency/figures/production_recovery.svg)
 Recovery counts distinguish a first qualifying trailing 30-s window, sustained for another 30 s, from the independent late-window threshold. They are retained by seed in the summary.
 
 ![Startup and actual learning gates](../reports/results/live_bias_consistency/figures/startup_gates.svg)

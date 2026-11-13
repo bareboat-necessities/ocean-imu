@@ -7,7 +7,7 @@
     "0",
     "72"
   ],
-  "header_sha256": "12beac7f536f1ee3e6a51326d69b59c8d20679d38af006dc0b10f5b3b4d68c03",
+  "header_sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
   "literal_over_injection_free_min": 1.0000088801271634,
   "magnetic_service_certified": false,
   "onset_s": 160,
@@ -24,16 +24,16 @@
         "1",
         "0"
       ],
-      "attitude_error_max_rad": 0.00115911,
-      "corollary_A_star_ratio": 0.000348011,
+      "attitude_error_max_rad": 0.0011557,
+      "corollary_A_star_ratio": 0.000352659,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.000473753,
+        "A_tilde_minus_I_max": 0.000472492,
         "G0_floor_service_gap_1s": 0.0839733,
         "injection_free_sigma_min": 218.48,
         "literal_sigma_min": 218.524,
-        "nominal_rate_max_rad_s": 0.00499995,
+        "nominal_rate_max_rad_s": 0.005,
         "word_nominal_force_L1": 1.01701,
-        "word_nominal_transverse_mean_mps2": 0.000572515,
+        "word_nominal_transverse_mean_mps2": 0.000574914,
         "word_s": [
           2.0,
           102.0
@@ -51,14 +51,14 @@
           "V": "429074636011928881/2186021390400000000"
         }
       },
-      "nominal_16s_mean_max_mps2": 0.000844493,
+      "nominal_16s_mean_max_mps2": 0.000851878,
       "nominal_force_L1_max": 1.01702,
-      "nominal_transverse_mean_max_mps2": 0.000682565,
+      "nominal_transverse_mean_max_mps2": 0.00069168,
       "pointwise_aw_error_sup_mps2": 0.242306,
       "pointwise_ratio_to_corollary_A": 0.215607,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.000844493,
-      "signed_mean_ratio_to_1_12383": 0.000751442,
+      "signed_16s_mean_error_max_mps2": 0.000851878,
+      "signed_mean_ratio_to_1_12383": 0.000758014,
       "tau_aw_range_s": [
         0.499388,
         0.524296
@@ -75,16 +75,16 @@
         "1",
         "0"
       ],
-      "attitude_error_max_rad": 0.00617358,
-      "corollary_A_star_ratio": 0.0114562,
+      "attitude_error_max_rad": 0.00617543,
+      "corollary_A_star_ratio": 0.0114561,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.00448571,
+        "A_tilde_minus_I_max": 0.00448575,
         "G0_floor_service_gap_1s": 0.08053,
         "injection_free_sigma_min": 266.49,
         "literal_sigma_min": 267.409,
-        "nominal_rate_max_rad_s": 0.00500043,
+        "nominal_rate_max_rad_s": 0.0050004,
         "word_nominal_force_L1": 1.04323,
-        "word_nominal_transverse_mean_mps2": 0.0221722,
+        "word_nominal_transverse_mean_mps2": 0.0221721,
         "word_s": [
           2.0,
           102.0
@@ -102,14 +102,14 @@
           "V": "6144521769/40282095616"
         }
       },
-      "nominal_16s_mean_max_mps2": 0.0254574,
+      "nominal_16s_mean_max_mps2": 0.0254572,
       "nominal_force_L1_max": 1.04376,
-      "nominal_transverse_mean_max_mps2": 0.0224693,
+      "nominal_transverse_mean_max_mps2": 0.0224692,
       "pointwise_aw_error_sup_mps2": 7.64698,
       "pointwise_ratio_to_corollary_A": 6.80439,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.0326606,
-      "signed_mean_ratio_to_1_12383": 0.0290619,
+      "signed_16s_mean_error_max_mps2": 0.0326603,
+      "signed_mean_ratio_to_1_12383": 0.0290616,
       "tau_aw_range_s": [
         9.99977,
         9.99977
@@ -126,16 +126,16 @@
         "0.1",
         "0"
       ],
-      "attitude_error_max_rad": 0.000244843,
+      "attitude_error_max_rad": 0.000244606,
       "corollary_A_star_ratio": 0.0813815,
       "literal_array": {
-        "A_tilde_minus_I_max": 7.18197e-05,
+        "A_tilde_minus_I_max": 7.18088e-05,
         "G0_floor_service_gap_1s": 0.0786051,
         "injection_free_sigma_min": 248.756,
         "literal_sigma_min": 248.766,
-        "nominal_rate_max_rad_s": 0.00499998,
+        "nominal_rate_max_rad_s": 0.00500003,
         "word_nominal_force_L1": 1.05237,
-        "word_nominal_transverse_mean_mps2": 0.0510535,
+        "word_nominal_transverse_mean_mps2": 0.0510533,
         "word_s": [
           2.0,
           102.0
@@ -159,8 +159,8 @@
       "pointwise_aw_error_sup_mps2": 2.25181,
       "pointwise_ratio_to_corollary_A": 2.00369,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.00834027,
-      "signed_mean_ratio_to_1_12383": 0.00742129,
+      "signed_16s_mean_error_max_mps2": 0.0083402,
+      "signed_mean_ratio_to_1_12383": 0.00742123,
       "tau_aw_range_s": [
         4.98841,
         5.05626
@@ -177,16 +177,16 @@
         "0.2",
         "0"
       ],
-      "attitude_error_max_rad": 0.000245179,
+      "attitude_error_max_rad": 0.000245355,
       "corollary_A_star_ratio": 0.0364106,
       "literal_array": {
-        "A_tilde_minus_I_max": 2.84245e-05,
-        "G0_floor_service_gap_1s": 0.0834351,
+        "A_tilde_minus_I_max": 2.80481e-05,
+        "G0_floor_service_gap_1s": 0.083435,
         "injection_free_sigma_min": 225.222,
         "literal_sigma_min": 225.224,
-        "nominal_rate_max_rad_s": 0.005,
+        "nominal_rate_max_rad_s": 0.00500005,
         "word_nominal_force_L1": 1.00238,
-        "word_nominal_transverse_mean_mps2": 0.0561199,
+        "word_nominal_transverse_mean_mps2": 0.05612,
         "word_s": [
           2.0,
           102.0
@@ -211,7 +211,7 @@
       "pointwise_ratio_to_corollary_A": 1.88911,
       "recorded_accelerometer_rows": 56001,
       "signed_16s_mean_error_max_mps2": 0.0100796,
-      "signed_mean_ratio_to_1_12383": 0.008969,
+      "signed_mean_ratio_to_1_12383": 0.00896901,
       "tau_aw_range_s": [
         2.49009,
         2.5224
@@ -228,14 +228,14 @@
         "1",
         "0.4"
       ],
-      "attitude_error_max_rad": 0.00865353,
+      "attitude_error_max_rad": 0.0086526,
       "corollary_A_star_ratio": 0.177372,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.00371187,
+        "A_tilde_minus_I_max": 0.00371182,
         "G0_floor_service_gap_1s": 0.0724443,
         "injection_free_sigma_min": 200.411,
         "literal_sigma_min": 200.455,
-        "nominal_rate_max_rad_s": 0.00500096,
+        "nominal_rate_max_rad_s": 0.00500103,
         "word_nominal_force_L1": 1.00058,
         "word_nominal_transverse_mean_mps2": 0.346506,
         "word_s": [
@@ -279,16 +279,16 @@
         "0.1",
         "0"
       ],
-      "attitude_error_max_rad": 0.000598104,
+      "attitude_error_max_rad": 0.000593205,
       "corollary_A_star_ratio": 0.102501,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.000449349,
+        "A_tilde_minus_I_max": 0.000449501,
         "G0_floor_service_gap_1s": 0.0810637,
         "injection_free_sigma_min": 191.808,
         "literal_sigma_min": 191.815,
-        "nominal_rate_max_rad_s": 0.00500001,
+        "nominal_rate_max_rad_s": 0.00500005,
         "word_nominal_force_L1": 1.02182,
-        "word_nominal_transverse_mean_mps2": 0.0662349,
+        "word_nominal_transverse_mean_mps2": 0.0662348,
         "word_s": [
           2.0,
           102.0
@@ -312,8 +312,8 @@
       "pointwise_aw_error_sup_mps2": 2.56392,
       "pointwise_ratio_to_corollary_A": 2.28141,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.05619,
-      "signed_mean_ratio_to_1_12383": 0.0499986,
+      "signed_16s_mean_error_max_mps2": 0.0561898,
+      "signed_mean_ratio_to_1_12383": 0.0499985,
       "tau_aw_range_s": [
         4.9884,
         5.05686

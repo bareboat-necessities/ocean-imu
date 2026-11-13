@@ -25,14 +25,14 @@
     "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
   "existing_csv_replays": {
-    "runs": 4,
+    "runs": 112,
     "exit_code": 0,
     "thresholds_changed": false,
     "instantaneous_override_is_gated": false,
-    "regression_override_rejection_exit_code": 2
+    "regression_override_rejection_exit_code": 2,
+    "note": "16 baseline and 16 production default gates pass; diagnostic profiles compared offline to unchanged bars"
   },
   "scope": {
-    "default_gyro_convention": "IntervalRate",
     "default_schmidt_hold": false,
     "truth_oracles": "explicit diagnostic arms only",
     "hardware_timing_qualified": false,
@@ -52,7 +52,7 @@
   },
   "research": {
     "independent_seeds": 6,
-    "paired_runs": 1020,
+    "paired_runs": 1200,
     "offline_windows": 72
   },
   "initial_build_failures": [
@@ -82,7 +82,7 @@
   },
   "required_check": {
     "command": "make all EIGEN_DIR=\"$EIGEN_DIR\"",
-    "status": "serial_retry_required_after_resource_failure"
+    "status": "serial make all in progress"
   },
   "source_sha256": {
     "src/kalman_carma/Kalman3D_Wave_CARMA3.h": "63a91fa019b3ac6cd0f9a249db891b36aa6e6621917a44ab1ec404aa29aded28",
@@ -175,8 +175,13 @@
       "mode": "exhaustive",
       "exit_code": 0
     },
-    "source_bound_proof_refresh": "in progress; stale bindings remain fail-closed",
-    "full_statistical_evidence": "must be genuinely regenerated on this source"
+    "source_bound_proof_refresh": {
+      "exit_code": 0,
+      "command": "python3 -m tools.stability.ou3_theorem.build_evidence --output /tmp/ocean-refreshed-proof-check.json",
+      "theorem_closed": false,
+      "note": "Actual source diagnostics regenerated before binding refresh; no theorem promotion"
+    },
+    "full_statistical_evidence": "genuine full branch regeneration queued in GitHub Actions"
   },
   "resource_build_failure": {
     "command": "make -j2 build EIGEN_DIR=/workspace/scratch/c5be0639f4c3/eigen-3.4.0",
@@ -184,5 +189,6 @@
     "error": "g++: fatal error: Killed signal terminated program cc1plus",
     "action": "retry serially after the evidence generators finish"
   },
-  "new_default_comparison": "running; retained research rows are historical controlled arms, not newly certified final-default runs"
+  "new_default_comparison": "complete: 48 production, 96 production_recovery and 36 main_rollout runs; six paired seeds",
+  "source_revision": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a"
 }

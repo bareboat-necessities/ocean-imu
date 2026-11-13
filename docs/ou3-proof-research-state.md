@@ -38,14 +38,15 @@ resets retain physical sample history; a new acquisition clears it.
 Relaxations introduced: none in runtime. The finite rotation/replay diagnostics
 and the linearized white-noise covariance envelope do not qualify hardware
 phase delays, SLOW+FAST physical envelopes, regional capture or end-to-end
-stability. Prior source-bound native receipts are historical until audited
-against this changed complete execution. Classification E applies to stale
+stability. Prior source-bound native receipts are archived. The finite native/observer
+records are regenerated against the changed complete execution, with the
+cache and noise-map audit in `ou3-gyro-sampling-audit.md`. Classification E applies to stale
 source bindings, not to the mathematical theorem. No shipping counterexample
 was found. Existing algebraic identities for unchanged kernels remain
 available; lifting their physical execution qualifications to this sampling
-map is OPEN. Next falsifiable proof calculation: audit the cache-augmented
-same-history gyro forcing against SF3--SF9 and recheck construction/release and
-actual magnetic-service receipts without deleting the new sample memory.
+map is OPEN. Next falsifiable proof calculation: qualify the cache-augmented physical
+forcing against SF3--SF9 and the still-open construction/release and all-time
+magnetic-service obligations, without deleting inherited sample memory.
 
 ## Historical native secant source binding
 
