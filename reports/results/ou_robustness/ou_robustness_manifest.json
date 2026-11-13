@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+  "git_branch": "claude/exciting-sagan-csur2l",
+  "git_commit": "e00df62ebab34c44480605efabc8ed99e70f3a25",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -341,8 +341,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-12T20:49:23+00:00",
-    "git_commit": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
+    "generated_at": "2026-11-13T01:58:00+00:00",
+    "git_commit": "e00df62ebab34c44480605efabc8ed99e70f3a25",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,8 +541,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43292529987",
-      "workflow": "build"
+      "run_id": "43342741843",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
