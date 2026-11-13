@@ -2086,6 +2086,27 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     }
 
     const size_t start = result.errs_z.size() - N_last;
+    // A NaN makes an ordinary `rms > limit` comparison false. Check the
+    // scored physical channels before aggregation, including bias truth used
+    // as the normalization denominator. Optional direction telemetry may be
+    // unavailable and is deliberately not part of these accuracy gates.
+    for (const auto* values : {&result.errs_x, &result.errs_y, &result.errs_z,
+                              &result.errs_roll, &result.errs_pitch, &result.errs_yaw,
+                              &result.ref_x, &result.ref_y, &result.ref_z,
+                              &result.accb_err_x, &result.accb_err_y, &result.accb_err_z,
+                              &result.gyrb_err_x, &result.gyrb_err_y, &result.gyrb_err_z,
+                              &result.accb_true_x, &result.accb_true_y, &result.accb_true_z,
+                              &result.gyrb_true_x, &result.gyrb_true_y, &result.gyrb_true_z}) {
+        if (values->size() != result.errs_z.size() ||
+            !std::all_of(values->begin() + static_cast<std::ptrdiff_t>(start), values->end(),
+                         [](float value) { return std::isfinite(value); })) {
+            g_w3d_any_gate_failed = true;
+            std::cerr << "ERROR: incomplete or nonfinite scored estimation history. Failing.\n";
+            std::cout << "QUALITY_GATE: PASS=0 REASON=invalid_scored_history\n";
+            if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
+            return;
+        }
+    }
     RMSReport rms_x, rms_y, rms_z, rms_roll, rms_pitch, rms_yaw;
     RMSReport rms_accb_x, rms_accb_y, rms_accb_z;
     RMSReport rms_gyrb_x, rms_gyrb_y, rms_gyrb_z;
@@ -2264,7 +2285,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     bool failed = false;
     std::string fail_reason = "ok";
     auto fail_if = [&](const char* label, float pct, float limit) {
-        if (pct > limit) {
+        if (!std::isfinite(pct) || pct > limit) {
             failed = true;
             fail_reason = std::string(label) + "_limit_exceeded";
             std::cerr << "ERROR: " << label << " RMS above limit (" << pct << "% > " << limit << "%). Failing.\n";
@@ -2273,7 +2294,9 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     };
 
     fail_if("Z", z_pct, limit_z);
-    fail_if("3D", pct_3d, limit_3d);
+    // Quiet diagnostic truth can have no displacement normalization at all.
+    if (disp_true_max_3d > 1e-12f || !std::isfinite(rms_3d_err))
+        fail_if("3D", pct_3d, limit_3d);
 
     // The attitude bars are fitted to the deployed protocol, which runs the
     // magnetometer, so an IMU-only run is not scored against them -- the same
@@ -2285,7 +2308,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     // the magnetometer is measuring a different filter without it.
     auto fail_attitude_if = [&](const char* label, float deg, float limit) {
         if (!result.with_mag || !(limit > 0.0f)) return;
-        if (deg > limit) {
+        if (!std::isfinite(deg) || deg > limit) {
             failed = true;
             fail_reason = std::string(label) + "_limit_exceeded";
             std::cerr << "ERROR: " << label << " RMS above limit (" << deg
@@ -2294,7 +2317,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
         }
     };
 
-    if (result.with_mag && rms_yaw.rms() > limits.err_limit_yaw_deg) {
+    if (result.with_mag && (!std::isfinite(rms_yaw.rms()) || rms_yaw.rms() > limits.err_limit_yaw_deg)) {
         failed = true;
         fail_reason = "yaw_limit_exceeded";
         std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
@@ -2305,7 +2328,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     fail_attitude_if("Pitch", rms_pitch.rms(), limits.err_limit_pitch_deg);
 
     const float accb_z_pct = pct_of_max(accb_rz, acc_true_max_z);
-    if (std::isfinite(accb_z_pct) && accb_z_pct > limits.acc_z_bias_percent) {
+    if (!std::isfinite(accb_rz) || (std::isfinite(accb_z_pct) && accb_z_pct > limits.acc_z_bias_percent)) {
         failed = true;
         fail_reason = "acc_z_bias_percent_exceeded";
         std::cerr << "ERROR: accel Z bias error RMS above limit ("
@@ -2313,7 +2336,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
                   << "% of max TRUE Z bias). Failing.\n";
         if (!collect_all_gates) std::exit(EXIT_FAILURE);
     }
-    if (std::isfinite(accb_r3_pct) && accb_r3_pct > limits.bias_3d_percent) {
+    if (!std::isfinite(accb_r3) || (std::isfinite(accb_r3_pct) && accb_r3_pct > limits.bias_3d_percent)) {
         failed = true;
         fail_reason = "acc_bias_3d_percent_exceeded";
         std::cerr << "ERROR: 3D accel bias error RMS above limit ("
@@ -2324,7 +2347,7 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     const float gyro_bias_limit = (limits.gyro_bias_3d_percent > 0.0f)
         ? limits.gyro_bias_3d_percent
         : limits.bias_3d_percent;
-    if (std::isfinite(gyrb_r3_pct) && gyrb_r3_pct > gyro_bias_limit) {
+    if (!std::isfinite(gyrb_r3) || (std::isfinite(gyrb_r3_pct) && gyrb_r3_pct > gyro_bias_limit)) {
         failed = true;
         fail_reason = "gyro_bias_3d_percent_exceeded";
         std::cerr << "ERROR: 3D gyro bias error RMS above limit ("

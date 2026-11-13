@@ -20,5 +20,5 @@ constexpr W3dFailureLimits kCsmRegressionBars{
 }
 int main(int argc, char* argv[]) {
     return ocean_imu::sim::shared_modes::run<ocean_imu::carma_shared_modes::KalmanCarmaSharedModes<float>>(
-        argc, argv, kCsmRegressionBars, "CARMA_SHARED_MODES_");
+        argc, argv, kCsmRegressionBars, ocean_imu::sim::current_limits::csm, "CARMA_SHARED_MODES_");
 }

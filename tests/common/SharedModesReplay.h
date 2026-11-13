@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <vector>
 #include "../kalman_carma/carma3/SimAdapters.h"
+#include "CurrentReplayLimits.h"
 #include "kalman_carma_shared_modes/SharedModesEstimator.h"
 namespace ocean_imu::sim::shared_modes {
 using namespace carma3_sim;
@@ -101,7 +102,8 @@ bool run_file(const std::string& filename, float dt, bool with_mag, const W3dRan
 }
 
 template<class Core>
-int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const char* family_prefix) {
+int run(int argc, char* argv[], const W3dFailureLimits& regression_bars,
+        const W3dFailureLimits& current_bars, const char* family_prefix) {
     const float dt = 1.0f / 200.0f;
     bool with_mag = true;
     bool require_gates = false;
@@ -155,7 +157,8 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars, const c
         }
         std::cout << "REGRESSION_PROTOCOL: GATED=" << (gated ? 1 : 0) << " FAMILY=" << family_prefix << " SAMPLING=" << (legacy_sampling_protocol ? "legacy_interval" : "production_defaults") << '\n';
         std::size_t scored = 0;
-        const W3dFailureLimits& bars = gated ? regression_bars : kUngatedBars;
+        const W3dFailureLimits& bars = !gated ? kUngatedBars :
+            legacy_sampling_protocol ? regression_bars : current_bars;
         for (const auto& f : files) {
             const std::string family = std::string(family_prefix) + variant;
             bool processed = false;

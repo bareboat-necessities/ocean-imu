@@ -77,9 +77,10 @@ struct OutputRow {
 };
 
 struct AhrsFailureLimits {
-    float err_limit_roll_deg = 7.0f;
-    float err_limit_pitch_deg = 7.0f;
-    float err_limit_yaw_deg = 17.0f;
+    // Main a053a1d2, eight pinned records, trailing 60 s; +0.5%.
+    float err_limit_roll_deg = 0.9377f;  // measured 0.932953
+    float err_limit_pitch_deg = 5.3591f; // measured 5.3324
+    float err_limit_yaw_deg = 12.7212f;  // measured 12.6579
     float min_processing_hz = 100.0f;
 };
 
@@ -198,17 +199,17 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
               << ", throughput=" << processing_hz
               << " samples/s, realtime_x=" << realtime_x << "\n";
 
-    if (roll_rms > limits.err_limit_roll_deg) {
+    if (!(roll_rms <= limits.err_limit_roll_deg)) {
         std::cerr << "ERROR: Roll RMS above limit (" << roll_rms << " deg > "
                   << limits.err_limit_roll_deg << " deg). Failing.\n";
         std::exit(EXIT_FAILURE);
     }
-    if (pitch_rms > limits.err_limit_pitch_deg) {
+    if (!(pitch_rms <= limits.err_limit_pitch_deg)) {
         std::cerr << "ERROR: Pitch RMS above limit (" << pitch_rms << " deg > "
                   << limits.err_limit_pitch_deg << " deg). Failing.\n";
         std::exit(EXIT_FAILURE);
     }
-    if (with_mag && yaw_rms > limits.err_limit_yaw_deg) {
+    if (with_mag && !(yaw_rms <= limits.err_limit_yaw_deg)) {
         std::cerr << "ERROR: Yaw RMS above limit (" << yaw_rms << " deg > "
                   << limits.err_limit_yaw_deg << " deg). Failing.\n";
         std::exit(EXIT_FAILURE);

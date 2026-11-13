@@ -43,6 +43,7 @@
 
 #include "util/W3dSimCommon.h"
 #include "../common/GyroReplayContract.h"
+#include "../common/CurrentReplayLimits.h"
 #include "kalman_tfg/SeaStateFusionFilter_TFG.h"
 
 using Eigen::Quaternionf;
@@ -347,10 +348,8 @@ void process_one(const std::string& filename,
     };
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
-    // Corrected worst yaw 0.949967 deg; retain the same 0.5% fixture margin.
-    constexpr auto corrected = gyro_replay::corrected_yaw(kRegressionBars, 0.95472f);
     print_summary_and_fail_if_needed(*result, dt,
-        gyro_replay::legacy ? kRegressionBars : corrected, kLabels);
+        gyro_replay::legacy ? kRegressionBars : ocean_imu::sim::current_limits::tfg, kLabels);
 }
 
 }  // namespace

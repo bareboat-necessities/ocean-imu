@@ -36,6 +36,7 @@
 #include <vector>
 
 #include "carma3/SimAdapters.h"
+#include "../common/CurrentReplayLimits.h"
 
 using Eigen::Vector3f;
 
@@ -151,11 +152,8 @@ int main(int argc, char* argv[]) {
         const bool gated = variant == "A41" && add_noise && with_mag && default_seeds &&
                            !std::getenv("W3D_CARMA3_EXCITATION");
         gyro_replay::require_regression(gated);
-        // Corrected predictor: measured worst yaw 0.760895 deg, same 0.5% margin.
-        // The original limits above remain locked to --regression.
-        constexpr auto corrected = gyro_replay::corrected_yaw(kA41RegressionBars, 0.7647f);
         const W3dFailureLimits& bars = !gated ? kUngatedBars :
-            gyro_replay::legacy ? kA41RegressionBars : corrected;
+            gyro_replay::legacy ? kA41RegressionBars : ocean_imu::sim::current_limits::carma;
         std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
         for (const auto& f : files) {
             const std::string family = "CARMA3_" + variant;

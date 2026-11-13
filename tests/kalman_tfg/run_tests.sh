@@ -25,5 +25,6 @@ make -f Makefile -f ../common/LocalGravityRegression.mk local_gravity-test
 sim_status=0
 W3D_COLLECT_ALL_GATES=1 ./kalman_tfg-sim --regression || sim_status=$?
 W3D_COLLECT_ALL_GATES=1 ./kalman_tfg-sim || sim_status=$?
+W3D_COLLECT_ALL_GATES=1 ./kalman_tfg-legacy-sim || sim_status=$?
 
 exit "$sim_status"
