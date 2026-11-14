@@ -26,9 +26,9 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
 
-SIM_DATA_VERSION ?= v1.2.3
+SIM_DATA_VERSION ?= v1.3.1
 SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
-SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft.zip
+SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft-5kn.zip
 SIM_DATA_ZIP ?= $(REPO_ROOT)/$(SIM_DATA_ZIP_NAME)
 SIM_DATA_URL ?= https://github.com/$(SIM_DATA_REPO)/releases/download/$(SIM_DATA_VERSION)/$(SIM_DATA_ZIP_NAME)
 
@@ -55,7 +55,7 @@ clean:
 	done
 
 # Both targets verify archive bytes and refresh every stale input directory.
-# The shared immutable cache avoids duplicating the 823 MB archive payload.
+# The shared immutable cache avoids duplicating the unpacked input payload.
 fetch-sim-data ensure-sim-data:
 	python3 "$(REPO_ROOT)/tools/sim_dataset.py" --archive "$(SIM_DATA_ZIP)" \
 		--dest $(TEST_DIRS) $(patsubst $(REPO_ROOT)/tests/%,$(REPO_ROOT)/plots/%,$(TEST_DIRS))

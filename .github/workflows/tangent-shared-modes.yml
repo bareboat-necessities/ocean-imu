@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
       - 'src/lie/**'
       - 'src/kalman_carma/**'
       - 'src/kalman_carma_shared_modes/**'
@@ -16,6 +17,7 @@ on:
   push:
     branches: [main, 'research/tangent-carma-observability']
     paths:
+      - "tools/sim_dataset.py"
       - 'src/lie/**'
       - 'src/kalman_carma/**'
       - 'src/kalman_carma_shared_modes/**'

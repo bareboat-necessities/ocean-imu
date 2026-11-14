@@ -1,115 +1,206 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
-// Production-default regression limits measured on main a053a1d2 (v2.7.6).
-// Eight pinned v1.2.3 vessel-RAO records, default seeds, trailing 900 s.
-// Worst score + 0.5%, rounded upward to 1e-5, capped by an existing
-// stricter production limit. Historical --regression bars stay separate.
-// Evidence and reproduction: docs/filter-simulator-gates.md.
+// v1.3.1 28 ft, 5 kn, +/-3 deg heading / 120 s; exact 200 Hz clocks.
+// Default seeds; trailing 900 s. Each profile: worst + 0.5%, rounded up
+// to 1e-5. Evidence and reproduction: docs/filter-simulator-gates.md.
 #include "util/W3dSimCommon.h"
 namespace ocean_imu::sim::current_limits {
 
 inline constexpr W3dFailureLimits ou2{
-    .err_limit_percent_z_jonswap   = 6.66210f, // measured 6.62894869
-    .err_limit_percent_z_pmstokes  = 6.46219f, // measured 6.43003035
-    .err_limit_yaw_deg             = 0.72934f, // measured 0.725703537
-    .err_limit_roll_deg            = 0.22667f, // measured 0.225542024
-    .err_limit_pitch_deg           = 0.21278f, // measured 0.211719394
-    .err_limit_percent_3d_jonswap  = 12.20058f, // measured 12.1398802
-    .err_limit_percent_3d_pmstokes = 12.02862f, // measured 11.968771
-    .acc_z_bias_percent            = 4.58751f, // measured 4.56468
-    .bias_3d_percent               = 61.99132f, // measured 61.6829
-    .gyro_bias_3d_percent          = 12.64713f, // measured 12.5842
+    .err_limit_percent_z_jonswap   = 20.94565f,
+    .err_limit_percent_z_pmstokes  = 11.37117f,
+    .err_limit_yaw_deg             = 0.89796f,
+    .err_limit_roll_deg            = 0.58935f,
+    .err_limit_pitch_deg           = 0.50524f,
+    .err_limit_percent_3d_jonswap  = 31.14368f,
+    .err_limit_percent_3d_pmstokes = 19.12513f,
+    .acc_z_bias_percent            = 7.32224f,
+    .bias_3d_percent               = 157.12572f,
+    .gyro_bias_3d_percent          = 12.56401f,
 };
 
 inline constexpr W3dFailureLimits ou3{
-    .err_limit_percent_z_jonswap   = 4.27053f, // measured 4.24928093
-    .err_limit_percent_z_pmstokes  = 4.23388f, // measured 4.21280766
-    .err_limit_yaw_deg             = 0.82829f, // measured 0.824165642
-    .err_limit_roll_deg            = 0.32284f, // measured 0.321227342
-    .err_limit_pitch_deg           = 0.13815f, // measured 0.137457415
-    .err_limit_percent_3d_jonswap  = 9.73471f, // measured 9.68627834
-    .err_limit_percent_3d_pmstokes = 9.69867f, // measured 9.65040874
-    .acc_z_bias_percent            = 4.35523f, // measured 4.33356
-    .bias_3d_percent               = 69.10592f, // measured 68.7621
-    .gyro_bias_3d_percent          = 12.25508f, // measured 12.1941
+    .err_limit_percent_z_jonswap   = 8.27723f,
+    .err_limit_percent_z_pmstokes  = 7.87831f,
+    .err_limit_yaw_deg             = 0.87554f,
+    .err_limit_roll_deg            = 0.34667f,
+    .err_limit_pitch_deg           = 0.15584f,
+    .err_limit_percent_3d_jonswap  = 19.43353f,
+    .err_limit_percent_3d_pmstokes = 19.15242f,
+    .acc_z_bias_percent            = 4.45285f,
+    .bias_3d_percent               = 75.64113f,
+    .gyro_bias_3d_percent          = 12.69245f,
 };
 
 inline constexpr W3dFailureLimits tfg{
-    .err_limit_percent_z_jonswap   = 4.40490f, // measured 4.38297987
-    .err_limit_percent_z_pmstokes  = 4.35577f, // measured 4.33409595
-    .err_limit_yaw_deg             = 0.95465f, // measured 0.949897051
-    .err_limit_roll_deg            = 0.35239f, // measured 0.350634784
-    .err_limit_pitch_deg           = 0.09390f, // measured 0.0934322327
-    .err_limit_percent_3d_jonswap  = 9.82421f, // measured 9.77532673
-    .err_limit_percent_3d_pmstokes = 9.92000f, // measured 9.88502121
-    .acc_z_bias_percent            = 4.34785f, // measured 4.32621
-    .bias_3d_percent               = 68.35106f, // measured 68.011
-    .gyro_bias_3d_percent          = 10.40186f, // measured 10.3501
+    .err_limit_percent_z_jonswap   = 7.85835f,
+    .err_limit_percent_z_pmstokes  = 7.51301f,
+    .err_limit_yaw_deg             = 1.64146f,
+    .err_limit_roll_deg            = 0.67022f,
+    .err_limit_pitch_deg           = 0.65965f,
+    .err_limit_percent_3d_jonswap  = 17.75326f,
+    .err_limit_percent_3d_pmstokes = 17.33916f,
+    .acc_z_bias_percent            = 5.01148f,
+    .bias_3d_percent               = 186.73905f,
+    .gyro_bias_3d_percent          = 10.99611f,
 };
 
 inline constexpr W3dFailureLimits carma{
-    .err_limit_percent_z_jonswap   = 3.07238f, // measured 3.05709362
-    .err_limit_percent_z_pmstokes  = 3.23081f, // measured 3.21473551
-    .err_limit_yaw_deg             = 0.76470f, // measured 0.760889888
-    .err_limit_roll_deg            = 0.35048f, // measured 0.348729193
-    .err_limit_pitch_deg           = 0.20325f, // measured 0.202237442
-    .err_limit_percent_3d_jonswap  = 4.86855f, // measured 4.84432125
-    .err_limit_percent_3d_pmstokes = 5.25706f, // measured 5.23089981
-    .acc_z_bias_percent            = 4.06168f, // measured 4.04147
-    .bias_3d_percent               = 81.73414f, // measured 81.3275
-    .gyro_bias_3d_percent          = 12.78000f, // measured 12.7244
+    .err_limit_percent_z_jonswap   = 4.21295f,
+    .err_limit_percent_z_pmstokes  = 4.69083f,
+    .err_limit_yaw_deg             = 0.94167f,
+    .err_limit_roll_deg            = 0.31108f,
+    .err_limit_pitch_deg           = 0.19556f,
+    .err_limit_percent_3d_jonswap  = 6.89035f,
+    .err_limit_percent_3d_pmstokes = 8.07388f,
+    .acc_z_bias_percent            = 4.32003f,
+    .bias_3d_percent               = 72.10192f,
+    .gyro_bias_3d_percent          = 12.41417f,
 };
 
 inline constexpr W3dFailureLimits csm{
-    .err_limit_percent_z_jonswap   = 2.46700f, // measured 2.45491838
-    .err_limit_percent_z_pmstokes  = 2.41541f, // measured 2.40339065
-    .err_limit_yaw_deg             = 0.75808f, // measured 0.754300177
-    .err_limit_roll_deg            = 0.35291f, // measured 0.351149976
-    .err_limit_pitch_deg           = 0.21288f, // measured 0.211819157
-    .err_limit_percent_3d_jonswap  = 4.41992f, // measured 4.39792442
-    .err_limit_percent_3d_pmstokes = 4.88513f, // measured 4.86081743
-    .acc_z_bias_percent            = 4.03272f, // measured 4.01265
-    .bias_3d_percent               = 83.27692f, // measured 82.8626
-    .gyro_bias_3d_percent          = 12.71000f, // measured 12.6637
+    .err_limit_percent_z_jonswap   = 3.56798f,
+    .err_limit_percent_z_pmstokes  = 3.72017f,
+    .err_limit_yaw_deg             = 0.99056f,
+    .err_limit_roll_deg            = 0.21343f,
+    .err_limit_pitch_deg           = 0.21032f,
+    .err_limit_percent_3d_jonswap  = 6.11027f,
+    .err_limit_percent_3d_pmstokes = 6.60492f,
+    .acc_z_bias_percent            = 3.94444f,
+    .bias_3d_percent               = 56.55326f,
+    .gyro_bias_3d_percent          = 12.38804f,
 };
 
 inline constexpr W3dFailureLimits tcarma{
-    .err_limit_percent_z_jonswap   = 3.07200f, // measured 3.05673885
-    .err_limit_percent_z_pmstokes  = 3.23061f, // measured 3.21453714
-    .err_limit_yaw_deg             = 0.77351f, // measured 0.769657433
-    .err_limit_roll_deg            = 0.35073f, // measured 0.348984271
-    .err_limit_pitch_deg           = 0.20364f, // measured 0.202624053
-    .err_limit_percent_3d_jonswap  = 4.87124f, // measured 4.84699917
-    .err_limit_percent_3d_pmstokes = 5.25855f, // measured 5.23238039
-    .acc_z_bias_percent            = 4.06068f, // measured 4.04047
-    .bias_3d_percent               = 81.82580f, // measured 81.4187
-    .gyro_bias_3d_percent          = 12.40000f, // measured 12.3488
+    .err_limit_percent_z_jonswap   = 4.21316f,
+    .err_limit_percent_z_pmstokes  = 4.69209f,
+    .err_limit_yaw_deg             = 0.93962f,
+    .err_limit_roll_deg            = 0.31016f,
+    .err_limit_pitch_deg           = 0.19382f,
+    .err_limit_percent_3d_jonswap  = 6.89010f,
+    .err_limit_percent_3d_pmstokes = 8.07473f,
+    .acc_z_bias_percent            = 4.31899f,
+    .bias_3d_percent               = 72.29649f,
+    .gyro_bias_3d_percent          = 12.60914f,
 };
 
 inline constexpr W3dFailureLimits tcsm{
-    .err_limit_percent_z_jonswap   = 2.46690f, // measured 2.45477271
-    .err_limit_percent_z_pmstokes  = 2.41520f, // measured 2.40329385
-    .err_limit_yaw_deg             = 0.76168f, // measured 0.757887661
-    .err_limit_roll_deg            = 0.35224f, // measured 0.350478113
-    .err_limit_pitch_deg           = 0.20862f, // measured 0.207578912
-    .err_limit_percent_3d_jonswap  = 4.42280f, // measured 4.40079069
-    .err_limit_percent_3d_pmstokes = 4.88809f, // measured 4.86376667
-    .acc_z_bias_percent            = 4.02852f, // measured 4.00847
-    .bias_3d_percent               = 82.68527f, // measured 82.2739
-    .gyro_bias_3d_percent          = 12.34600f, // measured 12.3014
+    .err_limit_percent_z_jonswap   = 3.56832f,
+    .err_limit_percent_z_pmstokes  = 3.72067f,
+    .err_limit_yaw_deg             = 0.95680f,
+    .err_limit_roll_deg            = 0.21302f,
+    .err_limit_pitch_deg           = 0.20167f,
+    .err_limit_percent_3d_jonswap  = 6.11056f,
+    .err_limit_percent_3d_pmstokes = 6.60548f,
+    .acc_z_bias_percent            = 3.94022f,
+    .bias_3d_percent               = 56.70200f,
+    .gyro_bias_3d_percent          = 12.52693f,
 };
 
 inline constexpr W3dFailureLimits tfg_legacy{
-    .err_limit_percent_z_jonswap   = 4.34379f, // measured 4.32217884
-    .err_limit_percent_z_pmstokes  = 4.31684f, // measured 4.29535675
-    .err_limit_yaw_deg             = 1.06248f, // measured 1.05719304
-    .err_limit_roll_deg            = 0.43509f, // measured 0.432924926
-    .err_limit_pitch_deg           = 0.49514f, // measured 0.492675722
-    .err_limit_percent_3d_jonswap  = 18.65808f, // measured 18.5652485
-    .err_limit_percent_3d_pmstokes = 19.03321f, // measured 18.938509
-    .acc_z_bias_percent            = 4.30249f, // measured 4.28108
-    .bias_3d_percent               = 120.86733f, // measured 120.266
-    .gyro_bias_3d_percent          = 20.99466f, // measured 20.8902
+    .err_limit_percent_z_jonswap   = 8.28795f,
+    .err_limit_percent_z_pmstokes  = 8.05605f,
+    .err_limit_yaw_deg             = 3.06465f,
+    .err_limit_roll_deg            = 0.40280f,
+    .err_limit_pitch_deg           = 1.16598f,
+    .err_limit_percent_3d_jonswap  = 31.15484f,
+    .err_limit_percent_3d_pmstokes = 30.90172f,
+    .acc_z_bias_percent            = 5.51543f,
+    .bias_3d_percent               = 250.68519f,
+    .gyro_bias_3d_percent          = 27.59379f,
 };
 
+namespace interval {
+
+inline constexpr W3dFailureLimits ou2{
+    .err_limit_percent_z_jonswap   = 20.94551f,
+    .err_limit_percent_z_pmstokes  = 11.37150f,
+    .err_limit_yaw_deg             = 0.89936f,
+    .err_limit_roll_deg            = 0.58666f,
+    .err_limit_pitch_deg           = 0.50723f,
+    .err_limit_percent_3d_jonswap  = 31.16022f,
+    .err_limit_percent_3d_pmstokes = 19.15704f,
+    .acc_z_bias_percent            = 7.32191f,
+    .bias_3d_percent               = 156.98100f,
+    .gyro_bias_3d_percent          = 12.55627f,
+};
+
+inline constexpr W3dFailureLimits ou3{
+    .err_limit_percent_z_jonswap   = 8.27822f,
+    .err_limit_percent_z_pmstokes  = 7.87925f,
+    .err_limit_yaw_deg             = 0.86774f,
+    .err_limit_roll_deg            = 0.34562f,
+    .err_limit_pitch_deg           = 0.15798f,
+    .err_limit_percent_3d_jonswap  = 19.35139f,
+    .err_limit_percent_3d_pmstokes = 19.08362f,
+    .acc_z_bias_percent            = 4.48809f,
+    .bias_3d_percent               = 75.55932f,
+    .gyro_bias_3d_percent          = 12.68089f,
+};
+
+inline constexpr W3dFailureLimits tfg{
+    .err_limit_percent_z_jonswap   = 7.85941f,
+    .err_limit_percent_z_pmstokes  = 7.51397f,
+    .err_limit_yaw_deg             = 1.62600f,
+    .err_limit_roll_deg            = 0.66877f,
+    .err_limit_pitch_deg           = 0.65359f,
+    .err_limit_percent_3d_jonswap  = 17.69845f,
+    .err_limit_percent_3d_pmstokes = 17.28851f,
+    .acc_z_bias_percent            = 5.13306f,
+    .bias_3d_percent               = 185.60441f,
+    .gyro_bias_3d_percent          = 10.99079f,
+};
+
+inline constexpr W3dFailureLimits carma{
+    .err_limit_percent_z_jonswap   = 4.21299f,
+    .err_limit_percent_z_pmstokes  = 4.69123f,
+    .err_limit_yaw_deg             = 0.94383f,
+    .err_limit_roll_deg            = 0.31009f,
+    .err_limit_pitch_deg           = 0.19758f,
+    .err_limit_percent_3d_jonswap  = 6.93610f,
+    .err_limit_percent_3d_pmstokes = 8.12158f,
+    .acc_z_bias_percent            = 4.35243f,
+    .bias_3d_percent               = 72.03609f,
+    .gyro_bias_3d_percent          = 12.40271f,
+};
+
+inline constexpr W3dFailureLimits csm{
+    .err_limit_percent_z_jonswap   = 3.56817f,
+    .err_limit_percent_z_pmstokes  = 3.72045f,
+    .err_limit_yaw_deg             = 0.99092f,
+    .err_limit_roll_deg            = 0.21307f,
+    .err_limit_pitch_deg           = 0.21094f,
+    .err_limit_percent_3d_jonswap  = 6.14746f,
+    .err_limit_percent_3d_pmstokes = 6.64710f,
+    .acc_z_bias_percent            = 3.98894f,
+    .bias_3d_percent               = 56.53819f,
+    .gyro_bias_3d_percent          = 12.37638f,
+};
+
+inline constexpr W3dFailureLimits tcarma{
+    .err_limit_percent_z_jonswap   = 4.21322f,
+    .err_limit_percent_z_pmstokes  = 4.69250f,
+    .err_limit_yaw_deg             = 0.94157f,
+    .err_limit_roll_deg            = 0.30920f,
+    .err_limit_pitch_deg           = 0.19587f,
+    .err_limit_percent_3d_jonswap  = 6.93581f,
+    .err_limit_percent_3d_pmstokes = 8.12238f,
+    .acc_z_bias_percent            = 4.35075f,
+    .bias_3d_percent               = 72.23870f,
+    .gyro_bias_3d_percent          = 12.59627f,
+};
+
+inline constexpr W3dFailureLimits tcsm{
+    .err_limit_percent_z_jonswap   = 3.56850f,
+    .err_limit_percent_z_pmstokes  = 3.72095f,
+    .err_limit_yaw_deg             = 0.95754f,
+    .err_limit_roll_deg            = 0.21266f,
+    .err_limit_pitch_deg           = 0.20247f,
+    .err_limit_percent_3d_jonswap  = 6.14765f,
+    .err_limit_percent_3d_pmstokes = 6.64760f,
+    .acc_z_bias_percent            = 3.98335f,
+    .bias_3d_percent               = 56.69075f,
+    .gyro_bias_3d_percent          = 12.51638f,
+};
+} // namespace interval
 } // namespace ocean_imu::sim::current_limits

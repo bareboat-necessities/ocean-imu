@@ -24,6 +24,7 @@ RETIRED_MARKERS = (
     r"\sigma_{aw}\tau^3",
     r"\tau,r_S\propto\tau^3",
 )
+OFAT_TABLE = "w3d-ou-robustness-sensitivity-ofat-generated.tex-part"
 
 
 def _table_block_by_label(text: str, label: str) -> str:
@@ -49,6 +50,29 @@ def _copy_if_changed(source: Path, target: Path) -> bool:
         return False
     target.write_bytes(data)
     return True
+
+
+def sync_ofat_excerpt(robustness_dir: Path, doc_dir: Path) -> bool:
+    """Mirror the three independent columns from the same retained study."""
+    text = (robustness_dir / "ou_robustness_publication.tex").read_text(encoding="utf-8")
+    table = _table_block_by_label(text, "tab:ou_robustness_sensitivity")
+    body = table.split(r"\midrule", 1)[1].split(r"\bottomrule", 1)[0]
+    rows = []
+    for line in body.splitlines():
+        if "&" not in line:
+            continue
+        cells = [cell.strip() for cell in line.split("&")]
+        if len(cells) != 6:
+            raise ValueError("expected six sensitivity cells")
+        rows.append("    " + " & ".join(cells[:4]) + r" \\")
+    if not rows:
+        raise ValueError("missing OFAT sensitivity rows")
+    target = doc_dir / OFAT_TABLE
+    original = target.read_text(encoding="utf-8")
+    head, remainder = original.split(r"\midrule", 1)
+    _, tail = remainder.split(r"\bottomrule", 1)
+    return _write_if_changed(target, head + "\\midrule\n" + "\n".join(rows)
+                             + "\n    \\bottomrule" + tail)
 
 
 def sync_current_sensitivity(robustness_dir: Path, doc_dir: Path) -> bool:

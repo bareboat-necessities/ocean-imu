@@ -1,4 +1,76 @@
+CSV timestamp export repair (class E): the input clock correction would be
+lost again through default six-significant-digit simulation CSV exports.
+Typed/untyped shared runners and the manual AHRS writer now emit time with
+17 significant digits, preserving the formatting of every other column.
+The complete 240000-sample formatter round-trip test passes; actual AHRS and
+OU-II exports each independently pass all 240000 timestamp checks. Both
+complete inherited 252-direction native diagnostic words were rerun at
+epsilon 0.01 and 0.005; both state-byte hashes match the previous receipt.
+Structures preserved: literal estimator equations, state/covariance, physical
+histories, gains, resets, tuning, scheduler and sensor records. Relaxations
+introduced: none; these source-binding diagnostics do not become uniform
+derivative bounds. No shipping counterexample or new theorem claim follows.
+Existing local conclusions and open theorem flags remain unchanged. Next
+check: complete rebuilt regressions and source-bound CI publication.
+
+Timestamp dataset migration (class E): v1.3.0 collapses distinct 200 Hz
+samples onto rounded times after 1000 s. v1.3.1 regenerates integer-indexed
+clocks, including the corrected Fenton endpoint/sample count. All 21 input
+time-series clocks pass an exact binary64 index/200 audit. The ancillary
+tracker spans 30 s (5999 samples), not the main records' 1200 s; the initial
+audit incorrectly required 239999 tracker rows and was corrected. The old gyro-bias gate rejects 12.5015% against 12.4956%; the old Kuchler
+PM-Stokes gate rejects 14.7245% against 14.14%. These invalidate reuse of
+v1.3.0 regression baselines on the corrected physical records. Existing
+v1.3.0 results are superseded and must be replaced, never relabelled.
+Structures preserved: estimator equations, inherited histories, sensor/noise
+configuration and fixed tuning. Relaxations introduced: none. This is an
+input/instrumentation failure, not a shipping counterexample or new theorem
+result. Existing proof conclusions and open flags remain unchanged. Current
+limiter: complete v1.3.1 replay/publication evidence; next check is the full
+measured suite and source-bound CI regeneration with corrected clocks.
+
+Moving-vessel CARMA installation baseline repair (class E): the completed
+1,456-row installation matrix and 128-row cutoff sweep were compared with
+stationary-data ratios. The physical input hash maps differ, invalidating that
+comparison. The verified CI artifact now supplies current tables and figures;
+the ratio comparison remains mandatory when input maps match. Structures
+preserved: sensor corruption, installation, estimator equations, fixed tuning
+and the unchanged same-dataset comparison tolerance. Relaxations introduced:
+none; distinct physical experiments are no longer treated as repeated runs.
+No shipping counterexample or theorem conclusion follows. Existing proof
+results remain unchanged. Next check: hosted same-input study reproduction.
+
 # OU-III proof research state
+
+Moving-vessel lever-arm gate maintenance (class E): the old assertion that
+navigation error must have an interior band optimum rejects the new 100 Hz
+boundary minimum (3-D/CG 0.99923). Force residual instead has the expected
+interior minimum: 0.146 at 5 Hz, versus 0.524 at 1 Hz and 3.140 at 100 Hz.
+The gate now tests that physical residual; exact compensation, force scaling,
+and the deployed 15 Hz accuracy bound are retained. All 31 study/article
+checks pass on the verified complete CI artifact. Structures preserved: sensor
+corruption, rigid-body installation, estimator equations and fixed tuning.
+Relaxations introduced: none; a downstream score is no longer mistaken for
+a force-model invariant. No shipping counterexample or new theorem claim is
+made. Next check: the same hosted study and source verifier after publication.
+
+Moving-vessel replay maintenance (class E): changing simulation-only source
+files invalidates the finite secant diagnostic's conservative whole-src digest;
+two historical dataset-scope clarifications also require fresh document pins.
+The compiler-discovered 39-header probe closure differs from main f2c65b2
+only in WaveFilesSupport.h (CSV horizontal-truth precision); estimator headers
+are unchanged. Both complete 252-direction diagnostic words were rerun at
+epsilon 0.01 and 0.005, preserving both native secant byte hashes. The source
+audit is recorded in moving-dataset-source-scope.json.
+Structures preserved: literal estimator equations, inherited state/covariance,
+physical probe record, gains, resets, frontend, scheduler and clocks. Relaxations
+introduced: no new relaxation; existing off-orbit finite secants remain diagnostics,
+not derivative bounds. This is a source-binding failure, not a failed stability
+inequality or a genuine shipping counterexample. Existing local results and open
+theorem flags are retained. The fresh native receipt is checked against the unchanged source verifier;
+no motion/service qualification is inferred from
+the new moving-boat dataset. The initial native command lacked clang++; the
+available g++ compiler is used with the same diagnostic protocol.
 
 Tangent research quality-gate repair (class E): Ruff found an unused import,
 and CI cppcheck found three inherited group-operation name collisions. The

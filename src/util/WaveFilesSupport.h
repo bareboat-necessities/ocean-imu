@@ -96,7 +96,8 @@ struct WaveParameters {
 };
 
 struct Wave_Sample {
-    float disp_x{}, disp_y{}, disp_z{};
+    double disp_x{}, disp_y{};
+    float disp_z{};
     float vel_x{}, vel_y{}, vel_z{};
     float acc_x{}, acc_y{}, acc_z{};
 };

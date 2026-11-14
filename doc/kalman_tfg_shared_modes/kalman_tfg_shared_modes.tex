@@ -468,7 +468,7 @@ The inherited startup convergence statistic instead requires every remaining
 30 s rolling RMS to stay below 1.5 times the scored RMS. Outage recovery requires
 30 s continuously below the larger of 0.5 degrees and twice the pre-gap RMS.
 These relative criteria are reported alongside absolute errors.
-An additional replay uses eight pinned vessel-RAO records from release v1.2.3
+An archived zero-speed replay uses eight vessel-RAO records from release v1.2.3
 and eight sensor/initialization seeds per record; inference there is conditional
 on each fixed wave realization. The reduced-heave diagnostic was added after
 the primary finding, uses 12 paired seeds and is explicitly exploratory.
@@ -531,6 +531,8 @@ and sensor streams are unchanged within a seed. Top two: heave and horizontal
 RMS change relative to independent TFG (paired 95\% intervals, symmetric-log
 axis). Bottom: median heading RMS and quartiles. Solid: default cap policy;
 dashed: legacy cap.}\label{fig:heave-sweep}\end{figure}
+\input{underway-baseline.tex-part}
+
 \section{Computational Cost and Embedded Evidence}
 The implementation uses one common TFG core parameterized by a motion policy;
 its original two-template-argument interface remains valid. It uses the same

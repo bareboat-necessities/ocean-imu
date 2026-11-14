@@ -24,7 +24,7 @@ regularizer through a reduced physical drift--distortion objective
 the contribution of this regularizer from that of OU scheduling.
 
 The displacement is oscillatory vessel motion about a local reference, not
-geodetic position. Evaluation uses synthetic vessel-response records at one
-fixed heading; it does not establish independent-vessel, sea-trial, thermal
+geodetic position. The current deterministic evaluation uses synthetic vessel-response
+records at 5 kn with slowly oscillating heading; it does not establish independent-vessel, sea-trial, thermal
 calibration, or embedded resource performance. The OU prior is isotropic,
 whereas the deployed integral regularizer uses distinct horizontal factors.

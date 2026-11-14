@@ -1,5 +1,10 @@
 # Engine-noise degradation study
 
+The numerical study below is archived stationary-vessel evidence from v1.2.1.
+New runs use the pinned v1.3.1 5 kn / ±3° moving-boat records; see the
+[current baseline](moving-vessel-results.md) and [before/after comparison](moving-vessel-comparison.md).
+The archived scores are not measurements of the moving boat.
+
 ## Purpose
 
 Every other noise source in this repository is electronic: accelerometer and
@@ -79,7 +84,7 @@ The simulator prints an `ENGINE_VIBRATION` banner with the resulting hull and
 recorded RMS, followed by one `ENGINE_LINE` per harmonic giving its true
 frequency, its aliased frequency, and its recorded amplitude.
 
-## Current results and reproduction
+## Archived results and current reproduction
 
 All records use oceanography-waves-lib v1.2.1 vessel-rao-28ft. The 456-run
 degradation matrix, 192-run OU-III mitigation matrix, and paired cross-family
@@ -87,7 +92,7 @@ guard check use the final 900 s at the selected filter settings, with unchanged 
 
 Run `tools/engine_noise_degradation.py`, `tools/ou3_engine_noise_mitigation.py`
 and `tools/engine_noise_guard_families.py` with `--data-dir plots/kalman_ou_ii`.
-Current raw measurements, summaries, manifests and figures are in
+Archived raw measurements, summaries, manifests and figures are in
 `reports/results/engine_noise_degradation/` and
 `reports/results/engine_noise_mitigation/`.
 

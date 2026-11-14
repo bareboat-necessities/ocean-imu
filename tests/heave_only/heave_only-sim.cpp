@@ -121,22 +121,22 @@ bool env_double(const char* name, double& out) {
 // targets: the worst Z RMS (%Hs) of each method across the scored records plus
 // about half a percent.
 struct HeaveLimits { float jonswap; float pmstokes; };
-constexpr HeaveLimits PII_LIMITS{7.55f, 8.80f};           // worst 7.51 / 8.75 (H8.5)
-constexpr HeaveLimits GODHAVN_LIMITS{356.8f, 388.4f};     // worst 355.0 / 386.4 (H8.5)
-constexpr HeaveLimits GODHAVN_EXT_LIMITS{22.50f, 28.77f}; // worst 22.39 / 28.63 (H8.5)
-constexpr HeaveLimits KUCHLER_LIMITS{15.66f, 17.50f};     // current worst 15.5707 / 17.4088 (H8.5)
-constexpr HeaveLimits RICHTER_ZD_LIMITS{19.21f, 24.68f};    // worst 19.11 / 24.56 (H8.5)
+constexpr HeaveLimits PII_LIMITS{15.29f, 14.60f}; // v1.3.1 worst 15.211 / 14.5221
+constexpr HeaveLimits GODHAVN_LIMITS{397.93f, 262.13f}; // v1.3.1 worst 395.945 / 260.817
+constexpr HeaveLimits GODHAVN_EXT_LIMITS{17.58f, 18.10f}; // v1.3.1 worst 17.4914 / 18.0065
+constexpr HeaveLimits KUCHLER_LIMITS{12.12f, 14.80f}; // v1.3.1 worst 12.0545 / 14.7245
+constexpr HeaveLimits RICHTER_ZD_LIMITS{16.46f, 16.69f}; // v1.3.1 worst 16.3688 / 16.6003
 // Shared proxy Mahony (--frontend proxy).
-constexpr HeaveLimits PII_PROXY_LIMITS{6.02f, 5.90f};          // worst 5.99 / 5.87
-constexpr HeaveLimits GODHAVN_PROXY_LIMITS{388.8f, 509.1f};     // worst 386.8 / 506.5
-constexpr HeaveLimits GODHAVN_EXT_PROXY_LIMITS{9.82f, 10.70f};  // worst 9.77 / 10.64
-constexpr HeaveLimits KUCHLER_PROXY_LIMITS{15.93f, 18.68f};     // worst 15.85 / 18.59
-constexpr HeaveLimits RICHTER_ZD_PROXY_LIMITS{5.34f, 5.78f};    // worst 5.31 / 5.75
+constexpr HeaveLimits PII_PROXY_LIMITS{15.29f, 14.59f}; // v1.3.1 worst 15.2052 / 14.5165
+constexpr HeaveLimits GODHAVN_PROXY_LIMITS{448.59f, 310.08f}; // v1.3.1 worst 446.358 / 308.529
+constexpr HeaveLimits GODHAVN_EXT_PROXY_LIMITS{12.65f, 12.73f}; // v1.3.1 worst 12.578 / 12.6598
+constexpr HeaveLimits KUCHLER_PROXY_LIMITS{12.46f, 14.73f}; // v1.3.1 worst 12.3888 / 14.6566
+constexpr HeaveLimits RICHTER_ZD_PROXY_LIMITS{10.27f, 10.28f}; // v1.3.1 worst 10.2172 / 10.2228
 // Ideal vertical reference (--frontend truth).
-constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{386.0f, 495.0f};    // worst 384.0 / 492.4 (H8.5)
-constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{9.03f, 9.70f};  // worst 8.98 / 9.65 (H8.5)
-constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{16.62f, 20.13f};    // current worst 16.5265 / 20.0231 (H8.5)
-constexpr HeaveLimits RICHTER_ZD_TRUTH_LIMITS{5.21f, 5.36f};   // worst 5.18 / 5.33
+constexpr HeaveLimits GODHAVN_TRUTH_LIMITS{446.78f, 306.22f}; // v1.3.1 worst 444.549 / 304.696
+constexpr HeaveLimits GODHAVN_EXT_TRUTH_LIMITS{12.64f, 12.72f}; // v1.3.1 worst 12.5761 / 12.6561
+constexpr HeaveLimits KUCHLER_TRUTH_LIMITS{12.02f, 14.75f}; // v1.3.1 worst 11.9519 / 14.6766
+constexpr HeaveLimits RICHTER_ZD_TRUTH_LIMITS{10.28f, 10.29f}; // v1.3.1 worst 10.2281 / 10.2303
 
 template <Method M>
 class HeaveOnlyAdapter final : public IW3dFusionAdapter {

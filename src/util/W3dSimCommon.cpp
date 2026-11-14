@@ -8,6 +8,8 @@ extern const float g_std = 9.80665f;
 #else
 
 #include "util/W3dSimCommon.h"
+#include "util/UnderwayReference.h"
+#include "util/CsvTimestamp.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -20,6 +22,14 @@ extern const float g_std = 9.80665f;
 #include <stdexcept>
 
 static bool g_w3d_any_gate_failed = false;
+
+bool w3d_underway_reference_from_env() {
+    const char* value = std::getenv("W3D_REFERENCE_MOTION");
+    if (!value || std::string(value) == "underway") return true;
+    if (std::string(value) == "stationary") return false;
+    throw std::invalid_argument("W3D_REFERENCE_MOTION must be underway or stationary");
+}
+
 
 ImuNoiseModel make_imu_noise_model(float sigma_white,
                                    float bias_half_range,
@@ -1286,8 +1296,18 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             snap.acc_est_zu  = MagSim_WMM::mag_frame_to_geographic_nautical(snap.acc_est_zu);
         }
 
-        Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
+        Vector3f disp_ref(static_cast<float>(rec.wave.disp_x), static_cast<float>(rec.wave.disp_y), rec.wave.disp_z);
         Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
+        // Score bounded wave coordinates about the declared moving track.
+        // Retain total recorded acceleration and every delivered IMU sample.
+        if (options_.underway_reference) {
+            const auto track = UnderwayReference::at(rec.time);
+            for (int axis = 0; axis < 3; ++axis) {
+                const auto i = static_cast<std::size_t>(axis);
+                disp_ref[axis] = static_cast<float>((axis == 0 ? rec.wave.disp_x : axis == 1 ? rec.wave.disp_y : static_cast<double>(rec.wave.disp_z)) - track.displacement[i]);
+                vel_ref[axis] = static_cast<float>(static_cast<double>(vel_ref[axis]) - track.velocity[i]);
+            }
+        }
         Vector3f acc_ref(rec.wave.acc_x, rec.wave.acc_y, rec.wave.acc_z);
 
         const Vector3f accel_err = snap.acc_est_zu - acc_ref;
@@ -1357,7 +1377,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
         if (options_.write_timeseries) {
-            ofs << rec.time << ","
+            ocean_imu::sim::write_csv_time(ofs, rec.time) << ","
                 << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
                 << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
                 << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","
@@ -1580,8 +1600,18 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.snapshots.push_back(snap);
         result.final_snapshot = snap;
 
-        Vector3f disp_ref(rec.wave.disp_x, rec.wave.disp_y, rec.wave.disp_z);
+        Vector3f disp_ref(static_cast<float>(rec.wave.disp_x), static_cast<float>(rec.wave.disp_y), rec.wave.disp_z);
         Vector3f vel_ref(rec.wave.vel_x, rec.wave.vel_y, rec.wave.vel_z);
+        // Score bounded wave coordinates about the declared moving track.
+        // Retain total recorded acceleration and every delivered IMU sample.
+        if (options_.underway_reference) {
+            const auto track = UnderwayReference::at(rec.time);
+            for (int axis = 0; axis < 3; ++axis) {
+                const auto i = static_cast<std::size_t>(axis);
+                disp_ref[axis] = static_cast<float>((axis == 0 ? rec.wave.disp_x : axis == 1 ? rec.wave.disp_y : static_cast<double>(rec.wave.disp_z)) - track.displacement[i]);
+                vel_ref[axis] = static_cast<float>(static_cast<double>(vel_ref[axis]) - track.velocity[i]);
+            }
+        }
         Vector3f acc_ref(rec.wave.acc_x, rec.wave.acc_y, rec.wave.acc_z);
 
         const Vector3f accel_err = snap.acc_est_zu - acc_ref;
@@ -1650,7 +1680,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.dir_travel_deg_hist.push_back(
             travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
-        ofs << rec.time << ","
+        ocean_imu::sim::write_csv_time(ofs, rec.time) << ","
             << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
             << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
             << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","

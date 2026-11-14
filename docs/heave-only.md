@@ -1,5 +1,12 @@
 # Heave-only filters
 
+External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+and [reference-coordinate convention](moving-vessel-replays.md). Earlier study figures below retain their stationary-vessel scope. Current
+underway regression limits are recorded in
+`reports/results/filter_sim_gates/heave_limits.json`.
+
+
 `tests/heave_only/` implements three published heave-only filters as
 comparison baselines (outside `src/`, which holds only shipping code). Each
 estimates vertical displacement from the levelled vertical acceleration

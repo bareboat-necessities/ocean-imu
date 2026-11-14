@@ -6,6 +6,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -54,7 +55,7 @@ DIRECTION_SCENARIOS = (
 )
 DETERMINISTIC_ROW_RE = re.compile(
     r"^\s*(JONSWAP|PM--Stokes)\s*&\s*([0-9.]+)\s*&\s*[0-9.]+\s*&\s*[0-9.]+\s*&\s*"
-    r"([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*(-?[0-9.]+)\s*&\s*"
+    r"([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*(-?[0-9.]+|\{--\})\s*&\s*"
     r"([0-9.]+/[0-9.]+/[0-9.]+)\s*\\\\$",
     re.MULTILINE,
 )
@@ -164,6 +165,18 @@ def curate_validation_for_article(text: str) -> str:
     ):
         text = _replace_table_caption(text, label, caption)
 
+    # The paired intervals make these two eight-column tables wider than the
+    # IEEE text block. Fit the article view without changing evidence values.
+    for label in ("tab:ou_mc_family", "tab:ou_mc_pmstokes"):
+        pos = text.index(rf"\label{{{label}}}")
+        start = text.rfind(r"\begin{table*}", 0, pos)
+        end = text.index(r"\end{table*}", pos)
+        block = text[start:end]
+        if r"\resizebox{\textwidth}" not in block:
+            block = block.replace(r"\begin{tabular}", r"\resizebox{\textwidth}{!}{%" + "\n  " + r"\begin{tabular}", 1)
+            block = block.replace(r"\end{tabular}", r"\end{tabular}%" + "\n  }", 1)
+            text = text[:start] + block + text[end:]
+
     if "tab:ou_transition_segments" in text or re.search(r"(?m)^\s*Transition\s*&", text):
         raise RuntimeError("one-way transition survived publication curation")
     return text
@@ -255,10 +268,9 @@ def sync_robustness_doc_copies(robustness_dir: Path, doc_dir: Path) -> bool:
     if not stress_target.is_file() or stress_target.read_bytes() != svg:
         stress_target.write_bytes(svg)
         changed = True
-    retired = doc_dir / ROBUSTNESS_RETIRED_SVG
-    if retired.exists():
-        retired.unlink()
-        changed = True
+    from ou_publication_robustness_sync import sync_current_sensitivity, sync_ofat_excerpt
+    changed |= sync_ofat_excerpt(robustness_dir, doc_dir)
+    changed |= sync_current_sensitivity(robustness_dir, doc_dir)
     return changed
 
 
@@ -283,12 +295,17 @@ def _direction_summary_rows(validation_dir: Path) -> list[str]:
             ):
                 metrics[key] = (float(row["mean"]), float(row["std"]), int(row["n"]))
     rows = []
+    def mean_std(value: float, std: float) -> str:
+        if not math.isfinite(value):
+            return "--"
+        return f"${value:.2f}\\pm{std:.2f}$"
+
     for index, (scenario, case, hs) in enumerate(DIRECTION_SCENARIOS):
         axis, axis_std, _ = metrics[(scenario, "dir_axis_rmse_deg")]
         travel, travel_std, travel_n = metrics[(scenario, "dir_travel_rmse_deg")]
         rows.append(
-            f"    {case:<11} & {hs} & ${axis:.2f}\\pm{axis_std:.2f}$ & "
-            f"${travel:.2f}\\pm{travel_std:.2f}$ & {travel_n} \\\\"
+            f"    {case:<11} & {hs} & {mean_std(axis, axis_std)} & "
+            f"{mean_std(travel, travel_std)} & {travel_n} \\\\"
         )
         if index == 3:
             rows.append(r"    \addlinespace")

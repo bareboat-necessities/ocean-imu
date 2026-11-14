@@ -9,7 +9,7 @@ that regularize the OU-II integration chain.  Its result is a pair of *shapes*,
     r_v = C_V q_eff^(1/10) sigma_a,B^(4/5) tau^(7/5)  / sqrt(T_S),
 
 This driver evaluates diagnostic coefficients for the shapes using the derivation's
-own stationarity conditions on the eight v1.2.3 vessel CG-heave periodograms
+own stationarity conditions on the eight v1.3.1 underway vessel CG-heave periodograms
 at the operating points in the current five-draw OU-II startup study. The diagnostic
 does not replace the selected deployed coefficients.
 
@@ -48,6 +48,8 @@ Typical use:
 from __future__ import annotations
 
 import argparse
+import json
+import hashlib
 import math
 import sys
 import csv
@@ -90,6 +92,15 @@ C_V_DEPLOYED = C_P_DEPLOYED / OU_II_PSEUDO_MSE_RATIO
 BAND_HZ = (0.02, 0.8)
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def verify_operating_points(path: Path, provenance: dict) -> None:
+    """Do not combine new motion spectra with old startup/tuner measurements."""
+    manifest_path = path.with_name('manifest.json')
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    if (manifest.get('simulation_provenance') != provenance or
+            manifest.get('files', {}).get(path.name) != hashlib.sha256(path.read_bytes()).hexdigest()):
+        raise ValueError('operating points do not match the pinned motion dataset; rerun tools/startup_ablation.py first')
 
 
 def reference_operating_points(path: Path):
@@ -190,8 +201,9 @@ def main(argv: list[str] | None = None) -> int:
                     default=ROOT / "reports/results/startup_ablation/startup_runs.csv")
     args = ap.parse_args(argv)
 
+    provenance = input_provenance(args.data_dir / record.filename for record in RECORDS)
+    verify_operating_points(args.operating_points, provenance)
     seas = list(reference_operating_points(args.operating_points))
-    input_provenance(args.data_dir / record for record, _, _ in seas)
     print(f"q_eff = {Q_EFF:.4e} m^2/s^3   c_sigma = {C_SIGMA_OU_II}   "
           f"band = {BAND_HZ[0]}-{BAND_HZ[1]} Hz\n")
 

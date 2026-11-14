@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
-      "git_blob_sha": "ad7b0ec59270543fc86bc23670a1f24034317396"
+      "git_blob_sha": "ceb20e37829c6d3cc7221d0bf5efdf7bc2a08d36"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b924e98e43701d8d6c8b650418aa05fec54604fc"
+      "git_blob_sha": "7c84f2705a6a8333d293f0614eab55cc0e8ecf8b"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -189,7 +189,7 @@
     },
     {
       "path": "docs/ou3-sampling-fidelity.md",
-      "git_blob_sha": "bb3dab16fbf8d87c81142a535937b7802c425199"
+      "git_blob_sha": "bf51bbfc886e658ae4ee27ab7e5aab3cc009a1e5"
     },
     {
       "path": "docs/ou3-signed-temporal-continuation.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5785049cbceff9ad9dbb58dcabba3438cbe4ca7d"
+      "git_blob_sha": "68d7f5882b529d1282d45f0b4ac3d2c7a4ebbdf9"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1778,5 +1778,14 @@
     ],
     "theorem_promoted": false,
     "note": "Repeated complete native secants after the final OU-II and PII source changes; no hash-only substitution"
+  },
+  "moving_dataset_scope_refresh": {
+    "scope": "Historical generator/version labels clarified in two bound documents; no physical assumption or mathematical statement changed.",
+    "documents": [
+      "docs/ou-gyro-bias-projection.md",
+      "docs/ou3-sampling-fidelity.md"
+    ],
+    "shipping_dependency_audit": "moving-dataset-source-scope.json",
+    "native_secant_receipt": "Fresh complete two-epsilon replay; native state-byte hashes match the prior diagnostic, without theorem promotion."
   }
 }

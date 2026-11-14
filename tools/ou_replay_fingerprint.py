@@ -307,7 +307,7 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         "--simulation-zip",
         type=Path,
         required=True,
-        help="exact sim-data-files-vessel-rao-28ft.zip used by the studies",
+        help="exact sim-data-files-vessel-rao-28ft-5kn.zip used by the studies",
     )
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--write", type=Path, help="write the current fingerprint JSON")

@@ -1,6 +1,7 @@
 """Accuracy reports must not silently omit failed, missing or invalid records."""
 import importlib.util
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -24,7 +25,23 @@ def fixture():
     return '\n'.join(lines)
 
 
+def pii_fixture():
+    return '\n'.join('PII_METRICS input=' + name +
+        ' start_s=300 window_s=900 samples=180000 disp_z_rms_m=0.1 disp_z_pct_hs=1'
+        ' roll_rms_deg=0.2 pitch_rms_deg=0.3 yaw_rms_deg=0.4\nQUALITY_GATE: PASS=1 REASON=ok'
+        for name in G.REFERENCE_CSV_SHA256)
+
+
 class ReplayEvidenceTests(unittest.TestCase):
+    def test_pii_rejects_missing_duplicate_and_nonfinite_records(self):
+        text = pii_fixture()
+        self.assertEqual(len(G.parse_pii(text)), 8)
+        for bad in (text.split('\n', 2)[-1], text + '\n' + text,
+                    text.replace('yaw_rms_deg=0.4', 'yaw_rms_deg=nan', 1),
+                    text.replace('samples=180000', 'samples=12000', 1)):
+            with self.assertRaises(ValueError):
+                G.parse_pii(bad)
+
     def test_rejects_partial_duplicate_nonfinite_and_wrong_window(self):
         text = fixture()
         self.assertEqual(len(G.parse_w3d(text)), 8)
@@ -51,9 +68,11 @@ class ReplayEvidenceTests(unittest.TestCase):
         owned = {f'tests/{folder}/{binary}.cpp' for folder, binary, _ in G.REPLAYS.values()}
         owned.update(('tests/kalman_carma/carma_process-sim.cpp',
                       'tests/kalman_carma/carma_lever_arm-sim.cpp'))
-        self.assertEqual(owned, {str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*-sim.cpp')})
+        expected = {str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*-sim.cpp')}
+        expected.add('tests/pii_observer/pii_observer-adaptive.cpp')
+        self.assertEqual(owned, expected)
 
-    def test_current_limits_cover_measurements_without_loosening_existing_gates(self):
+    def test_current_limits_match_the_measured_underway_dataset_with_declared_margin(self):
         evidence = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
         header = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text()
         for name, family in evidence['families'].items():
@@ -64,9 +83,11 @@ class ReplayEvidenceTests(unittest.TestCase):
             self.assertEqual(set(compiled), set(G.GATE_METRICS), name)
             for gate, value in compiled.items():
                 self.assertGreater(value, family['measured_worst'][gate], (name, gate))
-                previous = family['previous_production_limits'].get(gate)
-                if previous:
-                    self.assertLessEqual(value, previous, (name, gate))
+                expected = math.ceil(family['measured_worst'][gate] * 1.005 / 1e-5) * 1e-5
+                self.assertAlmostEqual(value, expected, places=5)
+        from sim_dataset import SHA256
+        self.assertEqual(evidence['inputs']['archive_sha256'], SHA256)
+
 
     def test_make_log_keeps_sampling_profiles_separate_and_rejects_failed_runs(self):
         families = ('OU_II', 'OU_III', 'TFG', 'CARMA3_A41', 'CARMA_SHARED_MODES_CSM',
@@ -83,7 +104,7 @@ class ReplayEvidenceTests(unittest.TestCase):
                 if legacy:
                     data = data.replace('disp_z_pct_hs=0.1', 'disp_z_pct_hs=9.0')
                 blocks.append(marker + '\n' + data)
-        log = '\n'.join(blocks)
+        log = '\n'.join(blocks) + '\nAdaptiveVerticalPIIMahony simulation starting\n' + pii_fixture()
         parts = G.split_make_log(log)
         self.assertEqual(G.parse_w3d(parts['ou2', 'legacy'])[0]['disp_z_pct_hs'], 9.0)
         self.assertEqual(G.parse_w3d(parts['ou2', 'default'])[0]['disp_z_pct_hs'], 0.1)

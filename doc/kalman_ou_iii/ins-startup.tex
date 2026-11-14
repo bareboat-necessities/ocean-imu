@@ -62,7 +62,8 @@ matched ablation.  Magnetic acquisition is performed provisionally for availabil
 and repeated after convergence for accuracy.  A continuously running hard-iron
 estimator then uses raw magnetometer data and yaw-stripped proxy tilt to solve a
 regularized body-offset identification problem without adding a magnetic-bias state
-to any navigation filter.  Current paired ablations use the v1.2.1 28 ft sailboat RAO records.
+to any navigation filter.  Current paired ablations use the v1.3.0 28 ft sailboat RAO records at 5 kn,
+with heading oscillating $\pm3^\circ$ about north every 120 s.
 They separate hard-iron tracking in all three families from startup-policy
 and refinement changes in TFG. Calibration-draw sweeps also record cases
 where an additive correction worsens yaw. The results distinguish finite
@@ -981,11 +982,14 @@ continuous regularized hard-iron identification.  The legacy staged quaternion M
 path remains valuable as a matched ablation and demonstrates why the separation is
 needed.
 
-The measurements show distinct benefits.  Proxy startup primarily reduces roll/tilt
-and accelerometer-bias error without materially moving OU displacement.  Continuous
-hard-iron correction then removes the standing magnetic gauge: mean yaw falls by
-about 55--57\% in both OU families, and TFG's hard-iron-off arm more than doubles yaw
-while leaving the other channels nearly unchanged.  The remaining limitation is also
+The current moving-vessel ablations show distinct benefits. With the default
+calibration draw, continuous hard-iron correction reduces mean yaw RMS from
+2.241 to 0.708 degrees for OU--II, from 2.041 to 0.595 degrees for OU--III,
+and from 1.546 to 0.876 degrees for TFG. Across five calibration draws,
+however, 4 of 40 OU--II pairs and 8 of 40 OU--III pairs worsen. The matched
+TFG staged-startup arm has greater mean yaw error but slightly lower mean
+accelerometer-bias error than deployed startup. These ablations therefore
+support channel-specific benefits rather than uniform improvement.  The remaining limitation is also
 clear: additive hard-iron learning cannot identify soft-iron/misalignment error without
 additional heading excitation.  That boundary is preferable to hiding the problem
 inside a larger filter.  The resulting architecture is therefore best understood as
