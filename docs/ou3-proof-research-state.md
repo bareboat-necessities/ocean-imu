@@ -1,3 +1,18 @@
+CSV timestamp export repair (class E): the input clock correction would be
+lost again through default six-significant-digit simulation CSV exports.
+Typed/untyped shared runners and the manual AHRS writer now emit time with
+17 significant digits, preserving the formatting of every other column.
+The complete 240000-sample formatter round-trip test passes; actual AHRS and
+OU-II exports each independently pass all 240000 timestamp checks. Both
+complete inherited 252-direction native diagnostic words were rerun at
+epsilon 0.01 and 0.005; both state-byte hashes match the previous receipt.
+Structures preserved: literal estimator equations, state/covariance, physical
+histories, gains, resets, tuning, scheduler and sensor records. Relaxations
+introduced: none; these source-binding diagnostics do not become uniform
+derivative bounds. No shipping counterexample or new theorem claim follows.
+Existing local conclusions and open theorem flags remain unchanged. Next
+check: complete rebuilt regressions and source-bound CI publication.
+
 Timestamp dataset migration (class E): v1.3.0 collapses distinct 200 Hz
 samples onto rounded times after 1000 s. v1.3.1 regenerates integer-indexed
 clocks, including the corrected Fenton endpoint/sample count. All 21 input

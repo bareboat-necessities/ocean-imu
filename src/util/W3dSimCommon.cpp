@@ -9,6 +9,7 @@ extern const float g_std = 9.80665f;
 
 #include "util/W3dSimCommon.h"
 #include "util/UnderwayReference.h"
+#include "util/CsvTimestamp.h"
 
 #include <cerrno>
 #include <cstdlib>
@@ -1376,7 +1377,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
         if (options_.write_timeseries) {
-            ofs << rec.time << ","
+            ocean_imu::sim::write_csv_time(ofs, rec.time) << ","
                 << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
                 << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
                 << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","
@@ -1679,7 +1680,7 @@ std::optional<TvgNloSimulationRunResult> TvgNloSimulationRunner::run(const std::
         result.dir_travel_deg_hist.push_back(
             travelDegGeneratorFromVec(snap.direction.travel_vec_boat, heading_ref_deg));
 
-        ofs << rec.time << ","
+        ocean_imu::sim::write_csv_time(ofs, rec.time) << ","
             << r_ref_out << "," << p_ref_out << "," << y_ref_out << ","
             << disp_ref.x() << "," << disp_ref.y() << "," << disp_ref.z() << ","
             << vel_ref.x() << "," << vel_ref.y() << "," << vel_ref.z() << ","

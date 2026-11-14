@@ -27,6 +27,7 @@ const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
 
 #include "ahrs/KalmanQMEKF.h"
 #include "util/WaveFilesSupport.h"
+#include "util/CsvTimestamp.h"
 #include "ahrs/FrameConversions.h"
 
 using Eigen::Vector3f;
@@ -512,7 +513,7 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
         << "gyro_noisy_x,gyro_noisy_y,gyro_noisy_z\n";
 
     for (const auto& r : rows) {
-        ofs << r.t << ","
+        ocean_imu::sim::write_csv_time(ofs, r.t) << ","
             << r.roll_ref << "," << r.pitch_ref << "," << r.yaw_ref << ","
             << r.acc_bx   << "," << r.acc_by    << "," << r.acc_bz << ","
             << r.gyro_x   << "," << r.gyro_y    << "," << r.gyro_z << ","

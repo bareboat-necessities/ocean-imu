@@ -33,5 +33,26 @@
       "samples": 5999
     },
     "verified_time_series": 21
+  },
+  "simulation_export_checks": {
+    "ahrs": {
+      "binary_sha256": "de2efce3af735cd91092fbec6a129e563331d56fe97bb4d19d6bd612693ec782",
+      "samples": 240000,
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "csv_clock": "every time exactly round-trips to sample_index / 200",
+      "exit_code": 0
+    },
+    "shared_runner": {
+      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
+      "samples": 240000,
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "csv_clock": "every time exactly round-trips to sample_index / 200",
+      "exit_code": 0
+    }
+  },
+  "export_source_sha256": {
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+    "tests/ahrs/ahrs-qmekf-sim.cpp": "5ceed97f6fd8683022ac65805fe5f4b03e475c6d22aa13119bb385780bbf5ffe"
   }
 }
