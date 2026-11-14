@@ -42,10 +42,11 @@
   0.05 m/s^2 floor, and the legacy sigma channel under it, are not wave
   evidence: the channel subtracts the configured 0.12 m/s^2 pre-band floor
   (referred through the band, 35 times the band variance the simulated
-  1.5 mg sensor produces in still water) and
-  attenuates the variance whenever the stillness detector's fixed
-  0.28 m/s^2 RMS threshold reports still water, so in still water and on
-  every small sea the CARMA driving noise is the floor itself.  The Evidence
+  1.5 mg sensor produces in still water), so in still water the CARMA
+  driving noise is the floor itself.  The stillness detector does not
+  attenuate this variance: its fixed 0.28 m/s^2 threshold is an
+  acceleration test, and a small long-period sea (0.27 m following at
+  5 kn) reads as still water while its heave is real.  The Evidence
   mode replaces sigma_aw / c_sigma by sqrt(p max(E, 0)), E the band variance
   in excess of the sensor-noise model and p its detection weight, and moves
   the CARMA frequency only with p times the confidence of the measured
@@ -535,9 +536,13 @@ private:
         // Legacy keeps its cost and its outputs: it reads no evidence.
         if (excitation_mode_ != CarmaExcitationMode::Legacy) update_wave_evidence_(dt, a_vertical_measurement);
         if (!advanceStartupStage_(wavePeriodUsable())) return;
-        constexpr float STILL_VAR_DECAY_SEC = 1.0f;
+        // No still-water attenuation: the band noise floor already removes
+        // still-water variance, and the detector's fixed acceleration
+        // threshold reads small long-period seas as still.
+        constexpr bool kStillnessAttenuatesVariance = false;
+        constexpr float kUnusedStillDecaySec = 1.0f;
         const float sea_time_sec = measureOperatingPoint_(
-            frontEndStill_(), frontEndStillTimeSec_(), STILL_VAR_DECAY_SEC, tau_coeff_, sigma_coeff_);
+            kStillnessAttenuatesVariance, frontEndStillTimeSec_(), kUnusedStillDecaySec, tau_coeff_, sigma_coeff_);
         const float sigma_t = excitation_sigma_target_();
         const float RS_raw = rs_spectral_mse_target_(tau_target_, sigma_t);
         RS_target_ = enable_clamp_ ? std::min(std::max(RS_raw, min_R_S_), max_R_S_) : RS_raw;

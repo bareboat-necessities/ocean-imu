@@ -37,16 +37,16 @@ using namespace carma3_sim;
 // about 0.5 %, the margin kalman_ou_iii-sim, kalman_tfg-sim and carma3-sim
 // use.
 constexpr W3dFailureLimits kT41RegressionBars{
-    .err_limit_percent_z_jonswap   = 3.072f,  // worst 3.05674 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 3.231f,  // worst 3.21467 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.7662f, // worst 0.76233 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3569f, // worst 0.355132 (pmstokes H8.5)
-    .err_limit_pitch_deg           = 0.2138f, // worst 0.212754 (pmstokes H8.5)
-    .err_limit_percent_3d_jonswap  = 4.890f,  // worst 4.86593 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 5.278f,  // worst 5.25201 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.206f,  // worst 4.18498 (pmstokes H8.5)
-    .bias_3d_percent               = 82.53f,  // worst 82.1137 (pmstokes H8.5, accel)
-    .gyro_bias_3d_percent          = 12.40f,  // worst 12.3347 (pmstokes H8.5, gyro)
+    .err_limit_percent_z_jonswap   = 2.47293f, // worst 2.46062 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 2.45206f, // worst 2.43985 (pmstokes H4)
+    .err_limit_yaw_deg             = 0.76680f, // worst 0.762983 (jonswap H4)
+    .err_limit_roll_deg            = 0.35725f, // worst 0.355469 (pmstokes H8.5)
+    .err_limit_pitch_deg           = 0.21418f, // worst 0.213105 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 4.93003f, // worst 4.90549 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 5.30339f, // worst 5.277 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.19388f, // worst 4.17301 (pmstokes H8.5)
+    .bias_3d_percent               = 82.61211f, // worst 82.2011 (pmstokes H8.5, accel)
+    .gyro_bias_3d_percent          = 12.40030f, // worst 12.3386 (pmstokes H8.5, gyro)
 };
 
 // The no-transport variant prints the same summary but has no fitted bars.

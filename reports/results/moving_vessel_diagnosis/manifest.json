@@ -1,0 +1,50 @@
+{
+ "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+ "eigen": "3.4.0 (/usr/include/eigen3)",
+ "inputs": {
+  "stationary": {
+   "release": "v1.2.3",
+   "archive": "sim-data-files-vessel-rao-28ft.zip",
+   "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
+  },
+  "moving": {
+   "release": "v1.3.0",
+   "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+   "archive_sha256": "324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3"
+  }
+ },
+ "protocol": "200 Hz; 1200 s; trailing 900 s; default noise/seeds unless --no-noise; magnetometer on; truth from input CSV in double precision; track at sample_index*dt",
+ "executables": {
+  "shipping": {
+   "ou2": "d99af8b94b38609712115711e6be4a19c432213e5eace82f98b0ea39aba9c118",
+   "ou3": "4e790e0af132097445193f4d88125989a1333727cf35f50a6bf269f04083fb6a",
+   "tfg": "90b25100db9018ace7cdb24c5802f10d02c8fdef8e05b3a73be6a2035bb93fad",
+   "carma": "193449b0b3622608dcded82a95e86764dee540f3f59301fb6a20dbf30ce9380f",
+   "csm": "63455c4230b308c223a68dbaf5a7b7effdf99fdd9350d23e9c3245153a35c19a",
+   "tcarma": "66b9a5d47a36e5a4e6e8c6e4670aa0558204b44532ab193d48ca7e34b3088054"
+  },
+  "experiment_hooks": {
+   "ou2": "bea89f35b16ae2dbf4fe36e795570fac06373b2b3b9c74298ca8fa5b47860fe0",
+   "ou3": "02bd3661619a63028b8effe2bda50f32552d0aee48fb88a96149da438e24d92b",
+   "tfg": "90b25100db9018ace7cdb24c5802f10d02c8fdef8e05b3a73be6a2035bb93fad",
+   "carma": "0b106dfd3bae60784b86211e1a87bbb1d331cf17de13bc456839013ffcc3933f",
+   "csm": "1b875014ade91249d718829227ce24af8ca5da2988745cd3a01d84a0abe2d10a"
+  },
+  "fixed": {
+   "ou2": "619b400dc53e722ac860dc0ed8b0c296580dc82331c0d0d445bc3d55e014622e",
+   "carma": "d4281bbe2702bc58c841103678d2822c27b829d865801998e619ec0235de7db0",
+   "tcarma": "e1c3e7724d60ce21a73479fd639b275dc30afb7f3e453ea357ed2cc6d060bb1f"
+  },
+  "experiment_tfg_warm_handoff": {
+   "tfg": "95e438b31c9cebfaf88478ad702ea067f0b22ab3c03601264000949c7fa39552"
+  }
+ },
+ "experiment_hook_patch_sha256": "00dcaad9335471063670db3c1041d70369859689a50ee2f83945af49c8ab0f18",
+ "files": {
+  "inputs.json": "paired input physics",
+  "shipping.csv": "executables before the stillness change: 5 filters x 5 arms x 8 records, plus TFG-CARMA S/M",
+  "fixed.csv": "OU-II, CARMA and TFG-CARMA S/M with the stillness change (this tree)",
+  "diagnostics.csv": "JONSWAP diagnostics: no_noise, stillness_off, ou3_floors_off*, ou3_bias_rw_frozen_no_noise, tfg_bias_unlock_*, tfg_warm_handoff (experiment build), ou2_bias_rw_z_* (this tree)"
+ },
+ "source_commit_before_fix": "f2c65b2e08a4735f1e649e6863d3a362988836f4"
+}

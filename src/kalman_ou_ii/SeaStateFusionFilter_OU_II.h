@@ -781,10 +781,13 @@ public:
         return std::isfinite(v_env) ? v_env : NAN;
     }
 
-    // Time constant of the still-water attenuation of the wave variance.
-    // OU-II keeps it as a knob at 5 s; OU-III fixes 1 s.
+    // Time constant of an optional still-water attenuation of the wave
+    // variance; 0, the default, disables it.  The band noise floor already
+    // removes still-water variance, and the stillness detector's fixed
+    // 0.28 m/s^2 acceleration threshold cannot tell still water from a small
+    // long-period sea (a 0.27 m following sea at 5 kn reads as still).
     void setSigmaStillnessDecaySec(float sec) {
-        if (std::isfinite(sec) && sec > 0.0f) sigma_stillness_decay_sec_ = sec;
+        if (std::isfinite(sec) && sec >= 0.0f) sigma_stillness_decay_sec_ = sec;
     }
 
     inline auto& mekf() noexcept { return *mekf_; }
@@ -931,10 +934,11 @@ private:
 
         if (!advanceStartupStage_(wavePeriodUsable())) return;
 
-        // This attenuation follows the statistical variance EMA.  Its horizon
-        // must preserve wave energy across brief quiet intervals.
+        // An enabled attenuation follows the statistical variance EMA.  Its
+        // horizon must preserve wave energy across brief quiet intervals.
+        const bool still_attenuates = sigma_stillness_decay_sec_ > 0.0f && frontEndStill_();
         const float sea_time_sec = measureOperatingPoint_(
-            frontEndStill_(), frontEndStillTimeSec_(), sigma_stillness_decay_sec_,
+            still_attenuates, frontEndStillTimeSec_(), sigma_stillness_decay_sec_,
             tau_coeff_, sigma_coeff_);
 
         float R_p0_raw = NAN;
@@ -1059,7 +1063,7 @@ private:
     float MAX_R_p0_std_           = MAX_R_p0_std;
     float MIN_R_v0_std_           = MIN_R_v0_std;
     float MAX_R_v0_std_           = MAX_R_v0_std;
-    float sigma_stillness_decay_sec_ = 5.0f;
+    float sigma_stillness_decay_sec_ = 0.0f;
     float adapt_R_p0_mult_        = ADAPT_R_p0_MULT;
     float adapt_R_v0_mult_        = ADAPT_R_v0_MULT;
     float adapt_R_slew_log_       = ADAPT_R_SLEW_LOG;

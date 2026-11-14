@@ -329,11 +329,14 @@ f_{\mathrm{tune}}=\frac{c_\tau}{2\tau},\qquad
 so the model's displacement zero-crossing frequency is placed on the
 measured one. The amplitude $\sigma_{aw}$ is the band acceleration RMS of the
 variance channel the wrapper shares with OU-III, with OU-III's floor. That
-channel subtracts a configured \SI{0.12}{m/s^2} pre-band noise floor and
-attenuates the variance while the front end's stillness detector reports a
-vertical RMS below \SI{0.28}{m/s^2}. In still water and on every sea below
-that RMS, $\sigma_z$ is therefore the \SI{0.05}{m/s^2} floor, not a measured
-amplitude (\cref{sec:quiet}). This is the wrapper's default \emph{legacy}
+channel subtracts a configured \SI{0.12}{m/s^2} pre-band noise floor. In
+the measurements of this article it also attenuated the variance while the
+front end's stillness detector reported a vertical RMS below
+\SI{0.28}{m/s^2}, so in still water and on every sea below that RMS
+$\sigma_z$ was the \SI{0.05}{m/s^2} floor, not a measured amplitude
+(\cref{sec:quiet}). The legacy chain no longer applies that attenuation:
+the noise floor already removes still-water variance, and an acceleration
+threshold also discards real long-period seas. This is the wrapper's default \emph{legacy}
 excitation mode, the mode of every result outside \cref{sec:quiet}. The
 horizontal factors act in the keel frame and are rotated into NED by the
 filter's heading; $S_x=S_y=1$ (isotropic) in every run. No horizontal
