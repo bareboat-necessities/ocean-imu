@@ -167,6 +167,17 @@ def ljung_box(values, lag=20):
     return result
 
 
+def available_statistics(value):
+    """Keep missing endpoint/failed-filter statistics unavailable in strict JSON."""
+    if isinstance(value, dict):
+        return {key: available_statistics(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [available_statistics(item) for item in value]
+    if isinstance(value, (float, np.floating)):
+        return float(value) if np.isfinite(value) else None
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--raw', type=Path, required=True)
@@ -424,13 +435,13 @@ def main():
     summary['whiteness'] = whiteness
     summary['whiteness_available_tests'] = sum(r['statistic'] is not None for r in whiteness)
     summary['whiteness_rejections_at_05'] = sum(r['p'] is not None and r['p'] < .05 for r in whiteness)
-    (OUT/'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False)+'\n')
+    (OUT/'summary.json').write_text(json.dumps(available_statistics(summary), indent=2, allow_nan=False)+'\n')
 
     tangent_gain = paired(primary, 'TFG', 'TAN', 'ba_h')['improvement_percent']
     headline = ('On acquired-reference waves, the paired TAN versus TFG horizontal-bias RMS change is '
                 +number(tangent_gain['mean'], 4)+'\\% improvement [95\\% interval '
                 +number(tangent_gain['low'], 4)+', '+number(tangent_gain['high'], 4)+'\\%].')
-    reliable = (tangent_gain['low'] > 0 and summary['failures'] == 0
+    reliable = (tangent_gain['low'] is not None and tangent_gain['low'] > 0 and summary['failures'] == 0
                 and summary['failed_processes'] == 0 and summary['incomplete_experiments'] == 0
                 and summary['endpoint_consistency']['TAN']['nees15'] <= bounds[1])
     recommendation = ('The measured cohort warrants further evaluation of the tangent-bias candidate, subject to independent replay and target qualification.' if reliable else

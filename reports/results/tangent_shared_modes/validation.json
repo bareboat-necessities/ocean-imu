@@ -25,8 +25,41 @@
     "log_sha256": "b6ffe80063a4dba3e8d090238c52b4459b895e929ca2e28223f76343ed9817ef"
   },
   "make_all": {
-    "status": "serial full repository run in progress; no passing completion claimed",
-    "live_log": "make-all.log"
+    "status": "pass",
+    "command": "make all",
+    "exit_code": 0,
+    "test_modules": 22,
+    "modules": [
+      "tests/ahrs",
+      "tests/detrend",
+      "tests/freq",
+      "tests/heave_only",
+      "tests/imu_calibrate",
+      "tests/kalman_carma",
+      "tests/kalman_carma_shared_modes",
+      "tests/kalman_ou_ii",
+      "tests/kalman_ou_iii",
+      "tests/kalman_tfg",
+      "tests/kalman_tfg_carma",
+      "tests/kalman_tfg_shared_modes",
+      "tests/kalman_tangent_shared_modes",
+      "tests/live_bias_consistency",
+      "tests/nlo",
+      "tests/pii_observer",
+      "tests/spectrum",
+      "tests/spike_filter",
+      "tests/util",
+      "tests/validation",
+      "tests/wave_dir",
+      "tests/wave_sim"
+    ],
+    "log_sha256": "940bbf656eb5c612bd39a88c7d027a8e24991cd73071757f663da9f28e150727",
+    "native_gate_passes": 120,
+    "native_gate_failures": 0,
+    "python_tests": 1169,
+    "python_skipped": 1,
+    "skip": "CMake unavailable on the default PATH; the separate full validation run includes CMake and has no skips.",
+    "implementation_note": "C++ source is unchanged after the validation_source_commit. Final missing-statistic JSON formatting is additionally covered by 13 focused regressions and full historical report regeneration."
   },
   "hardware": {
     "esp32_board_measurement": false
@@ -287,15 +320,23 @@
     "lualatex_passes": 2,
     "overfull_boxes": false,
     "source_sha256": "315862e03f9fc2624dd332f4102cc34765ff602638517b861fc743e3291b5d80",
-    "pdf_sha256": "24db851beb53f1483874bbaa377db9b7c6dad22ee73effbf516ff1517481d09d",
+    "pdf_sha256": "d7d2d15a09331739a1fdf100a2c363beb8c85fb05a08981a21a3a7f5ac7eb62b",
     "rendered_review_pages": [
       1,
+      2,
+      3,
+      4,
+      5,
       6,
+      7,
+      8,
+      9,
       10,
       11,
       12
     ],
-    "visual_review": "title, equations, tables, time histories, diagnostics and final-page references checked"
+    "visual_review": "All 12 pages reviewed in a contact sheet; detailed table and final-page reviews, without clipping or overfull boxes.",
+    "build_log_sha256": "8279ef26e147f4f0955992d7577445c452e34d41f41fd235f408a485f784e491"
   },
   "shared_table_formatter": {
     "default_output_byte_identical": true,
@@ -317,19 +358,6 @@
     "geometry_adds_no_physical_storage": true,
     "log_sha256": "00f2a7dd40334a701b0428dbd2823326cdf859cb681b96d79a26e80284af9941"
   },
-  "ou_ci_evidence_recovery": {
-    "workflow_run": 43501064300,
-    "producer_commit": "480d78f0fa35724800d7a70a96ea9a6355d5605d",
-    "full_artifact_ids": [
-      14078465349,
-      14076393097,
-      14075418119
-    ],
-    "archive_sha256_verified": true,
-    "immutable_replay_closure_matches_current_source": true,
-    "fresh_replay_here": false,
-    "method": "Existing --auto normalization in original producer checkout, then --check in integration checkout."
-  },
   "review_fixes": {
     "module_default_build_and_test_goal": "restored",
     "crash_partial_unpaired_launch_and_resume_receipts": "five regression tests pass",
@@ -343,7 +371,7 @@
     }
   },
   "review_followup": {
-    "regression_tests": 12,
+    "regression_tests": 13,
     "regression_status": "pass",
     "native_group_startup_seven_filter_smoke_and_vessel_replay": "pass",
     "raw_histories_verified_against_original_receipts": 168,
@@ -351,6 +379,63 @@
     "source_resume_binding": "implementation commit plus SHA-256 fingerprint of the complete source hash map",
     "article_pages": 12,
     "article_build_and_render_review": "pass",
-    "ou_fingerprint": "Preserved current-main record deliberately requires full replay for the changed replay-source/results tree; no fingerprint refreshed from smoke-only evidence."
+    "ou_fingerprint": "Preserved the record emitted by the full CI regeneration. Final source/results changes still require the conservative replay decision; no marker is refreshed from smoke or native regression alone.",
+    "unavailable_endpoint_and_whiteness_statistics": "strict JSON null; missing paired intervals cannot enable promotion",
+    "focused_test_log_sha256": "834b93531249916d73531f460a5f664be7f2b64841a5db54a8695a90a8c3aae9",
+    "python_quality_log_sha256": "226d4e3495cbd3e6aa32030a6985e11e0634beeaf65b8608a22b4f1690771a2b",
+    "current_report_sources": {
+      "tools/tangent_shared_modes_report.py": "177b73f8f96dda768e9e7ade896366f8235491906020ba691a15861e1591bfee",
+      "tools/tangent_shared_modes_inputs.py": "8fbc8735a33bbb9c0106c49fa2a0e3132f8c173c1dd42cdbfb14350747f55b57",
+      "tests/validation/test_tangent_report.py": "f14f10f64e6187f2e973316d7611e0f2c8e8da0552d5f49c0079b516fc9b85a6"
+    }
+  },
+  "validation_source_commit": "be0c54ec191e35284bfd58c785c9809262ade988",
+  "full_python_validation": {
+    "command": "python3 -m unittest discover -s tests/validation -v",
+    "status": "pass",
+    "tests": 1169,
+    "skipped": 0,
+    "cmake_available": true,
+    "log_sha256": "55bd7b2d805c3c538c13e97620c8a54c619494ba8174f48d99316d4134292a67"
+  },
+  "reporting_change_parity": {
+    "histories": 1,
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "score_rows_compared": 40,
+    "trace_bytes_identical": true,
+    "trace_sha256": "3375c8f3afc622cbec264c44180599e9b15c135ce50a3e04a1071896850defc8",
+    "shared_scores_identical_except": [
+      "memory_bytes",
+      "step_us"
+    ],
+    "new_sample_count_columns": [
+      "nees_samples",
+      "acc_nis_samples",
+      "mag_nis_samples"
+    ]
+  },
+  "ou_ci_evidence": {
+    "publication_commit": "639915d69bce5ea29d1db1395e18dd92f3839985",
+    "full_validation_and_robustness_producer": "be0c54ec191e35284bfd58c785c9809262ade988",
+    "retained_tfg_comparison_producer": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
+    "directory_trees": {
+      "reports/results/ou_validation": "9a820b2ba80c31714ba776026b7fe869a97b5ba7",
+      "reports/results/ou_robustness": "e098ac417b0ff7f7bc5d3eba748011f8514abaf9",
+      "reports/results/tfg_comparison": "4b951d2eca758937a3d899b7947d5fff973ed530"
+    },
+    "bot_publication_preserved": true,
+    "fresh_paired_cohort_locally": false,
+    "fingerprint": "Preserved the record emitted by the full CI regeneration. Final source/results changes still require the conservative replay decision; no marker is refreshed from smoke or native regression alone."
+  },
+  "post_ci_publication_validation": {
+    "publication_commit": "639915d69bce5ea29d1db1395e18dd92f3839985",
+    "command": "make -C tests/validation test",
+    "status": "pass",
+    "tests": 1170,
+    "skipped": 0,
+    "log_sha256": "11fad8e500d73666954327d82eb1d0c52f3ccff59710ff9d077089c081799f24",
+    "includes_final_missing_statistics_fix": true
   }
 }

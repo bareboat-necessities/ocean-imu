@@ -15,7 +15,7 @@ try:
     # The executable report configures publication fonts at import. Keep those
     # settings out of unrelated figure-export tests in the shared suite.
     with matplotlib.rc_context():
-        from tangent_shared_modes_report import ljung_box, trace
+        from tangent_shared_modes_report import available_statistics, ljung_box, trace
 except ModuleNotFoundError:
     ljung_box = trace = None
 
@@ -67,6 +67,14 @@ class RawInputBindingTests(unittest.TestCase):
 
 @unittest.skipIf(ljung_box is None, 'statistical reporting dependencies unavailable')
 class InnovationWhitenessTests(unittest.TestCase):
+    def test_missing_endpoint_statistics_remain_unavailable_in_json(self):
+        missing = {'endpoint': {'nees': float('nan'), 'nis': float('inf')},
+                   'pairs': [float('-inf'), 2.5, None], 'samples': 0}
+        actual = available_statistics(missing)
+        self.assertEqual(actual, {'endpoint': {'nees': None, 'nis': None},
+                                  'pairs': [None, 2.5, None], 'samples': 0})
+        json.dumps(actual, allow_nan=False)
+
     def test_short_nonfinite_and_constant_innovations_are_unavailable(self):
         for values in ([], [float('nan')]*30, list(range(20)), [2.]*30, [.1]*30):
             with self.subTest(values=values):
