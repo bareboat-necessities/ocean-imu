@@ -3,7 +3,7 @@
 \label{sec:direction-validation}
 
 The estimator is evaluated on the same directional records used by the marine
-motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.3.0
+motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.3.1
 28 ft vessel RAO at 5 kn with $\pm3^\circ$ heading oscillation over 120 s.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
 uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
 do not dominate the direction metric.  Ten paired seed triplets vary the wave

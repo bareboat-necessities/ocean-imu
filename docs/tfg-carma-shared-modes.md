@@ -1,6 +1,6 @@
 # Experimental shared-mode CARMA on the two-frame group
 
-Current external-data replays use v1.3.0, the 28 ft boat at 5 kn with
+Current external-data replays use v1.3.1, the 28 ft boat at 5 kn with
 ±3° heading oscillation over 120 s. The [current comparison](moving-vessel-results.md)
 and [before/after report](moving-vessel-comparison.md) describe this changed
 experiment; earlier multi-seed synthetic and v1.2.3 results retain their

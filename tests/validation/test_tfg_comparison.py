@@ -81,8 +81,26 @@ class TFGComparisonTests(unittest.TestCase):
         hashes = study.source_hashes()
         for path in ("src/kalman_tfg/SeaStateFusionFilter_TFG.h",
                      "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-                     "src/util/W3dSimCommon.cpp", "tools/ou_validation.py"):
+                     "src/util/W3dSimCommon.cpp", "tools/ou_validation.py",
+                     "tools/underway_reference.py"):
             self.assertIn(path, hashes)
+
+    def test_track_helper_change_invalidates_retained_replay(self):
+        manifest = json.loads((study.OUT / "manifest.json").read_text())
+        manifest["source_hashes"] = study.source_hashes()
+        original_hash = study.ov.sha256_file
+
+        def changed_hash(path):
+            if path == ROOT / "tools/underway_reference.py":
+                return "changed-track-helper"
+            return original_hash(path)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "manifest.json").write_text(json.dumps(manifest))
+            with patch.object(study.ov, "sha256_file", side_effect=changed_hash):
+                with self.assertRaisesRegex(ValueError, "source provenance is stale"):
+                    study.check_bundle(out)
 
     def test_all_five_deterministic_methods_are_required_and_rendered(self):
         spec = importlib.util.spec_from_file_location("baseline_comparison",

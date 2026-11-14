@@ -27,7 +27,7 @@ Evaluating the unmodified `VesselRao::transfer`, `incidentHarmonics` and
 `regularWaveHarmonics` for its 20 declared scenarios gives a largest envelope
 about 29.1126 m/s^3, for the PM 11.4-s case. This floating coefficient screening
 supports the scale of the selected limit; the proof below does not depend on
-that screening or claim measured-hull qualification. This screening does not qualify the v1.3.0 moving-vessel histories. Actual deployments must
+that screening or claim measured-hull qualification. This screening does not qualify the v1.3.1 moving-vessel histories. Actual deployments must
 certify their continuous-history jerk bound, not infer it from finite samples.
 
 The old 200-Hz witness has jerk amplitude `400*pi*2g/sqrt(5) > 10500 m/s^3`.

@@ -1,6 +1,6 @@
 # Shared-modes QMEKF (`KalmanCarmaSharedModes`, experimental)
 
-External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+External-data runs now use the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
 with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). Numerical
 studies explicitly naming v1.2.3 retain their stationary-vessel scope; their
@@ -449,7 +449,7 @@ points on the single-system seas).
   `|b|^2 <= gamma^2 sigma_h^2 sigma_z^2`; it needs its own validation on the
   26 seas.
 
-**Current underway dataset replay and gates.** The eight scored v1.3.0 records use the 5 kn / ±3° heading track. Production and interval-rate profiles have separately measured limits in `tests/common/CurrentReplayLimits.h`. Sensor inputs and turning acceleration are retained; displacement/velocity reference truth is relative to the declared cruise track.
+**Current underway dataset replay and gates.** The eight scored v1.3.1 records use the 5 kn / ±3° heading track. Production and interval-rate profiles have separately measured limits in `tests/common/CurrentReplayLimits.h`. Sensor inputs and turning acceleration are retained; displacement/velocity reference truth is relative to the declared cruise track.
 
 | Production gate | Measured worst | Limit |
 | --- | ---: | ---: |

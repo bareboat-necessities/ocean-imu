@@ -1,3 +1,22 @@
+Underway auxiliary publication repair (class E): regenerated v1.3.1 studies
+invalidate the old zero-speed engine-guard bound: the 800 rpm guard+R arm
+has pooled 3-D/engine-off RMS 2.417253, exceeding 1.7. Removing the gyro
+perturbation changes OU-III 3-D RMS by +26.47% and TFG by -39.04%; the
+old gyro-path-invariance attribution is also invalid. Tables and figures
+now use the verified fresh CI artifacts; the low-rpm regression sentinel
+is 2.45, while the inherited 1.7 bound remains for the other conditions.
+This documents degraded performance, not a correction to estimator tuning.
+Structures preserved: shipping equations, inherited state and covariance,
+sensor histories, noise configuration, gains, resets, scheduler and fixed tuning.
+Relaxations introduced: none to physical or theorem premises; the revised
+empirical sentinel applies only to this declared experiment. No genuine
+shipping counterexample was found; established local proof results and
+open theorem flags remain unchanged. The sampling-fidelity document pin
+changes only the name of the current dataset, not its physical qualification.
+Current limiter: final source-bound CI publication. Next falsifiable check:
+the complete regenerated replay and evidence contracts, including the cruise
+track helper in the TFG source inventory.
+
 CSV timestamp export repair (class E): the input clock correction would be
 lost again through default six-significant-digit simulation CSV exports.
 Typed/untyped shared runners and the manual AHRS writer now emit time with

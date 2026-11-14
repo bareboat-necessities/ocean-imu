@@ -1,19 +1,19 @@
 {
-  "source_commit": "5d64ee7e1d57303209d51efabf82a29108d8a44b",
+  "source_commit": "f52b4a2e67d1230cae2e04f8b8553bb40864d333",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
-  "acceptance": "measurement only; gate failures retained",
+  "acceptance": "all replay gates passed",
   "replay_exit_codes": {
     "ou2": {
-      "default": 1,
-      "legacy": 1
+      "default": 0,
+      "legacy": 0
     },
     "ou3": {
       "default": 0,
       "legacy": 0
     },
     "tfg": {
-      "default": 1,
-      "legacy": 1
+      "default": 0,
+      "legacy": 0
     },
     "carma": {
       "default": 0,
@@ -38,8 +38,8 @@
       "default": 0
     },
     "heave": {
-      "default": 1,
-      "proxy": 1,
+      "default": 0,
+      "proxy": 0,
       "truth": 0
     },
     "nlo": {
@@ -71,18 +71,18 @@
     }
   },
   "binary_sha256": {
-    "ou2": "b5b35fb1e64a02173ff12d33e6d16e57af29c7e3c53be8279b665e76cf5c36f0",
-    "ou3": "e24d19dac948678703bfbd8a37feee5ffc815a47bd38771128a5f740d3d7c417",
-    "tfg": "8b6914a489e3c2018a2525c533c6bd20e4c9c374cb19883789a90bd769e22b6d",
-    "carma": "1f4f1ad38a3ec91c47280e22d80d4f4bec1395500af4ddf6c66d4e760395ced6",
-    "csm": "bbb639495388943e7c5ccef982c9dab4d752ec760cb6ea371287c0d8b4dd8d0d",
-    "tcarma": "101ec6bc4ef3832da6c31e9847e50830d5ce083061a744fa27e11beed145bf89",
-    "tcsm": "389aeaf178e0e03a4099ec9ea9e3d27831939941eb08ca6dea87cdc9b0933ab2",
-    "tfg_legacy": "dd122f0d9eaa8eeaf6b81150dc68e16035ab5b2caec81e5a028ef2ef1b079260",
-    "ahrs": "dceaec6ba795792b137794d7f916bffe6aece8493cdc12252ce0800e71495cae",
-    "heave": "88246c53ba2553b933fd8d2c44214f3bf54070b1ab908426d804926351bb7233",
-    "nlo": "0608e38bf884028f62c1e6c46d39a9e61dfb59dfe234465e8de4f060cce93fcc",
-    "pii": "dd1e5c833f7963c9e3db0d82f7be252dd0fe691d07a9af58879457e97c7e5353"
+    "ou2": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
+    "ou3": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+    "tfg": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
+    "carma": "c9e25146f885472b47b5ee2ce310045cfb27baea391058d1e9acc2ba4a5dba96",
+    "csm": "69b4fb2986578000482a59f96b601fd3f81bc1ff9fba7c4832dd0bb204c5e338",
+    "tcarma": "6f61ccc01712289524261209c5a4e08cc5e6d5821785bbc62ce24217c2243f11",
+    "tcsm": "31b52de0938e9beca94b6df7ab1c51c83b87187a823f3d6c647be86b5598b1ac",
+    "tfg_legacy": "0c9e5b802fcdaebb1a739a9ac8e3fe7282e4d346adddfdcd8c544ae2a41823a9",
+    "ahrs": "de2efce3af735cd91092fbec6a129e563331d56fe97bb4d19d6bd612693ec782",
+    "heave": "98197edb993e7d5a1b00b21a3cbac7e7d856906d20e021eae917631439b8c5ba",
+    "nlo": "cc8678e30a73fa10641c9d7cde1e45a3db27f09a4c073f4e585467a9a17b0ac2",
+    "pii": "90b44b01671b3bfddaeec3e889104f8b1011b6f4cf1c34bfddaafb832a27070c"
   },
   "records": {
     "ou2": {

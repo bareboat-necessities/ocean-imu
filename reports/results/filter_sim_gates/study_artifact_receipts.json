@@ -1,0 +1,109 @@
+{
+  "role": "Verified fresh v1.3.1 study artifacts; only the producing matrix job's result directory was imported from each archive.",
+  "artifacts": [
+    {
+      "id": 14107682923,
+      "name": "simulation-study-engine_noise_degradation",
+      "digest": "sha256:6c0f83e8790a873b8daae5a866a4227774e5c3407f8266cac75b1d40c5e88b20",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14107682923"
+    },
+    {
+      "id": 14107567300,
+      "name": "simulation-study-startup_ablation",
+      "digest": "sha256:7d418c447b02be6665cac493b46655b5c97b0c618a30990a687722f08083c3bd",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14107567300"
+    },
+    {
+      "id": 14107267867,
+      "name": "simulation-study-ou_roundtrip_transition",
+      "digest": "sha256:c9129d5a103612e164a54dbead66bef75c68bd8e8f092921e9d78f1567ca1f87",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14107267867"
+    },
+    {
+      "id": 14106917998,
+      "name": "simulation-study-model_mismatch_ablation",
+      "digest": "sha256:db58c69bdc25423ad15d0d1bcfb7b8d4741d927c555f90025d0ba499f534edcd",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14106917998"
+    },
+    {
+      "id": 14106847818,
+      "name": "simulation-study-ou3_engine_noise_mitigation",
+      "digest": "sha256:4a22d71f5d6fc854abfdb9b7c06ac3fd68c792bc26cdf29436f04e1972faee1f",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14106847818"
+    },
+    {
+      "id": 14106733619,
+      "name": "simulation-study-direction_rao_ablation",
+      "digest": "sha256:e2e6031c091e66a5121f4dc946068f25e44f41d11c25b74e866a748cf4142d62",
+      "workflow_run": {
+        "id": 43577322116,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577322116/artifacts/14106733619"
+    },
+    {
+      "id": 14106557740,
+      "name": "ou3-lever-arm-study",
+      "digest": "sha256:cd958d73af26ae4f6dc0b5dd0ef67e7e782b500f363f8a6fa05454c86afab417",
+      "workflow_run": {
+        "id": 43577326520,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577326520/artifacts/14106557740"
+    },
+    {
+      "id": 14106828629,
+      "name": "carma-lever-arm-study",
+      "digest": "sha256:1875c36675f6b9c4b2e9eafdc8e99d1eb6239f2c6cccb913b9fb3f9cb5379039",
+      "workflow_run": {
+        "id": 43577326534,
+        "repository_id": 1187643613,
+        "head_repository_id": 1187643613,
+        "head_branch": "chore/moving-vessel-replays",
+        "head_sha": "f7cd0fa140a2f9647ef33d16bf40c25258442158"
+      },
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43577326534/artifacts/14106828629"
+    }
+  ]
+}
