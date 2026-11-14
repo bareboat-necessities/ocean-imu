@@ -729,7 +729,7 @@ private:
         const T* const si = Sinv.data();
         const T* const pc = PCt.data();
         T* const k = K.data();
-        for (int b = 0; b < 3; ++b)
+        for (Eigen::Index b = 0; b < 3; ++b)
             for (int i = 0; i < NX; ++i)
                 k[i + NX * b] = pc[i] * si[3 * b] + pc[i + NX] * si[1 + 3 * b] + pc[i + 2 * NX] * si[2 + 3 * b];
     }
