@@ -39,65 +39,65 @@
     "OU_II": {
       "nonstationary_endpoint_H4_0_Tp11_4": {
         "RS_ms": null,
-        "R_p0_std_m": 3.159146794052806,
-        "R_v0_std_mps": 1.2864601063589627,
-        "sigma_a_mps2": 0.261266649,
+        "R_p0_std_m": 3.3024672625151386,
+        "R_v0_std_mps": 1.3448227204193675,
+        "sigma_a_mps2": 0.276165783,
         "tau_s": 4.91137934
       },
       "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.23105525866050985,
-        "R_v0_std_mps": 0.18577893431540668,
-        "sigma_a_mps2": 0.0500000007,
+        "R_p0_std_m": 0.33998497971105063,
+        "R_v0_std_mps": 0.2733633832016277,
+        "sigma_a_mps2": 0.0810307488,
         "tau_s": 2.48742151
       },
       "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 1.467519546988585,
-        "R_v0_std_mps": 0.8635984902914021,
-        "sigma_a_mps2": 0.240224645,
+        "R_p0_std_m": 1.4969109732124013,
+        "R_v0_std_mps": 0.8808946083339076,
+        "sigma_a_mps2": 0.246253639,
         "tau_s": 3.39861536
       },
       "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.591049428372675,
-        "R_v0_std_mps": 1.3670869698483985,
-        "sigma_a_mps2": 0.377258837,
+        "R_p0_std_m": 2.749900634396974,
+        "R_v0_std_mps": 1.4508998880901447,
+        "sigma_a_mps2": 0.406388164,
         "tau_s": 3.79061389
       },
       "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 6.024470389295461,
-        "R_v0_std_mps": 2.4519859162948867,
-        "sigma_a_mps2": 0.584763408,
+        "R_p0_std_m": 6.036166347124328,
+        "R_v0_std_mps": 2.4567462225161467,
+        "sigma_a_mps2": 0.586182833,
         "tau_s": 4.91395187
       },
       "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
         "RS_ms": null,
-        "R_p0_std_m": 0.26334177872448356,
-        "R_v0_std_mps": 0.22728147688194594,
-        "sigma_a_mps2": 0.0696688443,
+        "R_p0_std_m": 0.3315865263353482,
+        "R_v0_std_mps": 0.28618123483740815,
+        "sigma_a_mps2": 0.0929255188,
         "tau_s": 2.31731844
       },
       "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
         "RS_ms": null,
-        "R_p0_std_m": 1.3350098653606972,
-        "R_v0_std_mps": 0.8097866791140558,
-        "sigma_a_mps2": 0.229347467,
+        "R_p0_std_m": 1.3641269383304575,
+        "R_v0_std_mps": 0.8274484346092733,
+        "sigma_a_mps2": 0.235617116,
         "tau_s": 3.297189
       },
       "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
         "RS_ms": null,
-        "R_p0_std_m": 2.7806227908335694,
-        "R_v0_std_mps": 1.5242247689140866,
-        "sigma_a_mps2": 0.451196074,
+        "R_p0_std_m": 2.9332925787926025,
+        "R_v0_std_mps": 1.6079121619107686,
+        "sigma_a_mps2": 0.482371837,
         "tau_s": 3.64857316
       },
       "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
         "RS_ms": null,
-        "R_p0_std_m": 5.909831981263022,
-        "R_v0_std_mps": 2.593009914507424,
-        "sigma_a_mps2": 0.682411969,
+        "R_p0_std_m": 5.914799670322384,
+        "R_v0_std_mps": 2.595189547874998,
+        "sigma_a_mps2": 0.683129072,
         "tau_s": 4.55827951
       }
     },
@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "chore/moving-vessel-replays",
-  "git_commit": "3ce7fe7cd11320abe15ff6e01fcd4283f0ede456",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 89903 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   704 +-\n .../ou_validation/ou_validation_covsync.svg        |   704 +-\n .../ou_validation/ou_validation_displacement.svg   |   660 +-\n .../results/ou_validation/ou_validation_macros.tex |     6 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4646 +-\n .../ou_validation/ou_validation_publication.tex    |     8 +-\n .../results/ou_validation/ou_validation_raw.csv    |  1176 +-\n .../ou_validation/ou_validation_summary.csv        |  5054 +-\n .../results/ou_validation/ou_validation_table.tex  |     2 +-\n .../ou_validation/ou_validation_vertical.svg       |   676 +-\n 11 files changed, 51769 insertions(+), 51770 deletions(-)",
+  "git_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 82387 +++++++++----------\n .../ou_validation/ou_validation_attitude.svg       |   646 +-\n .../ou_validation/ou_validation_covsync.svg        |   704 +-\n .../ou_validation/ou_validation_displacement.svg   |   684 +-\n .../results/ou_validation/ou_validation_macros.tex |   120 +-\n .../ou_validation/ou_validation_paired_effects.csv |  4512 +-\n .../ou_validation/ou_validation_publication.tex    |    58 +-\n .../results/ou_validation/ou_validation_raw.csv    |   888 +-\n .../ou_validation/ou_validation_summary.csv        |  4492 +-\n .../results/ou_validation/ou_validation_table.tex  |    72 +-\n .../ou_validation/ou_validation_tuning_points.tex  |    18 +-\n .../ou_validation/ou_validation_vertical.svg       |   680 +-\n 12 files changed, 47630 insertions(+), 47631 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -245,7 +245,7 @@
     },
     "src/kalman_common/SeaStateFusionDefaults.h": {
       "bytes": 12331,
-      "sha256": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d"
+      "sha256": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902"
     },
     "src/kalman_common/SeaStateFusionFilterCommon.h": {
       "bytes": 19966,
@@ -268,8 +268,8 @@
       "sha256": "19c68149683be53f55f2c4966c844d7147c9f4dda321252a277b050eaff523c5"
     },
     "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-      "bytes": 52157,
-      "sha256": "debb06ba1c75a3bb2ceac097494bd32c77bff734d33bcb09eae3a90772361c59"
+      "bytes": 52495,
+      "sha256": "6803377c6e4518c2b63978149c1b1da84c6140dc07e697991b6cb0f4759d3b52"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
       "bytes": 96291,
@@ -356,8 +356,8 @@
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
     "tests/common/CurrentReplayLimits.h": {
-      "bytes": 8216,
-      "sha256": "bd4d2484c5e343f2510d5d01cf5f46b0c64b4c6ee09bd52e2340d4ba64c5d148"
+      "bytes": 8210,
+      "sha256": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625"
     },
     "tests/common/GyroReplayContract.h": {
       "bytes": 1247,
@@ -527,8 +527,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-14T16:46:44+00:00",
-    "git_commit": "3ce7fe7cd11320abe15ff6e01fcd4283f0ede456",
+    "generated_at": "2026-11-14T19:02:54+00:00",
+    "git_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -603,7 +603,7 @@
         "size_bytes": 21011
       },
       "src/kalman_common/SeaStateFusionDefaults.h": {
-        "sha256": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d",
+        "sha256": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
         "size_bytes": 12331
       },
       "src/kalman_common/SeaStateFusionFilterCommon.h": {
@@ -627,8 +627,8 @@
         "size_bytes": 94241
       },
       "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": {
-        "sha256": "debb06ba1c75a3bb2ceac097494bd32c77bff734d33bcb09eae3a90772361c59",
-        "size_bytes": 52157
+        "sha256": "6803377c6e4518c2b63978149c1b1da84c6140dc07e697991b6cb0f4759d3b52",
+        "size_bytes": 52495
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
         "sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
@@ -715,8 +715,8 @@
         "size_bytes": 2765
       },
       "tests/common/CurrentReplayLimits.h": {
-        "sha256": "bd4d2484c5e343f2510d5d01cf5f46b0c64b4c6ee09bd52e2340d4ba64c5d148",
-        "size_bytes": 8216
+        "sha256": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+        "size_bytes": 8210
       },
       "tests/common/GyroReplayContract.h": {
         "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
@@ -774,55 +774,55 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "2f55bc306b6a695d327ba3ebd2fd0f90bd447c74893ee57643657c21762b9893",
-    "raw_rows_size_bytes": 595977,
+    "raw_rows_sha256": "8e4d8911697ea58428c37364963f1b3525840d8064d20dbb6eff0c0d8bc2ebe8",
+    "raw_rows_size_bytes": 596010,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43612257132",
+      "run_id": "43623625571",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_validation.json": {
-      "bytes": 5270250,
-      "sha256": "17e536451d1e2b4763582de7107d17ba0c7f416b91f2420aa0a7bafe773b7257"
+      "bytes": 5270352,
+      "sha256": "29c23e7135e0de60ac91ea277387d4184d6808eb3562048c99b7d614bb479c4c"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 81298,
-      "sha256": "6966d6c9dda532c7b1fcf2f34f60c730aea2488e1823d259041e907fcce9189c"
+      "bytes": 81275,
+      "sha256": "3ef4274b2b85ab2e0649869648974bddc80bc45c427981443e1b4651e2fa258c"
     },
     "ou_validation_covsync.svg": {
-      "bytes": 90949,
-      "sha256": "4432b45192965d7d58b2f50cc00dcffe8f3f070942c13f6e469c9388aa7f182b"
+      "bytes": 90965,
+      "sha256": "4bf13bdf9576be5d223b035a3939188df301a752fa98d1198e999ddfe0193104"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 79167,
-      "sha256": "2807851bf9a61919e3ee7f8b66c6bb354b178a854225e2fdb7ab1525b6d2cc2c"
+      "bytes": 79155,
+      "sha256": "ba0962cedacab1df794bc8eece6f6d9fa67ed63a86dbf64efe206b8852b9328e"
     },
     "ou_validation_macros.tex": {
-      "bytes": 10601,
-      "sha256": "1321c78f0817802e805b80f2bc763db4daab1f346b40a643efb8248f9f9b67ee"
+      "bytes": 10604,
+      "sha256": "0d6c04ff875ce1f20d9ba61b0f295464cd9c4293bc777cb73095edef197b5099"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 695067,
-      "sha256": "1f106760f20c7216b6b9a39fce239d4e5c37d047828d7af6595b56beafc4c728"
+      "bytes": 695107,
+      "sha256": "231b93da34b593ee4c88b92a2acfbfcaa06dd3784a9b7056cf7f958acd8a0210"
     },
     "ou_validation_publication.tex": {
-      "bytes": 13824,
-      "sha256": "d54d465ee80df58c795d9b3f98923e5377272b5db4c88ad43d46059dd6b3c14a"
+      "bytes": 13819,
+      "sha256": "c3fe6bbb726c888c55a3683079743546201cf058752f716c1638a03f94930a04"
     },
     "ou_validation_raw.csv": {
-      "bytes": 595977,
-      "sha256": "2f55bc306b6a695d327ba3ebd2fd0f90bd447c74893ee57643657c21762b9893"
+      "bytes": 596010,
+      "sha256": "8e4d8911697ea58428c37364963f1b3525840d8064d20dbb6eff0c0d8bc2ebe8"
     },
     "ou_validation_summary.csv": {
-      "bytes": 775931,
-      "sha256": "e15812cee68c7e5f5f29aacace51a563a35e423bead87ceefaa515fe9cebc817"
+      "bytes": 775965,
+      "sha256": "3cf4245c98984005cd05410afa49d385826c25ed93d2834b571a90011e649da8"
     },
     "ou_validation_table.tex": {
-      "bytes": 15611,
-      "sha256": "502e0a564ded6c496b2b4b8d4f010b3274e78bf5e73c7f952ad8cc0ee472716f"
+      "bytes": 15618,
+      "sha256": "81c690e50c7615fdfce393828fc17d39e5f5b1de498728365b6354b7e36f0a1e"
     },
     "ou_validation_transition.csv": {
       "bytes": 1208370,
@@ -834,11 +834,11 @@
     },
     "ou_validation_tuning_points.tex": {
       "bytes": 2122,
-      "sha256": "fc90163829668743a92ea78c155ff7ccee317cb7f8fc4a9378b474a9dfda86ac"
+      "sha256": "61b7a72d3480e2205ba44f4e3ba79e855d277919cccef2bd5c7e6ee919430886"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 80422,
-      "sha256": "fc28c14dfb8a11f0a4b67d2fe087f44ac488afe5d335084659f0301b1e803e4f"
+      "bytes": 80393,
+      "sha256": "d45c0a53dc84a3182ec8b1d8dfda5db89d141cd471469265deb6f5569befe7e7"
     }
   },
   "schema_version": 2,
@@ -878,25 +878,25 @@
   },
   "stationary_normalized_aggregate": {
     "OU_II": {
-      "bootstrap_ci95_high": 10.114351399406248,
-      "bootstrap_ci95_low": 9.0120246364,
-      "mean": 9.568576725500002,
+      "bootstrap_ci95_high": 7.83828624988125,
+      "bootstrap_ci95_low": 7.53633189400625,
+      "mean": 7.694987237500001,
       "n": 10,
-      "std": 0.9536013170627651
+      "std": 0.25528169163473524
     },
     "OU_III": {
-      "bootstrap_ci95_high": 6.43996302116875,
-      "bootstrap_ci95_low": 6.30178147499375,
-      "mean": 6.37372270775,
+      "bootstrap_ci95_high": 6.439962698531248,
+      "bootstrap_ci95_low": 6.30178199320625,
+      "mean": 6.3737226365,
       "n": 10,
-      "std": 0.11952532360408165
+      "std": 0.11952509975619455
     },
     "OU_III_minus_OU_II": {
-      "bootstrap_ci95_high": -2.640345091775001,
-      "bootstrap_ci95_low": -3.7180534798812506,
-      "cohen_dz": -3.4646366230358026,
-      "hedges_gz": -3.166244418977357,
-      "mean_paired_difference": -3.1948540177500004,
+      "bootstrap_ci95_high": -1.2087179305000002,
+      "bootstrap_ci95_low": -1.430952746925,
+      "cohen_dz": -6.968722848956626,
+      "hedges_gz": -6.368540839522522,
+      "mean_paired_difference": -1.321264601,
       "n_pairs": 10,
       "randomization_exact": true,
       "randomization_p_value": 0.001953125,
@@ -905,13 +905,13 @@
       "sign_p_value": 0.001953125,
       "sign_positive": 0,
       "sign_zero": 0,
-      "standard_error": 0.29160389925617936,
-      "std_paired_difference": 0.9221324962358067,
-      "t_ci95_high": -2.5352001683477488,
-      "t_ci95_low": -3.854507867152252,
+      "standard_error": 0.05995654614875605,
+      "std_paired_difference": 0.18959924646706575,
+      "t_ci95_high": -1.1856334706729506,
+      "t_ci95_low": -1.4568957313270494,
       "t_critical_value": 2.2621571627982036,
-      "t_p_value": 1.66508026709732e-06,
-      "t_statistic": -10.956142993627335
+      "t_p_value": 3.853569405331724e-09,
+      "t_statistic": -22.037036585160486
     }
   },
   "transition_diagnostic": {
