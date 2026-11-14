@@ -11,7 +11,7 @@ Roll RMS [deg] & 0.2424 & 0.296 & +0.0536\\
 Pitch RMS [deg] & 0.2526 & 0.2666 & +0.014\\
 Yaw RMS [deg] & 1.934 & 1.855 & -0.0789\\
 Accel. RMS [m/s$^2$] & 0.02252 & 0.02217 & -0.000353\\
-Accel. bias [m/s$^2$] & 0.06042 & 0.07134 & +0.0109\\
+Accel. bias [m/s$^2$] & 0.06043 & 0.07134 & +0.0109\\
 Gyro bias [rad/s] & 0.0001286 & 0.0001092 & -1.94e-05\\
 \bottomrule\end{tabular}\end{table}
 The companion JONSWAP heave difference is -0.226 percentage points of $H_s$ (paired-bootstrap 95\% interval [-0.266, -0.186]; paired Student-$t$ interval [-0.275, -0.176]). The exact sign and sign-flip $p$-values are 0.0020 and 0.0020, respectively. TFG has lower mean normalized heave error in this ensemble.
@@ -22,6 +22,6 @@ These are ten paired seed differences, not fifty independent conditions.
 \begin{tabular}{@{}lrrl@{}}\toprule
 Ensemble & OU--III & TFG & Difference [CI]\\\midrule
 JONSWAP & 6.31 & 6.09 & -0.23 [-0.27, -0.19]\\
-PM--Stokes & 5.99 & 5.83 & -0.16 [-0.18, -0.13]\\
+PM--Stokes & 5.99 & 5.83 & -0.16 [-0.19, -0.13]\\
 Crossfade & 6.07 & 5.81 & -0.26 [-0.37, -0.14]\\
 \bottomrule\end{tabular}\end{table}

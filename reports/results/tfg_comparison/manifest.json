@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "7b1bfae5a5a5e5899467bb628ebab8e058e114da9dd076b17062e92ee15cd462",
-    "TFG": "fcb1a3ef122f769447e1f9e67535cc0c24697619f196e3383bb33fa0953de611"
+    "OU_III": "8a4d737871575293dc47e04de9e56fdf9f8ccef6a717ab4e638ed8138902deb1",
+    "TFG": "d21354afa5525e711b9af5cacd16559c0e18f7574c578247d02707ae27cfcab3"
   },
   "build_environment": {
     "compiler": {
@@ -40,9 +40,9 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-14T09:06:35+00:00",
-  "git_commit": "f7cd0fa140a2f9647ef33d16bf40c25258442158",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   14 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  360 +-\n reports/results/tfg_comparison/paired_summary.json | 4084 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3594 ++++++++---------\n 5 files changed, 4206 insertions(+), 4206 deletions(-)",
+  "generated_utc": "2026-11-14T16:08:29+00:00",
+  "git_commit": "3ce7fe7cd11320abe15ff6e01fcd4283f0ede456",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    4 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   48 +-\n reports/results/tfg_comparison/paired_summary.json | 3978 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3280 ++++++++--------\n 5 files changed, 3835 insertions(+), 3835 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -138,11 +138,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "80e8ec93d7dd650be3c7c777d77afebb74fe3f46259dcc70836ea2bef8383abe",
-    "gate_diagnostics.json": "078e909746ea29be0e6cf21f329c574e0545f5a49002758269f07b558a8526e2",
-    "paired_summary.json": "a38a4486e9b7e3ae28ac2e03dc8570b3006d481c19baa0cdf8feabdd5ac17cbb",
-    "raw_runs.csv": "6e0434ff9797aa401ebd5f07ef5a787a08912cdd56ff1125221b91046a14e9d8",
-    "raw_runs.json": "103f12ab3ebe572f4fadce4f7c1abc987957c6eec06b2498cad61a262e1b6fba"
+    "comparison.tex": "025b998dbde33c7ef0f47714f261bef5fc56bf465906058cb692204ed98216d0",
+    "gate_diagnostics.json": "15522c740d4d992e052462080e3df722aef8b36f6611f7a0f887e5c5dc6d6d8c",
+    "paired_summary.json": "c7c7596081d029ef07ef98b990b78e513a31ccbcecae5fb97dc20da0a2466b2d",
+    "raw_runs.csv": "c7e2edc74808af51e4107fae67454d5b3cdf81ec8255dbd94ea3983aae010c7b",
+    "raw_runs.json": "7f1e11cf6d0d5b57ae88cd167d0992d009dcbe7a77fb7600757c32653a9bb09d"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -203,12 +203,13 @@
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "fa45b6ae2ed0b4491a97eebebd30ad1c4b4fadd9f0cfcd5d8688a2bdcf127f51",
     "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
-    "tools/tfg_comparison.py": "f39fda12e88e99ecf339291afab161cf0d8265027ea04cad93531cfc5e0fe97e"
+    "tools/tfg_comparison.py": "8850f1c1db88b089f1a8f0385fe4c4d0c01e6732043b93d4f3bf7092d8c94106",
+    "tools/underway_reference.py": "d91df15a7d6ba4865a9dc093ca81baba3e9acc297ed941e6c1bd70d16ef6dbfb"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "43577322107",
+    "run_id": "43612257132",
     "workflow": "ou-full-evidence-branch"
   }
 }
