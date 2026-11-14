@@ -7,6 +7,7 @@ from sim_dataset import ROOT, ARCHIVE, SHA256, REFERENCE_CSV_SHA256
 from filter_sim_gates import measured_worst
 from carma_sim_table import format_table
 from ou_sim_table import RECORDS
+from sim_dataset import RELEASE
 
 FAMILIES = {
     'ou2': 'OU-II', 'ou3': 'OU-III', 'tfg': 'TFG', 'carma': 'CARMA',
@@ -19,6 +20,72 @@ TABLES = {
     'tcarma': ('kalman_tfg_carma', 'tfg-carma-sim-results-generated.tex-part', 'tab:tfg_carma_sim_results'),
     'tcsm': ('kalman_tfg_shared_modes', 'tfg-shared-sim-results-generated.tex-part', 'tab:tfg_shared_sim_results'),
 }
+
+
+def publish_comparison(report):
+    before = json.loads((ROOT / 'reports/results/filter_sim_gates/stationary_control.json').read_text())
+    if before['release'] != RELEASE:
+        raise ValueError('zero-speed and underway controls must use the same clock-corrected release')
+    families, lines, angles = {}, [], []
+    for name, label in {**FAMILIES, 'pii': 'Adaptive PII', 'nlo': 'NLO'}.items():
+        control = before['families'][name]
+        if control['binary_sha256'] != report['binary_sha256'][name]:
+            raise ValueError(f'{name}: stationary and underway executable hashes differ')
+        old = control['records']
+        if name == 'pii':
+            new = report['other_replays']['pii']
+        elif name == 'nlo':
+            new = [dict(input=n, disp_z_pct_hs=v) for n,v in zip(sorted(REFERENCE_CSV_SHA256), report['other_replays']['nlo_z_percent_hs'])]
+        else:
+            new = report['records'][name]['default']
+        if {r['input'] for r in old} != set(REFERENCE_CSV_SHA256) or {r['input'] for r in new} != set(REFERENCE_CSV_SHA256):
+            raise ValueError(f'{name}: unpaired input names')
+        worst = lambda rr,k: max(r[k] for r in rr)
+        b,a = worst(old,'disp_z_pct_hs'),worst(new,'disp_z_pct_hs')
+        row = dict(heave_before_pct_hs=b,heave_after_pct_hs=a,heave_change_percent=100*(a/b-1),
+                   after_worst_heave_input=max(new,key=lambda r:r['disp_z_pct_hs'])['input'])
+        cells = [label,f'{b:.2f} → {a:.2f}',f'{row["heave_change_percent"]:+.0f}%']
+        for key, scale, precision in [('disp_3d_rms_m',1,3),('accel_bias_3d_rms_mps2',1000,2)]:
+            if key in old[0] and key in new[0]:
+                row[key+'_before'],row[key+'_after'] = worst(old,key),worst(new,key)
+                cells.append(f'{scale*row[key+"_before"]:.{precision}f} → {scale*row[key+"_after"]:.{precision}f}')
+            else:
+                cells.append('—')
+        lines.append('| '+' | '.join(cells)+' |')
+        if name != 'nlo':
+            angle_cells = [label]
+            for angle in ('roll','pitch','yaw'):
+                key=angle+'_rms_deg'
+                row[key+'_before'],row[key+'_after']=worst(old,key),worst(new,key)
+                angle_cells.append(f'{row[key+"_before"]:.3f} → {row[key+"_after"]:.3f}')
+            angles.append('| '+' | '.join(angle_cells)+' |')
+        families[name]=row
+    ahrs = before['families']['ahrs']
+    if ahrs['binary_sha256'] != report['binary_sha256']['ahrs']:
+        raise ValueError('AHRS: stationary and underway executable hashes differ')
+    angle_cells, row = ['AHRS (last 60 s)'], {}
+    for angle in ('roll','pitch','yaw'):
+        b = max(r[angle] for r in ahrs['records'])
+        a = max(r[angle] for r in report['other_replays']['ahrs'])
+        row[angle+'_rms_deg_before'],row[angle+'_rms_deg_after']=b,a
+        angle_cells.append(f'{b:.3f} → {a:.3f}')
+    angles.append('| '+' | '.join(angle_cells)+' |')
+    families['ahrs']=row
+    receipt = dict(before=before['archive'],after=report['inputs'],before_inputs=before['input_sha256'],
+                   release=RELEASE,scope='same executable and default draws in both arms; each column is its own worst record; physical input change, not an estimator improvement',
+                   binary_sha256=report['binary_sha256'],families=families)
+    (ROOT/'reports/results/filter_sim_gates/dataset_comparison.json').write_text(json.dumps(receipt,indent=2,allow_nan=False)+'\n')
+    text = ['# Stationary versus moving-boat measurements','',
+            f'Both arms are fresh replays of oceanography-waves-lib {RELEASE}, with exact 200 Hz clocks. Before is the zero-speed 28 ft vessel archive; after is the 5 kn archive with ±3° heading oscillation every 120 s. Each pair uses the identical rebuilt executable, default sensor and initialization draws, and trailing 900 s scoring. No estimator retuning is applied. Hashes and per-record controls are retained in `stationary_control.json`, `measurements.json`, and `dataset_comparison.json`.','',
+            '| Filter | Worst heave before → after (% Hs) | Relative increase | Worst 3D RMS before → after (m) | Accel bias RMS before → after (mm/s²) |',
+            '| --- | ---: | ---: | ---: | ---: |',*lines,'',
+            'Each column reports its own worst record; these maxima need not occur in the same sea. These deterministic comparisons do not provide population confidence intervals.','',
+            '| Filter | Roll before → after (deg) | Pitch before → after (deg) | Yaw before → after (deg) |',
+            '| --- | ---: | ---: | ---: |',*angles,'',
+            'OU-II and NLO have the largest relative heave deterioration. TFG has a substantial accelerometer-bias and attitude penalty; the shared-mode CARMA variants retain nearly unchanged worst absolute 3D RMS despite worse normalized heave in the smallest sea. These paired inputs change encounter frequency and steering together, so this experiment does not identify their separate causal contributions.','',
+            'The [engine-noise study](../reports/results/engine_noise_degradation/engine_noise_report.md) separately tests machinery stress on the moving records. At 800 rpm, OU-III with the guard plus covariance inflation reaches 2.417 times its engine-off 3D RMS; the old zero-speed 1.7-times claim does not carry over. Its pitch offset also worsens when covariance inflation is added. This is a measured operating limitation, not a change to deployed tuning.','',
+            'Position and velocity truth are expressed about the declared cruise track. All specific force, turning acceleration and angular rates remain intact. See the [coordinate convention](moving-vessel-replays.md) and [current results](moving-vessel-results.md).','']
+    (ROOT/'docs/moving-vessel-comparison.md').write_text('\n'.join(text))
 
 
 def publish():
@@ -106,6 +173,7 @@ def publish():
     for directory in ('kalman_ou_iii', 'kalman_tfg', 'kalman_carma',
                       'kalman_carma_shared_modes', 'kalman_tfg_carma', 'kalman_tfg_shared_modes'):
         (ROOT / 'doc' / directory / 'underway-baseline.tex-part').write_text('\n'.join(tex))
+    publish_comparison(report)
 
 
 if __name__ == '__main__':

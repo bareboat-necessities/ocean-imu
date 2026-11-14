@@ -1,32 +1,36 @@
 {
-  "source_commit": "de7f2861a7f3c157baac3fec26cfa7274e2bf6fc",
+  "source_commit": "f7cd0fa140a2f9647ef33d16bf40c25258442158",
   "simulation_provenance": {
-    "release": "v1.2.3",
-    "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
-    "motion_model": "VESSEL_RAO_28FT",
+    "release": "v1.3.1",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 120.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
     "input_sha256": {
-      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
-      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
-      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
-      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
-      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
-      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
-      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
-      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
     }
   },
   "protocol": "Full eight records x two OU families x engine off/2400 RPM (0.6 m/s2 reference level, 80 Hz sensor bandwidth) x three conditioning arms; default draw; final 900 s; unchanged gates",
   "producer_sha256": "19f884047f27389e82325824ab36b80900417152aafee8679140c79368efb8ff",
   "binary_sha256": {
-    "OU-II": "d70e5119377085559c21f53e96126d33e047e8d3b83e2ae4321d05c5c7cb0744",
-    "OU-III": "2d75761ee7fd3f65449cbc55fa0b308af756148061a8a99fe6e20b9f5d0bf847"
+    "OU-II": "9e11899c34c4650e57d6a651bb043c3102a67c101c9d19822d2b9d47697a2572",
+    "OU-III": "a896b5fd6cdbfec325f527d0314b39275277bfabad00ca3b9a6744f345d81446"
   },
   "files": {
-    "direction_runs.csv": "f1528b63a1577ebbe497a655cfbcc25dd82b31cf4e06ff9d4703b3cabc5dd8ca",
-    "direction_report.md": "a55c752e5d9ea5148c9d16613b4b8a29caed998eff24f92addae82e52fff7681",
-    "direction_ablation.tex": "22d6147e608d6a33278234de6e62ad9eca9e9159440e7ff228959603378018ad",
-    "direction_summary.csv": "98ca4e056a9f7b9b9d1616be212e4d5e33270434694601c0c7b56e7b75061b71"
+    "direction_runs.csv": "45a87ca0e5738063e0c4c64a687afc219ea730152395d91c6aa9d91e194ba8d8",
+    "direction_ablation.tex": "1bdd675fb840adc7c0a495bdb0c7d68fb62e2a04faa4de6b045304c3f597cf18",
+    "direction_summary.csv": "28bf8e3c2ae0a130f3470b6564f0814c5f048725dcd81f07ffa6401a2b3f2141",
+    "direction_report.md": "5fcc077d1dce035eaf364fd37c8d2fd70ce06771bcaab4a13aeb4cd90f97b541"
   },
-  "report_producer_sha256": "b86b015ebaea23515b861d74bcb5708902e53ab2c354939fa8ef368d74b25cca"
+  "report_producer_sha256": "392c81258c4e16ce49d1cc6b5d6821856111964bcf2794c7b94fcf3a89991507"
 }

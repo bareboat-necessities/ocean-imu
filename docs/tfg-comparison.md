@@ -1,17 +1,28 @@
 # OU-III and TFG on the moving-boat records
 
-The full companion study uses oceanography-waves-lib v1.3.0: a 28 ft analytical hull response at 5 kn, with ±3° heading over 120 s. It retains 180 replay rows: nine conditions, ten paired wave/noise/initialization seed triplets, and two deployed estimators. Each record lasts 1200 s at 200 Hz; the final 900 s are scored. All complete finite replays remain in the statistics, including deterministic regression-gate misses.
+The full companion study uses oceanography-waves-lib v1.3.1: a 28 ft analytical hull response at 5 kn, with ±3° heading over 120 s. It retains 180 replay rows: nine conditions, ten paired wave/noise/initialization seed triplets, and two deployed estimators. Each history lasts 1200 s at 200 Hz; the final 900 s are scored. Every complete finite replay remains in the statistics, including deterministic regression-gate misses.
 
-The JONSWAP companion aggregate averages the four heights **and the controlled crossfade** within each seed. It therefore differs from the four-height primary OU-II/OU-III endpoint. These are ten paired seed differences, not fifty independent conditions.
+The JONSWAP aggregate averages the four heights and the controlled crossfade within each seed. These are ten paired seed differences, not fifty independent conditions.
 
 | Ensemble | OU-III heave RMS (% Hs) | TFG | TFG minus OU-III, points [bootstrap 95% interval] |
 | --- | ---: | ---: | ---: |
-| JONSWAP plus crossfade | 6.31 | 6.09 | −0.225 [−0.266, −0.186] |
-| PM-Stokes | 5.99 | 5.83 | −0.16 [−0.18, −0.13] |
-| Controlled crossfade | 6.07 | 5.81 | −0.26 [−0.37, −0.14] |
+| JONSWAP plus crossfade | 6.312 | 6.087 | -0.226 [-0.266, -0.186] |
+| PM-Stokes | 5.989 | 5.831 | -0.157 [-0.185, -0.127] |
+| Controlled crossfade | 6.067 | 5.807 | -0.260 [-0.368, -0.138] |
 
-TFG has lower mean heave error in these declared ensembles. The other channels show tradeoffs: in the JONSWAP-plus-crossfade aggregate, accelerometer-bias RMS rises from 0.06043 m/s² (OU-III) to 0.07155 m/s² (TFG), roll RMS from 0.2424° to 0.2960°, and pitch from 0.2526° to 0.2679°. TFG has lower mean 3D displacement, yaw, and gyro-bias errors. These secondary channels are exploratory without multiplicity adjustment; the comparison concerns complete estimators.
+TFG has lower mean heave error in these declared ensembles. The other channels show tradeoffs:
 
-Reproduce with `python3 tools/tfg_comparison.py --mode full`. Raw rows, paired summaries, gate diagnostics, input/binary hashes, and the publication table are in `reports/results/tfg_comparison/`. The current bundle has a verified GitHub workflow receipt from [Actions run 43566551317](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43566551317), job `tfg_companion`. Its artifact digest and per-file hashes were checked, and the strict `--require-ci` publication contract passes.
+| Metric, JONSWAP plus crossfade | OU-III | TFG |
+| --- | ---: | ---: |
+| 3D displacement RMS (m) | 0.41489 | 0.40521 |
+| Roll RMS (deg) | 0.24237 | 0.29599 |
+| Pitch RMS (deg) | 0.25258 | 0.26661 |
+| Yaw RMS (deg) | 1.9343 | 1.8554 |
+| Accelerometer-bias RMS (m/s²) | 0.060425 | 0.071343 |
+| Gyroscope-bias RMS (rad/s) | 0.0001286 | 0.00010923 |
 
-The deterministic [stationary versus moving comparison](moving-vessel-comparison.md) answers a different question: what changes when the identical executable sees the new physical input.
+These secondary channels are exploratory without multiplicity adjustment. The comparison concerns complete estimators.
+
+Reproduce with `python3 tools/tfg_comparison.py --mode full`. Raw rows, paired summaries, gate diagnostics, input/binary hashes and producer workflow receipts are in `reports/results/tfg_comparison/`. Publication requires `--check --require-ci`; source changes, including changes to the cruise-track helper, invalidate reuse.
+
+The [stationary versus moving comparison](moving-vessel-comparison.md) separately measures the effect of changing physical input with the same executable.

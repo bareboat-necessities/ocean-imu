@@ -234,15 +234,17 @@ class OuArticleEngineNoiseContractTests(unittest.TestCase):
         }
         self.assertEqual(len(recorded), 1, recorded)
 
-    def test_gyro_path_ablation_leaves_the_result_unchanged(self):
-        """The section attributes the whole effect to the accelerometer."""
-
+    def test_gyro_path_ablation_reports_the_measured_tradeoff(self):
+        """Underway nonlinear trajectories no longer reproduce zero-speed invariance."""
+        article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
         rows = self.summary()
         for family in ("OU-II", "OU-III", "TFG"):
             full = float(rows[(family, "speed 2400 rpm")]["disp_3d_rms_m"])
             accel_only = float(rows[(family, "accelerometer only")]["disp_3d_rms_m"])
             with self.subTest(family=family):
-                self.assertAlmostEqual(accel_only / full, 1.0, delta=0.01)
+                change = 100 * (accel_only / full - 1)
+                self.assertIn(family.replace('OU-', 'OU--') + f': {change:+.2f}' + r'\%', article)
+        self.assertIn('do not establish that the gyro path is negligible', article)
 
     def test_reported_static_offset_fraction_matches_measurement(self):
         article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
@@ -355,9 +357,13 @@ class OuArticleVibrationGuardContractTests(unittest.TestCase):
                 continue
             ratio = float(row["disp_3d_rms_m"]) / baseline
             with self.subTest(condition=condition):
-                # Unguarded these run from 1.7x to 72x; the section claims the
-                # guard holds all of them inside 1.6x.
-                self.assertLess(ratio, 1.7, f"{condition}: {ratio:.2f}x")
+                # Exact-clock underway replay exposes a low-rpm limitation;
+                # keep the tighter inherited bound for every other condition.
+                limit = 2.45 if condition == '800 rpm' else 1.7
+                self.assertLess(ratio, limit, f"{condition}: {ratio:.2f}x")
+                if condition == '800 rpm':
+                    article = (DOC / "w3d-engine-noise-degradation.tex-part").read_text()
+                    self.assertIn(rf'\num{{{ratio:.3f}}} times the engine-off baseline', article)
 
     def test_guard_improves_every_engine_condition(self):
         rows = self.summary()
