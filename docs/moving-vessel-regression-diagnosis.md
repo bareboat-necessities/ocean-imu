@@ -10,6 +10,13 @@ attributes that change. All numbers come from
 `tools/moving_vessel_diagnosis.py` and are stored in
 `reports/results/moving_vessel_diagnosis/`.
 
+The replays now use v1.3.1 (SHA-256 `c3505115…920a402`), which re-prints the
+same records with exact time stamps. The estimator runs below use v1.3.0;
+`inputs.json` uses v1.3.1. Every input statistic in it agrees with v1.3.0
+within 0.1 %, except the time-stamp artifact (point 6), which is now zero. A
+CARMA replay of the PM-Stokes 0.27 m record gives the same heave score on both
+archives within 1e-5 of H; its 3D error falls from 13.4 to 12.8 mm.
+
 ## Answer
 
 1. **Every scored record is a following or quartering sea.** All eight records
@@ -28,34 +35,49 @@ attributes that change. All numbers come from
    filter. It is at least as large as the moving one in 33 of 40
    filter/record cells; per filter, the median of `(stretch − S)/(M − S)` is
    1.4–1.9.
-4. **It is an estimator property, not information loss.** A non-causal Wiener
-   smoother on the simulated accelerometer reaches 0.11–0.26 % of H on the moving
-   records, an order of magnitude below every filter. The regression remains
-   with sensor noise and bias switched off.
+4. **It is an estimator property, not information loss.** The causal
+   (real-time) MMSE heave estimate from the simulated accelerometer, with each
+   record's own spectrum as the prior, is at most 0.72–0.98 % of H stationary
+   and 0.85–1.46 % moving. Every filter is two to eight times above it, and
+   the bound changes appreciably only in the 0.27 m seas. A non-causal
+   smoother reaches 0.11–0.26 %. The regression remains with sensor noise and
+   bias switched off.
 5. **Two estimator mechanisms carry it** (quantified below). The fixed
    0.28 m/s² stillness detector reads the 0.27 m following seas as still water;
    it caused about 85 % of OU-II's worst-record regression and most of CARMA's
    from 1.5 m up, and is removed from both (Filter changes). Every wave
    model's normalized heave error also grows with wave period at fixed heave;
-   this carries most of the OU-III, TFG and shared-mode regression. TFG adds a tilt/bias excursion on long-period encounter spectra.
-6. **Scoring at the CSV time stamp adds 0.43 cm RMS x-error to every record.**
-   The time column has six significant digits, so samples after 1000 s are
-   stamped to 0.01 s. An underway scorer that evaluates the declared track at
-   that stamp misplaces it by up to 5 ms × 2.57 m/s. Evaluating it at
-   `sample_index × dt` removes the artifact.
+   this carries most of the OU-III, TFG and shared-mode regression. From
+   1.5 m up its main carrier is the accelerometer-bias random walk, which
+   absorbs part of the slower, weaker encounter acceleration. TFG adds a
+   tilt/bias excursion on long-period encounter spectra.
+6. **v1.3.0 time stamps added 0.43 cm RMS x-error to every record.** Its
+   time column has six significant digits, so samples after 1000 s are
+   stamped to 0.01 s. A scorer that evaluates the declared track at that
+   stamp misplaces it by up to 5 ms × 2.57 m/s. The scorer here evaluates the
+   track at `sample_index × dt`, and v1.3.1 prints exact stamps.
 
 ## Input physics, no estimator
 
-| Record | heave T_z (s) | vertical acc RMS (m/s²) | heave RMS (m) | still (%) | Wiener bound (% H) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| JONSWAP 0.27 m | 2.97 → 4.76 | 0.246 → 0.106 | 0.053 → 0.049 | 41 → 96 | 0.11 → 0.25 |
-| JONSWAP 1.5 m | 4.93 → 6.96 | 0.731 → 0.312 | 0.391 → 0.358 | 2 → 25 | 0.07 → 0.11 |
-| JONSWAP 4 m | 6.83 → 8.78 | 1.101 → 0.583 | 1.043 → 0.976 | 0 → 4 | 0.06 → 0.12 |
-| JONSWAP 8.5 m | 8.81 → 11.13 | 1.437 → 0.825 | 2.155 → 2.213 | 1 → 4 | 0.07 → 0.13 |
-| PM-Stokes 0.27 m | 2.96 → 4.46 | 0.236 → 0.119 | 0.050 → 0.047 | 43 → 92 | 0.11 → 0.26 |
-| PM-Stokes 1.5 m | 4.63 → 6.69 | 0.825 → 0.340 | 0.386 → 0.354 | 1 → 18 | 0.07 → 0.11 |
-| PM-Stokes 4 m | 6.33 → 8.40 | 1.290 → 0.661 | 1.040 → 0.991 | 0 → 2 | 0.07 → 0.11 |
-| PM-Stokes 8.5 m | 8.12 → 10.53 | 1.706 → 0.933 | 2.168 → 2.206 | 0 → 3 | 0.06 → 0.14 |
+| Record | heave T_z (s) | vertical acc RMS (m/s²) | heave RMS (m) | still (%) | causal bound (% H) | non-causal bound (% H) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| JONSWAP 0.27 m | 2.97 → 4.76 | 0.246 → 0.106 | 0.053 → 0.049 | 41 → 96 | 0.72 → 1.41 | 0.11 → 0.25 |
+| JONSWAP 1.5 m | 4.93 → 6.96 | 0.731 → 0.312 | 0.391 → 0.358 | 2 → 25 | 0.81 → 0.86 | 0.07 → 0.11 |
+| JONSWAP 4 m | 6.83 → 8.78 | 1.101 → 0.583 | 1.043 → 0.976 | 0 → 4 | 0.88 → 0.85 | 0.06 → 0.12 |
+| JONSWAP 8.5 m | 8.81 → 11.13 | 1.437 → 0.825 | 2.155 → 2.213 | 1 → 4 | 0.93 → 0.93 | 0.07 → 0.13 |
+| PM-Stokes 0.27 m | 2.96 → 4.46 | 0.236 → 0.119 | 0.050 → 0.047 | 43 → 92 | 0.75 → 1.46 | 0.11 → 0.26 |
+| PM-Stokes 1.5 m | 4.63 → 6.69 | 0.825 → 0.340 | 0.386 → 0.354 | 1 → 18 | 0.85 → 0.91 | 0.07 → 0.11 |
+| PM-Stokes 4 m | 6.33 → 8.40 | 1.290 → 0.661 | 1.040 → 0.991 | 0 → 2 | 0.93 → 0.90 | 0.07 → 0.11 |
+| PM-Stokes 8.5 m | 8.12 → 10.53 | 1.706 → 0.933 | 2.168 → 2.206 | 0 → 3 | 0.98 → 0.98 | 0.06 → 0.14 |
+
+Both bounds use the record's own heave spectrum as the prior and the simulated
+sensor: 1.51 mg white noise plus a 5e-4 m/s²/√s bias random walk on the
+vertical acceleration. The causal bound is the real-time limit: Wiener–
+Kolmogorov filtering after cepstral minimum-phase factorization, on a 20 Hz
+grid. It matches the discrete Kalman posterior exactly on AR(1) tests. Window
+leakage adds heave at frequencies the accelerometer cannot see, so it is an
+upper estimate. Halving the spectral segment changes it by at most 0.18 point
+of H, mostly upward.
 
 `still` is the fraction of the scored 900 s the shared `StillnessAdapter`
 (`tuner/SeaStateFusionTunerCommon.h`) flags as still water: energy EMA of the
@@ -185,6 +207,31 @@ over-estimates heave amplitude by 14 % on the 0.27 m stationary record
 under-estimates it (gain 0.76) while `sigma_a` is floored. The shared-mode and
 CARMA filters degrade least.
 
+**Accelerometer-bias competition (CARMA, this tree).** Heave RMS error, % of
+nominal H, JONSWAP records, `S` → `M`:
+
+| CARMA run | 0.27 m | 1.5 m | 4 m | 8.5 m |
+| --- | ---: | ---: | ---: | ---: |
+| `fixed` (simulated noise) | 2.46 → 3.57 | 2.21 → 2.65 | 2.20 → 2.29 | 2.08 → 2.33 |
+| `carma_no_noise` | 2.07 → 3.22 | 1.80 → 2.17 | 1.77 → 1.83 | 1.69 → 1.85 |
+| `carma_bias_rw_frozen_no_noise` | 1.64 → 2.47 | 1.19 → 1.28 | 1.04 → 0.92 | 0.90 → 0.83 |
+| `carma_bias_rw_1e-4` | 3.01 → 4.62 | 3.14 → 3.86 | 3.17 → 3.47 | 2.91 → 3.64 |
+
+Without sensor noise, freezing the assumed bias random walk
+(`5e-4 → 1e-7` m/s²/√s) shrinks CARMA's 5 kn penalty from 0.06–0.37 to
+−0.12…+0.09 point of H from 1.5 m up, and from 1.15 to 0.83 point at
+0.27 m. OU-III's stretched records behave alike
+(`ou3_bias_rw_frozen_no_noise`: `stretch − S` 1.94 → 0.86 point at 1.5 m,
+1.24 → 0.32 at 8.5 m). The encounter acceleration is ÷1.7–2.4 weaker and
+lower in frequency, so more of it falls where the random-walk prior is
+comparable to the wave prior. With
+the simulated drift present, a lower assumed drift worsens every record in
+both datasets, as for OU-II (`ou2_bias_rw_z_*`). Moving the CARMA frequency
+off the measured one (`carma_ftune_0.9`, `carma_ftune_1.15`) also worsens
+the worst record of both datasets. The trade-off is real for these fixed
+spectral shapes; the causal bound above says a prior matched to the
+encounter spectrum would lose little.
+
 **TFG long-period tilt/bias excursion.** On the 8.5 m records TFG's bias error
 grows ×2–3 and its pitch error ×6–7 (0.06 → 0.36° and 0.09 → 0.66°) on `M`
 and `notrack`, but not on `stretch` or `track`; the stretched 4 m record
@@ -234,13 +281,20 @@ excitation, which never read stillness, and are bit-identical.
   fixes 8.5 m PM-Stokes but worsens 8.5 m JONSWAP and triples stationary
   pitch. Both fail the stationary pitch gate; an observability-gated bias
   release, as in OU-III, is the next architecture to test.
-- *Period dependence.* Freezing the assumed accelerometer-bias drift halves
-  OU-III's noise-free error on every sea (`ou3_bias_rw_frozen_no_noise`): the
-  OU acceleration prior's low-frequency power competes with the bias state.
-  With the simulated drift present, lowering OU-II's vertical bias drift from
-  4e-4 to 2e-4 or 1e-4 m/s²/√s worsens every record
-  (`ou2_bias_rw_z_*`), so the competition is a real trade-off. The band-pass
-  CARMA and shared-mode priors already degrade least.
+- *CARMA scalar tuning.* Raising the CARMA driving-noise gain ×1.25 and halving
+  the assumed accelerometer noise (`carma_sigma_gain_1.25_racc_0.5`) lowers
+  0.27 m heave by 0.14–0.15 point of H and moves the larger seas by −0.02 to
+  +0.04. It raises horizontal error by 11 % in both datasets and moving yaw
+  error by 12 %, and leaves the 0.27 m 5 kn gap at 1.1 point. No recorded
+  CARMA setting improves heave without degrading another channel.
+- *Period dependence.* Freezing the assumed accelerometer-bias drift roughly
+  halves OU-III's noise-free error on the 1.5 and 8.5 m `S` and `stretch`
+  records (`ou3_bias_rw_frozen_no_noise`): the OU acceleration prior's
+  low-frequency power competes with the bias state. With the simulated drift
+  present, lowering OU-II's vertical bias drift from 4e-4 to 2e-4 or
+  1e-4 m/s²/√s worsens every record (`ou2_bias_rw_z_*`), and CARMA behaves
+  alike, so the competition is a real trade-off. The band-pass CARMA and
+  shared-mode priors already degrade least.
 
 ## Consequences for replay gates
 
@@ -250,12 +304,8 @@ excitation, which never read stillness, and are bit-identical.
 - The largest single deterioration, OU-II's 0.27 m heave and bias, was the
   stillness detector classifying a 0.2 m following sea as still water; it is
   removed above.
-- Horizontal and 3D scores of the low seas include the 0.43 cm time-stamp
-  artifact until the scorer evaluates the track at sample time. A phase
-  surrogate that re-derives displacement from velocity, and removes, restores
-  and scores the track at the same rounded stamps, does not carry it; a
-  wave-height-scaled record that scales the residual displacement carries it
-  multiplied by the scale.
+- The replays use v1.3.1, so horizontal and 3D scores no longer carry the
+  v1.3.0 time-stamp artifact; heave scores are unchanged.
 
 ## Next falsifiable experiments
 
@@ -267,13 +317,17 @@ excitation, which never read stillness, and are bit-identical.
 3. TFG: hold horizontal accelerometer-bias learning until tilt/bias
    observability is established (OU-III's magnetic-service lock), then replay
    the stretched 4 m and moving 8.5 m records.
+4. A CARMA prior whose low-frequency shape follows the measured encounter
+   spectrum (a bandwidth statistic alongside `tau` and `sigma`): with the
+   simulated bias drift, the target is a noise-free JONSWAP 0.27 m
+   `M − S` gap below the frozen-drift 0.83 point.
 
 ## Reproduce
 
 ```sh
-# Unpack both archives into v123/ and v130/, then build the replays, e.g.
+# Unpack v1.2.3, v1.3.0 and v1.3.1 into v123/, v130/ and v131/, then build the replays, e.g.
 make -C tests/kalman_ou_iii kalman_ou_iii-sim   # likewise ou_ii, tfg, carma3, shared modes
-python3 tools/moving_vessel_diagnosis.py inputs --stationary v123/ --moving v130/ \
+python3 tools/moving_vessel_diagnosis.py inputs --stationary v123/ --moving v131/ \
     --json reports/results/moving_vessel_diagnosis/inputs.json
 python3 tools/moving_vessel_diagnosis.py arms --stationary v123/ --moving v130/ --out arms/
 python3 tools/moving_vessel_diagnosis.py run --tests tests --arms-dir arms/ \
@@ -292,7 +346,8 @@ the executable; the scores are complete. `no_noise` adds `--extra=--no-noise`;
 `ou3_bias_rw_frozen_no_noise`, `tfg_bias_unlock_*` and `ou2_bias_rw_z_*` set
 `OU_III_ACC_BIAS_RW=1e-8`, `TFG_ACC_BIAS_UNLOCK_SEC` and
 `OU_II_ACC_BIAS_RW_Z`. The other diagnostic labels need an experiment-only
-build with environment hooks, never part of a shipping build:
+build with environment hooks, never part of a shipping build. Labels
+`carma_*` use this tree plus the hooks listed after the first block:
 
 ```diff
 --- a/src/tuner/SeaStateFusionTunerCommon.h   (StillnessAdapter constructor)
@@ -310,9 +365,27 @@ build with environment hooks, never part of a shipping build:
 +        }
 ```
 
+```diff
+--- a/tests/kalman_carma/carma3/SimAdapters.h   (CarmaAdapter constructor)
+         cfg_.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
++        if (const char* v = std::getenv("XP_RACC_SCALE")) cfg_.sigma_a *= std::strtof(v, nullptr);
+ ...
+         auto& filter = fusion_.raw();
++        if (const char* v = std::getenv("XP_CARMA_SIGMA_GAIN")) filter.setCarmaSigmaGain(std::strtof(v, nullptr));
++        if (const char* v = std::getenv("XP_QBACC"))
++            filter.mekf().set_Q_bacc_rw(Vector3f::Constant(std::strtof(v, nullptr)));
+--- a/src/kalman_carma/SeaStateFusionFilter_CARMA3.h   (apply_carma_tune_)
+-        const float f_tune = tau_coeff_ * 0.5f / tau;
++        static const float xp_f = std::getenv("XP_FTUNE_SCALE")
++            ? std::strtof(std::getenv("XP_FTUNE_SCALE"), nullptr) : 1.0f;
++        const float f_tune = xp_f * tau_coeff_ * 0.5f / tau;
+```
+
 `stillness_off` sets `XP_STILL_ENERGY_THRESH=0`. `ou3_floors_off*` also sets
 `XP_OU3_SIGMA_FLOOR=1e-4`, `OU_III_ACC_NOISE_FLOOR_SIGMA=1e-6` and
 `OU_III_R_S_MIN=1e-4`; the `R_scaled` rows add `SF_SIGMA_A_SCALE=1/s²` per
 record. `tfg_warm_handoff` uses the third hook. With the first two hooks unset
 the experiment build reproduces the shipping scores exactly on all five
-filters.
+filters. The `carma_*` labels set `XP_QBACC` (`1e-7` frozen, `1e-4`),
+`XP_CARMA_SIGMA_GAIN=1.25` with `XP_RACC_SCALE=0.5`, or `XP_FTUNE_SCALE`;
+`carma_no_noise` sets none and reproduces `fixed` without noise.

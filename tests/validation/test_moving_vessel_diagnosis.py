@@ -80,6 +80,27 @@ class CounterfactualTest(unittest.TestCase):
         self.assertAlmostEqual(slow['acc_z'][tail].abs().max(), 0.10 * (2 * np.pi / 4.5) ** 2, delta=1e-4)
 
 
+class CausalBoundTest(unittest.TestCase):
+    def test_matches_discrete_kalman_posterior(self):
+        theta = 2 * np.pi * np.fft.fftfreq(2 ** 14)
+        for a, q, r in ((0.95, 0.1, 1.0), (0.99, 0.02, 0.1), (0.5, 1.0, 1.0)):
+            phi = q / np.abs(1 - a * np.exp(-1j * theta)) ** 2
+            prior = q
+            for _ in range(5000):
+                posterior = prior * r / (prior + r)
+                prior = a * a * posterior + q
+            self.assertAlmostEqual(mvd.causal_mmse(phi, np.full(len(phi), r), np.ones(len(phi))),
+                                   posterior, delta=1e-9)
+
+    def test_causal_error_lies_between_noncausal_and_prior(self):
+        t = mvd.sample_times(mvd.WINDOW_SAMPLES)
+        rng = np.random.default_rng(0)
+        z = sum(0.05 * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi)) for f in np.linspace(0.2, 0.4, 40))
+        causal, noncausal = mvd.causal_bound(z), mvd.wiener_bound(z)
+        self.assertGreater(causal, noncausal)
+        self.assertLess(causal, 0.1 * z.std())
+
+
 class StillnessReplicaTest(unittest.TestCase):
     def test_threshold_is_absolute_acceleration(self):
         t = mvd.sample_times(mvd.WINDOW_SAMPLES + 2000)

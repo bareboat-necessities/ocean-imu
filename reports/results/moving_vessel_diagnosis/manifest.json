@@ -11,6 +11,11 @@
    "release": "v1.3.0",
    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
    "archive_sha256": "324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3"
+  },
+  "moving_inputs": {
+   "release": "v1.3.1",
+   "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+   "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402"
   }
  },
  "protocol": "200 Hz; 1200 s; trailing 900 s; default noise/seeds unless --no-noise; magnetometer on; truth from input CSV in double precision; track at sample_index*dt",
@@ -37,14 +42,18 @@
   },
   "experiment_tfg_warm_handoff": {
    "tfg": "95e438b31c9cebfaf88478ad702ea067f0b22ab3c03601264000949c7fa39552"
+  },
+  "experiment_carma_bias_hooks": {
+   "carma": "302bf695a2196bde1e7f55c773152d013fc64b71ba7c76e7985f89bf8426553c"
   }
  },
  "experiment_hook_patch_sha256": "00dcaad9335471063670db3c1041d70369859689a50ee2f83945af49c8ab0f18",
  "files": {
-  "inputs.json": "paired input physics",
+  "inputs.json": "paired input physics: v1.2.3 and v1.3.1 records (v1.3.1 is v1.3.0 with exact time stamps)",
   "shipping.csv": "executables before the stillness change: 5 filters x 5 arms x 8 records, plus TFG-CARMA S/M",
   "fixed.csv": "OU-II, CARMA and TFG-CARMA S/M with the stillness change (this tree)",
-  "diagnostics.csv": "JONSWAP diagnostics: no_noise, stillness_off, ou3_floors_off*, ou3_bias_rw_frozen_no_noise, tfg_bias_unlock_*, tfg_warm_handoff (experiment build), ou2_bias_rw_z_* (this tree)"
+  "diagnostics.csv": "JONSWAP diagnostics: no_noise, stillness_off, ou3_floors_off*, ou3_bias_rw_frozen_no_noise, tfg_bias_unlock_*, tfg_warm_handoff (experiment build), ou2_bias_rw_z_*; carma_* (this tree, experiment build: no_noise, bias_rw_*, sigma_gain_1.25_racc_0.5, ftune_*)"
  },
- "source_commit_before_fix": "f2c65b2e08a4735f1e649e6863d3a362988836f4"
+ "source_commit_before_fix": "f2c65b2e08a4735f1e649e6863d3a362988836f4",
+ "experiment_carma_bias_hook_patch_sha256": "108e061a5cce568f3f5011cd062344484b8425fbfa847d876bcea23933af14f7"
 }

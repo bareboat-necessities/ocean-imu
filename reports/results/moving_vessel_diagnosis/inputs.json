@@ -1,24 +1,26 @@
 {
  "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 3.000000917913582,
   "encounter_period_s": 5.722439998823861,
   "moving": {
-   "angular_rate_residual_radps": 2.287165242462197e-06,
-   "heave_rms_m": 0.04878738035526164,
-   "heave_tz_s": 4.760600111239252,
-   "heave_variance_below_0p1hz": 7.532610253001655e-06,
+   "angular_rate_residual_radps": 2.139280783727826e-06,
+   "causal_bound_pct_nominal_h": 1.4076443163382806,
+   "heave_rms_m": 0.04878737974954552,
+   "heave_tz_s": 4.760599993589678,
+   "heave_variance_below_0p1hz": 7.532383356115378e-06,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 5.301009213809493e-07,
+   "specific_force_residual_mps2": 5.343983922045936e-07,
    "still_fraction": 0.9601277777777778,
    "variance_factor_decay_1s": 0.04209607634683193,
    "variance_factor_decay_5s": 0.08915301747856046,
-   "vertical_acc_rms_mps2": 0.10598046731488339,
-   "wiener_bound_pct_nominal_h": 0.2509615023498514
+   "vertical_acc_rms_mps2": 0.1059804673271073,
+   "wiener_bound_pct_nominal_h": 0.25096145769583766
   },
   "nominal_height_m": 0.27,
   "stationary": {
    "angular_rate_residual_radps": 2.5394062391877886e-05,
+   "causal_bound_pct_nominal_h": 0.7231339458013963,
    "heave_rms_m": 0.05344381252454064,
    "heave_tz_s": 2.9699541222733763,
    "heave_variance_below_0p1hz": 4.565800787731151e-06,
@@ -30,28 +32,30 @@
    "vertical_acc_rms_mps2": 0.24619787902001555,
    "wiener_bound_pct_nominal_h": 0.1108196808109392
   },
-  "stretch_factor": 1.6029204207353918
+  "stretch_factor": 1.6029203811221289
  },
  "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 5.7000202907697455,
   "encounter_period_s": 7.604009949113087,
   "moving": {
-   "angular_rate_residual_radps": 3.3531811239051468e-06,
-   "heave_rms_m": 0.35761478983637424,
-   "heave_tz_s": 6.962508210686482,
-   "heave_variance_below_0p1hz": 0.0023243397679551226,
+   "angular_rate_residual_radps": 3.3270302548793484e-06,
+   "causal_bound_pct_nominal_h": 0.858251716789672,
+   "heave_rms_m": 0.3576147902020409,
+   "heave_tz_s": 6.962508035132934,
+   "heave_variance_below_0p1hz": 0.0023243388458009154,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 5.521958357235235e-07,
+   "specific_force_residual_mps2": 5.489334835573345e-07,
    "still_fraction": 0.2524,
    "variance_factor_decay_1s": 0.755371384850192,
    "variance_factor_decay_5s": 0.8503986715153348,
-   "vertical_acc_rms_mps2": 0.312125811336301,
-   "wiener_bound_pct_nominal_h": 0.11349302832698666
+   "vertical_acc_rms_mps2": 0.3121258056832807,
+   "wiener_bound_pct_nominal_h": 0.113493058636005
   },
   "nominal_height_m": 1.5,
   "stationary": {
    "angular_rate_residual_radps": 0.0001920808248166428,
+   "causal_bound_pct_nominal_h": 0.8085481102723703,
    "heave_rms_m": 0.3909735719013948,
    "heave_tz_s": 4.926063178696015,
    "heave_variance_below_0p1hz": 2.6906393154678805e-05,
@@ -63,28 +67,30 @@
    "vertical_acc_rms_mps2": 0.7314000221894539,
    "wiener_bound_pct_nominal_h": 0.07102244067245483
   },
-  "stretch_factor": 1.4134021343448415
+  "stretch_factor": 1.413402098707144
  },
  "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 8.499995272410853,
   "encounter_period_s": 10.21525000428523,
   "moving": {
-   "angular_rate_residual_radps": 6.717445204584838e-06,
-   "heave_rms_m": 0.9755495744070656,
-   "heave_tz_s": 8.776739382276576,
-   "heave_variance_below_0p1hz": 0.349376988414315,
+   "angular_rate_residual_radps": 6.304942723939222e-06,
+   "causal_bound_pct_nominal_h": 0.8542429022018562,
+   "heave_rms_m": 0.9755495591753864,
+   "heave_tz_s": 8.776739132853145,
+   "heave_variance_below_0p1hz": 0.3493769356537874,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 5.793369091122713e-07,
+   "specific_force_residual_mps2": 5.956591504485687e-07,
    "still_fraction": 0.039127777777777775,
    "variance_factor_decay_1s": 0.9639124542231406,
    "variance_factor_decay_5s": 0.9837220912411828,
-   "vertical_acc_rms_mps2": 0.582666317790765,
-   "wiener_bound_pct_nominal_h": 0.11998100808710993
+   "vertical_acc_rms_mps2": 0.5826663094416832,
+   "wiener_bound_pct_nominal_h": 0.1199807898868855
   },
   "nominal_height_m": 4.0,
   "stationary": {
    "angular_rate_residual_radps": 0.00021337557578313127,
+   "causal_bound_pct_nominal_h": 0.8807594101776478,
    "heave_rms_m": 1.0430886439957892,
    "heave_tz_s": 6.831214493482645,
    "heave_variance_below_0p1hz": 0.045273869267715386,
@@ -96,28 +102,30 @@
    "vertical_acc_rms_mps2": 1.1008095553831942,
    "wiener_bound_pct_nominal_h": 0.0629758001399671
   },
-  "stretch_factor": 1.284799268219446
+  "stretch_factor": 1.2847992317071346
  },
  "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 11.400012480438546,
   "encounter_period_s": 13.031515614284839,
   "moving": {
-   "angular_rate_residual_radps": 5.637888613602149e-06,
-   "heave_rms_m": 2.2126961098611893,
-   "heave_tz_s": 11.12567173112575,
-   "heave_variance_below_0p1hz": 0.7937037553172526,
+   "angular_rate_residual_radps": 5.9833845324347434e-06,
+   "causal_bound_pct_nominal_h": 0.9264255214095685,
+   "heave_rms_m": 2.212696084334659,
+   "heave_tz_s": 11.125671400571175,
+   "heave_variance_below_0p1hz": 0.7937037339506473,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 6.39886021502889e-07,
+   "specific_force_residual_mps2": 6.169960986568412e-07,
    "still_fraction": 0.03841666666666667,
    "variance_factor_decay_1s": 0.9633499031660848,
    "variance_factor_decay_5s": 0.9794735816328691,
-   "vertical_acc_rms_mps2": 0.8246349181112068,
-   "wiener_bound_pct_nominal_h": 0.128362509608274
+   "vertical_acc_rms_mps2": 0.8246349039206103,
+   "wiener_bound_pct_nominal_h": 0.1283628763242287
   },
   "nominal_height_m": 8.5,
   "stationary": {
    "angular_rate_residual_radps": 0.00021698119452329134,
+   "causal_bound_pct_nominal_h": 0.9307958689115311,
    "heave_rms_m": 2.15464622332746,
    "heave_tz_s": 8.813376485577779,
    "heave_variance_below_0p1hz": 0.5393953806948311,
@@ -129,28 +137,30 @@
    "vertical_acc_rms_mps2": 1.4370897743917819,
    "wiener_bound_pct_nominal_h": 0.07003006463783594
   },
-  "stretch_factor": 1.2623620186124824
+  "stretch_factor": 1.2623619811064737
  },
  "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 3.000000917913582,
   "encounter_period_s": 5.722439998823861,
   "moving": {
-   "angular_rate_residual_radps": 2.4955205665394553e-06,
-   "heave_rms_m": 0.04671453282766744,
-   "heave_tz_s": 4.45782141645057,
-   "heave_variance_below_0p1hz": 1.2122740119176087e-05,
+   "angular_rate_residual_radps": 2.5264472365144064e-06,
+   "causal_bound_pct_nominal_h": 1.4607725786180281,
+   "heave_rms_m": 0.046714532168586204,
+   "heave_tz_s": 4.457821320815973,
+   "heave_variance_below_0p1hz": 1.2122476650099748e-05,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 5.316895315132797e-07,
+   "specific_force_residual_mps2": 5.331029377941832e-07,
    "still_fraction": 0.9184833333333333,
    "variance_factor_decay_1s": 0.08580003488797447,
    "variance_factor_decay_5s": 0.17407563569820542,
-   "vertical_acc_rms_mps2": 0.11877073565954287,
-   "wiener_bound_pct_nominal_h": 0.2563101888980414
+   "vertical_acc_rms_mps2": 0.11877073576371157,
+   "wiener_bound_pct_nominal_h": 0.2563101549886537
   },
   "nominal_height_m": 0.27,
   "stationary": {
    "angular_rate_residual_radps": 2.446463551639133e-05,
+   "causal_bound_pct_nominal_h": 0.7457564788306834,
    "heave_rms_m": 0.049913344613507986,
    "heave_tz_s": 2.9558182755999964,
    "heave_variance_below_0p1hz": 3.806458769765026e-06,
@@ -162,28 +172,30 @@
    "vertical_acc_rms_mps2": 0.23611240800798275,
    "wiener_bound_pct_nominal_h": 0.11111502248603444
   },
-  "stretch_factor": 1.5081513817170253
+  "stretch_factor": 1.508151349362331
  },
  "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 5.7000202907697455,
   "encounter_period_s": 7.604009949113087,
   "moving": {
-   "angular_rate_residual_radps": 4.455804675507213e-06,
-   "heave_rms_m": 0.3543258949666576,
-   "heave_tz_s": 6.689016966452414,
-   "heave_variance_below_0p1hz": 0.003545241653426329,
+   "angular_rate_residual_radps": 4.284029040568793e-06,
+   "causal_bound_pct_nominal_h": 0.9115971000572766,
+   "heave_rms_m": 0.3543258916100529,
+   "heave_tz_s": 6.689016797068906,
+   "heave_variance_below_0p1hz": 0.0035452400679967127,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 5.474683817396908e-07,
+   "specific_force_residual_mps2": 5.45560993714389e-07,
    "still_fraction": 0.1807388888888889,
    "variance_factor_decay_1s": 0.826582870643767,
    "variance_factor_decay_5s": 0.9023119997449667,
-   "vertical_acc_rms_mps2": 0.33956702764811597,
-   "wiener_bound_pct_nominal_h": 0.11331897160473375
+   "vertical_acc_rms_mps2": 0.33956701933658945,
+   "wiener_bound_pct_nominal_h": 0.11331896597021994
   },
   "nominal_height_m": 1.5,
   "stationary": {
    "angular_rate_residual_radps": 0.00021063644249681365,
+   "causal_bound_pct_nominal_h": 0.8528338986197682,
    "heave_rms_m": 0.3855675749804943,
    "heave_tz_s": 4.632842063451505,
    "heave_variance_below_0p1hz": 3.155407125947387e-05,
@@ -195,28 +207,30 @@
    "vertical_acc_rms_mps2": 0.8251295486989119,
    "wiener_bound_pct_nominal_h": 0.06840627612146279
   },
-  "stretch_factor": 1.443825814659661
+  "stretch_factor": 1.4438257780981927
  },
  "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 8.499995272410853,
   "encounter_period_s": 10.21525000428523,
   "moving": {
-   "angular_rate_residual_radps": 8.882428669254594e-06,
-   "heave_rms_m": 0.9912143613914327,
-   "heave_tz_s": 8.398068698948146,
-   "heave_variance_below_0p1hz": 0.2945370807419469,
+   "angular_rate_residual_radps": 7.7100346674297e-06,
+   "causal_bound_pct_nominal_h": 0.9011272460266536,
+   "heave_rms_m": 0.9912143444296964,
+   "heave_tz_s": 8.39806845918547,
+   "heave_variance_below_0p1hz": 0.2945370428849397,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 6.377144909919252e-07,
+   "specific_force_residual_mps2": 5.848584976320126e-07,
    "still_fraction": 0.021805555555555557,
    "variance_factor_decay_1s": 0.9801079828108477,
    "variance_factor_decay_5s": 0.9913843966017241,
-   "vertical_acc_rms_mps2": 0.6609255723014962,
-   "wiener_bound_pct_nominal_h": 0.10922338453601083
+   "vertical_acc_rms_mps2": 0.6609255629750206,
+   "wiener_bound_pct_nominal_h": 0.10922317950203624
   },
   "nominal_height_m": 4.0,
   "stationary": {
    "angular_rate_residual_radps": 0.00021476679959208517,
+   "causal_bound_pct_nominal_h": 0.9305329151531141,
    "heave_rms_m": 1.0403885165723752,
    "heave_tz_s": 6.329100468545054,
    "heave_variance_below_0p1hz": 0.0647555790062498,
@@ -228,28 +242,30 @@
    "vertical_acc_rms_mps2": 1.2895057453141643,
    "wiener_bound_pct_nominal_h": 0.07181083434506248
   },
-  "stretch_factor": 1.3268976753783008
+  "stretch_factor": 1.3268976374957175
  },
  "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": {
-  "csv_time_artifact_x_rms_m": 0.00428422115401369,
+  "csv_time_artifact_x_rms_m": 1.7687023604534215e-13,
   "deep_water_period_s": 11.400012480438546,
   "encounter_period_s": 13.031515614284839,
   "moving": {
-   "angular_rate_residual_radps": 6.660763956223281e-06,
-   "heave_rms_m": 2.2062726734494285,
-   "heave_tz_s": 10.53478760524317,
-   "heave_variance_below_0p1hz": 0.6835077421451533,
+   "angular_rate_residual_radps": 6.575357182042607e-06,
+   "causal_bound_pct_nominal_h": 0.9840912012023905,
+   "heave_rms_m": 2.2062726452100514,
+   "heave_tz_s": 10.534787310154536,
+   "heave_variance_below_0p1hz": 0.6835077147657804,
    "propagates_with_track": true,
-   "specific_force_residual_mps2": 6.22512406067699e-07,
+   "specific_force_residual_mps2": 6.334235749250183e-07,
    "still_fraction": 0.03205555555555555,
    "variance_factor_decay_1s": 0.9696854021367886,
    "variance_factor_decay_5s": 0.9841329220665578,
-   "vertical_acc_rms_mps2": 0.9329029516652866,
-   "wiener_bound_pct_nominal_h": 0.1427994720342737
+   "vertical_acc_rms_mps2": 0.9329029337790318,
+   "wiener_bound_pct_nominal_h": 0.14279988713367048
   },
   "nominal_height_m": 8.5,
   "stationary": {
    "angular_rate_residual_radps": 0.00022232106899428006,
+   "causal_bound_pct_nominal_h": 0.9826731492374954,
    "heave_rms_m": 2.1678469621095053,
    "heave_tz_s": 8.119899010405893,
    "heave_variance_below_0p1hz": 0.38533883397826124,
@@ -261,6 +277,6 @@
    "vertical_acc_rms_mps2": 1.7057455696898942,
    "wiener_bound_pct_nominal_h": 0.06429308536115529
   },
-  "stretch_factor": 1.2974037721088065
+  "stretch_factor": 1.2974037357673898
  }
 }

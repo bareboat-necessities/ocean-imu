@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Attribute the stationary -> 5 kn replay change to its physical causes.
 
-The v1.3.0 records differ from the stationary v1.2.3 records in two separable
-ways: the declared steering track (5 kn, heading +/-3 deg over 120 s) and the
-encounter-frequency change of the wave response.  This tool builds exact
-counterfactual inputs, replays built executables on them, and reports the
-estimator-independent physics of each input pair.
+The 5 kn records (v1.3.0, or v1.3.1 with exact time stamps) differ from the
+stationary v1.2.3 records in two separable ways: the declared steering track
+(5 kn, heading +/-3 deg over 120 s) and the encounter-frequency change of the
+wave response.  This tool builds exact counterfactual inputs, replays built
+executables on them, and reports the estimator-independent physics of each
+input pair.
 
   inputs  paired input physics, no estimator (direction, Doppler, stillness,
-          Wiener bound, CSV time-stamp rounding)
+          non-causal and causal MMSE bounds, CSV time-stamp rounding)
   arms    counterfactual records, plus links to the two measured records
   run     replay built *-sim executables on the arms; one CSV row per record
   table   factor tables (Markdown) from run CSVs
@@ -16,7 +17,7 @@ estimator-independent physics of each input pair.
 Arms.  Body specific force and angular rate are rebuilt from the world
 kinematics of every counterfactual, so each arm is exactly self-consistent:
   S        v1.2.3 stationary record
-  M        v1.3.0 5 kn record
+  M        5 kn record
   notrack  M with the declared track and heading removed (no steering)
   track    S with the same track and heading added (steering, no Doppler)
   stretch  S slowed by s = Tz(M)/Tz(S): the stationary spectral shape at the
@@ -77,7 +78,7 @@ RECORD = re.compile(r'wave_data_(jonswap|pmstokes)_H([\d.]+)_L([\d.]+)_A([-\d.]+
 
 
 def track(times):
-    """Declared v1.3.0 track: position, velocity, acceleration, heading, rate."""
+    """Declared 5 kn track: position, velocity, acceleration, heading, rate."""
     t = np.asarray(times, dtype=float)
     phase = HEADING_FREQUENCY_RADPS * t
     x = jv(0, HEADING_AMPLITUDE_RAD) * t
@@ -217,6 +218,41 @@ def wiener_bound(z) -> float:
     return float(np.sqrt(trapezoid(s * noise / (s + noise), f)))
 
 
+def causal_mmse(phi_zz, phi_nn, transfer) -> float:
+    """Error variance of the causal Wiener-Kolmogorov estimate of z from y = D z + n.
+
+    Two-sided discrete-time spectra (variance = mean over the grid) on an FFT
+    grid: phi_zz of z, phi_nn of the independent noise n, transfer D (real
+    and even).  y is whitened by cepstral minimum-phase factorization,
+    phi_yy = s2 |G|^2 with G monic; the estimate keeps the k >= 0 part of the
+    z-innovation cross-correlation."""
+    phi_yy = transfer ** 2 * phi_zz + phi_nn
+    n = len(phi_yy)
+    cep = np.fft.ifft(np.log(phi_yy)).real
+    causal = np.zeros(n)
+    causal[1:n // 2] = cep[1:n // 2]
+    causal[n // 2] = cep[n // 2] / 2
+    g = np.exp(np.fft.fft(causal))
+    r_ze = np.fft.ifft(transfer * phi_zz / np.conj(g))
+    return float(phi_zz.mean() - (np.abs(r_ze[:n // 2]) ** 2).sum() / np.exp(cep[0]))
+
+
+def causal_bound(z, fs_out: float = 20.0, n: int = 2 ** 16) -> float:
+    """Causal (real-time) MMSE heave error from the simulated accelerometer (m RMS).
+
+    The record's own heave spectrum is the prior, so no causal estimator of
+    this sensor (y = d2z/dt2 + white noise + bias random walk) does better.
+    20 Hz grid (no heave energy above 1 Hz; 10 and 40 Hz agree within 2 %).
+    Window leakage adds low-frequency heave the accelerometer cannot see, so
+    finite spectral resolution makes this an upper estimate of the bound."""
+    f1, p1 = spectrum(z, nperseg=2 ** 16)
+    f = np.fft.fftfreq(n, 1 / fs_out)
+    w = 2 * np.pi * f
+    s_zz = np.interp(np.abs(f), f1, p1, left=0.0, right=0.0) / 2
+    s_nn = ACC_WHITE_SIGMA ** 2 / FS + ACC_BIAS_RW ** 2 / np.maximum(np.abs(w), 2 * np.pi * 1e-3) ** 2
+    return float(np.sqrt(max(causal_mmse(fs_out * s_zz, fs_out * s_nn, -w ** 2), 0.0)))
+
+
 def time_stamp_artifact(frame: pd.DataFrame) -> float:
     """RMS x-track error from evaluating the track at the CSV time column."""
     rounded = track(frame['time'].to_numpy())[0][:, 0]
@@ -269,6 +305,7 @@ def input_physics(stationary: Path, moving: Path) -> dict:
             # Elevation is in phase with orbital velocity along propagation.
             'propagates_with_track': bool(np.corrcoef(z, vx[window])[0, 1] > 0),
             'wiener_bound_pct_nominal_h': 100 * wiener_bound(z) / float(height),
+            'causal_bound_pct_nominal_h': 100 * causal_bound(z) / float(height),
             **stillness(frame['acc_z'].to_numpy()),
             **body_residuals(frame),
         }
@@ -413,7 +450,7 @@ def main() -> None:
     for name in ('inputs', 'arms'):
         p = sub.add_parser(name)
         p.add_argument('--stationary', type=Path, required=True, help='unpacked v1.2.3 records')
-        p.add_argument('--moving', type=Path, required=True, help='unpacked v1.3.0 records')
+        p.add_argument('--moving', type=Path, required=True, help='unpacked 5 kn records (v1.3.0 or v1.3.1)')
         p.add_argument('--only', default='', help='record-name substring filter')
         if name == 'inputs':
             p.add_argument('--json', type=Path)
