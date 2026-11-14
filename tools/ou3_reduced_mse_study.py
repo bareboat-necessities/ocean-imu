@@ -9,7 +9,7 @@ import statistics
 import numpy as np
 trapezoid = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
 from scipy.optimize import minimize_scalar
-from ou2_dual_mse_coefficients import vessel_spectrum
+from ou2_dual_mse_coefficients import vessel_spectrum, verify_operating_points
 from model_mismatch_ablation import RECORDS
 from sim_dataset import input_provenance
 
@@ -20,8 +20,9 @@ QEFF=2 * 0.0148**2 / 200  # deployed OU-III strong-observation reduction
 def main():
     out=ROOT/'reports/results/ou3_reduced_mse';out.mkdir(exist_ok=True,parents=True)
     data=ROOT/'plots/kalman_ou_ii';points=ROOT/'reports/results/startup_ablation/startup_runs.csv'
-    with points.open() as f: raw=list(csv.DictReader(f))
     provenance=input_provenance(data/r.filename for r in RECORDS)
+    verify_operating_points(points, provenance)
+    with points.open() as f: raw=list(csv.DictReader(f))
     rows=[]
     for record in RECORDS:
         rr=[r for r in raw if r['family']=='OU-III' and r['arm']=='deployed' and r['input']==record.filename]

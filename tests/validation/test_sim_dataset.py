@@ -62,6 +62,28 @@ class SimDatasetTests(unittest.TestCase):
             with path.open() as stream:
                 self.assertEqual(len(list(csv.DictReader(stream))), 8)
 
+    def test_diagnostics_reject_stale_startup_operating_points(self):
+        import sys
+        import hashlib
+        sys.path.insert(0, str(ROOT / 'tools'))
+        from ou2_dual_mse_coefficients import verify_operating_points
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'startup_runs.csv'
+            path.write_text('measured operating points')
+            marker = path.with_name('manifest.json')
+            expected = {'archive_sha256': D.SHA256}
+            data = {'simulation_provenance': {'archive_sha256': 'stationary'},
+                    'files': {path.name: hashlib.sha256(path.read_bytes()).hexdigest()}}
+            marker.write_text(json.dumps(data))
+            with self.assertRaisesRegex(ValueError, 'rerun tools/startup_ablation.py'):
+                verify_operating_points(path, expected)
+            data['simulation_provenance'] = expected
+            marker.write_text(json.dumps(data))
+            verify_operating_points(path, expected)
+            path.write_text('different rows with a stale receipt')
+            with self.assertRaises(ValueError):
+                verify_operating_points(path, expected)
+
     def test_committed_results_consumed_the_pinned_motion_bytes(self):
         # Older bundles name the release they were run from; their inputs must
         # still be byte-identical to the motion CSVs of the pinned release.

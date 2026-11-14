@@ -55,7 +55,7 @@ clean:
 	done
 
 # Both targets verify archive bytes and refresh every stale input directory.
-# The shared immutable cache avoids duplicating the 823 MB archive payload.
+# The shared immutable cache avoids duplicating the unpacked input payload.
 fetch-sim-data ensure-sim-data:
 	python3 "$(REPO_ROOT)/tools/sim_dataset.py" --archive "$(SIM_DATA_ZIP)" \
 		--dest $(TEST_DIRS) $(patsubst $(REPO_ROOT)/tests/%,$(REPO_ROOT)/plots/%,$(TEST_DIRS))
