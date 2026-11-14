@@ -1,23 +1,24 @@
 {
   "binary_sha256": {
-    "OU_III": "e24d19dac948678703bfbd8a37feee5ffc815a47bd38771128a5f740d3d7c417",
-    "TFG": "8b6914a489e3c2018a2525c533c6bd20e4c9c374cb19883789a90bd769e22b6d"
+    "OU_III": "b5954546411e6293c6f1f34a89239dee66c96883ea808319c239fef946600dbe",
+    "TFG": "e4594b9d2696f28a645c25b73c3a6f430f9a9032648a824a42bcc4a8d0781776"
   },
   "build_environment": {
     "compiler": {
       "CPPFLAGS_env": "",
       "CXXFLAGS_env": "",
-      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
       "command": "g++",
-      "version": "14.2.0"
+      "version": "13.3.0"
     },
     "eigen": {
-      "path": "unavailable",
-      "version": "unavailable"
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
     },
-    "numpy": "2.3.5",
-    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
-    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
@@ -39,9 +40,9 @@
     "release": "v1.3.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-14T05:54:57+00:00",
-  "git_commit": "be5e5acd8cc599693a322fba9a7d2c17e3a85f7a",
-  "git_diff_stat": "doc/kalman_ou_iii/ou_robustness_stress.svg         |    708 +-\n doc/kalman_ou_iii/ou_validation_attitude.svg       |   1513 +-\n doc/kalman_ou_iii/ou_validation_displacement.svg   |   1476 +-\n doc/kalman_ou_iii/ou_validation_vertical.svg       |   1524 +-\n doc/kalman_ou_iii/w3d-baseline-comparison.tex-part |     28 +-\n .../w3d-baseline-results-generated.tex-part        |     36 +-\n .../w3d-ou-robustness-macros-generated.tex-part    |     28 +-\n .../w3d-ou-robustness-results-generated.tex-part   |     36 +-\n ...bustness-sensitivity-current-generated.tex-part |     10 +-\n ...-robustness-sensitivity-ofat-generated.tex-part |     10 +-\n doc/kalman_ou_iii/w3d-ou-robustness.tex-part       |      4 +-\n .../w3d-ou-validation-macros-generated.tex-part    |    306 +-\n .../w3d-ou-validation-results-generated.tex-part   |     86 +-\n .../w3d-ou-validation-results-publication.tex-part |     32 +-\n ...-ou-validation-tuning-points-generated.tex-part |     18 +-\n .../w3d-wave-direction-config.tex-part             |      2 +-\n .../w3d-wave-direction-results.tex-part            |     41 +-\n doc/simulation-dataset.tex-part                    |      3 +-\n docs/engine-noise-degradation.md                   |      9 +-\n docs/model-mismatch-ablation.md                    |      5 +\n docs/ou-gyro-bias-projection.md                    |      5 +\n docs/ou-robustness.md                              |     23 +-\n docs/ou-validation.md                              |     33 +-\n docs/ou3-sampling-fidelity.md                      |      4 +-\n reports/results/ou_robustness/ou_robustness.json   |  46378 +++---\n .../results/ou_robustness/ou_robustness_macros.tex |     60 +-\n .../ou_robustness/ou_robustness_manifest.json      |    201 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |   1638 +-\n .../ou_robustness/ou_robustness_publication.tex    |     22 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |    620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   2336 +-\n .../results/ou_robustness/ou_robustness_stress.svg |    708 +-\n .../ou_robustness/ou_robustness_summary.csv        |   2074 +-\n reports/results/ou_validation/PROVENANCE.md        |      7 +-\n reports/results/ou_validation/ou_validation.json   | 147335 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |   1513 +-\n .../ou_validation/ou_validation_covsync.svg        |   1794 +-\n .../ou_validation/ou_validation_displacement.svg   |   1476 +-\n .../results/ou_validation/ou_validation_macros.tex |    306 +-\n .../ou_validation/ou_validation_manifest.json      |    465 +-\n .../ou_validation/ou_validation_paired_effects.csv |   5126 +-\n .../ou_validation/ou_validation_publication.tex    |     86 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   6120 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  24000 +--\n .../ou_validation/ou_validation_transition.svg     |   6579 +-\n .../ou_validation/ou_validation_tuning_points.tex  |     18 +-\n .../ou_validation/ou_validation_vertical.svg       |   1524 +-\n reports/results/tfg_comparison/comparison.tex      |     30 +-\n .../results/tfg_comparison/gate_diagnostics.json   |    452 +-\n reports/results/tfg_comparison/paired_summary.json |   4532 +-\n reports/results/tfg_comparison/raw_runs.csv        |    360 +-\n reports/results/tfg_comparison/raw_runs.json       |   3600 +-\n tests/pii_observer/pii_observer-adaptive.cpp       |     31 +-\n tests/validation/test_filter_sim_gates.py          |     22 +-\n tests/validation/test_ou_missing_direction.py      |     12 +\n .../test_zzzzz_publication_sync_contract.py        |     32 +\n tools/filter_sim_gates.py                          |     40 +-\n tools/ou_publication_robustness_sync.py            |     24 +\n tools/ou_publication_sync.py                       |     17 +-\n tools/ou_validation.py                             |     22 +-\n tools/tfg_comparison.py                            |     10 +-\n 63 files changed, 132496 insertions(+), 134862 deletions(-)",
+  "generated_utc": "2026-11-14T06:44:49+00:00",
+  "git_commit": "39fa9208a12d8b374a3dbf62a9125dee19712d10",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   16 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  360 +-\n reports/results/tfg_comparison/paired_summary.json | 4034 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3592 ++++++++---------\n 5 files changed, 4181 insertions(+), 4181 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -137,11 +138,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "1a16e421d47a5ec1e5d202d1227db60c10d2366b8057450db78ea3c787a71405",
-    "gate_diagnostics.json": "345a5d5d372d23522420035136655c242c051ae4a3d1f83c95b9d0df7a0f32f3",
-    "paired_summary.json": "de721dc5489becb82516778c01f0035e294e16aeca0eea5fe983742723161fa6",
-    "raw_runs.csv": "378a436be7b0b94962ed01cca4b2a8ea62f03e35afdc9a88c89ea83ebb2d4c7b",
-    "raw_runs.json": "100feee3824a40b83a276b745a558fd6ce716f27ec83e1a83edc3c8ae4f2f3b0"
+    "comparison.tex": "fefaba11bfc56357da33c7c73123ac2dbc2167a7a141de121e1f5deee76e1ea6",
+    "gate_diagnostics.json": "76b3d156532ad29d093a00eb379096421f7dbaf92eb3a53db2d3285d225e2ed0",
+    "paired_summary.json": "bb7a36ecfb125af8a7c768add437aa0bd6490cdb6bc60d088db84ac80c92fa03",
+    "raw_runs.csv": "aa57a6e2f8deebcd3010ba36bfcd2a58b3d3159f8b7194747546fb81ff8466a0",
+    "raw_runs.json": "2bd8b8f7dfc5b5f31e307cb881f406a3a11c58c24c306596be20784195a0ddad"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -203,5 +204,10 @@
     "tools/sim_dataset.py": "7342baf4a0a81b02e08de9035ed977b6c803e62e2471956999c52aa53af3a41e",
     "tools/tfg_comparison.py": "f39fda12e88e99ecf339291afab161cf0d8265027ea04cad93531cfc5e0fe97e"
   },
-  "workflow": null
+  "workflow": {
+    "job": "tfg_companion",
+    "run_attempt": "1",
+    "run_id": "43566551317",
+    "workflow": "ou-full-evidence-branch"
+  }
 }
