@@ -764,11 +764,13 @@ mismatch, observability, covariance and full estimator stability analyses.
 The filter, its wrapper and the CARMA model library are in
 \texttt{src/kalman\_carma}; the tests, the benchmark and the dataset
 simulator are in \texttt{tests/kalman\_carma}. The benchmark driver
-\texttt{tools/carma3\_benchmark.py} reproduces every run from committed
-seeds, and its raw results are in
-\texttt{reports/results/carma3\_benchmark}. This paper and its chart gallery
-are built by the repository's GitHub Actions workflow from a fresh replay of
-the dataset.
+\texttt{tools/carma3\_benchmark.py} replays every run from committed seeds
+with the current tree. Its raw results in
+\texttt{reports/results/carma3\_benchmark} were last regenerated in commit
+\texttt{bce6722}, before the legacy chain dropped the stillness attenuation;
+the driver at that revision, with that revision's pinned dataset, reproduces
+them. This paper and its chart gallery are built by the repository's GitHub
+Actions workflow from a fresh replay of the dataset.
 
 \begin{thebibliography}{9}
 \bibitem{brockwell01}

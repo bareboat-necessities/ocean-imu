@@ -61,14 +61,14 @@ archives within 1e-5 of H; its 3D error falls from 13.4 to 12.8 mm.
 
 | Record | heave T_z (s) | vertical acc RMS (m/s²) | heave RMS (m) | still (%) | causal bound (% H) | non-causal bound (% H) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| JONSWAP 0.27 m | 2.97 → 4.76 | 0.246 → 0.106 | 0.053 → 0.049 | 41 → 96 | 0.72 → 1.41 | 0.11 → 0.25 |
-| JONSWAP 1.5 m | 4.93 → 6.96 | 0.731 → 0.312 | 0.391 → 0.358 | 2 → 25 | 0.81 → 0.86 | 0.07 → 0.11 |
-| JONSWAP 4 m | 6.83 → 8.78 | 1.101 → 0.583 | 1.043 → 0.976 | 0 → 4 | 0.88 → 0.85 | 0.06 → 0.12 |
-| JONSWAP 8.5 m | 8.81 → 11.13 | 1.437 → 0.825 | 2.155 → 2.213 | 1 → 4 | 0.93 → 0.93 | 0.07 → 0.13 |
-| PM-Stokes 0.27 m | 2.96 → 4.46 | 0.236 → 0.119 | 0.050 → 0.047 | 43 → 92 | 0.75 → 1.46 | 0.11 → 0.26 |
-| PM-Stokes 1.5 m | 4.63 → 6.69 | 0.825 → 0.340 | 0.386 → 0.354 | 1 → 18 | 0.85 → 0.91 | 0.07 → 0.11 |
-| PM-Stokes 4 m | 6.33 → 8.40 | 1.290 → 0.661 | 1.040 → 0.991 | 0 → 2 | 0.93 → 0.90 | 0.07 → 0.11 |
-| PM-Stokes 8.5 m | 8.12 → 10.53 | 1.706 → 0.933 | 2.168 → 2.206 | 0 → 3 | 0.98 → 0.98 | 0.06 → 0.14 |
+| JONSWAP 0.27 m | 2.97 → 4.76 | 0.246 → 0.106 | 0.053 → 0.049 | 75 → 99 | 0.72 → 1.41 | 0.11 → 0.25 |
+| JONSWAP 1.5 m | 4.93 → 6.96 | 0.731 → 0.312 | 0.391 → 0.358 | 27 → 61 | 0.81 → 0.86 | 0.07 → 0.11 |
+| JONSWAP 4 m | 6.83 → 8.78 | 1.101 → 0.583 | 1.043 → 0.976 | 16 → 36 | 0.88 → 0.85 | 0.06 → 0.12 |
+| JONSWAP 8.5 m | 8.81 → 11.13 | 1.437 → 0.825 | 2.155 → 2.213 | 12 → 25 | 0.93 → 0.93 | 0.07 → 0.13 |
+| PM-Stokes 0.27 m | 2.96 → 4.46 | 0.236 → 0.119 | 0.050 → 0.047 | 77 → 99 | 0.75 → 1.46 | 0.11 → 0.26 |
+| PM-Stokes 1.5 m | 4.63 → 6.69 | 0.825 → 0.340 | 0.386 → 0.354 | 23 → 55 | 0.85 → 0.91 | 0.07 → 0.11 |
+| PM-Stokes 4 m | 6.33 → 8.40 | 1.290 → 0.661 | 1.040 → 0.991 | 13 → 32 | 0.93 → 0.90 | 0.07 → 0.11 |
+| PM-Stokes 8.5 m | 8.12 → 10.53 | 1.706 → 0.933 | 2.168 → 2.206 | 9 → 22 | 0.98 → 0.98 | 0.06 → 0.14 |
 
 Both bounds use the record's own heave spectrum as the prior and the simulated
 sensor: 1.51 mg white noise plus a 5e-4 m/s²/√s bias random walk on the
@@ -80,8 +80,10 @@ upper estimate. Halving the spectral segment changes it by at most 0.18 point
 of H, mostly upward.
 
 `still` is the fraction of the scored 900 s the shared `StillnessAdapter`
-(`tuner/SeaStateFusionTunerCommon.h`) flags as still water: energy EMA of the
-6 Hz-filtered vertical acceleration below `8e-4 g²` (0.28 m/s²) for 2 s. It is a
+(`tuner/SeaStateFusionTunerCommon.h`) flags as still water: energy EMA (0.1 s)
+of the 6 Hz-filtered vertical acceleration below `8e-4 g²` (0.28 m/s²). The
+flag is instantaneous, so it also flickers on near acceleration zero crossings
+of larger seas; its 2 s hold gates only the frequency relaxation. It is a
 threshold on acceleration, so the same heave at half the acceleration reads as
 still water. Both archives are internally consistent to their print
 precision: body specific force matches `C_wb (a + g)` within 6e-5 m/s² and gyro
@@ -181,10 +183,12 @@ Diagnostic runs on the four JONSWAP records; `S`, `M` and `stretch` arms.
 | Shared QMEKF | `no_noise` | 2.06 | 3.19 | 3.20 | 1.78 | 2.12 | 2.52 | 1.60 | 1.73 | 2.11 |
 
 **Stillness detector (OU-II, CARMA).** In the 0.27 m seas the detector reports
-still water 92–96 % of the moving window (41–43 % stationary). The operating
-point then multiplies the wave variance by `exp(-t_still/decay)`
-(`measureOperatingPoint_`; decay 5 s in OU-II, 1 s in OU-III), pinning
-`sigma_a` at its floor. Disabling the detector (`stillness_off`) cuts OU-II's
+still water 99 % of the moving window (75–77 % stationary, mostly short
+flickers). The operating point then multiplies the wave variance by
+`exp(-t_still/decay)` from the first still sample (`measureOperatingPoint_`;
+decay 5 s in OU-II, 1 s in OU-III). With OU-II's 5 s decay the mean factor over
+the window is 0.08–0.16 moving against 0.68 stationary, pinning `sigma_a` at
+its floor. Disabling the detector (`stillness_off`) cuts OU-II's
 0.27 m increase from 14.8 to 2.3 points of H, removes all of its 0.27 m
 tilt/bias excursion (bias 0.132 → 0.044 m/s², as stationary), and removes
 59–72 % of CARMA's increase at 1.5–8.5 m. It is worth 0.6 point to OU-III.
@@ -259,7 +263,10 @@ wrapper. The detector still relaxes the direction carrier. Heave RMS error,
 | TFG-CARMA | 3.21 → 2.46 | 4.67 → 3.73 | 4.19 → 3.57 | 3.00 → 2.33 |
 
 OU-II's 0.27 m moving bias error falls from 0.132 to 0.044 m/s² and its
-tilt from 0.59 to 0.20°. Stationary costs: OU-II's 0.27 m records gain about
+tilt from 0.59 to 0.20°. On the v1.3.1 zero-speed and 5 kn archives
+([comparison](moving-vessel-comparison.md)), worst heave now rises
+6.65 → 8.48 % of H for OU-II (+28 %, was 6.63 → 20.84) and 2.46 → 3.73 % for
+CARMA and TFG-CARMA (+51 %, was 3.21 → 4.67). Stationary costs: OU-II's 0.27 m records gain about
 2–3 % heave and yaw error; CARMA's horizontal error changes −1 % to +18 %,
 at most 10.5 mm (8.5 m moving, +3 %). Replay limits for the three families are re-measured
 (`docs/filter-simulator-gates.md`). The shared-mode filters use Evidence
@@ -384,8 +391,10 @@ build with environment hooks, never part of a shipping build. Labels
 `stillness_off` sets `XP_STILL_ENERGY_THRESH=0`. `ou3_floors_off*` also sets
 `XP_OU3_SIGMA_FLOOR=1e-4`, `OU_III_ACC_NOISE_FLOOR_SIGMA=1e-6` and
 `OU_III_R_S_MIN=1e-4`; the `R_scaled` rows add `SF_SIGMA_A_SCALE=1/s²` per
-record. `tfg_warm_handoff` uses the third hook. With the first two hooks unset
-the experiment build reproduces the shipping scores exactly on all five
-filters. The `carma_*` labels set `XP_QBACC` (`1e-7` frozen, `1e-4`),
+record. The third hook has no switch, so `tfg_warm_handoff` uses a separate
+TFG build (`experiment_tfg_warm_handoff` in `manifest.json`). The build with
+only the first two hooks, both unset, reproduces the shipping scores exactly
+on all five filters (`experiment_hooks`; its TFG hash equals the shipping
+one). The `carma_*` labels set `XP_QBACC` (`1e-7` frozen, `1e-4`),
 `XP_CARMA_SIGMA_GAIN=1.25` with `XP_RACC_SCALE=0.5`, or `XP_FTUNE_SCALE`;
 `carma_no_noise` sets none and reproduces `fixed` without noise.

@@ -3,8 +3,12 @@
 External-data regression now uses oceanography-waves-lib v1.3.1,
 `sim-data-files-vessel-rao-28ft-5kn.zip`: a 28 ft estimated hull response at
 5 kn with heading oscillating ±3° about north every 120 s. The dataset change
-has its own measured baseline. Estimator equations, tuning, default sensor
-noise and seed schedules are unchanged.
+has its own measured baseline. OU-II, CARMA and TFG-CARMA no longer let the
+still-water detector attenuate their wave variance
+([diagnosis](moving-vessel-regression-diagnosis.md)); their limits are
+measured with that change on g++ 13.3 (Ubuntu 24.04, the CI toolchain).
+Other estimator equations, tuning, default sensor noise and seed schedules
+are unchanged.
 
 See [current measurements](moving-vessel-results.md) and the
 [track/scoring convention](moving-vessel-replays.md). All physical sensor

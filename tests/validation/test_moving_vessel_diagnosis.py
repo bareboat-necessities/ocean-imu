@@ -108,8 +108,12 @@ class StillnessReplicaTest(unittest.TestCase):
         # Same heave amplitude; doubling the period divides acceleration by 4.
         fast = mvd.stillness(0.3 * w * w * np.sin(w * t))
         slow = mvd.stillness(0.3 * (w / 2) ** 2 * np.sin(w / 2 * t))
-        self.assertLess(fast['still_fraction'], 0.05)
-        self.assertGreater(slow['still_fraction'], 0.95)
+        # The flag is instantaneous, so it flickers near acceleration zero
+        # crossings; only a continuously still record loses its variance.
+        self.assertLess(fast['still_fraction'], 0.5)
+        self.assertGreater(fast['variance_factor_decay_5s'], 0.9)
+        self.assertGreater(slow['still_fraction'], 0.99)
+        self.assertLess(slow['variance_factor_decay_5s'], 0.01)
 
 
 if __name__ == '__main__':

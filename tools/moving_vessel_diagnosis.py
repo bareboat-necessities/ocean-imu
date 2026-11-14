@@ -58,7 +58,6 @@ ACC_WHITE_SIGMA = 1.51e-3 * G
 ACC_BIAS_RW = 0.0005
 # Shared StillnessAdapter (tuner/SeaStateFusionTunerCommon.h) and its input.
 STILL_ENERGY_THRESHOLD_G2 = 8e-4
-STILL_HOLD_S = 2.0
 STILL_EMA_ALPHA = 0.05
 TRACKER_INPUT_CUTOFF_HZ = 6.0
 QUAT = ['q_wb_zu_w', 'q_wb_zu_x', 'q_wb_zu_y', 'q_wb_zu_z']  # world -> body
@@ -194,14 +193,15 @@ def stillness(acc_z, seed: int = 1, decays=(1.0, 5.0)) -> dict:
     pole = np.exp(-2 * np.pi * TRACKER_INPUT_CUTOFF_HZ * DT)
     energy = lfilter([STILL_EMA_ALPHA], [1, STILL_EMA_ALPHA - 1],
                      (lfilter([1 - pole], [1, -pole], a) / G) ** 2)
-    low = energy < STILL_ENERGY_THRESHOLD_G2
+    # isStill() is the instantaneous threshold test; the 2 s hold gates only
+    # the frequency relaxation, never the variance attenuation.
+    still = energy < STILL_ENERGY_THRESHOLD_G2
     # Continuous below-threshold time, capped at 60 s as in the detector.
-    run = np.zeros(len(low))
+    run = np.zeros(len(still))
     count = 0
-    for i, flag in enumerate(low):
+    for i, flag in enumerate(still):
         count = count + 1 if flag else 0
         run[i] = min(count * DT, 60.0)
-    still = run > STILL_HOLD_S
     window = slice(-WINDOW_SAMPLES, None)
     result = {'still_fraction': float(still[window].mean())}
     for decay in decays:
@@ -389,7 +389,7 @@ def run_one(job: dict) -> dict:
     with tempfile.TemporaryDirectory(prefix='moving-diagnosis-') as tmp:
         work = Path(tmp)
         (work / record.name).symlink_to(record.resolve())
-        result = subprocess.run([str(job['binary']), *job['extra'], '--input', record.name], cwd=work, env=env,
+        result = subprocess.run([str(job['binary'].resolve()), *job['extra'], '--input', record.name], cwd=work, env=env,
                                 capture_output=True, text=True, check=False)
         metrics = {}
         for line in result.stdout.splitlines():
@@ -430,13 +430,15 @@ def markdown(pivot: pd.DataFrame) -> str:
              '|' + ' --- |' * len(names) + ' ---: |' * len(pivot.columns)]
     for key, values in pivot.iterrows():
         key = key if isinstance(key, tuple) else (key,)
-        lines.append('| ' + ' | '.join([*map(str, key), *(f'{v:.4g}' for v in values)]) + ' |')
+        key = [k.removeprefix('wave_data_').removesuffix('.csv') if names[i] == 'record' else str(k)
+               for i, k in enumerate(key)]
+        lines.append('| ' + ' | '.join([*key, *(f'{v:.4g}' for v in values)]) + ' |')
     return '\n'.join(lines)
 
 
 def command_table(args) -> None:
     frame = pd.concat([pd.read_csv(p) for p in args.csv], ignore_index=True)
-    frame['record'] = frame['record'].str.extract(r'wave_data_(\w+?_H[\d.]+)_')[0]
+    # Group on the full record name; shorten it only for display.
     for metric in args.metrics.split(','):
         pivot = frame.pivot_table(index=['label', 'family', 'record'], columns='arm', values=metric)
         pivot = pivot[[a for a in ARMS if a in pivot.columns]]

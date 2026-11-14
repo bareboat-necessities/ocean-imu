@@ -7,16 +7,16 @@
 namespace ocean_imu::sim::current_limits {
 
 inline constexpr W3dFailureLimits ou2{
-    .err_limit_percent_z_jonswap   = 20.94565f,
-    .err_limit_percent_z_pmstokes  = 11.37117f,
-    .err_limit_yaw_deg             = 0.89796f,
-    .err_limit_roll_deg            = 0.58935f,
-    .err_limit_pitch_deg           = 0.50524f,
-    .err_limit_percent_3d_jonswap  = 31.14368f,
-    .err_limit_percent_3d_pmstokes = 19.12513f,
-    .acc_z_bias_percent            = 7.32224f,
-    .bias_3d_percent               = 157.12572f,
-    .gyro_bias_3d_percent          = 12.56401f,
+    .err_limit_percent_z_jonswap   = 8.52521f,
+    .err_limit_percent_z_pmstokes  = 8.06839f,
+    .err_limit_yaw_deg             = 0.90353f,
+    .err_limit_roll_deg            = 0.21405f,
+    .err_limit_pitch_deg           = 0.18845f,
+    .err_limit_percent_3d_jonswap  = 16.40907f,
+    .err_limit_percent_3d_pmstokes = 16.08768f,
+    .acc_z_bias_percent            = 4.60839f,
+    .bias_3d_percent               = 53.91886f,
+    .gyro_bias_3d_percent          = 12.57034f,
 };
 
 inline constexpr W3dFailureLimits ou3{
@@ -46,16 +46,16 @@ inline constexpr W3dFailureLimits tfg{
 };
 
 inline constexpr W3dFailureLimits carma{
-    .err_limit_percent_z_jonswap   = 4.21295f,
-    .err_limit_percent_z_pmstokes  = 4.69083f,
-    .err_limit_yaw_deg             = 0.94167f,
-    .err_limit_roll_deg            = 0.31108f,
-    .err_limit_pitch_deg           = 0.19556f,
-    .err_limit_percent_3d_jonswap  = 6.89035f,
-    .err_limit_percent_3d_pmstokes = 8.07388f,
-    .acc_z_bias_percent            = 4.32003f,
-    .bias_3d_percent               = 72.10192f,
-    .gyro_bias_3d_percent          = 12.41417f,
+    .err_limit_percent_z_jonswap   = 3.58976f,
+    .err_limit_percent_z_pmstokes  = 3.74505f,
+    .err_limit_yaw_deg             = 0.94337f,
+    .err_limit_roll_deg            = 0.21201f,
+    .err_limit_pitch_deg           = 0.19463f,
+    .err_limit_percent_3d_jonswap  = 6.41330f,
+    .err_limit_percent_3d_pmstokes = 6.96590f,
+    .acc_z_bias_percent            = 3.95950f,
+    .bias_3d_percent               = 56.62221f,
+    .gyro_bias_3d_percent          = 12.43879f,
 };
 
 inline constexpr W3dFailureLimits csm{
@@ -72,16 +72,16 @@ inline constexpr W3dFailureLimits csm{
 };
 
 inline constexpr W3dFailureLimits tcarma{
-    .err_limit_percent_z_jonswap   = 4.21316f,
-    .err_limit_percent_z_pmstokes  = 4.69209f,
-    .err_limit_yaw_deg             = 0.93962f,
-    .err_limit_roll_deg            = 0.31016f,
-    .err_limit_pitch_deg           = 0.19382f,
-    .err_limit_percent_3d_jonswap  = 6.89010f,
-    .err_limit_percent_3d_pmstokes = 8.07473f,
-    .acc_z_bias_percent            = 4.31899f,
-    .bias_3d_percent               = 72.29649f,
-    .gyro_bias_3d_percent          = 12.60914f,
+    .err_limit_percent_z_jonswap   = 3.58978f,
+    .err_limit_percent_z_pmstokes  = 3.74520f,
+    .err_limit_yaw_deg             = 0.93217f,
+    .err_limit_roll_deg            = 0.21205f,
+    .err_limit_pitch_deg           = 0.19230f,
+    .err_limit_percent_3d_jonswap  = 6.41332f,
+    .err_limit_percent_3d_pmstokes = 6.96604f,
+    .acc_z_bias_percent            = 3.95801f,
+    .bias_3d_percent               = 56.69095f,
+    .gyro_bias_3d_percent          = 12.57688f,
 };
 
 inline constexpr W3dFailureLimits tcsm{
@@ -113,16 +113,16 @@ inline constexpr W3dFailureLimits tfg_legacy{
 namespace interval {
 
 inline constexpr W3dFailureLimits ou2{
-    .err_limit_percent_z_jonswap   = 20.94551f,
-    .err_limit_percent_z_pmstokes  = 11.37150f,
-    .err_limit_yaw_deg             = 0.89936f,
-    .err_limit_roll_deg            = 0.58666f,
-    .err_limit_pitch_deg           = 0.50723f,
-    .err_limit_percent_3d_jonswap  = 31.16022f,
-    .err_limit_percent_3d_pmstokes = 19.15704f,
-    .acc_z_bias_percent            = 7.32191f,
-    .bias_3d_percent               = 156.98100f,
-    .gyro_bias_3d_percent          = 12.55627f,
+    .err_limit_percent_z_jonswap   = 8.52594f,
+    .err_limit_percent_z_pmstokes  = 8.06917f,
+    .err_limit_yaw_deg             = 0.90485f,
+    .err_limit_roll_deg            = 0.21381f,
+    .err_limit_pitch_deg           = 0.18872f,
+    .err_limit_percent_3d_jonswap  = 16.45571f,
+    .err_limit_percent_3d_pmstokes = 16.13084f,
+    .acc_z_bias_percent            = 4.63046f,
+    .bias_3d_percent               = 53.89946f,
+    .gyro_bias_3d_percent          = 12.56140f,
 };
 
 inline constexpr W3dFailureLimits ou3{
@@ -152,16 +152,16 @@ inline constexpr W3dFailureLimits tfg{
 };
 
 inline constexpr W3dFailureLimits carma{
-    .err_limit_percent_z_jonswap   = 4.21299f,
-    .err_limit_percent_z_pmstokes  = 4.69123f,
-    .err_limit_yaw_deg             = 0.94383f,
-    .err_limit_roll_deg            = 0.31009f,
-    .err_limit_pitch_deg           = 0.19758f,
-    .err_limit_percent_3d_jonswap  = 6.93610f,
-    .err_limit_percent_3d_pmstokes = 8.12158f,
-    .acc_z_bias_percent            = 4.35243f,
-    .bias_3d_percent               = 72.03609f,
-    .gyro_bias_3d_percent          = 12.40271f,
+    .err_limit_percent_z_jonswap   = 3.58991f,
+    .err_limit_percent_z_pmstokes  = 3.74527f,
+    .err_limit_yaw_deg             = 0.94446f,
+    .err_limit_roll_deg            = 0.21179f,
+    .err_limit_pitch_deg           = 0.19655f,
+    .err_limit_percent_3d_jonswap  = 6.45718f,
+    .err_limit_percent_3d_pmstokes = 7.01268f,
+    .acc_z_bias_percent            = 4.00342f,
+    .bias_3d_percent               = 56.62572f,
+    .gyro_bias_3d_percent          = 12.42613f,
 };
 
 inline constexpr W3dFailureLimits csm{
@@ -178,16 +178,16 @@ inline constexpr W3dFailureLimits csm{
 };
 
 inline constexpr W3dFailureLimits tcarma{
-    .err_limit_percent_z_jonswap   = 4.21322f,
-    .err_limit_percent_z_pmstokes  = 4.69250f,
-    .err_limit_yaw_deg             = 0.94157f,
-    .err_limit_roll_deg            = 0.30920f,
-    .err_limit_pitch_deg           = 0.19587f,
-    .err_limit_percent_3d_jonswap  = 6.93581f,
-    .err_limit_percent_3d_pmstokes = 8.12238f,
-    .acc_z_bias_percent            = 4.35075f,
-    .bias_3d_percent               = 72.23870f,
-    .gyro_bias_3d_percent          = 12.59627f,
+    .err_limit_percent_z_jonswap   = 3.58993f,
+    .err_limit_percent_z_pmstokes  = 3.74543f,
+    .err_limit_yaw_deg             = 0.93332f,
+    .err_limit_roll_deg            = 0.21184f,
+    .err_limit_pitch_deg           = 0.19404f,
+    .err_limit_percent_3d_jonswap  = 6.45713f,
+    .err_limit_percent_3d_pmstokes = 7.01274f,
+    .acc_z_bias_percent            = 4.00092f,
+    .bias_3d_percent               = 56.69618f,
+    .gyro_bias_3d_percent          = 12.56572f,
 };
 
 inline constexpr W3dFailureLimits tcsm{

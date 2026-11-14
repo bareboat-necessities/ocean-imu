@@ -91,7 +91,20 @@
   ],
   "shipping_behavior_changed": false,
   "shipping_header_sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
-  "shipping_source_tree_sha256": "5e9db9d9bb17eaa84d20aabdc6cf695fcdb4eb60fffe1f7c01c11ed425d26bfe",
+  "shipping_source_tree_sha256": "d400abb9353b5c6836482907fd60079bf3f89e8ce039d2a4960dc7e2f3a4cc0e",
+  "source_binding_refresh": {
+    "changed_source_files_outside_probe_closure": [
+      "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
+      "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
+    ],
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "failed_quantity": "shipping_source_tree_sha256 (whole-src digest) only",
+    "justification": "Only the OU-II and CARMA wrappers change (still-water detection no longer attenuates their wave variance). The probe and all 39 src files of its compile closure are byte-identical to the reference commit, so native secant bytes, norms and every qualification and false theorem flag are retained without rerun.",
+    "original_shipping_source_tree_sha256": "5e9db9d9bb17eaa84d20aabdc6cf695fcdb4eb60fffe1f7c01c11ed425d26bfe",
+    "probe_closure_files_byte_identical": 40,
+    "reference_commit": "3ce7fe7cd11320abe15ff6e01fcd4283f0ede456",
+    "replay_performed": false
+  },
   "step_halving_matrix_difference_2norm": 0.014733694685449324,
   "structures_preserved": "complete inherited wrapper state, physical sensor record, all 21 states and full covariance, gains, Joseph, resets, projections, frontend/tuner and clocks",
   "theorem_closed": false,

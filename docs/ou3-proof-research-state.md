@@ -1,3 +1,29 @@
+Stillness-attenuation source identity (class E): the OU-II and CARMA wrappers
+no longer attenuate wave variance on the still-water detector's fixed
+acceleration threshold (`docs/moving-vessel-regression-diagnosis.md`). This
+changes only the conservative whole-src digest of the native secant report
+(failed quantity: `shipping_source_tree_sha256`). The OU-III wrapper and
+estimator, the probe and all 39 src files of its compile closure are
+byte-identical to the merged 5 kn replay head; no replay is claimed. Native
+results, byte hashes and all theorem/qualification flags are retained.
+Structures preserved: the complete shipping OU-III source closure and every
+OU-III operation. Relaxations introduced: none. Invalidated hypothesis: none;
+this repairs source identity, not an inequality. Current limiter and theorem
+status are unchanged. Next falsifiable check: proof provenance and evidence
+tests against the refreshed binding.
+
+Replay-gate toolchain sensitivity (class E, infrastructure): built with
+Ubuntu 24.04 g++ 13.3 on an AVX-512 host, the unchanged OU-III replay
+measures `gyro_bias_3d_percent` 12.7148 (default) and 12.7029 (interval)
+against limits 12.69245 and 12.68089 measured with Debian g++ 14.2; every
+other OU-III channel passes. Same source, different compiler/`-march=native`
+code generation; the 0.5 % limit margin is below this spread (OU-III up to
+0.7 % per channel, TFG up to 25 % on one record's yaw). Invalidated
+hypothesis: that the published limits transfer across toolchains. Retained:
+OU-III limits and evidence unchanged; no estimator or proof change.
+Structures preserved: all. Relaxations introduced: none. Next falsifiable
+check: the hosted ubuntu-24.04 replay of this branch against the same limits.
+
 Coefficient-report provenance repair (class E): the study workflow rewrote the
 coefficient report without replacing its manifest, retaining an obsolete
 dataset name and output hash. The producer now writes both together from the
