@@ -11,7 +11,11 @@ sys.path.insert(0, str(ROOT/'tools'))
 from tangent_shared_modes_inputs import verify_raw_inputs
 
 try:
-    from tangent_shared_modes_report import ljung_box, trace
+    import matplotlib
+    # The executable report configures publication fonts at import. Keep those
+    # settings out of unrelated figure-export tests in the shared suite.
+    with matplotlib.rc_context():
+        from tangent_shared_modes_report import ljung_box, trace
 except ModuleNotFoundError:
     ljung_box = trace = None
 
