@@ -33,6 +33,21 @@ def pii_fixture():
 
 
 class ReplayEvidenceTests(unittest.TestCase):
+    def test_heave_requires_all_methods_inputs_and_the_selected_frontend(self):
+        methods = sorted(G.HEAVE_METHODS | {'pii'})
+        text = '\n'.join(f'HEAVE_ONLY method={method} frontend=mahony record={name} z_pct_hs=1'
+                         for method in methods for name in G.REFERENCE_CSV_SHA256)
+        self.assertEqual(len(G.parse_heave(text, 'default')), 40)
+        invalid = (text.replace('frontend=mahony', 'frontend=proxy', 1),
+                   text.replace('method=godhavn ', 'method=unknown ', 1),
+                   text.replace('z_pct_hs=1', 'z_pct_hs=nan', 1),
+                   '\n'.join(text.splitlines()[1:]),
+                   text.replace(next(iter(G.REFERENCE_CSV_SHA256)),
+                                list(G.REFERENCE_CSV_SHA256)[1], 1))
+        for bad in invalid:
+            with self.assertRaises(ValueError):
+                G.parse_heave(bad, 'default')
+
     def test_pii_rejects_missing_duplicate_and_nonfinite_records(self):
         text = pii_fixture()
         self.assertEqual(len(G.parse_pii(text)), 8)

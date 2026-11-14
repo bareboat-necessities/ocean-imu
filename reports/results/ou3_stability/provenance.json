@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "fe065d9a3d384fe9b902c1f9f9ab05527322ec95"
+      "git_blob_sha": "5171c4cb37ad2700cb96ad9523dbef8e68e04218"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "c7f7c943ca101de7fe84f2ae2b2c30d51944c8b7"
+      "git_blob_sha": "e84e1d6fa493ec053e83216001be4a60901800ed"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1810,6 +1810,34 @@
     "probe_src_files_byte_identical": 39,
     "replay_performed": false,
     "scope": "PII-only runtime phase/noise-smoothing correction; no shipping OU-III operation or proof premise changes",
+    "relaxations_introduced": "None",
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "theorem_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "nlo_encounter_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+    "changed_src_outside_ou3_probe_closure": [
+      "src/nlo/TimeVarGainNLO_Adapter.h"
+    ],
+    "probe_src_files_byte_identical": 39,
+    "replay_performed": false,
+    "scope": "NLO-only wave-band acceleration bandwidth adjustment; no shipping OU-III operation or proof premise changes",
+    "relaxations_introduced": "None",
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "theorem_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "encounter_continuation_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+    "changed_src_outside_ou3_probe_closure": [
+      "src/nlo/TimeVarGainNLO_Adapter.h"
+    ],
+    "probe_src_files_byte_identical": 39,
+    "replay_performed": false,
+    "scope": "NLO wave-band bandwidth adjustment outside the unchanged OU-III closure; TFG cadence rejected and original source retained",
     "relaxations_introduced": "None",
     "native_secant_payload_identical_except_source_tree_digest": true,
     "theorem_promoted": false,

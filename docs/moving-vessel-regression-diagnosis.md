@@ -60,12 +60,22 @@ worst case is unchanged; the largest small-wave cost is 0.316 mm RMS.
 See the [scaling study](encounter-scaling-regressions.md) for the derivation,
 per-record comparisons and rejected cutoff/clamp experiments.
 
+## NLO weak-acceleration bandwidth
+
+The NLO adapter now protects drift-rejection bandwidth when measured wave-band
+acceleration is weak. Across three paired sensor seeds, moving mean/worst heave
+falls from 16.663/68.161 to 8.474/10.159% Hs. Its noise-free response has a
+measured cost, so this is a robustness tradeoff rather than a universal gain.
+The [scaling study](encounter-scaling-regressions.md) records normal-noise,
+engine-noise and ideal-sensor controls and the tightened production limits.
+
 ## Remaining regressions
 
 OU-III, TFG, Adaptive PII and NLO still show worse normalized heave on moving
 inputs. TFG also has a substantial tilt/bias penalty in the largest sea.
-The [current results](moving-vessel-results.md) and paired comparison report
-those limitations explicitly. Removing OU-III attenuation and changing TFG
+The [current results](moving-vessel-results.md), paired comparison and
+[eight-family inventory](encounter-scaling-regressions.md#remaining-ou-carma-and-tfg-speed-regressions)
+report those limitations explicitly. Removing OU-III attenuation and changing TFG
 startup/bias-release timing are not adopted here: neither has established
 acceptable behavior across both stationary and moving records.
 

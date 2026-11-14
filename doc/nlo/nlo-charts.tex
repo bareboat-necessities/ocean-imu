@@ -47,7 +47,43 @@ constant is 120 seconds; the gain multiplier is 0.5575 and the separate
 gain-smoothing time constant remains 30 seconds. The longer coarse horizon
 reduces irregular-wave crossing jitter, with a corresponding acquisition lag.
 Validation here covers the 5 kn vessel records with slow heading oscillation, not a guarantee of tracking
-rapidly changing seas. The original displacement quality limits are unchanged.
+rapidly changing seas.
+
+\section*{Drift rejection in weak encounter acceleration}
+
+Following seas lower encounter frequency and acceleration without slowing
+physical IMU bias drift. A frequency-only bandwidth schedule therefore loses
+drift rejection. The adapter now estimates the central variance $V$ of measured
+vertical acceleration through the shared period-scaled wave band
+($0.5 f$ to $4 f$, subject to its usual physical and sampling guards).
+The acceleration is projected using the current attitude, excluding the
+translational correction $\xi$. Attitude and frequency estimation remain
+coupled to the observer. The shared variance estimator averages four wave
+periods, with its existing horizon bounds.
+
+Let $s=0.12\,\mathrm{m/s^2}$, let $\theta_w$ be the existing clamped
+frequency command, and let $\theta_0$ be the configured capture bandwidth
+(default 1). Before the existing 30-second smoothing, the command becomes
+\[
+ w=\frac{1}{1+(V/s^2)^2},\qquad
+ \theta_c=\operatorname{clip}
+ \left(\sqrt{\theta_w^2+w\theta_0^2},\,0.15,\,1.60\right).
+\]
+The scale $s$ is empirical; it is neither an estimate of sensor noise nor a
+still-water classification. No displacement is suppressed or reset.
+Setting \texttt{theta\_accel\_scale\_mps2=0} restores the previous schedule.
+The core gains, frequency tracker, output high-pass and startup policy are
+retained. Band filtering matters: using broadband acceleration variance
+instead causes a substantial small-wave regression with machinery vibration.
+
+Paired zero-speed and 5 kn measurements, held-out sensor seeds, engine
+vibration and noise-free controls are recorded in
+\texttt{reports/results/encounter\_scaling/nlo\_band*.json} and discussed in
+\texttt{docs/encounter-scaling-regressions.md}. The adjustment trades some
+noise-free wave fidelity for stronger drift rejection; it is not a universal
+optimum. Moving-data JONSWAP and low-wave PM-Stokes regression limits tighten
+to 9.48 and 9.17 percent of nominal $H_s$, respectively; the other PM-Stokes
+limit remains 8.19 percent.
 
 \section*{Attitude}
 

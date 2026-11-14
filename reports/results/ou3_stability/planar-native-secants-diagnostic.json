@@ -91,7 +91,7 @@
   ],
   "shipping_behavior_changed": false,
   "shipping_header_sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
-  "shipping_source_tree_sha256": "9930e21dc8a1f2835424bb313784d9b2fcf2f8e93afc6119e8168bdb87246145",
+  "shipping_source_tree_sha256": "da3adf383d0c3e5a8cce460518c40fd2104940fcfa139c78c5cd4e033ac274bf",
   "source_binding_refresh": {
     "changed_source_files_outside_probe_closure": [
       "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
@@ -99,8 +99,28 @@
     ],
     "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
     "comment_only_probe_dependency": "src/kalman_common/SeaStateFusionDefaults.h",
+    "encounter_continuation_scope": {
+      "changed_src_outside_ou3_probe_closure": [
+        "src/nlo/TimeVarGainNLO_Adapter.h"
+      ],
+      "probe_src_files_byte_identical": 39,
+      "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+      "relaxations_introduced": "None",
+      "replay_performed": false,
+      "scope": "NLO wave-band bandwidth adjustment outside the unchanged OU-III closure; TFG cadence rejected and original source retained"
+    },
     "failed_quantity": "shipping_source_tree_sha256 (whole-src digest) only",
     "justification": "OU-II and CARMA behavior changes remain outside the OU-III probe closure. The defaults table corrects only its OU-II comment; removing C++ comments produces identical text. All other 39 probe/source closure files are byte-identical to 3ce7fe7. Retain native secant bytes and false theorem flags without claiming a replay.",
+    "nlo_encounter_scope": {
+      "changed_src_outside_ou3_probe_closure": [
+        "src/nlo/TimeVarGainNLO_Adapter.h"
+      ],
+      "probe_src_files_byte_identical": 39,
+      "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+      "relaxations_introduced": "None",
+      "replay_performed": false,
+      "scope": "NLO-only wave-band acceleration bandwidth adjustment; no shipping OU-III operation or proof premise changes"
+    },
     "original_shipping_source_tree_sha256": "5e9db9d9bb17eaa84d20aabdc6cf695fcdb4eb60fffe1f7c01c11ed425d26bfe",
     "pii_phase_guard_scope": {
       "changed_src_outside_ou3_probe_closure": [

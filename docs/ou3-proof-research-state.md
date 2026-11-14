@@ -1,21 +1,52 @@
-Encounter-scaling diagnostics and PII correction (class E, separate filter):
-the shipping OU-III probe closure remains byte-identical to a4833ea; the only
-new src change is VerticalPIIObserver.h, outside that closure. The conservative
-whole-src native-secant receipt is refreshed without replaying or altering its
-payload. Preserved: all OU-III states, covariance/gains, resets, scheduler,
-physical histories, frontend and tuning. Relaxations: none. Failures: lowering
-the period leak to 0.01 Hz worsens small-wave OU-III heave (moving 8.24 to
-9.53% Hs; zero-speed 4.25 to 8.35%); removing the S floor gives 26.01% on the
-moving case. These temporary include-overlay variants are rejected diagnostics,
-not admitted shipping counterexamples or stability conclusions. Increasing the
-variance cap from 35 to 60 s alone barely changes RMS. A parallel CARMA build
-hit `g++: fatal error: Killed signal terminated program cc1plus`; the serial
-make all build subsequently rebuilt that simulator. An unavailable clang++
-probe was compiled with g++ instead. These are infrastructure failures.
-Genuine shipping counterexample: none. Retained: native secant payloads and all
-open theorem/qualification flags, with no promotion. Next: verify the separate
-PII phase guard across held-out sensor seeds, full regressions and fresh hosted
-source-bound replay evidence. This changes PII behavior, not OU-III behavior.
+Hosted lever-arm publication refresh (class E): run 43630161809 on the
+PR merge-preview tree reports TFG-CARMA negative-control yaw ratio
+38.8156 -> 38.7948 and worst-sea tilt ratio 9.9692 -> 9.9366, exceeding the
+unchanged 0.01 absolute reproduction tolerance. The Git commit API confirms
+merge preview f8c87c3 and head 49ec862 have the identical tree
+50a382ebfa9b51caace1989b79f014521ec6af98. Importing the complete checksum-verified
+hosted artifact refreshes raw measurements, summaries, figures and generated
+documentation. No simulator, acceptance threshold or OU-III operation changes.
+Invalidated hypothesis: cross-toolchain reproduction of these highly amplified
+ratios within 0.01 absolute. Retained facts: physical histories, all OU-III
+structures, proof payload and open qualifications. Relaxations introduced: none.
+Next check: the unchanged hosted comparison against its regenerated publication.
+
+Encounter-response continuation (class E implementation diagnostics): the
+39-file shipping OU-III probe src closure remains byte-identical to the audited
+reference. The accepted NLO wave-band bandwidth guard is outside that closure.
+The whole-src secant receipt is refreshed without changing its numerical payload
+or claiming a replay. Structures preserved: every OU-III state, covariance/gain,
+reset, scheduler, frontend, tuner and persistent physical/filter history.
+Relaxations introduced: none. All theorem/physical-qualification flags remain open.
+
+Failed quantities: the proposed TFG fractional cadence fails three production
+legacy-law checks: heave 8.3259 > 8.28795% Hs, accelerometer-Z bias
+5.52383 > 5.51543% of maximum true bias, and heave 8.10862 > 8.05605% Hs.
+The unchanged limits reject it; the source and accepted measurements are restored.
+Suppressing OU-III periodic covariance resets changes worst screened heave
+8.23605 to 8.16948% Hs but worsens worst accelerometer-bias RMS
+0.05680 to 0.09373 m/s^2. A 0.5 s commit interval also worsens that bias
+metric to 0.08371 m/s^2. Neither is adopted. A TFG Schmidt-style held-bias
+startup overlay worsens small stationary pitch 0.0458 to 0.5440 degrees and
+bias 0.0506 to 0.11685 m/s^2; it is rejected. These invalidate the respective
+cadence/covariance/startup hypotheses as general fixes, not a stability theorem.
+Prior stillness and all-axis CARMA band-normalization failures remain recorded
+in encounter_scaling/kalman_followup.json. None is shipping evidence.
+
+Infrastructure: the earlier optional parallel CARMA compilation exhausted memory;
+serial compilation succeeded. A prior make-all receipt was lost after scratch
+exhaustion. This continuation stopped a separate make-all after its independently
+measured TFG cadence failure and reruns the required command on restored source
+with optional time-series output disabled. These are class E failures.
+Retained facts: unchanged OU-III closure, native secant payload and acceptance
+limits. Current limiter: reduced encounter acceleration with fixed sensor noise,
+and coupled attitude/bias/period estimation. Next falsifiable experiment:
+use the all-family paired inventory to isolate live tilt/bias/period error at
+reduced encounter acceleration. Vertical-only CARMA band compensation has now
+failed held-out independent-axis means (2.79308 to 2.80640% Hs; maximum cost
+6.46 mm) and is rejected after its one motivated refinement from the failed
+all-axis trial. No further scalar-gain tuning of that mechanism is justified.
+Full regressions and current-source hosted evidence remain required.
 
 Integration source audit (class E): main 48e444f is merged, and the
 OU-II/CARMA stillness fixes from PR #754 are incorporated. The shared defaults

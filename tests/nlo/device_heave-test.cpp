@@ -195,6 +195,49 @@ static bool heavingStartup(float noise_std, float phase) {
                  "heaving startup lost wave amplitude/phase");
 }
 
+// Slowing a wave must not slow physical sensor drift. Use an independent
+// sinusoidal bias history, not the simulator's random-walk generator, and
+// score the complete reported displacement (without demeaning or fitting).
+static bool encounterDrift() {
+    using Observer = TimeVarGainNloAdapter<false, NloMagType::None, float>;
+    bool ok = true;
+    for (const auto& wave : {std::pair<float, float>{0.06f, 5.0f}, {1.8f, 11.0f}}) {
+        auto previous_config = Observer::makeDefaultConfig();
+        previous_config.theta_accel_scale_mps2 = 0.0f;
+        Observer previous(previous_config), adjusted;
+        double old_square = 0.0, new_square = 0.0;
+        int scored = 0;
+        constexpr float dt = 0.005f;
+        const float omega = 2.0f*pi/wave.second;
+        for (int k = 0; k < 120000; ++k) {
+            const float t = k*dt;
+            const float z = wave.first*std::sin(omega*t);
+            const float bias = 0.03f + 0.008f*std::sin(2.0f*pi*t/70.0f);
+            const Vec3 force(0.0f, 0.0f, -omega*omega*z + bias - g_std);
+            previous.update(dt, Vec3::Zero(), force);
+            adjusted.update(dt, Vec3::Zero(), force);
+            if (k >= 30000) {
+                const float old_error = previous.snapshot().position_ned.z() - z;
+                const float new_error = adjusted.snapshot().position_ned.z() - z;
+                old_square += old_error*old_error;
+                new_square += new_error*new_error;
+                ++scored;
+            }
+        }
+        const double before = std::sqrt(old_square/scored);
+        const double after = std::sqrt(new_square/scored);
+        std::printf("NLO encounter drift A=%.2f T=%.1f RMS %.6f -> %.6f m\n",
+                    wave.first, wave.second, before, after);
+        ok &= check(std::isfinite(after) && after < 1.0,
+                    "NLO encounter drift response is unbounded");
+        ok &= wave.first < 0.1f
+            ? check(after < 0.25*before && after < 0.08,
+                    "weak acceleration lost sensor-drift rejection")
+            : check(after < 1.05*before, "drift protection damaged the larger wave");
+    }
+    return ok;
+}
+
 int main() {
     bool ok = forceCorrection();
     ok &= replay("200 Hz still", false, false, false);
@@ -205,5 +248,6 @@ int main() {
     ok &= heavingStartup(0.0f, 0.0f);
     ok &= heavingStartup(0.18f, 0.0f);
     ok &= heavingStartup(0.18f, pi*0.5f);
+    ok &= encounterDrift();
     return ok ? 0 : 1;
 }

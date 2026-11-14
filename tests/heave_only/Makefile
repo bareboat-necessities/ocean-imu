@@ -6,6 +6,7 @@ REPO_ROOT := $(abspath $(TEST_DIR)/../..)
 EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-isystem $(EIGEN_DIR),-isystem /usr/include/eigen3)
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
+BASEFLAGS += -MMD -MP
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -38,8 +39,10 @@ heave_only-sim: heave_only-sim.o W3dSimCommon.o
 heave_only-test: heave_only-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.cpp
+%.o: %.cpp Makefile
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
+-include $(wildcard *.d)
+
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv

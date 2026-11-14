@@ -181,12 +181,17 @@ static TrackerRunSummary run_from_csv(TrackerType tracker,
 
     // Output file
     std::string outFile = "freq_track_" + trackerName + "_" + waveName + tail + nb + ".csv";
-    std::ofstream ofs(outFile);
-    if (!ofs.is_open()) {
-        fprintf(stderr, "Failed to open %s\n", outFile.c_str());
-        return {};
+    const char* write_env = std::getenv("W3D_WRITE_TIMESERIES");
+    const bool write_timeseries = !write_env || std::string(write_env) != "0";
+    std::ofstream ofs;
+    if (write_timeseries) {
+        ofs.open(outFile);
+        if (!ofs.is_open()) {
+            fprintf(stderr, "Failed to open %s\n", outFile.c_str());
+            return {};
+        }
+        write_csv_header(ofs);
     }
-    write_csv_header(ofs);
 
     // Noise
     std::default_random_engine rng(run_seed);
@@ -243,15 +248,19 @@ static TrackerRunSummary run_from_csv(TrackerType tracker,
         double abs_error        = std::isnan(error) ? NAN : std::fabs(error);
         double abs_smooth_error = std::isnan(smooth_error) ? NAN : std::fabs(smooth_error);
 
-        write_csv_line(ofs, rec.time, true_f, est_freq, smooth_freq,
-                       error, smooth_error, abs_error, abs_smooth_error, updated);
+        if (write_timeseries) {
+            write_csv_line(ofs, rec.time, true_f, est_freq, smooth_freq,
+                           error, smooth_error, abs_error, abs_smooth_error, updated);
+        }
 
         sim_t = rec.time;
     });
     reader.close();
 
-    ofs.close();
-    printf("Wrote %s\n", outFile.c_str());
+    if (write_timeseries) {
+        ofs.close();
+        printf("Wrote %s\n", outFile.c_str());
+    }
 
     TrackerRunSummary summary;
     summary.tracker_name = trackerName;

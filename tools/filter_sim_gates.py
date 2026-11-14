@@ -90,6 +90,30 @@ def profiles_for(name: str) -> list[tuple[str, list[str]]]:
     return profiles
 
 
+HEAVE_METHODS = frozenset(('godhavn', 'godhavn_ext', 'richter_zd', 'kuchler'))
+
+
+def parse_heave(text: str, profile: str) -> list[dict]:
+    """Require each declared method and input, with the intended frontend."""
+    if profile not in ('default', 'proxy', 'truth'):
+        raise ValueError('unknown heave profile')
+    methods = HEAVE_METHODS | ({'pii'} if profile != 'truth' else set())
+    frontend = 'mahony' if profile == 'default' else profile
+    rows = [dict(item.split('=', 1) for item in line.split()[1:])
+            for line in text.splitlines() if line.startswith('HEAVE_ONLY ')]
+    if len(rows) != 8 * len(methods) or {r['method'] for r in rows} != methods:
+        raise ValueError(f'heave/{profile}: incomplete method inventory')
+    for method in methods:
+        names = [Path(r['record']).name for r in rows if r['method'] == method]
+        if len(names) != 8 or set(names) != set(REFERENCE_CSV_SHA256):
+            raise ValueError(f'heave/{profile}/{method}: incomplete records')
+    if any(r['frontend'] != frontend for r in rows):
+        raise ValueError(f'heave/{profile}: wrong frontend')
+    if not all(math.isfinite(float(r['z_pct_hs'])) for r in rows):
+        raise ValueError(f'heave/{profile}: nonfinite RMS')
+    return rows
+
+
 def parse_w3d(text: str) -> list[dict]:
     """Require eight complete, finite, 900 s records, including bias scores."""
     rows = []
@@ -272,18 +296,8 @@ def summarize(log_dir: Path, *, measure: bool = False) -> dict:
     if not all(math.isfinite(row[a]) for row in other['ahrs'] for a in ('roll', 'pitch', 'yaw')):
         raise ValueError('AHRS has nonfinite scored attitude')
     other['heave'] = {}
-    for profile, count in (('default', 40), ('proxy', 40), ('truth', 32)):
-        lines = (log_dir / f'heave-{profile}.log').read_text().splitlines()
-        rows = [dict(item.split('=', 1) for item in line.split()[1:])
-                for line in lines if line.startswith('HEAVE_ONLY ')]
-        if len(rows) != count:
-            raise ValueError(f'heave/{profile}: expected {count} scores')
-        for method in {r['method'] for r in rows}:
-            names = [Path(r['record']).name for r in rows if r['method'] == method]
-            if len(names) != 8 or set(names) != set(REFERENCE_CSV_SHA256):
-                raise ValueError(f'heave/{profile}/{method}: incomplete records')
-        if not all(math.isfinite(float(r['z_pct_hs'])) for r in rows):
-            raise ValueError(f'heave/{profile}: nonfinite RMS')
+    for profile, _ in profiles_for('heave'):
+        rows = parse_heave((log_dir / f'heave-{profile}.log').read_text(), profile)
         other['heave'][profile] = [{k: row[k] for k in ('method', 'frontend', 'record', 'z_pct_hs')}
                                    for row in rows]
     nlo = (log_dir / 'nlo-default.log').read_text()

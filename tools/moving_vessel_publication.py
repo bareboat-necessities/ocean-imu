@@ -75,6 +75,9 @@ def publish_comparison(report):
                    release=RELEASE,scope='same executable and default draws in both arms; each column is its own worst record; physical input change, not an estimator improvement',
                    binary_sha256=report['binary_sha256'],families=families)
     (ROOT/'reports/results/filter_sim_gates/dataset_comparison.json').write_text(json.dumps(receipt,indent=2,allow_nan=False)+'\n')
+    labels = {**FAMILIES, 'pii': 'Adaptive PII', 'nlo': 'NLO'}
+    largest = sorted(labels, key=lambda name: families[name]['heave_change_percent'], reverse=True)[:3]
+    ranking = ', '.join(labels[name] for name in largest)
     text = ['# Stationary versus moving-boat measurements','',
             f'Both arms are fresh replays of oceanography-waves-lib {RELEASE}, with exact 200 Hz clocks. Before is the zero-speed 28 ft vessel archive; after is the 5 kn archive with ±3° heading oscillation every 120 s. Each pair uses the identical rebuilt executable, default sensor and initialization draws, and trailing 900 s scoring. No estimator retuning is applied. Hashes and per-record controls are retained in `stationary_control.json`, `measurements.json`, and `dataset_comparison.json`.','',
             '| Filter | Worst heave before → after (% Hs) | Relative increase | Worst 3D RMS before → after (m) | Accel bias RMS before → after (mm/s²) |',
@@ -82,7 +85,7 @@ def publish_comparison(report):
             'Each column reports its own worst record; these maxima need not occur in the same sea. These deterministic comparisons do not provide population confidence intervals.','',
             '| Filter | Roll before → after (deg) | Pitch before → after (deg) | Yaw before → after (deg) |',
             '| --- | ---: | ---: | ---: |',*angles,'',
-            'NLO has the largest relative heave deterioration, followed by OU-III and cubic TFG. OU-II and the CARMA wrappers do not let still-water detection attenuate wave variance, which a 0.27 m following sea at 5 kn triggers. TFG has a substantial accelerometer-bias and attitude penalty; the shared-mode CARMA variants retain nearly unchanged worst absolute 3D RMS despite worse normalized heave in the smallest sea. These paired inputs change encounter frequency and steering together. The [regression diagnosis](moving-vessel-regression-diagnosis.md) explains the stillness fix and the limits of attributing the remaining differences.','',
+            f'The largest relative increases in worst heave are, in order: {ranking}. OU-II and the CARMA wrappers do not let still-water detection attenuate wave variance, which a 0.27 m following sea at 5 kn triggers. TFG has a substantial accelerometer-bias and attitude penalty; the shared-mode CARMA variants retain nearly unchanged worst absolute 3D RMS despite worse normalized heave in the smallest sea. These paired inputs change encounter frequency and steering together. The [regression diagnosis](moving-vessel-regression-diagnosis.md) explains the stillness fix and the limits of attributing the remaining differences.','',
             'The [engine-noise study](../reports/results/engine_noise_degradation/engine_noise_report.md) separately tests machinery stress on the moving records. At 800 rpm, OU-III with the guard plus covariance inflation reaches 2.417 times its engine-off 3D RMS; the old zero-speed 1.7-times claim does not carry over. Its pitch offset also worsens when covariance inflation is added. This is a measured operating limitation, not a change to deployed tuning.','',
             'Position and velocity truth are expressed about the declared cruise track. All specific force, turning acceleration and angular rates remain intact. See the [coordinate convention](moving-vessel-replays.md) and [current results](moving-vessel-results.md).','']
     (ROOT/'docs/moving-vessel-comparison.md').write_text('\n'.join(text))
@@ -126,7 +129,7 @@ def publish():
             (ROOT / 'doc' / directory / filename).write_text(format_table(formatted, table))
     out = ROOT / 'reports/results/filter_sim_gates/underway_summary.csv'
     with out.open('w') as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(summary[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(summary[0]), lineterminator='\n')
         writer.writeheader()
         writer.writerows(summary)
     prose = (
@@ -160,6 +163,11 @@ def publish():
     pii_yaw = max(r['yaw_rms_deg'] for r in pii)
     md.append(f'| Adaptive PII | {pii_j:.3f} | {pii_p:.3f} | — | {pii_yaw:.3f} | — |')
     tex.append(f'Adaptive PII & {pii_j:.2f} & {pii_p:.2f} & -- & {pii_yaw:.2f}' + r' \\')
+    nlo = dict(zip(sorted(REFERENCE_CSV_SHA256), report['other_replays']['nlo_z_percent_hs'], strict=True))
+    nlo_j = max(value for name, value in nlo.items() if 'jonswap' in name)
+    nlo_p = max(value for name, value in nlo.items() if 'pmstokes' in name)
+    md.append(f'| TVG-NLO | {nlo_j:.3f} | {nlo_p:.3f} | — | — | — |')
+    tex.append(f'TVG--NLO & {nlo_j:.2f} & {nlo_p:.2f} & -- & --' + r' \\')
     tex += [r'\hline\end{tabular}\end{center}',
             'Each column reports its worst record; maxima need not come from the same sea. '
             r'Production and interval-rate limits are qualified separately with a 0.5\% '

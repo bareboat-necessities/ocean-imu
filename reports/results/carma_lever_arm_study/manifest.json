@@ -62,20 +62,30 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "41855f484ff553707bc1d36bddf9ee193f81f63db9a88f104adc06f5daa4bc07",
-    "carma_lever_arm_penalty.svg": "7b1a44b409bb32ff5712277eae9be2cd126c172e42f7a76b90478370cf9d92b8",
-    "carma_lever_arm_sea_state.svg": "c161ac2ec4cf85627eb4017316d954887ec42a623be412feb179b6ddf5aff2d9",
-    "carma_lever_arm_tilt.svg": "067a4394855e30e246cc0676e1c450f8da76781c9a040bac1a2f17d3400b84b5",
-    "carma_lever_arm_yaw.svg": "21b18faf36959ae80cb4605c751f342fea1bbacd412e8c74cf576136667912e2",
-    "lever_arm_cutoff_runs.csv": "ee932f83e79ddc7c7eac93642311907d891bda8cceb17d885931c75bdd9fdea6",
-    "lever_arm_cutoff_summary.csv": "feeba1e0ab5e1d75ce4ce69698d4e3c3a2da835981971d2eb936f091fbc2725f",
-    "lever_arm_report.md": "45749c002ade27f5d499867b70bfd81b1a8ce27b5aa23ccb76c5d9080b3c3aa2",
-    "lever_arm_runs.csv": "352bebb4cddc4400ee76d5fa37c87a971e65ca407c6aa206e49f7cdb874d04fe",
-    "lever_arm_summary.csv": "3b0cbccc02e3e1318b55424add6d29f64a32c4fedcf65369e70f0ba2da3d69ce"
+    "carma_lever_arm_cutoff.svg": "67fd18474355dc2db02aeaa56a59a00852ccf98d1b42d71880b925004cf744b9",
+    "carma_lever_arm_penalty.svg": "37ba4f6a8938cebb83419580f0cc77ef635019bf4f26c2ea43f10a6eaa571e81",
+    "carma_lever_arm_sea_state.svg": "22afc5743df8ebba2d5d07bc61ebf5f83ddc2eef8f49068e6bff3722aa56cad7",
+    "carma_lever_arm_tilt.svg": "9d86682156847dafc0031fe83ff1a4974bd356b33455d9b6a771bf1885e364d3",
+    "carma_lever_arm_yaw.svg": "8b8767cfd4838b5f73ac396df5ff925efaff64ae56fe97abba607397e2e48e67",
+    "lever_arm_cutoff_runs.csv": "05d5c38ea364f91aa39665c86a92b6d6fbb87dd99d885e6173c124e45176be99",
+    "lever_arm_cutoff_summary.csv": "4105a5bf1ac8866e826c898433cb0a1ef2381ac38cbefd1655905eb152f06027",
+    "lever_arm_report.md": "f16601687419dd2f9db7f44c668d99822074aedde180a1d2e7851636e2c6f6e6",
+    "lever_arm_runs.csv": "be7ee7473dee1d7fc4d73e729e7947e71ed933e5dce55859ff5da3168eddbed0",
+    "lever_arm_summary.csv": "dd006bf192f5b3e9e46dfb3cce88d590f3a835f534a879f52890fae11b0ce708"
   },
   "filters": {
     "carma3": "A41",
     "tfg_carma3": "T41"
+  },
+  "hosted_replay_receipt": {
+    "artifact_id": 14129119609,
+    "artifact_zip_sha256": "e6e6d2f443bc2ac53047b4688b39b3afb3029c26ec3064a72509b168932df85e",
+    "job_id": 132562334035,
+    "scope": "Canonical hosted regeneration of summaries, drawings and raw measurements; no simulator or comparison threshold change. The source source_commit field retains the actual tested merge preview.",
+    "source_head": "49ec86262052bd3fa8460b2d43d04ccde23b42f9",
+    "source_tree": "50a382ebfa9b51caace1989b79f014521ec6af98",
+    "tree_identity": "GitHub Git commit API verifies the PR merge preview and its head have identical trees",
+    "workflow_run": 43630161809
   },
   "mode": "full",
   "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
@@ -101,6 +111,6 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "source_commit": "5b66d7aea7aaeaf8061e2208b904912cb2b65462",
+  "source_commit": "f8c87c3f0072f5409d5277be03772b3e8a7c8d97",
   "study": "CARMA IMU lever-arm installation"
 }

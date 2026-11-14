@@ -5,7 +5,7 @@ The current external-data baseline uses oceanography-waves-lib v1.3.1: a 28 ft e
 \begin{tabular}{lrrrr}
 \hline Filter & JONSWAP & PM--Stokes & 3-D & Yaw \\
  & \%$H_s$ & \%$H_s$ & m & deg \\ \hline
-OU-II & 8.48 & 8.03 & 1.072 & 0.90 \\
+OU-II & 8.49 & 8.03 & 1.072 & 0.90 \\
 OU-III & 8.24 & 7.84 & 0.900 & 0.87 \\
 TFG & 7.82 & 7.48 & 0.911 & 1.63 \\
 CARMA & 3.57 & 3.73 & 0.420 & 0.94 \\
@@ -13,6 +13,7 @@ Shared QMEKF & 3.55 & 3.70 & 0.364 & 0.99 \\
 TFG-CARMA & 3.57 & 3.73 & 0.420 & 0.93 \\
 Shared TFG & 3.55 & 3.70 & 0.364 & 0.95 \\
 TFG cubic & 8.25 & 8.02 & 1.579 & 3.05 \\
-Adaptive PII & 15.39 & 14.73 & -- & 8.23 \\
+Adaptive PII & 10.49 & 9.62 & -- & 8.23 \\
+TVG--NLO & 9.43 & 9.12 & -- & -- \\
 \hline\end{tabular}\end{center}
 Each column reports its worst record; maxima need not come from the same sea. Production and interval-rate limits are qualified separately with a 0.5\% margin and upward rounding. The analytic hull uses encounter corrections, without hull-specific forward-speed hydrodynamics or steering dynamics.

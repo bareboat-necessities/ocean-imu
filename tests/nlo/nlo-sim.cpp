@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <optional>
@@ -33,18 +34,19 @@ static constexpr float RMS_WINDOW_SEC = 900.0f;
 static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 
 // Raw heave gates verified on v1.3.1, 28 ft / 5 kn underway, trailing 900 s.
-// Worst JONSWAP 21.9016%, low-wave PM 23.5243%, other PM 8.14648%.
-// Add 0.5% relative and round upward to hundredths.
+// Wave-band drift protection: JONSWAP 9.4300%, low-wave PM 9.1186%.
+// Add 0.5% relative and round upward to hundredths; retain the stricter
+// existing 8.19% bar for the other PM seas.
 static constexpr float vertical_rms_limit_percent(WaveType wave_type, float hs)
 {
-    if (wave_type == WaveType::JONSWAP) return 22.02f;
-    if (wave_type == WaveType::PMSTOKES && hs > 0.0f && hs <= 0.30f) return 23.65f;
+    if (wave_type == WaveType::JONSWAP) return 9.48f;
+    if (wave_type == WaveType::PMSTOKES && hs > 0.0f && hs <= 0.30f) return 9.17f;
     return 8.19f;
 }
-static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.30f) == 23.65f);
+static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.30f) == 9.17f);
 static_assert(vertical_rms_limit_percent(WaveType::PMSTOKES, 0.31f) == 8.19f);
-static_assert(23.5243f < vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
-static_assert(23.66f > vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(9.1186f < vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
+static_assert(9.18f > vertical_rms_limit_percent(WaveType::PMSTOKES, 0.27f));
 
 class FusionAdapterTimeVarGainNLO_NoGnssNoMag final
     : public IW3dFusionAdapterTyped<TvgNloFilterSnapshot> {
@@ -197,6 +199,9 @@ private:
         if (const char* s = std::getenv("NLO_THETA_GAIN")) {
             cfg.theta_from_omega_gain = std::strtof(s, nullptr);
         }
+        if (const char* s = std::getenv("NLO_THETA_ACCEL_SCALE")) {
+            cfg.theta_accel_scale_mps2 = std::strtof(s, nullptr);
+        }
         if (const char* s = std::getenv("NLO_THETA_TAU")) {
             cfg.theta_smooth_tau_s = std::strtof(s, nullptr);
         }
@@ -306,6 +311,15 @@ static void print_tvg_nlo_vertical_summary(const TvgNloSimulationRunResult& resu
     std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
               << " Pitch=" << rms_pitch.rms()
               << " Yaw(free/ignored)=" << rms_yaw.rms() << "\n";
+    const auto precision = std::cout.precision();
+    std::cout << std::setprecision(9)
+              << "NLO_METRICS input=" << std::filesystem::path(result.input_name).filename().string()
+              << " start_s=" << static_cast<double>(start) * RMS_WINDOW_SEC / N_last
+              << " window_s=" << RMS_WINDOW_SEC << " samples=" << n_z
+              << " disp_z_rms_m=" << z_rms << " disp_z_pct_hs=" << z_pct
+              << " roll_rms_deg=" << rms_roll.rms() << " pitch_rms_deg=" << rms_pitch.rms()
+              << " yaw_rms_deg=" << rms_yaw.rms() << "\n";
+    std::cout.precision(precision);
 
     std::cout << "tvg_k1=" << d.k1
               << ", tvg_k2=" << d.k2
@@ -482,6 +496,9 @@ process_wave_file_for_tvg_nlo_nomag_nognss(const std::string& filename,
     options.dt = dt;
     options.with_mag = false;
     options.add_noise = add_noise;
+    if (const char* value = std::getenv("W3D_WRITE_TIMESERIES")) {
+        options.write_timeseries = std::string(value) != "0";
+    }
     options.mag_odr_hz = 0.0f;
     options.temperature_c = 35.0f;
     options.output_suffix_with_mag = "_tvg_nlo";

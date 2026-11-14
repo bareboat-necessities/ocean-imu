@@ -53,6 +53,52 @@ All 24 moving-record pairs improve. The mean reduction is 28.0%, and the worst n
 
 Production moving-data heave limits tighten from 15.47/14.81 to 10.54/9.68% Hs for JONSWAP/PM-Stokes. The yaw limit remains 8.28°. No gate is relaxed. The PII Makefile now records header dependencies, so a library-header change rebuilds its simulator and regression tests.
 
+## NLO low-acceleration bandwidth protection
+
+The encounter-frequency schedule can reduce observer bandwidth while displacement remains substantial. The library adapter now blends in the configured base bandwidth when measured wave-band acceleration is weak. With band variance V, empirical scale s = 0.12 m/s² and weight w = 1/(1+(V/s²)²), the target is sqrt(theta_wave² + theta_base² w), inside the existing bandwidth limits and smoothing. Setting `theta_accel_scale_mps2=0` selects the previous schedule. The energy measurement uses the prior attitude to level measured specific force and the shared 0.5–4 times wave-frequency band; it does not use the observer's translational correction. The attitude and frequency estimates remain coupled to the observer. This is an empirical bandwidth safeguard, not a sensor-noise estimate or a still-water classification.
+
+The three-seed [normal-noise comparison](../reports/results/encounter_scaling/nlo_band.json) contains 96 runs / 48 pairs. Separate [900 rpm engine](../reports/results/encounter_scaling/nlo_band_engine.json) and [noise-free](../reports/results/encounter_scaling/nlo_band_noise_free.json) controls each contain 32 runs / 16 pairs.
+
+| Dataset and seeds | Mean heave before → after (% Hs) | Worst before → after (% Hs) |
+| --- | ---: | ---: |
+| Zero-speed, default | 6.953 → 6.845 | 7.322 → 6.984 |
+| Zero-speed, all three seeds | 7.194 → 7.049 | 8.509 → 7.565 |
+| 5 kn, default | 11.518 → 8.111 | 23.524 → 9.430 |
+| 5 kn, all three seeds | 16.663 → 8.474 | 68.161 → 10.159 |
+
+Sixteen of 24 moving pairs improve. The largest default-seed moving cost is on the largest JONSWAP record: 7.7168 → 7.7423% Hs (2.16 mm RMS). The all-seed roll/pitch maxima change by less than 0.000003°. The NLO moving heave limits tighten from 22.02/23.65 to 9.48/9.17% Hs for JONSWAP/low PM-Stokes; the existing 8.19% limit on the other PM-Stokes records remains.
+
+Engine-noise moving mean/worst improve from 11.832/24.072 to 8.098/9.452% Hs. Zero-speed small JONSWAP at 900 rpm costs 0.407 mm RMS (6.961 → 7.112% Hs). A first broadband-energy implementation cost 2.84 percentage points in that case and was rejected; wave-band energy is the subsequent refinement. Noise-free moving mean increases from 5.989 to 6.995% Hs, including 4.106 → 7.775% on small JONSWAP (9.9 mm). The bandwidth safeguard therefore trades some ideal-sensor waveform accuracy for robustness to sensor bias and noise. It is not an across-the-board improvement.
+
+The device-path synthetic test independently exercises sinusoidal motion plus slow additive acceleration drift: the short, small wave improves from 0.574 to 0.0448 m RMS and the larger, slower wave from 0.715 to 0.702 m, without detrending, fitting, or output suppression. Existing delayed/jittered device, local-gravity and magnetic-turn tests remain required.
+
+## Remaining OU, CARMA and TFG speed regressions
+
+The [complete inventory](../reports/results/encounter_scaling/remaining_regressions.json) pairs all eight seas for every gated OU/CARMA/TFG replay family, using the same executable at both speeds. It includes displacement, roll, pitch, yaw and both bias-error RMS metrics. These values compare physical datasets after the accepted fixes; they are not before/after implementation improvements. The default sensor seed, production sampling profile and final 900 s are used. TFG legacy here means its regularization law, not the interval-rate sampling profile. Ungated CARMA spectral-shape research variants are not covered by these acceptance measurements.
+
+| Family | Mean heave, zero-speed → 5 kn (% Hs) | Worst heave, zero-speed → 5 kn (% Hs) | Seas with higher heave error |
+| --- | ---: | ---: | ---: |
+| OU-II | 6.216 → 7.348 | 6.642 → 8.486 | 8/8 |
+| OU-III | 3.996 → 5.601 | 4.249 → 8.236 | 8/8 |
+| TFG spectral law | 4.058 → 5.520 | 4.383 → 7.819 | 8/8 |
+| TFG legacy law | 4.196 → 5.926 | 4.322 → 8.247 | 8/8 |
+| CARMA independent axes | 2.311 → 2.745 | 2.461 → 3.726 | 7/8 |
+| CARMA shared modes | 2.273 → 2.685 | 2.455 → 3.702 | 6/8 |
+| TFG-CARMA independent axes | 2.311 → 2.745 | 2.461 → 3.727 | 7/8 |
+| TFG-CARMA shared modes | 2.273 → 2.685 | 2.455 → 3.702 | 6/8 |
+
+The OU-II and independent-axis CARMA/TFG-CARMA stillness fixes reduce the worst moving errors from about 20.84 to 8.486% Hs and 4.67 to 3.73% Hs respectively. They do not remove the residual speed penalty above. Shared-mode CARMA and OU-III remain unresolved rather than being described as fixed.
+
+The [continuation experiments](../reports/results/encounter_scaling/continuation_trials.json) preserve candidate patches, compilation details, input/source/binary hashes and scored values. Their outcomes constrain the next changes:
+
+* **Covariance timing:** a [48-run production screen](../reports/results/encounter_scaling/covariance_cadence.json) tests small, medium and large JONSWAP seas at both speeds. Disabling periodic OU-III covariance synchronization lowers worst screened heave 8.23605 → 8.16948% Hs but raises worst accelerometer-bias RMS 0.05680 → 0.09373 m/s². A 0.5 s tuning-commit interval also raises that bias metric to 0.08371 m/s². Neither is adopted. The TFG arm used the separately rejected cadence candidate and is labeled accordingly.
+* **TFG fractional cadence:** preserving the fractional timer remainder slightly helps the spectral law, but the legacy-law replay fails three unchanged gates: heave 8.3259 > 8.28795% Hs, Z-bias error 5.52383 > 5.51543% of maximum true bias, and heave 8.10862 > 8.05605% Hs. The candidate is rejected and the original source restored. Both [spectral](../reports/results/encounter_scaling/tfg_cadence.json) and [legacy](../reports/results/encounter_scaling/tfg_legacy_cadence.json) paired results remain diagnostic evidence, separate from the accepted inventory.
+* **TFG held-bias covariance:** a Schmidt-style startup overlay worsens small stationary pitch 0.0458 → 0.5440° and accelerometer-bias RMS 0.0506 → 0.11685 m/s²; large moving yaw rises 0.674 → 1.789°. The 12-run screen rejects it.
+* **Vertical-only CARMA band compensation:** the normalized default CARMA(4,1) prior predicts a continuous-band variance fraction 0.6230784 for the 0.5–4 frequency band, suggesting an acceleration-standard-deviation multiplier 1.26686. Applying it vertically, with the empirically calibrated horizontal amplitudes retained, gives small default-seed gains across all four families and all eight-sea means. The 256-run screen also includes held-out moving seeds 7 and 23. For independent-axis CARMA those seeds worsen mean heave 2.79308 → 2.80640% Hs, with a maximum 6.46 mm cost. This matched-model approximation does not reliably repair the regression and is not adopted. No held-out zero-speed or transition qualification is claimed.
+* **Existing CARMA evidence mode:** in an eight-run small/large JONSWAP screen of both independent-axis cores at both speeds, replacing legacy excitation with the existing noise-aware mode changes small moving heave by only about 0.008 percentage point and slightly worsens 3-D RMS. Large-wave changes are negligible. Shared-mode filters already use this mode. It is not a material repair of these residual errors.
+
+No acceptance bar is weakened. These finite diagnostics do not establish that a remaining regression is unavoidable: they reject the particular timing, covariance, startup and amplitude changes tested. The next useful mechanism must separate wave acceleration from attitude/bias error at the lower encounter acceleration, and preserve that separation across seeds and zero-speed controls.
+
 ## Cutoffs and clamps that were tested and rejected
 
 The full [exploratory record](../reports/results/encounter_scaling/exploratory_ablation.json) contains input physics, period-only diagnostics, executable hashes, all ablation rows, and the temporary include-overlay patches. Those overlays are experiments and are not shipping-source evidence.
@@ -65,7 +111,7 @@ The full [exploratory record](../reports/results/encounter_scaling/exploratory_a
 | Remove OU-III S-noise floor | Moving small-wave heave rises from 8.24 to 26.01% Hs. | Rejected. |
 | Raise fixed S-noise floor to 0.225 | Moving small-wave heave improves to 7.62%, but zero-speed error increases to 4.59%. | Not a general scaling repair. |
 | Reduce proxy correction gains | Little heave gain; quarter gains increase accelerometer-bias RMS to about 0.09 m/s². | Rejected. |
-| Increase NLO theta/frequency gain from 0.5575 to 1.0 | Small moving-wave heave improves from 21.90 to 9.48% Hs, but largest moving-wave error worsens from 7.72 to 13.39%. | Reject a global gain change; further work needs signal/noise-aware scheduling. |
+| Increase NLO theta/frequency gain from 0.5575 to 1.0 | Small moving-wave heave improves from 21.90 to 9.48% Hs, but largest moving-wave error worsens from 7.72 to 13.39%. | Reject the global gain change; the wave-band safeguard above is evaluated separately. |
 
 The separate 0.2 Hz acceleration tracker floor feeds the OU direction carrier. It does not supply the OU tuning frequency, so lowering it alone would not fix these heave regressions. The wave tuner has its own 0.03 Hz guard and the period estimator. No broad claim is made that every remaining RMS increase is a software bug: lower encounter frequency also lowers acceleration signal-to-noise ratio at unchanged physical sensor noise.
 
@@ -80,5 +126,7 @@ python3 tools/encounter_scaling_study.py \
   --seeds default,7,23 --jobs 3 \
   --output reports/results/encounter_scaling/pii_phase.json
 ```
+
+Use `--family nlo` for NLO, adding `--engine-rpm 900` or `--noise none` for its controls.
 
 The driver verifies the zero-speed archive, both sets of input hashes, exact clocks, complete scoring windows, finite metrics and unchanged executable identity across the pair set. Results include the source closure, compiler environment and all paired values. Source-bound hosted evidence and the full native regression suite remain separate required checks.

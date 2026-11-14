@@ -10,10 +10,30 @@
     "path": "src/kalman_common/SeaStateFusionDefaults.h",
     "scope": "OU-II stillness default table comment only; no OU-III operation changes"
   },
+  "encounter_continuation_scope": {
+    "changed_src_outside_ou3_probe_closure": [
+      "src/nlo/TimeVarGainNLO_Adapter.h"
+    ],
+    "probe_src_files_byte_identical": 39,
+    "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+    "relaxations_introduced": "None",
+    "replay_performed": false,
+    "scope": "NLO wave-band bandwidth adjustment outside the unchanged OU-III closure; TFG cadence rejected and original source retained"
+  },
   "native_secant_bytes_match_prior_report": [
     true,
     true
   ],
+  "nlo_encounter_scope": {
+    "changed_src_outside_ou3_probe_closure": [
+      "src/nlo/TimeVarGainNLO_Adapter.h"
+    ],
+    "probe_src_files_byte_identical": 39,
+    "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+    "relaxations_introduced": "None",
+    "replay_performed": false,
+    "scope": "NLO-only wave-band acceleration bandwidth adjustment; no shipping OU-III operation or proof premise changes"
+  },
   "pii_phase_guard_scope": {
     "changed_src_outside_ou3_probe_closure": [
       "src/pii_observer/VerticalPIIObserver.h"
