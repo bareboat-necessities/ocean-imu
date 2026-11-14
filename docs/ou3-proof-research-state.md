@@ -1,5 +1,19 @@
 # OU-III proof research state
 
+Stillness-attenuation source identity (class E): the OU-II and CARMA wrappers
+no longer attenuate wave variance on the stillness detector's fixed
+acceleration threshold (`docs/moving-vessel-regression-diagnosis.md`). With
+main's CARMA gain-index edit this changes only the conservative whole-src digest
+of the native secant report (failed quantity: `shipping_source_tree_sha256`).
+The OU-III wrapper and estimator and all 40 compiler-closure files of
+`planar_native_secant_probe.cpp` are byte-identical; no replay is claimed.
+Native results, byte hashes and all theorem/qualification flags are retained.
+Structures preserved: the complete shipping OU-III source closure and every
+OU-III operation. Relaxations introduced: none. Invalidated hypothesis: none;
+this repairs source identity, not an inequality. Current limiter and theorem
+status are unchanged. Next falsifiable check: proof provenance and evidence
+tests against the refreshed binding.
+
 Tangent research quality-gate repair (class E): Ruff found an unused import,
 and CI cppcheck found three inherited group-operation name collisions. The
 import is removed; tangent geometry now composes the existing physical storage

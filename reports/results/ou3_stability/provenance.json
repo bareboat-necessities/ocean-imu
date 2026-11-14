@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b924e98e43701d8d6c8b650418aa05fec54604fc"
+      "git_blob_sha": "e414d654ce26d85ff87b2edce2eb7f1c83fcd611"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5785049cbceff9ad9dbb58dcabba3438cbe4ca7d"
+      "git_blob_sha": "d228e0ac31a1f05a4cb82f85c70761ae286f72b7"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1749,6 +1749,17 @@
     "changed_source_files_outside_probe_closure": 9,
     "probe_closure_src_files_byte_identical_to_main": 38,
     "native_secant_regenerated_with": "clang 18.1.3",
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "stillness_attenuation_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "failed_quantity": "planar-native-secants-diagnostic.json shipping_source_tree_sha256 (whole-src digest) only",
+    "changed_source_files_outside_probe_closure": 9,
+    "probe_closure_src_files_byte_identical_to_main": 39,
     "native_secant_payload_identical_except_source_tree_digest": true,
     "replay_performed": false,
     "validation_gate_changed": false,

@@ -1,6 +1,8 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
-// Production-default regression limits measured on main a053a1d2 (v2.7.6).
+// Production-default regression limits measured on main a053a1d2 (v2.7.6);
+// OU-II, CARMA and TFG-CARMA measured without stillness variance attenuation
+// (docs/moving-vessel-regression-diagnosis.md).
 // Eight pinned v1.2.3 vessel-RAO records, default seeds, trailing 900 s.
 // Worst score + 0.5%, rounded upward to 1e-5, capped by an existing
 // stricter production limit. Historical --regression bars stay separate.
@@ -9,16 +11,16 @@
 namespace ocean_imu::sim::current_limits {
 
 inline constexpr W3dFailureLimits ou2{
-    .err_limit_percent_z_jonswap   = 6.66210f, // measured 6.62894869
-    .err_limit_percent_z_pmstokes  = 6.46219f, // measured 6.43003035
-    .err_limit_yaw_deg             = 0.72934f, // measured 0.725703537
-    .err_limit_roll_deg            = 0.22667f, // measured 0.225542024
-    .err_limit_pitch_deg           = 0.21278f, // measured 0.211719394
-    .err_limit_percent_3d_jonswap  = 12.20058f, // measured 12.1398802
-    .err_limit_percent_3d_pmstokes = 12.02862f, // measured 11.968771
-    .acc_z_bias_percent            = 4.58751f, // measured 4.56468
-    .bias_3d_percent               = 61.99132f, // measured 61.6829
-    .gyro_bias_3d_percent          = 12.64713f, // measured 12.5842
+    .err_limit_percent_z_jonswap   = 6.67400f, // measured 6.64418745
+    .err_limit_percent_z_pmstokes  = 6.47142f, // measured 6.43922281
+    .err_limit_yaw_deg             = 0.74609f, // measured 0.742370069
+    .err_limit_roll_deg            = 0.22529f, // measured 0.224164888
+    .err_limit_pitch_deg           = 0.21279f, // measured 0.211723939
+    .err_limit_percent_3d_jonswap  = 12.20210f, // measured 12.1413851
+    .err_limit_percent_3d_pmstokes = 12.03067f, // measured 11.970809
+    .acc_z_bias_percent            = 4.58776f, // measured 4.56493
+    .bias_3d_percent               = 62.00278f, // measured 61.6943
+    .gyro_bias_3d_percent          = 12.64763f, // measured 12.5847
 };
 
 inline constexpr W3dFailureLimits ou3{
@@ -48,16 +50,16 @@ inline constexpr W3dFailureLimits tfg{
 };
 
 inline constexpr W3dFailureLimits carma{
-    .err_limit_percent_z_jonswap   = 3.07238f, // measured 3.05709362
-    .err_limit_percent_z_pmstokes  = 3.23081f, // measured 3.21473551
-    .err_limit_yaw_deg             = 0.76470f, // measured 0.760889888
-    .err_limit_roll_deg            = 0.35048f, // measured 0.348729193
-    .err_limit_pitch_deg           = 0.20325f, // measured 0.202237442
-    .err_limit_percent_3d_jonswap  = 4.86855f, // measured 4.84432125
-    .err_limit_percent_3d_pmstokes = 5.25706f, // measured 5.23089981
-    .acc_z_bias_percent            = 4.06168f, // measured 4.04147
-    .bias_3d_percent               = 81.73414f, // measured 81.3275
-    .gyro_bias_3d_percent          = 12.78000f, // measured 12.7244
+    .err_limit_percent_z_jonswap   = 2.47299f, // measured 2.4606843
+    .err_limit_percent_z_pmstokes  = 2.45054f, // measured 2.43834066
+    .err_limit_yaw_deg             = 0.76470f, // measured 0.763234377
+    .err_limit_roll_deg            = 0.35093f, // measured 0.349181592
+    .err_limit_pitch_deg           = 0.20365f, // measured 0.202634886
+    .err_limit_percent_3d_jonswap  = 4.88800f, // measured 4.88411903
+    .err_limit_percent_3d_pmstokes = 5.27600f, // measured 5.25382423
+    .acc_z_bias_percent            = 4.04775f, // measured 4.02761
+    .bias_3d_percent               = 81.84731f, // measured 81.4401
+    .gyro_bias_3d_percent          = 12.78000f, // measured 12.7238
 };
 
 inline constexpr W3dFailureLimits csm{
@@ -74,16 +76,16 @@ inline constexpr W3dFailureLimits csm{
 };
 
 inline constexpr W3dFailureLimits tcarma{
-    .err_limit_percent_z_jonswap   = 3.07200f, // measured 3.05673885
-    .err_limit_percent_z_pmstokes  = 3.23061f, // measured 3.21453714
-    .err_limit_yaw_deg             = 0.77351f, // measured 0.769657433
-    .err_limit_roll_deg            = 0.35073f, // measured 0.348984271
-    .err_limit_pitch_deg           = 0.20364f, // measured 0.202624053
-    .err_limit_percent_3d_jonswap  = 4.87124f, // measured 4.84699917
-    .err_limit_percent_3d_pmstokes = 5.25855f, // measured 5.23238039
-    .acc_z_bias_percent            = 4.06068f, // measured 4.04047
-    .bias_3d_percent               = 81.82580f, // measured 81.4187
-    .gyro_bias_3d_percent          = 12.40000f, // measured 12.3488
+    .err_limit_percent_z_jonswap   = 2.47298f, // measured 2.46067643
+    .err_limit_percent_z_pmstokes  = 2.45038f, // measured 2.43818688
+    .err_limit_yaw_deg             = 0.77351f, // measured 0.770234048
+    .err_limit_roll_deg            = 0.35118f, // measured 0.349422902
+    .err_limit_pitch_deg           = 0.20400f, // measured 0.202977106
+    .err_limit_percent_3d_jonswap  = 4.89000f, // measured 4.88696814
+    .err_limit_percent_3d_pmstokes = 5.27800f, // measured 5.2571454
+    .acc_z_bias_percent            = 4.04668f, // measured 4.02654
+    .bias_3d_percent               = 81.93012f, // measured 81.5225
+    .gyro_bias_3d_percent          = 12.40000f, // measured 12.3564
 };
 
 inline constexpr W3dFailureLimits tcsm{

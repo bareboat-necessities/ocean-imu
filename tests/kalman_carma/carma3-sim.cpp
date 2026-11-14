@@ -72,16 +72,16 @@ CARMA_ADAPTER(Adapter_H41, 4, false, 4, false, &carma3_bench::CARMA41_SWAY_SHAPE
 // (default seeds, magnetometer on), each at the measured worst value plus
 // about 0.5 %, the margin kalman_ou_iii-sim and kalman_tfg-sim use.
 constexpr W3dFailureLimits kA41RegressionBars{
-    .err_limit_percent_z_jonswap   = 3.073f,  // worst 3.0571 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 3.231f,  // worst 3.21488 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 0.7575f, // worst 0.753738 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3565f, // worst 0.354707 (pmstokes H8.5)
-    .err_limit_pitch_deg           = 0.2137f, // worst 0.212555 (pmstokes H8.5)
-    .err_limit_percent_3d_jonswap  = 4.888f,  // worst 4.86298 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 5.276f,  // worst 5.24895 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.209f,  // worst 4.18715 (pmstokes H8.5)
-    .bias_3d_percent               = 82.43f,  // worst 82.0115 (pmstokes H8.5, accel)
-    .gyro_bias_3d_percent          = 12.78f,  // worst 12.7086 (pmstokes H8.5, gyro)
+    .err_limit_percent_z_jonswap   = 2.47294f, // worst 2.46063 (jonswap H0.27)
+    .err_limit_percent_z_pmstokes  = 2.45225f, // worst 2.44005 (pmstokes H4)
+    .err_limit_yaw_deg             = 0.76650f, // worst 0.762683 (pmstokes H0.27)
+    .err_limit_roll_deg            = 0.35687f, // worst 0.35509 (pmstokes H8.5)
+    .err_limit_pitch_deg           = 0.21399f, // worst 0.212921 (pmstokes H8.5)
+    .err_limit_percent_3d_jonswap  = 4.92748f, // worst 4.90296 (jonswap H8.5)
+    .err_limit_percent_3d_pmstokes = 5.30017f, // worst 5.2738 (pmstokes H8.5)
+    .acc_z_bias_percent            = 4.19624f, // worst 4.17536 (pmstokes H8.5)
+    .bias_3d_percent               = 82.51905f, // worst 82.1085 (pmstokes H8.5, accel)
+    .gyro_bias_3d_percent          = 12.76823f, // worst 12.7047 (pmstokes H8.5, gyro)
 };
 
 // The research variants print the same summary but have no fitted bars.

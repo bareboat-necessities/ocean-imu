@@ -132,7 +132,7 @@ class IntentionalDifferencesTest(unittest.TestCase):
 
     def test_still_water_decay_and_laws(self):
         ou2, ou3 = estimator_layer("ou2"), estimator_layer("ou3")
-        self.assertIn("float sigma_stillness_decay_sec_ = 5.0f;", ou2)
+        self.assertIn("float sigma_stillness_decay_sec_ = 0.0f;", ou2)
         self.assertIn("constexpr float STILL_VAR_DECAY_SEC = 1.0f;", ou3)
         self.assertIn("PseudoAdaptationLaw pseudo_law_ = PseudoAdaptationLaw::PhysicalMSE;", ou2)
         self.assertIn("RSAdaptationLaw rs_law_ = RSAdaptationLaw::SpectralMSE;", ou3)

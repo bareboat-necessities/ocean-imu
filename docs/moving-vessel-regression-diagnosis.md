@@ -34,10 +34,10 @@ attributes that change. All numbers come from
    with sensor noise and bias switched off.
 5. **Two estimator mechanisms carry it** (quantified below). The fixed
    0.28 m/s² stillness detector reads the 0.27 m following seas as still water;
-   it causes about 85 % of OU-II's worst-record regression and most of CARMA's
-   from 1.5 m up. Every wave model's normalized heave error also grows with wave
-   period at fixed heave; this carries most of the OU-III, TFG and shared-mode
-   regression. TFG adds a tilt/bias excursion on long-period encounter spectra.
+   it caused about 85 % of OU-II's worst-record regression and most of CARMA's
+   from 1.5 m up, and is removed from both (Filter changes). Every wave
+   model's normalized heave error also grows with wave period at fixed heave;
+   this carries most of the OU-III, TFG and shared-mode regression. TFG adds a tilt/bias excursion on long-period encounter spectra.
 6. **Scoring at the CSV time stamp adds 0.43 cm RMS x-error to every record.**
    The time column has six significant digits, so samples after 1000 s are
    stamped to 0.01 s. An underway scorer that evaluates the declared track at
@@ -191,13 +191,65 @@ and `notrack`, but not on `stretch` or `track`; the stretched 4 m record
 triggers the same excursion. It needs long-period encounter content, not
 steering.
 
+## Filter changes in this tree
+
+The tables above use the executables before these changes. One mechanism is
+fixed; the others were tested and are recorded as not adopted.
+
+**Stillness no longer attenuates wave variance in OU-II and CARMA.** Both
+wrappers subtract a configured band noise floor, so still water already yields
+zero wave variance; the extra `exp(-t_still/decay)` factor acted only on real
+seas below 0.28 m/s². OU-II now defaults `setSigmaStillnessDecaySec` to 0
+(off; a positive value keeps the old behaviour for studies), and CARMA's Legacy
+excitation passes no stillness to the operating point. TFG-CARMA uses the same
+wrapper. The detector still relaxes the direction carrier. Heave RMS error,
+% of nominal H, executables before → after (`fixed.csv`):
+
+| Filter | worst stationary | worst moving | moving JONSWAP 0.27 m | moving JONSWAP 8.5 m |
+| --- | ---: | ---: | ---: | ---: |
+| OU-II | 6.63 → 6.64 | 20.85 → 8.48 | 20.85 → 8.48 | 6.86 → 6.87 |
+| CARMA | 3.21 → 2.46 | 4.67 → 3.73 | 4.19 → 3.57 | 3.00 → 2.33 |
+| TFG-CARMA | 3.21 → 2.46 | 4.67 → 3.73 | 4.19 → 3.57 | 3.00 → 2.33 |
+
+OU-II's 0.27 m moving bias error falls from 0.132 to 0.044 m/s² and its
+tilt from 0.59 to 0.20°. Stationary costs: OU-II's 0.27 m records gain about
+2–3 % heave and yaw error; CARMA's horizontal error changes −1 % to +18 %,
+at most 10.5 mm (8.5 m moving, +3 %). Replay limits for the three families are re-measured
+(`docs/filter-simulator-gates.md`). The shared-mode filters use Evidence
+excitation, which never read stillness, and are bit-identical.
+
+**Not adopted.**
+
+- *OU-III stillness.* Removing its 1 s attenuation helps the 0.27 m moving
+  seas by 0.5 point of H but costs 0.08 point on the stationary 0.27 m record,
+  beyond its gate. OU-III is the proof-bound shipping filter; it is unchanged.
+- *TFG excursion.* TFG commits its default tune (`sigma_a` 0.01 m/s²,
+  `tau` 1.1 s) at handoff because its EMAs run only once Live; on the 8.5 m
+  moving record the main filter then drifts to +8° pitch error within 15 s,
+  and the bias unlock 10 s after Live stores the residual in the nearly
+  unobservable tilt/bias direction. Unlocking at 60 or 120 s
+  (`tfg_bias_unlock_*`) removes the 8.5 m moving excursion but moves it to the
+  stretched 8.5 m record and doubles to triples stationary pitch. Seeding the
+  handoff from the ready tuner targets (`tfg_warm_handoff`, experiment build)
+  fixes 8.5 m PM-Stokes but worsens 8.5 m JONSWAP and triples stationary
+  pitch. Both fail the stationary pitch gate; an observability-gated bias
+  release, as in OU-III, is the next architecture to test.
+- *Period dependence.* Freezing the assumed accelerometer-bias drift halves
+  OU-III's noise-free error on every sea (`ou3_bias_rw_frozen_no_noise`): the
+  OU acceleration prior's low-frequency power competes with the bias state.
+  With the simulated drift present, lowering OU-II's vertical bias drift from
+  4e-4 to 2e-4 or 1e-4 m/s²/√s worsens every record
+  (`ou2_bias_rw_z_*`), so the competition is a real trade-off. The band-pass
+  CARMA and shared-mode priors already degrade least.
+
 ## Consequences for replay gates
 
 - Gates rebaselined on these records measure the following-sea case only. A
   head sea raises the encounter frequency and would move each mechanism the
   other way; the archive has no such record.
-- The largest single deterioration, OU-II's 0.27 m heave and bias, is the
-  stillness detector classifying a 0.2 m following sea as still water.
+- The largest single deterioration, OU-II's 0.27 m heave and bias, was the
+  stillness detector classifying a 0.2 m following sea as still water; it is
+  removed above.
 - Horizontal and 3D scores of the low seas include the 0.43 cm time-stamp
   artifact until the scorer evaluates the track at sample time. A phase
   surrogate that re-derives displacement from velocity, and removes, restores
@@ -209,14 +261,12 @@ steering.
 
 1. A head-sea counterpart of the eight records: predicts stillness fractions
    and OU-II/CARMA errors at or below the stationary values.
-2. A stillness threshold in displacement-equivalent units (acceleration
-   divided by the tracked `ω²`): predicts OU-II's 0.27 m moving error near the
-   `stillness_off` value.
-3. OU-III residual period dependence: bisect the constants fixed in seconds on
+2. OU-III residual period dependence: bisect the constants fixed in seconds on
    the noise-free, floors-off `stretch` arm; the target is a `stretch/S` ratio
    near 1.
-4. TFG: replay the stretched 4 m record to isolate the tilt/bias separation
-   path that fails on long-period seas.
+3. TFG: hold horizontal accelerometer-bias learning until tilt/bias
+   observability is established (OU-III's magnetic-service lock), then replay
+   the stretched 4 m and moving 8.5 m records.
 
 ## Reproduce
 
@@ -227,17 +277,22 @@ python3 tools/moving_vessel_diagnosis.py inputs --stationary v123/ --moving v130
     --json reports/results/moving_vessel_diagnosis/inputs.json
 python3 tools/moving_vessel_diagnosis.py arms --stationary v123/ --moving v130/ --out arms/
 python3 tools/moving_vessel_diagnosis.py run --tests tests --arms-dir arms/ \
-    --label shipping --out reports/results/moving_vessel_diagnosis/shipping.csv
+    --families ou2,carma,tcarma --arms S,M \
+    --label fixed --out reports/results/moving_vessel_diagnosis/fixed.csv
 python3 tools/moving_vessel_diagnosis.py table reports/results/moving_vessel_diagnosis/*.csv
 ```
+
+`shipping.csv` was produced the same way by the executables before the
+stillness change (`manifest.json` records both sets).
 
 The scorer passes `W3D_REFERENCE_MOTION=stationary` and removes the track
 itself, so it runs unchanged with executables with or without an underway
 reference. `exit_code` 1 records a gate miss against the limits compiled into
-the executable; the scores are complete. `no_noise` adds `--extra=--no-noise`.
-The other diagnostic labels
-need an experiment-only build with two environment hooks, never part of a
-shipping build:
+the executable; the scores are complete. `no_noise` adds `--extra=--no-noise`;
+`ou3_bias_rw_frozen_no_noise`, `tfg_bias_unlock_*` and `ou2_bias_rw_z_*` set
+`OU_III_ACC_BIAS_RW=1e-8`, `TFG_ACC_BIAS_UNLOCK_SEC` and
+`OU_II_ACC_BIAS_RW_Z`. The other diagnostic labels need an experiment-only
+build with environment hooks, never part of a shipping build:
 
 ```diff
 --- a/src/tuner/SeaStateFusionTunerCommon.h   (StillnessAdapter constructor)
@@ -247,10 +302,17 @@ shipping build:
 +        static const float xp_floor = std::getenv("XP_OU3_SIGMA_FLOOR")
 +            ? std::strtof(std::getenv("XP_OU3_SIGMA_FLOOR"), nullptr) : 0.05f;
 +        const float sigma_floor = std::max(xp_floor, band_noise_floor_sigma_());
+--- a/src/kalman_tfg/SeaStateFusionFilter_TFG.h   (enterLive_, before commitTune_)
++        if (enable_tuner_ && !fixed_tuning_ && isTunerReady()) {
++            tune_.tau_applied = tau_target_;
++            tune_.sigma_applied = sigma_target_;
++            tune_.RS_applied = RS_target_;
++        }
 ```
 
 `stillness_off` sets `XP_STILL_ENERGY_THRESH=0`. `ou3_floors_off*` also sets
 `XP_OU3_SIGMA_FLOOR=1e-4`, `OU_III_ACC_NOISE_FLOOR_SIGMA=1e-6` and
 `OU_III_R_S_MIN=1e-4`; the `R_scaled` rows add `SF_SIGMA_A_SCALE=1/s²` per
-record. With the hooks unset the experiment build reproduces the shipping
-scores exactly on all five filters (`manifest.json` records both executable sets).
+record. `tfg_warm_handoff` uses the third hook. With the first two hooks unset
+the experiment build reproduces the shipping scores exactly on all five
+filters.

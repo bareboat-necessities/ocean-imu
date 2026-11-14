@@ -1,8 +1,10 @@
 # Filter simulator regression gates
 
 The estimator baseline is main `a053a1d2e571b4e4f39c566107c35154db1f3242`
-(v2.7.6). The filter settings, noise, data, score windows and estimator equations
-are unchanged by this gate update. The pinned input archive is
+(v2.7.6). OU-II, CARMA and TFG-CARMA are re-measured without the stillness
+variance attenuation (`docs/moving-vessel-regression-diagnosis.md`); their
+heave limits tighten and a few yaw/3D limits relax, never past the previous
+production bars. Noise, data and score windows are unchanged. The pinned input archive is
 oceanography-waves-lib v1.2.3, vessel-RAO 28 ft at CG, verified by
 `tools/sim_dataset.py`.
 
