@@ -17,7 +17,7 @@ The pinned v1.3.0 5 kn underway vessel-RAO inputs contain eight scored JONSWAP/P
 records, 1200 seconds at 200 Hz. Scores and gates use the final 900 seconds.
 The TFG limits in the simulator are its own measured worst errors plus 0.5%,
 rounded upward to 0.0001; provenance, per-record scores and limits are in
-`reports/results/tfg_shared_modes/deterministic_regression.json`. They cover
+`reports/results/filter_sim_gates/limits.json`. They cover
 vertical and 3-D displacement, roll/pitch/yaw, accelerometer Z and 3-D bias,
 and the gyroscope's own 3-D bias error. They are regression sentinels on fixed
 records, not statistical population bounds or independent validation results.
