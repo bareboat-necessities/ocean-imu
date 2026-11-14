@@ -63,7 +63,7 @@ def publish():
         writer.writeheader()
         writer.writerows(summary)
     prose = (
-        'The current external-data baseline uses oceanography-waves-lib v1.3.0: '
+        'The current external-data baseline uses oceanography-waves-lib v1.3.1: '
         'a 28 ft estimated hull RAO moving at 5 kn with heading oscillating '
         'plus/minus 3 degrees about north every 120 s. Eight fixed '
         'JONSWAP and PM-Stokes records run for 1200 s at 200 Hz; the last 900 s '

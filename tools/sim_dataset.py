@@ -9,9 +9,9 @@ from pathlib import Path
 import subprocess
 import zipfile
 
-RELEASE = 'v1.3.0'
+RELEASE = 'v1.3.1'
 ARCHIVE = 'sim-data-files-vessel-rao-28ft-5kn.zip'
-SHA256 = '324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3'
+SHA256 = 'c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402'
 REPOSITORY = 'bareboat-necessities/oceanography-waves-lib'
 URL = f'https://github.com/{REPOSITORY}/releases/download/{RELEASE}/{ARCHIVE}'
 DESCRIPTION = f'oceanography-waves-lib {RELEASE}, estimated 28 ft fin-keel sailboat RAO at CG, 5 kn, heading +/-3 deg with 120 s period'
@@ -23,7 +23,7 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-REFERENCE_CSV_SHA256 = {'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv': '145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073', 'wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv': '47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33', 'wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv': 'f99516359ff0ba67e618c4b39911780ecbe6d376d6a8a35644f770742c9c9bc8', 'wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv': '1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4', 'wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv': '000c45b12a8c905ad9b90c162f41510cecf41b3acdbd374f57f32a583a9f168b', 'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv': '78cd38f09aebd91991f2f1786a985b51fc3f5439c95e8dc7eab750121828462b', 'wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv': '846f4f98b6d0d9d271b3064290ee7c569dcde6fdfb62d0d4ccb300d46fd6dff1', 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv': 'e0cfb349504440c8ccd3e628776452997fc5e763ff1c515b02df344e59bd88bc'}
+REFERENCE_CSV_SHA256 = {'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv': '761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8', 'wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv': '328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913', 'wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv': '18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7', 'wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv': 'dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d', 'wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv': '0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300', 'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv': '609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970', 'wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv': '343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4', 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv': '7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150'}
 
 
 def input_provenance(paths) -> dict:
@@ -94,6 +94,20 @@ def verify(archive: Path) -> None:
         raise ValueError(f'{archive}: dataset SHA-256 mismatch: expected {SHA256}, got {actual}')
 
 
+def verify_csv_clock(path: Path, *, first_index: int = 0, samples: int = 240000) -> None:
+    """Require exact round trips of the integer-indexed 200 Hz clock."""
+    count = 0
+    with path.open() as stream:
+        next(stream)  # header
+        for count, line in enumerate(stream, 1):
+            actual = float(line.partition(',')[0])
+            expected = (first_index + count - 1) / 200
+            if actual != expected:
+                raise ValueError(f'{path}: invalid timestamp at sample {count}: {actual} != {expected}')
+    if count != samples:
+        raise ValueError(f'{path}: expected {samples} samples, got {count}')
+
+
 def fetch(archive: Path) -> None:
     if archive.exists():
         verify(archive)
@@ -125,6 +139,11 @@ def materialize(archive: Path, destinations: list[Path]) -> None:
             bundle.extractall(cache)
             records = {n: digest(cache / n) for n in members}
             marker.write_text(json.dumps(records, indent=2, sort_keys=True) + '\n')
+    for name in members:
+        if name.startswith('wave_data_') or name == 'wave_tracker_data.csv':
+            fenton = '_fenton_' in name or name == 'wave_tracker_data.csv'
+            samples = 5999 if name == 'wave_tracker_data.csv' else (239999 if fenton else 240000)
+            verify_csv_clock(cache / name, first_index=2 if fenton else 0, samples=samples)
     for destination in destinations:
         destination.mkdir(parents=True, exist_ok=True)
         for name in members:

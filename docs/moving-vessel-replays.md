@@ -1,8 +1,8 @@
 # Moving-vessel simulation inputs
 
-Every external oceanography-waves-lib replay uses `v1.3.0`, archive
+Every external oceanography-waves-lib replay uses `v1.3.1`, archive
 `sim-data-files-vessel-rao-28ft-5kn.zip`, SHA-256
-`324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3`.
+`c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402`.
 `tools/sim_dataset.py` owns the pin, validates each cached member, and records
 individual hashes for the eight scored JONSWAP/PM-Stokes inputs. Filenames,
 incident heights and spectra remain compatible with existing harnesses.
@@ -56,3 +56,10 @@ Older evidence naming v1.2.3 describes the stationary-vessel experiment. Its
 hashes and numerical conclusions must not be relabelled as underway evidence.
 The full OU evidence workflow regenerates source-bound statistical bundles
 on the branch, then synchronizes the articles; it rejects stale bundles.
+
+The input clock is checked before simulation: timestamps must round-trip to
+`sample_index / 200` exactly, including after 1000 s. Standard records contain
+240,000 samples; Fenton keeps its two-sample skip and inclusive endpoint
+(239,999 samples). The ancillary 30 s tracker contains 5,999 samples.
+Results from v1.3.0 are superseded and are replaced as the v1.3.1 studies run;
+their numerical values and receipts are never relabelled as v1.3.1 results.

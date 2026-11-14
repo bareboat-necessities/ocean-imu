@@ -32,7 +32,7 @@ bool add_noise = true;
 static constexpr float RMS_WINDOW_SEC = 900.0f;
 static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 
-// Raw heave gates on v1.3.0, 28 ft / 5 kn underway, trailing 900 s.
+// Raw heave gates verified on v1.3.1, 28 ft / 5 kn underway, trailing 900 s.
 // Worst JONSWAP 21.9016%, low-wave PM 23.5243%, other PM 8.14648%.
 // Add 0.5% relative and round upward to hundredths.
 static constexpr float vertical_rms_limit_percent(WaveType wave_type, float hs)

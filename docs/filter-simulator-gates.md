@@ -1,6 +1,6 @@
 # Filter simulator regression gates
 
-External-data regression now uses oceanography-waves-lib v1.3.0,
+External-data regression now uses oceanography-waves-lib v1.3.1,
 `sim-data-files-vessel-rao-28ft-5kn.zip`: a 28 ft estimated hull response at
 5 kn with heading oscillating ±3° about north every 120 s. The dataset change
 has its own measured baseline. Estimator equations, tuning, default sensor

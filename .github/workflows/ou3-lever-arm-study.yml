@@ -3,6 +3,7 @@ name: ou3-lever-arm-study
 on:
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
@@ -80,7 +81,7 @@ jobs:
         run: |
           MODE="${{ inputs.mode || 'full' }}"
           COMPARE=""
-          if [ "$MODE" = "full" ] && python3 -c 'import json; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_data") == "oceanography-waves-lib v1.3.0 vessel-rao-28ft-5kn"'; then
+          if [ "$MODE" = "full" ] && python3 -c 'import json,sys; sys.path.insert(0,"tools"); from sim_dataset import REFERENCE_CSV_SHA256; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_provenance",{}).get("input_sha256") == REFERENCE_CSV_SHA256'; then
             COMPARE="--compare-to /tmp/ou3-lever-committed"
           fi
           python3 -u tools/ou3_lever_arm_study.py \

@@ -1,5 +1,5 @@
 \paragraph{Simulation dataset}
-Current external-data simulations use the oceanography-waves-lib v1.3.0
+Current external-data simulations use the oceanography-waves-lib v1.3.1
 28 ft (8.53 m) fin-keel sailboat RAO records at 5 kn. Heading oscillates
 $\pm3^\circ$ about north with a 120 s sine period. The incident wave field
 is sampled along the moving track; the estimated response uses instantaneous

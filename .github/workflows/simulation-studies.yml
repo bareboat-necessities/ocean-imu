@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "tools/sim_dataset.py"
       - 'tools/sim_dataset.py'
       - 'tools/underway_reference.py'
       - 'src/util/UnderwayReference.h'

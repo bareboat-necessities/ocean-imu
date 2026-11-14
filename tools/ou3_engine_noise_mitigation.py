@@ -625,7 +625,7 @@ def main() -> int:
     manifest = {
         "study": "engine-noise mitigation (OU-III accelerometer vibration guard)",
         "source_commit": commit,
-        "simulation_data": "oceanography-waves-lib v1.3.0 vessel-rao-28ft-5kn",
+        "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft-5kn",
         "simulation_provenance": dataset,
         "family": "OU-III",
         "guard": {"cutoff_hz": GUARD_CUTOFF_HZ, "poles": GUARD_POLES,

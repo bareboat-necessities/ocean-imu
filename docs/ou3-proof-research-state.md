@@ -1,3 +1,19 @@
+Timestamp dataset migration (class E): v1.3.0 collapses distinct 200 Hz
+samples onto rounded times after 1000 s. v1.3.1 regenerates integer-indexed
+clocks, including the corrected Fenton endpoint/sample count. All 21 input
+time-series clocks pass an exact binary64 index/200 audit. The ancillary
+tracker spans 30 s (5999 samples), not the main records' 1200 s; the initial
+audit incorrectly required 239999 tracker rows and was corrected. The old gyro-bias gate rejects 12.5015% against 12.4956%; the old Kuchler
+PM-Stokes gate rejects 14.7245% against 14.14%. These invalidate reuse of
+v1.3.0 regression baselines on the corrected physical records. Existing
+v1.3.0 results are superseded and must be replaced, never relabelled.
+Structures preserved: estimator equations, inherited histories, sensor/noise
+configuration and fixed tuning. Relaxations introduced: none. This is an
+input/instrumentation failure, not a shipping counterexample or new theorem
+result. Existing proof conclusions and open flags remain unchanged. Current
+limiter: complete v1.3.1 replay/publication evidence; next check is the full
+measured suite and source-bound CI regeneration with corrected clocks.
+
 Moving-vessel CARMA installation baseline repair (class E): the completed
 1,456-row installation matrix and 128-row cutoff sweep were compared with
 stationary-data ratios. The physical input hash maps differ, invalidating that

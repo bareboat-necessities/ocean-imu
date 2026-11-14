@@ -1,4 +1,4 @@
-"""Declared v1.3.0 5 kn track; truth-side decomposition, never filter aid."""
+"""Declared v1.3.1 5 kn track; truth-side decomposition, never filter aid."""
 import numpy as np
 from scipy.special import jv
 

@@ -3,6 +3,7 @@ name: carma-lever-arm-study
 on:
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
       - "src/kalman_carma/**"
       - "src/kalman_common/ImuLeverArm.h"
       - "src/util/W3dSimCommon.*"

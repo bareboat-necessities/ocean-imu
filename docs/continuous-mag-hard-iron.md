@@ -24,7 +24,7 @@ TFG additionally supports `TFG_MAG_REFINE=0` and a staged startup ablation. Its 
 
 ## Vessel-response evidence
 
-`tools/startup_ablation.py` replays all eight pinned v1.3.0 28 ft / 5 kn moving-vessel records (±3° heading over 120 s). Five paired calibration draws for each OU family, plus four TFG arms, produce 192 measurements. The sensor draw is held fixed in this startup study. Results and input/binary hashes are in `reports/results/startup_ablation/`; `tools/startup_publication_sync.py` generates the paper tables.
+`tools/startup_ablation.py` replays all eight pinned v1.3.1 28 ft / 5 kn moving-vessel records (±3° heading over 120 s). Five paired calibration draws for each OU family, plus four TFG arms, produce 192 measurements. The sensor draw is held fixed in this startup study. Results and input/binary hashes are in `reports/results/startup_ablation/`; `tools/startup_publication_sync.py` generates the paper tables.
 
 In the default draw, mean yaw RMS falls from 2.241° to 0.708° (OU-II), 2.041° to 0.595° (OU-III), and 1.546° to 0.876° (TFG). Across the five calibration draws, 4 of 40 OU-II pairs and 8 of 40 OU-III pairs worsen.
 

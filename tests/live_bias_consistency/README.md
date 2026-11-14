@@ -50,7 +50,7 @@ research artifact is required. Use a fresh baseline object build if changing
 
 Python dependencies: NumPy, pandas, SciPy and Matplotlib. No simulated dataset
 download is needed for these synthetic experiments. `make all` separately uses
-the repository's pinned oceanography-waves-lib v1.3.0 moving-vessel archive.
+the repository's pinned oceanography-waves-lib v1.3.1 moving-vessel archive.
 
 ```sh
 python tools/live_bias_consistency.py --stage screen --jobs 4

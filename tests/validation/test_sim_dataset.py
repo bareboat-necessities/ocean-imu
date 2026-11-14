@@ -14,6 +14,24 @@ spec.loader.exec_module(D)
 
 
 class SimDatasetTests(unittest.TestCase):
+    def test_exact_clock_survives_the_1000_second_boundary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'clock.csv'
+            times = [i / 200 for i in range(199998, 200004)]
+            path.write_text('time,value\n' + ''.join(f'{t:.17g},0\n' for t in times))
+            D.verify_csv_clock(path, first_index=199998, samples=6)
+            path.write_text('time,value\n' + ''.join(f'{t:.6g},0\n' for t in times))
+            with self.assertRaisesRegex(ValueError, 'invalid timestamp'):
+                D.verify_csv_clock(path, first_index=199998, samples=6)
+
+    def test_fenton_skip_and_missing_sample_are_checked(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'clock.csv'
+            path.write_text('time,value\n0.01,0\n0.014999999999999999,0\n0.02,0\n')
+            D.verify_csv_clock(path, first_index=2, samples=3)
+            with self.assertRaisesRegex(ValueError, 'expected 4 samples'):
+                D.verify_csv_clock(path, first_index=2, samples=4)
+
     def test_wrong_existing_archive_is_rejected_without_reuse(self):
         with tempfile.TemporaryDirectory() as directory:
             archive = Path(directory)/D.ARCHIVE
@@ -96,7 +114,8 @@ class SimDatasetTests(unittest.TestCase):
                     stack.extend(node)
                 elif isinstance(node, dict):
                     inputs = node.get('input_sha256')
-                    if node.get('archive') == D.ARCHIVE and isinstance(inputs, dict):
+                    if (node.get('archive') == D.ARCHIVE and node.get('release') == D.RELEASE
+                            and isinstance(inputs, dict)):
                         for name, sha in inputs.items():
                             self.assertEqual(D.REFERENCE_CSV_SHA256.get(name), sha, f'{path}: {name}')
                         checked += 1
