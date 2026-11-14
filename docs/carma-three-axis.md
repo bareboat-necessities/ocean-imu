@@ -1050,7 +1050,7 @@ is an upper-bound diagnostic, not a candidate.
 
 ### 9.8 Pinned vessel-RAO dataset
 
-The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the CARMA variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The hull differs from the synthetic benchmark's.
+The eight scored records of oceanography-waves-lib v1.3.1 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the CARMA variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The hull differs from the synthetic benchmark's.
 
 | Filter | horizontal % H_s (change) | heave % H_s (change) | roll / pitch / yaw RMS (deg) |
 |---|---|---|---|

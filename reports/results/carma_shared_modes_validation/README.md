@@ -2,7 +2,7 @@
 
 This bundle supports `doc/kalman_carma_shared_modes/kalman_carma_shared_modes.tex`.
 It evaluates the current complete estimators with the pinned
-`oceanography-waves-lib` v1.2.3 28 ft vessel-response dataset. It is synthetic
+`oceanography-waves-lib` v1.3.1 28 ft vessel-response dataset. It is synthetic
 development evidence for one hull model, not sea-trial accuracy.
 
 ## Experiment matrix

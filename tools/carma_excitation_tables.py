@@ -375,7 +375,7 @@ def dataset(r):
     rows = list(_csv.DictReader(path.open()))
     r.w("## Pinned vessel-RAO dataset (independent hull)")
     r.w()
-    r.w("The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, "
+    r.w("The eight scored records of oceanography-waves-lib v1.3.1 (28 ft hull RAO, JONSWAP and PM-Stokes, "
         "H_s 0.27-8.5 m) through carma3-sim, ten W3D_SEED values, final 900 s; paired per (record, seed).  "
         "Displacement RMS in % of the record's H_s.")
     r.w()

@@ -1,7 +1,7 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 // Production-default regression limits measured on main a053a1d2 (v2.7.6).
-// Eight pinned v1.2.3 vessel-RAO records, default seeds, trailing 900 s.
+// Eight pinned v1.3.1 vessel-RAO records, default seeds, trailing 900 s.
 // Worst score + 0.5%, rounded upward to 1e-5, capped by an existing
 // stricter production limit. Historical --regression bars stay separate.
 // Evidence and reproduction: docs/filter-simulator-gates.md.

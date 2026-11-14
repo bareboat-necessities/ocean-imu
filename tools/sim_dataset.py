@@ -8,7 +8,7 @@ from pathlib import Path
 import subprocess
 import zipfile
 
-RELEASE = 'v1.2.3'
+RELEASE = 'v1.3.1'
 ARCHIVE = 'sim-data-files-vessel-rao-28ft.zip'
 SHA256 = '87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c'
 REPOSITORY = 'bareboat-necessities/oceanography-waves-lib'

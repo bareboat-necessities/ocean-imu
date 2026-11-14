@@ -14,7 +14,7 @@
   "baseline_binary_sha256": "469cc833f3dc95910afc18304c8618653fa298f5a28693e01878b9bd5e7a4d71",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
   "inputs": {
-    "release": "v1.2.3",
+    "release": "v1.3.1",
     "archive": "sim-data-files-vessel-rao-28ft.zip",
     "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
     "motion_model": "VESSEL_RAO_28FT",

@@ -373,7 +373,7 @@ JONSWAP 0.29 Hz, 0.8 m, n=30: horizontal RMS 21.68 mm (C41 x/y/z, independent) a
 | JONSWAP 0.29 Hz, 0.8 m, beam | C41 x/y/z | 0.327 | 0.307-0.352 |  |
 | JONSWAP 0.29 Hz, 0.8 m, beam | C52 x/y/z | 0.327 | 0.307-0.352 | 0.133 |
 
-## Pinned vessel-RAO dataset (oceanography-waves-lib v1.2.3, 28 ft hull RAO; independent of the synthetic truth)
+## Pinned vessel-RAO dataset (oceanography-waves-lib v1.3.1, 28 ft hull RAO; independent of the synthetic truth)
 
 Mean over seeds of the per-record RMS error, % of the record's H_s, final 900 s of each record; 10 seeds.  Horizontal = sqrt(x^2 + y^2).
 

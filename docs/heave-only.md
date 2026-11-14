@@ -139,7 +139,7 @@ Choices the paper leaves open:
 `process_wave_file_for_tracker`, the noise template and seeds of the OU-II,
 OU-III and TFG simulators. It uses:
 
-- the 28 ft RAO dataset `v1.2.3`;
+- the 28 ft RAO dataset `v1.3.1`;
 - an 8 mg accelerometer turn-on bias and a 5e-4 m/s²/√s bias random walk;
 - a 25 Hz magnetometer.
 

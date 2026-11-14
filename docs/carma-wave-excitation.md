@@ -800,7 +800,7 @@ parameter.  The measured-ratio harness is not part of this change;
 
 ### 6.10 Independent hull: the pinned vessel-RAO records
 
-The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO,
+The eight scored records of oceanography-waves-lib v1.3.1 (28 ft hull RAO,
 JONSWAP and PM-Stokes, H_s 0.27-8.5 m) through `carma3-sim`
 (`W3D_CARMA3_EXCITATION=A` or `C`), ten seeds, final 900 s, paired per
 record and seed (80 pairs per inner filter).  Displacement RMS in % of the

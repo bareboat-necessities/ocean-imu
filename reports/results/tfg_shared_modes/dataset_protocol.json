@@ -1,6 +1,6 @@
 {
   "inputs": {
-    "release": "v1.2.3",
+    "release": "v1.3.1",
     "archive": "sim-data-files-vessel-rao-28ft.zip",
     "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
     "motion_model": "VESSEL_RAO_28FT",

@@ -771,7 +771,7 @@ The horizontal CARMA prior is S_factor times the vertical amplitude; 1 everywher
 
 ## Pinned vessel-RAO dataset (independent hull)
 
-The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, H_s 0.27-8.5 m) through carma3-sim, ten W3D_SEED values, final 900 s; paired per (record, seed).  Displacement RMS in % of the record's H_s.
+The eight scored records of oceanography-waves-lib v1.3.1 (28 ft hull RAO, JONSWAP and PM-Stokes, H_s 0.27-8.5 m) through carma3-sim, ten W3D_SEED values, final 900 s; paired per (record, seed).  Displacement RMS in % of the record's H_s.
 
 | filter | metric | pairs | A (legacy) | C (evidence) | C vs A |
 |---|---|---|---|---|---|

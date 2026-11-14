@@ -80,7 +80,7 @@
   "mode": "full",
   "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
   "scoring_window_sec": 900.0,
-  "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
+  "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft",
   "simulation_provenance": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
     "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
@@ -95,7 +95,7 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
     },
     "motion_model": "VESSEL_RAO_28FT",
-    "release": "v1.2.3"
+    "release": "v1.3.1"
   },
   "source_commit": "9018fa4b57d9bd10983ae4e77ff95ce509551e17",
   "study": "CARMA IMU lever-arm installation"
