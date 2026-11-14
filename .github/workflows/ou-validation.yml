@@ -12,6 +12,10 @@ on:
       # src/tuner still moves every number this workflow gauges.
       - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
+      - "src/util/WaveFilesSupport.h"
+      - "src/util/UnderwayReference.h"
+      - "tools/sim_dataset.py"
+      - "tools/underway_reference.py"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
       - "tests/kalman_tfg/**"
@@ -195,9 +199,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
 
       - name: Run validation unit tests
         run: make -C tests/validation test
@@ -255,7 +259,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
 
       # Every full-study job below consumes this exact archive, rather than
       # independently redownloading a release asset that could theoretically be
@@ -265,7 +269,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ou-fingerprinted-simulation-data
-          path: sim-data-files-vessel-rao-28ft.zip
+          path: sim-data-files-vessel-rao-28ft-5kn.zip
           if-no-files-found: error
           retention-days: 1
 
@@ -276,7 +280,7 @@ jobs:
           set -euo pipefail
           marker=reports/ou_evidence_fingerprint.json
           if python3 tools/ou_replay_fingerprint.py \
-              --simulation-zip sim-data-files-vessel-rao-28ft.zip \
+              --simulation-zip sim-data-files-vessel-rao-28ft-5kn.zip \
               --check "$marker"; then
             echo "replay_required=false" >> "$GITHUB_OUTPUT"
             echo "Replay inputs and complete results tree are unchanged; reusing the full replay rows."
@@ -316,7 +320,7 @@ jobs:
         if: steps.decide.outputs.replay_required == 'false'
         run: |
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
           make -C tests/validation evidence-test
 
   # Evidence regeneration is sharded: the full validation study is roughly
@@ -379,7 +383,7 @@ jobs:
       - name: Unpack fingerprinted simulation data
         run: |
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
 
       - name: Run paired validation shard
         if: matrix.study == 'validation'
@@ -475,7 +479,7 @@ jobs:
       - name: Unpack fingerprinted simulation data
         run: |
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
 
       - name: Download this study's shards
         uses: actions/download-artifact@v8
@@ -542,9 +546,9 @@ jobs:
           path: .
       - name: Verify and unpack the shared archive
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
       - name: Reuse verified full evidence or run paired TFG comparison
         run: |
           if ! python3 tools/tfg_comparison.py --check --require-ci; then
@@ -661,7 +665,7 @@ jobs:
         if: steps.published.outputs.already != 'true'
         run: |
           mkdir -p plots/kalman_ou_ii
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d plots/kalman_ou_ii >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d plots/kalman_ou_ii >/dev/null
 
       - name: Download regenerated bundles
         if: steps.published.outputs.already != 'true'
@@ -724,14 +728,14 @@ jobs:
         if: steps.published.outputs.already != 'true'
         run: |
           python3 tools/ou_replay_fingerprint.py \
-            --simulation-zip sim-data-files-vessel-rao-28ft.zip \
+            --simulation-zip sim-data-files-vessel-rao-28ft-5kn.zip \
             --write reports/ou_evidence_fingerprint.json
 
       - name: Verify final evidence fingerprints
         if: steps.published.outputs.already != 'true'
         run: |
           python3 tools/ou_replay_fingerprint.py \
-            --simulation-zip sim-data-files-vessel-rao-28ft.zip \
+            --simulation-zip sim-data-files-vessel-rao-28ft-5kn.zip \
             --check reports/ou_evidence_fingerprint.json
 
       - name: Commit the regenerated evidence
@@ -764,7 +768,7 @@ jobs:
             # conservative fingerprints still match, then run the detailed
             # evidence contract as well.
             python3 tools/ou_replay_fingerprint.py \
-              --simulation-zip sim-data-files-vessel-rao-28ft.zip \
+              --simulation-zip sim-data-files-vessel-rao-28ft-5kn.zip \
               --check reports/ou_evidence_fingerprint.json
             make -C tests/validation evidence-test
           done

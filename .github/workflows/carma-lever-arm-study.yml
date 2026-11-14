@@ -49,9 +49,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
           mkdir -p /tmp/carma-lever-data
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d /tmp/carma-lever-data >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d /tmp/carma-lever-data >/dev/null
 
       - name: Build the lever-arm simulator and checks
         run: make -C tests/kalman_carma carma_lever_arm-sim carma_lever_arm-test

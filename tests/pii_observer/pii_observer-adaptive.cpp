@@ -418,6 +418,7 @@ process_wave_file_for_adaptive_pii_mahony(const std::string& filename,
     FusionAdapterAdaptivePIIMahony adapter(with_mag, sigma_a_init, sigma_g, sigma_m, mag_world_a);
 
     W3dSimulationOptions options;
+    options.underway_reference = w3d_underway_reference_from_env();
     options.dt = dt;
     options.with_mag = with_mag;
     options.add_noise = add_noise;

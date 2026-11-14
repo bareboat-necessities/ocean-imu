@@ -337,15 +337,7 @@ void process_one(const std::string& filename,
         print_validation_metrics(*result, dt, validation_window_sec, "TFG");
     }
 
-    static constexpr W3dFailureLimits kRegressionBars{
-        .err_limit_percent_z_jonswap   = 4.405f,  // worst 4.38306 (jonswap H0.27)
-        .err_limit_percent_z_pmstokes  = 4.356f,  // worst 4.33397 (pmstokes H0.27)
-        .err_limit_yaw_deg             = 0.943f,  // worst 0.937382 (jonswap H4.0)
-        .err_limit_percent_3d_jonswap  = 9.83f,   // worst 9.77897 (jonswap H8.5)
-        .err_limit_percent_3d_pmstokes = 9.92f,   // worst 9.86933 (pmstokes H8.5)
-        .acc_z_bias_percent            = 4.494f,  // worst 4.47079 (pmstokes H8.5)
-        .bias_3d_percent               = 74.1f,   // worst 73.727 (pmstokes H8.5, accel)
-    };
+    constexpr auto kRegressionBars = ocean_imu::sim::current_limits::interval::tfg;
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
     print_summary_and_fail_if_needed(*result, dt,

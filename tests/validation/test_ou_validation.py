@@ -56,7 +56,7 @@ class WaveSurrogateTests(unittest.TestCase):
         self.data = validation.rebuild_body_imu(self.columns, self.data)
 
     def test_common_phase_preserves_primitive_spectra_and_kinematics(self):
-        randomized = validation.phase_randomize_wave(self.columns, self.data, seed=73)
+        randomized = validation.phase_randomize_wave(self.columns, self.data, seed=73, underway=False)
         names = (
             "vel_x", "vel_y", "vel_z",
             "roll_deg", "pitch_deg", "yaw_deg",
@@ -113,9 +113,31 @@ class WaveSurrogateTests(unittest.TestCase):
         norms = np.linalg.norm(randomized[:, quaternion_indices], axis=1)
         np.testing.assert_allclose(norms, 1.0, atol=2e-12)
 
+    def test_underway_surrogates_and_scaling_preserve_the_declared_track(self):
+        from underway_reference import change_track, track
+        moving = change_track(self.columns, self.data, 1)
+        moving = validation.rebuild_body_imu(self.columns, moving)
+        randomized = validation.phase_randomize_wave(self.columns, moving, seed=73)
+        residual = change_track(self.columns, randomized, -1)
+        stationary = validation.phase_randomize_wave(self.columns, self.data, seed=73, underway=False)
+        for prefix in ('disp', 'vel', 'acc'):
+            indices = [self.columns.index(prefix + '_' + a) for a in 'xyz']
+            np.testing.assert_allclose(residual[:, indices], stationary[:, indices], atol=2e-10)
+        scaled = validation.scale_wave_motion(self.columns, moving, 2.0)
+        residual_scaled = change_track(self.columns, scaled, -1)
+        for prefix in ('disp', 'vel', 'acc'):
+            indices = [self.columns.index(prefix + '_' + a) for a in 'xyz']
+            np.testing.assert_allclose(residual_scaled[:, indices], 2 * self.data[:, indices], atol=2e-10)
+        # This fixture has a constant 5 degree residual yaw. Scaling must keep
+        # the commanded 3 degree steering oscillation, rather than doubling it.
+        yaw = self.columns.index('yaw_deg')
+        np.testing.assert_allclose(scaled[:, yaw], moving[:, yaw], atol=1e-12)
+        _, velocity, _, _ = track(self.data[:, 0])
+        np.testing.assert_allclose(np.linalg.norm(velocity, axis=1), 5 * 1852 / 3600, atol=1e-13)
+
     def test_phase_seed_changes_realization(self):
-        first = validation.phase_randomize_wave(self.columns, self.data, seed=1)
-        second = validation.phase_randomize_wave(self.columns, self.data, seed=2)
+        first = validation.phase_randomize_wave(self.columns, self.data, seed=1, underway=False)
+        second = validation.phase_randomize_wave(self.columns, self.data, seed=2, underway=False)
         index = self.columns.index("disp_z")
         self.assertGreater(np.max(np.abs(first[:, index] - second[:, index])), 0.1)
 

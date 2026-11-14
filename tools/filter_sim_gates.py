@@ -95,7 +95,7 @@ def parse_w3d(text: str) -> list[dict]:
     return rows
 
 
-def collect(log_dir: Path, jobs: int) -> None:
+def collect(log_dir: Path, jobs: int, *, measure: bool = False) -> None:
     """Run already built binaries; numeric failures never become new limits."""
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(('W3D_', 'SF_', 'OU_', 'HO_', 'NLO_', 'TFG_'))}
@@ -128,7 +128,7 @@ def collect(log_dir: Path, jobs: int) -> None:
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         runs = list(pool.map(run, REPLAYS.items()))
     (log_dir / 'runs.json').write_text(json.dumps(runs, indent=2) + '\n')
-    if any(p['exit_code'] for r in runs for p in r['profiles']):
+    if not measure and any(p['exit_code'] for r in runs for p in r['profiles']):
         raise ValueError('a replay failed; inspect logs, do not refit failing gates')
 
 
@@ -205,14 +205,14 @@ def import_make_log(source: Path, log_dir: Path) -> None:
     (log_dir / 'runs.json').write_text(json.dumps(runs, indent=2) + '\n')
 
 
-def summarize(log_dir: Path) -> dict:
+def summarize(log_dir: Path, *, measure: bool = False) -> dict:
     runs = json.loads((log_dir / 'runs.json').read_text())
     if {r['name'] for r in runs} != set(REPLAYS):
         raise ValueError('incomplete filter inventory')
     records = {}
     for run in runs:
         name = run['name']
-        if 'profiles' not in run or any(p['exit_code'] for p in run['profiles']):
+        if 'profiles' not in run or any(p['exit_code'] not in ((0, 1) if measure else (0,)) for p in run['profiles']):
             raise ValueError(f'{name}: unsuccessful replay')
         if [p['profile'] for p in run['profiles']] != [p for p, _ in profiles_for(name)]:
             raise ValueError(f'{name}: incomplete profile inventory')
@@ -220,7 +220,8 @@ def summarize(log_dir: Path) -> dict:
             records[name] = {}
             for profile in run['profiles']:
                 text = (log_dir / f"{name}-{profile['profile']}.log").read_text()
-                if text.count('QUALITY_GATE: PASS=1 REASON=ok') != 8 or 'QUALITY_GATE: SKIPPED' in text:
+                count = len(re.findall(r'^QUALITY_GATE: PASS=[01] ', text, re.M)) if measure else text.count('QUALITY_GATE: PASS=1 REASON=ok')
+                if count != 8 or 'QUALITY_GATE: SKIPPED' in text:
                     raise ValueError(f"{name}/{profile['profile']}: not eight passing numeric gates")
                 records[name][profile['profile']] = parse_w3d(text)
     other = {}
@@ -230,6 +231,8 @@ def summarize(log_dir: Path) -> dict:
         raise ValueError('AHRS did not score all eight records')
     other['ahrs'] = [{'input': name, **dict(zip(('roll', 'pitch', 'yaw'), map(float, values)))}
                      for name, values in zip(sorted(REFERENCE_CSV_SHA256), angles)]
+    if not all(math.isfinite(row[a]) for row in other['ahrs'] for a in ('roll', 'pitch', 'yaw')):
+        raise ValueError('AHRS has nonfinite scored attitude')
     other['heave'] = {}
     for profile, count in (('default', 40), ('proxy', 40), ('truth', 32)):
         lines = (log_dir / f'heave-{profile}.log').read_text().splitlines()
@@ -247,12 +250,14 @@ def summarize(log_dir: Path) -> dict:
                                    for row in rows]
     nlo = (log_dir / 'nlo-default.log').read_text()
     other['nlo_z_percent_hs'] = [float(v) for v in re.findall(r'Z RMS raw \(%Hs\): (\S+)%', nlo)]
-    if len(other['nlo_z_percent_hs']) != 8:
+    if len(other['nlo_z_percent_hs']) != 8 or not all(math.isfinite(v) for v in other['nlo_z_percent_hs']):
         raise ValueError('NLO did not score all eight records')
     here = ROOT / 'tests/kalman_ou_iii'
     return {
         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'compiler': subprocess.check_output(['g++', '--version'], text=True).splitlines()[0],
+        'acceptance': 'measurement only; gate failures retained' if measure else 'all replay gates passed',
+        'replay_exit_codes': {r['name']: {p['profile']: p['exit_code'] for p in r['profiles']} for r in runs},
         'protocol': '200 Hz; 1200 s; trailing 900 s; default noise/seeds; magnetometer on except NLO; AHRS trailing 60 s',
         'inputs': input_provenance([here / name for name in REFERENCE_CSV_SHA256]),
         'binary_sha256': {r['name']: r['binary_sha256'] for r in runs},
@@ -268,6 +273,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--log-dir', type=Path, required=True)
     parser.add_argument('--run', action='store_true')
+    parser.add_argument('--measure', action='store_true',
+                        help='report a changed dataset without promoting failed gates; complete finite records still required')
     parser.add_argument('--make-log', type=Path,
                         help='import a make all log produced with W3D_VALIDATION_WINDOW_SEC=900')
     parser.add_argument('--jobs', type=int, default=3)
@@ -278,10 +285,10 @@ def main() -> None:
     for folder, _, _ in REPLAYS.values():
         input_provenance([ROOT / 'tests' / folder / name for name in REFERENCE_CSV_SHA256])
     if args.run:
-        collect(args.log_dir, args.jobs)
+        collect(args.log_dir, args.jobs, measure=args.measure)
     if args.make_log:
         import_make_log(args.make_log, args.log_dir)
-    report = summarize(args.log_dir)
+    report = summarize(args.log_dir, measure=args.measure)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
     print(f'Wrote {args.output}')

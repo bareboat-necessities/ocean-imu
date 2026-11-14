@@ -78,9 +78,9 @@ struct OutputRow {
 
 struct AhrsFailureLimits {
     // Main a053a1d2, eight pinned records, trailing 60 s; +0.5%.
-    float err_limit_roll_deg = 0.9377f;  // measured 0.932953
-    float err_limit_pitch_deg = 5.3591f; // measured 5.3324
-    float err_limit_yaw_deg = 12.7212f;  // measured 12.6579
+    float err_limit_roll_deg = 0.6464f;  // underway worst 0.643094
+    float err_limit_pitch_deg = 3.0110f; // underway worst 2.99599
+    float err_limit_yaw_deg = 7.1155f;  // underway worst 7.08001
     float min_processing_hz = 100.0f;
 };
 

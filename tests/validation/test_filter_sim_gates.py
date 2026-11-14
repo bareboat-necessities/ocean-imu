@@ -1,6 +1,7 @@
 """Accuracy reports must not silently omit failed, missing or invalid records."""
 import importlib.util
 import json
+import math
 from pathlib import Path
 import re
 import sys
@@ -53,7 +54,7 @@ class ReplayEvidenceTests(unittest.TestCase):
                       'tests/kalman_carma/carma_lever_arm-sim.cpp'))
         self.assertEqual(owned, {str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*-sim.cpp')})
 
-    def test_current_limits_cover_measurements_without_loosening_existing_gates(self):
+    def test_current_limits_match_the_measured_underway_dataset_with_declared_margin(self):
         evidence = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
         header = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text()
         for name, family in evidence['families'].items():
@@ -64,9 +65,11 @@ class ReplayEvidenceTests(unittest.TestCase):
             self.assertEqual(set(compiled), set(G.GATE_METRICS), name)
             for gate, value in compiled.items():
                 self.assertGreater(value, family['measured_worst'][gate], (name, gate))
-                previous = family['previous_production_limits'].get(gate)
-                if previous:
-                    self.assertLessEqual(value, previous, (name, gate))
+                expected = math.ceil(family['measured_worst'][gate] * 1.005 / 1e-5) * 1e-5
+                self.assertAlmostEqual(value, expected, places=5)
+        from sim_dataset import SHA256
+        self.assertEqual(evidence['inputs']['archive_sha256'], SHA256)
+
 
     def test_make_log_keeps_sampling_profiles_separate_and_rejects_failed_runs(self):
         families = ('OU_II', 'OU_III', 'TFG', 'CARMA3_A41', 'CARMA_SHARED_MODES_CSM',

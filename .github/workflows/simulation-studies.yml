@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - 'tools/sim_dataset.py'
+      - 'tools/underway_reference.py'
+      - 'src/util/UnderwayReference.h'
+      - 'src/util/WaveFilesSupport.h'
+      - 'src/util/W3dSimCommon.*'
       - 'tools/model_mismatch_ablation.py'
       - 'tools/startup_ablation.py'
       - 'tools/startup_publication_sync.py'
@@ -73,7 +77,7 @@ jobs:
         if: always()
         run: |
           git rev-parse HEAD > source-commit.txt
-          sha256sum sim-data-files-vessel-rao-28ft.zip > simulation-sha256.txt
+          sha256sum sim-data-files-vessel-rao-28ft-5kn.zip > simulation-sha256.txt
       - uses: actions/upload-artifact@v6
         if: always()
         with:

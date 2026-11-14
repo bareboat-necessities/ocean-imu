@@ -4,7 +4,7 @@ REPO_ROOT := $(abspath $(TEST_DIR)/../..)
 EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-I$(EIGEN_DIR),-I/usr/include/eigen3)
 CFLAGS = -O3 -std=c++20 -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
-TARGETS = wave-convention-check vertical-accel-drift-test
+TARGETS = wave-convention-check vertical-accel-drift-test underway-reference-test
 
 .PHONY: all build test ensure-sim-data
 all: build test
@@ -31,4 +31,7 @@ clean:
 	rm -f *.o $(TARGETS) *.exe
 
 vertical-accel-drift-test: vertical-accel-drift-test.o W3dSimCommon.o
+	$(CC) $(CFLAGS) -o $@ $^
+
+underway-reference-test: underway-reference-test.o
 	$(CC) $(CFLAGS) -o $@ $^

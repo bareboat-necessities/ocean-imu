@@ -1,5 +1,7 @@
 """Regression checks for accidental surface-data reuse during RAO migration."""
+import csv
 import importlib.util
+from unittest.mock import patch
 import json
 from pathlib import Path
 import tempfile
@@ -24,8 +26,8 @@ class SimDatasetTests(unittest.TestCase):
             source = path.read_text()
             self.assertNotIn('sim-data-files.zip', source, path.name)
             self.assertNotIn('releases/download/v1.1.3', source, path.name)
-            self.assertNotIn('--pattern sim-data-files-vessel-rao-28ft.zip', source, path.name)
-            if 'sim-data-files-vessel-rao-28ft.zip' in source and 'ou-validation' not in path.name:
+            self.assertNotIn('--pattern sim-data-files-vessel-rao-28ft-5kn.zip', source, path.name)
+            if 'sim-data-files-vessel-rao-28ft-5kn.zip' in source and 'ou-validation' not in path.name:
                 self.assertIn('tools/sim_dataset.py', source, path.name)
 
     def test_make_checks_all_inputs_instead_of_one_filename(self):
@@ -33,6 +35,32 @@ class SimDatasetTests(unittest.TestCase):
         self.assertIn('tools/sim_dataset.py', source)
         self.assertIn('--dest $(TEST_DIRS)', source)
         self.assertNotIn('SIM_DATA_CHECK_FILE', source)
+
+    def test_changed_dataset_invalidates_append_only_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'dataset_runs.csv'
+            path.write_text('old stationary rows')
+            with patch.object(D, 'input_provenance', return_value={'archive_sha256': D.SHA256}):
+                D.bind_dataset_results(path, Path(directory))
+                self.assertFalse(path.exists())
+                path.write_text('new moving rows')
+                D.bind_dataset_results(path, Path(directory))
+                self.assertEqual(path.read_text(), 'new moving rows')
+
+    def test_resume_replays_partial_or_duplicate_eight_record_cells(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'dataset_runs.csv'
+            with path.open('w') as stream:
+                writer = csv.DictWriter(stream, fieldnames=('family', 'seed', 'input'))
+                writer.writeheader()
+                for seed, names in [('1', list(D.REFERENCE_CSV_SHA256)),
+                                    ('2', list(D.REFERENCE_CSV_SHA256)[:3]),
+                                    ('3', [next(iter(D.REFERENCE_CSV_SHA256))] * 8)]:
+                    for name in names:
+                        writer.writerow({'family': 'A41', 'seed': seed, 'input': name})
+            self.assertEqual(D.completed_dataset_runs(path), {('A41', '1')})
+            with path.open() as stream:
+                self.assertEqual(len(list(csv.DictReader(stream))), 8)
 
     def test_committed_results_consumed_the_pinned_motion_bytes(self):
         # Older bundles name the release they were run from; their inputs must

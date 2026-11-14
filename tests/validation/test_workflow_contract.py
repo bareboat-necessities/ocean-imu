@@ -103,7 +103,7 @@ class WorkflowContractTests(unittest.TestCase):
 
         gate = workflow[fingerprint:regenerate]
         self.assertIn("tools/ou_replay_fingerprint.py", gate)
-        self.assertIn("sim-data-files-vessel-rao-28ft.zip", gate)
+        self.assertIn("sim-data-files-vessel-rao-28ft-5kn.zip", gate)
         self.assertIn("reports/ou_evidence_fingerprint.json", gate)
         self.assertIn("replay_required=false", gate)
         self.assertIn("replay_required=true", gate)

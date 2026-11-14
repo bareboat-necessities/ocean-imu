@@ -2,18 +2,19 @@
 """Fetch and verify the single versioned vessel-motion dataset used by all replays."""
 from __future__ import annotations
 import argparse
+import csv
 import hashlib
 import json
 from pathlib import Path
 import subprocess
 import zipfile
 
-RELEASE = 'v1.2.3'
-ARCHIVE = 'sim-data-files-vessel-rao-28ft.zip'
-SHA256 = '87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c'
+RELEASE = 'v1.3.0'
+ARCHIVE = 'sim-data-files-vessel-rao-28ft-5kn.zip'
+SHA256 = '324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3'
 REPOSITORY = 'bareboat-necessities/oceanography-waves-lib'
 URL = f'https://github.com/{REPOSITORY}/releases/download/{RELEASE}/{ARCHIVE}'
-DESCRIPTION = f'oceanography-waves-lib {RELEASE}, estimated 28 ft fin-keel sailboat RAO at CG'
+DESCRIPTION = f'oceanography-waves-lib {RELEASE}, estimated 28 ft fin-keel sailboat RAO at CG, 5 kn, heading +/-3 deg with 120 s period'
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -22,7 +23,7 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
-REFERENCE_CSV_SHA256 = {'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv': '6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03', 'wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv': 'cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0', 'wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv': '11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb', 'wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv': 'f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7', 'wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv': 'a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c', 'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv': '3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4', 'wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv': 'f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2', 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv': '793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1'}
+REFERENCE_CSV_SHA256 = {'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv': '145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073', 'wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv': '47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33', 'wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv': 'f99516359ff0ba67e618c4b39911780ecbe6d376d6a8a35644f770742c9c9bc8', 'wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv': '1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4', 'wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv': '000c45b12a8c905ad9b90c162f41510cecf41b3acdbd374f57f32a583a9f168b', 'wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv': '78cd38f09aebd91991f2f1786a985b51fc3f5439c95e8dc7eab750121828462b', 'wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv': '846f4f98b6d0d9d271b3064290ee7c569dcde6fdfb62d0d4ccb300d46fd6dff1', 'wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv': 'e0cfb349504440c8ccd3e628776452997fc5e763ff1c515b02df344e59bd88bc'}
 
 
 def input_provenance(paths) -> dict:
@@ -34,7 +35,57 @@ def input_provenance(paths) -> dict:
             raise ValueError(f'{path}: input is not a pinned {RELEASE} vessel RAO reference')
         records[path.name] = actual
     return {'release': RELEASE, 'archive': ARCHIVE, 'archive_sha256': SHA256,
-            'motion_model': 'VESSEL_RAO_28FT', 'input_sha256': records}
+            'motion_model': 'VESSEL_RAO_28FT_5KN', 'speed_kn': 5.0,
+            'heading_amplitude_deg': 3.0, 'heading_period_s': 120.0,
+            'reference_coordinates': 'wave displacement/velocity relative to declared cruise track; total acceleration',
+            'input_sha256': records}
+
+
+def bind_dataset_results(path: Path, data_dir: Path, binaries=()) -> None:
+    """Invalidate append-only rows when input bytes or executables change.
+
+    Filenames are identical across stationary and underway releases, so a
+    filename/seed resume key alone would silently reuse the old experiment.
+    Only this regenerable dataset CSV is replaced; synthetic results stay.
+    """
+    protocol = {'dataset': input_provenance(data_dir / n for n in REFERENCE_CSV_SHA256),
+                'binaries': {str(Path(b).relative_to(ROOT)): digest(Path(b)) for b in binaries}}
+    marker = path.with_suffix('.inputs.json')
+    previous = json.loads(marker.read_text()) if marker.exists() else None
+    if previous != protocol and path.exists():
+        path.unlink()
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps(protocol, indent=2, sort_keys=True) + '\n')
+
+
+def completed_dataset_runs(path: Path) -> set[tuple[str, str]]:
+    """Resume only complete eight-record cells, never a partial invocation."""
+    if not path.exists():
+        return set()
+    cells = {}
+    with path.open() as stream:
+        reader = csv.DictReader(stream)
+        fields = reader.fieldnames
+        rows = list(reader)
+        for row in rows:
+            cells.setdefault((row['family'], row['seed']), []).append(row['input'])
+    complete = {key for key, names in cells.items()
+                if len(names) == 8 and set(names) == set(REFERENCE_CSV_SHA256)}
+    if complete != set(cells):
+        with path.open('w') as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(row for row in rows if (row['family'], row['seed']) in complete)
+    return complete
+
+
+def dataset_result_description(path: Path) -> str:
+    """Describe recorded rows by their receipt, never by today's fetch pin."""
+    marker = path.with_suffix('.inputs.json')
+    if marker.exists():
+        recorded = json.loads(marker.read_text())['dataset']
+        return f"oceanography-waves-lib {recorded['release']}, {recorded['motion_model']}"
+    return 'archived stationary-vessel oceanography-waves-lib v1.2.3'
 
 
 def verify(archive: Path) -> None:

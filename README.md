@@ -323,7 +323,9 @@ Some validation and simulation workflows depend on data released in:
 
 - https://github.com/bareboat-necessities/oceanography-waves-lib
 
-All simulations use release `v1.2.3` and `sim-data-files-vessel-rao-28ft.zip`: an estimated stationary 28 ft fin-keel sailboat RAO at the CG. Motion CSVs contain vessel response; spectrum CSVs and filename heights describe the incident sea. The preset is analytical, not a measured hull response. `make ensure-sim-data` verifies the pinned SHA-256 and replaces stale surface inputs. 
+All external-data simulations use release `v1.3.0` and `sim-data-files-vessel-rao-28ft-5kn.zip`: an estimated 28 ft fin-keel sailboat RAO at the CG, travelling at 5 kn with heading oscillating ±3° about north every 120 s. The records include encounter effects, steering acceleration, changing attitude and full body rates. This is an analytical quasi-steady response, without hull-specific forward-speed hydrodynamics or propulsion/steering dynamics. Spectrum CSVs and filename heights describe the incident sea.
+
+`make ensure-sim-data` verifies the archive and every cached member before replacing stale inputs. Wave-displacement/velocity scores subtract only the declared cruise track from reference truth; all physical accelerations and delivered sensors remain intact. See [the underway replay convention](docs/moving-vessel-replays.md).
 
 You can fetch and unpack this data for local runs with:
 

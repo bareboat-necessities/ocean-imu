@@ -50,9 +50,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
           mkdir -p /tmp/ou3-lever-data
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d /tmp/ou3-lever-data >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d /tmp/ou3-lever-data >/dev/null
 
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
@@ -80,7 +80,7 @@ jobs:
         run: |
           MODE="${{ inputs.mode || 'full' }}"
           COMPARE=""
-          if [ "$MODE" = "full" ] && python3 -c 'import json; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_data") == "oceanography-waves-lib v1.2.3 vessel-rao-28ft"'; then
+          if [ "$MODE" = "full" ] && python3 -c 'import json; d=json.load(open("reports/results/ou3_lever_arm_study/manifest.json")); assert d.get("simulation_data") == "oceanography-waves-lib v1.3.0 vessel-rao-28ft-5kn"'; then
             COMPARE="--compare-to /tmp/ou3-lever-committed"
           fi
           python3 -u tools/ou3_lever_arm_study.py \

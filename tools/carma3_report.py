@@ -447,7 +447,9 @@ def operating_point_table():
 
 
 def dataset_tables(ds, stats):
-    lines = ["## Pinned vessel-RAO dataset (oceanography-waves-lib v1.2.3, 28 ft hull RAO; independent of the "
+    from sim_dataset import dataset_result_description
+    description = dataset_result_description(OUT / "dataset_runs.csv")
+    lines = [f"## Pinned vessel-RAO dataset ({description}, 28 ft hull RAO; independent of the "
              "synthetic truth)", ""]
     by = collections.defaultdict(dict)
     for r in ds:

@@ -26,9 +26,9 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
 
-SIM_DATA_VERSION ?= v1.2.3
+SIM_DATA_VERSION ?= v1.3.0
 SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
-SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft.zip
+SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft-5kn.zip
 SIM_DATA_ZIP ?= $(REPO_ROOT)/$(SIM_DATA_ZIP_NAME)
 SIM_DATA_URL ?= https://github.com/$(SIM_DATA_REPO)/releases/download/$(SIM_DATA_VERSION)/$(SIM_DATA_ZIP_NAME)
 

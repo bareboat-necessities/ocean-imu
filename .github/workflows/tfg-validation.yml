@@ -74,7 +74,7 @@ jobs:
       - name: Download paired wave records
         run: |
           python3 tools/sim_dataset.py
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d tests/kalman_tfg >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d tests/kalman_tfg >/dev/null
           cp tests/kalman_tfg/wave_data_*.csv baseline-main/tests/kalman_tfg/
 
       - name: Build PR comparison simulators

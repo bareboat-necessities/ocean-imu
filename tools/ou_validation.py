@@ -37,6 +37,7 @@ from typing import Any, Iterable, Mapping, Sequence
 import numpy as np
 
 import ou_evidence_provenance as evidence_provenance
+from underway_reference import change_track
 
 import importlib.util as _ilu  # noqa: E402
 from pathlib import Path as _Path  # noqa: E402
@@ -59,7 +60,7 @@ SURROGATE_MAX_FREQ_HZ = 1.60
 SIMULATOR_GATE_WINDOW_SEC = 900.0
 WAVE_PHASE_METHOD = (
     "common random phase on the 0.02-1.60 Hz world-velocity and Euler "
-    "spectra; displacement and acceleration analytically derived from "
+    "spectra about the retained 5 kn/120 s cruise track; displacement and acceleration analytically derived from "
     "velocity; body IMU and quaternion reconstructed"
 )
 TRANSITION_METHOD = (
@@ -436,7 +437,7 @@ def rebuild_body_imu(columns: Sequence[str], data: np.ndarray) -> np.ndarray:
 
 
 def phase_randomize_wave(
-    columns: Sequence[str], data: np.ndarray, seed: int
+    columns: Sequence[str], data: np.ndarray, seed: int, *, underway: bool = True
 ) -> np.ndarray:
     """Build a band-limited, kinematically closed phase surrogate.
 
@@ -454,6 +455,9 @@ def phase_randomize_wave(
     velocity/attitude auto- and cross-spectra are preserved while the complete
     translational realization is kinematically consistent by construction.
     """
+
+    if underway:
+        data = change_track(columns, data, -1)
 
     velocity_indices = _column_indices(columns, ("vel_x", "vel_y", "vel_z"))
     displacement_indices = _column_indices(
@@ -518,15 +522,17 @@ def phase_randomize_wave(
     result[:, attitude_indices] = np.fft.irfft(
         attitude_spectrum, n=count, axis=0
     )
+    if underway:
+        result = change_track(columns, result, 1)
     return rebuild_body_imu(columns, result)
 
 
 def scale_wave_motion(
-    columns: Sequence[str], data: np.ndarray, scale: float
+    columns: Sequence[str], data: np.ndarray, scale: float, *, underway: bool = True
 ) -> np.ndarray:
     if not (math.isfinite(scale) and scale > 0.0):
         raise ValueError("wave scale must be positive")
-    result = data.copy()
+    result = change_track(columns, data, -1) if underway else data.copy()
     linear_names = (
         "disp_x", "disp_y", "disp_z",
         "vel_x", "vel_y", "vel_z",
@@ -538,6 +544,8 @@ def scale_wave_motion(
         index = columns.index(name)
         mean = float(np.mean(result[:, index]))
         result[:, index] = mean + scale * (result[:, index] - mean)
+    if underway:
+        result = change_track(columns, result, 1)
     return rebuild_body_imu(columns, result)
 
 

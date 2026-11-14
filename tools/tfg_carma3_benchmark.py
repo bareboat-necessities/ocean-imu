@@ -196,7 +196,9 @@ def cmd_dataset(args):
     import carma3_benchmark as cb
     for s in (OU3_SIM, CARMA3_SIM):
         require(s)
-    done = {(r["family"], r["seed"]) for r in read_rows(DATASET_RAW)}
+    from sim_dataset import bind_dataset_results, completed_dataset_runs
+    bind_dataset_results(DATASET_RAW, CARMA3_SIM.parent, (OU3_SIM, CARMA3_SIM))
+    done = completed_dataset_runs(DATASET_RAW)
     work = []
     for seed in range(1, args.seeds + 1):
         work.append(("OU3", seed, [str(OU3_SIM)], {}))
