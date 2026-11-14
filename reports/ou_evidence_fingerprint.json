@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "7f2e98a29b2429e2186b098b661fc79c2adf2f037806c443c23180df4229c419",
-  "results_file_count": 839,
+  "replay_fingerprint": "98119647f67b57b546e00f37cb3e0952a38cfc17a4df7f7547fb88ae80132378",
+  "results_file_count": 845,
   "results_files": [
     {
       "kind": "file",
@@ -2201,7 +2201,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "ec52e1802a936e8b7d2394274737749596e9e4dd85d858de1df8e5734c9063db"
+      "sha256": "13cc1769af08bdaa72d9f27a65c810e9321411f5bad5485ec5d296f528e921bf"
     },
     {
       "kind": "file",
@@ -2256,7 +2256,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "42d1f87fdcc08255c6f972150ae59ce4bf3bedfe21231775eacf93b368073283"
+      "sha256": "0845f5d72c09b25d7df7a9136991aac08928b6119674698a301167cfe8e96540"
     },
     {
       "kind": "file",
@@ -2346,7 +2346,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "f0f485063f254d5d0615f9ffe449052eaea5dd5a414b06dd20dda3c8a100e0d9"
+      "sha256": "f4e2babbac4950017e807facedd1a3585ce6b73c30b4039bd8463040d33bf158"
     },
     {
       "kind": "file",
@@ -2356,12 +2356,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "0fa34879c1929691749b4f13aafb4be02474d8bc3fc55206e3c9f040facbe4c9"
+      "sha256": "9931115827c9407efc81b6af1f31ba8c15642c8b84f4622c619e34db9526c27d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "462b98d0695abd9eebdb90cae5009d745a3330879aa1e893d5cfad6c76196b55"
+      "sha256": "d8488c15b648ee5acd45a1f833fda76a03f1a95ae40d8ab2a910e222e52c1a07"
     },
     {
       "kind": "file",
@@ -2371,22 +2371,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "3c52303e23cad7e285e717d96917b53e024b9184fda8f2ea76aa1f25eca56ffd"
+      "sha256": "ef0c104604a25eea11114544351b77f188fb84161c72fb084a1a66fca2049696"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "97a07b8a8294cb60019b3774ef2b440efd0092117d9336638141205c03322d79"
+      "sha256": "345a86e800e2658d73c757dfa992bfdf98b814d6630a23bc417036f5ebf7eb53"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "2a28764438f791fc941db096d2f467d9f31d3df1920bd66ffe1280d55936e7a0"
+      "sha256": "f0024d33aefba188b2effa090a657c397bb8a44accf09f376da32cbc8fe68d05"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "ce7b48d606d0d04e2814c123d27d750dc9088146f017aaef4c08bbb933db8955"
+      "sha256": "031ffffb64a93d611d2acd36f84f8a60759341f9dcc4cf51cd8c6b905fd2ac9e"
     },
     {
       "kind": "file",
@@ -2426,67 +2426,67 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "dba49d18d453f5526104bb3167b3f862ddae43fd66af5476f89fe91b3bf72dba"
+      "sha256": "5d2cb4756c9a56cbc724b5e61e9a2c5117ddafae671cbd9aeb50526b2fa7a74b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "e65a44c10db542c0df4e0ef8ce2908ce0d759b8082cf0208a6b1d86dcfa20728"
+      "sha256": "29d29019062b3a729af850a06a2ab49a545d541f246a13a5527a57042ac5d121"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "d42abbb66095073efc3a9715a2750a731eb68ce9816d93b9a0bc4774d3f725bc"
+      "sha256": "c76a2873f1fad65f9c711720d66f6b6469c00a230d060ee688151b096d77fb5b"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "e8b555abcac40e0ca748f49fcb980cd4154a1ec8e9bbc0a61283a7c068d7353f"
+      "sha256": "894005dcead762e7f20b0c168b08a6ee65ffe5071923ff01c42a48ec659417d4"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "ab97f354a1f92b6e50121a1c7b4cd8b957589ec8f57b9a86849996cb33023769"
+      "sha256": "0a2ac9c18776c17098c7eb925b3304639b4632035d324ea4d486eb58117572f9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "e7f285eeeba7d6ef19f76010164078f8bf0ac1c7cf8db36bdbc9ba19e7bed560"
+      "sha256": "1ba00212021d5fe9f0298484f9f1d07d95608a21452e966cf5d7d886fad00f64"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "6080655b71a7b41553918c8d34da2f671bf203c21d9902c55b33200f06c2357f"
+      "sha256": "686ab2942c531b29e1c14aa36ace37e623c1ce101fb7c4a6fb471d240a1dd47e"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "89fd11f315608905039467d892b676a0afc9ab48ba8e75158497102543c480c1"
+      "sha256": "ece14f86c69e790b16e2b98c9256df3160c4395791a8732dbb73c374905978bf"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "be6434c9b0e128933aa594cbcaed155424d8ac5a8fcf714b6d8c49ad4eed5cc9"
+      "sha256": "4d124a760704d87b17a4c2f13e498b381ee9dfe5010bad7915da60c2b8a89328"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "144276381c3b4454ba0bcd24fe26307b9d5a445f3764c741327c874d64b5cb2b"
+      "sha256": "7deafc32719c848ed2cf4575b1618c81dea65961fafd94586e320dbb1c17b4a9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "c2b21e6e566c1fcba91317db1fc0872d6ea95891feffb5aebcfe5200228bd362"
+      "sha256": "c59eba600a6b163915082047739596dd0250408052d64edb98d150017e74bd1d"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.csv",
-      "sha256": "f9ada6296e719ad7c724f580973b1e36f7ff9f4e841ab3e4271f6ef7c8d709ce"
+      "sha256": "489a73006a8e0e8b0296257e40506be4d08068c48ead22d227fae9220d142e95"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_transition.svg",
-      "sha256": "2016482898f825155fdd0fd8232552d7db10f54241145a7db64e9ebeeb1f6450"
+      "sha256": "cf3ab69cc94156fc1c9a46f3be3ad6078a0302ecaecbc4faa4010968f3284e01"
     },
     {
       "kind": "file",
@@ -2496,7 +2496,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "8fe1cad93533ed15cf85c31180485d2ef1a64f4737ff80c60680da22c9264c4e"
+      "sha256": "d603c17e3d08b8f5bd7d165bf15bd16c6ac592233eaf069e1a586213d7c91a3d"
     },
     {
       "kind": "file",
@@ -3555,6 +3555,36 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/tangent_shared_modes/manifest.json",
+      "sha256": "3cfe33b19d33c69aa4e63ac3aec1973b8eb59759e6a4a20a9e14d704e7348a4f"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/tangent_shared_modes/observability.json",
+      "sha256": "776eb3bd1d2796a76d5e373164fb44d22056d2c6b247faff4dd485bb35bbcd5d"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/tangent_shared_modes/publication.json",
+      "sha256": "6302a880751160fe39961b5096b5302959e4cbc9edab449eacacfb6ca0171432"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/tangent_shared_modes/scores.csv",
+      "sha256": "d7bea989f48f386bab5fbe709ef51ad85f5ba9eb59f66065b7ccdd73c10457b9"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/tangent_shared_modes/summary.json",
+      "sha256": "f5b4c7c019c39f2179146def64c9647a70d01cb07556f8a55c0e8be752656fa2"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/tangent_shared_modes/validation.json",
+      "sha256": "de66c271215f9d392f0225ebe12a4e79c14fc819726bb050bcffe39da649d80b"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/tfg_carma3/attitude_errors_jonswap.svg",
       "sha256": "5ee3ceba5a22338a720f9eacea252dfb20639796ca37fe6940ae9c159c4208d2"
     },
@@ -4199,13 +4229,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "75b4f7948b930d2a881f54ae2be9e4bc7bdf75ddc9d0d0c8f3ddcc6b525e1abc",
+  "results_fingerprint": "148cc6d28f4605e3b1e3a7c2010492194a2976cc26f34105ea0dc0b68aa6ec9f",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft.zip",
     "sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c"
   },
-  "tracked_replay_file_count": 957,
+  "tracked_replay_file_count": 984,
   "tracked_replay_files": [
     {
       "mode": "100755",
@@ -4225,7 +4255,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "b5f20578505bb043c6d18025a4fcbe6b38ce2c6d4596b654f7110da197daa47d"
+      "sha256": "254769f271e43f632ee8d9ac1ce337069729628986d8267fc77fe8c9ee1bb5e8"
     },
     {
       "mode": "100644",
@@ -4289,6 +4319,11 @@
     },
     {
       "mode": "100644",
+      "path": ".github/workflows/tangent-shared-modes.yml",
+      "sha256": "bca698c00ac6ec721620ccf3de2d2902740f2e4328cc9210a994703e528f8e40"
+    },
+    {
+      "mode": "100644",
       "path": ".github/workflows/tfg-device-regression.yml",
       "sha256": "034adeb8956cb903fdb2132c126efaa8b51846b6f1ad65a115ce6b8a9b7d1b24"
     },
@@ -4315,12 +4350,12 @@
     {
       "mode": "100644",
       "path": "CMakeLists.txt",
-      "sha256": "64ce18ea7ebdbf91efddd88a56aad5ebaf8a7a2dcf39f685024a5cebc85c9f5e"
+      "sha256": "500d861cf8eddaaa66af2f6a1668489db3d792f5c6bdf2c84d29937ffca98ab5"
     },
     {
       "mode": "100644",
       "path": "Makefile",
-      "sha256": "554a6c233849321643f28cb62c762e2125c47005843eb6df223472ed73a66389"
+      "sha256": "b135005d8a75ad06f58d762dacfe01dacde85014510df45fff1e83308b86d4f9"
     },
     {
       "mode": "100644",
@@ -4446,6 +4481,11 @@
       "mode": "100644",
       "path": "plots/kalman_ou_iii/kalman_ou_iii-plots.py",
       "sha256": "53f01094aed9b9937451280facb9d5d735965dc497e4df7f723966921d2e70f6"
+    },
+    {
+      "mode": "100644",
+      "path": "plots/kalman_tangent_shared_modes/draw_plots.sh",
+      "sha256": "4b7ccbf00e09115fa45210371b60b673728aa60aa668f665a6b0271be375032b"
     },
     {
       "mode": "100755",
@@ -4890,12 +4930,12 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_CARMA3.h",
-      "sha256": "85414e5dcfaef2913e588ddb6901b488a82e546412c0b624973df1c433f1ccfa"
+      "sha256": "8b47ef39b8f927465c72372c7484dbcfd6295f908910ac7f0e8049e429f35484"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
-      "sha256": "6f00745e6680a535c810b5623a9ea2c0725b10761cf497eb4e761341390e92ea"
+      "sha256": "2f550a4704d3acd867f532980a26354d93e79e46e19e656be990d38495bbfcde"
     },
     {
       "mode": "100644",
@@ -4929,6 +4969,11 @@
     },
     {
       "mode": "100644",
+      "path": "src/kalman_carma_shared_modes/KalmanTangentCarmaSharedModes.h",
+      "sha256": "90496200100b4b829549e175bc262d8fb2f1bacb3746d942dede5b1b7ae6c130"
+    },
+    {
+      "mode": "100644",
       "path": "src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h",
       "sha256": "6942b5de9ad401173456d77f67c98884f98f6b2837c8706022f2f4c5e01a47dd"
     },
@@ -4945,12 +4990,17 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma_shared_modes/SharedModesEstimator.h",
-      "sha256": "0c2630b815d9bb787463050ff6d681bba4734286874156b592dda0907c9ac1ce"
+      "sha256": "fe4c1f63d272ec08a8fcf98eabff8459a53a018097ac40ec76ee0f84dca388b5"
     },
     {
       "mode": "100644",
       "path": "src/kalman_common/AccelVibrationConditioning.h",
       "sha256": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803"
+    },
+    {
+      "mode": "100644",
+      "path": "src/kalman_common/BiasLearningGate.h",
+      "sha256": "22743af958ef3738923e72a3e2d88b19324b44013882c549373a0d1db037bb23"
     },
     {
       "mode": "100644",
@@ -5059,8 +5109,18 @@
     },
     {
       "mode": "100644",
+      "path": "src/lie/SE3Jacobians.h",
+      "sha256": "c75bbd592a77faa1dbbdda420543ec42795e58127efa21ee9c00a30a9da9df91"
+    },
+    {
+      "mode": "100644",
       "path": "src/lie/SO3Jacobians.h",
       "sha256": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d"
+    },
+    {
+      "mode": "100644",
+      "path": "src/lie/TangentBiasGroup.h",
+      "sha256": "68b66a2d05e447eb2c438c38df293a16437352712a995b7398fdbdf9f7cb26f0"
     },
     {
       "mode": "100644",
@@ -5259,6 +5319,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/common/CarmaModelExport.h",
+      "sha256": "0081f478bba9ea48602310520382b3551bda557419fb55a49e2ec43277c80b75"
+    },
+    {
+      "mode": "100644",
       "path": "tests/common/CurrentReplayLimits.h",
       "sha256": "5716fd61e5f86b895cdb20fbd7fb5ac98e665a9fb0a98e5d1be929722c8d347b"
     },
@@ -5316,6 +5381,11 @@
       "mode": "100644",
       "path": "tests/common/StationaryDeviceRegression.mk",
       "sha256": "5a2e0278a89c19844cca4cfd4aa9f06672f7ec59e35fa9469314cb690dd3cd82"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/common/TfgSharedRegressionBars.h",
+      "sha256": "b09890d203efef108f0183addb5b1921d5eb2700a28b573cc1cce46bc7de0f5b"
     },
     {
       "mode": "100644",
@@ -5680,7 +5750,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma_shared_modes/Makefile",
-      "sha256": "ffbf0e0eedabaa590651f56a753e4f2d920d503fbffb3a5392c0f2e1a8135c5d"
+      "sha256": "b5bd04c8fbe3d30dea81e3b46f1d6ac6fa74d5db8950c69c768d49b551ffabc9"
     },
     {
       "mode": "100644",
@@ -5944,6 +6014,66 @@
     },
     {
       "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/.gitignore",
+      "sha256": "3b36842bc9ae69b844b359c424dbfb4e51447d09b002aa6cfdb5028996d30628"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/Makefile",
+      "sha256": "369381ba36b99be06bc60519a1b0e9581e15e730006ed71fc688956b0e99c918"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/README.md",
+      "sha256": "bbfa7bbb77ef59513a6419b2e514401b49cfb818ee79bc3e452e7e61fe499498"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/Study.h",
+      "sha256": "bd035ece6836e1e21d24d09d3473fda0798f131da5a1ea58740516ed717a18fc"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/StudyAdapter.h",
+      "sha256": "c6b432be6992f318d2574cbd6d20be4ee472473da87ea334969f5bf60c215b69"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/geometry-test.cpp",
+      "sha256": "8a485b4b359b902f0b8711e8246655d9606e4112dd2cf07b65c7c88181e0b49b"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/independent.cpp",
+      "sha256": "96d108ef04b1fa1f581e0211eac563680f2cd5f2086443843bb3112b06297453"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/q.cpp",
+      "sha256": "31794c0fb7fd24d88e3adee2e0907c6418d545ad1a07cf773d9614e4b10a9075"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/run_tests.sh",
+      "sha256": "7d2b51fe331798b5e0fbdbcbd73e020d469fa2b10e021609c814e70f555ec4f4"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/study.cpp",
+      "sha256": "0adcb22d7a64b088fbcaef64e35220ee80112c2e1655654f6a2cc1af0678d40b"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/tangent-replay.cpp",
+      "sha256": "7dea808db25e88e14e15c056502a22d543b50d459e8a1de7a0fd1800a479c982"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/kalman_tangent_shared_modes/tfg.cpp",
+      "sha256": "88fbf52cafb95d47a9465f6a324bf0436956edd2007163120e1021bf24a4d80d"
+    },
+    {
+      "mode": "100644",
       "path": "tests/kalman_tfg/Makefile",
       "sha256": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae"
     },
@@ -6070,12 +6200,12 @@
     {
       "mode": "100644",
       "path": "tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp",
-      "sha256": "7ccd6e0eb3871a08bcb802c22d281e8ed498cb1f5bc777a4e8cd54c4bc1ffba8"
+      "sha256": "931555949a9a0b89de6b60fba9d0089ab3d5056cce2266246015a4f770c8f1f5"
     },
     {
       "mode": "100644",
       "path": "tests/kalman_tfg_shared_modes/regression_checks.py",
-      "sha256": "44189996f3ecd5263c8b345e6f84c006618e883e67869cd6c196355f43391578"
+      "sha256": "d7df16bdcd9c2ee74ac0b0e3a6a709606a9639c7b5cf84f5823aa02186a09922"
     },
     {
       "mode": "100755",
@@ -6085,7 +6215,7 @@
     {
       "mode": "100644",
       "path": "tests/live_bias_consistency/Adapter.h",
-      "sha256": "8ad2a72fb70ae947f06c38f4b4258b6fd65fc09c1c8dbb08d5e69d7e4374e6a0"
+      "sha256": "eb70518519770199c6cca00da97119a506aef77c6fadec1a84e6b11c163d1787"
     },
     {
       "mode": "100644",
@@ -7259,6 +7389,16 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_tangent_report.py",
+      "sha256": "b511a3387603dfb9833aeb9cdd762fd2e434d70d871fe6d829db551138591c07"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/validation/test_tangent_study_failures.py",
+      "sha256": "0ac3f72f6750560ebc488a745cfd32fb067ebbde3a54f3c2c3740d61ea771ee2"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_tfg_comparison.py",
       "sha256": "03d7fcfe55083c6c50ea427f92204fb75f8907b0a44665595b17f3d8c1ce353d"
     },
@@ -7490,7 +7630,7 @@
     {
       "mode": "100644",
       "path": "tools/carma_sim_table.py",
-      "sha256": "e27e072f397e2f62c3eebd382f907249ac934458b2bab2fb9589a13fccab5b08"
+      "sha256": "2c82f6edd2775059b440ca85d8656bc004f35a2929104426b3d5793d3d8f6054"
     },
     {
       "mode": "100644",
@@ -8891,6 +9031,31 @@
       "mode": "100644",
       "path": "tools/startup_transient_study.py",
       "sha256": "7a752d1cd1796e6fe3b482734ba2523ceb50b82d88cc53a6f18b1fd2ce2a3fb0"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tangent_shared_modes_inputs.py",
+      "sha256": "8fbc8735a33bbb9c0106c49fa2a0e3132f8c173c1dd42cdbfb14350747f55b57"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tangent_shared_modes_observability.py",
+      "sha256": "6d1fa8af3089bdc038865d8907eaf78c43f3e080e36391f83b222d811d681433"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tangent_shared_modes_report.py",
+      "sha256": "83e635e4c679cf029eaf63f75d3ab6f1ae838d36fc62dd471b993ca5759bfaba"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tangent_shared_modes_sim_table.py",
+      "sha256": "1e79a910e4992440020f83524dcb1caba1d4e0fafee31cd3276b7b09c559f9e7"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/tangent_shared_modes_study.py",
+      "sha256": "755d873fd711dafb521ba219f0b6a74e687d8c7986abdac7331eb55f75f703af"
     },
     {
       "mode": "100644",

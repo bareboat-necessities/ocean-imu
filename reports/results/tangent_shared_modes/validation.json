@@ -1,0 +1,441 @@
+{
+  "baseline_commit": "7712a0e046bb653839a4d582ec893d7671ac1e5f",
+  "implementation_commit": "1e2642b",
+  "group_and_reset": {
+    "status": "pass",
+    "maximum_group_round_trip_error": 4.31835e-16,
+    "maximum_reset_finite_difference_error": 1.89063e-10
+  },
+  "untouched_main_parity": {
+    "duration_s": 900,
+    "seed": 7301,
+    "filters": [
+      "QSM",
+      "TFG",
+      "CARMA"
+    ],
+    "trace_bytes_identical": true,
+    "all_score_fields_identical_except_runtime_and_memory": true,
+    "sensor_hash": "813f3a22b7d9b5d2"
+  },
+  "tangent_vessel_replay": {
+    "records": 8,
+    "unchanged_tfg_bars": true,
+    "passed": true,
+    "log_sha256": "b6ffe80063a4dba3e8d090238c52b4459b895e929ca2e28223f76343ed9817ef"
+  },
+  "make_all": {
+    "status": "pass",
+    "command": "make all",
+    "exit_code": 0,
+    "test_modules": 22,
+    "modules": [
+      "tests/ahrs",
+      "tests/detrend",
+      "tests/freq",
+      "tests/heave_only",
+      "tests/imu_calibrate",
+      "tests/kalman_carma",
+      "tests/kalman_carma_shared_modes",
+      "tests/kalman_ou_ii",
+      "tests/kalman_ou_iii",
+      "tests/kalman_tfg",
+      "tests/kalman_tfg_carma",
+      "tests/kalman_tfg_shared_modes",
+      "tests/kalman_tangent_shared_modes",
+      "tests/live_bias_consistency",
+      "tests/nlo",
+      "tests/pii_observer",
+      "tests/spectrum",
+      "tests/spike_filter",
+      "tests/util",
+      "tests/validation",
+      "tests/wave_dir",
+      "tests/wave_sim"
+    ],
+    "log_sha256": "940bbf656eb5c612bd39a88c7d027a8e24991cd73071757f663da9f28e150727",
+    "native_gate_passes": 120,
+    "native_gate_failures": 0,
+    "python_tests": 1169,
+    "python_skipped": 1,
+    "skip": "CMake unavailable on the default PATH; the separate full validation run includes CMake and has no skips.",
+    "implementation_note": "C++ source is unchanged after the validation_source_commit. Final missing-statistic JSON formatting is additionally covered by 13 focused regressions and full historical report regeneration."
+  },
+  "hardware": {
+    "esp32_board_measurement": false
+  },
+  "published_source_checkpoint": "5ad4f1469d9038a0c0e38a424e8b048be005d74e",
+  "local_source_checkpoint": "d75e61bf3992628e133d6b2ea9b9a78f86554a42",
+  "published_tree_identical_to_local_checkpoint": true,
+  "cmake_geometry": {
+    "status": "pass",
+    "maximum_group_round_trip_error": 4.04221e-16,
+    "maximum_reset_finite_difference_error": 1.84357e-10,
+    "log": "cmake-geometry-review.log",
+    "rocking_information_eigenvalues": [
+      0.0757344,
+      0.132968,
+      2.88222
+    ],
+    "storage_composition_rebuild": "pass"
+  },
+  "post_start_main": {
+    "commit": "e7f96eb",
+    "changes": "Current main full OU validation/robustness/TFG evidence is preserved byte-for-byte; no production filter changes in the main update.",
+    "integration_status": "merged, gates preserved"
+  },
+  "final_cohort": {
+    "histories": 168,
+    "score_rows": 4962,
+    "nonzero_exits": 0,
+    "source_snapshot_completed_without_mutation": true
+  },
+  "instrumentation_parity": {
+    "initial_score_rows_compared": 4626,
+    "all_physical_and_covariance_metrics_identical": true,
+    "fields": [
+      "att_rms",
+      "att_max",
+      "p_x",
+      "p_y",
+      "heave_rms",
+      "v_x",
+      "v_y",
+      "v_z",
+      "ba_x",
+      "ba_y",
+      "ba_z",
+      "bg_x",
+      "bg_y",
+      "bg_z",
+      "nees15",
+      "bias_nees",
+      "sensor_hash"
+    ]
+  },
+  "post_main_wave_parity": {
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "all_score_fields_identical_except_runtime_and_memory": true,
+    "sensor_hash": "8f0516979dd3c02d",
+    "source_change": "Only scored-history validation code in src/util/W3dSimCommon.cpp differs from the cohort source checkpoint."
+  },
+  "startup_and_late_gate_parity": [
+    {
+      "seed": 4101,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4101,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4102,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4103,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4104,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4105,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TFG",
+      "after": "TFG-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TAN",
+      "after": "TAN-G",
+      "window": "bias-held startup",
+      "nodes": 121,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TFG",
+      "after": "TFG-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    },
+    {
+      "seed": 4106,
+      "before": "TAN",
+      "after": "TAN-LG",
+      "window": "before late activation at 300 s",
+      "nodes": 300,
+      "maximum_physical_difference": 0.0
+    }
+  ],
+  "article": {
+    "pages": 12,
+    "lualatex_passes": 2,
+    "overfull_boxes": false,
+    "source_sha256": "315862e03f9fc2624dd332f4102cc34765ff602638517b861fc743e3291b5d80",
+    "pdf_sha256": "d7d2d15a09331739a1fdf100a2c363beb8c85fb05a08981a21a3a7f5ac7eb62b",
+    "rendered_review_pages": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "visual_review": "All 12 pages reviewed in a contact sheet; detailed table and final-page reviews, without clipping or overfull boxes.",
+    "build_log_sha256": "8279ef26e147f4f0955992d7577445c452e34d41f41fd235f408a485f784e491"
+  },
+  "shared_table_formatter": {
+    "default_output_byte_identical": true,
+    "wide_layout_checked": true
+  },
+  "storage_delta_host_bytes": {
+    "QSM": 320,
+    "TFG": 320,
+    "independent_CARMA": 32
+  },
+  "composition_storage_parity": {
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "score_rows": 40,
+    "trace_bytes_identical": true,
+    "all_score_fields_identical_except_runtime": true,
+    "trace_sha256": "3375c8f3afc622cbec264c44180599e9b15c135ce50a3e04a1071896850defc8",
+    "geometry_adds_no_physical_storage": true,
+    "log_sha256": "00f2a7dd40334a701b0428dbd2823326cdf859cb681b96d79a26e80284af9941"
+  },
+  "review_fixes": {
+    "module_default_build_and_test_goal": "restored",
+    "crash_partial_unpaired_launch_and_resume_receipts": "five regression tests pass",
+    "python_ruff_and_pycompile": "pass",
+    "tangent_group_storage": "composition preserves public group operations and prevents accidental base-group conversion",
+    "cppcheck_2_22_baseline_comparison": {
+      "baseline_findings": 47,
+      "current_findings": 47,
+      "added_findings": 0,
+      "gate_thresholds_unchanged": true
+    }
+  },
+  "review_followup": {
+    "regression_tests": 13,
+    "regression_status": "pass",
+    "native_group_startup_seven_filter_smoke_and_vessel_replay": "pass",
+    "raw_histories_verified_against_original_receipts": 168,
+    "report_regenerated_from_pinned_cohort": true,
+    "source_resume_binding": "implementation commit plus SHA-256 fingerprint of the complete source hash map",
+    "article_pages": 12,
+    "article_build_and_render_review": "pass",
+    "ou_fingerprint": "Preserved the record emitted by the full CI regeneration. Final source/results changes still require the conservative replay decision; no marker is refreshed from smoke or native regression alone.",
+    "unavailable_endpoint_and_whiteness_statistics": "strict JSON null; missing paired intervals cannot enable promotion",
+    "focused_test_log_sha256": "834b93531249916d73531f460a5f664be7f2b64841a5db54a8695a90a8c3aae9",
+    "python_quality_log_sha256": "226d4e3495cbd3e6aa32030a6985e11e0634beeaf65b8608a22b4f1690771a2b",
+    "current_report_sources": {
+      "tools/tangent_shared_modes_report.py": "177b73f8f96dda768e9e7ade896366f8235491906020ba691a15861e1591bfee",
+      "tools/tangent_shared_modes_inputs.py": "8fbc8735a33bbb9c0106c49fa2a0e3132f8c173c1dd42cdbfb14350747f55b57",
+      "tests/validation/test_tangent_report.py": "f14f10f64e6187f2e973316d7611e0f2c8e8da0552d5f49c0079b516fc9b85a6"
+    }
+  },
+  "validation_source_commit": "be0c54ec191e35284bfd58c785c9809262ade988",
+  "full_python_validation": {
+    "command": "python3 -m unittest discover -s tests/validation -v",
+    "status": "pass",
+    "tests": 1169,
+    "skipped": 0,
+    "cmake_available": true,
+    "log_sha256": "55bd7b2d805c3c538c13e97620c8a54c619494ba8174f48d99316d4134292a67"
+  },
+  "reporting_change_parity": {
+    "histories": 1,
+    "seed": 4101,
+    "duration_s": 900,
+    "filters": 10,
+    "score_rows_compared": 40,
+    "trace_bytes_identical": true,
+    "trace_sha256": "3375c8f3afc622cbec264c44180599e9b15c135ce50a3e04a1071896850defc8",
+    "shared_scores_identical_except": [
+      "memory_bytes",
+      "step_us"
+    ],
+    "new_sample_count_columns": [
+      "nees_samples",
+      "acc_nis_samples",
+      "mag_nis_samples"
+    ]
+  },
+  "ou_ci_evidence": {
+    "publication_commit": "639915d69bce5ea29d1db1395e18dd92f3839985",
+    "full_validation_and_robustness_producer": "be0c54ec191e35284bfd58c785c9809262ade988",
+    "retained_tfg_comparison_producer": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
+    "directory_trees": {
+      "reports/results/ou_validation": "9a820b2ba80c31714ba776026b7fe869a97b5ba7",
+      "reports/results/ou_robustness": "e098ac417b0ff7f7bc5d3eba748011f8514abaf9",
+      "reports/results/tfg_comparison": "4b951d2eca758937a3d899b7947d5fff973ed530"
+    },
+    "bot_publication_preserved": true,
+    "fresh_paired_cohort_locally": false,
+    "fingerprint": "Preserved the record emitted by the full CI regeneration. Final source/results changes still require the conservative replay decision; no marker is refreshed from smoke or native regression alone."
+  },
+  "post_ci_publication_validation": {
+    "publication_commit": "639915d69bce5ea29d1db1395e18dd92f3839985",
+    "command": "make -C tests/validation test",
+    "status": "pass",
+    "tests": 1170,
+    "skipped": 0,
+    "log_sha256": "11fad8e500d73666954327d82eb1d0c52f3ccff59710ff9d077089c081799f24",
+    "includes_final_missing_statistics_fix": true
+  }
+}

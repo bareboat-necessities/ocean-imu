@@ -1,0 +1,656 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{iftex}
+\ifPDFTeX\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\fi
+\usepackage{amsmath,amssymb,bm,mathtools,newtxtext,newtxmath}
+\usepackage{booktabs,array,graphicx,adjustbox,placeins,siunitx}
+\usepackage{pgfplots}\pgfplotsset{compat=1.18}
+\usepackage[final]{microtype}
+\usepackage{cite}
+\usepackage[breaklinks=true,hidelinks]{hyperref}
+\usepackage[nameinlink,capitalise,noabbrev]{cleveref}
+\interdisplaylinepenalty=2500\emergencystretch=2em\allowdisplaybreaks\raggedbottom
+\setcounter{topnumber}{5}\setcounter{dbltopnumber}{5}
+\renewcommand{\topfraction}{.95}\renewcommand{\dbltopfraction}{.95}
+\renewcommand{\textfraction}{.05}\renewcommand{\floatpagefraction}{.8}
+\renewcommand{\dblfloatpagefraction}{.8}
+\makeatletter
+\setlength{\@fptop}{0pt}\setlength{\@dblfptop}{0pt}
+\setlength{\@fpsep}{12pt plus 2pt}\setlength{\@dblfpsep}{12pt plus 2pt}
+\makeatother
+\newcommand{\R}{\mathbb R}
+\newcommand{\vc}[1]{\bm{#1}}
+\newcommand{\sk}[1]{[#1]_\times}
+\newcommand{\tr}{^{\mathsf T}}
+\newcommand{\IncludePGF}[1]{\resizebox{\linewidth}{!}{\input{#1}}}
+\providecommand{\mathdefault}[1]{#1}
+\hypersetup{pdftitle={Tangent-Bias Geometry and Bias Learning in Shared-Mode CARMA Marine Estimation},pdfauthor={Mikhail S. Grushinskiy}}
+\input{tangent-results-generated.tex-part}
+\title{Tangent-Bias Geometry and Bias Learning\\in Shared-Mode CARMA Marine Estimation}
+\author{\IEEEauthorblockN{Mikhail S. Grushinskiy}
+\IEEEauthorblockA{Bareboat Necessities, ocean-IMU project\\Independent Researcher, Fair Lawn, NJ, USA}}
+\begin{document}\maketitle
+\begin{abstract}
+\normalfont
+Tangent-group inertial filters geometrically couple sensor biases with
+navigation states, but their advantages depend on the underlying dynamics
+and available aiding. We investigate a vessel-mounted accelerometer,
+gyroscope and full three-axis magnetometer without external velocity or
+position measurements. The existing minimal shared-mode CARMA(4,1) prior
+models wave-relative motion. We implement a 27-state tangent-bias hybrid on
+$T\mathrm{SE}(3)$ extended by Euclidean wave coordinates, preserving the
+current process model, startup, measured-endpoint gyro integration,
+adaptation and covariance updates. The full tangent group of
+$\mathrm{SE}_2(3)$ instead introduces an additional virtual bias; its exact
+standard-INS navigation-error result is not asserted for this CARMA hybrid.
+A shared directional bias-gain veto tests a conditional excitation monitor
+with full Joseph covariance updates. Matched sensor histories separate
+geometry, bias weighting, startup and live recovery. \StudyHeadline{}
+Nonlinear sensor symmetries and nuisance-eliminated window information
+explain why magnetic aiding and fixed-heading roll/pitch excitation can
+help, while low-frequency motion and reference uncertainty retain weak
+bias directions. Results are experimental and refer to wave coordinates,
+not absolute geographic navigation.
+\end{abstract}
+\begin{IEEEkeywords}
+Equivariant filtering, tangent group, inertial sensor bias, CARMA, marine
+motion, observability, statistical consistency.
+\end{IEEEkeywords}
+
+\section{Question, Baseline and Research Scope}
+The practical question is whether a different geometric error and a more
+cautious learning policy improve live motion and bias estimates. Mathematical
+elegance alone is insufficient. The baseline is main commit
+\texttt{7712a0e046bb653839a4d582ec893d7671ac1e5f}, including the November 2026
+measured-endpoint gyro integration, three-dimensional bias corrections,
+covariance fixes and QMEKF sample-path optimization. Comparisons against
+historical endpoint prediction would confound this experiment.
+Integration also preserves main revision \texttt{480d78f}, which tightens
+production replay limits and rejects invalid scored histories. A fresh
+ten-filter, 900 s wave run after that integration reproduces every cohort
+score and sensor hash exactly, excluding host runtime and object size.
+
+The sensors observe specific force, angular rate and magnetic field. Outputs
+$\vc p,\vc v,\vc a$ describe oscillatory displacement about a local wave
+equilibrium. Neither absolute position, constant translation nor current is
+identified by these sensors. Position-drift metrics below are explicitly
+wave-coordinate errors. The shipping OU-III estimator is unchanged.
+
+\subsection{Verified literature and its transfer limits}
+The MEKF treats attitude multiplicatively and other states additively.
+An invariant EKF on $\mathrm{SE}_2(3)$ geometrically represents attitude,
+velocity and position; adding Euclidean IMU biases generally loses the
+bias-free group-affine property. The two-frame group (TFG) incorporates
+world vectors and body-frame biases in one asymmetric group law
+\cite{barrau2023}. Fornasier et al. introduced the tangent-group bias
+extension, including a virtual input and virtual bias, for standard biased
+inertial navigation \cite{fornasier2022}. The 2025 comparison interprets
+MEKF, imperfect IEKF, TFG, full TG, direct-position and semi-direct-bias
+filters as symmetry choices \cite{fornasier2025}. Its favorable full-TG
+result concerns externally aided trajectories with sufficient observability;
+it is not evidence about an IMU/magnetometer wave estimator.
+
+The 2024 dissertation gives a broader geometric treatment
+\cite{fornasier2024}. The September 2026 IterEqF preprint treats an iterated
+correction as Gauss--Newton on a manifold and derives its covariance reset
+\cite{vantoor2026}. Its reported localization example is not this marine
+sensor suite. A separate September 2026 acoustic/depth preprint studies
+tangent-group filtering with DVL velocity and pressure aiding
+\cite{lunawat2026}. These additional measurements carry independent motion
+information absent here. Both 2026 works are cited as preprints; their
+published abstracts motivate future comparisons rather than establish an
+accuracy claim for ocean-IMU.
+
+\subsection{Which tangent group is implemented?}
+The standard full TG-INS uses
+$\mathrm{SE}_2(3)\ltimes\mathfrak{se}_2(3)$: nine navigation coordinates
+and nine bias coordinates, including a virtual position-input bias. Adding
+the twelve remaining minimal CARMA coordinates gives 30 errors. Fixing that
+virtual bias to zero without changing the error/reset equations does not
+preserve the full symmetry.
+
+We instead use the six-bias semi-direct construction whose velocity/bias
+subgroup is $T\mathrm{SE}(3)$, with the other wave vectors as Euclidean
+representations. This preserves 27 states. We call it \emph{tangent-bias
+hybrid}, abbreviated TAN in tables. It is not a full 30-state TG-EqF
+implementation or a demonstration of its autonomous standard-INS error
+theorem. This distinction is a deliberate model-preserving design choice,
+and limits what a negative comparison can conclude about full TG filters.
+
+\section{Physical and Stochastic Model}
+The body-to-world attitude is $R\in\mathrm{SO}(3)$, with a local NED world
+frame and $\vc g=(0,0,g)\tr$. Sensor models are
+\begin{align}
+ \vc\omega_m&=\vc\omega+\vc b_g+\vc n_g,\\
+ \vc f_m&=R\tr(\vc a-\vc g)+\vc b_a+\vc n_a,\label{eq:force}\\
+ \vc m_m&=R\tr\vc B+\vc n_m.\label{eq:mag}
+\end{align}
+Temperature calibration, lever-arm processing and magnetic startup remain
+the existing components. Fixed calibration errors and uncertain reference
+fields are distinct from white packet noise.
+
+Per spatial axis the existing minimal shared-mode realization has
+\begin{equation}
+ \begin{aligned}
+ \vc x_i&=(p_i,v_i,a_i,\ell_i,w_{i1},w_{i2})\tr,\\
+ d\vc x_i&=A(\kappa)\vc x_i\,dt+G(\kappa,s_i)d\vc W_i.
+ \end{aligned}
+\end{equation}
+The first four coordinates are the established CARMA(4,1) realization; the
+last two form its lossless coloring factor. The complexified eight-real-state
+description contains two unobservable directions per axis. Their removal
+preserves the physical spectra, including cross-axis quadrature, and reduces
+$3+6+24=33$ to $3+6+18=27$ errors. This established reduction is reused,
+not recomputed or approximated by the new geometry.
+
+Let $W=[\vc p,\vc v,\vc a,\vc\ell,\vc w_1,\vc w_2]\in\R^{3\times6}$.
+Its nominal dynamics are $\dot W=WA\tr$. Spatial excitation is Hermitian:
+for the exact common discretization,
+\begin{equation}
+ Q_{ij}=\Re(\Sigma_{ij})Q_R+\Im(\Sigma_{ij})Q_I.
+\end{equation}
+$Q_R$ is symmetric and $Q_I$ antisymmetric; the complete covariance is
+real symmetric positive semidefinite. Bias dynamics are the existing random
+walk for $\vc b_g$ and active OU prior
+$\dot{\vc b}_a=-\lambda\vc b_a+\vc n_{ba}$; a held bias uses $\lambda=0$
+and the existing holding policy. No $S=0$ pseudo-measurement is added:
+stable CARMA displacement dynamics already regularize low-frequency motion.
+That regularization is a model prior, not an external position observation.
+
+\subsection{Spectral fitting and adaptation}
+The fixed CARMA spectral fit, period estimator, measurement-only leveling
+proxy, amplitude evidence and shared cross-spectrum learner are unchanged.
+One common time scale $\kappa$ keeps dynamics isotropic across spatial axes;
+amplitudes and cross-axis excitation may differ. Model commits preserve
+physical $(p,v,a,\ell)$ and transform normalized coloring states
+$\vc w_i/s_i$. The full covariance follows the same physical-coordinate
+congruence, retaining navigation/bias/motion cross-covariance. This includes
+the attitude shear when different axis transformations fail to commute with
+rotation. Reusing the existing commit path avoids confusing an adaptation
+coordinate error with geometric filtering performance.
+
+\section{Tangent-Bias Geometry}
+\subsection{Group action and exact finite correction}
+Let $N=\mathrm{SO}(3)\ltimes\R^{3\times6}$ with
+$(R,W)(U,Z)=(RU,W+RZ)$. Projection $\pi(R,W)=(R,\vc v)$ is a homomorphism
+to $\mathrm{SE}(3)$. The tangent-bias group is
+\begin{equation}
+ \mathcal G=N\ltimes_{\operatorname{Ad}_{\pi}}\R^6.\label{eq:group}
+\end{equation}
+Its bias ideal is an additive vector space carrying the adjoint action;
+it is not a second independent rigid-body pose. For
+$\vc b=(\vc b_g,\vc b_a)$ define lifted bias
+\begin{equation}
+ \gamma=\operatorname{Ad}_{(R,\vc v)}\vc b
+ =\begin{pmatrix}R\vc b_g\\R\vc b_a+\sk{\vc v}R\vc b_g\end{pmatrix}.
+\end{equation}
+In physical storage $(R,W,\vc b)$ the group product satisfies
+\begin{align}
+ R_+&=RU,&W_+&=W+RZ,\\
+ \vc b_{g,+}&=U\tr\vc b_g+\vc c_g,\\
+ \vc b_{a,+}&=U\tr(\vc b_a-\sk{\vc z_v}\vc b_g)+\vc c_a.
+\end{align}
+This is implemented as a small extension of the existing two-frame storage.
+No CARMA process is copied.
+
+Use a right-invariant error and a left correction:
+\begin{equation}
+ \eta=\hat X X^{-1},\qquad \hat X^+=\exp_{\mathcal G}(-\hat\xi)\hat X^-.
+\end{equation}
+To first order, relative to the current two-frame error $\xi_F$,
+\begin{align}
+ \vc\phi&=\log(\hat R R\tr),\quad
+ \vc\rho_i=\hat{\vc w}_i-\hat R R\tr\vc w_i,\\
+ \vc\beta_g&\simeq\hat R(\hat{\vc b}_g-\vc b_g),\quad
+ \vc\beta_a\simeq\hat R(\hat{\vc b}_a-\vc b_a),\\
+ \vc\zeta_a&=\vc\beta_a+\sk{\hat{\vc v}}\vc\beta_g,
+ \qquad \xi_T=S(\hat{\vc v})\xi_F.\label{eq:shear}
+\end{align}
+Only the accelerometer-bias row changes in $S$. For
+$u=(\vc\phi,\vc\rho_i,\vc\zeta_g,\vc\zeta_a)$, the exponential uses
+\begin{align}
+ E&=\exp(\sk{\vc\phi}),\quad W_E=J_l(\vc\phi)\rho,\\
+ \gamma_{g,E}&=J_l(\vc\phi)\vc\zeta_g,\\
+ \gamma_{a,E}&=J_l(\vc\phi)\vc\zeta_a+
+ Q_l(\vc\phi,\vc\rho_v)\vc\zeta_g,
+\end{align}
+then maps $\gamma_E$ back with
+$\operatorname{Ad}_{(E,\vc v_E)}^{-1}$. Here $Q_l$ is the standard
+$\mathrm{SE}(3)$ Jacobian cross block, shared with the TFG implementation.
+All coloring coordinates retain their original linear stochastic model.
+
+\subsection{Continuous error dynamics and the missing cancellation}
+For the repository's two-frame convention let
+$\Omega=\sk{\hat R(\vc\omega_m-\hat{\vc b}_g)}$. Ignoring displayed noise
+terms, the current linearized process is
+\begin{align}
+ \dot{\vc\phi}&=-\vc\beta_g,&
+ \dot{\vc\beta}_g&=\Omega\vc\beta_g,\\
+ \dot{\vc\rho}_i&=\sum_j A_{ij}\vc\rho_j-
+                \sk{\hat{\vc w}_i}\vc\beta_g,\label{eq:carmaerror}\\
+ \dot{\vc\beta}_a&=(\Omega-\lambda I)\vc\beta_a.
+\end{align}
+Differentiating \cref{eq:shear} gives
+\begin{align}
+ F_T&=\dot S S^{-1}+S F_F S^{-1},\label{eq:ft}\\
+ \dot{\vc\zeta}_a&=(\Omega-\lambda I)\vc\zeta_a+K_v\vc\beta_g,\\
+ K_v&=\sk{\dot{\hat{\vc v}}}+\sk{\hat{\vc v}}\Omega
+       -(\Omega-\lambda I)\sk{\hat{\vc v}}.
+\end{align}
+This retains every first-order coupling. In standard INS, force drives
+velocity and the full tangent bias can move the velocity/position
+linearization error into bias dynamics. Here force is \emph{measured
+against} a latent CARMA acceleration, while \cref{eq:carmaerror} propagates
+velocity. Inserting the standard autonomous TG-INS matrix would therefore
+change the process model and discard real terms. We do not do so.
+
+\subsection{Discrete propagation and covariance}
+The continuous noise injection is also coordinate dependent. Let
+$d\vc u_g$ denote gyro measurement noise, $d\vc u_{bg},d\vc u_{ba}$
+bias driving noise, and $d\vc u_{w_i}$ the jointly correlated CARMA
+driving increments. In the same error convention,
+\begin{align}
+ d\vc\phi\big|_n&=\hat R\,d\vc u_g,\\
+ d\vc\beta_g\big|_n&=-\hat R\,d\vc u_{bg},\\
+ d\vc\rho_i\big|_n&=\sk{\hat{\vc w}_i}\hat R\,d\vc u_g-d\vc u_{w_i},\\
+ d\vc\beta_a\big|_n&=-\hat R\,d\vc u_{ba}.
+\end{align}
+These blocks define $L_F$ and
+$Q_F^c=L_F Q_{\mathrm{drive}}L_F\tr$, including shared-mode forcing
+and gyro-induced attitude/motion cross-covariances. Accelerometer packet
+noise belongs to the force likelihood, not a second velocity-driving
+channel. Bias driving noise follows the native holding policy.
+For a frozen linearization the reference discretization is
+\begin{equation}
+ \Phi_F=e^{F_Fh},\qquad
+ Q_F=\int_0^h e^{F_Fs}Q_F^c e^{F_F\tr s}\,ds.
+\end{equation}
+The CARMA block evaluates its exact matrix-exponential discretization.
+Navigation retains the existing structured measured-endpoint
+approximation and shared-endpoint noise bound; it is not replaced by an
+assumed autonomous full-TG transition.
+The existing exact CARMA discretization and measured-endpoint gyro map
+produce $\Phi_F,Q_F$. At corresponding nominal endpoints,
+\begin{equation}
+ \Phi_T=S_1\Phi_F S_0^{-1},\quad Q_T=S_1Q_F S_1\tr,
+ \quad P_T=S P_F S\tr.\label{eq:discrete}
+\end{equation}
+Thus cross-covariances are retained rather than zeroed. These equations
+also show that a first-order coordinate change alone cannot improve the
+Gaussian linear update. A measured improvement must come from finite
+retraction/reset effects, different higher-order output approximations or
+an actual model change.
+
+For efficiency the implementation stores the public covariance in the
+current two-frame chart, reusing its optimized prediction and physical
+covariance writes. At each correction it maps the posterior to the tangent
+chart, applies the tangent reset and maps back. This is algebraically
+\cref{eq:discrete}, not an additional filter or an information fusion step.
+The existing conservative reused-endpoint gyro-noise treatment is retained;
+averaging two samples is not counted as two independent measurements.
+
+\subsection{Measurement model and reset}
+In world residual coordinates, without a lever arm,
+\begin{align}
+ \vc r_a&=\hat R(\vc f_m-\hat{\vc b}_a)-(\hat{\vc a}-\vc g),\\
+ H_{a,F}&=[\sk{\vc g}\quad0\quad\cdots\ -I_{\rho_a}\ \cdots\ -I_{\beta_a}],\\
+ \vc r_m&=\hat R\vc m_m-\vc B,\quad
+ H_{m,F}=[-\sk{\vc B}\quad0\ \cdots].
+\end{align}
+Noise rotates as $R\mathcal R R\tr$. The tangent Jacobian is
+$H_T=H_F S^{-1}$; in particular
+$H_{a,T,\beta_g}=\sk{\hat{\vc v}}$ in addition to any existing lever-arm
+term. Using this identity through the backing chart yields the same
+first-order residual likelihood.
+
+With $d=S_0Kr$, the complete stored-chart reset is
+\begin{equation}
+ J_{\mathrm{store}}=S_+^{-1}J_{r,\mathcal G}(d)S_0,
+ \qquad P^+=J_{\mathrm{store}}P_{\mathrm{post}}J_{\mathrm{store}}\tr.
+\end{equation}
+The Lie-algebra adjoint gains the blocks
+$(\operatorname{ad}_d)_{a,g}=\sk{\rho_v}$ and
+$(\operatorname{ad}_d)_{a,v}=\sk{\zeta_g}$. Their two paths also contribute
+to the bias/attitude reset block. Omitting either produces an inconsistent
+finite reset. A 32-term series is evaluated only on $3\times3$ blocks;
+covariance congruences use rank-row operations, not a dense exponential or
+an additional $27\times27$ scratch matrix. Finite differences and an
+independent dense covariance congruence test verify the implementation.
+
+When a physical bias is held during startup, the original two-frame
+retraction is used. Otherwise a second-order tangent cross term could move
+a mean whose gain row was held at zero. Switching geometry when native
+bias learning becomes active changes no physical state or backing
+covariance. This preserves the existing startup semantics and isolates
+live geometric effects.
+
+\subsection{Iterated updates: what would be a separate experiment?}
+An iterated update would minimize one prior-plus-measurement objective,
+\begin{equation}
+ \tfrac12\|\epsilon(X,\hat X^-)\|_{P^-}^2+
+ \tfrac12\|y-h(X)\|_{\mathcal R}^2,
+\end{equation}
+relinearizing at trial means and resetting covariance to the final chart.
+Reapplying a Kalman update to the same packet as if it were new data would
+double-count information. Neither an iterated update nor the full 30-state
+TG-INS is silently folded into TAN; their effect cannot be inferred from
+the comparisons here.
+
+\section{Bias Observability and Conservative Learning}
+\subsection{An exact sensor ambiguity and its limits}
+Full three-axis magnetic measurements constrain two attitude directions,
+but a rotation $Q$ about a known field obeys $Q\vc B=\vc B$. For any body
+bias perturbation $\vc d(t)$ define
+\begin{align}
+ R'&=QR,\quad \vc b_a'=\vc b_a+\vc d,\\
+ \vc a'&=\vc g+Q(\vc a-\vc g-R\vc d).\label{eq:gauge}
+\end{align}
+Equations \cref{eq:force,eq:mag} then give identical force and magnetic
+measurements; a constant $Q$ also preserves body angular rate. At constant
+$R$ and $\vc a=0$, choosing
+$\vc d=R\tr(Q\tr\vc g-\vc g)$ gives another stationary history with
+constant bias. This is a genuine local quiet sensor ambiguity, despite a
+three-dimensional field.
+
+It does \emph{not} imply that fixed heading makes horizontal bias
+unobservable. With roll/pitch excitation and a constant bias, the same
+$\vc d$ generally cannot satisfy \cref{eq:gauge} at every pose. Lie
+derivatives illustrate the mechanism:
+\begin{align}
+ L_fh_m&=-\sk{\vc\omega_m-\vc b_g}R\tr\vc B,\\
+ L_fh_a&=-\sk{\vc\omega_m-\vc b_g}R\tr(\vc a-\vc g)
+          +R\tr\dot{\vc a}+\dot{\vc b}_a.
+\end{align}
+The stationary constant-bias local observability matrix for
+$(\phi,b_g,b_a)$ has rank eight of nine when gravity and field are
+nonparallel. Its null direction is explicitly checked. Multiple tilting
+poses can remove that direction without yaw changes.
+
+If slow physical bias histories are allowed, however,
+$\vc d(t)=R(t)\tr(Q\tr\vc g-\vc g)$ gives $\vc a'=Q\vc a$.
+Bounded wave displacement remains bounded after rotation. This is a
+sensor-level compatibility family, not a theorem of stochastic
+non-identifiability: an OU bias law, CARMA excitation anisotropy, calibrated
+reference prior or qualified hull-response relationship may assign the
+histories different probabilities. It explains why process-prior assumptions
+must remain visible in any practical observability claim.
+
+\subsection{Nuisance-eliminated finite-horizon information}
+The independent diagnostic builds a scaled sensor/process Jacobian over a
+60-second window. Variables include every local pose, all 18 motion states
+at every node, constant gyro and accelerometer biases, and optionally a
+magnetic-reference perturbation. CARMA transition/noise matrices come from
+the existing filter export. The window uses one-second nodes; endpoint
+quadrature of nominal attitude over a node is an explicit approximation,
+separate from the live 200 Hz integration.
+
+For target columns $A$ and nuisance columns $B$, information is
+\begin{equation}
+ \mathcal I=A\tr(I-BB^\dagger)A.
+\end{equation}
+Sparse least-squares projection eliminates nuisance states without a
+physical ridge prior. Numerical convergence, scaling and covariance floors
+are recorded. Three magnetic assumptions are separated: fixed reference,
+an uncertain constant reference with a stated Gaussian prior, and a free
+reference. Sensor-only rows deliberately free the motion trajectory; their
+bias-information loss is a diagnostic relaxation. Adding CARMA process rows
+and the stationary motion prior quantifies model-supplied information.
+Varying that prior probes practical weakness. No window result feeds the
+live state or covariance.
+
+\subsection{Shared directional gain veto}
+An inexpensive candidate monitor accumulates a fading-memory conditional
+six-dimensional information matrix for constant world attitude error and
+body bias. Its force sensitivity is
+\begin{equation}
+ \begin{aligned}
+ H_a&=[\sk{\vc g}s_\phi\quad -Rs_b]/\sigma_{a,\mathrm{eff}},\\
+ H_m&=[-\sk{\vc B}s_\phi\quad0]/\sigma_m.
+ \end{aligned}
+\end{equation}
+The conditional model assumes a known reference and approximately
+zero-mean wave acceleration. Motion power inflates force variance; an
+explicit effective correlation time prevents 200 Hz copies being counted
+as independent stationary poses. Defaults are a 30 s fading horizon, 0.1 s
+commit, 1 s correlation time, scales $s_\phi=0.05$ rad and
+$s_b=0.05$ m/s$^2$. The force floor is 0.15 m/s$^2$ and the field scale
+8 $\mu$T. These values are fixed before holdout evaluation.
+
+After eliminating the three attitude nuisance coordinates, let
+$\mathcal I_b=U\operatorname{diag}(\lambda_i)U\tr$. The body-bias gain
+multiplier is
+\begin{equation}
+ D=U\operatorname{diag}\!\left(\frac{\lambda_i}{\lambda_i+1}\right)U\tr,
+ \qquad 0\preceq D\preceq I.
+\end{equation}
+QMEKF uses $K_b\leftarrow DK_b$; TFG/TAN use the equivalent world-bias
+factor $RDR\tr$. Other gain rows are retained. Native holding and process
+noise remain authoritative. This monitor is \emph{not} the full marine
+observability Gramian; it neglects nuisance evolution and cannot certify a
+learnable direction. The independent window analysis tests that limitation.
+
+The complete Joseph formula is essential for a modified gain $L$:
+\begin{align}
+ P_L&=(I-LH)P(I-LH)\tr+L\mathcal R L\tr,\\
+ P_L-P_K&=(L-K)(HPH\tr+\mathcal R)(L-K)\tr\succeq0.
+\end{align}
+Thus, under the stated linear likelihood, gain suppression never gains
+information relative to the ordinary Kalman update. This identity is
+tested. The monitor contributes no pseudo-measurement. It does not by itself
+prove consistency under colored noise, reference error, prior mismatch or
+nonlinear corrections. A lower bias RMS with dishonest uncertainty is not
+an adoption result.
+
+\section{Controlled Experiments}
+The new engine reuses the repository's independent directional spectral
+vessel-response truth and sensor-noise generators. It never generates
+truth from a filter estimate or feeds truth into normal estimation.
+Every compared variant receives one identical timestamped sensor history
+per seed. Hashes bind the actual input stream. The gyro is an instantaneous
+sample at the force timestamp; current main's endpoint integrator is used.
+For variable intervals the elapsed previous interval is passed to prediction.
+Prediction, accelerometer correction and due magnetic packets follow the
+existing fusion schedule.
+
+Seven primary variants are QMEKF shared modes (QSM), TFG shared modes (TFG),
+tangent-bias shared modes (TAN), the same three with the gain veto (-G), and
+independent-axis CARMA(4,1). Three additional wave arms enable the veto only
+at 300 s (-LG), without resetting adaptation or covariance. The native
+front end acquires its reference ordinarily. Exact/wrong reference arms are
+explicit diagnostic controls; truth is never a normal update channel.
+
+Development seeds 7301--7302 and short runs precede the fixed holdout seeds
+4101--4106. Cases cover quiet water, independent rocking at fixed heading,
+low/high waves, rise/recovery, deliberate yaw, horizontal/near-vertical
+field, reference error, early and late state perturbations, gyro error,
+engine vibration, colored noise, slow accelerometer/gyro bias drift, two-hour motion error, 100/200/400 Hz IMU,
+10/25/100 Hz magnetometer and nonuniform sampling. Early perturbations
+occur at the first native Live sample; they test convergence after the
+shared startup, not a different alignment algorithm. Late perturbations
+occur at 300 s. Additional wave arms match synthetic white-noise models,
+then separately the population bias prior. Tuning is not optimized against
+these holdout histories.
+
+The default directional JONSWAP sea has $H_s=0.8$ m,
+$f_p=0.29$ Hz and peak enhancement 3.3. Low/high controls use
+$H_s=0.15/4$ m. Transition envelopes multiply wave amplitude
+$1\to4\to1$, with 30 s smooth transitions centered at 300/600 s;
+their derivatives enter the independent physical truth. Default magnetic
+strength/inclination are 50 $\mu$T/65 degrees. White packet standard
+deviations are 0.0148 m/s$^2$, 0.00157 rad/s and 0.8 $\mu$T.
+Independent per-axis turn-on biases are uniform within
+$\pm0.008g$ and $\pm0.05$ degrees/s. The population control matches
+the variance of that uniform distribution, not its entire distribution.
+Engine disturbances add 0.08/0.15 m/s$^2$ sinusoids at 37/43 Hz
+to body X/Z; the colored force control has 0.025 m/s$^2$ stationary
+standard deviation and 0.3 s correlation time.
+
+The additional drift controls use the existing physical-history generator's
+sinusoidal/ramp bias channels, not estimated states. Rate controls retain
+per-packet white-noise standard deviations; they do not model an identical
+analog noise spectrum after different anti-alias filters.
+
+Full-state predictions/corrections run at sensor rate. Scores use 20 Hz
+estimates, with common windows. Traces and covariance audits are retained at
+1 Hz. Metrics include attitude RMS/maximum, velocity by axis, heave,
+horizontal wave-position error change, heave-error slope, all six bias
+components, first sustained sampled convergence, innovations, numerical failures,
+CPU update cost and object storage. Plots use the established shared vector
+export/decimation path and are never scoring input.
+Signed heave plots are positive upward; vertical error slopes in the score
+CSV retain the stated NED down convention.
+
+NEES uses common errors
+$[\log(\hat RR\tr),\hat p-p,\hat v-v,\hat b_g-b_g,\hat b_a-b_a]$ and the
+full transported 15-dimensional marginal covariance. Window NIS means use
+actual accepted measurements, with accepted fractions retained in the CSV;
+fixed-time packet NIS is taken before the accept/reject decision. At a fixed timestamp, independent-seed
+ensemble bounds use $\chi^2_{nd}$ for $n$ seeds and $d$ dimensions. Serial
+samples do not multiply the nominal degrees of freedom. Paired Student
+intervals use seed-level changes, not differences of marginal intervals.
+Innovation autocorrelation/whiteness tests are diagnostics of the stated
+likelihood. Native model mismatch is kept visible.
+The chi-square bounds are nominal Gaussian reference bounds, not
+distribution-free coverage guarantees under nonlinear dynamics or uniform
+turn-on biases. Paired Student intervals also have limited small-sample
+precision with six seeds. Conclusions do not rely on treating correlated
+time samples or repeated conditions as independent trials.
+
+\section{Measured Results and Ablations}
+\StudyCohort
+\PrimaryResultsTable
+\BiasResultsTable
+\PairedResultsTable
+\ConsistencyResultsTable
+\RecoveryResultsTable
+\RobustnessResultsTable
+\CostResultsTable
+\TimingResultsTable
+\AblationResultsTable
+\StudyInterpretation
+Excess state NEES and small packet NIS are separate failures of the stated
+uncertainty model. A broad measurement likelihood can coexist with missing
+state uncertainty from magnetic reference and low-frequency motion. Small
+NIS is therefore not scored as an improvement. The gate's weaker state
+overconfidence still lies outside the fixed-time ensemble bound.
+Zero numerical failures also does not mean robust accuracy. High-sea and
+near-vertical-field trials show large attitude excursions. In two of the
+six 87-degree-field histories, native bias learning remains held throughout
+the scored window, with roughly one third of magnetic packets rejected.
+The prototype preserves that hold and uses TFG geometry in that interval;
+it therefore cannot claim a tangent-bias recovery in those histories.
+This exposes a startup/service limitation under weak magnetic geometry,
+not a general claim that constant-heading bias estimation is impossible.
+The separate pinned vessel-response replay uses the same eight records,
+sampling contract and unchanged TFG numeric gates. The documentation build
+regenerates its single-realization table from the current executable;
+these rows do not replace the paired Monte Carlo study.
+\input{tangent-replay-generated.tex-part}
+
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_accuracy.pgf}
+\caption{Holdout comparisons by physical condition. Curves summarize measured
+seed-level errors; uncertainty is across independent seeds. Lower error
+alone does not establish an acceptable estimator.}\end{figure*}
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_bias_tracking.pgf}
+\caption{Representative accelerometer-bias drift (left) and gyroscope-bias drift
+(right). Each column uses its own declared physical history; all methods
+receive identical sensor streams within that history.}\end{figure*}
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_motion.pgf}
+\caption{One-Hz visualization of attitude error and wave-relative motion,
+with a final-seconds detail. Faster spectral content is not resolved by
+these display traces; RMS scoring uses 20 Hz estimates from full-rate updates.
+Horizontal displacement is not absolute geographic position.}\end{figure*}
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_degradation.pgf}
+\caption{Engine-noise and sea-state rise/recovery controls. Common noise and
+truth isolate estimator behavior under each disturbance.}\end{figure*}
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_consistency.pgf}
+\caption{Consistency and innovation diagnostics. Fixed-time ensemble bounds
+use independent seeds. Serial coverage is not a calibration certificate.}\end{figure*}
+\begin{figure*}[t]\centering
+\IncludePGF{tangent_observability.pgf}
+\caption{Nuisance-eliminated local information under explicit motion and
+magnetic-reference assumptions. Numerical rank thresholds are diagnostic,
+not a global observability proof.}\end{figure*}
+\clearpage\twocolumn
+
+\section{Implementation, Regression and Embedded Feasibility}
+The new class inherits the current shared TFG estimator. The existing
+minimal motion realization, confidence, period/amplitude adaptation,
+magnetic acquisition and timing contract are reused. The $\mathrm{SE}(3)$
+Jacobian cross block is extracted once and retained under its former
+namespace alias. A shared gain interface supports the optional bias veto in
+both QMEKF and TFG; defaults disable it. Public covariance storage and
+ordinary estimator APIs remain compatible.
+
+The tangent correction uses fixed-size small matrices and rank-row
+congruences. The covariance remains 27 by 27 (2916 bytes in float) and no
+additional full covariance scratch is introduced. The optional monitor
+stores a 6 by 6 information matrix plus small matrices. Wrapper storage
+includes its heap-owned estimator; reported sizes exclude allocator
+metadata and are host ABI values.
+The common optional gain/monitor interface adds 320 host bytes to each
+shared-mode wrapper/core even when disabled, relative to the untouched-main
+build of the same harness. The independent-axis core's interface adds
+32 host bytes. These costs are retained in the baseline comparison.
+CPU timings compare the same host build
+and instrument only filter updates. They are not Xtensa execution or board
+latency measurements; stack high-water marks, firmware linking and 200 Hz
+headroom on ESP32-S3 remain separate hardware qualifications.
+
+Regression checks cover group laws, the adjoint, exponential/logarithm,
+finite-difference reset, structured versus dense covariance transport,
+positive semidefiniteness, quiet/rocking information, Joseph gain penalties,
+and complete baseline traces built against an untouched main worktree.
+The original TFG replay limits are shared as one fixture; experimental
+replay failures are reported rather than used to widen them. The root
+\texttt{make all} and existing unrelated replay suites retain their original
+contracts. A focused CI job builds the implementation and article and runs
+independent smoke histories. The full cohort is reproducible separately.
+Separate checks confirm identical physical estimates with/without the gate
+while the native bias hold is active, and before late gate activation at
+300 s. Consequently the late-activation comparison measures live learning
+without changing startup estimates.
+\ValidationResults
+
+\section{Recommendation and Limitations}
+\StudyRecommendation
+The scope remains a local stochastic marine estimator. The conditional
+gain monitor is not a deployable observability certificate; a reliable
+sensor-driven gate must account for magnetic calibration/reference
+uncertainty and correlated low-frequency motion. A more accurate prior,
+independently qualified attitude, confirmed stationary multi-pose data,
+time-aligned GNSS/DVL velocity or pressure would be additional information,
+and must be evaluated as such rather than credited to a group choice.
+
+A full 30-state TG-INS with a compatible stochastic augmentation, an
+iterated measurement objective and realistic recorded hardware data are
+future experiments. This study neither implements that full-TG comparator
+nor establishes that all tangent-group filters are inferior. It tests the
+27-state model-preserving tangent-bias alternative and separates it from a
+shared learning policy. Statistical acceptance requires a paired accuracy
+gain, adequate uncertainty, robustness and acceptable target cost together.
+Finite Monte Carlo runs do not prove nonlinear global stability.
+
+\begin{thebibliography}{9}
+\bibitem{fornasier2022} A. Fornasier, Y. Ng, R. Mahony and S. Weiss,
+``Equivariant Filter Design for Inertial Navigation Systems with Input
+Measurement Biases,'' ICRA, 2022, doi:10.1109/ICRA46639.2022.9811778.
+\bibitem{barrau2023} A. Barrau and S. Bonnabel, ``The Geometry of Navigation
+Problems,'' IEEE Trans. Automatic Control, vol. 68, no. 2, pp. 689--704,
+2023, doi:10.1109/TAC.2022.3144328.
+\bibitem{fornasier2025} A. Fornasier, Y. Ge, P. van Goor, R. Mahony and
+S. Weiss, ``Equivariant symmetries for inertial navigation systems,''
+Automatica, vol. 181, 112495, 2025, doi:10.1016/j.automatica.2025.112495.
+\bibitem{fornasier2024} A. Fornasier, ``Equivariant Symmetries for Aided
+Inertial Navigation,'' dissertation, 2024, arXiv:2407.14297.
+\bibitem{vantoor2026} P. van Goor and J. R. Forbes, ``The Iterative
+Equivariant Filter,'' preprint, September 2026, arXiv:2609.12328.
+\bibitem{lunawat2026} A. Lunawat, P. van Goor, F. Dellaert and S. B.
+Williams, ``Equivariant Filter Design for Acoustic and Depth Aided Inertial
+Navigation Systems,'' preprint, September 2026, arXiv:2609.19742.
+\end{thebibliography}
+\end{document}

@@ -1,4 +1,5 @@
 .PHONY: all build test clean ensure-sim-data
+.DEFAULT_GOAL := all
 CC = g++
 TEST_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 REPO_ROOT := $(abspath $(TEST_DIR)/../..)
@@ -17,11 +18,14 @@ endif
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
 TARGETS = tfg_shared_modes-test carma_shared_modes-test carma_shared_modes_realization-test kalman_carma_shared_modes-sim kalman_carma_shared_modes-bench
-# carma3_bench's engine and filter units (tests/kalman_carma), compiled here
-# so the Monte Carlo benchmark pairs the new filter with the same truth and
-# sensors; the engine's main() is renamed carma3_bench_main.
-BENCH_OBJS = bench_engine.o bench_carma3_filters_ou.o bench_carma3_filters_c4.o bench_carma3_filters_c5.o \
-             bench_carma3_filters_tfg.o bench_carma3_filters_coupled.o
+# Share the canonical benchmark factory objects with tests/kalman_carma.
+# Only the engine needs a separate object because its main() is renamed.
+BENCH_FILTER_OBJS = $(addprefix $(BENCH_DIR)/,carma3_filters_ou.o carma3_filters_c4.o carma3_filters_c5.o carma3_filters_tfg.o carma3_filters_coupled.o)
+BENCH_OBJS = bench_engine.o $(BENCH_FILTER_OBJS)
+.PHONY: check-bench-factories
+check-bench-factories:
+$(BENCH_FILTER_OBJS): check-bench-factories
+	$(MAKE) -C $(BENCH_DIR) $(notdir $@) EIGEN_DIR="$(EIGEN_DIR)"
 all: build test
 build: $(TARGETS)
 test: ensure-sim-data $(TARGETS)
@@ -46,8 +50,6 @@ kalman_carma_shared_modes-bench: kalman_carma_shared_modes-bench.o csm_filters.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp
 	$(CC) $(CXXFLAGS) -Dmain=carma3_bench_main -MMD -MP -c $< -o $@
-bench_%.o: $(BENCH_DIR)/%.cpp
-	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 %.o: %.cpp
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)

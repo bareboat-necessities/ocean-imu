@@ -72,3 +72,18 @@ add_executable(detrend-log-frequency-test "${OCEAN_IMU_TESTS_DIR}/detrend/detren
 add_executable(kalman_tfg_shared_modes-sim
   "${OCEAN_IMU_TESTS_DIR}/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp"
   ${W3D_SIM_COMMON})
+
+# Reduced tangent-bias geometry shares CARMA and the current TFG machinery.
+add_executable(tangent-geometry-test
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/geometry-test.cpp")
+target_compile_options(tangent-geometry-test PRIVATE -O1 -DEIGEN_UNROLLING_LIMIT=0)
+add_executable(tangent-study
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/study.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/q.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/independent.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/tfg.cpp"
+  ${W3D_SIM_COMMON})
+target_compile_definitions(tangent-study PRIVATE EIGEN_UNROLLING_LIMIT=0)
+add_executable(tangent-replay
+  "${OCEAN_IMU_TESTS_DIR}/kalman_tangent_shared_modes/tangent-replay.cpp"
+  ${W3D_SIM_COMMON})

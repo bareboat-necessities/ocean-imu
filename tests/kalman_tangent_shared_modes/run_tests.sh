@@ -1,0 +1,43 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+./geometry-test
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+./tangent-study --scenario stationary --duration .005 --filters QSM --output "$scratch/startup"
+python3 - "$scratch/startup_scores.csv" <<'PY'
+import csv,sys,math
+row=next(csv.DictReader(open(sys.argv[1])))
+for count, metrics in [('nees_samples', ['nees15', 'bias_nees', 'h_bias_nees']),
+                       ('acc_nis_samples', ['acc_nis']), ('mag_nis_samples', ['mag_nis'])]:
+    assert int(row[count])==0,row
+    for metric in metrics:
+        assert math.isnan(float(row[metric])),row
+print('startup consistency: missing samples exported as unavailable PASS')
+PY
+./tangent-study --scenario rocking --seed 7301 --duration 180 --output "$scratch/rocking"
+python3 - "$scratch/rocking_scores.csv" <<'PY'
+import csv,sys,math
+rows=list(csv.DictReader(open(sys.argv[1])))
+assert len(rows)==7
+assert len({r['sensor_hash'] for r in rows})==1
+for r in rows:
+    assert int(r['failed'])==0,r
+    assert float(r['min_correlation_eigenvalue'])>-1e-4,r
+    assert float(r['bias_enabled_fraction'])>.99,r
+    assert math.isfinite(float(r['att_rms'])),r
+    for count in ('nees_samples', 'acc_nis_samples', 'mag_nis_samples'):
+        assert int(r[count])>0,r
+    # Safety envelope fixed before holdout runs; meaningful gross failures
+    # fail CI. Experimental accuracy is judged by the paired study.
+    assert float(r['att_max'])<10,r
+    assert float(r['heave_rms'])<2,r
+    assert max(float(r['ba_'+a]) for a in 'xyz')<.5,r
+print('paired 7-filter finite/PSD/live smoke PASS')
+PY
+# Share the full pinned-record and fail-closed protocol tests with TFG.
+if ! python3 ../kalman_tfg_shared_modes/regression_checks.py --binary ./tangent-replay --data-dir . > tangent-replay-checks.log 2>&1; then
+    cat tangent-replay-checks.log
+    exit 1
+fi
+echo 'Tangent replay: eight historical and current gates plus fail-closed protocol checks PASS (tangent-replay-checks.log).'

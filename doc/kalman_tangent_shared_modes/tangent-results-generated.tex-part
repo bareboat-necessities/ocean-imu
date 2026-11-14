@@ -1,0 +1,190 @@
+% Generated from source-bound paired scores.
+\newcommand{\StudyHeadline}{%
+On acquired-reference waves, the paired TAN versus TFG horizontal-bias RMS change is -0.0051\% improvement [95\% interval -0.0180, 0.0078\%].%
+}
+\newcommand{\StudyCohort}{%
+The cohort contains 168 paired sensor histories, with 6 independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly. Numerically failed filter/history pairs: 0; failed native processes: 0; incomplete experiments: 0.%
+}
+\newcommand{\PrimaryResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Native acquired-reference waves, 150--900 s. Six holdout seeds; entries are means except worst attitude, which is the cohort maximum.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrrrr}\toprule
+Method&Att. [deg]&Worst att. [deg]&Heave [mm]&$v_h$ [mm/s]&$v_z$ [mm/s]&$b_{a,h}$ [mm/s$^2$]&Wave drift [m]\\\midrule
+QSM&0.611&1.558&12.20&11.34&4.14&52.17&0.02\\
+TFG&0.611&1.543&12.20&11.34&4.14&51.95&0.02\\
+TAN&0.611&1.543&12.20&11.34&4.14&51.95&0.02\\
+QSM-G&0.604&1.524&13.88&11.22&5.43&51.20&0.02\\
+TFG-G&0.604&1.508&13.88&11.23&5.43&51.19&0.02\\
+TAN-G&0.604&1.508&13.88&11.23&5.43&51.19&0.02\\
+CARMA&0.612&1.562&13.02&11.50&4.37&51.89&0.02\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\BiasResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Per-axis bias RMS on the same waves. Accelerometer: mm/s$^2$; gyro: mrad/s.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrrr}\toprule
+Method&$b_{ax}$&$b_{ay}$&$b_{az}$&$b_{gx}$&$b_{gy}$&$b_{gz}$\\\midrule
+QSM&32.11&35.24&0.50&0.02&0.02&0.05\\
+TFG&31.51&35.40&0.50&0.02&0.02&0.05\\
+TAN&31.51&35.40&0.50&0.02&0.02&0.05\\
+QSM-G&29.62&35.40&0.94&0.02&0.02&0.05\\
+TFG-G&29.60&35.40&0.94&0.02&0.02&0.05\\
+TAN-G&29.60&35.40&0.94&0.02&0.02&0.05\\
+CARMA&31.07&35.64&0.52&0.02&0.02&0.05\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\PairedResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Paired percentage improvement (positive is lower error), mean [95\% Student interval], six independent seeds.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrr}\toprule
+Comparison&Attitude [\%]&Heave [\%]&Horizontal bias [\%]\\\midrule
+QSM$\to$TFG&1.36 [-2.30, 5.03]&0.02 [0.01, 0.02]&1.84 [-2.66, 6.33]\\
+TFG$\to$TAN&-0.0024 [-0.0198, 0.0151]&-0.0004 [-0.0006, -0.0001]&-0.0051 [-0.0180, 0.0078]\\
+QSM$\to$QSM-G&1.94 [-4.44, 8.33]&-13.63 [-26.46, -0.79]&6.30 [-12.79, 25.39]\\
+TFG$\to$TFG-G&0.63 [-5.66, 6.91]&-13.64 [-26.48, -0.80]&5.06 [-11.63, 21.76]\\
+TAN$\to$TAN-G&0.63 [-5.66, 6.91]&-13.64 [-26.48, -0.80]&5.07 [-11.64, 21.77]\\
+TFG-G$\to$TAN-G&-0.0024 [-0.0193, 0.0146]&-0.0009 [-0.0015, -0.0003]&-0.0003 [-0.0011, 0.0005]\\
+TAN$\to$TAN-LG&4.66 [-4.97, 14.30]&-4.66 [-5.03, -4.29]&10.59 [-14.69, 35.86]\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\ConsistencyResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Normalized consistency: NEES and packet NIS at fixed 899 s, plus accepted-packet NIS window means and lag-one innovations at 20 Hz. Nominal mean is one. Fixed-time 95\% ensemble bounds: NEES$_{15}$ [0.73, 1.31]; bias NEES/NIS$_3$ [0.46, 1.75].}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrrrr}\toprule
+Method&NEES$_{15}$/15&Bias NEES/3&Acc. NIS/3&Mag. NIS/3&Mean acc./3&Mean mag./3&Max. $|\rho_1|$\\\midrule
+QSM&2.00&8.12&0.04&0.01&0.03&0.01&0.437\\
+TFG&1.97&7.97&0.04&0.01&0.03&0.01&0.437\\
+TAN&1.97&7.97&0.04&0.01&0.03&0.01&0.437\\
+QSM-G&1.50&5.90&0.04&0.01&0.03&0.01&0.439\\
+TFG-G&1.50&5.90&0.04&0.01&0.03&0.01&0.439\\
+TAN-G&1.50&5.90&0.04&0.01&0.03&0.01&0.439\\
+CARMA&1.99&8.05&0.04&0.01&0.03&0.01&0.456\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\RecoveryResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Degradation and bias convergence. Long uses 5400--7200 s. Other RMS windows are 150--900 s. Convergence time is absolute time since construction.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrr}\toprule
+Condition&Method&$b_{a,h}$ [mm/s$^2$]&Converged&Median time [s]\\\midrule
+rocking&TFG&18.39&6/6&444.6\\
+rocking&TAN&18.39&6/6&444.6\\
+rocking&TAN-G&41.18&1/6&62.2\\
+late\_bias&TFG&90.87&0/6&--\\
+late\_bias&TAN&90.88&0/6&--\\
+late\_bias&TAN-G&94.32&0/6&--\\
+late\_attitude&TFG&62.66&0/6&--\\
+late\_attitude&TAN&63.50&0/6&--\\
+late\_attitude&TAN-G&51.91&1/6&333.8\\
+transition&TFG&50.52&1/6&31.8\\
+transition&TAN&50.52&1/6&31.8\\
+transition&TAN-G&51.17&1/6&31.8\\
+vibration&TFG&52.97&1/6&31.8\\
+vibration&TAN&52.97&1/6&31.8\\
+vibration&TAN-G&51.23&1/6&31.8\\
+long&TFG&78.00&1/6&31.8\\
+long&TAN&77.99&1/6&31.8\\
+long&TAN-G&52.94&1/6&31.8\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\CostResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Host update CPU time after warmup, per IMU step; memory includes the heap-owned core. No ESP32 board timing is claimed.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrr}\toprule
+Method&Errors&Host bytes&Median [$\mu$s]&Seed range [$\mu$s]\\\midrule
+QSM&27&16576&13.33&13.12--13.80\\
+TFG&27&18512&15.52&14.98--16.65\\
+TAN&27&18512&24.48&23.07--27.23\\
+QSM-G&27&16576&12.56&12.22--13.21\\
+TFG-G&27&18512&15.42&14.68--16.61\\
+TAN-G&27&18512&24.50&23.06--27.53\\
+CARMA&21&9840&9.55&9.15--10.01\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\RobustnessResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Accuracy excursions despite finite, positive covariance. Attitude columns are mean RMS and worst peak across six seeds. The 10-degree count is descriptive and changes no replay gate. Last columns show the worst learning/accepted-magnetometer fractions.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrrr}\toprule
+Condition&Method&Att. RMS [deg]&Peak [deg]&Peak $>10$ deg&Bias enabled&Mag. accepted\\\midrule
+high&TFG&1.81&30.86&3/6&0.960&1.000\\
+high&TAN&1.80&30.86&3/6&0.960&1.000\\
+high&TFG-G&1.52&30.86&3/6&0.960&1.000\\
+inclination87&TFG&15.92&66.85&3/6&0.000&0.639\\
+inclination87&TAN&15.92&66.85&3/6&0.000&0.639\\
+inclination87&TFG-G&15.77&66.85&3/6&0.000&0.639\\
+yaw&TFG&3.10&12.92&1/6&1.000&1.000\\
+yaw&TAN&3.10&12.92&1/6&1.000&1.000\\
+yaw&TFG-G&3.10&12.96&1/6&1.000&1.000\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\TimingResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Primary-wave startup and sustained convergence. Times are seconds since construction; convergence requires 30 s of evaluated samples below the declared threshold. Missing convergence is counted.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrr}\toprule
+Method&Median Live [s]&Att. converged&Median att. [s]&Bias converged&Median bias [s]\\\midrule
+QSM&31.8&5/6&34.9&1/6&31.8\\
+TFG&31.8&5/6&34.8&1/6&31.8\\
+TAN&31.8&5/6&34.8&1/6&31.8\\
+QSM-G&31.8&5/6&34.9&1/6&31.8\\
+TFG-G&31.8&5/6&34.8&1/6&31.8\\
+TAN-G&31.8&5/6&34.8&1/6&31.8\\
+CARMA&31.8&5/6&34.9&1/6&31.8\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\AblationResultsTable}{%
+\begin{table*}[t]\centering\footnotesize
+\caption{Reference, likelihood/prior and live-initialization ablations. Noise matches packet noise; population additionally matches the turn-on bias prior. NEES is a descriptive serial mean.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular}{lrrrrr}\toprule
+Control&Method&Att. [deg]&$b_{a,h}$ [mm/s$^2$]&Heave [mm]&NEES/15\\\midrule
+wave/native&TFG&0.611&51.95&12.20&3.79\\
+wave/native&TAN&0.611&51.95&12.20&3.79\\
+wave/native&TFG-G&0.604&51.19&13.88&3.06\\
+exact\_reference/native&TFG&0.590&46.51&12.18&3.43\\
+exact\_reference/native&TAN&0.590&46.52&12.18&3.43\\
+exact\_reference/native&TFG-G&0.603&50.97&13.88&3.03\\
+reference\_error/native&TFG&1.037&146.73&11.88&15.73\\
+reference\_error/native&TAN&1.037&146.73&11.88&15.73\\
+reference\_error/native&TFG-G&0.595&50.12&13.89&3.33\\
+wave/noise&TFG&0.589&58.34&11.81&11.32\\
+wave/noise&TAN&0.589&58.34&11.81&11.32\\
+wave/noise&TFG-G&0.580&53.76&13.43&4.95\\
+wave/population&TFG&0.583&58.12&11.81&10.98\\
+wave/population&TAN&0.583&58.12&11.81&10.98\\
+wave/population&TFG-G&0.588&56.92&12.81&3.64\\
+initial\_bias/native&TFG&1.075&97.04&12.37&12.07\\
+initial\_bias/native&TAN&1.075&97.04&12.37&12.07\\
+initial\_bias/native&TFG-G&1.076&100.76&13.49&10.00\\
+initial\_attitude/native&TFG&0.612&51.95&12.20&3.79\\
+initial\_attitude/native&TAN&0.612&51.95&12.20&3.79\\
+initial\_attitude/native&TFG-G&0.605&51.19&13.88&3.06\\
+high/native&TFG&1.805&179.31&81.33&26.35\\
+high/native&TAN&1.805&179.36&81.33&26.36\\
+high/native&TFG-G&1.524&52.02&143.20&6.25\\
+\bottomrule\end{tabular}\end{adjustbox}
+\end{table*}%
+}
+\newcommand{\StudyInterpretation}{%
+The paired tables isolate a finite-retraction/reset effect from the bias-gain effect. Noise/population-prior controls and the condition-specific scores are retained in the CSV, including numerical failures and missing convergence. The conditional excitation monitor and the full nuisance-eliminated window information use different assumptions; agreement is not presumed. Fixed-time normalized NEES ensemble bounds are [0.73, 1.31]. All covariance statements remain conditional on the declared CARMA, sensor-noise, calibration and bias priors. The one-Hz Ljung--Box diagnostics and all p-values are retained in the JSON; they are descriptive serial tests, not new independent trials. Supplying the exact field changes TFG horizontal-bias RMS from 51.95 to 46.51 mm/s$^2$; it does not remove the remaining error. Matching the packet-noise model gives 58.34 mm/s$^2$ and normalized serial NEES 11.32, so packet-noise mismatch alone does not explain the weak bias estimate. Across the recorded bias-held startup nodes the maximum TFG/TAN physical difference is 0.000000; startup is shared rather than a source of the geometric comparison.  At the unadjusted 5\% level, 50 of 126 available axis/seed/method whiteness tests reject; these correlated multiple tests are not independent acceptance votes.%
+}
+\newcommand{\StudyRecommendation}{%
+Do not promote the tangent-bias geometry or the conditional gain veto as a new production default from this evidence. Retain the experimental implementation and transfer only independently validated shared corrections. Geometry and a conservative gain policy have not jointly established the required accuracy, consistency, robustness and target qualification.%
+}
+\newcommand{\ValidationResults}{%
+Validation receipts, untouched-main parity and pinned-replay outcomes are recorded in \texttt{validation.json}; they must be read alongside the statistical cohort.%
+}

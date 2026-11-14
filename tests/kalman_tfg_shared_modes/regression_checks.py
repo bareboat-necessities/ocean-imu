@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the real default-seed replay, protocol admission and failing gates."""
 from __future__ import annotations
+import argparse
 import csv
 import json
 import os
@@ -18,17 +19,22 @@ from sim_dataset import REFERENCE_CSV_SHA256, input_provenance
 
 def main() -> None:
     """Verify default replay scores and distinguish each rejected protocol."""
-    binary = HERE / 'kalman_tfg_shared_modes-sim'
-    records = [HERE / name for name in REFERENCE_CSV_SHA256]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--binary', type=Path, default=HERE / 'kalman_tfg_shared_modes-sim')
+    parser.add_argument('--data-dir', type=Path, default=HERE)
+    args = parser.parse_args()
+    binary = args.binary.resolve()
+    data_dir = args.data_dir.resolve()
+    records = [data_dir / name for name in REFERENCE_CSV_SHA256]
     input_provenance(records)
     baseline = json.loads((ROOT / 'reports/results/tfg_shared_modes/deterministic_regression.json').read_text())
-    source = (HERE / 'kalman_tfg_shared_modes-sim.cpp').read_text()
+    source = (ROOT / 'tests/common/TfgSharedRegressionBars.h').read_text()
     compiled_limits = {k: float(v) for k, v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', source)}
     assert compiled_limits == baseline['limits'], 'C++ gates differ from the locked baseline'
     env = {k: v for k, v in os.environ.items() if not k.startswith('W3D_')}
     env['W3D_COLLECT_ALL_GATES'] = '1'
     env['W3D_WRITE_TIMESERIES'] = '1'
-    result = subprocess.run([str(binary), '--regression'], cwd=HERE, env=env,
+    result = subprocess.run([str(binary), '--regression'], cwd=data_dir, env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     print(result.stdout, end='', flush=True)
     assert result.returncode == 0, f'default replay failed: {result.returncode}'
@@ -42,7 +48,7 @@ def main() -> None:
     assert all(r['samples'] == '180000' and r['window_s'] == '900' for r in parsed)
 
     # Production defaults must meet their current, tighter numeric bars.
-    current = subprocess.run([str(binary)], cwd=HERE,
+    current = subprocess.run([str(binary)], cwd=data_dir,
                              env={**env, 'W3D_WRITE_TIMESERIES': '0'}, text=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     assert current.returncode == 0, current.stdout[-3000:]
