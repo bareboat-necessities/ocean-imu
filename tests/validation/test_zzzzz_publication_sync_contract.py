@@ -79,6 +79,13 @@ validation_core.RestatTests.test_restating_the_committed_bundle_reproduces_its_d
 
 
 class PublicationSyncRestatOverrideTests(unittest.TestCase):
+    def test_unresolved_deterministic_direction_is_preserved(self):
+        source = REPO_ROOT / "doc/kalman_ou_iii/w3d-sim-results-generated.tex-part"
+        rows = ou_publication_sync._deterministic_direction_rows(source)
+        self.assertEqual(sum(" & " in row for row in rows), 8)
+        self.assertEqual(sum("{--}" in row for row in rows), 2)
+        self.assertEqual(sum("0.0/0.0/100.0" in row for row in rows), 2)
+
     def test_override_is_installed(self):
         self.assertIs(
             validation_core.RestatTests.

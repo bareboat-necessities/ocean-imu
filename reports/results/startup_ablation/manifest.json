@@ -1,11 +1,11 @@
 {
   "binary_sha256": {
-    "OU-II": "d70e5119377085559c21f53e96126d33e047e8d3b83e2ae4321d05c5c7cb0744",
-    "OU-III": "2d75761ee7fd3f65449cbc55fa0b308af756148061a8a99fe6e20b9f5d0bf847",
-    "TFG": "faf2225ef3947d4b415cc48b28980976d484971b325e7c01fc896e582fa7e268"
+    "OU-II": "b5b35fb1e64a02173ff12d33e6d16e57af29c7e3c53be8279b665e76cf5c36f0",
+    "OU-III": "e24d19dac948678703bfbd8a37feee5ffc815a47bd38771128a5f740d3d7c417",
+    "TFG": "8b6914a489e3c2018a2525c533c6bd20e4c9c374cb19883789a90bd769e22b6d"
   },
   "files": {
-    "startup_runs.csv": "560c397629ea3ba78411809d5b02173b6e0956322c2d59e4d33c03042db88002"
+    "startup_runs.csv": "bbcdfcbe8e0f74b6f26c801228b9bbac730de9612f1290e45904e556ffd71217"
   },
   "producer_sha256": "b2d63f54c0c671e3612910a18f823536c77128e2857af468806b9130547ad92e",
   "protocol": "default sensor draw; final 900 s; paired initial-calibration seeds",
@@ -18,20 +18,24 @@
     "3033"
   ],
   "simulation_provenance": {
-    "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 120.0,
     "input_sha256": {
-      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
-      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
-      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
-      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
-      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
-      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
-      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
-      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "f99516359ff0ba67e618c4b39911780ecbe6d376d6a8a35644f770742c9c9bc8",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "000c45b12a8c905ad9b90c162f41510cecf41b3acdbd374f57f32a583a9f168b",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "78cd38f09aebd91991f2f1786a985b51fc3f5439c95e8dc7eab750121828462b",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "846f4f98b6d0d9d271b3064290ee7c569dcde6fdfb62d0d4ccb300d46fd6dff1",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e0cfb349504440c8ccd3e628776452997fc5e763ff1c515b02df344e59bd88bc"
     },
-    "motion_model": "VESSEL_RAO_28FT",
-    "release": "v1.2.3"
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.3.0",
+    "speed_kn": 5.0
   },
-  "source_commit": "de7f2861a7f3c157baac3fec26cfa7274e2bf6fc"
+  "source_commit": "cf4ef8f6238860b25d356ef9f00f910311a10291"
 }

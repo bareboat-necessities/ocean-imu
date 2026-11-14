@@ -18,10 +18,25 @@ controls also reproduce the archived regression baseline to the displayed precis
 | TFG-CARMA | 3.21 → 4.67 | +45% | 0.394 → 0.449 | 68.69 → 60.69 |
 | Shared TFG | 2.45 → 3.70 | +51% | 0.366 → 0.364 | 69.41 → 47.60 |
 
+Attitude also changes; these are worst-record RMS values in degrees, using the same executables in both arms.
+
+| Filter | Roll before → after | Pitch before → after | Yaw before → after |
+| --- | ---: | ---: | ---: |
+| OU-II | 0.226 → 0.587 | 0.212 → 0.503 | 0.726 → 0.894 |
+| OU-III | 0.321 → 0.345 | 0.137 → 0.155 | 0.824 → 0.869 |
+| TFG | 0.351 → 0.667 | 0.093 → 0.657 | 0.950 → 1.634 |
+| CARMA | 0.349 → 0.310 | 0.202 → 0.195 | 0.761 → 0.937 |
+| Shared QMEKF | 0.351 → 0.212 | 0.212 → 0.209 | 0.754 → 0.986 |
+| TFG-CARMA | 0.349 → 0.309 | 0.203 → 0.193 | 0.770 → 0.935 |
+| Shared TFG | 0.350 → 0.212 | 0.208 → 0.201 | 0.758 → 0.952 |
+
 The worst normalized heave error is in a **0.27 m sea** for every filter:
 JONSWAP for OU-II, OU-III and TFG; PM-Stokes for the CARMA families.
 Shared-mode filters retain essentially unchanged worst absolute 3D RMS,
 while OU-II and TFG show the largest accelerometer-bias deterioration.
+OU-II’s worst bias error occurs in 0.27 m JONSWAP. TFG’s worst bias and
+roll/pitch/yaw errors occur in **8.5 m PM-Stokes**, so the attitude and bias
+degradation is not confined to the smallest sea.
 
 Against the recorded auxiliary baselines, NLO worst raw heave rises from 7.32% to 23.52% Hs. AHRS worst roll/pitch/yaw
 improves from 0.93°/5.33°/12.66° to 0.64°/3.00°/7.08°.
