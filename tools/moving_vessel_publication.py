@@ -67,8 +67,8 @@ def publish():
         'The current external-data baseline uses oceanography-waves-lib v1.3.0: '
         'a 28 ft estimated hull RAO moving at 5 kn with heading oscillating '
         'plus/minus 3 degrees about north every 120 s. Eight fixed '
-        'JONSWAP/PM-Stokes records run for 1200 s at 200 Hz; the last 900 s '
-        'are scored with default sensor/initialization seeds. Displacement '
+        'JONSWAP and PM-Stokes records run for 1200 s at 200 Hz; the last 900 s '
+        'are scored with default sensor and initialization seeds. Displacement '
         'and velocity truth are relative to the declared cruise track. '
         'All recorded specific force, turning acceleration, changing attitude '
         'and body rates reach the estimator unchanged. The 3D denominator '
@@ -80,7 +80,7 @@ def publish():
           '| Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) | Accel bias RMS (mm/s²) |',
           '| --- | ---: | ---: | ---: | ---: | ---: |']
     tex = [r'\section{Current Underway Replay Baseline}', prose.replace('3D', '3-D'), '',
-           r'\begin{center}\small', r'\begin{tabular}{lrrrr}',
+           r'\begin{center}\small\setlength{\tabcolsep}{4pt}', r'\begin{tabular}{lrrrr}',
            r'\hline Filter & JONSWAP & PM--Stokes & 3-D & Yaw \\',
            r' & \%$H_s$ & \%$H_s$ & m & deg \\ \hline']
     for row in summary:

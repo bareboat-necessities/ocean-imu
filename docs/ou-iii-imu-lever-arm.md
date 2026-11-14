@@ -1,5 +1,12 @@
 # OU-III IMU installation lever-arm study
 
+External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+and [reference-coordinate convention](moving-vessel-replays.md). Numerical
+studies explicitly naming v1.2.3 retain their stationary-vessel scope; their
+results are not relabelled as underway evidence.
+
+
 This study measures the error introduced when the IMU is not mounted at the vessel center of gravity (CG), and how much of that error is removed by modeling the same installation vector inside the filter.
 
 ## Physical model

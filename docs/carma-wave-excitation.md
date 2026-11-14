@@ -798,7 +798,11 @@ directional wave systems.  The primary experiment keeps every mapping
 parameter.  The measured-ratio harness is not part of this change;
 `A41@C/sf0.57` reproduces the bench rows.
 
-### 6.10 Independent hull: the pinned vessel-RAO records
+### 6.10 Archived independent hull: stationary-vessel records
+
+These multi-seed numbers describe the zero-speed v1.2.3 experiment. Current
+5 kn measurements and the changed scoring convention are in
+[moving-vessel results](moving-vessel-results.md).
 
 The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO,
 JONSWAP and PM-Stokes, H_s 0.27-8.5 m) through `carma3-sim`

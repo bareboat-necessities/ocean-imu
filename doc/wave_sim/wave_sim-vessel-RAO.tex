@@ -75,13 +75,22 @@
     \end{abstract}
 \input{../simulation-dataset.tex-part}
 
-    \section{Preset used by the reference simulations}
-    The v1.2.1 reference archive uses an analytical zero-speed preset for an
+    \section{Response underlying the reference simulations}
+    The base response introduced in v1.2.1 is an analytical zero-speed preset for an
     8.53 m fin-keel sailboat. Its waterline length, beam and keel-inclusive
     draft are 7.0, 2.9 and 1.5 m. The heave, pitch and roll natural periods
     are 2.4, 2.8 and 3.5 s, with damping ratios 0.45, 0.35 and 0.22.
     Surge and sway use nonresonant response times 0.7 and 1.0 s. Heading and
     mean heel are zero. The response origin and default IMU are at the CG.
+
+    The current v1.3.0 records evaluate that response along a 5 kn track
+    with $\psi(t)=3^\circ\sin(2\pi t/120\,\mathrm{s})$, using instantaneous
+    heading and signed encounter frequency. Commanded yaw is therefore
+    time-varying even though the wave-yaw RAO below is zero. Total CG position
+    is cruise position plus the modulated wave response; its derivatives
+    include steering and rotating-response terms. This is a quasi-steady
+    kinematic extension, not a new identified forward-speed hull model.
+    The following formulas define the underlying fixed-heading response.
 
     With incident propagation direction $\beta$ relative to the fixed heading,
     the preset uses the smooth footprint and horizontal attenuation
@@ -105,7 +114,8 @@
     derivative, so a zero Euler-yaw rate does not imply zero body gyro $z$.
 
     These parameters are engineering estimates, not measured or computed
-    hull-specific RAOs. The preset does not model forward speed, wave yaw,
+    hull-specific RAOs. The base response does not model hull-specific
+    forward-speed hydrodynamics, wave-induced yaw,
     mean sailing heel, slamming, breaking or nonlinear restoring. Applying
     linear response to regular-wave bound elevation harmonics is an additional
     approximation. The 8.5 m incident-height cases are extrapolated stress

@@ -1048,7 +1048,11 @@ correlation is an additional constraint.  The correlation came from the true
 directional spectrum; no estimator of it was implemented or tested, so this
 is an upper-bound diagnostic, not a candidate.
 
-### 9.8 Pinned vessel-RAO dataset
+### 9.8 Archived stationary-vessel dataset
+
+These multi-seed numbers describe the zero-speed v1.2.3 experiment. Current
+5 kn measurements and the changed scoring convention are in
+[moving-vessel results](moving-vessel-results.md).
 
 The eight scored records of oceanography-waves-lib v1.2.3 (28 ft hull RAO, JONSWAP and PM-Stokes, 0.27-8.5 m) through the shared `W3dSimulationRunner`: OU-III is the unchanged `kalman_ou_iii-sim`, the CARMA variants `carma3-sim` with the identical adapter configuration; ten `W3D_SEED` values, final 900 s of each record.  The hull differs from the synthetic benchmark's.
 

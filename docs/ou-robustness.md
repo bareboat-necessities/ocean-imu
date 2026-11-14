@@ -1,5 +1,12 @@
 # OU-III robustness study
 
+External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+and [reference-coordinate convention](moving-vessel-replays.md). The retained multi-seed numerical study below describes the v1.2.3
+stationary-vessel experiment until its source-bound full regeneration lands.
+Its results are not relabelled as underway evidence.
+
+
 `tools/ou_robustness.py` implements the sensitivity and degradation-case study
 that complements the paired OU-II/OU-III comparison in `tools/ou_validation.py`.
 It does not retroactively tune the primary comparison.

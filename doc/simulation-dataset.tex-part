@@ -1,15 +1,22 @@
 \paragraph{Simulation dataset}
-Simulation records use the oceanography-waves-lib dataset, version 1.2.1.
-Motion and IMU channels describe the centre of gravity of an estimated
-28 ft (8.53 m) fin-keel sailboat at zero forward speed and fixed heading.
-The analytical response-amplitude operators (RAOs) include surge, sway,
-heave, roll and pitch; Euler yaw is held fixed. Body axes are $x$ forward, $y$ port and $z$ up. These are estimated
-coefficients, not measured hull-specific RAOs. Reported heights and periods
-identify the incident sea, and the supplied spectra are incident-wave spectra;
-they are not vessel-motion spectra. JONSWAP and PM records drive the RAOs
-with their first-order incident components, without particle Stokes drift
-or higher-order particle harmonics. Regular-wave elevation harmonics are
-filtered by the same response. The largest cases are extrapolated stress
-tests. The default IMU is at the centre of gravity; lever-arm studies add
-an explicit sensor offset. The wave-theory derivations and auxiliary
-Fenton surface plots describe incident waves separately from vessel motion.
+Current external-data simulations use the oceanography-waves-lib v1.3.0
+28 ft (8.53 m) fin-keel sailboat RAO records at 5 kn. Heading oscillates
+$\pm3^\circ$ about north with a 120 s sine period. The incident wave field
+is sampled along the moving track; the estimated response uses instantaneous
+heading and signed encounter frequency. Records include turning acceleration,
+response modulation, rotating-frame terms and full yaw--pitch--roll body rates.
+Raw displacement and velocity include total CG travel. Wave-estimator
+comparisons express reference displacement and velocity relative to the
+known cruise track, while retaining all recorded specific force and total
+acceleration. Body axes are $x$ forward, $y$ port and $z$ up.
+
+The RAOs are analytical estimates, not measured hull-specific responses.
+The underway model is quasi-steady; it does not identify hull-specific
+forward-speed hydrodynamics or propulsion/rudder dynamics. Filename heights,
+periods and supplied spectra identify the incident sea, not the encounter
+period or vessel-motion spectrum. JONSWAP and PM records use first-order
+incident components; regular-wave elevation harmonics pass through the
+response. Largest cases remain extrapolated stress tests. The default IMU
+is at the centre of gravity; lever-arm studies add an explicit sensor offset.
+Sections explicitly identified as archived v1.2.3 comparisons retain their
+original zero-speed experiment and are not underway evidence.

@@ -1167,10 +1167,13 @@ writes are defined in physical coordinates and mapped through
 rather than assigning a numerically identical but physically different
 matrix in the invariant tangent frame.
 
+\input{underway-baseline.tex-part}
+
 \section{Deterministic Replay and Quality Gates}
 \label{sec:validation}
 The dedicated simulator replays the pinned
-\texttt{oceanography-waves-lib v1.2.3} vessel-response records. There are eight
+\texttt{oceanography-waves-lib v1.3.0} 5 kn underway vessel-response records,
+with heading oscillating $\pm3^\circ$ about north every 120 s. There are eight
 scored records: JONSWAP and PM--Stokes, each at incident significant wave
 heights 0.27, 1.5, 4.0 and 8.5~m. Each history lasts 1200~s at 200~Hz. The
 sensor and initialization seeds, simulated noise, magnetic schedule and
@@ -1192,7 +1195,7 @@ not be interpreted as interchangeable percentages.
 \input{tfg-shared-gates-generated.tex-part}
 
 The executable's limits are its own measured worst errors over these eight
-records, enlarged by 0.5\% and rounded upward to 0.0001. The limits are locked
+records, enlarged by 0.5\% and rounded upward to 0.00001. The limits are locked
 regression sentinels, not estimated uncertainty bounds and not tuned anew at
 each CI run. The baseline JSON pins input hashes, compiler, source revision,
 per-record measurements and the baseline executable hash. A regression change
@@ -1388,7 +1391,7 @@ $R$; the public quaternion accessors retain the project's world-to-body conventi
 The dedicated replay is
 \path{tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp}.
 Both geometries reuse \path{tests/common/SharedModesReplay.h}; TFG limits are in
-\path{reports/results/tfg_shared_modes/deterministic_regression.json}.
+\path{reports/results/filter_sim_gates/limits.json}.
 Independent mathematical checks are in
 \path{tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp}.
 

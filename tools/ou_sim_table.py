@@ -108,7 +108,7 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]]) -> str:
         "% Single-realization deterministic protocol: default seeds, final 900 s",
         "% of a 20-minute replay.  Not the ten-seed study, and not to be quoted",
         "% interchangeably with it.",
-        "% Requires: \\usepackage{booktabs,siunitx}",
+        "% Requires: \\usepackage{booktabs,siunitx,graphicx}",
         "\\begin{table}[t]",
         "  \\centering",
         "  \\caption{Simulation results (last \\SI{900}{s} RMS window).}",
@@ -117,6 +117,7 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]]) -> str:
         "  \\renewcommand{\\arraystretch}{1.08}",
         "  \\footnotesize",
         "  \\sisetup{detect-all}",
+        "  \\resizebox{\\columnwidth}{!}{%",
         "  \\begin{tabular}{@{}l",
         "                  S[table-format=1.6]",
         "                  S[table-format=1.3]",
@@ -158,7 +159,8 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]]) -> str:
 
     lines.extend([
         "    \\bottomrule",
-        "  \\end{tabular}",
+        "  \\end{tabular}%",
+        "  }",
         "  \\vspace{1pt}",
         "  \\footnotesize",
         "  Z RMS is vertical-displacement RMS error in metres; Z\\%$H_s$ is the",
