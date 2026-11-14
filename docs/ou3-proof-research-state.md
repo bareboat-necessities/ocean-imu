@@ -1,3 +1,17 @@
+CARMA trial-rationale audit (class E numerical/interpretation failure): the
+provisional multiplier 1.26686008233 was incorrectly labeled as the exact
+continuous default-CARMA41 band correction. Infinite-domain spectral quadrature
+and an independently augmented Lyapunov solve agree on variance fraction
+0.58598012624 and multiplier 1.30634701277 for the stated 0.5/4 band.
+The interpretation is withdrawn; the recorded trial inputs, multiplier and
+RMS rows are preserved. No replay of the corrected factor is claimed, and
+failure of the provisional factor does not disprove the corrected one.
+Structures preserved: all shipping OU-III operations and physical histories.
+Relaxations introduced: none. No theorem promotion or runtime change.
+Next falsifiable work requires an architecture/measurement-model review and
+a quantitative argument before another scalar-gain trial, rather than silently
+substituting the corrected constant into old evidence.
+
 Hosted lever-arm publication refresh (class E): run 43630161809 on the
 PR merge-preview tree reports TFG-CARMA negative-control yaw ratio
 38.8156 -> 38.7948 and worst-sea tilt ratio 9.9692 -> 9.9366, exceeding the

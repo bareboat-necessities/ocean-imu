@@ -3028,7 +3028,7 @@
       ]
     },
     "carma_band_variance": {
-      "note": "All four gated CARMA families, both speeds, eight seas. 1/sqrt(0.6230783996572747)=1.2668600823289948 is the CARMA41 continuous normalized-band correction, not a fitted scale. Nine of 32 adjusted moving cases fail existing gates; not adopted.",
+      "note": "All four gated CARMA families, both speeds, eight seas. 1/sqrt(0.6230783996572747)=1.2668600823289948 was the provisional multiplier tested here. Its earlier exact continuous-band interpretation is withdrawn: independent quadrature and an augmented Lyapunov solve give variance fraction 0.58598012624 and multiplier 1.30634701277 for the stated default shape/band. These rows do not test that corrected factor. Nine of 32 adjusted moving cases fail existing gates; not adopted.",
       "role": "O1 include-overlay diagnostic, not shipping/gates",
       "rows": [
         {
