@@ -1,11 +1,9 @@
 # Paired OU-II/OU-III validation
 
-External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+The full study uses the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
 with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
-and [reference-coordinate convention](moving-vessel-replays.md). The retained multi-seed numerical study below describes the v1.2.3
-stationary-vessel experiment until its source-bound full regeneration lands.
-Its results are not relabelled as underway evidence.
-
+and [reference-coordinate convention](moving-vessel-replays.md). The complete
+840-row study below was regenerated from these inputs.
 
 `tools/ou_validation.py` implements the paired inferential validation path for
 the OU-II and OU-III filter families. The committed publication evidence is in
@@ -13,7 +11,7 @@ the OU-II and OU-III filter families. The committed publication evidence is in
 
 The current full bundle was regenerated for the shortened controlled transition
 and the refitted `r_S` averaging horizon. Its immutable replay source commit is
-`9276aee2c05804d61079d383d8657daa894c16b3`. It was produced outside GitHub
+`be5e5acd8cc599693a322fba9a7d2c17e3a85f7a`. It was produced outside GitHub
 Actions, so the manifest's `workflow_run` is null and its `build_environment`
 records the toolchain that did produce it; the replay hashes, not the runner,
 are what the contract checks. The manifest separates
@@ -114,21 +112,20 @@ For the declared primary endpoint, the four stationary JONSWAP seas are first
 averaged within each seed triplet and the paired seed-level values are then
 analyzed. The current isotropic bundle gives:
 
-- OU-II Adaptive: **6.464% of $H_s$** mean normalized vertical RMS;
-- OU-III Adaptive: **4.729% of $H_s$**;
-- OU-III minus OU-II: **-1.735 percentage points**;
-- percentile-bootstrap 95% interval: **[-1.811, -1.668]** points;
-- Student-t 95% interval: **[-1.823, -1.647]** points;
+- OU-II Adaptive: **9.569% of $H_s$** mean normalized vertical RMS;
+- OU-III Adaptive: **6.374% of $H_s$**;
+- OU-III minus OU-II: **-3.195 percentage points**;
+- percentile-bootstrap 95% interval: **[-3.719, -2.638]** points;
+- Student-t 95% interval: **[-3.855, -2.535]** points;
 - all ten paired seed-level differences are negative; the exact sign test and
   exact paired sign-flip test both give $p=0.001953125$.
 
-The current isotropic rerun also changes the three-dimensional interpretation of
-the JONSWAP-plus-transition comparison. OU-III has lower paired mean 3-D
- displacement RMS than OU-II in **all four stationary JONSWAP seas and the
-transition**, with all ten paired seeds improving in each of those five
-scenarios. This supersedes prose attached to the earlier operating point; the
-generated tables/macros are the source of truth for numerical publication
-statements.
+OU-III has lower paired mean vertical RMS in all four JONSWAP conditions.
+The full 3-D result is less uniform: three heights have negative paired
+intervals excluding zero, while the 1.5 m sea has a +0.0025 m difference
+with interval [-0.0004, +0.0053] m. The controlled transition has +0.0091 m
+with interval [-0.0027, +0.0204] m. Those two intervals do not resolve a 3-D
+advantage. Generated tables and macros retain each scenario's result.
 
 PM--Stokes remains a separate declared ensemble and is not pooled into the
 confirmatory JONSWAP endpoint.

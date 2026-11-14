@@ -5,7 +5,8 @@ $\pm3^\circ$ about north with a 120 s sine period. The incident wave field
 is sampled along the moving track; the estimated response uses instantaneous
 heading and signed encounter frequency. Records include turning acceleration,
 response modulation, rotating-frame terms and full yaw--pitch--roll body rates.
-Raw displacement and velocity include total CG travel. Wave-estimator
+A stationary sea condition denotes a steady incident spectrum; the vessel
+continues to move. Raw displacement and velocity include total CG travel. Wave-estimator
 comparisons express reference displacement and velocity relative to the
 known cruise track, while retaining all recorded specific force and total
 acceleration. Body axes are $x$ forward, $y$ port and $z$ up.

@@ -15,9 +15,11 @@ $\OUValidationNormalizedDifference$ percentage points, with bootstrap 95\%
 interval $[\OUValidationNormalizedDifferenceLow,\OUValidationNormalizedDifferenceHigh]$
 and exact sign-flip $p=\OUValidationNormalizedRandomizationP$.
 Figure~\ref{fig:ou_mc_vertical} shows lower OU--III vertical error in all
-four stationary seas. Full 3-D RMS is also lower, with paired intervals
-excluding zero (Fig.~\ref{fig:ou_mc_displacement}); individual horizontal
-channels need not improve. Pitch is shown in Fig.~\ref{fig:ou_mc_pitch}.
+four steady sea conditions. Full 3-D RMS is lower with paired intervals
+excluding zero in three JONSWAP heights. At $H_s=\SI{1.5}{m}$, the
+OU--III-minus-OU--II 3-D difference is $+0.0025$ m with interval
+$[-0.0004,+0.0053]$ m; no advantage is resolved there
+(Fig.~\ref{fig:ou_mc_displacement}). Individual horizontal channels need not improve. Pitch is shown in Fig.~\ref{fig:ou_mc_pitch}.
 
 PM--Stokes is analyzed separately rather than pooled with JONSWAP.
 Its ensemble gives a normalized vertical difference of
@@ -59,7 +61,7 @@ uncertainty over other hulls or headings.
 \subsubsection{Adaptation mechanism}
 Table~\ref{tab:ou_mc_channels} retains all four channel-ablation arms in the
 main text. At $H_s=\SI{8.5}{m}$, full adaptation, $r_S$ only, OU only, and
-FixedNominal yield $3.95$, $4.09$, $11.52$, and $13.26\%$ of $H_s$,
+FixedNominal yield $4.85$, $4.97$, $10.77$, and $11.97\%$ of $H_s$,
 respectively. Adaptive $r_S$ captures most of the off-nominal benefit;
 OU-only adaptation helps less, rather than not at all. At the nominal sea,
 Adaptive minus FixedNominal is
@@ -137,18 +139,16 @@ crossfade}. For seed $i$, the actual reported contrast is
  \label{eq:tfg-reported-aggregate}
 \end{equation}
 Here $E_Z=100\,\mathrm{RMS}(\hat z-z)/H_s$; the crossfade uses the final
-$H_s=\SI{4}{m}$. This five-condition pooling explains the OU--III baseline
-$4.423\%$, versus $4.35\%$ in the four-stationary-sea primary endpoint;
-the underlying OU--III replay results are identical. The bootstrap resamples
-ten seed-level differences, not the individual conditions.
+$H_s=\SI{4}{m}$. This five-condition aggregate is distinct from the four-height primary
+OU-family endpoint. The bootstrap resamples ten seed-level differences,
+not the individual conditions.
 
 \input{w3d-tfg-comparison-generated.tex-part}
-Tables~\ref{tab:tfg-paired} and \ref{tab:tfg-ensembles} show a small
-OU--III heave advantage in the mixed aggregate and the separate PM--Stokes
-ensemble, lower gyroscope-bias error for TFG, and no resolved crossfade
-heave advantage. Other channels are exploratory without multiplicity
-adjustment. This comparison tests complete estimators, not Lie-group
-coordinates in isolation; TFG wave-direction outputs are not scored.
+Tables~\ref{tab:tfg-paired} and \ref{tab:tfg-ensembles} retain the paired
+heave, attitude and sensor-bias contrasts, with the crossfade also shown
+separately. Other channels are exploratory without multiplicity adjustment.
+This comparison tests complete estimators, not Lie-group coordinates in
+isolation; TFG wave-direction outputs are not scored.
 
 The bidirectional transient diagnostic is reported in Sec.~\ref{sec:roundtrip-transition-ablation}.
 

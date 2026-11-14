@@ -24,7 +24,9 @@ RMS/incident Hs; 3D displacement is RMS/max reference wave-displacement norm.
 Accelerometer Z bias uses max absolute true Z bias; each vector-bias score
 uses max true vector-bias norm. Absolute displacement and bias RMS accompany
 these different percentage normalizations. AHRS uses the trailing 60 s.
-NLO gates raw heave, including its mean error. Heave-only gates remain
+NLO gates raw heave, including its mean error. Adaptive PII has separately
+measured vertical/yaw bars with the same 0.5% margin, rounded upward to
+0.01 in its quoted units; it rejects nonfinite heave and attitude scores. Heave-only gates remain
 separate for Mahony, proxy and ideal-attitude frontends and each method.
 
 The inventory covers all native W3d filters, the legacy cubic TFG diagnostic,

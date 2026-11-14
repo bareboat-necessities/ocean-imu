@@ -141,5 +141,12 @@
   },
   "source_commit": "f11980cb54816b48bae1ca3974edf7132b4329da",
   "before_control": "stationary_control.json",
-  "after_measurements": "measurements.json"
+  "after_measurements": "measurements.json",
+  "auxiliary_pii": {
+    "heave_before_pct_hs": 8.74888611,
+    "heave_after_pct_hs": 15.3869629,
+    "heave_change_percent": 75.87339355592549,
+    "after_worst_heave_input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+    "paired_receipt": "pii_comparison.json"
+  }
 }

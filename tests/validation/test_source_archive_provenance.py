@@ -37,6 +37,9 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
             "ou_evidence_provenance.py",
             "ou_validation.py",
             "ou_robustness.py",
+            "ou_robustness_core.py",
+            "underway_reference.py",
+            "sim_dataset.py",
         ):
             shutil.copy2(REPO_ROOT / "tools" / name, destination / "tools" / name)
 

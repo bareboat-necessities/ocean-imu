@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Publish the complete, passing underway replay report without rerunning it."""
-from pathlib import Path
 import csv
 import json
 
@@ -88,6 +87,12 @@ def publish():
             continue
         md.append(f"| {row['filter']} | {row['heave_jonswap_pct_hs']:.3f} | {row['heave_pmstokes_pct_hs']:.3f} | {row['disp_3d_rms_m']:.4f} | {row['yaw_rms_deg']:.3f} | {1000*row['accel_bias_3d_rms_mps2']:.2f} |")
         tex.append(f"{row['filter']} & {row['heave_jonswap_pct_hs']:.2f} & {row['heave_pmstokes_pct_hs']:.2f} & {row['disp_3d_rms_m']:.3f} & {row['yaw_rms_deg']:.2f}" + r' \\')
+    pii = report['other_replays']['pii']
+    pii_j = max(r['disp_z_pct_hs'] for r in pii if 'jonswap' in r['input'])
+    pii_p = max(r['disp_z_pct_hs'] for r in pii if 'pmstokes' in r['input'])
+    pii_yaw = max(r['yaw_rms_deg'] for r in pii)
+    md.append(f'| Adaptive PII | {pii_j:.3f} | {pii_p:.3f} | — | {pii_yaw:.3f} | — |')
+    tex.append(f'Adaptive PII & {pii_j:.2f} & {pii_p:.2f} & -- & {pii_yaw:.2f}' + r' \\')
     tex += [r'\hline\end{tabular}\end{center}',
             'Each column reports its worst record; maxima need not come from the same sea. '
             r'Production and interval-rate limits are qualified separately with a 0.5\% '

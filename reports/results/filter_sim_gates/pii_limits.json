@@ -1,0 +1,34 @@
+{
+  "inputs": {
+    "release": "v1.3.0",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 120.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "f99516359ff0ba67e618c4b39911780ecbe6d376d6a8a35644f770742c9c9bc8",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "000c45b12a8c905ad9b90c162f41510cecf41b3acdbd374f57f32a583a9f168b",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "78cd38f09aebd91991f2f1786a985b51fc3f5439c95e8dc7eab750121828462b",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "846f4f98b6d0d9d271b3064290ee7c569dcde6fdfb62d0d4ccb300d46fd6dff1",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e0cfb349504440c8ccd3e628776452997fc5e763ff1c515b02df344e59bd88bc"
+    }
+  },
+  "margin": 0.005,
+  "rounding": 0.01,
+  "measured_worst": {
+    "err_limit_percent_z_jonswap": 15.3869629,
+    "err_limit_percent_z_pmstokes": 14.7330933,
+    "err_limit_yaw_deg": 8.23251724
+  },
+  "current_limits": {
+    "err_limit_percent_z_jonswap": 15.47,
+    "err_limit_percent_z_pmstokes": 14.81,
+    "err_limit_yaw_deg": 8.28
+  }
+}

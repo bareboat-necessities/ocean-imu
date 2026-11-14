@@ -17,6 +17,7 @@ controls also reproduce the archived regression baseline to the displayed precis
 | Shared QMEKF | 2.45 → 3.70 | +51% | 0.366 → 0.364 | 69.91 → 47.48 |
 | TFG-CARMA | 3.21 → 4.67 | +45% | 0.394 → 0.449 | 68.69 → 60.69 |
 | Shared TFG | 2.45 → 3.70 | +51% | 0.366 → 0.364 | 69.41 → 47.60 |
+| Adaptive PII | 8.75 → 15.39 | +76% | — | — |
 
 Attitude also changes; these are worst-record RMS values in degrees, using the same executables in both arms.
 
@@ -29,14 +30,17 @@ Attitude also changes; these are worst-record RMS values in degrees, using the s
 | Shared QMEKF | 0.351 → 0.212 | 0.212 → 0.209 | 0.754 → 0.986 |
 | TFG-CARMA | 0.349 → 0.309 | 0.203 → 0.193 | 0.770 → 0.935 |
 | Shared TFG | 0.350 → 0.212 | 0.208 → 0.201 | 0.758 → 0.952 |
+| Adaptive PII | 5.394 → 4.397 | 4.519 → 3.581 | 10.303 → 8.233 |
 
-The worst normalized heave error is in a **0.27 m sea** for every filter:
+The worst normalized heave error is in a **0.27 m sea** for all seven 3D filters listed above:
 JONSWAP for OU-II, OU-III and TFG; PM-Stokes for the CARMA families.
 Shared-mode filters retain essentially unchanged worst absolute 3D RMS,
 while OU-II and TFG show the largest accelerometer-bias deterioration.
 OU-II’s worst bias error occurs in 0.27 m JONSWAP. TFG’s worst bias and
 roll/pitch/yaw errors occur in **8.5 m PM-Stokes**, so the attitude and bias
-degradation is not confined to the smallest sea.
+degradation is not confined to the smallest sea. Adaptive PII instead peaks
+in the 1.5 m JONSWAP condition; its attitude errors improve despite worse
+heave. Its paired control receipt is `pii_comparison.json`.
 
 Against the recorded auxiliary baselines, NLO worst raw heave rises from 7.32% to 23.52% Hs. AHRS worst roll/pitch/yaw
 improves from 0.93°/5.33°/12.66° to 0.64°/3.00°/7.08°.

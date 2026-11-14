@@ -165,6 +165,18 @@ def curate_validation_for_article(text: str) -> str:
     ):
         text = _replace_table_caption(text, label, caption)
 
+    # The paired intervals make these two eight-column tables wider than the
+    # IEEE text block. Fit the article view without changing evidence values.
+    for label in ("tab:ou_mc_family", "tab:ou_mc_pmstokes"):
+        pos = text.index(rf"\label{{{label}}}")
+        start = text.rfind(r"\begin{table*}", 0, pos)
+        end = text.index(r"\end{table*}", pos)
+        block = text[start:end]
+        if r"\resizebox{\textwidth}" not in block:
+            block = block.replace(r"\begin{tabular}", r"\resizebox{\textwidth}{!}{%" + "\n  " + r"\begin{tabular}", 1)
+            block = block.replace(r"\end{tabular}", r"\end{tabular}%" + "\n  }", 1)
+            text = text[:start] + block + text[end:]
+
     if "tab:ou_transition_segments" in text or re.search(r"(?m)^\s*Transition\s*&", text):
         raise RuntimeError("one-way transition survived publication curation")
     return text

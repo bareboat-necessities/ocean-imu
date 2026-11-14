@@ -1,5 +1,10 @@
 # Residual gyro-bias estimate protection in OU-II and OU-III
 
+The numerical study below is archived stationary-vessel evidence from v1.2.1.
+New runs use the pinned v1.3.0 5 kn / ±3° moving-boat records; see the
+[current baseline](moving-vessel-results.md) and [before/after comparison](moving-vessel-comparison.md).
+The archived scores are not measurements of the moving boat.
+
 The estimator's gyro-bias state represents residual sensor bias, so it is
 constrained to a deliberately generous physically plausible region. This also
 prevents discrete-time attitude propagation from entering rotation aliases

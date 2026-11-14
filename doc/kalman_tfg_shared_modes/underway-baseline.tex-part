@@ -13,5 +13,6 @@ Shared QMEKF & 3.55 & 3.70 & 0.364 & 0.99 \\
 TFG-CARMA & 4.19 & 4.67 & 0.449 & 0.93 \\
 Shared TFG & 3.55 & 3.70 & 0.364 & 0.95 \\
 TFG cubic & 8.25 & 8.02 & 1.579 & 3.05 \\
+Adaptive PII & 15.39 & 14.73 & -- & 8.23 \\
 \hline\end{tabular}\end{center}
 Each column reports its worst record; maxima need not come from the same sea. Production and interval-rate limits are qualified separately with a 0.5\% margin and upward rounding. The analytic hull uses encounter corrections, without hull-specific forward-speed hydrodynamics or steering dynamics.

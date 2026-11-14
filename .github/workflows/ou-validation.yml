@@ -360,7 +360,7 @@ jobs:
           install_deps() {
             apt_get update && apt_get install -y --no-install-recommends \
               g++ make libeigen3-dev \
-              python3-numpy python3-matplotlib
+              python3-numpy python3-matplotlib python3-scipy
           }
           for attempt in 1 2 3; do
             if install_deps; then
@@ -453,7 +453,7 @@ jobs:
           install_deps() {
             apt_get update && apt_get install -y --no-install-recommends \
               g++ make libeigen3-dev \
-              python3-numpy python3-matplotlib
+              python3-numpy python3-matplotlib python3-scipy
           }
           for attempt in 1 2 3; do
             if install_deps; then
@@ -539,7 +539,7 @@ jobs:
         run: |
           sudo apt-get -o Acquire::Retries=3 update
           sudo apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
-            g++ make libeigen3-dev python3-numpy
+            g++ make libeigen3-dev python3-numpy python3-scipy
       - uses: actions/download-artifact@v8
         with:
           name: ou-fingerprinted-simulation-data

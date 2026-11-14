@@ -1,5 +1,5 @@
 {
-  "source_commit": "f11980cb54816b48bae1ca3974edf7132b4329da",
+  "source_commit": "a6d01704592bc0a6e3e3cd714f1c2ff02491a65a",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
   "acceptance": "all replay gates passed",
   "replay_exit_codes": {
@@ -44,6 +44,9 @@
       "default": 0,
       "proxy": 0,
       "truth": 0
+    },
+    "pii": {
+      "default": 0
     }
   },
   "protocol": "200 Hz; 1200 s; trailing 900 s; default noise/seeds; magnetometer on except NLO; AHRS trailing 60 s",
@@ -78,7 +81,8 @@
     "tcarma": "101ec6bc4ef3832da6c31e9847e50830d5ce083061a744fa27e11beed145bf89",
     "tcsm": "389aeaf178e0e03a4099ec9ea9e3d27831939941eb08ca6dea87cdc9b0933ab2",
     "nlo": "0608e38bf884028f62c1e6c46d39a9e61dfb59dfe234465e8de4f060cce93fcc",
-    "heave": "88246c53ba2553b933fd8d2c44214f3bf54070b1ab908426d804926351bb7233"
+    "heave": "88246c53ba2553b933fd8d2c44214f3bf54070b1ab908426d804926351bb7233",
+    "pii": "dd1e5c833f7963c9e3db0d82f7be252dd0fe691d07a9af58879457e97c7e5353"
   },
   "records": {
     "carma": {
@@ -2769,6 +2773,72 @@
     }
   },
   "other_replays": {
+    "pii": [
+      {
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "disp_z_rms_m": 0.0239923112,
+        "disp_z_pct_hs": 8.88604069,
+        "roll_rms_deg": 0.353157043,
+        "pitch_rms_deg": 0.300095201,
+        "yaw_rms_deg": 4.40921307
+      },
+      {
+        "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+        "disp_z_rms_m": 0.230804443,
+        "disp_z_pct_hs": 15.3869629,
+        "roll_rms_deg": 1.73870897,
+        "pitch_rms_deg": 0.945135713,
+        "yaw_rms_deg": 4.5116415
+      },
+      {
+        "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+        "disp_z_rms_m": 0.516720176,
+        "disp_z_pct_hs": 12.918004,
+        "roll_rms_deg": 1.21565044,
+        "pitch_rms_deg": 1.63450432,
+        "yaw_rms_deg": 4.74990368
+      },
+      {
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "disp_z_rms_m": 1.17014289,
+        "disp_z_pct_hs": 13.766387,
+        "roll_rms_deg": 3.80676579,
+        "pitch_rms_deg": 2.93709421,
+        "yaw_rms_deg": 6.67983341
+      },
+      {
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "disp_z_rms_m": 0.0224645324,
+        "disp_z_pct_hs": 8.32019711,
+        "roll_rms_deg": 0.365453094,
+        "pitch_rms_deg": 0.313598096,
+        "yaw_rms_deg": 4.4044714
+      },
+      {
+        "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+        "disp_z_rms_m": 0.220996395,
+        "disp_z_pct_hs": 14.7330933,
+        "roll_rms_deg": 1.95131505,
+        "pitch_rms_deg": 1.1188091,
+        "yaw_rms_deg": 4.68864298
+      },
+      {
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "disp_z_rms_m": 0.461955398,
+        "disp_z_pct_hs": 11.5488853,
+        "roll_rms_deg": 1.42844272,
+        "pitch_rms_deg": 1.87298536,
+        "yaw_rms_deg": 4.91231489
+      },
+      {
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "disp_z_rms_m": 1.00018322,
+        "disp_z_pct_hs": 11.7668619,
+        "roll_rms_deg": 4.39661646,
+        "pitch_rms_deg": 3.58126235,
+        "yaw_rms_deg": 8.23251724
+      }
+    ],
     "ahrs": [
       {
         "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",

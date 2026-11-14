@@ -12,6 +12,7 @@ The current external-data baseline uses oceanography-waves-lib v1.3.0: a 28 ft e
 | TFG-CARMA | 4.192 | 4.669 | 0.4487 | 0.935 | 60.69 |
 | Shared TFG | 3.551 | 3.702 | 0.3643 | 0.952 | 47.60 |
 | TFG cubic | 8.247 | 8.016 | 1.5789 | 3.050 | 210.48 |
+| Adaptive PII | 15.387 | 14.733 | — | 8.233 | — |
 
 Each column is the worst of eight records; maxima need not occur together.
 The compact per-record measurements and both sampling profiles are in `reports/results/filter_sim_gates/measurements.json` and `underway_summary.csv`.

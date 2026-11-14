@@ -20,8 +20,8 @@ For unclamped cadence, the second ratio is $c^{41/14}$.
 Figure~\ref{fig:ou_robustness_sensitivity} reports all five sweeps. Direct
 OU-amplitude sensitivity is nearly flat, whereas regularizer perturbation
 has a larger effect. Coupling a halved $\tau$ into the regularizer raises
-normalized vertical error from $5.09$ to $12.87\%$; the corresponding OFAT
-$\tau$ perturbation gives $5.36\%$. Thus sensitivity along the adaptation
+normalized vertical error from $6.94$ to $13.92\%$; the corresponding OFAT
+$\tau$ perturbation gives $7.02\%$. Thus sensitivity along the adaptation
 law differs substantially from sensitivity to its prior parameters alone.
 
 \input{w3d-ou-robustness-sensitivity-current-generated.tex-part}

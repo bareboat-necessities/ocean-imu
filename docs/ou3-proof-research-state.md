@@ -1,5 +1,23 @@
 # OU-III proof research state
 
+Moving-vessel replay maintenance (class E): changing simulation-only source
+files invalidates the finite secant diagnostic's conservative whole-src digest;
+two historical dataset-scope clarifications also require fresh document pins.
+The compiler-discovered 39-header probe closure differs from main f2c65b2
+only in WaveFilesSupport.h (CSV horizontal-truth precision); estimator headers
+are unchanged. Both complete 252-direction diagnostic words were rerun at
+epsilon 0.01 and 0.005, preserving both native secant byte hashes. The source
+audit is recorded in moving-dataset-source-scope.json.
+Structures preserved: literal estimator equations, inherited state/covariance,
+physical probe record, gains, resets, frontend, scheduler and clocks. Relaxations
+introduced: no new relaxation; existing off-orbit finite secants remain diagnostics,
+not derivative bounds. This is a source-binding failure, not a failed stability
+inequality or a genuine shipping counterexample. Existing local results and open
+theorem flags are retained. The fresh native receipt is checked against the unchanged source verifier;
+no motion/service qualification is inferred from
+the new moving-boat dataset. The initial native command lacked clang++; the
+available g++ compiler is used with the same diagnostic protocol.
+
 Tangent research quality-gate repair (class E): Ruff found an unused import,
 and CI cppcheck found three inherited group-operation name collisions. The
 import is removed; tangent geometry now composes the existing physical storage

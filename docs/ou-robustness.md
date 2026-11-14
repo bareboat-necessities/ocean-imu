@@ -1,20 +1,19 @@
 # OU-III robustness study
 
-External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+The full study uses the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
 with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
-and [reference-coordinate convention](moving-vessel-replays.md). The retained multi-seed numerical study below describes the v1.2.3
-stationary-vessel experiment until its source-bound full regeneration lands.
-Its results are not relabelled as underway evidence.
-
+and [reference-coordinate convention](moving-vessel-replays.md). The 310 new
+simulator rows retain ten paired seed triplets, five sensitivity multipliers,
+and all low-motion and transition conditions.
 
 `tools/ou_robustness.py` implements the sensitivity and degradation-case study
 that complements the paired OU-II/OU-III comparison in `tools/ou_validation.py`.
 It does not retroactively tune the primary comparison.
 
 The current committed robustness bundle was regenerated from source commit
-`9276aee2c05804d61079d383d8657daa894c16b3` and landed with the full validation
-bundle. Both were produced outside GitHub Actions, so `workflow_run` is null in
-either manifest and the replay hashes carry the provenance.
+`be5e5acd8cc599693a322fba9a7d2c17e3a85f7a`. It was produced outside GitHub
+Actions, so `workflow_run` is null; the replay hashes and recorded build
+environment carry the provenance.
 
 ## Design
 
@@ -44,6 +43,14 @@ The study scores continuous displacement, attitude, bias, and tuning metrics.
 As with the primary validation, deterministic simulator regression thresholds
 are **not** statistical acceptance criteria and are not exported into the
 committed CSV/JSON evidence as pass/fail fields.
+
+## Current degradation results
+
+- Reducing incident height from 0.27 m to 0.05 m increases mean normalized heave RMS from **8.33% to 25.86% Hs**. Absolute RMS is 0.0129 m in the smaller sea.
+- Halving the coupled time scale and regularizer raises nominal-sea heave RMS from **6.94% to 13.92% Hs**. Halving only the time scale gives 7.02%; the coupling matters.
+- Compressing the crossfade from 120 s to 30 s raises Adaptive RMS from **6.07% to 6.23% Hs**. The paired difference is +0.16 points, with bootstrap 95% interval **[+0.04, +0.29]**. Adaptive remains below FixedNominal in the rapid case by 3.84 points.
+
+These are paired results within this development ensemble. The shorter crossfade also changes the scored mixture of sea conditions.
 
 ## Provenance
 
