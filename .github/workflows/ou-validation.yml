@@ -281,12 +281,13 @@ jobs:
           marker=reports/ou_evidence_fingerprint.json
           if python3 tools/ou_replay_fingerprint.py \
               --simulation-zip sim-data-files-vessel-rao-28ft-5kn.zip \
-              --check "$marker"; then
+              --check "$marker" && \
+              python3 -c 'import json, sys; m = json.load(open("reports/results/tfg_comparison/manifest.json")); sys.exit(not bool(m.get("workflow")))'; then
             echo "replay_required=false" >> "$GITHUB_OUTPUT"
             echo "Replay inputs and complete results tree are unchanged; reusing the full replay rows."
           else
             echo "replay_required=true" >> "$GITHUB_OUTPUT"
-            echo "Replay inputs or results tree changed; the full study must be regenerated."
+            echo "Replay inputs, results tree, or required TFG CI provenance need regeneration."
           fi
 
       - name: Install evidence-check dependencies

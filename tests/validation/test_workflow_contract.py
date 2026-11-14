@@ -2,6 +2,9 @@ from pathlib import Path
 import os
 import shlex
 import subprocess
+import tempfile
+import textwrap
+import json
 import unittest
 
 
@@ -69,6 +72,28 @@ def _compact(expression):
 
 
 class WorkflowContractTests(unittest.TestCase):
+    def test_matching_fingerprints_without_tfg_ci_receipt_trigger_regeneration(self):
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        step = workflow.split("      - name: Decide whether the full study is stale", 1)[1]
+        step = step.split("      - name: Install evidence-check dependencies", 1)[0]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        for fingerprint_exit, receipt, expected in ((0, None, 'true'),
+                (0, {'run_id': '123'}, 'false'), (1, {'run_id': '123'}, 'true')):
+            with self.subTest(fingerprint_exit=fingerprint_exit, receipt=receipt), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'tools').mkdir()
+                (root / 'tools/ou_replay_fingerprint.py').write_text(
+                    'import os, sys\nsys.exit(int(os.environ["FINGERPRINT_EXIT"]))\n')
+                manifest = root / 'reports/results/tfg_comparison/manifest.json'
+                manifest.parent.mkdir(parents=True)
+                manifest.write_text(json.dumps({'workflow': receipt}))
+                output = root / 'outputs'
+                result = subprocess.run(['bash', '-c', script], cwd=root, capture_output=True,
+                    text=True, env={**os.environ, 'GITHUB_OUTPUT': str(output),
+                                   'FINGERPRINT_EXIT': str(fingerprint_exit)})
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn('replay_required=' + expected, output.read_text())
+
     def test_full_regeneration_validates_before_commit(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         check_marker = "- name: Check the manuscript against the regenerated evidence"
