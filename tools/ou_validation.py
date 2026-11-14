@@ -2444,6 +2444,7 @@ def _direction_table(
             float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"])
             for s in stationary
             if (s, "OU_III", "Adaptive", metric) in indexed_summary
+            and math.isfinite(float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"]))
         ]
 
     def pooled(metric: str) -> float:
@@ -2454,17 +2455,20 @@ def _direction_table(
         values = scenario_means(metric)
         return float(np.max(values)) if values else math.nan
 
+    def display(value: float, digits: int) -> str:
+        return f"{value:.{digits}f}" if math.isfinite(value) else "--"
+
     lines.extend(
         (
-            rf"\providecommand{{\OUValidationDirectionAbsError}}{{{pooled('dir_axis_abs_error_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionWorstAbsError}}{{{worst('dir_axis_abs_error_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionRMSE}}{{{pooled('dir_axis_rmse_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionDominant}}{{{pooled('dir_sense_dominant_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationDirectionUncertain}}{{{pooled('dir_sense_uncertain_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelCorrect}}{{{pooled('dir_travel_correct_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelWrong}}{{{pooled('dir_travel_wrong_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelUnresolved}}{{{pooled('dir_travel_unresolved_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelAbsError}}{{{pooled('dir_travel_abs_error_deg'):.2f}}}",
+            rf"\providecommand{{\OUValidationDirectionAbsError}}{{{display(pooled('dir_axis_abs_error_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionWorstAbsError}}{{{display(worst('dir_axis_abs_error_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionRMSE}}{{{display(pooled('dir_axis_rmse_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionDominant}}{{{display(pooled('dir_sense_dominant_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationDirectionUncertain}}{{{display(pooled('dir_sense_uncertain_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelCorrect}}{{{display(pooled('dir_travel_correct_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelWrong}}{{{display(pooled('dir_travel_wrong_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelUnresolved}}{{{display(pooled('dir_travel_unresolved_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelAbsError}}{{{display(pooled('dir_travel_abs_error_deg'), 2)}}}",
         )
     )
     return lines

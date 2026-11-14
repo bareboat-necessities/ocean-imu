@@ -6,6 +6,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -255,10 +256,9 @@ def sync_robustness_doc_copies(robustness_dir: Path, doc_dir: Path) -> bool:
     if not stress_target.is_file() or stress_target.read_bytes() != svg:
         stress_target.write_bytes(svg)
         changed = True
-    retired = doc_dir / ROBUSTNESS_RETIRED_SVG
-    if retired.exists():
-        retired.unlink()
-        changed = True
+    from ou_publication_robustness_sync import sync_current_sensitivity, sync_ofat_excerpt
+    changed |= sync_ofat_excerpt(robustness_dir, doc_dir)
+    changed |= sync_current_sensitivity(robustness_dir, doc_dir)
     return changed
 
 
@@ -283,12 +283,17 @@ def _direction_summary_rows(validation_dir: Path) -> list[str]:
             ):
                 metrics[key] = (float(row["mean"]), float(row["std"]), int(row["n"]))
     rows = []
+    def mean_std(value: float, std: float) -> str:
+        if not math.isfinite(value):
+            return "--"
+        return f"${value:.2f}\\pm{std:.2f}$"
+
     for index, (scenario, case, hs) in enumerate(DIRECTION_SCENARIOS):
         axis, axis_std, _ = metrics[(scenario, "dir_axis_rmse_deg")]
         travel, travel_std, travel_n = metrics[(scenario, "dir_travel_rmse_deg")]
         rows.append(
-            f"    {case:<11} & {hs} & ${axis:.2f}\\pm{axis_std:.2f}$ & "
-            f"${travel:.2f}\\pm{travel_std:.2f}$ & {travel_n} \\\\"
+            f"    {case:<11} & {hs} & {mean_std(axis, axis_std)} & "
+            f"{mean_std(travel, travel_std)} & {travel_n} \\\\"
         )
         if index == 3:
             rows.append(r"    \addlinespace")

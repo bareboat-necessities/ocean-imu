@@ -32,6 +32,7 @@ REPLAYS = {
     'ahrs': ('ahrs', 'ahrs-qmekf-sim', False),
     'heave': ('heave_only', 'heave_only-sim', False),
     'nlo': ('nlo', 'nlo-sim', False),
+    'pii': ('pii_observer', 'pii_observer-adaptive', False),
 }
 METRICS = (
     'disp_z_pct_hs', 'disp_3d_pct_refmax', 'roll_rms_deg', 'pitch_rms_deg',
@@ -59,6 +60,25 @@ def measured_worst(rows: list[dict]) -> dict:
     """Keep normalization and wave-family selection identical to the C++ gates."""
     return {gate: max(row[metric] for row in rows if wave is None or wave in row['input'])
             for gate, (metric, wave) in GATE_METRICS.items()}
+
+
+def parse_pii(text: str) -> list[dict]:
+    """Score the vertical observer without inventing horizontal or bias states."""
+    rows = []
+    for line in text.splitlines():
+        if not line.startswith('PII_METRICS '):
+            continue
+        fields = dict(item.split('=', 1) for item in line.split()[1:])
+        if (fields['start_s'], fields['window_s'], fields['samples']) != ('300', '900', '180000'):
+            raise ValueError('PII requires the trailing 900 s of a full replay')
+        row = {'input': fields['input'], **{key: float(fields[key]) for key in
+               ('disp_z_rms_m', 'disp_z_pct_hs', 'roll_rms_deg', 'pitch_rms_deg', 'yaw_rms_deg')}}
+        if not all(math.isfinite(value) for key, value in row.items() if key != 'input'):
+            raise ValueError('nonfinite PII metric')
+        rows.append(row)
+    if len(rows) != 8 or {r['input'] for r in rows} != set(REFERENCE_CSV_SHA256):
+        raise ValueError('expected all eight unique PII records')
+    return rows
 
 
 def profiles_for(name: str) -> list[tuple[str, list[str]]]:
@@ -161,8 +181,18 @@ def split_make_log(text: str) -> dict[tuple[str, str], str]:
     ahrs = []
     heave = {'mahony': [], 'proxy': [], 'truth': []}
     nlo = []
+    pii = []
+    pii_active = False
     ahrs_heading = False
     for line in text.splitlines():
+        if line.startswith('Running ') and line.endswith('/run_tests.sh'):
+            flush()
+            block = []
+            pii_active = False
+        if line.startswith('AdaptiveVerticalPIIMahony simulation starting'):
+            flush()
+            block = []
+            pii_active = True
         if line.startswith(('GYRO_REPLAY_PROFILE ', 'REGRESSION_PROTOCOL:',
                             'TFG legacy comparison simulation starting')):
             flush()
@@ -179,9 +209,12 @@ def split_make_log(text: str) -> dict[tuple[str, str], str]:
             heave[fields['frontend']].append(line)
         if line.startswith('Z RMS raw (%Hs):'):
             nlo.append(line)
+        if line.startswith('PII_METRICS ') or (pii_active and line.startswith('QUALITY_GATE:')):
+            pii.append(line)
     flush()
     parts['ahrs', 'default'] = '\n'.join(ahrs) + '\n'
     parts['nlo', 'default'] = '\n'.join(nlo) + '\n'
+    parts['pii', 'default'] = '\n'.join(pii) + '\n'
     for frontend, lines in heave.items():
         parts['heave', 'default' if frontend == 'mahony' else frontend] = '\n'.join(lines) + '\n'
     expected = {(name, profile) for name in REPLAYS for profile, _ in profiles_for(name)}
@@ -216,7 +249,7 @@ def summarize(log_dir: Path, *, measure: bool = False) -> dict:
             raise ValueError(f'{name}: unsuccessful replay')
         if [p['profile'] for p in run['profiles']] != [p for p, _ in profiles_for(name)]:
             raise ValueError(f'{name}: incomplete profile inventory')
-        if name not in ('ahrs', 'heave', 'nlo'):
+        if name not in ('ahrs', 'heave', 'nlo', 'pii'):
             records[name] = {}
             for profile in run['profiles']:
                 text = (log_dir / f"{name}-{profile['profile']}.log").read_text()
@@ -225,6 +258,11 @@ def summarize(log_dir: Path, *, measure: bool = False) -> dict:
                     raise ValueError(f"{name}/{profile['profile']}: not eight passing numeric gates")
                 records[name][profile['profile']] = parse_w3d(text)
     other = {}
+    pii = (log_dir / 'pii-default.log').read_text()
+    gate_count = len(re.findall(r'^QUALITY_GATE: PASS=[01] REASON=', pii, re.M)) if measure else pii.count('QUALITY_GATE: PASS=1 REASON=ok')
+    if gate_count != 8 or 'QUALITY_GATE: SKIPPED' in pii:
+        raise ValueError('PII did not complete eight gated replays')
+    other['pii'] = parse_pii(pii)
     ahrs = (log_dir / 'ahrs-default.log').read_text()
     angles = re.findall(r'Angles RMS \(deg\): Roll=(\S+) Pitch=(\S+) Yaw=(\S+)', ahrs)
     if len(angles) != 8:

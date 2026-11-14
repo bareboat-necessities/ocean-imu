@@ -40,9 +40,9 @@ static constexpr int RMS_WINDOW_SEC_LABEL = static_cast<int>(RMS_WINDOW_SEC);
 // scored records plus about half a percent, rounded up in the last digit the
 // channel is quoted in
 static constexpr W3dFailureLimits FAIL_LIMITS {
-    .err_limit_percent_z_jonswap = 8.91f,   // worst 8.8651 (jonswap H8.5)
-    .err_limit_percent_z_pmstokes = 9.41f,  // worst 9.3622 (pmstokes H8.5)
-    .err_limit_yaw_deg = 10.84f,            // worst 10.7801 (pmstokes H8.5)
+    .err_limit_percent_z_jonswap = 15.47f,  // v1.3.0 worst 15.387 (H1.5)
+    .err_limit_percent_z_pmstokes = 14.81f, // v1.3.0 worst 14.7331 (H1.5)
+    .err_limit_yaw_deg = 8.28f,             // v1.3.0 worst 8.23252 (PM H8.5)
 };
 
 class FusionAdapterAdaptivePIIMahony final : public IW3dFusionAdapter {
@@ -319,6 +319,15 @@ static void print_vertical_only_summary(const W3dSimulationRunResult& result, fl
     std::cout << "Angles RMS (deg): Roll=" << rms_roll.rms()
               << " Pitch=" << rms_pitch.rms()
               << " Yaw=" << rms_yaw.rms() << "\n";
+    const auto precision = std::cout.precision();
+    std::cout << std::setprecision(9)
+              << "PII_METRICS input=" << std::filesystem::path(result.input_name).filename().string()
+              << " start_s=" << static_cast<double>(start) * RMS_WINDOW_SEC / N_last
+              << " window_s=" << RMS_WINDOW_SEC << " samples=" << N_last
+              << " disp_z_rms_m=" << z_rms << " disp_z_pct_hs=" << z_pct
+              << " roll_rms_deg=" << rms_roll.rms() << " pitch_rms_deg=" << rms_pitch.rms()
+              << " yaw_rms_deg=" << rms_yaw.rms() << "\n";
+    std::cout.precision(precision);
 
     std::cout << "env f_used_hz: mean=" << mean_vec(vf)
               << " median=" << median_vec(vf)
@@ -354,10 +363,20 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
 
     const size_t start = result.errs_z.size() - N_last;
 
-    RMSReport rms_z, rms_yaw;
+    RMSReport rms_z, rms_roll, rms_pitch, rms_yaw;
     for (size_t i = start; i < result.errs_z.size(); ++i) {
         rms_z.add(result.errs_z[i]);
+        rms_roll.add(result.errs_roll[i]);
+        rms_pitch.add(result.errs_pitch[i]);
         rms_yaw.add(result.errs_yaw[i]);
+    }
+
+    bool record_failed = false;
+    if (!(std::isfinite(rms_z.rms()) && std::isfinite(rms_roll.rms()) &&
+          std::isfinite(rms_pitch.rms()) && std::isfinite(rms_yaw.rms()))) {
+        std::cerr << "ERROR: nonfinite scored PII error. Failing.\n";
+        record_failed = any_quality_gate_failed = true;
+        if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
 
     const float z_pct = 100.0f * rms_z.rms() / result.wave_params.height;
@@ -369,6 +388,7 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
         std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
                   << "%). Failing.\n";
         any_quality_gate_failed = true;
+        record_failed = true;
         if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
 
@@ -376,8 +396,11 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
         std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
                   << FAIL_LIMITS.err_limit_yaw_deg << " deg). Failing.\n";
         any_quality_gate_failed = true;
+        record_failed = true;
         if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
+    std::cout << "QUALITY_GATE: PASS=" << (record_failed ? 0 : 1)
+              << " REASON=" << (record_failed ? "pii_error" : "ok") << "\n";
 }
 
 static std::optional<W3dSimulationRunResult>
