@@ -50,7 +50,7 @@ MEKF lever-arm Jacobian in Sec.~\ref{sec:measurement_model}.
 \IfFileExists{ou3_lever_arm_cutoff.svg}{%
 \begin{figure}[t]\centering
 \includesvg[width=\columnwidth,inkscapelatex=false]{ou3_lever_arm_cutoff}
-\caption{Derivative-band sweep for the 30 cm port arm. Narrow-band phase lag and wide-band differentiated noise compete. The deployed 15 Hz point remains close to the best measured 3-D score; it is not refitted.}\label{fig:imu-lever-arm-cutoff}
+\caption{Derivative-band sweep for the 30 cm port arm. The residual force exposes narrow-band phase lag and wide-band differentiated noise; its minimum need not coincide with the 3-D error minimum. The deployed 15 Hz point remains close to the best measured 3-D score; it is not refitted.}\label{fig:imu-lever-arm-cutoff}
 \end{figure}
 }{}
 An installed rotational term can partly cancel an existing estimator residual,

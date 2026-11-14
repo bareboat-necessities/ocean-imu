@@ -6,12 +6,12 @@ The JONSWAP companion aggregate averages the four heights **and the controlled c
 
 | Ensemble | OU-III heave RMS (% Hs) | TFG | TFG minus OU-III, points [bootstrap 95% interval] |
 | --- | ---: | ---: | ---: |
-| JONSWAP plus crossfade | 6.31 | 6.09 | −0.225 [−0.266, −0.185] |
+| JONSWAP plus crossfade | 6.31 | 6.09 | −0.225 [−0.266, −0.186] |
 | PM-Stokes | 5.99 | 5.83 | −0.16 [−0.18, −0.13] |
 | Controlled crossfade | 6.07 | 5.81 | −0.26 [−0.37, −0.14] |
 
-TFG has lower mean heave error in these declared ensembles. The other channels show tradeoffs: in the JONSWAP-plus-crossfade aggregate, accelerometer-bias RMS rises from 0.06042 m/s² (OU-III) to 0.07157 m/s² (TFG), roll RMS from 0.2424° to 0.2963°, and pitch from 0.2525° to 0.2687°. TFG has lower mean 3D displacement, yaw, and gyro-bias errors. These secondary channels are exploratory without multiplicity adjustment; the comparison concerns complete estimators.
+TFG has lower mean heave error in these declared ensembles. The other channels show tradeoffs: in the JONSWAP-plus-crossfade aggregate, accelerometer-bias RMS rises from 0.06043 m/s² (OU-III) to 0.07155 m/s² (TFG), roll RMS from 0.2424° to 0.2960°, and pitch from 0.2526° to 0.2679°. TFG has lower mean 3D displacement, yaw, and gyro-bias errors. These secondary channels are exploratory without multiplicity adjustment; the comparison concerns complete estimators.
 
-Reproduce with `python3 tools/tfg_comparison.py --mode full`. Raw rows, paired summaries, gate diagnostics, input/binary hashes, and the publication table are in `reports/results/tfg_comparison/`. The current local full replay has no GitHub workflow receipt. The CI publication gate still requires its own replay provenance; it is not bypassed by the local results.
+Reproduce with `python3 tools/tfg_comparison.py --mode full`. Raw rows, paired summaries, gate diagnostics, input/binary hashes, and the publication table are in `reports/results/tfg_comparison/`. The current bundle has a verified GitHub workflow receipt from [Actions run 43566551317](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43566551317), job `tfg_companion`. Its artifact digest and per-file hashes were checked, and the strict `--require-ci` publication contract passes.
 
 The deterministic [stationary versus moving comparison](moving-vessel-comparison.md) answers a different question: what changes when the identical executable sees the new physical input.

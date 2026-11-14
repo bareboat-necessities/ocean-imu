@@ -1,4 +1,27 @@
+Moving-vessel CARMA installation baseline repair (class E): the completed
+1,456-row installation matrix and 128-row cutoff sweep were compared with
+stationary-data ratios. The physical input hash maps differ, invalidating that
+comparison. The verified CI artifact now supplies current tables and figures;
+the ratio comparison remains mandatory when input maps match. Structures
+preserved: sensor corruption, installation, estimator equations, fixed tuning
+and the unchanged same-dataset comparison tolerance. Relaxations introduced:
+none; distinct physical experiments are no longer treated as repeated runs.
+No shipping counterexample or theorem conclusion follows. Existing proof
+results remain unchanged. Next check: hosted same-input study reproduction.
+
 # OU-III proof research state
+
+Moving-vessel lever-arm gate maintenance (class E): the old assertion that
+navigation error must have an interior band optimum rejects the new 100 Hz
+boundary minimum (3-D/CG 0.99923). Force residual instead has the expected
+interior minimum: 0.146 at 5 Hz, versus 0.524 at 1 Hz and 3.140 at 100 Hz.
+The gate now tests that physical residual; exact compensation, force scaling,
+and the deployed 15 Hz accuracy bound are retained. All 31 study/article
+checks pass on the verified complete CI artifact. Structures preserved: sensor
+corruption, rigid-body installation, estimator equations and fixed tuning.
+Relaxations introduced: none; a downstream score is no longer mistaken for
+a force-model invariant. No shipping counterexample or new theorem claim is
+made. Next check: the same hosted study and source verifier after publication.
 
 Moving-vessel replay maintenance (class E): changing simulation-only source
 files invalidates the finite secant diagnostic's conservative whole-src digest;

@@ -2,9 +2,7 @@
 
 External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
 with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
-and [reference-coordinate convention](moving-vessel-replays.md). Numerical
-studies explicitly naming v1.2.3 retain their stationary-vessel scope; their
-results are not relabelled as underway evidence.
+and [reference-coordinate convention](moving-vessel-replays.md). The complete current study was regenerated in CI on these moving-vessel inputs; its artifact and source identity are retained in the manifest.
 
 
 This study measures the error introduced when the IMU is not mounted at the vessel center of gravity (CG), and how much of that error is removed by modeling the same installation vector inside the filter.
@@ -34,7 +32,7 @@ The simulator prints `IMU_LEVER_ARM` when the stage is installed and `IMU_LEVER_
 
 ## Matrix
 
-The full run uses the eight standard stationary JONSWAP / PM-Stokes records and three canonical installation directions: x (athwartships), y (fore-aft), and z (vertical). Each direction is tested at 10, 20, and 30 cm from the CG. The CG displacement/velocity/acceleration truth, attitude, gyro truth, magnetometer, sensor-noise realization, OU-III tuning, startup, vibration guard, pseudo-measurements, and scoring are identical in every arm.
+The full run uses the eight standard stationary JONSWAP / PM-Stokes records and three canonical installation directions: x (forward), y (port), and z (vertical). Each direction is tested at 10, 20, and 30 cm from the CG. The CG displacement/velocity/acceleration truth, attitude, gyro truth, magnetometer, sensor-noise realization, OU-III tuning, startup, vibration guard, pseudo-measurements, and scoring are identical in every arm.
 
 Four arms are reported:
 
@@ -43,7 +41,7 @@ Four arms are reported:
 - **gyro**: the deployable model. It sees only the corrupted rate and reconstructs \(\dot\omega\) with a two-pole low-pass at 15 Hz followed by a causal second-order difference.
 - **exact**: the oracle. It removes the same term using the record's own angular kinematics, and bounds what any lever-arm model can recover.
 
-A separate sweep varies the `gyro` model's derivative band over 1-100 Hz on a 30 cm fore-aft arm. The band is the model's one design parameter and it is two-sided: too narrow and the low-pass phase lag misaligns a correction whose amplitude is already right, too wide and differentiated gyro noise exceeds the term being removed.
+A separate sweep varies the `gyro` model's derivative band over 1-100 Hz on a 30 cm fore-aft arm. The residual force exposes the phase-lag/noise tradeoff. On the current records it is smallest at 5 Hz (0.146 of installed force), versus 0.524 at 1 Hz and 3.140 at 100 Hz. The lowest downstream 3D/CG ratio instead occurs at the 100 Hz grid edge (0.99923); the fixed 15 Hz arm gives 1.00011. Navigation error can cancel other residuals, so that boundary minimum is not a physical optimum and the deployed band is retained.
 
 ## Outputs
 

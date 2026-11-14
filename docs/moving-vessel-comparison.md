@@ -18,6 +18,7 @@ controls also reproduce the archived regression baseline to the displayed precis
 | TFG-CARMA | 3.21 → 4.67 | +45% | 0.394 → 0.449 | 68.69 → 60.69 |
 | Shared TFG | 2.45 → 3.70 | +51% | 0.366 → 0.364 | 69.41 → 47.60 |
 | Adaptive PII | 8.75 → 15.39 | +76% | — | — |
+| NLO | 7.32 → 23.52 | +221% | — | — |
 
 Attitude also changes; these are worst-record RMS values in degrees, using the same executables in both arms.
 
@@ -42,8 +43,13 @@ degradation is not confined to the smallest sea. Adaptive PII instead peaks
 in the 1.5 m JONSWAP condition; its attitude errors improve despite worse
 heave. Its paired control receipt is `pii_comparison.json`.
 
-Against the recorded auxiliary baselines, NLO worst raw heave rises from 7.32% to 23.52% Hs. AHRS worst roll/pitch/yaw
-improves from 0.93°/5.33°/12.66° to 0.64°/3.00°/7.08°.
+Fresh same-executable auxiliary controls confirm NLO worst raw heave rises
+from 7.32% to 23.52% Hs, peaking in 0.27 m PM-Stokes. AHRS worst roll/pitch/yaw improves from
+0.93°/5.33°/12.66° to 0.64°/3.00°/7.08° over its trailing 60 s window.
+Input and executable hashes are in `auxiliary_stationary_control.json`. Each
+AHRS control record runs in its own process because the current moving-data
+gate exits immediately on a miss; each record retains its original fixed
+noise seeds. All eight finite scores are retained, including gate misses.
 
 A raw-data spectral check on the 0.27 m JONSWAP record finds a heave PSD peak
 period of 2.98 s before and 5.96 s after; vertical-acceleration RMS falls

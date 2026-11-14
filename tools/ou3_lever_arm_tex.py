@@ -144,6 +144,7 @@ def generate(
         best = min(sweep, key=lambda row: value(row, "disp_3d_ratio_to_baseline"))
         narrow = min(sweep, key=lambda row: value(row, "cutoff_hz"))
         wide = max(sweep, key=lambda row: value(row, "cutoff_hz"))
+        force_best = min(sweep, key=lambda row: value(row, "residual_fraction"))
         # The deployed corner is a choice, not the sweep's argmin; quoting the
         # argmin as "deployed" would overstate what the shipped model does.
         deployed = min(
@@ -151,21 +152,21 @@ def generate(
             key=lambda row: abs(value(row, "cutoff_hz") - DEPLOYED_CUTOFF_HZ),
         )
         lines += [
-            "The deployable model has one design parameter, the band of its rate",
-            "derivative, and it is two-sided.  Over the same eight seas with a",
-            f"\\SI{{{100.0 * value(narrow, 'distance_m'):.0f}}}{{cm}} port arm, a",
-            f"\\SI{{{value(narrow, 'cutoff_hz'):.0f}}}{{Hz}} corner leaves",
-            f"\\num{{{value(narrow, 'disp_3d_ratio_to_baseline'):.3f}}} times the CG",
-            "baseline because the low-pass phase lag misaligns a correction whose",
-            f"amplitude is already right, and a \\SI{{{value(wide, 'cutoff_hz'):.0f}}}{{Hz}}",
-            f"corner leaves \\num{{{value(wide, 'disp_3d_ratio_to_baseline'):.3f}}} because",
-            "the differentiated gyro noise it admits exceeds the term it removes.  The",
-            "basin between them is flat: the deployed",
+            "The rate-derivative band trades low-pass phase lag against differentiated",
+            "gyro noise. Over the same eight seas with a",
+            f"\\SI{{{100.0 * value(narrow, 'distance_m'):.0f}}}{{cm}} port arm, the residual",
+            "force divided by the installed force is",
+            f"\\num{{{value(narrow, 'residual_fraction'):.3f}}} at \\SI{{{value(narrow, 'cutoff_hz'):.0f}}}{{Hz}} and",
+            f"\\num{{{value(wide, 'residual_fraction'):.3f}}} at \\SI{{{value(wide, 'cutoff_hz'):.0f}}}{{Hz}}.",
+            f"The smallest tested force residual is \\num{{{value(force_best, 'residual_fraction'):.3f}}}",
+            f"at \\SI{{{value(force_best, 'cutoff_hz'):.0f}}}{{Hz}}. The deployed",
             f"\\SI{{{value(deployed, 'cutoff_hz'):.0f}}}{{Hz}} corner reaches",
-            f"\\num{{{value(deployed, 'disp_3d_ratio_to_baseline'):.3f}}} and the best",
+            f"\\num{{{value(deployed, 'disp_3d_ratio_to_baseline'):.3f}}} times the CG 3-D RMS; the best",
             f"corner measured, \\SI{{{value(best, 'cutoff_hz'):.0f}}}{{Hz}}, reaches",
-            f"\\num{{{value(best, 'disp_3d_ratio_to_baseline'):.3f}}}, so the model is",
-            "robust to this choice rather than tuned to it.",
+            f"\\num{{{value(best, 'disp_3d_ratio_to_baseline'):.3f}}}.",
+            "Downstream navigation errors can cancel other residuals. A minimum at",
+            "a tested band edge is therefore retained as a finite-grid result, not",
+            "an identified physical optimum. The deployed band is not refitted.",
             "",
         ]
 
