@@ -76,10 +76,10 @@ jobs:
               > "/tmp/carma-lever-committed/$name"
           done
 
-      # Byte equality across machines is not available (the simulator is built
-      # -march=native, and this runner's Matplotlib is not the one that drew
-      # the committed figures); every published ratio is compared instead, to
-      # a tolerance far below the effects the study reports.
+      # The simulator has a dedicated scalar, non-FMA build profile so CPU
+      # selection cannot change Eigen reduction order. Figure bytes can still
+      # vary with Matplotlib; compare every published ratio at the unchanged
+      # numerical tolerance instead of comparing figure bytes.
       - name: Run the lever-arm study
         run: |
           MODE="${{ inputs.mode || 'full' }}"

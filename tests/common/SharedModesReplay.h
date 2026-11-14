@@ -33,6 +33,8 @@ public:
         // Controlled sensor-path ablations for the article's machinery study.
         // Unset variables retain the deployed wrapper configuration.
         auto& filter = impl_.fusion().raw();
+        const char* normalize = std::getenv("W3D_CARMA_BAND_NORMALIZATION");
+        filter.setVerticalBandNormalization(!normalize || std::string(normalize) != "0");
         // Explicit sensor contract for diagnostic replays. Keep the original
         // interval-rate sampling protocol, with its separately measured bars.
         const char* gyro_input = std::getenv("W3D_CSM_GYRO_INPUT");

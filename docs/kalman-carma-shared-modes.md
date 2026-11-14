@@ -1,5 +1,14 @@
 # Shared-modes QMEKF (`KalmanCarmaSharedModes`, experimental)
 
+The current shared wrapper applies a model-derived vertical band-to-total
+acceleration normalization (1.306347 for the default CARMA(4,1) shape).
+Horizontal empirical factors keep their band-RMS convention. Passing `false`
+as the fourth `begin` argument retains the previous mapping; the raw wrapper
+also exposes `setVerticalBandNormalization`. Shape and band-ratio changes
+refresh the cached calculation. The [encounter-scaling report](encounter-scaling-regressions.md)
+contains the paired current-code qualification and its per-record costs.
+Historical experiments below retain their recorded source/settings.
+
 External-data runs now use the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
 with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). Numerical

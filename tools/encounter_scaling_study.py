@@ -9,7 +9,7 @@ always use the full-rate final 900 s, never the decimated drawing files.
 from __future__ import annotations
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import math
 import os
@@ -39,6 +39,13 @@ FAMILIES = {
            ('tcarma', 'kalman_tfg_carma', 'tfg_carma3-sim'),
            ('tcsm', 'kalman_tfg_shared_modes', 'kalman_tfg_shared_modes-sim'))},
 }
+for _family, _folder, _binary in (
+    ('csm', 'kalman_carma_shared_modes', 'kalman_carma_shared_modes-sim'),
+    ('tcsm', 'kalman_tfg_shared_modes', 'kalman_tfg_shared_modes-sim'),
+    ('tangent', 'kalman_tangent_shared_modes', 'tangent-replay'),
+):
+    FAMILIES[_family] = (_folder, _binary, 'VALIDATION_METRICS',
+                         'W3D_CARMA_BAND_NORMALIZATION', 'band_normalized')
 
 
 def verify_stationary(archive: Path, directory: Path) -> dict:
@@ -76,6 +83,8 @@ def run_one(job: dict) -> dict:
         (work / job['input'].name).symlink_to(job['input'])
         binary = job['previous_binary'] if job['previous'] and job['previous_binary'] else job['binary']
         command = [str(binary)] + (['--no-noise'] if job['noise'] == 'none' else [])
+        if prefix == 'VALIDATION_METRICS':
+            command += ['--input', job['input'].name]
         result = subprocess.run(command, cwd=work, env=env,
                                 capture_output=True, text=True, timeout=600, check=False)
     lines = [line for line in result.stdout.splitlines() if line.startswith(prefix + ' ')]
@@ -93,7 +102,9 @@ def run_one(job: dict) -> dict:
         raise ValueError('nonfinite scored metric')
     row = dict(dataset=job['dataset'], input=job['input'].name, seed=job['seed'],
                arm='previous' if job['previous'] else current_arm,
-               exit_code=result.returncode, metrics=metrics)
+               exit_code=result.returncode, metrics=metrics,
+               gate_failures=[s for s in (result.stdout + '\n' + result.stderr).splitlines()
+                              if s.startswith('ERROR:') or s.startswith('QUALITY_GATE: PASS=0')])
     print(row['dataset'], row['input'], row['seed'], row['arm'], metrics['disp_z_pct_hs'], flush=True)
     return row
 
@@ -112,6 +123,7 @@ def main() -> None:
     parser.add_argument('--seeds', default='default,7,23')
     parser.add_argument('--jobs', type=int, default=3)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--resume', action='store_true', help='resume a matching .partial.json checkpoint')
     args = parser.parse_args()
     if args.engine_rpm is not None and (not math.isfinite(args.engine_rpm)
                                       or args.engine_rpm <= 0 or args.noise == 'none'):
@@ -166,8 +178,36 @@ def main() -> None:
                  family=args.family, noise=args.noise, engine_rpm=args.engine_rpm)
             for dataset, directory in directories.items() for name in REFERENCE_CSV_SHA256
             for seed in seeds for previous in (True, False)]
+    # Long paired studies survive an interrupted session. A checkpoint cannot
+    # cross an executable, source, input, seed or experiment-setting change.
+    binding = dict(family=args.family, noise=args.noise, engine_rpm=args.engine_rpm,
+                   seeds=seeds, inputs=inputs, binary_sha256=initial_binary_hash,
+                   previous_build=previous_record, source_sha256=source_hashes)
+    partial = args.output.with_suffix('.partial.json')
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    rows = []
+    if args.resume and partial.exists():
+        saved = json.loads(partial.read_text())
+        if saved['binding'] != binding:
+            raise ValueError('checkpoint does not match this experiment')
+        rows = saved['rows']
+    def row_key(row):
+        return (row['dataset'], row['input'], row['seed'], row['arm'])
+    done = {row_key(row) for row in rows}
+    expected = {(j['dataset'], j['input'].name, j['seed'],
+                 'previous' if j['previous'] else current_arm) for j in jobs}
+    if len(done) != len(rows) or not done <= expected:
+        raise ValueError('checkpoint has duplicate or unexpected rows')
+    pending = [j for j in jobs if (j['dataset'], j['input'].name, j['seed'],
+               'previous' if j['previous'] else current_arm) not in done]
     with ThreadPoolExecutor(args.jobs) as pool:
-        rows = list(pool.map(run_one, jobs))
+        futures = [pool.submit(run_one, j) for j in pending]
+        for future in as_completed(futures):
+            rows.append(future.result())
+            tmp = partial.with_suffix('.tmp')
+            tmp.write_text(json.dumps(dict(binding=binding, rows=rows), allow_nan=False)+'\n')
+            tmp.replace(partial)
+    rows.sort(key=row_key)
     if previous_record is not None and digest(args.previous_binary) != previous_record['binary_sha256']:
         raise ValueError('previous executable changed during the paired experiment')
     if digest(binary) != initial_binary_hash:
@@ -194,6 +234,7 @@ def main() -> None:
                   build_environment=provenance.environment_metadata(), rows=rows, pairs=pairs)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False)+'\n')
+    partial.unlink(missing_ok=True)
 
 
 if __name__ == '__main__':

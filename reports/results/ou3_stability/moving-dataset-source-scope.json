@@ -12,13 +12,16 @@
   },
   "encounter_continuation_scope": {
     "changed_src_outside_ou3_probe_closure": [
+      "src/kalman_carma/CarmaVerticalModel.h",
+      "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
+      "src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h",
       "src/nlo/TimeVarGainNLO_Adapter.h"
     ],
     "probe_src_files_byte_identical": 39,
     "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
     "relaxations_introduced": "None",
     "replay_performed": false,
-    "scope": "NLO wave-band bandwidth adjustment outside the unchanged OU-III closure; TFG cadence rejected and original source retained"
+    "scope": "NLO wave-band and shared-mode CARMA vertical band normalization outside the unchanged OU-III closure; rejected OU/TFG candidates are not deployed"
   },
   "native_secant_bytes_match_prior_report": [
     true,

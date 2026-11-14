@@ -72,9 +72,75 @@ Engine-noise moving mean/worst improve from 11.832/24.072 to 8.098/9.452% Hs. Ze
 
 The device-path synthetic test independently exercises sinusoidal motion plus slow additive acceleration drift: the short, small wave improves from 0.574 to 0.0448 m RMS and the larger, slower wave from 0.715 to 0.702 m, without detrending, fitting, or output suppression. Existing delayed/jittered device, local-gravity and magnetic-turn tests remain required.
 
+## Shared-mode CARMA vertical band normalization
+
+The amplitude observer measures acceleration after a band filter, while the
+vertical CARMA prior expects total model acceleration RMS. The shared QMEKF,
+TFG and tangent wrappers now account for that difference. The frozen default
+CARMA(4,1) model passes 0.58598012624 of its acceleration variance through the
+0.5–4 frequency band, giving a standard-deviation factor of 1.30634701277.
+Two small covariance solves compute the fraction when shape or band ratios
+change. Horizontal empirical factors retain their previous convention. This
+uses measured scheduling parameters and the configured model, without vessel
+speed or wave truth. It approximates a changing sampled band with a frozen
+continuous model; it does not guarantee exact normalization of a real sea.
+
+The [QMEKF](../reports/results/encounter_scaling/shared_band_csm.json),
+[TFG](../reports/results/encounter_scaling/shared_band_tcsm.json) and
+[tangent](../reports/results/encounter_scaling/shared_band_tangent.json)
+qualifications each contain 96 full replays: eight seas, both speeds, default
+seed plus seeds 7 and 23, and enabled/disabled arms of the same native executable.
+
+| Shared-mode family | Moving mean, three seeds (% Hs) | Moving worst, three seeds (% Hs) | Zero-speed mean, three seeds (% Hs) |
+| --- | ---: | ---: | ---: |
+| QMEKF | 2.71437 → 2.69209 | 3.70165 → 3.58339 | 2.32357 → 2.28199 |
+| TFG | 2.71450 → 2.69235 | 3.70215 → 3.58331 | 2.32342 → 2.28185 |
+| Tangent | 2.71456 → 2.69242 | 3.70216 → 3.58334 | 2.32347 → 2.28192 |
+
+For QMEKF, default-seed moving mean/worst change from 2.68488/3.70165 to
+2.63526/3.53167% Hs. Across all seeds, 16 of 24 moving pairs improve;
+the largest moving cost is 3.325 mm RMS and the largest zero-speed cost is
+6.404 mm, both on the largest JONSWAP sea with seed 7. Mean moving 3-D
+displacement improves from 0.154984 to 0.151292 m. Mean pitch slightly
+increases from 0.121732 to 0.123154 degrees and yaw from 2.422058 to 2.426963
+degrees. This is a modest improvement, not a universal one. Because the
+zero-speed mean also improves, the new zero-to-moving gap need not shrink.
+
+All eight default moving records pass their unchanged production gates for
+each shared family. Held-out seeds are scored diagnostics; their harness does
+not apply default-seed acceptance bars. Zero-speed runs retain any moving-bar
+misses and are not presented as a separate gate qualification. The independent
+axis wrappers retain their previous default: the earlier held-out amplitude
+screen did not support enabling the correction there.
+
+The separate 900 rpm controls also improve: QMEKF moving mean/worst
+3.21590/4.07942 -> 3.12973/3.77766% Hs, and TFG
+3.06692/4.20859 -> 2.93138/3.89966% Hs. Both zero-speed means improve.
+The [QMEKF](../reports/results/encounter_scaling/shared_band_csm_engine.json)
+and [TFG](../reports/results/encounter_scaling/shared_band_tcsm_engine.json)
+controls each contain 32 replays. Normal-noise gates fail in both engine arms;
+these are degradation comparisons, not claims that the engine cases satisfy
+ordinary acceptance limits. No sea-transition qualification of this new
+normalization is claimed.
+
+The [additional localization record](../reports/results/encounter_scaling/residual_diagnostics.json)
+contains the rejected OU candidates and oracle diagnostics, with source/input/
+binary identities and overlay patches. Supplying the true period changes OU-III
+screened moving mean from 6.04498 to 6.06986% Hs; removing cruise-turn forcing
+changes small-wave heave only from 8.23605 to 8.23030%. Period error and that
+forcing do not explain most of the residual. Removing accelerometer error has
+a much larger effect than removing gyro or magnetometer error. This localizes
+further work to motion-prior and acceleration/bias separation, without proving
+an irreducible sensor floor. Fitting shape with wave truth worsens small-wave
+CARMA heave from 3.550 to 5.084% Hs and is rejected. Vertical-only OU-III
+stillness handling improves default moving mean but worsens the zero-speed
+mean for every tested seed and fails yaw, 0.880571 > 0.875540 degrees. The one
+refinement preserving acceleration weighting fails the same gate. Neither
+OU-III candidate is deployed, and no acceptance limit is widened.
+
 ## Remaining OU, CARMA and TFG speed regressions
 
-The [complete inventory](../reports/results/encounter_scaling/remaining_regressions.json) pairs all eight seas for every gated OU/CARMA/TFG replay family, using the same executable at both speeds. It includes displacement, roll, pitch, yaw and both bias-error RMS metrics. These values compare physical datasets after the accepted fixes; they are not before/after implementation improvements. The default sensor seed, production sampling profile and final 900 s are used. TFG legacy here means its regularization law, not the interval-rate sampling profile. Ungated CARMA spectral-shape research variants are not covered by these acceptance measurements.
+The [complete inventory](../reports/results/encounter_scaling/remaining_regressions.json), recorded before the shared-band normalization above, pairs all eight seas for every gated OU/CARMA/TFG replay family, using the same executable at both speeds. It includes displacement, roll, pitch, yaw and both bias-error RMS metrics. These values compare physical datasets after the earlier stillness/PII/NLO fixes; they are not before/after implementation improvements. The default sensor seed, production sampling profile and final 900 s are used. TFG legacy here means its regularization law, not the interval-rate sampling profile. Ungated CARMA spectral-shape research variants are not covered by these acceptance measurements.
 
 | Family | Mean heave, zero-speed → 5 kn (% Hs) | Worst heave, zero-speed → 5 kn (% Hs) | Seas with higher heave error |
 | --- | ---: | ---: | ---: |
@@ -87,7 +153,7 @@ The [complete inventory](../reports/results/encounter_scaling/remaining_regressi
 | TFG-CARMA independent axes | 2.311 → 2.745 | 2.461 → 3.727 | 7/8 |
 | TFG-CARMA shared modes | 2.273 → 2.685 | 2.455 → 3.702 | 6/8 |
 
-The OU-II and independent-axis CARMA/TFG-CARMA stillness fixes reduce the worst moving errors from about 20.84 to 8.486% Hs and 4.67 to 3.73% Hs respectively. They do not remove the residual speed penalty above. Shared-mode CARMA and OU-III remain unresolved rather than being described as fixed.
+The OU-II and independent-axis CARMA/TFG-CARMA stillness fixes reduce the worst moving errors from about 20.84 to 8.486% Hs and 4.67 to 3.73% Hs respectively. They do not remove the residual speed penalty above. The shared-mode correction also leaves a residual penalty; OU-III remains unresolved.
 
 The [continuation experiments](../reports/results/encounter_scaling/continuation_trials.json) preserve candidate patches, compilation details, input/source/binary hashes and scored values. Their outcomes constrain the next changes:
 
@@ -127,6 +193,6 @@ python3 tools/encounter_scaling_study.py \
   --output reports/results/encounter_scaling/pii_phase.json
 ```
 
-Use `--family nlo` for NLO, adding `--engine-rpm 900` or `--noise none` for its controls.
+Use `--family nlo` for NLO, adding `--engine-rpm 900` or `--noise none` for its controls. Use `--family csm`, `tcsm`, or `tangent` for the shared-mode band-normalization ablation. `--resume` recovers a partial run only when sources, executable, inputs, seeds and settings still match.
 
 The driver verifies the zero-speed archive, both sets of input hashes, exact clocks, complete scoring windows, finite metrics and unchanged executable identity across the pair set. Results include the source closure, compiler environment and all paired values. Source-bound hosted evidence and the full native regression suite remain separate required checks.

@@ -89,6 +89,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -331,6 +332,11 @@ public:
     const CarmaWaveEvidence& waveEvidence() const noexcept { return evidence_; }
     // CARMA vertical acceleration std of the last committed prior.
     float getCarmaAccelStd() const noexcept { return carma_accel_std_applied_; }
+    // Convert measured band RMS to the vertical model's full acceleration
+    // RMS. Horizontal factors retain their empirical band-RMS calibration.
+    // Applied by the next normal staged commit; no covariance reset.
+    void setVerticalBandNormalization(bool enabled) { normalize_vertical_band_ = enabled; }
+    bool verticalBandNormalization() const noexcept { return normalize_vertical_band_; }
     void setMagDelaySec(float d) { if (std::isfinite(d) && d >= 0.0f) mag_delay_sec_ = d; }
     void setMagUpdatesToUnlockAccBias(int n) { if (n >= 0) mag_updates_to_unlock_ = n; }
     void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
@@ -462,9 +468,9 @@ private:
         if (!(std::isfinite(tau) && tau > 0.0f)) return;
         const float f_tune = tau_coeff_ * 0.5f / tau;
         const float accel_std = carma_accel_std_();
-        carma_accel_std_applied_ = accel_std;
+        carma_accel_std_applied_ = accel_std * vertical_band_gain_();
         const double fz_v = mekf_->vertical_model().base_zero_crossing_hz();
-        mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), accel_std);
+        mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), carma_accel_std_applied_);
         const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();
         const float kappa_h = static_cast<float>(f_tune / fz_h);
         const float sx = accel_std * Sx_factor_, sy = accel_std * Sy_factor_;
@@ -633,6 +639,27 @@ private:
     float sigma_coeff_ = 0.9f;
     float carma_sigma_gain_ = 1.0f;
     float carma_sigma_floor_ = 0.05f;
+    bool normalize_vertical_band_ = false;
+    std::array<double,9> band_gain_key_{};
+    float band_gain_ = 1.0f;
+    bool band_gain_ready_ = false;
+
+    float vertical_band_gain_() {
+        if (!normalize_vertical_band_) return 1.0f;
+        const auto& model = mekf_->vertical_model();
+        const auto& s = model.shape();
+        const std::array<double,9> key{s.f1_hz, s.zeta1, s.f2_hz, s.zeta2,
+            s.f_lambda_hz, s.fz_hz, s.zeta_z,
+            sigma_wave_band_.lowRatio(), sigma_wave_band_.highRatio()};
+        if (!band_gain_ready_ || key != band_gain_key_) {
+            const double f = model.base_zero_crossing_hz();
+            const double fraction = model.acceleration_band_fraction(key[7] * f, key[8] * f);
+            band_gain_ = std::isfinite(fraction) ? static_cast<float>(1.0 / std::sqrt(fraction)) : 1.0f;
+            band_gain_key_ = key;
+            band_gain_ready_ = true;
+        }
+        return band_gain_;
+    }
 
     CarmaExcitationMode excitation_mode_ = CarmaExcitationMode::Legacy;
     bool evidence_gate_ = true;

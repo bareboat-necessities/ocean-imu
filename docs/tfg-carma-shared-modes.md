@@ -1,5 +1,14 @@
 # Experimental shared-mode CARMA on the two-frame group
 
+The current shared wrapper applies a model-derived vertical band-to-total
+acceleration normalization (1.306347 for the default CARMA(4,1) shape).
+Horizontal empirical factors keep their band-RMS convention. Passing `false`
+as the fourth `begin` argument retains the previous mapping; the raw wrapper
+also exposes `setVerticalBandNormalization`. Shape and band-ratio changes
+refresh the cached calculation. The [encounter-scaling report](encounter-scaling-regressions.md)
+contains the paired current-code qualification and its per-record costs.
+Historical experiments below retain their recorded source/settings.
+
 Current external-data replays use v1.3.1, the 28 ft boat at 5 kn with
 ±3° heading oscillation over 120 s. The [current comparison](moving-vessel-results.md)
 and [before/after report](moving-vessel-comparison.md) describe this changed

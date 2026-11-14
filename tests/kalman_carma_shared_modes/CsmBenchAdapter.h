@@ -42,6 +42,7 @@
 #include <cstdlib>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -119,7 +120,14 @@ public:
         c.confidence.enabled = sp_.confidence;
         c.confidence.accel_noise_std = ACC_SIGMA;
         if (!std::isnan(sp_.cap)) c.cap_coherence = sp_.cap;
-        f_.begin(fc, c);
+        bool normalize_band = true;
+        if (const char* value = std::getenv("CSM_BAND_NORMALIZATION")) {
+            const std::string setting(value);
+            if (setting != "0" && setting != "1")
+                throw std::invalid_argument("CSM_BAND_NORMALIZATION must be 0 or 1");
+            normalize_band = setting == "1";
+        }
+        f_.begin(fc, c, ocean_imu::carma::CarmaExcitationMode::Evidence, normalize_band);
         f_.raw().enableTuner(true);
         f_.raw().enableClamp(true);
         if (sp_.s_factor > 0.0f) f_.raw().setSFactor(sp_.s_factor);

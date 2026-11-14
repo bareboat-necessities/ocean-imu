@@ -571,6 +571,7 @@ public:
         base_var_h_ = P1(IDX_H, IDX_H);
         base_var_v_ = P1(IDX_V, IDX_V);
         base_var_a_ = P1(IDX_A, IDX_A);
+        base_accel_cross_ = P1.col(IDX_A);
         shape_valid_ = base_var_h_ > 0.0 && base_var_v_ > 0.0 && base_var_a_ > 0.0;
         configured_ = false;
         return shape_valid_ && configure(kappa_, accel_std_);
@@ -626,6 +627,30 @@ public:
     double base_var_v() const noexcept { return base_var_v_; }
     double base_var_a() const noexcept { return base_var_a_; }
 
+    // Fraction of stationary acceleration variance passed by the continuous
+    // band s*b/((s+a)*(s+b)), at kappa=1. For a period-scaled band, pass
+    // low_ratio*base_zero_crossing_hz() and high_ratio*base_zero_crossing_hz().
+    // The result is then invariant under frequency/amplitude scaling. This is
+    // a frozen-model calibration, not the covariance of a time-varying band.
+    EIGEN_DONT_INLINE double acceleration_band_fraction(double low_hz, double high_hz) const {
+        if (!shape_valid_ || !(std::isfinite(low_hz) && std::isfinite(high_hz)
+                              && low_hz > 0.0 && high_hz > low_hz)) return NAN;
+        constexpr double two_pi = 6.283185307179586476925286766559;
+        const double a = two_pi * low_hz, b = two_pi * high_hz;
+        Eigen::Matrix<double,N,N> A;
+        carma_dynamics<N>(shape_, 1.0, A);
+        const auto I = Eigen::Matrix<double,N,N>::Identity();
+        // Cross covariances with the low-pass state u and band state v.
+        // Sylvester equations: (aI-A)u=aPc, (bI-A)v=b(Pc-u).
+        const Eigen::Matrix<double,N,1> u =
+            (a * I - A).partialPivLu().solve(a * base_accel_cross_);
+        const Eigen::Matrix<double,N,1> v =
+            (b * I - A).partialPivLu().solve(b * (base_accel_cross_ - u));
+        const double fraction = b / (a + b) * v(IDX_A) / base_var_a_;
+        return std::isfinite(fraction) && fraction > 0.0 && fraction <= 1.0
+            ? fraction : NAN;
+    }
+
     // Stationary displacement standard deviation of the configured model:
     // Var_kappa(h) = g^2 Var_1(h) / kappa^5.
     T displacement_std() const noexcept {
@@ -641,6 +666,7 @@ private:
     double base_var_h_ = 0.0;
     double base_var_v_ = 0.0;
     double base_var_a_ = 0.0;
+    Eigen::Matrix<double,N,1> base_accel_cross_ = Eigen::Matrix<double,N,1>::Zero();
     T kappa_ = T(1);
     T accel_std_ = T(1);
     T noise_gain2_ = T(0);

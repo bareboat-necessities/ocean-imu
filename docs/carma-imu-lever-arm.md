@@ -93,15 +93,15 @@ committed evidence and the table below against each other.
 
 | IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea | Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 30 cm forward | 1.00 | 1.27 | 1.000 | 1.003 | 1.01 | 1.02 | 1.04 | 1.34 |
-| 30 cm starboard | 1.02 | 1.07 | 1.000 | 1.000 | 1.02 | 0.98 | 1.02 | 1.05 |
+| 30 cm forward | 1.00 | 1.27 | 1.000 | 1.003 | 1.01 | 1.02 | 1.04 | 1.33 |
+| 30 cm starboard | 1.02 | 1.07 | 1.000 | 1.000 | 1.02 | 0.97 | 1.02 | 1.05 |
 | 30 cm above | 1.04 | 1.23 | 1.000 | 1.001 | 1.02 | 0.97 | 1.03 | 1.01 |
-| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.03 | 1.14 | 1.11 | 2.83 |
-| 100 cm starboard | 1.09 | 1.75 | 1.000 | 1.002 | 1.03 | 0.99 | 1.04 | 1.90 |
-| 100 cm above | 1.20 | 2.41 | 1.002 | 1.005 | 1.05 | 1.20 | 1.08 | 1.04 |
-| 200 cm forward | 1.20 | 3.81 | 1.008 | 1.061 | 1.05 | 1.21 | 1.20 | 6.16 |
-| 200 cm starboard | 1.28 | 3.11 | 1.005 | 1.031 | 1.00 | 1.07 | 1.01 | 7.18 |
-| 200 cm above | 1.53 | 4.41 | 1.008 | 1.033 | 1.41 | 1.67 | 2.11 | 1.06 |
+| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.03 | 1.13 | 1.11 | 2.86 |
+| 100 cm starboard | 1.09 | 1.75 | 1.000 | 1.002 | 1.03 | 0.98 | 1.04 | 1.90 |
+| 100 cm above | 1.20 | 2.41 | 1.002 | 1.005 | 1.06 | 1.20 | 1.08 | 1.04 |
+| 200 cm forward | 1.20 | 3.81 | 1.008 | 1.061 | 1.05 | 1.17 | 1.20 | 6.16 |
+| 200 cm starboard | 1.28 | 3.11 | 1.005 | 1.031 | 1.00 | 1.06 | 1.02 | 7.10 |
+| 200 cm above | 1.53 | 4.41 | 1.008 | 1.033 | 1.41 | 1.68 | 2.11 | 1.08 |
 
 **TFG-CARMA3** (RMS / CG baseline: eight seas pooled, and the worst single sea)
 
@@ -110,11 +110,11 @@ committed evidence and the table below against each other.
 | 30 cm forward | 1.00 | 1.27 | 1.000 | 1.003 | 1.00 | 1.01 | 1.04 | 1.34 |
 | 30 cm starboard | 1.02 | 1.07 | 1.000 | 1.000 | 1.01 | 0.99 | 1.01 | 1.05 |
 | 30 cm above | 1.04 | 1.23 | 1.000 | 1.001 | 1.01 | 0.98 | 1.02 | 1.01 |
-| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.02 | 1.05 | 1.11 | 2.54 |
-| 100 cm starboard | 1.09 | 1.75 | 0.999 | 1.002 | 1.01 | 0.98 | 1.02 | 1.62 |
-| 100 cm above | 1.20 | 2.41 | 1.002 | 1.004 | 1.02 | 1.01 | 1.06 | 1.03 |
-| 200 cm forward | 1.20 | 3.81 | 1.007 | 1.062 | 1.05 | 1.07 | 1.09 | 3.51 |
-| 200 cm starboard | 1.28 | 3.10 | 1.004 | 1.031 | 1.00 | 0.99 | 1.00 | 4.20 |
+| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.02 | 1.05 | 1.11 | 2.51 |
+| 100 cm starboard | 1.09 | 1.75 | 0.999 | 1.002 | 1.01 | 0.98 | 1.02 | 1.63 |
+| 100 cm above | 1.20 | 2.41 | 1.001 | 1.004 | 1.02 | 1.01 | 1.06 | 1.03 |
+| 200 cm forward | 1.20 | 3.81 | 1.007 | 1.062 | 1.05 | 1.06 | 1.09 | 3.55 |
+| 200 cm starboard | 1.28 | 3.10 | 1.004 | 1.031 | 1.00 | 0.99 | 1.00 | 3.71 |
 | 200 cm above | 1.53 | 4.41 | 1.007 | 1.033 | 1.06 | 1.18 | 1.13 | 1.05 |
 
 Derivative corner of the corrected arm, IMU 100 cm above the CG (3-D RMS / CG baseline):
@@ -125,8 +125,8 @@ Derivative corner of the corrected arm, IMU 100 cm above the CG (3-D RMS / CG ba
 | 2 | 1.007 | 1.007 |
 | 5 | 1.002 | 1.002 |
 | 10 | 1.001 | 1.001 |
-| 15 | 1.002 | 1.002 |
-| 25 | 1.009 | 1.007 |
+| 15 | 1.002 | 1.001 |
+| 25 | 1.008 | 1.007 |
 | 50 | 1.024 | 1.023 |
 | 100 | 1.024 | 1.024 |
 <!-- END carma_lever_arm_headline -->
@@ -185,4 +185,4 @@ studied; a wrong sign doubles the term instead of removing it.  No hardware,
 on-target timing or sea data stands behind any of this, and the CARMA filters
 remain research estimators.
 
-The current moving-boat matrix was regenerated with g++ 13.3 (Ubuntu 24.04) at source commit `5b66d7a`, after the CARMA wrapper stopped attenuating wave variance on still-water detection; `manifest.json` records every published file hash. The simulator is built `-march=native`, so CI compares ratios to a 0.01 tolerance, and only when the committed and current input hash maps match.
+The moving-boat matrix uses a dedicated scalar, non-FMA replay build, removing native CPU vector selection from this publication. The manifest records the executable hash, compiler environment and build-source snapshot, as well as every published file hash. The independent-axis mapping is unchanged. CI retains the 0.01 ratio tolerance and compares only matching input hash maps; a fresh cross-host comparison remains necessary to qualify reproducibility.

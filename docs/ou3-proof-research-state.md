@@ -1,11 +1,79 @@
+## Current encounter-regression continuation
+
+**Current hypothesis.** Lower encounter acceleration exposes motion-prior and
+acceleration/bias separation errors. A blanket period or sigma change is not
+supported. The accepted CARMA change corrects vertical band-to-total model RMS
+in shared QMEKF, TFG and tangent wrappers; independent-axis defaults and all
+shipping OU-III code remain unchanged.
+
+**Evidence.** Each shared family has 96 source-bound native paired replays,
+eight seas at both speeds and three sensor seeds. QMEKF moving mean/worst
+improve 2.71437/3.70165 -> 2.69209/3.58339% Hs; individual costs remain
+(maximum moving 3.325 mm). See `shared_band_*.json` and
+`residual_diagnostics.json` under `reports/results/encounter_scaling`.
+Known-period OU-III moving mean 6.04498 -> 6.06986% Hs and removal of
+cruise-turn forcing 8.23605 -> 8.23030% Hs reject those as primary causes.
+
+**Current limiter.** OU/independent-CARMA/TFG speed penalties remain. Hosted
+OU-III replay run 43638967212, job 132582200326, fails yaw
+0.878680 > 0.867740 and 0.886419 > 0.875540 degrees. No bar is widened.
+The full rebuilt local suite and hosted acceptance must be assessed separately
+from successful paired shared-mode experiments.
+
+**Failed approaches / DEAD_ENDS (each class E).** Vertical-only OU-III
+stillness handling fails yaw 0.880571 > 0.875540 degrees and increases
+zero-speed mean for all three seeds. Its one refinement preserving horizontal
+acceleration weighting fails the same yaw bar: reject the mechanism pending
+architecture review. Scalar non-FMA OU-III still fails
+0.883995 > 0.875540 degrees; arithmetic-profile substitution is not a fix.
+Oracle CARMA shape fitting raises small-wave moving heave
+3.550 -> 5.084% Hs; it is neither deployable nor a general repair.
+The provisional band factor's interpretation failure is retained below;
+the corrected fraction is now independently tested by PSD quadrature.
+
+**Infrastructure/publication (class E).** Three concurrent template builds hit
+`g++: fatal error: Killed signal terminated program cc1plus`; serialized
+production builds succeed. Copied `.d` files named the previous checkout and
+could skip header recompilation; rebinding generated dependencies required a
+fresh `make all`, not acceptance of interrupted earlier runs. The paired
+shared-mode executables were explicitly rebuilt with local dependencies.
+Lever-arm run 43638967241 flips amplified negative-control yaw ratios
+38.7948/38.8156 and tilt 9.9366/9.9692 across native builds, exceeding the
+unchanged 0.01 tolerance. Its dedicated scalar non-FMA profile and complete
+study regeneration are now separate from native estimator acceptance;
+cross-host publication reproduction remains to be checked. This is arithmetic
+sensitivity of a bad-placement control, not an accuracy improvement.
+
+Local article rendering also has an environment failure (class E): LuaLaTeX
+reports `Corrupted NFSS tables` at existing math-font commands; pdfLaTeX
+cannot find `pdflatex.fmt`. Neither reports a new normalization-equation
+error. Hosted TeX rendering remains required; no PDF success is claimed.
+
+**Retained facts / six-item shipping handoff.** (1) Structures preserved:
+all 39 audited OU-III probe source files, literal prediction/correction/reset,
+state/covariance, tuner, scheduler, magnetic service and persistent histories.
+(2) Relaxations introduced: truth-period/shape and sensor-removal arms are
+explicit diagnostic counterfactuals only; none enters shipping OU-III or a
+proof claim. (3) All failures above are E, not A/B/C/D. (4) No genuine
+shipping counterexample was found. (5) Established algebraic results and
+open physical/arithmetic qualifications remain controlling; no theorem is
+promoted and no historical OU replay is relabeled as new. (6) Next falsifiable
+experiment: measure the joint low-encounter acceleration innovation and
+bias/tilt covariance against the actual staged OU/S history, then qualify a
+model-based separation change on both speeds and held-out seeds. Repeating
+scalar cutoff/variance sweeps without such a mechanism is not justified.
+
+## Earlier diagnostic record
+
 CARMA trial-rationale audit (class E numerical/interpretation failure): the
 provisional multiplier 1.26686008233 was incorrectly labeled as the exact
 continuous default-CARMA41 band correction. Infinite-domain spectral quadrature
 and an independently augmented Lyapunov solve agree on variance fraction
 0.58598012624 and multiplier 1.30634701277 for the stated 0.5/4 band.
 The interpretation is withdrawn; the recorded trial inputs, multiplier and
-RMS rows are preserved. No replay of the corrected factor is claimed, and
-failure of the provisional factor does not disprove the corrected one.
+RMS rows are preserved. That historical trial did not replay the corrected factor; the later
+source-bound qualification below is separately recorded in encounter_scaling.
+Failure of the provisional factor does not disprove the corrected one.
 Structures preserved: all shipping OU-III operations and physical histories.
 Relaxations introduced: none. No theorem promotion or runtime change.
 Next falsifiable work requires an architecture/measurement-model review and

@@ -38,6 +38,26 @@
       -1.0
     ]
   },
+  "binary_sha256": "93d1a3ffecb434690a9917cdb67241153862f6d4cd1e48d1c892ca812afff1c3",
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "command": "g++",
+      "version": "14.2.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/workspace/scratch/7542f0d861f1/ocean-imu/third_party/eigen/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+  },
+  "build_profile": "scalar Eigen, no native ISA selection, -ffp-contract=off -fno-tree-vectorize -DEIGEN_DONT_VECTORIZE",
+  "build_source_commit": "6b4e54caba4fa1d9c671c12ed2b7ce8f1ea6b7e7",
   "cutoff_sweep_case": {
     "axis": "z-up",
     "distance_m": 1.0
@@ -62,30 +82,20 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "67fd18474355dc2db02aeaa56a59a00852ccf98d1b42d71880b925004cf744b9",
-    "carma_lever_arm_penalty.svg": "37ba4f6a8938cebb83419580f0cc77ef635019bf4f26c2ea43f10a6eaa571e81",
-    "carma_lever_arm_sea_state.svg": "22afc5743df8ebba2d5d07bc61ebf5f83ddc2eef8f49068e6bff3722aa56cad7",
-    "carma_lever_arm_tilt.svg": "9d86682156847dafc0031fe83ff1a4974bd356b33455d9b6a771bf1885e364d3",
-    "carma_lever_arm_yaw.svg": "8b8767cfd4838b5f73ac396df5ff925efaff64ae56fe97abba607397e2e48e67",
-    "lever_arm_cutoff_runs.csv": "05d5c38ea364f91aa39665c86a92b6d6fbb87dd99d885e6173c124e45176be99",
-    "lever_arm_cutoff_summary.csv": "4105a5bf1ac8866e826c898433cb0a1ef2381ac38cbefd1655905eb152f06027",
-    "lever_arm_report.md": "f16601687419dd2f9db7f44c668d99822074aedde180a1d2e7851636e2c6f6e6",
-    "lever_arm_runs.csv": "be7ee7473dee1d7fc4d73e729e7947e71ed933e5dce55859ff5da3168eddbed0",
-    "lever_arm_summary.csv": "dd006bf192f5b3e9e46dfb3cce88d590f3a835f534a879f52890fae11b0ce708"
+    "carma_lever_arm_cutoff.svg": "8050aeeb36a42a31caee72221ea3db7fa6c45dc574d6257155e681a3ee78189a",
+    "carma_lever_arm_penalty.svg": "1f7d0500eb9484f1b951e4bc8c425f8f18e1764317cb0053a669d2966a7af5eb",
+    "carma_lever_arm_sea_state.svg": "9658b3579c677a55e032c3f79059e768118549b8d674f8c96c7666b7e87b1a4b",
+    "carma_lever_arm_tilt.svg": "2c46a0acbca0509ad72c46911dde61e13df73752514be377438c08a53f7c68ee",
+    "carma_lever_arm_yaw.svg": "08afc6733dca402d74e00a4738982b8f39c374c5cfbfbd3bd09a9a5832b03807",
+    "lever_arm_cutoff_runs.csv": "551fbec2bcafb162af9bc98e26fa9571ab1f8cbd2a2ed120e473ef542924db38",
+    "lever_arm_cutoff_summary.csv": "b702bc542ed5f6dea199b9a9322131a4b7080c208e539a26772155d1d0a856fd",
+    "lever_arm_report.md": "1740bcbd434fd671bfa75cc7e4d919a95fde1e748874b8422d889f1612f335b2",
+    "lever_arm_runs.csv": "cfc3632eca2dbc8a28ae01a5e1b8c175f9934e3ad7712efd5dcc0104a56b809a",
+    "lever_arm_summary.csv": "f05970e190b21565fbcb466eeb146fccd4e238da26fc8b6d35cabe5cc0b399ef"
   },
   "filters": {
     "carma3": "A41",
     "tfg_carma3": "T41"
-  },
-  "hosted_replay_receipt": {
-    "artifact_id": 14129119609,
-    "artifact_zip_sha256": "e6e6d2f443bc2ac53047b4688b39b3afb3029c26ec3064a72509b168932df85e",
-    "job_id": 132562334035,
-    "scope": "Canonical hosted regeneration of summaries, drawings and raw measurements; no simulator or comparison threshold change. The source source_commit field retains the actual tested merge preview.",
-    "source_head": "49ec86262052bd3fa8460b2d43d04ccde23b42f9",
-    "source_tree": "50a382ebfa9b51caace1989b79f014521ec6af98",
-    "tree_identity": "GitHub Git commit API verifies the PR merge preview and its head have identical trees",
-    "workflow_run": 43630161809
   },
   "mode": "full",
   "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
@@ -111,6 +121,7 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "source_commit": "f8c87c3f0072f5409d5277be03772b3e8a7c8d97",
+  "source_commit": "f658291eeaf89a3aa907089bfa8a781060ee89ef",
+  "source_note": "The compiled C++ source is identical at 6b4e54c and the f658291 evidence-only commit; the dedicated Makefile build profile is recorded separately. This is the independent-axis lever-arm baseline, with vertical band normalization absent.",
   "study": "CARMA IMU lever-arm installation"
 }

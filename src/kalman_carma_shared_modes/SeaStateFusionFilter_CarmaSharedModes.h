@@ -44,9 +44,11 @@ public:
     // small seas, and Evidence is the mode the filter's regression bars and
     // studies use (docs/kalman-carma-shared-modes.md).
     void begin(const Config& cfg, const SharedModes& shared_modes = SharedModes{},
-               carma::CarmaExcitationMode excitation = carma::CarmaExcitationMode::Evidence) {
+               carma::CarmaExcitationMode excitation = carma::CarmaExcitationMode::Evidence,
+               bool normalize_vertical_band = true) {
         Base::begin(cfg);
         this->raw().setCarmaExcitationMode(excitation);
+        this->raw().setVerticalBandNormalization(normalize_vertical_band);
         this->raw().mekf().configureSharedModes(shared_modes);
     }
 
