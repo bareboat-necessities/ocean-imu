@@ -45,7 +45,7 @@ The published replay fingerprint is
 the results fingerprint is
 `07e18bb45a2a21bef51c121f16aa72ee63c83907c8331c49dcf162606e45be9b`.
 The pinned simulation ZIP SHA-256 is
-`87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c`.
+`5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732`.
 The full study was genuinely replayed on the repaired source revision; no old
 raw rows were rebound to changed code.
 

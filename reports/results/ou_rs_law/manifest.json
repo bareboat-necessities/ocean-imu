@@ -91,7 +91,7 @@
   ],
   "simulation_provenance": {
     "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+    "archive_sha256": "5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732",
     "input_sha256": {
       "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
       "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7"
