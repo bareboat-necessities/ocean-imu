@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "c47d3a93013b6d1b52a85887227f5ecc1d33880eb86797e9382a5c3d76994d36",
-    "TFG": "54b0ef9f68abaf5427a757011095cd58ea60ef5338645d7d16156b82a7a5bc31"
+    "OU_III": "c71815d70c40499fbdb7ae64e4a4656b872e014b3a0f058788284f1266cbac87",
+    "TFG": "531d6f86b37996523dd3d38394032f457a32f22566ab58fb9bf5c8504eb0368f"
   },
   "build_environment": {
     "compiler": {
@@ -36,9 +36,9 @@
     "motion_model": "VESSEL_RAO_28FT",
     "release": "v1.2.3"
   },
-  "generated_utc": "2026-11-13T20:52:34+00:00",
-  "git_commit": "480d78f0fa35724800d7a70a96ea9a6355d5605d",
-  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   | 48 +++++++++++-----------\n 1 file changed, 24 insertions(+), 24 deletions(-)",
+  "generated_utc": "2026-11-13T23:14:51+00:00",
+  "git_commit": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   12 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   72 +-\n reports/results/tfg_comparison/paired_summary.json | 3986 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  242 +-\n reports/results/tfg_comparison/raw_runs.json       | 2108 +++++------\n 5 files changed, 3210 insertions(+), 3210 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -134,11 +134,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "a8ba2f592bce122e6b6262e16f83f41a4c3484a9b081258d05ac24fa067acb35",
-    "gate_diagnostics.json": "94db4a05e98813a80fb757d27b2e769ef2eb109354b01f9ef8606c958d7a6c22",
-    "paired_summary.json": "6f9f2e9c453f8d4314c510e0898b5a508d800df7a139b383f429f947deafaecb",
-    "raw_runs.csv": "42092185a5c4d661b9209b1bd2cf1f63607aaa3ccf5e617c74a2a9ebfdf9f915",
-    "raw_runs.json": "870b5e9c6f1a3716c11b71fb5344b0324aa32c467e2f77a8ce56e850abdfdf45"
+    "comparison.tex": "56ad6a4105aa8cff4d396b41edb23ca7ce75968d1358c81aefd1185c184ece4c",
+    "gate_diagnostics.json": "896f6d8b031f2611cff6e73ff53304faf023f4b5103575ffdcccfda952daba75",
+    "paired_summary.json": "c0226f2bcae9671ef122b5dd48208321dad5bcde5997eb26903ebd1bf36bedcd",
+    "raw_runs.csv": "e5be3fd2cddd1d84f83925bde34ac92484879f1ed640924fabb5fbf714948fdf",
+    "raw_runs.json": "3fcf622136279d99d5a56ff6ef2f7e1df1dba2830bbd78a9802c32419b647717"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -202,7 +202,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "43501064300",
+    "run_id": "43519105497",
     "workflow": "build"
   }
 }

@@ -63,6 +63,7 @@ def main():
     source_paths += [p for p in (ROOT/'src').rglob('*') if p.suffix in ('.h', '.cpp')]
     source_paths += [ROOT/'tests/kalman_carma/CarmaBenchTruth.h', ROOT/'tests/kalman_carma/carma3/Bench3.h', ROOT/'tests/common/CarmaModelExport.h', ROOT/'tests/kalman_tangent_shared_modes/Makefile']
     source_hashes = {str(p.relative_to(ROOT)):digest(p) for p in source_paths}
+    source_fingerprint = hashlib.sha256(json.dumps(source_hashes, sort_keys=True).encode()).hexdigest()
     binary_hash = digest(a.binary)
     implementation_commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     started = time.time()
@@ -82,12 +83,15 @@ def main():
                      'model_sha256': str(prefix)+'_model.json'}
         if a.resume and receipt_path.exists():
             receipt = json.loads(receipt_path.read_text())
-            if (receipt['binary_sha256'] != binary_hash or receipt['command'] != command
+            if (receipt.get('implementation_commit') != implementation_commit
+                    or receipt.get('source_fingerprint') != source_fingerprint
+                    or receipt['binary_sha256'] != binary_hash or receipt['command'] != command
                     or any(receipt.get(key) != optional_digest(path) for key, path in artifacts.items())):
                 raise RuntimeError(f'stale resume receipt {receipt_path}')
         else:
             begin = time.time()
-            receipt = dict(command=command, binary_sha256=binary_hash)
+            receipt = dict(command=command, binary_sha256=binary_hash,
+                           implementation_commit=implementation_commit, source_fingerprint=source_fingerprint)
             try:
                 result = subprocess.run(command, capture_output=True, text=True)
                 receipt.update(exit_code=result.returncode, stdout=result.stdout, stderr=result.stderr)
@@ -143,7 +147,7 @@ def main():
     source_changed = after != source_hashes
     failed_runs = sum(r['failed'] for r in receipts)
     manifest = dict(baseline_commit=BASELINE, implementation_commit=implementation_commit, profile=a.profile, seeds=seeds, cases=cases,
-                    binary_sha256=binary_hash, source_sha256=source_hashes,
+                    binary_sha256=binary_hash, source_sha256=source_hashes, source_fingerprint=source_fingerprint,
                     commands=sorted(receipts, key=lambda r:r['command']), seconds=time.time()-started,
                     failed_experiments=failed_runs,
                     incomplete_experiments=sum(not r['outputs_complete'] for r in receipts),

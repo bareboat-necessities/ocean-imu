@@ -190,16 +190,17 @@ int main(int argc,char** argv) try {
         }
         ++samples;t=scenario=="jitter"?t+h:double(samples)*dt;previous_h=h;
     }
-    scores<<std::setprecision(12)<<"scenario,seed,filter,start,end,n,att_rms,att_max,p_x,p_y,heave_rms,v_x,v_y,v_z,ba_x,ba_y,ba_z,bg_x,bg_y,bg_z,horizontal_drift,heave_slope,nees15,bias_nees,h_bias_nees,acc_nis,mag_nis,acc_applied_fraction,mag_applied_fraction,innovation_acf1_x,innovation_acf1_y,innovation_acf1_z,gate_trace,bias_enabled_fraction,live_time,att_convergence,bias_convergence,min_correlation_eigenvalue,asymmetry,failed,step_us,memory_bytes,states,samples,sensor_hash\n";
+    scores<<std::setprecision(12)<<"scenario,seed,filter,start,end,n,att_rms,att_max,p_x,p_y,heave_rms,v_x,v_y,v_z,ba_x,ba_y,ba_z,bg_x,bg_y,bg_z,horizontal_drift,heave_slope,nees15,bias_nees,h_bias_nees,acc_nis,mag_nis,acc_applied_fraction,mag_applied_fraction,innovation_acf1_x,innovation_acf1_y,innovation_acf1_z,gate_trace,bias_enabled_fraction,live_time,att_convergence,bias_convergence,min_correlation_eigenvalue,asymmetry,failed,step_us,memory_bytes,states,samples,sensor_hash,nees_samples,acc_nis_samples,mag_nis_samples\n";
     for(std::size_t f=0;f<nf;++f)for(std::size_t w=0;w<windows.size();++w) {
-        const auto& m=sums[f][w];const double n=std::max(1L,m.n),nd=std::max(1L,m.nd);
+        const auto& m=sums[f][w];const double n=std::max(1L,m.n);
+        const auto mean=[](double sum,long count){return count>0?sum/double(count):NAN;};
         scores<<scenario<<','<<seed<<','<<labels[f]<<','<<windows[w].first<<','<<windows[w].second<<','<<m.n<<','<<std::sqrt(m.att2/n)<<','<<m.attmax;
         for(const auto& a:{m.p2,m.v2,m.ba2,m.bg2})for(int j=0;j<3;++j)scores<<','<<std::sqrt(a(j)/n);
         const double nw=double(std::max(1L,m.nw));
         const D mu=m.white_sum/nw,var=m.white2/nw-mu.cwiseProduct(mu),acf=(m.white_lag/std::max(1.,nw-1)-mu.cwiseProduct(mu)).cwiseQuotient(var.cwiseMax(1e-20));
-        scores<<','<<(m.last_p-m.first_p).head<2>().norm()<<','<<(m.drift_den>0?m.drift_num/m.drift_den:NAN)<<','<<m.nees/nd<<','<<m.bnees/nd<<','<<m.hnees/nd<<','<<m.an/std::max(1L,m.na)<<','<<m.mn/std::max(1L,m.nm)<<','<<double(m.na)/n<<','<<double(m.nm)/std::max(1L,m.nmp);
+        scores<<','<<(m.last_p-m.first_p).head<2>().norm()<<','<<(m.drift_den>0?m.drift_num/m.drift_den:NAN)<<','<<mean(m.nees,m.nd)<<','<<mean(m.bnees,m.nd)<<','<<mean(m.hnees,m.nd)<<','<<mean(m.an,m.na)<<','<<mean(m.mn,m.nm)<<','<<double(m.na)/n<<','<<double(m.nm)/std::max(1L,m.nmp);
         for(int j=0;j<3;++j)scores<<','<<acf(j);
-        scores<<','<<m.gate/n<<','<<double(m.ng)/n<<','<<m.live<<','<<m.att_convergence<<','<<m.bias_convergence<<','<<m.mineig<<','<<m.asym<<','<<failures[f]<<','<<runtime[f]*1e6/std::max(1L,timed_samples[f])<<','<<filters[f]->memory()<<','<<filters[f]->states()<<','<<samples<<','<<std::hex<<hash<<std::dec<<'\n';
+        scores<<','<<m.gate/n<<','<<double(m.ng)/n<<','<<m.live<<','<<m.att_convergence<<','<<m.bias_convergence<<','<<m.mineig<<','<<m.asym<<','<<failures[f]<<','<<runtime[f]*1e6/std::max(1L,timed_samples[f])<<','<<filters[f]->memory()<<','<<filters[f]->states()<<','<<samples<<','<<std::hex<<hash<<std::dec<<','<<m.nd<<','<<m.na<<','<<m.nm<<'\n';
     }
     std::cout<<scenario<<" seed="<<seed<<" samples="<<samples<<" sensor_hash="<<std::hex<<hash<<std::dec<<" failures=";
     int failed=0;for(auto f:failures)failed+=f;std::cout<<failed<<'\n';return failed?2:0;

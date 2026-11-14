@@ -87,6 +87,7 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, str(ROOT/'plots'))
 from vector_export import save_figure
 from tangent_shared_modes_observability import analyze, structural_checks
+from tangent_shared_modes_inputs import verify_raw_inputs
 
 plt.rcParams.update({'font.family': 'serif', 'font.serif': ['Liberation Serif', 'DejaVu Serif'],
                      'font.size': 11.5, 'axes.labelsize': 11.5, 'legend.fontsize': 9,
@@ -145,8 +146,25 @@ def save(fig, name):
     plt.close(fig)
 
 
-def trace(raw, case='wave', seed=4101, model='native'):
+def trace(raw, case='wave', *, seed, model='native'):
     return pd.read_csv(raw/f'{case}_{seed}_{model}_trace.csv')
+
+
+def ljung_box(values, lag=20):
+    y = np.asarray(values, dtype=float)
+    y = y[np.isfinite(y)]
+    result = dict(lag=lag, samples=len(y), statistic=None, p=None)
+    if len(y) <= lag or np.all(y == y[0]):
+        return result
+    y = y-y.mean()
+    energy = np.dot(y, y)
+    if not np.isfinite(energy) or energy <= 0:
+        return result
+    acf = np.array([np.dot(y[k:], y[:-k])/energy for k in range(1, lag+1)])
+    q = len(y)*(len(y)+2)*np.sum(acf**2/(len(y)-np.arange(1, lag+1)))
+    if np.isfinite(q):
+        result.update(statistic=float(q), p=float(stats.chi2.sf(q, lag)))
+    return result
 
 
 def main():
@@ -156,6 +174,9 @@ def main():
     parser.add_argument('--allow-pinned-sources', action='store_true',
                         help='Regenerate a historical cohort against its recorded source receipt.')
     a = parser.parse_args()
+    manifest = json.loads((OUT/'manifest.json').read_text())
+    verify_raw_inputs(a.raw, manifest, OUT/'scores.csv')
+    representative = manifest['seeds'][0]
     OUT.mkdir(parents=True, exist_ok=True); DOC.mkdir(parents=True, exist_ok=True)
     # Canonical publication line endings; the original raw score receipts
     # remain untouched. This changes no score value.
@@ -165,7 +186,6 @@ def main():
     for prefix in ('ba', 'bg', 'v'):
         df[prefix+'_h'] = np.hypot(df[prefix+'_x'], df[prefix+'_y'])
         df[prefix+'_3d'] = np.sqrt(sum(df[prefix+'_'+axis]**2 for axis in 'xyz'))
-    manifest = json.loads((OUT/'manifest.json').read_text())
     primary = df[(df.scenario == 'wave') & (df.noise_profile == 'native') & (df.start == 150) & (df.end == 900)]
     cohort = df[(df.noise_profile == 'native') & (df.start == 150) & (df.end == 900)]
     comparisons = [('QSM', 'TFG'), ('TFG', 'TAN'), ('QSM', 'QSM-G'), ('TFG', 'TFG-G'),
@@ -197,7 +217,7 @@ def main():
     paired_table = table(r'Paired percentage improvement (positive is lower error), mean [95\% Student interval], six independent seeds.',
                          ['Comparison', r'Attitude [\%]', r'Heave [\%]', r'Horizontal bias [\%]'], rows)
 
-    td = trace(a.raw)
+    td = trace(a.raw, seed=representative)
     endpoint = pd.concat([trace(a.raw, seed=s).query('t == 899') for s in manifest['seeds']], ignore_index=True)
     bounds = stats.chi2.ppf([.025, .975], 15*len(manifest['seeds']))/(15*len(manifest['seeds']))
     bounds3 = stats.chi2.ppf([.025, .975], 3*len(manifest['seeds']))/(3*len(manifest['seeds']))
@@ -308,7 +328,7 @@ def main():
     truth = td[td['filter'] == 'QSM']
     for i, axis in enumerate('xyz'):
         for j, prefix in enumerate(('ba', 'bg')):
-            drift = trace(a.raw, 'bias_drift' if prefix == 'ba' else 'gyro_drift')
+            drift = trace(a.raw, 'bias_drift' if prefix == 'ba' else 'gyro_drift', seed=representative)
             truth_drift = drift[drift['filter'] == 'QSM']
             ax = axes[i, j]
             for f in chosen:
@@ -338,7 +358,7 @@ def main():
 
     fig, axes = plt.subplots(2, 2, figsize=(10.6, 4.8), sharex=True)
     for j, case in enumerate(('transition', 'vibration')):
-        data = trace(a.raw, case)
+        data = trace(a.raw, case, seed=representative)
         for f in chosen:
             d = data[data['filter'] == f]
             axes[0, j].plot(d.t, d.true_pz-d.pz, label=f, color=COLORS[f], lw=.8)
@@ -369,13 +389,13 @@ def main():
         for case in ('rocking', 'wave', 'yaw', 'inclination87'):
             for sd, label in [(0., 'known'), (2., 'uncertain'), (float('inf'), 'free')]:
                 print('information', case, label, flush=True)
-                information[case+'_'+label] = analyze(a.raw/f'{case}_4101_native', field_sd=sd)
+                information[case+'_'+label] = analyze(a.raw/f'{case}_{representative}_native', field_sd=sd)
         for case in ('rocking', 'wave'):
-            information[case+'_motion4'] = analyze(a.raw/f'{case}_4101_native', prior_scale=4.)
+            information[case+'_motion4'] = analyze(a.raw/f'{case}_{representative}_native', prior_scale=4.)
         information_path.write_text(json.dumps(information, indent=2, allow_nan=False)+'\n')
     information = json.loads(information_path.read_text())
     for key, receipt in information.items():
-        prefix = a.raw/(key.rsplit('_', 1)[0]+'_4101_native')
+        prefix = a.raw/(key.rsplit('_', 1)[0]+f'_{representative}_native')
         assert receipt['analysis_sha256'] == hashlib.sha256((ROOT/'tools/tangent_shared_modes_observability.py').read_bytes()).hexdigest()
         for suffix, sha in receipt['input_sha256'].items():
             assert hashlib.sha256(Path(str(prefix)+suffix).read_bytes()).hexdigest() == sha, f'stale information input: {prefix}'
@@ -399,12 +419,11 @@ def main():
         for f in ORDER:
             d = data[(data['filter'] == f) & (data.t >= 150)]
             for axis in 'xyz':
-                y = d['white_'+axis].to_numpy(); y = y[np.isfinite(y)]; y -= y.mean()
-                acf = np.array([np.dot(y[k:], y[:-k])/np.dot(y, y) for k in range(1, 21)])
-                q = len(y)*(len(y)+2)*np.sum(acf**2/(len(y)-np.arange(1, 21)))
-                whiteness.append(dict(seed=seed, filter=f, axis=axis, lag=20, statistic=float(q), p=float(stats.chi2.sf(q, 20))))
+                whiteness.append(dict(seed=seed, filter=f, axis=axis,
+                                      **ljung_box(d['white_'+axis].to_numpy())))
     summary['whiteness'] = whiteness
-    summary['whiteness_rejections_at_05'] = sum(r['p'] < .05 for r in whiteness)
+    summary['whiteness_available_tests'] = sum(r['statistic'] is not None for r in whiteness)
+    summary['whiteness_rejections_at_05'] = sum(r['p'] is not None and r['p'] < .05 for r in whiteness)
     (OUT/'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False)+'\n')
 
     tangent_gain = paired(primary, 'TFG', 'TAN', 'ba_h')['improvement_percent']
@@ -434,7 +453,7 @@ def main():
                        'Across the recorded bias-held startup nodes the maximum TFG/TAN physical difference is '+
                        number(max(s['maximum_physical_difference'] for s in startup), 6)+
                        '; startup is shared rather than a source of the geometric comparison. ')
-    interpretation += f' At the unadjusted 5\\% level, {summary["whiteness_rejections_at_05"]} of {len(whiteness)} axis/seed/method whiteness tests reject; these correlated multiple tests are not independent acceptance votes.'
+    interpretation += f' At the unadjusted 5\\% level, {summary["whiteness_rejections_at_05"]} of {summary["whiteness_available_tests"]} available axis/seed/method whiteness tests reject; these correlated multiple tests are not independent acceptance votes.'
     macros = [write_macro('StudyHeadline', headline), write_macro('StudyCohort',
               f'The cohort contains {len(manifest["commands"])} paired sensor histories, with '+str(len(manifest['seeds']))+
               ' independent holdout seeds per condition. Conditions share the declared seed set. The scores retain every declared variant and evaluation phase; failed runs are counted explicitly. '+

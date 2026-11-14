@@ -84,6 +84,33 @@ sys.exit(3)
             self.assertEqual(receipt['launch_error'], 'PermissionError')
             self.assertEqual(manifest['failed_experiments'], 1)
 
+    def test_resume_rejects_changed_source_or_commit_without_relabelling(self):
+        for field, stale in (('implementation_commit', '0'*40), ('source_fingerprint', '0'*64)):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as tmp:
+                work = Path(tmp)
+                binary = self.fake_binary(work, 'raise SystemExit(7)\n')
+                _, manifest, receipt = self.run_study(work, binary)
+                self.assertEqual(receipt['implementation_commit'], manifest['implementation_commit'])
+                self.assertEqual(receipt['source_fingerprint'], manifest['source_fingerprint'])
+                receipt[field] = stale
+                (work/'raw/rocking_17_native_receipt.json').write_text(json.dumps(receipt))
+                result, retained, _ = self.run_study(work, binary, resume=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('stale resume receipt', result.stderr)
+                self.assertEqual(retained, manifest)
+
+    def test_resume_rejects_legacy_unbound_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            binary = self.fake_binary(work, 'raise SystemExit(7)\n')
+            _, manifest, receipt = self.run_study(work, binary)
+            del receipt['source_fingerprint']
+            (work/'raw/rocking_17_native_receipt.json').write_text(json.dumps(receipt))
+            result, retained, _ = self.run_study(work, binary, resume=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('stale resume receipt', result.stderr)
+            self.assertEqual(retained, manifest)
+
     def test_unpaired_outputs_cannot_report_success(self):
         body = """import pathlib,sys
 p=pathlib.Path(sys.argv[sys.argv.index('--output')+1])

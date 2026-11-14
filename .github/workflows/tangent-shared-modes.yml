@@ -8,6 +8,7 @@ on:
       - 'src/kalman_carma_shared_modes/**'
       - 'src/kalman_common/BiasLearningGate.h'
       - 'tests/kalman_tangent_shared_modes/**'
+      - 'tests/validation/test_tangent_*.py'
       - 'tests/common/CarmaModelExport.h'
       - 'tools/tangent_shared_modes_*.py'
       - 'doc/kalman_tangent_shared_modes/**'
@@ -20,6 +21,7 @@ on:
       - 'src/kalman_carma_shared_modes/**'
       - 'src/kalman_common/BiasLearningGate.h'
       - 'tests/kalman_tangent_shared_modes/**'
+      - 'tests/validation/test_tangent_*.py'
       - 'tools/tangent_shared_modes_*.py'
       - 'doc/kalman_tangent_shared_modes/**'
       - '.github/workflows/tangent-shared-modes.yml'
@@ -35,11 +37,11 @@ jobs:
       - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libeigen3-dev
+          sudo apt-get install -y --no-install-recommends g++ libeigen3-dev python3-numpy python3-scipy python3-pandas python3-matplotlib
       - name: Build without concurrent template-instantiation memory spikes
         run: make -C tests/kalman_tangent_shared_modes build
       - name: Preserve failed experiment receipts and module default validation
-        run: python3 -m unittest discover -s tests/validation -p test_tangent_study_failures.py -v
+        run: python3 -m unittest discover -s tests/validation -p 'test_tangent_*.py' -v
       - name: Group, reset, covariance and seven-filter live smoke
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

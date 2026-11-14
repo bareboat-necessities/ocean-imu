@@ -26,9 +26,7 @@
   },
   "make_all": {
     "status": "serial full repository run in progress; no passing completion claimed",
-    "initial_failure": "g++ compiling tests/kalman_carma/carma3-test.cpp: fatal error: Killed signal terminated program cc1plus (concurrent template compilation)",
-    "interrupted_log": "make-all-retry.log ended during tests/kalman_ou_iii/rs_law-test.cpp compilation, with no completion receipt",
-    "live_log": "make-all-final.log"
+    "live_log": "make-all.log"
   },
   "hardware": {
     "esp32_board_measurement": false
@@ -49,8 +47,8 @@
     "storage_composition_rebuild": "pass"
   },
   "post_start_main": {
-    "commit": "c897c92a71a2d0b70679badb4a6b92a4a3efe80d",
-    "changes": "Includes 480d78f tighter current replay limits and c897c92 source-binding repair. No OU3 shipping process was changed.",
+    "commit": "e7f96eb",
+    "changes": "Current main full OU validation/robustness/TFG evidence is preserved byte-for-byte; no production filter changes in the main update.",
     "integration_status": "merged, gates preserved"
   },
   "final_cohort": {
@@ -343,5 +341,16 @@
       "added_findings": 0,
       "gate_thresholds_unchanged": true
     }
+  },
+  "review_followup": {
+    "regression_tests": 12,
+    "regression_status": "pass",
+    "native_group_startup_seven_filter_smoke_and_vessel_replay": "pass",
+    "raw_histories_verified_against_original_receipts": 168,
+    "report_regenerated_from_pinned_cohort": true,
+    "source_resume_binding": "implementation commit plus SHA-256 fingerprint of the complete source hash map",
+    "article_pages": 12,
+    "article_build_and_render_review": "pass",
+    "ou_fingerprint": "Preserved current-main record deliberately requires full replay for the changed replay-source/results tree; no fingerprint refreshed from smoke-only evidence."
   }
 }

@@ -147,6 +147,20 @@ every source hash against that Git tree, plus the complete score matrix and
 publication hashes. They do not relabel old numerical evidence as a new run
 of a changed estimator.
 
+Before generating statistics or figures, the report verifies every raw score,
+trace and model file against the cohort's experiment receipts and checks that
+the aggregate scores contain exactly those raw score values. Representative
+plots and information analyses use the first recorded cohort seed. Innovation
+whiteness tests with at most 20 finite samples or constant innovations are
+unavailable and are excluded from the reported test denominator.
+
+New experiment receipts include the implementation commit and a fingerprint of
+the complete source-hash map, which is stored once in the aggregate manifest.
+`--resume` requires both to match, as well as the executable, command and raw
+output hashes; legacy receipts without source provenance cannot be resumed.
+Native scores expose NEES and accepted-packet NIS sample counts. A zero count
+produces an unavailable (`nan`) metric rather than a measured zero.
+
 Runtime is instrumented **process CPU time** per filter update, not elapsed
 wall time from parallel runs. Object storage includes the heap-owned core,
 excludes allocator metadata, and uses the host ABI. There is no claim of
