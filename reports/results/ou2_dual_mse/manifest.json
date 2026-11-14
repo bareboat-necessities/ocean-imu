@@ -20,8 +20,9 @@
     }
   },
   "operating_points_sha256": "6462e7af6e818ec6f4cf47d13c3e462daeb7001ba898a0c06b3bf458d77ff2c9",
-  "producer_sha256": "5f17f7131aa92d6f2123c774f2cf8fce5216f37e413f446144128af16f0926ce",
-  "method": "finite CG-heave periodogram; current five-draw OU-II startup operating points; exact diagnostic optimum only; no deployed parameter changes",
+  "producer_sha256": "0a61abb7cb253f2048d27523f0d3965a34c3716b00f80d925f060fb85dd7f4d6",
+  "method": "finite CG-heave periodogram; current five-draw OU-II startup operating points; diagnostic optimum only; no deployed parameter changes",
+  "exact_objective": true,
   "files": {
     "coefficient_report.txt": "733ab1daab377ee0c312a955c948b253ea0b371157338f5a6036017d61770dd6"
   }

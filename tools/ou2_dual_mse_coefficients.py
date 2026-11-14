@@ -54,6 +54,8 @@ import math
 import sys
 import csv
 from pathlib import Path
+from contextlib import redirect_stdout
+import io
 from sim_dataset import input_provenance
 from model_mismatch_ablation import RECORDS
 from ou_validation import OU_II_PSEUDO_MSE_RATIO
@@ -199,7 +201,35 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--data-dir", type=Path, default=ROOT / "plots/kalman_ou_ii")
     ap.add_argument("--operating-points", type=Path,
                     default=ROOT / "reports/results/startup_ablation/startup_runs.csv")
+    ap.add_argument("--output-dir", type=Path,
+                    help="write the report and its matching input/source/output manifest")
     args = ap.parse_args(argv)
+
+    if args.output_dir is None:
+        return calculate(args)
+    output = io.StringIO()
+    with redirect_stdout(output):
+        status = calculate(args)
+    if status:
+        return status
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    path = args.output_dir / "coefficient_report.txt"
+    path.write_text(output.getvalue())
+    sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
+    manifest = {
+        "simulation_provenance": input_provenance(args.data_dir / record.filename for record in RECORDS),
+        "operating_points_sha256": sha(args.operating_points),
+        "producer_sha256": sha(Path(__file__)),
+        "method": "finite CG-heave periodogram; current five-draw OU-II startup operating points; diagnostic optimum only; no deployed parameter changes",
+        "exact_objective": args.exact,
+        "files": {path.name: sha(path)},
+    }
+    (args.output_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    print(output.getvalue(), end="")
+    return status
+
+
+def calculate(args) -> int:
 
     provenance = input_provenance(args.data_dir / record.filename for record in RECORDS)
     verify_operating_points(args.operating_points, provenance)
