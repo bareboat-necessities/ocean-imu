@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
     "nlo": "cc8678e30a73fa10641c9d7cde1e45a3db27f09a4c073f4e585467a9a17b0ac2",
-    "ou2": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
+    "ou2": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
     "ou3": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
     "pii": "90b44b01671b3bfddaeec3e889104f8b1011b6f4cf1c34bfddaafb832a27070c",
     "tfg": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39"
@@ -43,11 +43,141 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
+  "drawing_rendering": {
+    "font": "DejaVu Serif",
+    "output_sha256": {
+      "doc/kalman_ou_iii/w3d_multi_observer_jonswap_medium.pgf": "6b339fdbb03eb72277edce9e2811bed61bb50bf23a104bcd63d0a3f8cf786223",
+      "doc/kalman_ou_iii/w3d_multi_observer_jonswap_medium.svg": "977138eb56ac1b6f8376fe4a29e31f8950dcdaa673a2e7c79a76a7cdda57800a"
+    },
+    "pgf_engine": "lualatex",
+    "pgf_preamble": "\\usepackage{fontspec}\n\\setmainfont{DejaVu Serif}\n\\providecommand{\\mathdefault}[1]{#1}",
+    "scope": "drawing only; all RMS computed from full-rate traces before decimation"
+  },
   "drawing_scope": "At most 2000 extrema-preserving points over the last 60 s; drawing data never used for RMS.",
-  "git_commit": "f52b4a2e67d1230cae2e04f8b8553bb40864d333",
-  "local_orchestration": "import concurrent.futures, hashlib, importlib.util, json, os, re, subprocess, sys, tempfile\nfrom pathlib import Path\nimport pandas as pd\nROOT=Path('/workspace/scratch/0f70d6e02277/ocean-imu-moving')\nsys.path.insert(0,str(ROOT/'tools'))\nimport sim_dataset\nspec=importlib.util.spec_from_file_location('baseline',ROOT/'plots/kalman_ou_iii/baseline-comparison.py')\nb=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)\nBIN={\n'ou3':ROOT/'tests/kalman_ou_iii/kalman_ou_iii-sim',\n'ou2':ROOT/'tests/kalman_ou_ii/kalman_ou_ii-sim',\n 'tfg':ROOT/'tests/kalman_tfg/kalman_tfg-sim',\n 'pii':ROOT/'tests/pii_observer/pii_observer-adaptive',\n 'nlo':ROOT/'tests/nlo/nlo-sim'}\nOUT=ROOT/'reports/results/baseline_comparison'\nOUT.mkdir(parents=True,exist_ok=True)\ncols=['time','disp_est_z','disp_ref_z','roll_est','roll_ref','pitch_est','pitch_ref']\ndef sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()\ninitial={m:sha(p) for m,p in BIN.items()}\ndef run(job):\n method,name=job\n with tempfile.TemporaryDirectory(prefix='moving-baseline-') as td:\n  temp=Path(td);src=ROOT/'.sim-data'/sim_dataset.SHA256/name;(temp/name).symlink_to(src)\n  env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','OU_','SF_','TFG_','PII_','NLO_'))}\n  env.update(W3D_WRITE_TIMESERIES='1',W3D_VALIDATION_WINDOW_SEC='900',W3D_COLLECT_ALL_GATES='1')\n  cmd=[str(BIN[method])]\n  if method in ('ou2','ou3','tfg'):cmd+=['--input',str(temp/name)]\n  r=subprocess.run(cmd,cwd=temp,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=600)\n  if r.returncode!=0:raise RuntimeError(method+name+r.stdout[-3000:])\n  outputs=list(temp.glob('w3d_*.csv'))\n  if len(outputs)!=1:raise RuntimeError(str(outputs))\n  raw=outputs[0];rawhash=sha(raw);frame=pd.read_csv(raw,usecols=cols)\n  if len(frame)!=240000:raise ValueError('incomplete trace')\n  scored=b.tail(frame);err=b.rms(scored.disp_est_z-scored.disp_ref_z)\n  hs=float(re.search(r'_H([\\d.]+)_',name).group(1));wave='jonswap' if 'jonswap' in name else 'pmstokes'\n  row=dict(z_rms=err,z_pct=100*err/hs,roll_rms=b.rms(scored.roll_est-scored.roll_ref),pitch_rms=b.rms(scored.pitch_est-scored.pitch_ref))\n  # Scoring uses all delivered samples. Retain only bounded drawing data.\n  drawing=None\n  if wave=='jonswap' and hs==1.5:\n   from vector_export import envelope_indices\n   draw=b.tail(frame,60.0);idx=envelope_indices(tuple(draw[c].to_numpy() for c in cols),max_points=2000)\n   drawing=OUT/f'{method}_medium_drawing.csv';draw.iloc[idx].to_csv(drawing,index=False,float_format='%.10g')\n  result=dict(method=method,input=name,input_sha256=sim_dataset.REFERENCE_CSV_SHA256[name],binary_sha256=initial[method],raw_timeseries_sha256=rawhash,raw_samples=len(frame),scored_samples=len(scored),metrics=row)\n  print('Completed',method,name,flush=True)\n  return wave,hs,result\njobs=[(m,n) for n in sim_dataset.REFERENCE_CSV_SHA256 for m in BIN]\nwith concurrent.futures.ThreadPoolExecutor(2) as pool:results=list(pool.map(run,jobs))\nif initial!={m:sha(p) for m,p in BIN.items()}:raise ValueError('binary changed during replay')\nrows=[]\nfor wave in ('jonswap','pmstokes'):\n for hs in b.HEIGHTS:\n  match=[r for w,h,r in results if (w,h)==(wave,hs)]\n  rows.append(dict(wave=wave,hs=hs,**{r['method']:r['metrics'] for r in match}))\ntable=ROOT/'doc/kalman_ou_iii/w3d-baseline-results-generated.tex-part';b.write_tables(rows,table)\nimport ou_evidence_provenance as provenance\nmanifest=dict(schema_version=1,protocol='deterministic common records; unmodified full-rate simulation outputs scored by plots/kalman_ou_iii/baseline-comparison.py tail/metrics convention',dataset=sim_dataset.input_provenance([ROOT/'.sim-data'/sim_dataset.SHA256/n for n in sim_dataset.REFERENCE_CSV_SHA256]),git_commit=b.subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),workflow=provenance.workflow_metadata(),build_environment=provenance.environment_metadata(),binary_sha256=initial,rows=rows,replays=[r for _,_,r in results],table_sha256=sha(table),local_orchestration=Path(__file__).read_text(),drawing_scope='At most 2000 extrema-preserving points over the last 60 s; drawing data never used for RMS.')\n(OUT/'baseline_comparison.json').write_text(json.dumps(manifest,indent=2,sort_keys=True,allow_nan=False)+'\\n')\nprint('Wrote',table,flush=True)\n",
+  "git_commit": "ffd9f2613c85dfe00a2b7029671401afffcdb2f9",
+  "local_orchestration": "import concurrent.futures, hashlib, importlib.util, json, os, re, subprocess, sys, tempfile\nfrom pathlib import Path\nimport pandas as pd\nROOT=Path('/workspace/scratch/0f70d6e02277/ocean-imu-moving')\nsys.path.insert(0,str(ROOT/'tools'))\nimport sim_dataset\nspec=importlib.util.spec_from_file_location('baseline',ROOT/'plots/kalman_ou_iii/baseline-comparison.py')\nb=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)\nBIN={\n'ou3':ROOT/'tests/kalman_ou_iii/kalman_ou_iii-sim',\n'ou2':ROOT/'tests/kalman_ou_ii/kalman_ou_ii-sim',\n 'tfg':ROOT/'tests/kalman_tfg/kalman_tfg-sim',\n 'pii':ROOT/'tests/pii_observer/pii_observer-adaptive',\n 'nlo':ROOT/'tests/nlo/nlo-sim'}\nOUT=ROOT/'reports/results/baseline_comparison'\nOUT.mkdir(parents=True,exist_ok=True)\ncols=['time','disp_est_z','disp_ref_z','roll_est','roll_ref','pitch_est','pitch_ref']\ndef sha(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()\ninitial={m:sha(p) for m,p in BIN.items()}\ndef run(job):\n method,name=job\n with tempfile.TemporaryDirectory(prefix='moving-baseline-') as td:\n  temp=Path(td);src=ROOT/'.sim-data'/sim_dataset.SHA256/name;(temp/name).symlink_to(src)\n  env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','OU_','SF_','TFG_','PII_','NLO_'))}\n  env.update(W3D_WRITE_TIMESERIES='1',W3D_VALIDATION_WINDOW_SEC='900',W3D_COLLECT_ALL_GATES='1')\n  cmd=[str(BIN[method])]\n  if method in ('ou2','ou3','tfg'):cmd+=['--input',str(temp/name)]\n  r=subprocess.run(cmd,cwd=temp,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=600)\n  if r.returncode!=0:raise RuntimeError(method+name+r.stdout[-3000:])\n  outputs=list(temp.glob('w3d_*.csv'))\n  if len(outputs)!=1:raise RuntimeError(str(outputs))\n  raw=outputs[0];rawhash=sha(raw);frame=pd.read_csv(raw,usecols=cols)\n  if len(frame)!=240000:raise ValueError('incomplete trace')\n  scored=b.tail(frame);err=b.rms(scored.disp_est_z-scored.disp_ref_z)\n  hs=float(re.search(r'_H([\\d.]+)_',name).group(1));wave='jonswap' if 'jonswap' in name else 'pmstokes'\n  row=dict(z_rms=err,z_pct=100*err/hs,roll_rms=b.rms(scored.roll_est-scored.roll_ref),pitch_rms=b.rms(scored.pitch_est-scored.pitch_ref))\n  # Scoring uses all delivered samples. Retain only bounded drawing data.\n  drawing=None\n  if wave=='jonswap' and hs==1.5:\n   from vector_export import envelope_indices\n   draw=b.tail(frame,60.0);idx=envelope_indices(tuple(draw[c].to_numpy() for c in cols),max_points=2000)\n   drawing=OUT/f'{method}_medium_drawing.csv';draw.iloc[idx].to_csv(drawing,index=False,float_format='%.10g')\n  result=dict(method=method,input=name,input_sha256=sim_dataset.REFERENCE_CSV_SHA256[name],binary_sha256=initial[method],raw_timeseries_sha256=rawhash,raw_samples=len(frame),scored_samples=len(scored),metrics=row)\n  print('Completed',method,name,flush=True)\n  return wave,hs,result\nretained=json.loads(subprocess.check_output(['git','show','ffd9f2613c85dfe00a2b7029671401afffcdb2f9:reports/results/baseline_comparison/baseline_comparison.json']))\nfor method in BIN:\n if method != 'ou2' and initial[method] != retained['binary_sha256'][method]:raise ValueError('unmodified executable differs: '+method)\njobs=[('ou2',n) for n in sim_dataset.REFERENCE_CSV_SHA256]\nwith concurrent.futures.ThreadPoolExecutor(2) as pool:results=list(pool.map(run,jobs))\nfor r in retained['replays']:\n if r['method']!='ou2':results.append(('jonswap' if 'jonswap' in r['input'] else 'pmstokes',float(re.search(r'_H([\\d.]+)_',r['input']).group(1)),r))\nif initial!={m:sha(p) for m,p in BIN.items()}:raise ValueError('binary changed during replay')\nrows=[]\nfor wave in ('jonswap','pmstokes'):\n for hs in b.HEIGHTS:\n  match=[r for w,h,r in results if (w,h)==(wave,hs)]\n  rows.append(dict(wave=wave,hs=hs,**{r['method']:r['metrics'] for r in match}))\ntable=ROOT/'doc/kalman_ou_iii/w3d-baseline-results-generated.tex-part';b.write_tables(rows,table)\nimport ou_evidence_provenance as provenance\nmanifest=dict(schema_version=1,protocol='deterministic common records; unmodified full-rate simulation outputs scored by plots/kalman_ou_iii/baseline-comparison.py tail/metrics convention',dataset=sim_dataset.input_provenance([ROOT/'.sim-data'/sim_dataset.SHA256/n for n in sim_dataset.REFERENCE_CSV_SHA256]),git_commit=b.subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),workflow=provenance.workflow_metadata(),build_environment=provenance.environment_metadata(),binary_sha256=initial,rows=rows,replays=[r for _,_,r in results],table_sha256=sha(table),local_orchestration=Path(__file__).read_text(),drawing_scope='At most 2000 extrema-preserving points over the last 60 s; drawing data never used for RMS.')\nmanifest['retained_unmodified_replays']={'source_commit':retained['git_commit'],'receipt_commit':'ffd9f2613c85dfe00a2b7029671401afffcdb2f9','methods':['ou3','tfg','pii','nlo'],'binary_hashes_verified_unchanged':True,'reason':'Only OU-II behavior changes in this five-observer comparison; all eight OU-II records are newly replayed at full rate.'}\n(OUT/'baseline_comparison.json').write_text(json.dumps(manifest,indent=2,sort_keys=True,allow_nan=False)+'\\n')\nprint('Wrote',table,flush=True)\n",
   "protocol": "deterministic common records; unmodified full-rate simulation outputs scored by plots/kalman_ou_iii/baseline-comparison.py tail/metrics convention",
   "replays": [
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.16463185729469734,
+        "roll_rms": 0.20483750061689365,
+        "z_pct": 8.486343527661312,
+        "z_rms": 0.022913127524685543
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "d9188d405c76d00462084744c419329423ea0da23f59a245ca96a7bc0976b7a9",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.15191736214888416,
+        "roll_rms": 0.16320175401580247,
+        "z_pct": 7.626593587222257,
+        "z_rms": 0.11439890380833387
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "98239367ba64a6d15b62975b407eb4895efda1809ab8f55da36377288606c0c7",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "input_sha256": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.13201156947816567,
+        "roll_rms": 0.2010431052305293,
+        "z_pct": 6.788260702312028,
+        "z_rms": 0.2715304280924811
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "e9770513542b81034e9e7af51de3283813425bbe4b5a37543528cdc3c15de647",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.1875348809256063,
+        "roll_rms": 0.17975541608838924,
+        "z_pct": 6.87129472906742,
+        "z_rms": 0.5840600519707306
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "fe733cb31266079a900cd798b811d7d65105d7340db126ccd0546dff57a55d51",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "input_sha256": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.16337633123153975,
+        "roll_rms": 0.21301794434401128,
+        "z_pct": 8.026788333463433,
+        "z_rms": 0.02167232850035127
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "391309fa9a1b1254c056632a86ed70299b4326e96e5268cec8197abdf1b837ce",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "input_sha256": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.15395152496613368,
+        "roll_rms": 0.16399095030281302,
+        "z_pct": 7.524951751659722,
+        "z_rms": 0.11287427627489582
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "402258100fb71f9ba47a19161d970ebce0ae8a9d2ab8e906fc15e9d30e7667a5",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "input_sha256": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.13901779287293314,
+        "roll_rms": 0.20371945730102947,
+        "z_pct": 6.7061536822806245,
+        "z_rms": 0.268246147291225
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "e189017e5e3ce24066796c25b0f6e23f76871dc347a179ffb0c1bf4859243c6e",
+      "scored_samples": 180001
+    },
+    {
+      "binary_sha256": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "input_sha256": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150",
+      "method": "ou2",
+      "metrics": {
+        "pitch_rms": 0.1808142063959737,
+        "roll_rms": 0.18089114201972778,
+        "z_pct": 6.751705290406086,
+        "z_rms": 0.5738949496845173
+      },
+      "raw_samples": 240000,
+      "raw_timeseries_sha256": "6f75365cfd033b3f66495ac610f093cb08fb031599db2ad58b5db566e360ab08",
+      "scored_samples": 180001
+    },
     {
       "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
@@ -61,21 +191,6 @@
       },
       "raw_samples": 240000,
       "raw_timeseries_sha256": "bf6af1d0148abc56cda5851b3ef8e65cc8e9615ffab8a57ffedcaf1798cffadc",
-      "scored_samples": 180001
-    },
-    {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-      "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.502723183769695,
-        "roll_rms": 0.5864082905561884,
-        "z_pct": 20.84244061568024,
-        "z_rms": 0.05627458966233665
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "ec40c0ba9c0146795124da7227d519d0e147dec5493ef5fd6678288aa47deb0a",
       "scored_samples": 180001
     },
     {
@@ -139,21 +254,6 @@
       "scored_samples": 180001
     },
     {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
-      "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.15212793687083428,
-        "roll_rms": 0.157868652411949,
-        "z_pct": 7.594244561964033,
-        "z_rms": 0.1139136684294605
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "a6d216dfd021c9a16a15c6e977ed31c487d76bb0d1b46b24e6ffe14b28c26de0",
-      "scored_samples": 180001
-    },
-    {
       "binary_sha256": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
@@ -211,21 +311,6 @@
       },
       "raw_samples": 240000,
       "raw_timeseries_sha256": "20418fc3f76898530944ee8c9ca6e972de0b9f2d48077a1d2a6e0da1fe2ca51d",
-      "scored_samples": 180001
-    },
-    {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-      "input_sha256": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.1317423420640202,
-        "roll_rms": 0.20157345476652316,
-        "z_pct": 6.790168438849083,
-        "z_rms": 0.2716067375539633
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "f9c5ee6a4a5c3e847325db31a7f58875ba0dcdc9079a13adbfc359e910179393",
       "scored_samples": 180001
     },
     {
@@ -289,21 +374,6 @@
       "scored_samples": 180001
     },
     {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-      "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.18787489537226928,
-        "roll_rms": 0.17886654479155784,
-        "z_pct": 6.8592374397743505,
-        "z_rms": 0.5830351823808197
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "ca6df4a1dba9c020eb17e6d314a35fb2fb22bc9fb49ac6f684983edae609376c",
-      "scored_samples": 180001
-    },
-    {
       "binary_sha256": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
@@ -361,21 +431,6 @@
       },
       "raw_samples": 240000,
       "raw_timeseries_sha256": "1190f469250d44eeaa81907417a9855b939b512f578b5b2b413b9aa7dfed4195",
-      "scored_samples": 180001
-    },
-    {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-      "input_sha256": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.19269412392551763,
-        "roll_rms": 0.3524377659950076,
-        "z_pct": 11.3149644731238,
-        "z_rms": 0.03055040407743426
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "98d4b42c1b1665ec7fb905d3ae1ed60a379356fceaebb274c8872be1684f11d3",
       "scored_samples": 180001
     },
     {
@@ -439,21 +494,6 @@
       "scored_samples": 180001
     },
     {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
-      "input_sha256": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.1552391440692013,
-        "roll_rms": 0.1600300295115924,
-        "z_pct": 7.514444766798586,
-        "z_rms": 0.11271667150197878
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "e050fa40dfa31edb23d6a175938b85fc534b20efea46d5b20a52b5fd3ac33ae5",
-      "scored_samples": 180001
-    },
-    {
       "binary_sha256": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "input_sha256": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
@@ -511,21 +551,6 @@
       },
       "raw_samples": 240000,
       "raw_timeseries_sha256": "e00198ae251cd24f02d60567b1f41a309b890c37e14ee999a93ab8625280543f",
-      "scored_samples": 180001
-    },
-    {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
-      "input_sha256": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.13885585507590484,
-        "roll_rms": 0.20432614397403512,
-        "z_pct": 6.7096567992751766,
-        "z_rms": 0.26838627197100706
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "b5c50206142050348d9887121e3fffbdf9fa1aab3f2f3a399ca346baded3579a",
       "scored_samples": 180001
     },
     {
@@ -589,21 +614,6 @@
       "scored_samples": 180001
     },
     {
-      "binary_sha256": "6c6bcd97f7883ce61afc8938b30cf89c06e81ffb0adbfc726fe491cea8b0ef1e",
-      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-      "input_sha256": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150",
-      "method": "ou2",
-      "metrics": {
-        "pitch_rms": 0.180865760095252,
-        "roll_rms": 0.1804269581617134,
-        "z_pct": 6.742342327486642,
-        "z_rms": 0.5730990978363646
-      },
-      "raw_samples": 240000,
-      "raw_timeseries_sha256": "d78089ee9a2cb0406baa9d1a1a7fd43c2f5939090b906598b8c077ee0507d3f5",
-      "scored_samples": 180001
-    },
-    {
       "binary_sha256": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "input_sha256": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150",
@@ -649,6 +659,18 @@
       "scored_samples": 180001
     }
   ],
+  "retained_unmodified_replays": {
+    "binary_hashes_verified_unchanged": true,
+    "methods": [
+      "ou3",
+      "tfg",
+      "pii",
+      "nlo"
+    ],
+    "reason": "Only OU-II behavior changes in this five-observer comparison; all eight OU-II records are newly replayed at full rate.",
+    "receipt_commit": "ffd9f2613c85dfe00a2b7029671401afffcdb2f9",
+    "source_commit": "f52b4a2e67d1230cae2e04f8b8553bb40864d333"
+  },
   "rows": [
     {
       "hs": 0.27,
@@ -659,10 +681,10 @@
         "z_rms": 0.059134439333515317
       },
       "ou2": {
-        "pitch_rms": 0.502723183769695,
-        "roll_rms": 0.5864082905561884,
-        "z_pct": 20.84244061568024,
-        "z_rms": 0.05627458966233665
+        "pitch_rms": 0.16463185729469734,
+        "roll_rms": 0.20483750061689365,
+        "z_pct": 8.486343527661312,
+        "z_rms": 0.022913127524685543
       },
       "ou3": {
         "pitch_rms": 0.15128043353902393,
@@ -693,10 +715,10 @@
         "z_rms": 0.12693788257817581
       },
       "ou2": {
-        "pitch_rms": 0.15212793687083428,
-        "roll_rms": 0.157868652411949,
-        "z_pct": 7.594244561964033,
-        "z_rms": 0.1139136684294605
+        "pitch_rms": 0.15191736214888416,
+        "roll_rms": 0.16320175401580247,
+        "z_pct": 7.626593587222257,
+        "z_rms": 0.11439890380833387
       },
       "ou3": {
         "pitch_rms": 0.13964861283168942,
@@ -727,10 +749,10 @@
         "z_rms": 0.28729666741862303
       },
       "ou2": {
-        "pitch_rms": 0.1317423420640202,
-        "roll_rms": 0.20157345476652316,
-        "z_pct": 6.790168438849083,
-        "z_rms": 0.2716067375539633
+        "pitch_rms": 0.13201156947816567,
+        "roll_rms": 0.2010431052305293,
+        "z_pct": 6.788260702312028,
+        "z_rms": 0.2715304280924811
       },
       "ou3": {
         "pitch_rms": 0.12949658005803466,
@@ -761,10 +783,10 @@
         "z_rms": 0.6559412095839965
       },
       "ou2": {
-        "pitch_rms": 0.18787489537226928,
-        "roll_rms": 0.17886654479155784,
-        "z_pct": 6.8592374397743505,
-        "z_rms": 0.5830351823808197
+        "pitch_rms": 0.1875348809256063,
+        "roll_rms": 0.17975541608838924,
+        "z_pct": 6.87129472906742,
+        "z_rms": 0.5840600519707306
       },
       "ou3": {
         "pitch_rms": 0.15506457337135318,
@@ -795,10 +817,10 @@
         "z_rms": 0.06351768721201423
       },
       "ou2": {
-        "pitch_rms": 0.19269412392551763,
-        "roll_rms": 0.3524377659950076,
-        "z_pct": 11.3149644731238,
-        "z_rms": 0.03055040407743426
+        "pitch_rms": 0.16337633123153975,
+        "roll_rms": 0.21301794434401128,
+        "z_pct": 8.026788333463433,
+        "z_rms": 0.02167232850035127
       },
       "ou3": {
         "pitch_rms": 0.14756643955622917,
@@ -829,10 +851,10 @@
         "z_rms": 0.12219909482365439
       },
       "ou2": {
-        "pitch_rms": 0.1552391440692013,
-        "roll_rms": 0.1600300295115924,
-        "z_pct": 7.514444766798586,
-        "z_rms": 0.11271667150197878
+        "pitch_rms": 0.15395152496613368,
+        "roll_rms": 0.16399095030281302,
+        "z_pct": 7.524951751659722,
+        "z_rms": 0.11287427627489582
       },
       "ou3": {
         "pitch_rms": 0.14452439458111596,
@@ -863,10 +885,10 @@
         "z_rms": 0.28822981680316245
       },
       "ou2": {
-        "pitch_rms": 0.13885585507590484,
-        "roll_rms": 0.20432614397403512,
-        "z_pct": 6.7096567992751766,
-        "z_rms": 0.26838627197100706
+        "pitch_rms": 0.13901779287293314,
+        "roll_rms": 0.20371945730102947,
+        "z_pct": 6.7061536822806245,
+        "z_rms": 0.268246147291225
       },
       "ou3": {
         "pitch_rms": 0.1288449063311728,
@@ -897,10 +919,10 @@
         "z_rms": 0.6802232192209202
       },
       "ou2": {
-        "pitch_rms": 0.180865760095252,
-        "roll_rms": 0.1804269581617134,
-        "z_pct": 6.742342327486642,
-        "z_rms": 0.5730990978363646
+        "pitch_rms": 0.1808142063959737,
+        "roll_rms": 0.18089114201972778,
+        "z_pct": 6.751705290406086,
+        "z_rms": 0.5738949496845173
       },
       "ou3": {
         "pitch_rms": 0.14751630292456386,
@@ -924,6 +946,6 @@
     }
   ],
   "schema_version": 1,
-  "table_sha256": "c064948b509bd3151f5f3887db8ac526949b218d50d0c734cd6e964c833d1e47",
+  "table_sha256": "3ec3dac00621c4763f9786c22dc69a2fa2db743ef29b399e425cbfbdda34dccb",
   "workflow": null
 }

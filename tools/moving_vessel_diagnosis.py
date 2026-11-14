@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Attribute the stationary -> 5 kn replay change to its physical causes.
+"""Separate steering and encounter-frequency effects in vessel replays.
 
-The 5 kn records (v1.3.0, or v1.3.1 with exact time stamps) differ from the
-stationary v1.2.3 records in two separable ways: the declared steering track
+The exact-clock v1.3.1 5 kn records differ from the zero-speed v1.3.1
+records in two separable ways: the declared steering track
 (5 kn, heading +/-3 deg over 120 s) and the encounter-frequency change of the
 wave response.  This tool builds exact counterfactual inputs, replays built
 executables on them, and reports the estimator-independent physics of each
@@ -16,7 +16,7 @@ input pair.
 
 Arms.  Body specific force and angular rate are rebuilt from the world
 kinematics of every counterfactual, so each arm is exactly self-consistent:
-  S        v1.2.3 stationary record
+  S        zero-speed v1.3.1 record
   M        5 kn record
   notrack  M with the declared track and heading removed (no steering)
   track    S with the same track and heading added (steering, no Doppler)
@@ -24,7 +24,7 @@ kinematics of every counterfactual, so each arm is exactly self-consistent:
            encounter period, same heave, accelerations scaled by 1/s^2
 Truth and track are used only for inputs and scoring, never by an estimator.
 The scorer takes reference motion from the input CSV in double precision and
-evaluates the track at sample_index * dt, not at the rounded CSV time column.
+evaluates the track at sample_index * dt independently of CSV formatting.
 """
 from __future__ import annotations
 

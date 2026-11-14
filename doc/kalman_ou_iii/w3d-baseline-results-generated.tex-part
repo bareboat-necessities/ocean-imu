@@ -10,14 +10,14 @@
     \cmidrule(lr){3-7}\cmidrule(lr){8-12}
     & & PII & TVG--NLO & OU--II & TFG & OU--III & PII & TVG--NLO & OU--II & TFG & OU--III \\
     \midrule
-    JONSWAP & 0.27 & 0.024 & 0.059 & 0.056 & 0.021 & 0.022 & 8.9 & 21.9 & 20.8 & 7.8 & 8.2 \\
+    JONSWAP & 0.27 & 0.024 & 0.059 & 0.023 & 0.021 & 0.022 & 8.9 & 21.9 & 8.5 & 7.8 & 8.2 \\
     JONSWAP & 1.50 & 0.231 & 0.127 & 0.114 & 0.083 & 0.083 & 15.4 & 8.5 & 7.6 & 5.5 & 5.5 \\
     JONSWAP & 4.00 & 0.517 & 0.287 & 0.272 & 0.184 & 0.184 & 12.9 & 7.2 & 6.8 & 4.6 & 4.6 \\
-    JONSWAP & 8.50 & 1.170 & 0.656 & 0.583 & 0.374 & 0.374 & 13.8 & 7.7 & 6.9 & 4.4 & 4.4 \\
-    PM--Stokes & 0.27 & 0.022 & 0.064 & 0.031 & 0.020 & 0.021 & 8.3 & 23.5 & 11.3 & 7.5 & 7.8 \\
+    JONSWAP & 8.50 & 1.170 & 0.656 & 0.584 & 0.374 & 0.374 & 13.8 & 7.7 & 6.9 & 4.4 & 4.4 \\
+    PM--Stokes & 0.27 & 0.022 & 0.064 & 0.022 & 0.020 & 0.021 & 8.3 & 23.5 & 8.0 & 7.5 & 7.8 \\
     PM--Stokes & 1.50 & 0.221 & 0.122 & 0.113 & 0.082 & 0.081 & 14.7 & 8.1 & 7.5 & 5.4 & 5.4 \\
     PM--Stokes & 4.00 & 0.462 & 0.288 & 0.268 & 0.181 & 0.181 & 11.5 & 7.2 & 6.7 & 4.5 & 4.5 \\
-    PM--Stokes & 8.50 & 1.000 & 0.680 & 0.573 & 0.370 & 0.366 & 11.8 & 8.0 & 6.7 & 4.4 & 4.3 \\
+    PM--Stokes & 8.50 & 1.000 & 0.680 & 0.574 & 0.370 & 0.366 & 11.8 & 8.0 & 6.8 & 4.4 & 4.3 \\
     \bottomrule
   \end{tabular}
 \end{table*}
@@ -27,7 +27,7 @@
 \providecommand{\OUBaselineTVGNLOMeanVerticalPercent}{}
 \renewcommand{\OUBaselineTVGNLOMeanVerticalPercent}{11.5}
 \providecommand{\OUBaselineOUIIMeanVerticalPercent}{}
-\renewcommand{\OUBaselineOUIIMeanVerticalPercent}{9.3}
+\renewcommand{\OUBaselineOUIIMeanVerticalPercent}{7.3}
 \providecommand{\OUBaselineTFGMeanVerticalPercent}{}
 \renewcommand{\OUBaselineTFGMeanVerticalPercent}{5.5}
 \providecommand{\OUBaselineOUIIIMeanVerticalPercent}{}
@@ -45,7 +45,7 @@
     \midrule
     Adaptive PII & 12.2 & 8.3 & 15.4 & 1.91 & 1.59 \\
     TVG--NLO & 11.5 & 7.2 & 23.5 & 0.25 & 0.13 \\
-    OU--II & 9.3 & 6.7 & 20.8 & 0.25 & 0.21 \\
+    OU--II & 7.3 & 6.7 & 8.5 & 0.19 & 0.16 \\
     TFG & 5.5 & 4.4 & 7.8 & 0.35 & 0.23 \\
     \textbf{OU--III} & 5.6 & 4.3 & 8.2 & 0.22 & 0.14 \\
     \bottomrule

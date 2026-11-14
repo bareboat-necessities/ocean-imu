@@ -176,6 +176,12 @@ public:
         T tau_a_freq_exp  = T(-0.25);
         T tau_a_sigma_exp = T(-1.20);
 
+        // Keep the empirical noise smoothing, but do not let its LPF be
+        // faster than the minimum-error phase match to the PII wave response.
+        // A following sea lowers omega while its acceleration also falls;
+        // the old amplitude schedule could then pin tau_a at its short limit.
+        bool match_accel_filter_phase = true;
+
         // Optional scheduling of bias-trend channel.
         // Conservative defaults:
         //   - tau_d becomes larger when sigma is high
@@ -453,6 +459,25 @@ public:
         T tau_a_cmd = base_tau_a_
             * safe_pow_(f_ratio, adapt_cfg_.tau_a_freq_exp)
             * safe_pow_(s_ratio, adapt_cfg_.tau_a_sigma_exp);
+        if (adapt_cfg_.match_accel_filter_phase) {
+            // At omega the PII core has C=(i*omega/(r+i*omega))^3.
+            // With x=omega*tau_a, minimize |C/(1+i*x)-1|^2.
+            // Its positive minimizer is 2 Im(C)/(g+sqrt(g^2+4 Im(C)^2)),
+            // g=2 Re(C)-|C|^2. Use it only on the positive-phase branch.
+            // Raising tau never removes the empirical noise-smoothing floor.
+            const T omega = T(6.283185307179586) * std::max(f_disp_filt_hz_, eps_());
+            const T u = r_cmd / omega;
+            const T u2 = u * u;
+            const T denominator = (T(1) + u2) * (T(1) + u2) * (T(1) + u2);
+            const T real = (T(1) - T(3) * u2) / denominator;
+            const T imag = (T(3) * u - u * u2) / denominator;
+            if (real > T(0) && imag > T(0)) {
+                const T g = T(2) * real - (real * real + imag * imag);
+                const T phase_tau = T(2) * imag /
+                    (omega * (g + std::sqrt(g * g + T(4) * imag * imag)));
+                if (std::isfinite(phase_tau)) tau_a_cmd = std::max(tau_a_cmd, phase_tau);
+            }
+        }
         tau_a_cmd = std::clamp(tau_a_cmd, adapt_cfg_.tau_a_min, adapt_cfg_.tau_a_max);
 
         T tau_d_cmd = active_tau_d_;

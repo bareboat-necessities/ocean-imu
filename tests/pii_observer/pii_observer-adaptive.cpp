@@ -262,6 +262,13 @@ private:
         cfg.gravity_mps2 = g_std;
         cfg.use_mag = with_mag;
 
+        // Reproduce the previous library schedule without changing its gates.
+        if (const char* value = std::getenv("PII_PHASE_MATCH")) {
+            const std::string mode(value);
+            if (mode != "0" && mode != "1") throw std::invalid_argument("PII_PHASE_MATCH");
+            cfg.core.adaptation.match_accel_filter_phase = mode == "1";
+        }
+
         // Reproducible parameter sweeps; regression limits are never overridden.
         const auto scale = [](const char* name, float& value) {
             if (const char* text = std::getenv(name)) {

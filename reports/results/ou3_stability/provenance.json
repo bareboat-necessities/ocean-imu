@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "e0394af99505d6f46796bc9cc8cf10eec0b7da57"
+      "git_blob_sha": "fe065d9a3d384fe9b902c1f9f9ab05527322ec95"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "b887bbcda09861d5e2c8048bd853a6f20ed4f4e0"
+      "git_blob_sha": "b92089aa383682349f0731b431fad6d63f3a16ab"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1800,5 +1800,19 @@
     ],
     "shipping_dependency_audit": "moving-dataset-source-scope.json",
     "native_secant_receipt": "Fresh complete two-epsilon replay; native state-byte hashes match the prior diagnostic, without theorem promotion."
+  },
+  "pii_phase_guard_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "reference_commit": "a4833eadc5f3e0b6698a06117fb85e492ba15f1d",
+    "changed_src_outside_ou3_probe_closure": [
+      "src/pii_observer/VerticalPIIObserver.h"
+    ],
+    "probe_src_files_byte_identical": 39,
+    "replay_performed": false,
+    "scope": "PII-only runtime phase/noise-smoothing correction; no shipping OU-III operation or proof premise changes",
+    "relaxations_introduced": "None",
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "theorem_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md"
   }
 }

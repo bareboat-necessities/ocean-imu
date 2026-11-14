@@ -1,3 +1,22 @@
+Encounter-scaling diagnostics and PII correction (class E, separate filter):
+the shipping OU-III probe closure remains byte-identical to a4833ea; the only
+new src change is VerticalPIIObserver.h, outside that closure. The conservative
+whole-src native-secant receipt is refreshed without replaying or altering its
+payload. Preserved: all OU-III states, covariance/gains, resets, scheduler,
+physical histories, frontend and tuning. Relaxations: none. Failures: lowering
+the period leak to 0.01 Hz worsens small-wave OU-III heave (moving 8.24 to
+9.53% Hs; zero-speed 4.25 to 8.35%); removing the S floor gives 26.01% on the
+moving case. These temporary include-overlay variants are rejected diagnostics,
+not admitted shipping counterexamples or stability conclusions. Increasing the
+variance cap from 35 to 60 s alone barely changes RMS. A parallel CARMA build
+hit `g++: fatal error: Killed signal terminated program cc1plus`; the serial
+make all build subsequently rebuilt that simulator. An unavailable clang++
+probe was compiled with g++ instead. These are infrastructure failures.
+Genuine shipping counterexample: none. Retained: native secant payloads and all
+open theorem/qualification flags, with no promotion. Next: verify the separate
+PII phase guard across held-out sensor seeds, full regressions and fresh hosted
+source-bound replay evidence. This changes PII behavior, not OU-III behavior.
+
 Integration source audit (class E): main 48e444f is merged, and the
 OU-II/CARMA stillness fixes from PR #754 are incorporated. The shared defaults
 header changes only a descriptive OU-II table comment; stripping C++ comments
