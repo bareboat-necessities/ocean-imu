@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "chore/moving-vessel-replays",
-  "git_commit": "39fa9208a12d8b374a3dbf62a9125dee19712d10",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 37402 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |     2 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1564 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1876 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   520 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1890 +-\n 7 files changed, 21936 insertions(+), 21938 deletions(-)",
+  "git_commit": "f7cd0fa140a2f9647ef33d16bf40c25258442158",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 42006 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |     4 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1590 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   956 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   152 +-\n .../ou_robustness/ou_robustness_summary.csv        |  2000 +-\n 7 files changed, 23663 insertions(+), 23665 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -181,13 +181,17 @@
       "bytes": 12170,
       "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5"
     },
+    "src/util/CsvTimestamp.h": {
+      "bytes": 562,
+      "sha256": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721"
+    },
     "src/util/UnderwayReference.h": {
       "bytes": 2096,
       "sha256": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 105880,
-      "sha256": "f8b64cbf7f4296a93d5d4a38e10ce86ea89ae5f2bc529f03ebafb2123f6e4ade"
+      "bytes": 105971,
+      "sha256": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad"
     },
     "src/util/W3dSimCommon.h": {
       "bytes": 34727,
@@ -218,8 +222,8 @@
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
     "tests/common/CurrentReplayLimits.h": {
-      "bytes": 8286,
-      "sha256": "725216329ae3bfbdf641969d1fec4dcaaeaf2651087a2a82447d9512ad51155d"
+      "bytes": 8216,
+      "sha256": "bd4d2484c5e343f2510d5d01cf5f46b0c64b4c6ee09bd52e2340d4ba64c5d148"
     },
     "tests/common/GyroReplayContract.h": {
       "bytes": 1247,
@@ -236,14 +240,14 @@
   },
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
-    "RS_ms": 2.3865755903122703,
+    "RS_ms": 2.3865943342344824,
     "R_p0_std_m": null,
     "R_v0_std_mps": null,
-    "sigma_a_mps2": 0.233279109,
-    "tau_s": 3.57748032
+    "sigma_a_mps2": 0.233279228,
+    "tau_s": 3.57748938
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -354,11 +358,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-14T07:14:55+00:00",
-    "git_commit": "39fa9208a12d8b374a3dbf62a9125dee19712d10",
+    "generated_at": "2026-11-14T09:45:04+00:00",
+    "git_commit": "f7cd0fa140a2f9647ef33d16bf40c25258442158",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -496,13 +500,17 @@
         "sha256": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
         "size_bytes": 12170
       },
+      "src/util/CsvTimestamp.h": {
+        "sha256": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+        "size_bytes": 562
+      },
       "src/util/UnderwayReference.h": {
         "sha256": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
         "size_bytes": 2096
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "f8b64cbf7f4296a93d5d4a38e10ce86ea89ae5f2bc529f03ebafb2123f6e4ade",
-        "size_bytes": 105880
+        "sha256": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+        "size_bytes": 105971
       },
       "src/util/W3dSimCommon.h": {
         "sha256": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
@@ -533,8 +541,8 @@
         "size_bytes": 2765
       },
       "tests/common/CurrentReplayLimits.h": {
-        "sha256": "725216329ae3bfbdf641969d1fec4dcaaeaf2651087a2a82447d9512ad51155d",
-        "size_bytes": 8286
+        "sha256": "bd4d2484c5e343f2510d5d01cf5f46b0c64b4c6ee09bd52e2340d4ba64c5d148",
+        "size_bytes": 8216
       },
       "tests/common/GyroReplayContract.h": {
         "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
@@ -551,16 +559,16 @@
     },
     "input_files": {
       "plots/kalman_ou_ii/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
-        "sha256": "145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073",
-        "size_bytes": 69440848
+        "sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+        "size_bytes": 71568858
       },
       "plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
-        "sha256": "47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33",
-        "size_bytes": 67871432
+        "sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+        "size_bytes": 69999218
       },
       "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
-        "sha256": "1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4",
-        "size_bytes": 66507873
+        "sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+        "size_bytes": 68636931
       },
       "tools/ou_robustness_core.py": {
         "sha256": "c13fea5185057e1b9072112df44efb9c75fdbb6cb94eaa8e83aad8aabfaf4f00",
@@ -568,62 +576,62 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "1e25b6cd9d53860f6ec5343caca0b1f87953362da3be8215730c299ba9ff637c",
-    "raw_rows_size_bytes": 208362,
+    "raw_rows_sha256": "da22549a7df1c00f5263fdacec17354156cb353e543dd251d07483a7030e6b54",
+    "raw_rows_size_bytes": 208549,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43566551317",
+      "run_id": "43577322107",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1575154,
-      "sha256": "278475e14097e044a0c118ebd1ffd76c8961ec27471194cbe478115dfd886fba"
+      "bytes": 1575539,
+      "sha256": "68072898216073d61e93317d38d95bd7619dcfe6e998f78a7bb1d6a6ea121a8c"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "e2e34cbb7bf2f0fce98b25f1c6b9f0ee8c2333892b9bc6c36148394fcfdb0e7e"
+      "sha256": "891acb95eddb9e1d798847f212de8c5eb345c7b240e97044eea9ad2accd7656a"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 164501,
-      "sha256": "f81d6b7b1522512f19417254ac80b18dade06191c239beac9837631a8b756b4c"
+      "bytes": 164481,
+      "sha256": "6803c478a1a06159523e5c54d8a669b2e2c0af436468797b62d99fdf5a43093a"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "fb52ea56cd58c4345076e1006cbee68a8352208a7116cbce2906daa17f550120"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 208362,
-      "sha256": "1e25b6cd9d53860f6ec5343caca0b1f87953362da3be8215730c299ba9ff637c"
+      "bytes": 208549,
+      "sha256": "da22549a7df1c00f5263fdacec17354156cb353e543dd251d07483a7030e6b54"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 110521,
-      "sha256": "5b6ac5d6cd4c82e71ebca5f957892a7756d0868a3e64aa7e986d3c4115687819"
+      "bytes": 110514,
+      "sha256": "9336e639a233ede0b8f6af8911d0aaa68735fb68f5bddcc8f543e1796f97e29d"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 42720,
-      "sha256": "22690d6874c05dfcd53d4243ba7e23ab0bbb295da7f3b5297436a4e1fb654e0a"
+      "bytes": 42723,
+      "sha256": "c0fbe7e5c36bc17fbdbee46ad495291920e96e268b350880a0981afbb87e5b93"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 147529,
-      "sha256": "37b6ef7f51d750a22b53a1d3fa784cfc2635cd3eb33430c72dcf3b95f82e82a5"
+      "bytes": 147747,
+      "sha256": "6e3a8da5e6c0423c120d8b1b84181eee4e404e6e98646fa9b389110fc2de7a4a"
     }
   },
   "schema_version": 2,
   "source_files": {
     "plots/kalman_ou_ii/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
-      "bytes": 69440848,
-      "sha256": "145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073"
+      "bytes": 71568858,
+      "sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8"
     },
     "plots/kalman_ou_ii/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
-      "bytes": 67871432,
-      "sha256": "47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33"
+      "bytes": 69999218,
+      "sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913"
     },
     "plots/kalman_ou_ii/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
-      "bytes": 66507873,
-      "sha256": "1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4"
+      "bytes": 68636931,
+      "sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d"
     },
     "tools/ou_robustness_core.py": {
       "bytes": 54537,
