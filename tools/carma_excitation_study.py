@@ -387,9 +387,8 @@ DATASET_FIELDS = ["family", "seed", "input", "disp_z_rms_m", "disp_z_pct_hs", "d
 
 def dataset_invocation(variant, mode, seed):
     tdir = CARMA3_SIM.parent
-    files = sorted(str(p) for p in tdir.glob("wave_data_*.csv"))
-    if not files:
-        sys.exit("no dataset in tests/kalman_carma: make ensure-sim-data")
+    from sim_dataset import REFERENCE_CSV_SHA256
+    files = [str(tdir / n) for n in REFERENCE_CSV_SHA256]
     env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
     env.update(W3D_VALIDATION_WINDOW_SEC="900", W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1",
                W3D_CARMA3_VARIANT=variant, W3D_CARMA3_EXCITATION=mode, W3D_SEED=str(seed))
@@ -404,10 +403,9 @@ def dataset_invocation(variant, mode, seed):
 
 def cmd_dataset(a):
     require(CARMA3_SIM)
-    done = set()
-    if DATASET_RAW.exists() and DATASET_RAW.stat().st_size:
-        with DATASET_RAW.open() as f:
-            done = {(r["family"], r["seed"]) for r in csv.DictReader(f)}
+    from sim_dataset import bind_dataset_results, completed_dataset_runs
+    bind_dataset_results(DATASET_RAW, CARMA3_SIM.parent, (CARMA3_SIM,))
+    done = completed_dataset_runs(DATASET_RAW)
     work = [(v, m, s) for s in range(1, 11) for v in ("A41", "T41") for m in ("A", "C")
             if (f"{v}@{m}", str(s)) not in done]
     print(f"{len(work)} dataset invocations to do", flush=True)

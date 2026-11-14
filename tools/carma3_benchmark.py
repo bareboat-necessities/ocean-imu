@@ -181,9 +181,8 @@ def parse_metrics(text):
 
 
 def dataset_invocation(cmd, extra, seed):
-    files = sorted(str(p) for p in TDIR.glob("wave_data_*.csv"))
-    if not files:
-        sys.exit("no dataset in tests/kalman_carma: make ensure-sim-data")
+    from sim_dataset import REFERENCE_CSV_SHA256
+    files = [str(TDIR / n) for n in REFERENCE_CSV_SHA256]
     env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
     env.update(W3D_VALIDATION_WINDOW_SEC="900", W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1", **extra)
     if seed is not None:
@@ -196,7 +195,9 @@ def dataset_invocation(cmd, extra, seed):
 def cmd_dataset(args):
     for s in (OU3_SIM, CARMA3_SIM):
         require(s)
-    done = {(r["family"], r["seed"]) for r in read_rows(DATASET_RAW)}
+    from sim_dataset import bind_dataset_results, completed_dataset_runs
+    bind_dataset_results(DATASET_RAW, CARMA3_SIM.parent, (OU3_SIM, CARMA3_SIM))
+    done = completed_dataset_runs(DATASET_RAW)
     work = []
     for seed in range(1, args.seeds + 1):
         work.append(("OU3", seed, [str(OU3_SIM)], {}))

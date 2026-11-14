@@ -1,5 +1,12 @@
 # Shared-modes QMEKF (`KalmanCarmaSharedModes`, experimental)
 
+External-data runs now use the checksum-pinned v1.3.0 28 ft / 5 kn moving boat,
+with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+and [reference-coordinate convention](moving-vessel-replays.md). Numerical
+studies explicitly naming v1.2.3 retain their stationary-vessel scope; their
+results are not relabelled as underway evidence.
+
+
 **Status: experimental, simulation only, not a default.**  The shipping
 filter stays `SeaStateFusionFilter_OU_III`; the independent-axis CARMA3 QMEKF
 (`src/kalman_carma/`, benchmark name `A41`) is unchanged and remains the
@@ -442,32 +449,18 @@ points on the single-system seas).
   `|b|^2 <= gamma^2 sigma_h^2 sigma_z^2`; it needs its own validation on the
   26 seas.
 
-**Dataset replay and gates.**  `kalman_carma_shared_modes-sim` replays the
-eight scored records of the pinned oceanography-waves-lib dataset with the
-seeds, sensor model and adapter of every CARMA filter and is gated by CSM's
-own bars (worst default-seed value plus about 0.5 %; `kCsmRegressionBars`):
+**Current underway dataset replay and gates.** The eight scored v1.3.0 records use the 5 kn / ±3° heading track. Production and interval-rate profiles have separately measured limits in `tests/common/CurrentReplayLimits.h`. Sensor inputs and turning acceleration are retained; displacement/velocity reference truth is relative to the declared cruise track.
 
-| gate (worst of 8) | CSM | bar | TFG-CARMA3 (T41, Legacy) | T41, Evidence |
-|---|---|---|---|---|
-| heave % Hs, JONSWAP | 2.455 | 2.467 | 3.057 | 2.459 |
-| heave % Hs, PM-Stokes | 2.403 | 2.416 | 3.215 | 2.44 |
-| 3-D %, JONSWAP | 4.41 | 4.433 | 4.865 | 4.907 |
-| 3-D %, PM-Stokes | 4.879 | 4.904 | 5.252 | 5.277 |
-| roll (deg) | 0.3571 | 0.359 | 0.3551 | 0.3555 |
-| pitch (deg) | 0.222 | 0.2231 | 0.2128 | 0.2131 |
-| yaw (deg) | 0.7556 | 0.7595 | 0.7623 | 0.7631 |
-| accel z bias % | 4.164 | 4.186 | 4.185 | 4.173 |
-| accel 3-D bias % | 83.56 | 83.99 | 82.12 | 82.2 |
-| gyro 3-D bias % | 12.64 | 12.71 | 12.33 | 12.34 |
+| Production gate | Measured worst | Limit |
+| --- | ---: | ---: |
+| JONSWAP heave (% Hs) | 3.55019 | 3.56795 |
+| PM-Stokes heave (% Hs) | 3.70168 | 3.72019 |
+| JONSWAP 3D (% max wave displacement) | 6.42115 | 6.45326 |
+| PM-Stokes 3D (% max wave displacement) | 6.91558 | 6.95017 |
+| Yaw (deg) | 0.98588 | 0.99081 |
+| Accelerometer 3D bias (% max true bias) | 56.27220 | 56.55357 |
 
-Against CSM with the coupling off (`CSM_OFF`, which is A41 in Evidence mode)
-the replay shows the Monte Carlo pattern on every record: heave 0.2-2.8 %
-and 3-D 2-10 % lower, gyroscope bias equal, the 3-D accelerometer bias error
-1.8-4.9 % higher on the seas of Hs 1.5 m and above (a cost of the coupling:
-the two runs differ in nothing else).  The heave advantage over TFG-CARMA3 is the excitation mode
-(with Evidence excitation TFG-CARMA3 is within 0.04 points of Hs); the 3-D
-advantage is the coupling.  TFG-CARMA3's two-frame Lie group separates the
-biases and pitch slightly better.
+The [current comparison](moving-vessel-results.md) reports all filters and the low-sea degradations. The 26-sea synthetic study above is a separate controlled experiment; its confidence intervals are not transferred to the underway records.
 
 ## 7. Embedded efficiency
 

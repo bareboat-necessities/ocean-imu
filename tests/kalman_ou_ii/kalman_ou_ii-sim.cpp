@@ -662,17 +662,7 @@ private:
 // targets.  Each is the worst value the current filter produces across the
 // scored records plus about half a percent, rounded up in the last digit the
 // channel is quoted in
-static constexpr W3dFailureLimits FAIL_LIMITS{
-    .err_limit_percent_z_jonswap   = 6.674f,  // worst 6.6408 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 6.605f,  // worst 6.5717 (pmstokes H0.27)
-    .err_limit_yaw_deg             = 1.041f,  // worst 1.0357 (jonswap H4.0)
-    .err_limit_roll_deg            = 0.3866f, // worst 0.3846 (jonswap H4.0)
-    .err_limit_pitch_deg           = 0.3237f, // worst 0.3221 (jonswap H8.5)
-    .err_limit_percent_3d_jonswap  = 15.54f,  // worst 15.4571 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 16.62f,  // worst 16.5347 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.663f,  // worst 4.6391 (jonswap H8.5)
-    .bias_3d_percent               = 83.97f,  // worst 83.5458 (jonswap H4.0, accel)
-};
+constexpr auto FAIL_LIMITS = ocean_imu::sim::current_limits::interval::ou2;
 
 static constexpr W3dSummaryLabels SUMMARY_LABELS{
     .target = "p0_S_target",

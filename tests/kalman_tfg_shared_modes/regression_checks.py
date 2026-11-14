@@ -26,14 +26,16 @@ def main() -> None:
     binary = args.binary.resolve()
     data_dir = args.data_dir.resolve()
     records = [data_dir / name for name in REFERENCE_CSV_SHA256]
-    input_provenance(records)
-    baseline = json.loads((ROOT / 'reports/results/tfg_shared_modes/deterministic_regression.json').read_text())
-    source = (ROOT / 'tests/common/TfgSharedRegressionBars.h').read_text()
+    inputs = input_provenance(records)
+    baseline = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
+    assert baseline['inputs'] == inputs, 'locked limits use another input dataset'
+    source = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text().split('namespace interval {', 1)[1]
+    source = re.search(r'W3dFailureLimits tcsm\{(.*?)\};', source, re.S)[1]
     compiled_limits = {k: float(v) for k, v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', source)}
-    assert compiled_limits == baseline['limits'], 'C++ gates differ from the locked baseline'
+    assert compiled_limits == baseline['families']['tcsm']['interval_limits'], 'C++ gates differ from the locked baseline'
     env = {k: v for k, v in os.environ.items() if not k.startswith('W3D_')}
     env['W3D_COLLECT_ALL_GATES'] = '1'
-    env['W3D_WRITE_TIMESERIES'] = '1'
+    env['W3D_WRITE_TIMESERIES'] = os.environ.get('W3D_WRITE_TIMESERIES', '1')
     result = subprocess.run([str(binary), '--regression'], cwd=data_dir, env=env,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     print(result.stdout, end='', flush=True)
@@ -78,7 +80,8 @@ def main() -> None:
                 ([], {'W3D_CSM_VARIANT': 'CSM_OFF'}, protocol_error),
                 ([], {'W3D_CSM_GYRO_INPUT': 'instantaneous'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
                 ([], {'W3D_CSM_GYRO_INPUT': 'interval'}, '--regression forbids W3D_CSM_GYRO_INPUT'),
-                ([], {'W3D_ENGINE_RPM': '1600'}, '--regression forbids W3D_ENGINE_RPM')]:
+                ([], {'W3D_ENGINE_RPM': '1600'}, '--regression forbids W3D_ENGINE_RPM'),
+                ([], {'W3D_REFERENCE_MOTION': 'stationary'}, '--regression forbids W3D_REFERENCE_MOTION')]:
             r = run(['--input', str(records[0]), *args], changes)
             assert r.returncode == 2 and error in r.stdout, (args, changes, r.stdout[-1000:])
 

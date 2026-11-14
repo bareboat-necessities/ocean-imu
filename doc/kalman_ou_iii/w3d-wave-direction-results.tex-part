@@ -3,8 +3,8 @@
 \label{sec:direction-validation}
 
 The estimator is evaluated on the same directional records used by the marine
-motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.2.1
-28 ft vessel RAO.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
+motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.3.0
+28 ft vessel RAO at 5 kn with $\pm3^\circ$ heading oscillation over 120 s.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
 uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
 do not dominate the direction metric.  Ten paired seed triplets vary the wave
 realization, sensor noise and drift, and residual-error initialization.  The
@@ -69,7 +69,7 @@ translation receives equalizer output. The profile is explicitly enabled in
 the vessel simulators; generic deployment requires a known response in the
 correct coordinate frame. Weak response, response nulls and directional spread
 can still leave direction unresolved. Confidence and simulation acceptance
-thresholds are unchanged. The v1.2.1 phase kernel
+thresholds are unchanged. The generator phase kernel
 $\cos(\mathbf{k}\cdot\mathbf{x}-\omega t+\phi)$ defines the reported azimuth as
 propagation-to, with no additional $180^\circ$ shift.
 
@@ -78,7 +78,8 @@ propagation-to, with no additional $180^\circ$ shift.
 \section{Results}
 \label{sec:direction-results}
 
-Across the eight stationary JONSWAP and PM--Stokes seas, the pooled absolute
+Across the eight steady JONSWAP and PM--Stokes sea conditions, angular
+statistics use only finite resolved estimates. The mean absolute
 circular-mean wave-axis error is
 \OUValidationDirectionAbsError{} degrees, the pooled sample-level axial RMS
 error is \OUValidationDirectionRMSE{} degrees, and the worst scenario-level
@@ -130,15 +131,15 @@ OU--III performance claim for this paper.
     \toprule
     Case & $H_s$ [m] & Axis RMS & Directed RMS & $n$ \\
     \midrule
-    JONSWAP     & 0.27 & $5.86\pm3.54$ & $5.42\pm4.45$ & 9 \\
-    JONSWAP     & 1.50 & $21.46\pm2.03$ & $18.95\pm1.39$ & 10 \\
-    JONSWAP     & 4.00 & $18.01\pm1.97$ & $17.82\pm2.12$ & 10 \\
-    JONSWAP     & 8.50 & $25.53\pm2.58$ & $26.36\pm2.40$ & 10 \\
+    JONSWAP     & 0.27 & -- & -- & 0 \\
+    JONSWAP     & 1.50 & $22.63\pm2.04$ & $17.44\pm1.04$ & 10 \\
+    JONSWAP     & 4.00 & $21.24\pm2.77$ & $18.59\pm1.91$ & 10 \\
+    JONSWAP     & 8.50 & $28.17\pm1.54$ & $26.87\pm1.36$ & 10 \\
     \addlinespace
-    PM--Stokes  & 0.27 & $8.56\pm6.81$ & $10.28\pm4.03$ & 3 \\
-    PM--Stokes  & 1.50 & $22.79\pm1.98$ & $20.16\pm1.30$ & 10 \\
-    PM--Stokes  & 4.00 & $16.12\pm1.58$ & $16.17\pm1.34$ & 10 \\
-    PM--Stokes  & 8.50 & $23.80\pm2.21$ & $25.33\pm2.47$ & 10 \\
+    PM--Stokes  & 0.27 & -- & -- & 0 \\
+    PM--Stokes  & 1.50 & $23.99\pm1.59$ & $19.49\pm0.90$ & 10 \\
+    PM--Stokes  & 4.00 & $18.87\pm2.44$ & $17.02\pm1.80$ & 10 \\
+    PM--Stokes  & 8.50 & $26.52\pm1.95$ & $25.80\pm1.48$ & 10 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -163,15 +164,15 @@ aggregate correct-decision fraction from hiding large sense-flip errors.
     \toprule
     Case & $H_s$ & R & P & Y & $\bar\theta$ & T/A/U [\%] \\
     \midrule
-    JONSWAP     & 0.27 & 0.31 & 0.12 & 0.49 &  30.2 & 0.4/0.0/99.6 \\
-    JONSWAP     & 1.50 & 0.17 & 0.12 & 0.39 & -27.2 & 71.1/17.7/11.2 \\
-    JONSWAP     & 4.00 & 0.22 & 0.13 & 0.81 &  29.1 & 8.1/87.1/4.7 \\
-    JONSWAP     & 8.50 & 0.29 & 0.15 & 0.33 & -26.2 & 27.6/68.6/3.8 \\
+    JONSWAP     & 0.27 & 0.30 & 0.15 & 0.38 &  {--} & 0.0/0.0/100.0 \\
+    JONSWAP     & 1.50 & 0.13 & 0.14 & 0.74 & -33.6 & 62.6/9.4/28.0 \\
+    JONSWAP     & 4.00 & 0.23 & 0.13 & 0.87 &  34.0 & 45.4/45.3/9.3 \\
+    JONSWAP     & 8.50 & 0.17 & 0.16 & 0.62 & -32.7 & 19.0/74.4/6.6 \\
     \addlinespace
-    PM--Stokes  & 0.27 & 0.31 & 0.12 & 0.66 &  33.0 & 0.0/0.0/100.0 \\
-    PM--Stokes  & 1.50 & 0.17 & 0.12 & 0.24 & -28.0 & 85.6/0.0/14.4 \\
-    PM--Stokes  & 4.00 & 0.21 & 0.13 & 0.60 &  28.1 & 0.0/95.0/5.0 \\
-    PM--Stokes  & 8.50 & 0.33 & 0.15 & 0.30 & -27.2 & 95.3/0.8/3.8 \\
+    PM--Stokes  & 0.27 & 0.34 & 0.15 & 0.37 &  {--} & 0.0/0.0/100.0 \\
+    PM--Stokes  & 1.50 & 0.13 & 0.14 & 0.68 & -35.7 & 65.1/8.6/26.2 \\
+    PM--Stokes  & 4.00 & 0.23 & 0.13 & 0.69 &  31.7 & 18.6/74.0/7.4 \\
+    PM--Stokes  & 8.50 & 0.18 & 0.15 & 0.42 & -31.3 & 41.7/54.9/3.4 \\
     \bottomrule
   \end{tabular}
   \vspace{1pt}

@@ -62,16 +62,16 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "8beef6b9fe95c5ab823794ea0b2f7b7436c8159917efcec6daf456a5eda8cdf9",
-    "carma_lever_arm_penalty.svg": "a20c8ab93c29a3d337a91f271b496aa96a17f76431ca6709c7f8a330f2368b4c",
-    "carma_lever_arm_sea_state.svg": "1eb328af30dd77135d31c5dc1bcc19412e9c8eb539d0314578088372a5dd5ec1",
-    "carma_lever_arm_tilt.svg": "167e547ccdd04d8101def970b4451d6ed5f5f3efdaa64b892764a1aec1a453eb",
-    "carma_lever_arm_yaw.svg": "824fc94e01f14adae063a40f8c4f5c7d803857ea6d308cd0e54b9ca02d3f1c6f",
-    "lever_arm_cutoff_runs.csv": "9204263ff9fa0e0afb381bec520cd7b80caadac11e2e04c3d12cfda9db5ac09e",
-    "lever_arm_cutoff_summary.csv": "5606635d4bdc0dcd4629fbcab34746425c24b8e959f2f1b4d85f89b3d2850dca",
-    "lever_arm_report.md": "512ef1d7614d81b8f1acc2688122d2b7268ca87d6a09b859e4945f3750525937",
-    "lever_arm_runs.csv": "82cd5f8284ea9c35d8ca006395f824656516bb39dd5f4505de4088aa20b0bced",
-    "lever_arm_summary.csv": "e2e570131f3f3dd76e3872057dbe766449d3b0c3c90ec2ca554aa719235b0355"
+    "carma_lever_arm_cutoff.svg": "42246c6766606ce2087debaa4b3a0f1a62bbec2b128eeee75eb9673f3f2f8fec",
+    "carma_lever_arm_penalty.svg": "efa5f9974c2133b5323297fc672e7264f656b980b329838df36d479bb83daf7b",
+    "carma_lever_arm_sea_state.svg": "9b0c21099dbd18ef42047bef5c436df3dce96717eb09ad188d47dfe45f273a1b",
+    "carma_lever_arm_tilt.svg": "87aeb23b6c318da52d5fb082f4256ae1facd6c77936b56d210b5ac255549f36c",
+    "carma_lever_arm_yaw.svg": "844d3c8e35a8362b7fd541870e66497bfb951d541a76cf5dca0879aa602c7227",
+    "lever_arm_cutoff_runs.csv": "e579923733fcd724cfb32f651fd06037320deff656f88d763b33939abf7225b4",
+    "lever_arm_cutoff_summary.csv": "ea327396609c664f5415dae3859b6adb5cb5f56562adbb6be3b182973cc62241",
+    "lever_arm_report.md": "e8ff0a925dfddd4a99f617546cdc8e51bda6ba3eeacb19e8878ba4b813097a1d",
+    "lever_arm_runs.csv": "efecd07e23486edb1c6a9d69ec7d53f9fe79e609bfcd52a2e59ad1738103b01a",
+    "lever_arm_summary.csv": "8efb450d7eb7d8eb4632a97490d01a087e8e507c15e13f4424817ab37adc747f"
   },
   "filters": {
     "carma3": "A41",
@@ -79,31 +79,28 @@
   },
   "mode": "full",
   "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
-  "regeneration_receipt": {
-    "artifact_id": 14003119369,
-    "presentation_normalization": "SVG trailing whitespace removed; numerical replay rows unchanged",
-    "prior_summaries": "baseline-063017d4",
-    "source_head": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
-    "workflow_run": 43347750720
-  },
   "scoring_window_sec": 900.0,
-  "simulation_data": "oceanography-waves-lib v1.2.3 vessel-rao-28ft",
+  "simulation_data": "oceanography-waves-lib v1.3.0 vessel-rao-28ft-5kn",
   "simulation_provenance": {
-    "archive": "sim-data-files-vessel-rao-28ft.zip",
-    "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "324e28cf77cbef9dc1c4bed6e0d8ce54c5c805769384e5997d97a4824882baf3",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 120.0,
     "input_sha256": {
-      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
-      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
-      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
-      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
-      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
-      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
-      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
-      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "145f81c7840aedfa3aaec5f7cb27f279420fce2ccfc070f0266b0a9d249f1073",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "47a238317dbebdf0acc621c38afa7df3403d74487f546f20810fd0ce68d08a33",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "f99516359ff0ba67e618c4b39911780ecbe6d376d6a8a35644f770742c9c9bc8",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "1b5bd16ebeb705f591f6d791240012bf88991bd0dffa0f7a6b02cb97045a61c4",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "000c45b12a8c905ad9b90c162f41510cecf41b3acdbd374f57f32a583a9f168b",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "78cd38f09aebd91991f2f1786a985b51fc3f5439c95e8dc7eab750121828462b",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "846f4f98b6d0d9d271b3064290ee7c569dcde6fdfb62d0d4ccb300d46fd6dff1",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e0cfb349504440c8ccd3e628776452997fc5e763ff1c515b02df344e59bd88bc"
     },
-    "motion_model": "VESSEL_RAO_28FT",
-    "release": "v1.2.3"
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.3.0",
+    "speed_kn": 5.0
   },
-  "source_commit": "f8618df08cd9c2854dd1632be1a7a3728a562863",
+  "source_commit": "1201f2c15274ee95fc230c77a280c2d8ec8ee47f",
   "study": "CARMA IMU lever-arm installation"
 }

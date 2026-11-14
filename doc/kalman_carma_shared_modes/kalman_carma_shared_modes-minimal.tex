@@ -85,7 +85,7 @@ $\times$ 30 seeds the coupled 27-state filter lowers the 3-D position error
 of the baseline on 25 seas (median $3.2\,\%$, up to $15.8\,\%$), stays
 consistent, and withdraws every deliberately wrong prior; it is $58\,\%$
 worse on a hull whose heave response is half the prior's, an over-coupling
-of the excitation mapping. Gated on the pinned dataset, its 3-D error is
+of the excitation mapping. On the archived zero-speed dataset, its 3-D error is
 7--9\,\% below TFG-CARMA3's. On the ESP32-S3 it needs 1.9 times the
 baseline's multiply-adds per sample and \SI{12.5}{kB} of filter memory. The
 minimal stochastic order of the three-axis law is
@@ -621,7 +621,7 @@ turned priors cost 21--23\,\%. A coupling frozen at 400\,s in the keel frame
 through $90^\circ$ turns gives 25.4\,mm (estimated: 25.2, A41: 25.7).
 
 \begin{table}[!t]
-\caption{Regression gates of the dataset replay (eight scored records,
+\caption{Archived zero-speed v1.2.3 regression measurements (eight scored records,
 default seeds, magnetometer on): worst value over the records for CSM, its
 fitted bar (worst plus about 0.5\,\%, the repository's convention, gated in
 \texttt{run\_tests.sh}), and TFG-CARMA3 (T41, its gated Legacy excitation;
@@ -633,8 +633,9 @@ and with Evidence excitation, as CSM uses).}
 \end{adjustbox}
 \end{table}
 
-\paragraph{Dataset replay and regression gates}
-The eight scored records of the pinned dataset are replayed with the seeds,
+\paragraph{Archived zero-speed dataset replay and gates}
+These retained v1.2.3 zero-speed measurements predate the underway baseline
+reported above. The eight scored records were replayed with the seeds,
 sensor model and adapter configuration of every CARMA filter
 (\cref{tab:dataset}). CSM is gated by its own bars (\cref{tab:gates}), and
 all eight records pass. Against TFG-CARMA3 (two-frame Lie group,
@@ -669,13 +670,15 @@ along the coupling to applied coherence 0.8, and the TFG companion study
 compares the policies.
 
 \begin{table*}[!t]
-\caption{Dataset replay (pinned oceanography-waves-lib records, default
+\caption{Archived zero-speed dataset replay (v1.2.3 records, default
 seeds, Evidence excitation): heave RMS in \% of $H_s$ / 3-D RMS in \% of the
 reference maximum, CSM and CSM with the coupling off (A41).}
 \label{tab:dataset}
 \centering\small
 \InputPart{csm-dataset.tex-part}
 \end{table*}
+
+\input{underway-baseline.tex-part}
 
 \section{Embedded Efficiency}
 \label{sec:cost}

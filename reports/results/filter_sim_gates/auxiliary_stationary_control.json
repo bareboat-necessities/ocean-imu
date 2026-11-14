@@ -1,0 +1,134 @@
+{
+  "archive": "sim-data-files-vessel-rao-28ft.zip",
+  "release": "v1.2.3",
+  "archive_sha256": "87e3cee9505439ec3c0a3ea8c7516789a8f48e3412314c1dcd483894908d433c",
+  "input_sha256": {
+    "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "6a8a27234cb8fe3b1ecd524d2c13a9ebd029d584652f4212023ba974bd218e03",
+    "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "cd8e8ea89123773e7d8dcf7ac8712d780528c6ff02436b0f40b4d1a6a1bb97e0",
+    "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11e29a93ad1084b02af116311d194416567fa6bc20ac9569f5471f97b3d9f8bb",
+    "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "f147cba9d14b87d0e1af4d3e434196312d91295cd40b9a9d738e2919e60cdaa7",
+    "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "a1a4fff90e99a5be68f7767b2865db317e413c87df8e942440c6f6ca1520cf0c",
+    "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "3db45e87b465aed441637ba7d7d8b67c3944416a784ea9aef6ce57e9360e72e4",
+    "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f7d56bcfe9f901727e3dd1e21e61144d666943f6a74e2c1b5f4cc13d0cf580f2",
+    "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "793c3f6fd08bef8c980da53f7b77fc2f4e60914fe1e652f47ed5a7996d9a9fa1"
+  },
+  "role": "fresh same-executable stationary controls for auxiliary observers; diagnostic only, never the default replay dataset",
+  "protocol": {
+    "ahrs": "trailing 60 s attitude RMS; one input per process; unchanged fixed per-record noise seeds; gate misses retained",
+    "nlo": "trailing 900 s raw heave RMS",
+    "common": "200 Hz, full 1200 s, production sensor and initialization defaults"
+  },
+  "families": {
+    "ahrs": {
+      "binary_sha256": "dceaec6ba795792b137794d7f916bffe6aece8493cdc12252ce0800e71495cae",
+      "exit_codes": [
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      "log_sha256": "fe64ab98a0fbdb459db7ee543fe91e0da3c03c4e0f892aab45e03668c6071dbb",
+      "records": [
+        {
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "roll": 0.0325949,
+          "pitch": 0.131585,
+          "yaw": 0.313051
+        },
+        {
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "roll": 0.234754,
+          "pitch": 1.11232,
+          "yaw": 2.63215
+        },
+        {
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "roll": 0.778108,
+          "pitch": 3.46833,
+          "yaw": 8.22996
+        },
+        {
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "roll": 0.791152,
+          "pitch": 4.61286,
+          "yaw": 10.8705
+        },
+        {
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "roll": 0.0295641,
+          "pitch": 0.119142,
+          "yaw": 0.283105
+        },
+        {
+          "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+          "roll": 0.206664,
+          "pitch": 0.974975,
+          "yaw": 2.30576
+        },
+        {
+          "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+          "roll": 0.689002,
+          "pitch": 3.11684,
+          "yaw": 7.38702
+        },
+        {
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "roll": 0.932953,
+          "pitch": 5.3324,
+          "yaw": 12.6579
+        }
+      ]
+    },
+    "nlo": {
+      "binary_sha256": "0608e38bf884028f62c1e6c46d39a9e61dfb59dfe234465e8de4f060cce93fcc",
+      "exit_codes": [
+        0
+      ],
+      "log_sha256": "fa4b1a6d4ef49391506cf173005d7870c27e7fc8d397c9de0bbdcd7dd25e88e4",
+      "records": [
+        {
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "disp_z_pct_hs": 6.92255
+        },
+        {
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "disp_z_pct_hs": 6.89986
+        },
+        {
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "disp_z_pct_hs": 6.88099
+        },
+        {
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "disp_z_pct_hs": 6.93681
+        },
+        {
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "disp_z_pct_hs": 7.32231
+        },
+        {
+          "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+          "disp_z_pct_hs": 6.82569
+        },
+        {
+          "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+          "disp_z_pct_hs": 6.85257
+        },
+        {
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "disp_z_pct_hs": 6.98315
+        }
+      ]
+    }
+  },
+  "source_commit": "f7818224d515c48b40718cc89bfbbf7cc027500c",
+  "moving_measurements_sha256": "7c67dbe69b0452d7e7e006f40a2aa4e9e339c9db690eb723b5473d4870d35211",
+  "environment": {
+    "W3D_REFERENCE_MOTION": "stationary",
+    "W3D_WRITE_TIMESERIES": "0"
+  }
+}

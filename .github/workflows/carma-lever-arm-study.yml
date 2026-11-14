@@ -3,6 +3,7 @@ name: carma-lever-arm-study
 on:
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
       - "src/kalman_carma/**"
       - "src/kalman_common/ImuLeverArm.h"
       - "src/util/W3dSimCommon.*"
@@ -43,15 +44,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            g++ make libeigen3-dev python3-numpy python3-matplotlib
+            g++ make libeigen3-dev python3-numpy python3-matplotlib python3-scipy
 
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
           mkdir -p /tmp/carma-lever-data
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d /tmp/carma-lever-data >/dev/null
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d /tmp/carma-lever-data >/dev/null
 
       - name: Build the lever-arm simulator and checks
         run: make -C tests/kalman_carma carma_lever_arm-sim carma_lever_arm-test
@@ -60,8 +61,7 @@ jobs:
         run: ./carma_lever_arm-test
         working-directory: tests/kalman_carma
 
-      # Against the committed evidence, before the re-run replaces it; the
-      # re-run is held to the committed ratios by --compare-to below.
+      # Check committed evidence before the re-run replaces it.
       - name: Unit-test the study and its documentation contract
         run: python3 tests/validation/test_carma_lever_arm_study.py
 
@@ -71,7 +71,7 @@ jobs:
         if: ${{ (inputs.mode || 'full') == 'full' }}
         run: |
           mkdir -p /tmp/carma-lever-committed
-          for name in lever_arm_summary.csv lever_arm_cutoff_summary.csv; do
+          for name in manifest.json lever_arm_summary.csv lever_arm_cutoff_summary.csv; do
             git show "HEAD:reports/results/carma_lever_arm_study/$name" \
               > "/tmp/carma-lever-committed/$name"
           done
@@ -84,7 +84,7 @@ jobs:
         run: |
           MODE="${{ inputs.mode || 'full' }}"
           COMPARE=""
-          if [ "$MODE" = "full" ]; then
+          if [ "$MODE" = "full" ] && python3 -c 'import json, sys; sys.path.insert(0, "tools"); from sim_dataset import REFERENCE_CSV_SHA256; baseline = json.load(open("/tmp/carma-lever-committed/manifest.json")); sys.exit(baseline.get("simulation_provenance", {}).get("input_sha256") != REFERENCE_CSV_SHA256)'; then
             COMPARE="--compare-to /tmp/carma-lever-committed"
           fi
           python3 -u tools/carma_lever_arm_study.py \

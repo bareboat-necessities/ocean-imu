@@ -37,6 +37,7 @@ from typing import Any, Iterable, Mapping, Sequence
 import numpy as np
 
 import ou_evidence_provenance as evidence_provenance
+from underway_reference import change_track
 
 import importlib.util as _ilu  # noqa: E402
 from pathlib import Path as _Path  # noqa: E402
@@ -59,7 +60,7 @@ SURROGATE_MAX_FREQ_HZ = 1.60
 SIMULATOR_GATE_WINDOW_SEC = 900.0
 WAVE_PHASE_METHOD = (
     "common random phase on the 0.02-1.60 Hz world-velocity and Euler "
-    "spectra; displacement and acceleration analytically derived from "
+    "spectra about the retained 5 kn/120 s cruise track; displacement and acceleration analytically derived from "
     "velocity; body IMU and quaternion reconstructed"
 )
 TRANSITION_METHOD = (
@@ -436,7 +437,7 @@ def rebuild_body_imu(columns: Sequence[str], data: np.ndarray) -> np.ndarray:
 
 
 def phase_randomize_wave(
-    columns: Sequence[str], data: np.ndarray, seed: int
+    columns: Sequence[str], data: np.ndarray, seed: int, *, underway: bool = True
 ) -> np.ndarray:
     """Build a band-limited, kinematically closed phase surrogate.
 
@@ -454,6 +455,9 @@ def phase_randomize_wave(
     velocity/attitude auto- and cross-spectra are preserved while the complete
     translational realization is kinematically consistent by construction.
     """
+
+    if underway:
+        data = change_track(columns, data, -1)
 
     velocity_indices = _column_indices(columns, ("vel_x", "vel_y", "vel_z"))
     displacement_indices = _column_indices(
@@ -518,15 +522,17 @@ def phase_randomize_wave(
     result[:, attitude_indices] = np.fft.irfft(
         attitude_spectrum, n=count, axis=0
     )
+    if underway:
+        result = change_track(columns, result, 1)
     return rebuild_body_imu(columns, result)
 
 
 def scale_wave_motion(
-    columns: Sequence[str], data: np.ndarray, scale: float
+    columns: Sequence[str], data: np.ndarray, scale: float, *, underway: bool = True
 ) -> np.ndarray:
     if not (math.isfinite(scale) and scale > 0.0):
         raise ValueError("wave scale must be positive")
-    result = data.copy()
+    result = change_track(columns, data, -1) if underway else data.copy()
     linear_names = (
         "disp_x", "disp_y", "disp_z",
         "vel_x", "vel_y", "vel_z",
@@ -538,6 +544,8 @@ def scale_wave_motion(
         index = columns.index(name)
         mean = float(np.mean(result[:, index]))
         result[:, index] = mean + scale * (result[:, index] - mean)
+    if underway:
+        result = change_track(columns, result, 1)
     return rebuild_body_imu(columns, result)
 
 
@@ -2393,7 +2401,7 @@ def _direction_table(
         r"",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the v1.2.3 incident propagation azimuth. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
+        r"  \caption{Ten-seed OU--III wave-direction results over the final \SI{900}{s}, against the generator azimuth of each record. The propagation axis is defined modulo \SI{180}{\degree}, so $|\Delta\theta|$ is the absolute axial error of the circular-mean estimate and $\theta_{\mathrm{RMSE}}$ is the sample-wise axial RMS error. \emph{Sense} is a genuine correctness rate: the estimator's directed propagation vector, with the vessel heading removed, scored against the physical propagation direction of the record, which is the recorded incident propagation azimuth. \emph{Unresolved} is the share below the confidence and amplitude thresholds. The FORWARD/BACKWARD classes the estimator exports are relative to the axis representative it happens to return and invert under a \SI{180}{\degree} heading change, so they are not scored here. Entries are mean $\pm$ sample standard deviation over the seed triplets.}",
         r"  \label{tab:ou_mc_direction}",
         r"  \footnotesize",
         r"  \setlength{\tabcolsep}{3.6pt}",
@@ -2436,6 +2444,7 @@ def _direction_table(
             float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"])
             for s in stationary
             if (s, "OU_III", "Adaptive", metric) in indexed_summary
+            and math.isfinite(float(indexed_summary[(s, "OU_III", "Adaptive", metric)]["mean"]))
         ]
 
     def pooled(metric: str) -> float:
@@ -2446,17 +2455,20 @@ def _direction_table(
         values = scenario_means(metric)
         return float(np.max(values)) if values else math.nan
 
+    def display(value: float, digits: int) -> str:
+        return f"{value:.{digits}f}" if math.isfinite(value) else "--"
+
     lines.extend(
         (
-            rf"\providecommand{{\OUValidationDirectionAbsError}}{{{pooled('dir_axis_abs_error_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionWorstAbsError}}{{{worst('dir_axis_abs_error_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionRMSE}}{{{pooled('dir_axis_rmse_deg'):.2f}}}",
-            rf"\providecommand{{\OUValidationDirectionDominant}}{{{pooled('dir_sense_dominant_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationDirectionUncertain}}{{{pooled('dir_sense_uncertain_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelCorrect}}{{{pooled('dir_travel_correct_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelWrong}}{{{pooled('dir_travel_wrong_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelUnresolved}}{{{pooled('dir_travel_unresolved_pct'):.1f}}}",
-            rf"\providecommand{{\OUValidationTravelAbsError}}{{{pooled('dir_travel_abs_error_deg'):.2f}}}",
+            rf"\providecommand{{\OUValidationDirectionAbsError}}{{{display(pooled('dir_axis_abs_error_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionWorstAbsError}}{{{display(worst('dir_axis_abs_error_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionRMSE}}{{{display(pooled('dir_axis_rmse_deg'), 2)}}}",
+            rf"\providecommand{{\OUValidationDirectionDominant}}{{{display(pooled('dir_sense_dominant_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationDirectionUncertain}}{{{display(pooled('dir_sense_uncertain_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelCorrect}}{{{display(pooled('dir_travel_correct_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelWrong}}{{{display(pooled('dir_travel_wrong_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelUnresolved}}{{{display(pooled('dir_travel_unresolved_pct'), 1)}}}",
+            rf"\providecommand{{\OUValidationTravelAbsError}}{{{display(pooled('dir_travel_abs_error_deg'), 2)}}}",
         )
     )
     return lines

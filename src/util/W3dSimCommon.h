@@ -672,6 +672,10 @@ std::shared_ptr<W3dLeverArm> w3d_lever_arm_from_env(float dt);
 // null stage, so callers need no branch of their own.
 void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm);
 
+// Dataset replays default to the pinned underway track; standalone synthetic
+// diagnostics explicitly select W3D_REFERENCE_MOTION=stationary.
+bool w3d_underway_reference_from_env();
+
 struct W3dSimulationOptions {
     float dt = 0.005f;
     bool with_mag = true;
@@ -679,6 +683,8 @@ struct W3dSimulationOptions {
     float mag_odr_hz = 25.0f;
     float temperature_c = 35.0f;
     bool write_timeseries = true;
+    // Replay convention only; synthetic stationary diagnostics can opt out.
+    bool underway_reference = false;
     std::string output_suffix_with_mag = "_fusion";
     std::string output_suffix_no_mag = "_fusion_nomag";
     // Optional IMU installation lever arm.  Null is the default and leaves
@@ -850,6 +856,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
 
     AdapterT adapter(with_mag, sigma_a_init, sigma_g, sigma_m);
     W3dSimulationOptions options;
+    options.underway_reference = w3d_underway_reference_from_env();
     options.dt = dt;
     options.with_mag = with_mag;
     options.add_noise = add_noise;

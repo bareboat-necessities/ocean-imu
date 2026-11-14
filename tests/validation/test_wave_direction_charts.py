@@ -1,6 +1,7 @@
 """Publication contract for figures and integrated validation in kalman-wave-dir.tex."""
 
 import csv
+import math
 import re
 import unittest
 from pathlib import Path
@@ -84,7 +85,7 @@ class WaveDirectionChartContractTests(unittest.TestCase):
             r"^\s*(JONSWAP|PM--Stokes)\s*&\s*([0-9.]+)\s*&\s*"
             r"[0-9.]+\s*&\s*[0-9.]+\s*&\s*"
             r"([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*([0-9.]+)\s*&\s*"
-            r"(-?[0-9.]+)\s*&\s*([0-9.]+/[0-9.]+/[0-9.]+)\s*\\\\$",
+            r"(-?[0-9.]+|\{--\})\s*&\s*([0-9.]+/[0-9.]+/[0-9.]+)\s*\\\\$",
             re.MULTILINE,
         )
         rows = row_pattern.findall(source)
@@ -138,10 +139,11 @@ class WaveDirectionChartContractTests(unittest.TestCase):
         for scenario, (case, hs) in scenario_labels.items():
             axis_mean, axis_std, _ = metrics[(scenario, "dir_axis_rmse_deg")]
             travel_mean, travel_std, travel_n = metrics[(scenario, "dir_travel_rmse_deg")]
+            axis_cell = rf"\${axis_mean:.2f}\\pm{axis_std:.2f}\$" if math.isfinite(axis_mean) else "--"
+            travel_cell = rf"\${travel_mean:.2f}\\pm{travel_std:.2f}\$" if math.isfinite(travel_mean) else "--"
             expected = (
                 rf"{re.escape(case)}\s*&\s*{re.escape(hs)}\s*&\s*"
-                rf"\${axis_mean:.2f}\\pm{axis_std:.2f}\$\s*&\s*"
-                rf"\${travel_mean:.2f}\\pm{travel_std:.2f}\$\s*&\s*{travel_n}\s*\\\\"
+                rf"{axis_cell}\s*&\s*{travel_cell}\s*&\s*{travel_n}\s*\\\\"
             )
             self.assertRegex(results, expected)
 

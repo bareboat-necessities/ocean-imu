@@ -466,7 +466,11 @@ mode it therefore has 4\,\% lower tilt and 13\,\% lower yaw error than
 CARMA3, the misfit pattern of \cref{sec:bench}. The mode has one cost
 specific to TFG-CARMA3, in still-water arithmetic (\cref{sec:cost}).
 
-\section{Pinned Vessel-RAO Dataset}
+\section{Archived Stationary-Vessel Dataset}
+The multi-seed results in this section use the original zero-speed v1.2.3
+records. They are retained as that declared experiment; the current
+5 kn deterministic baseline is reported separately above.
+
 \label{sec:dataset}
 The eight scored records of the pinned 28\,ft vessel-RAO dataset are a second
 simulator with its own sensor models. Over 80 paired replays (8 records,
@@ -476,6 +480,8 @@ simulator with its own sensor models. Over 80 paired replays (8 records,
 on average. CARMA3's advantage over OU-III is unchanged; for example, on
 JONSWAP $H_s=\SI{1.5}{m}$ the heave error is 4.03\,\% of $H_s$ for OU-III
 against 2.21\,\% for both CARMA filters.
+
+\input{underway-baseline.tex-part}
 
 \section{Deterministic Replay}
 \label{sec:replay}

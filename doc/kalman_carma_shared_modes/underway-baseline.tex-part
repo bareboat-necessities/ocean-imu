@@ -1,0 +1,18 @@
+\section{Current Underway Replay Baseline}
+The current external-data baseline uses oceanography-waves-lib v1.3.0: a 28 ft estimated hull RAO moving at 5 kn with heading oscillating plus/minus 3 degrees about north every 120 s. Eight fixed JONSWAP and PM-Stokes records run for 1200 s at 200 Hz; the last 900 s are scored with default sensor and initialization seeds. Displacement and velocity truth are relative to the declared cruise track. All recorded specific force, turning acceleration, changing attitude and body rates reach the estimator unchanged. The 3-D denominator uses wave displacement, not forward travel. These deterministic regression measurements are not confidence intervals or sea trials. A dataset change is not an estimator improvement.
+
+\begin{center}\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrrr}
+\hline Filter & JONSWAP & PM--Stokes & 3-D & Yaw \\
+ & \%$H_s$ & \%$H_s$ & m & deg \\ \hline
+OU-II & 20.86 & 11.31 & 1.070 & 0.89 \\
+OU-III & 8.24 & 7.84 & 0.900 & 0.87 \\
+TFG & 7.82 & 7.48 & 0.911 & 1.63 \\
+CARMA & 4.19 & 4.67 & 0.449 & 0.94 \\
+Shared QMEKF & 3.55 & 3.70 & 0.364 & 0.99 \\
+TFG-CARMA & 4.19 & 4.67 & 0.449 & 0.93 \\
+Shared TFG & 3.55 & 3.70 & 0.364 & 0.95 \\
+TFG cubic & 8.25 & 8.02 & 1.579 & 3.05 \\
+Adaptive PII & 15.39 & 14.73 & -- & 8.23 \\
+\hline\end{tabular}\end{center}
+Each column reports its worst record; maxima need not come from the same sea. Production and interval-rate limits are qualified separately with a 0.5\% margin and upward rounding. The analytic hull uses encounter corrections, without hull-specific forward-speed hydrodynamics or steering dynamics.

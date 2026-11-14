@@ -16,3 +16,6 @@ motion about a local reference, not absolute navigation position.
 Externally referenced trials across hulls and headings, thermal and magnetic
 calibration, and evaluation of the full-state physical MSE remain priorities.
 Embedded execution establishes portability, not measured resource or deadline margins.
+
+Wind-heel separation remains future work and is not part of the evaluated
+wave-motion estimator.

@@ -178,9 +178,12 @@ class LeverArmCommittedEvidenceTests(unittest.TestCase):
                 self.assertLess(float(row["residual_rms_mps2"]),
                                 float(row["installed_rms_mps2"]))
 
-    def test_the_swept_derivative_band_is_two_sided(self):
+    def test_the_swept_force_residual_exposes_lag_and_noise(self):
         rows = sorted(load(CUTOFF_SUMMARY), key=lambda row: float(row["cutoff_hz"]))
-        ratios = [float(row["disp_3d_ratio_to_baseline"]) for row in rows]
+        # Downstream navigation errors can cancel other residuals. The band
+        # tradeoff belongs to the actual force reconstruction, not its 3D argmin.
+        ratios = [float(row["residual_fraction"]) for row in rows]
+        self.assertTrue(all(math.isfinite(r) and r >= 0 for r in ratios))
         best = min(range(len(ratios)), key=lambda i: ratios[i])
         self.assertGreater(best, 0, "the narrowest band should not be the best")
         self.assertLess(best, len(ratios) - 1, "the widest band should not be the best")

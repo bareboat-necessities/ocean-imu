@@ -1,16 +1,16 @@
 % Generated from the locked deterministic regression baseline.
 \begin{table}[!t]\centering\footnotesize
-\caption{TFG shared-mode deterministic quality gates. Bias and 3-D position percentages use the reference maxima defined in the text.}
+\caption{TFG shared-mode production gates on the 5 kn underway records. Bias and 3-D position percentages use the reference maxima defined in the text.}
 \label{tab:tfg_shared_gates}
 \begin{tabular}{lrr}\toprule Quantity&Measured worst&Limit\\\midrule
-JONSWAP heave [\% $H_s$]&2.4545&2.4669\\
-PM--Stokes heave [\% $H_s$]&2.4031&2.4152\\
-Heading [deg]&0.7592&0.7631\\
-Roll [deg]&0.3567&0.3585\\
-Pitch [deg]&0.2176&0.2188\\
-JONSWAP 3-D position [\%]&4.4133&4.4354\\
-PM--Stokes 3-D position [\%]&4.8823&4.9068\\
-Accelerometer Z bias [\%]&4.1579&4.1787\\
-Accelerometer 3-D bias [\%]&82.9956&83.4106\\
-Gyroscope 3-D bias [\%]&12.2845&12.3460\\
+JONSWAP heave [\% $H_s$]&3.55054&3.56830\\
+PM--Stokes heave [\% $H_s$]&3.70218&3.72069\\
+Heading [deg]&0.95216&0.95692\\
+Roll [deg]&0.21196&0.21302\\
+Pitch [deg]&0.20069&0.20170\\
+JONSWAP 3-D position [\%]&6.42164&6.45375\\
+PM--Stokes 3-D position [\%]&6.91621&6.95079\\
+Accelerometer Z bias [\%]&3.92067&3.94028\\
+Accelerometer 3-D bias [\%]&56.41980&56.70190\\
+Gyroscope 3-D bias [\%]&12.55900&12.62180\\
 \bottomrule\end{tabular}\end{table}

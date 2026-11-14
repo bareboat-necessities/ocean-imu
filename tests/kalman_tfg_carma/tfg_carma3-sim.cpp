@@ -36,18 +36,7 @@ using namespace carma3_sim;
 // (default seeds, magnetometer on), each at the measured worst value plus
 // about 0.5 %, the margin kalman_ou_iii-sim, kalman_tfg-sim and carma3-sim
 // use.
-constexpr W3dFailureLimits kT41RegressionBars{
-    .err_limit_percent_z_jonswap   = 2.47293f, // worst 2.46062 (jonswap H0.27)
-    .err_limit_percent_z_pmstokes  = 2.45206f, // worst 2.43985 (pmstokes H4)
-    .err_limit_yaw_deg             = 0.76680f, // worst 0.762983 (jonswap H4)
-    .err_limit_roll_deg            = 0.35725f, // worst 0.355469 (pmstokes H8.5)
-    .err_limit_pitch_deg           = 0.21418f, // worst 0.213105 (pmstokes H8.5)
-    .err_limit_percent_3d_jonswap  = 4.93003f, // worst 4.90549 (jonswap H8.5)
-    .err_limit_percent_3d_pmstokes = 5.30339f, // worst 5.277 (pmstokes H8.5)
-    .acc_z_bias_percent            = 4.19388f, // worst 4.17301 (pmstokes H8.5)
-    .bias_3d_percent               = 82.61211f, // worst 82.2011 (pmstokes H8.5, accel)
-    .gyro_bias_3d_percent          = 12.40030f, // worst 12.3386 (pmstokes H8.5, gyro)
-};
+constexpr auto kT41RegressionBars = ocean_imu::sim::current_limits::interval::tcarma;
 
 // The no-transport variant prints the same summary but has no fitted bars.
 constexpr float kUngated = 1.0e9f;

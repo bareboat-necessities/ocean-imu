@@ -144,11 +144,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft.zip
+          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
 
       - name: Unpack simulation data (${{ matrix.dir }})
         run: |
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
       # Retries and per-connection timeouts, because the archive stalling is
       # what actually burns the twenty minutes when this step fails.

@@ -18,7 +18,7 @@ Quiet water remains admissible. There is no minimum wave amplitude.
 The limit caps acceleration change at 0.6 m/s^2 across the longest admitted
 0.006 s IMU interval. It is a selected certification limit, not a universal
 law for all vessels or an assertion that every installation is qualified.
-For physical scale, the primary reference generator
+For historical physical scale, the zero-speed reference generator
 `oceanography-waves-lib` tag v1.2.1, commit
 `e442150682f560384be427df4cc7815956a091c5`, represents CG translation as a finite
 sum of harmonics with coefficients `c_n` and frequencies `omega_n`. Its
@@ -27,7 +27,7 @@ Evaluating the unmodified `VesselRao::transfer`, `incidentHarmonics` and
 `regularWaveHarmonics` for its 20 declared scenarios gives a largest envelope
 about 29.1126 m/s^3, for the PM 11.4-s case. This floating coefficient screening
 supports the scale of the selected limit; the proof below does not depend on
-that screening or claim measured-hull qualification. Actual deployments must
+that screening or claim measured-hull qualification. This screening does not qualify the v1.3.0 moving-vessel histories. Actual deployments must
 certify their continuous-history jerk bound, not infer it from finite samples.
 
 The old 200-Hz witness has jerk amplitude `400*pi*2g/sqrt(5) > 10500 m/s^3`.

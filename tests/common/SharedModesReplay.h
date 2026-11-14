@@ -34,7 +34,7 @@ public:
         // Unset variables retain the deployed wrapper configuration.
         auto& filter = impl_.fusion().raw();
         // Explicit sensor contract for diagnostic replays. Keep the original
-        // interval-rate regression protocol and its thresholds unchanged.
+        // interval-rate sampling protocol, with its separately measured bars.
         const char* gyro_input = std::getenv("W3D_CSM_GYRO_INPUT");
         const std::string gyro_mode = gyro_input ? gyro_input : (legacy_sampling_protocol ? "interval" : "defaults");
         using Mode = ocean_imu::kalman::filter_detail::GyroSampleMode;
@@ -151,7 +151,7 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars,
         if (require_gates) {
             for (const char* key : {"W3D_ENGINE_RPM", "W3D_CSM_GUARD_HZ", "W3D_CSM_GUARD_RACC_GAIN",
                                     "W3D_IMU_LEVER_ARM_M", "W3D_IMU_LEVER_ARM_MODEL",
-                                    "W3D_TUNING_MODE", "W3D_AW_COV_SYNC", "W3D_ALL_WAVE_TYPES"})
+                                    "W3D_TUNING_MODE", "W3D_AW_COV_SYNC", "W3D_ALL_WAVE_TYPES", "W3D_REFERENCE_MOTION"})
                 if (std::getenv(key)) throw std::invalid_argument(std::string("--regression forbids ") + key);
             if (window != 900.0f) throw std::invalid_argument("--regression requires a 900 s score window");
         }

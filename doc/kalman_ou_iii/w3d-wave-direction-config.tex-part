@@ -37,7 +37,7 @@ unresolved even while the axis is valid.  This separation is intentional: a
 well-determined propagation plane is not sufficient evidence for choosing one
 of its two directed senses.
 
-The vessel simulators additionally enable the known v1.2.1 response profile
+The vessel simulators additionally enable the analytical response profile originally introduced in v1.2.1
 in \texttt{VesselRaoEqualizer}. It uses the guarded accelerometer and matches
 horizontal and heave responses only in the direction branch. The generic
 filter leaves this profile disabled until the hull response is configured;
