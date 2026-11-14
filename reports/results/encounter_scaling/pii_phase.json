@@ -1817,5 +1817,6 @@
     }
   ],
   "git_checkout_is_dirty": true,
-  "git_commit_scope": "Base checkout; the exact modified source snapshot is bound by source_sha256. Publication commit follows the experiment."
+  "git_commit_scope": "Base checkout; the exact modified source snapshot is bound by source_sha256. Publication commit follows the experiment.",
+  "published_source_commit": "c94389a3bcedb632abd025e7db8d7dd367c94b08"
 }

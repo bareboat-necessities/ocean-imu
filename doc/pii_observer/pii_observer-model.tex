@@ -448,8 +448,8 @@
     \end{align}
     where the base values \((r_0,\tau_{a,0},\tau_{d,0},k_{b,0})\) are the
     configured reference parameters, not the currently active ones, so the
-    schedule cannot ratchet. Each commanded parameter is clamped to configured
-    bounds, then the active parameters move toward the commands via one-pole
+    schedule cannot ratchet. The acceleration command additionally receives the phase guard below.
+    Each commanded parameter is clamped to configured bounds, then the active parameters move toward the commands via one-pole
     smoothing:
     \begin{equation}
         \theta^{+}
@@ -459,6 +459,8 @@
     for each scheduled parameter \(\theta\), after which \(k_v,k_p,k_s\) are
     rebuilt from the new active \(r\). The two bias-channel schedules exist only
     when \texttt{WithBias=true}.
+
+    \input{pii-encounter-phase.tex-part}
 
     \subsection{Interpretation of the Scheduling Signs}
 
@@ -760,7 +762,7 @@
 
     \begin{table}[t]
         \centering
-        \caption{Scheduling exponents and bounds used in the simulation}
+        \caption{Base scheduling exponents and bounds; the acceleration command also receives the encounter-period phase guard}
         \label{tab:exponents}
         \small
         \begin{tabular}{@{}lrrl@{}}

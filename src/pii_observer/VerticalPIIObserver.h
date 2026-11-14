@@ -176,12 +176,6 @@ public:
         T tau_a_freq_exp  = T(-0.25);
         T tau_a_sigma_exp = T(-1.20);
 
-        // Keep the empirical noise smoothing, but do not let its LPF be
-        // faster than the minimum-error phase match to the PII wave response.
-        // A following sea lowers omega while its acceleration also falls;
-        // the old amplitude schedule could then pin tau_a at its short limit.
-        bool match_accel_filter_phase = true;
-
         // Optional scheduling of bias-trend channel.
         // Conservative defaults:
         //   - tau_d becomes larger when sigma is high
@@ -204,6 +198,12 @@ public:
 
         T kb_min    = T(5e-6);
         T kb_max    = T(6e-5);
+
+        // Keep the empirical noise smoothing, but do not let its LPF be
+        // faster than the minimum-error phase match to the PII wave response.
+        // A following sea lowers omega while its acceleration also falls;
+        // the old amplitude schedule could then pin tau_a at its short limit.
+        bool match_accel_filter_phase = true;
     };
 
     struct Snapshot {

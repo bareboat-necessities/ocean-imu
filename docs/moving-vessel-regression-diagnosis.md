@@ -50,6 +50,16 @@ visible; the fix does not improve every metric on every record. Production
 and interval-rate limits are remeasured using the documented rule and the
 previous production ceilings.
 
+## Encounter-period phase correction
+
+The PII library now retains the empirical noise-smoothing floor and adds an
+analytical phase match between the acceleration filter and its PII restoring
+core. Across all eight moving records and three sensor seeds, all 24 pairs
+improve: mean heave 12.13 → 8.73% Hs; worst 15.39 → 10.49%. The zero-speed
+worst case is unchanged; the largest small-wave cost is 0.316 mm RMS.
+See the [scaling study](encounter-scaling-regressions.md) for the derivation,
+per-record comparisons and rejected cutoff/clamp experiments.
+
 ## Remaining regressions
 
 OU-III, TFG, Adaptive PII and NLO still show worse normalized heave on moving

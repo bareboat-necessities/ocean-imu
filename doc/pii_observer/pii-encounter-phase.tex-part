@@ -1,0 +1,62 @@
+\subsection{Encounter-period phase matching}
+
+The empirical acceleration-amplitude schedule alone can hold
+$\tau_a$ at its \SI{0.15}{s} lower bound when a following sea lowers the
+acceleration while lengthening the encounter period. The restoring PII
+core then has more phase lead relative to the wave, without a matching
+increase in acceleration-filter lag.
+
+For the frozen continuous-time core, omitting its separate bias channel,
+the transfer from true displacement to reconstructed displacement before
+acceleration filtering is
+\begin{equation}
+ C=\left(\frac{i\omega}{r_{\mathrm{cmd}}+i\omega}\right)^3=A+iB,
+ \qquad \omega=2\pi f_f.
+\end{equation}
+With $x=\omega\tau_a$, the squared reconstruction error is
+\begin{equation}
+ E(x)=\left|\frac{C}{1+ix}-1\right|^2
+ =\frac{(A-1)^2+(B-x)^2}{1+x^2}.
+\end{equation}
+On the positive-phase branch $A>0$, $B>0$, define
+$g=2A-|C|^2$. The positive minimizer has the stable form
+\begin{equation}
+ x_* = \frac{2B}{g+\sqrt{g^2+4B^2}},\qquad
+ \tau_{a,*}=\frac{x_*}{\omega}.
+\end{equation}
+The implemented command is
+\begin{equation}
+ \tau_{a,\mathrm{cmd}}=\clamp\!\left(
+ \max(\tau_{a,\mathrm{empirical}},\tau_{a,*}),
+ \tau_{a,\min},\tau_{a,\max}\right).
+\end{equation}
+Outside that branch the empirical command is retained. Existing stronger
+noise smoothing, the \SIrange{0.15}{0.90}{s} bounds, and the existing
+parameter EMA all remain. The already filtered measured frequency supplies
+$\omega$; neither simulated wave truth nor vessel speed enters the filter.
+The restoring-pole, bias and attitude laws are unchanged.
+\texttt{match\_accel\_filter\_phase=false} reproduces the preceding schedule.
+
+This frozen scalar calculation does not guarantee improvement for every
+broadband nonlinear execution. Replacing the empirical time constant
+outright worsened the largest zero-speed record; retaining its smoothing
+floor avoids that loss. The C++ regression checks the complex frequency
+response, bounds and an actual sinusoidal reconstruction independently of
+the algebra used by the scheduler.
+
+On the exact-clock v1.3.1 zero-speed and \SI{5}{kn} records, one executable
+runs both settings with identical default and held-out sensor seeds 7 and
+23. The 96 runs give 48 paired comparisons, each scored at full rate over
+the final \SI{900}{s}. All 24 moving-record pairs improve. Their mean
+normalized heave RMS falls from $12.128$ to $8.734\,\%H_s$; worst error falls
+from $15.387$ to $10.487\,\%H_s$. The zero-speed worst remains
+$9.148\,\%H_s$ across the three seeds ($8.749\,\%H_s$ on the default seed).
+The largest observed zero-speed cost is \SI{0.316}{mm} RMS on a small
+PM--Stokes record. Paired attitude metrics are identical. These finite
+records are not population confidence intervals.
+
+The complete paired values, input and source hashes, compiler information
+and the rejected cutoff studies are retained under
+\texttt{reports/results/encounter\_scaling}. The reproduction driver is
+\texttt{tools/encounter\_scaling\_study.py}; the model analysis and complete
+ablation discussion are in \texttt{docs/encounter-scaling-regressions.md}.
