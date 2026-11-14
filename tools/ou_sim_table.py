@@ -22,6 +22,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import math
 import os
 import re
 import subprocess
@@ -54,7 +55,7 @@ PATTERNS = {
     "angles": re.compile(
         rf"Angles RMS \(deg\): Roll=({FLOAT}) Pitch=({FLOAT}) Yaw=({FLOAT})"
     ),
-    "dir_mean": re.compile(rf"dir_deg_gen \([^)]*\): mean_circ=({FLOAT})"),
+    "dir_mean": re.compile(rf"dir_deg_gen \([^)]*\): mean_circ=({FLOAT}|nan)"),
     "sense": re.compile(
         rf"sense: \+AXIS=\d+ \(({FLOAT})%\) -AXIS=\d+ \(({FLOAT})%\)"
         rf" UNCERTAIN=\d+ \(({FLOAT})%\)"
@@ -147,10 +148,11 @@ def format_table(rows: list[tuple[str, float, dict[str, Any]]]) -> str:
 
         roll, pitch, yaw = row["angles"]
         toward, away, uncertain = row["sense"]
+        direction = f"{row['dir_mean'][0]:.1f}" if math.isfinite(row["dir_mean"][0]) else "{--}"
         lines.append(
             f"    {family:<10s} & {hs:.2f} & {row['z_rms_m'][0]:.3f} &"
             f" {row['z_pct_hs'][0]:.1f} & {roll:.2f} & {pitch:.2f} &"
-            f" {yaw:.2f} & {row['dir_mean'][0]:.1f} &"
+            f" {yaw:.2f} & {direction} &"
             f" {toward:.1f}/{away:.1f}/{uncertain:.1f} \\\\"
         )
 

@@ -1219,6 +1219,17 @@ echo "sense: +AXIS=11199 (93.325%) -AXIS=251 (2.09167%) UNCERTAIN=550 (4.58333%)
 
 
 class SixtySecondTableToolTests(unittest.TestCase):
+    def test_unresolved_direction_is_reported_as_unavailable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / 'sim'
+            binary.write_text(STUB_SIMULATOR.replace('mean_circ=-28.275', 'mean_circ=nan'))
+            binary.chmod(0o755)
+            row = sim_table.run_record(binary, Path(tmp) / 'record.csv')
+        self.assertTrue(math.isnan(row['dir_mean'][0]))
+        table = sim_table.format_table([('JONSWAP', .27, row)])
+        self.assertIn('{--}', table)
+        self.assertNotIn('nan', table.lower())
+
     def test_a_relative_binary_path_survives_the_child_directory_change(self):
         """The table generator has to accept the path the workflow passes.
 
