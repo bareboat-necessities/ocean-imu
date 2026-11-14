@@ -225,7 +225,7 @@ inline constexpr float MAG_HI_SLEW_TAU_SEC         = 45.0f;
 //   max tuning frequency       1.5 Hz       1.2 Hz       1.5 Hz
 //   max sigma_aw               6.0          4.0          6.0
 //   max pseudo-update period   250 ms       150 ms       250 ms
-//   still-water sigma decay    5 s (knob)   1 s          none
+//   still-water sigma decay    off (knob)   1 s          none
 //   tau_coeff                  0.95         1.0          1.0
 //   sigma_coeff                0.85         0.9          0.8
 //   horizontal a_w factor      P = 1.5      S = 1.0      S = 1.0

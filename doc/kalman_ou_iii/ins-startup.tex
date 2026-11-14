@@ -984,12 +984,12 @@ needed.
 
 The current moving-vessel ablations show distinct benefits. With the default
 calibration draw, continuous hard-iron correction reduces mean yaw RMS from
-2.241 to 0.708 degrees for OU--II, from 2.041 to 0.595 degrees for OU--III,
-and from 1.546 to 0.876 degrees for TFG. Across five calibration draws,
-however, 4 of 40 OU--II pairs and 8 of 40 OU--III pairs worsen. The matched
-TFG staged-startup arm has greater mean yaw error but slightly lower mean
-accelerometer-bias error than deployed startup. These ablations therefore
-support channel-specific benefits rather than uniform improvement.  The remaining limitation is also
+2.242 to 0.708 degrees for OU--II, from 2.044 to 0.592 degrees for OU--III,
+and from 1.554 to 0.863 degrees for TFG. Across five calibration draws,
+however, 4 of 40 OU--II pairs and 8 of 40 OU--III pairs worsen. Matched
+TFG staged startup changes mean yaw RMS from 0.863 to 2.603 degrees
+and mean accelerometer-bias RMS from 0.0726 to 0.0825~\si{m.s^{-2}}.
+These ablations therefore support channel-specific benefits rather than uniform improvement. The remaining limitation is also
 clear: additive hard-iron learning cannot identify soft-iron/misalignment error without
 additional heading excitation.  That boundary is preferable to hiding the problem
 inside a larger filter.  The resulting architecture is therefore best understood as

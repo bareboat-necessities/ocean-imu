@@ -11,8 +11,10 @@ result here is a stability, admissibility or hardware statement.
 
 **Summary.**  In the legacy chain, the wave excitation of both CARMA filters
 is set by positive floors, not by measured waves (section 1.1).  In still
-water, and on every sea whose vertical acceleration RMS is below 0.28 m/s^2,
-the CARMA driving noise is the 0.05 m/s^2 floor.  The prior frequency is the
+water the CARMA driving noise is the 0.05 m/s^2 floor.  The measurements in
+this document were taken with a stillness attenuation that also held every
+sea below 0.28 m/s^2 vertical RMS on that floor; the Legacy chain no longer
+applies it (section 1.1).  The prior frequency is the
 0.05 Hz clamp, reached because sensor noise pulls the period estimate there.
 Sensor noise and slow attitude and bias error are then reconstructed as
 displacement.
@@ -60,15 +62,20 @@ CARMA axis: frequency scale `kappa = f_tune / f_z,model`, `f_tune = c_tau/(2
 tau)`, and the driving amplitude.  The Legacy amplitude is
 
     sigma_CARMA = c_carma max(0.05 m/s^2, sigma_band,floor, 1e-4, sigma_aw / c_sigma),
-    sigma_aw    = c_sigma sqrt(max(V - V_floor, 1e-6) a_still),
+    sigma_aw    = c_sigma sqrt(max(V - V_floor, 1e-6)),
 
-`V` the tuner's EW variance of the period-scaled band `[0.5, 4] f_tune`,
+`V` the tuner's EW variance of the period-scaled band `[0.5, 4] f_tune` and
 `V_floor = (0.12 m/s^2)^2 g_band` the configured pre-band floor referred
-through the band's exact white-noise gain `g_band`, and `a_still =
-exp(-t_still / 1 s)` the stillness attenuation (`MarineWaveFrontEnd`'s
-stillness detector: an EMA of `(a/g)^2` against `8e-4`, i.e. vertical RMS
-below `0.28 m/s^2`).  The horizontal amplitude is `S_factor` times the
-vertical one.
+through the band's exact white-noise gain `g_band`.  The horizontal amplitude
+is `S_factor` times the vertical one.
+
+The measurements of this section and of the A arm were taken with a further
+factor `a_still = exp(-t_still / 1 s)` under the root: `MarineWaveFrontEnd`'s
+stillness detector, an EMA of `(a/g)^2` against `8e-4`, i.e. vertical RMS
+below `0.28 m/s^2`.  It is an acceleration threshold, so it also discarded
+the measured amplitude of real long-period seas.  Legacy no longer applies
+it: `V_floor` already removes still-water variance
+(`docs/moving-vessel-regression-diagnosis.md`).
 
 Four positive floors sit in this chain, and none is wave evidence:
 
@@ -76,7 +83,7 @@ Four positive floors sit in this chain, and none is wave evidence:
 |---|---|---|
 | CARMA amplitude floor | 0.05 m/s^2 | a constant |
 | configured pre-band noise floor | 0.12 m/s^2 per sample | 8.1x the simulated BMI270-class accelerometer (1.51 mg = 0.0148 m/s^2); referred through the band it is 35x the band variance measured in still water |
-| stillness attenuation | vertical RMS < 0.28 m/s^2 | an absolute acceleration threshold, independent of the sensor |
+| stillness attenuation (in these measurements only) | vertical RMS < 0.28 m/s^2 | an absolute acceleration threshold, independent of the sensor |
 | variance floor | 1e-6 (m/s^2)^2 | numerical |
 
 Measured on the benchmark (seed 1): in still water the band variance is

@@ -374,7 +374,8 @@ with
 The position coefficient is retained; the channel ratio is tuned to the
 28 ft dataset and checked on separate sensor draws.
 The correlation-time multiplier is $c_\tau=0.95$, and the
-stillness-envelope decay time is \SI{5}{s}. Gyroscope process-noise standard
+optional stillness-envelope attenuation is disabled by default; the
+noise-subtracted variance channel retains small, long-period wave energy. Gyroscope process-noise standard
  deviations supplied to the wrapper receive an empirical weight of $0.2$.
 This covariance tuning does not rescale measured angular rates or change the
 physical sensor-error assumptions. The simulation uses these library defaults.

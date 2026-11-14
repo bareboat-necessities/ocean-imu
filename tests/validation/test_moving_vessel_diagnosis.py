@@ -1,0 +1,170 @@
+"""Counterfactual construction and scoring of tools/moving_vessel_diagnosis.py."""
+from pathlib import Path
+import sys
+import argparse
+import contextlib
+import io
+import os
+import tempfile
+from unittest import mock
+import unittest
+
+import numpy as np
+import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
+import moving_vessel_diagnosis as mvd  # noqa: E402
+
+
+def synthetic_record(n=4000, period=3.0):
+    """Self-consistent wave record: heave/surge sinusoids, roll/pitch rocking."""
+    t = mvd.sample_times(n)
+    w = 2 * np.pi / period
+    frame = pd.DataFrame({'time': np.round(t, 2)})
+    for axis, amp, phase in (('x', 0.05, 0.3), ('y', 0.02, 1.1), ('z', 0.10, 0.0)):
+        frame[f'disp_{axis}'] = amp * np.sin(w * t + phase)
+        frame[f'vel_{axis}'] = amp * w * np.cos(w * t + phase)
+        frame[f'acc_{axis}'] = -amp * w * w * np.sin(w * t + phase)
+    roll, pitch = 0.02 * np.sin(w * t), 0.015 * np.cos(w * t)
+    # q_wb is world -> body: conjugate of body -> world Rx(roll) then Ry(pitch).
+    qx = np.column_stack((np.cos(roll / 2), np.sin(roll / 2), 0 * t, 0 * t))
+    qy = np.column_stack((np.cos(pitch / 2), 0 * t, np.sin(pitch / 2), 0 * t))
+    q_bw = mvd.qmul(qy, qx)
+    q_wb = q_bw * np.array([1, -1, -1, -1])
+    dq = np.gradient(q_wb, mvd.DT, axis=0)
+    gyro = 2 * mvd.qmul(q_wb, dq * np.array([1, -1, -1, -1]))[:, 1:]
+    mvd.set_body_fields(frame, q_wb, gyro)
+    return frame
+
+
+def body_consistency(frame):
+    residual = mvd.body_residuals(frame)
+    return residual['specific_force_residual_mps2'], residual['angular_rate_residual_radps']
+
+
+class TrackTest(unittest.TestCase):
+    def test_primitive_and_derivatives_match(self):
+        t = mvd.sample_times(24000 * 2)
+        p, v, a, heading, rate = mvd.track(t)
+        self.assertLess(np.abs(np.gradient(p, mvd.DT, axis=0) - v)[5:-5].max(), 1e-6)
+        self.assertLess(np.abs(np.gradient(v, mvd.DT, axis=0) - a)[5:-5].max(), 1e-7)
+        np.testing.assert_allclose(np.linalg.norm(v, axis=1), mvd.SPEED_MPS)
+        self.assertAlmostEqual(np.degrees(np.abs(heading).max()), 3.0, places=6)
+        np.testing.assert_allclose(np.gradient(heading, mvd.DT)[5:-5], rate[5:-5], atol=1e-9)
+
+    def test_rounded_csv_time_misplaces_track_by_speed_times_rounding(self):
+        n = 240000
+        frame = pd.DataFrame({'time': [float(f'{x:.6g}') for x in mvd.sample_times(n)]})
+        artifact = mvd.time_stamp_artifact(frame)
+        # Past 1000 s, every other sample is rounded by 5 ms.
+        expected = mvd.SPEED_MPS * 0.005 * np.sqrt(0.5 * 200 / 900)
+        self.assertAlmostEqual(artifact, expected, delta=0.03 * expected)
+
+
+class CounterfactualTest(unittest.TestCase):
+    def test_retrack_is_consistent_and_invertible(self):
+        base = synthetic_record()
+        moving = mvd.retrack(base, +1)
+        for frame in (base, moving):
+            f_err, w_err = body_consistency(frame)
+            self.assertLess(f_err, 1e-9)
+            self.assertLess(w_err, 1e-6)
+        np.testing.assert_allclose(moving['yaw_deg'], np.degrees(mvd.track(mvd.sample_times(len(base)))[3]),
+                                   atol=1e-6)
+        back = mvd.retrack(moving, -1)
+        columns = [c for c in base.columns if c != 'time']
+        np.testing.assert_allclose(back[columns].to_numpy(), base[columns].to_numpy(), atol=1e-9)
+
+    def test_stretch_keeps_heave_and_scales_derivatives(self):
+        base = synthetic_record(n=8000)
+        slow = mvd.stretch(base, 1.5)
+        f_err, w_err = body_consistency(slow)
+        self.assertLess(f_err, 1e-9)
+        self.assertLess(w_err, 1e-5)
+        tail = slice(-4000, None)
+        self.assertAlmostEqual(slow['disp_z'][tail].abs().max(), 0.10, delta=1e-3)
+        self.assertAlmostEqual(slow['acc_z'][tail].abs().max(), 0.10 * (2 * np.pi / 4.5) ** 2, delta=1e-4)
+
+
+class CausalBoundTest(unittest.TestCase):
+    def test_matches_discrete_kalman_posterior(self):
+        theta = 2 * np.pi * np.fft.fftfreq(2 ** 14)
+        for a, q, r in ((0.95, 0.1, 1.0), (0.99, 0.02, 0.1), (0.5, 1.0, 1.0)):
+            phi = q / np.abs(1 - a * np.exp(-1j * theta)) ** 2
+            prior = q
+            for _ in range(5000):
+                posterior = prior * r / (prior + r)
+                prior = a * a * posterior + q
+            self.assertAlmostEqual(mvd.causal_mmse(phi, np.full(len(phi), r), np.ones(len(phi))),
+                                   posterior, delta=1e-9)
+
+    def test_causal_error_lies_between_noncausal_and_prior(self):
+        t = mvd.sample_times(mvd.WINDOW_SAMPLES)
+        rng = np.random.default_rng(0)
+        z = sum(0.05 * np.sin(2 * np.pi * f * t + rng.uniform(0, 2 * np.pi)) for f in np.linspace(0.2, 0.4, 40))
+        causal, noncausal = mvd.causal_bound(z), mvd.wiener_bound(z)
+        self.assertGreater(causal, noncausal)
+        self.assertLess(causal, 0.1 * z.std())
+
+
+class StillnessReplicaTest(unittest.TestCase):
+    def test_attenuation_uses_immediate_flag_before_two_second_hold(self):
+        with mock.patch.object(mvd, 'ACC_WHITE_SIGMA', 0.0):
+            result = mvd.stillness(np.zeros(100))
+        self.assertEqual(result['still_fraction'], 1.0)
+        self.assertLess(result['variance_factor_decay_5s'], 1.0)
+
+    def test_threshold_is_absolute_acceleration(self):
+        t = mvd.sample_times(mvd.WINDOW_SAMPLES + 2000)
+        w = 2 * np.pi / 5.0
+        # Same heave amplitude; doubling the period divides acceleration by 4.
+        fast = mvd.stillness(0.3 * w * w * np.sin(w * t))
+        slow = mvd.stillness(0.3 * (w / 2) ** 2 * np.sin(w / 2 * t))
+        # The flag is instantaneous, so it flickers near acceleration zero
+        # crossings; only a continuously still record loses its variance.
+        self.assertLess(fast['still_fraction'], 0.5)
+        self.assertGreater(fast['variance_factor_decay_5s'], 0.9)
+        self.assertGreater(slow['still_fraction'], 0.99)
+        self.assertLess(slow['variance_factor_decay_5s'], 0.01)
+
+
+class ReplayDriverTest(unittest.TestCase):
+    def test_relative_executable_survives_child_directory_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / 'fake-sim'
+            binary.write_text('#!/usr/bin/env python3\n'
+                              'from pathlib import Path\n'
+                              'Path("w3d_fake.csv").write_text("header\\n")\n'
+                              'print("VALIDATION_METRICS " + " ".join('
+                              'k + "=0" for k in ' + repr(mvd.HARNESS) + '))\n')
+            binary.chmod(0o755)
+            record = Path(tmp) / 'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv'
+            record.write_text('time\n0\n')
+            job = dict(binary=Path(os.path.relpath(binary)), record=record,
+                       family='ou2', arm='S', label='relative-path', extra=[], env={})
+            with mock.patch.object(mvd, 'score', return_value={'z_pct_h': 0.0}):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    result = mvd.run_one(job)
+            self.assertEqual(result['exit_code'], 0)
+
+    def test_table_keeps_distinct_wavelength_and_direction(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'scores.csv'
+            pd.DataFrame([
+                dict(label='test', family='ou2', arm='M', z_pct_h=1.0,
+                     record='wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv'),
+                dict(label='test', family='ou2', arm='M', z_pct_h=9.0,
+                     record='wave_data_jonswap_H0.270_L28.094_A60.00_P60.00.csv'),
+            ]).to_csv(path, index=False)
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                mvd.command_table(argparse.Namespace(csv=[path], metrics='z_pct_h'))
+            table = output.getvalue()
+            self.assertIn('L14.047_A30.00_P60.00', table)
+            self.assertIn('L28.094_A60.00_P60.00', table)
+            self.assertIn('| 1 |', table)
+            self.assertIn('| 9 |', table)
+
+
+if __name__ == '__main__':
+    unittest.main()

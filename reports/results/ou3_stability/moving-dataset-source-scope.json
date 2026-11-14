@@ -4,6 +4,12 @@
     "src/util/WaveFilesSupport.h"
   ],
   "changed_dependency_scope": "WaveFilesSupport.h changes CSV horizontal displacement parsing/storage to double precision; all other 38 compiler-discovered src headers are byte-identical to main.",
+  "comment_only_dependency_update": {
+    "comments_removed_text_identical": true,
+    "comparison_revision": "3ce7fe7cd11320abe15ff6e01fcd4283f0ede456",
+    "path": "src/kalman_common/SeaStateFusionDefaults.h",
+    "scope": "OU-II stillness default table comment only; no OU-III operation changes"
+  },
   "native_secant_bytes_match_prior_report": [
     true,
     true
@@ -28,7 +34,7 @@
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
     "src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
-    "src/kalman_common/SeaStateFusionDefaults.h": "48a0a757b7f9637f5a5bc111c81f62387162876b364c666afbd05e766383063d",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
     "src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",

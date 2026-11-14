@@ -93,42 +93,42 @@ committed evidence and the table below against each other.
 
 | IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea | Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 30 cm forward | 0.97 | 1.25 | 1.000 | 1.005 | 1.02 | 1.03 | 1.01 | 1.35 |
-| 30 cm starboard | 1.01 | 1.06 | 1.000 | 1.000 | 1.02 | 0.98 | 1.02 | 1.05 |
-| 30 cm above | 1.03 | 1.20 | 1.000 | 1.001 | 1.02 | 0.98 | 1.03 | 1.01 |
-| 100 cm forward | 1.01 | 2.19 | 1.000 | 1.019 | 1.04 | 1.15 | 1.05 | 2.68 |
-| 100 cm starboard | 1.09 | 1.64 | 0.997 | 1.001 | 1.03 | 1.01 | 1.04 | 1.87 |
-| 100 cm above | 1.18 | 2.21 | 1.002 | 1.005 | 1.05 | 1.16 | 1.08 | 1.03 |
-| 200 cm forward | 1.16 | 3.52 | 1.007 | 1.067 | 1.05 | 1.21 | 1.26 | 5.64 |
-| 200 cm starboard | 1.23 | 2.84 | 1.002 | 1.027 | 1.00 | 1.09 | 1.02 | 6.80 |
-| 200 cm above | 1.50 | 3.97 | 1.008 | 1.031 | 1.22 | 1.51 | 1.69 | 1.05 |
+| 30 cm forward | 1.00 | 1.27 | 1.000 | 1.003 | 1.01 | 1.02 | 1.04 | 1.34 |
+| 30 cm starboard | 1.02 | 1.07 | 1.000 | 1.000 | 1.02 | 0.98 | 1.02 | 1.05 |
+| 30 cm above | 1.04 | 1.23 | 1.000 | 1.001 | 1.02 | 0.97 | 1.03 | 1.01 |
+| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.03 | 1.14 | 1.11 | 2.83 |
+| 100 cm starboard | 1.09 | 1.75 | 1.000 | 1.002 | 1.03 | 0.99 | 1.04 | 1.90 |
+| 100 cm above | 1.20 | 2.41 | 1.002 | 1.005 | 1.05 | 1.20 | 1.08 | 1.04 |
+| 200 cm forward | 1.20 | 3.81 | 1.008 | 1.061 | 1.05 | 1.21 | 1.20 | 6.16 |
+| 200 cm starboard | 1.28 | 3.11 | 1.005 | 1.031 | 1.00 | 1.07 | 1.01 | 7.18 |
+| 200 cm above | 1.53 | 4.41 | 1.008 | 1.033 | 1.41 | 1.67 | 2.11 | 1.06 |
 
 **TFG-CARMA3** (RMS / CG baseline: eight seas pooled, and the worst single sea)
 
 | IMU | Uncorrected 3-D | worst sea | Corrected 3-D | worst sea | Corrected tilt, worst sea | Corrected yaw | Inner-filter tilt, worst sea | OU-III model tilt |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 30 cm forward | 0.97 | 1.25 | 1.000 | 1.005 | 1.01 | 1.01 | 1.01 | 1.36 |
-| 30 cm starboard | 1.01 | 1.06 | 1.000 | 1.000 | 1.01 | 0.99 | 1.01 | 1.04 |
-| 30 cm above | 1.03 | 1.20 | 1.000 | 1.001 | 1.01 | 0.98 | 1.02 | 1.01 |
-| 100 cm forward | 1.01 | 2.19 | 1.000 | 1.019 | 1.03 | 1.06 | 1.03 | 2.40 |
-| 100 cm starboard | 1.09 | 1.64 | 0.997 | 1.000 | 1.01 | 0.99 | 1.02 | 1.72 |
-| 100 cm above | 1.18 | 2.21 | 1.001 | 1.003 | 1.02 | 1.01 | 1.06 | 1.02 |
-| 200 cm forward | 1.16 | 3.52 | 1.006 | 1.067 | 1.06 | 1.07 | 1.14 | 3.60 |
-| 200 cm starboard | 1.23 | 2.84 | 1.001 | 1.028 | 1.00 | 1.00 | 0.99 | 4.18 |
-| 200 cm above | 1.50 | 3.97 | 1.006 | 1.031 | 1.05 | 1.14 | 1.11 | 1.04 |
+| 30 cm forward | 1.00 | 1.27 | 1.000 | 1.003 | 1.00 | 1.01 | 1.04 | 1.34 |
+| 30 cm starboard | 1.02 | 1.07 | 1.000 | 1.000 | 1.01 | 0.99 | 1.01 | 1.05 |
+| 30 cm above | 1.04 | 1.23 | 1.000 | 1.001 | 1.01 | 0.98 | 1.02 | 1.01 |
+| 100 cm forward | 1.05 | 2.29 | 1.001 | 1.016 | 1.02 | 1.05 | 1.11 | 2.54 |
+| 100 cm starboard | 1.09 | 1.75 | 0.999 | 1.002 | 1.01 | 0.98 | 1.02 | 1.62 |
+| 100 cm above | 1.20 | 2.41 | 1.001 | 1.004 | 1.02 | 1.01 | 1.06 | 1.03 |
+| 200 cm forward | 1.20 | 3.81 | 1.007 | 1.062 | 1.05 | 1.07 | 1.09 | 3.51 |
+| 200 cm starboard | 1.28 | 3.10 | 1.004 | 1.031 | 1.00 | 0.99 | 1.00 | 4.21 |
+| 200 cm above | 1.53 | 4.41 | 1.007 | 1.033 | 1.06 | 1.18 | 1.13 | 1.05 |
 
 Derivative corner of the corrected arm, IMU 100 cm above the CG (3-D RMS / CG baseline):
 
 | Corner [Hz] | CARMA3 | TFG-CARMA3 |
 | ---: | ---: | ---: |
-| 1 | 1.023 | 1.023 |
-| 2 | 1.005 | 1.005 |
-| 5 | 1.001 | 1.001 |
+| 1 | 1.026 | 1.026 |
+| 2 | 1.007 | 1.007 |
+| 5 | 1.002 | 1.002 |
 | 10 | 1.001 | 1.001 |
 | 15 | 1.002 | 1.001 |
-| 25 | 1.008 | 1.006 |
-| 50 | 1.025 | 1.025 |
-| 100 | 1.040 | 1.040 |
+| 25 | 1.009 | 1.007 |
+| 50 | 1.024 | 1.023 |
+| 100 | 1.024 | 1.024 |
 <!-- END carma_lever_arm_headline -->
 
 The table is rendered from `reports/results/carma_lever_arm_study/lever_arm_summary.csv`
@@ -137,43 +137,41 @@ the removed fractions.
 
 ### What an off-CoG IMU costs
 
-On the moving-boat records, pooled uncorrected 3D RMS ranges from 0.972–1.034
-of the CG baseline at 30 cm, 1.011–1.179 at 1 m and 1.161–1.500 at 2 m,
+On the moving-boat records, pooled uncorrected 3D RMS ranges from 1.001–1.039
+of the CG baseline at 30 cm, 1.047–1.197 at 1 m and 1.200–1.532 at 2 m,
 across both filters and all three directions. The worst individual sea reaches
-1.226, 2.131 and 3.791 respectively. An installed term can cancel an existing
-estimation residual in a pooled score; the sub-baseline values do not establish
-that moving the IMU improves the estimator. Pooled tilt at 2 m ranges from
-0.986–1.328 of baseline, with a worst-sea ratio of 1.570.
+1.271, 2.410 and 4.412 respectively. Pooled tilt at 2 m ranges from
+1.014–1.140 of baseline, with a worst-sea ratio of 1.267.
 
 ### What the correction recovers
 
 At the wrapper input, the deployed correction keeps pooled 3D RMS within
-0.3% of the CG baseline through 1 m and 0.8% at 2 m. Worst-sea 3D ratios
-reach 1.017 at 1 m and 1.062 at 2 m. Worst-sea tilt ratios reach 1.044 and
-1.192 respectively. The exact-kinematics oracle reproduces 3D and tilt to
+0.2% of the CG baseline through 1 m and 0.8% at 2 m. Worst-sea 3D ratios
+reach 1.016 at 1 m and 1.062 at 2 m. Worst-sea tilt ratios reach 1.048 and
+1.407 respectively. The exact-kinematics oracle reproduces 3D and tilt to
 within 0.1%; the deployable correction still includes gyro noise and filter lag.
-Pooled yaw can reach 1.148 at 1 m and 1.604 at 2 m: displacement recovery
+Pooled yaw can reach 1.197 at 1 m and 1.670 at 2 m: displacement recovery
 does not imply equally good heading recovery.
 
-In the derivative sweep, 5–15 Hz gives pooled 3D ratios of 1.0007–1.0017
-for the IMU 1 m above the CG. The ratios rise to approximately 1.023 at
-1 Hz and 1.040 at 100 Hz. The deployed 15 Hz setting is retained; this is
+In the derivative sweep, 5–15 Hz gives pooled 3D ratios of 1.0011–1.0019
+for the IMU 1 m above the CG. The ratios rise to approximately 1.026 at
+1 Hz and 1.024 at 100 Hz. The deployed 15 Hz setting is retained; this is
 one installation and one set of records, not a universal optimal cutoff.
 
 ### Why at the wrapper's input
 
-Applying the same correction inside the inner filter keeps worst-sea 3D
-ratios below 1.026 at 1 m and 1.090 at 2 m. Its worst-sea tilt ratio,
-however, reaches 2.780 at 2 m, versus 1.192 for the wrapper placement;
-pooled yaw reaches 3.615 versus 1.604. The wrapper placement corrects the
+Applying the same correction inside the inner filter gives worst-sea 3D
+ratios of 1.064 at 1 m and 1.063 at 2 m. Its worst-sea tilt ratio,
+however, reaches 2.114 at 2 m, versus 1.407 for the wrapper placement;
+pooled yaw reaches 2.997 versus 1.670. The wrapper placement corrects the
 specific force before startup, adaptation and the inner filter consume it.
 The matrix compares complete placements and does not isolate those consumers.
 
 ### OU-III's model
 
 The OU-III-model ablation inside these CARMA filters gives pooled tilt ratios
-up to 2.687 at 1 m and 6.681 at 2 m; worst-sea tilt reaches 9.337 and
-pooled yaw reaches 40.147 at 2 m. Its pooled displacement score can remain
+up to 2.825 at 1 m and 7.178 at 2 m; worst-sea tilt reaches 9.969 and
+pooled yaw reaches 38.816 at 2 m. Its pooled displacement score can remain
 close to baseline despite severe attitude degradation. It uses a one-pole
 filtered difference and the alpha bias Jacobian described above. The matrix
 does not isolate their separate effects. It runs CARMA3 and TFG-CARMA3,
@@ -187,4 +185,4 @@ studied; a wrong sign doubles the term instead of removing it.  No hardware,
 on-target timing or sea data stands behind any of this, and the CARMA filters
 remain research estimators.
 
-The current moving-boat matrix was generated by [Actions run 43566557545](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43566557545), source merge `1201f2c15274ee95fc230c77a280c2d8ec8ee47f` (the same source tree as `39fa9208`). All ten published file hashes were verified against artifact `14103380657` (archive SHA256 `a6b059f58be5433acb49210f892cde76a2143cc3b5292c8ccd135bfba9332c94`). That job completed the matrix and then rejected comparison with the stationary dataset's ratios. CI now compares ratios only when the committed and current input hash maps match.
+The current moving-boat matrix was regenerated with g++ 13.3 (Ubuntu 24.04) at source commit `5b66d7a`, after the CARMA wrapper stopped attenuating wave variance on still-water detection; `manifest.json` records every published file hash. The simulator is built `-march=native`, so CI compares ratios to a 0.01 tolerance, and only when the committed and current input hash maps match.

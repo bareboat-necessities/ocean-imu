@@ -17,7 +17,7 @@
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
-      "git_blob_sha": "60282fe06cf2617e2edf7b940552df2c52dc2710"
+      "git_blob_sha": "0fc888c49de794e4f889871044726185b655c312"
     },
     {
       "path": "src/kalman_common/SeaStateOUFamilyDefaults.h",
@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "7950bd639bb8379246f375598d6ff20c2a40b650"
+      "git_blob_sha": "e0394af99505d6f46796bc9cc8cf10eec0b7da57"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -777,7 +777,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "db3054e11cbe2b4fb2d0d02b147f094e02792dcc"
+      "git_blob_sha": "87a89d06bc38d554f916a6a3ea906e89a78d35c9"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "68d7f5882b529d1282d45f0b4ac3d2c7a4ebbdf9"
+      "git_blob_sha": "b887bbcda09861d5e2c8048bd853a6f20ed4f4e0"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1754,6 +1754,19 @@
     "validation_gate_changed": false,
     "mathematical_margin_promoted": false,
     "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "stillness_attenuation_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "failed_quantity": "planar-native-secants-diagnostic.json shipping_source_tree_sha256 (whole-src digest) only",
+    "changed_source_files_outside_probe_closure": 2,
+    "probe_closure_src_files_byte_identical_to_main": 38,
+    "native_secant_payload_identical_except_source_tree_digest": true,
+    "replay_performed": false,
+    "validation_gate_changed": false,
+    "mathematical_margin_promoted": false,
+    "ledger": "docs/ou3-proof-research-state.md",
+    "comment_only_probe_dependency": "src/kalman_common/SeaStateFusionDefaults.h",
+    "comment_only_dependency_text_verified": true
   },
   "runtime_change_audit": {
     "baseline_main": "063017d44e3c422621a7f7b260f950cacb43a616",

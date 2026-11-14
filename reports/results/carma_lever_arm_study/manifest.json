@@ -62,16 +62,16 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "ef469c9a5507442765a8f5dbfaee8133784a55b0934e8d19e143a3f421875761",
-    "carma_lever_arm_penalty.svg": "126f13c3add69e6350d3a313eb634701a8ed6fcb449fbd180d57aab7ba9f8e99",
-    "carma_lever_arm_sea_state.svg": "ebe4b20d2d169be3c3a67e204cb103502477d52fab685c1985517c70c02780b5",
-    "carma_lever_arm_tilt.svg": "56b224c26b1e68663878a353b331d96ab714768fdb9f95fe794c2d9c4782ae37",
-    "carma_lever_arm_yaw.svg": "df80af7f79dbf325de31734d2ab7e36c7b4c82365e7b56f859a5f84a95dec6f0",
-    "lever_arm_cutoff_runs.csv": "8299871793d319d2ea9571b9f5c1a5395253867c7fa4879b5b098c3c78bc8578",
-    "lever_arm_cutoff_summary.csv": "762d588bf213a58675bb00fcd1e97b6916f53c2413557fcecf4b04c5fc1c9082",
-    "lever_arm_report.md": "7d887b2a29802bca3bdd828662a30980cf203fc42f712ac1302e348fd8268e32",
-    "lever_arm_runs.csv": "3de08662ed61e31f5c4cb84b1c6106ba247ea4a200f3a23f2d7735618d21cab3",
-    "lever_arm_summary.csv": "31c9ae8fbf446663fd040728209b75e131285b18b17a745e448c15e621c65446"
+    "carma_lever_arm_cutoff.svg": "41855f484ff553707bc1d36bddf9ee193f81f63db9a88f104adc06f5daa4bc07",
+    "carma_lever_arm_penalty.svg": "7b1a44b409bb32ff5712277eae9be2cd126c172e42f7a76b90478370cf9d92b8",
+    "carma_lever_arm_sea_state.svg": "c161ac2ec4cf85627eb4017316d954887ec42a623be412feb179b6ddf5aff2d9",
+    "carma_lever_arm_tilt.svg": "067a4394855e30e246cc0676e1c450f8da76781c9a040bac1a2f17d3400b84b5",
+    "carma_lever_arm_yaw.svg": "21b18faf36959ae80cb4605c751f342fea1bbacd412e8c74cf576136667912e2",
+    "lever_arm_cutoff_runs.csv": "ee932f83e79ddc7c7eac93642311907d891bda8cceb17d885931c75bdd9fdea6",
+    "lever_arm_cutoff_summary.csv": "feeba1e0ab5e1d75ce4ce69698d4e3c3a2da835981971d2eb936f091fbc2725f",
+    "lever_arm_report.md": "45749c002ade27f5d499867b70bfd81b1a8ce27b5aa23ccb76c5d9080b3c3aa2",
+    "lever_arm_runs.csv": "352bebb4cddc4400ee76d5fa37c87a971e65ca407c6aa206e49f7cdb874d04fe",
+    "lever_arm_summary.csv": "3b0cbccc02e3e1318b55424add6d29f64a32c4fedcf65369e70f0ba2da3d69ce"
   },
   "filters": {
     "carma3": "A41",
@@ -101,6 +101,6 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "source_commit": "32d97f0d6af53a84456d9adda99e30ce60dc0eb0",
+  "source_commit": "5b66d7aea7aaeaf8061e2208b904912cb2b65462",
   "study": "CARMA IMU lever-arm installation"
 }

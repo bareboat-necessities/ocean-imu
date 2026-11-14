@@ -87,6 +87,10 @@ selected offline on the vessel-response records, then held as frozen parameters 
 sensor/initialization draws; reference displacement never enters online
 scheduling or gains. OU--III is fixed during comparator selection. These are development
 ensemble comparisons, not unseen-vessel tests.
+The five-observer CSV comparison uses the generator's inclusive final
+\SI{900}{s} interval, with 180001 timestamps recorded in its receipt.
+The native regression and paired protocols score 180000 samples from
+\SI{300}{s}; all five CSV observers use the same inclusive convention.
 OU--II and OU--III share the wave-band period input but use PhysicalMSE dual
 and SpectralMSE integral regularization, respectively.
 
