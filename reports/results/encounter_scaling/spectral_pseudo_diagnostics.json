@@ -1,0 +1,1583 @@
+{
+  "role": "Archived causal diagnostics and historical producer bytes, not accepted defaults or stability evidence",
+  "records": {
+    "response-diagnosis.json": {
+      "role": "vertical-only ideal-sensor localization; not shipping qualification",
+      "rows": [
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "counterfactual_sha256": "f74552d7539e8ec322a626ee8ef1a25a496bd4e1915a1014f38a0b1ea6289211",
+          "rms_m": 0.02068082856362349,
+          "mean_error_m": -0.0001719516254578433,
+          "peak_hz": 0.164794921875,
+          "peak_gain": 1.3904633490014704,
+          "peak_phase_deg": 13.212718244075534,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 2.3302404036666666,
+              "minimum": 2.02585,
+              "maximum": 2.66642
+            },
+            "sigma_a_applied": {
+              "mean": 0.05018897371499999,
+              "minimum": 0.05,
+              "maximum": 0.0742102
+            },
+            "R_p0_applied": {
+              "mean": 0.15401424754999998,
+              "minimum": 0.150004,
+              "maximum": 0.225475
+            },
+            "acc_bias_est_z": {
+              "mean": -4.826168482787444e-06,
+              "minimum": -0.0020426,
+              "maximum": 0.00216186
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 1.1844748696903925e-06,
+            "0.05:0.1": 5.7199336768549746e-06,
+            "0.1:0.2": 0.0003820439951386595,
+            "0.2:0.4": 5.83785567110935e-05,
+            "0.4:100": 5.238829198574188e-07
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=3.69064814e-08 disp_y_rms_m=2.29086353e-07 disp_z_rms_m=0.0206806362 disp_3d_rms_m=0.0206806362 disp_x_pct_hs=1.36690669e-05 disp_y_pct_hs=8.48467971e-05 disp_z_pct_hs=7.65949488 disp_3d_pct_refmax=11.1396713 disp_z_ref_rms_m=0.0487863831 disp_z_pct_refrms=42.3901825 roll_rms_deg=0.000111159097 pitch_rms_deg=2.36197648e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=4.49881838e-08 accel_y_rms_mps2=2.10184723e-07 accel_z_rms_mps2=0.0055856253 accel_3d_rms_mps2=0.0055856253 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000687311578 gyro_bias_3d_rms_radps=2.6757786e-07 tau_applied_s=2.61834788 sigma_applied_mps2=0.0500000007 tuning_applied=0.150004983 wave_period_s=5.23366308 frequency_hz=0.200003758 period_s=4.99974442 accel_variance_m2ps4=0.00912884995",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv segment=window samples=180000 disp_x_mean_m=-9.44188105e-09 disp_y_mean_m=1.6286387e-07 disp_z_mean_m=-0.00017195144 roll_mean_deg=-0.000100591955 pitch_mean_deg=-2.11134175e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "counterfactual_sha256": "cdba1c54d45a873cfe22e9e5d1e674c2a507d3fd7e33e623b9bbce67f33a74f7",
+          "rms_m": 0.0666771565614218,
+          "mean_error_m": -0.00020385600536664472,
+          "peak_hz": 0.13427734375,
+          "peak_gain": 1.1471260879368823,
+          "peak_phase_deg": 3.007942331114568,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 3.472481015333333,
+              "minimum": 3.01499,
+              "maximum": 3.872
+            },
+            "sigma_a_applied": {
+              "mean": 0.17037504188833333,
+              "minimum": 0.05,
+              "maximum": 0.345112
+            },
+            "R_p0_applied": {
+              "mean": 1.6475217339166666,
+              "minimum": 0.25155,
+              "maximum": 3.34958
+            },
+            "acc_bias_est_z": {
+              "mean": -6.730353641733708e-06,
+              "minimum": -0.00293272,
+              "maximum": 0.00307717
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 0.0003317394925755915,
+            "0.05:0.1": 0.00032978049479152774,
+            "0.1:0.2": 0.0038736974783214503,
+            "0.2:0.4": 1.531276908728447e-05,
+            "0.4:100": 9.237124223124032e-07
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=2.33593099e-07 disp_y_rms_m=1.51900372e-06 disp_z_rms_m=0.0666756257 disp_3d_rms_m=0.0666756257 disp_x_pct_hs=1.55728721e-05 disp_y_pct_hs=0.000101266909 disp_z_pct_hs=4.44504166 disp_3d_pct_refmax=5.46901464 disp_z_ref_rms_m=0.357609242 disp_z_pct_refrms=18.6448269 roll_rms_deg=0.000111463836 pitch_rms_deg=2.35612315e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=1.3713111e-07 accel_y_rms_mps2=6.28198563e-07 accel_z_rms_mps2=0.00498572644 accel_3d_rms_mps2=0.00498572644 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=-30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000781854556 gyro_bias_3d_rms_radps=2.87140324e-07 tau_applied_s=3.5777297 sigma_applied_mps2=0.233431041 tuning_applied=2.1299026 wave_period_s=7.24090528 frequency_hz=0.200000003 period_s=5 accel_variance_m2ps4=0.0838912949",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv segment=window samples=180000 disp_x_mean_m=-7.75771554e-08 disp_y_mean_m=1.08987672e-06 disp_z_mean_m=-0.00020385487 roll_mean_deg=-0.000100962912 pitch_mean_deg=-2.10662001e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "counterfactual_sha256": "c20b2b8552e24ea75b14120fa62d0d8ba30a45c2c69c77cd640c1770833c2089",
+          "rms_m": 0.29628787876723983,
+          "mean_error_m": -0.0006179371984303371,
+          "peak_hz": 0.08544921875,
+          "peak_gain": 1.1040669508063512,
+          "peak_phase_deg": 2.056842568715727,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 5.419859426833334,
+              "minimum": 4.45302,
+              "maximum": 6.08875
+            },
+            "sigma_a_applied": {
+              "mean": 0.5895851413433333,
+              "minimum": 0.05,
+              "maximum": 0.914018
+            },
+            "R_p0_applied": {
+              "mean": 18.137482494666667,
+              "minimum": 6.88051,
+              "maximum": 28.1171
+            },
+            "acc_bias_est_z": {
+              "mean": -1.7147867189744223e-07,
+              "minimum": -0.00298912,
+              "maximum": 0.00313249
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 0.003576022306468414,
+            "0.05:0.1": 0.08651344815725699,
+            "0.1:0.2": 0.004604449326126075,
+            "0.2:0.4": 8.066518136904852e-06,
+            "0.4:100": 1.0115875266696923e-05
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=2.16902549e-06 disp_y_rms_m=1.85245881e-05 disp_z_rms_m=0.296282023 disp_3d_rms_m=0.296282023 disp_x_pct_hs=2.55179457e-05 disp_y_pct_hs=0.000217936322 disp_z_pct_hs=3.4856708 disp_3d_pct_refmax=4.15623903 disp_z_ref_rms_m=2.21266222 disp_z_pct_refrms=13.390296 roll_rms_deg=0.00011309189 pitch_rms_deg=2.40660611e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=3.5616597e-07 accel_y_rms_mps2=1.64506844e-06 accel_z_rms_mps2=0.00320497481 accel_3d_rms_mps2=0.00320497528 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=-30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000911888375 gyro_bias_3d_rms_radps=2.9737015e-07 tau_applied_s=5.16860151 sigma_applied_mps2=0.615023077 tuning_applied=16.4922504 wave_period_s=10.3666973 frequency_hz=0.200000003 period_s=5 accel_variance_m2ps4=0.477220356",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv segment=window samples=180000 disp_x_mean_m=-1.41575936e-06 disp_y_mean_m=1.64044286e-05 disp_z_mean_m=-0.000617938582 roll_mean_deg=-0.000103049555 pitch_mean_deg=-2.15997479e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "counterfactual_sha256": "10977feaf93906f0139415da19917fb8e751d3b16758da5b34c0eebcda68c1d4",
+          "rms_m": 0.008070042912185828,
+          "mean_error_m": 0.00011114748447198523,
+          "peak_hz": 0.3173828125,
+          "peak_gain": 1.141939850167081,
+          "peak_phase_deg": 2.9007076197359143,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 1.4902537306666666,
+              "minimum": 1.40055,
+              "maximum": 1.5944
+            },
+            "sigma_a_applied": {
+              "mean": 0.12001620710000001,
+              "minimum": 0.05,
+              "maximum": 0.294426
+            },
+            "R_p0_applied": {
+              "mean": 0.15547390398333333,
+              "minimum": 0.150003,
+              "maximum": 0.210273
+            },
+            "acc_bias_est_z": {
+              "mean": -2.683222320595667e-06,
+              "minimum": -0.00105329,
+              "maximum": 0.00107235
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 5.989317204100884e-08,
+            "0.05:0.1": 7.206445655214012e-08,
+            "0.1:0.2": 9.458159654712014e-08,
+            "0.2:0.4": 6.343933172574171e-05,
+            "0.4:100": 2.0813004310324535e-06
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=3.12870903e-08 disp_y_rms_m=1.95288095e-07 disp_z_rms_m=0.00806982908 disp_3d_rms_m=0.00806982908 disp_x_pct_hs=1.15878111e-05 disp_y_pct_hs=7.23289195e-05 disp_z_pct_hs=2.98882556 disp_3d_pct_refmax=4.06712627 disp_z_ref_rms_m=0.0534430668 disp_z_pct_refrms=15.0998621 roll_rms_deg=0.000111160378 pitch_rms_deg=2.36454343e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=1.04045583e-07 accel_y_rms_mps2=4.74423302e-07 accel_z_rms_mps2=0.00655461289 accel_3d_rms_mps2=0.00655461289 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000303509092 gyro_bias_3d_rms_radps=2.75438822e-07 tau_applied_s=1.45692575 sigma_applied_mps2=0.0500000007 tuning_applied=0.150008976 wave_period_s=2.90865302 frequency_hz=0.228228837 period_s=3.21742892 accel_variance_m2ps4=0.0302133411",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv segment=window samples=180000 disp_x_mean_m=-8.36228242e-09 disp_y_mean_m=1.39347449e-07 disp_z_mean_m=0.000111147776 roll_mean_deg=-0.0001005917 pitch_mean_deg=-2.11318966e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "counterfactual_sha256": "8290df87c4c9dd39d4e39f60d7a7ee2878bfca0e42b8ff0c5cb33856a96ea63e",
+          "rms_m": 0.04528419033667082,
+          "mean_error_m": -9.283773653423896e-05,
+          "peak_hz": 0.177001953125,
+          "peak_gain": 1.1116347970963876,
+          "peak_phase_deg": 1.990840254941543,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 2.442141969833333,
+              "minimum": 2.02577,
+              "maximum": 2.73722
+            },
+            "sigma_a_applied": {
+              "mean": 0.533582771235,
+              "minimum": 0.0910888,
+              "maximum": 0.735903
+            },
+            "R_p0_applied": {
+              "mean": 1.5871940885000002,
+              "minimum": 0.844972,
+              "maximum": 2.24227
+            },
+            "acc_bias_est_z": {
+              "mean": -5.63049910366666e-07,
+              "minimum": -0.00190859,
+              "maximum": 0.0015982
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 5.074232979313221e-06,
+            "0.05:0.1": 6.069491228199164e-06,
+            "0.1:0.2": 0.0019194463886733346,
+            "0.2:0.4": 0.0002583366499120008,
+            "0.4:100": 6.859743196216365e-07
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=2.09729507e-07 disp_y_rms_m=1.19501021e-06 disp_z_rms_m=0.0452831388 disp_3d_rms_m=0.0452831388 disp_x_pct_hs=1.39819667e-05 disp_y_pct_hs=7.96673412e-05 disp_z_pct_hs=3.01887584 disp_3d_pct_refmax=3.54172945 disp_z_ref_rms_m=0.390964061 disp_z_pct_refrms=11.5824289 roll_rms_deg=0.000109691522 pitch_rms_deg=2.33234969e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=3.06726577e-07 accel_y_rms_mps2=1.39481426e-06 accel_z_rms_mps2=0.00344074843 accel_3d_rms_mps2=0.00344074843 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=-30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000530959223 gyro_bias_3d_rms_radps=2.97515129e-07 tau_applied_s=2.50480866 sigma_applied_mps2=0.397717625 tuning_applied=1.29235995 wave_period_s=4.98630762 frequency_hz=0.233257398 period_s=4.4476881 accel_variance_m2ps4=0.258217394",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv segment=window samples=180000 disp_x_mean_m=-5.9475731e-08 disp_y_mean_m=7.61071021e-07 disp_z_mean_m=-9.28368099e-05 roll_mean_deg=-9.88265965e-05 pitch_mean_deg=-2.06970217e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "binary_sha256": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "counterfactual_sha256": "750af263e2e7fdfb4272bb121e6c4a2fcd87feed5cea59c9c4cdb97a11ab5102",
+          "rms_m": 0.25192070527087085,
+          "mean_error_m": 0.0011267974242947698,
+          "peak_hz": 0.091552734375,
+          "peak_gain": 1.1131250896769473,
+          "peak_phase_deg": 2.111390526171058,
+          "operating_points": {
+            "tau_applied": {
+              "mean": 4.393276536166667,
+              "minimum": 3.70257,
+              "maximum": 5.03044
+            },
+            "sigma_a_applied": {
+              "mean": 1.0677234358333332,
+              "minimum": 0.480194,
+              "maximum": 1.30167
+            },
+            "R_p0_applied": {
+              "mean": 16.28957022666667,
+              "minimum": 10.7672,
+              "maximum": 25.3338
+            },
+            "acc_bias_est_z": {
+              "mean": 3.176091101742783e-06,
+              "minimum": -0.00296988,
+              "maximum": 0.00293713
+            }
+          },
+          "error_variance_by_hz_band": {
+            "0:0.05": 0.0005406260928775487,
+            "0.05:0.1": 0.052345810171796084,
+            "0.1:0.2": 0.008843107999473422,
+            "0.2:0.4": 5.9365143116687946e-05,
+            "0.4:100": 5.755884186917044e-06
+          },
+          "metric_lines": [
+            "VALIDATION_METRICS family=OU_III tuning_mode=adaptive aw_cov_sync=periodic input=wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv segment=window start_s=300 window_s=900 samples=180000 disp_x_rms_m=1.89081254e-06 disp_y_rms_m=1.51438944e-05 disp_z_rms_m=0.251920879 disp_3d_rms_m=0.251920879 disp_x_pct_hs=2.22448525e-05 disp_y_pct_hs=0.000178163464 disp_z_pct_hs=2.96377492 disp_3d_pct_refmax=3.87959123 disp_z_ref_rms_m=2.15460229 disp_z_pct_refrms=11.6922216 roll_rms_deg=0.000112982598 pitch_rms_deg=2.40467034e-05 yaw_rms_deg=0.000106811523 accel_x_rms_mps2=6.26811016e-07 accel_y_rms_mps2=2.86542831e-06 accel_z_rms_mps2=0.00298586115 accel_3d_rms_mps2=0.00298586255 dir_travel_error_deg=nan dir_travel_rmse_deg=nan dir_travel_correct_pct=0 dir_travel_wrong_pct=0 dir_travel_unresolved_pct=100 dir_axis_mean_deg=nan dir_axis_truth_deg=-30 dir_axis_error_deg=nan dir_axis_rmse_deg=nan dir_axis_circ_std_deg=nan dir_axis_available_pct=0 dir_sense_forward_pct=0 dir_sense_reverse_pct=0 dir_sense_uncertain_pct=100 dir_sense_dominant_pct=0 accel_bias_3d_rms_mps2=0.000835706014 gyro_bias_3d_rms_radps=3.02323059e-07 tau_applied_s=4.49889851 sigma_applied_mps2=1.10831857 tuning_applied=16.7009945 wave_period_s=9.12742138 frequency_hz=0.200000003 period_s=5 accel_variance_m2ps4=1.50689435",
+            "VALIDATION_METRICS_MEANS family=OU_III input=wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv segment=window samples=180000 disp_x_mean_m=-1.11671977e-06 disp_y_mean_m=1.30095059e-05 disp_z_mean_m=0.00112679263 roll_mean_deg=-0.00010289366 pitch_mean_deg=-2.15966957e-05 yaw_mean_deg=-0.000106811523"
+          ]
+        }
+      ]
+    },
+    "spectral-pseudo-feasibility.json": {
+      "role": "non-promoting continuous frozen scalar feasibility; not shipping replay, proof, acceptance or an error bound",
+      "structures_preserved": "OU integration chain, configured process/measurement noise, S cadence information rate and recorded mean operating point",
+      "relaxations": "fixed attitude, no cov-sync/reset/startup/adaptation chronology; stationary OU physical bias replaces finite random walk; 0.002..10 Hz scoring band; continuous Riccati limit",
+      "candidate": "S+beta*v only in Z, beta=(T_z/2pi)^2 with default tau=T_z/2. No truth enters the candidate coefficient.",
+      "rationale": "For differentiable stationary wave motion, Cov(S,v)=-Var(p), so beta=Var(p)/Var(v) removes covariance with v. A sinusoid at the measured zero-crossing frequency is in the pseudo observation nullspace; DC displacement is still penalized.",
+      "rows": [
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.021366464601547196,
+          "noise_rms_m": 0.009034590080039035,
+          "combined_rms_m": 0.023198052234692228,
+          "peak_gain": 1.4173196460684199,
+          "peak_phase_deg": 14.365410389533437
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 0.5501760879373495,
+          "distortion_rms_m": 0.009067245719905696,
+          "noise_rms_m": 0.008270557558545503,
+          "combined_rms_m": 0.012272614524801238,
+          "peak_gain": 1.1585080636714804,
+          "peak_phase_deg": 6.644025113157994
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.07027613306719054,
+          "noise_rms_m": 0.044572081374888155,
+          "combined_rms_m": 0.08321902016346458,
+          "peak_gain": 1.1750299135154212,
+          "peak_phase_deg": 3.947852510494897
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 1.2217434369020403,
+          "distortion_rms_m": 0.02279363601903711,
+          "noise_rms_m": 0.04251255544346058,
+          "combined_rms_m": 0.04823761201906305,
+          "peak_gain": 1.0223816147870695,
+          "peak_phase_deg": 0.5402785895813366
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.3043296033312659,
+          "noise_rms_m": 0.2235976201259748,
+          "combined_rms_m": 0.37764057407774043,
+          "peak_gain": 1.1145902650905914,
+          "peak_phase_deg": 2.130346101350464
+        },
+        {
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 2.9762972266033176,
+          "distortion_rms_m": 0.11965979862831992,
+          "noise_rms_m": 0.21716233481012698,
+          "combined_rms_m": 0.2479474683636753,
+          "peak_gain": 1.015926143605074,
+          "peak_phase_deg": 0.31505054677915073
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.008286574755878316,
+          "noise_rms_m": 0.007924481915270246,
+          "combined_rms_m": 0.0114658072027313,
+          "peak_gain": 1.1445369699660126,
+          "peak_phase_deg": 3.0256341739122403
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 0.22501977703592563,
+          "distortion_rms_m": 0.0021906125852598447,
+          "noise_rms_m": 0.007609926212341386,
+          "combined_rms_m": 0.0079189494540614,
+          "peak_gain": 1.01498284794814,
+          "peak_phase_deg": 0.3095384209913187
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.04619284617883431,
+          "noise_rms_m": 0.03905355469345334,
+          "combined_rms_m": 0.060489331061733514,
+          "peak_gain": 1.1161698685639323,
+          "peak_phase_deg": 2.1932357251338495
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 0.6042853551620722,
+          "distortion_rms_m": 0.0174229435965243,
+          "noise_rms_m": 0.03804734503455169,
+          "combined_rms_m": 0.04184685684428273,
+          "peak_gain": 1.0292450520520442,
+          "peak_phase_deg": 0.5916860069290903
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "S",
+          "beta_s2": 0,
+          "distortion_rms_m": 0.25538743616854354,
+          "noise_rms_m": 0.19645041658601023,
+          "combined_rms_m": 0.32220414139107345,
+          "peak_gain": 1.112515635700517,
+          "peak_phase_deg": 2.0827199933829283
+        },
+        {
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "S_plus_v",
+          "beta_s2": 1.955587877575139,
+          "distortion_rms_m": 0.12278872085200879,
+          "noise_rms_m": 0.19229677998372627,
+          "combined_rms_m": 0.22815591502431437,
+          "peak_gain": 1.039865079676557,
+          "peak_phase_deg": 0.7853416542524958
+        }
+      ]
+    },
+    "vertical-noise-screen.json": {
+      "role": "one axis-specific refinement of the rejected uniform measurement-noise calibration; body Z is not world vertical under tilt; diagnostic only",
+      "source_sha256": {
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MarineWaveFrontEnd.h": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/vertical_noise_screen.py": "6640546c05d8dab46c2c81c9ff8753c7c86e5e24cc3c46711da901b159764aba",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": "19c68149683be53f55f2c4966c844d7147c9f4dda321252a277b050eaff523c5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "6803377c6e4518c2b63978149c1b1da84c6140dc07e697991b6cb0f4759d3b52",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": "c677621e9b56ad37177a3536e67a189cdfc7b620b21c5e81cfb9b70a612040c6",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10"
+      },
+      "binary_sha256": {
+        "ou2": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+        "ou3": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f"
+      },
+      "rows": [
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "metrics": {
+            "disp_z_pct_hs": 8.50382996,
+            "disp_3d_pct_refmax": 16.3508434,
+            "roll_rms_deg": 0.210471004,
+            "pitch_rms_deg": 0.166604757,
+            "yaw_rms_deg": 0.349187285,
+            "accel_bias_3d_rms_mps2": 0.0452703908,
+            "gyro_bias_3d_rms_radps": 0.000111181515,
+            "disp_x_rms_m": 0.0170716327,
+            "disp_y_rms_m": 0.0126009155,
+            "disp_z_rms_m": 0.0229603406,
+            "disp_3d_rms_m": 0.031263411
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "metrics": {
+            "disp_z_pct_hs": 8.48621082,
+            "disp_3d_pct_refmax": 16.3309994,
+            "roll_rms_deg": 0.204838574,
+            "pitch_rms_deg": 0.164632887,
+            "yaw_rms_deg": 0.350500166,
+            "accel_bias_3d_rms_mps2": 0.04429451,
+            "gyro_bias_3d_rms_radps": 0.000111067326,
+            "disp_x_rms_m": 0.0170656145,
+            "disp_y_rms_m": 0.012601573,
+            "disp_z_rms_m": 0.0229127686,
+            "disp_3d_rms_m": 0.0312254671
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "metrics": {
+            "disp_z_pct_hs": 7.62653255,
+            "disp_3d_pct_refmax": 13.0209751,
+            "roll_rms_deg": 0.16320236,
+            "pitch_rms_deg": 0.151917294,
+            "yaw_rms_deg": 0.898962259,
+            "accel_bias_3d_rms_mps2": 0.036840599,
+            "gyro_bias_3d_rms_radps": 0.000103974409,
+            "disp_x_rms_m": 0.107799813,
+            "disp_y_rms_m": 0.077564396,
+            "disp_z_rms_m": 0.114397995,
+            "disp_3d_rms_m": 0.175282449
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "metrics": {
+            "disp_z_pct_hs": 7.6148715,
+            "disp_3d_pct_refmax": 13.0129089,
+            "roll_rms_deg": 0.163544118,
+            "pitch_rms_deg": 0.151095718,
+            "yaw_rms_deg": 0.907622159,
+            "accel_bias_3d_rms_mps2": 0.03678637,
+            "gyro_bias_3d_rms_radps": 0.000104166043,
+            "disp_x_rms_m": 0.107807316,
+            "disp_y_rms_m": 0.0775664523,
+            "disp_z_rms_m": 0.114223078,
+            "disp_3d_rms_m": 0.175173864
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+            "ERROR: Yaw RMS above limit (0.907622 deg > 0.90353 deg). Failing."
+          ]
+        },
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "metrics": {
+            "disp_z_pct_hs": 6.87118053,
+            "disp_3d_pct_refmax": 13.6069603,
+            "roll_rms_deg": 0.179756403,
+            "pitch_rms_deg": 0.187535375,
+            "yaw_rms_deg": 0.843000829,
+            "accel_bias_3d_rms_mps2": 0.0420133658,
+            "gyro_bias_3d_rms_radps": 0.000116171381,
+            "disp_x_rms_m": 0.731958985,
+            "disp_y_rms_m": 0.521048844,
+            "disp_z_rms_m": 0.584050357,
+            "disp_3d_rms_m": 1.07162058
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "metrics": {
+            "disp_z_pct_hs": 6.86953974,
+            "disp_3d_pct_refmax": 13.6037464,
+            "roll_rms_deg": 0.178783908,
+            "pitch_rms_deg": 0.189530492,
+            "yaw_rms_deg": 0.84666729,
+            "accel_bias_3d_rms_mps2": 0.0421979018,
+            "gyro_bias_3d_rms_radps": 0.000116389485,
+            "disp_x_rms_m": 0.731668651,
+            "disp_y_rms_m": 0.521092296,
+            "disp_z_rms_m": 0.583910882,
+            "disp_3d_rms_m": 1.07136738
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=Pitch_limit_exceeded",
+            "ERROR: Pitch RMS above limit (0.18953 deg > 0.18845 deg). Failing."
+          ]
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "metrics": {
+            "disp_z_pct_hs": 6.13903189,
+            "disp_3d_pct_refmax": 10.3948269,
+            "roll_rms_deg": 0.209893748,
+            "pitch_rms_deg": 0.151520148,
+            "yaw_rms_deg": 0.522794962,
+            "accel_bias_3d_rms_mps2": 0.0441433676,
+            "gyro_bias_3d_rms_radps": 0.000103950442,
+            "disp_x_rms_m": 0.00987111777,
+            "disp_y_rms_m": 0.00777156418,
+            "disp_z_rms_m": 0.0165753867,
+            "disp_3d_rms_m": 0.0207985491
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "metrics": {
+            "disp_z_pct_hs": 6.13968134,
+            "disp_3d_pct_refmax": 10.3955526,
+            "roll_rms_deg": 0.209265918,
+            "pitch_rms_deg": 0.152677327,
+            "yaw_rms_deg": 0.527637303,
+            "accel_bias_3d_rms_mps2": 0.0441755094,
+            "gyro_bias_3d_rms_radps": 0.000103600178,
+            "disp_x_rms_m": 0.0098712137,
+            "disp_y_rms_m": 0.00777159352,
+            "disp_z_rms_m": 0.0165771395,
+            "disp_3d_rms_m": 0.0208000019
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "metrics": {
+            "disp_z_pct_hs": 6.64238977,
+            "disp_3d_pct_refmax": 10.8153725,
+            "roll_rms_deg": 0.147589624,
+            "pitch_rms_deg": 0.166159123,
+            "yaw_rms_deg": 0.615633368,
+            "accel_bias_3d_rms_mps2": 0.0376902781,
+            "gyro_bias_3d_rms_radps": 0.000110874811,
+            "disp_x_rms_m": 0.0836024731,
+            "disp_y_rms_m": 0.0602340847,
+            "disp_z_rms_m": 0.0996358469,
+            "disp_3d_rms_m": 0.143334642
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "metrics": {
+            "disp_z_pct_hs": 6.63580036,
+            "disp_3d_pct_refmax": 10.8090048,
+            "roll_rms_deg": 0.145347506,
+            "pitch_rms_deg": 0.173006013,
+            "yaw_rms_deg": 0.6384148,
+            "accel_bias_3d_rms_mps2": 0.0383694097,
+            "gyro_bias_3d_rms_radps": 0.000109560417,
+            "disp_x_rms_m": 0.083572112,
+            "disp_y_rms_m": 0.0602388829,
+            "disp_z_rms_m": 0.0995370075,
+            "disp_3d_rms_m": 0.143250257
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "metrics": {
+            "disp_z_pct_hs": 6.04779291,
+            "disp_3d_pct_refmax": 12.14149,
+            "roll_rms_deg": 0.212770715,
+            "pitch_rms_deg": 0.202090055,
+            "yaw_rms_deg": 0.597602487,
+            "accel_bias_3d_rms_mps2": 0.0492667928,
+            "gyro_bias_3d_rms_radps": 0.000129960565,
+            "disp_x_rms_m": 0.6237728,
+            "disp_y_rms_m": 0.444063663,
+            "disp_z_rms_m": 0.514062405,
+            "disp_3d_rms_m": 0.922250092
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+            "ERROR: Pitch RMS above limit (0.20209 deg > 0.18845 deg). Failing.",
+            "ERROR: 3D accel bias error RMS above limit (58.3943% > 53.9189% of max TRUE bias). Failing."
+          ]
+        },
+        {
+          "family": "ou2",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.7142857142857143,
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "metrics": {
+            "disp_z_pct_hs": 6.03063536,
+            "disp_3d_pct_refmax": 12.1282606,
+            "roll_rms_deg": 0.212745413,
+            "pitch_rms_deg": 0.208697543,
+            "yaw_rms_deg": 0.612850547,
+            "accel_bias_3d_rms_mps2": 0.0501449257,
+            "gyro_bias_3d_rms_radps": 0.000128798696,
+            "disp_x_rms_m": 0.623494744,
+            "disp_y_rms_m": 0.444054246,
+            "disp_z_rms_m": 0.512603998,
+            "disp_3d_rms_m": 0.921245217
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+            "ERROR: Pitch RMS above limit (0.208698 deg > 0.18845 deg). Failing.",
+            "ERROR: 3D accel bias error RMS above limit (59.4351% > 53.9189% of max TRUE bias). Failing."
+          ]
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "metrics": {
+            "disp_z_pct_hs": 8.23604965,
+            "disp_3d_pct_refmax": 19.3368416,
+            "roll_rms_deg": 0.300123245,
+            "pitch_rms_deg": 0.151279956,
+            "yaw_rms_deg": 0.381683469,
+            "accel_bias_3d_rms_mps2": 0.0567988753,
+            "gyro_bias_3d_rms_radps": 0.00011252478,
+            "disp_x_rms_m": 0.0263389051,
+            "disp_y_rms_m": 0.0133696264,
+            "disp_z_rms_m": 0.0222373344,
+            "disp_3d_rms_m": 0.0369727463
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "metrics": {
+            "disp_z_pct_hs": 7.72113228,
+            "disp_3d_pct_refmax": 18.9225864,
+            "roll_rms_deg": 0.383126318,
+            "pitch_rms_deg": 0.153231412,
+            "yaw_rms_deg": 0.40641886,
+            "accel_bias_3d_rms_mps2": 0.0699379519,
+            "gyro_bias_3d_rms_radps": 0.000113513241,
+            "disp_x_rms_m": 0.0263828877,
+            "disp_y_rms_m": 0.0133560738,
+            "disp_z_rms_m": 0.0208470579,
+            "disp_3d_rms_m": 0.036180675
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+            "ERROR: Roll RMS above limit (0.383126 deg > 0.34667 deg). Failing.",
+            "ERROR: 3D accel bias error RMS above limit (82.8951% > 75.6411% of max TRUE bias). Failing."
+          ]
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "metrics": {
+            "disp_z_pct_hs": 5.50112581,
+            "disp_3d_pct_refmax": 11.781023,
+            "roll_rms_deg": 0.131164953,
+            "pitch_rms_deg": 0.139649704,
+            "yaw_rms_deg": 0.735916197,
+            "accel_bias_3d_rms_mps2": 0.0314023308,
+            "gyro_bias_3d_rms_radps": 0.000102563055,
+            "disp_x_rms_m": 0.108139716,
+            "disp_y_rms_m": 0.0815340132,
+            "disp_z_rms_m": 0.0825168937,
+            "disp_3d_rms_m": 0.158590764
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "metrics": {
+            "disp_z_pct_hs": 5.43137789,
+            "disp_3d_pct_refmax": 11.7392855,
+            "roll_rms_deg": 0.106420644,
+            "pitch_rms_deg": 0.149960801,
+            "yaw_rms_deg": 0.788297236,
+            "accel_bias_3d_rms_mps2": 0.0301434528,
+            "gyro_bias_3d_rms_radps": 0.000101480218,
+            "disp_x_rms_m": 0.108155921,
+            "disp_y_rms_m": 0.0814737231,
+            "disp_z_rms_m": 0.0814706683,
+            "disp_3d_rms_m": 0.158028916
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "metrics": {
+            "disp_z_pct_hs": 4.39795399,
+            "disp_3d_pct_refmax": 11.4285984,
+            "roll_rms_deg": 0.173384681,
+            "pitch_rms_deg": 0.155063912,
+            "yaw_rms_deg": 0.617735624,
+            "accel_bias_3d_rms_mps2": 0.0366789587,
+            "gyro_bias_3d_rms_radps": 0.000112237103,
+            "disp_x_rms_m": 0.641439974,
+            "disp_y_rms_m": 0.508843958,
+            "disp_z_rms_m": 0.373826087,
+            "disp_3d_rms_m": 0.900062978
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "metrics": {
+            "disp_z_pct_hs": 4.3726964,
+            "disp_3d_pct_refmax": 11.416296,
+            "roll_rms_deg": 0.163583472,
+            "pitch_rms_deg": 0.167082936,
+            "yaw_rms_deg": 0.642653406,
+            "accel_bias_3d_rms_mps2": 0.0371651538,
+            "gyro_bias_3d_rms_radps": 0.00011483852,
+            "disp_x_rms_m": 0.641231358,
+            "disp_y_rms_m": 0.508966684,
+            "disp_z_rms_m": 0.371679217,
+            "disp_3d_rms_m": 0.899094105
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=Pitch_limit_exceeded",
+            "ERROR: Pitch RMS above limit (0.167083 deg > 0.15584 deg). Failing."
+          ]
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "metrics": {
+            "disp_z_pct_hs": 4.2492137,
+            "disp_3d_pct_refmax": 8.6204319,
+            "roll_rms_deg": 0.308397561,
+            "pitch_rms_deg": 0.11928837,
+            "yaw_rms_deg": 0.492509484,
+            "accel_bias_3d_rms_mps2": 0.0562956445,
+            "gyro_bias_3d_rms_radps": 0.000105852538,
+            "disp_x_rms_m": 0.00914514717,
+            "disp_y_rms_m": 0.00906869117,
+            "disp_z_rms_m": 0.0114728771,
+            "disp_3d_rms_m": 0.0172482412
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "metrics": {
+            "disp_z_pct_hs": 4.27540922,
+            "disp_3d_pct_refmax": 8.64646244,
+            "roll_rms_deg": 0.333808988,
+            "pitch_rms_deg": 0.130822435,
+            "yaw_rms_deg": 0.513413489,
+            "accel_bias_3d_rms_mps2": 0.0610774271,
+            "gyro_bias_3d_rms_radps": 0.000105243307,
+            "disp_x_rms_m": 0.00915032811,
+            "disp_y_rms_m": 0.00907292031,
+            "disp_z_rms_m": 0.0115436045,
+            "disp_3d_rms_m": 0.0173003245
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "metrics": {
+            "disp_z_pct_hs": 4.10599947,
+            "disp_3d_pct_refmax": 8.41985321,
+            "roll_rms_deg": 0.16731371,
+            "pitch_rms_deg": 0.114214219,
+            "yaw_rms_deg": 0.378935218,
+            "accel_bias_3d_rms_mps2": 0.0341265649,
+            "gyro_bias_3d_rms_radps": 0.000110538997,
+            "disp_x_rms_m": 0.0694948733,
+            "disp_y_rms_m": 0.0618775487,
+            "disp_z_rms_m": 0.0615899973,
+            "disp_3d_rms_m": 0.111587167
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "metrics": {
+            "disp_z_pct_hs": 4.07322836,
+            "disp_3d_pct_refmax": 8.40033817,
+            "roll_rms_deg": 0.16173777,
+            "pitch_rms_deg": 0.123547964,
+            "yaw_rms_deg": 0.419506073,
+            "accel_bias_3d_rms_mps2": 0.0343429595,
+            "gyro_bias_3d_rms_radps": 0.000107333894,
+            "disp_x_rms_m": 0.0695360079,
+            "disp_y_rms_m": 0.061852783,
+            "disp_z_rms_m": 0.0610984303,
+            "disp_3d_rms_m": 0.111328527
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "scale": 1,
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "metrics": {
+            "disp_z_pct_hs": 3.70579672,
+            "disp_3d_pct_refmax": 9.68622494,
+            "roll_rms_deg": 0.285948098,
+            "pitch_rms_deg": 0.137470409,
+            "yaw_rms_deg": 0.321578354,
+            "accel_bias_3d_rms_mps2": 0.0526687391,
+            "gyro_bias_3d_rms_radps": 0.000124561629,
+            "disp_x_rms_m": 0.523464322,
+            "disp_y_rms_m": 0.409994066,
+            "disp_z_rms_m": 0.314992726,
+            "disp_3d_rms_m": 0.735751629
+          },
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "calibrated_body_z",
+          "scale": 0.5030181086519115,
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "metrics": {
+            "disp_z_pct_hs": 3.69099045,
+            "disp_3d_pct_refmax": 9.67677498,
+            "roll_rms_deg": 0.28111136,
+            "pitch_rms_deg": 0.158300161,
+            "yaw_rms_deg": 0.449005485,
+            "accel_bias_3d_rms_mps2": 0.0538172312,
+            "gyro_bias_3d_rms_radps": 0.000111847134,
+            "disp_x_rms_m": 0.52394557,
+            "disp_y_rms_m": 0.409055859,
+            "disp_z_rms_m": 0.313734204,
+            "disp_3d_rms_m": 0.73503387
+          },
+          "exit_code": 1,
+          "gate_failures": [
+            "QUALITY_GATE: PASS=0 REASON=Pitch_limit_exceeded",
+            "ERROR: Pitch RMS above limit (0.1583 deg > 0.15584 deg). Failing."
+          ]
+        }
+      ]
+    },
+    "spectral-pseudo-screen.json": {
+      "role": "O1 exploratory overlays; unmodified truth/sensor streams; not shipping acceptance or stability evidence",
+      "source_sha256": {
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/add_spectral_pseudo.py": "4e37adbda4afcf40aa583f66c01076786f55e66bd3f0a6e37fd1e3ddb7a52481",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MarineWaveFrontEnd.h": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/build_rs_physical.py": "ae079902c49b54bfa838a683428c301a075cee962b695bd4d22d20ecf5d16be7",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/rsphysical-include/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "4978baee9e136370ca90e958f999a9ab37d6a4e37fdb68f3099d5ac56772511a",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/spectral_pseudo_screen.py": "717f07ba1858e93e2b80f286ff73a0a710d99f57add29e13437e928c3ed58f38",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+        "/workspace/scratch/7542f0d861f1/experiments/round2/rsphysical-include/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "8e5a846354fd2ce64fb9a4d8aef0e5d1a6ee3d7f86927426d6287e65afdcc84b",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+        "/workspace/scratch/7542f0d861f1/ocean-imu/src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31"
+      },
+      "binary_sha256": "8bbbb6b2eacf2e0051a18c3a7e1c903c873177b8c23030a417b4250e36ff83a3",
+      "rows": [
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 7.74471617,
+            "disp_3d_pct_refmax": 18.9244843,
+            "roll_rms_deg": 0.302381992,
+            "pitch_rms_deg": 0.134078234,
+            "yaw_rms_deg": 0.409514874,
+            "accel_bias_3d_rms_mps2": 0.0558400601,
+            "gyro_bias_3d_rms_radps": 0.000112694914,
+            "disp_x_rms_m": 0.0263482686,
+            "disp_y_rms_m": 0.0133346887,
+            "disp_z_rms_m": 0.0209107343,
+            "disp_3d_rms_m": 0.0361843072
+          },
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 8.23605537,
+            "disp_3d_pct_refmax": 19.3372307,
+            "roll_rms_deg": 0.300178975,
+            "pitch_rms_deg": 0.151240155,
+            "yaw_rms_deg": 0.381744653,
+            "accel_bias_3d_rms_mps2": 0.0568042584,
+            "gyro_bias_3d_rms_radps": 0.000112527916,
+            "disp_x_rms_m": 0.0263400022,
+            "disp_y_rms_m": 0.0133695072,
+            "disp_z_rms_m": 0.0222373512,
+            "disp_3d_rms_m": 0.0369734913
+          },
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 5.50087786,
+            "disp_3d_pct_refmax": 11.7813244,
+            "roll_rms_deg": 0.13111119,
+            "pitch_rms_deg": 0.139714509,
+            "yaw_rms_deg": 0.737723708,
+            "accel_bias_3d_rms_mps2": 0.031404864,
+            "gyro_bias_3d_rms_radps": 0.00010246929,
+            "disp_x_rms_m": 0.108147405,
+            "disp_y_rms_m": 0.0815354586,
+            "disp_z_rms_m": 0.0825131685,
+            "disp_3d_rms_m": 0.158594817
+          },
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 4.4253993,
+            "disp_3d_pct_refmax": 16.6584034,
+            "roll_rms_deg": 0.307004631,
+            "pitch_rms_deg": 0.130689293,
+            "yaw_rms_deg": 0.418489963,
+            "accel_bias_3d_rms_mps2": 0.056322936,
+            "gyro_bias_3d_rms_radps": 0.000112791946,
+            "disp_x_rms_m": 0.0263468046,
+            "disp_y_rms_m": 0.0133264316,
+            "disp_z_rms_m": 0.011948579,
+            "disp_3d_rms_m": 0.0318514742
+          },
+          "input_sha256": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 5.47034407,
+            "disp_3d_pct_refmax": 11.7631712,
+            "roll_rms_deg": 0.132677719,
+            "pitch_rms_deg": 0.133044362,
+            "yaw_rms_deg": 0.72088176,
+            "accel_bias_3d_rms_mps2": 0.0307120662,
+            "gyro_bias_3d_rms_radps": 0.000102520557,
+            "disp_x_rms_m": 0.108120315,
+            "disp_y_rms_m": 0.0815586597,
+            "disp_z_rms_m": 0.0820551664,
+            "disp_3d_rms_m": 0.158350453
+          },
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 3.49592304,
+            "disp_3d_pct_refmax": 10.7868299,
+            "roll_rms_deg": 0.130505115,
+            "pitch_rms_deg": 0.127473608,
+            "yaw_rms_deg": 0.708239615,
+            "accel_bias_3d_rms_mps2": 0.0297009479,
+            "gyro_bias_3d_rms_radps": 0.00010247797,
+            "disp_x_rms_m": 0.108100638,
+            "disp_y_rms_m": 0.0815451145,
+            "disp_z_rms_m": 0.0524388477,
+            "disp_3d_rms_m": 0.14520739
+          },
+          "input_sha256": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 4.39800549,
+            "disp_3d_pct_refmax": 11.4292469,
+            "roll_rms_deg": 0.173382938,
+            "pitch_rms_deg": 0.155057415,
+            "yaw_rms_deg": 0.617729843,
+            "accel_bias_3d_rms_mps2": 0.036677327,
+            "gyro_bias_3d_rms_radps": 0.000112241767,
+            "disp_x_rms_m": 0.641491473,
+            "disp_y_rms_m": 0.508866012,
+            "disp_z_rms_m": 0.373830467,
+            "disp_3d_rms_m": 0.900114
+          },
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 4.36021757,
+            "disp_3d_pct_refmax": 11.4123058,
+            "roll_rms_deg": 0.173005149,
+            "pitch_rms_deg": 0.153970793,
+            "yaw_rms_deg": 0.61559689,
+            "accel_bias_3d_rms_mps2": 0.0364769548,
+            "gyro_bias_3d_rms_radps": 0.000112141817,
+            "disp_x_rms_m": 0.641499341,
+            "disp_y_rms_m": 0.508847415,
+            "disp_z_rms_m": 0.370618492,
+            "disp_3d_rms_m": 0.898779809
+          },
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "moving",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 3.00222421,
+            "disp_3d_pct_refmax": 10.8882904,
+            "roll_rms_deg": 0.170877427,
+            "pitch_rms_deg": 0.148605376,
+            "yaw_rms_deg": 0.602056503,
+            "accel_bias_3d_rms_mps2": 0.0354469009,
+            "gyro_bias_3d_rms_radps": 0.00011221665,
+            "disp_x_rms_m": 0.641361237,
+            "disp_y_rms_m": 0.508782029,
+            "disp_z_rms_m": 0.255189061,
+            "disp_3d_rms_m": 0.857510865
+          },
+          "input_sha256": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 4.24905825,
+            "disp_3d_pct_refmax": 8.62026501,
+            "roll_rms_deg": 0.308491081,
+            "pitch_rms_deg": 0.119227201,
+            "yaw_rms_deg": 0.492480814,
+            "accel_bias_3d_rms_mps2": 0.0563065223,
+            "gyro_bias_3d_rms_radps": 0.00010585432,
+            "disp_x_rms_m": 0.0091450857,
+            "disp_y_rms_m": 0.00906865206,
+            "disp_z_rms_m": 0.011472458,
+            "disp_3d_rms_m": 0.0172479078
+          },
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 4.3132391,
+            "disp_3d_pct_refmax": 8.6780529,
+            "roll_rms_deg": 0.307536364,
+            "pitch_rms_deg": 0.119245961,
+            "yaw_rms_deg": 0.492403269,
+            "accel_bias_3d_rms_mps2": 0.0561557561,
+            "gyro_bias_3d_rms_radps": 0.000105846411,
+            "disp_x_rms_m": 0.00914508477,
+            "disp_y_rms_m": 0.00906842295,
+            "disp_z_rms_m": 0.0116457455,
+            "disp_3d_rms_m": 0.0173635315
+          },
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 3.12718797,
+            "disp_3d_pct_refmax": 7.69693136,
+            "roll_rms_deg": 0.296898037,
+            "pitch_rms_deg": 0.122005068,
+            "yaw_rms_deg": 0.495286763,
+            "accel_bias_3d_rms_mps2": 0.0546517186,
+            "gyro_bias_3d_rms_radps": 0.000105800245,
+            "disp_x_rms_m": 0.00914541911,
+            "disp_y_rms_m": 0.00906885136,
+            "disp_z_rms_m": 0.00844340771,
+            "disp_3d_rms_m": 0.0154004507
+          },
+          "input_sha256": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 4.10599518,
+            "disp_3d_pct_refmax": 8.41957474,
+            "roll_rms_deg": 0.167309701,
+            "pitch_rms_deg": 0.114179388,
+            "yaw_rms_deg": 0.378836125,
+            "accel_bias_3d_rms_mps2": 0.0341226384,
+            "gyro_bias_3d_rms_radps": 0.000110540488,
+            "disp_x_rms_m": 0.0694942325,
+            "disp_y_rms_m": 0.0618716478,
+            "disp_z_rms_m": 0.0615899302,
+            "disp_3d_rms_m": 0.111583464
+          },
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 4.14389324,
+            "disp_3d_pct_refmax": 8.44337845,
+            "roll_rms_deg": 0.167215243,
+            "pitch_rms_deg": 0.113373943,
+            "yaw_rms_deg": 0.376748025,
+            "accel_bias_3d_rms_mps2": 0.0340273306,
+            "gyro_bias_3d_rms_radps": 0.000110566878,
+            "disp_x_rms_m": 0.0694917291,
+            "disp_y_rms_m": 0.0618757121,
+            "disp_z_rms_m": 0.0621584021,
+            "disp_3d_rms_m": 0.111898936
+          },
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 2.96806836,
+            "disp_3d_pct_refmax": 7.78140831,
+            "roll_rms_deg": 0.16536589,
+            "pitch_rms_deg": 0.105108902,
+            "yaw_rms_deg": 0.356583536,
+            "accel_bias_3d_rms_mps2": 0.0329244472,
+            "gyro_bias_3d_rms_radps": 0.000110649831,
+            "disp_x_rms_m": 0.0694519728,
+            "disp_y_rms_m": 0.0618810244,
+            "disp_z_rms_m": 0.0445210263,
+            "disp_3d_rms_m": 0.103125937
+          },
+          "input_sha256": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "baseline",
+          "metrics": {
+            "disp_z_pct_hs": 3.70582581,
+            "disp_3d_pct_refmax": 9.68631649,
+            "roll_rms_deg": 0.285993099,
+            "pitch_rms_deg": 0.137428716,
+            "yaw_rms_deg": 0.321463436,
+            "accel_bias_3d_rms_mps2": 0.052672416,
+            "gyro_bias_3d_rms_radps": 0.000124561644,
+            "disp_x_rms_m": 0.523464322,
+            "disp_y_rms_m": 0.410004675,
+            "disp_z_rms_m": 0.314995199,
+            "disp_3d_rms_m": 0.735758603
+          },
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "physical_RS",
+          "metrics": {
+            "disp_z_pct_hs": 3.69617486,
+            "disp_3d_pct_refmax": 9.68195915,
+            "roll_rms_deg": 0.285868138,
+            "pitch_rms_deg": 0.137128025,
+            "yaw_rms_deg": 0.320832282,
+            "accel_bias_3d_rms_mps2": 0.0526264869,
+            "gyro_bias_3d_rms_radps": 0.000124583647,
+            "disp_x_rms_m": 0.523468196,
+            "disp_y_rms_m": 0.410035402,
+            "disp_z_rms_m": 0.314174861,
+            "disp_3d_rms_m": 0.735427618
+          },
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "exit_code": 0,
+          "gate_failures": []
+        },
+        {
+          "family": "ou3",
+          "dataset": "stationary",
+          "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          "arm": "spectral_S",
+          "metrics": {
+            "disp_z_pct_hs": 2.62974453,
+            "disp_3d_pct_refmax": 9.23443985,
+            "roll_rms_deg": 0.281954527,
+            "pitch_rms_deg": 0.131389439,
+            "yaw_rms_deg": 0.309431791,
+            "accel_bias_3d_rms_mps2": 0.051520858,
+            "gyro_bias_3d_rms_radps": 0.000124585844,
+            "disp_x_rms_m": 0.523347616,
+            "disp_y_rms_m": 0.410064608,
+            "disp_z_rms_m": 0.223528296,
+            "disp_3d_rms_m": 0.701434672
+          },
+          "input_sha256": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+          "exit_code": 0,
+          "gate_failures": []
+        }
+      ]
+    }
+  },
+  "historical_producers": {
+    "response_diagnosis.py": {
+      "text": "from pathlib import Path\nimport sys, os, subprocess, tempfile, json\nimport numpy as np\nimport pandas as pd\nfrom scipy.signal import welch, csd\n\nR = Path('/workspace/scratch/7542f0d861f1/ocean-imu')\nO = R.parent/'experiments/round2'\nsys.path.insert(0, str(R/'tools'))\nimport moving_vessel_diagnosis as physics\nfrom sim_dataset import digest\n\nrows = []\nD = {'moving': R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402', 'stationary': Path('/tmp/pr753-stationary-inputs')}\nbinary = R/'tests/kalman_ou_iii/kalman_ou_iii-sim'\nfor dataset, directory in D.items():\n    for source in sorted(directory.glob('wave_data_jonswap_H*.csv')):\n        if 'H4.000' in source.name:\n            continue\n        frame = pd.read_csv(source, float_precision='round_trip')\n        for prefix in ('disp', 'vel', 'acc'):\n            frame[[prefix+'_x', prefix+'_y']] = 0.0\n        q = np.zeros((len(frame), 4)); q[:, 0] = 1\n        physics.set_body_fields(frame, q, np.zeros((len(frame), 3)))\n        with tempfile.TemporaryDirectory(dir=O) as temporary:\n            work = Path(temporary)\n            path = work/source.name\n            frame.to_csv(path, index=False, float_format='%.17g')\n            env = {k:v for k,v in os.environ.items() if not k.startswith(('W3D_', 'OU_', 'SF_', 'TFG_', 'PROBE_'))}\n            env.update(W3D_WRITE_TIMESERIES='1', W3D_COLLECT_ALL_GATES='1', W3D_VALIDATION_WINDOW_SEC='900', W3D_REFERENCE_MOTION='stationary')\n            run = subprocess.run([str(binary), '--input', str(path), '--no-noise'], cwd=work, env=env, capture_output=True, text=True, timeout=600)\n            assert run.returncode in (0,1), run.stderr\n            output = next(p for p in work.glob('*.csv') if p != path)\n            columns = ['time', 'disp_ref_z', 'disp_est_z', 'acc_ref_z', 'acc_est_z', 'tau_applied', 'sigma_a_applied', 'R_p0_applied', 'acc_bias_est_z']\n            data = pd.read_csv(output, usecols=columns).iloc[-180000:]\n            z = data.disp_ref_z.to_numpy(); estimate = data.disp_est_z.to_numpy(); error = estimate-z\n            f, psd = welch(z, fs=200, nperseg=32768)\n            _, cross = csd(z, estimate, fs=200, nperseg=32768)\n            _, epsd = welch(error, fs=200, nperseg=32768)\n            peak = int(np.argmax(psd)); transfer = cross[peak]/psd[peak]\n            row = dict(dataset=dataset, input=source.name, binary_sha256=digest(binary), input_sha256=digest(source), counterfactual_sha256=digest(path),\n                       rms_m=float(np.sqrt(np.mean(error**2))), mean_error_m=float(error.mean()),\n                       peak_hz=float(f[peak]), peak_gain=float(abs(transfer)), peak_phase_deg=float(np.angle(transfer, deg=True)),\n                       operating_points={k:dict(mean=float(data[k].mean()), minimum=float(data[k].min()), maximum=float(data[k].max())) for k in columns[5:]},\n                       error_variance_by_hz_band={f'{lo}:{hi}':float(np.sum(epsd[(f>=lo)&(f<hi)])*(f[1]-f[0])) for lo,hi in [(0,.05),(.05,.1),(.1,.2),(.2,.4),(.4,100)]},\n                       metric_lines=[line for line in run.stdout.splitlines() if line.startswith('VALIDATION_METRICS')])\n            rows.append(row)\n            np.savez_compressed(O/f'response-{dataset}-{source.stem}.npz', **{k:data[k].to_numpy() for k in columns}, frequency=f, truth_psd=psd, error_psd=epsd, cross_psd=cross)\n            print(json.dumps(row), flush=True)\n            (O/'response-diagnosis.json').write_text(json.dumps(dict(role='vertical-only ideal-sensor localization; not shipping qualification', rows=rows), indent=2)+'\\n')\n",
+      "sha256": "3485af9250d45f871fd647ae4621f741018e4ccfe2cb1f21658ed8dcbe8edb7b"
+    },
+    "spectral_pseudo_feasibility.py": {
+      "text": "\"\"\"Frozen scalar diagnostic; this is explicitly not the shipping estimator.\"\"\"\nfrom pathlib import Path\nimport json\nimport numpy as np\nfrom scipy.linalg import solve_continuous_are\nfrom scipy.signal import periodogram\n\nO=Path(__file__).resolve().parent\nrows=[]\nfor row in json.loads((O/'response-diagnosis.json').read_text())['rows']:\n    data=np.load(O/f\"response-{row['dataset']}-{Path(row['input']).stem}.npz\")\n    op=row['operating_points'];tau=op['tau_applied']['mean'];sigma=op['sigma_a_applied']['mean'];rs=op['R_p0_applied']['mean']\n    dt=.005;ts=.015/1.1*tau\n    # [S,p,v,a,b], frozen actual mean schedule, continuous approximation.\n    A=np.zeros((5,5));A[0,1]=A[1,2]=A[2,3]=1\n    A[3,3]=-1/tau;A[4,4]=-1/5000\n    Q=np.diag([0,0,0,2*sigma**2/tau,2.5e-7])\n    R=np.diag([rs**2*ts,(.0148*2.8*.71)**2*dt])\n    f,psd=periodogram(data['disp_ref_z'],fs=200)\n    selected=(f>=.002)&(f<=10);w=2*np.pi*f[selected];psd=psd[selected]\n    for arm,beta in [('S',0),('S_plus_v',(tau/np.pi)**2)]:\n        C=np.array([[1.,0,beta,0,0],[0,0,0,1,1]])\n        P=solve_continuous_are(A.T,C.T,Q,R);K=P@C.T@np.linalg.inv(R)\n        H=np.linalg.solve(1j*w[:,None,None]*np.eye(5)-A+K@C,np.broadcast_to(K[:,1],(len(w),5))[...,None])[:,1,0]\n        transfer=-w*w*H\n        wave=np.trapezoid(abs(transfer-1)**2*psd,w)/(2*np.pi)\n        # One-sided physical white acceleration plus stationary OU bias PSD;\n        # a surrogate for the replay's finite random walk, explicitly not an\n        # identical physical execution or all-frequency bound.\n        noise_psd=2*(.0148**2*.005+2.5e-7/(w*w+(1/5000)**2))\n        noise=np.trapezoid(abs(H)**2*noise_psd,w)/(2*np.pi)\n        peak=int(np.argmin(abs(w/(2*np.pi)-row['peak_hz'])))\n        rows.append(dict(dataset=row['dataset'],input=row['input'],arm=arm,beta_s2=beta,\n                         distortion_rms_m=float(wave**.5),noise_rms_m=float(noise**.5),combined_rms_m=float((wave+noise)**.5),\n                         peak_gain=float(abs(transfer[peak])),peak_phase_deg=float(np.angle(transfer[peak],deg=True))))\n(O/'spectral-pseudo-feasibility.json').write_text(json.dumps(dict(\n    role='non-promoting continuous frozen scalar feasibility; not shipping replay, proof, acceptance or an error bound',\n    structures_preserved='OU integration chain, configured process/measurement noise, S cadence information rate and recorded mean operating point',\n    relaxations='fixed attitude, no cov-sync/reset/startup/adaptation chronology; stationary OU physical bias replaces finite random walk; 0.002..10 Hz scoring band; continuous Riccati limit',\n    candidate='S+beta*v only in Z, beta=(T_z/2pi)^2 with default tau=T_z/2. No truth enters the candidate coefficient.',\n    rationale='For differentiable stationary wave motion, Cov(S,v)=-Var(p), so beta=Var(p)/Var(v) removes covariance with v. A sinusoid at the measured zero-crossing frequency is in the pseudo observation nullspace; DC displacement is still penalized.',\n    rows=rows),indent=2)+'\\n')\nprint('Recorded',len(rows),'frozen scalar arms')\n",
+      "sha256": "c06c443272f9c3a83f6942a46c2bc6d79f92ab77141d5c88d385039824598e12"
+    },
+    "vertical_noise_screen.py": {
+      "text": "from pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport sys, os, subprocess, tempfile, json, math\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu'); O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS, REPLAYS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256\nimport ou_evidence_provenance as provenance\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\nnames=[n for n in REFERENCE_CSV_SHA256 if 'jonswap' in n and 'H4.000' not in n]\nsources={Path(__file__).resolve()}; binaries={}\nfor family in ['ou2','ou3']:\n    folder,name,_=REPLAYS[family]; binary=R/'tests'/folder/name\n    subprocess.run(['make','-q','-C',str(binary.parent),binary.name],check=True,stdout=subprocess.DEVNULL)\n    binaries[family]=binary\n    sources.update(provenance.implementation_closure([binary.with_suffix('.cpp'),R/'src/util/W3dSimCommon.cpp']))\ninitial={str(p):digest(p) for p in sources}; hashes={k:digest(p) for k,p in binaries.items()}\nrows=[]\ndef run(job):\n    family,dataset,name,arm=job\n    source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    factor=1/(2.8*(.5 if family=='ou2' else .71))\n    if arm=='calibrated_body_z':env['SF_SIGMA_A_Z_SCALE']=str(factor)\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        run=subprocess.run([str(binaries[family]),'--input',str(source)],cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in run.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and run.returncode in (0,1),run.stdout[-2000:]+run.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(family=family,dataset=dataset,input=name,arm=arm,scale=factor if arm!='baseline' else 1,input_sha256=digest(source),metrics=metrics,exit_code=run.returncode,gate_failures=[s for s in (run.stdout+'\\n'+run.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(family,dataset,name,arm,metrics['disp_z_pct_hs'],metrics['yaw_rms_deg'],run.returncode,flush=True)\n    return row\njobs=[(f,d,n,a) for f in binaries for d in D for n in names for a in ['baseline','calibrated_body_z']]\nwith ThreadPoolExecutor(2) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result())\n        (O/'vertical-noise-screen.json').write_text(json.dumps(dict(role='one axis-specific refinement of the rejected uniform measurement-noise calibration; body Z is not world vertical under tilt; diagnostic only',source_sha256=initial,binary_sha256=hashes,rows=rows),indent=2)+'\\n')\nassert initial=={str(p):digest(p) for p in sources}\nassert hashes=={k:digest(p) for k,p in binaries.items()}\n",
+      "sha256": "6640546c05d8dab46c2c81c9ff8753c7c86e5e24cc3c46711da901b159764aba"
+    },
+    "spectral_pseudo_screen.py": {
+      "text": "from pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport sys, os, subprocess, tempfile, json, math, time\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256\nimport ou_evidence_provenance as provenance\nbinary=O/'ou3-rsphysical-probe'\nfor attempt in range(5400):\n    if (O/'rsphysical-build.json').exists():break\n    log=(O/'build-rsphysical.log').read_text()\n    if 'Traceback' in log:raise RuntimeError(log[-2000:])\n    time.sleep(2)\nelse:raise RuntimeError('No completed probe build')\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\nnames=[n for n in REFERENCE_CSV_SHA256 if 'jonswap' in n and 'H4.000' not in n]\nsources=set(provenance.implementation_closure([R/'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp',R/'src/util/W3dSimCommon.cpp']))\nsources.update((O/'rsphysical-include').rglob('*.h'));sources.update([Path(__file__).resolve(),O/'build_rs_physical.py',O/'add_spectral_pseudo.py'])\ninitial={str(p):digest(p) for p in sources};bh=digest(binary);rows=[]\ndef run(job):\n    dataset,name,arm=job;source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    if arm=='physical_RS':env['PROBE_RS_PHYSICAL']='1'\n    if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        result=subprocess.run([str(binary),'--input',str(source)],cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in result.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and result.returncode in (0,1),result.stdout[-2000:]+result.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(family='ou3',dataset=dataset,input=name,arm=arm,metrics=metrics,input_sha256=digest(source),exit_code=result.returncode,gate_failures=[s for s in (result.stdout+'\\n'+result.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(dataset,name,arm,metrics['disp_z_pct_hs'],metrics['yaw_rms_deg'],result.returncode,flush=True);return row\njobs=[(d,n,a) for d in D for n in names for a in ['baseline','physical_RS','spectral_S']]\nwith ThreadPoolExecutor(2) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result());(O/'spectral-pseudo-screen.json').write_text(json.dumps(dict(role='O1 exploratory overlays; unmodified truth/sensor streams; not shipping acceptance or stability evidence',source_sha256=initial,binary_sha256=bh,rows=rows),indent=2)+'\\n')\nassert initial=={str(p):digest(p) for p in sources} and bh==digest(binary)\n",
+      "sha256": "717f07ba1858e93e2b80f286ff73a0a710d99f57add29e13437e928c3ed58f38"
+    },
+    "qualify_spectral_pseudo.py": {
+      "text": "\"\"\"Paired, source-bound qualification of an explicit experimental overlay.\"\"\"\nfrom pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport argparse, sys, os, subprocess, tempfile, json, math\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256, input_provenance, verify_csv_clock\nfrom encounter_scaling_study import verify_stationary\nimport ou_evidence_provenance as provenance\n\np=argparse.ArgumentParser(description=__doc__)\np.add_argument('--binary',type=Path,required=True);p.add_argument('--build-record',type=Path,required=True)\np.add_argument('--family',default='ou3',choices=['ou3','tfg'])\np.add_argument('--seeds',default='default,7,23');p.add_argument('--jobs',type=int,default=3)\np.add_argument('--output',type=Path,required=True);p.add_argument('--engine-rpm',type=float)\np.add_argument('--legacy',action='store_true');p.add_argument('--no-noise',action='store_true')\np.add_argument('--resume',action='store_true')\nargs=p.parse_args();binary=args.binary.resolve();seeds=args.seeds.split(',')\nassert args.jobs>0 and len(seeds)==len(set(seeds))\nassert all(s=='default' or s.isdecimal() and int(s)<=2**32-1 for s in seeds)\nassert not (args.no_noise and args.engine_rpm)\nbuild=json.loads(args.build_record.read_text());assert digest(binary)==build['binary_sha256']\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\ninputs=dict(moving=input_provenance(D['moving']/n for n in REFERENCE_CSV_SHA256),stationary=verify_stationary(Path('/tmp/pr753-stationary-v131.zip'),D['stationary']))\nfor d in D.values():\n    for n in REFERENCE_CSV_SHA256:verify_csv_clock(d/n)\nbase_root=R/'tests'/('kalman_ou_iii' if args.family=='ou3' else 'kalman_tfg')\nsource=base_root/('kalman_ou_iii-sim.cpp' if args.family=='ou3' else 'kalman_tfg-sim.cpp')\nsources=set(provenance.implementation_closure([source,R/'src/util/W3dSimCommon.cpp']))\nsources.update((O/'rsphysical-include').rglob('*.h'));sources.add(Path(__file__).resolve())\ninitial={str(x):digest(x) for x in sources};bh=digest(binary)\nmetadata=dict(role='full native paired replay of an explicit experimental overlay, not a promoted shipping/default or stability receipt',family=args.family,source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R,text=True).strip(),source_sha256=initial,binary_sha256=bh,build=build,inputs=inputs,seeds=seeds,engine_rpm=args.engine_rpm,no_noise=args.no_noise,legacy=args.legacy,protocol='same executable and sensor streams, 1200 s at 200 Hz; all 180000 samples in final 900 s; PROBE_SPECTRAL_S=1 enables only the vertical S+beta*v pseudo observation')\nrows=[];partial=args.output.with_suffix('.partial.json')\nif args.resume and partial.exists():\n    old=json.loads(partial.read_text());rows=old.pop('rows');assert old==metadata\n\ndef run(job):\n    dataset,name,seed,arm=job;source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    if seed!='default':env['W3D_SEED']=seed\n    if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n    if args.engine_rpm:env['W3D_ENGINE_RPM']=str(args.engine_rpm)\n    command=[str(binary),'--input',str(source)]+(['--regression'] if args.legacy else [])+(['--no-noise'] if args.no_noise else [])\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        result=subprocess.run(command,cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in result.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and result.returncode in (0,1),result.stdout[-2000:]+result.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(dataset=dataset,input=name,seed=seed,arm=arm,metrics=metrics,input_sha256=digest(source),exit_code=result.returncode,gate_failures=[s for s in (result.stdout+'\\n'+result.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(dataset,name,seed,arm,metrics['disp_z_pct_hs'],result.returncode,flush=True);return row\ndone={(r['dataset'],r['input'],r['seed'],r['arm']) for r in rows};assert len(done)==len(rows)\njobs=[(d,n,s,a) for d in D for s in seeds for n in REFERENCE_CSV_SHA256 for a in ['baseline','spectral_S'] if (d,n,s,a) not in done]\nargs.output.parent.mkdir(parents=True,exist_ok=True)\nwith ThreadPoolExecutor(args.jobs) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result());partial.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n')\nassert initial=={str(x):digest(x) for x in sources} and bh==digest(binary)\nrows.sort(key=lambda r:tuple(r[k] for k in ['dataset','input','seed','arm']))\nargs.output.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n');partial.unlink()\n",
+      "sha256": "3beb37f4a5ea77b2d30513238eb2977c5208eec53840a05840d067bc47da2c02"
+    },
+    "qualify_spectral_pseudo_live.py": {
+      "text": "\"\"\"Paired, source-bound qualification of an explicit experimental overlay.\"\"\"\nfrom pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport argparse, sys, os, subprocess, tempfile, json, math\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256, input_provenance, verify_csv_clock\nfrom encounter_scaling_study import verify_stationary\nimport ou_evidence_provenance as provenance\n\np=argparse.ArgumentParser(description=__doc__)\np.add_argument('--binary',type=Path,required=True);p.add_argument('--build-record',type=Path,required=True)\np.add_argument('--family',default='ou3',choices=['ou3','tfg'])\np.add_argument('--seeds',default='default,7,23');p.add_argument('--jobs',type=int,default=3)\np.add_argument('--output',type=Path,required=True);p.add_argument('--engine-rpm',type=float)\np.add_argument('--legacy',action='store_true');p.add_argument('--no-noise',action='store_true')\np.add_argument('--resume',action='store_true')\nargs=p.parse_args();binary=args.binary.resolve();seeds=args.seeds.split(',')\nassert args.jobs>0 and len(seeds)==len(set(seeds))\nassert all(s=='default' or s.isdecimal() and int(s)<=2**32-1 for s in seeds)\nassert not (args.no_noise and args.engine_rpm)\nbuild=json.loads(args.build_record.read_text());assert digest(binary)==build['binary_sha256']\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\ninputs=dict(moving=input_provenance(D['moving']/n for n in REFERENCE_CSV_SHA256),stationary=verify_stationary(Path('/tmp/pr753-stationary-v131.zip'),D['stationary']))\nfor d in D.values():\n    for n in REFERENCE_CSV_SHA256:verify_csv_clock(d/n)\nbase_root=R/'tests'/('kalman_ou_iii' if args.family=='ou3' else 'kalman_tfg')\nsource=base_root/('kalman_ou_iii-sim.cpp' if args.family=='ou3' else 'kalman_tfg-sim.cpp')\nsources=set(provenance.implementation_closure([source,R/'src/util/W3dSimCommon.cpp']))\nsources.update((O/'spectral-live-include').rglob('*.h'));sources.add(Path(__file__).resolve())\ninitial={str(x):digest(x) for x in sources};bh=digest(binary)\nmetadata=dict(role='full native paired replay of an explicit experimental overlay, not a promoted shipping/default or stability receipt',family=args.family,source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R,text=True).strip(),source_sha256=initial,binary_sha256=bh,build=build,inputs=inputs,seeds=seeds,engine_rpm=args.engine_rpm,no_noise=args.no_noise,legacy=args.legacy,protocol='same executable and sensor streams, 1200 s at 200 Hz; all 180000 samples in final 900 s; PROBE_SPECTRAL_S=1 enables only the vertical S+beta*v pseudo observation')\nrows=[];partial=args.output.with_suffix('.partial.json')\nif args.resume and partial.exists():\n    old=json.loads(partial.read_text());rows=old.pop('rows');assert old==metadata\n\ndef run(job):\n    dataset,name,seed,arm=job;source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    if seed!='default':env['W3D_SEED']=seed\n    if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n    if args.engine_rpm:env['W3D_ENGINE_RPM']=str(args.engine_rpm)\n    command=[str(binary),'--input',str(source)]+(['--regression'] if args.legacy else [])+(['--no-noise'] if args.no_noise else [])\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        result=subprocess.run(command,cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in result.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and result.returncode in (0,1),result.stdout[-2000:]+result.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(dataset=dataset,input=name,seed=seed,arm=arm,metrics=metrics,input_sha256=digest(source),exit_code=result.returncode,gate_failures=[s for s in (result.stdout+'\\n'+result.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(dataset,name,seed,arm,metrics['disp_z_pct_hs'],result.returncode,flush=True);return row\ndone={(r['dataset'],r['input'],r['seed'],r['arm']) for r in rows};assert len(done)==len(rows)\njobs=[(d,n,s,a) for d in D for s in seeds for n in REFERENCE_CSV_SHA256 for a in ['baseline','spectral_S'] if (d,n,s,a) not in done]\nargs.output.parent.mkdir(parents=True,exist_ok=True)\nwith ThreadPoolExecutor(args.jobs) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result());partial.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n')\nassert initial=={str(x):digest(x) for x in sources} and bh==digest(binary)\nrows.sort(key=lambda r:tuple(r[k] for k in ['dataset','input','seed','arm']))\nargs.output.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n');partial.unlink()\n",
+      "sha256": "c09181cdcc0cff82d102a5fa719999807ee80269a443241b05bcf6f1f6063720"
+    },
+    "qualify_spectral_schmidt.py": {
+      "text": "\"\"\"Paired, source-bound qualification of an explicit experimental overlay.\"\"\"\nfrom pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport argparse, sys, os, subprocess, tempfile, json, math\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256, input_provenance, verify_csv_clock\nfrom encounter_scaling_study import verify_stationary\nimport ou_evidence_provenance as provenance\n\np=argparse.ArgumentParser(description=__doc__)\np.add_argument('--binary',type=Path,required=True);p.add_argument('--build-record',type=Path,required=True)\np.add_argument('--family',default='ou3',choices=['ou3','tfg'])\np.add_argument('--seeds',default='default,7,23');p.add_argument('--jobs',type=int,default=3)\np.add_argument('--output',type=Path,required=True);p.add_argument('--engine-rpm',type=float)\np.add_argument('--legacy',action='store_true');p.add_argument('--no-noise',action='store_true')\np.add_argument('--resume',action='store_true')\nargs=p.parse_args();binary=args.binary.resolve();seeds=args.seeds.split(',')\nassert args.jobs>0 and len(seeds)==len(set(seeds))\nassert all(s=='default' or s.isdecimal() and int(s)<=2**32-1 for s in seeds)\nassert not (args.no_noise and args.engine_rpm)\nbuild=json.loads(args.build_record.read_text());assert digest(binary)==build['binary_sha256']\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\ninputs=dict(moving=input_provenance(D['moving']/n for n in REFERENCE_CSV_SHA256),stationary=verify_stationary(Path('/tmp/pr753-stationary-v131.zip'),D['stationary']))\nfor d in D.values():\n    for n in REFERENCE_CSV_SHA256:verify_csv_clock(d/n)\nbase_root=R/'tests'/('kalman_ou_iii' if args.family=='ou3' else 'kalman_tfg')\nsource=base_root/('kalman_ou_iii-sim.cpp' if args.family=='ou3' else 'kalman_tfg-sim.cpp')\nsources=set(provenance.implementation_closure([source,R/'src/util/W3dSimCommon.cpp']))\nsources.update((O/'spectral-schmidt-include').rglob('*.h'));sources.add(Path(__file__).resolve())\ninitial={str(x):digest(x) for x in sources};bh=digest(binary)\nmetadata=dict(role='full native paired replay of an explicit experimental overlay, not a promoted shipping/default or stability receipt',family=args.family,source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R,text=True).strip(),source_sha256=initial,binary_sha256=bh,build=build,inputs=inputs,seeds=seeds,engine_rpm=args.engine_rpm,no_noise=args.no_noise,legacy=args.legacy,protocol='same executable and sensor streams, 1200 s at 200 Hz; all 180000 samples in final 900 s; PROBE_SPECTRAL_S=1 enables only the vertical S+beta*v pseudo observation')\nrows=[];partial=args.output.with_suffix('.partial.json')\nif args.resume and partial.exists():\n    old=json.loads(partial.read_text());rows=old.pop('rows');assert old==metadata\n\ndef run(job):\n    dataset,name,seed,arm=job;source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    if seed!='default':env['W3D_SEED']=seed\n    if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n    if args.engine_rpm:env['W3D_ENGINE_RPM']=str(args.engine_rpm)\n    command=[str(binary),'--input',str(source)]+(['--regression'] if args.legacy else [])+(['--no-noise'] if args.no_noise else [])\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        result=subprocess.run(command,cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in result.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and result.returncode in (0,1),result.stdout[-2000:]+result.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(dataset=dataset,input=name,seed=seed,arm=arm,metrics=metrics,input_sha256=digest(source),exit_code=result.returncode,gate_failures=[s for s in (result.stdout+'\\n'+result.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(dataset,name,seed,arm,metrics['disp_z_pct_hs'],result.returncode,flush=True);return row\ndone={(r['dataset'],r['input'],r['seed'],r['arm']) for r in rows};assert len(done)==len(rows)\njobs=[(d,n,s,a) for d in D for s in seeds for n in REFERENCE_CSV_SHA256 for a in ['baseline','spectral_S'] if (d,n,s,a) not in done]\nargs.output.parent.mkdir(parents=True,exist_ok=True)\nwith ThreadPoolExecutor(args.jobs) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result());partial.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n')\nassert initial=={str(x):digest(x) for x in sources} and bh==digest(binary)\nrows.sort(key=lambda r:tuple(r[k] for k in ['dataset','input','seed','arm']))\nargs.output.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n');partial.unlink()\n",
+      "sha256": "f45d91adef7af898e17c80065eeec1ab730acb76d43a6a16a3f2983eedfd0f74"
+    },
+    "build_rs_physical.py": {
+      "text": "from pathlib import Path\nimport subprocess, time, json, hashlib\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu'); O=R.parent/'experiments/round2'\npath='src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h'\ns=(R/path).read_text().replace('#include <algorithm>','#include <algorithm>\\n#include <cstdlib>')\nbefore='''        const float rs_z = RSb * s;\n        mekf_->set_RS_noise(Eigen::Vector3f(\n            rs_z * R_S_x_factor_,\n            rs_z * R_S_y_factor_,\n            rs_z\n        ));'''\nafter='''        const float rs_h = RSb * s;\n        const float rs_z = probe_rs_physical_ready_\n            ? std::clamp(probe_rs_physical_, min_R_S_, max_R_S_) * pseudo_update_information_rate_scale_() * s\n            : rs_h;\n        mekf_->set_RS_noise(Eigen::Vector3f(\n            rs_h * R_S_x_factor_,\n            rs_h * R_S_y_factor_,\n            rs_z\n        ));'''\nassert before in s;s=s.replace(before,after)\ns=s.replace('    void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {','''    float probe_rs_physical_ = 0.0f;\n    bool probe_rs_physical_ready_ = false;\n    void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {''')\nbefore='''        float RS_raw = rs_target_from_law_(tau_target_, sigma_target_);\n'''\nafter=before+'''\n        // Diagnostic architectural separation: keep the complete original\n        // OU-prior and horizontal regularization histories. Only vertical S\n        // uses measured wave variance before stillness attenuation.\n        if (std::getenv(\"PROBE_RS_PHYSICAL\") && rs_law_ == RSAdaptationLaw::SpectralMSE) {\n            const float old_tau = tau_target_, old_sigma = sigma_target_;\n            measureOperatingPoint_(false, 0.0f, STILL_VAR_DECAY_SEC, tau_coeff_, sigma_coeff_);\n            const float physical_rs = std::clamp(rs_target_from_law_(tau_target_,sigma_target_),min_R_S_,max_R_S_);\n            tau_target_ = old_tau;\n            sigma_target_ = old_sigma;\n            if (!probe_rs_physical_ready_) {\n                probe_rs_physical_ = tune_.RS_applied;\n                probe_rs_physical_ready_ = true;\n            }\n            const float horizon = seastate::common::adaptiveSmoothingHorizonSec(\n                adapt_RS_mult_, tau_target_, physical_rs, probe_rs_physical_, adapt_RS_slew_log_, dt);\n            probe_rs_physical_ += (1.0f - std::exp(-dt/horizon)) * (physical_rs-probe_rs_physical_);\n        }\n'''\nassert before in s;s=s.replace(before,after)\ns=s.replace('''    void resetTrackingState_() {\n        resetFrontEnd_();''','''    void resetTrackingState_() {\n        probe_rs_physical_ready_ = false;\n        resetFrontEnd_();''')\ntarget=O/'rsphysical-include/kalman_ou_iii/SeaStateFusionFilter_OU_III.h';target.parent.mkdir(parents=True,exist_ok=True);target.write_text(s)\ncmd=['g++','-O1','-std=c++20','-march=native','-DEIGEN_UNROLLING_LIMIT=0','-fno-finite-math-only','-I'+str(O/'rsphysical-include'),'-I'+str(R/'src'),'-isystem',str(R/'third_party/eigen'),str(R/'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'),str(R/'tests/kalman_ou_iii/W3dSimCommon.o'),'-o',str(O/'ou3-rsphysical-probe')]\n# No second compiler while the required serial root build is in its build phase.\nfor attempt in range(3600):\n    log=(O/'make-all-serial.log').read_text()\n    if 'Running /workspace/scratch/7542f0d861f1/ocean-imu/tests/ahrs/run_tests.sh' in log:break\n    if 'make: ***' in log:raise RuntimeError('Root build failed; inspect before compiling another target')\n    if attempt%30==0:print('Waiting for required root build to finish compilation',flush=True)\n    time.sleep(2)\nelse:raise RuntimeError('Required build did not finish compilation in two hours')\nprint('Compiling isolated diagnostic overlay',flush=True)\nsubprocess.run(cmd,check=True)\n(O/'rsphysical-build.json').write_text(json.dumps(dict(command=cmd,source_path=path,base_sha256=hashlib.sha256((R/path).read_bytes()).hexdigest(),overlay_sha256=hashlib.sha256(target.read_bytes()).hexdigest(),binary_sha256=hashlib.sha256((O/'ou3-rsphysical-probe').read_bytes()).hexdigest()),indent=2)+'\\n')\nprint('rsphysical built',flush=True)\n",
+      "sha256": "ae079902c49b54bfa838a683428c301a075cee962b695bd4d22d20ecf5d16be7"
+    },
+    "add_spectral_pseudo.py": {
+      "text": "from pathlib import Path\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\ns=(R/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h').read_text()\ns=s.replace('#pragma once','#pragma once\\n#include <cstdlib>',1)\nbefore='''    // Innovation: target S = 0\n    const Vector3 r = -xext.template segment<3>(off_S);\n\n    // Innovation covariance S = P_SS + R_S\n    Matrix3& S_mat = S_scratch_;\n    S_mat = Pext.template block<3,3>(off_S, off_S) + R_S;\n\n    // Cross covariance PC\u1d40 = P(:,S) (NX\u00d73)\n    MatrixNX3& PCt = PCt_scratch_;\n    PCt.noalias() = Pext.template block<NX,3>(0, off_S);\n'''\nafter='''    // Diagnostic only: y_S = S + beta v, beta=(T_z/2pi)^2.\n    // For stationary differentiable physical wave motion Cov(S,v)=-Var(p),\n    // so beta=Var(p)/Var(v) orthogonalizes the pseudo residual against v.\n    // The shipping ablation remains exactly S=0 when the flag is absent.\n    Vector3 r = -xext.template segment<3>(off_S);\n    Matrix3& S_mat = S_scratch_;\n    S_mat = Pext.template block<3,3>(off_S, off_S) + R_S;\n    MatrixNX3& PCt = PCt_scratch_;\n    PCt.noalias() = Pext.template block<NX,3>(0, off_S);\n    if (std::getenv(\"PROBE_SPECTRAL_S\")) {\n        const T beta = tau_aw * tau_aw / T(9.8696044010893586188);\n        const int z = 2;\n        r(z) -= beta * xext(OFF_V+z);\n        for (int i=0; i<NX; ++i)\n            PCt(i,z) += beta * Pext(i,OFF_V+z);\n        for (int i=0; i<3; ++i) {\n            S_mat(i,z) += beta * Pext(off_S+i,OFF_V+z);\n            S_mat(z,i) += beta * Pext(OFF_V+z,off_S+i);\n        }\n        S_mat(z,z) += beta * beta * Pext(OFF_V+z,OFF_V+z);\n    }\n'''\nassert before in s;s=s.replace(before,after)\nout=O/'rsphysical-include/kalman_ou_iii/Kalman3D_Wave_OU_III.h';out.write_text(s)\nprint('Added S+beta*v diagnostic to queued overlay; production source unchanged')\n",
+      "sha256": "4e37adbda4afcf40aa583f66c01076786f55e66bd3f0a6e37fd1e3ddb7a52481"
+    },
+    "add_tfg_spectral_pseudo.py": {
+      "text": "from pathlib import Path\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\ns=(R/'src/kalman_tfg/Kalman3D_Wave_TFG.h').read_text().replace('#pragma once','#pragma once\\n#include <cstdlib>',1)\nbefore='''        H.template block<3,3>(0, OFF_S) = -Matrix3::Identity();\n        Rw = R_S_;\n'''\nafter='''        H.template block<3,3>(0, OFF_S) = -Matrix3::Identity();\n        if (std::getenv(\"PROBE_SPECTRAL_S\")) {\n            const T beta = tau_aw_ * tau_aw_ / T(9.8696044010893586188);\n            r(2) -= beta * X_.X(2,0);\n            const Matrix3 velocity_cross = ocean_imu::lie::skew<T>(Vector3(X_.X.col(0)));\n            H.template block<1,3>(2,OFF_PHI) += beta * velocity_cross.row(2);\n            H(2,OFF_V+2) = -beta;\n        }\n        Rw = R_S_;\n'''\nassert s.count(before)==1;s=s.replace(before,after)\nout=O/'rsphysical-include/kalman_tfg/Kalman3D_Wave_TFG.h';out.parent.mkdir(parents=True,exist_ok=True);out.write_text(s)\nprint('Prepared TFG residual and its matching invariant Jacobian')\n",
+      "sha256": "f195d0d7e3bfd874a4d487f8256f95a3ad2a117dd2e275869b8b1698be044137"
+    },
+    "tfg-spectral-jacobians.cpp": {
+      "text": "/*\n    Copyright (c) 2025-2026  Mikhail Grushinskiy\n\n    Measurement Jacobians for the invariant residuals, verified against\n    central finite differences taken ON THE MANIFOLD.\n\n    The perturbation goes through inject(), not by adding to a state vector.\n    That matters: inject() applies Exp_G, so the derivative computed here is\n    d r / d xi in exactly the coordinates P is expressed in and the Kalman\n    gain operates in. An additive perturbation would differ by J_l and by the\n    rotation of the world vectors, and would agree only to first order --\n    passing at small steps while the real linearization is wrong.\n\n    The sign convention is the one fixed in Kalman3D_Wave_TFG:\n\n        r ~ H xi + noise,   xi the error OF THE ESTIMATE,   correction = -K r\n\n    so H is literally d r / d xi and there is nothing to get backwards.\n\n    Beyond matching finite differences, the tests assert the two properties\n    that are the point of the redesign: the accelerometer and magnetometer\n    Jacobians are built from FIXED references (gravity, the world magnetic\n    vector) and must not change when the estimated attitude or the estimated\n    wave acceleration changes.\n*/\n\n#define EIGEN_NON_ARDUINO\n\n#include \"kalman_tfg/Kalman3D_Wave_TFG.h\"\n\n#include <cmath>\n#include <iostream>\n#include <random>\n#include <string>\n\nnamespace {\n\nusing T = double;\nusing Filter  = ocean_imu::kalman::Kalman3D_Wave_TFG<T, true, true, false>;\nusing Vector3 = Eigen::Matrix<T,3,1>;\nusing Matrix3 = Eigen::Matrix<T,3,3>;\nusing Tangent = Filter::Tangent;\n\nconstexpr int NX = Filter::NX;\nusing JacobianT = Eigen::Matrix<T,3,NX>;\n\nint failures = 0;\n\nbool check(bool condition, const std::string& message) {\n    if (!condition) {\n        std::cerr << \"FAIL: \" << message << '\\n';\n        ++failures;\n    }\n    return condition;\n}\n\nstd::mt19937 rng(20260806u);\n\nVector3 rand_vec(double scale) {\n    std::uniform_real_distribution<double> d(-scale, scale);\n    return Vector3(d(rng), d(rng), d(rng));\n}\n\nFilter make_filter() {\n    Filter f;\n    f.set_aw_time_constant(T(1.7));\n    f.set_aw_stationary_std(Vector3(T(0.6), T(0.6), T(0.32)));\n    f.set_Racc_std(Vector3(T(0.4), T(0.35), T(0.5)));\n    f.set_Rmag_std(Vector3(T(0.1), T(0.12), T(0.09)));\n    f.set_RS_noise(Vector3(T(1.5), T(1.5), T(0.8)));\n    f.set_magnetic_reference_world(Vector3(T(0.21), T(0.02), T(0.43)));\n    // A genuinely rotated attitude and non-zero everything, so a term that is\n    // wrong cannot pass by being multiplied into zero.\n    f.initialize_from_truth(\n        Eigen::Quaternion<T>(Eigen::AngleAxis<T>(\n            T(0.83), Vector3(T(0.31), T(-0.62), T(0.72)).normalized())),\n        Vector3(T(0.5), T(-0.8), T(1.1)),      // v\n        Vector3(T(-1.7), T(2.4), T(0.9)),      // p\n        Vector3(T(3.3), T(-2.1), T(1.4)),      // S\n        Vector3(T(0.3), T(-0.5), T(0.7)),      // a_w\n        Vector3(T(0.012), T(-0.008), T(0.004)),// b_g\n        Vector3(T(0.02), T(0.05), T(-0.01)));  // b_a\n    return f;\n}\n\n// ---------------------------------------------------------------------------\n// Generic finite-difference driver: perturb the estimate through inject(),\n// recompute the residual, central-difference.\n// ---------------------------------------------------------------------------\n\ntemplate<typename ResidualFn>\nJacobianT numeric_jacobian(const Filter& base, ResidualFn residual, T eps) {\n    JacobianT numeric;\n    for (int j = 0; j < NX; ++j) {\n        Tangent e = Tangent::Zero();\n\n        e(j) = eps;\n        Filter plus = base;\n        plus.inject(e);\n\n        e(j) = -eps;\n        Filter minus = base;\n        minus.inject(e);\n\n        numeric.col(j) = (residual(plus) - residual(minus)) / (T(2) * eps);\n    }\n    return numeric;\n}\n\n// Bitwise state comparison, for asserting that something did NOT happen.\n//\n// error_from() is the wrong instrument here: it computes Log(Rhat R_ref^T),\n// and the floating-point product of a rotation with its own transpose is\n// I +- 1e-17 rather than exactly I, so it reports ~1e-16 of \"error\" between\n// two bitwise-identical states. For inertness the raw comparison is both\n// exact and unambiguous.\nbool states_identical(const Filter& a, const Filter& b) {\n    return (a.state().R - b.state().R).cwiseAbs().maxCoeff() == T(0)\n        && (a.state().X - b.state().X).cwiseAbs().maxCoeff() == T(0)\n        && (a.state().B - b.state().B).cwiseAbs().maxCoeff() == T(0);\n}\n\nvoid compare(const JacobianT& analytic, const JacobianT& numeric, T tol,\n             const std::string& tag) {\n    const T err = (analytic - numeric).cwiseAbs().maxCoeff();\n    if (!check(err <= tol, tag + \": Jacobian does not match finite differences\")) {\n        std::cerr << \"  max|diff| = \" << err << \" (tol \" << tol << \")\\n\";\n        int bi = 0, bj = 0;\n        T worst = T(0);\n        for (int i = 0; i < 3; ++i) {\n            for (int j = 0; j < NX; ++j) {\n                const T d = std::abs(analytic(i,j) - numeric(i,j));\n                if (d > worst) { worst = d; bi = i; bj = j; }\n            }\n        }\n        std::cerr << \"  worst entry (\" << bi << \",\" << bj << \"): analytic \"\n                  << analytic(bi,bj) << \" numeric \" << numeric(bi,bj) << '\\n';\n    }\n}\n\n// ---------------------------------------------------------------------------\n// Accelerometer\n// ---------------------------------------------------------------------------\n\n// The specific force a perfectly calibrated sensor would report for this\n// state, so the residual is evaluated near zero rather than at an arbitrary\n// offset. No temperature term: the callers leave k_a at zero, and the\n// temperature path gets its own dedicated check below.\nVector3 consistent_accel(const Filter& f) {\n    return f.R_wb() * (f.get_world_accel() - f.gravity_world()) + f.get_acc_bias();\n}\n\n/*\n    Finite differences at a CONSISTENT state, where r_a = 0.\n\n    That is not a convenience: [g]x is the exact derivative precisely where\n    the residual vanishes. Evaluating anywhere else would measure the\n    deliberately neglected -[r_a]x term as well, and the honest way to handle\n    that is a separate test that pins its exact value -- see below -- rather\n    than a tolerance loose enough to swallow it.\n*/\nvoid test_accel_jacobian_at_consistent_state() {\n    const T tempC = T(35);\n    for (int trial = 0; trial < 10; ++trial) {\n        Filter f = make_filter();\n        if (trial > 0) {\n            Tangent jitter = Tangent::Zero();\n            jitter.segment<3>(Filter::OFF_PHI) = rand_vec(0.5);\n            for (int c = 0; c < 4; ++c) jitter.segment<3>(Filter::OFF_V + 3*c) = rand_vec(1.5);\n            jitter.segment<3>(Filter::OFF_BA) = rand_vec(0.05);\n            f.inject(jitter);\n        }\n        const Vector3 acc = consistent_accel(f);\n\n        Vector3 r; JacobianT H; Matrix3 Rw;\n        f.accel_residual(acc, tempC, r, H, Rw);\n        check(r.cwiseAbs().maxCoeff() <= T(1e-12),\n              \"the consistent-state accelerometer sample left a residual\");\n\n        const JacobianT numeric = numeric_jacobian(\n            f,\n            [&](const Filter& g) {\n                Vector3 rr; JacobianT HH; Matrix3 RR;\n                g.accel_residual(acc, tempC, rr, HH, RR);\n                return rr;\n            },\n            T(1e-6));\n\n        compare(H, numeric, T(2e-8), \"accelerometer (consistent state)\");\n    }\n}\n\n/*\n    Away from a consistent state the finite-difference Jacobian and the\n    analytic one must differ by EXACTLY -[r_a]x.\n\n    This is the test that makes the approximation honest. Asserting only that\n    the gap is \"small\" would pass equally well if the gap were some other\n    small thing, and would stop discriminating the moment a genuine error of\n    similar magnitude appeared. Asserting the gap's exact structure means any\n    additional error shows up immediately, however small.\n*/\nvoid test_accel_jacobian_neglected_term_is_exactly_the_innovation() {\n    const T tempC = T(35);\n    for (int trial = 0; trial < 6; ++trial) {\n        Filter f = make_filter();\n        const Vector3 acc = consistent_accel(f) + rand_vec(0.4);\n\n        Vector3 r; JacobianT H; Matrix3 Rw;\n        f.accel_residual(acc, tempC, r, H, Rw);\n        check(r.norm() > T(0.1), \"the deliberate residual is too small to test with\");\n\n        const JacobianT numeric = numeric_jacobian(\n            f,\n            [&](const Filter& g) {\n                Vector3 rr; JacobianT HH; Matrix3 RR;\n                g.accel_residual(acc, tempC, rr, HH, RR);\n                return rr;\n            },\n            T(1e-6));\n\n        const Matrix3 gap = numeric.block<3,3>(0, Filter::OFF_PHI)\n                          - H.block<3,3>(0, Filter::OFF_PHI);\n        const Matrix3 want = -ocean_imu::lie::skew<T>(r);\n        const T err = (gap - want).cwiseAbs().maxCoeff();\n        if (!check(err <= T(2e-8),\n                   \"the accelerometer Jacobian's neglected term is not exactly -[r_a]x\")) {\n            std::cerr << \"  max|gap + [r]x| = \" << err << \", |r| = \" << r.norm() << '\\n';\n        }\n\n        // Every other column must be exact regardless of the residual.\n        JacobianT rest_a = H, rest_n = numeric;\n        rest_a.block<3,3>(0, Filter::OFF_PHI).setZero();\n        rest_n.block<3,3>(0, Filter::OFF_PHI).setZero();\n        compare(rest_a, rest_n, T(2e-8), \"accelerometer (non-attitude columns)\");\n    }\n}\n\n// The residual must vanish at a state consistent with the measurement --\n// otherwise the Jacobian is the derivative of the wrong function.\nvoid test_accel_residual_is_zero_at_truth() {\n    Filter f = make_filter();\n    const T tempC = T(41);\n    f.set_accel_bias_temp_coeff(Vector3(T(1e-3), T(-2e-3), T(5e-4)));\n    const Vector3 g = f.gravity_world();\n    const Vector3 ba = f.get_acc_bias() + Vector3(T(1e-3), T(-2e-3), T(5e-4)) * (tempC - T(35));\n    const Vector3 acc = f.R_wb() * (f.get_world_accel() - g) + ba;\n\n    Vector3 r; JacobianT H; Matrix3 Rw;\n    f.accel_residual(acc, tempC, r, H, Rw);\n    check(r.cwiseAbs().maxCoeff() <= T(1e-13),\n          \"accelerometer residual is not zero at a consistent state \"\n          \"(temperature term applied inconsistently?)\");\n}\n\n/*\n    The whole argument for the invariant residual is that H_a is built from\n    the fixed gravity vector. Assert it directly: rotate the estimate, change\n    the estimated wave acceleration, and the Jacobian's attitude block must\n    not move.\n*/\nvoid test_accel_jacobian_is_estimate_independent() {\n    Filter a = make_filter();\n    Filter b = make_filter();\n\n    Tangent big = Tangent::Zero();\n    big.segment<3>(Filter::OFF_PHI) = Vector3(T(0.9), T(-1.2), T(0.7));\n    big.segment<3>(Filter::OFF_AW)  = Vector3(T(2.0), T(-3.0), T(1.5));\n    b.inject(big);\n\n    Vector3 ra, rb; JacobianT Ha, Hb; Matrix3 Ra, Rb;\n    a.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), ra, Ha, Ra);\n    b.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), rb, Hb, Rb);\n\n    check((Ha.block<3,3>(0, Filter::OFF_PHI) - Hb.block<3,3>(0, Filter::OFF_PHI))\n              .cwiseAbs().maxCoeff() == T(0),\n          \"H_a attitude block changed with the estimate; it must depend only on g\");\n    check((Ha.block<3,3>(0, Filter::OFF_PHI)\n           - ocean_imu::lie::skew<T>(a.gravity_world())).cwiseAbs().maxCoeff() == T(0),\n          \"H_a attitude block is not [g]x\");\n    check((Ha.block<3,3>(0, Filter::OFF_AW) + Matrix3::Identity()).cwiseAbs().maxCoeff() == T(0),\n          \"H_a wave-acceleration block is not -I\");\n}\n\n/*\n    The accelerometer-bias column is -Rhat at Level 1 and -I at Level 2.\n\n    This is not a formatting detail. delta_ba is an additive BODY-frame error,\n    so it has to be rotated into the world frame the residual lives in;\n    beta_a = R(bhat_a - b_a) is already world-referred and needs no rotation.\n    Writing -I here at Level 1 would be wrong by a full rotation, and would\n    still look plausible because it is right at zero attitude.\n*/\nvoid test_accel_bias_column_is_rotated_at_level_one() {\n    Filter f = make_filter();\n    Vector3 r; JacobianT H; Matrix3 Rw;\n    f.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), r, H, Rw);\n\n    const Matrix3 got = H.block<3,3>(0, Filter::OFF_BA);\n    check((got + f.R_bw()).cwiseAbs().maxCoeff() <= T(1e-15),\n          \"H_a accelerometer-bias column must be -Rhat at Level 1\");\n    // And it must be genuinely different from -I, or the test above proves\n    // nothing about this state.\n    check((got + Matrix3::Identity()).cwiseAbs().maxCoeff() > T(0.3),\n          \"the test attitude is too close to identity to distinguish -Rhat from -I\");\n}\n\n// Freezing the accelerometer bias must remove its column entirely.\nvoid test_accel_bias_freeze_zeroes_the_column() {\n    Filter f = make_filter();\n    f.set_acc_bias_updates_enabled(false);\n    Vector3 r; JacobianT H; Matrix3 Rw;\n    f.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), r, H, Rw);\n    check(H.block<3,3>(0, Filter::OFF_BA).cwiseAbs().maxCoeff() == T(0),\n          \"a frozen accelerometer bias must not appear in H_a\");\n}\n\n// ---------------------------------------------------------------------------\n// Magnetometer\n// ---------------------------------------------------------------------------\n\nvoid test_mag_jacobian_at_consistent_state() {\n    for (int trial = 0; trial < 10; ++trial) {\n        Filter f = make_filter();\n        if (trial > 0) {\n            Tangent jitter = Tangent::Zero();\n            jitter.segment<3>(Filter::OFF_PHI) = rand_vec(0.6);\n            f.inject(jitter);\n        }\n        const Vector3 mag = f.R_wb() * f.magnetic_reference_world();\n\n        Vector3 r; JacobianT H; Matrix3 Rw;\n        f.mag_residual(mag, r, H, Rw);\n\n        const JacobianT numeric = numeric_jacobian(\n            f,\n            [&](const Filter& g) {\n                Vector3 rr; JacobianT HH; Matrix3 RR;\n                g.mag_residual(mag, rr, HH, RR);\n                return rr;\n            },\n            T(1e-6));\n\n        compare(H, numeric, T(2e-8), \"magnetometer (consistent state)\");\n    }\n}\n\n// Same structure as the accelerometer: the gap is exactly -[r_m]x.\nvoid test_mag_jacobian_neglected_term_is_exactly_the_innovation() {\n    for (int trial = 0; trial < 6; ++trial) {\n        Filter f = make_filter();\n        const Vector3 mag = f.R_wb() * f.magnetic_reference_world() + rand_vec(0.05);\n\n        Vector3 r; JacobianT H; Matrix3 Rw;\n        f.mag_residual(mag, r, H, Rw);\n        check(r.norm() > T(0.01), \"the deliberate magnetic residual is too small\");\n\n        const JacobianT numeric = numeric_jacobian(\n            f,\n            [&](const Filter& g) {\n                Vector3 rr; JacobianT HH; Matrix3 RR;\n                g.mag_residual(mag, rr, HH, RR);\n                return rr;\n            },\n            T(1e-6));\n\n        const Matrix3 gap = numeric.block<3,3>(0, Filter::OFF_PHI)\n                          - H.block<3,3>(0, Filter::OFF_PHI);\n        const T err = (gap + ocean_imu::lie::skew<T>(r)).cwiseAbs().maxCoeff();\n        check(err <= T(2e-8),\n              \"the magnetometer Jacobian's neglected term is not exactly -[r_m]x\");\n    }\n}\n\nvoid test_mag_residual_is_zero_at_truth() {\n    Filter f = make_filter();\n    const Vector3 mag = f.R_wb() * f.magnetic_reference_world();\n    Vector3 r; JacobianT H; Matrix3 Rw;\n    f.mag_residual(mag, r, H, Rw);\n    check(r.cwiseAbs().maxCoeff() <= T(1e-14),\n          \"magnetometer residual is not zero at the true attitude\");\n}\n\nvoid test_mag_jacobian_uses_the_world_reference() {\n    Filter a = make_filter();\n    Filter b = make_filter();\n    Tangent big = Tangent::Zero();\n    big.segment<3>(Filter::OFF_PHI) = Vector3(T(1.1), T(-0.6), T(0.9));\n    b.inject(big);\n\n    Vector3 ra, rb; JacobianT Ha, Hb; Matrix3 Ra, Rb;\n    const Vector3 mag(T(0.19), T(0.05), T(0.40));\n    a.mag_residual(mag, ra, Ha, Ra);\n    b.mag_residual(mag, rb, Hb, Rb);\n\n    check((Ha - Hb).cwiseAbs().maxCoeff() == T(0),\n          \"H_m changed with the estimated attitude; it must depend only on B_w\");\n    check((Ha.block<3,3>(0, Filter::OFF_PHI)\n           + ocean_imu::lie::skew<T>(a.magnetic_reference_world())).cwiseAbs().maxCoeff() == T(0),\n          \"H_m attitude block is not -[B_w]x\");\n    check(Ha.block<3,18>(0, 3).cwiseAbs().maxCoeff() == T(0),\n          \"the magnetometer must not touch anything but attitude\");\n}\n\n// ---------------------------------------------------------------------------\n// Integral pseudo-measurement\n// ---------------------------------------------------------------------------\n\nvoid test_integral_jacobian() {\n    for (int trial = 0; trial < 10; ++trial) {\n        Filter f = make_filter();\n        f.set_aw_time_constant(T(0.3+1.2*trial));\n        if (trial > 0) {\n            Tangent jitter = Tangent::Zero();\n            jitter.segment<3>(Filter::OFF_V) = rand_vec(2.0);\n            jitter.segment<3>(Filter::OFF_PHI) = rand_vec(0.4);\n            jitter.segment<3>(Filter::OFF_S)   = rand_vec(2.0);\n            f.inject(jitter);\n        }\n\n        Vector3 r; JacobianT H; Matrix3 Rw;\n        f.integral_residual(r, H, Rw);\n\n        const JacobianT numeric = numeric_jacobian(\n            f,\n            [](const Filter& g) {\n                Vector3 rr; JacobianT HH; Matrix3 RR;\n                g.integral_residual(rr, HH, RR);\n                return rr;\n            },\n            T(1e-6));\n\n        // The [Shat]x term is what makes this match at a tight tolerance;\n        // dropping it would leave an O(|S| |phi|) residual.\n        compare(H, numeric, T(2e-8), \"integral pseudo-measurement\");\n    }\n}\n\nvoid test_integral_keeps_the_S_cross_term() {\n    Filter f = make_filter();\n    Vector3 r; JacobianT H; Matrix3 Rw;\n    f.integral_residual(r, H, Rw);\n    const T beta = std::getenv(\"PROBE_SPECTRAL_S\") ? T(1.7*1.7/9.8696044010893586188) : T(0);\n    Matrix3 expected = ocean_imu::lie::skew<T>(f.get_integral_displacement());\n    const Matrix3 velocity_cross = ocean_imu::lie::skew<T>(Vector3(f.state().X.col(0)));\n    expected.row(2) += beta * velocity_cross.row(2);\n    check((H.block<3,3>(0,Filter::OFF_PHI)-expected).cwiseAbs().maxCoeff()<T(1e-14), \"spectral integral attitude cross term\");\n    check((H.block<3,3>(0,Filter::OFF_S)+Matrix3::Identity()).cwiseAbs().maxCoeff()==T(0), \"spectral integral S block\");\n    Vector3 expected_r=-f.get_integral_displacement(); expected_r(2)-=beta*f.state().X(2,0);\n    check((r-expected_r).cwiseAbs().maxCoeff()<T(1e-14), \"spectral integral residual\");\n    Matrix3 expected_v=Matrix3::Zero();expected_v(2,2)=-beta;\n    check((H.block<3,3>(0,Filter::OFF_V)-expected_v).cwiseAbs().maxCoeff()<T(1e-14), \"spectral velocity block\");\n}\n\n// ---------------------------------------------------------------------------\n// Noise rotation\n// ---------------------------------------------------------------------------\n\nvoid test_measurement_noise_is_rotated_into_the_world() {\n    Filter f = make_filter();\n    Vector3 r; JacobianT H; Matrix3 Rw;\n\n    f.set_Racc_std(Vector3(T(0.4), T(0.2), T(0.7)));   // anisotropic\n    f.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), r, H, Rw);\n    Matrix3 body; body.setZero();\n    body.diagonal() << T(0.16), T(0.04), T(0.49);\n    check((Rw - f.R_bw() * body * f.R_wb()).cwiseAbs().maxCoeff() <= T(1e-14),\n          \"accelerometer noise is not Rhat R_body Rhat^T\");\n    check((Rw - body).cwiseAbs().maxCoeff() > T(1e-3),\n          \"the test attitude does not actually exercise the rotation\");\n\n    // Isotropic noise must pass through unchanged -- a useful invariant, and\n    // the reason this transformation is invisible in most configurations.\n    f.set_Racc_std(Vector3::Constant(T(0.4)));\n    f.accel_residual(Vector3(T(0.1), T(0.2), T(-9.6)), T(35), r, H, Rw);\n    check((Rw - Matrix3::Identity() * T(0.16)).cwiseAbs().maxCoeff() <= T(1e-15),\n          \"isotropic accelerometer noise must be unchanged by the world rotation\");\n\n    // R_S is already world frame and must NOT be rotated.\n    f.set_RS_noise(Vector3(T(1.5), T(1.5), T(0.8)));\n    f.integral_residual(r, H, Rw);\n    Matrix3 want; want.setZero();\n    // set_RS_noise takes standard deviations, so R_S is their square. Write\n    // the squares as products rather than as literals: 0.8*0.8 is\n    // 0.6400000000000001 in double, so a literal 0.64 would fail the exact\n    // comparison below for a reason that has nothing to do with frames.\n    want.diagonal() << T(1.5)*T(1.5), T(1.5)*T(1.5), T(0.8)*T(0.8);\n    check((Rw - want).cwiseAbs().maxCoeff() == T(0),\n          \"R_S must stay in world/NED coordinates, not be rotated by the estimate\");\n}\n\n// ---------------------------------------------------------------------------\n// The updates themselves\n// ---------------------------------------------------------------------------\n\n// An update must move the state toward the measurement and shrink the\n// covariance in the observed direction.\nvoid test_updates_reduce_error_and_covariance() {\n    // Accelerometer: seed a wave-acceleration error and check it shrinks.\n    {\n        Filter truth = make_filter();\n        Filter f = make_filter();\n        Tangent err = Tangent::Zero();\n        err.segment<3>(Filter::OFF_AW) = Vector3(T(0.4), T(-0.3), T(0.25));\n        f.inject(err);\n        f.set_initial_linear_uncertainty(T(0.3), T(1.0), T(3.0), T(0.6));\n\n        const Vector3 acc = consistent_accel(truth);\n        const T before = f.error_from(truth).segment<3>(Filter::OFF_AW).norm();\n        const T trace_before = f.covariance_full().trace();\n        check(f.measurement_update_acc_only(acc, T(35)), \"accelerometer update was rejected\");\n        const T after = f.error_from(truth).segment<3>(Filter::OFF_AW).norm();\n\n        check(after < before, \"the accelerometer update did not reduce the a_w error\");\n        check(f.covariance_full().trace() < trace_before,\n              \"the accelerometer update did not reduce covariance\");\n        check(f.lastAccDiag().accepted && f.lastAccDiag().nis >= T(0),\n              \"accelerometer diagnostics not populated\");\n    }\n\n    // Magnetometer: seed a yaw error.\n    {\n        Filter truth = make_filter();\n        Filter f = make_filter();\n        Tangent err = Tangent::Zero();\n        err.segment<3>(Filter::OFF_PHI) = Vector3(T(0), T(0), T(0.15));\n        f.inject(err);\n\n        const Vector3 mag = truth.R_wb() * truth.magnetic_reference_world();\n        const T before = f.error_from(truth).segment<3>(Filter::OFF_PHI).norm();\n        check(f.measurement_update_mag_only(mag), \"magnetometer update was rejected\");\n        const T after = f.error_from(truth).segment<3>(Filter::OFF_PHI).norm();\n        check(after < before, \"the magnetometer update did not reduce the attitude error\");\n    }\n\n    // Integral: S must be pulled toward zero.\n    {\n        Filter f = make_filter();\n        f.set_initial_linear_uncertainty(T(0.3), T(1.0), T(3.0), T(0.6));\n        Vector3 r0,r1;JacobianT H;Matrix3 Rw;\n        f.integral_residual(r0,H,Rw);\n        const T before = r0.norm();\n        check(f.applyIntegralZeroPseudoMeas(), \"integral pseudo-measurement was rejected\");\n        f.integral_residual(r1,H,Rw);\n        check(r1.norm() < before,\n              \"the integral pseudo-measurement did not pull S toward zero\");\n    }\n}\n\n// Covariance must stay symmetric and PSD through a long measurement sequence.\nvoid test_updates_keep_covariance_sane() {\n    Filter f = make_filter();\n    f.set_initial_linear_uncertainty(T(0.3), T(1.0), T(3.0), T(0.6));\n    std::normal_distribution<double> n(0.0, 0.2);\n\n    for (int step = 0; step < 3000; ++step) {\n        f.time_update(Vector3(n(rng), n(rng), n(rng)), T(0.005));\n        f.measurement_update_acc_only(\n            Vector3(f.R_wb() * (f.get_world_accel() - f.gravity_world())) + rand_vec(0.05),\n            T(35));\n        if (step % 8 == 0) {\n            f.measurement_update_mag_only(\n                Vector3(f.R_wb() * f.magnetic_reference_world()) + rand_vec(0.01));\n        }\n        if (step % 3 == 0) f.applyIntegralZeroPseudoMeas();\n    }\n\n    const auto& P = f.covariance_full();\n    check(P.allFinite(), \"covariance went non-finite over a filtered run\");\n    check((P - P.transpose()).cwiseAbs().maxCoeff() <= T(1e-12) * P.cwiseAbs().maxCoeff(),\n          \"covariance lost symmetry under the Joseph update\");\n    Eigen::SelfAdjointEigenSolver<Filter::MatrixNX> es(P);\n    check(es.info() == Eigen::Success &&\n          es.eigenvalues().minCoeff() >= -T(1e-10) * std::max(T(1), P.cwiseAbs().maxCoeff()),\n          \"covariance stopped being PSD under the Joseph update\");\n    check(f.state().R.allFinite() && f.get_acc_bias().norm() <= T(0.5) + T(1e-9),\n          \"accelerometer bias escaped its ball\");\n}\n\n// Rejected updates must leave the state and covariance completely untouched.\nvoid test_rejected_updates_are_inert() {\n    Filter f = make_filter();\n    f.set_meas_gate_nis(T(1e-6));   // reject essentially everything\n    const Filter before = f;\n    const auto P_before = f.covariance_full();\n\n    const bool accepted = f.measurement_update_acc_only(Vector3(T(5), T(5), T(5)), T(35));\n    check(!accepted, \"the NIS gate did not reject an absurd measurement\");\n    check(!f.lastAccDiag().accepted, \"diagnostics claim acceptance after rejection\");\n    check(states_identical(f, before), \"a rejected update modified the state\");\n    check((f.covariance_full() - P_before).cwiseAbs().maxCoeff() == T(0),\n          \"a rejected update modified the covariance\");\n\n    // A missing magnetic reference must also be inert, not a silent update\n    // against the default unit-x vector.\n    Filter g;\n    g.initialize_identity();\n    check(!g.has_magnetic_reference(), \"magnetic reference should start unset\");\n    const auto Pg = g.covariance_full();\n    check(!g.measurement_update_mag_only(Vector3(T(0.2), T(0), T(0.4))),\n          \"magnetometer update ran without a world reference\");\n    check((g.covariance_full() - Pg).cwiseAbs().maxCoeff() == T(0),\n          \"an update without a magnetic reference modified the covariance\");\n}\n\n// Non-finite input must not poison the filter.\nvoid test_non_finite_input_is_ignored() {\n    Filter f = make_filter();\n    const auto P_before = f.covariance_full();\n    const Filter before = f;\n    const T nan = std::numeric_limits<T>::quiet_NaN();\n    check(!f.measurement_update_acc_only(Vector3(nan, T(0), T(0)), T(35)),\n          \"a NaN accelerometer sample was accepted\");\n    check(!f.measurement_update_mag_only(Vector3(nan, T(0), T(0))),\n          \"a NaN magnetometer sample was accepted\");\n    check(states_identical(f, before) &&\n          (f.covariance_full() - P_before).cwiseAbs().maxCoeff() == T(0),\n          \"a NaN sample perturbed the filter\");\n}\n\nvoid test_float_instantiation() {\n    using FloatFilter = ocean_imu::kalman::Kalman3D_Wave_TFG<float, true, true, false>;\n    FloatFilter f;\n    f.initialize_identity();\n    f.set_magnetic_reference_world(Eigen::Vector3f(0.21f, 0.02f, 0.43f));\n    for (int i = 0; i < 400; ++i) {\n        f.time_update(Eigen::Vector3f(0.01f, -0.02f, 0.03f), 0.005f);\n        f.measurement_update_acc_only(Eigen::Vector3f(0.0f, 0.0f, -9.80665f), 35.0f);\n        f.measurement_update_mag_only(Eigen::Vector3f(0.21f, 0.02f, 0.43f));\n        f.applyIntegralZeroPseudoMeas();\n    }\n    check(f.covariance_full().allFinite() && f.state().R.allFinite(),\n          \"the float instantiation went non-finite under measurement updates\");\n}\n\n} // namespace\n\nint main() {\n    test_accel_residual_is_zero_at_truth();\n    test_accel_jacobian_at_consistent_state();\n    test_accel_jacobian_neglected_term_is_exactly_the_innovation();\n    test_accel_jacobian_is_estimate_independent();\n    test_accel_bias_column_is_rotated_at_level_one();\n    test_accel_bias_freeze_zeroes_the_column();\n\n    test_mag_residual_is_zero_at_truth();\n    test_mag_jacobian_at_consistent_state();\n    test_mag_jacobian_neglected_term_is_exactly_the_innovation();\n    test_mag_jacobian_uses_the_world_reference();\n\n    test_integral_jacobian();\n    test_integral_keeps_the_S_cross_term();\n\n    test_measurement_noise_is_rotated_into_the_world();\n    test_updates_reduce_error_and_covariance();\n    test_updates_keep_covariance_sane();\n    test_rejected_updates_are_inert();\n    test_non_finite_input_is_ignored();\n    test_float_instantiation();\n\n    if (failures != 0) {\n        std::cerr << failures << \" Jacobian check(s) failed\\n\";\n        return 1;\n    }\n    std::cout << \"tfg_jacobians-test: all checks passed\\n\";\n    return 0;\n}\n",
+      "sha256": "d9e8aa4a8bd5a1af17bbdba66bb53caa02a40b51d337e417925ee375bdc661da"
+    },
+    "qualify_spectral_attitude_schmidt.py": {
+      "text": "\"\"\"Paired, source-bound qualification of an explicit experimental overlay.\"\"\"\nfrom pathlib import Path\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport argparse, sys, os, subprocess, tempfile, json, math\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nsys.path.insert(0,str(R/'tools'))\nfrom filter_sim_gates import METRICS\nfrom sim_dataset import digest, REFERENCE_CSV_SHA256, input_provenance, verify_csv_clock\nfrom encounter_scaling_study import verify_stationary\nimport ou_evidence_provenance as provenance\n\np=argparse.ArgumentParser(description=__doc__)\np.add_argument('--binary',type=Path,required=True);p.add_argument('--build-record',type=Path,required=True)\np.add_argument('--family',default='ou3',choices=['ou3','tfg'])\np.add_argument('--seeds',default='default,7,23');p.add_argument('--jobs',type=int,default=3)\np.add_argument('--output',type=Path,required=True);p.add_argument('--engine-rpm',type=float)\np.add_argument('--legacy',action='store_true');p.add_argument('--no-noise',action='store_true')\np.add_argument('--resume',action='store_true')\nargs=p.parse_args();binary=args.binary.resolve();seeds=args.seeds.split(',')\nassert args.jobs>0 and len(seeds)==len(set(seeds))\nassert all(s=='default' or s.isdecimal() and int(s)<=2**32-1 for s in seeds)\nassert not (args.no_noise and args.engine_rpm)\nbuild=json.loads(args.build_record.read_text());assert digest(binary)==build['binary_sha256']\nD={'moving':R/'.sim-data/c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402','stationary':Path('/tmp/pr753-stationary-inputs')}\ninputs=dict(moving=input_provenance(D['moving']/n for n in REFERENCE_CSV_SHA256),stationary=verify_stationary(Path('/tmp/pr753-stationary-v131.zip'),D['stationary']))\nfor d in D.values():\n    for n in REFERENCE_CSV_SHA256:verify_csv_clock(d/n)\nbase_root=R/'tests'/('kalman_ou_iii' if args.family=='ou3' else 'kalman_tfg')\nsource=base_root/('kalman_ou_iii-sim.cpp' if args.family=='ou3' else 'kalman_tfg-sim.cpp')\nsources=set(provenance.implementation_closure([source,R/'src/util/W3dSimCommon.cpp']))\nsources.update((O/'spectral-attitude-schmidt-include').rglob('*.h'));sources.add(Path(__file__).resolve())\ninitial={str(x):digest(x) for x in sources};bh=digest(binary)\nmetadata=dict(role='full native paired replay of an explicit experimental overlay, not a promoted shipping/default or stability receipt',family=args.family,source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=R,text=True).strip(),source_sha256=initial,binary_sha256=bh,build=build,inputs=inputs,seeds=seeds,engine_rpm=args.engine_rpm,no_noise=args.no_noise,legacy=args.legacy,protocol='same executable and sensor streams, 1200 s at 200 Hz; all 180000 samples in final 900 s; PROBE_SPECTRAL_S=1 enables only the vertical S+beta*v pseudo observation')\nrows=[];partial=args.output.with_suffix('.partial.json')\nif args.resume and partial.exists():\n    old=json.loads(partial.read_text());rows=old.pop('rows');assert old==metadata\n\ndef run(job):\n    dataset,name,seed,arm=job;source=D[dataset]/name\n    env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_'))}\n    env.update(W3D_WRITE_TIMESERIES='0',W3D_COLLECT_ALL_GATES='1',W3D_VALIDATION_WINDOW_SEC='900')\n    if dataset=='stationary':env['W3D_REFERENCE_MOTION']='stationary'\n    if seed!='default':env['W3D_SEED']=seed\n    if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n    if args.engine_rpm:env['W3D_ENGINE_RPM']=str(args.engine_rpm)\n    command=[str(binary),'--input',str(source)]+(['--regression'] if args.legacy else [])+(['--no-noise'] if args.no_noise else [])\n    with tempfile.TemporaryDirectory(dir=O) as tmp:\n        result=subprocess.run(command,cwd=tmp,env=env,capture_output=True,text=True,timeout=600)\n    lines=[s for s in result.stdout.splitlines() if s.startswith('VALIDATION_METRICS ')]\n    assert len(lines)==1 and result.returncode in (0,1),result.stdout[-2000:]+result.stderr\n    fields=dict(v.split('=',1) for v in lines[0].split()[1:])\n    assert (fields['input'],fields['start_s'],fields['window_s'],fields['samples'])==(name,'300','900','180000')\n    metrics={k:float(fields[k]) for k in METRICS};assert all(math.isfinite(v) for v in metrics.values())\n    row=dict(dataset=dataset,input=name,seed=seed,arm=arm,metrics=metrics,input_sha256=digest(source),exit_code=result.returncode,gate_failures=[s for s in (result.stdout+'\\n'+result.stderr).splitlines() if s.startswith(('ERROR:','QUALITY_GATE: PASS=0'))])\n    print(dataset,name,seed,arm,metrics['disp_z_pct_hs'],result.returncode,flush=True);return row\ndone={(r['dataset'],r['input'],r['seed'],r['arm']) for r in rows};assert len(done)==len(rows)\njobs=[(d,n,s,a) for d in D for s in seeds for n in REFERENCE_CSV_SHA256 for a in ['baseline','spectral_S'] if (d,n,s,a) not in done]\nargs.output.parent.mkdir(parents=True,exist_ok=True)\nwith ThreadPoolExecutor(args.jobs) as pool:\n    for future in as_completed([pool.submit(run,j) for j in jobs]):\n        rows.append(future.result());partial.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n')\nassert initial=={str(x):digest(x) for x in sources} and bh==digest(binary)\nrows.sort(key=lambda r:tuple(r[k] for k in ['dataset','input','seed','arm']))\nargs.output.write_text(json.dumps(dict(**metadata,rows=rows),indent=2)+'\\n');partial.unlink()\n",
+      "sha256": "3d84ecc03f5ddcbbc17eb1b1cc6d351f3ec8a6cfc05459d2867f6685c7d2de6a"
+    },
+    "build_schmidt_pseudo.py": {
+      "text": "from pathlib import Path\nimport hashlib,json,subprocess\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2';D=O/'spectral-schmidt-include'\nhelper='''#pragma once\n#include <Eigen/Dense>\n// Constrained minimum-variance gain: motion uses all three pseudo observations;\n// attitude and sensor bias use only the unchanged horizontal observations.\n// The full PHt, H and noise are retained in the subsequent Joseph update.\n// No covariance row is deleted and no innovation is relabeled as a sensor.\ntemplate<class Gain, class Cross, class Innovation>\nvoid constrain_vertical_pseudo_gain(Gain& K, const Cross& PHt, const Innovation& S,\n                                   int phi, int bg, int ba) {\n    using T = typename Gain::Scalar;\n    const Eigen::Matrix<T,2,2> Sxy = S.template topLeftCorner<2,2>();\n    Eigen::LDLT<Eigen::Matrix<T,2,2>> ldlt(Sxy);\n    for (int off : {phi,bg,ba}) {\n        if (off < 0) continue;\n        for (int i=off;i<off+3;++i) {\n            const Eigen::Matrix<T,2,1> rhs = PHt.template block<1,2>(i,0).transpose();\n            K.template block<1,2>(i,0) = ldlt.solve(rhs).transpose();\n            K(i,2) = T(0);\n        }\n    }\n}\n'''\nD.mkdir(exist_ok=True);(D/'PartialSchmidt.h').write_text(helper)\nfor family,file in [('ou3','kalman_ou_iii/Kalman3D_Wave_OU_III.h'),('tfg','kalman_tfg/Kalman3D_Wave_TFG.h')]:\n s=(O/'rsphysical-include'/file).read_text().replace('#include <cstdlib>','#include <cstdlib>\\n#include \"PartialSchmidt.h\"',1)\n if family=='ou3':\n  start=s.index('void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::applyIntegralZeroPseudoMeas()')\n  a=s[:start];b=s[start:]\n  needle='    gain_from_ldlt3_(PCt, ldlt, K);'\n  assert b.count(needle)>=1\n  b=b.replace(needle,needle+'''\\n    if (std::getenv(\"PROBE_SPECTRAL_S\"))\n        constrain_vertical_pseudo_gain(K, PCt, S_mat, 0,\n                                      with_gyro_bias ? 3 : -1,\n                                      with_accel_bias ? OFF_BA : -1);''',1)\n  s=a+b\n else:\n  needle='return apply_update3_(r, H, Rw, last_S_diag_);'\n  assert s.count(needle)==1\n  s=s.replace(needle,'return apply_update3_(r, H, Rw, last_S_diag_, std::getenv(\"PROBE_SPECTRAL_S\") != nullptr);')\n  needle='const Matrix3& Rw, MeasDiag3& diag) {\\n        diag = MeasDiag3{};'\n  assert s.count(needle)==1\n  s=s.replace(needle,'const Matrix3& Rw, MeasDiag3& diag, bool constrain_vertical = false) {\\n        diag = MeasDiag3{};')\n  needle='        K = ldlt.solve(PHt.transpose()).transpose();'\n  assert s.count(needle)==1\n  s=s.replace(needle,needle+'''\\n        if (constrain_vertical)\n            constrain_vertical_pseudo_gain(K, PHt, S, OFF_PHI, OFF_BG,\n                                          with_accel_bias ? OFF_BA : -1);''')\n target=D/file;target.parent.mkdir(exist_ok=True,parents=True);target.write_text(s)\nprint('Prepared partial-Schmidt observation overlays. No shipping edits.',flush=True)\nflags=['g++','-O3','-std=c++20','-Wall','-Wextra','-Wshadow','-Wconversion','-funroll-loops','-fno-finite-math-only','-march=native','-I'+str(D),'-Isrc','-isystem','third_party/eigen']\nfor family,subdir in [('ou3','kalman_ou_iii'),('tfg','kalman_tfg')]:\n binary=O/(family+'-spectral-schmidt-native')\n cmd=flags+[f'tests/{subdir}/{subdir}-sim.cpp',f'tests/{subdir}/W3dSimCommon.o','-o',str(binary)]\n print('Building',family,flush=True);subprocess.run(cmd,cwd=R,check=True)\n record=dict(command=cmd,binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),overlay_sha256={str(p.relative_to(D)):hashlib.sha256(p.read_bytes()).hexdigest() for p in D.rglob('*.h')})\n (O/(family+'-spectral-schmidt-native-build.json')).write_text(json.dumps(record,indent=2)+'\\n')\n print('Built',family,flush=True)\n",
+      "sha256": "caef6358ce3c083dbea35d65c8305672a5a19ec20d35b188ed5a13b2b6b60a29"
+    },
+    "build_attitude_schmidt.py": {
+      "text": "from pathlib import Path\nimport hashlib,json,subprocess\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2';D=O/'spectral-attitude-schmidt-include';D.mkdir(exist_ok=True)\nfor path in (O/'spectral-schmidt-include').rglob('*.h'):\n s=path.read_text();name=path.relative_to(O/'spectral-schmidt-include')\n if name.name=='Kalman3D_Wave_OU_III.h':\n  needle='with_accel_bias ? OFF_BA : -1);';assert s.count(needle)==1;s=s.replace(needle,'-1); // Keep the accelerometer-bias learning channel.')\n if name.name=='Kalman3D_Wave_TFG.h':\n  needle='with_accel_bias ? OFF_BA : -1);';assert s.count(needle)==1;s=s.replace(needle,'-1); // Keep the accelerometer-bias learning channel.')\n out=D/name;out.parent.mkdir(parents=True,exist_ok=True);out.write_text(s)\nflags=['g++','-O3','-std=c++20','-Wall','-Wextra','-Wshadow','-Wconversion','-funroll-loops','-fno-finite-math-only','-march=native','-I'+str(D),'-Isrc','-isystem','third_party/eigen']\nfor family,subdir in [('ou3','kalman_ou_iii'),('tfg','kalman_tfg')]:\n binary=O/(family+'-spectral-attitude-schmidt-native')\n cmd=flags+[f'tests/{subdir}/{subdir}-sim.cpp',f'tests/{subdir}/W3dSimCommon.o','-o',str(binary)]\n print('Building',family,flush=True);subprocess.run(cmd,cwd=R,check=True)\n record=dict(command=cmd,binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),overlay_sha256={str(p.relative_to(D)):hashlib.sha256(p.read_bytes()).hexdigest() for p in D.rglob('*.h')})\n (O/(family+'-spectral-attitude-schmidt-native-build.json')).write_text(json.dumps(record,indent=2)+'\\n')\n print('Built',family,flush=True)\n",
+      "sha256": "75e443e74498e7f8335dd3a8c6990af74f1b9321d620186401c22b6dd5df7e7a"
+    },
+    "run_pseudo_device.py": {
+      "text": "from pathlib import Path\nimport hashlib,json,os,subprocess,sys\nR=Path('/workspace/scratch/7542f0d861f1/ocean-imu');O=R.parent/'experiments/round2'\nbinary=Path(sys.argv[1]).resolve();out=Path(sys.argv[2]);source=Path(sys.argv[3]).resolve();overlay=Path(sys.argv[4]).resolve()\nhashit=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()\ninitial={str(p):hashit(p) for p in [source,*overlay.rglob('*.h')]}\nrows=[]\nfor arm in ['baseline','spectral_S']:\n env={k:v for k,v in os.environ.items() if not k.startswith(('W3D_','SF_','OU_','TFG_','PROBE_','OCEAN_IMU_TRACE'))}\n if arm=='spectral_S':env['PROBE_SPECTRAL_S']='1'\n result=subprocess.run([str(binary)],env=env,cwd=O,capture_output=True,text=True,timeout=900)\n assert result.returncode in (0,1),result.stderr\n rows.append(dict(arm=arm,exit_code=result.returncode,stdout=result.stdout,stderr=result.stderr))\n print(arm,result.returncode,flush=True)\nassert initial=={p:hashit(Path(p)) for p in initial}\nout.write_text(json.dumps(dict(role='Thirteen ten-minute device-configured histories: quiet offsets, tilt, held bias, fixed tuning, no sync, 10/20/50/200 Hz, noise and motion. Unchanged 2 m peak-heave regression bound.',source_sha256=initial,binary_sha256=hashit(binary),rows=rows),indent=2)+'\\n')\n",
+      "sha256": "e46c34ad5a37f6dde5f36bb41b66f2bd5eda672f0a1d14e63462c7cd9b8fd53c"
+    },
+    "tfg-legacy-device-probe.cpp": {
+      "text": "/* Copyright (c) 2026 Mikhail Grushinskiy\n * Device-configured, deterministic ten-minute histories. No detrender is used:\n * the primary regression measures the actual estimator's raw world state.\n */\n#define EIGEN_NON_ARDUINO\n#include \"kalman_tfg/SeaStateFusionFilter_TFG.h\"\n#include <algorithm>\n#include <cmath>\n#include <fstream>\n#include <cstdlib>\n#include <iomanip>\n#include <iostream>\n#include <stdexcept>\n#include <string>\n\nnamespace {\nusing Fusion = ocean_imu::tfg::SeaStateFusionFilter_TFG<>;\nusing V = Eigen::Vector3f;\nusing M = Eigen::Matrix3f;\nconstexpr float g = 9.80665f;\nconstexpr float pi = 3.14159265358979323846f;\nstruct Case {\n    const char* name;\n    float residual, dt;\n    bool tilted=false, hold_bias=false, fixed=false, sync=true, moving=false, noise=false;\n};\n\nbool run(const Case& c) {\n    Fusion f;\n    Fusion::Config cfg;\n    // Literal operating point from atomS3R_ins_tfg::resetFusion_.\n    cfg.sigma_a = V::Constant(0.12f);\n    cfg.sigma_m = V::Constant(0.80f);\n    cfg.gyro_noise_density = 0.00135f;\n    cfg.with_mag = true;\n    cfg.mag_delay_sec = 0.0f;\n    cfg.mag_init_min_mag_norm = 5.0f;\n    cfg.gravity_magnitude = g;\n    cfg.online_tune_warmup_sec = 10.0f;\n    if (c.hold_bias) cfg.acc_bias_unlock_sec = 1000.0f;\n    f.begin(cfg);\n    f.setEmbeddedFriendlyLegacyRSLaw(true);\n    f.setPeriodicAwCovSync(c.sync);\n    if (c.fixed && !f.setFixedTuning(2.5f, 0.25f, 1.5f))\n        throw std::runtime_error(\"fixed configuration rejected\");\n\n    const M Rbase = (Eigen::AngleAxisf(c.tilted ? 2.9670597f : 0.0f, V::UnitZ()) *\n                     Eigen::AngleAxisf(c.tilted ? 0.4363323f : 0.0f, V::UnitY()) *\n                     Eigen::AngleAxisf(c.tilted ? 1.0471976f : 0.0f, V::UnitX())).toRotationMatrix();\n    // Normal test runs must not put diagnostics among simulator input CSVs.\n    // A focused replay may opt in to traces in an existing directory.\n    std::ofstream csv;\n    if (const char* directory = std::getenv(\"OCEAN_IMU_TRACE_DIR\")) {\n        csv.open(std::string(directory)+\"/tfg-device-\"+c.name+\".csv\");\n        if (!csv) throw std::runtime_error(\"cannot open device trace\");\n    }\n    if (csv.is_open()) csv << \"t,live,bias_enabled,pz,vz,Sz,awz,baz,tau,sigma,rs,tilt_error_deg\\n\";\n    float peak_p=0, peak_v=0, peak_S=0, peak_aw=0, peak_ba=0, peak_tilt=0;\n    float first_live=-1, first_bias=-1, mag_clock=0, log_clock=0;\n    bool finite=true;\n    const int n = static_cast<int>(std::lround(600.0 / double(c.dt)));\n    for (int k=0; k<n; ++k) {\n        const float t=static_cast<float>(double(k)*double(c.dt));\n        constexpr float w=2.0f*pi*0.17f;\n        const float roll=c.moving ? 0.12f*std::sin(w*t) : 0.0f;\n        const float roll_rate=c.moving ? 0.12f*w*std::cos(w*t) : 0.0f;\n        const M R = Rbase * Eigen::AngleAxisf(roll,V::UnitX()).toRotationMatrix();\n        const V aw(0.0f,0.0f,c.moving ? 0.20f*std::sin(w*t) : 0.0f);\n        V acc=R.transpose()*(aw+V(0,0,-g+c.residual));\n        V gyro(roll_rate,0,0);\n        if (c.noise) {\n            acc += V(0.01f*std::sin(2*pi*7.3f*t),0.013f*std::cos(2*pi*11.1f*t),\n                     0.015f*std::sin(2*pi*5.7f*t));\n            gyro += V(0.0005f,-0.0003f,0.0002f);\n        }\n        f.update(c.dt,gyro,acc,35.0f);\n        mag_clock += c.dt;\n        if (mag_clock >= 0.04f) {\n            mag_clock=0.0f;\n            f.updateMag(R.transpose()*V(20,0,43));\n        }\n        const auto& core=f.mekf();\n        if (f.isLive() && first_live<0) {\n            first_live=t;\n            std::cout << \"EVENT case=\" << c.name << \" live_s=\" << t\n                      << \" timeout=\" << f.handoffTimedOut() << '\\n';\n        }\n        if (f.isLive() && core.acc_bias_updates_enabled() && first_bias<0) {\n            first_bias=t;\n            std::cout << \"EVENT case=\" << c.name << \" bias_unlock_s=\" << t << '\\n';\n        }\n        const V p=core.get_position(), v=core.get_velocity();\n        const V S=core.get_integral_displacement(), a=core.get_world_accel(), ba=core.get_acc_bias();\n        const bool ok=p.allFinite() && v.allFinite() && S.allFinite() && a.allFinite() &&\n                      ba.allFinite() && core.covariance_full().allFinite();\n        if (!ok) { finite=false; std::cerr << \"NONFINITE case=\" << c.name << \" t=\" << t << '\\n'; break; }\n        const float cosine=std::clamp((core.R_bw()*R.transpose())(2,2),-1.0f,1.0f);\n        const float tilt=std::acos(cosine)*180.0f/pi;\n        if (f.isLive()) {\n            peak_p=std::max(peak_p,std::abs(p.z())); peak_v=std::max(peak_v,std::abs(v.z()));\n            peak_S=std::max(peak_S,std::abs(S.z())); peak_aw=std::max(peak_aw,std::abs(a.z()));\n            peak_ba=std::max(peak_ba,ba.norm()); peak_tilt=std::max(peak_tilt,tilt);\n        }\n        log_clock+=c.dt;\n        if (log_clock>=1.0f && csv.is_open()) {\n            log_clock=0;\n            csv << std::setprecision(9) << t << ',' << f.isLive() << ',' << core.acc_bias_updates_enabled()\n                << ',' << p.z() << ',' << v.z() << ',' << S.z() << ',' << a.z() << ',' << ba.z()\n                << ',' << f.getTauApplied() << ',' << f.getSigmaApplied() << ',' << f.getRSFilterInput()\n                << ',' << tilt << '\\n';\n        }\n    }\n    std::cout << std::setprecision(9) << \"RESULT case=\" << c.name << \" residual=\" << c.residual\n              << \" dt=\" << c.dt << \" live=\" << first_live << \" unlock=\" << first_bias\n              << \" maxp=\" << peak_p << \" maxv=\" << peak_v << \" maxS=\" << peak_S\n              << \" maxaw=\" << peak_aw << \" maxba=\" << peak_ba << \" maxtilt=\" << peak_tilt\n              << \" pz=\" << f.get_position().z() << \" tau=\" << f.getTauApplied()\n              << \" sigma=\" << f.getSigmaApplied() << \" rs=\" << f.getRSFilterInput()\n              << \" finite=\" << finite << '\\n';\n    // These bounded, small-disturbance histories have peaks below 1.20 m.\n    // This is a regression bound, not output saturation in the estimator.\n    return finite && first_live>=0 && peak_p<=2.0f;\n}\n} // namespace\nint main() {\n    std::cout << std::unitbuf;\n    const Case cases[] = {\n        {\"level-zero\",0.0f,0.005f},\n        {\"level-001\",0.01f,0.005f},\n        {\"level-003\",0.03f,0.005f},\n        {\"level-005\",0.05f,0.005f},\n        {\"tilted-005\",0.05f,0.005f,true},\n        {\"tilted-held\",0.05f,0.005f,true,true},\n        {\"tilted-fixed\",0.05f,0.005f,true,false,true},\n        {\"tilted-no-sync\",0.05f,0.005f,true,false,false,false},\n        {\"tilted-50hz\",0.05f,0.020f,true},\n        {\"tilted-20hz\",0.05f,0.050f,true},\n        {\"tilted-10hz\",0.05f,0.100f,true},\n        {\"tilted-noisy\",0.05f,0.005f,true,false,false,true,false,true},\n        {\"moving-noisy\",0.05f,0.005f,true,false,false,true,true,true},\n    };\n    bool ok=true;\n    try { for (const auto& c: cases) ok=run(c) && ok; }\n    catch (const std::exception& e) { std::cerr << e.what() << '\\n'; return 2; }\n    return ok ? 0 : 1;\n}\n",
+      "sha256": "7c7e83015429d01eab5e4f7d58e07f7001da9531d7036aa139ae1a0a993754d0"
+    }
+  },
+  "reproduction": "Historical producers retain their original scratch paths; the portable tools/encounter_pseudo_study.py reconstructs exact source overlays from spectral_pseudo_recipes.json for paired qualification. The response diagnostic regenerates its own NPZ intermediates.",
+  "response_precision": "Frequency-response values use the exported CSV precision. Canonical RMS metrics are the raw VALIDATION_METRICS lines, not a recomputation from that CSV."
+}

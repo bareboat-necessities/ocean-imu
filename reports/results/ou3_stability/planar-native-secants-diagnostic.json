@@ -91,7 +91,7 @@
   ],
   "shipping_behavior_changed": false,
   "shipping_header_sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
-  "shipping_source_tree_sha256": "a7ba2725568636b144628f675613fb54bcddb948d5b327b2f98f5fe0b7921e56",
+  "shipping_source_tree_sha256": "9b6d3de3d4999dc2fa2089c4e6b7daf3eff6785b08248c5e926cf99d6f061512",
   "source_binding_refresh": {
     "changed_source_files_outside_probe_closure": [
       "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
@@ -104,13 +104,15 @@
         "src/kalman_carma/CarmaVerticalModel.h",
         "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
         "src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h",
+        "src/kalman_tfg/Kalman3D_Wave_TFG.h",
+        "src/kalman_tfg/SeaStateFusionFilter_TFG.h",
         "src/nlo/TimeVarGainNLO_Adapter.h"
       ],
       "probe_src_files_byte_identical": 39,
       "reference_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
       "relaxations_introduced": "None",
       "replay_performed": false,
-      "scope": "NLO wave-band and shared-mode CARMA vertical band normalization outside the unchanged OU-III closure; rejected OU/TFG candidates are not deployed"
+      "scope": "NLO wave-band, shared-mode CARMA normalization and TFG wave-matched vertical regularization outside the unchanged OU-III closure; rejected OU-III candidates are not deployed"
     },
     "failed_quantity": "shipping_source_tree_sha256 (whole-src digest) only",
     "justification": "OU-II and CARMA behavior changes remain outside the OU-III probe closure. The defaults table corrects only its OU-II comment; removing C++ comments produces identical text. All other 39 probe/source closure files are byte-identical to 3ce7fe7. Retain native secant bytes and false theorem flags without claiming a replay.",

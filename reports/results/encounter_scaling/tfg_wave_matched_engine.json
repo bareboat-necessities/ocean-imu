@@ -1,0 +1,1074 @@
+{
+  "protocol": "200 Hz, 1200 s; final 900 s/180000 samples; paired sensor/initialization seeds",
+  "family": "tfg",
+  "noise": "normal",
+  "engine_rpm": 900.0,
+  "previous_build": null,
+  "role": "controlled paired experiment; moving-data acceptance bars are not stationary/noise-seed bars",
+  "seeds": [
+    "default"
+  ],
+  "inputs": {
+    "stationary": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "1eaa5be44dc0c0900658170efe7392085bedf377a90af1feb3345c715ad750ea",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "19bbe7c56f9da74a18497461a69638b5eef03265b5eaca937feec5c5b9889a53",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "90408172af21214fd46da50a57a340540175a18ce3600834bba1b7faa81307dd",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f738de0faa1bd030c2ecb7d6fb81358f8c6b59f15ce60512f77ad01907c26f6d",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "da1c20739ec76966580f3d68a5e905999e2a5d23fd43265d6e8510e6588bbbf5"
+      }
+    },
+    "moving": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 120.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
+      }
+    }
+  },
+  "binary_sha256": "e03bca6ca3fcf6c88bcea36dd6903b2010d5fe2c01b796f8b7f2af74e6fdfa4c",
+  "git_commit": "2b30838accd17370696f9a00fcd6254427c52406",
+  "source_sha256": {
+    "src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+    "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "d9e27d0c242df714fd32f37dd28304b6e3cfcc7a855f91afcad72a26103727fb",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "cc8cded2e84b2e0d0bff15a5bb6f8245b37db100f7393c63b3012e028845abca",
+    "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+    "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+    "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+    "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+    "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+    "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+    "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+    "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+    "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+    "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+    "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+    "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+    "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "322b6d32843f05d1a809ccc19d4768d37db29f100e2707efde379c7394315f46",
+    "tools/encounter_scaling_study.py": "faa3b2b5a21e2f2bfa1749b7ce17d342855acddc5e1cbcedc551635b608586cf",
+    "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
+    "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
+    "tools/stationary_vessel_control.py": "be90aab968ed917aa2707efcc08382dd45fdd4af52febd66fed10d6fa34a87cf"
+  },
+  "build_environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "compiler": {
+      "command": "g++",
+      "version": "14.2.0",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "CXXFLAGS_env": "",
+      "CPPFLAGS_env": ""
+    },
+    "eigen": {
+      "version": "3.4.0",
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/workspace/scratch/7542f0d861f1/ocean-imu/third_party/eigen/Eigen/src/Core/util/Macros.h"
+    }
+  },
+  "rows": [
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0272893738,
+        "disp_z_pct_hs": 10.1071749,
+        "roll_rms_deg": 1.84490919,
+        "pitch_rms_deg": 4.63640261,
+        "yaw_rms_deg": 14.5095558,
+        "disp_3d_rms_m": 0.0526507944,
+        "accel_bias_3d_rms_mps2": 0.851002753,
+        "gyro_bias_3d_rms_radps": 0.000170716987
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Z RMS above limit (10.1072% > 7.85835%). Failing.",
+        "ERROR: 3D RMS above limit (27.5365% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (14.5096 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.84491 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.6364 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (81.1109% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1008.67% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (15.9671% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0229411814,
+        "disp_z_pct_hs": 8.49673367,
+        "roll_rms_deg": 1.87064147,
+        "pitch_rms_deg": 4.67744017,
+        "yaw_rms_deg": 14.630023,
+        "disp_3d_rms_m": 0.0507027879,
+        "accel_bias_3d_rms_mps2": 0.859160304,
+        "gyro_bias_3d_rms_radps": 0.000171613719
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Z RMS above limit (8.49673% > 7.85835%). Failing.",
+        "ERROR: 3D RMS above limit (26.5177% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (14.63 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.87064 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.67744 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (82.7688% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1018.33% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.051% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.102694243,
+        "disp_z_pct_hs": 6.84628248,
+        "roll_rms_deg": 2.04055643,
+        "pitch_rms_deg": 5.45503426,
+        "yaw_rms_deg": 15.8325081,
+        "disp_3d_rms_m": 0.293766201,
+        "accel_bias_3d_rms_mps2": 0.989248097,
+        "gyro_bias_3d_rms_radps": 0.000187835409
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (21.8226% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (15.8325 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (2.04056 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.45503 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (107.154% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1172.52% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.5682% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.079775773,
+        "disp_z_pct_hs": 5.31838465,
+        "roll_rms_deg": 2.02790284,
+        "pitch_rms_deg": 5.42226839,
+        "yaw_rms_deg": 15.7440147,
+        "disp_3d_rms_m": 0.285699457,
+        "accel_bias_3d_rms_mps2": 0.983304322,
+        "gyro_bias_3d_rms_radps": 0.000187396712
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (21.2234% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (15.744 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (2.0279 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.42227 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (106.314% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1165.48% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.5271% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.223562434,
+        "disp_z_pct_hs": 5.58906078,
+        "roll_rms_deg": 1.93949533,
+        "pitch_rms_deg": 5.16086197,
+        "yaw_rms_deg": 16.3148766,
+        "disp_3d_rms_m": 0.764824212,
+        "accel_bias_3d_rms_mps2": 0.934898853,
+        "gyro_bias_3d_rms_radps": 0.000184736477
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (22.4584% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (16.3149 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.9395 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.16086 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (94.2199% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1108.1% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.2783% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.171008319,
+        "disp_z_pct_hs": 4.275208,
+        "roll_rms_deg": 1.93997502,
+        "pitch_rms_deg": 5.15681696,
+        "yaw_rms_deg": 16.3053913,
+        "disp_3d_rms_m": 0.749790072,
+        "accel_bias_3d_rms_mps2": 0.934358954,
+        "gyro_bias_3d_rms_radps": 0.000184715856
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (22.0169% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (16.3054 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.93998 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.15682 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (94.2254% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1107.46% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.2764% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.434305429,
+        "disp_z_pct_hs": 5.10947561,
+        "roll_rms_deg": 2.27862668,
+        "pitch_rms_deg": 5.68879652,
+        "yaw_rms_deg": 16.4398746,
+        "disp_3d_rms_m": 1.97976971,
+        "accel_bias_3d_rms_mps2": 1.02991974,
+        "gyro_bias_3d_rms_radps": 0.000194211665
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (25.1382% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (16.4399 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (2.27863 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.6888 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (110.792% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1220.73% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (18.1645% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.310495883,
+        "disp_z_pct_hs": 3.65289259,
+        "roll_rms_deg": 2.15133905,
+        "pitch_rms_deg": 5.45584965,
+        "yaw_rms_deg": 15.7778282,
+        "disp_3d_rms_m": 1.91852331,
+        "accel_bias_3d_rms_mps2": 0.985169828,
+        "gyro_bias_3d_rms_radps": 0.000189735729
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (24.3606% > 17.7533%). Failing.",
+        "ERROR: Yaw RMS above limit (15.7778 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (2.15134 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.45585 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (103.106% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1167.69% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.7459% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0257592015,
+        "disp_z_pct_hs": 9.54044437,
+        "roll_rms_deg": 1.84769011,
+        "pitch_rms_deg": 4.67189646,
+        "yaw_rms_deg": 14.6174231,
+        "disp_3d_rms_m": 0.0486513153,
+        "accel_bias_3d_rms_mps2": 0.856898308,
+        "gyro_bias_3d_rms_radps": 0.00017342341
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Z RMS above limit (9.54044% > 7.51301%). Failing.",
+        "ERROR: 3D RMS above limit (26.3277% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (14.6174 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.84769 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.6719 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (82.5364% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1015.65% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.2202% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0215320755,
+        "disp_z_pct_hs": 7.97484255,
+        "roll_rms_deg": 1.87031257,
+        "pitch_rms_deg": 4.70771313,
+        "yaw_rms_deg": 14.7221527,
+        "disp_3d_rms_m": 0.0466750041,
+        "accel_bias_3d_rms_mps2": 0.864005387,
+        "gyro_bias_3d_rms_radps": 0.000174217421
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Z RMS above limit (7.97484% > 7.51301%). Failing.",
+        "ERROR: 3D RMS above limit (25.2582% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (14.7222 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.87031 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.70771 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (84.0475% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1024.08% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.2945% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.101791836,
+        "disp_z_pct_hs": 6.78612232,
+        "roll_rms_deg": 1.97710061,
+        "pitch_rms_deg": 5.35419655,
+        "yaw_rms_deg": 15.7086916,
+        "disp_3d_rms_m": 0.278710842,
+        "accel_bias_3d_rms_mps2": 0.96984458,
+        "gyro_bias_3d_rms_radps": 0.000185075958
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (21.2761% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (15.7087 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.9771 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.3542 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (103.079% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1149.52% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.3101% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0809386075,
+        "disp_z_pct_hs": 5.39590693,
+        "roll_rms_deg": 1.96782875,
+        "pitch_rms_deg": 5.32948399,
+        "yaw_rms_deg": 15.64112,
+        "disp_3d_rms_m": 0.271118462,
+        "accel_bias_3d_rms_mps2": 0.965394795,
+        "gyro_bias_3d_rms_radps": 0.000184761768
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (20.6966% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (15.6411 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.96783 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.32948 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (102.506% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1144.25% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.2807% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.220749393,
+        "disp_z_pct_hs": 5.51873493,
+        "roll_rms_deg": 1.62142408,
+        "pitch_rms_deg": 4.67251492,
+        "yaw_rms_deg": 14.6839838,
+        "disp_3d_rms_m": 0.707723081,
+        "accel_bias_3d_rms_mps2": 0.841000855,
+        "gyro_bias_3d_rms_radps": 0.000175822235
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (20.6821% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (14.684 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.62142 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.67251 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (76.8478% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (996.81% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.4446% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.170499295,
+        "disp_z_pct_hs": 4.26248217,
+        "roll_rms_deg": 1.59433794,
+        "pitch_rms_deg": 4.6105094,
+        "yaw_rms_deg": 14.5125122,
+        "disp_3d_rms_m": 0.688980699,
+        "accel_bias_3d_rms_mps2": 0.829469681,
+        "gyro_bias_3d_rms_radps": 0.000174867906
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (20.1344% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (14.5125 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.59434 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.61051 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (75.2101% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (983.143% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.3553% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.432148486,
+        "disp_z_pct_hs": 5.08409977,
+        "roll_rms_deg": 2.17313409,
+        "pitch_rms_deg": 5.31399345,
+        "yaw_rms_deg": 15.5662661,
+        "disp_3d_rms_m": 1.76046348,
+        "accel_bias_3d_rms_mps2": 0.968559027,
+        "gyro_bias_3d_rms_radps": 0.000188239748
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (22.5039% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (15.5663 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (2.17313 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (5.31399 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (96.571% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1148% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (17.606% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.311968356,
+        "disp_z_pct_hs": 3.67021585,
+        "roll_rms_deg": 1.98701739,
+        "pitch_rms_deg": 4.97462463,
+        "yaw_rms_deg": 14.6026869,
+        "disp_3d_rms_m": 1.68091547,
+        "accel_bias_3d_rms_mps2": 0.90305084,
+        "gyro_bias_3d_rms_radps": 0.000180775911
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: 3D RMS above limit (21.4871% > 17.3392%). Failing.",
+        "ERROR: Yaw RMS above limit (14.6027 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.98702 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.97462 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (86.0801% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (1070.36% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (16.9079% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0118282707,
+        "disp_z_pct_hs": 4.38084078,
+        "roll_rms_deg": 1.59494567,
+        "pitch_rms_deg": 4.49621534,
+        "yaw_rms_deg": 13.5765104,
+        "disp_3d_rms_m": 0.0204672739,
+        "accel_bias_3d_rms_mps2": 0.814428091,
+        "gyro_bias_3d_rms_radps": 9.88379179e-05
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (13.5765 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.59495 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.49622 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (75.5363% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (965.315% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0103120739,
+        "disp_z_pct_hs": 3.81928658,
+        "roll_rms_deg": 1.58654976,
+        "pitch_rms_deg": 4.48689508,
+        "yaw_rms_deg": 13.5464182,
+        "disp_3d_rms_m": 0.0196247622,
+        "accel_bias_3d_rms_mps2": 0.812453628,
+        "gyro_bias_3d_rms_radps": 9.88473621e-05
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (13.5464 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.58655 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.4869 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (75.1481% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (962.974% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0680267587,
+        "disp_z_pct_hs": 4.53511715,
+        "roll_rms_deg": 0.89557445,
+        "pitch_rms_deg": 2.98215747,
+        "yaw_rms_deg": 8.95084476,
+        "disp_3d_rms_m": 0.130151987,
+        "accel_bias_3d_rms_mps2": 0.53107065,
+        "gyro_bias_3d_rms_radps": 0.000107084939
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (8.95084 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.895574 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.98216 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (32.5432% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (629.46% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0494878292,
+        "disp_z_pct_hs": 3.29918838,
+        "roll_rms_deg": 0.899835885,
+        "pitch_rms_deg": 2.99553466,
+        "yaw_rms_deg": 8.98427486,
+        "disp_3d_rms_m": 0.12151356,
+        "accel_bias_3d_rms_mps2": 0.53347218,
+        "gyro_bias_3d_rms_radps": 0.000107056083
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (8.98427 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.899836 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.99553 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (32.8135% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (632.307% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.179621771,
+        "disp_z_pct_hs": 4.49054432,
+        "roll_rms_deg": 0.753443003,
+        "pitch_rms_deg": 2.42406106,
+        "yaw_rms_deg": 8.23870945,
+        "disp_3d_rms_m": 0.391711503,
+        "accel_bias_3d_rms_mps2": 0.434258223,
+        "gyro_bias_3d_rms_radps": 0.000115200419
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (8.23871 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.753443 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.42406 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (22.7765% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (514.712% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.131584242,
+        "disp_z_pct_hs": 3.28960609,
+        "roll_rms_deg": 0.752163649,
+        "pitch_rms_deg": 2.41348934,
+        "yaw_rms_deg": 8.21120262,
+        "disp_3d_rms_m": 0.371562988,
+        "accel_bias_3d_rms_mps2": 0.432500362,
+        "gyro_bias_3d_rms_radps": 0.000115380943
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (8.2112 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.752164 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.41349 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (22.6403% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (512.628% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.341572016,
+        "disp_z_pct_hs": 4.01849413,
+        "roll_rms_deg": 0.689936221,
+        "pitch_rms_deg": 2.16355395,
+        "yaw_rms_deg": 6.4111762,
+        "disp_3d_rms_m": 0.959240377,
+        "accel_bias_3d_rms_mps2": 0.384471387,
+        "gyro_bias_3d_rms_radps": 0.000124013473
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (6.41118 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.689936 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.16355 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (19.3549% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (455.701% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (11.5989% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.243202597,
+        "disp_z_pct_hs": 2.86120701,
+        "roll_rms_deg": 0.650964439,
+        "pitch_rms_deg": 2.04404736,
+        "yaw_rms_deg": 6.09610605,
+        "disp_3d_rms_m": 0.922462106,
+        "accel_bias_3d_rms_mps2": 0.363080025,
+        "gyro_bias_3d_rms_radps": 0.000124950704
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (6.09611 deg > 1.64146 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.04405 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (17.9336% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (430.347% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (11.6866% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0117088966,
+        "disp_z_pct_hs": 4.33662844,
+        "roll_rms_deg": 1.61493385,
+        "pitch_rms_deg": 4.5749898,
+        "yaw_rms_deg": 13.5422592,
+        "disp_3d_rms_m": 0.020119084,
+        "accel_bias_3d_rms_mps2": 0.828158855,
+        "gyro_bias_3d_rms_radps": 9.59391255e-05
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (13.5423 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.61493 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.57499 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (78.0408% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (981.589% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.00996890105,
+        "disp_z_pct_hs": 3.6921854,
+        "roll_rms_deg": 1.60785258,
+        "pitch_rms_deg": 4.56766272,
+        "yaw_rms_deg": 13.5182667,
+        "disp_3d_rms_m": 0.0191551112,
+        "accel_bias_3d_rms_mps2": 0.826595068,
+        "gyro_bias_3d_rms_radps": 9.59797326e-05
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (13.5183 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (1.60785 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (4.56766 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (77.7233% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (979.736% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0657630116,
+        "disp_z_pct_hs": 4.38420057,
+        "roll_rms_deg": 0.717020631,
+        "pitch_rms_deg": 2.43795943,
+        "yaw_rms_deg": 7.5205164,
+        "disp_3d_rms_m": 0.121970572,
+        "accel_bias_3d_rms_mps2": 0.43422693,
+        "gyro_bias_3d_rms_radps": 0.000107152766
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (7.52052 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.717021 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.43796 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (22.4032% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (514.675% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0482430533,
+        "disp_z_pct_hs": 3.21620345,
+        "roll_rms_deg": 0.722268224,
+        "pitch_rms_deg": 2.45529079,
+        "yaw_rms_deg": 7.56400204,
+        "disp_3d_rms_m": 0.113542847,
+        "accel_bias_3d_rms_mps2": 0.437345177,
+        "gyro_bias_3d_rms_radps": 0.000107155756
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (7.564 deg > 1.64146 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.722268 deg > 0.67022 deg). Failing.",
+        "ERROR: Pitch RMS above limit (2.45529 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (22.6726% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (518.371% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.173959956,
+        "disp_z_pct_hs": 4.34899902,
+        "roll_rms_deg": 0.549091876,
+        "pitch_rms_deg": 1.74361491,
+        "yaw_rms_deg": 6.08880091,
+        "disp_3d_rms_m": 0.370496273,
+        "accel_bias_3d_rms_mps2": 0.315334141,
+        "gyro_bias_3d_rms_radps": 0.000113058348
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (6.0888 deg > 1.64146 deg). Failing.",
+        "ERROR: Pitch RMS above limit (1.74361 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (13.6513% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (373.755% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.1295055,
+        "disp_z_pct_hs": 3.23763752,
+        "roll_rms_deg": 0.544572055,
+        "pitch_rms_deg": 1.72057724,
+        "yaw_rms_deg": 6.02797413,
+        "disp_3d_rms_m": 0.351106107,
+        "accel_bias_3d_rms_mps2": 0.311363459,
+        "gyro_bias_3d_rms_radps": 0.000113366026
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (6.02797 deg > 1.64146 deg). Failing.",
+        "ERROR: Pitch RMS above limit (1.72058 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (13.4108% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (369.049% > 186.739% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.345637202,
+        "disp_z_pct_hs": 4.06631994,
+        "roll_rms_deg": 0.562304199,
+        "pitch_rms_deg": 1.54070365,
+        "yaw_rms_deg": 4.75017071,
+        "disp_3d_rms_m": 0.882118285,
+        "accel_bias_3d_rms_mps2": 0.280513316,
+        "gyro_bias_3d_rms_radps": 0.000122743048
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (4.75017 deg > 1.64146 deg). Failing.",
+        "ERROR: Pitch RMS above limit (1.5407 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (12.9003% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (332.483% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (11.4801% > 10.9961% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.255615771,
+        "disp_z_pct_hs": 3.00724435,
+        "roll_rms_deg": 0.521759987,
+        "pitch_rms_deg": 1.41135061,
+        "yaw_rms_deg": 4.40730143,
+        "disp_3d_rms_m": 0.844819605,
+        "accel_bias_3d_rms_mps2": 0.25732258,
+        "gyro_bias_3d_rms_radps": 0.000123629274
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (4.4073 deg > 1.64146 deg). Failing.",
+        "ERROR: Pitch RMS above limit (1.41135 deg > 0.65965 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (11.782% > 5.01148% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (304.996% > 186.739% of max TRUE bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (11.563% > 10.9961% of max TRUE bias). Failing."
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 10.1071749,
+      "wave_matched_heave_pct_hs": 8.49673367,
+      "relative_change_percent": -15.933643633692352
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 6.84628248,
+      "wave_matched_heave_pct_hs": 5.31838465,
+      "relative_change_percent": -22.31718943037244
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.58906078,
+      "wave_matched_heave_pct_hs": 4.275208,
+      "relative_change_percent": -23.507577242700872
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.10947561,
+      "wave_matched_heave_pct_hs": 3.65289259,
+      "relative_change_percent": -28.507485526484388
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 9.54044437,
+      "wave_matched_heave_pct_hs": 7.97484255,
+      "relative_change_percent": -16.41015616550363
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 6.78612232,
+      "wave_matched_heave_pct_hs": 5.39590693,
+      "relative_change_percent": -20.486152834333225
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.51873493,
+      "wave_matched_heave_pct_hs": 4.26248217,
+      "relative_change_percent": -22.763419079451964
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.08409977,
+      "wave_matched_heave_pct_hs": 3.67021585,
+      "relative_change_percent": -27.809916877378672
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.38084078,
+      "wave_matched_heave_pct_hs": 3.81928658,
+      "relative_change_percent": -12.818411537887474
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.53511715,
+      "wave_matched_heave_pct_hs": 3.29918838,
+      "relative_change_percent": -27.252411109159546
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.49054432,
+      "wave_matched_heave_pct_hs": 3.28960609,
+      "relative_change_percent": -26.743711773453782
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.01849413,
+      "wave_matched_heave_pct_hs": 2.86120701,
+      "relative_change_percent": -28.799024772993743
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.33662844,
+      "wave_matched_heave_pct_hs": 3.6921854,
+      "relative_change_percent": -14.860462428734156
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.38420057,
+      "wave_matched_heave_pct_hs": 3.21620345,
+      "relative_change_percent": -26.64105123274504
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.34899902,
+      "wave_matched_heave_pct_hs": 3.23763752,
+      "relative_change_percent": -25.554420566413473
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.06631994,
+      "wave_matched_heave_pct_hs": 3.00724435,
+      "relative_change_percent": -26.045062996198954
+    }
+  ]
+}

@@ -248,15 +248,47 @@ and the invariant-style attitude Jacobian is
 As with gravity, the estimate-dependent residual term is omitted at linearization. Measurement covariance is rotated from body to world coordinates.
 
 \subsection{Integral-displacement regularization}
-The drift regularizer retains the physical constraint $\bm{S}\simeq0$:
+The raw core retains $\bm{S}\simeq0$ when its integral-velocity weight is
+zero. The sea-state wrapper enables a wave-matched vertical regularizer:
+let $\bm{E}_z=\bm{e}_z\bm{e}_z^T$ and
+$\beta=(T_z/(2\pi))^2$. Here $T_z=2\tau_{\rm applied}/c_\tau$ is the
+effective staged, clamped period inferred from the measured tuning frequency;
+$c_\tau$ is the configured OU time-scale coefficient. Then
 \begin{equation}
-\bm{r}_S=-\hat {\bm{S}},
+\bm{r}_S=-\hat {\bm{S}}-\beta\bm{E}_z\hat {\bm{v}},
 \end{equation}
 with
 \begin{equation}
-\bm{H}_S=\begin{bmatrix}\Skew{\hat {\bm{S}}}&0&0&0&-\bm{I}&0&0\end{bmatrix}.
+\begin{aligned}
+\bm{H}_{S,\phi}&=\Skew{\hat {\bm{S}}}+\beta\bm{E}_z\Skew{\hat {\bm{v}}},\\
+\bm{H}_{S,v}&=-\beta\bm{E}_z,\qquad \bm{H}_{S,S}=-\bm{I},
+\end{aligned}
 \end{equation}
-The covariance $\bm{R}_S$ is defined directly in the world/navigation frame. This is one motivation for choosing a right-invariant error: the NED-anisotropic regularization does not need to rotate with the attitude estimate.
+and all other blocks zero.
+For harmonic displacement at angular frequency $2\pi/T_z$, the vertical
+primitive satisfies $S_z=-\beta v_z$. Thus the observation does not penalize
+that wave, while still constraining integration drift. This is a motion-model
+regularizer, not a physical zero measurement or a broadband accuracy guarantee.
+The world-frame covariance $\bm{R}_S$ and its existing adaptation laws remain
+unchanged. No vessel speed or reference trajectory enters $\beta$.
+
+For the spectral-MSE adaptation law, the vertical model assumption is excluded
+from direct attitude or gyro-bias correction. With $\bm{C}=\bm{H}_S\bm{P}\bm{H}_S^T+\bm{R}_S$, their gain
+rows instead use the horizontal marginal:
+\begin{equation}
+\bm{K}_{i,xy}=(\bm{P}\bm{H}_S^T)_{i,xy}\bm{C}_{xy,xy}^{-1},
+\qquad K_{i,z}=0,\qquad i\in\{\bm{\phi},\bm{b}_g\}.
+\end{equation}
+Other rows retain the full gain. The empirical legacy-cubic law retains the
+full gain in every row: imposing the same restriction degraded its coupled
+attitude/bias calibration in the paired tests. This law-specific policy is
+empirically qualified, without a universal optimality claim. In particular,
+accelerometer-bias learning
+remains active; suppressing that channel caused large heave regressions.
+The full observation Jacobian, cross covariance, Joseph update and retraction
+transport are retained with this constrained gain. Setting
+\texttt{setWaveMatchedVerticalIntegral(false)} restores the previous observation
+and unconstrained gain.
 
 \section{Covariance Update and Retraction Transport}
 Each rank-three measurement uses the Joseph update

@@ -46,6 +46,9 @@ for _family, _folder, _binary in (
 ):
     FAMILIES[_family] = (_folder, _binary, 'VALIDATION_METRICS',
                          'W3D_CARMA_BAND_NORMALIZATION', 'band_normalized')
+for _family, _binary in (('tfg', 'kalman_tfg-sim'), ('tfg_legacy', 'kalman_tfg-legacy-sim')):
+    FAMILIES[_family] = ('kalman_tfg', _binary, 'VALIDATION_METRICS',
+                         'TFG_WAVE_MATCHED_INTEGRAL', 'wave_matched')
 
 
 def verify_stationary(archive: Path, directory: Path) -> dict:

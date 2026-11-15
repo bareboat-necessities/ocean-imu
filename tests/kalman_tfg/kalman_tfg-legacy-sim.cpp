@@ -66,6 +66,8 @@ public:
         if (float v = 0.0f; env_float("SF_MAG_DELAY_SEC", v)) cfg.mag_delay_sec = v;
 
         fusion_.begin(cfg);
+        if (const char* enabled = std::getenv("TFG_WAVE_MATCHED_INTEGRAL"))
+            fusion_.setWaveMatchedVerticalIntegral(std::string(enabled) != "0");
         fusion_.setEmbeddedFriendlyLegacyRSLaw(true);
     }
 

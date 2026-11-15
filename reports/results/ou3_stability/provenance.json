@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "bd97bbc6617f8cd2e128f70d717854e40a8f78d7"
+      "git_blob_sha": "0b78729c3c454899bdfab8d579a933d7778991a3"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "7dde70b2b7d04a087bf5c2d3ae9ebc743d3896d2"
+      "git_blob_sha": "db14566003f272749f7f89ef2f5baab08f11d5bf"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1836,11 +1836,13 @@
       "src/kalman_carma/CarmaVerticalModel.h",
       "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
       "src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h",
+      "src/kalman_tfg/Kalman3D_Wave_TFG.h",
+      "src/kalman_tfg/SeaStateFusionFilter_TFG.h",
       "src/nlo/TimeVarGainNLO_Adapter.h"
     ],
     "probe_src_files_byte_identical": 39,
     "replay_performed": false,
-    "scope": "NLO wave-band and shared-mode CARMA vertical band normalization outside the unchanged OU-III closure; rejected OU/TFG candidates are not deployed",
+    "scope": "NLO wave-band, shared-mode CARMA normalization and TFG wave-matched vertical regularization outside the unchanged OU-III closure; rejected OU-III candidates are not deployed",
     "relaxations_introduced": "None",
     "native_secant_payload_identical_except_source_tree_digest": true,
     "theorem_promoted": false,

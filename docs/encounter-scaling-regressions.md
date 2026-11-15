@@ -138,20 +138,118 @@ mean for every tested seed and fails yaw, 0.880571 > 0.875540 degrees. The one
 refinement preserving acceleration weighting fails the same gate. Neither
 OU-III candidate is deployed, and no acceptance limit is widened.
 
+## Wave-matched TFG vertical regularization
+
+The following-sea penalty is partly waveform distortion. In a 144-run
+[axis-isolation study](../reports/results/encounter_scaling/axis_isolation.json),
+removing vessel rotation and horizontal motion does not remove small-wave
+OU-III heave error. With ideal sensors and vertical-only motion, its dominant
+moving-wave gain is 1.39046 with 13.2127 degrees of phase lead, versus 1.14194
+and 2.90071 degrees at zero speed. Mean error is only -0.172 mm. Correcting
+DC drift alone therefore cannot remove this error.
+
+The TFG sea-state wrapper now enables the vertical observation
+`S_z + beta*v_z = 0`, with `beta=(Tz/2pi)^2`. The effective period is derived
+from the staged, clamped OU time constant, undoing the configured time-scale
+coefficient: `Tz=2*tau_applied/tau_coeff`. For harmonic displacement at that
+period, the observation is identically zero. Integration drift remains
+constrained. Both mean and covariance use the corresponding Jacobian,
+including its right-invariant attitude term. Existing horizontal observations,
+noise schedules, physical sensor noise, cadence and bias-learning gates are
+retained. No speed, wave truth or postprocessed output enters the correction.
+
+For the spectral-MSE law, attitude and gyro-bias gain rows use only the
+horizontal innovation marginal; the vertical model assumption cannot directly
+correct them. The empirical legacy law retains its original full gain. Applying
+the restricted gain to that law fails large-JONSWAP yaw (3.34544 > 3.06465
+degrees), pitch (1.28213 > 1.16598) and 3-D bias (271.194 > 250.685 percent).
+The gain policy is therefore selected by the configured adaptation law, not by
+the sea, speed or score. This law-specific choice is empirically qualified;
+no universal optimality claim is made. Accelerometer-bias
+learning remains active. The full observation Jacobian, cross covariance,
+Joseph update and retraction transport are retained. This is a constrained
+gain, not deletion of covariance rows. `setWaveMatchedVerticalIntegral(false)`
+restores the old observation and gain. The raw core remains backward compatible
+with a zero default integral-velocity weight. Both sea-state tuning laws use
+the new wrapper default.
+
+The [production spectral-law study](../reports/results/encounter_scaling/tfg_wave_matched.json)
+and [legacy-law study](../reports/results/encounter_scaling/tfg_legacy_wave_matched.json)
+compare enabled/disabled arms of the same rebuilt library executable across
+eight seas, both speeds, and three sensor seeds. Separate
+[engine controls](../reports/results/encounter_scaling/tfg_wave_matched_engine.json)
+and [legacy engine controls](../reports/results/encounter_scaling/tfg_legacy_wave_matched_engine.json)
+use 900 rpm. Normal-noise gates remain unchanged; engine and held-out-seed gate
+misses are retained as diagnostic failures, not relabeled as acceptance.
+
+| TFG law / seed set | Moving mean (% Hs) | Moving worst (% Hs) | Zero-speed mean (% Hs) |
+| --- | ---: | ---: | ---: |
+| Spectral / default | 5.51972 → 3.94431 | 7.81925 → 5.71623 | 4.05819 → 2.95295 |
+| Spectral / all three | 5.66404 → 4.13752 | 8.25393 → 6.29250 | 4.19766 → 3.12663 |
+| Legacy / default | 5.92580 → 3.34548 | 8.24671 → 4.83242 | 4.19613 → 2.78386 |
+| Legacy / all three | 6.02315 → 3.48111 | 8.50441 → 5.13326 | 4.29185 → 2.90210 |
+
+All 24 moving and all 24 zero-speed heave pairs improve for each law. Both
+laws pass all eight unchanged default moving gates. The spectral law also
+passes the eight historical gyro-profile gates. Held-out draws remain
+scored diagnostics: spectral-law gates fail in both arms for all 16 held-out
+moving draws; legacy-law held-out moving failures decrease from 12 to 7.
+The moving acceptance bars are not separate zero-speed bars: four default
+legacy zero-speed records fail before and three after. These failures remain
+visible in the reports.
+
+Default moving spectral-law mean roll/pitch/yaw improve from
+0.35468/0.22700/0.82508 to 0.32406/0.14693/0.65824 degrees, and 3-D
+accelerometer-bias RMS from 0.07122 to 0.06071 m/s². There are individual
+metric costs; for example, zero-speed mean spectral pitch increases from
+0.05694 to 0.08089 degrees. Heave improvement is not an all-metric dominance
+claim. Since zero-speed heave also improves, a residual speed penalty remains
+when both datasets use the new implementation.
+
+At 900 rpm, moving mean/worst heave improve from 6.82267/10.10717 to
+5.38083/8.49673% Hs for the spectral law, and from 8.36863/13.16449 to
+6.30468/10.98167% Hs for legacy. All eight moving pairs improve for each law.
+The legacy zero-speed engine mean improves 4.91176 -> 3.85497% Hs, but its
+worst rises 5.29725 -> 5.50372 and two of eight heave pairs worsen
+by 0.910 mm (small JONSWAP) and 0.470 mm (small PM-Stokes). These are
+stress tradeoffs: all sixteen normal-noise gates fail in both engine arms
+for each law. They are not a successful engine-noise acceptance qualification.
+
+The [device qualification](../reports/results/encounter_scaling/tfg_wave_device.json)
+runs all thirteen ten-minute histories with both laws and both observation
+settings: 52 histories covering quiet offsets, tilted/held-bias startup,
+fixed tuning, disabled covariance synchronization, 10/20/50/200 Hz sampling,
+and noisy motion. Every history passes the unchanged 2 m raw peak-heave
+regression limit. Maximum peaks decrease from 1.19073 to 1.16632 m for the
+spectral law and 0.90622 to 0.88201 m for legacy. No detrender or output
+saturation is used for this check.
+
+OU-III is **not** switched to this model. Its initial 96-run experiment improves
+all 48 heave pairs, but fails default H4 JONSWAP yaw (0.887208 > 0.875540 degrees)
+and small PM-Stokes roll (0.348330 > 0.346670). Delaying activation until the
+existing bias-calibration release does not fix them. The gain-constrained
+refinement removes the yaw miss but still fails roll (0.348498 > 0.346670)
+and two zero-speed gates. Holding accelerometer-bias gain rows as well is
+rejected outright: moving mean heave becomes 22.6271% Hs for OU-III and
+28.8276% for TFG. Needed bias learning must be preserved. All scores and
+[source-exact recipes](../reports/results/encounter_scaling/spectral_pseudo_recipes.json)
+remain available; none of these experimental OU-III equations inherits its
+shipping stability argument.
+
 ## Remaining OU, CARMA and TFG speed regressions
 
-The [complete inventory](../reports/results/encounter_scaling/remaining_regressions.json), recorded before the shared-band normalization above, pairs all eight seas for every gated OU/CARMA/TFG replay family, using the same executable at both speeds. It includes displacement, roll, pitch, yaw and both bias-error RMS metrics. These values compare physical datasets after the earlier stillness/PII/NLO fixes; they are not before/after implementation improvements. The default sensor seed, production sampling profile and final 900 s are used. TFG legacy here means its regularization law, not the interval-rate sampling profile. Ungated CARMA spectral-shape research variants are not covered by these acceptance measurements.
+The refreshed [complete inventory](../reports/results/encounter_scaling/remaining_regressions.json), including the shared-band normalization and wave-matched TFG defaults above, pairs all eight seas for every gated OU/CARMA/TFG replay family, using the same executable at both speeds. It includes displacement, roll, pitch, yaw and both bias-error RMS metrics. These values compare physical datasets after the accepted stillness/PII/NLO, shared-mode and TFG wave-matched fixes; they are not before/after implementation improvements. The default sensor seed, production sampling profile and final 900 s are used. TFG legacy here means its regularization law, not the interval-rate sampling profile. Ungated CARMA spectral-shape research variants are not covered by these acceptance measurements.
 
 | Family | Mean heave, zero-speed → 5 kn (% Hs) | Worst heave, zero-speed → 5 kn (% Hs) | Seas with higher heave error |
 | --- | ---: | ---: | ---: |
 | OU-II | 6.216 → 7.348 | 6.642 → 8.486 | 8/8 |
 | OU-III | 3.996 → 5.601 | 4.249 → 8.236 | 8/8 |
-| TFG spectral law | 4.058 → 5.520 | 4.383 → 7.819 | 8/8 |
-| TFG legacy law | 4.196 → 5.926 | 4.322 → 8.247 | 8/8 |
+| TFG spectral law | 2.953 → 3.944 | 3.232 → 5.716 | 8/8 |
+| TFG legacy law | 2.784 → 3.345 | 2.970 → 4.832 | 6/8 |
 | CARMA independent axes | 2.311 → 2.745 | 2.461 → 3.726 | 7/8 |
-| CARMA shared modes | 2.273 → 2.685 | 2.455 → 3.702 | 6/8 |
+| CARMA shared modes | 2.210 → 2.635 | 2.357 → 3.532 | 7/8 |
 | TFG-CARMA independent axes | 2.311 → 2.745 | 2.461 → 3.727 | 7/8 |
-| TFG-CARMA shared modes | 2.273 → 2.685 | 2.455 → 3.702 | 6/8 |
+| TFG-CARMA shared modes | 2.210 → 2.635 | 2.357 → 3.533 | 7/8 |
 
 The OU-II and independent-axis CARMA/TFG-CARMA stillness fixes reduce the worst moving errors from about 20.84 to 8.486% Hs and 4.67 to 3.73% Hs respectively. They do not remove the residual speed penalty above. The shared-mode correction also leaves a residual penalty; OU-III remains unresolved.
 
@@ -193,6 +291,22 @@ python3 tools/encounter_scaling_study.py \
   --output reports/results/encounter_scaling/pii_phase.json
 ```
 
-Use `--family nlo` for NLO, adding `--engine-rpm 900` or `--noise none` for its controls. Use `--family csm`, `tcsm`, or `tangent` for the shared-mode band-normalization ablation. `--resume` recovers a partial run only when sources, executable, inputs, seeds and settings still match.
+Use `--family tfg` or `tfg_legacy` for the production wave-matched ablation. Use `--family nlo` for NLO, adding `--engine-rpm 900` or `--noise none` for its controls. Use `--family csm`, `tcsm`, or `tangent` for the shared-mode band-normalization ablation. `--resume` recovers a partial run only when sources, executable, inputs, seeds and settings still match.
 
 The driver verifies the zero-speed archive, both sets of input hashes, exact clocks, complete scoring windows, finite metrics and unchanged executable identity across the pair set. Results include the source closure, compiler environment and all paired values. Source-bound hosted evidence and the full native regression suite remain separate required checks.
+
+Historical overlay experiments can be rebuilt with `tools/encounter_pseudo_study.py`
+using `--family ou3|tfg|tfg_legacy --variant wave_matched|live_release|partial_schmidt|attitude_schmidt`
+and a fresh `--work` directory. Run `--prepare` first, then supply the same
+input arguments and an `--output` file. Preparation archives the recorded
+base commit into an isolated source snapshot before applying checksum-verified
+recipes. It does not mix later production code into an older baseline. The
+base commit must be available in local Git history. The frozen-model and
+axis-removal calculations are explicit diagnostics, not shipping acceptance
+or stability certificates. Their exact historical producers and limitations
+are preserved in `spectral_pseudo_diagnostics.json`.
+
+In paired reports, `git_commit` identifies the checkout base. The explicit
+`source_sha256` closure binds the actual working-tree implementation used to
+build and run each executable; no clean-source identity is inferred from the
+checkout-base field alone.

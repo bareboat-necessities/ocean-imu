@@ -169,6 +169,8 @@ public:
 
         gyro_replay::configure(cfg);
         fusion_.begin(cfg);
+        if (bool enabled = true; env_bool("TFG_WAVE_MATCHED_INTEGRAL", enabled))
+            fusion_.setWaveMatchedVerticalIntegral(enabled);
 
         // Coefficient overrides, so a sweep can move the tuning laws without
         // recompiling. Names mirror the OU-III simulator's OU_III_* set.

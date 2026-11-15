@@ -253,6 +253,18 @@ class Kalman3D_Wave_TFG {
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
     [[nodiscard]] T aw_time_constant() const { return tau_aw_; }
 
+    // Vertical drift observation S_z + beta*v_z = 0.  For a sinusoid,
+    // beta=1/omega^2 preserves the wave while anchoring its integration DC.
+    // A zero weight retains the original three S=0 observations.
+    bool set_integral_velocity_weight(T beta_s2, bool protect_attitude = true) {
+        if (!std::isfinite(beta_s2) || beta_s2 < T(0)) return false;
+        integral_velocity_weight_ = beta_s2;
+        protect_integral_attitude_ = protect_attitude;
+        return true;
+    }
+    [[nodiscard]] T integral_velocity_weight() const { return integral_velocity_weight_; }
+    [[nodiscard]] bool integral_attitude_protected() const { return protect_integral_attitude_; }
+
     void set_aw_stationary_std(const Vector3& sigma) {
         Sigma_aw_ = sigma.cwiseAbs2().asDiagonal();
     }
@@ -673,6 +685,12 @@ class Kalman3D_Wave_TFG {
         H.setZero();
         H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(Vector3(X_.X.col(2)));
         H.template block<3,3>(0, OFF_S) = -Matrix3::Identity();
+        if (integral_velocity_weight_ > T(0)) {
+            r(2) -= integral_velocity_weight_ * X_.X(2,0);
+            const Matrix3 velocity_cross = ocean_imu::lie::skew<T>(Vector3(X_.X.col(0)));
+            H.template block<1,3>(2,OFF_PHI) += integral_velocity_weight_ * velocity_cross.row(2);
+            H(2,OFF_V+2) = -integral_velocity_weight_;
+        }
         Rw = R_S_;
     }
 
@@ -698,7 +716,8 @@ class Kalman3D_Wave_TFG {
         if (!linear_block_enabled_) { last_S_diag_ = MeasDiag3{}; return false; }
         Vector3 r; Eigen::Matrix<T,3,NX> H; Matrix3 Rw;
         integral_residual(r, H, Rw);
-        return apply_update3_(r, H, Rw, last_S_diag_);
+        return apply_update3_(r, H, Rw, last_S_diag_,
+                              integral_velocity_weight_ > T(0) && protect_integral_attitude_);
     }
 
     bool apply_update3(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
@@ -813,7 +832,7 @@ class Kalman3D_Wave_TFG {
     }
 
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
-                        const Matrix3& Rw, MeasDiag3& diag) {
+                        const Matrix3& Rw, MeasDiag3& diag, bool protect_attitude = false) {
         diag = MeasDiag3{};
         diag.r = r;
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
@@ -836,6 +855,24 @@ class Kalman3D_Wave_TFG {
         // either way.
         Eigen::Matrix<T,NX,3>& K = scratch_nx3_b_;
         K = ldlt.solve(PHt.transpose()).transpose();
+        if (protect_attitude) {
+            // The wave model is not an independent tilt/gyro observation.
+            // Constrain these gain rows to use only the horizontal S rows,
+            // solving their marginal innovation rather than simply deleting
+            // column 2 of the full gain. Keep BA learning and the full H,
+            // cross covariance and Joseph update below.
+            const Eigen::Matrix<T,2,2> Sxy = S.template topLeftCorner<2,2>();
+            Eigen::LDLT<Eigen::Matrix<T,2,2>> horizontal(Sxy);
+            if (horizontal.info() != Eigen::Success || !horizontal.isPositive()) return false;
+            for (int off : {OFF_PHI, OFF_BG}) {
+                if (off == OFF_BG && !with_gyro_bias) continue;
+                for (int i = off; i < off + 3; ++i) {
+                    const Eigen::Matrix<T,2,1> rhs = PHt.template block<1,2>(i,0).transpose();
+                    K.template block<1,2>(i,0) = horizontal.solve(rhs).transpose();
+                    K(i,2) = T(0);
+                }
+            }
+        }
         if (!K.allFinite()) return false;
 
         const Tangent correction = K * r;
@@ -960,6 +997,8 @@ class Kalman3D_Wave_TFG {
     MatrixNX P_{MatrixNX::Identity()};
 
     T tau_aw_{T(1.0)};
+    T integral_velocity_weight_{T(0)};
+    bool protect_integral_attitude_{true};
     Matrix3 Sigma_aw_{Matrix3::Identity()};
     Matrix3 aw_cov_floor_target_{Matrix3::Identity()};
     bool aw_cov_floor_pending_{false};
