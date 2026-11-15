@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "fix/low-sea-encounter-regressions",
-  "git_commit": "5a6c64b3138ed3c17cbef36e479b01b845108fb5",
+  "git_commit": "c3a79eb697d5d4b7216c28314a000c15fd3adebc",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -377,8 +377,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-15T19:17:41+00:00",
-    "git_commit": "5a6c64b3138ed3c17cbef36e479b01b845108fb5",
+    "generated_at": "2026-11-15T20:19:44+00:00",
+    "git_commit": "c3a79eb697d5d4b7216c28314a000c15fd3adebc",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -610,7 +610,12 @@
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
     "raw_rows_sha256": "8afc3dfc6a0229d3b10b9e9d4adc3118bb408bc1803e44b27739c8f0328aafb1",
     "raw_rows_size_bytes": 208475,
-    "workflow_run": null
+    "workflow_run": {
+      "job": "commit",
+      "run_attempt": "1",
+      "run_id": "43752835838",
+      "workflow": "ou-full-evidence-branch"
+    }
   },
   "result_files": {
     "ou_robustness.json": {
