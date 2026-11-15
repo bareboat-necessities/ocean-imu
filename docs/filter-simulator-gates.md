@@ -30,6 +30,10 @@ maxima, previous caps, final limits and known pre-existing failures.
 Unknown families, profiles, records and unmeasured channels fail closed within
 this fixed-draw protocol. Explicit sensor-seed sweeps retain their original
 global diagnostic bars; they are not used to qualify these deterministic caps.
+Heave-only `HO_*` overrides that alter the active method or frontend likewise
+retain the old diagnostic bars, including Kuchler body-Z input. With default
+seeds, `NLO_NOGATE` suppresses numerical-limit failures only: unknown records
+remain protocol errors and abort before a quality summary.
 
 `CurrentReplayLimits.h` retains the global production and interval-rate ceilings
 as additional upper bounds. Its 61 post-encounter reductions and their controls
@@ -86,6 +90,16 @@ OU-III yaw ceilings: 0.886419° versus 0.87554° (production) and 0.878680° ver
 to absorb them. Passing native controls do not erase runner-dependent failures.
 Restoring the old drifting worst-case accuracy still requires estimator work.
 
+The [verification record](../reports/results/filter_sim_gates/per_record_verification.json)
+retains all 32 passing native OU-II/OU-III scores, binary/input identities, and
+completed hosted checks for the remaining families. The regenerated evidence
+publication passed 1,210 tests with one skipped. The final heave-only guard passes all 112 default cases plus its body-Z
+ablation control. Twelve focused protocol tests pass. Full local `make all`
+attempts were interrupted by execution-service failures; none is reported as complete.
+Hosted OU-III on source 8b5aebe passed 14/16 cases and reproduced the two
+Hs=4 m JONSWAP yaw failures above. Its pre-regeneration checkout also failed
+a publication-freshness check; the source-bound bundles are now refreshed.
+
 W3d scores use the trailing 900 s of each 1200 s, 200 Hz record. Heave is
 RMS/incident Hs; 3D displacement is RMS/max reference wave-displacement norm.
 Accelerometer Z bias uses max absolute true Z bias; each vector-bias score
@@ -111,7 +125,7 @@ plot decimation never changes scoring. The conditional eight-record gates
 are deterministic sentinels, not population confidence intervals, general
 accuracy targets or guarantees for engine noise and alternate priors.
 
-After building, reproduce the passing evidence with:
+After building, reproduce the evidence and gate outcomes with:
 
 ```sh
 make all

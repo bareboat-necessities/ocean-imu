@@ -102,6 +102,60 @@ int main() {
                             str(cpp), '-o', str(binary)], check=True, capture_output=True)
             subprocess.run([str(binary)], check=True, capture_output=True)
 
+    def test_heave_ablation_flags_do_not_use_default_record_bars(self):
+        # Compile the simulator's actual protocol predicate without its Eigen
+        # replay machinery; changes to the experiment must retain old bars.
+        sim = (ROOT / 'tests/heave_only/heave_only-sim.cpp').read_text()
+        enums = '\n'.join(re.findall(r'enum class (?:Method|Levelling) \{[^}]+\};', sim))
+        helpers = sim[sim.index('bool env_flag('):sim.index('// Regression sentinels')]
+        source = '#include <cstdlib>\n#include <string>\n#include <cassert>\n' + enums
+        source += '\nLevelling g_frontend = Levelling::Mahony;\n' + helpers
+        source += r'''
+int main() {
+    for (auto m : {Method::PII, Method::Godhavn, Method::GodhavnExt, Method::RichterZd, Method::Kuchler})
+        assert(!diagnostic_configuration(m));
+    for (const auto* flag : {"HO_KUCHLER_BODY_Z", "HO_KUCHLER_OFFSET_FIT"}) {
+        setenv(flag, "1", 1);
+        assert(diagnostic_configuration(Method::Kuchler));
+        assert(!diagnostic_configuration(Method::Godhavn));
+        setenv(flag, "0", 1);
+        assert(!diagnostic_configuration(Method::Kuchler));
+        unsetenv(flag);
+    }
+    for (const auto* value : {"HO_KUCHLER_ZETA_Q", "HO_KUCHLER_OMEGA_RW"}) {
+        setenv(value, "0", 1);
+        assert(diagnostic_configuration(Method::Kuchler));
+        assert(!diagnostic_configuration(Method::PII));
+        unsetenv(value);
+    }
+    setenv("HO_FIXED_WC", "0.2", 1);
+    assert(diagnostic_configuration(Method::Godhavn));
+    assert(diagnostic_configuration(Method::GodhavnExt));
+    assert(diagnostic_configuration(Method::RichterZd));
+    assert(!diagnostic_configuration(Method::Kuchler));
+    unsetenv("HO_FIXED_WC");
+    for (const auto* flag : {"HO_BIAS_TERM", "HO_SUBTRACT_MEAN"}) {
+        setenv(flag, "1", 1);
+        assert(diagnostic_configuration(Method::Godhavn));
+        assert(!diagnostic_configuration(Method::GodhavnExt));
+        assert(!diagnostic_configuration(Method::RichterZd));
+        unsetenv(flag);
+    }
+    setenv("HO_MAHONY_TWOKP", "1", 1);
+    assert(diagnostic_configuration(Method::PII));
+    g_frontend = Levelling::Proxy;
+    assert(diagnostic_configuration(Method::Kuchler));
+    g_frontend = Levelling::Truth;
+    assert(!diagnostic_configuration(Method::Kuchler));
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cpp, binary = Path(tmp) / 'test.cpp', Path(tmp) / 'test'
+            cpp.write_text(source)
+            subprocess.run(['g++', '-std=c++20', '-Wall', '-Wextra', '-Werror',
+                            str(cpp), '-o', str(binary)], check=True, capture_output=True)
+            subprocess.run([str(binary)], check=True, capture_output=True)
+
     def test_heave_requires_all_methods_inputs_and_the_selected_frontend(self):
         methods = sorted(G.HEAVE_METHODS | {'pii'})
         text = '\n'.join(f'HEAVE_ONLY method={method} frontend=mahony record={name} z_pct_hs=1'

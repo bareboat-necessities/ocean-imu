@@ -118,6 +118,21 @@ bool env_double(const char* name, double& out) {
     return false;
 }
 
+bool diagnostic_configuration(Method method) {
+    // These overrides change the experiment qualified by the per-record table.
+    // Keep its former global diagnostic bars without weakening default runs.
+    if (g_frontend != Levelling::Truth && std::getenv("HO_MAHONY_TWOKP")) return true;
+    if (method == Method::Kuchler) {
+        return env_flag("HO_KUCHLER_BODY_Z") || env_flag("HO_KUCHLER_OFFSET_FIT") ||
+            std::getenv("HO_KUCHLER_ZETA_Q") || std::getenv("HO_KUCHLER_OMEGA_RW");
+    }
+    if (method == Method::Godhavn || method == Method::GodhavnExt || method == Method::RichterZd) {
+        return std::getenv("HO_FIXED_WC") ||
+            (method == Method::Godhavn && (env_flag("HO_BIAS_TERM") || env_flag("HO_SUBTRACT_MEAN")));
+    }
+    return false;
+}
+
 // Regression sentinels for the deterministic single-realization protocol, not
 // targets: the worst Z RMS (%Hs) of each method across the scored records plus
 // about half a percent.
@@ -382,9 +397,10 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
            : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS
            : method == Method::RichterZd ? RICHTER_ZD_LIMITS : KUCHLER_LIMITS);
     namespace rl = ocean_imu::sim::record_limits;
-    const float limit = rl::limit(std::string("heave_") + method_name(method),
-        frontend_name(g_frontend), r.input_name, rl::Metric::heave,
-        r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes);
+    const float fallback = r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes;
+    const float limit = diagnostic_configuration(method) ? fallback
+        : rl::limit(std::string("heave_") + method_name(method),
+            frontend_name(g_frontend), r.input_name, rl::Metric::heave, fallback);
     if (!(z_pct <= limit)) {
         std::cerr << "ERROR: " << method_name(method) << " Z RMS above limit ("
                   << z_pct << "% > " << limit << "%) for " << r.input_name << "\n";
