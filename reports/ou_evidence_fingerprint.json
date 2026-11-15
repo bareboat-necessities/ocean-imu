@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "7b508d38916875ce2bbbf6535c18bfc04016dd12a151832e619c15d073696b6e",
-  "results_file_count": 901,
+  "replay_fingerprint": "3554f3ad43c58c6d2653465dc81e3e52c05b8aca6f24a63313af5835b0b1ef3e",
+  "results_file_count": 902,
   "results_files": [
     {
       "kind": "file",
@@ -1565,6 +1565,11 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/filter_sim_gates/per_record_verification.json",
+      "sha256": "b39a979f3c8a594b5d6e2acc3c8faed0e8717d526bc7676eb6deccfcda879705"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/filter_sim_gates/stationary_control.json",
       "sha256": "47fc026b149721b79781ac7beb5778b0e17cb42d640f13b0cbea6933644e05cd"
     },
@@ -2536,7 +2541,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "0bc597a0206ffbd8bd6dcf67abbe42e320494f44b1bf3a793e53a929c7e02aea"
+      "sha256": "0c7c79a0d394372cc01f3ba12c8df028a5358998ebaa33e57d63815bfbfe2157"
     },
     {
       "kind": "file",
@@ -2626,22 +2631,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness.json",
-      "sha256": "68072898216073d61e93317d38d95bd7619dcfe6e998f78a7bb1d6a6ea121a8c"
+      "sha256": "4399b74a7b1158ded5938e74b4e2ae739e7d2c0d6e5e9dab7f714c40360a93ef"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_macros.tex",
-      "sha256": "891acb95eddb9e1d798847f212de8c5eb345c7b240e97044eea9ad2accd7656a"
+      "sha256": "f11396fb83195e957a7cb17a1b4a9babfe7b50a1f1761901f9c33e0971add808"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "e7097d5d96091a9f23f11021deb5f89cd0e604cda69ab1619f6521644c301165"
+      "sha256": "245065752f15683a5b0fba1f8e2e1c5357320f26908b7e85be126730c6843191"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "6803c478a1a06159523e5c54d8a669b2e2c0af436468797b62d99fdf5a43093a"
+      "sha256": "488801771acb74a5e2ac529aa05e3b25e4060c09a13ceb35e2af60c5f42556ec"
     },
     {
       "kind": "file",
@@ -2651,22 +2656,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "da22549a7df1c00f5263fdacec17354156cb353e543dd251d07483a7030e6b54"
+      "sha256": "8afc3dfc6a0229d3b10b9e9d4adc3118bb408bc1803e44b27739c8f0328aafb1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_sensitivity.svg",
-      "sha256": "9336e639a233ede0b8f6af8911d0aaa68735fb68f5bddcc8f543e1796f97e29d"
+      "sha256": "bf7dc438ce14e10caa96ef34a7c1a35be77fb0572c23555cbe7ebc61504271ab"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "c0fbe7e5c36bc17fbdbee46ad495291920e96e268b350880a0981afbb87e5b93"
+      "sha256": "12c38f1e27b6f7cd81c868ecb19204543a0a148ef1773d0c36e4b52870548ba1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "6e3a8da5e6c0423c120d8b1b84181eee4e404e6e98646fa9b389110fc2de7a4a"
+      "sha256": "0ecf8923f9d9c1843a9f1ae4e87d03d0850eca113c729bdae343c32a39dca378"
     },
     {
       "kind": "file",
@@ -2706,22 +2711,22 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "91482ee06aba4bf88a1e9100e3cfa2fc7547dc6141338c86859553e8be90cfce"
+      "sha256": "21144a8611bf6089d2a2920576ce6178b62ff9daad9f003a78dfc82ecfbbd188"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "0ba68dc05edbc56166d3c4e107cbc9895ccd71e4d5c789fbe9aa0cef5d7d1744"
+      "sha256": "2eac1c435de972413d04dbf9a270a29b493979625a43c9f5a4d134a4c25efa80"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "7585f78e029636af497d400950d9e9c7fd4c3a01347ec6f01ed524c66faf4bfa"
+      "sha256": "839e71511dc6709da3a30faa50e09eb3b9a7ede417db2aea9f9407e8a36c6278"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "313fea823113526fc178590c5424b8f71c3a15b7220246bdf9f808766d6700e7"
+      "sha256": "30b5b17181a16c53aab4b6878dad1fe517af9a4db6aed6abaa2ce3d99346aa09"
     },
     {
       "kind": "file",
@@ -2731,12 +2736,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "ac76d06a51ca3e554c43b668f07a597836c0ebb9e5eec25e87d7b4d586aab077"
+      "sha256": "d467f023b27137bcfa8d2b37dedceaf4e152b7b9e7b8204dd229093442929808"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "dfd950f0154ce257c9a98a2cbf3ca33d7c84ad0b98b5b6ac193d16ceffd798da"
+      "sha256": "fd7fe547f13059c1943de57c6f68018874de04263841cef868e4b54933a7fdfd"
     },
     {
       "kind": "file",
@@ -2746,12 +2751,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "1f4f20073215fb0542843b7cbc290c019b65e84231f3cf1efc6b1d3ea3abc562"
+      "sha256": "ea6241490abc9b2d8f4da2c932948ceb100ceb82f6a544fff424c8075a276a97"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "285ab7580add62fd3ddd304776925539c795d979bd6595171b94907645f04581"
+      "sha256": "52d060e14aa68bbfaf58475cf253d4dc78395e20992e26762bddb24d28935229"
     },
     {
       "kind": "file",
@@ -2776,7 +2781,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "dc4eb115ea44764d2344792ffed3576926502bff0528e524f1f4e6ffbfdd9cb3"
+      "sha256": "fd031f33c44f3c9e6835e7d09ecd93c6a022d433addb72fd620a812d2ff493f8"
     },
     {
       "kind": "file",
@@ -4509,7 +4514,7 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "87f483eda8122bfbc9bed53d6fe98657e7fc14810abe4bbb2b420a62ce700e67",
+  "results_fingerprint": "c072049855c04a9113b673efd2a2f27be2e1d9d1107629895fd54ecfe9845c49",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
@@ -5785,7 +5790,7 @@
     {
       "mode": "100644",
       "path": "tests/heave_only/heave_only-sim.cpp",
-      "sha256": "edeb2720004cef7af2b88759ad7ec97f1737d9f3077d096b04c641f327c21b44"
+      "sha256": "955da663ea7577c36c101b62c2691a6690632b8f6f87c5c82945d2208f7eb45c"
     },
     {
       "mode": "100644",
@@ -6865,7 +6870,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_filter_sim_gates.py",
-      "sha256": "4f41b8170e35769dc54af6f7864aa2a48e1d21eb02977d4506cf17de85af314d"
+      "sha256": "92ac2c1a4f35a31e99c00682c659ce164cae81fd83163b67de6bfb73c47a3f67"
     },
     {
       "mode": "100644",
