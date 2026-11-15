@@ -1,7 +1,7 @@
 {
   "source_base": "13f77b892b1b9dfc25714eb786f7745c89a663e7",
   "role": "Non-promoting diagnostic controls. No shipping estimator, noise input or quality gate changed. Prototype failures retained.",
-  "build": "Compile the named simulator and src/util/W3dSimCommon.cpp using -O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=native -Isrc and Eigen 3.4.0; apply the selected overlay include directory before src; run both v1.3.1 archives with the declared env and seed.",
+  "build": "Reconstruction recipe: compile the named simulator and src/util/W3dSimCommon.cpp with -O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=native, followed by the per-experiment include order below. Eigen 3.4.0. Original complete shell command was not retained; this is not a claim of an archived exact invocation. Binary hashes bind the measured executables.",
   "protocol": "Pinned v1.3.1 28 ft / 5 kn; default noise/seeds; 1200 s at 200 Hz; trailing 900 s / 180000 samples; original gates unchanged; zero-speed controls use W3D_REFERENCE_MOTION=stationary; seed 7 is a held-out diagnostic draw. Moving default bars do not qualify stationary or held-out runs.",
   "experiments": [
     {
@@ -897,7 +897,12 @@
             "text": "--- src/kalman_carma/SeaStateFusionFilter_CARMA3.h\n+++ kalman_carma/SeaStateFusionFilter_CARMA3.h\n@@ -89,6 +89,7 @@\n #endif\n \n #include <algorithm>\n+#include <cstdlib>\n #include <array>\n #include <cmath>\n #include <limits>\n@@ -469,6 +470,7 @@\n         const float f_tune = tau_coeff_ * 0.5f / tau;\n         const float accel_std = carma_accel_std_();\n         carma_accel_std_applied_ = accel_std * vertical_band_gain_();\n+        if (const char* x=std::getenv(\"PROBE_VERTICAL_MODEL_SIGMA_GAIN\")) carma_accel_std_applied_ *= std::stof(x);\n         const double fz_v = mekf_->vertical_model().base_zero_crossing_hz();\n         mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), carma_accel_std_applied_);\n         const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();\n"
           }
         }
-      }
+      },
+      "reconstruction_include_order": [
+        "-Icarma-flex-include",
+        "-Isrc",
+        "-isystem third_party/eigen"
+      ]
     },
     {
       "spec": {
@@ -1803,7 +1808,12 @@
             "text": "--- src/kalman_carma/SeaStateFusionFilter_CARMA3.h\n+++ kalman_carma/SeaStateFusionFilter_CARMA3.h\n@@ -89,6 +89,7 @@\n #endif\n \n #include <algorithm>\n+#include <cstdlib>\n #include <array>\n #include <cmath>\n #include <limits>\n@@ -152,6 +153,12 @@\n         lever_.reset_kinematics();\n         this->resetFrontendGyroHistory();\n         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);\n+        if (std::getenv(\"PROBE_BROAD_SPECTRUM\")) {\n+            auto shape = kalman::carma::CARMA41_JONSWAP_SHAPE;\n+            shape.zeta1 = 0.3;\n+            shape.zeta2 = 0.7;\n+            mekf_->set_vertical_shape(shape);\n+        }\n         applyGyroSampling_();\n         seastate::common::finalizeInitialization(\n             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });\n@@ -165,6 +172,12 @@\n         this->resetFrontendGyroHistory();\n         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,\n                                        gravity_magnitude);\n+        if (std::getenv(\"PROBE_BROAD_SPECTRUM\")) {\n+            auto shape = kalman::carma::CARMA41_JONSWAP_SHAPE;\n+            shape.zeta1 = 0.3;\n+            shape.zeta2 = 0.7;\n+            mekf_->set_vertical_shape(shape);\n+        }\n         applyGyroSampling_();\n         seastate::common::finalizeInitialization(\n             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });\n"
           }
         }
-      }
+      },
+      "reconstruction_include_order": [
+        "-Icarma-broad-include",
+        "-Isrc",
+        "-isystem third_party/eigen"
+      ]
     },
     {
       "spec": {
@@ -2705,7 +2715,12 @@
             "text": "--- src/kalman_carma/SeaStateFusionFilter_CARMA3.h\n+++ kalman_carma/SeaStateFusionFilter_CARMA3.h\n@@ -89,6 +89,7 @@\n #endif\n \n #include <algorithm>\n+#include <cstdlib>\n #include <array>\n #include <cmath>\n #include <limits>\n@@ -152,6 +153,11 @@\n         lever_.reset_kinematics();\n         this->resetFrontendGyroHistory();\n         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);\n+        if (const char* probe_zero = std::getenv(\"PROBE_REAL_ZERO\")) {\n+            auto shape = kalman::carma::CARMA41_JONSWAP_SHAPE;\n+            shape.fz_hz = std::atof(probe_zero) * shape.f1_hz;\n+            mekf_->set_vertical_shape(shape);\n+        }\n         applyGyroSampling_();\n         seastate::common::finalizeInitialization(\n             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });\n@@ -165,6 +171,11 @@\n         this->resetFrontendGyroHistory();\n         mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,\n                                        gravity_magnitude);\n+        if (const char* probe_zero = std::getenv(\"PROBE_REAL_ZERO\")) {\n+            auto shape = kalman::carma::CARMA41_JONSWAP_SHAPE;\n+            shape.fz_hz = std::atof(probe_zero) * shape.f1_hz;\n+            mekf_->set_vertical_shape(shape);\n+        }\n         applyGyroSampling_();\n         seastate::common::finalizeInitialization(\n             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });\n"
           }
         }
-      }
+      },
+      "reconstruction_include_order": [
+        "-Icarma-zero-include",
+        "-Isrc",
+        "-isystem third_party/eigen"
+      ]
     },
     {
       "spec": {
@@ -3422,7 +3437,12 @@
             "text": "--- src/kalman_ou_iii/Kalman3D_Wave_OU_III.h\n+++ kalman_ou_iii/Kalman3D_Wave_OU_III.h\n@@ -1,4 +1,6 @@\n #pragma once\n+#include <cstdlib>\n+#include \"PartialSchmidt.h\"\n #include \"kalman_common/GyroInterval.h\"\n \n /*\n@@ -2329,16 +2331,27 @@\n {\n     constexpr int off_S = OFF_S;   // offset of S block (3 states)\n \n-    // Innovation: target S = 0\n-    const Vector3 r = -xext.template segment<3>(off_S);\n-\n-    // Innovation covariance S = P_SS + R_S\n+    // Diagnostic only: y_S = S + beta v, beta=(T_z/2pi)^2.\n+    // For stationary differentiable physical wave motion Cov(S,v)=-Var(p),\n+    // so beta=Var(p)/Var(v) orthogonalizes the pseudo residual against v.\n+    // The shipping ablation remains exactly S=0 when the flag is absent.\n+    Vector3 r = -xext.template segment<3>(off_S);\n     Matrix3& S_mat = S_scratch_;\n     S_mat = Pext.template block<3,3>(off_S, off_S) + R_S;\n-\n-    // Cross covariance PC\u1d40 = P(:,S) (NX\u00d73)\n     MatrixNX3& PCt = PCt_scratch_;\n     PCt.noalias() = Pext.template block<NX,3>(0, off_S);\n+    if (std::getenv(\"PROBE_SPECTRAL_S\")) {\n+        const T beta = tau_aw * tau_aw / T(9.8696044010893586188);\n+        const int z = 2;\n+        r(z) -= beta * xext(OFF_V+z);\n+        for (int i=0; i<NX; ++i)\n+            PCt(i,z) += beta * Pext(i,OFF_V+z);\n+        for (int i=0; i<3; ++i) {\n+            S_mat(i,z) += beta * Pext(off_S+i,OFF_V+z);\n+            S_mat(z,i) += beta * Pext(OFF_V+z,off_S+i);\n+        }\n+        S_mat(z,z) += beta * beta * Pext(OFF_V+z,OFF_V+z);\n+    }\n \tif constexpr (with_accel_bias) {\n         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(PCt);\n     }\n@@ -2347,6 +2360,25 @@\n     if (!safe_ldlt3_(S_mat, ldlt, R_S.norm())) return;\n     MatrixNX3& K = K_scratch_;\n     gain_from_ldlt3_(PCt, ldlt, K);\n+    if (std::getenv(\"PROBE_SPECTRAL_S\"))\n+        constrain_vertical_pseudo_gain(K, PCt, S_mat, 0,\n+                                      with_gyro_bias ? 3 : -1,\n+                                      -1); // Keep the accelerometer-bias learning channel.\n+    if constexpr (with_accel_bias) {\n+        if (std::getenv(\"PROBE_SPECTRAL_S\") && std::getenv(\"PROBE_DIRECTIONAL_BIAS\")) {\n+            const Eigen::Matrix<T,2,2> Sxy = S_mat.template topLeftCorner<2,2>();\n+            Eigen::LDLT<Eigen::Matrix<T,2,2>> ldxy(Sxy);\n+            Matrix3 marginal = Matrix3::Zero();\n+            for (int i=0; i<3; ++i) {\n+                const Eigen::Matrix<T,2,1> rhs = PCt.template block<1,2>(OFF_BA+i,0).transpose();\n+                marginal.template block<1,2>(i,0) = ldxy.solve(rhs).transpose();\n+            }\n+            const Vector3 down = R_wb() * Vector3::UnitZ();\n+            const Matrix3 extra = K.template block<3,3>(OFF_BA,0) - marginal;\n+            K.template block<3,3>(OFF_BA,0) = marginal + down * (down.transpose() * extra);\n+        }\n+    }\n+\n     if constexpr (with_accel_bias) {\n         if (!acc_bias_updates_enabled_) freeze_acc_bias_rows_(K);\n     }\n"
           }
         }
-      }
+      },
+      "reconstruction_include_order": [
+        "-Iou3-directional-include",
+        "-Isrc",
+        "-isystem third_party/eigen"
+      ]
     }
   ]
 }
