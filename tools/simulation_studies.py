@@ -77,6 +77,8 @@ def command_for(study, data, out, jobs, mode):
 
 def dataset_chart(out):
     """A dataset-only report must not import synthetic results from another run."""
+    sys.path.insert(0, str(ROOT/'plots'))
+    from vector_export import save_figure
     import pandas as pd
     import matplotlib
     matplotlib.use('Agg')
@@ -102,7 +104,7 @@ def dataset_chart(out):
                                                      title=f'{RELEASE} · {CASES[CASE]["description"]}')
         ax.set_xticklabels([str(n).replace('wave_data_', '').replace('.csv', '') for n in data.file], rotation=30, ha='right', fontsize=8)
         ax.figure.tight_layout()
-        ax.figure.savefig(out/'csv_timing.svg')
+        save_figure(ax.figure, out/'csv_timing.svg')
         plt.close(ax.figure)
     files = list(out.rglob('dataset_runs.csv')) + list(out.rglob('dataset_summary.csv'))
     for path in files:
@@ -117,7 +119,7 @@ def dataset_chart(out):
                             title=f'{RELEASE} · {CASES[CASE]["description"]}')
         ax.set_xticklabels([str(n).replace('wave_data_', '').replace('.csv', '') for n in table.index], rotation=30, ha='right', fontsize=8)
         ax.figure.tight_layout()
-        ax.figure.savefig(path.with_name('heave_mean_m.svg'))
+        save_figure(ax.figure, path.with_name('heave_mean_m.svg'))
         plt.close(ax.figure)
 
 

@@ -1,3 +1,22 @@
+## Bidirectional v1.4.0 replay qualification
+
+Class E integration failure: changing `src/util/UnderwayReference.h` invalidated
+the finite native secant report's whole-source digest; updating the dataset
+pointer in the bound gyro-projection document invalidated its document hash.
+A fresh complete 252-column replay at both original epsilons reproduces both
+native state-byte hashes. The receipt is
+`reports/results/ou3_stability/v140-replay-reference-source-scope.json`.
+The source-binding gate and mathematical qualifications remain unchanged.
+
+Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
+physical record, frontend, magnetic service and clocks are preserved; (2) only
+the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
+stale binding was E, while the retained sufficient-bound failure remains D;
+(4) no shipping counterexample was found; (5) existing algebra and open theorem
+qualifications are retained; (6) validate the refreshed provenance and both
+external-record regression cases before publication. No new stability claim is
+made. The current replay inventory is 544 cells across the two directions.
+
 ## Current low-wave model follow-up
 
 Current hypothesis: encounter-spectrum mismatch contributes to the moving

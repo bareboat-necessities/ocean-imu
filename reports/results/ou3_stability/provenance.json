@@ -141,7 +141,7 @@
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
-      "git_blob_sha": "0d3785ea6424c7be7a363ed4109e10c7ad077292"
+      "git_blob_sha": "77bc96b53a76f6ba96dc97205f2c24f4176ef5d6"
     },
     {
       "path": "docs/ou3-ag-readout-proof.md",
@@ -173,7 +173,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "4c0071f75b217028a1fbf27d740aa34e5a42104c"
+      "git_blob_sha": "f0b69d3cfe60f67e8b529a1bb6e602c6848aa581"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -845,7 +845,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "db14566003f272749f7f89ef2f5baab08f11d5bf"
+      "git_blob_sha": "ac5dca704186d9c5f7d74a1d5422b3b43fc5dae2"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1006,6 +1006,10 @@
     {
       "path": "reports/results/ou3_stability/planar-native-secants-source-binding-archive.json",
       "git_blob_sha": "81551f3925a5f8622ba57c17c3aabcc8433e040f"
+    },
+    {
+      "path": "reports/results/ou3_stability/v140-replay-reference-source-scope.json",
+      "git_blob_sha": "bd3949f31f49b40d619f0bd93939470e76c24ae9"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1847,5 +1851,11 @@
     "native_secant_payload_identical_except_source_tree_digest": true,
     "theorem_promoted": false,
     "ledger": "docs/ou3-proof-research-state.md"
+  },
+  "bidirectional_dataset_source_refresh": {
+    "receipt": "reports/results/ou3_stability/v140-replay-reference-source-scope.json",
+    "replay_performed": true,
+    "native_state_bytes_identical": true,
+    "theorem_promoted": false
   }
 }

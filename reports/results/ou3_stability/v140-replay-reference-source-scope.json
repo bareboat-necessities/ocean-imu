@@ -1,0 +1,33 @@
+{
+  "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+  "failed_quantity": "whole-src digest in planar-native-secants-diagnostic.json; version-only context in bound gyro-projection document",
+  "reference_commit": "43dcfaa88938fde0797593d5d4e525ff42ee82f3",
+  "tested_source_commit": "0e8a45e35a7d734dcc9e13097edd4d24192cba17",
+  "changed_src_files": [
+    "src/util/UnderwayReference.h"
+  ],
+  "command": "OPENBLAS_NUM_THREADS=1 python3 -m tools.stability.ou3_theorem.planar_native_secants --eigen third_party/eigen --output /tmp/ocean-native-secants-v140.json",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "previous_source_tree_sha256": "9b6d3de3d4999dc2fa2089c4e6b7daf3eff6785b08248c5e926cf99d6f061512",
+  "current_source_tree_sha256": "8cefb58ee0a8e70c7da5cd82e8901fbf5efdd368dccadf00c2a98fb989512f8b",
+  "native_secant_bytes_identical": true,
+  "native_secant_bytes_sha256": [
+    "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50",
+    "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+  ],
+  "epsilons": [
+    0.01,
+    0.005
+  ],
+  "columns": 252,
+  "word_samples": [
+    40000,
+    44000
+  ],
+  "replay_performed": true,
+  "structures_preserved": "complete inherited wrapper state, physical sensor record, all 21 states and full covariance, gains, Joseph, resets, projections, frontend/tuner and clocks",
+  "relaxations_introduced": "off-orbit root perturbations are diagnostic neighbourhood points, not certified reachable histories; finite differences are not derivative enclosures",
+  "shipping_counterexample_found": false,
+  "theorem_promoted": false,
+  "interpretation": "Fresh two-epsilon complete native execution matches earlier state bytes. SVD-derived summaries have only floating-point roundoff differences. Existing sufficient-bound failures and open qualifications remain."
+}

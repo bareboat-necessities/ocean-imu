@@ -41,6 +41,8 @@ def metric_rows(report):
 
 
 def publish(report, destination):
+    sys.path.insert(0, str(ROOT/'plots'))
+    from vector_export import save_figure
     import matplotlib
     matplotlib.use('Agg')
     matplotlib.rcParams['svg.hashsalt'] = 'ocean-imu-sim-v1.4.0'
@@ -76,7 +78,7 @@ def publish(report, destination):
         fig.colorbar(im, ax=ax, label=unit)
         fig.tight_layout()
         figure_path = destination/(metric+'.svg')
-        fig.savefig(figure_path, metadata={'Date': None})
+        save_figure(fig, figure_path, metadata={'Date': None})
         figure_path.write_text('\n'.join(line.rstrip() for line in figure_path.read_text().splitlines())+'\n')
         plt.close(fig)
     (destination/'README.md').write_text(
