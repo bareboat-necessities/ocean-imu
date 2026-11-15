@@ -1,3 +1,4 @@
+#include "../common/RecordW3dLimits.h"
 #include <filesystem>
 #include <iostream>
 #include <cstdlib>
@@ -686,7 +687,8 @@ static void process_wave_file_for_tracker(const std::string& filename,
         print_validation_metrics(*result, dt, validation_window_sec, "OU_II");
     }
     print_summary_and_fail_if_needed(*result, dt,
-        gyro_replay::legacy ? FAIL_LIMITS : ocean_imu::sim::current_limits::ou2, SUMMARY_LABELS);
+        ocean_imu::sim::record_limits::w3d("ou2", gyro_replay::legacy ? "legacy" : "default",
+            filename, gyro_replay::legacy ? FAIL_LIMITS : ocean_imu::sim::current_limits::ou2), SUMMARY_LABELS);
 }
 
 int main(int argc, char* argv[]) {

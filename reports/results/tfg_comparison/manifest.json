@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "ec48472427b54d7bd1c4bae41edc8d99fcb2b5a0d63e50b3f577c8a4d93bef66",
-    "TFG": "d7cdccedbfebb79e695180a29b5a448666e19793280ac72c1c3cdc698d959bf5"
+    "OU_III": "722a1a1f0d60c527ca0d69e7cb137a834097768899a12773e675cb67c868aa2c",
+    "TFG": "a8e82c2bb530c7a340599b021565b21d430490ef973586d35456c9e189f68536"
   },
   "build_environment": {
     "compiler": {
@@ -40,9 +40,9 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-15T01:34:06+00:00",
-  "git_commit": "6552e140906e1575b4f5e60d15796e33ec7a67cd",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   26 +-\n .../results/tfg_comparison/gate_diagnostics.json   |   20 +-\n reports/results/tfg_comparison/paired_summary.json | 4442 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3238 +++++++-------\n 5 files changed, 4043 insertions(+), 4043 deletions(-)",
+  "generated_utc": "2026-11-15T04:43:23+00:00",
+  "git_commit": "8b5aebea9b1ef33dd59f58e8d6ed2a15da1e67e6",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    6 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  152 +-\n reports/results/tfg_comparison/paired_summary.json | 3954 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  246 +-\n reports/results/tfg_comparison/raw_runs.json       | 2142 +++++------\n 5 files changed, 3250 insertions(+), 3250 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -138,11 +138,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "97de0682a6421184a88be37d7c96eb0fdab5677e39d00065797d87743ccb2518",
-    "gate_diagnostics.json": "82bc8e9623a44825237675606bd0986d1107c8c8a10a91230d57660add7d6de0",
-    "paired_summary.json": "0d340b0b069c049a8b49f4779af6f5523daa7de395d1389b43906c2ea695bdef",
-    "raw_runs.csv": "71581a21791aa2a521a3e2686145fd9141a49fda677f6952dc3596c39a23d6ac",
-    "raw_runs.json": "a6b8773075bf6ecbded5d5c8065c935e2b966daf167a20dec41e9bb5a7e5e4c6"
+    "comparison.tex": "f7aeea5aeec6654f3b23cee633ea8b10de40eaf5a7d3552d4a33f261e9f92225",
+    "gate_diagnostics.json": "1d6417ef3581540df5fa0fab33dc20791b7e2b1c8b867212ec603d7936c257ad",
+    "paired_summary.json": "a1335c413725acdb0089363cc3bd8063a192412e5ed00f7167bc2a5bbca269ea",
+    "raw_runs.csv": "c5b791c657bf7b10fdad7f11e385acf63fa3f26fbcb5bf9d73f7728e7d948ee2",
+    "raw_runs.json": "bbd11c7755239767b51498ecfa812c500035d82ada470652de62d4d23f47a161"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -194,12 +194,15 @@
     "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
-    "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+    "tests/common/CurrentReplayLimits.h": "27809db7176660cc989a461d3f0a47eb94f64c860b621ba272573b7260908278",
     "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/common/RecordReplayLimits.h": "671e7ff6be3f59247ffdeae3d09032bf8607e43f13be3c70bba74e10fd6fd604",
+    "tests/common/RecordReplayLimits.inc": "ed4e1d4bfce75190b0ab796cfde09afa08e436f20e2edb464d54b89e02045888",
+    "tests/common/RecordW3dLimits.h": "9a62af11515077882505f07e13367e328e27a0f745f9eb810c8e9e40bfac12e3",
     "tests/kalman_ou_iii/Makefile": "45832334387f7fda2f93f1695d12b9ca0f25049d7062a0040a23effd1a970363",
-    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d",
     "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
-    "tests/kalman_tfg/kalman_tfg-sim.cpp": "322b6d32843f05d1a809ccc19d4768d37db29f100e2707efde379c7394315f46",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "1883ae7f42357b58a8e09ffa42c964bc1c5c69eb1e0038e3a7e6afe683617264",
     "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
     "tools/ou_validation.py": "fa45b6ae2ed0b4491a97eebebd30ad1c4b4fadd9f0cfcd5d8688a2bdcf127f51",
     "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
@@ -209,7 +212,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "43661880261",
+    "run_id": "43677124618",
     "workflow": "ou-full-evidence-branch"
   }
 }

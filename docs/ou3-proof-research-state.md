@@ -1,3 +1,70 @@
+## All-filter per-sea regression gates
+
+Current scope: preserve merged estimator source and apply record-specific caps
+to every qualified default replay family/profile. The 256 combinations contain
+1,120 active limits; 991 are tighter than the preceding global ceilings, and
+none are wider. All OU, CARMA and TFG variants with measured default bars,
+tangent shared-mode, AHRS, PII, NLO and heave-only frontends are covered.
+Explicit seed sweeps retain their previous diagnostic bars. Process-prior,
+lever-arm and alternative-prior diagnostics retain their separate contracts.
+
+Evidence: source 8b5aebe passes all eleven focused gate tests; the isolated
+heave-ablation follow-up passes all twelve, including configuration isolation. Restored native
+OU-II and OU-III builds pass all 32 sea/profile replays. Completed hosted jobs
+pass all other filter families, including 112 heave-only cases and 24 plain/legacy
+TFG cases. Exact source/input/binary/log identities and all native scores are
+retained in `reports/results/filter_sim_gates/per_record_verification.json`.
+Hosted OU-III job 132699747477 passed 14/16 replay cases and reproduced
+the two yaw failures below. Its pre-regeneration checkout also failed the TFG
+publication-freshness check; 20379a9 contains the freshly regenerated bundles.
+
+Classification E, existing runner-dependent numeric gate failure: main c9d3219
+CI job 132679582303 records OU-III Hs=4 m JONSWAP yaw 0.886419 > 0.87554 deg
+(production) and 0.878680 > 0.86774 deg (interval). This invalidates an all-runner
+pass claim, not a stability result. Those caps are retained, not widened.
+The current limiter remains the two runner-dependent yaw failures, not heave
+gate coverage. A same-input compiler/arithmetic comparison is the next
+falsifiable diagnostic; passing native controls do not erase hosted failures.
+
+Classification E, incomplete local validation: serial `make -j1 all` attempts
+were interrupted to expand the gate scope and correct diagnostic lookup order.
+The final attempt reached shared-TFG compilation before a workspace reset
+removed the checkout and build products. No complete local-suite pass is claimed.
+An initial unqualified C++ test lookup selected `std::find` through ADL; the
+qualified call now passes. These instrumentation/infrastructure failures do not
+invalidate the subsequently completed native and hosted replay receipts. A
+second `make -j1 all`, after the diagnostic-only heave fix, reached calibration
+compilation before the execution service disconnected; its partial heave replay
+also has no completion receipt. Separate final heave checks pass all 112 default cases. The body-Z ablation
+passes at 8.42477% Hs against its retained 12.12% diagnostic bar, while the
+5.85437% default record bar remains unchanged. These checks are retained in
+the verification record.
+The local 1,210-test evidence suite initially had one TeX error (missing
+`lualatex.fmt`, then font/cache setup). Restoring the runtime resources resolved
+it: the complete repeated suite passed with one skipped; no test was weakened.
+A standalone provenance check was initially invoked without its module path;
+correcting `PYTHONPATH=tests/validation` made the unchanged check pass.
+
+Classification E, resolved publication freshness: the new replay gate closure
+invalidated the preceding validation/robustness and TFG comparison bundles.
+Workflow 43677124618 freshly regenerated all six OU shards and the TFG study,
+passed its 1,210-test publication suite (one skipped), and committed the evidence
+as 20379a9268df3951da80aba5676b0048500aabb3. Old replay hashes were not restamped.
+The source 8b5aebe replay fingerprint is
+`7b508d38916875ce2bbbf6535c18bfc04016dd12a151832e619c15d073696b6e`.
+The subsequent heave-only diagnostic guard changes the broad source fingerprint,
+so its record is retained for CI to detect and regenerate, not restamped.
+OU/TFG replay dependency closures are unchanged and their contracts pass.
+
+Six-item handoff: (1) all shipping OU-III states, dynamics, covariance/gains,
+tuner, scheduler, magnetic service and continuous physical histories preserved;
+(2) no estimator/proof relaxation; (3) interrupted builds, test instrumentation,
+runner gate failures and stale publication are E; (4) no shipping counterexample
+found; (5) established algebra and open physical/theorem qualifications remain
+unchanged; (6) complete qualification of the heave diagnostic guard and continue
+the same-history accelerometer/covariance and arithmetic diagnosis below. Old drifting accuracy recovery is not
+claimed by lowering acceptance limits.
+
 ## Current encounter-regression continuation
 
 **Current hypothesis.** Reduced encounter acceleration exposes drift-regularizer

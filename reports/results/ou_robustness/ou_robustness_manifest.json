@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "chore/moving-vessel-replays",
-  "git_commit": "6552e140906e1575b4f5e60d15796e33ec7a67cd",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 34160 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |     2 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1578 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   956 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   152 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1922 +-\n 7 files changed, 19694 insertions(+), 19696 deletions(-)",
+  "git_branch": "fix/tighten-post-encounter-gates",
+  "git_commit": "a3a3f0e72d9e5102ee33e01e9ba323e8ce54aa1f",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 28956 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |     2 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1578 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   434 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   956 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   152 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1916 +-\n 7 files changed, 16996 insertions(+), 16998 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 18427,
@@ -222,20 +222,32 @@
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
     "tests/common/CurrentReplayLimits.h": {
-      "bytes": 8210,
-      "sha256": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625"
+      "bytes": 8261,
+      "sha256": "27809db7176660cc989a461d3f0a47eb94f64c860b621ba272573b7260908278"
     },
     "tests/common/GyroReplayContract.h": {
       "bytes": 1247,
       "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9"
+    },
+    "tests/common/RecordReplayLimits.h": {
+      "bytes": 1729,
+      "sha256": "671e7ff6be3f59247ffdeae3d09032bf8607e43f13be3c70bba74e10fd6fd604"
+    },
+    "tests/common/RecordReplayLimits.inc": {
+      "bytes": 43087,
+      "sha256": "ed4e1d4bfce75190b0ab796cfde09afa08e436f20e2edb464d54b89e02045888"
+    },
+    "tests/common/RecordW3dLimits.h": {
+      "bytes": 1591,
+      "sha256": "9a62af11515077882505f07e13367e328e27a0f745f9eb810c8e9e40bfac12e3"
     },
     "tests/kalman_ou_iii/Makefile": {
       "bytes": 808,
       "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 34488,
-      "sha256": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857"
+      "bytes": 34636,
+      "sha256": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d"
     }
   },
   "matplotlib": "3.6.3",
@@ -247,7 +259,7 @@
     "tau_s": 3.57748938
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -358,11 +370,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-15T02:04:07+00:00",
-    "git_commit": "6552e140906e1575b4f5e60d15796e33ec7a67cd",
+    "generated_at": "2026-11-15T06:18:07+00:00",
+    "git_commit": "a3a3f0e72d9e5102ee33e01e9ba323e8ce54aa1f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
@@ -541,20 +553,32 @@
         "size_bytes": 2765
       },
       "tests/common/CurrentReplayLimits.h": {
-        "sha256": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
-        "size_bytes": 8210
+        "sha256": "27809db7176660cc989a461d3f0a47eb94f64c860b621ba272573b7260908278",
+        "size_bytes": 8261
       },
       "tests/common/GyroReplayContract.h": {
         "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
         "size_bytes": 1247
+      },
+      "tests/common/RecordReplayLimits.h": {
+        "sha256": "671e7ff6be3f59247ffdeae3d09032bf8607e43f13be3c70bba74e10fd6fd604",
+        "size_bytes": 1729
+      },
+      "tests/common/RecordReplayLimits.inc": {
+        "sha256": "ed4e1d4bfce75190b0ab796cfde09afa08e436f20e2edb464d54b89e02045888",
+        "size_bytes": 43087
+      },
+      "tests/common/RecordW3dLimits.h": {
+        "sha256": "9a62af11515077882505f07e13367e328e27a0f745f9eb810c8e9e40bfac12e3",
+        "size_bytes": 1591
       },
       "tests/kalman_ou_iii/Makefile": {
         "sha256": "66039c2ca256e51abe32e8339ad7724d2c4341101cf50c0a6c67a13edf6980f6",
         "size_bytes": 808
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857",
-        "size_bytes": 34488
+        "sha256": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d",
+        "size_bytes": 34636
       }
     },
     "input_files": {
@@ -576,47 +600,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "7d0c6835f20993377210e8edccc3bd34cf26d13ecffd2451482eebe6fefe2bc5",
-    "raw_rows_size_bytes": 208552,
+    "raw_rows_sha256": "8afc3dfc6a0229d3b10b9e9d4adc3118bb408bc1803e44b27739c8f0328aafb1",
+    "raw_rows_size_bytes": 208475,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43661880261",
+      "run_id": "43682165384",
       "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1575564,
-      "sha256": "fc35f7ee089686b805e930d9ffbc44ab8e65c040f5dafe397e2b0bcd4be2e08e"
+      "bytes": 1575476,
+      "sha256": "4399b74a7b1158ded5938e74b4e2ae739e7d2c0d6e5e9dab7f714c40360a93ef"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "891acb95eddb9e1d798847f212de8c5eb345c7b240e97044eea9ad2accd7656a"
+      "sha256": "f11396fb83195e957a7cb17a1b4a9babfe7b50a1f1761901f9c33e0971add808"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 164623,
-      "sha256": "aa2f19ee84f10c6e68d100f17879daf75847818b7f689fba1f700b05749ded2f"
+      "bytes": 164594,
+      "sha256": "488801771acb74a5e2ac529aa05e3b25e4060c09a13ceb35e2af60c5f42556ec"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "fb52ea56cd58c4345076e1006cbee68a8352208a7116cbce2906daa17f550120"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 208552,
-      "sha256": "7d0c6835f20993377210e8edccc3bd34cf26d13ecffd2451482eebe6fefe2bc5"
+      "bytes": 208475,
+      "sha256": "8afc3dfc6a0229d3b10b9e9d4adc3118bb408bc1803e44b27739c8f0328aafb1"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 110510,
-      "sha256": "92ff2958d4346396c74723dcc73de68792ecbeb596178d2184ae067b9016e3a7"
+      "bytes": 110540,
+      "sha256": "bf7dc438ce14e10caa96ef34a7c1a35be77fb0572c23555cbe7ebc61504271ab"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 42720,
-      "sha256": "d5f4646c70291d49d241a707fce69a95870ed42996dcfd2b61fb1669ac9b84a2"
+      "bytes": 42708,
+      "sha256": "12c38f1e27b6f7cd81c868ecb19204543a0a148ef1773d0c36e4b52870548ba1"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 147627,
-      "sha256": "04fe9e5fac76e7bb00a26c572c18066acd1932b134ddb3973ae4e2c507f1b894"
+      "bytes": 147645,
+      "sha256": "0ecf8923f9d9c1843a9f1ae4e87d03d0850eca113c729bdae343c32a39dca378"
     }
   },
   "schema_version": 2,

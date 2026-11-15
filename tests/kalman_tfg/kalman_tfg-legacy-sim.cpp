@@ -12,6 +12,7 @@
     with the pre-PR main results prices the parity changes themselves.
 */
 
+#include "../common/RecordW3dLimits.h"
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -130,7 +131,9 @@ void process_one(const std::string& filename,
     // measured default-seed bars, independent of SpectralMSE's envelope.
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
-    print_summary_and_fail_if_needed(*result, dt, ocean_imu::sim::current_limits::tfg_legacy, kLabels);
+    print_summary_and_fail_if_needed(*result, dt,
+        ocean_imu::sim::record_limits::w3d("tfg_legacy", "default", filename,
+            ocean_imu::sim::current_limits::tfg_legacy), kLabels);
 }
 
 }  // namespace

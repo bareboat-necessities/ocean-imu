@@ -28,6 +28,7 @@
     because the current value is acceptable. See the table below.
 */
 
+#include "../common/RecordW3dLimits.h"
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -343,7 +344,8 @@ void process_one(const std::string& filename,
     static constexpr W3dSummaryLabels kLabels{ .target = "RS_target",
                                                .applied = "RS_applied" };
     print_summary_and_fail_if_needed(*result, dt,
-        gyro_replay::legacy ? kRegressionBars : ocean_imu::sim::current_limits::tfg, kLabels);
+        ocean_imu::sim::record_limits::w3d("tfg", gyro_replay::legacy ? "legacy" : "default",
+            filename, gyro_replay::legacy ? kRegressionBars : ocean_imu::sim::current_limits::tfg), kLabels);
 }
 
 }  // namespace
