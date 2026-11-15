@@ -41,6 +41,8 @@ STUDIES = {
     'carma_shared_modes_study': CSM,
     'carma_shared_modes_validation': OU + TFG + CSM + OBS,
     'tfg_shared_modes_dataset': CARMA + CSM + TCSM,
+    'live_bias_csv_replay': CSM + TCSM,
+    'live_bias_csv_timing': [],
 }
 DATASET_STUDIES = {'carma3_benchmark': 'carma3_benchmark',
                    'tfg_carma3_benchmark': 'tfg_carma3',
@@ -51,6 +53,10 @@ DATASET_STUDIES = {'carma3_benchmark': 'carma3_benchmark',
 def command_for(study, data, out, jobs, mode):
     command = [sys.executable, '-u', str(ROOT/'tools'/f'{study}.py')]
     common = ['--data-dir', str(data), '--jobs', str(jobs)]
+    if study == 'live_bias_csv_replay':
+        return command + ['--all-records', '--jobs', str(jobs), '--output-dir', str(out)]
+    if study == 'live_bias_csv_timing':
+        return command + ['--output-dir', str(out)]
     if study in ('ou_validation', 'ou_robustness', 'tfg_comparison'):
         return command + common + ['--mode', mode, '--output-dir', str(out), '--skip-build']
     if study in DATASET_STUDIES:
@@ -75,6 +81,29 @@ def dataset_chart(out):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
+    replay = out/'csv_rollout_all.json'
+    if replay.exists():
+        rows = []
+        for run in json.loads(replay.read_text()):
+            for line in run['metrics']:
+                if line.startswith('VALIDATION_METRICS '):
+                    fields = dict(pair.split('=', 1) for pair in line.split()[1:])
+                    rows.append(dict(input=run['input'], family=run['filter']+'/'+run['contract'],
+                                     disp_z_rms_m=float(fields['disp_z_rms_m'])))
+        if len(rows) != 48:
+            raise ValueError('expected 48 complete paired bias/timing replay rows')
+        pd.DataFrame(rows).to_csv(out/'dataset_runs.csv', index=False)
+    timing = out/'csv_timing.json'
+    if timing.exists():
+        data = pd.DataFrame(json.loads(timing.read_text()))
+        data.to_csv(out/'csv_timing.csv', index=False)
+        columns = ['gyro_endpoint_increment_rms', 'gyro_centered_increment_rms']
+        ax = data.set_index('file')[columns].plot.bar(figsize=(13, 6), ylabel='Gyro increment residual RMS (rad/s)',
+                                                     title=f'{RELEASE} · {CASES[CASE]["description"]}')
+        ax.set_xticklabels([str(n).replace('wave_data_', '').replace('.csv', '') for n in data.file], rotation=30, ha='right', fontsize=8)
+        ax.figure.tight_layout()
+        ax.figure.savefig(out/'csv_timing.svg')
+        plt.close(ax.figure)
     files = list(out.rglob('dataset_runs.csv')) + list(out.rglob('dataset_summary.csv'))
     for path in files:
         data = pd.read_csv(path)
@@ -143,13 +172,23 @@ def main():
             if result.returncode:
                 break
     receipt.update(exit_code=result.returncode, seconds=time.monotonic()-begin,
-                   status='completed' if result.returncode == 0 else 'failed', log_sha256=digest(out/'study.log'))
+                   status='postprocessing' if result.returncode == 0 else 'failed', log_sha256=digest(out/'study.log'))
     receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')
     if result.returncode:
         print((out/'study.log').read_text()[-6000:], file=sys.stderr)
         return result.returncode
-    if args.study in DATASET_STUDIES or args.study == 'tfg_shared_modes_dataset':
-        dataset_chart(out)
+    try:
+        if args.study in DATASET_STUDIES or args.study in ('tfg_shared_modes_dataset', 'live_bias_csv_replay', 'live_bias_csv_timing'):
+            dataset_chart(out)
+        after = {f'{d}/{b}': digest(ROOT/'tests'/d/b) for d,b in targets}
+        if after != receipt['binary_sha256']:
+            raise ValueError('study executable changed during the run')
+    except Exception as error:
+        receipt.update(status='failed', exit_code=1, error=str(error))
+        receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')
+        raise
+    receipt.update(status='completed', seconds=time.monotonic()-begin)
+    receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')
     print(f'{CASE}/{args.study}: completed; outputs in {out}', flush=True)
     return 0
 

@@ -10,6 +10,7 @@ on:
       - "tests/common/**"
       - "tools/carma*.py"
       - "tools/tfg*.py"
+      - "tools/live_bias_csv*.py"
       - 'tools/underway_reference.py'
       - 'src/util/UnderwayReference.h'
       - 'src/util/WaveFilesSupport.h'
@@ -44,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         case: [following, head]
-        study: [ou_validation, ou_robustness, tfg_comparison, model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition, startup_ablation, startup_transient_study, direction_rao_ablation, ou3_lever_arm_study, carma_lever_arm_study, carma3_benchmark, tfg_carma3_benchmark, carma_excitation_study, carma_shared_modes_study, carma_shared_modes_validation, tfg_shared_modes_dataset]
+        study: [ou_validation, ou_robustness, tfg_comparison, model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition, startup_ablation, startup_transient_study, direction_rao_ablation, ou3_lever_arm_study, carma_lever_arm_study, carma3_benchmark, tfg_carma3_benchmark, carma_excitation_study, carma_shared_modes_study, carma_shared_modes_validation, tfg_shared_modes_dataset, live_bias_csv_replay, live_bias_csv_timing]
     env:
       OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:

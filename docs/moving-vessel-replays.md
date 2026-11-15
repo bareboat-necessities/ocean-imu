@@ -44,7 +44,7 @@ the case from identically named CSV files.
 The study inventory is in `tools/simulation_studies.py`: paired OU validation
 and robustness, TFG comparison, model mismatch, engine noise, startup, wave
 direction, low–high–low transitions, lever arms, CARMA shape/excitation/coupling
-ablations, shared-mode degradation, and paired QMEKF/TFG dataset comparisons.
+ablations, shared-mode degradation, paired QMEKF/TFG dataset comparisons, and CSV timing/live-bias audits.
 Each is run against both cases by `simulation-studies.yml`. Synthetic-only
 prior-process, Lie-group, calibration and stability experiments retain their
 independently defined scenarios; they do not consume either ZIP.
@@ -52,3 +52,5 @@ independently defined scenarios; they do not consume either ZIP.
 Earlier committed study bundles keep their recorded input hashes and remain
 historical evidence until replaced by a complete run. They must not be relabelled
 as v1.4.0 results. Current case-specific evidence lives under `sim_v1.4.0`.
+
+Historical counterfactual and tuning-search tools retain their explicitly selected controls and configurations. They are not current acceptance studies and are not automatically rerun with substituted inputs.

@@ -43,6 +43,7 @@ def metric_rows(report):
 def publish(report, destination):
     import matplotlib
     matplotlib.use('Agg')
+    matplotlib.rcParams['svg.hashsalt'] = 'ocean-imu-sim-v1.4.0'
     import matplotlib.pyplot as plt
     import numpy as np
     rows = metric_rows(report)
@@ -74,7 +75,7 @@ def publish(report, destination):
                         color='white' if values[i,j] > values.max()*.65 else '#202020')
         fig.colorbar(im, ax=ax, label=unit)
         fig.tight_layout()
-        fig.savefig(destination/(metric+'.svg'))
+        fig.savefig(destination/(metric+'.svg'), metadata={'Date': None})
         plt.close(fig)
     (destination/'README.md').write_text(
         f"# {RELEASE}: {CASES[report['case']]['description']}\n\n"
