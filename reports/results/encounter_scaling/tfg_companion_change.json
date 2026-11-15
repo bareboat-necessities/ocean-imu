@@ -1,0 +1,2332 @@
+{
+  "role": "Cross-build before/after companion comparison; all 180 paired input hashes match. Unchanged OU-III numerical differences are reported as a build control. This is separate from the same-executable fixed-record ablation.",
+  "protocol": "Nine conditions by ten wave/noise/initialization triplets; final 900 seconds. Equal-weight condition means below, not the separately declared JONSWAP primary endpoint. All complete finite histories retained irrespective of default-seed gates.",
+  "baseline": {
+    "report_location": "2b30838accd17370696f9a00fcd6254427c52406:reports/results/tfg_comparison",
+    "producer_commit": "899670598ce9cf6ecd5c9ad109da11f1f4f70c4c",
+    "workflow": {
+      "job": "tfg_companion",
+      "run_attempt": "1",
+      "run_id": "43623625571",
+      "workflow": "ou-full-evidence-branch"
+    },
+    "binary_sha256": {
+      "OU_III": "8a4d737871575293dc47e04de9e56fdf9f8ccef6a717ab4e638ed8138902deb1",
+      "TFG": "d21354afa5525e711b9af5cacd16559c0e18f7574c578247d02707ae27cfcab3"
+    },
+    "raw_runs_sha256": "7f1e11cf6d0d5b57ae88cd167d0992d009dcbe7a77fb7600757c32653a9bb09d"
+  },
+  "candidate": {
+    "report_location": "reports/results/tfg_comparison",
+    "producer_commit": "6552e140906e1575b4f5e60d15796e33ec7a67cd",
+    "workflow": {
+      "job": "tfg_companion",
+      "run_attempt": "1",
+      "run_id": "43661880261",
+      "workflow": "ou-full-evidence-branch"
+    },
+    "binary_sha256": {
+      "OU_III": "ec48472427b54d7bd1c4bae41edc8d99fcb2b5a0d63e50b3f577c8a4d93bef66",
+      "TFG": "d7cdccedbfebb79e695180a29b5a448666e19793280ac72c1c3cdc698d959bf5"
+    },
+    "raw_runs_sha256": "a6b8773075bf6ecbded5d5c8065c935e2b966daf167a20dec41e9bb5a7e5e4c6"
+  },
+  "summary": {
+    "disp_z_pct_hs": {
+      "before_mean": 5.973272408444445,
+      "after_mean": 4.4259415230000005,
+      "improved_pairs": 90
+    },
+    "disp_3d_rms_m": {
+      "before_mean": 0.3921189039111111,
+      "after_mean": 0.3711714202322222,
+      "improved_pairs": 90
+    },
+    "roll_rms_deg": {
+      "before_mean": 0.2981930314388889,
+      "after_mean": 0.30257961472444445,
+      "improved_pairs": 31
+    },
+    "pitch_rms_deg": {
+      "before_mean": 0.27494376087,
+      "after_mean": 0.3036094537166667,
+      "improved_pairs": 32
+    },
+    "yaw_rms_deg": {
+      "before_mean": 1.8342886149222222,
+      "after_mean": 1.8659419433444444,
+      "improved_pairs": 37
+    },
+    "accel_bias_3d_rms_mps2": {
+      "before_mean": 0.07294341381777779,
+      "after_mean": 0.07678456414555555,
+      "improved_pairs": 30
+    },
+    "gyro_bias_3d_rms_radps": {
+      "before_mean": 0.00010923448050555556,
+      "after_mean": 0.00010930057099111111,
+      "improved_pairs": 28
+    }
+  },
+  "unchanged_ou3_max_absolute_difference": {
+    "disp_z_pct_hs": 6.819000000035658e-05,
+    "disp_3d_rms_m": 1.794099999996579e-05,
+    "roll_rms_deg": 0.00014036899999991803,
+    "pitch_rms_deg": 0.00010631999999999309,
+    "yaw_rms_deg": 0.00018608600000002973,
+    "accel_bias_3d_rms_mps2": 2.0921000000007073e-05,
+    "gyro_bias_3d_rms_radps": 6.024999999994576e-09
+  },
+  "pairs": [
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "a6bb2e3cec6d5edca9a0e869a94ecdb2bfe0af61d154eaeead30b69105524be0",
+      "before": {
+        "disp_z_pct_hs": 5.47523308,
+        "disp_3d_rms_m": 0.485637099,
+        "roll_rms_deg": 0.377945602,
+        "pitch_rms_deg": 0.338434905,
+        "yaw_rms_deg": 4.24991035,
+        "accel_bias_3d_rms_mps2": 0.0849375948,
+        "gyro_bias_3d_rms_radps": 0.000110404151
+      },
+      "after": {
+        "disp_z_pct_hs": 3.92825532,
+        "disp_3d_rms_m": 0.461319774,
+        "roll_rms_deg": 0.386096179,
+        "pitch_rms_deg": 0.365906388,
+        "yaw_rms_deg": 4.32179832,
+        "accel_bias_3d_rms_mps2": 0.0892718062,
+        "gyro_bias_3d_rms_radps": 0.000110401452
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "c30d7b1ca3280304a40d1b08517d0eececaadd4f122d225cf59707c1b481b536",
+      "before": {
+        "disp_z_pct_hs": 5.80323696,
+        "disp_3d_rms_m": 0.479752392,
+        "roll_rms_deg": 0.158192694,
+        "pitch_rms_deg": 0.288166493,
+        "yaw_rms_deg": 1.39285982,
+        "accel_bias_3d_rms_mps2": 0.0559797995,
+        "gyro_bias_3d_rms_radps": 0.000101450867
+      },
+      "after": {
+        "disp_z_pct_hs": 4.15114164,
+        "disp_3d_rms_m": 0.451526135,
+        "roll_rms_deg": 0.167525411,
+        "pitch_rms_deg": 0.240765467,
+        "yaw_rms_deg": 1.28696501,
+        "accel_bias_3d_rms_mps2": 0.0496637598,
+        "gyro_bias_3d_rms_radps": 0.00010149234
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "03e30f39ea7e12479fdf50e2b39994a3c68762375b621a4f906ce77632055be9",
+      "before": {
+        "disp_z_pct_hs": 5.45550156,
+        "disp_3d_rms_m": 0.469201207,
+        "roll_rms_deg": 0.387160718,
+        "pitch_rms_deg": 0.277588069,
+        "yaw_rms_deg": 1.52784598,
+        "accel_bias_3d_rms_mps2": 0.0807577968,
+        "gyro_bias_3d_rms_radps": 0.000113555485
+      },
+      "after": {
+        "disp_z_pct_hs": 3.87509012,
+        "disp_3d_rms_m": 0.442786992,
+        "roll_rms_deg": 0.380693078,
+        "pitch_rms_deg": 0.181633607,
+        "yaw_rms_deg": 1.30914974,
+        "accel_bias_3d_rms_mps2": 0.0709713995,
+        "gyro_bias_3d_rms_radps": 0.000113198745
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "c07d9bb546d3e1d55e8280b652e29a375d5908534e713d3f942ca46bac1f3856",
+      "before": {
+        "disp_z_pct_hs": 5.88206148,
+        "disp_3d_rms_m": 0.506814778,
+        "roll_rms_deg": 0.1647508,
+        "pitch_rms_deg": 0.0971696824,
+        "yaw_rms_deg": 1.01604402,
+        "accel_bias_3d_rms_mps2": 0.0297288168,
+        "gyro_bias_3d_rms_radps": 9.92540372e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.10616159,
+        "disp_3d_rms_m": 0.478153795,
+        "roll_rms_deg": 0.172266394,
+        "pitch_rms_deg": 0.0824394301,
+        "yaw_rms_deg": 1.12446499,
+        "accel_bias_3d_rms_mps2": 0.0296540465,
+        "gyro_bias_3d_rms_radps": 9.93879221e-05
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "c1e0a6cd7d6ae27cc8d6411b62888c9c2c63a1915766112255ed089c5bf9829a",
+      "before": {
+        "disp_z_pct_hs": 6.19008446,
+        "disp_3d_rms_m": 0.521861553,
+        "roll_rms_deg": 0.175335541,
+        "pitch_rms_deg": 0.0564927608,
+        "yaw_rms_deg": 1.80612218,
+        "accel_bias_3d_rms_mps2": 0.0290897489,
+        "gyro_bias_3d_rms_radps": 0.000107959873
+      },
+      "after": {
+        "disp_z_pct_hs": 4.44734287,
+        "disp_3d_rms_m": 0.492638558,
+        "roll_rms_deg": 0.175729349,
+        "pitch_rms_deg": 0.0578553565,
+        "yaw_rms_deg": 1.81762862,
+        "accel_bias_3d_rms_mps2": 0.0291788187,
+        "gyro_bias_3d_rms_radps": 0.000108098597
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "18347cc45e899c1df8efa32f9a659dec3d0d84790cc9e78e9636cb5d1522229c",
+      "before": {
+        "disp_z_pct_hs": 6.00770283,
+        "disp_3d_rms_m": 0.488628358,
+        "roll_rms_deg": 0.198271647,
+        "pitch_rms_deg": 0.104752131,
+        "yaw_rms_deg": 0.284780562,
+        "accel_bias_3d_rms_mps2": 0.0369724594,
+        "gyro_bias_3d_rms_radps": 9.85067454e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.40868187,
+        "disp_3d_rms_m": 0.460797817,
+        "roll_rms_deg": 0.188303381,
+        "pitch_rms_deg": 0.151714653,
+        "yaw_rms_deg": 0.225568682,
+        "accel_bias_3d_rms_mps2": 0.0400936492,
+        "gyro_bias_3d_rms_radps": 9.87211824e-05
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "289a50240ad21a06fa1550102b6525d052729019f957d488e47742822e2d88f2",
+      "before": {
+        "disp_z_pct_hs": 6.31339025,
+        "disp_3d_rms_m": 0.515089512,
+        "roll_rms_deg": 0.174167186,
+        "pitch_rms_deg": 0.446076483,
+        "yaw_rms_deg": 3.12522292,
+        "accel_bias_3d_rms_mps2": 0.0800441355,
+        "gyro_bias_3d_rms_radps": 0.000120709083
+      },
+      "after": {
+        "disp_z_pct_hs": 4.64254141,
+        "disp_3d_rms_m": 0.486856788,
+        "roll_rms_deg": 0.173928812,
+        "pitch_rms_deg": 0.499432862,
+        "yaw_rms_deg": 3.24405384,
+        "accel_bias_3d_rms_mps2": 0.0886059552,
+        "gyro_bias_3d_rms_radps": 0.000120569821
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "3ab9248f37ac435728826902b54d73d18ffded4133c108cfa805ab36ff0e4932",
+      "before": {
+        "disp_z_pct_hs": 5.61354446,
+        "disp_3d_rms_m": 0.494154721,
+        "roll_rms_deg": 0.865267217,
+        "pitch_rms_deg": 0.368414104,
+        "yaw_rms_deg": 2.58295393,
+        "accel_bias_3d_rms_mps2": 0.156817764,
+        "gyro_bias_3d_rms_radps": 0.000107023785
+      },
+      "after": {
+        "disp_z_pct_hs": 3.94528699,
+        "disp_3d_rms_m": 0.466908038,
+        "roll_rms_deg": 0.861012101,
+        "pitch_rms_deg": 0.301563084,
+        "yaw_rms_deg": 2.44005919,
+        "accel_bias_3d_rms_mps2": 0.152000368,
+        "gyro_bias_3d_rms_radps": 0.000106784479
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "c0e0ae266c030dc249a5abdb272f10cdbec3e63f6251ffe7b29bdeba3e5cbb51",
+      "before": {
+        "disp_z_pct_hs": 5.54669619,
+        "disp_3d_rms_m": 0.476428866,
+        "roll_rms_deg": 0.111468963,
+        "pitch_rms_deg": 0.225609958,
+        "yaw_rms_deg": 2.09728575,
+        "accel_bias_3d_rms_mps2": 0.0424821451,
+        "gyro_bias_3d_rms_radps": 0.000113767266
+      },
+      "after": {
+        "disp_z_pct_hs": 4.01541805,
+        "disp_3d_rms_m": 0.450959206,
+        "roll_rms_deg": 0.112931088,
+        "pitch_rms_deg": 0.216831774,
+        "yaw_rms_deg": 2.07889485,
+        "accel_bias_3d_rms_mps2": 0.0410797037,
+        "gyro_bias_3d_rms_radps": 0.000113870832
+      }
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "0d5f761f384cc3cdbcbeff365cf409546dc6f6cdad70de36cb69b855022f5e32",
+      "before": {
+        "disp_z_pct_hs": 5.77930546,
+        "disp_3d_rms_m": 0.509284675,
+        "roll_rms_deg": 0.457505107,
+        "pitch_rms_deg": 0.175627053,
+        "yaw_rms_deg": 1.87842214,
+        "accel_bias_3d_rms_mps2": 0.0833856612,
+        "gyro_bias_3d_rms_radps": 0.000116071787
+      },
+      "after": {
+        "disp_z_pct_hs": 3.96707344,
+        "disp_3d_rms_m": 0.480459422,
+        "roll_rms_deg": 0.46004194,
+        "pitch_rms_deg": 0.197753236,
+        "yaw_rms_deg": 1.93096602,
+        "accel_bias_3d_rms_mps2": 0.08525341,
+        "gyro_bias_3d_rms_radps": 0.00011594181
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "2414da7c9d2912e7718e2328bfadc4f41d0019a99acda47dd782aee7d56d7ba5",
+      "before": {
+        "disp_z_pct_hs": 7.17441225,
+        "disp_3d_rms_m": 0.0310153607,
+        "roll_rms_deg": 0.390206546,
+        "pitch_rms_deg": 0.398086756,
+        "yaw_rms_deg": 5.05671358,
+        "accel_bias_3d_rms_mps2": 0.0950259864,
+        "gyro_bias_3d_rms_radps": 8.67920317e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.07712078,
+        "disp_3d_rms_m": 0.0278426185,
+        "roll_rms_deg": 0.391557187,
+        "pitch_rms_deg": 0.402175874,
+        "yaw_rms_deg": 5.0657444,
+        "accel_bias_3d_rms_mps2": 0.0956971198,
+        "gyro_bias_3d_rms_radps": 8.68918287e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "f20698b8e286326765d519895ff39c876f6b1dd30822b58582e5d3a8e0a053c8",
+      "before": {
+        "disp_z_pct_hs": 7.70308828,
+        "disp_3d_rms_m": 0.0326276943,
+        "roll_rms_deg": 0.173785731,
+        "pitch_rms_deg": 0.386888206,
+        "yaw_rms_deg": 0.833055496,
+        "accel_bias_3d_rms_mps2": 0.0728396028,
+        "gyro_bias_3d_rms_radps": 0.000100842808
+      },
+      "after": {
+        "disp_z_pct_hs": 5.41749048,
+        "disp_3d_rms_m": 0.0290887877,
+        "roll_rms_deg": 0.17317836,
+        "pitch_rms_deg": 0.393495768,
+        "yaw_rms_deg": 0.823848367,
+        "accel_bias_3d_rms_mps2": 0.0738297775,
+        "gyro_bias_3d_rms_radps": 0.000100871941
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "2200a57bc1ec67e118639944f3f6c3fc7b1c3614c0d39632c8912ccbb63527a7",
+      "before": {
+        "disp_z_pct_hs": 7.85368156,
+        "disp_3d_rms_m": 0.0330729075,
+        "roll_rms_deg": 0.352122754,
+        "pitch_rms_deg": 0.149219751,
+        "yaw_rms_deg": 2.07301593,
+        "accel_bias_3d_rms_mps2": 0.0646571964,
+        "gyro_bias_3d_rms_radps": 0.000113792172
+      },
+      "after": {
+        "disp_z_pct_hs": 5.54992437,
+        "disp_3d_rms_m": 0.0294655226,
+        "roll_rms_deg": 0.355134696,
+        "pitch_rms_deg": 0.161691695,
+        "yaw_rms_deg": 2.10250568,
+        "accel_bias_3d_rms_mps2": 0.0660198331,
+        "gyro_bias_3d_rms_radps": 0.000113954258
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "b90e2a72c80861ac1c51ba540e843033799b78ea8dea82b24115cd5036cd1dcb",
+      "before": {
+        "disp_z_pct_hs": 7.40426493,
+        "disp_3d_rms_m": 0.0315018073,
+        "roll_rms_deg": 0.105253294,
+        "pitch_rms_deg": 0.190045878,
+        "yaw_rms_deg": 0.980537176,
+        "accel_bias_3d_rms_mps2": 0.0367791168,
+        "gyro_bias_3d_rms_radps": 9.07180802e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.26497459,
+        "disp_3d_rms_m": 0.0281875543,
+        "roll_rms_deg": 0.103574619,
+        "pitch_rms_deg": 0.195240602,
+        "yaw_rms_deg": 0.99127239,
+        "accel_bias_3d_rms_mps2": 0.0374141335,
+        "gyro_bias_3d_rms_radps": 9.07084614e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "692e29258fbdad2711b5d612347af625c3d1626956c7436c82a955179c6094ea",
+      "before": {
+        "disp_z_pct_hs": 7.8360033,
+        "disp_3d_rms_m": 0.0328880325,
+        "roll_rms_deg": 0.169915214,
+        "pitch_rms_deg": 0.0506546833,
+        "yaw_rms_deg": 1.44118047,
+        "accel_bias_3d_rms_mps2": 0.0296122283,
+        "gyro_bias_3d_rms_radps": 0.000101903643
+      },
+      "after": {
+        "disp_z_pct_hs": 5.70653582,
+        "disp_3d_rms_m": 0.0295162164,
+        "roll_rms_deg": 0.171436638,
+        "pitch_rms_deg": 0.0540382341,
+        "yaw_rms_deg": 1.45259416,
+        "accel_bias_3d_rms_mps2": 0.0300333947,
+        "gyro_bias_3d_rms_radps": 0.000101957317
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "c90754866d2c4c611fc056e40f8570c75817901b17752d1095fb4fe7dd9381c3",
+      "before": {
+        "disp_z_pct_hs": 7.76514721,
+        "disp_3d_rms_m": 0.0322715268,
+        "roll_rms_deg": 0.161080837,
+        "pitch_rms_deg": 0.233558238,
+        "yaw_rms_deg": 0.406727672,
+        "accel_bias_3d_rms_mps2": 0.0477373526,
+        "gyro_bias_3d_rms_radps": 9.42767583e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.70767355,
+        "disp_3d_rms_m": 0.0289702937,
+        "roll_rms_deg": 0.160138622,
+        "pitch_rms_deg": 0.237504572,
+        "yaw_rms_deg": 0.408027977,
+        "accel_bias_3d_rms_mps2": 0.0482140519,
+        "gyro_bias_3d_rms_radps": 9.42589031e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "de3666e9c00ad7fed38fcd344039d9a15646113fe1a5b492ad08d4494493842c",
+      "before": {
+        "disp_z_pct_hs": 7.90566206,
+        "disp_3d_rms_m": 0.0325536244,
+        "roll_rms_deg": 0.115028657,
+        "pitch_rms_deg": 0.157081291,
+        "yaw_rms_deg": 2.50322676,
+        "accel_bias_3d_rms_mps2": 0.0323174335,
+        "gyro_bias_3d_rms_radps": 0.000132451765
+      },
+      "after": {
+        "disp_z_pct_hs": 5.6779623,
+        "disp_3d_rms_m": 0.0289620347,
+        "roll_rms_deg": 0.114861973,
+        "pitch_rms_deg": 0.136198401,
+        "yaw_rms_deg": 2.45256162,
+        "accel_bias_3d_rms_mps2": 0.0294372886,
+        "gyro_bias_3d_rms_radps": 0.000132698609
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "c0d88252e5cc968e9c7fedbd6f6bd66f6ef060c1c829dbb676cf847d2c1835d8",
+      "before": {
+        "disp_z_pct_hs": 7.68639803,
+        "disp_3d_rms_m": 0.0321855135,
+        "roll_rms_deg": 0.81092912,
+        "pitch_rms_deg": 0.349510282,
+        "yaw_rms_deg": 0.982268751,
+        "accel_bias_3d_rms_mps2": 0.149950728,
+        "gyro_bias_3d_rms_radps": 0.000100897516
+      },
+      "after": {
+        "disp_z_pct_hs": 5.2010622,
+        "disp_3d_rms_m": 0.0283205882,
+        "roll_rms_deg": 0.811267078,
+        "pitch_rms_deg": 0.350118011,
+        "yaw_rms_deg": 0.983569026,
+        "accel_bias_3d_rms_mps2": 0.150041282,
+        "gyro_bias_3d_rms_radps": 0.000100769139
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "998589cb4f8fb95958dddaf0d95675160616aa800c05b23f921ed3ee417236f9",
+      "before": {
+        "disp_z_pct_hs": 7.75203562,
+        "disp_3d_rms_m": 0.032784272,
+        "roll_rms_deg": 0.0859404802,
+        "pitch_rms_deg": 0.190755367,
+        "yaw_rms_deg": 0.818808258,
+        "accel_bias_3d_rms_mps2": 0.0356587209,
+        "gyro_bias_3d_rms_radps": 0.000104987688
+      },
+      "after": {
+        "disp_z_pct_hs": 5.61345959,
+        "disp_3d_rms_m": 0.0294382945,
+        "roll_rms_deg": 0.085785225,
+        "pitch_rms_deg": 0.188041329,
+        "yaw_rms_deg": 0.811781466,
+        "accel_bias_3d_rms_mps2": 0.0352193378,
+        "gyro_bias_3d_rms_radps": 0.000105002342
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "315ad04b47d64f3088c72d3767fad1d3771ae327efc6c7362d3e28f11f5782ec",
+      "before": {
+        "disp_z_pct_hs": 7.52785683,
+        "disp_3d_rms_m": 0.0319704227,
+        "roll_rms_deg": 0.407928497,
+        "pitch_rms_deg": 0.199368939,
+        "yaw_rms_deg": 2.75357771,
+        "accel_bias_3d_rms_mps2": 0.0776696056,
+        "gyro_bias_3d_rms_radps": 0.000109539207
+      },
+      "after": {
+        "disp_z_pct_hs": 5.04515457,
+        "disp_3d_rms_m": 0.0281919986,
+        "roll_rms_deg": 0.406946689,
+        "pitch_rms_deg": 0.188460842,
+        "yaw_rms_deg": 2.72559547,
+        "accel_bias_3d_rms_mps2": 0.0767083988,
+        "gyro_bias_3d_rms_radps": 0.000109499037
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "4908db1cdbe19c5fa3e07b77193854c0f09a388d9bce0bddead0bc80a2d016db",
+      "before": {
+        "disp_z_pct_hs": 6.9234581,
+        "disp_3d_rms_m": 0.167700872,
+        "roll_rms_deg": 0.333656549,
+        "pitch_rms_deg": 0.255378991,
+        "yaw_rms_deg": 4.00092316,
+        "accel_bias_3d_rms_mps2": 0.0707958788,
+        "gyro_bias_3d_rms_radps": 0.00010497561
+      },
+      "after": {
+        "disp_z_pct_hs": 5.62381697,
+        "disp_3d_rms_m": 0.156271949,
+        "roll_rms_deg": 0.344211519,
+        "pitch_rms_deg": 0.252340615,
+        "yaw_rms_deg": 3.9990077,
+        "accel_bias_3d_rms_mps2": 0.0719864294,
+        "gyro_bias_3d_rms_radps": 0.000105114043
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "8e8c8e1eb4302a1b9110abc2ba5902f1429b60437f66fd0e03e903f955a22c8b",
+      "before": {
+        "disp_z_pct_hs": 6.7310133,
+        "disp_3d_rms_m": 0.161870986,
+        "roll_rms_deg": 0.19620426,
+        "pitch_rms_deg": 0.423613816,
+        "yaw_rms_deg": 1.29553962,
+        "accel_bias_3d_rms_mps2": 0.0802298337,
+        "gyro_bias_3d_rms_radps": 9.57313896e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.43565369,
+        "disp_3d_rms_m": 0.150465354,
+        "roll_rms_deg": 0.198666841,
+        "pitch_rms_deg": 0.408174694,
+        "yaw_rms_deg": 1.26195681,
+        "accel_bias_3d_rms_mps2": 0.0779789835,
+        "gyro_bias_3d_rms_radps": 9.548651e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "35b77f2f9969c24f30b24101235fe170a32b180c28f91d566fb4fb68ec0c7d72",
+      "before": {
+        "disp_z_pct_hs": 6.42671824,
+        "disp_3d_rms_m": 0.161908016,
+        "roll_rms_deg": 0.421833456,
+        "pitch_rms_deg": 0.280175418,
+        "yaw_rms_deg": 1.43240428,
+        "accel_bias_3d_rms_mps2": 0.0859496891,
+        "gyro_bias_3d_rms_radps": 0.000111984336
+      },
+      "after": {
+        "disp_z_pct_hs": 4.97799873,
+        "disp_3d_rms_m": 0.149979398,
+        "roll_rms_deg": 0.420004398,
+        "pitch_rms_deg": 0.27711454,
+        "yaw_rms_deg": 1.4249481,
+        "accel_bias_3d_rms_mps2": 0.0853742287,
+        "gyro_bias_3d_rms_radps": 0.000112206813
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "245228ded5a078278028cede3b039f86634c3680444d24a6e5268c843d56e3c9",
+      "before": {
+        "disp_z_pct_hs": 6.66069889,
+        "disp_3d_rms_m": 0.162512898,
+        "roll_rms_deg": 0.118558735,
+        "pitch_rms_deg": 0.250465691,
+        "yaw_rms_deg": 0.571060836,
+        "accel_bias_3d_rms_mps2": 0.0469925776,
+        "gyro_bias_3d_rms_radps": 8.89713265e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.29164028,
+        "disp_3d_rms_m": 0.150716022,
+        "roll_rms_deg": 0.115093291,
+        "pitch_rms_deg": 0.294683605,
+        "yaw_rms_deg": 0.553374469,
+        "accel_bias_3d_rms_mps2": 0.0538491569,
+        "gyro_bias_3d_rms_radps": 8.90856536e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "f02584f933ead991068ca9a90ddffde72cb49d9fb14397a5741adc1963d4a2ce",
+      "before": {
+        "disp_z_pct_hs": 7.02478218,
+        "disp_3d_rms_m": 0.171221226,
+        "roll_rms_deg": 0.167600065,
+        "pitch_rms_deg": 0.0495946445,
+        "yaw_rms_deg": 1.95141435,
+        "accel_bias_3d_rms_mps2": 0.0283914395,
+        "gyro_bias_3d_rms_radps": 0.00010863263
+      },
+      "after": {
+        "disp_z_pct_hs": 5.71485901,
+        "disp_3d_rms_m": 0.159894362,
+        "roll_rms_deg": 0.166559786,
+        "pitch_rms_deg": 0.0497979261,
+        "yaw_rms_deg": 1.9504658,
+        "accel_bias_3d_rms_mps2": 0.0282120295,
+        "gyro_bias_3d_rms_radps": 0.000108784916
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "973138fc0fa0ade4db93d23787c2001a24a77013c74676e7990c70ff08505164",
+      "before": {
+        "disp_z_pct_hs": 7.04670858,
+        "disp_3d_rms_m": 0.168378681,
+        "roll_rms_deg": 0.204035968,
+        "pitch_rms_deg": 0.161957562,
+        "yaw_rms_deg": 0.498787582,
+        "accel_bias_3d_rms_mps2": 0.0436459556,
+        "gyro_bias_3d_rms_radps": 9.49604437e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.7031436,
+        "disp_3d_rms_m": 0.156610146,
+        "roll_rms_deg": 0.210340634,
+        "pitch_rms_deg": 0.172301054,
+        "yaw_rms_deg": 0.517926514,
+        "accel_bias_3d_rms_mps2": 0.0456848331,
+        "gyro_bias_3d_rms_radps": 9.49943278e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "473ba7999de82348c730df2b2824cf46b472ea1f3c4fb8230c78a8e4cd79165a",
+      "before": {
+        "disp_z_pct_hs": 6.71355343,
+        "disp_3d_rms_m": 0.164159626,
+        "roll_rms_deg": 0.166023925,
+        "pitch_rms_deg": 0.0787943006,
+        "yaw_rms_deg": 2.15068316,
+        "accel_bias_3d_rms_mps2": 0.0304222647,
+        "gyro_bias_3d_rms_radps": 0.000127533072
+      },
+      "after": {
+        "disp_z_pct_hs": 5.34217167,
+        "disp_3d_rms_m": 0.152538121,
+        "roll_rms_deg": 0.171452701,
+        "pitch_rms_deg": 0.101819977,
+        "yaw_rms_deg": 2.08651543,
+        "accel_bias_3d_rms_mps2": 0.0333783701,
+        "gyro_bias_3d_rms_radps": 0.000127682986
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "a54703d6b99cc3b0da46e7a8fe9d34be376435da48e4e0a2d5798db5dda5ba30",
+      "before": {
+        "disp_z_pct_hs": 7.28032875,
+        "disp_3d_rms_m": 0.173275754,
+        "roll_rms_deg": 0.862445831,
+        "pitch_rms_deg": 0.453715205,
+        "yaw_rms_deg": 2.33021545,
+        "accel_bias_3d_rms_mps2": 0.164174095,
+        "gyro_bias_3d_rms_radps": 0.000109239656
+      },
+      "after": {
+        "disp_z_pct_hs": 5.97607422,
+        "disp_3d_rms_m": 0.16149728,
+        "roll_rms_deg": 0.862172902,
+        "pitch_rms_deg": 0.439459562,
+        "yaw_rms_deg": 2.30046606,
+        "accel_bias_3d_rms_mps2": 0.162996978,
+        "gyro_bias_3d_rms_radps": 0.000108940687
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "19ae3274e2a55991e075aac37fca715d801a94a8bd912c3abd90eccd8ed9a70e",
+      "before": {
+        "disp_z_pct_hs": 6.87925148,
+        "disp_3d_rms_m": 0.16750282,
+        "roll_rms_deg": 0.0996955633,
+        "pitch_rms_deg": 0.287825435,
+        "yaw_rms_deg": 2.39384675,
+        "accel_bias_3d_rms_mps2": 0.0523269922,
+        "gyro_bias_3d_rms_radps": 0.000126169034
+      },
+      "after": {
+        "disp_z_pct_hs": 5.51836586,
+        "disp_3d_rms_m": 0.155803904,
+        "roll_rms_deg": 0.10233134,
+        "pitch_rms_deg": 0.315819383,
+        "yaw_rms_deg": 2.45880413,
+        "accel_bias_3d_rms_mps2": 0.0571017079,
+        "gyro_bias_3d_rms_radps": 0.000126362254
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "10dbba6a1976dad88eaeb018f50021852c9d2a22752900cf46a0883bcdc076cc",
+      "before": {
+        "disp_z_pct_hs": 6.97898483,
+        "disp_3d_rms_m": 0.167198166,
+        "roll_rms_deg": 0.50700587,
+        "pitch_rms_deg": 0.224266931,
+        "yaw_rms_deg": 2.56789589,
+        "accel_bias_3d_rms_mps2": 0.0948083699,
+        "gyro_bias_3d_rms_radps": 0.000110940149
+      },
+      "after": {
+        "disp_z_pct_hs": 5.68179178,
+        "disp_3d_rms_m": 0.155899405,
+        "roll_rms_deg": 0.51714927,
+        "pitch_rms_deg": 0.288400561,
+        "yaw_rms_deg": 2.71397042,
+        "accel_bias_3d_rms_mps2": 0.101293154,
+        "gyro_bias_3d_rms_radps": 0.000111482077
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "fedfe81246839f0141ef44e99f25f6fe11c40c98c30e9d8115befea084ddcd58",
+      "before": {
+        "disp_z_pct_hs": 5.36218596,
+        "disp_3d_rms_m": 0.40403682,
+        "roll_rms_deg": 0.368563294,
+        "pitch_rms_deg": 0.264906853,
+        "yaw_rms_deg": 2.13111258,
+        "accel_bias_3d_rms_mps2": 0.0763455927,
+        "gyro_bias_3d_rms_radps": 0.000100457386
+      },
+      "after": {
+        "disp_z_pct_hs": 4.02950573,
+        "disp_3d_rms_m": 0.378582776,
+        "roll_rms_deg": 0.371797621,
+        "pitch_rms_deg": 0.276872993,
+        "yaw_rms_deg": 2.16022706,
+        "accel_bias_3d_rms_mps2": 0.0781041905,
+        "gyro_bias_3d_rms_radps": 0.000100649959
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "b8827bf813881d054241f275a33639284ffb96ac9bc22cc61392c72784b8113c",
+      "before": {
+        "disp_z_pct_hs": 5.11326504,
+        "disp_3d_rms_m": 0.399266511,
+        "roll_rms_deg": 0.120833725,
+        "pitch_rms_deg": 0.622108638,
+        "yaw_rms_deg": 0.874858439,
+        "accel_bias_3d_rms_mps2": 0.109273389,
+        "gyro_bias_3d_rms_radps": 0.000104228537
+      },
+      "after": {
+        "disp_z_pct_hs": 3.81010032,
+        "disp_3d_rms_m": 0.374650449,
+        "roll_rms_deg": 0.121288098,
+        "pitch_rms_deg": 0.605499744,
+        "yaw_rms_deg": 0.843316078,
+        "accel_bias_3d_rms_mps2": 0.106411673,
+        "gyro_bias_3d_rms_radps": 0.000104037783
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "5ae6eb138814ff1035de916be74fbf5fba050e9e0795f78afec4236027c183c7",
+      "before": {
+        "disp_z_pct_hs": 5.10625601,
+        "disp_3d_rms_m": 0.417633504,
+        "roll_rms_deg": 0.376328051,
+        "pitch_rms_deg": 0.0614012256,
+        "yaw_rms_deg": 2.45827746,
+        "accel_bias_3d_rms_mps2": 0.0619727708,
+        "gyro_bias_3d_rms_radps": 0.000113681519
+      },
+      "after": {
+        "disp_z_pct_hs": 3.73979354,
+        "disp_3d_rms_m": 0.39453572,
+        "roll_rms_deg": 0.410264403,
+        "pitch_rms_deg": 0.20699963,
+        "yaw_rms_deg": 2.83299255,
+        "accel_bias_3d_rms_mps2": 0.0765876696,
+        "gyro_bias_3d_rms_radps": 0.00011421994
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "c7d5668975af7a717248d5c35f2935d69ab56f0aa559e35b360b41b09279bf54",
+      "before": {
+        "disp_z_pct_hs": 4.96792364,
+        "disp_3d_rms_m": 0.40334186,
+        "roll_rms_deg": 0.227637947,
+        "pitch_rms_deg": 0.267322838,
+        "yaw_rms_deg": 0.537609875,
+        "accel_bias_3d_rms_mps2": 0.0577391461,
+        "gyro_bias_3d_rms_radps": 0.000103391874
+      },
+      "after": {
+        "disp_z_pct_hs": 3.6983974,
+        "disp_3d_rms_m": 0.382234514,
+        "roll_rms_deg": 0.227151215,
+        "pitch_rms_deg": 0.296461195,
+        "yaw_rms_deg": 0.57537359,
+        "accel_bias_3d_rms_mps2": 0.0617001876,
+        "gyro_bias_3d_rms_radps": 0.000103518316
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "0cd82f91bf877e8b4ef7874e3bb1710f5b54d4d4e7ef5320ca90ad7ce6b1e75e",
+      "before": {
+        "disp_z_pct_hs": 5.51018476,
+        "disp_3d_rms_m": 0.418015718,
+        "roll_rms_deg": 0.16032362,
+        "pitch_rms_deg": 0.0786036104,
+        "yaw_rms_deg": 1.9038018,
+        "accel_bias_3d_rms_mps2": 0.0284755006,
+        "gyro_bias_3d_rms_radps": 0.000108441585
+      },
+      "after": {
+        "disp_z_pct_hs": 4.23670912,
+        "disp_3d_rms_m": 0.393421501,
+        "roll_rms_deg": 0.169252664,
+        "pitch_rms_deg": 0.10720402,
+        "yaw_rms_deg": 1.98479223,
+        "accel_bias_3d_rms_mps2": 0.0324616581,
+        "gyro_bias_3d_rms_radps": 0.000108526976
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "ceae57703e623e7eabfbf112b2d3cc683a77487d1f3a7326ab3fe1b02f8de10f",
+      "before": {
+        "disp_z_pct_hs": 5.42604446,
+        "disp_3d_rms_m": 0.400276393,
+        "roll_rms_deg": 0.183972925,
+        "pitch_rms_deg": 0.0859957486,
+        "yaw_rms_deg": 0.925657392,
+        "accel_bias_3d_rms_mps2": 0.0321570262,
+        "gyro_bias_3d_rms_radps": 0.000104829211
+      },
+      "after": {
+        "disp_z_pct_hs": 4.16221714,
+        "disp_3d_rms_m": 0.375450045,
+        "roll_rms_deg": 0.174916506,
+        "pitch_rms_deg": 0.0845384598,
+        "yaw_rms_deg": 0.936452448,
+        "accel_bias_3d_rms_mps2": 0.0304762293,
+        "gyro_bias_3d_rms_radps": 0.000105020037
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "6bce6e85f3ddd6255b64590b565b73f345eca7ccd2870de52995d50c819a8fa0",
+      "before": {
+        "disp_z_pct_hs": 5.17053795,
+        "disp_3d_rms_m": 0.397041589,
+        "roll_rms_deg": 0.209057197,
+        "pitch_rms_deg": 0.503093719,
+        "yaw_rms_deg": 1.17972696,
+        "accel_bias_3d_rms_mps2": 0.0919110551,
+        "gyro_bias_3d_rms_radps": 0.000125421502
+      },
+      "after": {
+        "disp_z_pct_hs": 3.92298627,
+        "disp_3d_rms_m": 0.373518467,
+        "roll_rms_deg": 0.214976847,
+        "pitch_rms_deg": 0.500323296,
+        "yaw_rms_deg": 1.17578363,
+        "accel_bias_3d_rms_mps2": 0.0918434635,
+        "gyro_bias_3d_rms_radps": 0.000125260689
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "8f597fb39a96d2519e711c5d30de84ad9e768290f7e54763dccb4b1ced0600a4",
+      "before": {
+        "disp_z_pct_hs": 5.35377693,
+        "disp_3d_rms_m": 0.432092816,
+        "roll_rms_deg": 0.853314102,
+        "pitch_rms_deg": 0.415766686,
+        "yaw_rms_deg": 2.76057172,
+        "accel_bias_3d_rms_mps2": 0.15800488,
+        "gyro_bias_3d_rms_radps": 0.000103521888
+      },
+      "after": {
+        "disp_z_pct_hs": 4.22413588,
+        "disp_3d_rms_m": 0.412423462,
+        "roll_rms_deg": 0.868391752,
+        "pitch_rms_deg": 0.501754642,
+        "yaw_rms_deg": 2.94040704,
+        "accel_bias_3d_rms_mps2": 0.167393208,
+        "gyro_bias_3d_rms_radps": 0.000103156104
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "8768c78a8c2b454c52a6f3fdb721a118b4de72edfdf57a61d15269a8a9aefe62",
+      "before": {
+        "disp_z_pct_hs": 5.17584324,
+        "disp_3d_rms_m": 0.418632567,
+        "roll_rms_deg": 0.17812182,
+        "pitch_rms_deg": 0.525411844,
+        "yaw_rms_deg": 2.10806036,
+        "accel_bias_3d_rms_mps2": 0.096030429,
+        "gyro_bias_3d_rms_radps": 0.00011797082
+      },
+      "after": {
+        "disp_z_pct_hs": 3.89755845,
+        "disp_3d_rms_m": 0.396677881,
+        "roll_rms_deg": 0.199372247,
+        "pitch_rms_deg": 0.641991973,
+        "yaw_rms_deg": 2.37412596,
+        "accel_bias_3d_rms_mps2": 0.116316453,
+        "gyro_bias_3d_rms_radps": 0.000118301818
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "40b6bda4d6121c7d30bcacf5b4aabb90ff5af1332245eec4bad13b8b0a983bb4",
+      "before": {
+        "disp_z_pct_hs": 5.16868258,
+        "disp_3d_rms_m": 0.406685889,
+        "roll_rms_deg": 0.432781011,
+        "pitch_rms_deg": 0.119955666,
+        "yaw_rms_deg": 1.36523139,
+        "accel_bias_3d_rms_mps2": 0.0749162287,
+        "gyro_bias_3d_rms_radps": 0.000110482724
+      },
+      "after": {
+        "disp_z_pct_hs": 3.84521604,
+        "disp_3d_rms_m": 0.381870776,
+        "roll_rms_deg": 0.365393788,
+        "pitch_rms_deg": 0.288478285,
+        "yaw_rms_deg": 0.694375396,
+        "accel_bias_3d_rms_mps2": 0.0772539005,
+        "gyro_bias_3d_rms_radps": 0.000110555848
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "6ccb16e09af6c141cd5bb7f1fed120024eeb892f5108a56ddd569ba8ad14f56d",
+      "before": {
+        "disp_z_pct_hs": 5.10442972,
+        "disp_3d_rms_m": 0.958668411,
+        "roll_rms_deg": 0.430544108,
+        "pitch_rms_deg": 0.371743858,
+        "yaw_rms_deg": 3.88649106,
+        "accel_bias_3d_rms_mps2": 0.0944904685,
+        "gyro_bias_3d_rms_radps": 9.95814407e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 3.75427866,
+        "disp_3d_rms_m": 0.912799776,
+        "roll_rms_deg": 0.425656676,
+        "pitch_rms_deg": 0.361311972,
+        "yaw_rms_deg": 3.85901809,
+        "accel_bias_3d_rms_mps2": 0.0926804841,
+        "gyro_bias_3d_rms_radps": 9.9604069e-05
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "dd4cd65a6e7cdd27a0e4f73dfecc07ea53929953d1991277584252155a64a19c",
+      "before": {
+        "disp_z_pct_hs": 4.42152071,
+        "disp_3d_rms_m": 0.852205634,
+        "roll_rms_deg": 0.398227453,
+        "pitch_rms_deg": 0.382197499,
+        "yaw_rms_deg": 0.413376391,
+        "accel_bias_3d_rms_mps2": 0.0919900984,
+        "gyro_bias_3d_rms_radps": 0.000103774961
+      },
+      "after": {
+        "disp_z_pct_hs": 3.13392615,
+        "disp_3d_rms_m": 0.815146565,
+        "roll_rms_deg": 0.430308819,
+        "pitch_rms_deg": 0.535337448,
+        "yaw_rms_deg": 0.686537802,
+        "accel_bias_3d_rms_mps2": 0.115458846,
+        "gyro_bias_3d_rms_radps": 0.000104529419
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "a0dad97002a9895cc2b753e4b1c53b635c45db6b44ed265f0118bc6b13b0612e",
+      "before": {
+        "disp_z_pct_hs": 5.04564381,
+        "disp_3d_rms_m": 0.894236088,
+        "roll_rms_deg": 0.0799829364,
+        "pitch_rms_deg": 0.130017906,
+        "yaw_rms_deg": 1.43511331,
+        "accel_bias_3d_rms_mps2": 0.0232906584,
+        "gyro_bias_3d_rms_radps": 0.000115644245
+      },
+      "after": {
+        "disp_z_pct_hs": 3.83855844,
+        "disp_3d_rms_m": 0.850214958,
+        "roll_rms_deg": 0.0843458623,
+        "pitch_rms_deg": 0.174082756,
+        "yaw_rms_deg": 1.5451827,
+        "accel_bias_3d_rms_mps2": 0.0312862694,
+        "gyro_bias_3d_rms_radps": 0.000115777199
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "44087dd555c07ca49dc40c83b6c63622c5a34952c7205198518a6c4dffd56de8",
+      "before": {
+        "disp_z_pct_hs": 4.60564137,
+        "disp_3d_rms_m": 0.946311057,
+        "roll_rms_deg": 0.128383636,
+        "pitch_rms_deg": 0.122912377,
+        "yaw_rms_deg": 1.54667771,
+        "accel_bias_3d_rms_mps2": 0.0302576404,
+        "gyro_bias_3d_rms_radps": 0.000120093704
+      },
+      "after": {
+        "disp_z_pct_hs": 3.24111462,
+        "disp_3d_rms_m": 0.906351626,
+        "roll_rms_deg": 0.167373881,
+        "pitch_rms_deg": 0.238937691,
+        "yaw_rms_deg": 0.987518787,
+        "accel_bias_3d_rms_mps2": 0.051249478,
+        "gyro_bias_3d_rms_radps": 0.000119776043
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "872e5d2383a060b9b918069ed3644680f936c10987b85520809c48b6f6e9e907",
+      "before": {
+        "disp_z_pct_hs": 4.76309156,
+        "disp_3d_rms_m": 0.929677486,
+        "roll_rms_deg": 0.294213325,
+        "pitch_rms_deg": 0.105760336,
+        "yaw_rms_deg": 1.8734529,
+        "accel_bias_3d_rms_mps2": 0.0503352471,
+        "gyro_bias_3d_rms_radps": 0.000113369308
+      },
+      "after": {
+        "disp_z_pct_hs": 3.35809159,
+        "disp_3d_rms_m": 0.885168672,
+        "roll_rms_deg": 0.297131538,
+        "pitch_rms_deg": 0.095751293,
+        "yaw_rms_deg": 1.90608561,
+        "accel_bias_3d_rms_mps2": 0.0501091667,
+        "gyro_bias_3d_rms_radps": 0.000113416114
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "d93f651ed077c020966f16fb31c533c1ad32af261f08f8f689d4371de9eb2603",
+      "before": {
+        "disp_z_pct_hs": 5.09914923,
+        "disp_3d_rms_m": 0.941582143,
+        "roll_rms_deg": 0.130953655,
+        "pitch_rms_deg": 0.450174391,
+        "yaw_rms_deg": 0.919335723,
+        "accel_bias_3d_rms_mps2": 0.078651309,
+        "gyro_bias_3d_rms_radps": 0.000107927182
+      },
+      "after": {
+        "disp_z_pct_hs": 3.61343431,
+        "disp_3d_rms_m": 0.892769516,
+        "roll_rms_deg": 0.142948046,
+        "pitch_rms_deg": 0.533648074,
+        "yaw_rms_deg": 1.10635114,
+        "accel_bias_3d_rms_mps2": 0.093423605,
+        "gyro_bias_3d_rms_radps": 0.000107956286
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "f8580cbf3d367da353488f0897cfe28c200ab010dfe47160036c61f553807f71",
+      "before": {
+        "disp_z_pct_hs": 4.98252392,
+        "disp_3d_rms_m": 0.905987203,
+        "roll_rms_deg": 0.139264271,
+        "pitch_rms_deg": 0.329923749,
+        "yaw_rms_deg": 1.16767502,
+        "accel_bias_3d_rms_mps2": 0.0617167875,
+        "gyro_bias_3d_rms_radps": 0.000139700001
+      },
+      "after": {
+        "disp_z_pct_hs": 3.62447,
+        "disp_3d_rms_m": 0.858596563,
+        "roll_rms_deg": 0.136911169,
+        "pitch_rms_deg": 0.284354508,
+        "yaw_rms_deg": 1.26631749,
+        "accel_bias_3d_rms_mps2": 0.0542597473,
+        "gyro_bias_3d_rms_radps": 0.00013948734
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "ffd107ecfb7fe3262d265f5169e83b0329f77c80c35c7732f74de91ba71a7f65",
+      "before": {
+        "disp_z_pct_hs": 4.93201447,
+        "disp_3d_rms_m": 0.960504174,
+        "roll_rms_deg": 0.68098408,
+        "pitch_rms_deg": 0.256541431,
+        "yaw_rms_deg": 2.26702476,
+        "accel_bias_3d_rms_mps2": 0.117658794,
+        "gyro_bias_3d_rms_radps": 0.000113229442
+      },
+      "after": {
+        "disp_z_pct_hs": 3.64145947,
+        "disp_3d_rms_m": 0.918445587,
+        "roll_rms_deg": 0.691861272,
+        "pitch_rms_deg": 0.32123214,
+        "yaw_rms_deg": 2.40951681,
+        "accel_bias_3d_rms_mps2": 0.123762973,
+        "gyro_bias_3d_rms_radps": 0.000112753616
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "d36dbcf3060140ba51cf659d326bd759805bd4012f98fe9f15a2c4c7e7eb5406",
+      "before": {
+        "disp_z_pct_hs": 4.96259546,
+        "disp_3d_rms_m": 0.950498223,
+        "roll_rms_deg": 0.109056495,
+        "pitch_rms_deg": 0.589665234,
+        "yaw_rms_deg": 3.30960917,
+        "accel_bias_3d_rms_mps2": 0.104690082,
+        "gyro_bias_3d_rms_radps": 0.000132028086
+      },
+      "after": {
+        "disp_z_pct_hs": 3.53015161,
+        "disp_3d_rms_m": 0.906469047,
+        "roll_rms_deg": 0.121943638,
+        "pitch_rms_deg": 0.738059938,
+        "yaw_rms_deg": 3.6597476,
+        "accel_bias_3d_rms_mps2": 0.130299985,
+        "gyro_bias_3d_rms_radps": 0.000132078538
+      }
+    },
+    {
+      "scenario": "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "d8836de9537afe86a34561e46378af425158d55885fe9afb4ccfea5795b4c8d2",
+      "before": {
+        "disp_z_pct_hs": 4.72711515,
+        "disp_3d_rms_m": 0.888425231,
+        "roll_rms_deg": 0.377863318,
+        "pitch_rms_deg": 0.497823805,
+        "yaw_rms_deg": 2.70112824,
+        "accel_bias_3d_rms_mps2": 0.10710071,
+        "gyro_bias_3d_rms_radps": 0.000119592849
+      },
+      "after": {
+        "disp_z_pct_hs": 3.41804481,
+        "disp_3d_rms_m": 0.846107662,
+        "roll_rms_deg": 0.396461815,
+        "pitch_rms_deg": 0.62303859,
+        "yaw_rms_deg": 2.98160791,
+        "accel_bias_3d_rms_mps2": 0.126684308,
+        "gyro_bias_3d_rms_radps": 0.00012012761
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "5e37178bf9b3eca62727c69f0c124ca48ba70a451ea3d384ea1e6f8c4a5d9dcf",
+      "before": {
+        "disp_z_pct_hs": 6.86196327,
+        "disp_3d_rms_m": 0.0293705016,
+        "roll_rms_deg": 0.404875696,
+        "pitch_rms_deg": 0.421419263,
+        "yaw_rms_deg": 5.58019924,
+        "accel_bias_3d_rms_mps2": 0.0996713787,
+        "gyro_bias_3d_rms_radps": 8.78424034e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.88145828,
+        "disp_3d_rms_m": 0.0263403933,
+        "roll_rms_deg": 0.407061577,
+        "pitch_rms_deg": 0.42823264,
+        "yaw_rms_deg": 5.59600353,
+        "accel_bias_3d_rms_mps2": 0.10078419,
+        "gyro_bias_3d_rms_radps": 8.80666776e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "cdd82130646b2f244f04be207bcf170d8a738e369a83e195f7cade5bb82a7199",
+      "before": {
+        "disp_z_pct_hs": 7.29102945,
+        "disp_3d_rms_m": 0.0305989236,
+        "roll_rms_deg": 0.184977666,
+        "pitch_rms_deg": 0.374798119,
+        "yaw_rms_deg": 1.00184751,
+        "accel_bias_3d_rms_mps2": 0.071782276,
+        "gyro_bias_3d_rms_radps": 0.000100517296
+      },
+      "after": {
+        "disp_z_pct_hs": 5.15617132,
+        "disp_3d_rms_m": 0.027252391,
+        "roll_rms_deg": 0.184477195,
+        "pitch_rms_deg": 0.380225331,
+        "yaw_rms_deg": 0.994080126,
+        "accel_bias_3d_rms_mps2": 0.0725786239,
+        "gyro_bias_3d_rms_radps": 0.00010053422
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "3e795201a431cc407dc14950085adfa3db5a68d22391ca00fb6d9bf1210622a6",
+      "before": {
+        "disp_z_pct_hs": 7.49205923,
+        "disp_3d_rms_m": 0.0312800892,
+        "roll_rms_deg": 0.326302379,
+        "pitch_rms_deg": 0.13941291,
+        "yaw_rms_deg": 1.97103393,
+        "accel_bias_3d_rms_mps2": 0.0599256977,
+        "gyro_bias_3d_rms_radps": 0.000112574737
+      },
+      "after": {
+        "disp_z_pct_hs": 5.32315969,
+        "disp_3d_rms_m": 0.0278484821,
+        "roll_rms_deg": 0.331347078,
+        "pitch_rms_deg": 0.161852553,
+        "yaw_rms_deg": 2.02324963,
+        "accel_bias_3d_rms_mps2": 0.0623704344,
+        "gyro_bias_3d_rms_radps": 0.00011275064
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "0370c4249fa4a79129a90d76265b0a508df0ed69b8d5d1803e5281dc61f05c9a",
+      "before": {
+        "disp_z_pct_hs": 7.09163284,
+        "disp_3d_rms_m": 0.0298473965,
+        "roll_rms_deg": 0.101613328,
+        "pitch_rms_deg": 0.204321861,
+        "yaw_rms_deg": 1.0003258,
+        "accel_bias_3d_rms_mps2": 0.0386931933,
+        "gyro_bias_3d_rms_radps": 9.2834227e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.06195498,
+        "disp_3d_rms_m": 0.0266605262,
+        "roll_rms_deg": 0.0999024808,
+        "pitch_rms_deg": 0.213135481,
+        "yaw_rms_deg": 1.01882303,
+        "accel_bias_3d_rms_mps2": 0.0399217121,
+        "gyro_bias_3d_rms_radps": 9.28043155e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "bafb33ef10a05a0dd04e1f266fe39f124324b7ed09d99a11f2ff9dd48d2da571",
+      "before": {
+        "disp_z_pct_hs": 7.52305937,
+        "disp_3d_rms_m": 0.0312885754,
+        "roll_rms_deg": 0.179657847,
+        "pitch_rms_deg": 0.0593188778,
+        "yaw_rms_deg": 1.44232893,
+        "accel_bias_3d_rms_mps2": 0.0316995271,
+        "gyro_bias_3d_rms_radps": 9.94688817e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.47998619,
+        "disp_3d_rms_m": 0.0280203987,
+        "roll_rms_deg": 0.180781081,
+        "pitch_rms_deg": 0.0629339144,
+        "yaw_rms_deg": 1.45182037,
+        "accel_bias_3d_rms_mps2": 0.0320819914,
+        "gyro_bias_3d_rms_radps": 9.95589362e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "82fc6dd900d772257dc5eb3bbb8296920e253655800f8e29d4f4149ce7d3328d",
+      "before": {
+        "disp_z_pct_hs": 7.42790222,
+        "disp_3d_rms_m": 0.0306420662,
+        "roll_rms_deg": 0.152226463,
+        "pitch_rms_deg": 0.248042688,
+        "yaw_rms_deg": 0.419253737,
+        "accel_bias_3d_rms_mps2": 0.0490085073,
+        "gyro_bias_3d_rms_radps": 9.48734669e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 5.46397305,
+        "disp_3d_rms_m": 0.0274650212,
+        "roll_rms_deg": 0.151578024,
+        "pitch_rms_deg": 0.25300774,
+        "yaw_rms_deg": 0.423492342,
+        "accel_bias_3d_rms_mps2": 0.0496895872,
+        "gyro_bias_3d_rms_radps": 9.48935631e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "25dcdc9cb276864f53303fe9d01f4808a2844432a28adad2a7abd49af911f351",
+      "before": {
+        "disp_z_pct_hs": 7.4525857,
+        "disp_3d_rms_m": 0.0306757465,
+        "roll_rms_deg": 0.117353491,
+        "pitch_rms_deg": 0.119120598,
+        "yaw_rms_deg": 2.6366384,
+        "accel_bias_3d_rms_mps2": 0.027558187,
+        "gyro_bias_3d_rms_radps": 0.000128587257
+      },
+      "after": {
+        "disp_z_pct_hs": 5.31971312,
+        "disp_3d_rms_m": 0.0272366609,
+        "roll_rms_deg": 0.11833407,
+        "pitch_rms_deg": 0.0852305666,
+        "yaw_rms_deg": 2.55207825,
+        "accel_bias_3d_rms_mps2": 0.0238306504,
+        "gyro_bias_3d_rms_radps": 0.000128997417
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "3954f283f9e924d588dd1ad22a25c8696dd49156c48cd1ff36e94a88ef57207c",
+      "before": {
+        "disp_z_pct_hs": 7.4243474,
+        "disp_3d_rms_m": 0.030630216,
+        "roll_rms_deg": 0.798207641,
+        "pitch_rms_deg": 0.342728764,
+        "yaw_rms_deg": 0.748555005,
+        "accel_bias_3d_rms_mps2": 0.147515088,
+        "gyro_bias_3d_rms_radps": 0.000100954334
+      },
+      "after": {
+        "disp_z_pct_hs": 5.10702038,
+        "disp_3d_rms_m": 0.0269459803,
+        "roll_rms_deg": 0.79839474,
+        "pitch_rms_deg": 0.341569364,
+        "yaw_rms_deg": 0.746382713,
+        "accel_bias_3d_rms_mps2": 0.147464633,
+        "gyro_bias_3d_rms_radps": 0.000100812213
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "71a6d87cc60da5f82e31efe16f76b759d8393c98792eb7da936f934bbc399ef3",
+      "before": {
+        "disp_z_pct_hs": 7.35504389,
+        "disp_3d_rms_m": 0.0308494959,
+        "roll_rms_deg": 0.0848295316,
+        "pitch_rms_deg": 0.265622526,
+        "yaw_rms_deg": 0.924643099,
+        "accel_bias_3d_rms_mps2": 0.0477771871,
+        "gyro_bias_3d_rms_radps": 0.000105641884
+      },
+      "after": {
+        "disp_z_pct_hs": 5.30524778,
+        "disp_3d_rms_m": 0.0276193283,
+        "roll_rms_deg": 0.0847552791,
+        "pitch_rms_deg": 0.26019156,
+        "yaw_rms_deg": 0.912029147,
+        "accel_bias_3d_rms_mps2": 0.046880085,
+        "gyro_bias_3d_rms_radps": 0.000105643492
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "be9439f5080bfc94d64000e744b7ec4e2cc4932d61caef0d332f17fabfa0fd1b",
+      "before": {
+        "disp_z_pct_hs": 7.32892752,
+        "disp_3d_rms_m": 0.0307449754,
+        "roll_rms_deg": 0.429643363,
+        "pitch_rms_deg": 0.250557154,
+        "yaw_rms_deg": 3.01365757,
+        "accel_bias_3d_rms_mps2": 0.0851127133,
+        "gyro_bias_3d_rms_radps": 0.00010918414
+      },
+      "after": {
+        "disp_z_pct_hs": 5.0072422,
+        "disp_3d_rms_m": 0.0271622427,
+        "roll_rms_deg": 0.437751383,
+        "pitch_rms_deg": 0.280850828,
+        "yaw_rms_deg": 3.08866048,
+        "accel_bias_3d_rms_mps2": 0.0890266001,
+        "gyro_bias_3d_rms_radps": 0.000109197965
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "084fe9026d79b778c8f8ae7d6558557a85abf50f4553eec71d4226f444b27ebb",
+      "before": {
+        "disp_z_pct_hs": 6.23801231,
+        "disp_3d_rms_m": 0.157081902,
+        "roll_rms_deg": 0.335599124,
+        "pitch_rms_deg": 0.252763033,
+        "yaw_rms_deg": 4.06705999,
+        "accel_bias_3d_rms_mps2": 0.0707773939,
+        "gyro_bias_3d_rms_radps": 0.000103767059
+      },
+      "after": {
+        "disp_z_pct_hs": 4.87064552,
+        "disp_3d_rms_m": 0.145726964,
+        "roll_rms_deg": 0.349618077,
+        "pitch_rms_deg": 0.257900625,
+        "yaw_rms_deg": 4.08781338,
+        "accel_bias_3d_rms_mps2": 0.0733109117,
+        "gyro_bias_3d_rms_radps": 0.000103970946
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "56b38a3bb4f7b12be59279659cb6fd50f8668dc725bd59aa78c2ec1df700b4b9",
+      "before": {
+        "disp_z_pct_hs": 6.08820963,
+        "disp_3d_rms_m": 0.152804449,
+        "roll_rms_deg": 0.198572159,
+        "pitch_rms_deg": 0.39881736,
+        "yaw_rms_deg": 1.08897746,
+        "accel_bias_3d_rms_mps2": 0.0765477717,
+        "gyro_bias_3d_rms_radps": 9.5969408e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.71356392,
+        "disp_3d_rms_m": 0.141431481,
+        "roll_rms_deg": 0.199805409,
+        "pitch_rms_deg": 0.388680816,
+        "yaw_rms_deg": 1.06708169,
+        "accel_bias_3d_rms_mps2": 0.0750563666,
+        "gyro_bias_3d_rms_radps": 9.57794036e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "422fef4f1bddeb86ce431dace4ed87f7586344024ebe7d43d53c90a05aa82120",
+      "before": {
+        "disp_z_pct_hs": 5.96786118,
+        "disp_3d_rms_m": 0.153646603,
+        "roll_rms_deg": 0.404315352,
+        "pitch_rms_deg": 0.230069071,
+        "yaw_rms_deg": 1.33827007,
+        "accel_bias_3d_rms_mps2": 0.078778103,
+        "gyro_bias_3d_rms_radps": 0.000111205256
+      },
+      "after": {
+        "disp_z_pct_hs": 4.51765871,
+        "disp_3d_rms_m": 0.142096713,
+        "roll_rms_deg": 0.402944922,
+        "pitch_rms_deg": 0.233255178,
+        "yaw_rms_deg": 1.34462285,
+        "accel_bias_3d_rms_mps2": 0.0788417757,
+        "gyro_bias_3d_rms_radps": 0.000111469177
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "3ec438fd90354db0a5e348aa8b5e7db147b20f4ec3c649b93b20733e42db6eee",
+      "before": {
+        "disp_z_pct_hs": 6.04269743,
+        "disp_3d_rms_m": 0.153962567,
+        "roll_rms_deg": 0.115873747,
+        "pitch_rms_deg": 0.270575941,
+        "yaw_rms_deg": 0.538529575,
+        "accel_bias_3d_rms_mps2": 0.0500455052,
+        "gyro_bias_3d_rms_radps": 8.994175e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.62374258,
+        "disp_3d_rms_m": 0.142461866,
+        "roll_rms_deg": 0.113902837,
+        "pitch_rms_deg": 0.304412633,
+        "yaw_rms_deg": 0.536846399,
+        "accel_bias_3d_rms_mps2": 0.0554081686,
+        "gyro_bias_3d_rms_radps": 9.00781815e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "e28094b818104dd9e2c689d58918136ed41aa0e9453ecdbd8f65d1b5bba2e2de",
+      "before": {
+        "disp_z_pct_hs": 6.38917446,
+        "disp_3d_rms_m": 0.161757424,
+        "roll_rms_deg": 0.1666473,
+        "pitch_rms_deg": 0.0511386245,
+        "yaw_rms_deg": 1.99424624,
+        "accel_bias_3d_rms_mps2": 0.0282768253,
+        "gyro_bias_3d_rms_radps": 0.000109254746
+      },
+      "after": {
+        "disp_z_pct_hs": 5.02212381,
+        "disp_3d_rms_m": 0.150530055,
+        "roll_rms_deg": 0.164843023,
+        "pitch_rms_deg": 0.052916754,
+        "yaw_rms_deg": 1.98576593,
+        "accel_bias_3d_rms_mps2": 0.0280566365,
+        "gyro_bias_3d_rms_radps": 0.000109415916
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "ce35c87840a0cc135866e9066ec6001c5b1a91ab97afdf6d1af8e6581b8e559a",
+      "before": {
+        "disp_z_pct_hs": 6.32653761,
+        "disp_3d_rms_m": 0.155941814,
+        "roll_rms_deg": 0.207502604,
+        "pitch_rms_deg": 0.162453637,
+        "yaw_rms_deg": 0.517094493,
+        "accel_bias_3d_rms_mps2": 0.0442405269,
+        "gyro_bias_3d_rms_radps": 9.55132782e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 4.96883821,
+        "disp_3d_rms_m": 0.144549996,
+        "roll_rms_deg": 0.217145115,
+        "pitch_rms_deg": 0.158368871,
+        "yaw_rms_deg": 0.50546962,
+        "accel_bias_3d_rms_mps2": 0.045211412,
+        "gyro_bias_3d_rms_radps": 9.55963114e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "0bd0c99414743d2725c633a5c0555a9882017050ef0aa3d80752597305362b11",
+      "before": {
+        "disp_z_pct_hs": 6.13395977,
+        "disp_3d_rms_m": 0.154936776,
+        "roll_rms_deg": 0.176487535,
+        "pitch_rms_deg": 0.0837911069,
+        "yaw_rms_deg": 2.0502677,
+        "accel_bias_3d_rms_mps2": 0.0325447731,
+        "gyro_bias_3d_rms_radps": 0.00013110874
+      },
+      "after": {
+        "disp_z_pct_hs": 4.71323347,
+        "disp_3d_rms_m": 0.143428877,
+        "roll_rms_deg": 0.180819869,
+        "pitch_rms_deg": 0.114903674,
+        "yaw_rms_deg": 1.97050667,
+        "accel_bias_3d_rms_mps2": 0.0360816531,
+        "gyro_bias_3d_rms_radps": 0.000131301786
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "9e09bcff5ca1a0c344dc8e43dfc95023a53a998dd799f3e610946e1737fd8ccd",
+      "before": {
+        "disp_z_pct_hs": 6.54357386,
+        "disp_3d_rms_m": 0.161211357,
+        "roll_rms_deg": 0.851189733,
+        "pitch_rms_deg": 0.431285828,
+        "yaw_rms_deg": 2.24259567,
+        "accel_bias_3d_rms_mps2": 0.160795942,
+        "gyro_bias_3d_rms_radps": 0.000106369938
+      },
+      "after": {
+        "disp_z_pct_hs": 5.21318293,
+        "disp_3d_rms_m": 0.149776101,
+        "roll_rms_deg": 0.852071464,
+        "pitch_rms_deg": 0.425934136,
+        "yaw_rms_deg": 2.23172832,
+        "accel_bias_3d_rms_mps2": 0.160513937,
+        "gyro_bias_3d_rms_radps": 0.000106059502
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "16d50158a80cf55ef33e4e367fdc22baf88368fedbf116773944f0999adaec79",
+      "before": {
+        "disp_z_pct_hs": 6.17854261,
+        "disp_3d_rms_m": 0.156823024,
+        "roll_rms_deg": 0.09833543,
+        "pitch_rms_deg": 0.274047434,
+        "yaw_rms_deg": 2.26608443,
+        "accel_bias_3d_rms_mps2": 0.0499492288,
+        "gyro_bias_3d_rms_radps": 0.000126453175
+      },
+      "after": {
+        "disp_z_pct_hs": 4.76405954,
+        "disp_3d_rms_m": 0.145259365,
+        "roll_rms_deg": 0.098963432,
+        "pitch_rms_deg": 0.273465276,
+        "yaw_rms_deg": 2.26385283,
+        "accel_bias_3d_rms_mps2": 0.0498847365,
+        "gyro_bias_3d_rms_radps": 0.000126493978
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "46843b59e9083515ca5168d964e753b29fcfeb83a24a7d36046d03a36a35452e",
+      "before": {
+        "disp_z_pct_hs": 6.21483469,
+        "disp_3d_rms_m": 0.155970484,
+        "roll_rms_deg": 0.509705782,
+        "pitch_rms_deg": 0.196262866,
+        "yaw_rms_deg": 2.37534952,
+        "accel_bias_3d_rms_mps2": 0.0934408531,
+        "gyro_bias_3d_rms_radps": 0.000109234286
+      },
+      "after": {
+        "disp_z_pct_hs": 4.86615896,
+        "disp_3d_rms_m": 0.144932061,
+        "roll_rms_deg": 0.520200491,
+        "pitch_rms_deg": 0.25256899,
+        "yaw_rms_deg": 2.5067153,
+        "accel_bias_3d_rms_mps2": 0.0989595056,
+        "gyro_bias_3d_rms_radps": 0.000109742941
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "43f30e1fc8da425128c1f3b7865020cf0f573cf036ff9c7b88dc7e2612f5028e",
+      "before": {
+        "disp_z_pct_hs": 5.10081863,
+        "disp_3d_rms_m": 0.393743873,
+        "roll_rms_deg": 0.365625978,
+        "pitch_rms_deg": 0.254639208,
+        "yaw_rms_deg": 1.83888423,
+        "accel_bias_3d_rms_mps2": 0.0749982819,
+        "gyro_bias_3d_rms_radps": 0.000101512218
+      },
+      "after": {
+        "disp_z_pct_hs": 3.80436707,
+        "disp_3d_rms_m": 0.369797498,
+        "roll_rms_deg": 0.367390484,
+        "pitch_rms_deg": 0.263954967,
+        "yaw_rms_deg": 1.86023927,
+        "accel_bias_3d_rms_mps2": 0.0762562677,
+        "gyro_bias_3d_rms_radps": 0.000101759564
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "1dacc4058521644ef3898341d8025630407174c5cd6c3d39a0ff11d2542bf161",
+      "before": {
+        "disp_z_pct_hs": 4.89665079,
+        "disp_3d_rms_m": 0.392714202,
+        "roll_rms_deg": 0.126208901,
+        "pitch_rms_deg": 0.56504333,
+        "yaw_rms_deg": 0.903153181,
+        "accel_bias_3d_rms_mps2": 0.0998774767,
+        "gyro_bias_3d_rms_radps": 0.000103550898
+      },
+      "after": {
+        "disp_z_pct_hs": 3.60016012,
+        "disp_3d_rms_m": 0.368370235,
+        "roll_rms_deg": 0.133726999,
+        "pitch_rms_deg": 0.498886287,
+        "yaw_rms_deg": 0.777972281,
+        "accel_bias_3d_rms_mps2": 0.0889869109,
+        "gyro_bias_3d_rms_radps": 0.00010325951
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "b2858649eebda42769bf9e97cf83b61488abb09041f52447f492e5cbe396adbe",
+      "before": {
+        "disp_z_pct_hs": 4.87490416,
+        "disp_3d_rms_m": 0.410520256,
+        "roll_rms_deg": 0.423332185,
+        "pitch_rms_deg": 0.106727295,
+        "yaw_rms_deg": 2.80246711,
+        "accel_bias_3d_rms_mps2": 0.0717676282,
+        "gyro_bias_3d_rms_radps": 0.000113600625
+      },
+      "after": {
+        "disp_z_pct_hs": 3.53065681,
+        "disp_3d_rms_m": 0.389290452,
+        "roll_rms_deg": 0.465858996,
+        "pitch_rms_deg": 0.311303288,
+        "yaw_rms_deg": 3.28070331,
+        "accel_bias_3d_rms_mps2": 0.0944650695,
+        "gyro_bias_3d_rms_radps": 0.000114465642
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "cd41a768f62502a50a928de28ff51a9f457eaa5521ae59d314c05ff35f094714",
+      "before": {
+        "disp_z_pct_hs": 4.72860909,
+        "disp_3d_rms_m": 0.397624552,
+        "roll_rms_deg": 0.215325028,
+        "pitch_rms_deg": 0.276428908,
+        "yaw_rms_deg": 0.636788309,
+        "accel_bias_3d_rms_mps2": 0.0577526353,
+        "gyro_bias_3d_rms_radps": 0.000104334576
+      },
+      "after": {
+        "disp_z_pct_hs": 3.44972205,
+        "disp_3d_rms_m": 0.377430797,
+        "roll_rms_deg": 0.20229435,
+        "pitch_rms_deg": 0.256647438,
+        "yaw_rms_deg": 0.601834953,
+        "accel_bias_3d_rms_mps2": 0.0536512025,
+        "gyro_bias_3d_rms_radps": 0.000104423401
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "a35bdd1b2caa32061009e51b6ca160d91d1122446bf901467a653e93f248b843",
+      "before": {
+        "disp_z_pct_hs": 5.22556734,
+        "disp_3d_rms_m": 0.403979748,
+        "roll_rms_deg": 0.166976243,
+        "pitch_rms_deg": 0.080115281,
+        "yaw_rms_deg": 1.67551959,
+        "accel_bias_3d_rms_mps2": 0.0297718626,
+        "gyro_bias_3d_rms_radps": 0.00010536849
+      },
+      "after": {
+        "disp_z_pct_hs": 3.98183513,
+        "disp_3d_rms_m": 0.380465895,
+        "roll_rms_deg": 0.17430456,
+        "pitch_rms_deg": 0.103335716,
+        "yaw_rms_deg": 1.74146867,
+        "accel_bias_3d_rms_mps2": 0.0329753123,
+        "gyro_bias_3d_rms_radps": 0.00010543855
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "3bccc2453fb218f318b3057c3dd8ffbec1bbb459c8264763a341a039a5ef7d45",
+      "before": {
+        "disp_z_pct_hs": 5.15030527,
+        "disp_3d_rms_m": 0.391389698,
+        "roll_rms_deg": 0.192015782,
+        "pitch_rms_deg": 0.0851717293,
+        "yaw_rms_deg": 1.0961535,
+        "accel_bias_3d_rms_mps2": 0.0332592689,
+        "gyro_bias_3d_rms_radps": 0.000104292914
+      },
+      "after": {
+        "disp_z_pct_hs": 3.90362072,
+        "disp_3d_rms_m": 0.367899656,
+        "roll_rms_deg": 0.185646698,
+        "pitch_rms_deg": 0.0781980455,
+        "yaw_rms_deg": 1.14327347,
+        "accel_bias_3d_rms_mps2": 0.0316560045,
+        "gyro_bias_3d_rms_radps": 0.000104635554
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "1f4aa1edbab210885fb37bd442087333509a72407ce22af7c073a5e61e33c4dd",
+      "before": {
+        "disp_z_pct_hs": 4.97588825,
+        "disp_3d_rms_m": 0.389247894,
+        "roll_rms_deg": 0.208966658,
+        "pitch_rms_deg": 0.489409745,
+        "yaw_rms_deg": 1.27185571,
+        "accel_bias_3d_rms_mps2": 0.0898284614,
+        "gyro_bias_3d_rms_radps": 0.000124071084
+      },
+      "after": {
+        "disp_z_pct_hs": 3.7309792,
+        "disp_3d_rms_m": 0.366521001,
+        "roll_rms_deg": 0.219797313,
+        "pitch_rms_deg": 0.509914815,
+        "yaw_rms_deg": 1.32186389,
+        "accel_bias_3d_rms_mps2": 0.0938194022,
+        "gyro_bias_3d_rms_radps": 0.000123790946
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "9ff09ad3fd8f4a5c21850a8d85c506a1feac46002b410eba258631c1766782cb",
+      "before": {
+        "disp_z_pct_hs": 5.09971905,
+        "disp_3d_rms_m": 0.42125386,
+        "roll_rms_deg": 0.830044329,
+        "pitch_rms_deg": 0.2924577,
+        "yaw_rms_deg": 2.60058188,
+        "accel_bias_3d_rms_mps2": 0.14594622,
+        "gyro_bias_3d_rms_radps": 0.000103837338
+      },
+      "after": {
+        "disp_z_pct_hs": 3.94162393,
+        "disp_3d_rms_m": 0.401646614,
+        "roll_rms_deg": 0.842964172,
+        "pitch_rms_deg": 0.368551403,
+        "yaw_rms_deg": 2.76109529,
+        "accel_bias_3d_rms_mps2": 0.152960107,
+        "gyro_bias_3d_rms_radps": 0.000103459686
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "460d0afd6da971db9df6dbd0a6d24e2a2c37de3ea69547aeeeda8732f3f3ac64",
+      "before": {
+        "disp_z_pct_hs": 4.89209986,
+        "disp_3d_rms_m": 0.406391293,
+        "roll_rms_deg": 0.177556783,
+        "pitch_rms_deg": 0.571613133,
+        "yaw_rms_deg": 2.40777779,
+        "accel_bias_3d_rms_mps2": 0.103722326,
+        "gyro_bias_3d_rms_radps": 0.000116940209
+      },
+      "after": {
+        "disp_z_pct_hs": 3.63480902,
+        "disp_3d_rms_m": 0.386383384,
+        "roll_rms_deg": 0.205679402,
+        "pitch_rms_deg": 0.731907189,
+        "yaw_rms_deg": 2.77544761,
+        "accel_bias_3d_rms_mps2": 0.131700069,
+        "gyro_bias_3d_rms_radps": 0.000117557931
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "489ed4c2b16591686ee5130fd41e283d8b402f13c8b25c1779209cd859198928",
+      "before": {
+        "disp_z_pct_hs": 4.87379169,
+        "disp_3d_rms_m": 0.394201249,
+        "roll_rms_deg": 0.41922465,
+        "pitch_rms_deg": 0.141099632,
+        "yaw_rms_deg": 1.20649719,
+        "accel_bias_3d_rms_mps2": 0.073330842,
+        "gyro_bias_3d_rms_radps": 0.000112660506
+      },
+      "after": {
+        "disp_z_pct_hs": 3.5552423,
+        "disp_3d_rms_m": 0.370855659,
+        "roll_rms_deg": 0.353681147,
+        "pitch_rms_deg": 0.391305953,
+        "yaw_rms_deg": 0.565660417,
+        "accel_bias_3d_rms_mps2": 0.0879950821,
+        "gyro_bias_3d_rms_radps": 0.000113014023
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 11,
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "input_sha256": "02a30731bbf86401aad5ef47ffe3904a46752460019f4dbac5e65185eab2bebf",
+      "before": {
+        "disp_z_pct_hs": 4.97496128,
+        "disp_3d_rms_m": 0.942471147,
+        "roll_rms_deg": 0.448950589,
+        "pitch_rms_deg": 0.290517509,
+        "yaw_rms_deg": 3.74672675,
+        "accel_bias_3d_rms_mps2": 0.087923333,
+        "gyro_bias_3d_rms_radps": 9.9744102e-05
+      },
+      "after": {
+        "disp_z_pct_hs": 3.66829109,
+        "disp_3d_rms_m": 0.898319185,
+        "roll_rms_deg": 0.44263953,
+        "pitch_rms_deg": 0.275352269,
+        "yaw_rms_deg": 3.70634937,
+        "accel_bias_3d_rms_mps2": 0.0855498984,
+        "gyro_bias_3d_rms_radps": 9.97613752e-05
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 29,
+      "imu_noise_seed": 211,
+      "initialization_seed": 1103,
+      "input_sha256": "274726e38cd282388e425585bdac026fbeac17f8fd6d774bd1eb3da8a310d225",
+      "before": {
+        "disp_z_pct_hs": 4.40712118,
+        "disp_3d_rms_m": 0.845446885,
+        "roll_rms_deg": 0.435712218,
+        "pitch_rms_deg": 0.248587608,
+        "yaw_rms_deg": 0.399502814,
+        "accel_bias_3d_rms_mps2": 0.0828662589,
+        "gyro_bias_3d_rms_radps": 0.000104308267
+      },
+      "after": {
+        "disp_z_pct_hs": 3.16802812,
+        "disp_3d_rms_m": 0.810318708,
+        "roll_rms_deg": 0.47395429,
+        "pitch_rms_deg": 0.435638309,
+        "yaw_rms_deg": 0.726020038,
+        "accel_bias_3d_rms_mps2": 0.107615992,
+        "gyro_bias_3d_rms_radps": 0.000105183681
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 47,
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "input_sha256": "2ca7d824a7458b5de2bd7f4e67bf089640fbf008cf8e16cf3c5a2ea44085ce59",
+      "before": {
+        "disp_z_pct_hs": 4.9111886,
+        "disp_3d_rms_m": 0.887988746,
+        "roll_rms_deg": 0.14390716,
+        "pitch_rms_deg": 0.261194527,
+        "yaw_rms_deg": 1.63038957,
+        "accel_bias_3d_rms_mps2": 0.0501212776,
+        "gyro_bias_3d_rms_radps": 0.000118771692
+      },
+      "after": {
+        "disp_z_pct_hs": 3.73494625,
+        "disp_3d_rms_m": 0.846444845,
+        "roll_rms_deg": 0.155911073,
+        "pitch_rms_deg": 0.327965707,
+        "yaw_rms_deg": 1.78631508,
+        "accel_bias_3d_rms_mps2": 0.0616909042,
+        "gyro_bias_3d_rms_radps": 0.000118996031
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 71,
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "input_sha256": "089ead21ff56bc667ce2e05760904bdb17dea02cb9fd5fcd00a5af5f7d92dc0e",
+      "before": {
+        "disp_z_pct_hs": 4.5185647,
+        "disp_3d_rms_m": 0.924079001,
+        "roll_rms_deg": 0.184141681,
+        "pitch_rms_deg": 0.0994640589,
+        "yaw_rms_deg": 1.18941152,
+        "accel_bias_3d_rms_mps2": 0.037060488,
+        "gyro_bias_3d_rms_radps": 0.000115645584
+      },
+      "after": {
+        "disp_z_pct_hs": 3.22182918,
+        "disp_3d_rms_m": 0.886569858,
+        "roll_rms_deg": 0.230022922,
+        "pitch_rms_deg": 0.24715063,
+        "yaw_rms_deg": 0.769071043,
+        "accel_bias_3d_rms_mps2": 0.0595464706,
+        "gyro_bias_3d_rms_radps": 0.000115292583
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 97,
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "input_sha256": "8207f9bb203fa8d01ae0005e6234f02a45a4d6635ac584177ca2f8a0a722a31b",
+      "before": {
+        "disp_z_pct_hs": 4.80266476,
+        "disp_3d_rms_m": 0.936361551,
+        "roll_rms_deg": 0.369612128,
+        "pitch_rms_deg": 0.0976276547,
+        "yaw_rms_deg": 2.13964391,
+        "accel_bias_3d_rms_mps2": 0.0622282028,
+        "gyro_bias_3d_rms_radps": 0.000112130037
+      },
+      "after": {
+        "disp_z_pct_hs": 3.44745135,
+        "disp_3d_rms_m": 0.893191457,
+        "roll_rms_deg": 0.372928411,
+        "pitch_rms_deg": 0.0888883844,
+        "yaw_rms_deg": 2.17200279,
+        "accel_bias_3d_rms_mps2": 0.0622776859,
+        "gyro_bias_3d_rms_radps": 0.000112298323
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 131,
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "input_sha256": "b47341398964c699fa3736fe3b4cf9ab1133678dc70f1f91604c23b9253f1d07",
+      "before": {
+        "disp_z_pct_hs": 5.0369916,
+        "disp_3d_rms_m": 0.934523165,
+        "roll_rms_deg": 0.203839034,
+        "pitch_rms_deg": 0.565751731,
+        "yaw_rms_deg": 1.29262674,
+        "accel_bias_3d_rms_mps2": 0.101696104,
+        "gyro_bias_3d_rms_radps": 0.00010635623
+      },
+      "after": {
+        "disp_z_pct_hs": 3.6172986,
+        "disp_3d_rms_m": 0.888673007,
+        "roll_rms_deg": 0.22000137,
+        "pitch_rms_deg": 0.650105894,
+        "yaw_rms_deg": 1.49152017,
+        "accel_bias_3d_rms_mps2": 0.116669036,
+        "gyro_bias_3d_rms_radps": 0.000106430438
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 173,
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "input_sha256": "d2251660b47607dc79b28af98dfa21cfc0bc5a2ea7af0112a9358cfc0b608b1b",
+      "before": {
+        "disp_z_pct_hs": 4.93015003,
+        "disp_3d_rms_m": 0.904392362,
+        "roll_rms_deg": 0.213763312,
+        "pitch_rms_deg": 0.612356424,
+        "yaw_rms_deg": 0.443250507,
+        "accel_bias_3d_rms_mps2": 0.112381697,
+        "gyro_bias_3d_rms_radps": 0.000147582934
+      },
+      "after": {
+        "disp_z_pct_hs": 3.60740972,
+        "disp_3d_rms_m": 0.856114507,
+        "roll_rms_deg": 0.189894944,
+        "pitch_rms_deg": 0.487563699,
+        "yaw_rms_deg": 0.60946846,
+        "accel_bias_3d_rms_mps2": 0.0906307697,
+        "gyro_bias_3d_rms_radps": 0.000146407139
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 211,
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "input_sha256": "c2f9b31295ff55cb3eae7ce90cd33b2c0a628dddc9e1e03ff8785438e705c969",
+      "before": {
+        "disp_z_pct_hs": 4.91010427,
+        "disp_3d_rms_m": 0.960389674,
+        "roll_rms_deg": 0.761267364,
+        "pitch_rms_deg": 0.747475743,
+        "yaw_rms_deg": 3.22897124,
+        "accel_bias_3d_rms_mps2": 0.177077517,
+        "gyro_bias_3d_rms_radps": 0.000113305199
+      },
+      "after": {
+        "disp_z_pct_hs": 3.66583467,
+        "disp_3d_rms_m": 0.92122376,
+        "roll_rms_deg": 0.76977396,
+        "pitch_rms_deg": 0.805422246,
+        "yaw_rms_deg": 3.35426021,
+        "accel_bias_3d_rms_mps2": 0.185261339,
+        "gyro_bias_3d_rms_radps": 0.000113157577
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 257,
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "input_sha256": "920b27674d7e2322a90bcaf09c001b4bbcbc6388e6d00559eef4047070e1a0a4",
+      "before": {
+        "disp_z_pct_hs": 4.89285707,
+        "disp_3d_rms_m": 0.935806632,
+        "roll_rms_deg": 0.104173228,
+        "pitch_rms_deg": 0.675727427,
+        "yaw_rms_deg": 3.46586204,
+        "accel_bias_3d_rms_mps2": 0.119590178,
+        "gyro_bias_3d_rms_radps": 0.000132875241
+      },
+      "after": {
+        "disp_z_pct_hs": 3.56275582,
+        "disp_3d_rms_m": 0.894988,
+        "roll_rms_deg": 0.115800455,
+        "pitch_rms_deg": 0.817953169,
+        "yaw_rms_deg": 3.80268526,
+        "accel_bias_3d_rms_mps2": 0.144169435,
+        "gyro_bias_3d_rms_radps": 0.000133094974
+      }
+    },
+    {
+      "scenario": "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "wave_phase_seed": 307,
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "input_sha256": "50e9fc4a8f9becb0f6d749f73b55f76b5f3509a79fb1b615299e5519d7958b45",
+      "before": {
+        "disp_z_pct_hs": 4.68037415,
+        "disp_3d_rms_m": 0.887538493,
+        "roll_rms_deg": 0.20308961,
+        "pitch_rms_deg": 0.176365733,
+        "yaw_rms_deg": 1.1248306,
+        "accel_bias_3d_rms_mps2": 0.0423777029,
+        "gyro_bias_3d_rms_radps": 0.000117508178
+      },
+      "after": {
+        "disp_z_pct_hs": 3.39472437,
+        "disp_3d_rms_m": 0.842676461,
+        "roll_rms_deg": 0.237057343,
+        "pitch_rms_deg": 0.126516744,
+        "yaw_rms_deg": 1.59028554,
+        "accel_bias_3d_rms_mps2": 0.0427733026,
+        "gyro_bias_3d_rms_radps": 0.000117483891
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
   "replay_fingerprint": "767716fbaf2b50fc507b87c7efd3d0b00ac1ee124656af67095fab11bda00cba",
-  "results_file_count": 897,
+  "results_file_count": 899,
   "results_files": [
     {
       "kind": "file",
@@ -1315,6 +1315,11 @@
     },
     {
       "kind": "file",
+      "path": "reports/results/encounter_scaling/ou3_directional_gain_diagnostic.json",
+      "sha256": "b8a8248f775010fa9c2af88a401e8c92d6b9cfa5628be9c2cb39173dd64779f4"
+    },
+    {
+      "kind": "file",
       "path": "reports/results/encounter_scaling/ou3_spectral_attitude_schmidt.json",
       "sha256": "788f45f322a2df3532b76ee27b412d0bc2dd8b3719a19526e521e06a66923d7b"
     },
@@ -1387,6 +1392,11 @@
       "kind": "file",
       "path": "reports/results/encounter_scaling/tfg_cadence.json",
       "sha256": "53f82888fd5bf40a078358f69fd2ed4f6e5d2338e0ef4d3d123b81140c3d586b"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/encounter_scaling/tfg_companion_change.json",
+      "sha256": "6900c71e5dc1d2f75573ed1e09ae03d228ac8de0da7137d8b90c61e7a7f6cfd6"
     },
     {
       "kind": "file",
@@ -2516,7 +2526,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "d1cc30f102d2b9cab3fab93e77f1ee20039b8a03af54b59619779c0fe90de28d"
+      "sha256": "35bef38f56fa89cd4dbe62da8d0cf368c7d5d2cd746599ce5557ea7000b9b102"
     },
     {
       "kind": "file",
@@ -4489,7 +4499,7 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "3c369b082670ece2ff7ee398995e18457d57a178fb13973bdb70b867de6e7cf5",
+  "results_fingerprint": "9f00cf4fc0dbfdc4919ddc79871ae930e4cda0159168960788c7031cc060b315",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",

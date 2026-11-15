@@ -224,6 +224,23 @@ regression limit. Maximum peaks decrease from 1.19073 to 1.16632 m for the
 spectral law and 0.90622 to 0.88201 m for legacy. No detrender or output
 saturation is used for this check.
 
+The broader [CI companion study](tfg-comparison.md) includes ten independent
+wave/noise/initialization triplets, all eight fixed seas, and a controlled
+crossfade. Its [before/after comparison](../reports/results/encounter_scaling/tfg_companion_change.json)
+retains identical input hashes for every arm and records the small numerical
+differences in the unchanged OU-III build control. TFG improves heave and 3-D
+displacement in all 90 histories. Across those histories, mean heave improves
+5.97327 -> 4.42594% Hs and 3-D displacement 0.39212 -> 0.37117 m. This is a
+cross-build comparison, separate from the same-executable ablations above.
+
+The broader study also exposes costs: mean roll/pitch/yaw change from
+0.29819/0.27494/1.83429 to 0.30258/0.30361/1.86594 degrees, and
+accelerometer-bias RMS from 0.07294 to 0.07678 m/s². The fixed-record attitude
+improvements therefore do not generalize to all randomized histories.
+The heave gain is retained in the controlled crossfade (TFG 4.14870% Hs
+versus OU-III 6.06695); this does not establish all-metric dominance or
+qualification on an unseen vessel.
+
 OU-III is **not** switched to this model. Its initial 96-run experiment improves
 all 48 heave pairs, but fails default H4 JONSWAP yaw (0.887208 > 0.875540 degrees)
 and small PM-Stokes roll (0.348330 > 0.346670). Delaying activation until the

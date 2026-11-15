@@ -38,6 +38,33 @@ default-seed bars in both arms and are diagnostic comparisons only. Engine
 acceptance bars failing both arms. Source-exact overlay recipes, raw scores
 and historical producer bytes are retained under encounter_scaling.
 
+The independent ten-triplet companion study additionally retains all eight
+fixed seas and the controlled crossfade. All 90 TFG histories improve heave
+and 3-D displacement versus the previous build on identical physical input
+hashes. Mean heave is 5.97327 -> 4.42594% Hs and 3-D error
+0.39212 -> 0.37117 m. Mean roll/pitch/yaw nevertheless rise from
+0.29819/0.27494/1.83429 to 0.30258/0.30361/1.86594 degrees, and mean
+accelerometer-bias RMS from 0.07294 to 0.07678 m/s². The unchanged OU-III
+control's maximum heave difference is only 0.00006819 percentage points.
+These are explicit multi-metric tradeoffs; fixed-record attitude gains do not
+establish all-seed dominance. Source-bound CI rows and the cross-build comparison
+are retained separately from same-executable ablation evidence.
+
+A source-bound directional diagnostic adds six instrumented replays and one
+same-binary logging-off control to the archived rejected OU-III overlay.
+On the failed small moving PM record, the perpendicular share of squared
+conditional vertical-observation BA increments decreases 3.6893% -> 1.1424%,
+and perpendicular RMS per update decreases 4.06498e-6 -> 1.33163e-6 m/s²,
+while roll rises 0.344943 -> 0.348498 degrees. Thus larger perpendicular
+increment energy does not explain the miss. These increment statistics are
+not information measures or causal error attribution. Logging-on/off printed
+scores and gate outcomes are identical. The exact instrumentation patch,
+parent overlay, source/object/binary hashes, runner and all summary rows are
+in `encounter_scaling/ou3_directional_gain_diagnostic.json`. No further
+projection candidate is adopted from this diagnostic alone. This is an
+interpretation failure of the proposed explanation (class E), not a new
+shipping counterexample or a failure of the source-bound logging control.
+
 **Current limiter.** Final TFG native qualification contains 96 runs per law,
 all 48 heave pairs improving in each. Default moving mean/worst are
 5.51972/7.81925 -> 3.94431/5.71623% Hs (spectral) and
@@ -46,10 +73,20 @@ gates pass, as do eight historical gyro-profile gates. Fifty-two device
 histories pass their unchanged 2 m peak bound. Engine controls improve all
 moving pairs for both laws; legacy has two zero-speed heave costs, maximum
 0.910 mm. Their normal-noise gates fail in both engine arms. The complete
-`make all` and exact-head hosted qualification remain separate requirements. OU-II,
+`make -j1 all` reached the publication contract with all preceding native
+phases passing, then exited 2 on the stale TFG companion bundle described
+below. After importing the genuine CI companion bundle, the entire
+`make -C tests/validation evidence-test` passes its 1206-test suite (one
+skip); both later wave_dir and wave_sim groups also pass. Full branch
+run 43661880261 subsequently passes the same 1206-test evidence suite in CI
+and publishes commit 280697c. Remaining hosted matrix jobs are tracked
+separately. OU-II,
 OU-III and independent CARMA retain speed penalties. No acceptance bar is
-widened. Current hosted OU-III run 43648218718, job 132610749846, fails yaw
-0.878680 > 0.867740 and 0.886419 > 0.875540 degrees, as before the TFG change.
+widened. Earlier hosted OU-III run 43648218718, job 132610749846, fails yaw
+0.878680 > 0.867740 and 0.886419 > 0.875540 degrees. At current source
+6552e14, run 43661885066 job 132655244860 completes its native Run tests
+step successfully; the earlier failure is not reproduced on this runner.
+No OU-III source or acceptance limit changed to obtain that pass.
 
 **Failed approaches / DEAD_ENDS (each class E).** Original OU-III S+beta*v
 fails H4 JONSWAP yaw 0.887208 > 0.875540 degrees and small PM-Stokes roll
@@ -90,14 +127,45 @@ moving roll 0.383126 > 0.346670 and BA 82.8951 > 75.6411 percent, and
 OU-II medium yaw 0.907622 > 0.903530. Uniform/axis-specific noise scaling
 has exhausted its refinement. These are replay failures, not instability.
 
-**Infrastructure/publication (class E).** Concurrent Eigen builds exhausted
+**Infrastructure/publication (class E).** At source 6552e14, hosted run 43661885009, job
+132652794958, `make -C tests/validation evidence-test` fails in
+`tools/tfg_comparison.py --check --require-ci` with
+`ValueError: TFG comparison source provenance is stale`. The new TFG
+source invalidates the older companion comparison, not the separately qualified
+paired results. The source hashes must not be restamped onto old scores.
+Resolved by full branch evidence run 43661880261, whose companion, validation
+and robustness bundles pass all contracts and the 1206-test suite before
+publication in commit 280697c. That automatic commit is preserved before
+adding the documentation and independently checked cross-build comparison.
+The same condition fails hosted OU smoke run 43661884949, job 132653485163.
+The final local `make -j1 all` has a completed exit receipt (2587.38 s, exit 2):
+all phases through util pass, including all 120 tagged Kalman replay gates,
+then tests/validation stops at that same exact stale-companion error.
+The later wave_dir and wave_sim groups pass separately. CI companion run
+43661880261 succeeds, and its artifact 14140719607 verifies against the current
+source and every retained result hash. Importing that exact bundle repairs
+the contract; `make -C tests/validation evidence-test` then passes. This is
+not a claim that the earlier failed aggregate command exited successfully.
+NLO/PII ignore the timeseries suppression flag and wrote about 2.1 GB of
+temporary traces, filling the workspace. Completed untracked output traces
+were removed; retained inputs, code, scores and evidence were not changed.
+The independent local companion diagnostic subsequently completes all 180
+rows and validates every input pair and 900-second scoring window. A prior
+serial attempt was intentionally interrupted after 14 pairs and restarted
+with three replay workers; its partial output is not evidence.
+The CI bundle, rather than the local run, supplies the publication receipt.
+Its raw CSV keeps the producer's CRLF bytes; whitespace verification treats
+CR-at-EOL as line endings without rewriting hash-bound evidence.
+
+Concurrent Eigen builds exhausted
 memory (`Killed signal terminated program cc1plus`); compilation is strictly
 serial. The two earlier `make all` sessions lost their exit receipts after
 exec-server transport loss, most recently partway through OU-III. Neither is
 a completed validation. The subsequent TFG-candidate run also lost its session/exit receipt after
 completing AHRS, detrend and frequency and partway through heave-only; it cannot
-validate the corrected legacy gain policy. New full validation is required
-for the final TFG source.
+validate the corrected legacy gain policy. The later completed aggregate
+run and targeted evidence repair described above validate the final source;
+these interrupted attempts remain non-evidence.
 A device diagnostic initially named nonexistent `device_config_quiet_test.cpp`;
 no score was produced, and the real `tfg_device_heave-test.cpp` is the required
 production test. No missing or interrupted output is treated as a pass. An extra test command
@@ -107,8 +175,9 @@ stdlib unittest and pass all eight cases with that runner instead.
 Dedicated scalar non-FMA lever-arm reproduction passes hosted run 43648218794,
 job 132610657908, without changing its 0.01 tolerance. Both modified shared
 CARMA method papers compile and their rendered normalization equations were
-reviewed. The updated five-page TFG article also compiles and its equation
-layout was reviewed. Local pdfLaTeX initially failed to find its format;
+reviewed. The updated six-page TFG article compiles with the current companion
+tables and freshly regenerated deterministic plots; equation and table
+layouts were reviewed. Local pdfLaTeX initially failed to find its format;
 using the existing explicit LuaLaTeX format repairs this tooling failure. The numerical inventory was refreshed after normalization.
 
 **Retained facts / six-item shipping handoff.** (1) Preserved: all 39 audited
@@ -123,8 +192,14 @@ are E; no mathematical counterexample classification is inferred. (4) No genuine
 shipping counterexample was found. (5) Established algebra and open physical,
 arithmetic and end-to-end qualifications remain controlling; no theorem or
 historical replay payload is promoted. (6) Next falsifiable experiment:
-complete whole-project validation of the qualified TFG library, then investigate OU-III's remaining coupled roll/bias regression from its
-full measurement/covariance equations, rather than another scalar sweep.
+finish publication landing and hosted checks, then trace the subsequent
+accelerometer attitude/BA corrections and evolving covariance on the same
+failed small-PM physical history. The directional diagnostic above rejects
+larger perpendicular pseudo-update energy as the explanation; it does not
+establish that removing that channel would help. Preserve vertical BA
+learning (freezing all BA already failed) and quantify the coupled error path
+before proposing another gain architecture. Extend that diagnosis to the
+randomized TFG histories; no further scalar or activation sweep is justified.
 
 ## Earlier diagnostic record
 
