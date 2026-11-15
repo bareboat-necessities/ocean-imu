@@ -19,6 +19,7 @@ on:
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
       - "tests/kalman_tfg/**"
+      - "tests/common/HostReplayFlags.mk"
       - "tests/validation/**"
       - "tools/ou_validation.py"
       - "tools/tfg_comparison.py"

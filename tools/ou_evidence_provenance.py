@@ -89,6 +89,7 @@ STUDIES: dict[str, dict[str, Any]] = {
         "build_files": (
             REPO_ROOT / "tests" / "kalman_ou_ii" / "Makefile",
             REPO_ROOT / "tests" / "kalman_ou_iii" / "Makefile",
+            REPO_ROOT / "tests" / "common" / "HostReplayFlags.mk",
         ),
         "analysis_files": (REPO_ROOT / "tools" / "ou_validation.py",),
     },
@@ -103,7 +104,10 @@ STUDIES: dict[str, dict[str, Any]] = {
             REPO_ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim.cpp",
             REPO_ROOT / "src" / "util" / "W3dSimCommon.cpp",
         ),
-        "build_files": (REPO_ROOT / "tests" / "kalman_ou_iii" / "Makefile",),
+        "build_files": (
+            REPO_ROOT / "tests" / "kalman_ou_iii" / "Makefile",
+            REPO_ROOT / "tests" / "common" / "HostReplayFlags.mk",
+        ),
         "analysis_files": (
             REPO_ROOT / "tools" / "ou_validation.py",
             REPO_ROOT / "tools" / "ou_robustness.py",
@@ -214,6 +218,7 @@ def _ou_iii_sim_build_contract(text: str) -> str:
         stripped = line.strip()
         if (
             stripped.startswith(_BUILD_ASSIGNMENT_PREFIXES)
+            or stripped.startswith("include ")
             or stripped.startswith("ifeq (")
             or stripped.startswith("else ifeq (")
             or stripped in {"else", "endif"}
@@ -223,7 +228,7 @@ def _ou_iii_sim_build_contract(text: str) -> str:
             selected.append(stripped)
             if index + 1 < len(lines) and lines[index + 1].startswith("\t"):
                 selected.append(lines[index + 1].strip())
-        if stripped == "%.o: %.cpp":
+        if stripped.startswith("%.o: %.cpp"):
             selected.append(stripped)
             if index + 1 < len(lines) and lines[index + 1].startswith("\t"):
                 selected.append(lines[index + 1].strip())

@@ -11,13 +11,7 @@ LIEPP_CPPFLAGS := -isystem $(REPO_ROOT)/third_party/Lie-plusplus/include
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(LIEPP_CPPFLAGS) $(CPPFLAGS)
 
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 
 LDFLAGS  =
 
@@ -81,7 +75,7 @@ kalman_tfg-legacy-sim: kalman_tfg-legacy-sim.o W3dSimCommon.o
 
 # -MMD -MP records the headers each object depends on, so editing a group or
 # filter header rebuilds the test instead of silently reusing a stale object.
-%.o: %.cpp
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 -include $(wildcard *.d)

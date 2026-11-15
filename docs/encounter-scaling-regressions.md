@@ -2,6 +2,43 @@
 
 All comparisons use exact-clock oceanography-waves-lib v1.3.1 inputs: the zero-speed/free-drifting 28 ft response and the 5 kn response. The moving records are following or quartering seas. They change encounter period and acceleration without a comparable change in displacement amplitude. All eight input hashes and the two archive checksums are bound in the [paired study](../reports/results/encounter_scaling/pii_phase.json).
 
+## Remaining low-wave error
+
+The host CPU-profile correction described in `filter-simulator-gates.md` fixes
+reproducibility of the CI yaw/pitch checks; it is not a heave improvement.
+The default 5 kn, Hs=0.27 m scores remain:
+
+| Filter | JONSWAP RMS (% Hs) | PM-Stokes RMS (% Hs) |
+| --- | ---: | ---: |
+| OU-III | 8.236 | 7.839 |
+| Independent CARMA | 3.572 | 3.726 |
+| Shared QMEKF CARMA | 3.456 | 3.532 |
+| TFG CARMA | 3.572 | 3.727 |
+| Shared TFG CARMA | 3.456 | 3.533 |
+
+CARMA's absolute heave RMS is approximately 9.3–10.1 mm. The independent
+CARMA zero-speed controls are 2.461/2.409% Hs (6.64/6.50 mm). These percentages
+use incident Hs, not the vessel's much smaller heave RMS. The earlier ideal,
+vertical-only controls below show that sensor noise alone does not explain
+the regression.
+
+The [low-wave follow-up](../reports/results/encounter_scaling/low_wave_followup.json)
+retains 120 non-promoting runs, source overlays, all scored channels and gate
+failures. Doubling only vertical CARMA process sigma, broadening its vertical
+pole damping, and moving its numerator zero away from DC all fail paired
+qualification against both speeds and a held-out sensor draw. For example,
+the finite-DC prior worsens moving small-wave heave to 3.754/3.974% Hs and
+also worsens the large-wave and zero-speed controls. None is enabled.
+
+OU-III's wave-matched vertical pseudo observation still lowers small-wave
+heave to 4.424/4.635% Hs, but increases yaw from 0.382/0.371° to
+0.423/0.394° and fails attitude gates. A gravity-direction projection of the
+bias gain does not remove the tradeoff across all seas. These are rejected
+coupled-estimator changes, not a reason to weaken the attitude limits. The
+next model investigation must address the frequency response and joint
+attitude/bias separation together; another scalar variance or damping change
+is not supported by these controls.
+
 ## Physical input change
 
 | Spectrum | Nominal Hs (m) | Zero-speed Tz → 5 kn Tz (s) | Acceleration RMS after/before | Heave RMS after/before |

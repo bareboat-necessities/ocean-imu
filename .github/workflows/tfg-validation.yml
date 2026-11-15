@@ -10,6 +10,7 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
+      - 'tests/common/HostReplayFlags.mk'
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - 'src/tuner/**'
       - 'src/util/W3dSimCommon.*'
       - 'tests/kalman_tfg/**'
+      - 'tests/common/HostReplayFlags.mk'
       - '.github/workflows/tfg-validation.yml'
   workflow_dispatch:
 
