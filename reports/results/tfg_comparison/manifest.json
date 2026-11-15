@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "722a1a1f0d60c527ca0d69e7cb137a834097768899a12773e675cb67c868aa2c",
-    "TFG": "a8e82c2bb530c7a340599b021565b21d430490ef973586d35456c9e189f68536"
+    "OU_III": "9d71de116e1b31701d5fc42e1316aabae50f0ab5dc0d539e739346965be122a6",
+    "TFG": "8f0c163a6f4cb7976585e0421f03091371b85af96f6d3dca46189c6f1cf0903e"
   },
   "build_environment": {
     "compiler": {
@@ -17,7 +17,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
@@ -40,9 +40,9 @@
     "release": "v1.3.1",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-15T04:43:23+00:00",
-  "git_commit": "8b5aebea9b1ef33dd59f58e8d6ed2a15da1e67e6",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    6 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  152 +-\n reports/results/tfg_comparison/paired_summary.json | 3954 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  246 +-\n reports/results/tfg_comparison/raw_runs.json       | 2142 +++++------\n 5 files changed, 3250 insertions(+), 3250 deletions(-)",
+  "generated_utc": "2026-11-15T18:18:11+00:00",
+  "git_commit": "5a6c64b3138ed3c17cbef36e479b01b845108fb5",
+  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   | 48 +++++++++++-----------\n reports/results/tfg_comparison/raw_runs.csv        | 48 +++++++++++-----------\n reports/results/tfg_comparison/raw_runs.json       | 48 +++++++++++-----------\n 3 files changed, 72 insertions(+), 72 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -139,10 +139,10 @@
   },
   "result_sha256": {
     "comparison.tex": "f7aeea5aeec6654f3b23cee633ea8b10de40eaf5a7d3552d4a33f261e9f92225",
-    "gate_diagnostics.json": "1d6417ef3581540df5fa0fab33dc20791b7e2b1c8b867212ec603d7936c257ad",
+    "gate_diagnostics.json": "0d8b94990164819a8c857f4a5f769e23194062200d9654e87261eeba8878d401",
     "paired_summary.json": "a1335c413725acdb0089363cc3bd8063a192412e5ed00f7167bc2a5bbca269ea",
-    "raw_runs.csv": "c5b791c657bf7b10fdad7f11e385acf63fa3f26fbcb5bf9d73f7728e7d948ee2",
-    "raw_runs.json": "bbd11c7755239767b51498ecfa812c500035d82ada470652de62d4d23f47a161"
+    "raw_runs.csv": "ac626be225f5a52723ffa46ba22e32e18b9e108bdf554d1c449e4f1210390cac",
+    "raw_runs.json": "1fbe6f1f014667b5ac9fbf1f5ee893ce8a0cac768d7324b5874c2fd6f5546c55"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -196,23 +196,24 @@
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
     "tests/common/CurrentReplayLimits.h": "27809db7176660cc989a461d3f0a47eb94f64c860b621ba272573b7260908278",
     "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/common/HostReplayFlags.mk": "f34f01bdaf4f222f2c1b8d04861109b53710fd2f572da6dfae38356b58c0a851",
     "tests/common/RecordReplayLimits.h": "671e7ff6be3f59247ffdeae3d09032bf8607e43f13be3c70bba74e10fd6fd604",
     "tests/common/RecordReplayLimits.inc": "ed4e1d4bfce75190b0ab796cfde09afa08e436f20e2edb464d54b89e02045888",
     "tests/common/RecordW3dLimits.h": "9a62af11515077882505f07e13367e328e27a0f745f9eb810c8e9e40bfac12e3",
-    "tests/kalman_ou_iii/Makefile": "45832334387f7fda2f93f1695d12b9ca0f25049d7062a0040a23effd1a970363",
+    "tests/kalman_ou_iii/Makefile": "940672147ff51648582ad0eb524ea2e8c766ca21d5bdc33a4995213c1ad8ee80",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d",
-    "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
+    "tests/kalman_tfg/Makefile": "42ab6e385b147fe28214ea45d65c898185324f2a812eedbe0fca87196a195ba5",
     "tests/kalman_tfg/kalman_tfg-sim.cpp": "1883ae7f42357b58a8e09ffa42c964bc1c5c69eb1e0038e3a7e6afe683617264",
-    "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
+    "tools/ou_evidence_provenance.py": "2ea942433cb54811e06c767c7075e77f99df0741ab4fcddc0f57eb18f1d9b987",
     "tools/ou_validation.py": "fa45b6ae2ed0b4491a97eebebd30ad1c4b4fadd9f0cfcd5d8688a2bdcf127f51",
     "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
-    "tools/tfg_comparison.py": "8850f1c1db88b089f1a8f0385fe4c4d0c01e6732043b93d4f3bf7092d8c94106",
+    "tools/tfg_comparison.py": "37858d1dc086d4b604607f9c26411331374c53fc97816a12bf0806432375c812",
     "tools/underway_reference.py": "d91df15a7d6ba4865a9dc093ca81baba3e9acc297ed941e6c1bd70d16ef6dbfb"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "43677124618",
+    "run_id": "43744555921",
     "workflow": "ou-full-evidence-branch"
   }
 }

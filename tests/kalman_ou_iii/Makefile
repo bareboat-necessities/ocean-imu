@@ -6,13 +6,7 @@ EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-isystem $(EIGEN_DIR),-isystem /usr/include/eigen3)
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
 TARGETS = kalman_ou_iii-sim accel_vibration_guard-test imu_lever_arm-test kalman_ou_common-test ou_core_numerics-test aw_covariance_policy-test acc_bias_ou-test channel_freeze-test wave_period-test mag_hard_iron-test continuous_mag_hard_iron-test tuner_coupling-test tuner_schedule-test wave_band_sigma-test shipping_contract-test shipping_transition-test rs_law-test startup_init-test sampled_capture-test
@@ -60,7 +54,7 @@ shipping_transition-test: shipping_transition-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 rs_law-test: rs_law-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-%.o: %.cpp
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)
 clean:

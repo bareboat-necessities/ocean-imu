@@ -11,9 +11,25 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "tools"))
+import ou_evidence_provenance as provenance
 
 
 class SourceArchiveProvenanceTests(unittest.TestCase):
+    def test_shared_cpu_profile_is_a_replay_dependency(self):
+        for study in ("validation", "robustness"):
+            self.assertIn("tests/common/HostReplayFlags.mk",
+                          provenance.implementation_records(study))
+
+    def test_makefile_projection_retains_include_and_compile_rule(self):
+        text = (REPO_ROOT / "tests/kalman_ou_iii/Makefile").read_text()
+        original = provenance._ou_iii_sim_build_contract(text)
+        for changed in (
+            text.replace("include $(REPO_ROOT)/tests/common/HostReplayFlags.mk", ""),
+            text.replace("$(CXXFLAGS) -MMD -MP -c", "$(CXXFLAGS) -ffast-math -MMD -MP -c"),
+        ):
+            self.assertNotEqual(original, provenance._ou_iii_sim_build_contract(changed))
+
     def _copy_archive_fixture(self, destination: Path) -> None:
         # Copy exactly the material the evidence contract needs.  Deliberately
         # do not copy .git: this models GitHub source ZIPs, release archives,

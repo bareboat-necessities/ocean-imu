@@ -222,6 +222,7 @@ def source_hashes() -> dict[str, str]:
     roots = [ROOT / "src/util/W3dSimCommon.cpp"] + [b.with_suffix(".cpp") for b in BINARY.values()]
     files = set(provenance.implementation_closure(roots))
     files.update(b.parent / "Makefile" for b in BINARY.values())
+    files.add(ROOT / "tests/common/HostReplayFlags.mk")
     files.update(ROOT / n for n in ("tools/tfg_comparison.py", "tools/ou_validation.py",
         "tools/ou_evidence_provenance.py", "tools/sim_dataset.py", "tools/underway_reference.py"))
     return {str(p.relative_to(ROOT)): ov.sha256_file(p) for p in sorted(files)}

@@ -2,6 +2,102 @@
 
 All comparisons use exact-clock oceanography-waves-lib v1.3.1 inputs: the zero-speed/free-drifting 28 ft response and the 5 kn response. The moving records are following or quartering seas. They change encounter period and acceleration without a comparable change in displacement amplitude. All eight input hashes and the two archive checksums are bound in the [paired study](../reports/results/encounter_scaling/pii_phase.json).
 
+## Remaining low-wave error
+
+The host CPU-profile correction described in `filter-simulator-gates.md` fixes
+reproducibility of the CI yaw/pitch checks; it is not a heave improvement.
+The default 5 kn, Hs=0.27 m scores remain:
+
+| Filter | JONSWAP RMS (% Hs) | PM-Stokes RMS (% Hs) |
+| --- | ---: | ---: |
+| OU-III | 8.236 | 7.839 |
+| Independent CARMA | 3.572 | 3.726 |
+| Shared QMEKF CARMA | 3.456 | 3.532 |
+| TFG CARMA | 3.572 | 3.727 |
+| Shared TFG CARMA | 3.456 | 3.533 |
+
+CARMA's absolute heave RMS is approximately 9.3–10.1 mm. The independent
+CARMA zero-speed controls are 2.461/2.409% Hs (6.64/6.50 mm). These percentages
+use incident Hs, not the vessel's much smaller heave RMS. The earlier ideal,
+vertical-only controls below show that sensor noise alone does not explain
+the regression.
+
+The [low-wave follow-up](../reports/results/encounter_scaling/low_wave_followup.json)
+retains 120 non-promoting runs, source overlays, all scored channels and gate
+failures. Doubling only vertical CARMA process sigma, broadening its vertical
+pole damping, and moving its numerator zero away from DC all fail paired
+qualification against both speeds and a held-out sensor draw. For example,
+the finite-DC prior worsens moving small-wave heave to 3.754/3.974% Hs and
+also worsens the large-wave and zero-speed controls. None is enabled.
+
+OU-III's wave-matched vertical pseudo observation still lowers small-wave
+heave to 4.424/4.635% Hs, but increases yaw from 0.382/0.371° to
+0.423/0.394° and fails attitude gates. A gravity-direction projection of the
+bias gain does not remove the tradeoff across all seas. These are rejected
+coupled-estimator changes, not a reason to weaken the attitude limits. The
+next model investigation must address the frequency response and joint
+attitude/bias separation together; another scalar variance or damping change
+is not supported by these controls.
+
+## Sensor-only spectral-fit experiment
+
+The [model follow-up](../reports/results/encounter_scaling/low_wave_model_followup.json)
+contains 144 full replays and reconstructible source overlays. Five CARMA
+families each have 24 runs: both small-wave spectra, both vessel speeds,
+default seeds plus seeds 7 and 23, and baseline/candidate arms. Another 24
+OU-III runs compare the baseline, undamped and damped wave observations on
+small and large seas with two sensor draws. No estimator default or limit changes.
+
+The CARMA candidate fits the acceleration spectrum from the **noisy sensor
+stream during the first 240 s**. It uses acceleration magnitude, a noise-aware
+Whittle objective, two pole frequencies, two damping ratios and driving
+variance. It reads no displacement or attitude truth. At approximately 300 s
+it applies the fitted shape, absolute frequency and amplitude together, keeping
+the existing state and covariance. The complete final 900 s is scored. The
+60 s gap prevents the float staging clock from admitting future training data.
+The fit is frozen thereafter. Retuning shape alone while retaining the old
+period/amplitude mapping did not reproduce these improvements.
+
+| Family, default 5 kn / Hs=0.27 m | JONSWAP before → candidate (% Hs) | PM-Stokes before → candidate (% Hs) | Existing moving gates |
+| --- | ---: | ---: | --- |
+| Independent QMEKF CARMA | 3.572 → 3.253 | 3.726 → 3.333 | Both pass |
+| TFG CARMA | 3.572 → 3.254 | 3.727 → 3.333 | JONSWAP yaw fails |
+| Shared QMEKF CARMA | 3.456 → 3.244 | 3.532 → 3.325 | Pitch/bias fail |
+| Shared TFG CARMA | 3.456 → 3.244 | 3.533 → 3.325 | Attitude/bias fail |
+| Tangent shared CARMA | 3.456 → 3.244 | 3.533 → 3.325 | Attitude/bias fail |
+
+Independent QMEKF's three-draw moving mean improves 3.60148 → 3.28484% Hs,
+with all six heave pairs improving; zero-speed mean improves 2.49049 →
+1.33817%. Thus the moving/zero-speed gap is **not resolved**. The default
+moving gains are 8.9% and 10.6%, approximately 0.86 and 1.06 mm RMS.
+TFG CARMA requires its common-shape API and the same frequency on every axis;
+its vertical-only setter rejects a different shape. The corrected common-model
+experiment improves heave but misses JONSWAP yaw, 0.347021 > 0.346480 degrees.
+Shared modes also change their horizontal dynamics; pitch and bias costs
+prevent promotion. Their live shape-coordinate continuity needs separate
+qualification. A failed setter is not treated as a successful shape change.
+
+This is an offline, causal-window model experiment, **not an on-device adaptive
+implementation**. Larger seas, transitions and engine noise have not qualified
+this candidate. The retained parameters, training procedure, sensor/input and
+binary hashes, all scored channels and all gate misses make the limitation
+reviewable. The reproducer verifies source and dataset hashes before staging:
+
+```sh
+python3 tools/replay_low_wave_followup.py --work /tmp/low-wave-replay \
+  --moving-dir tests/kalman_ou_iii --stationary-dir /path/to/v1.3.1-zero-speed --run
+```
+
+For OU-III, the damped observation is
+`S_z + 2*zeta*sqrt(beta)*p_z + beta*v_z = 0`, with `zeta=0.1` and
+`beta=(tau/pi)^2`. The complete Jacobian, cross covariance and Joseph update
+are used. Default small-wave heave improves 8.236 → 4.305% Hs (JONSWAP) and
+7.839 → 4.489% (PM-Stokes), but yaw increases 0.382 → 0.418 degrees and
+0.371 → 0.392 degrees; roll also fails. The candidate is rejected. Protecting
+all accelerometer-bias rows from the vertical pseudo observation instead
+caused gross heave/bias errors, so suppressing that learning channel is not
+an acceptable fix. These results do not establish a sensor floor or instability.
+
 ## Physical input change
 
 | Spectrum | Nominal Hs (m) | Zero-speed Tz → 5 kn Tz (s) | Acceleration RMS after/before | Heave RMS after/before |

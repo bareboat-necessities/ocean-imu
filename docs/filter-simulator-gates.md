@@ -84,11 +84,26 @@ The following counts describe the additional per-record tightening:
 | Kuchler | 24 / 24 |
 | Richter | 24 / 24 |
 
-The main-branch CI control on the Hs=4 m JONSWAP record already exceeds the
-OU-III yaw ceilings: 0.886419° versus 0.87554° (production) and 0.878680° versus
-0.86774° (interval). These failures remain explicit; the limits are not raised
-to absorb them. Passing native controls do not erase runner-dependent failures.
-Restoring the old drifting worst-case accuracy still requires estimator work.
+OU-III and TFG host fixtures use the fixed Linux x86-64-v3 (AVX2/FMA) CPU
+target in `tests/common/HostReplayFlags.mk`. These host tests require a CPU
+supporting x86-64-v3; other platforms retain their existing build settings.
+Firmware flags and estimator source are unchanged. A different host arithmetic
+profile can be built diagnostically with `make -B HOST_REPLAY_ARCH_FLAGS=...`.
+
+Run 43734792425 exposed why the CPU target is part of the experiment:
+`-march=native` selected AVX-512 on one runner and changed Eigen's arithmetic.
+On the same local machine a clean native OU-III build gives Hs=4 m JONSWAP
+yaw 0.886416°, while x86-64-v3 gives 0.871181° and restores the saved AVX2
+result exactly. The interval result is 0.863419°. Both pass the unchanged
+0.87554° / 0.86774° limits. The TFG comparison's Hs=8.5 m JONSWAP interval
+pitch is 0.093262° versus the unchanged 0.09461° bar (CI native: 0.094639°).
+All 40 OU-III, TFG and legacy-TFG sea/profile cases pass; source, binary and
+input identities are in [the CPU-profile receipt](../reports/results/filter_sim_gates/host_cpu_profile.json).
+The included build settings participate in OU and TFG evidence provenance,
+so previous publication bundles require real regeneration, not restamping.
+
+This repairs fixture reproducibility. It does not recover the old drifting
+heave accuracy; that estimator limitation remains documented separately.
 
 The [verification record](../reports/results/filter_sim_gates/per_record_verification.json)
 retains all 32 passing native OU-II/OU-III scores, binary/input identities, and

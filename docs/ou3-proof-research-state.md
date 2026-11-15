@@ -1,69 +1,100 @@
-## All-filter per-sea regression gates
+## Current low-wave model follow-up
 
-Current scope: preserve merged estimator source and apply record-specific caps
-to every qualified default replay family/profile. The 256 combinations contain
-1,120 active limits; 991 are tighter than the preceding global ceilings, and
-none are wider. All OU, CARMA and TFG variants with measured default bars,
-tangent shared-mode, AHRS, PII, NLO and heave-only frontends are covered.
-Explicit seed sweeps retain their previous diagnostic bars. Process-prior,
-lever-arm and alternative-prior diagnostics retain their separate contracts.
+Current hypothesis: encounter-spectrum mismatch contributes to the moving
+low-wave error, but its correction must preserve joint attitude/bias learning.
+The source-bound 144-run diagnostic in
+`reports/results/encounter_scaling/low_wave_model_followup.json` fits only
+0..240 s of noisy accelerometer magnitude and scores the complete final
+900 s after a staged model change. Independent QMEKF CARMA moving small-wave
+heave improves 3.572/3.726 → 3.253/3.333% Hs and passes both default gates;
+its three-seed mean improves 3.60148 → 3.28484%. This is an offline experimental
+model, not a promoted device implementation or an all-sea qualification.
 
-Evidence: source 8b5aebe passes all eleven focused gate tests; the isolated
-heave-ablation follow-up passes all twelve, including configuration isolation. Restored native
-OU-II and OU-III builds pass all 32 sea/profile replays. Completed hosted jobs
-pass all other filter families, including 112 heave-only cases and 24 plain/legacy
-TFG cases. Exact source/input/binary/log identities and all native scores are
-retained in `reports/results/filter_sim_gates/per_record_verification.json`.
-Hosted OU-III job 132699747477 passed 14/16 replay cases and reproduced
-the two yaw failures below. Its pre-regeneration checkout also failed the TFG
-publication-freshness check; 20379a9 contains the freshly regenerated bundles.
+Class E failed qualifications: shared CARMA improves heave but fails
+pitch/bias gates; the corrected common-model TFG CARMA experiment fails
+JONSWAP yaw, 0.347021 > 0.346480 deg. An initial TFG probe ignored a rejected
+vertical-only shape setter; its numbers are invalid for the intended shape
+experiment and are excluded from the retained comparison. The corrected
+probe checks the return and uses the supported common shape/frequency.
+OU-III's damped wave observation lowers default small-wave heave to
+4.305/4.489% Hs but fails yaw (0.418392 > 0.383600 and 0.391542 > 0.372690 deg)
+and roll. Complete vertical-bias Schmidt protection instead worsens small
+JONSWAP heave to 15.3421 > 8.27723% Hs. Lower measurement-noise weight also
+fails attitude/bias qualification; a sensor-level tuner noise floor changes
+heave negligibly. These gain/variance refinements are closed, not promoted.
 
-Classification E, existing runner-dependent numeric gate failure: main c9d3219
-CI job 132679582303 records OU-III Hs=4 m JONSWAP yaw 0.886419 > 0.87554 deg
-(production) and 0.878680 > 0.86774 deg (interval). This invalidates an all-runner
-pass claim, not a stability result. Those caps are retained, not widened.
-The current limiter remains the two runner-dependent yaw failures, not heave
-gate coverage. A same-input compiler/arithmetic comparison is the next
-falsifiable diagnostic; passing native controls do not erase hosted failures.
+Class E infrastructure: full evidence run 43744555921 completed its replay
+and combine jobs but its commit job failed on the stale ledger blob in
+`ou3_stability/provenance.json`. The genuine three full CI artifacts are now
+restored and their publication contract verifies; no historical replay hashes
+were restamped. `make all MAKE='make -j2'` was killed in
+`carma_shared_modes_realization-test.o` while other compiles ran; serial
+qualification is required. The separate local evidence suite initially had
+one environment error (LuaLaTeX format/font support), not an estimator failure.
 
-Classification E, incomplete local validation: serial `make -j1 all` attempts
-were interrupted to expand the gate scope and correct diagnostic lookup order.
-The final attempt reached shared-TFG compilation before a workspace reset
-removed the checkout and build products. No complete local-suite pass is claimed.
-An initial unqualified C++ test lookup selected `std::find` through ADL; the
-qualified call now passes. These instrumentation/infrastructure failures do not
-invalidate the subsequently completed native and hosted replay receipts. A
-second `make -j1 all`, after the diagnostic-only heave fix, reached calibration
-compilation before the execution service disconnected; its partial heave replay
-also has no completion receipt. Separate final heave checks pass all 112 default cases. The body-Z ablation
-passes at 8.42477% Hs against its retained 12.12% diagnostic bar, while the
-5.85437% default record bar remains unchanged. These checks are retained in
-the verification record.
-The local 1,210-test evidence suite initially had one TeX error (missing
-`lualatex.fmt`, then font/cache setup). Restoring the runtime resources resolved
-it: the complete repeated suite passed with one skipped; no test was weakened.
-A standalone provenance check was initially invoked without its module path;
-correcting `PYTHONPATH=tests/validation` made the unchanged check pass.
+Retained facts / limiter: the independent CARMA candidate improves both
+speeds, so it does not close their gap. Shared-pole changes also affect
+horizontal dynamics; live coordinate transport and full-state qualification
+remain necessary. No additional scalar gain search is justified. Next
+falsifiable experiment: qualify a causal sensor-spectrum adaptation with
+explicit state/covariance transport and separate shape/frequency/amplitude
+ablations on independent and shared models, including larger seas and engine
+controls before enabling a default.
 
-Classification E, resolved publication freshness: the new replay gate closure
-invalidated the preceding validation/robustness and TFG comparison bundles.
-Workflow 43677124618 freshly regenerated all six OU shards and the TFG study,
-passed its 1,210-test publication suite (one skipped), and committed the evidence
-as 20379a9268df3951da80aba5676b0048500aabb3. Old replay hashes were not restamped.
-The source 8b5aebe replay fingerprint is
-`7b508d38916875ce2bbbf6535c18bfc04016dd12a151832e619c15d073696b6e`.
-The subsequent heave-only diagnostic guard changes the broad source fingerprint,
-so its record is retained for CI to detect and regenerate, not restamped.
-OU/TFG replay dependency closures are unchanged and their contracts pass.
+Six-item handoff: (1) shipping states, equations, covariance, startup, magnetic
+service, tuner and physical histories are unchanged; (2) the staged overlays
+are experimental estimators, not lossless proof models; (3) rejected numeric
+and infrastructure attempts are E; (4) no shipping counterexample is claimed;
+(5) existing algebraic results and open theorem/physical qualifications remain;
+(6) use the full joint model and history in the next qualification. No proof
+closure or universally improved default is claimed.
 
-Six-item handoff: (1) all shipping OU-III states, dynamics, covariance/gains,
-tuner, scheduler, magnetic service and continuous physical histories preserved;
-(2) no estimator/proof relaxation; (3) interrupted builds, test instrumentation,
-runner gate failures and stale publication are E; (4) no shipping counterexample
-found; (5) established algebra and open physical/theorem qualifications remain
-unchanged; (6) complete qualification of the heave diagnostic guard and continue
-the same-history accelerometer/covariance and arithmetic diagnosis below. Old drifting accuracy recovery is not
-claimed by lowering acceptance limits.
+## Host arithmetic and earlier low-wave diagnosis
+
+Current hypothesis: the fixed-draw CI yaw/pitch failures are caused by
+CPU-dependent Eigen arithmetic, separately from the encounter/heave error.
+On source 13f77b89, the same machine and inputs give OU-III H4 JONSWAP yaw
+0.886416 deg with native AVX-512 and 0.871181 deg with x86-64-v3 AVX2.
+The latter exactly reproduces the saved passing binary. Interval yaw is
+0.863419 deg; TFG H8.5 JONSWAP interval pitch is 0.093262 deg. All 40 OU-III,
+TFG and legacy-TFG cases pass unchanged limits under the fixed host profile.
+See `reports/results/filter_sim_gates/host_cpu_profile.json`.
+
+Classification E: CI run 43734792425 job 132879743097 fails OU-III default /
+interval yaw (0.886419 > 0.87554 / 0.878680 > 0.86774 deg) and the TFG plot
+comparison interval pitch (0.0946392 > 0.09461 deg). The invalidated hypothesis
+is that `-march=native` reproduces one fixed arithmetic experiment on every
+host. Host Makefiles now share a fixed x86-64-v3 target; estimator/firmware
+source and all gates are preserved. Build includes participate in provenance;
+old publication hashes are not relabeled as new replays.
+
+Classification E, non-promoting estimator diagnostics: vertical CARMA sigma,
+broader damping and finite-DC numerator candidates fail paired qualification.
+The OU-III wave-matched pseudo observation and one directional-bias refinement
+still trade lower heave for attitude/bias degradation. Exact overlays and 120
+runs are in `reports/results/encounter_scaling/low_wave_followup.json`.
+The second failure of selective gain protection closes that scalar refinement
+path: the next falsifiable experiment requires an architecture-level joint
+frequency-response / attitude-bias separation model with independent sea,
+noise and engine controls. No default estimator change is justified here.
+
+Structures preserved: all shipping states, equations, covariance updates,
+startup, clocks, tuning, magnetic service and continuous physical histories.
+Relaxations introduced: none in shipping code; explicitly labeled include
+overlays are rejected experimental estimators. Six-item handoff: (1) those
+shipping structures remain intact; (2) experimental overlays are not proof
+models or deployment qualifications; (3) observed numeric/CI failures are E;
+(4) no shipping stability counterexample is claimed; (5) existing algebra and
+open physical/theorem qualifications are retained; (6) qualify full build and
+regenerated publication evidence, then test a joint-model alternative against
+the retained low-wave controls. Host reproducibility does not imply recovered
+moving-vessel accuracy or a closed stability theorem.
+
+The all-filter per-sea gate inventory remains active: 256 family/profile/sea
+combinations, 1,120 limits, of which 991 tightened the preceding global caps.
+Gate coverage and older receipts remain in `docs/filter-simulator-gates.md`;
+only the host-arithmetic cause and its qualification supersede the previous
+unresolved runner-failure diagnosis.
 
 ## Current encounter-regression continuation
 
