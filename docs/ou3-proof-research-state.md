@@ -1,3 +1,33 @@
+## Post-merge replay-gate tightening
+
+Current scope: preserve merged estimator source at c9d3219 and tighten 61
+previously loose TFG/shared-mode acceptance limits using retained native and
+CI scores. Both gyro profiles and the tangent shared-bar consumer are covered.
+No limit is widened and no OU-III runtime source is changed. The remaining
+OU-II/OU-III/independent-CARMA speed penalties are not declared solved.
+
+Classification E, publication freshness: changing `CurrentReplayLimits.h`
+invalidates the companion's conservative implementation closure.
+`python tools/tfg_comparison.py --check --require-ci` fails with
+`ValueError: TFG comparison source provenance is stale`. Old scores and
+source hashes are not restamped. `python tools/ou_evidence_contract.py --auto`
+also reports `validation: replay dependency differs from replay provenance:
+tests/common/CurrentReplayLimits.h` and the same error for robustness.
+The branch evidence workflow must regenerate and validate all three bundles
+before publication. Nine focused gate-contract
+tests pass; serial `make -j1 all` is running. Dense NLO/PII output CSVs are
+redirected to `/dev/null` for this run because their writers ignore the
+suppression flag; full-rate input histories and in-memory RMS scoring are
+unchanged. The failed stale-publication check is not a numerical regression.
+
+Six-item handoff: (1) all shipping OU-III states, dynamics, covariance/gains,
+tuner, scheduler, magnetic service and continuous physical histories are
+preserved; (2) no new estimator or proof relaxation; (3) the freshness failure
+is E; (4) no shipping counterexample found; (5) established algebra and open
+physical/theorem qualifications remain unchanged; (6) complete fresh gate
+replays/publication, then continue the same-history accelerometer/covariance
+diagnosis recorded below. Old drifting worst-case targets remain explicit.
+
 ## Current encounter-regression continuation
 
 **Current hypothesis.** Reduced encounter acceleration exposes drift-regularizer

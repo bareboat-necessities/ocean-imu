@@ -99,9 +99,48 @@ class ReplayEvidenceTests(unittest.TestCase):
             for gate, value in compiled.items():
                 self.assertGreater(value, family['measured_worst'][gate], (name, gate))
                 expected = math.ceil(family['measured_worst'][gate] * 1.005 / 1e-5) * 1e-5
+                if 'previous_current_limits' in family:
+                    expected = min(expected, family['previous_current_limits'][gate])
                 self.assertAlmostEqual(value, expected, places=5)
         from sim_dataset import SHA256
         self.assertEqual(evidence['inputs']['archive_sha256'], SHA256)
+
+    def test_tightened_profiles_cover_every_retained_control_without_widening(self):
+        folder = ROOT / 'reports/results/filter_sim_gates'
+        evidence = json.loads((folder / 'limits.json').read_text())
+        study = json.loads((folder / 'gate_tightening.json').read_text())
+        header = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text()
+        sections = header.split('namespace interval {')
+        self.assertEqual(study['inputs'], evidence['inputs'])
+        for name, profiles in study['controls'].items():
+            family = evidence['families'][name]
+            for profile, controls in profiles.items():
+                key = 'current_limits' if profile == 'default' else 'interval_limits'
+                section = sections[0 if profile == 'default' else 1]
+                block = re.search(r'W3dFailureLimits ' + name + r'\{(.*?)\};', section, re.S)[1]
+                compiled = {k: float(v) for k, v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', block)}
+                self.assertEqual(compiled, family[key])
+                for control in controls:
+                    self.assertEqual(len(control['rows']), 8)
+                    self.assertEqual({r['input'] for r in control['rows']}, set(study['inputs']['input_sha256']))
+                for gate, limit in compiled.items():
+                    worst = max(G.measured_worst(c['rows'])[gate] for c in controls)
+                    previous = family['previous_' + key][gate]
+                    expected = min(previous, math.ceil(worst * 1.005 / 1e-5) * 1e-5)
+                    self.assertGreater(limit, worst, (name, profile, gate))
+                    self.assertLessEqual(limit, previous, (name, profile, gate))
+                    self.assertAlmostEqual(limit, expected, places=5)
+
+    def test_tfg_heave_gates_reject_the_pre_improvement_regression(self):
+        limits = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
+        for family, filename in [('tfg', 'tfg_wave_matched.json'),
+                                 ('tfg_legacy', 'tfg_legacy_wave_matched.json')]:
+            study = json.loads((ROOT / 'reports/results/encounter_scaling' / filename).read_text())
+            for wave in ('jonswap', 'pmstokes'):
+                old = max(r['metrics']['disp_z_pct_hs'] for r in study['rows']
+                          if r['dataset'] == 'moving' and r['seed'] == 'default'
+                          and r['arm'] == 'previous' and wave in r['input'])
+                self.assertGreater(old, limits['families'][family]['current_limits']['err_limit_percent_z_' + wave])
 
 
     def test_make_log_keeps_sampling_profiles_separate_and_rejects_failed_runs(self):
