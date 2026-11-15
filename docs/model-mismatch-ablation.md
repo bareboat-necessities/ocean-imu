@@ -1,5 +1,10 @@
 # Noise-free model-mismatch ablation
 
+The numerical study below is archived stationary-vessel evidence from v1.2.1.
+New runs use the pinned v1.3.1 5 kn / ±3° moving-boat records; see the
+[current baseline](moving-vessel-results.md) and [before/after comparison](moving-vessel-comparison.md).
+The archived scores are not measurements of the moving boat.
+
 ## Purpose
 
 This ablation estimates the residual error floor of the deployed OU-II, OU-III,

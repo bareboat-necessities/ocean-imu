@@ -1,10 +1,15 @@
-\section{Comparative Validation on Vessel-Response Records}
+\section{Archived Comparative Validation on Zero-Speed Records}
 \label{sec:csm-validation}
 \subsection{Protocol, comparators and scoring}
+This section retains the v1.2.3 stationary-vessel experiment, including its
+original paired comparisons and machinery/transition traces. It is not
+underway evidence. The current v1.3.1 deterministic baseline is stated
+separately; its rebaselining does not transfer these confidence intervals.
+
 The following experiments evaluate the complete shared-mode estimator,
 including its proxy, magnetic acquisition, bias release and adaptation.
 They use the same simulation machinery as the OU--III article: the
-versioned \texttt{oceanography-waves-lib} v1.3.1 estimated 28~ft fin-keel
+versioned \texttt{oceanography-waves-lib} v1.2.3 estimated 28~ft fin-keel
 vessel-response records. JONSWAP and PM--Stokes each supply four stationary
 incident significant heights, $H_s=0.27,1.5,4.0,8.5$~m. The response of
 this one prescribed hull is not a measured sea trial or a population of

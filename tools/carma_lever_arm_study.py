@@ -42,6 +42,7 @@ import math
 import os
 import shutil
 import tempfile
+import ou_evidence_provenance
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Iterable, Sequence
@@ -673,7 +674,9 @@ def main() -> int:
     manifest = {
         "study": "CARMA IMU lever-arm installation",
         "source_commit": ou3.source_commit(),
-        "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft",
+        "binary_sha256": ou3.sha256(BINARY),
+        "build_environment": ou_evidence_provenance.environment_metadata(),
+        "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft-5kn",
         "simulation_provenance": dataset,
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,

@@ -1,0 +1,959 @@
+{
+  "role": "non-promoting diagnostic; three sea sizes, two speeds, default sensor seed",
+  "protocol": "1200 s at 200 Hz; full-rate final 900 s; no detrending or fitting",
+  "source_commit": "49ec86262052bd3fa8460b2d43d04ccde23b42f9",
+  "source_sha256": {
+    "src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+    "src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+    "src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+    "src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+    "src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+    "src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+    "src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+    "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+    "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+    "src/kalman_common/MarineWaveFrontEnd.h": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
+    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+    "src/kalman_common/ProxyStartupFusion.h": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
+    "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+    "src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h": "19c68149683be53f55f2c4966c844d7147c9f4dda321252a277b050eaff523c5",
+    "src/kalman_ou_ii/SeaStateFusionFilter_OU_II.h": "6803377c6e4518c2b63978149c1b1da84c6140dc07e697991b6cb0f4759d3b52",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "549a541e14cb544e39b9c513fd073526f752fdc4525a4b6846a4165aa114f622",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "99fced1427b9fe3d398a8564c596b966f3ac468e22f66fa37e4f917b41897101",
+    "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+    "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+    "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+    "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+    "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+    "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+    "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+    "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+    "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+    "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+    "src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+    "src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+    "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+    "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+    "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+    "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+    "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/kalman_ou_ii/Makefile": "991c6e64ca7008f8f38010b5118fd1fb8cfa655159a645a46389ae2200e8669d",
+    "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp": "c677621e9b56ad37177a3536e67a189cdfc7b620b21c5e81cfb9b70a612040c6",
+    "tests/kalman_ou_iii/Makefile": "45832334387f7fda2f93f1695d12b9ca0f25049d7062a0040a23effd1a970363",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "bb49b2aa454ff6318fcd07847f269821e3f368245026feb34c0c832a05584857",
+    "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "d4600df9c449a19f85d75d2bb7e2c602d7d57f7acb18e3fb1d8c69ec719a42e6"
+  },
+  "binary_sha256": {
+    "ou2": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+    "ou3": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+    "tfg": "8ef6ed408196d1ddc69af88a2f183c99c820f948708dd19114b100d82e6bf3b9"
+  },
+  "driver_sha256": "b630a7849ce00803f97ad4b567b32daf0e4bb97fb64ab353236dae392cee1f2d",
+  "build_environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "compiler": {
+      "command": "g++",
+      "version": "14.2.0",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "CXXFLAGS_env": "",
+      "CPPFLAGS_env": ""
+    },
+    "eigen": {
+      "version": "3.4.0",
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/workspace/scratch/0f70d6e02277/ocean-imu-moving/third_party/eigen/Eigen/src/Core/util/Macros.h"
+    }
+  },
+  "arms": {
+    "baseline": {},
+    "no_periodic_sync": {
+      "W3D_AW_COV_SYNC": "reconfigure",
+      "TFG_AW_COV_SYNC": "0"
+    },
+    "slower_commits": {
+      "OU_ADAPT_EVERY_SECS": "0.5"
+    }
+  },
+  "inputs": {
+    "stationary": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "1eaa5be44dc0c0900658170efe7392085bedf377a90af1feb3345c715ad750ea",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "19bbe7c56f9da74a18497461a69638b5eef03265b5eaca937feec5c5b9889a53",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "90408172af21214fd46da50a57a340540175a18ce3600834bba1b7faa81307dd",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f738de0faa1bd030c2ecb7d6fb81358f8c6b59f15ce60512f77ad01907c26f6d",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "da1c20739ec76966580f3d68a5e905999e2a5d23fd43265d6e8510e6588bbbf5"
+      }
+    },
+    "moving": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 120.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
+      }
+    }
+  },
+  "rows": [
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.13903189,
+        "disp_z_rms_m": 0.0165753867,
+        "disp_3d_rms_m": 0.0207985491,
+        "roll_rms_deg": 0.209893748,
+        "pitch_rms_deg": 0.151520148,
+        "yaw_rms_deg": 0.522794962,
+        "accel_bias_3d_rms_mps2": 0.0441433676,
+        "gyro_bias_3d_rms_radps": 0.000103950442
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.14805269,
+        "disp_z_rms_m": 0.0165997427,
+        "disp_3d_rms_m": 0.020829523,
+        "roll_rms_deg": 0.212948784,
+        "pitch_rms_deg": 0.150867164,
+        "yaw_rms_deg": 0.522124052,
+        "accel_bias_3d_rms_mps2": 0.0445026234,
+        "gyro_bias_3d_rms_radps": 0.000103772603
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.14706707,
+        "disp_z_rms_m": 0.016597081,
+        "disp_3d_rms_m": 0.0208232794,
+        "roll_rms_deg": 0.212816536,
+        "pitch_rms_deg": 0.150772721,
+        "yaw_rms_deg": 0.522134364,
+        "accel_bias_3d_rms_mps2": 0.0444750004,
+        "gyro_bias_3d_rms_radps": 0.000103585931
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.64238977,
+        "disp_z_rms_m": 0.0996358469,
+        "disp_3d_rms_m": 0.143334642,
+        "roll_rms_deg": 0.147589624,
+        "pitch_rms_deg": 0.166159123,
+        "yaw_rms_deg": 0.615633368,
+        "accel_bias_3d_rms_mps2": 0.0376902781,
+        "gyro_bias_3d_rms_radps": 0.000110874811
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.6436491,
+        "disp_z_rms_m": 0.0996547416,
+        "disp_3d_rms_m": 0.143460691,
+        "roll_rms_deg": 0.146888658,
+        "pitch_rms_deg": 0.166485295,
+        "yaw_rms_deg": 0.613254547,
+        "accel_bias_3d_rms_mps2": 0.0376564786,
+        "gyro_bias_3d_rms_radps": 0.000111419889
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.6496644,
+        "disp_z_rms_m": 0.0997449681,
+        "disp_3d_rms_m": 0.14349252,
+        "roll_rms_deg": 0.146949038,
+        "pitch_rms_deg": 0.166229948,
+        "yaw_rms_deg": 0.610889435,
+        "accel_bias_3d_rms_mps2": 0.0376302786,
+        "gyro_bias_3d_rms_radps": 0.000111176254
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 6.04779291,
+        "disp_z_rms_m": 0.514062405,
+        "disp_3d_rms_m": 0.922250092,
+        "roll_rms_deg": 0.212770715,
+        "pitch_rms_deg": 0.202090055,
+        "yaw_rms_deg": 0.597602487,
+        "accel_bias_3d_rms_mps2": 0.0492667928,
+        "gyro_bias_3d_rms_radps": 0.000129960565
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 6.04387665,
+        "disp_z_rms_m": 0.513729513,
+        "disp_3d_rms_m": 0.922146142,
+        "roll_rms_deg": 0.212011576,
+        "pitch_rms_deg": 0.203028128,
+        "yaw_rms_deg": 0.600271046,
+        "accel_bias_3d_rms_mps2": 0.0492985025,
+        "gyro_bias_3d_rms_radps": 0.000130244065
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 6.05090284,
+        "disp_z_rms_m": 0.514326751,
+        "disp_3d_rms_m": 0.922057807,
+        "roll_rms_deg": 0.212113023,
+        "pitch_rms_deg": 0.202730656,
+        "yaw_rms_deg": 0.59861511,
+        "accel_bias_3d_rms_mps2": 0.0492727123,
+        "gyro_bias_3d_rms_radps": 0.000130138214
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 8.48621082,
+        "disp_z_rms_m": 0.0229127686,
+        "disp_3d_rms_m": 0.0312254671,
+        "roll_rms_deg": 0.204838574,
+        "pitch_rms_deg": 0.164632887,
+        "yaw_rms_deg": 0.350500166,
+        "accel_bias_3d_rms_mps2": 0.04429451,
+        "gyro_bias_3d_rms_radps": 0.000111067326
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 8.48193932,
+        "disp_z_rms_m": 0.022901237,
+        "disp_3d_rms_m": 0.0312134419,
+        "roll_rms_deg": 0.223393142,
+        "pitch_rms_deg": 0.164757788,
+        "yaw_rms_deg": 0.354075491,
+        "accel_bias_3d_rms_mps2": 0.0468437821,
+        "gyro_bias_3d_rms_radps": 0.000111352099
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 8.47379589,
+        "disp_z_rms_m": 0.0228792485,
+        "disp_3d_rms_m": 0.0311959423,
+        "roll_rms_deg": 0.219773263,
+        "pitch_rms_deg": 0.164579272,
+        "yaw_rms_deg": 0.353357911,
+        "accel_bias_3d_rms_mps2": 0.0463230833,
+        "gyro_bias_3d_rms_radps": 0.000111286543
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 7.62653255,
+        "disp_z_rms_m": 0.114397995,
+        "disp_3d_rms_m": 0.175282449,
+        "roll_rms_deg": 0.16320236,
+        "pitch_rms_deg": 0.151917294,
+        "yaw_rms_deg": 0.898962259,
+        "accel_bias_3d_rms_mps2": 0.036840599,
+        "gyro_bias_3d_rms_radps": 0.000103974409
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 7.62508631,
+        "disp_z_rms_m": 0.114376299,
+        "disp_3d_rms_m": 0.17531772,
+        "roll_rms_deg": 0.161984831,
+        "pitch_rms_deg": 0.152167931,
+        "yaw_rms_deg": 0.895285666,
+        "accel_bias_3d_rms_mps2": 0.0367201082,
+        "gyro_bias_3d_rms_radps": 0.000104522318
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 7.62898445,
+        "disp_z_rms_m": 0.114434771,
+        "disp_3d_rms_m": 0.175261423,
+        "roll_rms_deg": 0.162284091,
+        "pitch_rms_deg": 0.151879013,
+        "yaw_rms_deg": 0.888972044,
+        "accel_bias_3d_rms_mps2": 0.0367244445,
+        "gyro_bias_3d_rms_radps": 0.000104398547
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.87118053,
+        "disp_z_rms_m": 0.584050357,
+        "disp_3d_rms_m": 1.07162058,
+        "roll_rms_deg": 0.179756403,
+        "pitch_rms_deg": 0.187535375,
+        "yaw_rms_deg": 0.843000829,
+        "accel_bias_3d_rms_mps2": 0.0420133658,
+        "gyro_bias_3d_rms_radps": 0.000116171381
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.87439871,
+        "disp_z_rms_m": 0.584323883,
+        "disp_3d_rms_m": 1.07183909,
+        "roll_rms_deg": 0.179760382,
+        "pitch_rms_deg": 0.188386336,
+        "yaw_rms_deg": 0.846205056,
+        "accel_bias_3d_rms_mps2": 0.0421198085,
+        "gyro_bias_3d_rms_radps": 0.000115766125
+      }
+    },
+    {
+      "family": "ou2",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 6.88148785,
+        "disp_z_rms_m": 0.584926486,
+        "disp_3d_rms_m": 1.07166278,
+        "roll_rms_deg": 0.179903194,
+        "pitch_rms_deg": 0.188106582,
+        "yaw_rms_deg": 0.845746636,
+        "accel_bias_3d_rms_mps2": 0.0420956016,
+        "gyro_bias_3d_rms_radps": 0.000115995143
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.2492137,
+        "disp_z_rms_m": 0.0114728771,
+        "disp_3d_rms_m": 0.0172482412,
+        "roll_rms_deg": 0.308397561,
+        "pitch_rms_deg": 0.11928837,
+        "yaw_rms_deg": 0.492509484,
+        "accel_bias_3d_rms_mps2": 0.0562956445,
+        "gyro_bias_3d_rms_radps": 0.000105852538
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 4.24612474,
+        "disp_z_rms_m": 0.0114645371,
+        "disp_3d_rms_m": 0.0171821043,
+        "roll_rms_deg": 0.390183151,
+        "pitch_rms_deg": 0.105009183,
+        "yaw_rms_deg": 0.486330956,
+        "accel_bias_3d_rms_mps2": 0.0687981471,
+        "gyro_bias_3d_rms_radps": 0.00010623454
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 4.25703144,
+        "disp_z_rms_m": 0.0114939846,
+        "disp_3d_rms_m": 0.0172353163,
+        "roll_rms_deg": 0.37593627,
+        "pitch_rms_deg": 0.103265181,
+        "yaw_rms_deg": 0.489045084,
+        "accel_bias_3d_rms_mps2": 0.0663590282,
+        "gyro_bias_3d_rms_radps": 0.000106197149
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.10599947,
+        "disp_z_rms_m": 0.0615899973,
+        "disp_3d_rms_m": 0.111587167,
+        "roll_rms_deg": 0.16731371,
+        "pitch_rms_deg": 0.114214219,
+        "yaw_rms_deg": 0.378935218,
+        "accel_bias_3d_rms_mps2": 0.0341265649,
+        "gyro_bias_3d_rms_radps": 0.000110538997
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.11048746,
+        "disp_z_rms_m": 0.0616573133,
+        "disp_3d_rms_m": 0.111657195,
+        "roll_rms_deg": 0.16268453,
+        "pitch_rms_deg": 0.112280898,
+        "yaw_rms_deg": 0.376140833,
+        "accel_bias_3d_rms_mps2": 0.0332721882,
+        "gyro_bias_3d_rms_radps": 0.00011125434
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.11815929,
+        "disp_z_rms_m": 0.0617723949,
+        "disp_3d_rms_m": 0.111905962,
+        "roll_rms_deg": 0.163358346,
+        "pitch_rms_deg": 0.110775508,
+        "yaw_rms_deg": 0.368790656,
+        "accel_bias_3d_rms_mps2": 0.0332143605,
+        "gyro_bias_3d_rms_radps": 0.000111079484
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 3.70579672,
+        "disp_z_rms_m": 0.314992726,
+        "disp_3d_rms_m": 0.735751629,
+        "roll_rms_deg": 0.285948098,
+        "pitch_rms_deg": 0.137470409,
+        "yaw_rms_deg": 0.321578354,
+        "accel_bias_3d_rms_mps2": 0.0526687391,
+        "gyro_bias_3d_rms_radps": 0.000124561629
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 3.70341015,
+        "disp_z_rms_m": 0.314789861,
+        "disp_3d_rms_m": 0.736082196,
+        "roll_rms_deg": 0.282778412,
+        "pitch_rms_deg": 0.135966122,
+        "yaw_rms_deg": 0.322637171,
+        "accel_bias_3d_rms_mps2": 0.0520512871,
+        "gyro_bias_3d_rms_radps": 0.000124602913
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 3.70233965,
+        "disp_z_rms_m": 0.314698875,
+        "disp_3d_rms_m": 0.737352848,
+        "roll_rms_deg": 0.28346926,
+        "pitch_rms_deg": 0.135592237,
+        "yaw_rms_deg": 0.319604516,
+        "accel_bias_3d_rms_mps2": 0.0521237291,
+        "gyro_bias_3d_rms_radps": 0.000124510669
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 8.23604965,
+        "disp_z_rms_m": 0.0222373344,
+        "disp_3d_rms_m": 0.0369727463,
+        "roll_rms_deg": 0.300123245,
+        "pitch_rms_deg": 0.151279956,
+        "yaw_rms_deg": 0.381683469,
+        "accel_bias_3d_rms_mps2": 0.0567988753,
+        "gyro_bias_3d_rms_radps": 0.00011252478
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 8.16948223,
+        "disp_z_rms_m": 0.0220576022,
+        "disp_3d_rms_m": 0.0362323485,
+        "roll_rms_deg": 0.537100852,
+        "pitch_rms_deg": 0.125138268,
+        "yaw_rms_deg": 0.547939777,
+        "accel_bias_3d_rms_mps2": 0.0937254429,
+        "gyro_bias_3d_rms_radps": 0.000115184033
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 8.19360352,
+        "disp_z_rms_m": 0.0221227296,
+        "disp_3d_rms_m": 0.036670953,
+        "roll_rms_deg": 0.475177944,
+        "pitch_rms_deg": 0.131807506,
+        "yaw_rms_deg": 0.491934568,
+        "accel_bias_3d_rms_mps2": 0.0837144554,
+        "gyro_bias_3d_rms_radps": 0.000114400864
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 5.50112581,
+        "disp_z_rms_m": 0.0825168937,
+        "disp_3d_rms_m": 0.158590764,
+        "roll_rms_deg": 0.131164953,
+        "pitch_rms_deg": 0.139649704,
+        "yaw_rms_deg": 0.735916197,
+        "accel_bias_3d_rms_mps2": 0.0314023308,
+        "gyro_bias_3d_rms_radps": 0.000102563055
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 5.48125553,
+        "disp_z_rms_m": 0.0822188333,
+        "disp_3d_rms_m": 0.158340409,
+        "roll_rms_deg": 0.0608538315,
+        "pitch_rms_deg": 0.201240078,
+        "yaw_rms_deg": 0.957199752,
+        "accel_bias_3d_rms_mps2": 0.035172306,
+        "gyro_bias_3d_rms_radps": 0.000102408769
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_pct_hs": 5.48230028,
+        "disp_z_rms_m": 0.0822345093,
+        "disp_3d_rms_m": 0.158939362,
+        "roll_rms_deg": 0.0737700388,
+        "pitch_rms_deg": 0.189402983,
+        "yaw_rms_deg": 0.892085791,
+        "accel_bias_3d_rms_mps2": 0.0338648334,
+        "gyro_bias_3d_rms_radps": 0.000102599683
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.39795399,
+        "disp_z_rms_m": 0.373826087,
+        "disp_3d_rms_m": 0.900062978,
+        "roll_rms_deg": 0.173384681,
+        "pitch_rms_deg": 0.155063912,
+        "yaw_rms_deg": 0.617735624,
+        "accel_bias_3d_rms_mps2": 0.0366789587,
+        "gyro_bias_3d_rms_radps": 0.000112237103
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.39729595,
+        "disp_z_rms_m": 0.373770177,
+        "disp_3d_rms_m": 0.900201201,
+        "roll_rms_deg": 0.152705312,
+        "pitch_rms_deg": 0.153264657,
+        "yaw_rms_deg": 0.623606086,
+        "accel_bias_3d_rms_mps2": 0.0337775461,
+        "gyro_bias_3d_rms_radps": 0.000111545793
+      }
+    },
+    {
+      "family": "ou3",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "slower_commits",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.39576292,
+        "disp_z_rms_m": 0.373639852,
+        "disp_3d_rms_m": 0.901846588,
+        "roll_rms_deg": 0.15844439,
+        "pitch_rms_deg": 0.153709635,
+        "yaw_rms_deg": 0.620634079,
+        "accel_bias_3d_rms_mps2": 0.0345504656,
+        "gyro_bias_3d_rms_radps": 0.000111845628
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.36270761,
+        "disp_z_rms_m": 0.0117793111,
+        "disp_3d_rms_m": 0.0171212815,
+        "roll_rms_deg": 0.294766098,
+        "pitch_rms_deg": 0.0457723923,
+        "yaw_rms_deg": 0.530372739,
+        "accel_bias_3d_rms_mps2": 0.0506408103,
+        "gyro_bias_3d_rms_radps": 9.79272008e-05
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.36992121,
+        "disp_z_rms_m": 0.0117987869,
+        "disp_3d_rms_m": 0.0171272941,
+        "roll_rms_deg": 0.318794817,
+        "pitch_rms_deg": 0.0762690678,
+        "yaw_rms_deg": 0.562819898,
+        "accel_bias_3d_rms_mps2": 0.0556453429,
+        "gyro_bias_3d_rms_radps": 9.7772252e-05
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.19094706,
+        "disp_z_rms_m": 0.0628642067,
+        "disp_3d_rms_m": 0.104894169,
+        "roll_rms_deg": 0.265084088,
+        "pitch_rms_deg": 0.0470142365,
+        "yaw_rms_deg": 0.359497428,
+        "accel_bias_3d_rms_mps2": 0.0448271036,
+        "gyro_bias_3d_rms_radps": 0.0001030231
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.1955266,
+        "disp_z_rms_m": 0.0629329011,
+        "disp_3d_rms_m": 0.104980871,
+        "roll_rms_deg": 0.263240576,
+        "pitch_rms_deg": 0.0417346098,
+        "yaw_rms_deg": 0.346268833,
+        "accel_bias_3d_rms_mps2": 0.0443043634,
+        "gyro_bias_3d_rms_radps": 0.000102998369
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 3.72503877,
+        "disp_z_rms_m": 0.316628307,
+        "disp_3d_rms_m": 0.744430065,
+        "roll_rms_deg": 0.311778247,
+        "pitch_rms_deg": 0.0622968897,
+        "yaw_rms_deg": 0.291479856,
+        "accel_bias_3d_rms_mps2": 0.050022345,
+        "gyro_bias_3d_rms_radps": 0.000110732566
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 3.72209096,
+        "disp_z_rms_m": 0.316377729,
+        "disp_3d_rms_m": 0.745334983,
+        "roll_rms_deg": 0.31048122,
+        "pitch_rms_deg": 0.0601180792,
+        "yaw_rms_deg": 0.283582062,
+        "accel_bias_3d_rms_mps2": 0.0495920144,
+        "gyro_bias_3d_rms_radps": 0.000110757122
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 7.80376959,
+        "disp_z_rms_m": 0.0210701786,
+        "disp_3d_rms_m": 0.03353782,
+        "roll_rms_deg": 0.317195892,
+        "pitch_rms_deg": 0.155076176,
+        "yaw_rms_deg": 0.312915772,
+        "accel_bias_3d_rms_mps2": 0.0598575473,
+        "gyro_bias_3d_rms_radps": 0.000111026762
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 7.77479124,
+        "disp_z_rms_m": 0.0209919363,
+        "disp_3d_rms_m": 0.0333457813,
+        "roll_rms_deg": 0.398154169,
+        "pitch_rms_deg": 0.0982888937,
+        "yaw_rms_deg": 0.45873481,
+        "accel_bias_3d_rms_mps2": 0.0696705058,
+        "gyro_bias_3d_rms_radps": 0.000111593545
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 5.51752234,
+        "disp_z_rms_m": 0.0827628374,
+        "disp_3d_rms_m": 0.152467579,
+        "roll_rms_deg": 0.24147357,
+        "pitch_rms_deg": 0.170992106,
+        "yaw_rms_deg": 0.840180874,
+        "accel_bias_3d_rms_mps2": 0.0495140217,
+        "gyro_bias_3d_rms_radps": 0.000115544222
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 5.52712297,
+        "disp_z_rms_m": 0.0829068497,
+        "disp_3d_rms_m": 0.152865916,
+        "roll_rms_deg": 0.232625917,
+        "pitch_rms_deg": 0.170833543,
+        "yaw_rms_deg": 0.84360218,
+        "accel_bias_3d_rms_mps2": 0.0481993444,
+        "gyro_bias_3d_rms_radps": 0.000115342627
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "baseline",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.39947557,
+        "disp_z_rms_m": 0.373955429,
+        "disp_3d_rms_m": 0.911448717,
+        "roll_rms_deg": 0.528971553,
+        "pitch_rms_deg": 0.352609664,
+        "yaw_rms_deg": 0.673500955,
+        "accel_bias_3d_rms_mps2": 0.105129316,
+        "gyro_bias_3d_rms_radps": 0.000111780173
+      }
+    },
+    {
+      "family": "tfg",
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "arm": "no_periodic_sync",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_pct_hs": 4.41070652,
+        "disp_z_rms_m": 0.374910057,
+        "disp_3d_rms_m": 0.912980616,
+        "roll_rms_deg": 0.527233243,
+        "pitch_rms_deg": 0.351952791,
+        "yaw_rms_deg": 0.672814548,
+        "accel_bias_3d_rms_mps2": 0.104791969,
+        "gyro_bias_3d_rms_radps": 0.000111941488
+      }
+    }
+  ],
+  "limits": "Stationary gate failures are retained; moving gates do not define stationary acceptance. This screen can reject a mechanism, not establish all-sea or multi-seed improvement.",
+  "decision": "No periodic-sync or slower-commit change adopted; small heave gains do not preserve bias accuracy.",
+  "source_overrides": {
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "--- a/src/kalman_tfg/SeaStateFusionFilter_TFG.h\n+++ b/src/kalman_tfg/SeaStateFusionFilter_TFG.h\n@@ -46,6 +46,7 @@\n #include \"kalman_common/AccelVibrationConditioning.h\"\n #include \"kalman_common/MagneticStartupCommon.h\"\n #include \"kalman_common/SeaStateFusionDefaults.h\"\n+#include \"kalman_common/PeriodicSchedule.h\"\n #include \"kalman_common/SeaStateFusionFilterCommon.h\"\n #include \"kalman_tfg/Kalman3D_Wave_TFG.h\"\n #include \"tuner/AdaptiveWaveBandPass.h\"\n@@ -316,9 +317,11 @@\n         // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the\n         // S = 0 pseudo-measurement from here on an accumulated-time timer.\n         // The period is the same tau-scaled cadence (pseudoUpdatePeriodFor_).\n-        pseudo_elapsed_ += dt;\n-        if (pseudo_elapsed_ >= pseudo_period_sec_) {\n-            pseudo_elapsed_ = 0.0f;\n+        // Preserve the fractional IMU interval, as in the OU cores. Resetting\n+        // to zero rounds every requested cadence upward to a whole sample and\n+        // changes the information rate assumed by both regularization laws.\n+        if (ocean_imu::kalman::filter_detail::periodic_update_due(\n+                dt, pseudo_period_sec_, pseudo_elapsed_)) {\n             mekf_.applyIntegralZeroPseudoMeas();\n         }\n \n"
+  },
+  "baseline_note": "OU-II and OU-III production source unchanged. TFG baseline includes the separately rejected fractional cadence candidate; it is not the accepted TFG baseline."
+}

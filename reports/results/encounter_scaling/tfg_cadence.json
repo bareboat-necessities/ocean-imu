@@ -1,0 +1,2169 @@
+{
+  "protocol": "200 Hz, 1200 s; final 900 s/180000 samples; paired sensor/initialization seeds",
+  "family": "tfg",
+  "noise": "normal",
+  "engine_rpm": null,
+  "previous_build": {
+    "source_commit": "49ec86262052bd3fa8460b2d43d04ccde23b42f9",
+    "binary_sha256": "708654a5b4c1201969a3af585acc57a626c54ab6764ce9fe9f2d3af51d240d39",
+    "source_sha256": {
+      "src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+      "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+      "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+      "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+      "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+      "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+      "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+      "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+      "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+      "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+      "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+      "src/kalman_tfg/Kalman3D_Wave_TFG.h": "549a541e14cb544e39b9c513fd073526f752fdc4525a4b6846a4165aa114f622",
+      "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "6250cb51948718e8a2f4962bfec5a92a8e855efe60d7d4c7ae7f7f8585244ede",
+      "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+      "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+      "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+      "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+      "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+      "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+      "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+      "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+      "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+      "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+      "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+      "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+      "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+      "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+      "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+      "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+      "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+      "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+      "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+      "tests/kalman_tfg/kalman_tfg-sim.cpp": "d4600df9c449a19f85d75d2bb7e2c602d7d57f7acb18e3fb1d8c69ec719a42e6"
+    }
+  },
+  "role": "controlled paired experiment; moving-data acceptance bars are not stationary/noise-seed bars",
+  "seeds": [
+    "default",
+    "7",
+    "23"
+  ],
+  "inputs": {
+    "stationary": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "1eaa5be44dc0c0900658170efe7392085bedf377a90af1feb3345c715ad750ea",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "19bbe7c56f9da74a18497461a69638b5eef03265b5eaca937feec5c5b9889a53",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "90408172af21214fd46da50a57a340540175a18ce3600834bba1b7faa81307dd",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f738de0faa1bd030c2ecb7d6fb81358f8c6b59f15ce60512f77ad01907c26f6d",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "da1c20739ec76966580f3d68a5e905999e2a5d23fd43265d6e8510e6588bbbf5"
+      }
+    },
+    "moving": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 120.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
+      }
+    }
+  },
+  "binary_sha256": "8ef6ed408196d1ddc69af88a2f183c99c820f948708dd19114b100d82e6bf3b9",
+  "git_commit": "49ec86262052bd3fa8460b2d43d04ccde23b42f9",
+  "source_sha256": {
+    "src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+    "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "549a541e14cb544e39b9c513fd073526f752fdc4525a4b6846a4165aa114f622",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "99fced1427b9fe3d398a8564c596b966f3ac468e22f66fa37e4f917b41897101",
+    "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+    "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+    "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+    "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+    "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+    "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+    "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+    "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+    "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+    "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+    "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+    "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+    "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "d4600df9c449a19f85d75d2bb7e2c602d7d57f7acb18e3fb1d8c69ec719a42e6",
+    "tools/encounter_scaling_study.py": "f0ac8d534fc5aaa98ecc27e6542bf4edf89dd55b2de0c60d9f70dce5e4fcce9c",
+    "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
+    "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
+    "tools/stationary_vessel_control.py": "be90aab968ed917aa2707efcc08382dd45fdd4af52febd66fed10d6fa34a87cf"
+  },
+  "build_environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "compiler": {
+      "command": "g++",
+      "version": "14.2.0",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "CXXFLAGS_env": "",
+      "CPPFLAGS_env": ""
+    },
+    "eigen": {
+      "version": "3.4.0",
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/workspace/scratch/0f70d6e02277/ocean-imu-moving/third_party/eigen/Eigen/src/Core/util/Macros.h"
+    }
+  },
+  "rows": [
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0118339723,
+        "disp_z_pct_hs": 4.38295269,
+        "roll_rms_deg": 0.293456465,
+        "pitch_rms_deg": 0.0451259129,
+        "yaw_rms_deg": 0.528814673,
+        "disp_3d_rms_m": 0.0175820962,
+        "accel_bias_3d_rms_mps2": 0.0503974929,
+        "gyro_bias_3d_rms_radps": 9.80193508e-05
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0117793111,
+        "disp_z_pct_hs": 4.36270761,
+        "roll_rms_deg": 0.294766098,
+        "pitch_rms_deg": 0.0457723923,
+        "yaw_rms_deg": 0.530372739,
+        "disp_3d_rms_m": 0.0171212815,
+        "accel_bias_3d_rms_mps2": 0.0506408103,
+        "gyro_bias_3d_rms_radps": 9.79272008e-05
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0129259862,
+        "disp_z_pct_hs": 4.78740215,
+        "roll_rms_deg": 0.0597694665,
+        "pitch_rms_deg": 0.288503587,
+        "yaw_rms_deg": 3.87539291,
+        "disp_3d_rms_m": 0.0180231463,
+        "accel_bias_3d_rms_mps2": 0.0508707613,
+        "gyro_bias_3d_rms_radps": 0.000109731642
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0127425473,
+        "disp_z_pct_hs": 4.71946192,
+        "roll_rms_deg": 0.0610834584,
+        "pitch_rms_deg": 0.29120782,
+        "yaw_rms_deg": 3.88140869,
+        "disp_3d_rms_m": 0.0175464246,
+        "accel_bias_3d_rms_mps2": 0.0513624623,
+        "gyro_bias_3d_rms_radps": 0.000109670378
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0115869259,
+        "disp_z_pct_hs": 4.29145384,
+        "roll_rms_deg": 0.220020741,
+        "pitch_rms_deg": 0.176299214,
+        "yaw_rms_deg": 3.201195,
+        "disp_3d_rms_m": 0.0176408496,
+        "accel_bias_3d_rms_mps2": 0.0478022024,
+        "gyro_bias_3d_rms_radps": 0.000115531409
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0115359137,
+        "disp_z_pct_hs": 4.2725606,
+        "roll_rms_deg": 0.221519709,
+        "pitch_rms_deg": 0.179436907,
+        "yaw_rms_deg": 3.20986986,
+        "disp_3d_rms_m": 0.0171672534,
+        "accel_bias_3d_rms_mps2": 0.0483473539,
+        "gyro_bias_3d_rms_radps": 0.000115410861
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0629143119,
+        "disp_z_pct_hs": 4.1942873,
+        "roll_rms_deg": 0.265163064,
+        "pitch_rms_deg": 0.0471028648,
+        "yaw_rms_deg": 0.359506279,
+        "disp_3d_rms_m": 0.105178416,
+        "accel_bias_3d_rms_mps2": 0.0448327586,
+        "gyro_bias_3d_rms_radps": 0.000103044564
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0628642067,
+        "disp_z_pct_hs": 4.19094706,
+        "roll_rms_deg": 0.265084088,
+        "pitch_rms_deg": 0.0470142365,
+        "yaw_rms_deg": 0.359497428,
+        "disp_3d_rms_m": 0.104894169,
+        "accel_bias_3d_rms_mps2": 0.0448271036,
+        "gyro_bias_3d_rms_radps": 0.0001030231
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0692180693,
+        "disp_z_pct_hs": 4.61453772,
+        "roll_rms_deg": 0.0436225347,
+        "pitch_rms_deg": 0.216682404,
+        "yaw_rms_deg": 3.13618279,
+        "disp_3d_rms_m": 0.106855191,
+        "accel_bias_3d_rms_mps2": 0.0386756957,
+        "gyro_bias_3d_rms_radps": 0.000113830079
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.068985112,
+        "disp_z_pct_hs": 4.59900713,
+        "roll_rms_deg": 0.0435503647,
+        "pitch_rms_deg": 0.216244355,
+        "yaw_rms_deg": 3.13511848,
+        "disp_3d_rms_m": 0.106523536,
+        "accel_bias_3d_rms_mps2": 0.0385865495,
+        "gyro_bias_3d_rms_radps": 0.000113824914
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0627478436,
+        "disp_z_pct_hs": 4.18318939,
+        "roll_rms_deg": 0.194089249,
+        "pitch_rms_deg": 0.0768829584,
+        "yaw_rms_deg": 3.81945014,
+        "disp_3d_rms_m": 0.107167386,
+        "accel_bias_3d_rms_mps2": 0.0346696265,
+        "gyro_bias_3d_rms_radps": 0.000125285413
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0626330823,
+        "disp_z_pct_hs": 4.17553854,
+        "roll_rms_deg": 0.194373667,
+        "pitch_rms_deg": 0.077692993,
+        "yaw_rms_deg": 3.82377815,
+        "disp_3d_rms_m": 0.106879793,
+        "accel_bias_3d_rms_mps2": 0.0347671956,
+        "gyro_bias_3d_rms_radps": 0.000125230334
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.161189929,
+        "disp_z_pct_hs": 4.02974844,
+        "roll_rms_deg": 0.275554478,
+        "pitch_rms_deg": 0.0666086376,
+        "yaw_rms_deg": 0.949965298,
+        "disp_3d_rms_m": 0.320884526,
+        "accel_bias_3d_rms_mps2": 0.0467106476,
+        "gyro_bias_3d_rms_radps": 0.00010778899
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.161662713,
+        "disp_z_pct_hs": 4.0415678,
+        "roll_rms_deg": 0.275606871,
+        "pitch_rms_deg": 0.0667330176,
+        "yaw_rms_deg": 0.950452566,
+        "disp_3d_rms_m": 0.321811229,
+        "accel_bias_3d_rms_mps2": 0.0467293337,
+        "gyro_bias_3d_rms_radps": 0.000107794825
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.18071112,
+        "disp_z_pct_hs": 4.51777792,
+        "roll_rms_deg": 0.0552534834,
+        "pitch_rms_deg": 0.249488652,
+        "yaw_rms_deg": 3.41158962,
+        "disp_3d_rms_m": 0.320912421,
+        "accel_bias_3d_rms_mps2": 0.044690311,
+        "gyro_bias_3d_rms_radps": 0.000119265111
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.18037948,
+        "disp_z_pct_hs": 4.50948715,
+        "roll_rms_deg": 0.0551594682,
+        "pitch_rms_deg": 0.24906753,
+        "yaw_rms_deg": 3.41021705,
+        "disp_3d_rms_m": 0.321710706,
+        "accel_bias_3d_rms_mps2": 0.0445916057,
+        "gyro_bias_3d_rms_radps": 0.000119308788
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.160165176,
+        "disp_z_pct_hs": 4.00412941,
+        "roll_rms_deg": 0.195420742,
+        "pitch_rms_deg": 0.166101292,
+        "yaw_rms_deg": 1.84110236,
+        "disp_3d_rms_m": 0.317854941,
+        "accel_bias_3d_rms_mps2": 0.0427318662,
+        "gyro_bias_3d_rms_radps": 0.000115924064
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.160048157,
+        "disp_z_pct_hs": 4.00120401,
+        "roll_rms_deg": 0.196077973,
+        "pitch_rms_deg": 0.168054953,
+        "yaw_rms_deg": 1.84706223,
+        "disp_3d_rms_m": 0.318584323,
+        "accel_bias_3d_rms_mps2": 0.0430235267,
+        "gyro_bias_3d_rms_radps": 0.000115942748
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.316704184,
+        "disp_z_pct_hs": 3.72593141,
+        "roll_rms_deg": 0.313209504,
+        "pitch_rms_deg": 0.0609227978,
+        "yaw_rms_deg": 0.285445839,
+        "disp_3d_rms_m": 0.742536843,
+        "accel_bias_3d_rms_mps2": 0.0501481332,
+        "gyro_bias_3d_rms_radps": 0.000110675974
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.316628307,
+        "disp_z_pct_hs": 3.72503877,
+        "roll_rms_deg": 0.311778247,
+        "pitch_rms_deg": 0.0622968897,
+        "yaw_rms_deg": 0.291479856,
+        "disp_3d_rms_m": 0.744430065,
+        "accel_bias_3d_rms_mps2": 0.050022345,
+        "gyro_bias_3d_rms_radps": 0.000110732566
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.366927087,
+        "disp_z_pct_hs": 4.31678915,
+        "roll_rms_deg": 0.0633739159,
+        "pitch_rms_deg": 0.223053664,
+        "yaw_rms_deg": 3.03901124,
+        "disp_3d_rms_m": 0.748039663,
+        "accel_bias_3d_rms_mps2": 0.0414550491,
+        "gyro_bias_3d_rms_radps": 0.000126710976
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.365999073,
+        "disp_z_pct_hs": 4.30587149,
+        "roll_rms_deg": 0.0642676651,
+        "pitch_rms_deg": 0.215225026,
+        "yaw_rms_deg": 3.01970315,
+        "disp_3d_rms_m": 0.750171542,
+        "accel_bias_3d_rms_mps2": 0.0401084349,
+        "gyro_bias_3d_rms_radps": 0.000126628554
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.316753447,
+        "disp_z_pct_hs": 3.726511,
+        "roll_rms_deg": 0.251450479,
+        "pitch_rms_deg": 0.144946143,
+        "yaw_rms_deg": 3.60986567,
+        "disp_3d_rms_m": 0.739982605,
+        "accel_bias_3d_rms_mps2": 0.047202073,
+        "gyro_bias_3d_rms_radps": 0.000124812039
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.317177266,
+        "disp_z_pct_hs": 3.73149729,
+        "roll_rms_deg": 0.251509279,
+        "pitch_rms_deg": 0.147031054,
+        "yaw_rms_deg": 3.61583877,
+        "disp_3d_rms_m": 0.742326558,
+        "accel_bias_3d_rms_mps2": 0.04737176,
+        "gyro_bias_3d_rms_radps": 0.000124787621
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0117021194,
+        "disp_z_pct_hs": 4.33411837,
+        "roll_rms_deg": 0.291049868,
+        "pitch_rms_deg": 0.044872079,
+        "yaw_rms_deg": 0.620495677,
+        "disp_3d_rms_m": 0.017412018,
+        "accel_bias_3d_rms_mps2": 0.0499948598,
+        "gyro_bias_3d_rms_radps": 9.49768873e-05
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0116757434,
+        "disp_z_pct_hs": 4.3243494,
+        "roll_rms_deg": 0.292097092,
+        "pitch_rms_deg": 0.0451678634,
+        "yaw_rms_deg": 0.619599283,
+        "disp_3d_rms_m": 0.0169995092,
+        "accel_bias_3d_rms_mps2": 0.0501860753,
+        "gyro_bias_3d_rms_radps": 9.48737797e-05
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0127673401,
+        "disp_z_pct_hs": 4.72864437,
+        "roll_rms_deg": 0.0599598661,
+        "pitch_rms_deg": 0.28783381,
+        "yaw_rms_deg": 4.17508411,
+        "disp_3d_rms_m": 0.0178407691,
+        "accel_bias_3d_rms_mps2": 0.0507589988,
+        "gyro_bias_3d_rms_radps": 0.000112070338
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0125963408,
+        "disp_z_pct_hs": 4.66531134,
+        "roll_rms_deg": 0.0609484427,
+        "pitch_rms_deg": 0.289682806,
+        "yaw_rms_deg": 4.17899752,
+        "disp_3d_rms_m": 0.0174061209,
+        "accel_bias_3d_rms_mps2": 0.0510963313,
+        "gyro_bias_3d_rms_radps": 0.000112052272
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0114928186,
+        "disp_z_pct_hs": 4.25659943,
+        "roll_rms_deg": 0.220902205,
+        "pitch_rms_deg": 0.173768252,
+        "yaw_rms_deg": 3.26008224,
+        "disp_3d_rms_m": 0.0174299609,
+        "accel_bias_3d_rms_mps2": 0.0476515703,
+        "gyro_bias_3d_rms_radps": 0.000114463051
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0114603713,
+        "disp_z_pct_hs": 4.2445817,
+        "roll_rms_deg": 0.222165704,
+        "pitch_rms_deg": 0.176333994,
+        "yaw_rms_deg": 3.26717448,
+        "disp_3d_rms_m": 0.0170232765,
+        "accel_bias_3d_rms_mps2": 0.0481016971,
+        "gyro_bias_3d_rms_radps": 0.000114366645
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0614656135,
+        "disp_z_pct_hs": 4.09770727,
+        "roll_rms_deg": 0.262768239,
+        "pitch_rms_deg": 0.0398575142,
+        "yaw_rms_deg": 0.245284602,
+        "disp_3d_rms_m": 0.102381989,
+        "accel_bias_3d_rms_mps2": 0.0441470146,
+        "gyro_bias_3d_rms_radps": 0.000102675564
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0615828708,
+        "disp_z_pct_hs": 4.10552454,
+        "roll_rms_deg": 0.262479156,
+        "pitch_rms_deg": 0.0397326574,
+        "yaw_rms_deg": 0.245672464,
+        "disp_3d_rms_m": 0.102211431,
+        "accel_bias_3d_rms_mps2": 0.0441138893,
+        "gyro_bias_3d_rms_radps": 0.000102643542
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0664596856,
+        "disp_z_pct_hs": 4.43064547,
+        "roll_rms_deg": 0.044920627,
+        "pitch_rms_deg": 0.243463576,
+        "yaw_rms_deg": 3.21527195,
+        "disp_3d_rms_m": 0.103590734,
+        "accel_bias_3d_rms_mps2": 0.0432477221,
+        "gyro_bias_3d_rms_radps": 0.000113269765
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0663279146,
+        "disp_z_pct_hs": 4.42186069,
+        "roll_rms_deg": 0.0448516533,
+        "pitch_rms_deg": 0.242802218,
+        "yaw_rms_deg": 3.21365523,
+        "disp_3d_rms_m": 0.103409521,
+        "accel_bias_3d_rms_mps2": 0.0431152135,
+        "gyro_bias_3d_rms_radps": 0.000113185582
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0611833557,
+        "disp_z_pct_hs": 4.07889032,
+        "roll_rms_deg": 0.190402254,
+        "pitch_rms_deg": 0.0828054622,
+        "yaw_rms_deg": 3.72958636,
+        "disp_3d_rms_m": 0.104502998,
+        "accel_bias_3d_rms_mps2": 0.0344754644,
+        "gyro_bias_3d_rms_radps": 0.000122193524
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0614126101,
+        "disp_z_pct_hs": 4.09417391,
+        "roll_rms_deg": 0.19060199,
+        "pitch_rms_deg": 0.0837499574,
+        "yaw_rms_deg": 3.73343825,
+        "disp_3d_rms_m": 0.104317859,
+        "accel_bias_3d_rms_mps2": 0.0345795974,
+        "gyro_bias_3d_rms_radps": 0.000122110461
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.158943117,
+        "disp_z_pct_hs": 3.97357798,
+        "roll_rms_deg": 0.291593522,
+        "pitch_rms_deg": 0.0577806793,
+        "yaw_rms_deg": 0.915796578,
+        "disp_3d_rms_m": 0.317310423,
+        "accel_bias_3d_rms_mps2": 0.0488923378,
+        "gyro_bias_3d_rms_radps": 0.000105823419
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.159830004,
+        "disp_z_pct_hs": 3.99575019,
+        "roll_rms_deg": 0.291068405,
+        "pitch_rms_deg": 0.0572669394,
+        "yaw_rms_deg": 0.910289824,
+        "disp_3d_rms_m": 0.318739146,
+        "accel_bias_3d_rms_mps2": 0.0487955287,
+        "gyro_bias_3d_rms_radps": 0.000105821709
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.176010087,
+        "disp_z_pct_hs": 4.40025234,
+        "roll_rms_deg": 0.0498899184,
+        "pitch_rms_deg": 0.328210056,
+        "yaw_rms_deg": 3.35854697,
+        "disp_3d_rms_m": 0.317429394,
+        "accel_bias_3d_rms_mps2": 0.058173798,
+        "gyro_bias_3d_rms_radps": 0.000120302939
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.176261634,
+        "disp_z_pct_hs": 4.40654087,
+        "roll_rms_deg": 0.0497028381,
+        "pitch_rms_deg": 0.323622108,
+        "yaw_rms_deg": 3.34730864,
+        "disp_3d_rms_m": 0.318725526,
+        "accel_bias_3d_rms_mps2": 0.0573481023,
+        "gyro_bias_3d_rms_radps": 0.000120251258
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.157492802,
+        "disp_z_pct_hs": 3.93731999,
+        "roll_rms_deg": 0.194681406,
+        "pitch_rms_deg": 0.153159752,
+        "yaw_rms_deg": 1.59367085,
+        "disp_3d_rms_m": 0.314226568,
+        "accel_bias_3d_rms_mps2": 0.0413113013,
+        "gyro_bias_3d_rms_radps": 0.000116640105
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.158142015,
+        "disp_z_pct_hs": 3.95355034,
+        "roll_rms_deg": 0.195261642,
+        "pitch_rms_deg": 0.155400962,
+        "yaw_rms_deg": 1.60121536,
+        "disp_3d_rms_m": 0.315727055,
+        "accel_bias_3d_rms_mps2": 0.0416137464,
+        "gyro_bias_3d_rms_radps": 0.000116643881
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.316808999,
+        "disp_z_pct_hs": 3.72716451,
+        "roll_rms_deg": 0.350571334,
+        "pitch_rms_deg": 0.0932235643,
+        "yaw_rms_deg": 0.382877022,
+        "disp_3d_rms_m": 0.74473381,
+        "accel_bias_3d_rms_mps2": 0.0573617108,
+        "gyro_bias_3d_rms_radps": 0.000110530324
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.318059564,
+        "disp_z_pct_hs": 3.74187708,
+        "roll_rms_deg": 0.348418087,
+        "pitch_rms_deg": 0.0888644233,
+        "yaw_rms_deg": 0.37192747,
+        "disp_3d_rms_m": 0.748131633,
+        "accel_bias_3d_rms_mps2": 0.0568486974,
+        "gyro_bias_3d_rms_radps": 0.000110655899
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.361855209,
+        "disp_z_pct_hs": 4.25712013,
+        "roll_rms_deg": 0.0753148645,
+        "pitch_rms_deg": 0.330673009,
+        "yaw_rms_deg": 3.37682819,
+        "disp_3d_rms_m": 0.756023526,
+        "accel_bias_3d_rms_mps2": 0.0602607653,
+        "gyro_bias_3d_rms_radps": 0.000126123952
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.361566186,
+        "disp_z_pct_hs": 4.25371981,
+        "roll_rms_deg": 0.0735275969,
+        "pitch_rms_deg": 0.322136074,
+        "yaw_rms_deg": 3.35562873,
+        "disp_3d_rms_m": 0.75905019,
+        "accel_bias_3d_rms_mps2": 0.0586945638,
+        "gyro_bias_3d_rms_radps": 0.000126044775
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.318507195,
+        "disp_z_pct_hs": 3.74714351,
+        "roll_rms_deg": 0.284827858,
+        "pitch_rms_deg": 0.14520368,
+        "yaw_rms_deg": 3.7266798,
+        "disp_3d_rms_m": 0.746952832,
+        "accel_bias_3d_rms_mps2": 0.0523498133,
+        "gyro_bias_3d_rms_radps": 0.00012412385
+      }
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.319247603,
+        "disp_z_pct_hs": 3.75585413,
+        "roll_rms_deg": 0.283227026,
+        "pitch_rms_deg": 0.145365283,
+        "yaw_rms_deg": 3.72619534,
+        "disp_3d_rms_m": 0.750411391,
+        "accel_bias_3d_rms_mps2": 0.0520744883,
+        "gyro_bias_3d_rms_radps": 0.000124185113
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0211119708,
+        "disp_z_pct_hs": 7.8192482,
+        "roll_rms_deg": 0.31726563,
+        "pitch_rms_deg": 0.15468049,
+        "yaw_rms_deg": 0.313569158,
+        "disp_3d_rms_m": 0.0337760001,
+        "accel_bias_3d_rms_mps2": 0.0598357655,
+        "gyro_bias_3d_rms_radps": 0.00011105922
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0210701786,
+        "disp_z_pct_hs": 7.80376959,
+        "roll_rms_deg": 0.317195892,
+        "pitch_rms_deg": 0.155076176,
+        "yaw_rms_deg": 0.312915772,
+        "disp_3d_rms_m": 0.03353782,
+        "accel_bias_3d_rms_mps2": 0.0598575473,
+        "gyro_bias_3d_rms_radps": 0.000111026762
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0222856123,
+        "disp_z_pct_hs": 8.25393009,
+        "roll_rms_deg": 0.109464608,
+        "pitch_rms_deg": 0.0748580694,
+        "yaw_rms_deg": 4.50272369,
+        "disp_3d_rms_m": 0.0337322876,
+        "accel_bias_3d_rms_mps2": 0.0226021782,
+        "gyro_bias_3d_rms_radps": 0.000117133874
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0221539661,
+        "disp_z_pct_hs": 8.20517254,
+        "roll_rms_deg": 0.109477833,
+        "pitch_rms_deg": 0.0746778324,
+        "yaw_rms_deg": 4.50234222,
+        "disp_3d_rms_m": 0.0334599689,
+        "accel_bias_3d_rms_mps2": 0.0225816127,
+        "gyro_bias_3d_rms_radps": 0.000117117495
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0205854028,
+        "disp_z_pct_hs": 7.62422323,
+        "roll_rms_deg": 0.249834448,
+        "pitch_rms_deg": 0.0667364523,
+        "yaw_rms_deg": 2.42164493,
+        "disp_3d_rms_m": 0.0332793444,
+        "accel_bias_3d_rms_mps2": 0.0433438756,
+        "gyro_bias_3d_rms_radps": 0.000114147966
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0205581598,
+        "disp_z_pct_hs": 7.61413288,
+        "roll_rms_deg": 0.249762043,
+        "pitch_rms_deg": 0.0664368793,
+        "yaw_rms_deg": 2.42064619,
+        "disp_3d_rms_m": 0.0329702944,
+        "accel_bias_3d_rms_mps2": 0.0433249064,
+        "gyro_bias_3d_rms_radps": 0.000114084156
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0828652531,
+        "disp_z_pct_hs": 5.52435017,
+        "roll_rms_deg": 0.241531551,
+        "pitch_rms_deg": 0.17098482,
+        "yaw_rms_deg": 0.840380847,
+        "disp_3d_rms_m": 0.152760118,
+        "accel_bias_3d_rms_mps2": 0.0495086797,
+        "gyro_bias_3d_rms_radps": 0.000115536292
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0827628374,
+        "disp_z_pct_hs": 5.51752234,
+        "roll_rms_deg": 0.24147357,
+        "pitch_rms_deg": 0.170992106,
+        "yaw_rms_deg": 0.840180874,
+        "disp_3d_rms_m": 0.152467579,
+        "accel_bias_3d_rms_mps2": 0.0495140217,
+        "gyro_bias_3d_rms_radps": 0.000115544222
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0927055255,
+        "disp_z_pct_hs": 6.18036795,
+        "roll_rms_deg": 0.0644879341,
+        "pitch_rms_deg": 0.0400334746,
+        "yaw_rms_deg": 3.24578238,
+        "disp_3d_rms_m": 0.158533484,
+        "accel_bias_3d_rms_mps2": 0.0115172239,
+        "gyro_bias_3d_rms_radps": 0.000106215608
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0922710449,
+        "disp_z_pct_hs": 6.15140295,
+        "roll_rms_deg": 0.0645093396,
+        "pitch_rms_deg": 0.0399924815,
+        "yaw_rms_deg": 3.24533367,
+        "disp_3d_rms_m": 0.158120364,
+        "accel_bias_3d_rms_mps2": 0.0115041547,
+        "gyro_bias_3d_rms_radps": 0.000106158659
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0830461904,
+        "disp_z_pct_hs": 5.53641272,
+        "roll_rms_deg": 0.232697353,
+        "pitch_rms_deg": 0.0506165735,
+        "yaw_rms_deg": 3.95501971,
+        "disp_3d_rms_m": 0.157581925,
+        "accel_bias_3d_rms_mps2": 0.039014075,
+        "gyro_bias_3d_rms_radps": 0.000129052161
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.082954891,
+        "disp_z_pct_hs": 5.53032589,
+        "roll_rms_deg": 0.232766375,
+        "pitch_rms_deg": 0.0506817028,
+        "yaw_rms_deg": 3.95814729,
+        "disp_3d_rms_m": 0.15720734,
+        "accel_bias_3d_rms_mps2": 0.0390291438,
+        "gyro_bias_3d_rms_radps": 0.000128988424
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.184255779,
+        "disp_z_pct_hs": 4.60639429,
+        "roll_rms_deg": 0.286205411,
+        "pitch_rms_deg": 0.0655609816,
+        "yaw_rms_deg": 1.14122558,
+        "disp_3d_rms_m": 0.389640421,
+        "accel_bias_3d_rms_mps2": 0.0474040098,
+        "gyro_bias_3d_rms_radps": 0.000114899034
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.184357554,
+        "disp_z_pct_hs": 4.60893869,
+        "roll_rms_deg": 0.285760552,
+        "pitch_rms_deg": 0.0645961463,
+        "yaw_rms_deg": 1.13728857,
+        "disp_3d_rms_m": 0.390001148,
+        "accel_bias_3d_rms_mps2": 0.0473052822,
+        "gyro_bias_3d_rms_radps": 0.000114895243
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.202759758,
+        "disp_z_pct_hs": 5.06899405,
+        "roll_rms_deg": 0.0582159422,
+        "pitch_rms_deg": 0.092597492,
+        "yaw_rms_deg": 2.99342346,
+        "disp_3d_rms_m": 0.391785026,
+        "accel_bias_3d_rms_mps2": 0.0154900588,
+        "gyro_bias_3d_rms_radps": 0.000112346301
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.202486962,
+        "disp_z_pct_hs": 5.06217384,
+        "roll_rms_deg": 0.0585395508,
+        "pitch_rms_deg": 0.08887849,
+        "yaw_rms_deg": 3.00510478,
+        "disp_3d_rms_m": 0.392079264,
+        "accel_bias_3d_rms_mps2": 0.0149737317,
+        "gyro_bias_3d_rms_radps": 0.000112365771
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.183693856,
+        "disp_z_pct_hs": 4.59234619,
+        "roll_rms_deg": 0.236887902,
+        "pitch_rms_deg": 0.164633259,
+        "yaw_rms_deg": 1.84990704,
+        "disp_3d_rms_m": 0.386803895,
+        "accel_bias_3d_rms_mps2": 0.0478078648,
+        "gyro_bias_3d_rms_radps": 0.000123928694
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.183514968,
+        "disp_z_pct_hs": 4.58787441,
+        "roll_rms_deg": 0.235566854,
+        "pitch_rms_deg": 0.163456485,
+        "yaw_rms_deg": 1.84624374,
+        "disp_3d_rms_m": 0.386912644,
+        "accel_bias_3d_rms_mps2": 0.0474823602,
+        "gyro_bias_3d_rms_radps": 0.000123935301
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.373726159,
+        "disp_z_pct_hs": 4.39677811,
+        "roll_rms_deg": 0.529959679,
+        "pitch_rms_deg": 0.36060372,
+        "yaw_rms_deg": 0.690656543,
+        "disp_3d_rms_m": 0.910044849,
+        "accel_bias_3d_rms_mps2": 0.10600163,
+        "gyro_bias_3d_rms_radps": 0.000111733665
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.373955429,
+        "disp_z_pct_hs": 4.39947557,
+        "roll_rms_deg": 0.528971553,
+        "pitch_rms_deg": 0.352609664,
+        "yaw_rms_deg": 0.673500955,
+        "disp_3d_rms_m": 0.911448717,
+        "accel_bias_3d_rms_mps2": 0.105129316,
+        "gyro_bias_3d_rms_radps": 0.000111780173
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.4134022,
+        "disp_z_pct_hs": 4.86355543,
+        "roll_rms_deg": 0.402217746,
+        "pitch_rms_deg": 0.614406645,
+        "yaw_rms_deg": 4.16879988,
+        "disp_3d_rms_m": 0.924805284,
+        "accel_bias_3d_rms_mps2": 0.127676457,
+        "gyro_bias_3d_rms_radps": 0.000125944673
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.412614584,
+        "disp_z_pct_hs": 4.85428905,
+        "roll_rms_deg": 0.40027526,
+        "pitch_rms_deg": 0.604753733,
+        "yaw_rms_deg": 4.14643383,
+        "disp_3d_rms_m": 0.925911248,
+        "accel_bias_3d_rms_mps2": 0.126078039,
+        "gyro_bias_3d_rms_radps": 0.000125884573
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.377349019,
+        "disp_z_pct_hs": 4.4394002,
+        "roll_rms_deg": 0.534065425,
+        "pitch_rms_deg": 0.553391099,
+        "yaw_rms_deg": 4.65722513,
+        "disp_3d_rms_m": 0.928496063,
+        "accel_bias_3d_rms_mps2": 0.129338712,
+        "gyro_bias_3d_rms_radps": 0.000122703714
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.377614081,
+        "disp_z_pct_hs": 4.44251871,
+        "roll_rms_deg": 0.533339739,
+        "pitch_rms_deg": 0.549518883,
+        "yaw_rms_deg": 4.64836597,
+        "disp_3d_rms_m": 0.930533171,
+        "accel_bias_3d_rms_mps2": 0.12877807,
+        "gyro_bias_3d_rms_radps": 0.000122748737
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.020184204,
+        "disp_z_pct_hs": 7.47563076,
+        "roll_rms_deg": 0.308465987,
+        "pitch_rms_deg": 0.171358958,
+        "yaw_rms_deg": 0.290084243,
+        "disp_3d_rms_m": 0.0318819061,
+        "accel_bias_3d_rms_mps2": 0.0598818697,
+        "gyro_bias_3d_rms_radps": 0.000113443886
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.020186821,
+        "disp_z_pct_hs": 7.47660017,
+        "roll_rms_deg": 0.308618575,
+        "pitch_rms_deg": 0.171027213,
+        "yaw_rms_deg": 0.289967746,
+        "disp_3d_rms_m": 0.0316711739,
+        "accel_bias_3d_rms_mps2": 0.0598798022,
+        "gyro_bias_3d_rms_radps": 0.000113419745
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0211581104,
+        "disp_z_pct_hs": 7.83633709,
+        "roll_rms_deg": 0.138017282,
+        "pitch_rms_deg": 0.112137228,
+        "yaw_rms_deg": 4.70507097,
+        "disp_3d_rms_m": 0.031773366,
+        "accel_bias_3d_rms_mps2": 0.0305388439,
+        "gyro_bias_3d_rms_radps": 0.000115347473
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0210818071,
+        "disp_z_pct_hs": 7.80807638,
+        "roll_rms_deg": 0.138042644,
+        "pitch_rms_deg": 0.11188212,
+        "yaw_rms_deg": 4.70433378,
+        "disp_3d_rms_m": 0.0315674096,
+        "accel_bias_3d_rms_mps2": 0.030507911,
+        "gyro_bias_3d_rms_radps": 0.000115352741
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0196991656,
+        "disp_z_pct_hs": 7.29598713,
+        "roll_rms_deg": 0.262019396,
+        "pitch_rms_deg": 0.0777740553,
+        "yaw_rms_deg": 2.49308467,
+        "disp_3d_rms_m": 0.0313329846,
+        "accel_bias_3d_rms_mps2": 0.0459221154,
+        "gyro_bias_3d_rms_radps": 0.000117026422
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0197430458,
+        "disp_z_pct_hs": 7.31223917,
+        "roll_rms_deg": 0.262142628,
+        "pitch_rms_deg": 0.0780393481,
+        "yaw_rms_deg": 2.49411249,
+        "disp_3d_rms_m": 0.031187674,
+        "accel_bias_3d_rms_mps2": 0.0459591784,
+        "gyro_bias_3d_rms_radps": 0.00011701075
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0816633776,
+        "disp_z_pct_hs": 5.44422483,
+        "roll_rms_deg": 0.230102569,
+        "pitch_rms_deg": 0.171649963,
+        "yaw_rms_deg": 0.757197559,
+        "disp_3d_rms_m": 0.149223194,
+        "accel_bias_3d_rms_mps2": 0.0480350927,
+        "gyro_bias_3d_rms_radps": 0.00011492741
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0815277174,
+        "disp_z_pct_hs": 5.43518114,
+        "roll_rms_deg": 0.230106264,
+        "pitch_rms_deg": 0.171488985,
+        "yaw_rms_deg": 0.756610334,
+        "disp_3d_rms_m": 0.149144232,
+        "accel_bias_3d_rms_mps2": 0.0480241366,
+        "gyro_bias_3d_rms_radps": 0.000114924165
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0900354385,
+        "disp_z_pct_hs": 6.00236225,
+        "roll_rms_deg": 0.0564241856,
+        "pitch_rms_deg": 0.0394278057,
+        "yaw_rms_deg": 3.27860069,
+        "disp_3d_rms_m": 0.154483572,
+        "accel_bias_3d_rms_mps2": 0.010082298,
+        "gyro_bias_3d_rms_radps": 0.00010720444
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0897308066,
+        "disp_z_pct_hs": 5.98205376,
+        "roll_rms_deg": 0.0564738847,
+        "pitch_rms_deg": 0.0396717861,
+        "yaw_rms_deg": 3.27922964,
+        "disp_3d_rms_m": 0.154385924,
+        "accel_bias_3d_rms_mps2": 0.0101130158,
+        "gyro_bias_3d_rms_radps": 0.000107161482
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.081397526,
+        "disp_z_pct_hs": 5.42650175,
+        "roll_rms_deg": 0.235730127,
+        "pitch_rms_deg": 0.0707843527,
+        "yaw_rms_deg": 4.06714439,
+        "disp_3d_rms_m": 0.153538436,
+        "accel_bias_3d_rms_mps2": 0.0403576232,
+        "gyro_bias_3d_rms_radps": 0.000125615406
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0815086737,
+        "disp_z_pct_hs": 5.43391132,
+        "roll_rms_deg": 0.2358073,
+        "pitch_rms_deg": 0.0717685148,
+        "yaw_rms_deg": 4.07001686,
+        "disp_3d_rms_m": 0.153586164,
+        "accel_bias_3d_rms_mps2": 0.040423464,
+        "gyro_bias_3d_rms_radps": 0.000125595092
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.181310102,
+        "disp_z_pct_hs": 4.53275251,
+        "roll_rms_deg": 0.257025093,
+        "pitch_rms_deg": 0.064764291,
+        "yaw_rms_deg": 0.93425256,
+        "disp_3d_rms_m": 0.384405017,
+        "accel_bias_3d_rms_mps2": 0.0423200093,
+        "gyro_bias_3d_rms_radps": 0.000116983814
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.181627765,
+        "disp_z_pct_hs": 4.54069424,
+        "roll_rms_deg": 0.255733997,
+        "pitch_rms_deg": 0.0619501695,
+        "yaw_rms_deg": 0.922540188,
+        "disp_3d_rms_m": 0.384884179,
+        "accel_bias_3d_rms_mps2": 0.042007409,
+        "gyro_bias_3d_rms_radps": 0.000116991505
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.199608952,
+        "disp_z_pct_hs": 4.99022388,
+        "roll_rms_deg": 0.135890335,
+        "pitch_rms_deg": 0.235612497,
+        "yaw_rms_deg": 3.36637592,
+        "disp_3d_rms_m": 0.387934983,
+        "accel_bias_3d_rms_mps2": 0.0476560146,
+        "gyro_bias_3d_rms_radps": 0.00011771897
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.198997512,
+        "disp_z_pct_hs": 4.97493792,
+        "roll_rms_deg": 0.135518268,
+        "pitch_rms_deg": 0.234523013,
+        "yaw_rms_deg": 3.36347318,
+        "disp_3d_rms_m": 0.387973607,
+        "accel_bias_3d_rms_mps2": 0.0474426262,
+        "gyro_bias_3d_rms_radps": 0.000117674965
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.17987062,
+        "disp_z_pct_hs": 4.49676561,
+        "roll_rms_deg": 0.181790262,
+        "pitch_rms_deg": 0.110591091,
+        "yaw_rms_deg": 1.16637158,
+        "disp_3d_rms_m": 0.383797944,
+        "accel_bias_3d_rms_mps2": 0.035041593,
+        "gyro_bias_3d_rms_radps": 0.000126194165
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.179824471,
+        "disp_z_pct_hs": 4.49561167,
+        "roll_rms_deg": 0.181509435,
+        "pitch_rms_deg": 0.110119954,
+        "yaw_rms_deg": 1.16879249,
+        "disp_3d_rms_m": 0.383883327,
+        "accel_bias_3d_rms_mps2": 0.0349254943,
+        "gyro_bias_3d_rms_radps": 0.000126168699
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.370463252,
+        "disp_z_pct_hs": 4.35839128,
+        "roll_rms_deg": 0.666882515,
+        "pitch_rms_deg": 0.65636152,
+        "yaw_rms_deg": 1.63328528,
+        "disp_3d_rms_m": 0.910732746,
+        "accel_bias_3d_rms_mps2": 0.156766206,
+        "gyro_bias_3d_rms_radps": 0.000114319038
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "adjusted",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.371065855,
+        "disp_z_pct_hs": 4.36548042,
+        "roll_rms_deg": 0.666027188,
+        "pitch_rms_deg": 0.650676906,
+        "yaw_rms_deg": 1.62004757,
+        "disp_3d_rms_m": 0.912541926,
+        "accel_bias_3d_rms_mps2": 0.155990809,
+        "gyro_bias_3d_rms_radps": 0.000114354014
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.40659076,
+        "disp_z_pct_hs": 4.78342056,
+        "roll_rms_deg": 0.570642591,
+        "pitch_rms_deg": 0.83791703,
+        "yaw_rms_deg": 4.88673735,
+        "disp_3d_rms_m": 0.927928269,
+        "accel_bias_3d_rms_mps2": 0.175863177,
+        "gyro_bias_3d_rms_radps": 0.000134815287
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.405743957,
+        "disp_z_pct_hs": 4.773458,
+        "roll_rms_deg": 0.569082141,
+        "pitch_rms_deg": 0.830585361,
+        "yaw_rms_deg": 4.86975145,
+        "disp_3d_rms_m": 0.929959893,
+        "accel_bias_3d_rms_mps2": 0.174643278,
+        "gyro_bias_3d_rms_radps": 0.000134615126
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.373006582,
+        "disp_z_pct_hs": 4.38831282,
+        "roll_rms_deg": 0.703596652,
+        "pitch_rms_deg": 0.824447572,
+        "yaw_rms_deg": 5.5172286,
+        "disp_3d_rms_m": 0.935823262,
+        "accel_bias_3d_rms_mps2": 0.183612466,
+        "gyro_bias_3d_rms_radps": 0.000125592254
+      }
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "adjusted",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.374134958,
+        "disp_z_pct_hs": 4.40158749,
+        "roll_rms_deg": 0.698180914,
+        "pitch_rms_deg": 0.808342874,
+        "yaw_rms_deg": 5.47819805,
+        "disp_3d_rms_m": 0.937622309,
+        "accel_bias_3d_rms_mps2": 0.180897892,
+        "gyro_bias_3d_rms_radps": 0.000125543593
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.38295269,
+      "adjusted_heave_pct_hs": 4.36270761,
+      "relative_change_percent": -0.4619050542386649
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.78740215,
+      "adjusted_heave_pct_hs": 4.71946192,
+      "relative_change_percent": -1.419146081137146
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.29145384,
+      "adjusted_heave_pct_hs": 4.2725606,
+      "relative_change_percent": -0.44025266738042523
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.1942873,
+      "adjusted_heave_pct_hs": 4.19094706,
+      "relative_change_percent": -0.07963784455108369
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.61453772,
+      "adjusted_heave_pct_hs": 4.59900713,
+      "relative_change_percent": -0.3365578730170182
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.18318939,
+      "adjusted_heave_pct_hs": 4.17553854,
+      "relative_change_percent": -0.18289513781731825
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.02974844,
+      "adjusted_heave_pct_hs": 4.0415678,
+      "relative_change_percent": 0.29330267573726143
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.51777792,
+      "adjusted_heave_pct_hs": 4.50948715,
+      "relative_change_percent": -0.18351433263900097
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.00412941,
+      "adjusted_heave_pct_hs": 4.00120401,
+      "relative_change_percent": -0.07305957676326802
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 3.72593141,
+      "adjusted_heave_pct_hs": 3.72503877,
+      "relative_change_percent": -0.023957499528959314
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.31678915,
+      "adjusted_heave_pct_hs": 4.30587149,
+      "relative_change_percent": -0.25291158823450566
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 3.726511,
+      "adjusted_heave_pct_hs": 3.73149729,
+      "relative_change_percent": 0.13380585754343421
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.33411837,
+      "adjusted_heave_pct_hs": 4.3243494,
+      "relative_change_percent": -0.22539693580172493
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.72864437,
+      "adjusted_heave_pct_hs": 4.66531134,
+      "relative_change_percent": -1.33934855413963
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.25659943,
+      "adjusted_heave_pct_hs": 4.2445817,
+      "relative_change_percent": -0.2823317109733159
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.09770727,
+      "adjusted_heave_pct_hs": 4.10552454,
+      "relative_change_percent": 0.19077180200821608
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.43064547,
+      "adjusted_heave_pct_hs": 4.42186069,
+      "relative_change_percent": -0.19827314235548732
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.07889032,
+      "adjusted_heave_pct_hs": 4.09417391,
+      "relative_change_percent": 0.37469970509038664
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 3.97357798,
+      "adjusted_heave_pct_hs": 3.99575019,
+      "relative_change_percent": 0.5579910627549811
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.40025234,
+      "adjusted_heave_pct_hs": 4.40654087,
+      "relative_change_percent": 0.14291294030650548
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 3.93731999,
+      "adjusted_heave_pct_hs": 3.95355034,
+      "relative_change_percent": 0.4122182103873051
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 3.72716451,
+      "adjusted_heave_pct_hs": 3.74187708,
+      "relative_change_percent": 0.39473894861699055
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.25712013,
+      "adjusted_heave_pct_hs": 4.25371981,
+      "relative_change_percent": -0.07987371500366436
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 3.74714351,
+      "adjusted_heave_pct_hs": 3.75585413,
+      "relative_change_percent": 0.23246027211805131
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 7.8192482,
+      "adjusted_heave_pct_hs": 7.80376959,
+      "relative_change_percent": -0.19795522029854018
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 8.25393009,
+      "adjusted_heave_pct_hs": 8.20517254,
+      "relative_change_percent": -0.5907192024690588
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 7.62422323,
+      "adjusted_heave_pct_hs": 7.61413288,
+      "relative_change_percent": -0.13234594129269972
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.52435017,
+      "adjusted_heave_pct_hs": 5.51752234,
+      "relative_change_percent": -0.12359517028950329
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 6.18036795,
+      "adjusted_heave_pct_hs": 6.15140295,
+      "relative_change_percent": -0.4686614168336156
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 5.53641272,
+      "adjusted_heave_pct_hs": 5.53032589,
+      "relative_change_percent": -0.1099417674916392
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.60639429,
+      "adjusted_heave_pct_hs": 4.60893869,
+      "relative_change_percent": 0.055236261592361835
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 5.06899405,
+      "adjusted_heave_pct_hs": 5.06217384,
+      "relative_change_percent": -0.13454760318765135
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.59234619,
+      "adjusted_heave_pct_hs": 4.58787441,
+      "relative_change_percent": -0.09737462758658832
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.39677811,
+      "adjusted_heave_pct_hs": 4.39947557,
+      "relative_change_percent": 0.061350833099016455
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.86355543,
+      "adjusted_heave_pct_hs": 4.85428905,
+      "relative_change_percent": -0.1905268714085473
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.4394002,
+      "adjusted_heave_pct_hs": 4.44251871,
+      "relative_change_percent": 0.07024620127737968
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 7.47563076,
+      "adjusted_heave_pct_hs": 7.47660017,
+      "relative_change_percent": 0.012967601412139373
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 7.83633709,
+      "adjusted_heave_pct_hs": 7.80807638,
+      "relative_change_percent": -0.36063673212913816
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 7.29598713,
+      "adjusted_heave_pct_hs": 7.31223917,
+      "relative_change_percent": 0.22275313416020293
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.44422483,
+      "adjusted_heave_pct_hs": 5.43518114,
+      "relative_change_percent": -0.16611529248691248
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 6.00236225,
+      "adjusted_heave_pct_hs": 5.98205376,
+      "relative_change_percent": -0.3383416254158833
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 5.42650175,
+      "adjusted_heave_pct_hs": 5.43391132,
+      "relative_change_percent": 0.1365441372980225
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.53275251,
+      "adjusted_heave_pct_hs": 4.54069424,
+      "relative_change_percent": 0.17520766868428517
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.99022388,
+      "adjusted_heave_pct_hs": 4.97493792,
+      "relative_change_percent": -0.306318120540916
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.49676561,
+      "adjusted_heave_pct_hs": 4.49561167,
+      "relative_change_percent": -0.02566155543962667
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.35839128,
+      "adjusted_heave_pct_hs": 4.36548042,
+      "relative_change_percent": 0.16265496933538515
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.78342056,
+      "adjusted_heave_pct_hs": 4.773458,
+      "relative_change_percent": -0.20827271771395317
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.38831282,
+      "adjusted_heave_pct_hs": 4.40158749,
+      "relative_change_percent": 0.3025005405152381
+    }
+  ],
+  "decision": "Rejected: legacy-law production gates fail 8.3259 > 8.28795% Hs, 5.52383 > 5.51543% Z bias, and 8.10862 > 8.05605% Hs. Restored original wrapper; these are candidate values only.",
+  "candidate_patch": "--- a/src/kalman_tfg/SeaStateFusionFilter_TFG.h\n+++ b/src/kalman_tfg/SeaStateFusionFilter_TFG.h\n@@ -46,6 +46,7 @@\n #include \"kalman_common/AccelVibrationConditioning.h\"\n #include \"kalman_common/MagneticStartupCommon.h\"\n #include \"kalman_common/SeaStateFusionDefaults.h\"\n+#include \"kalman_common/PeriodicSchedule.h\"\n #include \"kalman_common/SeaStateFusionFilterCommon.h\"\n #include \"kalman_tfg/Kalman3D_Wave_TFG.h\"\n #include \"tuner/AdaptiveWaveBandPass.h\"\n@@ -316,9 +317,11 @@\n         // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the\n         // S = 0 pseudo-measurement from here on an accumulated-time timer.\n         // The period is the same tau-scaled cadence (pseudoUpdatePeriodFor_).\n-        pseudo_elapsed_ += dt;\n-        if (pseudo_elapsed_ >= pseudo_period_sec_) {\n-            pseudo_elapsed_ = 0.0f;\n+        // Preserve the fractional IMU interval, as in the OU cores. Resetting\n+        // to zero rounds every requested cadence upward to a whole sample and\n+        // changes the information rate assumed by both regularization laws.\n+        if (ocean_imu::kalman::filter_detail::periodic_update_due(\n+                dt, pseudo_period_sec_, pseudo_elapsed_)) {\n             mekf_.applyIntegralZeroPseudoMeas();\n         }\n \n"
+}

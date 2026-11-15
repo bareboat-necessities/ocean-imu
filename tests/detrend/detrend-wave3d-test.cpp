@@ -14,6 +14,7 @@
 #define EIGEN_NON_ARDUINO
 
 #include "detrend/AdaptiveWaveDetrender3D.h"
+#include "util/UnderwayReference.h"
 
 namespace {
 
@@ -163,7 +164,9 @@ std::vector<WaveRow> load_wave_rows(const std::string& path) {
 }
 
 Vec3d reference_signal(const WaveRow& row) {
-  return Vec3d{row.disp_x_m, row.disp_y_m, row.disp_z_m};
+  const auto track = UnderwayReference::at(row.time_s);
+  return Vec3d{row.disp_x_m - track.displacement[0],
+               row.disp_y_m - track.displacement[1], row.disp_z_m};
 }
 
 Vec3d drift_signal(const Scenario& scenario, double wave_freq_hz, double time_s, double duration_s) {

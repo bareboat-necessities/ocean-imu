@@ -1,0 +1,2386 @@
+{
+  "protocol": "200 Hz, 1200 s; final 900 s/180000 samples; paired sensor/initialization seeds",
+  "family": "tfg_legacy",
+  "noise": "normal",
+  "engine_rpm": null,
+  "previous_build": null,
+  "role": "controlled paired experiment; moving-data acceptance bars are not stationary/noise-seed bars",
+  "seeds": [
+    "default",
+    "7",
+    "23"
+  ],
+  "inputs": {
+    "stationary": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft.zip",
+      "archive_sha256": "5d74a266cf72a908db163b3e4ffc8a2fe4fffc0949b2c347ecc5b60bf5f68732",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "c8c722fa8f5f89cb1c5dd26ddfeaf6a4317841b764f0961dcf9a869c16ed56b4",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "374de362768cba5bd30d28bccee2ad12d59a314fdc01a262b752ff952653f205",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "1eaa5be44dc0c0900658170efe7392085bedf377a90af1feb3345c715ad750ea",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "cb260cfb2fe49fb2394544538b363009dc261cad51b8a534d2b6abb165209a3f",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "19bbe7c56f9da74a18497461a69638b5eef03265b5eaca937feec5c5b9889a53",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "90408172af21214fd46da50a57a340540175a18ce3600834bba1b7faa81307dd",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "f738de0faa1bd030c2ecb7d6fb81358f8c6b59f15ce60512f77ad01907c26f6d",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "da1c20739ec76966580f3d68a5e905999e2a5d23fd43265d6e8510e6588bbbf5"
+      }
+    },
+    "moving": {
+      "release": "v1.3.1",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 120.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
+      }
+    }
+  },
+  "binary_sha256": "6d12b4afa35f4614f7199839dc93c7ff164f49f793782a60f8efce0f98024854",
+  "git_commit": "2b30838accd17370696f9a00fcd6254427c52406",
+  "source_sha256": {
+    "src/ahrs/FrameConversions.h": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+    "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MagneticStartupCommon.h": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
+    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "93d1349910f2a39583cadbcf7019ce34d55a42fc41948206545cd65e7e453209",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "b6f16f44d338f38af7d3891ca8e99223d86285228b149fde2a4c86f603dc02c8",
+    "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+    "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+    "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
+    "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+    "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+    "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+    "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+    "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
+    "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
+    "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+    "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+    "tests/common/CurrentReplayLimits.h": "650879d2c6e0f41c46343b5748ea6569559ded50a06ab3447530f9b092b0e625",
+    "tests/kalman_tfg/Makefile": "a53bd04e2eb29cdb8572521a0f5c0905e8ed3849993e0490bf96056cbd209eae",
+    "tests/kalman_tfg/kalman_tfg-legacy-sim.cpp": "60a86d38ed5b0f52cce87cc10b47259eceee6a5bf9acee3f316ea0d7738df9fd",
+    "tools/encounter_scaling_study.py": "faa3b2b5a21e2f2bfa1749b7ce17d342855acddc5e1cbcedc551635b608586cf",
+    "tools/ou_evidence_provenance.py": "b88220a03cd516c70647386380cb80dabf3f4df370f0756e4cf82537b56aa83b",
+    "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
+    "tools/stationary_vessel_control.py": "be90aab968ed917aa2707efcc08382dd45fdd4af52febd66fed10d6fa34a87cf"
+  },
+  "build_environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "compiler": {
+      "command": "g++",
+      "version": "14.2.0",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "CXXFLAGS_env": "",
+      "CPPFLAGS_env": ""
+    },
+    "eigen": {
+      "version": "3.4.0",
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/workspace/scratch/7542f0d861f1/ocean-imu/third_party/eigen/Eigen/src/Core/util/Macros.h"
+    }
+  },
+  "rows": [
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0224648342,
+        "disp_z_pct_hs": 8.32030869,
+        "roll_rms_deg": 0.147772253,
+        "pitch_rms_deg": 0.370528191,
+        "yaw_rms_deg": 1.40421796,
+        "disp_3d_rms_m": 0.0611685216,
+        "accel_bias_3d_rms_mps2": 0.0663090199,
+        "gyro_bias_3d_rms_radps": 0.000209226666
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=3D_limit_exceeded",
+        "ERROR: Z RMS above limit (8.32031% > 8.28795%). Failing.",
+        "ERROR: 3D RMS above limit (31.9913% > 31.1548%). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0125874393,
+        "disp_z_pct_hs": 4.66201448,
+        "roll_rms_deg": 0.149695352,
+        "pitch_rms_deg": 0.354412496,
+        "yaw_rms_deg": 1.44525063,
+        "disp_3d_rms_m": 0.0582723431,
+        "accel_bias_3d_rms_mps2": 0.0636230633,
+        "gyro_bias_3d_rms_radps": 0.000209103353
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0229619164,
+        "disp_z_pct_hs": 8.5044136,
+        "roll_rms_deg": 0.142231926,
+        "pitch_rms_deg": 0.218875453,
+        "yaw_rms_deg": 3.94406176,
+        "disp_3d_rms_m": 0.0658997148,
+        "accel_bias_3d_rms_mps2": 0.0355433561,
+        "gyro_bias_3d_rms_radps": 0.000167284452
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Z RMS above limit (8.50441% > 8.28795%). Failing.",
+        "ERROR: 3D RMS above limit (34.4657% > 31.1548%). Failing.",
+        "ERROR: Yaw RMS above limit (3.94406 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0136273392,
+        "disp_z_pct_hs": 5.04716253,
+        "roll_rms_deg": 0.142588526,
+        "pitch_rms_deg": 0.213034779,
+        "yaw_rms_deg": 3.95804691,
+        "disp_3d_rms_m": 0.0632556826,
+        "accel_bias_3d_rms_mps2": 0.0344908684,
+        "gyro_bias_3d_rms_radps": 0.000167243561
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: 3D RMS above limit (33.0829% > 31.1548%). Failing.",
+        "ERROR: Yaw RMS above limit (3.95805 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0222661253,
+        "disp_z_pct_hs": 8.24671268,
+        "roll_rms_deg": 0.366316557,
+        "pitch_rms_deg": 0.153301314,
+        "yaw_rms_deg": 0.383297205,
+        "disp_3d_rms_m": 0.059272822,
+        "accel_bias_3d_rms_mps2": 0.0609701462,
+        "gyro_bias_3d_rms_radps": 0.000192520907
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0126637155,
+        "disp_z_pct_hs": 4.6902647,
+        "roll_rms_deg": 0.369109392,
+        "pitch_rms_deg": 0.144424886,
+        "yaw_rms_deg": 0.407751799,
+        "disp_3d_rms_m": 0.0563499257,
+        "accel_bias_3d_rms_mps2": 0.0607438199,
+        "gyro_bias_3d_rms_radps": 0.000192607258
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0874124691,
+        "disp_z_pct_hs": 5.82749748,
+        "roll_rms_deg": 0.187349051,
+        "pitch_rms_deg": 0.339677125,
+        "yaw_rms_deg": 3.11025524,
+        "disp_3d_rms_m": 0.293894321,
+        "accel_bias_3d_rms_mps2": 0.0632002354,
+        "gyro_bias_3d_rms_radps": 0.000239597619
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.11026 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0471569747,
+        "disp_z_pct_hs": 3.14379811,
+        "roll_rms_deg": 0.189715609,
+        "pitch_rms_deg": 0.330588907,
+        "yaw_rms_deg": 3.13085914,
+        "disp_3d_rms_m": 0.284341663,
+        "accel_bias_3d_rms_mps2": 0.061408665,
+        "gyro_bias_3d_rms_radps": 0.000237570886
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.13086 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0920932144,
+        "disp_z_pct_hs": 6.13954735,
+        "roll_rms_deg": 0.157604098,
+        "pitch_rms_deg": 0.383953124,
+        "yaw_rms_deg": 2.39970303,
+        "disp_3d_rms_m": 0.292393208,
+        "accel_bias_3d_rms_mps2": 0.0612025112,
+        "gyro_bias_3d_rms_radps": 0.000182533709
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0551035255,
+        "disp_z_pct_hs": 3.67356825,
+        "roll_rms_deg": 0.159065276,
+        "pitch_rms_deg": 0.41643849,
+        "yaw_rms_deg": 2.32148099,
+        "disp_3d_rms_m": 0.282760054,
+        "accel_bias_3d_rms_mps2": 0.0665308163,
+        "gyro_bias_3d_rms_radps": 0.00018097453
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0871233866,
+        "disp_z_pct_hs": 5.80822563,
+        "roll_rms_deg": 0.350874037,
+        "pitch_rms_deg": 0.157009125,
+        "yaw_rms_deg": 0.654394984,
+        "disp_3d_rms_m": 0.275479048,
+        "accel_bias_3d_rms_mps2": 0.0551338196,
+        "gyro_bias_3d_rms_radps": 0.000179873532
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0465844721,
+        "disp_z_pct_hs": 3.10563135,
+        "roll_rms_deg": 0.344519377,
+        "pitch_rms_deg": 0.180927128,
+        "yaw_rms_deg": 0.735541344,
+        "disp_3d_rms_m": 0.265338451,
+        "accel_bias_3d_rms_mps2": 0.056295082,
+        "gyro_bias_3d_rms_radps": 0.000179699564
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.19794479,
+        "disp_z_pct_hs": 4.94861984,
+        "roll_rms_deg": 0.19939588,
+        "pitch_rms_deg": 0.233964309,
+        "yaw_rms_deg": 1.74677944,
+        "disp_3d_rms_m": 0.768622398,
+        "accel_bias_3d_rms_mps2": 0.0361284241,
+        "gyro_bias_3d_rms_radps": 0.000214919448
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: accel Z bias error RMS above limit (5.53943% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.105975941,
+        "disp_z_pct_hs": 2.64939857,
+        "roll_rms_deg": 0.193254441,
+        "pitch_rms_deg": 0.2100721,
+        "yaw_rms_deg": 1.65995574,
+        "disp_3d_rms_m": 0.748635352,
+        "accel_bias_3d_rms_mps2": 0.0322322138,
+        "gyro_bias_3d_rms_radps": 0.000217055145
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.207552552,
+        "disp_z_pct_hs": 5.18881369,
+        "roll_rms_deg": 0.178979591,
+        "pitch_rms_deg": 0.223656356,
+        "yaw_rms_deg": 3.48420691,
+        "disp_3d_rms_m": 0.762895167,
+        "accel_bias_3d_rms_mps2": 0.0352645926,
+        "gyro_bias_3d_rms_radps": 0.000185613011
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.48421 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.122413814,
+        "disp_z_pct_hs": 3.06034541,
+        "roll_rms_deg": 0.198914647,
+        "pitch_rms_deg": 0.327653289,
+        "yaw_rms_deg": 3.77992558,
+        "disp_3d_rms_m": 0.747403562,
+        "accel_bias_3d_rms_mps2": 0.0580947511,
+        "gyro_bias_3d_rms_radps": 0.000178365619
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.77993 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.198941216,
+        "disp_z_pct_hs": 4.97353029,
+        "roll_rms_deg": 0.30297184,
+        "pitch_rms_deg": 0.187737837,
+        "yaw_rms_deg": 0.864171326,
+        "disp_3d_rms_m": 0.727162898,
+        "accel_bias_3d_rms_mps2": 0.0474067591,
+        "gyro_bias_3d_rms_radps": 0.00022006697
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.108058229,
+        "disp_z_pct_hs": 2.70145583,
+        "roll_rms_deg": 0.290696889,
+        "pitch_rms_deg": 0.231689379,
+        "yaw_rms_deg": 0.710344136,
+        "disp_3d_rms_m": 0.706514955,
+        "accel_bias_3d_rms_mps2": 0.0515244864,
+        "gyro_bias_3d_rms_radps": 0.000212243554
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.420591652,
+        "disp_z_pct_hs": 4.94813681,
+        "roll_rms_deg": 0.363804936,
+        "pitch_rms_deg": 0.210602835,
+        "yaw_rms_deg": 3.14847207,
+        "disp_3d_rms_m": 1.5958221,
+        "accel_bias_3d_rms_mps2": 0.0562110394,
+        "gyro_bias_3d_rms_radps": 0.000309278053
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.14847 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (6.70541% > 5.51543% of max TRUE Z bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (28.4199% > 27.5938% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.221156493,
+        "disp_z_pct_hs": 2.60184097,
+        "roll_rms_deg": 0.36848712,
+        "pitch_rms_deg": 0.211646289,
+        "yaw_rms_deg": 3.18481159,
+        "disp_3d_rms_m": 1.55390227,
+        "accel_bias_3d_rms_mps2": 0.0563137159,
+        "gyro_bias_3d_rms_radps": 0.000323853543
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.18481 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (5.88303% > 5.51543% of max TRUE Z bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (29.7593% > 27.5938% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.444879919,
+        "disp_z_pct_hs": 5.23388147,
+        "roll_rms_deg": 0.197399855,
+        "pitch_rms_deg": 1.11139071,
+        "yaw_rms_deg": 0.434141755,
+        "disp_3d_rms_m": 1.56920791,
+        "accel_bias_3d_rms_mps2": 0.187218577,
+        "gyro_bias_3d_rms_radps": 0.000170103202
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.270462245,
+        "disp_z_pct_hs": 3.18190861,
+        "roll_rms_deg": 0.218904212,
+        "pitch_rms_deg": 1.29115093,
+        "yaw_rms_deg": 0.453230828,
+        "disp_3d_rms_m": 1.53295052,
+        "accel_bias_3d_rms_mps2": 0.216693133,
+        "gyro_bias_3d_rms_radps": 0.000173979206
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Pitch RMS above limit (1.29115 deg > 1.16598 deg). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (280.206% > 250.685% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.417247891,
+        "disp_z_pct_hs": 4.90879869,
+        "roll_rms_deg": 0.322811812,
+        "pitch_rms_deg": 1.16017568,
+        "yaw_rms_deg": 3.04939628,
+        "disp_3d_rms_m": 1.57890439,
+        "accel_bias_3d_rms_mps2": 0.210448623,
+        "gyro_bias_3d_rms_radps": 0.00029355954
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.228285611,
+        "disp_z_pct_hs": 2.68571305,
+        "roll_rms_deg": 0.31118837,
+        "pitch_rms_deg": 1.28212607,
+        "yaw_rms_deg": 3.34544206,
+        "disp_3d_rms_m": 1.54493999,
+        "accel_bias_3d_rms_mps2": 0.228804067,
+        "gyro_bias_3d_rms_radps": 0.000280987675
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.34544 deg > 3.06465 deg). Failing.",
+        "ERROR: Pitch RMS above limit (1.28213 deg > 1.16598 deg). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (271.194% > 250.685% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0217107199,
+        "disp_z_pct_hs": 8.04100704,
+        "roll_rms_deg": 0.151076078,
+        "pitch_rms_deg": 0.343439132,
+        "yaw_rms_deg": 1.50150585,
+        "disp_3d_rms_m": 0.0585002415,
+        "accel_bias_3d_rms_mps2": 0.0620062165,
+        "gyro_bias_3d_rms_radps": 0.000211400547
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=3D_limit_exceeded",
+        "ERROR: 3D RMS above limit (31.6574% > 30.9017%). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0129422545,
+        "disp_z_pct_hs": 4.79342747,
+        "roll_rms_deg": 0.153897002,
+        "pitch_rms_deg": 0.322688103,
+        "yaw_rms_deg": 1.5543077,
+        "disp_3d_rms_m": 0.0558533259,
+        "accel_bias_3d_rms_mps2": 0.0586406849,
+        "gyro_bias_3d_rms_radps": 0.000211334918
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0222104602,
+        "disp_z_pct_hs": 8.22609615,
+        "roll_rms_deg": 0.145050347,
+        "pitch_rms_deg": 0.213454649,
+        "yaw_rms_deg": 4.06611156,
+        "disp_3d_rms_m": 0.0633943975,
+        "accel_bias_3d_rms_mps2": 0.0344069116,
+        "gyro_bias_3d_rms_radps": 0.000169435414
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Z RMS above limit (8.2261% > 8.05605%). Failing.",
+        "ERROR: 3D RMS above limit (34.3059% > 30.9017%). Failing.",
+        "ERROR: Yaw RMS above limit (4.06611 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0138627011,
+        "disp_z_pct_hs": 5.13433361,
+        "roll_rms_deg": 0.145487905,
+        "pitch_rms_deg": 0.212033227,
+        "yaw_rms_deg": 4.06895161,
+        "disp_3d_rms_m": 0.0609711967,
+        "accel_bias_3d_rms_mps2": 0.0341337137,
+        "gyro_bias_3d_rms_radps": 0.000169281353
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: 3D RMS above limit (32.9946% > 30.9017%). Failing.",
+        "ERROR: Yaw RMS above limit (4.06895 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0216431078,
+        "disp_z_pct_hs": 8.01596546,
+        "roll_rms_deg": 0.350665808,
+        "pitch_rms_deg": 0.180897951,
+        "yaw_rms_deg": 0.34186402,
+        "disp_3d_rms_m": 0.056819696,
+        "accel_bias_3d_rms_mps2": 0.0610221922,
+        "gyro_bias_3d_rms_radps": 0.000185628145
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0130504221,
+        "disp_z_pct_hs": 4.83348942,
+        "roll_rms_deg": 0.35250479,
+        "pitch_rms_deg": 0.174204484,
+        "yaw_rms_deg": 0.350671798,
+        "disp_3d_rms_m": 0.0541130379,
+        "accel_bias_3d_rms_mps2": 0.0606862158,
+        "gyro_bias_3d_rms_radps": 0.000185670942
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.085914433,
+        "disp_z_pct_hs": 5.72762871,
+        "roll_rms_deg": 0.213374436,
+        "pitch_rms_deg": 0.196937755,
+        "yaw_rms_deg": 3.49893355,
+        "disp_3d_rms_m": 0.289500862,
+        "accel_bias_3d_rms_mps2": 0.0420430377,
+        "gyro_bias_3d_rms_radps": 0.00021680865
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.49893 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0482585542,
+        "disp_z_pct_hs": 3.21723676,
+        "roll_rms_deg": 0.212229088,
+        "pitch_rms_deg": 0.20483911,
+        "yaw_rms_deg": 3.47452211,
+        "disp_3d_rms_m": 0.280219555,
+        "accel_bias_3d_rms_mps2": 0.0428370126,
+        "gyro_bias_3d_rms_radps": 0.000214881613
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.47452 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0903916284,
+        "disp_z_pct_hs": 6.02610826,
+        "roll_rms_deg": 0.159843579,
+        "pitch_rms_deg": 0.376951307,
+        "yaw_rms_deg": 2.45944333,
+        "disp_3d_rms_m": 0.286147565,
+        "accel_bias_3d_rms_mps2": 0.0600681491,
+        "gyro_bias_3d_rms_radps": 0.000184002958
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0552251711,
+        "disp_z_pct_hs": 3.68167782,
+        "roll_rms_deg": 0.162009552,
+        "pitch_rms_deg": 0.406609237,
+        "yaw_rms_deg": 2.388309,
+        "disp_3d_rms_m": 0.276884824,
+        "accel_bias_3d_rms_mps2": 0.0649512857,
+        "gyro_bias_3d_rms_radps": 0.000182170843
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0858061314,
+        "disp_z_pct_hs": 5.72040844,
+        "roll_rms_deg": 0.344888657,
+        "pitch_rms_deg": 0.152003258,
+        "yaw_rms_deg": 0.559207499,
+        "disp_3d_rms_m": 0.270050853,
+        "accel_bias_3d_rms_mps2": 0.0535326786,
+        "gyro_bias_3d_rms_radps": 0.000178400835
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0477641486,
+        "disp_z_pct_hs": 3.18427634,
+        "roll_rms_deg": 0.338193208,
+        "pitch_rms_deg": 0.173821449,
+        "yaw_rms_deg": 0.636892021,
+        "disp_3d_rms_m": 0.260360718,
+        "accel_bias_3d_rms_mps2": 0.0544409379,
+        "gyro_bias_3d_rms_radps": 0.0001784466
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.194207981,
+        "disp_z_pct_hs": 4.85519934,
+        "roll_rms_deg": 0.156651735,
+        "pitch_rms_deg": 0.22474277,
+        "yaw_rms_deg": 0.966253281,
+        "disp_3d_rms_m": 0.748903632,
+        "accel_bias_3d_rms_mps2": 0.0349099897,
+        "gyro_bias_3d_rms_radps": 0.00024081445
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: accel Z bias error RMS above limit (5.52944% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.109371081,
+        "disp_z_pct_hs": 2.73427701,
+        "roll_rms_deg": 0.154563233,
+        "pitch_rms_deg": 0.240524471,
+        "yaw_rms_deg": 0.902183533,
+        "disp_3d_rms_m": 0.730146587,
+        "accel_bias_3d_rms_mps2": 0.0379171222,
+        "gyro_bias_3d_rms_radps": 0.00024209643
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.204571441,
+        "disp_z_pct_hs": 5.11428595,
+        "roll_rms_deg": 0.160410136,
+        "pitch_rms_deg": 0.30223012,
+        "yaw_rms_deg": 2.31903625,
+        "disp_3d_rms_m": 0.740543187,
+        "accel_bias_3d_rms_mps2": 0.0445356257,
+        "gyro_bias_3d_rms_radps": 0.000168343526
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.125564292,
+        "disp_z_pct_hs": 3.13910723,
+        "roll_rms_deg": 0.165749237,
+        "pitch_rms_deg": 0.399497688,
+        "yaw_rms_deg": 2.07514405,
+        "disp_3d_rms_m": 0.72181797,
+        "accel_bias_3d_rms_mps2": 0.061926268,
+        "gyro_bias_3d_rms_radps": 0.000169058883
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.195530325,
+        "disp_z_pct_hs": 4.88825798,
+        "roll_rms_deg": 0.305774242,
+        "pitch_rms_deg": 0.179354012,
+        "yaw_rms_deg": 1.03417337,
+        "disp_3d_rms_m": 0.71347928,
+        "accel_bias_3d_rms_mps2": 0.0443635359,
+        "gyro_bias_3d_rms_radps": 0.000190703548
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.111593455,
+        "disp_z_pct_hs": 2.78983641,
+        "roll_rms_deg": 0.299939275,
+        "pitch_rms_deg": 0.169232219,
+        "yaw_rms_deg": 0.961516321,
+        "disp_3d_rms_m": 0.694408715,
+        "accel_bias_3d_rms_mps2": 0.0428788103,
+        "gyro_bias_3d_rms_radps": 0.000188762831
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.413795739,
+        "disp_z_pct_hs": 4.86818504,
+        "roll_rms_deg": 0.403167099,
+        "pitch_rms_deg": 0.227107748,
+        "yaw_rms_deg": 3.227566,
+        "disp_3d_rms_m": 1.54633641,
+        "accel_bias_3d_rms_mps2": 0.065505296,
+        "gyro_bias_3d_rms_radps": 0.000331656338
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.22757 deg > 3.06465 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.403167 deg > 0.4028 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (6.65929% > 5.51543% of max TRUE Z bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (30.4763% > 27.5938% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.233113974,
+        "disp_z_pct_hs": 2.74251723,
+        "roll_rms_deg": 0.417147785,
+        "pitch_rms_deg": 0.218367279,
+        "yaw_rms_deg": 3.34946299,
+        "disp_3d_rms_m": 1.50955904,
+        "accel_bias_3d_rms_mps2": 0.0650786981,
+        "gyro_bias_3d_rms_radps": 0.000351766503
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=gyro_bias_3d_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.34946 deg > 3.06465 deg). Failing.",
+        "ERROR: Roll RMS above limit (0.417148 deg > 0.4028 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (5.87203% > 5.51543% of max TRUE Z bias). Failing.",
+        "ERROR: 3D gyro bias error RMS above limit (32.3242% > 27.5938% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.440252304,
+        "disp_z_pct_hs": 5.17943859,
+        "roll_rms_deg": 0.200142622,
+        "pitch_rms_deg": 1.41021407,
+        "yaw_rms_deg": 0.52203095,
+        "disp_3d_rms_m": 1.53508389,
+        "accel_bias_3d_rms_mps2": 0.241491854,
+        "gyro_bias_3d_rms_radps": 0.000181216121
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Pitch RMS above limit (1.41021 deg > 1.16598 deg). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (312.273% > 250.685% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.283454835,
+        "disp_z_pct_hs": 3.33476281,
+        "roll_rms_deg": 0.220985815,
+        "pitch_rms_deg": 1.58729148,
+        "yaw_rms_deg": 0.859108984,
+        "disp_3d_rms_m": 1.50294185,
+        "accel_bias_3d_rms_mps2": 0.270384073,
+        "gyro_bias_3d_rms_radps": 0.000176916263
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_bias_3d_percent_exceeded",
+        "ERROR: Pitch RMS above limit (1.58729 deg > 1.16598 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (5.82562% > 5.51543% of max TRUE Z bias). Failing.",
+        "ERROR: 3D accel bias error RMS above limit (349.634% > 250.685% of max TRUE bias). Failing."
+      ]
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.411781222,
+        "disp_z_pct_hs": 4.84448481,
+        "roll_rms_deg": 0.400792122,
+        "pitch_rms_deg": 0.864400744,
+        "yaw_rms_deg": 2.10839891,
+        "disp_3d_rms_m": 1.50731003,
+        "accel_bias_3d_rms_mps2": 0.163742751,
+        "gyro_bias_3d_rms_radps": 0.00026428228
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.236671358,
+        "disp_z_pct_hs": 2.78436875,
+        "roll_rms_deg": 0.389102519,
+        "pitch_rms_deg": 0.947435737,
+        "yaw_rms_deg": 2.31178951,
+        "disp_3d_rms_m": 1.46989489,
+        "accel_bias_3d_rms_mps2": 0.175115556,
+        "gyro_bias_3d_rms_radps": 0.00025839897
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0117112948,
+        "disp_z_pct_hs": 4.33751631,
+        "roll_rms_deg": 0.141500622,
+        "pitch_rms_deg": 0.2317065,
+        "yaw_rms_deg": 2.65856099,
+        "disp_3d_rms_m": 0.037598975,
+        "accel_bias_3d_rms_mps2": 0.0410626493,
+        "gyro_bias_3d_rms_radps": 0.000214570508
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.007755775,
+        "disp_z_pct_hs": 2.87250924,
+        "roll_rms_deg": 0.135366291,
+        "pitch_rms_deg": 0.227162585,
+        "yaw_rms_deg": 2.53292942,
+        "disp_3d_rms_m": 0.0365398414,
+        "accel_bias_3d_rms_mps2": 0.0400474519,
+        "gyro_bias_3d_rms_radps": 0.000214177664
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0125668254,
+        "disp_z_pct_hs": 4.65437984,
+        "roll_rms_deg": 0.186275467,
+        "pitch_rms_deg": 0.716973543,
+        "yaw_rms_deg": 4.80174398,
+        "disp_3d_rms_m": 0.0378557257,
+        "accel_bias_3d_rms_mps2": 0.125886068,
+        "gyro_bias_3d_rms_radps": 0.000176424888
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (4.80174 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.00924995635,
+        "disp_z_pct_hs": 3.42590976,
+        "roll_rms_deg": 0.177955329,
+        "pitch_rms_deg": 0.676534057,
+        "yaw_rms_deg": 4.71634769,
+        "disp_3d_rms_m": 0.0368955396,
+        "accel_bias_3d_rms_mps2": 0.118737102,
+        "gyro_bias_3d_rms_radps": 0.000175980473
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (4.71635 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0116697596,
+        "disp_z_pct_hs": 4.32213306,
+        "roll_rms_deg": 0.417399049,
+        "pitch_rms_deg": 0.42033568,
+        "yaw_rms_deg": 1.05716288,
+        "disp_3d_rms_m": 0.0371466205,
+        "accel_bias_3d_rms_mps2": 0.0956954807,
+        "gyro_bias_3d_rms_radps": 0.000173732493
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.417399 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.00801840797,
+        "disp_z_pct_hs": 2.96978068,
+        "roll_rms_deg": 0.406821728,
+        "pitch_rms_deg": 0.377890944,
+        "yaw_rms_deg": 0.95409137,
+        "disp_3d_rms_m": 0.0361802839,
+        "accel_bias_3d_rms_mps2": 0.0891081318,
+        "gyro_bias_3d_rms_radps": 0.000173646666
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.406822 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0639059618,
+        "disp_z_pct_hs": 4.26039743,
+        "roll_rms_deg": 0.147556052,
+        "pitch_rms_deg": 0.343386412,
+        "yaw_rms_deg": 2.93553805,
+        "disp_3d_rms_m": 0.198984236,
+        "accel_bias_3d_rms_mps2": 0.0615561567,
+        "gyro_bias_3d_rms_radps": 0.000230023041
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.04180995,
+        "disp_z_pct_hs": 2.78732991,
+        "roll_rms_deg": 0.149055406,
+        "pitch_rms_deg": 0.331869334,
+        "yaw_rms_deg": 2.97921753,
+        "disp_3d_rms_m": 0.192965969,
+        "accel_bias_3d_rms_mps2": 0.0593959205,
+        "gyro_bias_3d_rms_radps": 0.00023094521
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0685619488,
+        "disp_z_pct_hs": 4.57079649,
+        "roll_rms_deg": 0.176922381,
+        "pitch_rms_deg": 0.436620802,
+        "yaw_rms_deg": 3.64368844,
+        "disp_3d_rms_m": 0.197087973,
+        "accel_bias_3d_rms_mps2": 0.0769165531,
+        "gyro_bias_3d_rms_radps": 0.0001802076
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.64369 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0481676497,
+        "disp_z_pct_hs": 3.21117663,
+        "roll_rms_deg": 0.18248266,
+        "pitch_rms_deg": 0.470906526,
+        "yaw_rms_deg": 3.72752833,
+        "disp_3d_rms_m": 0.190922171,
+        "accel_bias_3d_rms_mps2": 0.0833971277,
+        "gyro_bias_3d_rms_radps": 0.000179257258
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.72753 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0641274005,
+        "disp_z_pct_hs": 4.27515984,
+        "roll_rms_deg": 0.421566218,
+        "pitch_rms_deg": 0.226403624,
+        "yaw_rms_deg": 0.424957454,
+        "disp_3d_rms_m": 0.193508685,
+        "accel_bias_3d_rms_mps2": 0.0711101592,
+        "gyro_bias_3d_rms_radps": 0.000186871388
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.421566 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0418315381,
+        "disp_z_pct_hs": 2.78876901,
+        "roll_rms_deg": 0.429323733,
+        "pitch_rms_deg": 0.255711436,
+        "yaw_rms_deg": 0.493023545,
+        "disp_3d_rms_m": 0.187135458,
+        "accel_bias_3d_rms_mps2": 0.0751295909,
+        "gyro_bias_3d_rms_radps": 0.000186911115
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.429324 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.167466477,
+        "disp_z_pct_hs": 4.18666172,
+        "roll_rms_deg": 0.157180876,
+        "pitch_rms_deg": 0.264452934,
+        "yaw_rms_deg": 1.63594162,
+        "disp_3d_rms_m": 0.607312202,
+        "accel_bias_3d_rms_mps2": 0.039290484,
+        "gyro_bias_3d_rms_radps": 0.000244300201
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.10593801,
+        "disp_z_pct_hs": 2.64845014,
+        "roll_rms_deg": 0.162406564,
+        "pitch_rms_deg": 0.285444915,
+        "yaw_rms_deg": 1.75213361,
+        "disp_3d_rms_m": 0.592641234,
+        "accel_bias_3d_rms_mps2": 0.0431197099,
+        "gyro_bias_3d_rms_radps": 0.000245306263
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.180112407,
+        "disp_z_pct_hs": 4.50281,
+        "roll_rms_deg": 0.165134877,
+        "pitch_rms_deg": 0.340328157,
+        "yaw_rms_deg": 3.42043567,
+        "disp_3d_rms_m": 0.601293325,
+        "accel_bias_3d_rms_mps2": 0.0550512634,
+        "gyro_bias_3d_rms_radps": 0.000170184343
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.42044 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.123822339,
+        "disp_z_pct_hs": 3.0955584,
+        "roll_rms_deg": 0.164603308,
+        "pitch_rms_deg": 0.355521232,
+        "yaw_rms_deg": 3.45465922,
+        "disp_3d_rms_m": 0.586603343,
+        "accel_bias_3d_rms_mps2": 0.0585978664,
+        "gyro_bias_3d_rms_radps": 0.000171565203
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.45466 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.169518292,
+        "disp_z_pct_hs": 4.23795748,
+        "roll_rms_deg": 0.339103341,
+        "pitch_rms_deg": 0.186728016,
+        "yaw_rms_deg": 1.00778592,
+        "disp_3d_rms_m": 0.572757602,
+        "accel_bias_3d_rms_mps2": 0.053938508,
+        "gyro_bias_3d_rms_radps": 0.000209253514
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.109145373,
+        "disp_z_pct_hs": 2.72863436,
+        "roll_rms_deg": 0.346280664,
+        "pitch_rms_deg": 0.188962385,
+        "yaw_rms_deg": 1.08638704,
+        "disp_3d_rms_m": 0.557158649,
+        "accel_bias_3d_rms_mps2": 0.0551548898,
+        "gyro_bias_3d_rms_radps": 0.000207033314
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.344055682,
+        "disp_z_pct_hs": 4.04771376,
+        "roll_rms_deg": 0.254671633,
+        "pitch_rms_deg": 0.211645842,
+        "yaw_rms_deg": 3.33143306,
+        "disp_3d_rms_m": 1.22886288,
+        "accel_bias_3d_rms_mps2": 0.0392880514,
+        "gyro_bias_3d_rms_radps": 0.000245554227
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.33143 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (6.39964% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.208690584,
+        "disp_z_pct_hs": 2.45518327,
+        "roll_rms_deg": 0.280155331,
+        "pitch_rms_deg": 0.258700341,
+        "yaw_rms_deg": 3.6155467,
+        "disp_3d_rms_m": 1.19556642,
+        "accel_bias_3d_rms_mps2": 0.0480240844,
+        "gyro_bias_3d_rms_radps": 0.000245823263
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.61555 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (5.84329% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.370376587,
+        "disp_z_pct_hs": 4.35737133,
+        "roll_rms_deg": 0.202074647,
+        "pitch_rms_deg": 0.44714278,
+        "yaw_rms_deg": 1.76622415,
+        "disp_3d_rms_m": 1.21158576,
+        "accel_bias_3d_rms_mps2": 0.0679545477,
+        "gyro_bias_3d_rms_radps": 0.000188393242
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.250133067,
+        "disp_z_pct_hs": 2.94274187,
+        "roll_rms_deg": 0.216825724,
+        "pitch_rms_deg": 0.541267633,
+        "yaw_rms_deg": 1.52415884,
+        "disp_3d_rms_m": 1.1816957,
+        "accel_bias_3d_rms_mps2": 0.0849816948,
+        "gyro_bias_3d_rms_radps": 0.000187493832
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.34149456,
+        "disp_z_pct_hs": 4.01758289,
+        "roll_rms_deg": 0.386047363,
+        "pitch_rms_deg": 0.404183537,
+        "yaw_rms_deg": 0.993930161,
+        "disp_3d_rms_m": 1.18489957,
+        "accel_bias_3d_rms_mps2": 0.0871185437,
+        "gyro_bias_3d_rms_radps": 0.000201861316
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.209924549,
+        "disp_z_pct_hs": 2.46970057,
+        "roll_rms_deg": 0.374577045,
+        "pitch_rms_deg": 0.466283232,
+        "yaw_rms_deg": 1.15190029,
+        "disp_3d_rms_m": 1.15240169,
+        "accel_bias_3d_rms_mps2": 0.0945780054,
+        "gyro_bias_3d_rms_radps": 0.000204045908
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0116326995,
+        "disp_z_pct_hs": 4.30840731,
+        "roll_rms_deg": 0.141359419,
+        "pitch_rms_deg": 0.223794207,
+        "yaw_rms_deg": 2.72432399,
+        "disp_3d_rms_m": 0.0368265957,
+        "accel_bias_3d_rms_mps2": 0.0398080572,
+        "gyro_bias_3d_rms_radps": 0.00021478362
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.00772603042,
+        "disp_z_pct_hs": 2.86149263,
+        "roll_rms_deg": 0.136344656,
+        "pitch_rms_deg": 0.218279451,
+        "yaw_rms_deg": 2.62549376,
+        "disp_3d_rms_m": 0.0357627235,
+        "accel_bias_3d_rms_mps2": 0.0386567004,
+        "gyro_bias_3d_rms_radps": 0.000214559841
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0124551933,
+        "disp_z_pct_hs": 4.61303425,
+        "roll_rms_deg": 0.180733174,
+        "pitch_rms_deg": 0.685377777,
+        "yaw_rms_deg": 5.02907944,
+        "disp_3d_rms_m": 0.0372939296,
+        "accel_bias_3d_rms_mps2": 0.120277077,
+        "gyro_bias_3d_rms_radps": 0.000175333276
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (5.02908 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.00909475144,
+        "disp_z_pct_hs": 3.36842632,
+        "roll_rms_deg": 0.174304426,
+        "pitch_rms_deg": 0.65351671,
+        "yaw_rms_deg": 4.96292543,
+        "disp_3d_rms_m": 0.0363173075,
+        "accel_bias_3d_rms_mps2": 0.114651479,
+        "gyro_bias_3d_rms_radps": 0.000174917572
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (4.96293 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0115975859,
+        "disp_z_pct_hs": 4.29540205,
+        "roll_rms_deg": 0.404463559,
+        "pitch_rms_deg": 0.382044703,
+        "yaw_rms_deg": 0.756535947,
+        "disp_3d_rms_m": 0.0366428606,
+        "accel_bias_3d_rms_mps2": 0.089363575,
+        "gyro_bias_3d_rms_radps": 0.000172055734
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.404464 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.00795824826,
+        "disp_z_pct_hs": 2.94749928,
+        "roll_rms_deg": 0.396391541,
+        "pitch_rms_deg": 0.348834515,
+        "yaw_rms_deg": 0.684465051,
+        "disp_3d_rms_m": 0.0356718265,
+        "accel_bias_3d_rms_mps2": 0.084320724,
+        "gyro_bias_3d_rms_radps": 0.000171998603
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0624518991,
+        "disp_z_pct_hs": 4.16345978,
+        "roll_rms_deg": 0.143061489,
+        "pitch_rms_deg": 0.386492014,
+        "yaw_rms_deg": 2.72706652,
+        "disp_3d_rms_m": 0.192811355,
+        "accel_bias_3d_rms_mps2": 0.0688447878,
+        "gyro_bias_3d_rms_radps": 0.000227083467
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.0423384421,
+        "disp_z_pct_hs": 2.82256269,
+        "roll_rms_deg": 0.143834323,
+        "pitch_rms_deg": 0.378432453,
+        "yaw_rms_deg": 2.76125479,
+        "disp_3d_rms_m": 0.187198058,
+        "accel_bias_3d_rms_mps2": 0.0672272518,
+        "gyro_bias_3d_rms_radps": 0.000228100951
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0665731058,
+        "disp_z_pct_hs": 4.43820667,
+        "roll_rms_deg": 0.186811179,
+        "pitch_rms_deg": 0.509676158,
+        "yaw_rms_deg": 3.84302402,
+        "disp_3d_rms_m": 0.191778913,
+        "accel_bias_3d_rms_mps2": 0.0899511427,
+        "gyro_bias_3d_rms_radps": 0.000178291026
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.84302 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0478060618,
+        "disp_z_pct_hs": 3.18707061,
+        "roll_rms_deg": 0.194386572,
+        "pitch_rms_deg": 0.550903738,
+        "yaw_rms_deg": 3.94285178,
+        "disp_3d_rms_m": 0.18607913,
+        "accel_bias_3d_rms_mps2": 0.097666949,
+        "gyro_bias_3d_rms_radps": 0.000177060705
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.94285 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0627647713,
+        "disp_z_pct_hs": 4.18431807,
+        "roll_rms_deg": 0.432924122,
+        "pitch_rms_deg": 0.282712758,
+        "yaw_rms_deg": 0.699532807,
+        "disp_3d_rms_m": 0.188792497,
+        "accel_bias_3d_rms_mps2": 0.0780306533,
+        "gyro_bias_3d_rms_radps": 0.000193331027
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.432924 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.0424419641,
+        "disp_z_pct_hs": 2.8294642,
+        "roll_rms_deg": 0.441849619,
+        "pitch_rms_deg": 0.317810357,
+        "yaw_rms_deg": 0.790176809,
+        "disp_3d_rms_m": 0.182856247,
+        "accel_bias_3d_rms_mps2": 0.0831659064,
+        "gyro_bias_3d_rms_radps": 0.000193758417
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=Roll_limit_exceeded",
+        "ERROR: Roll RMS above limit (0.44185 deg > 0.4028 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.165027693,
+        "disp_z_pct_hs": 4.12569237,
+        "roll_rms_deg": 0.151694417,
+        "pitch_rms_deg": 0.272443026,
+        "yaw_rms_deg": 1.23311245,
+        "disp_3d_rms_m": 0.591089308,
+        "accel_bias_3d_rms_mps2": 0.042617701,
+        "gyro_bias_3d_rms_radps": 0.000257716922
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.110767625,
+        "disp_z_pct_hs": 2.76919055,
+        "roll_rms_deg": 0.155385196,
+        "pitch_rms_deg": 0.275766373,
+        "yaw_rms_deg": 1.34915519,
+        "disp_3d_rms_m": 0.57771951,
+        "accel_bias_3d_rms_mps2": 0.0422074273,
+        "gyro_bias_3d_rms_radps": 0.000259475404
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.178337619,
+        "disp_z_pct_hs": 4.4584403,
+        "roll_rms_deg": 0.158613861,
+        "pitch_rms_deg": 0.46561417,
+        "yaw_rms_deg": 3.54216671,
+        "disp_3d_rms_m": 0.586627066,
+        "accel_bias_3d_rms_mps2": 0.0769379884,
+        "gyro_bias_3d_rms_radps": 0.000167907143
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.54217 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.127958596,
+        "disp_z_pct_hs": 3.19896483,
+        "roll_rms_deg": 0.159445494,
+        "pitch_rms_deg": 0.479069114,
+        "yaw_rms_deg": 3.56715155,
+        "disp_3d_rms_m": 0.573005378,
+        "accel_bias_3d_rms_mps2": 0.0803922042,
+        "gyro_bias_3d_rms_radps": 0.000168914237
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=yaw_limit_exceeded",
+        "ERROR: Yaw RMS above limit (3.56715 deg > 3.06465 deg). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.167741999,
+        "disp_z_pct_hs": 4.19355011,
+        "roll_rms_deg": 0.357526958,
+        "pitch_rms_deg": 0.187001511,
+        "yaw_rms_deg": 1.03378367,
+        "disp_3d_rms_m": 0.560244262,
+        "accel_bias_3d_rms_mps2": 0.055811394,
+        "gyro_bias_3d_rms_radps": 0.000223364914
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.114135325,
+        "disp_z_pct_hs": 2.85338306,
+        "roll_rms_deg": 0.366890073,
+        "pitch_rms_deg": 0.207522422,
+        "yaw_rms_deg": 1.1352154,
+        "disp_3d_rms_m": 0.545730352,
+        "accel_bias_3d_rms_mps2": 0.0594207793,
+        "gyro_bias_3d_rms_radps": 0.000220603572
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "previous",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.346447915,
+        "disp_z_pct_hs": 4.07585764,
+        "roll_rms_deg": 0.267763376,
+        "pitch_rms_deg": 0.213890657,
+        "yaw_rms_deg": 3.32006812,
+        "disp_3d_rms_m": 1.21380365,
+        "accel_bias_3d_rms_mps2": 0.0431620628,
+        "gyro_bias_3d_rms_radps": 0.000258768676
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.32007 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (6.41962% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "arm": "wave_matched",
+      "exit_code": 1,
+      "metrics": {
+        "disp_z_rms_m": 0.227158442,
+        "disp_z_pct_hs": 2.67245221,
+        "roll_rms_deg": 0.283551425,
+        "pitch_rms_deg": 0.218375415,
+        "yaw_rms_deg": 3.4936626,
+        "disp_3d_rms_m": 1.182899,
+        "accel_bias_3d_rms_mps2": 0.0444952846,
+        "gyro_bias_3d_rms_radps": 0.000261495734
+      },
+      "gate_failures": [
+        "QUALITY_GATE: PASS=0 REASON=acc_z_bias_percent_exceeded",
+        "ERROR: Yaw RMS above limit (3.49366 deg > 3.06465 deg). Failing.",
+        "ERROR: accel Z bias error RMS above limit (5.89698% > 5.51543% of max TRUE Z bias). Failing."
+      ]
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.368455321,
+        "disp_z_pct_hs": 4.3347683,
+        "roll_rms_deg": 0.202610537,
+        "pitch_rms_deg": 0.540694118,
+        "yaw_rms_deg": 1.61741841,
+        "disp_3d_rms_m": 1.20308042,
+        "accel_bias_3d_rms_mps2": 0.0846489593,
+        "gyro_bias_3d_rms_radps": 0.000185858778
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.260224789,
+        "disp_z_pct_hs": 3.06146812,
+        "roll_rms_deg": 0.229125917,
+        "pitch_rms_deg": 0.712018907,
+        "yaw_rms_deg": 1.2113502,
+        "disp_3d_rms_m": 1.17707539,
+        "accel_bias_3d_rms_mps2": 0.115267612,
+        "gyro_bias_3d_rms_radps": 0.000189833547
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "previous",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.343646497,
+        "disp_z_pct_hs": 4.04290009,
+        "roll_rms_deg": 0.389652401,
+        "pitch_rms_deg": 0.492664278,
+        "yaw_rms_deg": 1.0375067,
+        "disp_3d_rms_m": 1.17798948,
+        "accel_bias_3d_rms_mps2": 0.101465911,
+        "gyro_bias_3d_rms_radps": 0.000217564506
+      },
+      "gate_failures": []
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "arm": "wave_matched",
+      "exit_code": 0,
+      "metrics": {
+        "disp_z_rms_m": 0.22779499,
+        "disp_z_pct_hs": 2.67994094,
+        "roll_rms_deg": 0.375841677,
+        "pitch_rms_deg": 0.573441267,
+        "yaw_rms_deg": 1.23762226,
+        "disp_3d_rms_m": 1.14781678,
+        "accel_bias_3d_rms_mps2": 0.111941174,
+        "gyro_bias_3d_rms_radps": 0.000215557346
+      },
+      "gate_failures": []
+    }
+  ],
+  "pairs": [
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 8.32030869,
+      "wave_matched_heave_pct_hs": 4.66201448,
+      "relative_change_percent": -43.968251014494506
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 8.5044136,
+      "wave_matched_heave_pct_hs": 5.04716253,
+      "relative_change_percent": -40.65243334355234
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 8.24671268,
+      "wave_matched_heave_pct_hs": 4.6902647,
+      "relative_change_percent": -43.125644338563276
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 5.82749748,
+      "wave_matched_heave_pct_hs": 3.14379811,
+      "relative_change_percent": -46.05234715605574
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 6.13954735,
+      "wave_matched_heave_pct_hs": 3.67356825,
+      "relative_change_percent": -40.165487118525114
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.80822563,
+      "wave_matched_heave_pct_hs": 3.10563135,
+      "relative_change_percent": -46.53046303919154
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.94861984,
+      "wave_matched_heave_pct_hs": 2.64939857,
+      "relative_change_percent": -46.46186905317019
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 5.18881369,
+      "wave_matched_heave_pct_hs": 3.06034541,
+      "relative_change_percent": -41.02032578471708
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.97353029,
+      "wave_matched_heave_pct_hs": 2.70145583,
+      "relative_change_percent": -45.683334121204275
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.94813681,
+      "wave_matched_heave_pct_hs": 2.60184097,
+      "relative_change_percent": -47.417764101797346
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 5.23388147,
+      "wave_matched_heave_pct_hs": 3.18190861,
+      "relative_change_percent": -39.205566113059106
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.90879869,
+      "wave_matched_heave_pct_hs": 2.68571305,
+      "relative_change_percent": -45.28777365689854
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 8.04100704,
+      "wave_matched_heave_pct_hs": 4.79342747,
+      "relative_change_percent": -40.38772200851102
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 8.22609615,
+      "wave_matched_heave_pct_hs": 5.13433361,
+      "relative_change_percent": -37.584809168562906
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 8.01596546,
+      "wave_matched_heave_pct_hs": 4.83348942,
+      "relative_change_percent": -39.70171847521908
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 5.72762871,
+      "wave_matched_heave_pct_hs": 3.21723676,
+      "relative_change_percent": -43.829516141942804
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 6.02610826,
+      "wave_matched_heave_pct_hs": 3.68167782,
+      "relative_change_percent": -38.904552305537244
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 5.72040844,
+      "wave_matched_heave_pct_hs": 3.18427634,
+      "relative_change_percent": -44.33480802290405
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.85519934,
+      "wave_matched_heave_pct_hs": 2.73427701,
+      "relative_change_percent": -43.683527317335646
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 5.11428595,
+      "wave_matched_heave_pct_hs": 3.13910723,
+      "relative_change_percent": -38.62081118088441
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.88825798,
+      "wave_matched_heave_pct_hs": 2.78983641,
+      "relative_change_percent": -42.92779919933767
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.86818504,
+      "wave_matched_heave_pct_hs": 2.74251723,
+      "relative_change_percent": -43.664482605615994
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 5.17943859,
+      "wave_matched_heave_pct_hs": 3.33476281,
+      "relative_change_percent": -35.61536154828704
+    },
+    {
+      "dataset": "moving",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.84448481,
+      "wave_matched_heave_pct_hs": 2.78436875,
+      "relative_change_percent": -42.52497718121651
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.33751631,
+      "wave_matched_heave_pct_hs": 2.87250924,
+      "relative_change_percent": -33.77525213271186
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.65437984,
+      "wave_matched_heave_pct_hs": 3.42590976,
+      "relative_change_percent": -26.393851001210933
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.32213306,
+      "wave_matched_heave_pct_hs": 2.96978068,
+      "relative_change_percent": -31.28900386051511
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.26039743,
+      "wave_matched_heave_pct_hs": 2.78732991,
+      "relative_change_percent": -34.5758240681316
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.57079649,
+      "wave_matched_heave_pct_hs": 3.21117663,
+      "relative_change_percent": -29.745797323827027
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.27515984,
+      "wave_matched_heave_pct_hs": 2.78876901,
+      "relative_change_percent": -34.76807618028147
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.18666172,
+      "wave_matched_heave_pct_hs": 2.64845014,
+      "relative_change_percent": -36.74076586249725
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.50281,
+      "wave_matched_heave_pct_hs": 3.0955584,
+      "relative_change_percent": -31.252742176551983
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.23795748,
+      "wave_matched_heave_pct_hs": 2.72863436,
+      "relative_change_percent": -35.61439979336461
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.04771376,
+      "wave_matched_heave_pct_hs": 2.45518327,
+      "relative_change_percent": -39.34395029948955
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.35737133,
+      "wave_matched_heave_pct_hs": 2.94274187,
+      "relative_change_percent": -32.46520328117183
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.01758289,
+      "wave_matched_heave_pct_hs": 2.46970057,
+      "relative_change_percent": -38.527700918200594
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.30840731,
+      "wave_matched_heave_pct_hs": 2.86149263,
+      "relative_change_percent": -33.58351650368916
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.61303425,
+      "wave_matched_heave_pct_hs": 3.36842632,
+      "relative_change_percent": -26.980244727209644
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.29540205,
+      "wave_matched_heave_pct_hs": 2.94749928,
+      "relative_change_percent": -31.380130528177208
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.16345978,
+      "wave_matched_heave_pct_hs": 2.82256269,
+      "relative_change_percent": -32.20631784270533
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.43820667,
+      "wave_matched_heave_pct_hs": 3.18707061,
+      "relative_change_percent": -28.190126170938314
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.18431807,
+      "wave_matched_heave_pct_hs": 2.8294642,
+      "relative_change_percent": -32.379323161730866
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.12569237,
+      "wave_matched_heave_pct_hs": 2.76919055,
+      "relative_change_percent": -32.87937389282373
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.4584403,
+      "wave_matched_heave_pct_hs": 3.19896483,
+      "relative_change_percent": -28.249239313577903
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.19355011,
+      "wave_matched_heave_pct_hs": 2.85338306,
+      "relative_change_percent": -31.957816524100156
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "23",
+      "previous_heave_pct_hs": 4.07585764,
+      "wave_matched_heave_pct_hs": 2.67245221,
+      "relative_change_percent": -34.43215033388653
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "7",
+      "previous_heave_pct_hs": 4.3347683,
+      "wave_matched_heave_pct_hs": 3.06146812,
+      "relative_change_percent": -29.37412317977873
+    },
+    {
+      "dataset": "stationary",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "seed": "default",
+      "previous_heave_pct_hs": 4.04290009,
+      "wave_matched_heave_pct_hs": 2.67994094,
+      "relative_change_percent": -33.71241236881518
+    }
+  ]
+}

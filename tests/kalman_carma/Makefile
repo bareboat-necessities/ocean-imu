@@ -14,13 +14,19 @@ else
     CXXFLAGS = $(BASEFLAGS)
 endif
 LDFLAGS =
+# Published lever-arm ratios include amplified negative controls. Keep their
+# arithmetic independent of the runner's SIMD/FMA instruction set; the other
+# host targets retain their native performance profile.
+LEVER_REPRO_FLAGS = $(BASEFLAGS) -ffp-contract=off -fno-tree-vectorize -DEIGEN_DONT_VECTORIZE
 VPATH = $(REPO_ROOT)/src/util
-TARGETS = carma_model-test carma_process-sim carma3-test tfg_carma3-test carma3_bench carma3-sim \
+TARGETS = carma_band_normalization-test carma_model-test carma_process-sim carma3-test tfg_carma3-test carma3_bench carma3-sim \
           carma_lever_arm-test carma_lever_arm-sim carma_excitation-test carma_coupled-test
 all: build test
 build: $(TARGETS)
 test: $(TARGETS)
 	bash ./run_tests.sh
+carma_band_normalization-test: carma_band_normalization-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_model-test: carma_model-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_process-sim: carma_process-sim.o
@@ -35,8 +41,12 @@ carma3-sim: carma3-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_lever_arm-test: carma_lever_arm-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-carma_lever_arm-sim: carma_lever_arm-sim.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+carma_lever_arm-sim: carma_lever_arm-repro.o W3dSimCommon-repro.o
+	$(CC) $(LEVER_REPRO_FLAGS) -o $@ $^ $(LDFLAGS)
+carma_lever_arm-repro.o: carma_lever_arm-sim.cpp Makefile
+	$(CC) $(LEVER_REPRO_FLAGS) -MMD -MP -c $< -o $@
+W3dSimCommon-repro.o: $(REPO_ROOT)/src/util/W3dSimCommon.cpp Makefile
+	$(CC) $(LEVER_REPRO_FLAGS) -MMD -MP -c $< -o $@
 carma_excitation-test: carma_excitation-test.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_coupled-test: carma_coupled-test.o

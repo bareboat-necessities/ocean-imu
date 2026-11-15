@@ -8,7 +8,7 @@ from carma_sim_table import main
 def write_gate_table() -> None:
     """Write the published gate thresholds and their locked measured maxima."""
     root = Path(__file__).resolve().parents[1]
-    baseline = json.loads((root / "reports/results/tfg_shared_modes/deterministic_regression.json").read_text())
+    baseline = json.loads((root / "reports/results/filter_sim_gates/limits.json").read_text())["families"]["tcsm"]
     names = {
         "err_limit_percent_z_jonswap": "JONSWAP heave [\\% $H_s$]",
         "err_limit_percent_z_pmstokes": "PM--Stokes heave [\\% $H_s$]",
@@ -21,11 +21,11 @@ def write_gate_table() -> None:
         "gyro_bias_3d_percent": "Gyroscope 3-D bias [\\%]"}
     rows = [r"% Generated from the locked deterministic regression baseline.",
             r"\begin{table}[!t]\centering\footnotesize",
-            r"\caption{TFG shared-mode deterministic quality gates. Bias and 3-D position percentages use the reference maxima defined in the text.}",
+            r"\caption{TFG shared-mode production gates on the 5 kn underway records. Bias and 3-D position percentages use the reference maxima defined in the text.}",
             r"\label{tab:tfg_shared_gates}",
             r"\begin{tabular}{lrr}\toprule Quantity&Measured worst&Limit\\\midrule"]
     for key, name in names.items():
-        rows.append(f"{name}&{baseline['measured_worst'][key]['value']:.4f}&{baseline['limits'][key]:.4f}" + r"\\")
+        rows.append(f"{name}&{baseline['measured_worst'][key]:.5f}&{baseline['current_limits'][key]:.5f}" + r"\\")
     rows.extend([r"\bottomrule\end{tabular}\end{table}", ""])
     (root / "doc/kalman_tfg_shared_modes/tfg-shared-gates-generated.tex-part").write_text("\n".join(rows))
 

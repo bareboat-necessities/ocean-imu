@@ -33,7 +33,7 @@
     "src/kalman_common/MagneticStartupCommon.h": "da00c8831719b80026321605965fbbc6f26bc1aa",
     "src/kalman_common/MarineWaveFrontEnd.h": "d594a15e9c2690026e07f714e114a385ad1a388c",
     "src/kalman_common/ProxyStartupFusion.h": "0510597886cf16a04de3a8436f0ce436f243659a",
-    "src/kalman_common/SeaStateFusionDefaults.h": "60282fe06cf2617e2edf7b940552df2c52dc2710",
+    "src/kalman_common/SeaStateFusionDefaults.h": "0fc888c49de794e4f889871044726185b655c312",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "2efa28418a4dc26ea20093adde2d5198f483c4fd",
     "src/tuner/ContinuousMagHardIronEstimator.h": "8c53e63344e3532a7231195f51fc0e75549abcff",
     "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"

@@ -21,7 +21,7 @@ LDFLAGS  =
 # Tell make to look for source files in src/util
 VPATH = $(REPO_ROOT)/src/util
 
-TARGETS = pii_observer-adaptive local_gravity-test
+TARGETS = pii_observer-adaptive local_gravity-test phase_matching-test
 
 all: build test
 
@@ -36,11 +36,16 @@ ensure-sim-data:
 pii_observer-adaptive: pii_observer-adaptive.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+phase_matching-test: phase_matching-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 local_gravity-test: local_gravity-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+%.o: %.cpp Makefile
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+-include $(wildcard *.d)
 
 clean:
-	rm -f *.o $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) *.exe *.csv

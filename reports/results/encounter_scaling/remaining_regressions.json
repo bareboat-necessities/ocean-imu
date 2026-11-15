@@ -1,0 +1,3631 @@
+{
+  "role": "remaining speed regressions after accepted fixes, not a before/after implementation claim",
+  "protocol": "default production sampling; eight seas per family; final 900 s at 200 Hz; same executable at both speeds",
+  "limits": "Single default sensor seed; fixed-sea records. No all-seed or transition robustness claim. TFG_LEGACY is the legacy regularization law, not the interval-rate sampling profile. Ungated CARMA research shapes are outside this inventory.",
+  "binary_sha256": {
+    "ou2": "fc98a284a41bbdc5940ce92f883a744248a9a62ef1271f60727440d6d7aeca73",
+    "ou3": "fea96fbe15a8d9f22dec844b898eb47bccbab4e67e0cfaaecf5e2c4ca55acf4f",
+    "tfg": "e03bca6ca3fcf6c88bcea36dd6903b2010d5fe2c01b796f8b7f2af74e6fdfa4c",
+    "tfg_legacy": "ab269b0f2049de33bdd1cf19b1dccea3bb4ac252f76928fe649c3330999952e8",
+    "carma": "4df8fd8011f209da1242664a8c88551a0eca8fd1d8346dc7bf171b328f0e80fe",
+    "csm": "f246b12b60e781dfe59e57815a0309a474e5a5b81e7b11d2dfd0223c6ed4aa8b",
+    "tcarma": "edae0711dbca458ddbadf80bd7d299c2bc64597065dd2d57db36ca296aa52b9d",
+    "tcsm": "11d4b0123ba5ff3f5bad9c29df11c0ac30cb91049b891e3e7cd3384b91798831"
+  },
+  "summaries": {
+    "ou2": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 6.21602571,
+          "worst": 6.64238977
+        },
+        "moving": {
+          "mean": 7.34763878375,
+          "worst": 8.48621082
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.2191210389875,
+          "worst": 0.514062405
+        },
+        "moving": {
+          "mean": 0.2461940885375,
+          "worst": 0.584050357
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.3694660223125,
+          "worst": 0.922250092
+        },
+        "moving": {
+          "mean": 0.430295739475,
+          "worst": 1.07162058
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.182531623125,
+          "worst": 0.224210173
+        },
+        "moving": {
+          "mean": 0.188807848875,
+          "worst": 0.213017866
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.17614222875,
+          "worst": 0.211698189
+        },
+        "moving": {
+          "mean": 0.15915694275,
+          "worst": 0.187535375
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.582785483375,
+          "worst": 0.74228996
+        },
+        "moving": {
+          "mean": 0.6740276885,
+          "worst": 0.898962259
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0430441405625,
+          "worst": 0.052054286
+        },
+        "moving": {
+          "mean": 0.0407209121625,
+          "worst": 0.045268409
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.000118263007675,
+          "worst": 0.000134549031
+        },
+        "moving": {
+          "mean": 0.00011634787275,
+          "worst": 0.000133728012
+        }
+      },
+      "heave_regressions": 8
+    },
+    "ou3": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 3.99568191375,
+          "worst": 4.2492137
+        },
+        "moving": {
+          "mean": 5.60072261125,
+          "worst": 8.23604965
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.136588211025,
+          "worst": 0.314992726
+        },
+        "moving": {
+          "mean": 0.163964311275,
+          "worst": 0.373826087
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.2964981576625,
+          "worst": 0.735751629
+        },
+        "moving": {
+          "mean": 0.3704686686375,
+          "worst": 0.900062978
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.25002768075,
+          "worst": 0.321229339
+        },
+        "moving": {
+          "mean": 0.215429172,
+          "worst": 0.344943434
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.1227680845,
+          "worst": 0.137470409
+        },
+        "moving": {
+          "mean": 0.14299283175,
+          "worst": 0.155063912
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.478469044,
+          "worst": 0.824193358
+        },
+        "moving": {
+          "mean": 0.5923503301249999,
+          "worst": 0.871180534
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0469236774375,
+          "worst": 0.0580132529
+        },
+        "moving": {
+          "mean": 0.0429438361875,
+          "worst": 0.0635003
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.00011726119837500001,
+          "worst": 0.000130381901
+        },
+        "moving": {
+          "mean": 0.000115652268375,
+          "worst": 0.000135029564
+        }
+      },
+      "heave_regressions": 8
+    },
+    "tfg": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.9529504487500002,
+          "worst": 3.23241782
+        },
+        "moving": {
+          "mean": 3.9443050025,
+          "worst": 5.71622658
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.09939695189125,
+          "worst": 0.228542209
+        },
+        "moving": {
+          "mean": 0.115053201775,
+          "worst": 0.25707534
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.2802969190875,
+          "worst": 0.712462783
+        },
+        "moving": {
+          "mean": 0.3478379709875,
+          "worst": 0.862051845
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.27946164475,
+          "worst": 0.310043544
+        },
+        "moving": {
+          "mean": 0.32406394925,
+          "worst": 0.52861768
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.08089020755000001,
+          "worst": 0.209607914
+        },
+        "moving": {
+          "mean": 0.1469328579875,
+          "worst": 0.24564524
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.549619959625,
+          "worst": 0.884033382
+        },
+        "moving": {
+          "mean": 0.65824499,
+          "worst": 1.06940472
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0489082713625,
+          "worst": 0.0567863174
+        },
+        "moving": {
+          "mean": 0.06071259455,
+          "worst": 0.0918369144
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.0001045167827625,
+          "worst": 0.000111604015
+        },
+        "moving": {
+          "mean": 0.000113961584375,
+          "worst": 0.00011715349
+        }
+      },
+      "heave_regressions": 8
+    },
+    "tfg_legacy": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.78385806125,
+          "worst": 2.96969032
+        },
+        "moving": {
+          "mean": 3.345475705,
+          "worst": 4.83241558
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.0951989093825,
+          "worst": 0.227985531
+        },
+        "moving": {
+          "mean": 0.100505217,
+          "worst": 0.236482531
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.48086121652499997,
+          "worst": 1.15279245
+        },
+        "moving": {
+          "mean": 0.6300948623375,
+          "worst": 1.53665936
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.3942328955,
+          "worst": 0.438824177
+        },
+        "moving": {
+          "mean": 0.3419384435,
+          "worst": 0.400981575
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.321569213625,
+          "worst": 0.497368068
+        },
+        "moving": {
+          "mean": 0.381876051125,
+          "worst": 1.16576886
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.8921645545,
+          "worst": 1.13007987
+        },
+        "moving": {
+          "mean": 1.13863933075,
+          "worst": 3.06292152
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.078835528275,
+          "worst": 0.101766109
+        },
+        "moving": {
+          "mean": 0.0870036347,
+          "worst": 0.210334092
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.0001969469105,
+          "worst": 0.000222964925
+        },
+        "moving": {
+          "mean": 0.000212659766375,
+          "worst": 0.000292506593
+        }
+      },
+      "heave_regressions": 6
+    },
+    "carma": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.3105915475,
+          "worst": 2.46071506
+        },
+        "moving": {
+          "mean": 2.744861305,
+          "worst": 3.72640705
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.08052889177,
+          "worst": 0.200521588
+        },
+        "moving": {
+          "mean": 0.0857488160375,
+          "worst": 0.203015402
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.15630953444875,
+          "worst": 0.395830125
+        },
+        "moving": {
+          "mean": 0.1719761698125,
+          "worst": 0.420078367
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.225628146625,
+          "worst": 0.349189281
+        },
+        "moving": {
+          "mean": 0.185350433,
+          "worst": 0.210947379
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.17663304675,
+          "worst": 0.202649325
+        },
+        "moving": {
+          "mean": 0.17926917975,
+          "worst": 0.193653822
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.586344268125,
+          "worst": 0.763220191
+        },
+        "moving": {
+          "mean": 0.68036123725,
+          "worst": 0.938402891
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0490275304625,
+          "worst": 0.0687125921
+        },
+        "moving": {
+          "mean": 0.0431578271125,
+          "worst": 0.0475340113
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.0001182435645,
+          "worst": 0.000136041708
+        },
+        "moving": {
+          "mean": 0.000113391933,
+          "worst": 0.000132334098
+        }
+      },
+      "heave_regressions": 7
+    },
+    "csm": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.21009922,
+          "worst": 2.35746789
+        },
+        "moving": {
+          "mean": 2.63525927,
+          "worst": 3.53167033
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.07623798093375,
+          "worst": 0.186245084
+        },
+        "moving": {
+          "mean": 0.08144645725875001,
+          "worst": 0.189371526
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.141452951745,
+          "worst": 0.360034496
+        },
+        "moving": {
+          "mean": 0.14804491275,
+          "worst": 0.353658676
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.223618220625,
+          "worst": 0.351539195
+        },
+        "moving": {
+          "mean": 0.182722564625,
+          "worst": 0.201871291
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.18340572525,
+          "worst": 0.203920215
+        },
+        "moving": {
+          "mean": 0.18225228975,
+          "worst": 0.206254214
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.598812561375,
+          "worst": 0.768736064
+        },
+        "moving": {
+          "mean": 0.68877408275,
+          "worst": 0.977257252
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0496126311,
+          "worst": 0.0689841062
+        },
+        "moving": {
+          "mean": 0.0432842080375,
+          "worst": 0.0460592285
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.000118870328125,
+          "worst": 0.000138605741
+        },
+        "moving": {
+          "mean": 0.000112729419125,
+          "worst": 0.000130973844
+        }
+      },
+      "heave_regressions": 7
+    },
+    "tcarma": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.31058052375,
+          "worst": 2.46069813
+        },
+        "moving": {
+          "mean": 2.74481648375,
+          "worst": 3.7265358
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.08053152233,
+          "worst": 0.200535417
+        },
+        "moving": {
+          "mean": 0.08574805820499999,
+          "worst": 0.203014866
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.156371299835,
+          "worst": 0.396041125
+        },
+        "moving": {
+          "mean": 0.1720166381875,
+          "worst": 0.420136869
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.22585793775000002,
+          "worst": 0.349413693
+        },
+        "moving": {
+          "mean": 0.185686139375,
+          "worst": 0.210981175
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.177158460125,
+          "worst": 0.20298554
+        },
+        "moving": {
+          "mean": 0.178760560125,
+          "worst": 0.191358387
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.585653655125,
+          "worst": 0.770251632
+        },
+        "moving": {
+          "mean": 0.677487213125,
+          "worst": 0.927442193
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0491207591125,
+          "worst": 0.0687795952
+        },
+        "moving": {
+          "mean": 0.0431296927625,
+          "worst": 0.0475909561
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.0001163475453,
+          "worst": 0.000132119967
+        },
+        "moving": {
+          "mean": 0.0001131231063125,
+          "worst": 0.000133762398
+        }
+      },
+      "heave_regressions": 7
+    },
+    "tcsm": {
+      "disp_z_pct_hs": {
+        "stationary": {
+          "mean": 2.209945605,
+          "worst": 2.35702682
+        },
+        "moving": {
+          "mean": 2.6354058975,
+          "worst": 3.53331423
+        }
+      },
+      "disp_z_rms_m": {
+        "stationary": {
+          "mean": 0.076240713305,
+          "worst": 0.186269566
+        },
+        "moving": {
+          "mean": 0.081446295055,
+          "worst": 0.189398229
+        }
+      },
+      "disp_3d_rms_m": {
+        "stationary": {
+          "mean": 0.14153393633,
+          "worst": 0.360263169
+        },
+        "moving": {
+          "mean": 0.14808896700000002,
+          "worst": 0.353711694
+        }
+      },
+      "roll_rms_deg": {
+        "stationary": {
+          "mean": 0.22380089012499998,
+          "worst": 0.351773232
+        },
+        "moving": {
+          "mean": 0.182797867875,
+          "worst": 0.198921174
+        }
+      },
+      "pitch_rms_deg": {
+        "stationary": {
+          "mean": 0.181814186375,
+          "worst": 0.200908944
+        },
+        "moving": {
+          "mean": 0.1799731775,
+          "worst": 0.199213788
+        }
+      },
+      "yaw_rms_deg": {
+        "stationary": {
+          "mean": 0.594701405625,
+          "worst": 0.776937008
+        },
+        "moving": {
+          "mean": 0.679470852125,
+          "worst": 0.94694078
+        }
+      },
+      "accel_bias_3d_rms_mps2": {
+        "stationary": {
+          "mean": 0.0494249956625,
+          "worst": 0.0689728037
+        },
+        "moving": {
+          "mean": 0.0429778736875,
+          "worst": 0.0456007719
+        }
+      },
+      "gyro_bias_3d_rms_radps": {
+        "stationary": {
+          "mean": 0.0001168321642,
+          "worst": 0.000134036352
+        },
+        "moving": {
+          "mean": 0.0001124128574125,
+          "worst": 0.000132371671
+        }
+      },
+      "heave_regressions": 7
+    }
+  },
+  "rows": [
+    {
+      "family": "ou2",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.13903189,
+          "moving": 8.48621082,
+          "delta": 2.34717893
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0165753867,
+          "moving": 0.0229127686,
+          "delta": 0.006337381900000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0207985491,
+          "moving": 0.0312254671,
+          "delta": 0.010426918
+        },
+        "roll_rms_deg": {
+          "stationary": 0.209893748,
+          "moving": 0.204838574,
+          "delta": -0.005055173999999996
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.151520148,
+          "moving": 0.164632887,
+          "delta": 0.013112739000000012
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.522794962,
+          "moving": 0.350500166,
+          "delta": -0.17229479599999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0441433676,
+          "moving": 0.04429451,
+          "delta": 0.00015114240000000528
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000103950442,
+          "moving": 0.000111067326,
+          "delta": 7.116883999999996e-06
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.64238977,
+          "moving": 7.62653255,
+          "delta": 0.98414278
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0996358469,
+          "moving": 0.114397995,
+          "delta": 0.014762148099999997
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.143334642,
+          "moving": 0.175282449,
+          "delta": 0.031947806999999995
+        },
+        "roll_rms_deg": {
+          "stationary": 0.147589624,
+          "moving": 0.16320236,
+          "delta": 0.015612735999999988
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.166159123,
+          "moving": 0.151917294,
+          "delta": -0.014241828999999984
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.615633368,
+          "moving": 0.898962259,
+          "delta": 0.283328891
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0376902781,
+          "moving": 0.036840599,
+          "delta": -0.0008496791000000004
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000110874811,
+          "moving": 0.000103974409,
+          "delta": -6.900401999999998e-06
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.34932613,
+          "moving": 6.78805208,
+          "delta": 0.43872595000000025
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.253973037,
+          "moving": 0.271522075,
+          "delta": 0.01754903799999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.41106692,
+          "moving": 0.460512072,
+          "delta": 0.04944515199999999
+        },
+        "roll_rms_deg": {
+          "stationary": 0.157494485,
+          "moving": 0.201044008,
+          "delta": 0.04354952300000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.182916537,
+          "moving": 0.132011741,
+          "delta": -0.050904796
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.703278184,
+          "moving": 0.847095191,
+          "delta": 0.143817007
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0404410437,
+          "moving": 0.0388589799,
+          "delta": -0.0015820637999999984
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000129357446,
+          "moving": 0.000132673405,
+          "delta": 3.315958999999981e-06
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.04779291,
+          "moving": 6.87118053,
+          "delta": 0.8233876200000001
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.514062405,
+          "moving": 0.584050357,
+          "delta": 0.06998795199999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.922250092,
+          "moving": 1.07162058,
+          "delta": 0.14937048800000008
+        },
+        "roll_rms_deg": {
+          "stationary": 0.212770715,
+          "moving": 0.179756403,
+          "delta": -0.03301431199999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.202090055,
+          "moving": 0.187535375,
+          "delta": -0.014554679999999987
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.597602487,
+          "moving": 0.843000829,
+          "delta": 0.245398342
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0492667928,
+          "moving": 0.0420133658,
+          "delta": -0.007253427
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000129960565,
+          "moving": 0.000116171381,
+          "delta": -1.3789183999999996e-05
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 5.93436337,
+          "moving": 8.02665424,
+          "delta": 2.0922908699999994
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0160227809,
+          "moving": 0.0216719657,
+          "delta": 0.005649184800000002
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0201178994,
+          "moving": 0.0295759067,
+          "delta": 0.009458007300000001
+        },
+        "roll_rms_deg": {
+          "stationary": 0.208093792,
+          "moving": 0.213017866,
+          "delta": 0.0049240740000000005
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.152720869,
+          "moving": 0.16337575,
+          "delta": 0.010654880999999977
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.74228996,
+          "moving": 0.352882385,
+          "delta": -0.389407575
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0440308712,
+          "moving": 0.045268409,
+          "delta": 0.0012375378000000006
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 9.96992094e-05,
+          "moving": 0.00011080347,
+          "delta": 1.1104260600000002e-05
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.44088602,
+          "moving": 7.52491951,
+          "delta": 1.0840334900000004
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0966132954,
+          "moving": 0.1128738,
+          "delta": 0.016260504600000003
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.137918487,
+          "moving": 0.171905443,
+          "delta": 0.033986955999999985
+        },
+        "roll_rms_deg": {
+          "stationary": 0.144700274,
+          "moving": 0.163991645,
+          "delta": 0.019291371
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.166538313,
+          "moving": 0.153951496,
+          "delta": -0.012586817
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.451563567,
+          "moving": 0.82919693,
+          "delta": 0.37763336300000006
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0374655277,
+          "moving": 0.0372413322,
+          "delta": -0.00022419550000000316
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000114693954,
+          "moving": 0.000104282088,
+          "delta": -1.0411866000000001e-05
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 6.19421721,
+          "moving": 6.70597553,
+          "delta": 0.5117583200000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.247768685,
+          "moving": 0.268239021,
+          "delta": 0.020470336000000033
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.39838922,
+          "moving": 0.454658508,
+          "delta": 0.05626928800000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.155500174,
+          "moving": 0.203720078,
+          "delta": 0.04821990400000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.175494596,
+          "moving": 0.139017478,
+          "delta": -0.036477118
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.532735169,
+          "moving": 0.649068534,
+          "delta": 0.11633336500000002
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0392609574,
+          "moving": 0.040004883,
+          "delta": 0.0007439256000000005
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000123018603,
+          "moving": 0.000133728012,
+          "delta": 1.0709409000000014e-05
+        }
+      }
+    },
+    {
+      "family": "ou2",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 5.98019838,
+          "moving": 6.75158501,
+          "delta": 0.7713866300000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.508316875,
+          "moving": 0.573884726,
+          "delta": 0.06556785099999995
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.901852369,
+          "moving": 1.04758549,
+          "delta": 0.1457331209999999
+        },
+        "roll_rms_deg": {
+          "stationary": 0.224210173,
+          "moving": 0.180891857,
+          "delta": -0.04331831600000002
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.211698189,
+          "moving": 0.180813521,
+          "delta": -0.030884668000000004
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.49638617,
+          "moving": 0.621515214,
+          "delta": 0.12512904399999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.052054286,
+          "moving": 0.0412452184,
+          "delta": -0.0108090676
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000134549031,
+          "moving": 0.000118082891,
+          "delta": -1.6466139999999984e-05
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 4.2492137,
+          "moving": 8.23604965,
+          "delta": 3.9868359499999997
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0114728771,
+          "moving": 0.0222373344,
+          "delta": 0.010764457299999999
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0172482412,
+          "moving": 0.0369727463,
+          "delta": 0.019724505099999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.308397561,
+          "moving": 0.300123245,
+          "delta": -0.008274316000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.11928837,
+          "moving": 0.151279956,
+          "delta": 0.03199158599999999
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.492509484,
+          "moving": 0.381683469,
+          "delta": -0.110826015
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0562956445,
+          "moving": 0.0567988753,
+          "delta": 0.0005032308000000041
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000105852538,
+          "moving": 0.00011252478,
+          "delta": 6.672242000000002e-06
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 4.10599947,
+          "moving": 5.50112581,
+          "delta": 1.3951263399999991
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0615899973,
+          "moving": 0.0825168937,
+          "delta": 0.0209268964
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.111587167,
+          "moving": 0.158590764,
+          "delta": 0.047003596999999994
+        },
+        "roll_rms_deg": {
+          "stationary": 0.16731371,
+          "moving": 0.131164953,
+          "delta": -0.036148757000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.114214219,
+          "moving": 0.139649704,
+          "delta": 0.025435485000000008
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.378935218,
+          "moving": 0.735916197,
+          "delta": 0.356980979
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0341265649,
+          "moving": 0.0314023308,
+          "delta": -0.0027242341000000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000110538997,
+          "moving": 0.000102563055,
+          "delta": -7.975942000000008e-06
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 4.01235628,
+          "moving": 4.59340048,
+          "delta": 0.5810442
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.160494253,
+          "moving": 0.183736011,
+          "delta": 0.023241758
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.332650304,
+          "moving": 0.404882789,
+          "delta": 0.07223248500000001
+        },
+        "roll_rms_deg": {
+          "stationary": 0.225302681,
+          "moving": 0.233335644,
+          "delta": 0.008032963000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.125113979,
+          "moving": 0.129496872,
+          "delta": 0.004382893000000027
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.824193358,
+          "moving": 0.871180534,
+          "delta": 0.04698717599999991
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0428795516,
+          "moving": 0.0435446613,
+          "delta": 0.0006651096999999995
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000130381901,
+          "moving": 0.000135029564,
+          "delta": 4.6476629999999916e-06
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.70579672,
+          "moving": 4.39795399,
+          "delta": 0.6921572700000005
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.314992726,
+          "moving": 0.373826087,
+          "delta": 0.05883336099999997
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.735751629,
+          "moving": 0.900062978,
+          "delta": 0.164311349
+        },
+        "roll_rms_deg": {
+          "stationary": 0.285948098,
+          "moving": 0.173384681,
+          "delta": -0.11256341699999997
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.137470409,
+          "moving": 0.155063912,
+          "delta": 0.01759350300000001
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.321578354,
+          "moving": 0.617735624,
+          "delta": 0.29615727000000003
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0526687391,
+          "moving": 0.0366789587,
+          "delta": -0.0159897804
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000124561629,
+          "moving": 0.000112237103,
+          "delta": -1.2324526000000012e-05
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 4.21281433,
+          "moving": 7.83910942,
+          "delta": 3.62629509
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0113745993,
+          "moving": 0.0211655963,
+          "delta": 0.009790997
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0171741601,
+          "moving": 0.0352159888,
+          "delta": 0.018041828700000002
+        },
+        "roll_rms_deg": {
+          "stationary": 0.313517928,
+          "moving": 0.344943434,
+          "delta": 0.03142550599999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.118295863,
+          "moving": 0.147566453,
+          "delta": 0.029270589999999985
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.656650186,
+          "moving": 0.370832056,
+          "delta": -0.28581813
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0570583381,
+          "moving": 0.0635003,
+          "delta": 0.006441961899999994
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000101661273,
+          "moving": 0.000112669703,
+          "delta": 1.1008430000000003e-05
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 4.03040791,
+          "moving": 5.4099946,
+          "delta": 1.37958669
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0604561195,
+          "moving": 0.0811499208,
+          "delta": 0.020693801299999995
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.107639402,
+          "moving": 0.155066848,
+          "delta": 0.04742744600000001
+        },
+        "roll_rms_deg": {
+          "stationary": 0.165955707,
+          "moving": 0.127707243,
+          "delta": -0.03824846400000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.112618454,
+          "moving": 0.144524917,
+          "delta": 0.031906462999999996
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.236131102,
+          "moving": 0.676078141,
+          "delta": 0.439947039
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0338021629,
+          "moving": 0.0316485912,
+          "delta": -0.0021535717000000024
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000114437993,
+          "moving": 0.000102659818,
+          "delta": -1.1778175e-05
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.95174623,
+          "moving": 4.51799679,
+          "delta": 0.5662505599999998
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.158069849,
+          "moving": 0.180719867,
+          "delta": 0.022650017999999994
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.322844893,
+          "moving": 0.396577507,
+          "delta": 0.07373261399999997
+        },
+        "roll_rms_deg": {
+          "stationary": 0.212556422,
+          "moving": 0.231997848,
+          "delta": 0.01944142600000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.120274924,
+          "moving": 0.128845215,
+          "delta": 0.008570291000000008
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.619257033,
+          "moving": 0.667918324,
+          "delta": 0.04866129099999994
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0405451655,
+          "moving": 0.0432688072,
+          "delta": 0.0027236417000000013
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000123502658,
+          "moving": 0.000133020905,
+          "delta": 9.518247000000015e-06
+        }
+      }
+    },
+    {
+      "family": "ou3",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.69712067,
+          "moving": 4.31015015,
+          "delta": 0.6130294800000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.314255267,
+          "moving": 0.36636278,
+          "delta": 0.052107512999999994
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.727089465,
+          "moving": 0.876379728,
+          "delta": 0.14929026299999992
+        },
+        "roll_rms_deg": {
+          "stationary": 0.321229339,
+          "moving": 0.180776328,
+          "delta": -0.14045301100000002
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.134868458,
+          "moving": 0.147515625,
+          "delta": 0.012647167000000015
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.298497617,
+          "moving": 0.417458296,
+          "delta": 0.11896067900000001
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0580132529,
+          "moving": 0.036708165,
+          "delta": -0.0213050879
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000127152598,
+          "moving": 0.000114513219,
+          "delta": -1.2639379000000002e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.23241782,
+          "moving": 5.71622658,
+          "delta": 2.4838087599999996
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00872752815,
+          "moving": 0.0154338116,
+          "delta": 0.0067062834499999995
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0156632848,
+          "moving": 0.0305516794,
+          "delta": 0.0148883946
+        },
+        "roll_rms_deg": {
+          "stationary": 0.287895322,
+          "moving": 0.319958121,
+          "delta": 0.032062798999999975
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.0430028588,
+          "moving": 0.142270252,
+          "delta": 0.09926739320000001
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.52178961,
+          "moving": 0.330784768,
+          "delta": -0.191004842
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0494057946,
+          "moving": 0.0593213588,
+          "delta": 0.009915564200000004
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 9.80762707e-05,
+          "moving": 0.000111090681,
+          "delta": 1.3014410299999997e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.02676225,
+          "moving": 3.95787573,
+          "delta": 0.93111348
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0454014353,
+          "moving": 0.0593681373,
+          "delta": 0.013966701999999998
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0957158431,
+          "moving": 0.141460001,
+          "delta": 0.0457441579
+        },
+        "roll_rms_deg": {
+          "stationary": 0.262821853,
+          "moving": 0.230686054,
+          "delta": -0.03213579899999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.0464258343,
+          "moving": 0.24564524,
+          "delta": 0.1992194057
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.366478354,
+          "moving": 1.01194978,
+          "delta": 0.6454714259999998
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0443992615,
+          "moving": 0.0570468903,
+          "delta": 0.012647628799999998
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000103155449,
+          "moving": 0.00011604654,
+          "delta": 1.2891090999999998e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.93151355,
+          "moving": 3.24947166,
+          "delta": 0.3179581100000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.117260538,
+          "moving": 0.129978865,
+          "delta": 0.012718327000000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.301166922,
+          "moving": 0.367016971,
+          "delta": 0.06585004900000002
+        },
+        "roll_rms_deg": {
+          "stationary": 0.270462066,
+          "moving": 0.281325787,
+          "delta": 0.010863720999999993
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.0889684111,
+          "moving": 0.0519505665,
+          "delta": -0.0370178446
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.884033382,
+          "moving": 1.06940472,
+          "delta": 0.18537133800000005
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0470890626,
+          "moving": 0.0462776162,
+          "delta": -0.0008114463999999988
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000108077642,
+          "moving": 0.000115057359,
+          "delta": 6.979716999999997e-06
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.65116644,
+          "moving": 3.02441573,
+          "delta": 0.37324928999999996
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.225349143,
+          "moving": 0.25707534,
+          "delta": 0.031726196999999984
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.710205495,
+          "moving": 0.862051845,
+          "delta": 0.15184635000000002
+        },
+        "roll_rms_deg": {
+          "stationary": 0.274162889,
+          "moving": 0.456132114,
+          "delta": 0.18196922499999996
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.209607914,
+          "moving": 0.0956526101,
+          "delta": -0.11395530390000001
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.643755853,
+          "moving": 0.326170981,
+          "delta": -0.317584872
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0567863174,
+          "moving": 0.0763161257,
+          "delta": 0.0195298083
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000111604015,
+          "moving": 0.000110880494,
+          "delta": -7.23521000000005e-07
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 3.20573187,
+          "moving": 5.45901442,
+          "delta": 2.2532825499999998
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00865547638,
+          "moving": 0.0147393392,
+          "delta": 0.006083862819999999
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0155314635,
+          "moving": 0.0287404545,
+          "delta": 0.013208990999999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.286127448,
+          "moving": 0.30778259,
+          "delta": 0.021655142000000016
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.043882139,
+          "moving": 0.171271652,
+          "delta": 0.127389513
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.623038888,
+          "moving": 0.294238478,
+          "delta": -0.32880040999999993
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0491380319,
+          "moving": 0.0597676374,
+          "delta": 0.0106296055
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 9.50141184e-05,
+          "moving": 0.000113499831,
+          "delta": 1.84857126e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.97007632,
+          "moving": 3.90866899,
+          "delta": 0.9385926699999998
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0445511453,
+          "moving": 0.0586300381,
+          "delta": 0.0140788928
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0931826383,
+          "moving": 0.138009325,
+          "delta": 0.04482668669999999
+        },
+        "roll_rms_deg": {
+          "stationary": 0.261980176,
+          "moving": 0.220160782,
+          "delta": -0.04181939400000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.0394643992,
+          "moving": 0.237069055,
+          "delta": 0.1976046558
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.248075709,
+          "moving": 0.908233106,
+          "delta": 0.660157397
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0439562052,
+          "moving": 0.0547344014,
+          "delta": 0.0107781962
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.00010273535,
+          "moving": 0.000115372328,
+          "delta": 1.2636978000000001e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.91720343,
+          "moving": 3.22433567,
+          "delta": 0.30713224000000006
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.11668814,
+          "moving": 0.128973424,
+          "delta": 0.012285284000000007
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.298446923,
+          "moving": 0.362395167,
+          "delta": 0.06394824400000004
+        },
+        "roll_rms_deg": {
+          "stationary": 0.28219986,
+          "moving": 0.247848466,
+          "delta": -0.034351394000000035
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.064041622,
+          "moving": 0.0509241223,
+          "delta": -0.013117499700000007
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.806464195,
+          "moving": 0.836825907,
+          "delta": 0.03036171200000004
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0477163941,
+          "moving": 0.0403998122,
+          "delta": -0.007316581899999994
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000106237596,
+          "moving": 0.00011715349,
+          "delta": 1.0915894000000005e-05
+        }
+      }
+    },
+    {
+      "family": "tfg",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.68873191,
+          "moving": 3.01443124,
+          "delta": 0.32569932999999995
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.228542209,
+          "moving": 0.256226659,
+          "delta": 0.027684450000000027
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.712462783,
+          "moving": 0.852478325,
+          "delta": 0.140015542
+        },
+        "roll_rms_deg": {
+          "stationary": 0.310043544,
+          "moving": 0.52861768,
+          "delta": 0.21857413599999997
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.111728482,
+          "moving": 0.180679366,
+          "delta": 0.068950884
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.303323686,
+          "moving": 0.48835218,
+          "delta": 0.18502849400000004
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0527751036,
+          "moving": 0.0918369144,
+          "delta": 0.0390618108
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000111233821,
+          "moving": 0.000112591952,
+          "delta": 1.3581310000000012e-06
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.96969032,
+          "moving": 4.68929958,
+          "delta": 1.71960926
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00801816396,
+          "moving": 0.0126611087,
+          "delta": 0.00464294474
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0361802466,
+          "moving": 0.0563599505,
+          "delta": 0.0201797039
+        },
+        "roll_rms_deg": {
+          "stationary": 0.405686468,
+          "moving": 0.369901538,
+          "delta": -0.03578493000000005
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.372686028,
+          "moving": 0.141469672,
+          "delta": -0.231216356
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.944211066,
+          "moving": 0.413057029,
+          "delta": -0.5311540370000001
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0883229524,
+          "moving": 0.0606600419,
+          "delta": -0.0276629105
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000173487031,
+          "moving": 0.000192518841,
+          "delta": 1.903180999999999e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.7884953,
+          "moving": 3.10508919,
+          "delta": 0.31659389000000004
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0418274328,
+          "moving": 0.0465763398,
+          "delta": 0.004748906999999997
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.187203303,
+          "moving": 0.265351862,
+          "delta": 0.078148559
+        },
+        "roll_rms_deg": {
+          "stationary": 0.427228153,
+          "moving": 0.346250415,
+          "delta": -0.08097773800000002
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.246969774,
+          "moving": 0.173746184,
+          "delta": -0.07322359
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.474703461,
+          "moving": 0.712886453,
+          "delta": 0.23818299199999998
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0739177391,
+          "moving": 0.0558905192,
+          "delta": -0.018027219900000002
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000186844904,
+          "moving": 0.000179456532,
+          "delta": -7.388371999999995e-06
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.72904825,
+          "moving": 2.70000935,
+          "delta": -0.029038899999999757
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.109161928,
+          "moving": 0.108000375,
+          "delta": -0.0011615530000000096
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.557440221,
+          "moving": 0.707098067,
+          "delta": 0.14965784599999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.346534491,
+          "moving": 0.299735695,
+          "delta": -0.046798795999999976
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.188267604,
+          "moving": 0.196060717,
+          "delta": 0.00779311299999999
+        },
+        "yaw_rms_deg": {
+          "stationary": 1.08924925,
+          "moving": 0.82881254,
+          "delta": -0.2604367099999999
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0550596751,
+          "moving": 0.0479288884,
+          "delta": -0.0071307866999999955
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000208721758,
+          "moving": 0.000219097041,
+          "delta": 1.0375283000000002e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.47130871,
+          "moving": 2.68166757,
+          "delta": 0.21035885999999993
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.210061237,
+          "moving": 0.227941751,
+          "delta": 0.017880513999999986
+        },
+        "disp_3d_rms_m": {
+          "stationary": 1.15279245,
+          "moving": 1.53665936,
+          "delta": 0.38386691000000006
+        },
+        "roll_rms_deg": {
+          "stationary": 0.384579033,
+          "moving": 0.321617812,
+          "delta": -0.06296122100000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.411980391,
+          "moving": 1.16576886,
+          "delta": 0.7537884690000001
+        },
+        "yaw_rms_deg": {
+          "stationary": 1.01377821,
+          "moving": 3.06292152,
+          "delta": 2.0491433100000003
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.087724179,
+          "moving": 0.210334092,
+          "delta": 0.122609913
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000201308038,
+          "moving": 0.000292506593,
+          "delta": 9.119855500000002e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.94748092,
+          "moving": 4.83241558,
+          "delta": 1.8849346600000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0079581989,
+          "moving": 0.0130475229,
+          "delta": 0.005089324000000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0356721096,
+          "moving": 0.0541256852,
+          "delta": 0.0184535756
+        },
+        "roll_rms_deg": {
+          "stationary": 0.39542833,
+          "moving": 0.353192061,
+          "delta": -0.04223626899999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.344292551,
+          "moving": 0.171224907,
+          "delta": -0.173067644
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.67830056,
+          "moving": 0.350890219,
+          "delta": -0.32741034100000005
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0836441144,
+          "moving": 0.0605446249,
+          "delta": -0.023099489499999994
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000171856504,
+          "moving": 0.000185656972,
+          "delta": 1.3800467999999983e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.82910228,
+          "moving": 3.18379903,
+          "delta": 0.35469675
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0424365364,
+          "moving": 0.0477569886,
+          "delta": 0.005320452199999999
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.182936504,
+          "moving": 0.260425389,
+          "delta": 0.07748888500000001
+        },
+        "roll_rms_deg": {
+          "stationary": 0.438824177,
+          "moving": 0.339410454,
+          "delta": -0.09941372300000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.304917186,
+          "moving": 0.169064745,
+          "delta": -0.13585244100000002
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.758276999,
+          "moving": 0.621581495,
+          "delta": -0.13669550399999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0812627226,
+          "moving": 0.054199297,
+          "delta": -0.027063425600000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000193325963,
+          "moving": 0.000178023256,
+          "delta": -1.530270699999999e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.85355616,
+          "moving": 2.78937793,
+          "delta": -0.06417823
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.114142247,
+          "moving": 0.111575119,
+          "delta": -0.002567128000000002
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.546233118,
+          "moving": 0.694856405,
+          "delta": 0.14862328700000005
+        },
+        "roll_rms_deg": {
+          "stationary": 0.366472185,
+          "moving": 0.304417998,
+          "delta": -0.06205418699999998
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.206072107,
+          "moving": 0.176831454,
+          "delta": -0.029240653000000005
+        },
+        "yaw_rms_deg": {
+          "stationary": 1.13007987,
+          "moving": 1.01972556,
+          "delta": -0.11035431000000018
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0589867346,
+          "moving": 0.0441224352,
+          "delta": -0.014864299400000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000222964925,
+          "moving": 0.000190252831,
+          "delta": -3.2712093999999985e-05
+        }
+      }
+    },
+    {
+      "family": "tfg_legacy",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.68218255,
+          "moving": 2.78214741,
+          "delta": 0.09996486000000004
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.227985531,
+          "moving": 0.236482531,
+          "delta": 0.008497000000000005
+        },
+        "disp_3d_rms_m": {
+          "stationary": 1.14843178,
+          "moving": 1.46588218,
+          "delta": 0.3174504
+        },
+        "roll_rms_deg": {
+          "stationary": 0.389110327,
+          "moving": 0.400981575,
+          "delta": 0.011871248000000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.497368068,
+          "moving": 0.86084187,
+          "delta": 0.363473802
+        },
+        "yaw_rms_deg": {
+          "stationary": 1.04871702,
+          "moving": 2.09923983,
+          "delta": 1.0505228100000001
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.101766109,
+          "moving": 0.162349179,
+          "delta": 0.06058307000000002
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000217066161,
+          "moving": 0.000263766065,
+          "delta": 4.6699903999999974e-05
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.46071506,
+          "moving": 3.57189059,
+          "delta": 1.1111755300000001
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00664393092,
+          "moving": 0.0096441051,
+          "delta": 0.0030001741799999997
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00812195614,
+          "moving": 0.0122014536,
+          "delta": 0.0040794974599999995
+        },
+        "roll_rms_deg": {
+          "stationary": 0.214381143,
+          "moving": 0.20244433,
+          "delta": -0.01193681299999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.157390341,
+          "moving": 0.186388686,
+          "delta": 0.02899834500000001
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.544013917,
+          "moving": 0.34362489,
+          "delta": -0.200389027
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0454339273,
+          "moving": 0.0465417504,
+          "delta": 0.0011078230999999952
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000104651284,
+          "moving": 0.000110128138,
+          "delta": 5.4768540000000026e-06
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.20793676,
+          "moving": 2.64721251,
+          "delta": 0.4392757500000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0331190526,
+          "moving": 0.0397081897,
+          "delta": 0.006589137100000003
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0592678487,
+          "moving": 0.0714113936,
+          "delta": 0.012143544899999997
+        },
+        "roll_rms_deg": {
+          "stationary": 0.192089289,
+          "moving": 0.174949348,
+          "delta": -0.017139940999999992
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.180271581,
+          "moving": 0.188439071,
+          "delta": 0.008167490000000027
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.597393513,
+          "moving": 0.938402891,
+          "delta": 0.341009378
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0449820682,
+          "moving": 0.0433103032,
+          "delta": -0.0016717650000000056
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000111266883,
+          "moving": 0.000100625293,
+          "delta": -1.0641589999999996e-05
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.20135164,
+          "moving": 2.28637791,
+          "delta": 0.08502627000000018
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0880540609,
+          "moving": 0.0914551169,
+          "delta": 0.0034010559999999995
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.171203449,
+          "moving": 0.185390785,
+          "delta": 0.014187335999999995
+        },
+        "roll_rms_deg": {
+          "stationary": 0.169628128,
+          "moving": 0.17513147,
+          "delta": 0.005503342000000022
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.170750946,
+          "moving": 0.149985552,
+          "delta": -0.020765393999999993
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.763220191,
+          "moving": 0.836284459,
+          "delta": 0.07306426799999999
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0406400524,
+          "moving": 0.0379738547,
+          "delta": -0.0026661977000000045
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000126938336,
+          "moving": 0.000131550201,
+          "delta": 4.611865e-06
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.08187056,
+          "moving": 2.33424306,
+          "delta": 0.2523724999999999
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.176959008,
+          "moving": 0.19841066,
+          "delta": 0.021451651999999988
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.370989501,
+          "moving": 0.415760547,
+          "delta": 0.04477104599999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.316590756,
+          "moving": 0.18507278,
+          "delta": -0.13151797599999998
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.198392361,
+          "moving": 0.193653822,
+          "delta": -0.004738538999999986
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.541003346,
+          "moving": 0.829255521,
+          "delta": 0.288252175
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0635063127,
+          "moving": 0.0444788486,
+          "delta": -0.019027464099999995
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.00013119253,
+          "moving": 0.00010945239,
+          "delta": -2.174014e-05
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.40908694,
+          "moving": 3.72640705,
+          "delta": 1.3173201100000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00650453474,
+          "moving": 0.0100612994,
+          "delta": 0.0035567646599999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00790471025,
+          "moving": 0.0128083443,
+          "delta": 0.004903634049999999
+        },
+        "roll_rms_deg": {
+          "stationary": 0.214011997,
+          "moving": 0.210947379,
+          "delta": -0.003064618000000019
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.158200219,
+          "moving": 0.185634002,
+          "delta": 0.02743378299999999
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.761491537,
+          "moving": 0.36063686,
+          "delta": -0.40085467700000005
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0454738811,
+          "moving": 0.0475340113,
+          "delta": 0.002060130199999996
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000100360383,
+          "moving": 0.000110106157,
+          "delta": 9.745774000000006e-06
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.32635188,
+          "moving": 2.65911841,
+          "delta": 0.3327665300000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0348952785,
+          "moving": 0.0398867764,
+          "delta": 0.004991497899999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0587745905,
+          "moving": 0.070629172,
+          "delta": 0.011854581500000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.191298276,
+          "moving": 0.17728062,
+          "delta": -0.01401765599999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.180542856,
+          "moving": 0.191742644,
+          "delta": 0.011199787999999988
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.443641603,
+          "moving": 0.860284984,
+          "delta": 0.416643381
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0449576899,
+          "moving": 0.0440604575,
+          "delta": -0.0008972324000000031
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000115494477,
+          "moving": 0.000100951635,
+          "delta": -1.4542841999999994e-05
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.43834209,
+          "moving": 2.34522438,
+          "delta": -0.09311771000000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0975336805,
+          "moving": 0.0938089788,
+          "delta": -0.0037247016999999993
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.178384095,
+          "moving": 0.187529296,
+          "delta": 0.00914520100000002
+        },
+        "roll_rms_deg": {
+          "stationary": 0.157836303,
+          "moving": 0.170487106,
+          "delta": 0.012650802999999988
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.164866745,
+          "moving": 0.149939865,
+          "delta": -0.014926880000000003
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.577303171,
+          "moving": 0.651223063,
+          "delta": 0.07391989200000004
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.03851372,
+          "moving": 0.0373528004,
+          "delta": -0.0011609196000000044
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000120002915,
+          "moving": 0.000132334098,
+          "delta": 1.2331183000000002e-05
+        }
+      }
+    },
+    {
+      "family": "carma",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.35907745,
+          "moving": 2.38841653,
+          "delta": 0.029339080000000184
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.200521588,
+          "moving": 0.203015402,
+          "delta": 0.002493814000000011
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.395830125,
+          "moving": 0.420078367,
+          "delta": 0.02424824200000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.349189281,
+          "moving": 0.186490431,
+          "delta": -0.16269885
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.202649325,
+          "moving": 0.188369796,
+          "delta": -0.014279528999999985
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.462686867,
+          "moving": 0.62317723,
+          "delta": 0.16049036300000002
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0687125921,
+          "moving": 0.0440105908,
+          "delta": -0.0247020013
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000136041708,
+          "moving": 0.000111987552,
+          "delta": -2.405415600000001e-05
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.35746789,
+          "moving": 3.45553541,
+          "delta": 1.0980675199999999
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00636516325,
+          "moving": 0.00932994578,
+          "delta": 0.0029647825299999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00770634459,
+          "moving": 0.0113804918,
+          "delta": 0.00367414721
+        },
+        "roll_rms_deg": {
+          "stationary": 0.203096703,
+          "moving": 0.197469845,
+          "delta": -0.005626857999999985
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.161274165,
+          "moving": 0.174936563,
+          "delta": 0.013662397999999992
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.548537552,
+          "moving": 0.345830768,
+          "delta": -0.20270678399999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0443236008,
+          "moving": 0.0445578657,
+          "delta": 0.00023426489999999606
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000104627303,
+          "moving": 0.000110190391,
+          "delta": 5.5630880000000015e-06
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.18919754,
+          "moving": 2.61043572,
+          "delta": 0.42123818
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0328379646,
+          "moving": 0.0391565375,
+          "delta": 0.0063185729
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0568087883,
+          "moving": 0.0645654425,
+          "delta": 0.0077566541999999974
+        },
+        "roll_rms_deg": {
+          "stationary": 0.197608218,
+          "moving": 0.174605846,
+          "delta": -0.023002371999999993
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.189982399,
+          "moving": 0.200830191,
+          "delta": 0.010847791999999995
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.619474649,
+          "moving": 0.977257252,
+          "delta": 0.357782603
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.046852164,
+          "moving": 0.0449486598,
+          "delta": -0.001903504200000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000111206326,
+          "moving": 0.000100253012,
+          "delta": -1.0953314000000007e-05
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.13388324,
+          "moving": 2.21481109,
+          "delta": 0.08092785000000013
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0853553265,
+          "moving": 0.0885924399,
+          "delta": 0.003237113400000005
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.15726091,
+          "moving": 0.162353337,
+          "delta": 0.005092426999999983
+        },
+        "roll_rms_deg": {
+          "stationary": 0.163453475,
+          "moving": 0.170164078,
+          "delta": 0.006710603000000009
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.18184942,
+          "moving": 0.159847677,
+          "delta": -0.022001743000000018
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.754416823,
+          "moving": 0.826500297,
+          "delta": 0.07208347400000004
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0413579792,
+          "moving": 0.0386220142,
+          "delta": -0.002735965
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000126965955,
+          "moving": 0.000130310116,
+          "delta": 3.344160999999994e-06
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 1.97894883,
+          "moving": 2.22790027,
+          "delta": 0.24895144000000013
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.168210655,
+          "moving": 0.189371526,
+          "delta": 0.021160871000000026
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.326202303,
+          "moving": 0.353658676,
+          "delta": 0.02745637299999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.319360018,
+          "moving": 0.186804369,
+          "delta": -0.13255564900000003
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.203920215,
+          "moving": 0.189140975,
+          "delta": -0.014779239999999999
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.569366634,
+          "moving": 0.81540221,
+          "delta": 0.24603557600000003
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0645065382,
+          "moving": 0.0441936627,
+          "delta": -0.020312875500000008
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000133689842,
+          "moving": 0.000108409426,
+          "delta": -2.5280416000000007e-05
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.30723357,
+          "moving": 3.53167033,
+          "delta": 1.2244367599999997
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00622953102,
+          "moving": 0.00953551009,
+          "delta": 0.0033059790699999994
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00751676597,
+          "moving": 0.0117358258,
+          "delta": 0.00421905983
+        },
+        "roll_rms_deg": {
+          "stationary": 0.20276764,
+          "moving": 0.201871291,
+          "delta": -0.0008963489999999907
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.162110195,
+          "moving": 0.177030966,
+          "delta": 0.014920771
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.768736064,
+          "moving": 0.356556892,
+          "delta": -0.41217917200000004
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0443763323,
+          "moving": 0.0453676283,
+          "delta": 0.0009912959999999957
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000100350007,
+          "moving": 0.000110218061,
+          "delta": 9.868053999999995e-06
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.25030589,
+          "moving": 2.61237526,
+          "delta": 0.36206936999999995
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0337545909,
+          "moving": 0.039185632,
+          "delta": 0.005431041099999999
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0557402261,
+          "moving": 0.0644511729,
+          "delta": 0.008710946800000008
+        },
+        "roll_rms_deg": {
+          "stationary": 0.198542073,
+          "moving": 0.177660808,
+          "delta": -0.02088126500000001
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.191040024,
+          "moving": 0.206254214,
+          "delta": 0.015214189999999989
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.467596859,
+          "moving": 0.905031025,
+          "delta": 0.437434166
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0471551158,
+          "moving": 0.0460592285,
+          "delta": -0.0010958873000000008
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000115445822,
+          "moving": 0.000100635647,
+          "delta": -1.4810174999999994e-05
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.27263832,
+          "moving": 2.22431898,
+          "delta": -0.04831933999999993
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0909055322,
+          "moving": 0.0889727548,
+          "delta": -0.001932777400000002
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.16035378,
+          "moving": 0.16268082,
+          "delta": 0.0023270400000000024
+        },
+        "roll_rms_deg": {
+          "stationary": 0.152578443,
+          "moving": 0.165813535,
+          "delta": 0.013235092000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.17559962,
+          "moving": 0.160449967,
+          "delta": -0.015149653000000013
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.584267259,
+          "moving": 0.648596108,
+          "delta": 0.06432884900000002
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0393452123,
+          "moving": 0.0381411612,
+          "delta": -0.001204051099999999
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000120071629,
+          "moving": 0.000130973844,
+          "delta": 1.0902215000000007e-05
+        }
+      }
+    },
+    {
+      "family": "csm",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.19111848,
+          "moving": 2.2050271,
+          "delta": 0.013908620000000038
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.186245084,
+          "moving": 0.187427312,
+          "delta": 0.0011822280000000074
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.360034496,
+          "moving": 0.353533536,
+          "delta": -0.00650096
+        },
+        "roll_rms_deg": {
+          "stationary": 0.351539195,
+          "moving": 0.187390745,
+          "delta": -0.16414845000000003
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.201469764,
+          "moving": 0.189527765,
+          "delta": -0.011941999000000009
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.478104651,
+          "moving": 0.63501811,
+          "delta": 0.15691345899999998
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0689841062,
+          "moving": 0.0443834439,
+          "delta": -0.024600662300000006
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000138605741,
+          "moving": 0.000110844856,
+          "delta": -2.7760884999999993e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.46069813,
+          "moving": 3.57191873,
+          "delta": 1.1112206000000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00664388482,
+          "moving": 0.00964418054,
+          "delta": 0.0030002957199999998
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00812243111,
+          "moving": 0.0122014927,
+          "delta": 0.00407906159
+        },
+        "roll_rms_deg": {
+          "stationary": 0.21467492,
+          "moving": 0.202474117,
+          "delta": -0.012200802999999982
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.157594398,
+          "moving": 0.186753318,
+          "delta": 0.029158920000000005
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.543617308,
+          "moving": 0.344679832,
+          "delta": -0.19893747599999995
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.045495104,
+          "moving": 0.0465895943,
+          "delta": 0.0010944903000000006
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000103248851,
+          "moving": 0.000109164706,
+          "delta": 5.915854999999999e-06
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.20783615,
+          "moving": 2.64695573,
+          "delta": 0.4391195800000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0331175439,
+          "moving": 0.0397043377,
+          "delta": 0.006586793800000004
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0592729971,
+          "moving": 0.0714219511,
+          "delta": 0.012148954000000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.19224897,
+          "moving": 0.175747424,
+          "delta": -0.016501545999999978
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.181794792,
+          "moving": 0.187707096,
+          "delta": 0.005912303999999979
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.598510146,
+          "moving": 0.927442193,
+          "delta": 0.328932047
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0451888777,
+          "moving": 0.0433131717,
+          "delta": -0.0018757059999999978
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000110694964,
+          "moving": 9.99683325e-05,
+          "delta": -1.0726631500000003e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.20113516,
+          "moving": 2.28635979,
+          "delta": 0.08522462999999991
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0880454034,
+          "moving": 0.0914543867,
+          "delta": 0.0034089833000000014
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.171246856,
+          "moving": 0.185503483,
+          "delta": 0.014256626999999994
+        },
+        "roll_rms_deg": {
+          "stationary": 0.170069471,
+          "moving": 0.175251395,
+          "delta": 0.005181924000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.170653209,
+          "moving": 0.150130644,
+          "delta": -0.020522564999999993
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.770251632,
+          "moving": 0.852606654,
+          "delta": 0.082355022
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0406831577,
+          "moving": 0.0380108468,
+          "delta": -0.0026723109000000023
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000126175466,
+          "moving": 0.000133762398,
+          "delta": 7.586932000000008e-06
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.08215523,
+          "moving": 2.33428884,
+          "delta": 0.25213361
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.176983207,
+          "moving": 0.198414564,
+          "delta": 0.021431356999999984
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.371194571,
+          "moving": 0.415822029,
+          "delta": 0.04462745800000001
+        },
+        "roll_rms_deg": {
+          "stationary": 0.316806465,
+          "moving": 0.185574502,
+          "delta": -0.13123196299999998
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.198518634,
+          "moving": 0.191145658,
+          "delta": -0.007372976000000003
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.529004216,
+          "moving": 0.813428998,
+          "delta": 0.284424782
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0635493398,
+          "moving": 0.0442013144,
+          "delta": -0.019348025399999996
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000125166727,
+          "moving": 0.000108638305,
+          "delta": -1.652842200000001e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.40909147,
+          "moving": 3.7265358,
+          "delta": 1.3174443300000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00650454732,
+          "moving": 0.0100616468,
+          "delta": 0.003557099480000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00790510047,
+          "moving": 0.0128085483,
+          "delta": 0.004903447829999999
+        },
+        "roll_rms_deg": {
+          "stationary": 0.214299068,
+          "moving": 0.210981175,
+          "delta": -0.003317893000000016
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.15835546,
+          "moving": 0.186080754,
+          "delta": 0.027725293999999984
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.761256218,
+          "moving": 0.362754017,
+          "delta": -0.398502201
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.045528654,
+          "moving": 0.0475909561,
+          "delta": 0.0020623020999999964
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 9.90901754e-05,
+          "moving": 0.000109227134,
+          "delta": 1.0136958599999996e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.32629395,
+          "moving": 2.65888119,
+          "delta": 0.3325872399999996
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0348944105,
+          "moving": 0.0398832187,
+          "delta": 0.0049888082
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.058778055,
+          "moving": 0.0706376284,
+          "delta": 0.011859573399999997
+        },
+        "roll_rms_deg": {
+          "stationary": 0.19131586,
+          "moving": 0.178073063,
+          "delta": -0.013242797
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.182269216,
+          "moving": 0.191358387,
+          "delta": 0.00908917099999998
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.44676277,
+          "moving": 0.847177804,
+          "delta": 0.400415034
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0451722182,
+          "moving": 0.0441088825,
+          "delta": -0.001063335700000001
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000114793365,
+          "moving": 0.000100148172,
+          "delta": -1.4645193000000008e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.43819404,
+          "moving": 2.3451817,
+          "delta": -0.09301234000000003
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0975277647,
+          "moving": 0.0938072652,
+          "delta": -0.003720499500000002
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.178409263,
+          "moving": 0.187601104,
+          "delta": 0.009191840999999978
+        },
+        "roll_rms_deg": {
+          "stationary": 0.158035055,
+          "moving": 0.17045714,
+          "delta": 0.012422085
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.165096432,
+          "moving": 0.150681436,
+          "delta": -0.014414995999999985
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.58486408,
+          "moving": 0.659739554,
+          "delta": 0.07487547399999994
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0385691263,
+          "moving": 0.0374443382,
+          "delta": -0.001124788099999996
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000119490847,
+          "moving": 0.000133328969,
+          "delta": 1.3838121999999999e-05
+        }
+      }
+    },
+    {
+      "family": "tcarma",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.35924006,
+          "moving": 2.38841009,
+          "delta": 0.029170029999999958
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.200535417,
+          "moving": 0.203014866,
+          "delta": 0.0024794489999999947
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.396041125,
+          "moving": 0.420136869,
+          "delta": 0.02409574400000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.349413693,
+          "moving": 0.186930299,
+          "delta": -0.16248339400000003
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.20298554,
+          "moving": 0.186227188,
+          "delta": -0.016758352000000004
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.450962871,
+          "moving": 0.612068653,
+          "delta": 0.16110578200000003
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0687795952,
+          "moving": 0.0437784381,
+          "delta": -0.025001157100000004
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000132119967,
+          "moving": 0.000110746834,
+          "delta": -2.1373132999999997e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.35702682,
+          "moving": 3.45635104,
+          "delta": 1.0993242199999997
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00636397256,
+          "moving": 0.00933214836,
+          "delta": 0.0029681758000000003
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00770571036,
+          "moving": 0.0113812042,
+          "delta": 0.0036754938400000003
+        },
+        "roll_rms_deg": {
+          "stationary": 0.202066198,
+          "moving": 0.194362208,
+          "delta": -0.007703989999999994
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.164819092,
+          "moving": 0.181021571,
+          "delta": 0.016202478999999992
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.554530621,
+          "moving": 0.345641166,
+          "delta": -0.20888945499999995
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0445754826,
+          "moving": 0.0448857471,
+          "delta": 0.00031026449999999733
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000103181985,
+          "moving": 0.000109198991,
+          "delta": 6.01700600000001e-06
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.18890834,
+          "moving": 2.60978007,
+          "delta": 0.42087173
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0328336246,
+          "moving": 0.0391467027,
+          "delta": 0.006313078100000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.056811966,
+          "moving": 0.0645632893,
+          "delta": 0.007751323300000008
+        },
+        "roll_rms_deg": {
+          "stationary": 0.197266459,
+          "moving": 0.175499484,
+          "delta": -0.021766974999999994
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.187416926,
+          "moving": 0.194250166,
+          "delta": 0.00683323999999999
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.61015141,
+          "moving": 0.94694078,
+          "delta": 0.3367893700000001
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0465024598,
+          "moving": 0.0441814624,
+          "delta": -0.0023209973999999967
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000110818233,
+          "moving": 9.96447125e-05,
+          "delta": -1.1173520500000003e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.13343334,
+          "moving": 2.21477938,
+          "delta": 0.08134604000000012
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0853373334,
+          "moving": 0.0885911733,
+          "delta": 0.0032538398999999996
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.157325044,
+          "moving": 0.162508965,
+          "delta": 0.005183921000000008
+        },
+        "roll_rms_deg": {
+          "stationary": 0.166977048,
+          "moving": 0.173491061,
+          "delta": 0.006514013000000013
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.176322967,
+          "moving": 0.155719116,
+          "delta": -0.020603851000000006
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.767369926,
+          "moving": 0.842640281,
+          "delta": 0.07527035500000001
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0410412587,
+          "moving": 0.0385363325,
+          "delta": -0.0025049262000000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000126335639,
+          "moving": 0.000132371671,
+          "delta": 6.0360319999999885e-06
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 1.97937,
+          "moving": 2.2282145,
+          "delta": 0.2488444999999999
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.168246448,
+          "moving": 0.189398229,
+          "delta": 0.02115178100000001
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.326480091,
+          "moving": 0.353711694,
+          "delta": 0.02723160300000005
+        },
+        "roll_rms_deg": {
+          "stationary": 0.317953587,
+          "moving": 0.185904205,
+          "delta": -0.132049382
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.199454412,
+          "moving": 0.185829461,
+          "delta": -0.013624950999999996
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.540078282,
+          "moving": 0.800064743,
+          "delta": 0.259986461
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0638715997,
+          "moving": 0.0436462387,
+          "delta": -0.020225361000000004
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000126811763,
+          "moving": 0.000107476873,
+          "delta": -1.9334889999999996e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.30694866,
+          "moving": 3.53331423,
+          "delta": 1.2263655699999996
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.00622876128,
+          "moving": 0.00953994878,
+          "delta": 0.0033111875
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.00751637248,
+          "moving": 0.0117382864,
+          "delta": 0.0042219139200000005
+        },
+        "roll_rms_deg": {
+          "stationary": 0.201775685,
+          "moving": 0.198921174,
+          "delta": -0.002854511000000004
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.165364951,
+          "moving": 0.182207316,
+          "delta": 0.016842364999999998
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.776937008,
+          "moving": 0.362475365,
+          "delta": -0.414461643
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0446029268,
+          "moving": 0.0456007719,
+          "delta": 0.0009978451000000055
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 9.90424596e-05,
+          "moving": 0.000109295084,
+          "delta": 1.0252624400000003e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.25011349,
+          "moving": 2.6117363,
+          "delta": 0.3616228100000001
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0337517038,
+          "moving": 0.0391760468,
+          "delta": 0.005424343000000005
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.0557413138,
+          "moving": 0.0644522011,
+          "delta": 0.008710887299999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.197831586,
+          "moving": 0.178374037,
+          "delta": -0.01945754899999999
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.188673511,
+          "moving": 0.199213788,
+          "delta": 0.010540277000000015
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.460835695,
+          "moving": 0.870417178,
+          "delta": 0.40958148299999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0467847027,
+          "moving": 0.045208469,
+          "delta": -0.0015762336999999987
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000114892173,
+          "moving": 9.98909018e-05,
+          "delta": -1.5001271199999999e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.27235746,
+          "moving": 2.22411084,
+          "delta": -0.04824662000000002
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.0908942968,
+          "moving": 0.0889644325,
+          "delta": -0.0019298643000000004
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.160427824,
+          "moving": 0.162816629,
+          "delta": 0.002388804999999994
+        },
+        "roll_rms_deg": {
+          "stationary": 0.154763326,
+          "moving": 0.168867633,
+          "delta": 0.014104306999999983
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.171552688,
+          "moving": 0.156729102,
+          "delta": -0.014823586
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.587666571,
+          "moving": 0.653770268,
+          "delta": 0.06610369700000007
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0390487313,
+          "moving": 0.0380565226,
+          "delta": -0.0009922086999999968
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000119538709,
+          "moving": 0.000131819761,
+          "delta": 1.2281051999999995e-05
+        }
+      }
+    },
+    {
+      "family": "tcsm",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metrics": {
+        "disp_z_pct_hs": {
+          "stationary": 2.19140673,
+          "moving": 2.20496082,
+          "delta": 0.013554089999999963
+        },
+        "disp_z_rms_m": {
+          "stationary": 0.186269566,
+          "moving": 0.187421679,
+          "delta": 0.0011521130000000102
+        },
+        "disp_3d_rms_m": {
+          "stationary": 0.360263169,
+          "moving": 0.353539467,
+          "delta": -0.006723701999999998
+        },
+        "roll_rms_deg": {
+          "stationary": 0.351773232,
+          "moving": 0.186963141,
+          "delta": -0.164810091
+        },
+        "pitch_rms_deg": {
+          "stationary": 0.200908944,
+          "moving": 0.1848149,
+          "delta": -0.016094044000000002
+        },
+        "yaw_rms_deg": {
+          "stationary": 0.460041732,
+          "moving": 0.613817036,
+          "delta": 0.15377530400000006
+        },
+        "accel_bias_3d_rms_mps2": {
+          "stationary": 0.0689728037,
+          "moving": 0.0437074453,
+          "delta": -0.0252653584
+        },
+        "gyro_bias_3d_rms_radps": {
+          "stationary": 0.000134036352,
+          "moving": 0.000109604865,
+          "delta": -2.4431487000000003e-05
+        }
+      }
+    }
+  ],
+  "measurement_sha256": {
+    "moving": "7ec5585bdefd63c8248741e2f8e7b0e7499846c1f4e77f9df92627386a69912f",
+    "stationary": "47fc026b149721b79781ac7beb5778b0e17cb42d640f13b0cbea6933644e05cd"
+  }
+}

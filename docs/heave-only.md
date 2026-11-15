@@ -1,5 +1,12 @@
 # Heave-only filters
 
+External-data runs now use the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
+with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+and [reference-coordinate convention](moving-vessel-replays.md). Earlier study figures below retain their stationary-vessel scope. Current
+underway regression limits are recorded in
+`reports/results/filter_sim_gates/heave_limits.json`.
+
+
 `tests/heave_only/` implements three published heave-only filters as
 comparison baselines (outside `src/`, which holds only shipping code). Each
 estimates vertical displacement from the levelled vertical acceleration
@@ -139,7 +146,7 @@ Choices the paper leaves open:
 `process_wave_file_for_tracker`, the noise template and seeds of the OU-II,
 OU-III and TFG simulators. It uses:
 
-- the 28 ft RAO dataset `v1.3.1`;
+- the 28 ft RAO dataset `v1.2.3`;
 - an 8 mg accelerometer turn-on bias and a 5e-4 m/s²/√s bias random walk;
 - a 25 Hz magnetometer.
 

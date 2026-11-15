@@ -68,7 +68,7 @@
 \maketitle
 
 \begin{abstract}
-This early implementation paper describes a right-invariant two-frame Lie-group error-state extended Kalman filter (EKF) for marine inertial wave-state estimation. The estimator was developed as a geometric reformulation of an existing quaternion multiplicative EKF with an Ornstein--Uhlenbeck (OU) wave-acceleration model. The state combines body-to-world attitude, four world-frame translational columns (velocity, position, integral displacement, and wave acceleration), and body-frame inertial-sensor biases. The resulting two-frame group lets a single finite correction rotate the attitude and world-vector states coherently while retaining the natural body-frame interpretation of biases. The implemented error is right-invariant, $\bm{\eta}=\hat {\bm{X}} \bm{X}^{-1}$, while corrections are applied by left multiplication. Accelerometer and magnetometer updates use invariant-style Jacobians built from fixed world references, and covariance is transported after finite injection with the full group retraction Jacobian. The complete marine process is not claimed to be group-affine or log-linear; estimated-state-dependent couplings remain in the propagation model. The present paper focuses on conventions, group construction, implemented propagation and measurement equations, numerical safeguards, and verification architecture. Performance claims are intentionally preliminary pending a publication-scale paired simulation campaign.
+This early implementation paper describes a right-invariant two-frame Lie-group error-state extended Kalman filter (EKF) for marine inertial wave-state estimation. The estimator was developed as a geometric reformulation of an existing quaternion multiplicative EKF with an Ornstein--Uhlenbeck (OU) wave-acceleration model. The state combines body-to-world attitude, four world-frame translational columns (velocity, position, integral displacement, and wave acceleration), and body-frame inertial-sensor biases. The resulting two-frame group lets a single finite correction rotate the attitude and world-vector states coherently while retaining the natural body-frame interpretation of biases. The implemented error is right-invariant, $\bm{\eta}=\hat {\bm{X}} \bm{X}^{-1}$, while corrections are applied by left multiplication. Accelerometer and magnetometer updates use invariant-style Jacobians built from fixed world references, and covariance is transported after finite injection with the full group retraction Jacobian. The complete marine process is not claimed to be group-affine or log-linear; estimated-state-dependent couplings remain in the propagation model. The present paper focuses on conventions, group construction, implemented propagation and measurement equations, numerical safeguards, and verification architecture. Paired simulations on a declared vessel-response ensemble quantify displacement improvements and attitude/bias tradeoffs; field performance and geometry-only advantages remain unestablished.
 \end{abstract}
 \input{../simulation-dataset.tex-part}
 
@@ -248,15 +248,47 @@ and the invariant-style attitude Jacobian is
 As with gravity, the estimate-dependent residual term is omitted at linearization. Measurement covariance is rotated from body to world coordinates.
 
 \subsection{Integral-displacement regularization}
-The drift regularizer retains the physical constraint $\bm{S}\simeq0$:
+The raw core retains $\bm{S}\simeq0$ when its integral-velocity weight is
+zero. The sea-state wrapper enables a wave-matched vertical regularizer:
+let $\bm{E}_z=\bm{e}_z\bm{e}_z^T$ and
+$\beta=(T_z/(2\pi))^2$. Here $T_z=2\tau_{\rm applied}/c_\tau$ is the
+effective staged, clamped period inferred from the measured tuning frequency;
+$c_\tau$ is the configured OU time-scale coefficient. Then
 \begin{equation}
-\bm{r}_S=-\hat {\bm{S}},
+\bm{r}_S=-\hat {\bm{S}}-\beta\bm{E}_z\hat {\bm{v}},
 \end{equation}
 with
 \begin{equation}
-\bm{H}_S=\begin{bmatrix}\Skew{\hat {\bm{S}}}&0&0&0&-\bm{I}&0&0\end{bmatrix}.
+\begin{aligned}
+\bm{H}_{S,\phi}&=\Skew{\hat {\bm{S}}}+\beta\bm{E}_z\Skew{\hat {\bm{v}}},\\
+\bm{H}_{S,v}&=-\beta\bm{E}_z,\qquad \bm{H}_{S,S}=-\bm{I},
+\end{aligned}
 \end{equation}
-The covariance $\bm{R}_S$ is defined directly in the world/navigation frame. This is one motivation for choosing a right-invariant error: the NED-anisotropic regularization does not need to rotate with the attitude estimate.
+and all other blocks zero.
+For harmonic displacement at angular frequency $2\pi/T_z$, the vertical
+primitive satisfies $S_z=-\beta v_z$. Thus the observation does not penalize
+that wave, while still constraining integration drift. This is a motion-model
+regularizer, not a physical zero measurement or a broadband accuracy guarantee.
+The world-frame covariance $\bm{R}_S$ and its existing adaptation laws remain
+unchanged. No vessel speed or reference trajectory enters $\beta$.
+
+For the spectral-MSE adaptation law, the vertical model assumption is excluded
+from direct attitude or gyro-bias correction. With $\bm{C}=\bm{H}_S\bm{P}\bm{H}_S^T+\bm{R}_S$, their gain
+rows instead use the horizontal marginal:
+\begin{equation}
+\bm{K}_{i,xy}=(\bm{P}\bm{H}_S^T)_{i,xy}\bm{C}_{xy,xy}^{-1},
+\qquad K_{i,z}=0,\qquad i\in\{\bm{\phi},\bm{b}_g\}.
+\end{equation}
+Other rows retain the full gain. The empirical legacy-cubic law retains the
+full gain in every row: imposing the same restriction degraded its coupled
+attitude/bias calibration in the paired tests. This law-specific policy is
+empirically qualified, without a universal optimality claim. In particular,
+accelerometer-bias learning
+remains active; suppressing that channel caused large heave regressions.
+The full observation Jacobian, cross covariance, Joseph update and retraction
+transport are retained with this constrained gain. Setting
+\texttt{setWaveMatchedVerticalIntegral(false)} restores the previous observation
+and unconstrained gain.
 
 \section{Covariance Update and Retraction Transport}
 Each rank-three measurement uses the Joseph update
@@ -294,6 +326,8 @@ The convention tests intentionally include negative assertions. For example, a r
 
 Mutation testing has also been used during development: changing the bias Jacobian sign, correction side, body-block transpose, exponential handedness, or $\bm{J}_l$ coefficients causes the relevant mathematical suites to fail. This is important because a large collection of passing identities is weak evidence if the tests also pass when the implementation is deliberately broken.
 
+\input{underway-baseline.tex-part}
+
 \section{Simulation Results}
 \label{sec:tfg-sim-results}
 The simulator replays eight reference wave records -- four JONSWAP and four
@@ -312,34 +346,30 @@ cannot drift away from the code that produced them.
   \end{table}%
 }
 
-This is a single-realization deterministic protocol, not a multi-seed study,
-and it is reported for continuity with the corresponding OU-III table. The two
-are scored on the same records in the same order -- the record list is imported
-rather than duplicated -- but they remain separate measurements of separate
-implementations and should not be quoted as a controlled comparison.
-Four successive coefficient sweeps retain an acceleration-model scale of
-$c_\sigma=0.8$. On two additional paired sensor and initialization draws,
-mean normalized heave error decreases from $3.841\%$ to $3.835\%$ of $H_s$,
-with two gate violations in both arms. Roll improves slightly, while
-pitch, yaw, and three-dimensional displacement have small adverse changes.
-The improvement is modest and does not establish dominance across channels.
-These draws use the same eight vessel-response histories; they do not test
-unseen hulls or independent sea realizations.
+The table is a single-realization deterministic protocol. Separate paired
+ablations compare the old and wave-matched observations in the same executable
+across eight seas, both vessel speeds, and three sensor seeds. All 48 heave
+pairs improve for each tuning law. For the spectral law, mean moving heave
+error decreases from $5.66404\%$ to $4.13752\%$ of $H_s$ across the three
+seeds; the worst decreases from $8.25393\%$ to $6.29250\%$.
+For the legacy law, the corresponding mean is $6.02315\%$ to $3.48111\%$
+and the worst is $8.50441\%$ to $5.13326\%$.
+All eight default moving-sea gates pass for each law without widening their
+limits. Held-out-seed gate misses remain scored diagnostics rather than
+acceptance on bars derived from the default seed.
 
-Two features of the table are worth stating plainly rather than leaving for the
-reader to infer. Vertical error sits in the range expected of this filter
-family and is not obviously better than the quaternion MEKF it derives from;
-the geometric argument of this paper predicts advantages in large-error
-transients and covariance consistency, neither of which a set of stationary
-records exercises. Three-dimensional error is the weaker column, which is
-consistent with the horizontal channels remaining the least observable part of
-the state regardless of how the error is parameterized.
+Both speeds improve on average, so a residual speed penalty remains with
+the new implementation. Attitude and bias performance is not uniformly
+better; the independent companion ensemble below makes those costs visible.
+The comparison is between complete estimator configurations and does not
+isolate the benefit of the Lie-group geometry.
 
 \begin{figure}[t]
   \centering
   \IncludePGF{tfg_jonswap_H1.500_L50.710_A-30.00_P120.00_heave.pgf}
-  \caption{Vertical channel, JONSWAP $\bm{H}_s=\SI{1.5}{\bm{m}}$, over the scored
-    window: estimate against reference, and the error series beneath.}
+  \caption{Vertical channel, JONSWAP $\bm{H}_s=\SI{1.5}{\bm{m}}$: the last
+    60 s show estimate, reference and error; the RMS annotation scores the
+    full final 900 s.}
   \label{fig:tfg-heave-jonswap-h15}
 \end{figure}
 
@@ -372,28 +402,42 @@ the state regardless of how the error is parameterized.
   \label{fig:tfg-bias-jonswap-h15}
 \end{figure}
 
-\section{Evaluation Beyond These Records}
-A publication-scale results section should use paired wave records and
-identical sensor-noise realizations when comparing the geometric filter with
-OU-III, and should report 3-D position RMS, vertical RMS normalized by
-significant wave height, attitude RMS, bias convergence, innovation
-consistency, and computational cost. Separate ablations should isolate
-(i) additive versus two-frame bias geometry and (ii) full retraction covariance
-transport versus reduced reset approximations.
+\section{Paired Companion Evaluation}
+The companion study retains ten wave/noise/initialization seed triplets,
+eight fixed sea conditions, and a controlled crossfade. Each history lasts
+$1200$ s and the final $900$ s are scored. Every complete finite replay is
+included, irrespective of default-seed gate misses. The JONSWAP aggregate
+averages its four heights and the crossfade within each seed, giving ten
+independent paired seed differences.
 
-This draft deliberately does not copy numerical claims from the OU-III paper.
-Although both filters share the physical wave model, results belong to the
-implementation and revision actually tested.
+\input{../kalman_ou_iii/w3d-tfg-comparison-generated.tex-part}
+
+A cross-build comparison with the previous TFG implementation preserves all
+90 physical input hashes. Every history improves in heave and 3-D displacement;
+mean heave is $5.97327\%$ to $4.42594\%$ of $H_s$, and mean 3-D displacement
+error is $0.39212$ to $0.37117$ m. The unchanged OU-III control has a maximum
+heave difference of $0.00006819$ percentage points between builds.
+Mean roll, pitch and yaw nevertheless increase from
+$0.29819/0.27494/1.83429$ to $0.30258/0.30361/1.86594$ degrees, and mean
+accelerometer-bias RMS increases from $0.07294$ to $0.07678$ m/s$^2$.
+These costs prevent an all-metric dominance claim. The crossfade is a
+controlled transition, not an evolving random sea; this development hull
+ensemble does not establish performance on unseen vessels.
+
+Separate ablations are still needed to isolate additive versus two-frame
+bias geometry and full versus reduced retraction covariance transport.
+Innovation consistency, computational cost and real-device motion accuracy
+also require their own qualification.
 
 \section{Discussion}
-The principal structural benefit is not merely replacing a quaternion by a rotation matrix. The group law changes what a translational error means. A finite attitude correction carries $\bm{v}$, $\bm{p}$, $\bm{S}$, and $\bm{a}_w$ through the same geometry, while the two-frame bias slot respects the body-frame nature of inertial biases. The right-invariant choice also aligns the dominant measurement references with the world frame: gravity, magnetic north, and the $\bm{S}=0$ regularizer admit simple Jacobian structure.
+The principal structural benefit is not merely replacing a quaternion by a rotation matrix. The group law changes what a translational error means. A finite attitude correction carries $\bm{v}$, $\bm{p}$, $\bm{S}$, and $\bm{a}_w$ through the same geometry, while the two-frame bias slot respects the body-frame nature of inertial biases. The right-invariant choice also aligns the dominant measurement references with the world frame: gravity, magnetic north, and the wave-matched integral regularizer admit explicit Jacobian structure.
 
 There are corresponding costs. Process propagation is more involved than in a simple additive error-state EKF, especially because the full marine dynamics are not group-affine. Bias/world coupling requires structured discretization, and covariance must be transported after finite retraction. The method therefore trades algebraic and implementation complexity for stronger geometric consistency in the state correction and measurement structure.
 
-A second limitation is evidential. Mathematical identity tests establish that the implemented group operations and local Jacobians match their stated conventions, but they do not establish superior wave-estimation accuracy. That question requires paired multi-seed simulation and hardware data. The present manuscript should therefore be read as an implementation and methods draft.
+A second limitation is evidential. Mathematical identity tests establish that the implemented group operations and local Jacobians match their stated conventions, but they do not establish superior wave-estimation accuracy. The paired ensemble supports lower displacement error for the complete current estimator, with attitude and bias costs; hardware data and geometry-isolating ablations remain necessary. The present manuscript is an implementation and methods study, not a universal accuracy ranking.
 
 \section{Conclusion}
-A right-invariant two-frame Lie-group error-state EKF has been implemented for embedded marine wave-state estimation. The estimator combines $\SO(3)$ attitude, world-frame velocity/position/integral/wave-acceleration states, and body-frame inertial biases in one group, while retaining the exact integrated OU wave model of the earlier estimator. Its convention contract, group exponential, adjoint, invariant-style measurements, and full retraction covariance transport are all directly testable. The next stage is to attach generated paired simulation evidence and hardware results to determine where the geometric formulation materially improves accuracy, consistency, or robustness over the OU-III MEKF.
+A right-invariant two-frame Lie-group error-state EKF has been implemented for embedded marine wave-state estimation. The estimator combines $\SO(3)$ attitude, world-frame velocity/position/integral/wave-acceleration states, and body-frame inertial biases in one group, while retaining the exact integrated OU wave model of the earlier estimator. Its convention contract, group exponential, adjoint, invariant-style measurements, and full retraction covariance transport are all directly testable. The paired simulation evidence reports lower displacement error together with attitude and bias tradeoffs. Field experiments and geometry-isolating ablations are still needed to attribute accuracy, consistency or robustness gains specifically to the geometric formulation.
 
 \section*{Reproducibility Note}
 The source implementation is maintained in the Bareboat Necessities \texttt{ocean-imu} repository. The primary implementation files are \texttt{src/lie/TwoFrameGroup.h}, \texttt{src/lie/SO3Jacobians.h}, and \texttt{src/kalman\_tfg/Kalman3D\_Wave\_TFG.h}; the mathematical tests are under \texttt{tests/kalman\_tfg}. This paper is intended to be built by the repository's GitHub Actions workflow so that a PDF artifact is produced on pull requests and pushes affecting the TFG implementation or manuscript.

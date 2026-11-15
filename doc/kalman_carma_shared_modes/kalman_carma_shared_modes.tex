@@ -561,9 +561,10 @@ The prototype displacement zero-crossing frequency is
 \end{equation}
 This uses the same spectral-moment quantity estimated online. It does not
 equate measured period to the reciprocal of a pole natural frequency.
-All three axes use the same $\kappa$ and shape. The default amplitudes are
-isotropic, $\sigma_x=\sigma_y=\sigma_z$; there is no assumption that their
-sample paths are identical.
+All three axes use the same $\kappa$ and shape. The horizontal factors
+retain their band-RMS calibration; the vertical amplitude includes the
+model-band normalization in Eq.~\eqref{eq:bandnormalization}. There is no
+assumption that the axes have identical sample paths.
 
 The colouring realization also scales exactly:
 \begin{equation}
@@ -804,6 +805,27 @@ where $\mathcal S(x)=0$ for $x\le0$, $3x^2-2x^3$ for $0<x<1$, and
  \sigma_{\rm target}=c_\sigma\sqrt{p_E\max(E,0)}.
  \label{eq:sigmatarget}
 \end{equation}
+After smoothing and the gain/floor mapping of Eq.~\eqref{eq:operatingpoint},
+let $\sigma_B$ denote the band-amplitude command. The wrapper converts it
+to the vertical model's full acceleration RMS. For its frozen spectrum $S_a$,
+\begin{equation}
+ F_B=\frac{\int_0^\infty |B(i2\pi f)|^2 S_a(f)\,df}
+               {\int_0^\infty S_a(f)\,df},\qquad
+ \sigma_z=\sigma_B/\sqrt{F_B}.
+ \label{eq:bandnormalization}
+\end{equation}
+The default CARMA(4,1) shape with the $0.5$--$4$ frequency band gives
+$F_B=0.58598012624$, or a standard-deviation multiplier $1.30634701277$.
+Two small Sylvester solves evaluate this fraction when the shape or band
+ratios change; no matrix solve is added to each IMU update. The empirical
+horizontal amplitude factors retain the band-RMS convention. This is a
+continuous, frozen-model calibration: sampled, changing bands and a
+mismatched sea spectrum need not realize exactly this fraction. The
+normalization can be disabled without changing the measurement stream.
+Historical study tables remain tied to their recorded source snapshots;
+the current paired speed/seed comparisons are in the repository's
+\texttt{encounter-scaling-regressions} report.
+
 Although the API calls $p_E$ a probability, it is a configured smooth
 evidence weight, not a calibrated Bayesian posterior probability.
 No physical wave variance is assigned merely because the sensor has a
@@ -857,10 +879,12 @@ can decay toward the numerical floor. The internal coefficient
 $c_\sigma=0.9$ is divided out when assigning acceleration amplitude,
 \begin{equation}
  f_{\rm op}=\frac{c_\tau}{2\tau},\qquad
- \sigma_i=c_{\rm gain}\max(10^{-5},\sigma/c_\sigma),
+ \sigma_B=c_{\rm gain}\max(10^{-5},\sigma/c_\sigma),
  \label{eq:operatingpoint}
 \end{equation}
-with $c_{\rm gain}=1$ and equal axes by default.
+with $c_{\rm gain}=1$ by default. Before any coherence-cap enlargement,
+the default horizontal amplitudes are $\sigma_x=\sigma_y=\sigma_B$;
+the vertical amplitude follows Eq.~\eqref{eq:bandnormalization}.
 
 Every valid IMU sample contributes to the moments and smoothing.
 Activation is throttled separately: about every 0.1~s a candidate is
@@ -1141,6 +1165,8 @@ is realized on the next motion-model refresh. The acceleration-band
 frequency tracker also serves wave-direction reporting; its carrier is
 not substituted for the zero-crossing period in \cref{eq:kappa}.
 
+\input{underway-baseline.tex-part}
+
 \input{csm-validation.tex-part}
 
 \section{Scope and Limitations}
@@ -1194,7 +1220,7 @@ gravity leakage distinguishable from physical wave motion. These roles
 are complementary and are all needed to understand the implemented
 estimator.
 
-On the declared vessel-response ensemble, the paired comparisons favor the
+On the archived zero-speed vessel-response ensemble, the paired comparisons favor the
 CARMA displacement priors over OU--III for heave and three-dimensional
 error, with a smaller additional contribution from shared excitation.
 Machinery vibration nevertheless produces large errors, and the fixed

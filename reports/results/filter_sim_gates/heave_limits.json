@@ -1,0 +1,148 @@
+{
+  "default": {
+    "godhavn": {
+      "measured_worst": {
+        "jonswap": 395.945,
+        "pmstokes": 260.817
+      },
+      "limits": {
+        "jonswap": 397.93,
+        "pmstokes": 262.13
+      }
+    },
+    "godhavn_ext": {
+      "measured_worst": {
+        "jonswap": 17.4914,
+        "pmstokes": 18.0065
+      },
+      "limits": {
+        "jonswap": 17.58,
+        "pmstokes": 18.1
+      }
+    },
+    "kuchler": {
+      "measured_worst": {
+        "jonswap": 12.0538,
+        "pmstokes": 14.0638
+      },
+      "limits": {
+        "jonswap": 12.12,
+        "pmstokes": 14.14
+      }
+    },
+    "pii": {
+      "measured_worst": {
+        "jonswap": 15.211,
+        "pmstokes": 14.5221
+      },
+      "limits": {
+        "jonswap": 15.29,
+        "pmstokes": 14.6
+      }
+    },
+    "richter_zd": {
+      "measured_worst": {
+        "jonswap": 16.3688,
+        "pmstokes": 16.6003
+      },
+      "limits": {
+        "jonswap": 16.46,
+        "pmstokes": 16.69
+      }
+    }
+  },
+  "proxy": {
+    "godhavn": {
+      "measured_worst": {
+        "jonswap": 446.358,
+        "pmstokes": 308.529
+      },
+      "limits": {
+        "jonswap": 448.59,
+        "pmstokes": 310.08
+      }
+    },
+    "godhavn_ext": {
+      "measured_worst": {
+        "jonswap": 12.578,
+        "pmstokes": 12.6598
+      },
+      "limits": {
+        "jonswap": 12.65,
+        "pmstokes": 12.73
+      }
+    },
+    "kuchler": {
+      "measured_worst": {
+        "jonswap": 11.6091,
+        "pmstokes": 13.5416
+      },
+      "limits": {
+        "jonswap": 11.67,
+        "pmstokes": 13.61
+      }
+    },
+    "pii": {
+      "measured_worst": {
+        "jonswap": 15.2052,
+        "pmstokes": 14.5166
+      },
+      "limits": {
+        "jonswap": 15.29,
+        "pmstokes": 14.59
+      }
+    },
+    "richter_zd": {
+      "measured_worst": {
+        "jonswap": 10.2172,
+        "pmstokes": 10.2228
+      },
+      "limits": {
+        "jonswap": 10.27,
+        "pmstokes": 10.28
+      }
+    }
+  },
+  "truth": {
+    "godhavn": {
+      "measured_worst": {
+        "jonswap": 444.549,
+        "pmstokes": 304.696
+      },
+      "limits": {
+        "jonswap": 446.78,
+        "pmstokes": 306.22
+      }
+    },
+    "godhavn_ext": {
+      "measured_worst": {
+        "jonswap": 12.5761,
+        "pmstokes": 12.6561
+      },
+      "limits": {
+        "jonswap": 12.64,
+        "pmstokes": 12.72
+      }
+    },
+    "kuchler": {
+      "measured_worst": {
+        "jonswap": 11.9522,
+        "pmstokes": 14.6765
+      },
+      "limits": {
+        "jonswap": 12.02,
+        "pmstokes": 14.75
+      }
+    },
+    "richter_zd": {
+      "measured_worst": {
+        "jonswap": 10.2281,
+        "pmstokes": 10.2303
+      },
+      "limits": {
+        "jonswap": 10.28,
+        "pmstokes": 10.29
+      }
+    }
+  }
+}

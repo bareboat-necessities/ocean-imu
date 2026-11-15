@@ -53,12 +53,13 @@ Small tilt errors leak gravity into horizontal acceleration as
 There is no corresponding first-order vertical term. The scalar SpectralMSE
 reduction omits this coupling and cannot alone determine horizontal tuning.
 The factors in \eqref{eq:fus-rs-anisotropy} are applied in world NED;
-their surge/sway interpretation is restricted to the zero-yaw records.
+their surge/sway interpretation is exact only at zero yaw. On the current
+$\pm3^\circ$ track, these remain fixed north/east weights.
 
 \subsection{Bias tracking}
 For the medium JONSWAP sea, ten-seed OU--III accelerometer-bias RMS is
-$0.0632\pm0.0330$~\si{m.s^{-2}} and gyroscope-bias RMS is
-$(1.19\pm0.16)\times10^{-4}$~\si{rad.s^{-1}} over the final \SI{900}{s}.
+$0.0637\pm0.0320$~\si{m.s^{-2}} and gyroscope-bias RMS is
+$(1.25\pm0.15)\times10^{-4}$~\si{rad.s^{-1}} over the final \SI{900}{s}.
 Bias states also absorb model error; smooth estimates therefore do not
 establish physical bias identifiability. The fixed-temperature, random-walk
 truth deliberately differs from the slow Gauss--Markov estimator prior.
@@ -93,8 +94,8 @@ Gauss--Markov residual.}
 The matched on/off ablation uses one sensor-error draw on each of the eight
 RAO records, scored over the final \SI{900}{s}
 (Table~\ref{tab:mag-hi-yaw}). Arithmetic mean yaw RMS falls from
-\SI{1.945}{\degree} to \SI{0.479}{\degree}; the worst-record RMS falls from
-\SI{2.064}{\degree} to \SI{0.815}{\degree}. OU--II uses the same correction.
+\SI{2.044}{\degree} to \SI{0.592}{\degree}; the worst-record RMS falls from
+\SI{2.095}{\degree} to \SI{0.868}{\degree}. OU--II uses the same correction.
 Misalignment-dominated draws can regress: unmodeled distortions may alias
 into the additive fit while passing its residual gate. This is not a
 complete magnetometer calibration.

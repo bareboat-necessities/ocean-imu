@@ -42,10 +42,11 @@
   0.05 m/s^2 floor, and the legacy sigma channel under it, are not wave
   evidence: the channel subtracts the configured 0.12 m/s^2 pre-band floor
   (referred through the band, 35 times the band variance the simulated
-  1.5 mg sensor produces in still water) and
-  attenuates the variance whenever the stillness detector's fixed
-  0.28 m/s^2 RMS threshold reports still water, so in still water and on
-  every small sea the CARMA driving noise is the floor itself.  The Evidence
+  1.5 mg sensor produces in still water), so in still water the CARMA
+  driving noise is the floor itself.  The stillness detector does not
+  attenuate this variance: its fixed 0.28 m/s^2 threshold is an
+  acceleration test, and a small long-period sea (0.27 m following at
+  5 kn) reads as still water while its heave is real.  The Evidence
   mode replaces sigma_aw / c_sigma by sqrt(p max(E, 0)), E the band variance
   in excess of the sensor-noise model and p its detection weight, and moves
   the CARMA frequency only with p times the confidence of the measured
@@ -88,6 +89,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -330,6 +332,11 @@ public:
     const CarmaWaveEvidence& waveEvidence() const noexcept { return evidence_; }
     // CARMA vertical acceleration std of the last committed prior.
     float getCarmaAccelStd() const noexcept { return carma_accel_std_applied_; }
+    // Convert measured band RMS to the vertical model's full acceleration
+    // RMS. Horizontal factors retain their empirical band-RMS calibration.
+    // Applied by the next normal staged commit; no covariance reset.
+    void setVerticalBandNormalization(bool enabled) { normalize_vertical_band_ = enabled; }
+    bool verticalBandNormalization() const noexcept { return normalize_vertical_band_; }
     void setMagDelaySec(float d) { if (std::isfinite(d) && d >= 0.0f) mag_delay_sec_ = d; }
     void setMagUpdatesToUnlockAccBias(int n) { if (n >= 0) mag_updates_to_unlock_ = n; }
     void setNominalRaccStd(const Eigen::Vector3f& r) { Racc_nominal_ = r; }
@@ -461,9 +468,9 @@ private:
         if (!(std::isfinite(tau) && tau > 0.0f)) return;
         const float f_tune = tau_coeff_ * 0.5f / tau;
         const float accel_std = carma_accel_std_();
-        carma_accel_std_applied_ = accel_std;
+        carma_accel_std_applied_ = accel_std * vertical_band_gain_();
         const double fz_v = mekf_->vertical_model().base_zero_crossing_hz();
-        mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), accel_std);
+        mekf_->set_vertical_carma(static_cast<float>(f_tune / fz_v), carma_accel_std_applied_);
         const double fz_h = mekf_->horizontal_model().base_zero_crossing_hz();
         const float kappa_h = static_cast<float>(f_tune / fz_h);
         const float sx = accel_std * Sx_factor_, sy = accel_std * Sy_factor_;
@@ -535,9 +542,13 @@ private:
         // Legacy keeps its cost and its outputs: it reads no evidence.
         if (excitation_mode_ != CarmaExcitationMode::Legacy) update_wave_evidence_(dt, a_vertical_measurement);
         if (!advanceStartupStage_(wavePeriodUsable())) return;
-        constexpr float STILL_VAR_DECAY_SEC = 1.0f;
+        // No still-water attenuation: the band noise floor already removes
+        // still-water variance, and the detector's fixed acceleration
+        // threshold reads small long-period seas as still.
+        constexpr bool kStillnessAttenuatesVariance = false;
+        constexpr float kUnusedStillDecaySec = 1.0f;
         const float sea_time_sec = measureOperatingPoint_(
-            frontEndStill_(), frontEndStillTimeSec_(), STILL_VAR_DECAY_SEC, tau_coeff_, sigma_coeff_);
+            kStillnessAttenuatesVariance, frontEndStillTimeSec_(), kUnusedStillDecaySec, tau_coeff_, sigma_coeff_);
         const float sigma_t = excitation_sigma_target_();
         const float RS_raw = rs_spectral_mse_target_(tau_target_, sigma_t);
         RS_target_ = enable_clamp_ ? std::min(std::max(RS_raw, min_R_S_), max_R_S_) : RS_raw;
@@ -628,6 +639,27 @@ private:
     float sigma_coeff_ = 0.9f;
     float carma_sigma_gain_ = 1.0f;
     float carma_sigma_floor_ = 0.05f;
+    bool normalize_vertical_band_ = false;
+    std::array<double,9> band_gain_key_{};
+    float band_gain_ = 1.0f;
+    bool band_gain_ready_ = false;
+
+    float vertical_band_gain_() {
+        if (!normalize_vertical_band_) return 1.0f;
+        const auto& model = mekf_->vertical_model();
+        const auto& s = model.shape();
+        const std::array<double,9> key{s.f1_hz, s.zeta1, s.f2_hz, s.zeta2,
+            s.f_lambda_hz, s.fz_hz, s.zeta_z,
+            sigma_wave_band_.lowRatio(), sigma_wave_band_.highRatio()};
+        if (!band_gain_ready_ || key != band_gain_key_) {
+            const double f = model.base_zero_crossing_hz();
+            const double fraction = model.acceleration_band_fraction(key[7] * f, key[8] * f);
+            band_gain_ = std::isfinite(fraction) ? static_cast<float>(1.0 / std::sqrt(fraction)) : 1.0f;
+            band_gain_key_ = key;
+            band_gain_ready_ = true;
+        }
+        return band_gain_;
+    }
 
     CarmaExcitationMode excitation_mode_ = CarmaExcitationMode::Legacy;
     bool evidence_gate_ = true;

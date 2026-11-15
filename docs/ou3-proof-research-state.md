@@ -1,4 +1,418 @@
+## Current encounter-regression continuation
+
+**Current hypothesis.** Reduced encounter acceleration exposes drift-regularizer
+wave distortion as well as lower sensor signal-to-noise ratio. OU-III's
+vertical S=0 observation can be replaced experimentally by S+beta*v=0,
+beta=(Tz/2pi)^2. A sinusoid at the measured period lies in its nullspace;
+DC integration drift does not. TFG additionally needs a constrained gain:
+attitude/gyro rows use only the unchanged horizontal pseudo observations;
+accelerometer-bias learning, all cross covariance and the full Joseph update
+are retained. The production TFG implementation passes native paired qualification. Its spectral-MSE
+law uses the constrained gain; the empirical legacy law retains its original
+full gain, whose separate wave-matched experiment passes the default gates.
+All shipping OU-III source files remain unchanged.
+
+**Evidence.** Shared QMEKF/CARMA band normalization has 96 paired replays per
+family; moving mean/worst improve 2.71437/3.70165 -> 2.69209/3.58339% Hs,
+with individual costs retained (maximum moving 3.325 mm). The refreshed
+all-family inventory includes that default, rather than the previous snapshot.
+
+The 144-run axis-isolation study preserves each vertical physical history
+while removing rotation and horizontal translation in explicit counterfactuals.
+Small moving OU-III heave remains 7.65949% Hs with ideal sensors and vertical-only
+motion. Its dominant-frequency gain/phase are 1.39046/13.2127 degrees,
+versus 1.14194/2.90071 at zero speed; mean error is only -0.172 mm.
+A frozen continuous [S,p,v,a,b] diagnostic approximately reproduces the
+response and motivates the new observation; it is not shipping evidence.
+
+The native OU-III S+beta*v experiment contains 96 runs: eight seas, both
+speeds, default and two held-out sensor seeds. All 48 heave pairs improve;
+moving mean/worst are 5.70459/8.24420 -> 3.69184/4.84891% Hs. Default
+moving mean is 5.60072 -> 3.54931, below the previous zero-speed 3.99568.
+Attitude misses nevertheless reject default adoption. The TFG refinement
+has 32 default and 64 held-out runs: all 48 heave pairs improve. Default
+moving mean is 5.51972 -> 3.94431% Hs, versus the previous zero-speed
+4.05819; all eight default moving gates pass. Held-out draws fail tight
+default-seed bars in both arms and are diagnostic comparisons only. Engine
+900 rpm mean moving heave improves 6.82267 -> 5.38083% Hs, with normal
+acceptance bars failing both arms. Source-exact overlay recipes, raw scores
+and historical producer bytes are retained under encounter_scaling.
+
+The independent ten-triplet companion study additionally retains all eight
+fixed seas and the controlled crossfade. All 90 TFG histories improve heave
+and 3-D displacement versus the previous build on identical physical input
+hashes. Mean heave is 5.97327 -> 4.42594% Hs and 3-D error
+0.39212 -> 0.37117 m. Mean roll/pitch/yaw nevertheless rise from
+0.29819/0.27494/1.83429 to 0.30258/0.30361/1.86594 degrees, and mean
+accelerometer-bias RMS from 0.07294 to 0.07678 m/s². The unchanged OU-III
+control's maximum heave difference is only 0.00006819 percentage points.
+These are explicit multi-metric tradeoffs; fixed-record attitude gains do not
+establish all-seed dominance. Source-bound CI rows and the cross-build comparison
+are retained separately from same-executable ablation evidence.
+
+A source-bound directional diagnostic adds six instrumented replays and one
+same-binary logging-off control to the archived rejected OU-III overlay.
+On the failed small moving PM record, the perpendicular share of squared
+conditional vertical-observation BA increments decreases 3.6893% -> 1.1424%,
+and perpendicular RMS per update decreases 4.06498e-6 -> 1.33163e-6 m/s²,
+while roll rises 0.344943 -> 0.348498 degrees. Thus larger perpendicular
+increment energy does not explain the miss. These increment statistics are
+not information measures or causal error attribution. Logging-on/off printed
+scores and gate outcomes are identical. The exact instrumentation patch,
+parent overlay, source/object/binary hashes, runner and all summary rows are
+in `encounter_scaling/ou3_directional_gain_diagnostic.json`. No further
+projection candidate is adopted from this diagnostic alone. This is an
+interpretation failure of the proposed explanation (class E), not a new
+shipping counterexample or a failure of the source-bound logging control.
+
+**Current limiter.** Final TFG native qualification contains 96 runs per law,
+all 48 heave pairs improving in each. Default moving mean/worst are
+5.51972/7.81925 -> 3.94431/5.71623% Hs (spectral) and
+5.92580/8.24671 -> 3.34548/4.83242 (legacy). All sixteen default moving
+gates pass, as do eight historical gyro-profile gates. Fifty-two device
+histories pass their unchanged 2 m peak bound. Engine controls improve all
+moving pairs for both laws; legacy has two zero-speed heave costs, maximum
+0.910 mm. Their normal-noise gates fail in both engine arms. The complete
+`make -j1 all` reached the publication contract with all preceding native
+phases passing, then exited 2 on the stale TFG companion bundle described
+below. After importing the genuine CI companion bundle, the entire
+`make -C tests/validation evidence-test` passes its 1206-test suite (one
+skip); both later wave_dir and wave_sim groups also pass. Full branch
+run 43661880261 subsequently passes the same 1206-test evidence suite in CI
+and publishes commit 280697c. Remaining hosted matrix jobs are tracked
+separately. OU-II,
+OU-III and independent CARMA retain speed penalties. No acceptance bar is
+widened. Earlier hosted OU-III run 43648218718, job 132610749846, fails yaw
+0.878680 > 0.867740 and 0.886419 > 0.875540 degrees. At current source
+6552e14, run 43661885066 job 132655244860 completes its native Run tests
+step successfully; the earlier failure is not reproduced on this runner.
+No OU-III source or acceptance limit changed to obtain that pass.
+
+**Failed approaches / DEAD_ENDS (each class E).** Original OU-III S+beta*v
+fails H4 JONSWAP yaw 0.887208 > 0.875540 degrees and small PM-Stokes roll
+0.348330 > 0.346670. Its one calibration-release refinement still fails:
+0.887076 > 0.875540 and 0.348330 > 0.346670. Reject activation timing as
+the repair; magnetic-reference refinement uses the separate proxy, not the
+main filter's attitude. The subsequent architecture review finds that a
+wave-model pseudo observation should not directly act as a tilt/gyro sensor.
+Holding both attitude and all sensor-bias gain rows, however, destroys needed
+BA learning: moving mean heave rises to 22.6271% Hs (OU-III) and 28.8276%
+(TFG), with all eight default records failing. Its one refinement retains BA
+learning. TFG passes the eight default gates; OU-III still fails small-sea
+roll 0.348498 > 0.346670 and has two zero-speed gate misses. No further
+scalar or activation tweak of this OU-III mechanism is justified; it remains
+experimental pending a new coupled attitude/bias architecture review.
+
+Applying the spectral-law gain restriction to the legacy law fails large
+JONSWAP yaw 3.34544 > 3.06465 degrees, pitch 1.28213 > 1.16598 and BA
+271.194 > 250.685 percent. Reject a common gain policy across both noise laws;
+retain the original legacy gain and qualify that exact production branch.
+The failed 96-run production trial is retained as
+`tfg_legacy_wave_matched_protected_rejected.json`, never as accepted evidence.
+
+The unprotected TFG S+beta*v candidate fails largest PM-Stokes yaw
+1.67407 > 1.64146 degrees, pitch 0.673546 > 0.659650 and 3-D BA error
+188.483 > 186.739 percent. This motivates, but does not itself validate,
+the attitude-protected implementation. Original S-only unit expectations fail
+on the changed model; independent on-manifold finite differences pass after
+expressing the correct residual, and the production Jacobian suite passes
+the original observation plus protected/unprotected wave-matched observations,
+with a separate 3000-step covariance check for each of the three policies.
+
+Earlier rejected mechanisms retain their exact records: vertical-only OU-III
+stillness handling and its refinement fail yaw; scalar non-FMA still fails
+0.883995 > 0.875540 degrees; oracle CARMA shape fitting raises small-wave
+heave 3.550 -> 5.084% Hs. Body-Z-only noise calibration fails OU-III small
+moving roll 0.383126 > 0.346670 and BA 82.8951 > 75.6411 percent, and
+OU-II medium yaw 0.907622 > 0.903530. Uniform/axis-specific noise scaling
+has exhausted its refinement. These are replay failures, not instability.
+
+**Infrastructure/publication (class E).** At source 6552e14, hosted run 43661885009, job
+132652794958, `make -C tests/validation evidence-test` fails in
+`tools/tfg_comparison.py --check --require-ci` with
+`ValueError: TFG comparison source provenance is stale`. The new TFG
+source invalidates the older companion comparison, not the separately qualified
+paired results. The source hashes must not be restamped onto old scores.
+Resolved by full branch evidence run 43661880261, whose companion, validation
+and robustness bundles pass all contracts and the 1206-test suite before
+publication in commit 280697c. That automatic commit is preserved before
+adding the documentation and independently checked cross-build comparison.
+The same condition fails hosted OU smoke run 43661884949, job 132653485163.
+The final local `make -j1 all` has a completed exit receipt (2587.38 s, exit 2):
+all phases through util pass, including all 120 tagged Kalman replay gates,
+then tests/validation stops at that same exact stale-companion error.
+The later wave_dir and wave_sim groups pass separately. CI companion run
+43661880261 succeeds, and its artifact 14140719607 verifies against the current
+source and every retained result hash. Importing that exact bundle repairs
+the contract; `make -C tests/validation evidence-test` then passes. This is
+not a claim that the earlier failed aggregate command exited successfully.
+NLO/PII ignore the timeseries suppression flag and wrote about 2.1 GB of
+temporary traces, filling the workspace. Completed untracked output traces
+were removed; retained inputs, code, scores and evidence were not changed.
+The independent local companion diagnostic subsequently completes all 180
+rows and validates every input pair and 900-second scoring window. A prior
+serial attempt was intentionally interrupted after 14 pairs and restarted
+with three replay workers; its partial output is not evidence.
+The CI bundle, rather than the local run, supplies the publication receipt.
+Its raw CSV keeps the producer's CRLF bytes; whitespace verification treats
+CR-at-EOL as line endings without rewriting hash-bound evidence.
+
+Concurrent Eigen builds exhausted
+memory (`Killed signal terminated program cc1plus`); compilation is strictly
+serial. The two earlier `make all` sessions lost their exit receipts after
+exec-server transport loss, most recently partway through OU-III. Neither is
+a completed validation. The subsequent TFG-candidate run also lost its session/exit receipt after
+completing AHRS, detrend and frequency and partway through heave-only; it cannot
+validate the corrected legacy gain policy. The later completed aggregate
+run and targeted evidence repair described above validate the final source;
+these interrupted attempts remain non-evidence.
+A device diagnostic initially named nonexistent `device_config_quiet_test.cpp`;
+no score was produced, and the real `tfg_device_heave-test.cpp` is the required
+production test. No missing or interrupted output is treated as a pass. An extra test command
+failed because pytest is not installed; the three encounter test modules use
+stdlib unittest and pass all eight cases with that runner instead.
+
+Dedicated scalar non-FMA lever-arm reproduction passes hosted run 43648218794,
+job 132610657908, without changing its 0.01 tolerance. Both modified shared
+CARMA method papers compile and their rendered normalization equations were
+reviewed. The updated six-page TFG article compiles with the current companion
+tables and freshly regenerated deterministic plots; equation and table
+layouts were reviewed. Local pdfLaTeX initially failed to find its format;
+using the existing explicit LuaLaTeX format repairs this tooling failure. The numerical inventory was refreshed after normalization.
+
+**Retained facts / six-item shipping handoff.** (1) Preserved: all 39 audited
+OU-III probe source files, literal states, prediction/correction/reset,
+covariance/gains, tuner, scheduler, magnetic service and persistent histories.
+(2) Relaxations: ideal sensors/axis removal and frozen Riccati calculations are
+explicit non-promoting diagnostics; the latter freezes attitude/adaptation,
+omits reset/sync/startup, uses continuous time and substitutes a stationary
+OU physical-bias spectrum for the finite random walk. Experimental OU-III
+observation/gain changes do not inherit the shipping proof. (3) Failures above
+are E; no mathematical counterexample classification is inferred. (4) No genuine
+shipping counterexample was found. (5) Established algebra and open physical,
+arithmetic and end-to-end qualifications remain controlling; no theorem or
+historical replay payload is promoted. (6) Next falsifiable experiment:
+finish publication landing and hosted checks, then trace the subsequent
+accelerometer attitude/BA corrections and evolving covariance on the same
+failed small-PM physical history. The directional diagnostic above rejects
+larger perpendicular pseudo-update energy as the explanation; it does not
+establish that removing that channel would help. Preserve vertical BA
+learning (freezing all BA already failed) and quantify the coupled error path
+before proposing another gain architecture. Extend that diagnosis to the
+randomized TFG histories; no further scalar or activation sweep is justified.
+
+## Earlier diagnostic record
+
+CARMA trial-rationale audit (class E numerical/interpretation failure): the
+provisional multiplier 1.26686008233 was incorrectly labeled as the exact
+continuous default-CARMA41 band correction. Infinite-domain spectral quadrature
+and an independently augmented Lyapunov solve agree on variance fraction
+0.58598012624 and multiplier 1.30634701277 for the stated 0.5/4 band.
+The interpretation is withdrawn; the recorded trial inputs, multiplier and
+RMS rows are preserved. That historical trial did not replay the corrected factor; the later
+source-bound qualification below is separately recorded in encounter_scaling.
+Failure of the provisional factor does not disprove the corrected one.
+Structures preserved: all shipping OU-III operations and physical histories.
+Relaxations introduced: none. No theorem promotion or runtime change.
+Next falsifiable work requires an architecture/measurement-model review and
+a quantitative argument before another scalar-gain trial, rather than silently
+substituting the corrected constant into old evidence.
+
+Hosted lever-arm publication refresh (class E): run 43630161809 on the
+PR merge-preview tree reports TFG-CARMA negative-control yaw ratio
+38.8156 -> 38.7948 and worst-sea tilt ratio 9.9692 -> 9.9366, exceeding the
+unchanged 0.01 absolute reproduction tolerance. The Git commit API confirms
+merge preview f8c87c3 and head 49ec862 have the identical tree
+50a382ebfa9b51caace1989b79f014521ec6af98. Importing the complete checksum-verified
+hosted artifact refreshes raw measurements, summaries, figures and generated
+documentation. No simulator, acceptance threshold or OU-III operation changes.
+Invalidated hypothesis: cross-toolchain reproduction of these highly amplified
+ratios within 0.01 absolute. Retained facts: physical histories, all OU-III
+structures, proof payload and open qualifications. Relaxations introduced: none.
+Next check: the unchanged hosted comparison against its regenerated publication.
+
+Encounter-response continuation (class E implementation diagnostics): the
+39-file shipping OU-III probe src closure remains byte-identical to the audited
+reference. The accepted NLO wave-band bandwidth guard is outside that closure.
+The whole-src secant receipt is refreshed without changing its numerical payload
+or claiming a replay. Structures preserved: every OU-III state, covariance/gain,
+reset, scheduler, frontend, tuner and persistent physical/filter history.
+Relaxations introduced: none. All theorem/physical-qualification flags remain open.
+
+Failed quantities: the proposed TFG fractional cadence fails three production
+legacy-law checks: heave 8.3259 > 8.28795% Hs, accelerometer-Z bias
+5.52383 > 5.51543% of maximum true bias, and heave 8.10862 > 8.05605% Hs.
+The unchanged limits reject it; the source and accepted measurements are restored.
+Suppressing OU-III periodic covariance resets changes worst screened heave
+8.23605 to 8.16948% Hs but worsens worst accelerometer-bias RMS
+0.05680 to 0.09373 m/s^2. A 0.5 s commit interval also worsens that bias
+metric to 0.08371 m/s^2. Neither is adopted. A TFG Schmidt-style held-bias
+startup overlay worsens small stationary pitch 0.0458 to 0.5440 degrees and
+bias 0.0506 to 0.11685 m/s^2; it is rejected. These invalidate the respective
+cadence/covariance/startup hypotheses as general fixes, not a stability theorem.
+Prior stillness and all-axis CARMA band-normalization failures remain recorded
+in encounter_scaling/kalman_followup.json. None is shipping evidence.
+
+Infrastructure: the earlier optional parallel CARMA compilation exhausted memory;
+serial compilation succeeded. A prior make-all receipt was lost after scratch
+exhaustion. This continuation stopped a separate make-all after its independently
+measured TFG cadence failure and reruns the required command on restored source
+with optional time-series output disabled. These are class E failures.
+Retained facts: unchanged OU-III closure, native secant payload and acceptance
+limits. Current limiter: reduced encounter acceleration with fixed sensor noise,
+and coupled attitude/bias/period estimation. Next falsifiable experiment:
+use the all-family paired inventory to isolate live tilt/bias/period error at
+reduced encounter acceleration. Vertical-only CARMA band compensation has now
+failed held-out independent-axis means (2.79308 to 2.80640% Hs; maximum cost
+6.46 mm) and is rejected after its one motivated refinement from the failed
+all-axis trial. No further scalar-gain tuning of that mechanism is justified.
+Full regressions and current-source hosted evidence remain required.
+
+Integration source audit (class E): main 48e444f is merged, and the
+OU-II/CARMA stillness fixes from PR #754 are incorporated. The shared defaults
+header changes only a descriptive OU-II table comment; stripping C++ comments
+leaves identical text. No shipping OU-III operation, state, covariance, gain,
+reset, physical history, scheduler or tuner changes. No relaxation, genuine
+shipping counterexample or theorem promotion is introduced. Native secant
+results and all open qualifications are retained; no probe replay is claimed.
+The conservative whole-src and comment-only dependency receipts are refreshed.
+Current limiter: source-bound replay bundles need regeneration after the
+OU-II behavior change. Next falsifiable check: complete hosted evidence and
+native regressions under the unchanged acceptance checks. The first provenance
+test exposed the generated-port certificate’s additional comment hash;
+regenerating that certificate changes only its defaults-header receipt. A
+receipt-key assertion initially used source_blob_sha instead of the actual
+source_git_blob_sha and stopped before writing; the corrected audit verifies
+that no mathematical output changes.
+
+Stillness-attenuation source identity (class E): the OU-II and CARMA wrappers
+no longer attenuate wave variance on the still-water detector's fixed
+acceleration threshold (`docs/moving-vessel-regression-diagnosis.md`). This
+changes only the conservative whole-src digest of the native secant report
+(failed quantity: `shipping_source_tree_sha256`). The OU-III wrapper and
+estimator, the probe and all 39 src files of its compile closure are
+byte-identical to the merged 5 kn replay head; no replay is claimed. Native
+results, byte hashes and all theorem/qualification flags are retained.
+Structures preserved: the complete shipping OU-III source closure and every
+OU-III operation. Relaxations introduced: none. Invalidated hypothesis: none;
+this repairs source identity, not an inequality. Current limiter and theorem
+status are unchanged. Next falsifiable check: proof provenance and evidence
+tests against the refreshed binding.
+
+Replay-gate toolchain sensitivity (class E, infrastructure): built with
+Ubuntu 24.04 g++ 13.3 on an AVX-512 host, the unchanged OU-III replay
+measures `gyro_bias_3d_percent` 12.7148 (default) and 12.7029 (interval)
+against limits 12.69245 and 12.68089 measured with Debian g++ 14.2; every
+other OU-III channel passes. Same source, different compiler/`-march=native`
+code generation; the 0.5 % limit margin is below this spread (OU-III up to
+0.7 % per channel, TFG up to 25 % on one record's yaw). Invalidated
+hypothesis: that the published limits transfer across toolchains. Retained:
+OU-III limits and evidence unchanged; no estimator or proof change.
+Structures preserved: all. Relaxations introduced: none. Next falsifiable
+check: the hosted ubuntu-24.04 replay of this branch against the same limits.
+
+Coefficient-report provenance repair (class E): the study workflow rewrote the
+coefficient report without replacing its manifest, retaining an obsolete
+dataset name and output hash. The producer now writes both together from the
+verified current startup operating points and the pinned physical inputs.
+Structures preserved: all estimator equations, physical histories, covariance,
+gains, tuning and the diagnostic calculation. Relaxations introduced: none.
+No shipping counterexample or theorem promotion follows; established local
+results and open theorem flags remain unchanged. Next check: the report/receipt
+regression and the hosted study workflow using the new producer output option.
+
+Underway auxiliary publication repair (class E): regenerated v1.3.1 studies
+invalidate the old zero-speed engine-guard bound: the 800 rpm guard+R arm
+has pooled 3-D/engine-off RMS 2.417253, exceeding 1.7. Removing the gyro
+perturbation changes OU-III 3-D RMS by +26.47% and TFG by -39.04%; the
+old gyro-path-invariance attribution is also invalid. Tables and figures
+now use the verified fresh CI artifacts; the low-rpm regression sentinel
+is 2.45, while the inherited 1.7 bound remains for the other conditions.
+This documents degraded performance, not a correction to estimator tuning.
+Structures preserved: shipping equations, inherited state and covariance,
+sensor histories, noise configuration, gains, resets, scheduler and fixed tuning.
+Relaxations introduced: none to physical or theorem premises; the revised
+empirical sentinel applies only to this declared experiment. No genuine
+shipping counterexample was found; established local proof results and
+open theorem flags remain unchanged. The sampling-fidelity document pin
+changes only the name of the current dataset, not its physical qualification.
+Current limiter: final source-bound CI publication. Next falsifiable check:
+the complete regenerated replay and evidence contracts, including the cruise
+track helper in the TFG source inventory.
+
+CSV timestamp export repair (class E): the input clock correction would be
+lost again through default six-significant-digit simulation CSV exports.
+Typed/untyped shared runners and the manual AHRS writer now emit time with
+17 significant digits, preserving the formatting of every other column.
+The complete 240000-sample formatter round-trip test passes; actual AHRS and
+OU-II exports each independently pass all 240000 timestamp checks. Both
+complete inherited 252-direction native diagnostic words were rerun at
+epsilon 0.01 and 0.005; both state-byte hashes match the previous receipt.
+Structures preserved: literal estimator equations, state/covariance, physical
+histories, gains, resets, tuning, scheduler and sensor records. Relaxations
+introduced: none; these source-binding diagnostics do not become uniform
+derivative bounds. No shipping counterexample or new theorem claim follows.
+Existing local conclusions and open theorem flags remain unchanged. Next
+check: complete rebuilt regressions and source-bound CI publication.
+
+Timestamp dataset migration (class E): v1.3.0 collapses distinct 200 Hz
+samples onto rounded times after 1000 s. v1.3.1 regenerates integer-indexed
+clocks, including the corrected Fenton endpoint/sample count. All 21 input
+time-series clocks pass an exact binary64 index/200 audit. The ancillary
+tracker spans 30 s (5999 samples), not the main records' 1200 s; the initial
+audit incorrectly required 239999 tracker rows and was corrected. The old gyro-bias gate rejects 12.5015% against 12.4956%; the old Kuchler
+PM-Stokes gate rejects 14.7245% against 14.14%. These invalidate reuse of
+v1.3.0 regression baselines on the corrected physical records. Existing
+v1.3.0 results are superseded and must be replaced, never relabelled.
+Structures preserved: estimator equations, inherited histories, sensor/noise
+configuration and fixed tuning. Relaxations introduced: none. This is an
+input/instrumentation failure, not a shipping counterexample or new theorem
+result. Existing proof conclusions and open flags remain unchanged. Current
+limiter: complete v1.3.1 replay/publication evidence; next check is the full
+measured suite and source-bound CI regeneration with corrected clocks.
+
+Moving-vessel CARMA installation baseline repair (class E): the completed
+1,456-row installation matrix and 128-row cutoff sweep were compared with
+stationary-data ratios. The physical input hash maps differ, invalidating that
+comparison. The verified CI artifact now supplies current tables and figures;
+the ratio comparison remains mandatory when input maps match. Structures
+preserved: sensor corruption, installation, estimator equations, fixed tuning
+and the unchanged same-dataset comparison tolerance. Relaxations introduced:
+none; distinct physical experiments are no longer treated as repeated runs.
+No shipping counterexample or theorem conclusion follows. Existing proof
+results remain unchanged. Next check: hosted same-input study reproduction.
+
 # OU-III proof research state
+
+Moving-vessel lever-arm gate maintenance (class E): the old assertion that
+navigation error must have an interior band optimum rejects the new 100 Hz
+boundary minimum (3-D/CG 0.99923). Force residual instead has the expected
+interior minimum: 0.146 at 5 Hz, versus 0.524 at 1 Hz and 3.140 at 100 Hz.
+The gate now tests that physical residual; exact compensation, force scaling,
+and the deployed 15 Hz accuracy bound are retained. All 31 study/article
+checks pass on the verified complete CI artifact. Structures preserved: sensor
+corruption, rigid-body installation, estimator equations and fixed tuning.
+Relaxations introduced: none; a downstream score is no longer mistaken for
+a force-model invariant. No shipping counterexample or new theorem claim is
+made. Next check: the same hosted study and source verifier after publication.
+
+Moving-vessel replay maintenance (class E): changing simulation-only source
+files invalidates the finite secant diagnostic's conservative whole-src digest;
+two historical dataset-scope clarifications also require fresh document pins.
+The compiler-discovered 39-header probe closure differs from main f2c65b2
+only in WaveFilesSupport.h (CSV horizontal-truth precision); estimator headers
+are unchanged. Both complete 252-direction diagnostic words were rerun at
+epsilon 0.01 and 0.005, preserving both native secant byte hashes. The source
+audit is recorded in moving-dataset-source-scope.json.
+Structures preserved: literal estimator equations, inherited state/covariance,
+physical probe record, gains, resets, frontend, scheduler and clocks. Relaxations
+introduced: no new relaxation; existing off-orbit finite secants remain diagnostics,
+not derivative bounds. This is a source-binding failure, not a failed stability
+inequality or a genuine shipping counterexample. Existing local results and open
+theorem flags are retained. The fresh native receipt is checked against the unchanged source verifier;
+no motion/service qualification is inferred from
+the new moving-boat dataset. The initial native command lacked clang++; the
+available g++ compiler is used with the same diagnostic protocol.
 
 Tangent research quality-gate repair (class E): Ruff found an unused import,
 and CI cppcheck found three inherited group-operation name collisions. The

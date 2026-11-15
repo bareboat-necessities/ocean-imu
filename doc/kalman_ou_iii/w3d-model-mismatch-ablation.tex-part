@@ -2,11 +2,11 @@
 \label{sec:model-mismatch-ablation}
 Replaying the records with sensor corruption disabled while retaining the estimators' ordinary covariances,
 regularization, adaptation, and startup isolates a \emph{deployed-estimator}
-residual, not pure plant-model mismatch. Eight equal-length stationary records
+residual, not pure plant-model mismatch. Eight equal-length v1.3.1 underway records
 are pooled over their final \SI{900}{s}.
 
-OU--III vertical and 3-D RMS are $0.145$ and $0.312$~m, versus $0.249$ and
-$0.440$~m for OU--II and $0.145$ and $0.342$~m for TFG
+OU--III vertical and 3-D RMS are $0.167$ and $0.394$~m, versus $0.284$ and
+$0.523$~m for OU--II and $0.164$ and $0.418$~m for TFG
 (Fig.~\ref{fig:model-mismatch-floor}). Nonzero estimated bias with zero
 true bias demonstrates absorption of model residuals.
 Fig.~\ref{fig:model-mismatch-scaling}
@@ -15,7 +15,7 @@ slope-one line is a reference, not a fitted law. Incident $H_s$ is not the
 vessel's heave height.
 \begin{table}[t]
   \centering
-  \caption{Noise-free deployed-estimator mismatch floor over eight stationary
+  \caption{Noise-free deployed-estimator mismatch floor over eight underway
   records.  $Z/Z_{\rm ref}$ is normalized by pooled reference vertical RMS.}
   \label{tab:model-mismatch-floor}
   \footnotesize
@@ -24,9 +24,9 @@ vessel's heave height.
     \toprule
     Family & $X$ [m] & $Y$ [m] & $Z$ [m] & 3-D [m] & $Z/Z_{\rm ref}$ [\%] \\
     \midrule
-    OU--II & 0.308 & 0.192 & 0.249 & 0.440 & 20.46 \\
-    OU--III & 0.240 & 0.136 & 0.145 & 0.312 & 11.89 \\
-    TFG & 0.258 & 0.171 & 0.145 & 0.342 & 11.95 \\
+    OU--II & 0.367 & 0.241 & 0.284 & 0.523 & 23.23 \\
+    OU--III & 0.302 & 0.189 & 0.167 & 0.394 & 13.65 \\
+    TFG & 0.311 & 0.226 & 0.164 & 0.418 & 13.40 \\
     \bottomrule
   \end{tabular}
 \end{table}

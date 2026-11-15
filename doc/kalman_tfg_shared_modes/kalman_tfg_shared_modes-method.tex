@@ -520,7 +520,8 @@ The prototype displacement zero-crossing frequency is
 This uses the same spectral-moment quantity estimated online. It does not
 equate measured period to the reciprocal of a pole natural frequency.
 All three axes use the same $\kappa$ and shape. The uncoupled scheduled amplitudes are
-isotropic, $\sigma_x=\sigma_y=\sigma_z$ (the coherence cap can enlarge
+equal before the vertical band normalization of Eq.~\eqref{eq:bandnormalization}
+(the coherence cap can enlarge
 horizontal excitation); there is no assumption that their
 sample paths are identical.
 
@@ -810,6 +811,27 @@ where $\mathcal S(x)=0$ for $x\le0$, $3x^2-2x^3$ for $0<x<1$, and
  \sigma_{\rm target}=c_\sigma\sqrt{p_E\max(E,0)}.
  \label{eq:sigmatarget}
 \end{equation}
+After smoothing and the gain/floor mapping of Eq.~\eqref{eq:operatingpoint},
+let $\sigma_B$ denote the band-amplitude command. The wrapper converts it
+to the vertical model's full acceleration RMS. For its frozen spectrum $S_a$,
+\begin{equation}
+ F_B=\frac{\int_0^\infty |B(i2\pi f)|^2 S_a(f)\,df}
+               {\int_0^\infty S_a(f)\,df},\qquad
+ \sigma_z=\sigma_B/\sqrt{F_B}.
+ \label{eq:bandnormalization}
+\end{equation}
+The default CARMA(4,1) shape with the $0.5$--$4$ frequency band gives
+$F_B=0.58598012624$, or a standard-deviation multiplier $1.30634701277$.
+Two small Sylvester solves evaluate this fraction when the shape or band
+ratios change; no matrix solve is added to each IMU update. The empirical
+horizontal amplitude factors retain the band-RMS convention. This is a
+continuous, frozen-model calibration: sampled, changing bands and a
+mismatched sea spectrum need not realize exactly this fraction. The
+normalization can be disabled without changing the measurement stream.
+Historical study tables remain tied to their recorded source snapshots;
+the current paired speed/seed comparisons are in the repository's
+\texttt{encounter-scaling-regressions} report.
+
 Although the API calls $p_E$ a probability, it is a configured smooth
 evidence weight, not a calibrated Bayesian posterior probability.
 No physical wave variance is assigned merely because the sensor has a
@@ -863,10 +885,12 @@ can decay toward the numerical floor. The internal coefficient
 $c_\sigma=0.9$ is divided out when assigning acceleration amplitude,
 \begin{equation}
  f_{\rm op}=\frac{c_\tau}{2\tau},\qquad
- \sigma_i=c_{\rm gain}\max(10^{-5},\sigma/c_\sigma),
+ \sigma_B=c_{\rm gain}\max(10^{-5},\sigma/c_\sigma),
  \label{eq:operatingpoint}
 \end{equation}
-with $c_{\rm gain}=1$ and equal axes by default.
+with $c_{\rm gain}=1$ by default. Before any coherence-cap enlargement,
+the default horizontal amplitudes are $\sigma_x=\sigma_y=\sigma_B$;
+the vertical amplitude follows Eq.~\eqref{eq:bandnormalization}.
 
 Every valid IMU sample contributes to the moments and smoothing.
 Activation is throttled separately: about every 0.1~s a candidate is
@@ -1167,10 +1191,13 @@ writes are defined in physical coordinates and mapped through
 rather than assigning a numerically identical but physically different
 matrix in the invariant tangent frame.
 
+\input{underway-baseline.tex-part}
+
 \section{Deterministic Replay and Quality Gates}
 \label{sec:validation}
 The dedicated simulator replays the pinned
-\texttt{oceanography-waves-lib v1.3.1} vessel-response records. There are eight
+\texttt{oceanography-waves-lib v1.3.1} 5 kn underway vessel-response records,
+with heading oscillating $\pm3^\circ$ about north every 120 s. There are eight
 scored records: JONSWAP and PM--Stokes, each at incident significant wave
 heights 0.27, 1.5, 4.0 and 8.5~m. Each history lasts 1200~s at 200~Hz. The
 sensor and initialization seeds, simulated noise, magnetic schedule and
@@ -1192,7 +1219,7 @@ not be interpreted as interchangeable percentages.
 \input{tfg-shared-gates-generated.tex-part}
 
 The executable's limits are its own measured worst errors over these eight
-records, enlarged by 0.5\% and rounded upward to 0.0001. The limits are locked
+records, enlarged by 0.5\% and rounded upward to 0.00001. The limits are locked
 regression sentinels, not estimated uncertainty bounds and not tuned anew at
 each CI run. The baseline JSON pins input hashes, compiler, source revision,
 per-record measurements and the baseline executable hash. A regression change
@@ -1388,7 +1415,7 @@ $R$; the public quaternion accessors retain the project's world-to-body conventi
 The dedicated replay is
 \path{tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp}.
 Both geometries reuse \path{tests/common/SharedModesReplay.h}; TFG limits are in
-\path{reports/results/tfg_shared_modes/deterministic_regression.json}.
+\path{reports/results/filter_sim_gates/limits.json}.
 Independent mathematical checks are in
 \path{tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp}.
 

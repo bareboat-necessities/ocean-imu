@@ -314,7 +314,7 @@ public:
 
         // Unlike the OU wrappers, whose MEKFs fire their own zero
         // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the
-        // S = 0 pseudo-measurement from here on an accumulated-time timer.
+        // Integral drift pseudo-measurement on an accumulated-time timer.
         // The period is the same tau-scaled cadence (pseudoUpdatePeriodFor_).
         pseudo_elapsed_ += dt;
         if (pseudo_elapsed_ >= pseudo_period_sec_) {
@@ -381,6 +381,14 @@ public:
     void setTauScaledPseudoCadence(bool on) { tau_scaled_pseudo_cadence_ = on; applyPseudoCadence_(); }
     [[nodiscard]] bool tauScaledPseudoCadence() const noexcept { return tau_scaled_pseudo_cadence_; }
 
+    void setWaveMatchedVerticalIntegral(bool on) {
+        wave_matched_vertical_integral_ = on;
+        commitTune_();
+    }
+    [[nodiscard]] bool waveMatchedVerticalIntegral() const noexcept {
+        return wave_matched_vertical_integral_;
+    }
+
     bool setFixedTuning(float tau_s, float sigma_a, float RS) {
         if (!(tau_s > 0.0f) || !(sigma_a >= 0.0f) || !(RS > 0.0f)) return false;
         if (!std::isfinite(tau_s) || !std::isfinite(sigma_a) || !std::isfinite(RS)) return false;
@@ -418,7 +426,9 @@ public:
 
     void enableTuner(bool on) { enable_tuner_ = on; }
     void enableLinearBlock(bool on) { mekf_.set_linear_block_enabled(on); }
-    void setTauCoeff(float c)      { if (c > 0.0f && std::isfinite(c)) tau_coeff_ = c; }
+    void setTauCoeff(float c) {
+        if (c > 0.0f && std::isfinite(c)) { tau_coeff_ = c; commitTune_(); }
+    }
     void setSigmaCoeff(float c)    { if (c > 0.0f && std::isfinite(c)) sigma_coeff_ = c; }
     void setRSCoeff(float c)       { if (c > 0.0f && std::isfinite(c)) R_S_coeff_ = c; }
     void setSFactor(float s)       { if (s > 0.0f && std::isfinite(s)) S_factor_ = s; }
@@ -428,10 +438,10 @@ public:
     [[nodiscard]] float getRSYFactor() const noexcept { return R_S_y_factor_; }
     void setAccNoiseFloorSigma(float s) { if (s >= 0.0f && std::isfinite(s)) noise_floor_sigma_ = s; }
 
-    void setRSLaw(RSLaw law) noexcept { rs_law_ = law; }
+    void setRSLaw(RSLaw law) noexcept { rs_law_ = law; applyIntegralConstraint_(); }
     [[nodiscard]] RSLaw getRSLaw() const noexcept { return rs_law_; }
     void setEmbeddedFriendlyLegacyRSLaw(bool legacy) noexcept {
-        rs_law_ = legacy ? RSLaw::LegacyCubic : RSLaw::SpectralMSE;
+        setRSLaw(legacy ? RSLaw::LegacyCubic : RSLaw::SpectralMSE);
     }
     void setRSMseCoeff(float c) {
         if (std::isfinite(c) && c > 0.0f) rs_mse_coeff_ = c;
@@ -1007,8 +1017,23 @@ private:
         pseudo_period_sec_ = pseudoUpdatePeriodFor_(tune_.tau_applied);
     }
 
+    void applyIntegralConstraint_() {
+        // The staged/clamped OU time scale is tau_coeff*Tz/2. Undo the
+        // user coefficient before forming beta=(Tz/2pi)^2. No truth or speed
+        // enters this observation, and a fixed tune implies the same period.
+        const float wave_time = tune_.tau_applied / tau_coeff_;
+        const float beta = wave_time * wave_time / 9.8696044010893586188f;
+        // SpectralMSE needs a constrained attitude/gyro gain. Applying that
+        // same restriction to the empirically weighted LegacyCubic law
+        // worsens its coupled attitude/bias calibration; retain its full gain.
+        mekf_.set_integral_velocity_weight(
+            wave_matched_vertical_integral_ && std::isfinite(beta) ? beta : 0.0f,
+            rs_law_ == RSLaw::SpectralMSE);
+    }
+
     void commitTune_() {
         mekf_.set_aw_time_constant(tune_.tau_applied);
+        applyIntegralConstraint_();
         applyPseudoCadence_();
         const float sZ = tune_.sigma_applied;
         mekf_.set_aw_stationary_std(Vector3f(sZ * S_factor_, sZ * S_factor_, sZ));
@@ -1100,6 +1125,7 @@ private:
     float adapt_elapsed_sec_ = 0.0f;
     bool tune_apply_pending_ = false;
     bool tau_scaled_pseudo_cadence_ = true;
+    bool wave_matched_vertical_integral_ = true;
     float RS_filter_input_ = 0.5f;
 
     float tuner_warm_sec_ = 0.0f;

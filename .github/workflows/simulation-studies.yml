@@ -3,11 +3,17 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "tools/sim_dataset.py"
       - 'tools/sim_dataset.py'
+      - 'tools/underway_reference.py'
+      - 'src/util/UnderwayReference.h'
+      - 'src/util/WaveFilesSupport.h'
+      - 'src/util/W3dSimCommon.*'
       - 'tools/model_mismatch_ablation.py'
       - 'tools/startup_ablation.py'
       - 'tools/startup_publication_sync.py'
       - 'tools/ou3_reduced_mse_study.py'
+      - 'tools/ou2_dual_mse_coefficients.py'
       - 'tools/direction_rao_ablation.py'
       - 'tools/direction_rao_report.py'
       - 'src/wave_dir/**'
@@ -63,7 +69,7 @@ jobs:
           if [ "$STUDY" = startup_ablation ]; then
             python3 tools/startup_publication_sync.py
             mkdir -p reports/results/ou2_dual_mse
-            python3 tools/ou2_dual_mse_coefficients.py --exact | tee reports/results/ou2_dual_mse/coefficient_report.txt
+            python3 tools/ou2_dual_mse_coefficients.py --exact --output-dir reports/results/ou2_dual_mse
             python3 tools/ou3_reduced_mse_study.py
           fi
           if [ "$STUDY" = engine_noise_degradation ]; then
@@ -73,7 +79,7 @@ jobs:
         if: always()
         run: |
           git rev-parse HEAD > source-commit.txt
-          sha256sum sim-data-files-vessel-rao-28ft.zip > simulation-sha256.txt
+          sha256sum sim-data-files-vessel-rao-28ft-5kn.zip > simulation-sha256.txt
       - uses: actions/upload-artifact@v6
         if: always()
         with:

@@ -13,11 +13,14 @@ set -e
 ./carma_shared_modes-test
 ./carma_shared_modes_realization-test
 
-# Paired smoke row (carma3_bench engine): with the coupling off the filter IS
+# Paired smoke row (carma3_bench engine): match the historical band-amplitude
+# mapping on BOTH sides of this realization identity. Default normalized
+# behavior is tested by the wrapper tests and full replay below.
+# With the coupling off the filter IS
 # the CARMA3 baseline A41@C in law, through adaptation (equal to float
 # rounding); the deployable CSM and CSM:noconf run without failure.  Timing
 # columns are never compared.
-./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
+CSM_BAND_NORMALIZATION=0 ./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
     --seed 1 --filters A41@C,CSM,CSM:noconf,CSM:off --score-start 200 > smoke_csm.csv
 python3 - <<'PY'
 import csv
@@ -42,8 +45,9 @@ W3D_COLLECT_ALL_GATES=1 ./kalman_carma_shared_modes-sim --regression
 # The actual default live path must meet its current, tighter production bars.
 W3D_COLLECT_ALL_GATES=1 W3D_WRITE_TIMESERIES=0 ./kalman_carma_shared_modes-sim
 
-# Controlled geometry comparison with the same Evidence schedule and data.
-./kalman_carma_shared_modes-bench --header --extended --level full \
+# Controlled geometry comparison with the same Evidence schedule, amplitude
+# mapping and data (the independent-axis controls retain that mapping).
+CSM_BAND_NORMALIZATION=0 ./kalman_carma_shared_modes-bench --header --extended --level full \
     --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" --seed 1 --score-start 200 \
     --filters A41@C,T41@C,CSM,TCSM,TCSM:off > smoke_tfg_shared.csv
 python3 - <<'CHECK'

@@ -717,7 +717,11 @@ equivalent in translation and tilt and +0.45 % in heading.  Rapid
 rotations expose neither an advantage nor a weakness: the invariant error
 dynamics are exact in the rotation, and so is the MEKF's.
 
-### 7.6 Independent vessel-RAO dataset
+### 7.6 Archived stationary-vessel dataset
+
+These multi-seed numbers describe the zero-speed v1.2.3 experiment. Current
+5 kn measurements and the changed scoring convention are in
+[moving-vessel results](moving-vessel-results.md).
 
 The pinned 28 ft vessel-RAO records (JONSWAP and Pierson-Moskowitz/Stokes,
 H_s 0.27-8.5 m; 8 records x 10 seeds, `carma3-sim` for A41/T41/T41R0 and

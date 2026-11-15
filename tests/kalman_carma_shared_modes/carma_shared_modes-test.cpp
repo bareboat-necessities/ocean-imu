@@ -248,6 +248,9 @@ void test1_api() {
     const auto h = a.health();
     check(h.covariance_finite && h.covariance_asymmetry <= 1e-6f, "covariance finite and symmetric",
           h.covariance_asymmetry, 1e-6);
+    check(a.fusion().raw().verticalBandNormalization(), "shared wrapper enables vertical band calibration");
+    check(a.fusion().raw().getCarmaAccelStd() == a.fusion().raw().mekf().vertical_model().accel_std(),
+          "reported vertical sigma is the committed full-model sigma");
     const auto ss = a.seaState();
     check(std::isfinite(ss.operating_hz) && ss.operating_hz > 0.0f && ss.accel_std.allFinite(), "sea-state outputs finite");
 }

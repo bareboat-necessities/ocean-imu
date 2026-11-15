@@ -1,8 +1,9 @@
 """Conventions of the shipped wave records, asserted rather than assumed.
 
-The v1.2.1 generator azimuth is the incident propagation-to direction.
-Known RAO phase/amplitude matching is necessary before using an orbital
-correlation to check it. The test skips if records have not been fetched.
+The underway records retain incident propagation-to azimuth in filenames.
+Their orbital correlations include signed encounter frequency and changing
+heading, so stationary-hull phase matching cannot validate propagation sign.
+Check the delivered total-motion kinematics and declared track instead.
 
 The second contract here is the Python mirror of the deployed fixed-tuning
 operating point, pinned against the shipping headers.
@@ -13,7 +14,6 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-from scipy.signal import bilinear, lfilter
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "tools"))
@@ -37,56 +37,39 @@ def _azimuth_from_name(path: Path) -> float:
     raise ValueError(f"no azimuth in {path.name}")
 
 
-class GeneratorAzimuthConventionTests(unittest.TestCase):
-    def test_azimuth_is_propagation_to_after_rao_phase_matching(self):
+class GeneratorMotionConventionTests(unittest.TestCase):
+    def test_underway_records_have_consistent_total_motion_and_heading(self):
+        from underway_reference import track
         records = _records()
         if not records:
             self.skipTest("simulation records not fetched")
-
         for path in records:
             with self.subTest(record=path.name):
-                columns = path.read_text(encoding="utf-8").split("\n", 1)[0].strip().split(",")
-                index = {name: position for position, name in enumerate(columns)}
+                with path.open() as stream:
+                    columns = stream.readline().strip().split(',')
                 rows = int(SAMPLE_RATE_HZ * ANALYSIS_SECONDS)
-                data = np.loadtxt(
-                    path,
-                    delimiter=",",
-                    skiprows=1,
-                    max_rows=rows,
-                    usecols=[index["disp_x"], index["disp_y"], index["disp_z"]],
-                )
-                # Independent continuous transfer formulas of VesselRao:
-                # X has surge tau=.7, Y sway tau=1; match X and heave to Y.
-                bx, ax = bilinear([.7**2, 1.4, 1], [1, 2, 1], fs=SAMPLE_RATE_HZ)
-                wn = 2 * np.pi / 2.4
-                bz, az = bilinear([1/wn**2, .9/wn, 1], [1, 2, 1], fs=SAMPLE_RATE_HZ)
-                data[:, 0] = lfilter(bx, ax, data[:, 0])
-                data[:, 2] = lfilter(bz, az, data[:, 2])
-                data = data[int(30 * SAMPLE_RATE_HZ):]
-                horizontal = data[:, :2] - data[:, :2].mean(axis=0)
-                vertical = data[:, 2] - data[:, 2].mean()
-
-                # Principal axis of the horizontal orbital displacement.
-                _, vectors = np.linalg.eigh(np.cov(horizontal.T))
-                axis = vectors[:, -1]
-
-                # For a deep-water wave travelling along +axis with z up, the
-                # along-axis displacement and the vertical rate are in
-                # antiphase, so the correlation picks the propagation end.
-                vertical_rate = np.gradient(vertical, 1.0 / SAMPLE_RATE_HZ)
-                along = horizontal @ axis
-                if float(np.mean(along * vertical_rate)) > 0.0:
-                    axis = -axis
-
-                travel_deg = np.degrees(np.arctan2(axis[1], axis[0])) % 360.0
-                expected_deg = _azimuth_from_name(path) % 360.0
-                error = (travel_deg - expected_deg + 180.0) % 360.0 - 180.0
-                self.assertLess(
-                    abs(error),
-                    20.0,
-                    f"{path.name}: propagation-to direction {travel_deg:.1f} deg is not "
-                    f"propagation azimuth = {expected_deg:.1f} deg",
-                )
+                data = np.loadtxt(path, delimiter=',', skiprows=1, max_rows=rows)
+                times = data[:, columns.index('time')]
+                position = data[:, [columns.index('disp_' + a) for a in 'xyz']]
+                velocity = data[:, [columns.index('vel_' + a) for a in 'xyz']]
+                acceleration = data[:, [columns.index('acc_' + a) for a in 'xyz']]
+                # These are independent numerical derivatives of the raw total
+                # history, including forward travel and steering acceleration.
+                dp = np.gradient(position, 1 / SAMPLE_RATE_HZ, axis=0)
+                dv = np.gradient(velocity, 1 / SAMPLE_RATE_HZ, axis=0)
+                # Upstream exports total travel through float32: its north
+                # position ULP grows with distance. Bound derivative error
+                # by that quantization, independently of estimator accuracy.
+                ulp = np.abs(np.spacing(position.astype(np.float32))).astype(float)
+                bound = .0001 + 2 * ulp / (2 / SAMPLE_RATE_HZ)
+                self.assertTrue(np.all(np.abs(dp[2:-2] - velocity[2:-2]) <= bound[2:-2]))
+                np.testing.assert_allclose(dv[2:-2], acceleration[2:-2], atol=.003, rtol=.003)
+                cruise, _, _, heading = track(times)
+                np.testing.assert_allclose(data[:, columns.index('yaw_deg')], heading, atol=2e-6)
+                # Total displacement includes kilometre-scale travel; its
+                # wave residual remains bounded rather than accumulating it.
+                self.assertGreater(position[-1, 0] - position[0, 0], 900)
+                self.assertLess(np.max(np.abs(position - cruise)), 20)
 
 
 class DeployedLawMirrorTests(unittest.TestCase):

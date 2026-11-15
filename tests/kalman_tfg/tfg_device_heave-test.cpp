@@ -25,7 +25,7 @@ struct Case {
     bool tilted=false, hold_bias=false, fixed=false, sync=true, moving=false, noise=false;
 };
 
-bool run(const Case& c) {
+bool run(const Case& c, bool legacy_rs, bool wave_matched) {
     Fusion f;
     Fusion::Config cfg;
     // Literal operating point from atomS3R_ins_tfg::resetFusion_.
@@ -39,6 +39,8 @@ bool run(const Case& c) {
     cfg.online_tune_warmup_sec = 10.0f;
     if (c.hold_bias) cfg.acc_bias_unlock_sec = 1000.0f;
     f.begin(cfg);
+    f.setEmbeddedFriendlyLegacyRSLaw(legacy_rs);
+    f.setWaveMatchedVerticalIntegral(wave_matched);
     f.setPeriodicAwCovSync(c.sync);
     if (c.fixed && !f.setFixedTuning(2.5f, 0.25f, 1.5f))
         throw std::runtime_error("fixed configuration rejected");
@@ -121,8 +123,16 @@ bool run(const Case& c) {
     return finite && first_live>=0 && peak_p<=2.0f;
 }
 } // namespace
-int main() {
+int main(int argc, char** argv) {
     std::cout << std::unitbuf;
+    bool legacy_rs = false, wave_matched = true;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg(argv[i]);
+        if (arg == "--legacy-rs") legacy_rs = true;
+        else if (arg == "--previous-integral") wave_matched = false;
+        else { std::cerr << "Unknown option: " << arg << '\n'; return 2; }
+    }
+    std::cout << "CONFIG legacy_rs=" << legacy_rs << " wave_matched=" << wave_matched << '\n';
     const Case cases[] = {
         {"level-zero",0.0f,0.005f},
         {"level-001",0.01f,0.005f},
@@ -139,7 +149,7 @@ int main() {
         {"moving-noisy",0.05f,0.005f,true,false,false,true,true,true},
     };
     bool ok=true;
-    try { for (const auto& c: cases) ok=run(c) && ok; }
+    try { for (const auto& c: cases) ok=run(c, legacy_rs, wave_matched) && ok; }
     catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 2; }
     return ok ? 0 : 1;
 }

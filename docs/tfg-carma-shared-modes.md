@@ -1,5 +1,21 @@
 # Experimental shared-mode CARMA on the two-frame group
 
+The current shared wrapper applies a model-derived vertical band-to-total
+acceleration normalization (1.306347 for the default CARMA(4,1) shape).
+Horizontal empirical factors keep their band-RMS convention. Passing `false`
+as the fourth `begin` argument retains the previous mapping; the raw wrapper
+also exposes `setVerticalBandNormalization`. Shape and band-ratio changes
+refresh the cached calculation. The [encounter-scaling report](encounter-scaling-regressions.md)
+contains the paired current-code qualification and its per-record costs.
+Historical experiments below retain their recorded source/settings.
+
+Current external-data replays use v1.3.1, the 28 ft boat at 5 kn with
+±3° heading oscillation over 120 s. The [current comparison](moving-vessel-results.md)
+and [before/after report](moving-vessel-comparison.md) describe this changed
+experiment; earlier multi-seed synthetic and v1.2.3 results retain their
+original scope.
+
+
 `KalmanTfgCarmaSharedModes<float>` combines the existing six-state-per-axis
 minimal shared-mode CARMA(4,1) prior with the existing right-invariant TFG core.
 It has 27 error states on `TwoFrameGroup<float,6,2>`. It is experimental; the
@@ -129,7 +145,7 @@ The `kalman_tfg_shared_modes` CI entry builds and runs its dedicated
 `tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp` on the pinned
 vessel-RAO data. Its test script verifies eight real quality-gate passes and
 demonstrates failure on corrupted displacement truth. The measured limits and
-baseline provenance are in `reports/results/tfg_shared_modes/deterministic_regression.json`.
+baseline provenance are in `reports/results/filter_sim_gates/limits.json`.
 The replay table, bounded plots, LaTeX compilation/retry, PDF uploads and
 release publication follow the standard estimator pipeline.
 

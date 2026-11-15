@@ -34,6 +34,19 @@ int main() {
     if (f.getPseudoLaw() != PseudoAdaptationLaw::PhysicalMSE)
         return fail("OU-II default is not PhysicalMSE");
 
+    // A caller must be able to restore the no-attenuation default after
+    // temporarily enabling the legacy study setting.
+    if (f.sigma_stillness_decay_sec_ != 0.0f)
+        return fail("OU-II stillness attenuation must default off");
+    f.setSigmaStillnessDecaySec(5.0f);
+    if (f.sigma_stillness_decay_sec_ != 5.0f)
+        return fail("OU-II legacy stillness setting was rejected");
+    f.setSigmaStillnessDecaySec(0.0f);
+    f.setSigmaStillnessDecaySec(-1.0f);
+    f.setSigmaStillnessDecaySec(NAN);
+    if (f.sigma_stillness_decay_sec_ != 0.0f)
+        return fail("OU-II stillness disable/invalid-setting contract failed");
+
     float rp0=0, rv0=0, rp1=0, rv1=0;
     f.pseudo_targets_from_law_(tau, sigma, rp0, rv0);
     f.pseudo_targets_from_law_(tau, sigma*d, rp1, rv1);

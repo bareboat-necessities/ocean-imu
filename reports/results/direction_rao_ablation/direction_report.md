@@ -4,17 +4,17 @@ Each row is an unweighted mean across eight full-record replays, scored over the
 
 | Family | RPM | Arm | Axis error ° | Axis available % | Directed RMS ° | Correct % | Wrong % | Unresolved % |
 |---|---:|---|---:|---:|---:|---:|---:|---:|
-| OU-II | 0 | unconditioned | 11.70 | 76.16 | 19.55 | 71.81 | 0.41 | 27.77 |
-| OU-II | 0 | guard-only | 11.70 | 76.16 | 19.55 | 71.81 | 0.41 | 27.77 |
-| OU-II | 0 | guard-and-rao | 2.36 | 73.02 | 16.35 | 69.60 | 0.23 | 30.17 |
-| OU-II | 2400 | unconditioned | 52.46 | 85.09 | 91.40 | 6.63 | 4.36 | 89.01 |
-| OU-II | 2400 | guard-only | 11.24 | 75.31 | 25.61 | 64.08 | 0.73 | 35.18 |
-| OU-II | 2400 | guard-and-rao | 17.76 | 72.63 | -- | 68.23 | 0.24 | 31.54 |
-| OU-III | 0 | unconditioned | 11.74 | 75.98 | 19.64 | 71.79 | 0.42 | 27.79 |
-| OU-III | 0 | guard-only | 11.74 | 75.98 | 19.64 | 71.79 | 0.42 | 27.79 |
-| OU-III | 0 | guard-and-rao | 2.16 | 72.95 | 15.93 | 69.46 | 0.21 | 30.33 |
-| OU-III | 2400 | unconditioned | 47.65 | 77.50 | 88.59 | 5.78 | 2.39 | 91.83 |
-| OU-III | 2400 | guard-only | 10.98 | 75.09 | 22.99 | 64.33 | 0.81 | 34.86 |
-| OU-III | 2400 | guard-and-rao | 18.70 | 72.55 | -- | 68.13 | 0.23 | 31.65 |
+| OU-II | 0 | unconditioned | 4.47 | 71.82 | -- | 61.10 | 1.09 | 37.80 |
+| OU-II | 0 | guard-only | 4.47 | 71.82 | -- | 61.10 | 1.09 | 37.80 |
+| OU-II | 0 | guard-and-rao | -- | 71.17 | -- | 64.55 | 0.24 | 35.20 |
+| OU-II | 2400 | unconditioned | 46.77 | 75.04 | 104.97 | 0.28 | 0.29 | 99.43 |
+| OU-II | 2400 | guard-only | -- | 71.25 | -- | 31.30 | 2.09 | 66.61 |
+| OU-II | 2400 | guard-and-rao | -- | 70.22 | -- | 62.55 | 0.14 | 37.30 |
+| OU-III | 0 | unconditioned | 4.37 | 71.68 | -- | 61.31 | 0.97 | 37.72 |
+| OU-III | 0 | guard-only | 4.37 | 71.68 | -- | 61.31 | 0.97 | 37.72 |
+| OU-III | 0 | guard-and-rao | -- | 70.99 | -- | 64.67 | 0.22 | 35.11 |
+| OU-III | 2400 | unconditioned | 45.72 | 74.43 | 106.70 | 0.77 | 0.79 | 98.44 |
+| OU-III | 2400 | guard-only | -- | 71.10 | -- | 31.60 | 2.18 | 66.22 |
+| OU-III | 2400 | guard-and-rao | -- | 70.00 | -- | 61.93 | 0.17 | 37.90 |
 
 Quiet guard-on/off measurements are identical. RAO-on/off attitude and displacement measurements are identical in every matched pair. Angular accuracy is conditional on usable motion. Engine vibration substantially reduces availability without the guard; correction cannot recover direction from absent or weak motion. Quality and confidence thresholds are unchanged. The unconditioned arm disables both the guard and its covariance inflation, so that comparison measures their combined effect.

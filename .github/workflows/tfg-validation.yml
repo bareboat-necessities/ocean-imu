@@ -3,6 +3,7 @@ name: tfg-validation
 on:
   push:
     paths:
+      - "tools/sim_dataset.py"
       - 'src/kalman_tfg/**'
       - 'src/kalman_common/**'
       - 'src/lie/**'
@@ -12,6 +13,7 @@ on:
       - '.github/workflows/tfg-validation.yml'
   pull_request:
     paths:
+      - "tools/sim_dataset.py"
       - 'src/kalman_tfg/**'
       - 'src/kalman_common/**'
       - 'src/lie/**'
@@ -58,14 +60,6 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v6
 
-      - name: Checkout exact pre-PR baseline
-        uses: actions/checkout@v6
-        with:
-          # On PRs use the immutable base SHA. The fallback keeps manual/push
-          # runs reproducible against the baseline this comparison documents.
-          ref: ${{ github.event.pull_request.base.sha || 'e49e3a289007f0efc6bf27979b0553335db7f8a3' }}
-          path: baseline-main
-
       - name: Install simulation dependencies
         run: |
           sudo apt-get update -qq
@@ -74,16 +68,12 @@ jobs:
       - name: Download paired wave records
         run: |
           python3 tools/sim_dataset.py
-          unzip -o sim-data-files-vessel-rao-28ft.zip -d tests/kalman_tfg >/dev/null
-          cp tests/kalman_tfg/wave_data_*.csv baseline-main/tests/kalman_tfg/
+          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d tests/kalman_tfg >/dev/null
 
       - name: Build PR comparison simulators
         run: make -C tests/kalman_tfg kalman_tfg-sim kalman_tfg-legacy-sim
 
-      - name: Build main baseline simulator
-        run: make -C baseline-main/tests/kalman_tfg kalman_tfg-sim
-
-      # The three arms deliberately use identical records, seeds and 900 s
+      # The two arms deliberately use identical records, seeds and 900 s
       # scoring windows. Collect all record-level gates so a changed default
       # cannot truncate the paired comparison at its first regression.
       - name: Run SpectralMSE TFG arm
@@ -102,58 +92,28 @@ jobs:
           W3D_COLLECT_ALL_GATES: '1'
         run: ./kalman_tfg-legacy-sim | tee tfg-legacy-cubic.log || true
 
-      - name: Run pre-PR main baseline arm
-        working-directory: baseline-main/tests/kalman_tfg
-        env:
-          W3D_WRITE_TIMESERIES: '0'
-          W3D_VALIDATION_WINDOW_SEC: '900'
-          W3D_COLLECT_ALL_GATES: '1'
-        run: ./kalman_tfg-sim | tee ../../../tfg-main-baseline.log || true
-
       - name: Gate SpectralMSE default
         working-directory: tests/kalman_tfg
         run: |
           python3 - <<'PY'
-          import math
+          import json
+          import sys
           from pathlib import Path
 
-          rows = []
-          for line in Path('tfg-spectral-mse.log').read_text().splitlines():
-              if not line.startswith('VALIDATION_METRICS '):
-                  continue
-              fields = {}
-              for token in line.split()[1:]:
-                  if '=' in token:
-                      k, v = token.split('=', 1)
-                      fields[k] = v
-              rows.append(fields)
+          sys.path.insert(0, str(Path('../../tools').resolve()))
+          from filter_sim_gates import parse_w3d, measured_worst
 
-          if len(rows) != 8:
-              raise SystemExit(f'expected 8 TFG validation rows, got {len(rows)}')
-
-          limits = {
-              'z_jonswap': 4.698,
-              'z_pmstokes': 4.631,
-              'yaw': 1.292,
-              'd3_jonswap': 20.43,
-              'd3_pmstokes': 20.15,
-          }
-          worst = {k: -math.inf for k in limits}
-          for r in rows:
-              name = r['input'].lower()
-              family = 'jonswap' if 'jonswap' in name else 'pmstokes'
-              z = float(r['disp_z_pct_hs'])
-              d3 = float(r['disp_3d_pct_refmax'])
-              yaw = float(r['yaw_rms_deg'])
-              worst[f'z_{family}'] = max(worst[f'z_{family}'], z)
-              worst[f'd3_{family}'] = max(worst[f'd3_{family}'], d3)
-              worst['yaw'] = max(worst['yaw'], yaw)
-
+          text = Path('tfg-spectral-mse.log').read_text()
+          rows = parse_w3d(text)
+          if text.count('QUALITY_GATE: PASS=1 REASON=ok') != 8 or 'QUALITY_GATE: PASS=0' in text:
+              raise SystemExit('TFG default did not pass all eight underway gates')
+          limits = json.loads(Path('../../reports/results/filter_sim_gates/limits.json').read_text())['families']['tfg']['current_limits']
           failures = []
-          for key, limit in limits.items():
-              if not math.isfinite(worst[key]) or worst[key] > limit:
-                  failures.append(f'{key}={worst[key]:.6g} > {limit}')
-              print(f'TFG_PARITY_GATE {key} worst={worst[key]:.6g} limit={limit}')
+          for key, value in measured_worst(rows).items():
+              limit = limits[key]
+              print(f'TFG_PARITY_GATE {key} worst={value:.6g} limit={limit}')
+              if value > limit:
+                  failures.append(f'{key}={value:.6g} > {limit}')
           if failures:
               raise SystemExit('TFG SpectralMSE regression: ' + '; '.join(failures))
           PY
@@ -166,4 +126,3 @@ jobs:
           path: |
             tests/kalman_tfg/tfg-spectral-mse.log
             tests/kalman_tfg/tfg-legacy-cubic.log
-            tfg-main-baseline.log

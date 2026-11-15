@@ -448,6 +448,48 @@ void test_integral_keeps_the_S_cross_term() {
           "integral residual is not -Shat");
 }
 
+void test_wave_matched_integral() {
+    for (T beta : {T(0.01), T(0.3), T(1), T(15)}) {
+        Filter f = make_filter();
+        check(f.set_integral_velocity_weight(beta), "valid integral weight rejected");
+        Vector3 r; JacobianT H; Matrix3 Rw;
+        f.integral_residual(r, H, Rw);
+        const JacobianT numeric = numeric_jacobian(f, [](const Filter& g) {
+            Vector3 rr; JacobianT HH; Matrix3 RR;
+            g.integral_residual(rr, HH, RR);
+            return rr;
+        }, T(1e-6));
+        compare(H, numeric, T(2e-7), "wave-matched integral on manifold");
+
+        // At every phase of a harmonic wave, S=-v/omega^2. The new
+        // pseudo observation must not move that physical trajectory.
+        for (int phase = 0; phase < 12; ++phase) {
+            const T v = std::cos(T(phase) * T(M_PI)/T(6));
+            f.initialize_from_truth(Eigen::Quaternion<T>::Identity(),
+                Vector3(0,0,v), Vector3::Zero(), Vector3(0,0,-beta*v),
+                Vector3::Zero(), Vector3::Zero(), Vector3::Zero());
+            f.integral_residual(r, H, Rw);
+            check(r.norm() <= T(1e-14), "harmonic wave is not in integral nullspace");
+        }
+    }
+    Filter f = make_filter();
+    check(!f.set_integral_velocity_weight(T(-1)), "negative weight accepted");
+    check(!f.set_integral_velocity_weight(std::numeric_limits<T>::infinity()),
+          "nonfinite weight accepted");
+    check(f.integral_velocity_weight() == T(0), "invalid weight changed configuration");
+
+    // A pure vertical regularizer innovation cannot rotate the vessel or
+    // correct gyro bias. Those rows still respond to horizontal observations.
+    f.set_integral_velocity_weight(T(1));
+    f.initialize_from_truth(Eigen::Quaternion<T>::Identity(), Vector3::Zero(),
+        Vector3::Zero(), Vector3(0,0,1), Vector3::Zero(), Vector3::Zero(), Vector3::Zero());
+    const auto before = f.state();
+    check(f.applyIntegralZeroPseudoMeas(), "wave pseudo observation rejected");
+    check((f.state().R-before.R).norm() <= T(1e-14) &&
+          (f.state().B.col(0)-before.B.col(0)).norm() <= T(1e-14),
+          "vertical regularizer directly altered attitude or gyro bias");
+}
+
 // ---------------------------------------------------------------------------
 // Noise rotation
 // ---------------------------------------------------------------------------
@@ -541,8 +583,9 @@ void test_updates_reduce_error_and_covariance() {
 }
 
 // Covariance must stay symmetric and PSD through a long measurement sequence.
-void test_updates_keep_covariance_sane() {
+void test_updates_keep_covariance_sane(T integral_weight = T(0), bool protect_attitude = true) {
     Filter f = make_filter();
+    f.set_integral_velocity_weight(integral_weight, protect_attitude);
     f.set_initial_linear_uncertainty(T(0.3), T(1.0), T(3.0), T(0.6));
     std::normal_distribution<double> n(0.0, 0.2);
 
@@ -643,10 +686,13 @@ int main() {
 
     test_integral_jacobian();
     test_integral_keeps_the_S_cross_term();
+    test_wave_matched_integral();
 
     test_measurement_noise_is_rotated_into_the_world();
     test_updates_reduce_error_and_covariance();
     test_updates_keep_covariance_sane();
+    test_updates_keep_covariance_sane(T(2));
+    test_updates_keep_covariance_sane(T(2), false);
     test_rejected_updates_are_inert();
     test_non_finite_input_is_ignored();
     test_float_instantiation();

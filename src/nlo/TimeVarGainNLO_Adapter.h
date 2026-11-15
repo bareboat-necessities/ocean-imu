@@ -59,6 +59,8 @@
 #include "nlo/TimeVaryingGainNLO.h"
 #include "kalman_common/GyroInterval.h"
 #include "freq/FrequencyTrackerPolicy.h"
+#include "tuner/SeaStateAutoTuner.h"
+#include "tuner/AdaptiveWaveBandPass.h"
 
 template <bool WithGNSS = false,
           NloMagType Mag = NloMagType::None,
@@ -420,6 +422,15 @@ public:
             if constexpr (requires { c.coarse_smooth_tau_s; }) c.coarse_smooth_tau_s = R(120.0);
             return c;
         }();
+
+        // Weak acceleration needs more drift rejection than frequency-only
+        // similarity supplies: the physical sensor drift does not slow down
+        // with the encounter waves. Smoothly blend the configured capture
+        // bandwidth into the wave schedule using measured wave-band acceleration
+        // variance. This is an empirical scale, not a stillness declaration
+        // or an estimate of sensor noise. Zero disables the adjustment.
+        // Appended to preserve existing aggregate member order.
+        R theta_accel_scale_mps2 = R(0.12);
     };
 
     explicit TimeVarGainNloAdapter(const Config& cfg = makeDefaultConfig())
@@ -543,6 +554,8 @@ public:
         report_hp_primed_ = false;
         ref_heave_v_ = R(0);
         ref_heave_z_ = R(0);
+        theta_energy_.reset();
+        theta_band_.reset();
         last_wave_freq_hz_ = R(0);
         last_wave_freq_conf_ = R(0);
         last_wave_freq_locked_ = false;
@@ -745,7 +758,7 @@ public:
             filter_.setGyroBiasBody(current);
         }
 
-        updateThetaSchedule_(dt);
+        updateThetaSchedule_(dt, specific_force_b_mps2);
 
         filter_.update(dt, interval_gyro_, specific_force_b_mps2, aux);
 
@@ -854,6 +867,8 @@ private:
     bool report_hp_primed_ = false;
     R ref_heave_v_ = R(0);
     R ref_heave_z_ = R(0);
+    SeaStateAutoTuner theta_energy_{};
+    AdaptiveWaveBandPass theta_band_{};
     R last_wave_freq_hz_ = R(0);
     R last_wave_freq_conf_ = R(0);
     bool last_wave_freq_locked_ = false;
@@ -921,9 +936,25 @@ private:
       Hold the aiding loop a fixed factor below the dominant wave frequency by
       scheduling theta. See Config::auto_theta_from_wave_freq.
     */
-    void updateThetaSchedule_(R dt) {
+    void updateThetaSchedule_(R dt, const Vec3& specific_force_b_mps2) {
         if (!cfg_.auto_theta_from_wave_freq || !initialized_) {
             return;
+        }
+
+        // Use the measured force projected by the current attitude, excluding
+        // xi (the translational observer correction). Otherwise changing theta
+        // would directly change the energy used to select theta. Reuse the
+        // period-scaled band to reject drift and machinery vibration before
+        // the shared tuner averages four periods. Attitude remains coupled.
+        if (cfg_.theta_accel_scale_mps2 > R(0) &&
+            isFinite_(cfg_.theta_accel_scale_mps2)) {
+            const R acceleration =
+                (filter_.quaternionBodyToNED() * specific_force_b_mps2).z()
+                + cfg_.gravity_mps2;
+            const R frequency = last_wave_freq_hz_ > R(0) ? last_wave_freq_hz_ : R(0.12);
+            const float band = theta_band_.step(static_cast<float>(acceleration),
+                                                static_cast<float>(dt), static_cast<float>(frequency));
+            theta_energy_.update(static_cast<float>(dt), band, static_cast<float>(frequency));
         }
 
         /*
@@ -1007,11 +1038,22 @@ private:
 
         constexpr R kTwoPi = R(6.283185307179586);
 
-        const R target = clamp_(
+        R target = clamp_(
             cfg_.theta_from_omega_gain * kTwoPi * last_wave_freq_hz_,
             cfg_.theta_min,
             cfg_.theta_max
         );
+
+        if (cfg_.theta_accel_scale_mps2 > R(0) &&
+            isFinite_(cfg_.theta_accel_scale_mps2) && theta_energy_.isVarReady()) {
+            const R scale = cfg_.theta_accel_scale_mps2;
+            const R ratio = R(theta_energy_.getAccelVariance()) /
+                std::max(scale * scale, std::numeric_limits<R>::min());
+            const R weight = R(1) / (R(1) + ratio * ratio);
+            target = clamp_(std::sqrt(target * target +
+                                     cfg_.filter.theta * cfg_.filter.theta * weight),
+                            cfg_.theta_min, cfg_.theta_max);
+        }
 
         /*
           Snap on first acquisition, lag afterwards.

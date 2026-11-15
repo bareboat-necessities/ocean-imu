@@ -11,6 +11,18 @@ import ou_validation as validation
 
 
 class MissingDirectionTests(unittest.TestCase):
+    def test_unresolved_sea_does_not_erase_other_direction_measurements(self):
+        scenarios = ['stationary_jonswap_H0_270_case', 'stationary_jonswap_H1_500_case']
+        summary = {
+            (scenario, 'OU_III', 'Adaptive', 'dir_axis_abs_error_deg'): {'mean': value}
+            for scenario, value in zip(scenarios, [math.nan, 12.0])
+        }
+        output = '\n'.join(validation._direction_table(scenarios, summary, lambda *a: '--'))
+        self.assertIn(r'\OUValidationDirectionAbsError}{12.00}', output)
+        self.assertIn(r'\OUValidationDirectionWorstAbsError}{12.00}', output)
+        self.assertIn(r'\OUValidationTravelAbsError}{--}', output)
+        self.assertNotIn('{nan}', output)
+
     def test_json_null_matches_csv_nan_but_never_a_measurement(self):
         self.assertTrue(provenance._scalar_matches_csv(None, 'nan'))
         self.assertTrue(provenance._scalar_matches_csv(None, ''))

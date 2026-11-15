@@ -26,7 +26,11 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
             "reports/results/ou_validation",
             "reports/results/ou_robustness",
         ):
-            shutil.copytree(REPO_ROOT / relative, destination / relative)
+            # A source archive contains neither compiled objects nor the
+            # externally downloaded replay inputs/dense drawing outputs.
+            ignore = (shutil.ignore_patterns("*.o", "*.d", "*.log", "wave_data_*.csv", "w3d_*.csv")
+                      if relative.startswith("tests/") else None)
+            shutil.copytree(REPO_ROOT / relative, destination / relative, ignore=ignore)
         # Study entry points import these plotting helpers even in restat mode.
         (destination / "plots").mkdir(parents=True)
         for name in ("vector_export.py", "figure_decimation.py"):
@@ -37,6 +41,9 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
             "ou_evidence_provenance.py",
             "ou_validation.py",
             "ou_robustness.py",
+            "ou_robustness_core.py",
+            "underway_reference.py",
+            "sim_dataset.py",
         ):
             shutil.copy2(REPO_ROOT / "tools" / name, destination / "tools" / name)
 

@@ -73,11 +73,35 @@ void test_x_y_factors_are_independent() {
     check(near(f.getRSYFactor(), 0.80f), "invalid Y factor was accepted");
 }
 
+void test_integral_uses_staged_period_and_tau_coefficient() {
+    Fusion f;
+    f.begin(Fusion::Config{});
+    check(f.waveMatchedVerticalIntegral(), "wave-matched integral not enabled by default");
+    check(f.setFixedTuning(2.0f, 0.5f, 3.0f), "fixed tuning rejected");
+    const float beta = 4.0f / 9.8696044010893586188f;
+    check(near(f.mekf().integral_velocity_weight(), beta), "wrong fixed-period weight");
+    f.setTauCoeff(2.0f);
+    check(near(f.mekf().integral_velocity_weight(), beta/4.0f),
+          "OU scaling coefficient leaked into inferred wave period");
+    check(f.mekf().integral_attitude_protected(), "spectral law lost its constrained gain");
+    f.setEmbeddedFriendlyLegacyRSLaw(true);
+    check(!f.mekf().integral_attitude_protected(), "legacy law did not retain its coupled gain");
+    check(near(f.mekf().integral_velocity_weight(), beta/4.0f),
+          "law change altered the wave period");
+    f.setRSLaw(Fusion::RSLaw::SpectralMSE);
+    check(f.mekf().integral_attitude_protected(), "law switch left a stale gain policy");
+    const Matrix3f noise = integral_R(f);
+    f.setWaveMatchedVerticalIntegral(false);
+    check(f.mekf().integral_velocity_weight() == 0.0f, "ablation did not restore S=0");
+    check((noise-integral_R(f)).norm() == 0.0f, "ablation also changed pseudo noise");
+}
+
 }  // namespace
 
 int main() {
     test_default_horizontal_factors_without_changing_rs_law();
     test_x_y_factors_are_independent();
+    test_integral_uses_staged_period_and_tau_coefficient();
     if (failures != 0) {
         std::cerr << failures << " TFG R_S axis-factor test(s) failed\n";
         return 1;

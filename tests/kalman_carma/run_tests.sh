@@ -9,6 +9,7 @@
 # tools/carma_lever_arm_study.py; the wave-excitation study is
 # tools/carma_excitation_study.py.
 set -e
+./carma_band_normalization-test
 ./carma_model-test
 mkdir -p process
 ./carma_process-sim process
