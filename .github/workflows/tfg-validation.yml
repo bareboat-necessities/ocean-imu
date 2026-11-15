@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - 'src/kalman_tfg/**'
       - 'src/kalman_common/**'
       - 'src/lie/**'
@@ -15,6 +16,7 @@ on:
   pull_request:
     paths:
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - 'src/kalman_tfg/**'
       - 'src/kalman_common/**'
       - 'src/lie/**'
@@ -58,6 +60,12 @@ jobs:
   wave-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - name: Checkout PR
         uses: actions/checkout@v6
@@ -69,8 +77,7 @@ jobs:
 
       - name: Download paired wave records
         run: |
-          python3 tools/sim_dataset.py
-          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d tests/kalman_tfg >/dev/null
+          python3 tools/sim_dataset.py --dest tests/kalman_tfg
 
       - name: Build PR comparison simulators
         run: make -C tests/kalman_tfg kalman_tfg-sim kalman_tfg-legacy-sim
@@ -124,7 +131,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: tfg-rs-law-comparison
+          name: tfg-rs-law-comparison-${{ matrix.case }}
           path: |
             tests/kalman_tfg/tfg-spectral-mse.log
             tests/kalman_tfg/tfg-legacy-cubic.log

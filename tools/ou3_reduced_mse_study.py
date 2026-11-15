@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Evaluate the retained reduced MSE objective on pinned vessel CG spectra."""
 from pathlib import Path
+import argparse
 import csv
 import hashlib
 import json
@@ -18,8 +19,15 @@ QEFF=2 * 0.0148**2 / 200  # deployed OU-III strong-observation reduction
 
 
 def main():
-    out=ROOT/'reports/results/ou3_reduced_mse';out.mkdir(exist_ok=True,parents=True)
-    data=ROOT/'plots/kalman_ou_ii';points=ROOT/'reports/results/startup_ablation/startup_runs.csv'
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--data-dir', type=Path, default=ROOT/'plots/kalman_ou_ii')
+    parser.add_argument('--operating-points', type=Path, default=ROOT/'reports/results/startup_ablation/startup_runs.csv')
+    parser.add_argument('--output-dir', type=Path, default=ROOT/'reports/results/ou3_reduced_mse')
+    parser.add_argument('--doc-dir', type=Path, default=ROOT/'doc/kalman_ou_iii')
+    args = parser.parse_args()
+    out=args.output_dir;out.mkdir(exist_ok=True,parents=True)
+    args.doc_dir.mkdir(parents=True, exist_ok=True)
+    data=args.data_dir;points=args.operating_points
     provenance=input_provenance(data/r.filename for r in RECORDS)
     verify_operating_points(points, provenance)
     with points.open() as f: raw=list(csv.DictReader(f))
@@ -73,7 +81,7 @@ is not a period-scaled family; these local fixed-shape exponents cannot
 be interpreted as the derivative across the actual RAO sea-state family.
 '''
     (out/'reduced_mse.tex').write_text(text)
-    (ROOT/'doc/kalman_ou_iii/w3d-reduced-mse-results-generated.tex-part').write_text(text)
+    (args.doc_dir/'w3d-reduced-mse-results-generated.tex-part').write_text(text)
     (out/'manifest.json').write_text(json.dumps(dict(simulation_provenance=provenance,
         q_eff_m2ps3=QEFF,operating_points_sha256=hashlib.sha256(points.read_bytes()).hexdigest(),
         producer_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

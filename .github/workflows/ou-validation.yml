@@ -15,6 +15,7 @@ on:
       - "src/util/WaveFilesSupport.h"
       - "src/util/UnderwayReference.h"
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "tools/underway_reference.py"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"

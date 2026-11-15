@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - 'src/lie/**'
       - 'src/kalman_carma/**'
       - 'src/kalman_carma_shared_modes/**'
@@ -18,6 +19,7 @@ on:
     branches: [main, 'research/tangent-carma-observability']
     paths:
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - 'src/lie/**'
       - 'src/kalman_carma/**'
       - 'src/kalman_carma_shared_modes/**'
@@ -34,6 +36,12 @@ jobs:
   native-and-article:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - uses: actions/checkout@v6
       - name: Install native dependencies
@@ -62,7 +70,7 @@ jobs:
           latexmk_use_lualatex: true
       - uses: actions/upload-artifact@v6
         with:
-          name: tangent-shared-modes-research
+          name: tangent-shared-modes-research-${{ matrix.case }}
           path: |
             doc/kalman_tangent_shared_modes/kalman_tangent_shared_modes.pdf
             reports/results/tangent_shared_modes/*.json

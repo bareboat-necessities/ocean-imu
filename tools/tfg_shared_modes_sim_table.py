@@ -21,11 +21,11 @@ def write_gate_table() -> None:
         "gyro_bias_3d_percent": "Gyroscope 3-D bias [\\%]"}
     rows = [r"% Generated from the locked deterministic regression baseline.",
             r"\begin{table}[!t]\centering\footnotesize",
-            r"\caption{TFG shared-mode production gates on the 5 kn underway records. Bias and 3-D position percentages use the reference maxima defined in the text.}",
+            r"\caption{TFG shared-mode production gates across both v1.4.0 directions at 5 kn. Each replay additionally enforces its own per-record cap. Bias and 3-D position percentages use the reference maxima defined in the text.}",
             r"\label{tab:tfg_shared_gates}",
             r"\begin{tabular}{lrr}\toprule Quantity&Measured worst&Limit\\\midrule"]
     for key, name in names.items():
-        rows.append(f"{name}&{baseline['measured_worst'][key]:.5f}&{baseline['current_limits'][key]:.5f}" + r"\\")
+        rows.append(f"{name}&{baseline['current_measured_worst'][key]:.5f}&{baseline['current_limits'][key]:.5f}" + r"\\")
     rows.extend([r"\bottomrule\end{tabular}\end{table}", ""])
     (root / "doc/kalman_tfg_shared_modes/tfg-shared-gates-generated.tex-part").write_text("\n".join(rows))
 

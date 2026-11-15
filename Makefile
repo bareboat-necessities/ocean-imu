@@ -26,13 +26,16 @@ TEST_DIRS := \
 	$(REPO_ROOT)/tests/wave_dir \
 	$(REPO_ROOT)/tests/wave_sim
 
-SIM_DATA_VERSION ?= v1.3.1
-SIM_DATA_REPO ?= bareboat-necessities/oceanography-waves-lib
-SIM_DATA_ZIP_NAME ?= sim-data-files-vessel-rao-28ft-5kn.zip
-SIM_DATA_ZIP ?= $(REPO_ROOT)/$(SIM_DATA_ZIP_NAME)
-SIM_DATA_URL ?= https://github.com/$(SIM_DATA_REPO)/releases/download/$(SIM_DATA_VERSION)/$(SIM_DATA_ZIP_NAME)
+# One active direction for ordinary unit/study runs. The full default target
+# additionally runs the complete, isolated two-direction regression matrix.
+export OCEAN_IMU_SIM_CASE ?= following
+SIM_JOBS ?= 3
 
-all: build test
+all: build
+	@status=0; \
+	$(MAKE) -C "$(REPO_ROOT)" test || status=$$?; \
+	$(MAKE) -C "$(REPO_ROOT)" sim-regression || status=$$?; \
+	exit $$status
 
 build:
 	@set -e; \
@@ -40,7 +43,7 @@ build:
 		$(MAKE) -C $$d build; \
 	done
 
-test: ensure-sim-data
+test: build ensure-sim-data
 	@$(MAKE) -C "$(REPO_ROOT)" run-tests
 
 # Sanitizer, static-analysis and coverage layer. Run one gate with
@@ -57,7 +60,7 @@ clean:
 # Both targets verify archive bytes and refresh every stale input directory.
 # The shared immutable cache avoids duplicating the unpacked input payload.
 fetch-sim-data ensure-sim-data:
-	python3 "$(REPO_ROOT)/tools/sim_dataset.py" --archive "$(SIM_DATA_ZIP)" \
+	python3 "$(REPO_ROOT)/tools/sim_dataset.py" \
 		--dest $(TEST_DIRS) $(patsubst $(REPO_ROOT)/tests/%,$(REPO_ROOT)/plots/%,$(TEST_DIRS))
 
 run-tests:
@@ -68,3 +71,7 @@ run-tests:
 			( cd "$$d" && bash -e ./run_tests.sh ); \
 		fi; \
 	done
+
+.PHONY: sim-regression
+sim-regression: build
+	python3 "$(REPO_ROOT)/tools/sim_matrix.py" --jobs $(SIM_JOBS)

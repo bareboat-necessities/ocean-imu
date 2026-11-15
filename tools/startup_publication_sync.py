@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Publish the current paired startup study without fixed numerical claims."""
 from pathlib import Path
+import argparse
 import csv
 import statistics as st
 
@@ -82,12 +83,17 @@ magnetic offset and distortion while holding the paired realization fixed.
 
 
 def main():
-    with (RESULTS/'startup_runs.csv').open() as stream: rows=list(csv.DictReader(stream))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--results', type=Path, default=RESULTS)
+    parser.add_argument('--doc-dir', type=Path, default=DOC)
+    args = parser.parse_args()
+    args.doc_dir.mkdir(parents=True, exist_ok=True)
+    with (args.results/'startup_runs.csv').open() as stream: rows=list(csv.DictReader(stream))
     assert len(rows)==192, 'full startup matrix required'
     hard,study=generate(rows)
     for name,text in [('w3d-hard-iron-results-generated.tex-part',hard),('w3d-startup-results-generated.tex-part',study)]:
-        (DOC/name).write_text(text)
-        (RESULTS/name.replace('.tex-part','.tex')).write_text(text)
+        (args.doc_dir/name).write_text(text)
+        (args.results/name.replace('.tex-part','.tex')).write_text(text)
 
 
 if __name__=='__main__':main()

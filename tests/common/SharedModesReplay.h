@@ -102,8 +102,9 @@ bool run_file(const std::string& filename, float dt, bool with_mag, const W3dRan
     if (window > 0.0f) print_validation_metrics(*result, dt, window, family.c_str());
     const char* gate_family = nullptr;
     if (family == "CARMA_SHARED_MODES_CSM") gate_family = "csm";
-    else if (family == "TFG_CARMA_SHARED_MODES_CSM" || family == "TANGENT_CARMA_SHARED_MODES_CSM")
+    else if (family == "TFG_CARMA_SHARED_MODES_CSM")
         gate_family = "tcsm";
+    else if (family == "TANGENT_CARMA_SHARED_MODES_CSM") gate_family = "tangent";
     else if (gated) throw std::invalid_argument("unknown gated shared-mode family: " + family);
     const auto record_bars = gated ? record_limits::w3d(gate_family,
         legacy_sampling_protocol ? "legacy" : "default", filename, bars) : bars;

@@ -14,7 +14,7 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from sim_dataset import REFERENCE_CSV_SHA256, input_provenance
+from sim_dataset import REFERENCE_CSV_SHA256, input_provenance, CASE
 
 
 def main() -> None:
@@ -28,11 +28,12 @@ def main() -> None:
     records = [data_dir / name for name in REFERENCE_CSV_SHA256]
     inputs = input_provenance(records)
     baseline = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
-    assert baseline['inputs'] == inputs, 'locked limits use another input dataset'
+    assert baseline['inputs'][CASE] == inputs, 'locked limits use another input dataset'
+    family = 'tangent' if binary.name == 'tangent-replay' else 'tcsm'
     source = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text().split('namespace interval {', 1)[1]
-    source = re.search(r'W3dFailureLimits tcsm\{(.*?)\};', source, re.S)[1]
+    source = re.search(r'W3dFailureLimits ' + family + r'\{(.*?)\};', source, re.S)[1]
     compiled_limits = {k: float(v) for k, v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', source)}
-    assert compiled_limits == baseline['families']['tcsm']['interval_limits'], 'C++ gates differ from the locked baseline'
+    assert compiled_limits == baseline['families'][family]['interval_limits'], 'C++ gates differ from the locked baseline'
     env = {k: v for k, v in os.environ.items() if not k.startswith('W3D_')}
     env['W3D_COLLECT_ALL_GATES'] = '1'
     env['W3D_WRITE_TIMESERIES'] = os.environ.get('W3D_WRITE_TIMESERIES', '1')

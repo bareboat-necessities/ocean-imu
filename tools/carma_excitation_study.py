@@ -33,7 +33,8 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCH = ROOT / "tests" / "kalman_carma" / "carma3_bench"
-OUT = ROOT / "reports" / "results" / "carma_excitation"
+from sim_dataset import study_output, require_complete_metrics
+OUT = study_output("carma_excitation")
 RAW = OUT / "raw_runs.csv"
 TUNE_RAW = OUT / "tuning_runs.csv"
 TRANS = OUT / "transitions.csv"
@@ -419,9 +420,7 @@ def cmd_dataset(a):
             for fut in as_completed(futs):
                 v, m, s = futs[fut]
                 p, rows = fut.result()
-                if p.returncode not in (0, 1) or not rows:
-                    print(f"ERROR {v}@{m} seed {s}: rc={p.returncode} {p.stderr[-300:]}", flush=True)
-                    continue
+                require_complete_metrics(rows, p.returncode)
                 for r in rows:
                     r["family"] = f"{v}@{m}"
                     r["seed"] = str(s)

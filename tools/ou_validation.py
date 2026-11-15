@@ -60,7 +60,7 @@ SURROGATE_MAX_FREQ_HZ = 1.60
 SIMULATOR_GATE_WINDOW_SEC = 900.0
 WAVE_PHASE_METHOD = (
     "common random phase on the 0.02-1.60 Hz world-velocity and Euler "
-    "spectra about the retained 5 kn/120 s cruise track; displacement and acceleration analytically derived from "
+    "spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from "
     "velocity; body IMU and quaternion reconstructed"
 )
 TRANSITION_METHOD = (

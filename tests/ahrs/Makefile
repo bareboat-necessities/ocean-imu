@@ -43,7 +43,9 @@ ahrs-qmekf-sim: ahrs-qmekf-sim.o W3dSimCommon.o
 ahrs-qmekf-sim.o: ../../src/ahrs/KalmanQMEKF.h
 
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 clean:
 	rm -f *.o $(TARGETS) *.exe *.csv
+
+-include $(wildcard *.d)

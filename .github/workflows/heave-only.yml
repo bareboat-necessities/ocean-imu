@@ -9,6 +9,7 @@ on:
       - "src/util/W3dSimCommon.*"
       - "tests/heave_only/**"
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "Makefile"
       - ".github/workflows/heave-only.yml"
   pull_request:
@@ -18,6 +19,7 @@ on:
       - "src/util/W3dSimCommon.*"
       - "tests/heave_only/**"
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "Makefile"
       - ".github/workflows/heave-only.yml"
   workflow_dispatch:
@@ -33,6 +35,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6

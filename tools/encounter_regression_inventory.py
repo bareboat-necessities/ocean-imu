@@ -7,8 +7,12 @@ import json
 import math
 from pathlib import Path
 
-from sim_dataset import ROOT, REFERENCE_CSV_SHA256, SHA256, digest
+from sim_dataset import ROOT, digest
 from stationary_vessel_control import ARCHIVE_SHA256
+
+_HISTORICAL_INPUTS = json.loads((ROOT / 'reports/results/filter_sim_gates/stationary_comparison_inputs.json').read_text())
+REFERENCE_CSV_SHA256 = _HISTORICAL_INPUTS['input_sha256']
+SHA256 = _HISTORICAL_INPUTS['archive_sha256']
 
 FAMILIES = ('ou2', 'ou3', 'tfg', 'tfg_legacy', 'carma', 'csm', 'tcarma', 'tcsm')
 METRICS = ('disp_z_pct_hs', 'disp_z_rms_m', 'disp_3d_rms_m', 'roll_rms_deg',

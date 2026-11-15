@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "src/kalman_carma/**"
       - "src/kalman_common/ImuLeverArm.h"
       - "src/util/W3dSimCommon.*"
@@ -36,6 +37,12 @@ jobs:
   study:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -50,9 +57,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
+          python3 tools/sim_dataset.py --archive simulation-case.zip
           mkdir -p /tmp/carma-lever-data
-          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d /tmp/carma-lever-data >/dev/null
+          unzip -o simulation-case.zip -d /tmp/carma-lever-data >/dev/null
 
       - name: Build the lever-arm simulator and checks
         run: make -C tests/kalman_carma carma_lever_arm-sim carma_lever_arm-test
@@ -98,6 +105,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: carma-lever-arm-study
+          name: carma-lever-arm-study-${{ matrix.case }}
           path: reports/results/carma_lever_arm_study/**
           if-no-files-found: warn

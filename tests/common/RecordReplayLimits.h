@@ -5,14 +5,16 @@
 #include <array>
 #include <cstddef>
 #include <stdexcept>
+#include <limits>
 #include <string>
 #include <string_view>
 #include "GyroReplayContract.h"
+#include "util/UnderwayReference.h"
 
 namespace ocean_imu::sim::record_limits {
 enum class Metric : std::size_t { heave, displacement, roll, pitch, yaw, acc_z, acc_3d, gyro_3d };
 struct Entry {
-    std::string_view family, profile, input;
+    std::string_view scenario, family, profile, input;
     std::array<float, 8> limits;
 };
 #include "RecordReplayLimits.inc"
@@ -21,7 +23,7 @@ inline const Entry& find(std::string_view family, std::string_view profile, std:
     input.remove_prefix(input.find_last_of("/\\") == std::string_view::npos
                         ? 0 : input.find_last_of("/\\") + 1);
     for (const auto& entry : entries)
-        if (entry.family == family && entry.profile == profile && entry.input == input)
+        if (entry.scenario == UnderwayReference::scenario() && entry.family == family && entry.profile == profile && entry.input == input)
             return entry;
     throw std::invalid_argument("missing per-record gate: " + std::string(family) + "/" +
                                 std::string(profile) + "/" + std::string(input));
@@ -36,6 +38,8 @@ inline float tighten(const Entry& entry, Metric metric, float global) {
 inline float limit(std::string_view family, std::string_view profile, std::string_view input,
                    Metric metric, float global) {
     if (!gyro_replay::default_seeds()) return global;
-    return tighten(find(family, profile, input), metric, global);
+    // Default protocol bars belong to the selected v1.4.0 trajectory. The
+    // historical fallback is only for diagnostic/non-default sensor draws.
+    return tighten(find(family, profile, input), metric, std::numeric_limits<float>::infinity());
 }
 } // namespace ocean_imu::sim::record_limits

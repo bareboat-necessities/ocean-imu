@@ -1,0 +1,41 @@
+name: simulation-matrix
+on:
+  push:
+    paths: ['src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
+  pull_request:
+    paths: ['src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: simulation-matrix-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make libeigen3-dev python3-numpy python3-matplotlib python3-pandas python3-scipy
+      - name: Check dataset, gate and case isolation contracts
+        run: |
+          python3 tests/validation/test_sim_dataset.py
+          python3 tests/validation/test_bidirectional_sim.py
+          python3 tools/generate_record_replay_limits.py --check
+      - name: Run every filter and applicable replay profile
+        run: python3 -u tools/sim_matrix.py --cases "${{ matrix.case }}" --build --jobs 2
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: simulation-v1.4.0-${{ matrix.case }}
+          path: reports/results/sim_v1.4.0/${{ matrix.case }}/
+          if-no-files-found: error

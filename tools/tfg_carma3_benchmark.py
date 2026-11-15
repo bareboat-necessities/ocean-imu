@@ -39,7 +39,8 @@ TDIR = ROOT / "tests" / "kalman_carma"
 BENCH = TDIR / "carma3_bench"
 CARMA3_SIM = TDIR / "carma3-sim"
 OU3_SIM = ROOT / "tests" / "kalman_ou_iii" / "kalman_ou_iii-sim"
-OUT = ROOT / "reports" / "results" / "tfg_carma3"
+from sim_dataset import study_output, require_complete_metrics
+OUT = study_output("tfg_carma3")
 RAW = OUT / "raw_runs.csv"
 FOLLOWUP_RAW = OUT / "followup_runs.csv"
 MECHANISM_RAW = OUT / "mechanism_runs.csv"
@@ -217,9 +218,7 @@ def cmd_dataset(args):
             for fut in as_completed(futs):
                 fam, seed = futs[fut]
                 p, metrics = fut.result()
-                if p.returncode not in (0, 1) or not metrics:
-                    print(f"ERROR {fam} seed {seed}: rc={p.returncode} {p.stderr[-300:]}", flush=True)
-                    continue
+                require_complete_metrics(metrics, p.returncode)
                 for m in metrics:
                     m["family"] = fam
                     m["seed"] = str(seed)

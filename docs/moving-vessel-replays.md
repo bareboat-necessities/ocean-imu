@@ -1,65 +1,54 @@
-# Moving-vessel simulation inputs
+# Moving-vessel replays
 
-Every external oceanography-waves-lib replay uses `v1.3.1`, archive
-`sim-data-files-vessel-rao-28ft-5kn.zip`, SHA-256
-`c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402`.
-`tools/sim_dataset.py` owns the pin, validates each cached member, and records
-individual hashes for the eight scored JONSWAP/PM-Stokes inputs. Filenames,
-incident heights and spectra remain compatible with existing harnesses.
+All current external-record runs use oceanography-waves-lib **v1.4.0** at 5 kn,
+with the 28 ft vessel RAO at the centre of gravity. The two independently
+checksummed archives contain the same 30 CSV names but different trajectories:
 
-The 28 ft hull moves at 5 kn (2.572222 m/s). In north/west/up coordinates,
-heading is `psi(t) = 3 degrees * sin(2*pi*t/120 s)`, with velocity
-`U*(cos(psi), sin(psi), 0)`. Position is its analytic primitive from time zero;
-acceleration is its derivative. The upstream model samples the incident wave
-field along that path, applies estimated RAOs with signed encounter frequency
-and changing heading, and exports total CG travel, velocity and acceleration.
-It includes rotating response terms and full yaw/pitch/roll body rates. It
-uses quasi-steady estimated RAOs, without hull-specific forward-speed
-hydrodynamics or a propulsion/rudder model.
+| Case | Archive | Mean heading | Steering |
+| --- | --- | --- | --- |
+| `following` | `sim-data-files-vessel-rao-28ft-5kn.zip` | north, 0° | ±3°, 20 s sine |
+| `head` | `sim-data-files-vessel-rao-28ft-5kn-south.zip` | south, 180° | ±3°, 20 s sine |
 
-## Scoring convention
+Regular waves in the southbound case are head seas; directional spectra are
+centred on bow-quartering seas. The archive's incident height and period are
+not the vessel's encounter height and period.
 
-The estimators reconstruct bounded wave motion about a local equilibrium.
-They have no external velocity/position aid for absolute cruise navigation.
-`UnderwayReference.h` subtracts the declared track from **reference position
-and velocity only**, after running the filter. The 3D percentage denominator
-uses that residual displacement, not kilometres of forward travel. This is
-an analytic truth-side coordinate definition, never an output-dependent fit
-or a sensor correction. Horizontal travel is parsed in double precision
-before subtraction to retain small wave motion late in a record.
+`make all` builds and tests the project, then runs every central replay profile
+on **both cases**. `make sim-regression` runs only that matrix. It writes
+`reports/results/sim_v1.4.0/{following,head}/`: input and executable provenance,
+full-rate metrics in JSON/CSV, seven metric charts, and per-profile logs.
+Any missing record, nonfinite metric or failed numeric gate fails the command;
+complete failed measurements remain available. Normal CI never refits limits.
 
-Recorded specific force, angular rate, attitude, magnetic truth and total
-acceleration remain intact. Steering acceleration is therefore an actual
-low-frequency disturbance to the wave estimator. `acc_ref_*` continues to
-mean total acceleration; it includes the track acceleration in addition to
-the derivative of `vel_ref_*`. No known track state is supplied to a filter.
-Standalone synthetic diagnostics can set `W3D_REFERENCE_MOTION=stationary`;
-the low-level runner also defaults to total reference coordinates unless a
-replay entry point explicitly selects the underway convention.
+For one case, run:
 
-Phase surrogates remove the declared p/v/a/yaw track, randomize the residual
-wave chain, restore the same track, and rebuild body IMU fields. Wave-height
-scaling likewise scales only residual motion. Both sea-state crossfade
-endpoints retain the identical track, so the existing exact derivative cross
-terms preserve continuous total motion through a transition.
+```sh
+python3 tools/sim_matrix.py --cases head --build --jobs 2
+OCEAN_IMU_SIM_CASE=head python3 tools/simulation_studies.py carma_shared_modes_validation
+```
 
-## Evidence and regression limits
+`OCEAN_IMU_SIM_CASE` selects one process's input hashes, reference trajectory
+and per-record gates. Set it **before starting Python or a simulator**. The
+standalone default is `following`. `tools/sim_dataset.py --case all --dest DIR`
+creates `DIR/following` and `DIR/head`; it never extracts both into one folder.
+The study and build workflows use separate jobs and case-named artifacts.
+The existing following-sea PDF/SVG release filenames stay stable; head-sea
+products carry a `-head` suffix.
 
-The eight full records retain 200 Hz sampling, 1200 s duration, default noise
-and seeds, and trailing 900 s W3d scoring. AHRS uses its trailing 60 s window.
-Production and interval-rate profiles are measured separately. Limits are
-rebaselined from this changed physical experiment, with a 0.5% relative margin
-and upward rounding; a change of dataset is not an estimator improvement.
-Nonfinite, partial, missing or duplicate records remain failures.
+The scoring reference subtracts only the analytically declared cruise
+**displacement and velocity**. All total acceleration and recorded IMU samples
+remain available to the estimator. The Python surrogate generator and C++
+scoring reference share the 20 s period and the 180° rotation. Neither guesses
+the case from identically named CSV files.
 
-Older evidence naming v1.2.3 describes the stationary-vessel experiment. Its
-hashes and numerical conclusions must not be relabelled as underway evidence.
-The full OU evidence workflow regenerates source-bound statistical bundles
-on the branch, then synchronizes the articles; it rejects stale bundles.
+The study inventory is in `tools/simulation_studies.py`: paired OU validation
+and robustness, TFG comparison, model mismatch, engine noise, startup, wave
+direction, low–high–low transitions, lever arms, CARMA shape/excitation/coupling
+ablations, shared-mode degradation, and paired QMEKF/TFG dataset comparisons.
+Each is run against both cases by `simulation-studies.yml`. Synthetic-only
+prior-process, Lie-group, calibration and stability experiments retain their
+independently defined scenarios; they do not consume either ZIP.
 
-The input clock is checked before simulation: timestamps must round-trip to
-`sample_index / 200` exactly, including after 1000 s. Standard records contain
-240,000 samples; Fenton keeps its two-sample skip and inclusive endpoint
-(239,999 samples). The ancillary 30 s tracker contains 5,999 samples.
-Results from v1.3.0 are superseded and are replaced as the v1.3.1 studies run;
-their numerical values and receipts are never relabelled as v1.3.1 results.
+Earlier committed study bundles keep their recorded input hashes and remain
+historical evidence until replaced by a complete run. They must not be relabelled
+as v1.4.0 results. Current case-specific evidence lives under `sim_v1.4.0`.

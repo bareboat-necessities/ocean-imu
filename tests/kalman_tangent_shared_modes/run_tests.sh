@@ -40,4 +40,5 @@ if ! python3 ../kalman_tfg_shared_modes/regression_checks.py --binary ./tangent-
     cat tangent-replay-checks.log
     exit 1
 fi
+cat tangent-replay-checks.log
 echo 'Tangent replay: eight historical and current gates plus fail-closed protocol checks PASS (tangent-replay-checks.log).'

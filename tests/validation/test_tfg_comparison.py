@@ -86,8 +86,7 @@ class TFGComparisonTests(unittest.TestCase):
             self.assertIn(path, hashes)
 
     def test_track_helper_change_invalidates_retained_replay(self):
-        manifest = json.loads((study.OUT / "manifest.json").read_text())
-        manifest["source_hashes"] = study.source_hashes()
+        manifest = {"protocol": study.protocol("full"), "source_hashes": study.source_hashes()}
         original_hash = study.ov.sha256_file
 
         def changed_hash(path):

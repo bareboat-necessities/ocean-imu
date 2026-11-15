@@ -17,7 +17,7 @@ import re
 import subprocess
 import tempfile
 
-from sim_dataset import ROOT, REFERENCE_CSV_SHA256, input_provenance, digest
+from sim_dataset import ROOT, REFERENCE_CSV_SHA256, input_provenance, digest, CASE
 
 
 REPLAYS = {
@@ -27,6 +27,7 @@ REPLAYS = {
     'carma': ('kalman_carma', 'carma3-sim', True),
     'csm': ('kalman_carma_shared_modes', 'kalman_carma_shared_modes-sim', True),
     'tcarma': ('kalman_tfg_carma', 'tfg_carma3-sim', True),
+    'tangent': ('kalman_tangent_shared_modes', 'tangent-replay', True),
     'tcsm': ('kalman_tfg_shared_modes', 'kalman_tfg_shared_modes-sim', True),
     'tfg_legacy': ('kalman_tfg', 'kalman_tfg-legacy-sim', False),
     'ahrs': ('ahrs', 'ahrs-qmekf-sim', False),
@@ -139,7 +140,7 @@ def parse_w3d(text: str) -> list[dict]:
     return rows
 
 
-def collect(log_dir: Path, jobs: int, *, measure: bool = False) -> None:
+def collect(log_dir: Path, jobs: int, *, measure: bool = False, data_dir: Path | None = None) -> None:
     """Run already built binaries; numeric failures never become new limits."""
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(('W3D_', 'SF_', 'OU_', 'HO_', 'NLO_', 'TFG_'))}
@@ -157,7 +158,7 @@ def collect(log_dir: Path, jobs: int, *, measure: bool = False) -> None:
         with tempfile.TemporaryDirectory(prefix=f'filter-gates-{name}-') as tmp:
             work = Path(tmp)
             for record in REFERENCE_CSV_SHA256:
-                (work / record).symlink_to(here / record)
+                (work / record).symlink_to((data_dir or here).resolve() / record)
             for profile, args in profiles:
                 command = [str(here / binary), *args]
                 with (log_dir / f'{name}-{profile}.log').open('w') as stream:
@@ -166,14 +167,15 @@ def collect(log_dir: Path, jobs: int, *, measure: bool = False) -> None:
                 results.append({'profile': profile, 'exit_code': result.returncode,
                                 'log_sha256': digest(log_dir / f'{name}-{profile}.log')})
                 print(f'{name}/{profile}: exit {result.returncode}', flush=True)
+        if digest(here / binary) != binary_sha:
+            raise ValueError(f'{name}: executable changed during replay')
         return {'name': name, 'binary_sha256': binary_sha, 'profiles': results}
 
     log_dir.mkdir(parents=True, exist_ok=True)
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         runs = list(pool.map(run, REPLAYS.items()))
     (log_dir / 'runs.json').write_text(json.dumps(runs, indent=2) + '\n')
-    if not measure and any(p['exit_code'] for r in runs for p in r['profiles']):
-        raise ValueError('a replay failed; inspect logs, do not refit failing gates')
+    # Summarize even failed gates so CI always retains their numeric evidence.
 
 
 def split_make_log(text: str) -> dict[tuple[str, str], str]:
@@ -184,8 +186,8 @@ def split_make_log(text: str) -> dict[tuple[str, str], str]:
         raise ValueError('make log contains a failed numeric replay')
     families = dict(zip(('OU_II', 'OU_III', 'TFG', 'CARMA3_A41',
                          'CARMA_SHARED_MODES_CSM', 'TFG_CARMA3_T41',
-                         'TFG_CARMA_SHARED_MODES_CSM', 'TFG_LEGACY'),
-                        ('ou2', 'ou3', 'tfg', 'carma', 'csm', 'tcarma', 'tcsm', 'tfg_legacy')))
+                         'TFG_CARMA_SHARED_MODES_CSM', 'TFG_LEGACY', 'TANGENT_CARMA_SHARED_MODES_CSM'),
+                        ('ou2', 'ou3', 'tfg', 'carma', 'csm', 'tcarma', 'tcsm', 'tfg_legacy', 'tangent')))
     parts = {}
     block = []
     profile = 'default'
@@ -262,13 +264,17 @@ def import_make_log(source: Path, log_dir: Path) -> None:
     (log_dir / 'runs.json').write_text(json.dumps(runs, indent=2) + '\n')
 
 
-def summarize(log_dir: Path, *, measure: bool = False) -> dict:
+def summarize(log_dir: Path, *, measure: bool = False, data_dir: Path | None = None) -> dict:
     runs = json.loads((log_dir / 'runs.json').read_text())
     if {r['name'] for r in runs} != set(REPLAYS):
         raise ValueError('incomplete filter inventory')
     records = {}
     for run in runs:
         name = run['name']
+        for profile in run['profiles']:
+            log = log_dir / f"{name}-{profile['profile']}.log"
+            if digest(log) != profile['log_sha256']:
+                raise ValueError(f'changed replay log: {log}')
         if 'profiles' not in run or any(p['exit_code'] not in ((0, 1) if measure else (0,)) for p in run['profiles']):
             raise ValueError(f'{name}: unsuccessful replay')
         if [p['profile'] for p in run['profiles']] != [p for p, _ in profiles_for(name)]:
@@ -304,9 +310,18 @@ def summarize(log_dir: Path, *, measure: bool = False) -> dict:
     other['nlo_z_percent_hs'] = [float(v) for v in re.findall(r'Z RMS raw \(%Hs\): (\S+)%', nlo)]
     if len(other['nlo_z_percent_hs']) != 8 or not all(math.isfinite(v) for v in other['nlo_z_percent_hs']):
         raise ValueError('NLO did not score all eight records')
-    here = ROOT / 'tests/kalman_ou_iii'
+    here = data_dir or ROOT / 'tests/kalman_ou_iii'
+    sources = {p for base in ('src', 'tests/common')
+               for p in (ROOT/base).rglob('*') if p.suffix in ('.h', '.cpp', '.inc', '.mk')}
+    sources.update(ROOT/'tests'/folder/(binary+'.cpp') for folder,binary,_ in REPLAYS.values())
+    sources.update(ROOT/'tests'/folder/'Makefile' for folder,_,_ in REPLAYS.values())
+    sources.update(ROOT/'tools'/name for name in ('filter_sim_gates.py', 'sim_dataset.py', 'sim_dataset_manifest.json'))
     return {
+        'case': CASE,
+        'log_sha256': {p.name: digest(p) for p in sorted(log_dir.glob('*.log'))},
         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+        'source_dirty': bool(subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, text=True)),
+        'source_sha256': {str(p.relative_to(ROOT)): digest(p) for p in sorted(sources)},
         'compiler': subprocess.check_output(['g++', '--version'], text=True).splitlines()[0],
         'acceptance': 'measurement only; gate failures retained' if measure else 'all replay gates passed',
         'replay_exit_codes': {r['name']: {p['profile']: p['exit_code'] for p in r['profiles']} for r in runs},
@@ -325,6 +340,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--log-dir', type=Path, required=True)
     parser.add_argument('--run', action='store_true')
+    parser.add_argument('--data-dir', type=Path, help='isolated case input directory (otherwise per-test directories)')
     parser.add_argument('--measure', action='store_true',
                         help='report a changed dataset without promoting failed gates; complete finite records still required')
     parser.add_argument('--make-log', type=Path,
@@ -335,15 +351,20 @@ def main() -> None:
     if args.run and args.make_log:
         parser.error('--run and --make-log are mutually exclusive')
     for folder, _, _ in REPLAYS.values():
-        input_provenance([ROOT / 'tests' / folder / name for name in REFERENCE_CSV_SHA256])
+        input_provenance([(args.data_dir or ROOT / 'tests' / folder) / name for name in REFERENCE_CSV_SHA256])
     if args.run:
-        collect(args.log_dir, args.jobs, measure=args.measure)
+        collect(args.log_dir, args.jobs, measure=args.measure, data_dir=args.data_dir)
     if args.make_log:
         import_make_log(args.make_log, args.log_dir)
-    report = summarize(args.log_dir, measure=args.measure)
+    report = summarize(args.log_dir, measure=True, data_dir=args.data_dir)
+    failed = any(code for profiles in report['replay_exit_codes'].values() for code in profiles.values())
+    if not failed:
+        report['acceptance'] = 'all replay gates passed'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
     print(f'Wrote {args.output}')
+    if failed and not args.measure:
+        raise SystemExit('replay gates failed; metrics retained; limits were not changed')
 
 
 if __name__ == '__main__':
