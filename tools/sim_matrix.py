@@ -49,7 +49,7 @@ def publish(report, destination):
     rows = metric_rows(report)
     fields = list(dict.fromkeys(key for row in rows for key in row))
     with (destination/'metrics.csv').open('w') as stream:
-        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer = csv.DictWriter(stream, fieldnames=fields, lineterminator='\n')
         writer.writeheader()
         writer.writerows(rows)
     records = sorted(report['inputs']['input_sha256'])
@@ -75,7 +75,9 @@ def publish(report, destination):
                         color='white' if values[i,j] > values.max()*.65 else '#202020')
         fig.colorbar(im, ax=ax, label=unit)
         fig.tight_layout()
-        fig.savefig(destination/(metric+'.svg'), metadata={'Date': None})
+        figure_path = destination/(metric+'.svg')
+        fig.savefig(figure_path, metadata={'Date': None})
+        figure_path.write_text('\n'.join(line.rstrip() for line in figure_path.read_text().splitlines())+'\n')
         plt.close(fig)
     (destination/'README.md').write_text(
         f"# {RELEASE}: {CASES[report['case']]['description']}\n\n"

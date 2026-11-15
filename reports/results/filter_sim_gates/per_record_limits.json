@@ -10485,7 +10485,7 @@
   ],
   "note": "New dataset baseline: both v1.4.0 directions and 20 s steering. Old v1.3.1 numeric caps are not comparable controls. CI never refits these limits.",
   "measurement_sha256": {
-    "following": "c8816940f856d8a91c533968c481a3863c9cf12df426cf5bb34cbd68aba5878e",
-    "head": "433146edf37370215bb9fe3947c84d2374488bedca19fef3b74b6db6bb15d9f7"
+    "following": "bcc154768d139cb0c821c95bd0f0e36acc11c2514aa92b53469b10a18443dd12",
+    "head": "2d6d6bf389efc8e7f49f91c474cb470ccadccb08f8cb88dc3a2d9670dcd22e27"
   }
 }

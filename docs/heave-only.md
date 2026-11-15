@@ -4,7 +4,7 @@ External-data runs now use the checksum-pinned v1.4.0 28 ft / 5 kn moving boat i
 following and head seas, with ±3° heading over 20 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). Earlier study figures below retain their stationary-vessel scope. Current
 underway regression limits are recorded in
-`reports/results/filter_sim_gates/heave_limits.json`.
+`reports/results/filter_sim_gates/per_record_limits.json`.
 
 
 `tests/heave_only/` implements three published heave-only filters as

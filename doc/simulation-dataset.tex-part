@@ -25,3 +25,7 @@ Sections explicitly identified as archived v1.2.3 comparisons retain their
 original zero-speed experiment and are not underway evidence.
 
 \IfFileExists{../simulation-case.tex-part}{\input{../simulation-case.tex-part}}{}
+
+The active build case labels deterministic replay tables and traces.
+Seeded and derived studies retain the case recorded in their own manifests;
+case-specific study metrics and charts are published as separate artifacts.

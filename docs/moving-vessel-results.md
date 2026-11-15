@@ -1,20 +1,55 @@
 # Underway replay results
 
-The current external-data baseline uses oceanography-waves-lib v1.3.1: a 28 ft estimated hull RAO moving at 5 kn with heading oscillating plus/minus 3 degrees about north every 120 s. Eight fixed JONSWAP and PM-Stokes records run for 1200 s at 200 Hz; the last 900 s are scored with default sensor and initialization seeds. Displacement and velocity truth are relative to the declared cruise track. All recorded specific force, turning acceleration, changing attitude and body rates reach the estimator unchanged. The 3D denominator uses wave displacement, not forward travel. These deterministic regression measurements are not confidence intervals or sea trials. A dataset change is not an estimator improvement.
+The current external-data baseline uses oceanography-waves-lib v1.4.0: a 28 ft estimated hull RAO at 5 kn, following seas northbound and head/bow-quartering seas southbound, both with a ±3° heading sine every 20 s. Each case contains eight 1200 s, 200 Hz records. The final 900 s are scored, except AHRS attitude (final 60 s). Displacement and velocity truth are relative to the declared cruise track; total acceleration and delivered IMU samples are retained. These are deterministic regression measurements, not confidence intervals or sea trials.
 
-| Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) | Accel bias RMS (mm/s²) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| OU-II | 8.486 | 8.027 | 1.0716 | 0.899 | 45.27 |
-| OU-III | 8.236 | 7.839 | 0.9001 | 0.871 | 63.50 |
-| TFG | 5.716 | 5.459 | 0.8621 | 1.069 | 91.84 |
-| CARMA | 3.572 | 3.726 | 0.4201 | 0.938 | 47.53 |
-| Shared QMEKF | 3.456 | 3.532 | 0.3537 | 0.977 | 46.06 |
-| TFG-CARMA | 3.572 | 3.727 | 0.4201 | 0.927 | 47.59 |
-| Shared TFG | 3.456 | 3.533 | 0.3537 | 0.947 | 45.60 |
-| TFG cubic | 4.689 | 4.832 | 1.5367 | 3.063 | 210.33 |
-| Adaptive PII | 10.487 | 9.623 | — | 8.233 | — |
-| TVG-NLO | 9.430 | 9.119 | — | — | — |
+## Northbound, following seas
 
-Each column is the worst of eight records; maxima need not occur together.
-The compact per-record measurements and both sampling profiles are in `reports/results/filter_sim_gates/measurements.json` and `underway_summary.csv`.
-See [the scoring and surrogate convention](moving-vessel-replays.md).
+| Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) |
+| --- | ---: | ---: | ---: | ---: |
+| OU-II | 8.551 | 8.088 | 1.092 | 0.978 |
+| OU-III | 8.371 | 7.932 | 1.007 | 0.940 |
+| TFG | 5.870 | 5.565 | 0.995 | 1.378 |
+| TFG cubic | 4.805 | 4.923 | 1.568 | 3.840 |
+| CARMA | 3.522 | 3.628 | 0.545 | 1.007 |
+| Shared QMEKF | 3.481 | 3.500 | 0.499 | 0.919 |
+| TFG-CARMA | 3.522 | 3.629 | 0.546 | 0.986 |
+| Shared TFG | 3.481 | 3.502 | 0.499 | 0.915 |
+| Shared tangent | 3.482 | 3.502 | 0.499 | 0.915 |
+| AHRS | — | — | — | 6.746 |
+| Adaptive PII | 10.640 | 10.256 | — | 8.094 |
+| TVG-NLO | 9.583 | 9.145 | — | — |
+| Heave PII | 10.194 | 9.352 | — | — |
+| Godhavn | 382.948 | 296.548 | — | — |
+| Godhavn extended | 17.407 | 18.196 | — | — |
+| Richter | 16.237 | 16.918 | — | — |
+| Kuchler | 13.419 | 14.422 | — | — |
+
+[Full metrics](../reports/results/sim_v1.4.0/following/metrics.csv) · [Charts and provenance](../reports/results/sim_v1.4.0/following/README.md)
+
+## Southbound, head / bow-quartering seas
+
+| Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) |
+| --- | ---: | ---: | ---: | ---: |
+| OU-II | 6.075 | 5.862 | 0.915 | 2.717 |
+| OU-III | 3.616 | 3.559 | 0.849 | 2.487 |
+| TFG | 2.773 | 2.781 | 0.866 | 2.589 |
+| TFG cubic | 2.714 | 2.691 | 1.146 | 2.445 |
+| CARMA | 2.168 | 2.532 | 0.608 | 2.489 |
+| Shared QMEKF | 2.118 | 2.363 | 0.592 | 2.519 |
+| TFG-CARMA | 2.168 | 2.533 | 0.608 | 2.437 |
+| Shared TFG | 2.117 | 2.362 | 0.592 | 2.448 |
+| Shared tangent | 2.118 | 2.363 | 0.592 | 2.449 |
+| AHRS | — | — | — | 8.810 |
+| Adaptive PII | 11.562 | 15.729 | — | 14.973 |
+| TVG-NLO | 7.171 | 7.824 | — | — |
+| Heave PII | 10.483 | 13.855 | — | — |
+| Godhavn | 395.715 | 489.737 | — | — |
+| Godhavn extended | 26.438 | 31.342 | — | — |
+| Richter | 22.413 | 25.517 | — | — |
+| Kuchler | 20.910 | 23.041 | — | — |
+
+[Full metrics](../reports/results/sim_v1.4.0/head/metrics.csv) · [Charts and provenance](../reports/results/sim_v1.4.0/head/README.md)
+
+Each column is the worst of eight records; maxima need not occur together. Each case/sea/profile has its own fixed limit. All profiles, roll/pitch, bias metrics and input/executable hashes remain in the case-specific JSON/CSV reports.
+
+See [the scoring convention](moving-vessel-replays.md) and [gate protocol](filter-simulator-gates.md).

@@ -77,7 +77,7 @@ def publish(root):
     for directory in DOCS:
         (ROOT/'doc'/directory/'underway-baseline.tex-part').write_text('\n'.join(tex))
     with (root/'summary.csv').open('w') as stream:
-        writer = csv.DictWriter(stream,fieldnames=summary[0])
+        writer = csv.DictWriter(stream,fieldnames=summary[0],lineterminator='\n')
         writer.writeheader()
         writer.writerows(summary)
 

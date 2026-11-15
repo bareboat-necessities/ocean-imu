@@ -157,7 +157,7 @@ jobs:
           sys.path.insert(0, 'tools')
           from sim_dataset import DESCRIPTION
           Path('doc/simulation-case.tex-part').write_text(
-              '\\paragraph{Replay case for this build}\n' + DESCRIPTION.replace('_', r'\_') + '.\n')
+              '\\paragraph{Deterministic replay case for this build}\n' + DESCRIPTION.replace('_', r'\_') + '.\n')
           PYCASE
 
       - name: Unpack simulation data (${{ matrix.dir }})
