@@ -14,14 +14,29 @@ inputs and turning acceleration remain intact. Only reference displacement
 and velocity are expressed about the declared cruise track. In particular,
 3D error percentages are normalized by wave displacement, not total travel.
 
-`tests/common/CurrentReplayLimits.h` contains separately qualified production
-and interval-rate limits. Each channel uses the worst of eight full records,
-plus 0.5%, rounded upward to 0.00001, capped by the previous gate. No gate
-may widen during this tightening. For the updated TFG/shared profiles, use
-the maximum of retained native and available CI controls; shared TFG bars
-also cover the tangent consumer. Both production and historical interval-rate
-profiles are checked. `gate_tightening.json` retains those controls and every
-before/after limit. `limits.json` records the exact compiled values.
+Every default replay family now applies **per-sea limits**. A quiet or moderate
+record cannot consume the error budget of the worst sea. The table in
+`tests/common/RecordReplayLimits.inc` covers 256 family/profile/sea combinations
+and 1,120 active scalar limits; 991 are lower than their previous global caps.
+Coverage includes all OU and CARMA configurations with qualified default bars,
+both TFG regularizers, shared QMEKF/TFG and the tangent consumer, AHRS, adaptive
+PII, NLO, and all five heave-only methods on their supported frontends.
+
+Each limit is the maximum retained native/CI score **for that record and
+profile**, plus 0.5%, rounded upward to 0.00001, capped by its existing global
+limit. No limit widens. `per_record_limits.json` retains controls, measured
+maxima, previous caps, final limits and known pre-existing failures.
+`RecordW3dLimits.h` adapts the common table to the existing W3d summary.
+Unknown families, profiles, records and unmeasured channels fail closed within
+this fixed-draw protocol. Explicit sensor-seed sweeps retain their original
+global diagnostic bars; they are not used to qualify these deterministic caps.
+
+`CurrentReplayLimits.h` retains the global production and interval-rate ceilings
+as additional upper bounds. Its 61 post-encounter reductions and their controls
+are recorded in `gate_tightening.json`; `limits.json` records those exact global
+values. Shared TFG and tangent use the same per-record envelope, containing
+controls from both consumers. The generated table can be reproduced with
+`python3 tools/generate_record_replay_limits.py`; `--check` verifies its bytes.
 
 The old drifting-vessel limits remain accuracy-recovery targets, not an
 achievement implied by passing a higher moving-vessel gate. A reduction in
@@ -43,13 +58,33 @@ in [moving-vessel-comparison.md](moving-vessel-comparison.md).
 | Shared TFG / tangent | 2.467/2.415 | 3.568/3.721 | 3.474/3.551 |
 | TFG legacy | 4.344/4.317 | 8.288/8.056 | 4.713/4.857 |
 
-OU-II, OU-III and independent CARMA limits are unchanged here: their current
-worst scores still need those ceilings. PII/NLO and heave-only limits were
-already tightened with their accepted changes and remain separate; the
-process-prior and lever-arm simulators have their own diagnostic contracts.
-The present 61 reductions cover heave, 3D displacement, attitude and bias
-channels where current evidence permits tightening. They do not establish
-complete free-drifting accuracy recovery.
+These are the maximum global ceilings, not the limit applied to every sea.
+The following counts describe the additional per-record tightening:
+
+| Filter | Lower per-record limits / active limits |
+| --- | ---: |
+| OU-II | 116 / 128 |
+| OU-III | 108 / 128 |
+| TFG | 108 / 128 |
+| CARMA | 113 / 128 |
+| Shared QMEKF | 106 / 128 |
+| TFG-CARMA | 120 / 128 |
+| Shared TFG / tangent | 106 / 128 |
+| TFG legacy | 54 / 64 |
+| AHRS | 24 / 24 |
+| Adaptive PII | 16 / 16 |
+| NLO | 8 / 8 |
+| Heave PII | 16 / 16 |
+| Godhavn | 24 / 24 |
+| Extended Godhavn | 24 / 24 |
+| Kuchler | 24 / 24 |
+| Richter | 24 / 24 |
+
+The main-branch CI control on the Hs=4 m JONSWAP record already exceeds the
+OU-III yaw ceilings: 0.886419° versus 0.87554° (production) and 0.878680° versus
+0.86774° (interval). These failures remain explicit; the limits are not raised
+to absorb them. Passing native controls do not erase runner-dependent failures.
+Restoring the old drifting worst-case accuracy still requires estimator work.
 
 W3d scores use the trailing 900 s of each 1200 s, 200 Hz record. Heave is
 RMS/incident Hs; 3D displacement is RMS/max reference wave-displacement norm.
@@ -57,13 +92,16 @@ Accelerometer Z bias uses max absolute true Z bias; each vector-bias score
 uses max true vector-bias norm. Absolute displacement and bias RMS accompany
 these different percentage normalizations. AHRS uses the trailing 60 s.
 NLO gates raw heave, including its mean error. Adaptive PII has separately
-measured vertical/yaw bars with the same 0.5% margin, rounded upward to
-0.01 in its quoted units; it rejects nonfinite heave and attitude scores. Heave-only gates remain
+measured vertical/yaw bars with the same 0.5% margin; it rejects nonfinite heave and attitude scores. Heave-only gates remain
 separate for Mahony, proxy and ideal-attitude frontends and each method.
 
 The inventory covers all native W3d filters, the legacy cubic TFG diagnostic,
 AHRS, heave-only methods, NLO, the independently checked CARMA process prior,
-and the lever-arm study instrument. Detrender inputs also use wave-relative
+and the lever-arm study instrument. The latter two are not eight-sea filter
+replays: process-prior spectral/derivative/variance checks and lever-arm numerical
+contracts remain in force. Ungated CARMA research priors and shared-mode
+ablations retain their diagnostic status; A41/T41/CSM caps are not fitted to
+those different models. Detrender inputs also use wave-relative
 horizontal displacement from the moving records; cruise travel is not added
 to their wave-reference target.
 

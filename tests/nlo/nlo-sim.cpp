@@ -1,3 +1,4 @@
+#include "../common/RecordReplayLimits.h"
 #include <filesystem>
 #include <iostream>
 #include <iomanip>
@@ -422,8 +423,9 @@ static void fail_if_tvg_nlo_vertical_gates_breached(const TvgNloSimulationRunRes
     const float z_pct =
         100.0f * rms_z_raw.rms() / result.wave_params.height;
 
-    const float z_limit = vertical_rms_limit_percent(
-        result.wave_type, result.wave_params.height);
+    namespace rl = ocean_imu::sim::record_limits;
+    const float z_limit = rl::limit("nlo", "default", result.input_name, rl::Metric::heave,
+        vertical_rms_limit_percent(result.wave_type, result.wave_params.height));
 
     if (!(z_pct <= z_limit)) {
         std::cerr << "ERROR: raw Z RMS above limit (" << z_pct << "% > "

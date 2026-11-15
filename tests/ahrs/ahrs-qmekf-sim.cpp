@@ -2,6 +2,7 @@
    Copyright (c) 2025-2026  Mikhail Grushinskiy
 */
 
+#include "../common/RecordReplayLimits.h"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -529,7 +530,11 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     const auto t1 = std::chrono::steady_clock::now();
     const double elapsed_sec = std::chrono::duration<double>(t1 - t0).count();
 
-    static constexpr AhrsFailureLimits FAIL_LIMITS{};
+    AhrsFailureLimits FAIL_LIMITS{};
+    namespace rl = ocean_imu::sim::record_limits;
+    FAIL_LIMITS.err_limit_roll_deg = rl::limit("ahrs", "default", filename, rl::Metric::roll, FAIL_LIMITS.err_limit_roll_deg);
+    FAIL_LIMITS.err_limit_pitch_deg = rl::limit("ahrs", "default", filename, rl::Metric::pitch, FAIL_LIMITS.err_limit_pitch_deg);
+    FAIL_LIMITS.err_limit_yaw_deg = rl::limit("ahrs", "default", filename, rl::Metric::yaw, FAIL_LIMITS.err_limit_yaw_deg);
     print_summary_and_fail_if_needed(outname, rows, dt, with_mag, elapsed_sec, FAIL_LIMITS);
 }
 

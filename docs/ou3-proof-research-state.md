@@ -1,32 +1,43 @@
-## Post-merge replay-gate tightening
+## All-filter per-sea regression gates
 
-Current scope: preserve merged estimator source at c9d3219 and tighten 61
-previously loose TFG/shared-mode acceptance limits using retained native and
-CI scores. Both gyro profiles and the tangent shared-bar consumer are covered.
-No limit is widened and no OU-III runtime source is changed. The remaining
-OU-II/OU-III/independent-CARMA speed penalties are not declared solved.
+Current scope: preserve merged estimator source and apply record-specific caps
+to every qualified default replay family/profile. The 256 combinations contain
+1,120 active limits; 991 are tighter than the preceding global ceilings, and
+none are wider. All OU, CARMA and TFG variants with measured default bars,
+tangent shared-mode, AHRS, PII, NLO and heave-only frontends are covered.
+Explicit seed sweeps retain their previous diagnostic bars. Process-prior,
+lever-arm and alternative-prior diagnostics retain their separate contracts.
 
-Classification E, publication freshness: changing `CurrentReplayLimits.h`
-invalidates the companion's conservative implementation closure.
-`python tools/tfg_comparison.py --check --require-ci` fails with
-`ValueError: TFG comparison source provenance is stale`. Old scores and
-source hashes are not restamped. `python tools/ou_evidence_contract.py --auto`
-also reports `validation: replay dependency differs from replay provenance:
-tests/common/CurrentReplayLimits.h` and the same error for robustness.
-The branch evidence workflow must regenerate and validate all three bundles
-before publication. Nine focused gate-contract
-tests pass; serial `make -j1 all` is running. Dense NLO/PII output CSVs are
-redirected to `/dev/null` for this run because their writers ignore the
-suppression flag; full-rate input histories and in-memory RMS scoring are
-unchanged. The failed stale-publication check is not a numerical regression.
+Classification E, incomplete validation: the preceding serial `make -j1 all`
+was intentionally interrupted in frequency tests (exit 130) to expand scope.
+The first expanded compile was interrupted before replay to move CARMA lookup
+after unscored-input filtering and preserve seeded diagnostics. Neither run is
+claimed complete. A focused C++ lookup test initially failed compilation because
+unqualified `find` selected `std::find` through argument-dependent lookup;
+qualifying the test call fixes it. All eleven focused tests now pass, including
+missing-channel rejection and a regression below the old global ceiling.
+
+Classification E, existing runner-dependent numeric gate failure: main c9d3219
+CI job 132679582303 records OU-III Hs=4 m JONSWAP yaw 0.886419 > 0.87554 deg
+(production) and 0.878680 > 0.86774 deg (interval). This invalidates an all-runner
+pass claim, not a stability result. Those caps are retained, not widened. Other
+retained controls fit their respective caps. The next falsifiable check is the
+complete build/replay on the expanded tables and final-head CI qualification.
+
+Classification E, publication freshness: the changed replay source and shared
+gate closure invalidate the OU validation/robustness and TFG comparison bundles.
+Their old hashes and scores are not restamped. Fresh branch evidence must be
+regenerated. Serial `make -j1 all` is running; dense NLO/PII/detrender traces are
+redirected to `/dev/null` where necessary, preserving full-rate in-memory RMS.
 
 Six-item handoff: (1) all shipping OU-III states, dynamics, covariance/gains,
-tuner, scheduler, magnetic service and continuous physical histories are
-preserved; (2) no new estimator or proof relaxation; (3) the freshness failure
-is E; (4) no shipping counterexample found; (5) established algebra and open
-physical/theorem qualifications remain unchanged; (6) complete fresh gate
-replays/publication, then continue the same-history accelerometer/covariance
-diagnosis recorded below. Old drifting worst-case targets remain explicit.
+tuner, scheduler, magnetic service and continuous physical histories preserved;
+(2) no estimator/proof relaxation; (3) interrupted builds, test instrumentation,
+runner gate failures and stale publication are E; (4) no shipping counterexample
+found; (5) established algebra and open physical/theorem qualifications remain
+unchanged; (6) finish fresh regression/publication checks, then continue the
+same-history accelerometer/covariance diagnosis below. Old drifting accuracy
+recovery is not claimed by lowering acceptance limits.
 
 ## Current encounter-regression continuation
 

@@ -1,3 +1,4 @@
+#include "../common/RecordReplayLimits.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -380,7 +381,10 @@ void summarize(Method method, const W3dSimulationRunResult& r, float dt) {
            : method == Method::Godhavn ? GODHAVN_LIMITS
            : method == Method::GodhavnExt ? GODHAVN_EXT_LIMITS
            : method == Method::RichterZd ? RICHTER_ZD_LIMITS : KUCHLER_LIMITS);
-    const float limit = r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes;
+    namespace rl = ocean_imu::sim::record_limits;
+    const float limit = rl::limit(std::string("heave_") + method_name(method),
+        frontend_name(g_frontend), r.input_name, rl::Metric::heave,
+        r.wave_type == WaveType::JONSWAP ? lim.jonswap : lim.pmstokes);
     if (!(z_pct <= limit)) {
         std::cerr << "ERROR: " << method_name(method) << " Z RMS above limit ("
                   << z_pct << "% > " << limit << "%) for " << r.input_name << "\n";

@@ -1,3 +1,4 @@
+#include "../common/RecordReplayLimits.h"
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -387,9 +388,11 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
     }
 
     const float z_pct = 100.0f * rms_z.rms() / result.wave_params.height;
-    const float z_limit = (result.wave_type == WaveType::JONSWAP)
-        ? FAIL_LIMITS.err_limit_percent_z_jonswap
-        : FAIL_LIMITS.err_limit_percent_z_pmstokes;
+    namespace rl = ocean_imu::sim::record_limits;
+    const float z_limit = rl::limit("pii", "default", result.input_name, rl::Metric::heave,
+        result.wave_type == WaveType::JONSWAP
+        ? FAIL_LIMITS.err_limit_percent_z_jonswap : FAIL_LIMITS.err_limit_percent_z_pmstokes);
+    const float yaw_limit = rl::limit("pii", "default", result.input_name, rl::Metric::yaw, FAIL_LIMITS.err_limit_yaw_deg);
 
     if (z_pct > z_limit) {
         std::cerr << "ERROR: Z RMS above limit (" << z_pct << "% > " << z_limit
@@ -399,9 +402,9 @@ static void fail_if_vertical_quality_gates_breached(const W3dSimulationRunResult
         if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);
     }
 
-    if (result.with_mag && rms_yaw.rms() > FAIL_LIMITS.err_limit_yaw_deg) {
+    if (result.with_mag && rms_yaw.rms() > yaw_limit) {
         std::cerr << "ERROR: Yaw RMS above limit (" << rms_yaw.rms() << " deg > "
-                  << FAIL_LIMITS.err_limit_yaw_deg << " deg). Failing.\n";
+                  << yaw_limit << " deg). Failing.\n";
         any_quality_gate_failed = true;
         record_failed = true;
         if (std::getenv("W3D_COLLECT_ALL_GATES") == nullptr) std::exit(EXIT_FAILURE);

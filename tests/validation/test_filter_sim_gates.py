@@ -5,6 +5,8 @@ import math
 from pathlib import Path
 import re
 import sys
+import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +35,73 @@ def pii_fixture():
 
 
 class ReplayEvidenceTests(unittest.TestCase):
+    def test_per_record_inventory_caps_and_generated_cpp(self):
+        from generate_record_replay_limits import render
+        folder = ROOT / 'reports/results/filter_sim_gates'
+        data = json.loads((folder / 'per_record_limits.json').read_text())
+        expected = {(family, profile, name) for family, profiles in data['controls'].items()
+                    for profile in profiles for name in G.REFERENCE_CSV_SHA256}
+        actual = {(e['family'], e['profile'], e['input']) for e in data['entries']}
+        self.assertEqual(expected, actual)
+        self.assertEqual(len(actual), len(data['entries']))
+        self.assertEqual(len(actual), 256)
+        self.assertEqual({e['family'] for e in data['entries']},
+                         set(G.REPLAYS) - {'heave'} | {'heave_' + m for m in G.HEAVE_METHODS | {'pii'}})
+        failures = []
+        for entry in data['entries']:
+            controls = data['controls'][entry['family']][entry['profile']]
+            for metric, limit in entry['limits'].items():
+                worst = max(r['metrics'][metric] for c in controls for r in c['rows']
+                            if r['input'] == entry['input'])
+                self.assertEqual(worst, entry['measured_max'][metric])
+                old = entry['previous_global'][metric]
+                self.assertLessEqual(limit, old)
+                self.assertAlmostEqual(limit, min(old, math.ceil(worst * 1.005 / 1e-5) * 1e-5), places=5)
+                if worst > limit:
+                    failures.append((entry['family'], entry['profile'], entry['input'], metric))
+        # Retain the known main-runner OU3 failure; do not quietly fit it away.
+        self.assertEqual(set(failures), {(e['family'], e['profile'], e['input'], e['metric'])
+                                        for e in data['existing_global_failures']})
+        self.assertEqual(render(data), (ROOT / 'tests/common/RecordReplayLimits.inc').read_text())
+
+    def test_compiled_record_lookup_rejects_hidden_regressions_and_missing_channels(self):
+        # Exercise the actual C++ lookup, including path handling and failure modes.
+        source = r'''
+#include "tests/common/RecordReplayLimits.h"
+#include <cassert>
+using namespace ocean_imu::sim::record_limits;
+namespace rl = ocean_imu::sim::record_limits;
+int main() {
+    const auto& e = rl::find("ou2", "default", "/tmp/wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv");
+    const float global = 8.52521f;
+    const float local = tighten(e, Metric::heave, global);
+    const float regression = (local + global) / 2;
+    assert(regression <= global && !(regression <= local));
+    assert(tighten(e, Metric::heave, 0.01f) == 0.01f);
+    int caught = 0;
+    for (const auto* unknown : {"missing.csv", "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv.bak"}) {
+        try { (void)rl::find("ou2", "default", unknown); }
+        catch (const std::invalid_argument&) { ++caught; }
+    }
+    try { (void)rl::find("ou2", "typo", e.input); }
+    catch (const std::invalid_argument&) { ++caught; }
+    try { (void)rl::find("typo", "default", e.input); }
+    catch (const std::invalid_argument&) { ++caught; }
+    try { (void)tighten(rl::find("nlo", "default", e.input), Metric::yaw, 10); }
+    catch (const std::invalid_argument&) { ++caught; }
+    assert(caught == 5);
+    setenv("W3D_IMU_SEED", "1234", 1);
+    assert(limit("ou3", "default", "diagnostic_crossfade.csv", Metric::heave, 8.0f) == 8.0f);
+    unsetenv("W3D_IMU_SEED");
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            cpp, binary = Path(tmp) / 'test.cpp', Path(tmp) / 'test'
+            cpp.write_text(source)
+            subprocess.run(['g++', '-std=c++20', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT), '-I', str(ROOT / 'src'),
+                            str(cpp), '-o', str(binary)], check=True, capture_output=True)
+            subprocess.run([str(binary)], check=True, capture_output=True)
+
     def test_heave_requires_all_methods_inputs_and_the_selected_frontend(self):
         methods = sorted(G.HEAVE_METHODS | {'pii'})
         text = '\n'.join(f'HEAVE_ONLY method={method} frontend=mahony record={name} z_pct_hs=1'

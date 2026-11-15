@@ -19,6 +19,7 @@
 
 #define EIGEN_NON_ARDUINO
 
+#include "../common/RecordW3dLimits.h"
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
@@ -57,13 +58,15 @@ constexpr W3dSummaryLabels kLabels{.target = "RS_target", .applied = "kappa_z_ap
 template<class A>
 void run_file(const std::string& filename, float dt, bool with_mag, const W3dRandomSeeds& seeds,
               bool write_timeseries, float window, const std::string& family,
-              const W3dFailureLimits& bars) {
+              const W3dFailureLimits& bars, bool gated) {
     auto result = process_wave_file_for_tracker<A>(filename, dt, with_mag, add_noise, 25.0f,
                                                    "_fusion_" + family, "_fusion_" + family + "_nomag",
                                                    seeds, write_timeseries);
     if (!result) return;
     if (window > 0.0f) print_validation_metrics(*result, dt, window, family.c_str());
-    print_summary_and_fail_if_needed(*result, dt, bars, kLabels);
+    const auto record_bars = gated ? ocean_imu::sim::record_limits::w3d(
+        "tcarma", gyro_replay::legacy ? "legacy" : "default", filename, bars) : bars;
+    print_summary_and_fail_if_needed(*result, dt, record_bars, kLabels);
 }
 
 }  // namespace
@@ -110,8 +113,8 @@ int main(int argc, char* argv[]) {
         std::cout << "GYRO_REPLAY_PROFILE " << gyro_replay::name() << '\n';
         for (const auto& f : files) {
             const std::string family = "TFG_CARMA3_" + variant;
-            if (variant == "T41") run_file<Adapter_T41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
-            else if (variant == "T41R0") run_file<Adapter_T41R0>(f, dt, with_mag, seeds, write_timeseries, window, family, bars);
+            if (variant == "T41") run_file<Adapter_T41>(f, dt, with_mag, seeds, write_timeseries, window, family, bars, gated);
+            else if (variant == "T41R0") run_file<Adapter_T41R0>(f, dt, with_mag, seeds, write_timeseries, window, family, bars, gated);
             else throw std::invalid_argument("W3D_TFG_CARMA3_VARIANT must be T41 or T41R0");
         }
     } catch (const std::exception& e) {

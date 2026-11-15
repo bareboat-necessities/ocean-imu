@@ -22,22 +22,22 @@
     },
     "kuchler": {
       "measured_worst": {
-        "jonswap": 12.0538,
-        "pmstokes": 14.0638
+        "jonswap": 12.0545,
+        "pmstokes": 14.7245
       },
       "limits": {
         "jonswap": 12.12,
-        "pmstokes": 14.14
+        "pmstokes": 14.8
       }
     },
     "pii": {
       "measured_worst": {
-        "jonswap": 15.211,
-        "pmstokes": 14.5221
+        "jonswap": 10.1614,
+        "pmstokes": 9.3181
       },
       "limits": {
-        "jonswap": 15.29,
-        "pmstokes": 14.6
+        "jonswap": 10.22,
+        "pmstokes": 9.37
       }
     },
     "richter_zd": {
@@ -74,22 +74,22 @@
     },
     "kuchler": {
       "measured_worst": {
-        "jonswap": 11.6091,
-        "pmstokes": 13.5416
+        "jonswap": 12.3888,
+        "pmstokes": 14.6566
       },
       "limits": {
-        "jonswap": 11.67,
-        "pmstokes": 13.61
+        "jonswap": 12.46,
+        "pmstokes": 14.73
       }
     },
     "pii": {
       "measured_worst": {
-        "jonswap": 15.2052,
-        "pmstokes": 14.5166
+        "jonswap": 9.86949,
+        "pmstokes": 9.31202
       },
       "limits": {
-        "jonswap": 15.29,
-        "pmstokes": 14.59
+        "jonswap": 9.92,
+        "pmstokes": 9.36
       }
     },
     "richter_zd": {
@@ -126,8 +126,8 @@
     },
     "kuchler": {
       "measured_worst": {
-        "jonswap": 11.9522,
-        "pmstokes": 14.6765
+        "jonswap": 11.9519,
+        "pmstokes": 14.6766
       },
       "limits": {
         "jonswap": 12.02,

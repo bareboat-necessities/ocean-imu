@@ -1,6 +1,7 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 // One shared-modes adapter and replay protocol for QMEKF and TFG geometry.
+#include "RecordW3dLimits.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -99,7 +100,14 @@ bool run_file(const std::string& filename, float dt, bool with_mag, const W3dRan
             throw std::runtime_error("nonfinite estimation error in " + filename);
     }
     if (window > 0.0f) print_validation_metrics(*result, dt, window, family.c_str());
-    print_summary_and_fail_if_needed(*result, dt, bars, kLabels);
+    const char* gate_family = nullptr;
+    if (family == "CARMA_SHARED_MODES_CSM") gate_family = "csm";
+    else if (family == "TFG_CARMA_SHARED_MODES_CSM" || family == "TANGENT_CARMA_SHARED_MODES_CSM")
+        gate_family = "tcsm";
+    else if (gated) throw std::invalid_argument("unknown gated shared-mode family: " + family);
+    const auto record_bars = gated ? record_limits::w3d(gate_family,
+        legacy_sampling_protocol ? "legacy" : "default", filename, bars) : bars;
+    print_summary_and_fail_if_needed(*result, dt, record_bars, kLabels);
     return true;
 }
 
