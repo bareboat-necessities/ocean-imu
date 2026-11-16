@@ -1,3 +1,47 @@
+## Heading-separation runtime qualification
+
+Current hypothesis: the IMU-only steady-forward turn model separates the
+steering force from the wave state and its bias harmonic. It does not supply
+the missing absolute tilt/reference/bias information. At runtime revision
+`a86c1eb7707d6618f917cf4384c7ad027f27a5ad`, the common-flag comparison improves
+Y RMS in all 128 cells, but only 15 cells pass every unchanged quality gate.
+Following-sea, 1.5 m shared-TFG bias RMS rises from 0.01539 to 0.02470 m/s²;
+its zero-cruise control is 0.02396 m/s². Full records and build scope are in
+`reports/results/heading_kinematics/runtime.json` and `docs/heading-kinematics.md`.
+These are empirical results, not a stability or observability certificate.
+
+Class E implementation failures: the first optimized OU-III turn-model build
+segfaulted on an aligned AVX load after the new member shifted matrix buffers.
+Appending that member instead preserves the established buffer layout; all
+16 comparison replays and CI lever-arm run 43959596866 complete. The required
+`make all -j1 SIM_JOBS=2` was then killed by host memory pressure while another
+build ran (`g++: fatal error: Killed signal terminated program cc1plus`,
+`carma_coupled-test.o`). A serial retry retains responsibility for the full
+suite. Neither failure establishes a mathematical counterexample.
+
+Class E proof integration failure: run 43959598850 rejects
+`signed observer shipping fingerprint changed` and
+`forced data diagnostic fingerprint changed: shipping_header_sha256`.
+The invalidated hypothesis is that the old source-bound evidence can qualify
+the new force mean, attitude/gyro-bias Jacobians and causal speed observer.
+Old receipt hashes remain unchanged. Current limiter: native acceptance,
+the slow bias/attitude regressions, and a faithful proof model of the new
+observer history and its uncertain speed. Broader bias priors, covariance
+resets, longer bias memory and Schmidt holding did not qualify an all-case
+remedy; no such change or numerical-gate relaxation is promoted.
+
+Six-item handoff: (1) the OU a_w→v→p→S chain, covariance update/reset,
+startup/reference and tuner chronology remain; the accelerometer model now
+includes the separate turn force and native derivatives; (2) no old proof is
+transferred to this implementation, and the steady-forward motion assumption
+and unmodelled joint speed uncertainty are explicit; (3) the crash, resource,
+acceptance and stale-binding failures above are E; (4) no admitted shipping
+stability counterexample was established; (5) prior algebra and its stated
+open qualifications remain, with the old operator receipts limited to their
+original source; (6) export and audit the actual new measurement operators
+and carry the speed observer, covariance, physical and frontend histories
+through the existing proof boundaries before any new bound is promoted.
+
 ## Bidirectional v1.4.0 replay qualification
 
 Class E integration failure: changing `src/util/UnderwayReference.h` invalidated

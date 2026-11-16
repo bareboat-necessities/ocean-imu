@@ -46,11 +46,12 @@ the case from identically named CSV files.
 This makes horizontal displacement error a **wave-only output error under
 steering contamination**, not an error against total bounded vessel motion.
 The removed cruise track is curved: its acceleration is nonzero. The current
-IMU/magnetometer filters have no independent cruise speed/course input and no
-separate cruise-motion state. Their horizontal priors can therefore assign
-some of that physical acceleration to wave motion, tilt or accelerometer bias.
-Subtracting the track from scoring does not perform this separation inside a
-filter. See [the paired heading investigation](heading-kinematics.md).
+IMU/magnetometer filters have no independent cruise speed/course input. The
+shared runtime turn observer now estimates steady forward speed from sensor
+history and models the corresponding force separately from wave acceleration.
+This separation is conditional on its motion assumptions; subtracting the
+track from scoring alone cannot provide it. See
+[the paired heading investigation and runtime results](heading-kinematics.md).
 
 Displacement/velocity/acceleration columns use the generator's geographic
 Z-up axes (north, west, up), after undoing magnetic declination on estimated

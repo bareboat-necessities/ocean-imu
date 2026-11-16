@@ -43,7 +43,9 @@ void model_jacobians() {
 
 void run(float speed, float period, bool yaw, bool turned_mount) {
     Separator filter;
-    const Q mount(Eigen::AngleAxisf(turned_mount ? 1.57079632679f : 0.f,V::UnitZ()));
+    const Q mount = turned_mount
+        ? Q(Eigen::AngleAxisf(.6f,V::UnitY())) * Q(Eigen::AngleAxisf(1.57079632679f,V::UnitZ()))
+        : Q::Identity();
     Separator::Config cfg;cfg.forward_body=mount*V::UnitX();filter.reset(cfg);
     std::mt19937 rng(547);std::normal_distribution<float> noise(0,1);
     constexpr float dt=.005f,g=9.80665f;
@@ -79,6 +81,9 @@ void run(float speed, float period, bool yaw, bool turned_mount) {
     // Judge the actual acceleration correction over the tail, not the
     // instantaneous nuisance-speed estimate under gyro noise.
     if(!yaw) assert(filter.speedMps()==0);
+    // A delivery gap invalidates the learned motion and its cached force.
+    filter.update(.2f,V::Zero(),V(0,0,-g),g);
+    assert(filter.speedMps()==0 && filter.correctionBodyMs2().isZero(0));
 }
 int main(){
     model_jacobians();

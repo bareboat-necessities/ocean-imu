@@ -1,6 +1,6 @@
 # Heading oscillations, horizontal wave motion and bias
 
-The v1.4.0 replay exposes physical steering acceleration in every tested horizontal filter. The scoring target is wave displacement after removing the entire curved cruise track, while the filters receive the total specific force and have no separate cruise-motion state. The characteristic 20 s displacement error and 10 s body-bias ripple are predominantly responses to this unmodelled motion. They are not explained by rotating a displacement axis alone.
+The v1.4.0 replay exposes physical steering acceleration in every tested horizontal filter. The scoring target is wave displacement after removing the entire curved cruise track, while the filters receive the total specific force. The runtime now models steady forward turning separately from wave motion. Previously the characteristic 20 s displacement error and 10 s body-bias ripple were predominantly responses to this unmodelled motion. They are not explained by rotating a displacement axis alone.
 
 ## What the generator and scorer mean
 
@@ -120,6 +120,93 @@ This is a conditional motion model, not a joint navigation-speed covariance
 state. Uncertainty and temporal correlation in the learned speed are not
 claimed to be fully represented by the native Kalman covariance.
 
-Full replay validation of the runtime change is in progress. Existing quality
-limits are retained; the attribution tables above describe the original runtime
-and are not acceptance results for this implementation.
+## Runtime results and acceptance status
+
+The optimized GCC 14.2 / x86-64-v3 runtime at
+`a86c1eb7707d6618f917cf4384c7ad027f27a5ad` completed all **128** default-profile
+cells: eight families, eight seas and both directions. These comparison
+executables use common `-O3 -funroll-loops -fno-finite-math-only
+-march=x86-64-v3` flags, including tangent; its normal Makefile additionally
+sets `EIGEN_UNROLLING_LIMIT=0` and omits that architecture flag. The required
+native-target build is therefore reported separately. No filter receives
+truth-derived corrections. The full-rate scores, input/binary/trace hashes,
+unchanged quality-gate outcomes and every failing channel are in
+[`runtime.json`](../reports/results/heading_kinematics/runtime.json) and
+[`runtime.csv`](../reports/results/heading_kinematics/runtime.csv).
+The OU-II, TFG, CARMA, shared-QMEKF and TFG-CARMA comparison binaries were
+built from `b4378d84`; OU-III, shared TFG and tangent use the `a86c1eb7`
+source bytes. The only runtime difference between these revisions is the
+OU-III member relocation described below. These receipts retain their actual
+binary hashes; they are not a regenerated full native publication bundle.
+
+Y displacement RMS improves in **128/128** cells, by **12.0–93.2%**. The
+10-second body-Y bias harmonic falls by **94.8–99.3%** in the 20 cells with
+paired pre-fix harmonic measurements. This is removal of the reported
+steering response, not a claim that the remaining bias offset is correct.
+
+### Runtime Y displacement RMS, 0.27 m JONSWAP [m]
+
+| Filter | Following: before → runtime | Head: before → runtime |
+| --- | ---: | ---: |
+| OU-II | 0.12804 → 0.01249 | 0.07241 → 0.00626 |
+| OU-III | 0.12162 → 0.01276 | 0.08927 → 0.00827 |
+| TFG | 0.24759 → 0.01681 | 0.11033 → 0.00832 |
+| CARMA | 0.04560 → 0.00455 | 0.02387 → 0.00234 |
+| Shared QMEKF | 0.04532 → 0.00428 | 0.02387 → 0.00230 |
+| TFG-CARMA | 0.04560 → 0.00455 | 0.02387 → 0.00234 |
+| Shared TFG | 0.04532 → 0.00429 | 0.02387 → 0.00230 |
+| Shared tangent | 0.04532 → 0.00429 | 0.02387 → 0.00230 |
+
+![Runtime OU-III displacement and unsmoothed body bias](../reports/results/heading_kinematics/runtime-small-ou3.svg)
+
+The 16 paired zero-speed controls (OU-III/shared QMEKF, low/medium waves,
+both directions, changing/fixed yaw) change Y RMS by at most **0.020 mm**,
+and Z RMS by at most **0.00043 mm**, relative to the pre-fix controls. Thus
+the observer preserves these wave histories when the boat is not travelling
+forward. [`runtime-controls.json`](../reports/results/heading_kinematics/runtime-controls.json)
+also includes four medium-wave shared-TFG/tangent zero-speed controls.
+
+**The change is not accepted for merging yet.** Only **15/128** cells pass all
+existing per-record gates. Remaining failures are chiefly attitude and
+absolute accelerometer-bias error. Across this matrix, 3D bias RMS ratios
+range from 0.616 to 1.605 relative to the previous runtime. The largest rise
+is following-sea, 1.5 m shared TFG: **0.01539 → 0.02470 m/s²**. Its
+zero-speed control is **0.02396 m/s²**, so simply removing the steering
+force does not solve this slower tilt/reference/bias error. No gate was
+relaxed to hide it. Broader bias priors, bias-covariance resets and changing
+the bias relaxation time did not provide an across-sea remedy and were
+not selected.
+
+The shared force derivatives, native TFG retraction and the TFG-CARMA dense
+Joseph comparison pass; the latter covers **239** native checks. Synthetic
+observer controls include a mounting rotation out of the horizontal plane
+and clearing learned motion after an IMU gap. The OU-III optimized replay
+also caught a matrix-layout-sensitive crash; retaining its established
+covariance-buffer layout fixes that crash in all 16 replay records.
+
+The required `make all -j1 SIM_JOBS=2` is a separate acceptance run. Historical
+OU/stability evidence does not establish acceptance of this changed model;
+its source binding must be regenerated and its applicability reviewed.
+The native-target [CI matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43959597252)
+completed both directions at `a86c1eb7`: every horizontal default/legacy
+profile reports quality-gate failure (exit 1), with no abnormal simulator
+exit. AHRS, NLO, PII and all three heave-only profiles pass in both directions.
+[`runtime-native-ci.json`](../reports/results/heading_kinematics/runtime-native-ci.json)
+retains these statuses and the complete CI artifact identities. This result
+confirms the acceptance blocker; it does not turn the comparison into a
+passing baseline.
+
+To reproduce the runtime comparison, build the native simulators, run
+`tools/heading_kinematics_diagnosis.py` with `--variants released`, all eight
+families and all eight pinned `--records`, then run:
+
+```sh
+python3 tools/heading_turn_validation.py --work-dir /path/to/replays \
+  --runtime-revision a86c1eb7707d6618f917cf4384c7ad027f27a5ad \
+  --build-description "GCC 14.2; -O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=x86-64-v3; Eigen 3.4.0" \
+  --output reports/results/heading_kinematics/runtime.json
+```
+
+Pass `--baseline-traces /path/to/pre-fix/traces` to reproduce the figure. Both
+plot sources are hash-checked; only the display is uniformly decimated to
+20 Hz. Scoring uses the entire 200 Hz window.
