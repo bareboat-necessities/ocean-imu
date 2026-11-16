@@ -33,6 +33,10 @@ int main(int argc, char* argv[]) {
     else if (mode == "overflow") r.accb_err_x.assign(count, std::numeric_limits<float>::max());
     else if (mode == "gyro_bias") r.gyrb_err_x.assign(count, 0.00015f);
     else if (mode == "roll") r.errs_roll.assign(count, 0.2f);
+    // 0.004 m is only 0.8% of the reference maximum: the 1% 3D gate
+    // passes, but the independent 0.003 m Y gate must reject it.
+    else if (mode == "y" || mode == "y_disabled") r.errs_y.assign(count, 0.004f);
+    else if (mode == "y_valid") r.errs_y.assign(count, 0.0029f);
     else if (mode == "quiet") {
         r.ref_z.assign(count, 0.0f);
         r.accb_true_z.assign(count, 0.0f);
@@ -50,6 +54,7 @@ int main(int argc, char* argv[]) {
         .acc_z_bias_percent = 20.0f,
         .bias_3d_percent = 20.0f,
         .gyro_bias_3d_percent = 10.0f,
+        .err_limit_y_rms_m = mode == "y_disabled" ? 0.0f : 0.003f,
     };
     print_summary_and_fail_if_needed(r, 1.0f, limits, {});
     return w3d_any_quality_gate_failed() ? 1 : 0;

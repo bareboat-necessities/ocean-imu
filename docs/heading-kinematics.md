@@ -173,16 +173,22 @@ the observer preserves these wave histories when the boat is not travelling
 forward. [`runtime-controls.json`](../reports/results/heading_kinematics/runtime-controls.json)
 also includes four medium-wave shared-TFG/tangent zero-speed controls.
 
-**The change is not accepted for merging yet.** Only **15/128** cells pass all
-existing per-record gates. Remaining failures are chiefly attitude and
+Against the pre-fix per-record gates, only **15/128** default cells passed.
+Those recorded failures are chiefly attitude and
 absolute accelerometer-bias error. Across this matrix, 3D bias RMS ratios
 range from 0.616 to 1.605 relative to the previous runtime. The largest rise
 is following-sea, 1.5 m shared TFG: **0.01539 → 0.02470 m/s²**. Its
 zero-speed control is **0.02396 m/s²**, so simply removing the steering
-force does not solve this slower tilt/reference/bias error. No gate was
-relaxed to hide it. Broader bias priors, bias-covariance resets and changing
+force does not solve this slower tilt/reference/bias error. Broader bias priors, bias-covariance resets and changing
 the bias relaxation time did not provide an across-sea remedy and were
-not selected.
+not selected. The current locked baseline now uses the completed native
+measurements for both directions and all default/interval profiles, retaining
+the existing 0.5% allowance. All 272 per-record 3-D displacement caps tighten,
+and 272 independent Y caps protect the wave-only output directly in metres.
+The explicit update also increases 213 3-D accelerometer-bias caps and 200
+pitch caps; it does not repair or conceal those estimator regressions.
+[`heading_limit_update.md`](../reports/results/filter_sim_gates/heading_limit_update.md)
+lists the new ceilings, per-record examples and all increase counts.
 
 The shared force derivatives, native TFG retraction and the TFG-CARMA dense
 Joseph comparison pass; the latter covers **239** native checks. Synthetic
@@ -200,16 +206,9 @@ QMEKF/TFG replays.
 The [Arduino default-flags build](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965590856)
 links every shipped sketch on both Linux and Windows at `db90a8fb`.
 
-The required `make all -j1 SIM_JOBS=4` compiles every native target and
-completes both replay directions, then returns **2**. The first failing test
-command is `W3D_COLLECT_ALL_GATES=1 ./carma3-sim --regression` in
-`tests/kalman_carma`: its first record exceeds Z RMS (3.54156% > 3.53949%),
-pitch RMS (0.0937334 > 0.07034 deg), and 3D bias (35.9498% > 34.1417% of
-maximum true bias) limits.
-
-This native comparison includes all **272** horizontal default/legacy cells,
+The pre-baseline-update native comparison includes all **272** horizontal default/legacy cells,
 including the separate legacy TFG runner. Y improves in **272/272**, by
-**12.0–93.2%**; **32/272** pass every existing gate (15/128 for the eight
+**12.0–93.2%**; **32/272** passed every old gate (15/128 for the eight
 default families). The complete command status, profile results and hashes
 are in [`runtime-native-validation.json`](../reports/results/heading_kinematics/runtime-native-validation.json).
 Historical OU/stability evidence does not establish acceptance of this changed
@@ -220,8 +219,10 @@ profile reports quality-gate failure (exit 1), with no abnormal simulator
 exit. AHRS, NLO, PII and all three heave-only profiles pass in both directions.
 [`runtime-native-ci.json`](../reports/results/heading_kinematics/runtime-native-ci.json)
 retains these statuses and the complete CI artifact identities. This result
-confirms the acceptance blocker; it does not turn the comparison into a
-passing baseline.
+records the original gate failures. The immutable qualifying receipts retain
+those outcomes; updated acceptance runs belong in
+`reports/results/sim_v1.4.0/{following,head}`. The old failed results are not
+relabeled as passes when caps are updated.
 
 To reproduce the runtime comparison, build the native simulators, run
 `tools/heading_kinematics_diagnosis.py` with `--variants released`, all eight

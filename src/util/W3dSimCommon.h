@@ -760,6 +760,10 @@ struct W3dFailureLimits {
     // The gyro's own 3D bias bar.  Zero selects the shared bias_3d_percent
     // threshold above.
     float gyro_bias_3d_percent = 0.0f;
+    // Wave-only geographic Y displacement, in metres RMS. A separate bar
+    // prevents a horizontal regression from hiding inside the 3D allowance.
+    // Zero preserves ungated diagnostic and vertical-only configurations.
+    float err_limit_y_rms_m = 0.0f;
 };
 
 struct W3dSummaryLabels {

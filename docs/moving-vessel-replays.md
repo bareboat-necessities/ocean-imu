@@ -16,7 +16,7 @@ not the vessel's encounter height and period.
 `make all` builds and tests the project, then runs every central replay profile
 on **both cases**. `make sim-regression` runs only that matrix. It writes
 `reports/results/sim_v1.4.0/{following,head}/`: input and executable provenance,
-full-rate metrics in JSON/CSV, seven metric charts, and per-profile logs.
+full-rate metrics in JSON/CSV, eight metric charts (including wave Y RMS), and per-profile logs.
 Any missing record, nonfinite metric or failed numeric gate fails the command;
 complete failed measurements remain available. Normal CI never refits limits.
 The fixed-draw acceptance build uses GCC 14 and Eigen 3.4 with the shared host

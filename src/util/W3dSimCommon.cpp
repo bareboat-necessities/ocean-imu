@@ -2328,6 +2328,15 @@ void print_summary_and_fail_if_needed(const W3dSimulationRunResult& result,
     if (disp_true_max_3d > 1e-12f || !std::isfinite(rms_3d_err))
         fail_if("3D", pct_3d, limit_3d);
 
+    if (limits.err_limit_y_rms_m > 0.0f &&
+        (!std::isfinite(rms_y.rms()) || rms_y.rms() > limits.err_limit_y_rms_m)) {
+        failed = true;
+        fail_reason = "Y_limit_exceeded";
+        std::cerr << "ERROR: Y RMS above limit (" << rms_y.rms() << " m > "
+                  << limits.err_limit_y_rms_m << " m). Failing.\n";
+        if (!collect_all_gates) std::exit(EXIT_FAILURE);
+    }
+
     // The attitude bars are fitted to the deployed protocol, which runs the
     // magnetometer, so an IMU-only run is not scored against them -- the same
     // rule yaw has always followed here, and for the same reason.  Roll and

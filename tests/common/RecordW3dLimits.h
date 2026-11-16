@@ -21,6 +21,8 @@ inline W3dFailureLimits w3d(std::string_view family, std::string_view profile,
     bars.gyro_bias_3d_percent = tighten(e, Metric::gyro_3d,
         bars.gyro_bias_3d_percent > 0 ? bars.gyro_bias_3d_percent : bars.bias_3d_percent);
     bars.bias_3d_percent = tighten(e, Metric::acc_3d, bars.bias_3d_percent);
+    if (bars.err_limit_y_rms_m > 0)
+        bars.err_limit_y_rms_m = tighten(e, Metric::displacement_y, bars.err_limit_y_rms_m);
     return bars;
 }
 } // namespace ocean_imu::sim::record_limits

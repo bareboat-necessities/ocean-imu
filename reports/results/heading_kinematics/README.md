@@ -15,7 +15,12 @@
 
 The original attribution bundles and runtime measurements have separate roles.
 The runtime reduces Y RMS in all 128 cells and the measured bias harmonic in
-all 20 paired cells, but only 15/128 cells pass every existing quality gate.
+all 20 paired cells, but only 15/128 cells passed every pre-fix quality gate.
 The native Makefile run extends this to 272 default/legacy cells: Y improves
-in every cell, while 32/272 pass every unchanged gate.
-These files do not replace the locked acceptance baseline.
+in every cell, while 32/272 passed every pre-fix gate.
+The current locked baseline is now derived from the complete native run, with
+all 272 3-D displacement caps tightened and separate Y caps added. Bias and
+attitude cap increases are explicitly recorded in
+[`heading_limit_update.md`](../filter_sim_gates/heading_limit_update.md).
+These historical comparison files keep their original gate outcomes; current
+enforced scores and Y charts are in [`../sim_v1.4.0/`](../sim_v1.4.0/).

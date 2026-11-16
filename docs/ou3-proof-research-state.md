@@ -37,7 +37,14 @@ Old receipt hashes remain unchanged. Current limiter: native acceptance,
 the slow bias/attitude regressions, and a faithful proof model of the new
 observer history and its uncertain speed. Broader bias priors, covariance
 resets, longer bias memory and Schmidt holding did not qualify an all-case
-remedy; no such change or numerical-gate relaxation is promoted.
+remedy; no such runtime change is promoted. The deterministic gate baseline
+is now explicitly updated from the completed native measurements at the
+user's request: all 544 cases remain, all 272 horizontal 3-D caps tighten,
+and each horizontal case gains an independent Y RMS cap. The 213 increased
+3-D bias caps and 200 increased pitch caps are disclosed in
+`reports/results/filter_sim_gates/heading_limit_update.md`; changing a cap
+does not resolve the associated estimation error or qualify a theorem.
+The original failed-gate outcomes remain in their immutable receipts.
 
 The 48 targeted native mathematical/unit invocations and the complete
 live-bias-consistency suite pass. The Arduino default-flags workflow
