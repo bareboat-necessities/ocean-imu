@@ -1,0 +1,18 @@
+{
+  "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+  "failed_command": "tests/kalman_carma_shared_modes/run_tests.sh:24",
+  "old_exit_code": 139,
+  "old_engine_avx512": true,
+  "new_engine_avx512": false,
+  "old_engine_sha256": "5a8eb64b06e03ae6747cb50da2c1fa2e77840a31b088880bcff510d3f1a49fdc",
+  "new_engine_sha256": "b6bb353a2e870b1a8527949d74dae4e151de1b97e22cb848b60ac11d1f1f6227",
+  "benchmark_sha256": "d4e7bf95a260661a0d2e9fd2ba83d3c79946048ac0093be34a2814181e59bb15",
+  "qmekf_max_equivalence_error": 2.21356472462908e-05,
+  "qmekf_limit": 0.0001,
+  "tfg_max_equivalence_error": 3.339321850515109e-05,
+  "tfg_limit": 0.01,
+  "all_variants_finite_and_pass": true,
+  "filter_algorithms_changed": false,
+  "numeric_limits_changed": false,
+  "repair": "explicit benchmark engine and TFG unit object rules depend on their Makefile and HostReplayFlags.mk"
+}

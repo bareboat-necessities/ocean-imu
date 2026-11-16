@@ -26,7 +26,7 @@ test: ensure-sim-data $(TARGETS)
 	bash ./run_tests.sh
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
-tfg_shared_modes-test.o: tfg_shared_modes-test.cpp
+tfg_shared_modes-test.o: tfg_shared_modes-test.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(filter-out -O3 -funroll-loops,$(CXXFLAGS)) -O1 -DEIGEN_UNROLLING_LIMIT=0 -MMD -MP -c $< -o $@
 tfg_shared_modes-test: tfg_shared_modes-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -42,7 +42,7 @@ kalman_carma_shared_modes-sim: kalman_carma_shared_modes-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 kalman_carma_shared_modes-bench: kalman_carma_shared_modes-bench.o csm_filters.o tfg_csm_filters.o $(BENCH_OBJS) W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp
+bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -Dmain=carma3_bench_main -MMD -MP -c $< -o $@
 %.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@

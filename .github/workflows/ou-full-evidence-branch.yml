@@ -8,7 +8,8 @@ on:
       - ".github/actions/replay-toolchain/**"
       - "tools/**"
       - "docs/tfg-comparison.md"
-      - "tests/validation/**"
+      # Every tracked test/build file belongs to the conservative fingerprint.
+      - "tests/**"
       # The publisher validates and fingerprints the proof records too.
       # A source-bound proof refresh must supersede an older in-flight run.
       - "reports/results/ou3_stability/**"
@@ -19,14 +20,7 @@ on:
       - "Makefile"
       - "tools/startup_ablation.py"
       - "tools/ou3_lever_arm_study.py"
-      - "tests/nlo/nlo-sim.cpp"
       - "src/**"
-      - "tests/kalman_ou_ii/kalman_ou_ii-sim.cpp"
-      - "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
-      - "tests/kalman_tfg/kalman_tfg-sim.cpp"
-      - "tests/kalman_ou_iii/Makefile"
-      - "tests/kalman_tfg/Makefile"
-      - "tests/common/HostReplayFlags.mk"
       - ".github/workflows/ou-validation.yml"
       - ".github/workflows/ou-full-evidence-branch.yml"
 

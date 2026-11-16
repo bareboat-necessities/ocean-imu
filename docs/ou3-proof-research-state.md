@@ -29,6 +29,16 @@ the earlier full run at 77ec3f4 predates the additional heave result bundle,
 so its protected-results fingerprint cannot be rebased onto that newer tree.
 This is another class E publication-integration issue; a fresh run must bind
 the actual current results, with the fingerprint check preserved.
+The required native build exposed a further class E incremental-build failure:
+the shared-mode benchmark exited 139 because its explicit `bench_engine.o`
+rule did not inherit the generic Makefile/host-flag dependencies. Its retained
+AVX-512 object was linked with rebuilt AVX2 objects. Both explicit object rules
+now name those dependencies. Rebuilding removes AVX-512 instructions from the
+engine and the original smoke commands pass unchanged: maximum QMEKF
+equivalence error 2.2136e-5 < 1e-4 and TFG error 3.3394e-5 < 0.01. The receipt
+is `reports/results/filter_sim_gates/incremental_host_build.json`. No filter
+equation or numeric limit changed. The next check is the complete native suite
+with a consistent build, plus the fresh publication fingerprints.
 
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
