@@ -43,6 +43,23 @@ remain available to the estimator. The Python surrogate generator and C++
 scoring reference share the 20 s period and the 180° rotation. Neither guesses
 the case from identically named CSV files.
 
+This makes horizontal displacement error a **wave-only output error under
+steering contamination**, not an error against total bounded vessel motion.
+The removed cruise track is curved: its acceleration is nonzero. The current
+IMU/magnetometer filters have no independent cruise speed/course input and no
+separate cruise-motion state. Their horizontal priors can therefore assign
+some of that physical acceleration to wave motion, tilt or accelerometer bias.
+Subtracting the track from scoring does not perform this separation inside a
+filter. See [the paired heading investigation](heading-kinematics.md).
+
+Displacement/velocity/acceleration columns use the generator's geographic
+Z-up axes (north, west, up), after undoing magnetic declination on estimated
+world vectors. Bias columns use **sensor-body axes after the harness's
+`(x,y,z) -> (y,x,-z)` basis conversion**. They are not world-frame biases;
+`acc_bias_y` is not the same physical axis as `disp_ref_y`. The historical
+`*_ned` snapshot member names denote this basis convention, not an attitude
+rotation of the sensor bias into the navigation frame.
+
 The study inventory is in `tools/simulation_studies.py`: paired OU validation
 and robustness, TFG comparison, model mismatch, engine noise, startup, wave
 direction, low–high–low transitions, lever arms, CARMA shape/excitation/coupling
