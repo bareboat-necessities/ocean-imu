@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman_common/MarineTurnModel.h"
 
 /*
   Copyright (c) 2025-2026 Mikhail Grushinskiy
@@ -141,6 +142,8 @@ public:
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    void set_marine_turn(T speed, const Vector3& bow) { marine_turn_.set(speed, bow); }
+
     struct MeasDiag3 {
         Vector3 r = Vector3::Zero();
         Matrix3 S = Matrix3::Zero();
@@ -245,6 +248,9 @@ public:
     [[nodiscard]] Eigen::Matrix<T,6,6> pv_covariance6() const {
         const Eigen::Matrix<T,6,NX> J = pv_readout();
         return J * Pext * J.transpose();
+    }
+    [[nodiscard]] Vector3 get_world_total_accel() const {
+        return get_world_accel() + R_wb().transpose()*turn_evaluation_().force;
     }
     [[nodiscard]] Vector3 get_world_accel() const {
         if constexpr (kMotion) {
@@ -554,6 +560,12 @@ public:
     void set_alpha_smoothing_tau(T tau_sec) { lever_.set_alpha_smoothing_tau(tau_sec); }
 
 private:
+    MarineTurnModel<T> marine_turn_;
+    typename MarineTurnModel<T>::Evaluation turn_evaluation_() const {
+        Vector3 omega = marine_turn_.endpoint_gyro;
+        if constexpr (with_gyro_bias) omega -= xext.template segment<3>(3);
+        return marine_turn_.evaluate(Vector3(R_wb().col(2)), omega, marine_turn_.bow);
+    }
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
     Eigen::Quaternion<T> qref;
@@ -1074,6 +1086,7 @@ void CARMA3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
     const auto input = gyro_interval_.prepare(gyr, Ts);
+    marine_turn_.endpoint_gyro = gyr;
     if (!input.predict) return;
 
 
@@ -1326,14 +1339,16 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         else return Vector3(xext(idx_a(0)), xext(idx_a(1)), xext(OFF_Z + 2));
     }();
     const Vector3 f_cog_b = Rwb * (aw - g_world);
-    Vector3 f_pred = f_cog_b + ba_term;
+    const Vector3 down = Rwb.col(2);
+    const auto turn = turn_evaluation_();
+    Vector3 f_pred = f_cog_b + ba_term + turn.force;
     // Off-CoG IMU: the rotational term at the sensor (ImuLeverArm.h).  Its
     // attitude Jacobian is zero; its gyro-bias Jacobian is appended below.
     if (lever_.enabled()) f_pred += lever_.acceleration();
     const Vector3 r = acc_meas - f_pred;
     last_acc_diag_.r = r;
 
-    const Matrix3 J_att = -skew_(f_cog_b);
+    const Matrix3 J_att = -skew_(f_cog_b) - turn.down_jacobian * skew_(down);
     constexpr int NCOL_MAX = 3 + (kMotion ? 3 * motion_acc_terms_() : 3) + (AB ? 3 : 0) + (GB ? 3 : 0);
     int ncol = 6 + (AB ? 3 : 0);
     int col[NCOL_MAX];
@@ -1341,7 +1356,7 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     for (int k = 0; k < 3; ++k) { col[k] = k; cvec[k] = J_att.col(k); }
     if constexpr (kMotion) {
         // The coupling source sees the measured world-frame acceleration.
-        Vector3 f_meas_cog = acc_meas - ba_term;
+        Vector3 f_meas_cog = acc_meas - ba_term - turn.force;
         if (lever_.enabled()) f_meas_cog -= lever_.acceleration();
         motion_.observe(Rwb.transpose() * f_meas_cog + g_world);
         int m = 3;
@@ -1364,8 +1379,9 @@ void CARMA3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         }
     }
     if constexpr (GB) {
-        if (lever_.enabled()) {
-            const Matrix3 J_bg = lever_.bias_jacobian();
+        if (lever_.enabled() || marine_turn_.speed != T(0)) {
+            Matrix3 J_bg = -turn.rate_jacobian;
+            if (lever_.enabled()) J_bg += lever_.bias_jacobian();
             for (int k = 0; k < 3; ++k) { col[ncol] = 3 + k; cvec[ncol] = J_bg.col(k); ++ncol; }
         }
     }

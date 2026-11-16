@@ -276,9 +276,11 @@ public:
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro_body_ned.allFinite() ||
             !acc_body_ned.allFinite() || !std::isfinite(tempC)) return;
 
+        // This sample can train the speed used by the next innovation only.
+        // A gap that resets that learner also removes its stale correction.
+        impl_.setManoeuvreMotion(dt <= 0.1f ? turn_separator_.speedMps() : 0.0f,
+                                cfg_.turn_separator.forward_body);
         turn_separator_.update(dt, gyro_body_ned, acc_body_ned, cfg_.gravity_magnitude);
-        impl_.setManoeuvreAccelerationBody(turn_separator_.correctionBodyMs2(
-            attitudeReferenceQuat_().conjugate()*Eigen::Vector3f::UnitZ(), gyro_body_ned));
         t_ += dt;
 
         last_acc_body_ned_  = acc_body_ned;

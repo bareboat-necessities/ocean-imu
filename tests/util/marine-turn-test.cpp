@@ -1,12 +1,45 @@
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 #define EIGEN_NON_ARDUINO
 #include "kalman_common/MarineTurnSeparator.h"
+#include "kalman_common/MarineTurnModel.h"
 #include <cassert>
 #include <iostream>
 #include <random>
 using V=Eigen::Vector3f;
 using Q=Eigen::Quaternionf;
 using Separator=seastate::common::MarineTurnSeparator;
+
+void model_jacobians() {
+    using Model=ocean_imu::kalman::MarineTurnModel<double>;
+    using Vec=Model::V;
+    using Mat=Model::M;
+    Model model;
+    const Vec bow=Vec(1,.2,-.1).normalized(), down=Vec(.13,-.21,1).normalized();
+    const Vec omega(.07,-.11,.026);
+    model.set(2.6,bow);
+    const auto e=model.evaluate(down,omega,bow);
+    assert(std::abs(e.force.dot(down)) < 1e-14);
+    const double eps=1e-6;
+    Mat jd,jw;
+    for(int k=0;k<3;++k) {
+        const Vec step=eps*Vec::Unit(k);
+        jd.col(k)=(model.evaluate(down+step,omega,bow).force-
+                   model.evaluate(down-step,omega,bow).force)/(2*eps);
+        jw.col(k)=(model.evaluate(down,omega+step,bow).force-
+                   model.evaluate(down,omega-step,bow).force)/(2*eps);
+    }
+    assert((jd-e.down_jacobian).norm()<1e-9);
+    assert((jw-e.rate_jacobian).norm()<1e-9);
+    // Rotation of the mounting frame rotates force and both derivatives.
+    const Mat mount=Eigen::AngleAxisd(.8,Vec(1,2,3).normalized()).toRotationMatrix();
+    const auto rotated=model.evaluate(mount*down,mount*omega,mount*bow);
+    assert((rotated.force-mount*e.force).norm()<1e-14);
+    assert((rotated.down_jacobian-mount*jd*mount.transpose()).norm()<1e-9);
+    assert((rotated.rate_jacobian-mount*jw*mount.transpose()).norm()<1e-9);
+    model.set(0,bow);
+    const auto zero=model.evaluate(down,omega,bow);
+    assert(zero.force.isZero(0) && zero.down_jacobian.isZero(0) && zero.rate_jacobian.isZero(0));
+}
 
 void run(float speed, float period, bool yaw, bool turned_mount) {
     Separator filter;
@@ -48,6 +81,7 @@ void run(float speed, float period, bool yaw, bool turned_mount) {
     if(!yaw) assert(filter.speedMps()==0);
 }
 int main(){
+    model_jacobians();
     run(2.1f,14,true,false);
     run(4.f,28,true,true);
     run(-1.5f,55,true,false);

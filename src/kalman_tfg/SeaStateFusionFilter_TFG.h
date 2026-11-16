@@ -253,6 +253,8 @@ public:
     void update(float dt, const Vector3f& gyro, const Vector3f& acc, float tempC = 35.0f) {
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
 
+        mekf_.set_marine_turn(dt <= 0.1f ? turn_separator_.speedMps() : 0.0f,
+                              cfg_.turn_separator.forward_body);
         turn_separator_.update(dt, gyro, acc, cfg_.gravity_magnitude);
         applyPendingTune_();
         elapsed_sec_ += dt;
@@ -314,8 +316,7 @@ public:
 
         periodicAwCovSyncTick_(dt);
         mekf_.time_update(gyro, dt);
-        mekf_.measurement_update_acc_only(acc_in-turn_separator_.correctionBodyMs2(
-            mekf_.quaternion().conjugate()*Vector3f::UnitZ(), gyro), tempC);
+        mekf_.measurement_update_acc_only(acc_in, tempC);
 
         // Unlike the OU wrappers, whose MEKFs fire their own zero
         // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the
@@ -523,6 +524,7 @@ public:
     [[nodiscard]] Vector3f get_velocity() const { return mekf_.get_velocity(); }
     [[nodiscard]] Vector3f get_position() const { return mekf_.get_position(); }
     [[nodiscard]] Vector3f get_world_accel() const { return mekf_.get_world_accel(); }
+    [[nodiscard]] Vector3f get_world_total_accel() const { return mekf_.get_world_total_accel(); }
 
 private:
     void beginMagAcquisition_() {

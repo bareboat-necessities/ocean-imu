@@ -88,7 +88,7 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = ned_to_zu(fusion_.get_position());
         s.vel_est_zu  = ned_to_zu(fusion_.get_velocity());
-        s.acc_est_zu  = ned_to_zu(fusion_.get_world_accel());
+        s.acc_est_zu  = ned_to_zu(fusion_.get_world_total_accel());
 
         const Quaternionf q_bw_ned = fusion_.quaternion().normalized();
         float roll_deg = 0.0f, pitch_deg = 0.0f, yaw_deg = 0.0f;

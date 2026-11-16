@@ -190,6 +190,33 @@ void test_accel_jacobian_at_consistent_state() {
     }
 }
 
+void test_turn_jacobian_through_group_retraction() {
+    for (int trial=0; trial<8; ++trial) {
+        Filter f=make_filter();
+        const Vector3 bow=trial%2 ? Vector3::UnitY() : Vector3::UnitX();
+        const Vector3 gyro(T(.03)*std::sin(T(trial)),T(-.07),T(.04)*std::cos(T(trial)));
+        const T speed=trial%2 ? T(-1.4) : T(3.1);
+        f.time_update(gyro,T(.005));
+        f.set_marine_turn(speed,bow);
+        const Vector3 d=f.R_wb()*Vector3::UnitZ();
+        const Vector3 w=gyro-f.state().B.col(0);
+        const T c=d.dot(bow), h2=T(1)-c*c;
+        const Vector3 force=speed*(w.dot(d)-c*w.dot(bow))*d.cross(bow)/(h2*std::sqrt(h2));
+        check((f.get_world_total_accel()-f.get_world_accel()-f.R_bw()*force).norm()<T(1e-12),
+              "total acceleration does not include the estimated turn force");
+        const Vector3 acc=consistent_accel(f)+force;
+        Vector3 r; JacobianT H; Matrix3 Rw;
+        f.accel_residual(acc,T(35),r,H,Rw);
+        check(r.norm()<T(1e-12), "turn force left a consistent-state residual");
+        const JacobianT numeric=numeric_jacobian(f,[&](const Filter& g) {
+            Vector3 rr; JacobianT HH; Matrix3 RR;
+            g.accel_residual(acc,T(35),rr,HH,RR);
+            return rr;
+        },T(1e-6));
+        compare(H,numeric,T(2e-8),"turn model through TFG retraction");
+    }
+}
+
 /*
     Away from a consistent state the finite-difference Jacobian and the
     analytic one must differ by EXACTLY -[r_a]x.
@@ -674,6 +701,7 @@ void test_float_instantiation() {
 int main() {
     test_accel_residual_is_zero_at_truth();
     test_accel_jacobian_at_consistent_state();
+    test_turn_jacobian_through_group_retraction();
     test_accel_jacobian_neglected_term_is_exactly_the_innovation();
     test_accel_jacobian_is_estimate_independent();
     test_accel_bias_column_is_rotated_at_level_one();

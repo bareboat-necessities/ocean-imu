@@ -259,7 +259,7 @@ public:
 
         s.disp_est_zu = ned_to_zu(fusion_.get_position());
         s.vel_est_zu  = ned_to_zu(fusion_.get_velocity());
-        s.acc_est_zu  = ned_to_zu(fusion_.get_world_accel());
+        s.acc_est_zu  = ned_to_zu(fusion_.get_world_total_accel());
 
         // BODY -> WORLD in NED. After magnetic lock this is the learned
         // magnetic-NED frame, not true north: no declination model is applied,

@@ -473,13 +473,25 @@ void reference_update(G& Xh, MX& P, const V3& r, const Eigen::Matrix<double, 3, 
     Xh = G::Exp_G(TX(-a)).compose(Xh);
 }
 
-void test_update_against_reference() {
+V3 turn_force(const G& state, const V3& gyro) {
+    const V3 bow=V3::UnitY(), d=state.R.transpose()*V3::UnitZ();
+    const V3 w=gyro-state.B.col(0);
+    const double c=d.dot(bow), h2=1-c*c;
+    return 2.6*(w.dot(d)-c*w.dot(bow))*d.cross(bow)/(h2*std::sqrt(h2));
+}
+
+void test_update_against_reference(bool turning=false) {
     const V3 Bw(18.0, 1.5, 43.0);
     const M3 Racc = V3(0.03, 0.04, 0.05).array().square().matrix().asDiagonal();
     const M3 Rmag = V3(0.8, 0.8, 0.9).array().square().matrix().asDiagonal();
+    const V3 gyro(.03,-.04,.06);
     for (int held = 0; held < 2; ++held) {
         for (const auto& st : jacobian_states()) {
             F f = make_filter();
+            if (turning) {
+                f.time_update(gyro,.005);
+                f.set_marine_turn(2.6,V3::UnitY());
+            }
             f.set_Racc_std(V3(0.03, 0.04, 0.05));
             f.set_Rmag(V3(0.8, 0.8, 0.9));
             f.set_accel_bias_temp_coeff(V3::Zero());
@@ -495,13 +507,19 @@ void test_update_against_reference() {
             xi.head<3>() = rvec(0.01);
             for (int i = 6; i < F::OFF_BA; ++i) xi(i) = std::normal_distribution<double>(0, 0.03)(rng);
             const G X = truth_from(Xr, xi);
-            const V3 facc = X.R.transpose() * (V3(X.X.col(2)) - V3(0, 0, GRAV)) + V3(X.B.col(1));
+            V3 facc = X.R.transpose() * (V3(X.X.col(2)) - V3(0, 0, GRAV)) + V3(X.B.col(1));
+            if (turning) facc += turn_force(X,gyro);
             const V3 mmag = X.R.transpose() * Bw;
             // Accelerometer.
             f.measurement_update_acc_only(facc, 35.0);
             {
-                const V3 r = Xr.R * (facc - V3(Xr.B.col(1))) - (V3(Xr.X.col(2)) - V3(0, 0, GRAV));
-                const auto H = fd_meas(Xr, [&](const G& Xt) { return acc_residual(Xr, Xt, V3::Zero(), 0.0); }, 1e-6);
+                const V3 turn = turning ? turn_force(Xr,gyro) : V3::Zero();
+                const V3 r = Xr.R * (facc - V3(Xr.B.col(1)) - turn) - (V3(Xr.X.col(2)) - V3(0, 0, GRAV));
+                const auto H = fd_meas(Xr, [&](const G& Xt) {
+                    V3 residual=acc_residual(Xr,Xt,V3::Zero(),0.0);
+                    if (turning) residual += Xr.R*(turn_force(Xt,gyro)-turn);
+                    return residual;
+                }, 1e-6);
                 reference_update(Xr, Pr, r, H, Racc, held != 0, 0);
             }
             const double ex = std::max({(f.state().R - Xr.R).cwiseAbs().maxCoeff(),
@@ -519,7 +537,7 @@ void test_update_against_reference() {
                                          (f.state().X - Xr.X).cwiseAbs().maxCoeff(),
                                          (f.state().B - Xr.B).cwiseAbs().maxCoeff()});
             const double ep2 = rel_max(f.covariance_full(), Pr);
-            const std::string tag = std::string(held ? " (bias held)" : "") + ": " + st.name;
+            const std::string tag = std::string(turning ? " (turning)" : "") + std::string(held ? " (bias held)" : "") + ": " + st.name;
             check("update: accel state vs dense FD reference" + tag, ex, 1e-7);
             check("update: accel covariance vs dense FD reference" + tag, ep, 1e-6);
             check("update: accel+mag state vs dense FD reference" + tag, ex2, 1e-7);
@@ -1476,6 +1494,7 @@ int main() {
     test_mekf_relation();
     test_yaw_information();
     test_behaviour();
+    test_update_against_reference(true);
     std::printf("tfg_carma3-test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;
 }

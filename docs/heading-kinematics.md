@@ -80,11 +80,22 @@ coherence, speed bounds and a settling interval prevent a constant heading or
 noise-only regression from supplying a correction.
 
 The learned turning acceleration is evaluated in the main estimator's gravity
-plane and accounted for in its accelerometer measurement update. It therefore
-has no vertical component in that navigation frame. The raw measurement-only
+plane and included in its physical accelerometer prediction, separately from
+the wave acceleration. `MarineTurnModel` supplies the attitude and gyro-bias
+Jacobians in the native QMEKF or TFG error coordinates. It uses the endpoint
+gyro sample and the current gyro-bias estimate; attitude prediction retains
+its existing interval integration. The current sensor sample can train only
+the following sample's nuisance-speed estimate. The turning term has no
+vertical component in that navigation frame. The raw measurement-only
 startup, magnetic-reference and sea-state tuning paths retain their sensor
 stream. Bias remains a sensor-body state; this correction is not a relabeling or
 smoothing of the reported bias.
+
+`get_world_accel()` is the wave-state acceleration. The new
+`get_world_total_accel()` adds the estimated steering acceleration and is used
+for the replay's existing total-acceleration columns and RMS. Position and
+velocity remain wave-relative; every delivered IMU sample and every reference
+column retain their original values.
 
 `Config::turn_separator.forward_body` declares the bow in the calibrated body
 frame (X by default). The replay explicitly uses Y because its body conversion
@@ -99,6 +110,15 @@ need independent navigation aiding; yaw alone does not make those motions
 identifiable. Synthetic tests cover different turn periods and speeds, reverse
 travel, mounting rotation, zero-speed yaw, constant heading and preservation of
 the navigation vertical.
+
+Finite differences check the shared force derivatives and the TFG group
+retraction, including the gyro-bias columns. The TFG-CARMA sparse update is
+also compared with a dense Joseph update using an independently differentiated
+turn model. A zero speed supplies exactly zero force and derivatives.
+
+This is a conditional motion model, not a joint navigation-speed covariance
+state. Uncertainty and temporal correlation in the learned speed are not
+claimed to be fully represented by the native Kalman covariance.
 
 Full replay validation of the runtime change is in progress. Existing quality
 limits are retained; the attribution tables above describe the original runtime

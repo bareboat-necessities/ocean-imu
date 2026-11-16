@@ -511,7 +511,7 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
         s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
-        s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_accel());
+        s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_total_accel());
 
         // Filter attitude is BODY->WORLD in NED.
         //
