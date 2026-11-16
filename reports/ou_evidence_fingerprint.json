@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "16646240dfddd75b4169604ac468043d31c87019df1e531a1af722af30fb3758",
+  "replay_fingerprint": "f6227c2a9f942c949a6ebd90ff9d6a7b0f1731496a4bc0e9099543e1f3c6ffbe",
   "results_file_count": 993,
   "results_files": [
     {
@@ -2571,7 +2571,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "ccff0d36b753ac7d420ac88cd9263e7d799e5326040105d6a71d07ea368e7f25"
+      "sha256": "8602466ec4c98f714909b5fc68c4b541e8834ca8aa9056ef19a51496ff448a73"
     },
     {
       "kind": "file",
@@ -2676,7 +2676,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "4cd530bcee911afa13d2be8547b8425d85d7e31ccdc1a39a469ffcb3b0aa9704"
+      "sha256": "badcd699677d92f9cc284c4d367b73a9a1fd8965662ccbc22a6edb7f4b9358da"
     },
     {
       "kind": "file",
@@ -2771,7 +2771,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "7720bcf53ec8fffadd8a1972cad7b8728568e543cb04626138c8ba5ad6a780cd"
+      "sha256": "940650b3c2f2637d4b8c362dda34463ab66c919ce35770de3c65916d16f14e6b"
     },
     {
       "kind": "file",
@@ -4969,13 +4969,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "64c332eee67339654344655d081860226eca548fc87c68564d4545ff760cda68",
+  "results_fingerprint": "1b28d56900988b0292d21cabb6d8780fa98ffe98c84095e81f41d46d94042a13",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1023,
+  "tracked_replay_file_count": 1025,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -5005,7 +5005,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "96654f4afb49235d71ab0b71c137736ac0ab2875858632d388ac3a628f477dd9"
+      "sha256": "123cc05a3e473d1d2c6f0dfcd548e04d46af192183d9ac066504203cdf7fd4d1"
     },
     {
       "mode": "100644",
@@ -5205,7 +5205,7 @@
     {
       "mode": "100755",
       "path": "plots/kalman_carma_shared_modes/draw_plots.sh",
-      "sha256": "1f4ee83626506cc0fbd3dbc5e36fe6f6fabc0920b9651c61d94ce80a440c3bb7"
+      "sha256": "9e03a4996bc40ce4f07e7a14a0451d9710c051aa82e7ddb326c65b47c0e43d8a"
     },
     {
       "mode": "100755",
@@ -8204,6 +8204,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/test_shared_modes_article_evidence.py",
+      "sha256": "0191498f4e4da07b0540e82445c3ae580decd936c30927f420776ce6a5a67b34"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/test_sim_dataset.py",
       "sha256": "885daf6ae610a136735e52b97f6e35f3a73afbd5048b1d9ada9815aba63e114e"
     },
@@ -8370,7 +8375,7 @@
     {
       "mode": "100644",
       "path": "tests/wave_sim/wave-convention-check.cpp",
-      "sha256": "3b35296d960bb0226019f6783ef8adc21843f8815d0c5002ab559a4eaeed5495"
+      "sha256": "d3603400db431d9ed076f4ae616be2301a71172992d9d6ea1646088837f757b9"
     },
     {
       "mode": "100644",
@@ -8726,6 +8731,11 @@
       "mode": "100644",
       "path": "tools/replay_low_wave_followup.py",
       "sha256": "5adb8a5cf1b06435cc2442aeb24931e4af92fbd10e306cbfc298a520891439f0"
+    },
+    {
+      "mode": "100644",
+      "path": "tools/shared_modes_article_evidence.py",
+      "sha256": "94773af60ad1a73e4380da969d7615d1d944c970c853840b1ec77759621412e1"
     },
     {
       "mode": "100644",
