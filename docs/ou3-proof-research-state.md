@@ -109,6 +109,30 @@ promotion. Current limiter: corrected CI article completion. Next falsifiable
 check: both direction builds produce articles with valid full companion evidence;
 orchestration tests must reject replay and final provenance failures.
 
+Class E article failures in main build 43815390646: both shared-mode jobs
+lack `luaotfload-main`, so analytical PGF export stops and the method article
+cannot find `csm_validation_xy.pgf`; the head-sea wave job rejects its 180-degree
+mean yaw against a zero-heading convention check before writing drift CSVs.
+Invalidated assumptions: XeTeX packages include LuaLaTeX font loading, all
+vessel headings are near zero, and committed v1.2.3 validation traces qualify
+v1.4.0 articles. Add the LuaLaTeX dependency, measure the same 3-degree RMS
+deviation cap around the declared case heading, and reuse complete v1.4.0
+shared-mode CI artifacts only after checking source ancestry/runtime changes,
+input hashes, ten seeds, 1,038 unique runs, 180,000-sample windows and product
+hashes. Otherwise generate the actual full study. No evidence is restamped.
+Retained facts: both 544-cell matrices, all 42 studies and regenerated full OU
+provenance passed. Structures preserved: shipping operations, scoring windows,
+source/input bindings and fixed numerical gates. Relaxations introduced: none;
+no shipping counterexample or theorem promotion. Current limiter: article
+build completion. Next falsifiable experiment: both direction convention and
+drift plots, analytical PGF exports, artifact rejection tests and corrected CI
+PDF publication. A local parallel prebuild of the unchanged tangent-study
+`q.o` was killed by the host memory limit (class E); the serial required build
+retains responsibility for that target. This invalidates only the local
+parallelism assumption, retains every source/proof fact, and does not justify
+a runtime or numerical change. The existing six-item shipping handoff below
+still applies.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the

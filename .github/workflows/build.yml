@@ -142,6 +142,7 @@ jobs:
           # than from the commit that started the run, or the article is
           # typeset against the evidence the regeneration just replaced.
           ref: ${{ github.ref == 'refs/heads/main' && 'refs/heads/main' || '' }}
+          fetch-depth: 0
 
       - name: Download sim data from oceanography-waves-lib GitHub repo release
         env:
@@ -195,7 +196,7 @@ jobs:
           install_deps() {
             apt_get update && apt_get install -y \
               g++ make libeigen3-dev \
-              texlive-xetex texlive-latex-recommended texlive-fonts-recommended \
+              texlive-xetex texlive-luatex texlive-latex-recommended texlive-fonts-recommended \
               texlive-latex-extra texlive-fonts-extra dvipng cm-super \
               texlive-plain-generic \
               inkscape graphviz python3-pip \
@@ -319,6 +320,20 @@ jobs:
         with:
           name: tfg-article-evidence-${{ matrix.case }}
           path: reports/results/tfg_comparison/**
+          if-no-files-found: error
+
+      - name: Prepare current shared-mode article evidence
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/shared_modes_article_evidence.py --jobs 2
+
+      - name: Retain shared-mode article evidence
+        if: matrix.dir == 'kalman_carma_shared_modes'
+        uses: actions/upload-artifact@v6
+        with:
+          name: shared-mode-article-evidence-${{ matrix.case }}
+          path: reports/results/sim_v1.4.0/${{ matrix.case }}/studies/carma_shared_modes_validation/**
           if-no-files-found: error
 
       - name: Generate PGF plots (${{ matrix.dir }})
