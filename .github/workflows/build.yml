@@ -121,7 +121,7 @@ jobs:
           && (github.ref != 'refs/heads/main'
               || (needs['ou-evidence'].result == 'success'
                   && needs['evidence-contract'].result == 'success')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # kalman_ou_iii PGF generation alone takes 22-28 min on hosted runners;
     # 45 min cancelled that job on slower runners before LaTeX finished.
     timeout-minutes: 75
@@ -213,6 +213,9 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Compile tests (${{ matrix.dir }})
         run: |

@@ -5,6 +5,7 @@ on:
   push:
     branches-ignore: [main]
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "tools/**"
       - "docs/tfg-comparison.md"
       - "tests/validation/**"

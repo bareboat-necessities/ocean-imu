@@ -1,9 +1,9 @@
 name: simulation-matrix
 on:
   push:
-    paths: ['src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
+    paths: ['.github/actions/replay-toolchain/**', 'src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
   pull_request:
-    paths: ['src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
+    paths: ['.github/actions/replay-toolchain/**', 'src/**', 'tests/**', 'tools/**', 'Makefile', '.github/workflows/simulation-matrix.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,6 +31,9 @@ jobs:
           python3 tests/validation/test_sim_dataset.py
           python3 tests/validation/test_bidirectional_sim.py
           python3 tools/generate_record_replay_limits.py --check
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
+
       - name: Run every filter and applicable replay profile
         run: python3 -u tools/sim_matrix.py --cases "${{ matrix.case }}" --build --jobs 2
       - uses: actions/upload-artifact@v6

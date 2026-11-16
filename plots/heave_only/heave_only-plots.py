@@ -62,6 +62,7 @@ NAME = re.compile(r"w3d_(?P<wave>[a-z]+)_H(?P<h>[0-9.]+)_")
 
 
 FRONTEND = "mahony"
+CASE_LABEL = ""
 
 
 def find(tests_dir: Path, method: str, wave: str, height: float):
@@ -111,7 +112,7 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
     fig, axes = plt.subplots(4, 1, figsize=(10, 10.5), sharex=True)
     levelling = FRONTENDS[FRONTEND][1]
     fig.suptitle(f"{wave.upper()} Hs = {height:g} m: heave, last {PLOT_WINDOW_S:.0f} s; "
-                 f"{levelling} (window RMS error in legend)")
+                 f"{levelling} (window RMS error in legend)" + (f"\n{CASE_LABEL}" if CASE_LABEL else ""))
     panels = (
         (axes[0], ("ou3", "ou2", "tfg", "pii"), "OU families and PII" if "pii" in est else "OU families"),
         (axes[1], ("richter_zd", "godhavn_ext", "kuchler"), "Literature heave-only filters"),
@@ -142,7 +143,7 @@ def overview(dfs: dict, wave: str, group: str, height: float, out: Path):
 def zkin(df: pd.DataFrame, method: str, wave: str, group: str, height: float, out: Path):
     fig, axes = plt.subplots(2, 1, figsize=(10, 5.0), sharex=True)
     fig.suptitle(f"{SOURCES[method][2]}: {wave.upper()} Hs = {height:g} m (Z-axis, last "
-                 f"{PLOT_WINDOW_S:.0f} s)")
+                 f"{PLOT_WINDOW_S:.0f} s)" + (f"\n{CASE_LABEL}" if CASE_LABEL else ""))
     for ax, prefix, ylabel in ((axes[0], "disp", "Disp Z [m]"), (axes[1], "vel", "Vel Z [m/s]")):
         ax.plot(df["time"], df[f"{prefix}_ref_z"], label="Ref")
         ax.plot(df["time"], df[f"{prefix}_est_z"], label="Est", linestyle="--")
@@ -160,10 +161,12 @@ def main():
     ap.add_argument("--png", action="store_true", help="also write PNG previews")
     ap.add_argument("--frontend", choices=tuple(FRONTENDS), default="mahony",
                     help="which levelling the heave-only filter series used")
+    ap.add_argument("--case-label", default="", help="verified case description for standalone chart titles")
     args = ap.parse_args()
-    global WRITE_PNG, FRONTEND
+    global WRITE_PNG, FRONTEND, CASE_LABEL
     WRITE_PNG = args.png
     FRONTEND = args.frontend
+    CASE_LABEL = args.case_label
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     made = 0

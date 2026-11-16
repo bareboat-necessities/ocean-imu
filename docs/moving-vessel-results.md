@@ -6,14 +6,14 @@ The current external-data baseline uses oceanography-waves-lib v1.4.0: a 28 ft e
 
 | Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) |
 | --- | ---: | ---: | ---: | ---: |
-| OU-II | 8.551 | 8.088 | 1.092 | 0.978 |
+| OU-II | 8.551 | 8.088 | 1.092 | 0.968 |
 | OU-III | 8.371 | 7.932 | 1.007 | 0.940 |
 | TFG | 5.870 | 5.565 | 0.995 | 1.378 |
 | TFG cubic | 4.805 | 4.923 | 1.568 | 3.840 |
-| CARMA | 3.522 | 3.628 | 0.545 | 1.007 |
+| CARMA | 3.522 | 3.628 | 0.545 | 1.006 |
 | Shared QMEKF | 3.481 | 3.500 | 0.499 | 0.919 |
-| TFG-CARMA | 3.522 | 3.629 | 0.546 | 0.986 |
-| Shared TFG | 3.481 | 3.502 | 0.499 | 0.915 |
+| TFG-CARMA | 3.522 | 3.629 | 0.546 | 0.985 |
+| Shared TFG | 3.481 | 3.502 | 0.499 | 0.914 |
 | Shared tangent | 3.482 | 3.502 | 0.499 | 0.915 |
 | AHRS | — | — | — | 6.746 |
 | Adaptive PII | 10.640 | 10.256 | — | 8.094 |
@@ -30,7 +30,7 @@ The current external-data baseline uses oceanography-waves-lib v1.4.0: a 28 ft e
 
 | Filter | JONSWAP heave (% Hs) | PM-Stokes heave (% Hs) | 3D RMS (m) | Yaw RMS (deg) |
 | --- | ---: | ---: | ---: | ---: |
-| OU-II | 6.075 | 5.862 | 0.915 | 2.717 |
+| OU-II | 6.075 | 5.861 | 0.915 | 2.717 |
 | OU-III | 3.616 | 3.559 | 0.849 | 2.487 |
 | TFG | 2.773 | 2.781 | 0.866 | 2.589 |
 | TFG cubic | 2.714 | 2.691 | 1.146 | 2.445 |
@@ -46,7 +46,7 @@ The current external-data baseline uses oceanography-waves-lib v1.4.0: a 28 ft e
 | Godhavn | 395.715 | 489.737 | — | — |
 | Godhavn extended | 26.438 | 31.342 | — | — |
 | Richter | 22.413 | 25.517 | — | — |
-| Kuchler | 20.910 | 23.041 | — | — |
+| Kuchler | 20.910 | 21.765 | — | — |
 
 [Full metrics](../reports/results/sim_v1.4.0/head/metrics.csv) · [Charts and provenance](../reports/results/sim_v1.4.0/head/README.md)
 

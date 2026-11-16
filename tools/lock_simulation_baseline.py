@@ -8,6 +8,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import shutil
 
 from sim_dataset import ROOT, CASES, RELEASE, REFERENCE_CSV_SHA256_BY_CASE, digest
 from sim_matrix import metric_rows
@@ -105,6 +106,9 @@ def main():
     evidence, global_caps = make_baseline(reports)
     evidence['measurement_sha256'] = {c:digest(p) for c,p in paths.items()}
     out = ROOT/'reports/results/filter_sim_gates'
+    evidence['measurement_files'] = {c:f'baseline_{c}.json' for c in CASES}
+    for case, source in paths.items():
+        shutil.copyfile(source, out/evidence['measurement_files'][case])
     (out/'per_record_limits.json').write_text(json.dumps(evidence,indent=2,allow_nan=False)+'\n')
     (out/'limits.json').write_text(json.dumps(global_caps,indent=2,allow_nan=False)+'\n')
     (ROOT/'tests/common/RecordReplayLimits.inc').write_text(render(evidence))

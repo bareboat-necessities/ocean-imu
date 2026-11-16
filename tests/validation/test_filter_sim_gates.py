@@ -79,6 +79,10 @@ class ReplayEvidenceTests(unittest.TestCase):
         from generate_record_replay_limits import render
         from lock_simulation_baseline import cap
         data = json.loads((ROOT / 'reports/results/filter_sim_gates/per_record_limits.json').read_text())
+        for case, name in data['measurement_files'].items():
+            path = ROOT/'reports/results/filter_sim_gates'/name
+            self.assertEqual(G.digest(path), data['measurement_sha256'][case])
+            self.assertEqual(json.loads(path.read_text())['case'], case)
         keys = {(e['case'], e['family'], e['profile'], e['input']) for e in data['entries']}
         self.assertEqual(len(keys), 544)
         self.assertEqual(len(keys), len(data['entries']))
@@ -120,6 +124,17 @@ int main() {
     setenv("W3D_IMU_SEED", "1234", 1);
     assert(limit("ou3", "default", "diagnostic_crossfade.csv", Metric::heave, 8.0f) == 8.0f);
     unsetenv("W3D_IMU_SEED");
+    const char* regular = "/tmp/wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv";
+    assert(uses_record_caps(regular));
+    setenv("W3D_ALL_WAVE_TYPES", "1", 1);
+    assert(!uses_record_caps(regular));
+    assert(limit("nlo", "default", regular, Metric::heave, 8.19f) == 8.19f);
+    assert(uses_record_caps(e.input));
+    assert(uses_record_caps("wave_data_jonswap_typo.csv"));
+    assert(limit("ou2", "default", e.input, Metric::heave, global) == e.limits[0]);
+    setenv("W3D_ALL_WAVE_TYPES", "0", 1);
+    assert(uses_record_caps(regular));
+    unsetenv("W3D_ALL_WAVE_TYPES");
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:
@@ -238,16 +253,30 @@ int main() {
         expected.add('tests/kalman_tangent_shared_modes/tangent-replay.cpp')
         self.assertEqual(owned, expected)
 
-    def test_global_limits_and_evidence_match_both_case_measurements(self):
+    def test_locked_limits_match_qualifying_receipts_and_current_scores_pass(self):
         from lock_simulation_baseline import make_baseline, render_global
-        reports = {c: json.loads((ROOT / f'reports/results/sim_v1.4.0/{c}/measurements.json').read_text())
-                   for c in ('following', 'head')}
-        expected, global_caps = make_baseline(reports)
         actual = json.loads((ROOT / 'reports/results/filter_sim_gates/per_record_limits.json').read_text())
+        baseline = {c: json.loads((ROOT/'reports/results/filter_sim_gates'/name).read_text())
+                    for c, name in actual['measurement_files'].items()}
+        expected, global_caps = make_baseline(baseline)
         self.assertEqual(actual['entries'], expected['entries'])
         self.assertEqual(actual['inputs'], expected['inputs'])
         self.assertEqual(global_caps, json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text()))
         self.assertEqual(render_global(global_caps), (ROOT / 'tests/common/CurrentReplayLimits.h').read_text())
+        reports = {c: json.loads((ROOT/f'reports/results/sim_v1.4.0/{c}/measurements.json').read_text())
+                   for c in ('following', 'head')}
+        for report in reports.values():
+            self.assertEqual(report['acceptance'], 'all replay gates passed')
+            self.assertFalse(any(code for profiles in report['replay_exit_codes'].values()
+                                 for code in profiles.values()))
+        current, _ = make_baseline(reports)
+        def key(row):
+            return tuple(row[k] for k in ('case', 'family', 'profile', 'input'))
+        caps = {key(row): row['limits'] for row in actual['entries']}
+        self.assertEqual({key(row) for row in current['entries']}, set(caps))
+        for row in current['entries']:
+            for metric, score in row['measured_max'].items():
+                self.assertLessEqual(score, caps[key(row)][metric], (key(row), metric))
 
     def test_make_log_keeps_sampling_profiles_separate_and_rejects_failed_runs(self):
         families = ('OU_II', 'OU_III', 'TFG', 'CARMA3_A41', 'CARMA_SHARED_MODES_CSM',

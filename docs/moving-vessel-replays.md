@@ -19,6 +19,8 @@ on **both cases**. `make sim-regression` runs only that matrix. It writes
 full-rate metrics in JSON/CSV, seven metric charts, and per-profile logs.
 Any missing record, nonfinite metric or failed numeric gate fails the command;
 complete failed measurements remain available. Normal CI never refits limits.
+The fixed-draw acceptance build uses GCC 14 and Eigen 3.4 with the shared host
+arithmetic settings described in [the gate protocol](filter-simulator-gates.md).
 
 For one case, run:
 
@@ -44,10 +46,15 @@ the case from identically named CSV files.
 The study inventory is in `tools/simulation_studies.py`: paired OU validation
 and robustness, TFG comparison, model mismatch, engine noise, startup, wave
 direction, low–high–low transitions, lever arms, CARMA shape/excitation/coupling
-ablations, shared-mode degradation, paired QMEKF/TFG dataset comparisons, and CSV timing/live-bias audits.
+ablations, shared-mode degradation, paired QMEKF/TFG dataset comparisons,
+CSV timing/live-bias audits, and heave-only comparisons with all three frontends.
 Each is run against both cases by `simulation-studies.yml`. Synthetic-only
 prior-process, Lie-group, calibration and stability experiments retain their
 independently defined scenarios; they do not consume either ZIP.
+
+The heave comparison additionally retains the final 60 s at the original 200 Hz
+and plots uniformly sampled 50 Hz traces. Its 136 full-record accuracy checks
+are independent of this plotting reduction; each direction produces 102 SVGs.
 
 Earlier committed study bundles keep their recorded input hashes and remain
 historical evidence until replaced by a complete run. They must not be relabelled

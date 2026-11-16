@@ -19,6 +19,20 @@ struct Entry {
 };
 #include "RecordReplayLimits.inc"
 
+inline bool uses_record_caps(std::string_view input) {
+    if (!gyro_replay::default_seeds()) return false;
+    input.remove_prefix(input.find_last_of("/\\") == std::string_view::npos
+                        ? 0 : input.find_last_of("/\\") + 1);
+    const char* all = std::getenv("W3D_ALL_WAVE_TYPES");
+    // Startup/engine studies explicitly include these regular-wave controls.
+    // They retain diagnostic global bars; the eight irregular-wave fixtures
+    // and unknown/misspelled inputs must still resolve a locked record cap.
+    const bool regular = input.starts_with("wave_data_gerstner_") ||
+                         input.starts_with("wave_data_cnoidal_") ||
+                         input.starts_with("wave_data_fenton_");
+    return !(all && std::string_view(all) != "0" && regular);
+}
+
 inline const Entry& find(std::string_view family, std::string_view profile, std::string_view input) {
     input.remove_prefix(input.find_last_of("/\\") == std::string_view::npos
                         ? 0 : input.find_last_of("/\\") + 1);
@@ -37,7 +51,7 @@ inline float tighten(const Entry& entry, Metric metric, float global) {
 
 inline float limit(std::string_view family, std::string_view profile, std::string_view input,
                    Metric metric, float global) {
-    if (!gyro_replay::default_seeds()) return global;
+    if (!uses_record_caps(input)) return global;
     // Default protocol bars belong to the selected v1.4.0 trajectory. The
     // historical fallback is only for diagnostic/non-default sensor draws.
     return tighten(find(family, profile, input), metric, std::numeric_limits<float>::infinity());

@@ -3,6 +3,7 @@ name: carma-lever-arm-study
 on:
   pull_request:
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "tools/sim_dataset.py"
       - "tools/sim_dataset_manifest.json"
       - "src/kalman_carma/**"
@@ -60,6 +61,9 @@ jobs:
           python3 tools/sim_dataset.py --archive simulation-case.zip
           mkdir -p /tmp/carma-lever-data
           unzip -o simulation-case.zip -d /tmp/carma-lever-data >/dev/null
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Build the lever-arm simulator and checks
         run: make -C tests/kalman_carma carma_lever_arm-sim carma_lever_arm-test

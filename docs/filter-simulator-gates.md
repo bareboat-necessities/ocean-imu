@@ -26,6 +26,17 @@ sensor noise. Input hashes are distinct even though the two archives share
 filenames. `RecordReplayLimits.inc` is generated from this reviewed evidence.
 `CurrentReplayLimits.h` holds the overall ceilings; the per-record limits
 prevent one direction or sea from borrowing another's larger allowance.
+The original qualifying receipts are retained as `baseline_following.json`
+and `baseline_head.json` beside the gate table and checked against its hashes.
+Current replay reports may be refreshed without changing those locked caps.
+
+The fixed-draw host acceptance build is Linux x86-64, GCC 14 and Eigen 3.4.
+CI selects that compiler explicitly and uses the shared AVX2 host flags instead
+of selecting AVX-512 or other reductions from the runner CPU. The tangent
+replay retains its existing scalar/SSE build. Compiler/SIMD changes can alter
+adaptive mode decisions over a long replay; their results need separate
+qualification rather than being treated as identical fixed-draw arithmetic.
+These host build settings do not change firmware or estimator code.
 
 The v1.4.0 baseline is initialized explicitly from complete measurements.
 The old v1.3.1 heading period was 120 s, so its thresholds are not carried over
@@ -39,6 +50,9 @@ profiles. Missing/duplicate/short records, nonfinite metrics, invalid case
 names and failed numeric gates are errors. Complete scores and failure logs
 are retained before returning a failing status. The case-aware study matrix
 also rejects partial dataset invocations rather than silently appending them.
+Startup/engine studies additionally enable the regular Gerstner, cnoidal and
+Fenton controls with `W3D_ALL_WAVE_TYPES`. Those controls retain their diagnostic
+global bars; enabling them does not bypass the eight irregular-wave record caps.
 
 Current JSON/CSV metrics and SVG charts are in
 `reports/results/sim_v1.4.0/{following,head}`. Their receipts record the input

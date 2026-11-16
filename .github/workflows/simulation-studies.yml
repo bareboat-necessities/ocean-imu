@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "tools/sim_dataset.py"
       - "tools/sim_dataset_manifest.json"
       - "tools/simulation_studies.py"
@@ -11,6 +12,9 @@ on:
       - "tools/carma*.py"
       - "tools/tfg*.py"
       - "tools/live_bias_csv*.py"
+      - "tools/heave_only_comparison.py"
+      - "plots/heave_only/**"
+      - "tests/heave_only/**"
       - 'tools/underway_reference.py'
       - 'src/util/UnderwayReference.h'
       - 'src/util/WaveFilesSupport.h'
@@ -45,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         case: [following, head]
-        study: [ou_validation, ou_robustness, tfg_comparison, model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition, startup_ablation, startup_transient_study, direction_rao_ablation, ou3_lever_arm_study, carma_lever_arm_study, carma3_benchmark, tfg_carma3_benchmark, carma_excitation_study, carma_shared_modes_study, carma_shared_modes_validation, tfg_shared_modes_dataset, live_bias_csv_replay, live_bias_csv_timing]
+        study: [ou_validation, ou_robustness, tfg_comparison, model_mismatch_ablation, engine_noise_degradation, ou3_engine_noise_mitigation, ou_roundtrip_transition, startup_ablation, startup_transient_study, direction_rao_ablation, ou3_lever_arm_study, carma_lever_arm_study, carma3_benchmark, tfg_carma3_benchmark, carma_excitation_study, carma_shared_modes_study, carma_shared_modes_validation, tfg_shared_modes_dataset, live_bias_csv_replay, live_bias_csv_timing, heave_only_comparison]
     env:
       OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
@@ -54,12 +58,17 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ make libeigen3-dev python3-numpy python3-matplotlib python3-pandas python3-scipy
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
+
       - name: Run the complete case-specific study
         run: python3 -u tools/simulation_studies.py "${{ matrix.study }}" --jobs 2
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: simulation-study-v1.4.0-${{ matrix.case }}-${{ matrix.study }}
-          path: reports/results/sim_v1.4.0/${{ matrix.case }}/studies/${{ matrix.study }}/
+          path: |
+            reports/results/sim_v1.4.0/${{ matrix.case }}/studies/${{ matrix.study }}/
+            reports/results/sim_v1.4.0/${{ matrix.case }}/studies/${{ matrix.study }}.log
           if-no-files-found: error
           retention-days: 14

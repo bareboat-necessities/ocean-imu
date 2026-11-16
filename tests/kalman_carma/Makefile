@@ -6,13 +6,7 @@ EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-isystem $(EIGEN_DIR),-isystem /usr/include/eigen3)
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 LDFLAGS =
 # Published lever-arm ratios include amplified negative controls. Keep their
 # arithmetic independent of the runner's SIMD/FMA instruction set; the other
@@ -51,7 +45,7 @@ carma_excitation-test: carma_excitation-test.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 carma_coupled-test: carma_coupled-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-%.o: %.cpp
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)
 clean:

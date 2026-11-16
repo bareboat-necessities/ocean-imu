@@ -17,3 +17,8 @@ Charts show production defaults. CSV/JSON also retain interval-rate profiles and
 heave truth/proxy frontends. Per-case studies are kept under `CASE/studies/` and
 published by the `simulation-studies` workflow; each receipt identifies its inputs,
 executables, commands and completion status.
+
+The full OU-III lever-arm sweep is also recorded for
+[following seas](following/studies/ou3_lever_arm_study/lever_arm_report.md) and
+[head seas](head/studies/ou3_lever_arm_study/lever_arm_report.md): 224 installation
+runs plus 64 derivative-cutoff runs per direction, with five SVG charts each.

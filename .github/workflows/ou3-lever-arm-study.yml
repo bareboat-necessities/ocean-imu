@@ -3,6 +3,7 @@ name: ou3-lever-arm-study
 on:
   pull_request:
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "tools/sim_dataset.py"
       - "tools/sim_dataset_manifest.json"
       - "src/kalman_ou_iii/**"
@@ -61,6 +62,9 @@ jobs:
           python3 tools/sim_dataset.py --archive simulation-case.zip
           mkdir -p /tmp/ou3-lever-data
           unzip -o simulation-case.zip -d /tmp/ou3-lever-data >/dev/null
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim

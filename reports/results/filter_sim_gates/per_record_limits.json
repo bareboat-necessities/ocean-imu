@@ -10487,5 +10487,9 @@
   "measurement_sha256": {
     "following": "bcc154768d139cb0c821c95bd0f0e36acc11c2514aa92b53469b10a18443dd12",
     "head": "2d6d6bf389efc8e7f49f91c474cb470ccadccb08f8cb88dc3a2d9670dcd22e27"
+  },
+  "measurement_files": {
+    "following": "baseline_following.json",
+    "head": "baseline_head.json"
   }
 }

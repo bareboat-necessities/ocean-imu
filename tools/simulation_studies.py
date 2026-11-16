@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -43,11 +44,35 @@ STUDIES = {
     'tfg_shared_modes_dataset': CARMA + CSM + TCSM,
     'live_bias_csv_replay': CSM + TCSM,
     'live_bias_csv_timing': [],
+    'heave_only_comparison': OU + TFG + [('heave_only', 'heave_only-sim')],
 }
 DATASET_STUDIES = {'carma3_benchmark': 'carma3_benchmark',
                    'tfg_carma3_benchmark': 'tfg_carma3',
                    'carma_excitation_study': 'carma_excitation',
                    'carma_shared_modes_study': 'kalman_carma_shared_modes'}
+
+
+def run_commands(commands, env, out):
+    """Preserve diagnostics when a legacy study replaces its results directory."""
+    if not commands:
+        raise ValueError('at least one study command is required')
+    # A sibling log survives output cleanup and remains available if CI
+    # interrupts the job before the child returns.
+    out.parent.mkdir(parents=True, exist_ok=True)
+    log_path = out.parent/f'{out.name}.log'
+    with log_path.open('w', encoding='utf-8') as log:
+        for command in commands:
+            try:
+                result = subprocess.run(command, env=env, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+            except OSError as error:
+                log.write(f'Unable to launch {command!r}: {error}\n')
+                result = subprocess.CompletedProcess(command, 127)
+            if result.returncode:
+                break
+        out.mkdir(parents=True, exist_ok=True)
+        log.flush()
+        shutil.copyfile(log_path, out/'study.log')
+    return result
 
 
 def command_for(study, data, out, jobs, mode):
@@ -135,7 +160,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     data = ROOT/'.sim-data/cases'/CASE
     targets = STUDIES[args.study]
-    destinations = [data, ROOT/'plots/kalman_ou_ii'] + [ROOT/'tests'/d for d,_ in targets]
+    destinations = [data]
+    if args.study != 'heave_only_comparison':
+        destinations += [ROOT/'plots/kalman_ou_ii'] + [ROOT/'tests'/d for d,_ in targets]
     subprocess.run([sys.executable, str(ROOT/'tools/sim_dataset.py'), '--case', CASE,
                     '--dest', *map(str, destinations)], check=True)
     if not args.skip_build:
@@ -168,11 +195,7 @@ def main():
         commands.append(tool('engine_noise_guard_families', '--data-dir', data, '--jobs', args.jobs,
                              '--degradation-summary', out/'engine_noise_summary.csv', '--output-dir', out))
     receipt['commands'] = commands
-    with (out/'study.log').open('w') as log:
-        for command in commands:
-            result = subprocess.run(command, env=env, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
-            if result.returncode:
-                break
+    result = run_commands(commands, env, out)
     receipt.update(exit_code=result.returncode, seconds=time.monotonic()-begin,
                    status='postprocessing' if result.returncode == 0 else 'failed', log_sha256=digest(out/'study.log'))
     receipt_path.write_text(json.dumps(receipt, indent=2)+'\n')

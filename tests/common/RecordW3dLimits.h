@@ -6,8 +6,9 @@
 namespace ocean_imu::sim::record_limits {
 inline W3dFailureLimits w3d(std::string_view family, std::string_view profile,
                            std::string_view input, W3dFailureLimits bars) {
-    // Seed sweeps are diagnostic experiments, not this fixed-draw protocol.
-    if (!gyro_replay::default_seeds()) return bars;
+    // Seed sweeps and explicitly enabled regular-wave controls are diagnostic
+    // experiments outside the eight-record fixed-draw protocol.
+    if (!uses_record_caps(input)) return bars;
     const auto& e = find(family, profile, input);
     bars.err_limit_percent_z_jonswap = tighten(e, Metric::heave, bars.err_limit_percent_z_jonswap);
     bars.err_limit_percent_z_pmstokes = tighten(e, Metric::heave, bars.err_limit_percent_z_pmstokes);
