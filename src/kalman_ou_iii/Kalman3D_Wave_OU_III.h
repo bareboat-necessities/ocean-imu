@@ -605,7 +605,6 @@ class Kalman3D_Wave_OU_III {
     }
 
   private:
-    MarineTurnModel<T> marine_turn_;
     typename MarineTurnModel<T>::Evaluation turn_evaluation_() const {
         Vector3 omega = deheel_vector_(marine_turn_.endpoint_gyro);
         if constexpr (with_gyro_bias) omega -= xext.template segment<3>(3);
@@ -1174,6 +1173,10 @@ class Kalman3D_Wave_OU_III {
 	    log_tau_aw_f_.update(z);
 	    refresh_model_params_from_filtered_();
 	}
+    // Keep the established covariance-buffer layout independent of the
+    // optional nuisance-motion model.
+    MarineTurnModel<T> marine_turn_;
+
 };
 
 // Implementation
