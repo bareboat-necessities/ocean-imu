@@ -7,6 +7,7 @@ import sys
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -34,6 +35,46 @@ def pii_fixture():
 
 
 class ReplayEvidenceTests(unittest.TestCase):
+    def test_cli_rejects_failed_gate_even_when_process_returns_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            logs = Path(tmp)
+            runs = []
+            for name in G.REPLAYS:
+                profiles = []
+                for profile, _ in G.profiles_for(name):
+                    if name == 'pii':
+                        text = pii_fixture()
+                    elif name == 'ahrs':
+                        text = 'Angles RMS (deg): Roll=1 Pitch=1 Yaw=1\n' * 8
+                    elif name == 'nlo':
+                        text = 'Z RMS raw (%Hs): 1%\n' * 8
+                    elif name == 'heave':
+                        methods = G.HEAVE_METHODS | ({'pii'} if profile != 'truth' else set())
+                        frontend = 'mahony' if profile == 'default' else profile
+                        text = '\n'.join(f'HEAVE_ONLY method={method} frontend={frontend} record={record} z_pct_hs=1'
+                                         for method in methods for record in G.REFERENCE_CSV_SHA256)
+                    else:
+                        lines = fixture().splitlines()
+                        text = '\n'.join(line + ('\nQUALITY_GATE: PASS=1 REASON=ok' if line.startswith('Bias error RMS (% of max TRUE bias) (gyro)') else '')
+                                         for line in lines)
+                    if (name, profile) == ('ou3', 'default'):
+                        text = text.replace('QUALITY_GATE: PASS=1 REASON=ok',
+                                            'QUALITY_GATE: PASS=0 REASON=accuracy', 1)
+                    path = logs / f'{name}-{profile}.log'
+                    path.write_text(text)
+                    profiles.append(dict(profile=profile, exit_code=0, log_sha256=G.digest(path)))
+                runs.append(dict(name=name, binary_sha256='fixture', profiles=profiles))
+            (logs / 'runs.json').write_text(json.dumps(runs))
+            output = logs / 'measurements.json'
+            with mock.patch.object(G, 'input_provenance', return_value={}), mock.patch.object(
+                    sys, 'argv', ['filter_sim_gates.py', '--log-dir', str(logs), '--output', str(output)]):
+                with self.assertRaisesRegex(SystemExit, 'replay gates failed'):
+                    G.main()
+            report = json.loads(output.read_text())
+            self.assertNotEqual(report['acceptance'], 'all replay gates passed')
+            self.assertIn('ou3/default', report['gate_error'])
+            self.assertEqual(report['replay_exit_codes']['ou3']['default'], 0)
+
     def test_per_record_inventory_caps_and_generated_cpp(self):
         from generate_record_replay_limits import render
         from lock_simulation_baseline import cap

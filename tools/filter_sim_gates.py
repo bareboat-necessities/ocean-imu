@@ -357,8 +357,15 @@ def main() -> None:
     if args.make_log:
         import_make_log(args.make_log, args.log_dir)
     report = summarize(args.log_dir, measure=True, data_dir=args.data_dir)
-    failed = any(code for profiles in report['replay_exit_codes'].values() for code in profiles.values())
-    if not failed:
+    # Retain complete failed measurements, but require both successful exit
+    # codes and passing gate banners before describing a replay as accepted.
+    try:
+        summarize(args.log_dir, measure=False, data_dir=args.data_dir)
+    except ValueError as error:
+        failed = True
+        report['gate_error'] = str(error)
+    else:
+        failed = False
         report['acceptance'] = 'all replay gates passed'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
