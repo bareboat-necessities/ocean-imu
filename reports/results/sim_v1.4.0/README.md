@@ -22,3 +22,9 @@ The full OU-III lever-arm sweep is also recorded for
 [following seas](following/studies/ou3_lever_arm_study/lever_arm_report.md) and
 [head seas](head/studies/ou3_lever_arm_study/lever_arm_report.md): 224 installation
 runs plus 64 derivative-cutoff runs per direction, with five SVG charts each.
+
+Detailed heave comparisons also pass all 136 full-record checks per direction:
+[following seas](following/studies/heave_only_comparison/README.md) and
+[head seas](head/studies/heave_only_comparison/README.md). Each generates 102
+charts; the default-frontend overviews and all full-record metrics are retained
+here, with the full trace/chart bundle available from its CI job.

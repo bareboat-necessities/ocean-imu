@@ -8,6 +8,23 @@ native state-byte hashes. The receipt is
 `reports/results/ou3_stability/v140-replay-reference-source-scope.json`.
 The source-binding gate and mathematical qualifications remain unchanged.
 
+Further class E integration failures: a child lever-arm study deleted its
+wrapper's open `study.log`, causing `FileNotFoundError` after successful
+replays; the head-sea startup control requested the nonexistent
+`nlo/default/wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv` irregular-sea
+cap; and GCC/CPU-dependent arithmetic exceeded the following JONSWAP H4
+OU-III pitch cap of 0.11387 deg. These invalidate assumptions about output
+ownership, diagnostic-control gate lookup and host reproducibility, not
+shipping stability. Sibling logs survive child cleanup, explicitly requested
+regular-wave controls keep their original global gates, and GCC 14 with the
+fixed host instruction set passes all 544 cells without changing numeric caps
+(OU-III H4 pitch 0.113302581 deg). Both full 288-run OU-III lever-arm studies
+and ten regular-wave startup controls pass. Current measurements retain their
+input and executable hashes; the immutable qualifying receipts are separate.
+The remaining publication limiter is regeneration of the stale full OU
+bundles. The next falsifiable check is the unchanged evidence contract against
+the complete new CI bundles, followed by the required `make all` result.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
