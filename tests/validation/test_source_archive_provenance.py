@@ -60,6 +60,7 @@ class SourceArchiveProvenanceTests(unittest.TestCase):
             "ou_robustness_core.py",
             "underway_reference.py",
             "sim_dataset.py",
+            "sim_dataset_manifest.json",  # Imported by the study entry points.
         ):
             shutil.copy2(REPO_ROOT / "tools" / name, destination / "tools" / name)
 
