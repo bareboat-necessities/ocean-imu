@@ -40,6 +40,29 @@ is `reports/results/filter_sim_gates/incremental_host_build.json`. No filter
 equation or numeric limit changed. The next check is the complete native suite
 with a consistent build, plus the fresh publication fingerprints.
 
+Main CI exposed a remaining class E host-reproducibility failure in the same
+following-sea H4 record: Ubuntu GCC 14.2.0-4ubuntu2 and Debian GCC 14.2.0-19
+are different compiler builds. A two-compiler/two-libm diagnostic reproduces
+CI's OU-II startup at 31.9076 s and pitch 0.127569 deg (cap 0.12747), while
+the qualified Debian compiler enters at 31.9526 s and scores 0.126945 deg
+with Ubuntu libm. Seven affected default/legacy OU/TFG profiles pass their
+unchanged caps with that compiler and Ubuntu libm. The receipt is
+`reports/results/filter_sim_gates/compiler_build_diagnostic.json`.
+The assumption that the upstream GCC version alone fixes host arithmetic is
+invalidated. The CI action now verifies/extracts exact compiler and header
+packages, checks frontend relocation and runs a compiled probe. The initial
+probe incorrectly expected a distribution suffix in `__VERSION__`; it now
+checks the upstream macro separately from the full driver/package identity.
+Structures preserved: every source equation, state, covariance, physical
+history, noise seed, startup rule and numerical limit. Relaxations introduced:
+none. No shipping counterexample or theorem promotion follows from these host
+differences. The next falsifiable check is both complete CI replay matrices
+using the pinned compiler, followed by fresh OU publication provenance. The
+required native `make all` reaches validation but its command
+`python3 ../../tools/ou_evidence_contract.py --auto` rejects the stale full OU
+bundles' source/input bindings; the subsequent two-case replay matrix remains
+independent of that honest publication gate.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the

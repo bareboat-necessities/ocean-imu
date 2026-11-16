@@ -1,0 +1,212 @@
+{
+  "source_revision": "297b51f251e7e8ad7987f2c0995bfb54cb9cdc1a",
+  "failed_ci_run": 43791929429,
+  "failed_ci_job": 133052095943,
+  "source_note": "Runtime sources identical to merged PR 757; only compiler build and math-library selection varied.",
+  "case": "following",
+  "record": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+  "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+  "compiler_builds": {
+    "qualified": "Debian 14.2.0-19",
+    "ci_failure": "Ubuntu 14.2.0-4ubuntu2~24.04.1"
+  },
+  "compiler_packages": [
+    {
+      "Package": "cpp-14-x86-64-linux-gnu",
+      "Version": "14.2.0-19",
+      "Filename": "pool/main/g/gcc-14/cpp-14-x86-64-linux-gnu_14.2.0-19_amd64.deb",
+      "SHA256": "ef274b5379f5f97fc71619d39ecc84d039d3e184570d207b909c90afaa5d79e0"
+    },
+    {
+      "Package": "g++-14-x86-64-linux-gnu",
+      "Version": "14.2.0-19",
+      "Filename": "pool/main/g/gcc-14/g++-14-x86-64-linux-gnu_14.2.0-19_amd64.deb",
+      "SHA256": "c66b009fedd340520279d1af2f91d0668e9f64f0c08fe62179ca1c75e556be58"
+    },
+    {
+      "Package": "gcc-14-x86-64-linux-gnu",
+      "Version": "14.2.0-19",
+      "Filename": "pool/main/g/gcc-14/gcc-14-x86-64-linux-gnu_14.2.0-19_amd64.deb",
+      "SHA256": "a17ef039f1ba482051c3efb5c2c24070002e60dd0bd09fd456ec31481a11b725"
+    },
+    {
+      "Package": "libgcc-14-dev",
+      "Version": "14.2.0-19",
+      "Filename": "pool/main/g/gcc-14/libgcc-14-dev_14.2.0-19_amd64.deb",
+      "SHA256": "ca6f2d36d96b19b3eb71405b0b80134d8c89380b02204a2512e5c58ceb090628"
+    },
+    {
+      "Package": "libstdc++-14-dev",
+      "Version": "14.2.0-19",
+      "Filename": "pool/main/g/gcc-14/libstdc++-14-dev_14.2.0-19_amd64.deb",
+      "SHA256": "4b962fac5f1af0bd8b1b3f97e0f47b9d8e9a79e88802143f00ebfbd78ad87a7b"
+    }
+  ],
+  "ubuntu_math_package": {
+    "version": "2.39-0ubuntu8.12",
+    "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9",
+    "method": "LD_PRELOAD libm.so.6, host libc retained"
+  },
+  "flags": "-O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=x86-64-v3",
+  "eigen": "Ubuntu Eigen 3.4 headers for every diagnostic build",
+  "locked_limits_sha256": "e5c8945ec466ae701076b4bd6b0c8292a57aa86ae9267cc83defea67ef55262b",
+  "numeric_limits_changed": false,
+  "compiler_math_factorial": {
+    "debian_compiler_debian_math": {
+      "log_sha256": "34b5fd569d064b0da9acb2cb76f65a9c348e6059ad41dd883b30ea04f50063f9",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 6.7891283,
+        "disp_3d_rms_m": 0.530832529,
+        "roll_rms_deg": 0.207061946,
+        "pitch_rms_deg": 0.126943856,
+        "yaw_rms_deg": 0.968496263,
+        "accel_bias_3d_rms_mps2": 0.0402012281,
+        "gyro_bias_3d_rms_radps": 0.000146165854
+      },
+      "live_s": 31.9526
+    },
+    "ubuntu_compiler_debian_math": {
+      "log_sha256": "b077f129dc69e7405d05b71be9f36e870be5bddd8e96528262452e867ba20c25",
+      "gate_pass": false,
+      "metrics": {
+        "disp_z_pct_hs": 6.7800703,
+        "disp_3d_rms_m": 0.530551314,
+        "roll_rms_deg": 0.207025588,
+        "pitch_rms_deg": 0.127569422,
+        "yaw_rms_deg": 0.963472724,
+        "accel_bias_3d_rms_mps2": 0.040246848,
+        "gyro_bias_3d_rms_radps": 0.000145702579
+      },
+      "live_s": 31.9076
+    },
+    "debian_compiler_ubuntu_math": {
+      "log_sha256": "34b7466da64a175d671160d442c271ba8592f55fbf42a5f00f8cc11ae62dca0d",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 6.78913164,
+        "disp_3d_rms_m": 0.530831814,
+        "roll_rms_deg": 0.207061455,
+        "pitch_rms_deg": 0.126945361,
+        "yaw_rms_deg": 0.968494296,
+        "accel_bias_3d_rms_mps2": 0.040201325,
+        "gyro_bias_3d_rms_radps": 0.00014616632
+      },
+      "live_s": 31.9526
+    },
+    "ubuntu_compiler_ubuntu_math": {
+      "log_sha256": "5c515fe883c4d978d5465c8f5384f0c75641efbcfc34a98639cac041f116d1d4",
+      "gate_pass": false,
+      "metrics": {
+        "disp_z_pct_hs": 6.7800684,
+        "disp_3d_rms_m": 0.530548811,
+        "roll_rms_deg": 0.207025051,
+        "pitch_rms_deg": 0.127569154,
+        "yaw_rms_deg": 0.96346879,
+        "accel_bias_3d_rms_mps2": 0.0402468704,
+        "gyro_bias_3d_rms_radps": 0.000145699814
+      },
+      "live_s": 31.9076
+    }
+  },
+  "qualified_compiler_with_ubuntu_math": {
+    "ou2/default": {
+      "log_sha256": "34b7466da64a175d671160d442c271ba8592f55fbf42a5f00f8cc11ae62dca0d",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 6.78913164,
+        "disp_3d_rms_m": 0.530831814,
+        "roll_rms_deg": 0.207061455,
+        "pitch_rms_deg": 0.126945361,
+        "yaw_rms_deg": 0.968494296,
+        "accel_bias_3d_rms_mps2": 0.040201325,
+        "gyro_bias_3d_rms_radps": 0.00014616632
+      },
+      "live_s": 31.9526
+    },
+    "ou3/default": {
+      "log_sha256": "4214fe37062924512acf2a1095a8ea2719479a6a13d2790975cd878a22d76203",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 4.59590673,
+        "disp_3d_rms_m": 0.703904033,
+        "roll_rms_deg": 0.244460121,
+        "pitch_rms_deg": 0.113304824,
+        "yaw_rms_deg": 0.940188289,
+        "accel_bias_3d_rms_mps2": 0.0445486978,
+        "gyro_bias_3d_rms_radps": 0.000146068196
+      },
+      "live_s": 31.9526
+    },
+    "tfg/default": {
+      "log_sha256": "db4b154a056be39b0458b38671a325bc78047aba214c93eba357edb61cc4f05d",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 3.25008035,
+        "disp_3d_rms_m": 0.712561607,
+        "roll_rms_deg": 0.284786075,
+        "pitch_rms_deg": 0.0613087304,
+        "yaw_rms_deg": 1.14847207,
+        "accel_bias_3d_rms_mps2": 0.0470756926,
+        "gyro_bias_3d_rms_radps": 0.000112011381
+      }
+    },
+    "tfg_cubic/default": {
+      "log_sha256": "0549ecd0cf5a74f52c5e355135774d944b84d58efec0340f0370887736f4c47c",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 2.69518614,
+        "disp_3d_rms_m": 0.868389428,
+        "roll_rms_deg": 0.301896274,
+        "pitch_rms_deg": 0.194943875,
+        "yaw_rms_deg": 0.896564066,
+        "accel_bias_3d_rms_mps2": 0.0470384955,
+        "gyro_bias_3d_rms_radps": 0.000230453021
+      }
+    },
+    "ou2/legacy": {
+      "log_sha256": "f6aeacbff895ab8952f767f75d5fad1d6053f106c24a4f602daefef123b5b9d1",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 6.79675055,
+        "disp_3d_rms_m": 0.531828403,
+        "roll_rms_deg": 0.206301451,
+        "pitch_rms_deg": 0.127842382,
+        "yaw_rms_deg": 0.963677227,
+        "accel_bias_3d_rms_mps2": 0.0402170755,
+        "gyro_bias_3d_rms_radps": 0.000146035527
+      },
+      "live_s": 31.9526
+    },
+    "ou3/legacy": {
+      "log_sha256": "12148d7cc74982fcf9dd993a033b7972b0d0195ec4d636ef7058f9fd4285628a",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 4.60479641,
+        "disp_3d_rms_m": 0.703579009,
+        "roll_rms_deg": 0.243160293,
+        "pitch_rms_deg": 0.116440915,
+        "yaw_rms_deg": 0.932449639,
+        "accel_bias_3d_rms_mps2": 0.0445170254,
+        "gyro_bias_3d_rms_radps": 0.000145914426
+      },
+      "live_s": 31.9526
+    },
+    "tfg/legacy": {
+      "log_sha256": "05982be1e98c0eb3b90d7b2bd55773522cf39fb47767ef109fe8ed805ba9e310",
+      "gate_pass": true,
+      "metrics": {
+        "disp_z_pct_hs": 3.26258206,
+        "disp_3d_rms_m": 0.712387383,
+        "roll_rms_deg": 0.284451991,
+        "pitch_rms_deg": 0.061250139,
+        "yaw_rms_deg": 1.14357126,
+        "accel_bias_3d_rms_mps2": 0.0470113605,
+        "gyro_bias_3d_rms_radps": 0.000112006455
+      }
+    }
+  },
+  "installer": "All five downloads verified; private frontend relocation and compiled C++20 runtime probe passed.",
+  "conclusion": "Compiler distribution build changes the startup transition; changing only libm does not explain the failure. Pin the qualified compiler build; retain every numeric cap.",
+  "scope": "Finite deterministic host replay diagnostic; no firmware/source change and no shipping stability claim."
+}

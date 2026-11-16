@@ -30,7 +30,13 @@ The original qualifying receipts are retained as `baseline_following.json`
 and `baseline_head.json` beside the gate table and checked against its hashes.
 Current replay reports may be refreshed without changing those locked caps.
 
-The fixed-draw host acceptance build is Linux x86-64, GCC 14 and Eigen 3.4.
+The fixed-draw host acceptance build is Linux x86-64, Debian GCC
+**14.2.0-19** and Eigen 3.4. The compiler package build is part of the protocol:
+Ubuntu GCC 14.2.0-4ubuntu2 produces a different startup transition on the
+following-sea 4 m JONSWAP record, despite reporting the same upstream version.
+The shared CI action extracts five official, SHA256-pinned Debian compiler and
+header packages into a private directory, checks the relocated frontend and
+compiles/runs a probe; it does not replace the runner's system packages.
 CI selects that compiler explicitly and uses the shared AVX2 host flags instead
 of selecting AVX-512 or other reductions from the runner CPU. The tangent
 replay retains its existing scalar/SSE build. Compiler/SIMD changes can alter
