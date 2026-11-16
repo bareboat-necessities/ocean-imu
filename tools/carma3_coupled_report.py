@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.integrate import trapezoid
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -289,9 +290,9 @@ def cross_spectral_accuracy():
         f, S = r
         band = (f >= 0.05) & (f <= 1.0)
         keys = ["00", "01", "02", "11", "12", "22"]
-        den = sum(np.trapezoid(np.abs(S[("truth", k)][band]) ** 2, f[band]) for k in keys)
+        den = sum(trapezoid(np.abs(S[("truth", k)][band]) ** 2, f[band]) for k in keys)
         for flt in bench.SPEC_FILTERS:
-            num = sum(np.trapezoid(np.abs(S[(flt, k)][band] - S[("truth", k)][band]) ** 2, f[band]) for k in keys)
+            num = sum(trapezoid(np.abs(S[(flt, k)][band] - S[("truth", k)][band]) ** 2, f[band]) for k in keys)
             acc.setdefault(flt, []).append(math.sqrt(num / den))
     return {k: float(np.mean(v)) for k, v in acc.items()}
 

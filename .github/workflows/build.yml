@@ -302,6 +302,25 @@ jobs:
       - name: Clean test build (${{ matrix.dir }})
         run: make -C tests/${{ matrix.dir }} clean
 
+      - name: Prepare case-specific full TFG publication evidence
+        if: matrix.dir == 'kalman_ou_iii'
+        run: |
+          # Reuse only a complete, current bundle for this direction. In
+          # particular, the committed following-sea bundle cannot serve head seas.
+          if ! python3 tools/tfg_comparison.py --check --require-ci; then
+            python3 -u tools/tfg_comparison.py --mode full --jobs 2 \
+              --data-dir plots/kalman_ou_iii
+          fi
+          python3 tools/tfg_comparison.py --check --require-ci --publish
+
+      - name: Retain case-specific TFG publication provenance
+        if: matrix.dir == 'kalman_ou_iii'
+        uses: actions/upload-artifact@v6
+        with:
+          name: tfg-article-evidence-${{ matrix.case }}
+          path: reports/results/tfg_comparison/**
+          if-no-files-found: error
+
       - name: Generate PGF plots (${{ matrix.dir }})
         id: plots
         continue-on-error: true

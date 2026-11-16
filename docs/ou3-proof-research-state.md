@@ -94,6 +94,21 @@ counterexample. Current limiter: the corrected workflow must complete in CI.
 Next falsifiable check: both shared-mode study jobs finish their complete
 publication products with the installed TeX dependency.
 
+Class E article-pipeline failures: CARMA plotting calls `np.trapezoid`, absent
+in CI NumPy 1.26; OU-III plotting rejects stale TFG evidence with `only the
+complete declared full protocol is publication evidence`. This invalidates
+assumptions about plotting API availability and reuse of one companion bundle
+across source states and directions. SciPy's equivalent trapezoidal integration
+renders all 16 CARMA PNGs under NumPy 1.26. The article job reuses a valid TFG
+bundle, otherwise performs the actual full replay for its selected direction;
+the original CI/source/input checks still gate publication and the bundle is
+retained as an artifact. Structures preserved: all shipping operations, fixed
+gates and complete scoring windows. Relaxations introduced: none. Retained
+facts: all existing proof qualifications; no shipping counterexample or theorem
+promotion. Current limiter: corrected CI article completion. Next falsifiable
+check: both direction builds produce articles with valid full companion evidence;
+orchestration tests must reject replay and final provenance failures.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
