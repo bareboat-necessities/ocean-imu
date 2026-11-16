@@ -1,15 +1,15 @@
 {
   "binary_sha256": {
-    "OU_III": "9d71de116e1b31701d5fc42e1316aabae50f0ab5dc0d539e739346965be122a6",
-    "TFG": "8f0c163a6f4cb7976585e0421f03091371b85af96f6d3dca46189c6f1cf0903e"
+    "OU_III": "bb130a577f521873db02bfc248faaff83003a56b25f1ba4640a35e5c1aa2e1b2",
+    "TFG": "3c7fdffce901c8f40b12c8609e8d4a7853f27fa355bc383459253ec8ea53c00d"
   },
   "build_environment": {
     "compiler": {
       "CPPFLAGS_env": "",
       "CXXFLAGS_env": "",
-      "banner": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
       "command": "g++",
-      "version": "13.3.0"
+      "version": "14.2.0"
     },
     "eigen": {
       "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
@@ -22,27 +22,29 @@
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
-    "archive_sha256": "c3505115275925e453e848248561803aeb6b9eadc4e03827c6657f4f1920a402",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "case": "following",
     "heading_amplitude_deg": 3.0,
-    "heading_period_s": 120.0,
+    "heading_period_s": 20.0,
     "input_sha256": {
-      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "761ee9dd703c14363ceeed73b9027da6db6f941529dff33f49f6289237fbc0c8",
-      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "328bf5f24c6a579fc1d3b473a8df45c15a7a9f2146b85d03db14e92263113913",
-      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "18d5ac472be4b88b6c61cfbde4fa7177b27d7b04c90262dcbf783e71ef0e45c7",
-      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "dab59d4e72b3d75ba730f545813429a1d21bbd454cabd35fe56124d0e309cc4d",
-      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "0fb455a798fdb09a9d77bb75dc800e57d84ecdc823997f74adf8a0fcc55ce300",
-      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "609339f115e4caa774bbe437bc429301e2d77b5603b5aaac785cb4aa62790970",
-      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "343ffbde75fe5e146018bd7790d6df4596e783a101b0b0d8346354ff2b1d56e4",
-      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "7d471977f88b58c9a22ccc3e8c4e1e5a068367e0434e587e73307150c4bc3150"
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
     },
+    "mean_heading_deg": 0.0,
     "motion_model": "VESSEL_RAO_28FT_5KN",
     "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
-    "release": "v1.3.1",
+    "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-15T18:18:11+00:00",
-  "git_commit": "5a6c64b3138ed3c17cbef36e479b01b845108fb5",
-  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   | 48 +++++++++++-----------\n reports/results/tfg_comparison/raw_runs.csv        | 48 +++++++++++-----------\n reports/results/tfg_comparison/raw_runs.json       | 48 +++++++++++-----------\n 3 files changed, 72 insertions(+), 72 deletions(-)",
+  "generated_utc": "2026-11-16T07:09:50+00:00",
+  "git_commit": "8acdab58cc7c17bd2752b8809898562a6ade5dfc",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   26 +-\n .../results/tfg_comparison/gate_diagnostics.json   |  612 +--\n reports/results/tfg_comparison/paired_summary.json | 4422 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3600 ++++++++--------\n 5 files changed, 4510 insertions(+), 4510 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -63,7 +65,7 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv"
     ],
     "mode": "full",
-    "phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/120 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed",
+    "phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed",
     "pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
     "primary": "JONSWAP-plus-crossfade seed-level mean Z %Hs; difference TFG minus OU-III",
     "sampling_unit": "seed triplet, not record or time sample",
@@ -138,11 +140,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "f7aeea5aeec6654f3b23cee633ea8b10de40eaf5a7d3552d4a33f261e9f92225",
-    "gate_diagnostics.json": "0d8b94990164819a8c857f4a5f769e23194062200d9654e87261eeba8878d401",
-    "paired_summary.json": "a1335c413725acdb0089363cc3bd8063a192412e5ed00f7167bc2a5bbca269ea",
-    "raw_runs.csv": "ac626be225f5a52723ffa46ba22e32e18b9e108bdf554d1c449e4f1210390cac",
-    "raw_runs.json": "1fbe6f1f014667b5ac9fbf1f5ee893ce8a0cac768d7324b5874c2fd6f5546c55"
+    "comparison.tex": "6045fdbd788b469dad40e10a44a0b2d7b83cc80a9af37787b4d9d1153b28bf7b",
+    "gate_diagnostics.json": "a149cf149957c5834af341bccb064deb29971eb84060f415bb94e63ac46b54c7",
+    "paired_summary.json": "d4a919878f0418017dcbda89ce6c9a64258a88a256c68407391be371c1f2c830",
+    "raw_runs.csv": "4a32e67c7db27b29e64a087f73858f23b58da04d885f2fa43118bac9854fa3bf",
+    "raw_runs.json": "1b809e053dc3b2b0c0422968819caa736dca52c2ef0c8d66d5b8519914f34a77"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -185,7 +187,7 @@
     "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
     "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
     "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
-    "src/util/UnderwayReference.h": "11444b121748f64674121e8a475b52a1aeeb9c7fa2fc3a8c8789bfde36b001e3",
+    "src/util/UnderwayReference.h": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422",
     "src/util/W3dSimCommon.cpp": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
     "src/util/W3dSimCommon.h": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
     "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
@@ -194,26 +196,27 @@
     "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
-    "tests/common/CurrentReplayLimits.h": "27809db7176660cc989a461d3f0a47eb94f64c860b621ba272573b7260908278",
+    "tests/common/CurrentReplayLimits.h": "e4c42640bd10c19ff132f72bd9e5c5de8fc32689b1af98e5f26355e5bdc92334",
     "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
-    "tests/common/HostReplayFlags.mk": "f34f01bdaf4f222f2c1b8d04861109b53710fd2f572da6dfae38356b58c0a851",
-    "tests/common/RecordReplayLimits.h": "671e7ff6be3f59247ffdeae3d09032bf8607e43f13be3c70bba74e10fd6fd604",
-    "tests/common/RecordReplayLimits.inc": "ed4e1d4bfce75190b0ab796cfde09afa08e436f20e2edb464d54b89e02045888",
-    "tests/common/RecordW3dLimits.h": "9a62af11515077882505f07e13367e328e27a0f745f9eb810c8e9e40bfac12e3",
+    "tests/common/HostReplayFlags.mk": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
+    "tests/common/RecordReplayLimits.h": "de6c5f9f869f4a99a70a257aa34800cb09df6735396dbee56ec7cc2bb857a4ae",
+    "tests/common/RecordReplayLimits.inc": "8b0de13d1e338c297d367e0743c5ff373578ec6a55fabf5880cb8f3b4b4fdc75",
+    "tests/common/RecordW3dLimits.h": "3016ddd0feb85f0ee9fa26ee0254226957daa7a82653ed9b71b05698ac95ec84",
     "tests/kalman_ou_iii/Makefile": "940672147ff51648582ad0eb524ea2e8c766ca21d5bdc33a4995213c1ad8ee80",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d",
     "tests/kalman_tfg/Makefile": "42ab6e385b147fe28214ea45d65c898185324f2a812eedbe0fca87196a195ba5",
     "tests/kalman_tfg/kalman_tfg-sim.cpp": "1883ae7f42357b58a8e09ffa42c964bc1c5c69eb1e0038e3a7e6afe683617264",
     "tools/ou_evidence_provenance.py": "2ea942433cb54811e06c767c7075e77f99df0741ab4fcddc0f57eb18f1d9b987",
-    "tools/ou_validation.py": "fa45b6ae2ed0b4491a97eebebd30ad1c4b4fadd9f0cfcd5d8688a2bdcf127f51",
-    "tools/sim_dataset.py": "5772f51a5cc9977ab182f36d03377c3889de7bfc1e8230de7bca09abdbf31788",
-    "tools/tfg_comparison.py": "37858d1dc086d4b604607f9c26411331374c53fc97816a12bf0806432375c812",
-    "tools/underway_reference.py": "d91df15a7d6ba4865a9dc093ca81baba3e9acc297ed941e6c1bd70d16ef6dbfb"
+    "tools/ou_validation.py": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343",
+    "tools/sim_dataset.py": "6f85f9da08d17008c0375621b11c13ad235253205d83d178545689d20c3dcb67",
+    "tools/sim_dataset_manifest.json": "99d0c135f0ba85a342b09ae2ffe5e014b802a393ab6de4d98dba62748f59431e",
+    "tools/tfg_comparison.py": "2271479e4f5b0f1d3ffcbe0b7865f7e0c37848560f3a73ce9403da881de3c4b6",
+    "tools/underway_reference.py": "8f989958573896d09ea0042fabd4313e6b1781b020ca2cbc1fc22bee8db2c3a2"
   },
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "43744555921",
-    "workflow": "ou-full-evidence-branch"
+    "run_id": "43815390646",
+    "workflow": "build"
   }
 }
