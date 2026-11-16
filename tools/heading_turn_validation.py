@@ -17,9 +17,27 @@ from heading_kinematics_diagnosis import FAMILIES, cached_trace_valid
 from sim_dataset import ROOT, CASES, REFERENCE_CSV_SHA256_BY_CASE, digest
 
 
-def summarize(work: Path) -> dict:
-    baseline = {case: json.loads((ROOT/'reports/results/sim_v1.4.0'/case/
-                                 'measurements.json').read_text()) for case in CASES}
+BASELINE_REVISION = '5426da8a394b33f5f473f70faa05247f832f85fa'
+BASELINE_SHA256 = {
+    'following': '8bac1740fdbcc845a9b0be669fe8705d29c983792222b985ebbd119fe3abf80a',
+    'head': '5d39a3b1e7e9c96b4be07260516a94c33c8a288b3e9e1b8ae23a4819c1490950',
+}
+
+
+def load_baseline(directory: Path | None = None) -> dict:
+    """Do not silently label refreshed main-branch metrics as the pre-fix run."""
+    baseline = {}
+    directory = directory or ROOT/'reports/results/sim_v1.4.0'
+    for case in CASES:
+        path = directory/case/'measurements.json'
+        if digest(path) != BASELINE_SHA256[case]:
+            raise ValueError(f'{path}: baseline changed; restore the file from {BASELINE_REVISION}')
+        baseline[case] = json.loads(path.read_text())
+    return baseline
+
+
+def summarize(work: Path, baseline_dir: Path | None = None) -> dict:
+    baseline = load_baseline(baseline_dir)
     attribution = {}
     for name in ('measurements', 'medium'):
         report = json.loads((ROOT/'reports/results/heading_kinematics'/f'{name}.json').read_text())
@@ -72,7 +90,7 @@ def summarize(work: Path) -> dict:
                 rows.append(pair)
     return dict(
         role='Runtime comparison; existing quality-gate failures are retained',
-        baseline_revision='5426da8a394b33f5f473f70faa05247f832f85fa',
+        baseline_revision=BASELINE_REVISION,
         score='Final 900 s, all 180000 samples at 200 Hz; unchanged references and sensor draws',
         frames=dict(displacement='geographic NWU', bias='sensor body after (x,y,z) -> (y,x,-z)'),
         runs=rows,
@@ -145,10 +163,12 @@ def main():
     parser.add_argument('--build-description', required=True,
                         help='Compiler and effective flags used for the comparison executables')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--baseline-dir', type=Path,
+                        help='Directory containing the pinned pre-fix following/head measurements.json files')
     parser.add_argument('--baseline-traces', type=Path,
                         help='Optional pre-fix dense traces, used only for the before/after figure')
     args = parser.parse_args()
-    report = summarize(args.work_dir.resolve())
+    report = summarize(args.work_dir.resolve(), args.baseline_dir)
     report['runtime_revision'] = args.runtime_revision
     report['build_description'] = args.build_description
     args.output.parent.mkdir(parents=True, exist_ok=True)

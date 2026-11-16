@@ -1,8 +1,8 @@
 ## Heading-separation runtime qualification
 
 Current hypothesis: the IMU-only steady-forward turn model separates the
-steering force from the wave state and its bias harmonic. It does not supply
-the missing absolute tilt/reference/bias information. At runtime revision
+steering force from the wave state and its bias harmonic. It does not by
+itself resolve the absolute tilt/reference/bias errors. At runtime revision
 `a86c1eb7707d6618f917cf4384c7ad027f27a5ad`, the common-flag comparison improves
 Y RMS in all 128 cells, but only 15 cells pass every unchanged quality gate.
 Following-sea, 1.5 m shared-TFG bias RMS rises from 0.01539 to 0.02470 m/s²;
@@ -16,8 +16,17 @@ Appending that member instead preserves the established buffer layout; all
 16 comparison replays and CI lever-arm run 43959596866 complete. The required
 `make all -j1 SIM_JOBS=2` was then killed by host memory pressure while another
 build ran (`g++: fatal error: Killed signal terminated program cc1plus`,
-`carma_coupled-test.o`). A serial retry retains responsibility for the full
-suite. Neither failure establishes a mathematical counterexample.
+`carma_coupled-test.o`). Interrupted host sessions produced no final status;
+their partial logs were not promoted to a completed suite.
+The completed `make all -j1 SIM_JOBS=4` compiles every native target and
+finishes both replay directions, then returns 2. Its first failed test is
+`W3D_COLLECT_ALL_GATES=1 ./carma3-sim --regression` in `tests/kalman_carma`:
+Z RMS 3.54156% > 3.53949%, pitch RMS 0.0937334 > 0.07034 deg, and 3D bias
+35.9498% > 34.1417% of maximum true bias. The native comparison improves Y
+in 272/272 default/legacy cells, while 32/272 pass every unchanged gate.
+`reports/results/heading_kinematics/runtime-native-validation.json` retains
+the command, exit, log and executable hashes and all profile outcomes.
+These class E acceptance failures establish no mathematical counterexample.
 
 Class E proof integration failure: run 43959598850 rejects
 `signed observer shipping fingerprint changed` and
@@ -29,6 +38,30 @@ the slow bias/attitude regressions, and a faithful proof model of the new
 observer history and its uncertain speed. Broader bias priors, covariance
 resets, longer bias memory and Schmidt holding did not qualify an all-case
 remedy; no such change or numerical-gate relaxation is promoted.
+
+The 48 targeted native mathematical/unit invocations and the complete
+live-bias-consistency suite pass. The Arduino default-flags workflow
+43965590856 links every shipped sketch on both Linux and Windows at
+`db90a8fb`; native replay workflow 43965579218 completes both directions with
+ordinary quality-gate failures and no abnormal simulator exit. These results
+qualify buildability and the tested identities, not the missing theorem.
+An independent released-input gyro audit initially rejected an incomplete
+inventory because the sequential matrix had not staged its head-sea directory.
+Using the already pinned case inputs completes all 16 records: the largest
+quaternion-derivative/body-rate RMS discrepancy is 1.16e-6 rad/s. This class E
+input-discovery failure is resolved; the input data were not changed.
+
+DEAD_END, class E candidate-qualification failure: subtracting the learned
+turn force from a separate measurement-only Mahony proxy did not remove its
+slow tilt error across the 16 released histories. In the trailing 900 s of
+head-sea H8.5, the mean tilt-error norm increases from 0.548570 to 0.550639 deg
+for JONSWAP and from 0.909033 to 0.912569 deg for PM/Stokes. This isolated
+diagnostic is not the shipping frontend and supplies no counterexample to
+shipping stability. It invalidates an across-sea remedy based on correcting
+that proxy's accelerometer stream alone; no proxy change is promoted.
+The runtime's untouched startup/reference path and the measured steering
+improvements remain. The limiter remains separation of slow tilt, magnetic
+reference and body bias after the physical turn force has been accounted for.
 
 Six-item handoff: (1) the OU a_w→v→p→S chain, covariance update/reset,
 startup/reference and tuner chronology remain; the accelerometer model now

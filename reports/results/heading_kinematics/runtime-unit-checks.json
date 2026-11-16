@@ -1,0 +1,368 @@
+{
+  "role": "Targeted native mathematical/unit checks; not a replacement for make all or replay acceptance",
+  "runtime_revision": "a86c1eb7707d6618f917cf4384c7ad027f27a5ad",
+  "test_revision": "db90a8fb3ce29d02335b31b1797f65eeb4b57e95",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "eigen": "3.4.0",
+  "flags": "Each existing target Makefile; optimized native build, no blanket vectorization disable",
+  "runs": [
+    {
+      "directory": "tests/kalman_ou_ii",
+      "command": "./tuner_schedule-test",
+      "exit_code": 0,
+      "binary_sha256": "6327b32a93b2145fd3ffc070811bf53fbca6df1d19fd9368732558417d375740",
+      "log_sha256": "24af85f399938a9e8afe4590d0a40981f842fde48bcceb8334495a620c875e5b"
+    },
+    {
+      "directory": "tests/kalman_ou_ii",
+      "command": "./iss_contract-test",
+      "exit_code": 0,
+      "binary_sha256": "acf27aa4c00aeb3a918169ab8dd05ea6717609597eab3279cc07a2ea80d88a10",
+      "log_sha256": "71a66dd3c73d427aee3d2faa7b8c79ead181fd7db067debde34710051d8bf313"
+    },
+    {
+      "directory": "tests/kalman_ou_ii",
+      "command": "./startup_init-test",
+      "exit_code": 0,
+      "binary_sha256": "8d22a09d070c3a99cd4fe99042041ccbfb725503f3be565b3dc21802017b1046",
+      "log_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5"
+    },
+    {
+      "directory": "tests/kalman_ou_ii",
+      "command": "./regularizer_floor-test",
+      "exit_code": 0,
+      "binary_sha256": "2bec584007f4a50c3c119b14e4866c822f2e70ee6ef71b1ed4b08fded7caef0a",
+      "log_sha256": "682468f286503b3ca98689aa3ce23f8a79534144cbf19cf1ffca8a7cfe0779fb"
+    },
+    {
+      "directory": "tests/kalman_ou_ii",
+      "command": "./pseudo_law-test",
+      "exit_code": 0,
+      "binary_sha256": "4f4c03a33b20b5d8119b5760b7b9fc1f1f985b3c4f520f8c1df7e0e1cfa4f512",
+      "log_sha256": "1400747e01dafc3f76b72c041cf9aefa83a1a28ca0e6b6fb59c799af60bbd853"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./accel_vibration_guard-test",
+      "exit_code": 0,
+      "binary_sha256": "98ec4cff929e4f6702c427f77b46e7e4842ca9c91e331069c1b7c096563d7bea",
+      "log_sha256": "a5514b334a41e35e33b230666a97e3e0ddd6a9d63a63b48a54ce2c7d8b08f108"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./imu_lever_arm-test",
+      "exit_code": 0,
+      "binary_sha256": "dcc4702548f6915c3a915ee3b27d7c0172cc15022c1fc1b1afb3661eecf86f2c",
+      "log_sha256": "dd69d3e4af372f9de2115c7c4ea208d9c68e74b2acde96e460d448864e51d275"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./kalman_ou_common-test",
+      "exit_code": 0,
+      "binary_sha256": "e1ed3794adce6f03e4727a35e4f17f57e3d9e40c64d313f32c5785e4cb234ce7",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./ou_core_numerics-test",
+      "exit_code": 0,
+      "binary_sha256": "12b1a306ca76c8b78b743ba227184b9f33099c1ca501bc75f0e23d62601afec8",
+      "log_sha256": "a2237ee46793fc71c09e549bf7b15f0490a6fe7bfcc5d426b770362d6611924b"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./aw_covariance_policy-test",
+      "exit_code": 0,
+      "binary_sha256": "5431a4b33ffa286e1a1db2710ef4696fcffcffafaf441a87a2d6b8e4ffa992f0",
+      "log_sha256": "24bbf644ef99f0d1dfc6cfc8131cc308675fd210c75f2ad3c80cc0d34692cd60"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./acc_bias_ou-test",
+      "exit_code": 0,
+      "binary_sha256": "da0c445b652ce1f72c133f351f10d38c469b15edabd81e63d769342c9d929853",
+      "log_sha256": "66228b6f88ed98f435e2d766ce38d81f44c27aff0dee9720a2a0aa2fa1858f6e"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./channel_freeze-test",
+      "exit_code": 0,
+      "binary_sha256": "456e14b1c626a4fd2a268de2aae3063c30184889daf88d6b44ae38b168544747",
+      "log_sha256": "33cb935dc4ece1a1bba5e81728add49e844acafeab4a7370057e85657833848f"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./wave_period-test",
+      "exit_code": 0,
+      "binary_sha256": "7d4526a8367677bc67f039f527b8915ac7f16ba99cc81cf3ba7e984701f3d797",
+      "log_sha256": "cb29affa9538a1a57f74dc5924991dc5378d523f864e19ba9444487e1a1fa478"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./mag_hard_iron-test",
+      "exit_code": 0,
+      "binary_sha256": "b807803dc7412678733a4a8a6c0af1b9813314bf914e019eb27f0e7289e1530d",
+      "log_sha256": "06c326b1ec1ef33256487a0b6111603c5ba36ea2c8b0ddec30782df56e7e6ee7"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./continuous_mag_hard_iron-test",
+      "exit_code": 0,
+      "binary_sha256": "1be96f51c2c94d8e2715c3617ae23c9d9d6e16b8311ea88b0235525d60562c5c",
+      "log_sha256": "383fd021ea13649e7c714cdeb2524bde3262d65774091ee42626870cc3734ccd"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./tuner_coupling-test",
+      "exit_code": 0,
+      "binary_sha256": "573c23b16da9f0e388209a2ce9fbff62c5f8af3160a00af8acd43e9678707bc9",
+      "log_sha256": "5c6c4b285ba1e7fada11542e3bf2e0dd3357c7280f5beac06521c6a5d148ac38"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./tuner_schedule-test",
+      "exit_code": 0,
+      "binary_sha256": "5ebad48d5233a33af9a07b852f3a2fd286cf9599d836e8125c062fef6f63b3bd",
+      "log_sha256": "0243606bb1afd522cfc26c77c48bc914b8697894461b981648b8353c090ef912"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./wave_band_sigma-test",
+      "exit_code": 0,
+      "binary_sha256": "fe28e2334b1c8fa862b4d25b31f668597cdf12835f6de52681a8d097ad980eda",
+      "log_sha256": "3ec81c52a10838c5c8906121eda7100535901b15abf7e91871652a980501bbd0"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./shipping_contract-test",
+      "exit_code": 0,
+      "binary_sha256": "82c88d0fde4dbffa430e2c2a375eaf4ad61f444c669e797a9b069b5e55ce51fd",
+      "log_sha256": "9de87cfd6a9490b5577cd6730a76f8b0e9f323d3d37a8af42f49ce05df14617f"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./shipping_transition-test",
+      "exit_code": 0,
+      "binary_sha256": "dce6d611b419e70040a6986aa2010aedf7ca18d5dc8162a73c56fb8c758b29b2",
+      "log_sha256": "e0fd8a222cb043e7ddf9a0e9fe870d6caaa1f21af14a2a2d4a6fd020f5c59886"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./sampled_capture-test",
+      "exit_code": 0,
+      "binary_sha256": "de9f4bd4e8b6e1398116686449ee7952796799e39b1538a7634d71e2a1477cf2",
+      "log_sha256": "3da473fea9d7846dfe43c0a8274e3ad6caae80b7cc9e96b390044d36c2bf7096"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./rs_law-test",
+      "exit_code": 0,
+      "binary_sha256": "cb81546531beef49a4e05bcaf31bb6594007e57ac0f3d4070f978bc33039bc6b",
+      "log_sha256": "43b78e480f9f566cb81686526c5e3b6b74b548fd34830d22fdb33c65e18e2e7a"
+    },
+    {
+      "directory": "tests/kalman_ou_iii",
+      "command": "./startup_init-test",
+      "exit_code": 0,
+      "binary_sha256": "f62c1dec36e44dd45f971c54f28f594cf88c2d19311577ddc5cbae9e4e0049a3",
+      "log_sha256": "0f48491491d32a33970243a55066a6274b4fa22c36de21446a5cfa54e8b8dca5"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./lie_group-test",
+      "exit_code": 0,
+      "binary_sha256": "c03a4155d58dbb31e9d8471e319e4c23d4698b4687f43b5284fc04e57a3ca063",
+      "log_sha256": "7b8c97a8c4567ca918dd1608d5bbdfa81048a302e8cd4bd05be0ace985ef62b8"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./convention-test",
+      "exit_code": 0,
+      "binary_sha256": "8ebfc35f1d8a29b222b533eb15c002ab2b1e6f61afb8b43de4a04dc6fa2b4c2d",
+      "log_sha256": "2b2c3370be9777a577bf34ff54340f7379edb91df080c81d034aad3f7d9404dc"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./ou_chain_identity-test",
+      "exit_code": 0,
+      "binary_sha256": "aaf0ecb181e32ff205c18a69b49734d5901389f5e75f105962ccd6dd8db7a1dd",
+      "log_sha256": "6f2560a5951bf5136fe89b8678043d67568d287144ecdd7fa6433b30353c626b"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_propagation-test",
+      "exit_code": 0,
+      "binary_sha256": "5d6391d229a9450819fa7bc2875d1fb9c8a5e73ee3eaefb5a5f660215056aa0e",
+      "log_sha256": "bba7742f548eebc508909ac924c0eab75eb40efa89a70a9800d27d1073513d61"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_jacobians-test",
+      "exit_code": 0,
+      "binary_sha256": "846d24d5f55534f2382a93cc71436527f9b2a7788ac805def2c6656e1e3c8c35",
+      "log_sha256": "6dc6d991d82d5e32860e1a6a9259a1056b0a3251f0204fe46fa0a4efb863b7ee"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./covariance_transport-test",
+      "exit_code": 0,
+      "binary_sha256": "49c7dca869643e288f3a24f8797b4c21bd4cdb6a7814444616ad9c77e10f18d5",
+      "log_sha256": "c73366ecf1ed8ac1daeec2b5842a4908e48465517a26c0ec5786dd198c5a6e60"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_process_covariance-test",
+      "exit_code": 0,
+      "binary_sha256": "2f31edf5aa930363aa58c23d455b6586218aeef870e13531fc9d636d5c484e01",
+      "log_sha256": "2783fdd7b21799b3bd198e5ce29f81940a43357af2bbad167265343cf4ff48e6"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_orchestrator-test",
+      "exit_code": 0,
+      "binary_sha256": "5904478ebafc16a9b67787d57733cbf146a5c1e47ab3d89ea400701b88068467",
+      "log_sha256": "f2c9b4a1030fd605eaf20753743a960e24210898ba68242274e764d267be90c9"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_rs_axis_factors-test",
+      "exit_code": 0,
+      "binary_sha256": "3057664852a930433330661814b729bdd9613ac9ab9962b786d5b2d8d65045d0",
+      "log_sha256": "152add77ea2608a3f99d80623fd9e47cee734d1bde4e1d1bbfb8ff47c3ed8dd4"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_handoff_heave-test",
+      "exit_code": 0,
+      "binary_sha256": "ae38b227961c61a0c487dbd5712d5ef5674c5190ee2d764aacb73fdee2660e2c",
+      "log_sha256": "76fe5e799425d730d293e798661c6e355ed1358672664eff1fa8e0e9fed2cb57"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_device_heave-test",
+      "exit_code": 0,
+      "binary_sha256": "b3139a70c5ea5ad1796c310d4850e62e18b17a2f705ec35a24a02808fdaec672",
+      "log_sha256": "ef5e1d6e8c9b143f988fc96deef32aee7f29b9c77948aafab5aedf34aa23c2b2"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_device_tempcomp-test",
+      "exit_code": 0,
+      "binary_sha256": "2f9281345e66a7d02ebd15b1b174afc9958969d9a4a6ac8cfa765acc602ece0e",
+      "log_sha256": "9d8337f100621177732d766188248b6e6a791df3680f2c594c1db92ada066372"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma_band_normalization-test",
+      "exit_code": 0,
+      "binary_sha256": "705b91c4b899298fcb0c3580f3b11658e9ee92be4dae0b0f3b23109cc0bcb8fa",
+      "log_sha256": "ff6f1eb19ddd563dd7803a87e3ada4c270d2f4be0f0ff25c736e763ec66f1b57"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma_model-test",
+      "exit_code": 0,
+      "binary_sha256": "a3ac052a09680c42b2b24067b3d6256f41aca0ded445852e0168e8ad95365c36",
+      "log_sha256": "8f16d94cbf23f5390ced70ccc27ee10956822b55945ee592ac8c090a574df807"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma3-test",
+      "exit_code": 0,
+      "binary_sha256": "f8a2728fe2afabe6f2215495e36dd599c0166c1fab911d9e7d742be8c6cbab4b",
+      "log_sha256": "80f910119278470c91a3d48c63cf471343bbbdcf9e8fb7dfed5492534ef23137"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./tfg_carma3-test",
+      "exit_code": 0,
+      "binary_sha256": "5befa0a1cdfd4ea7e8fe4dd1d42b07d27a58bd3e3745b41bc2bdb019e690bfc6",
+      "log_sha256": "b525e59d6584b34d4f952ef483fa4747881db05246b9d120ceed113b3e52af74"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma_lever_arm-test",
+      "exit_code": 0,
+      "binary_sha256": "3f9f695730e2ac7c71b9db29ac78eedc49e469bb51fb2da2bc1279f47d686426",
+      "log_sha256": "29110ed652ad4323c919242c5709136608bcc04b034a4f41844360552c2860bd"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma_excitation-test",
+      "exit_code": 0,
+      "binary_sha256": "47aff9685b09c8099a94549e47cf314132b5fad87370b617cd3ef1eb5746a877",
+      "log_sha256": "2d0f3b8891d5eb532eb0a4126db9fdea85925ad55773d0c888e19b8112bc5b57"
+    },
+    {
+      "directory": "tests/kalman_carma",
+      "command": "./carma_coupled-test",
+      "exit_code": 0,
+      "binary_sha256": "9b8856df76c95e10b9a8dbfcda1596aec89fa04215d1f988753a1b1de93880fd",
+      "log_sha256": "0e097f2df68c2d48b9b6225676bed26fa065801a578ba7f105698b0261123735"
+    },
+    {
+      "directory": "tests/kalman_carma_shared_modes",
+      "command": "./tfg_shared_modes-test",
+      "exit_code": 0,
+      "binary_sha256": "45da02f0f3dc67066f46ae285a9225894512421d5f900da02e8f20c78c444e44",
+      "log_sha256": "48ecd1e5c9a21357e8da2dc6f2406bed766b6e67ab7a0e6f20a8d8e947eb2c27"
+    },
+    {
+      "directory": "tests/kalman_carma_shared_modes",
+      "command": "./carma_shared_modes-test",
+      "exit_code": 0,
+      "binary_sha256": "4e2eb948ba92bbc2b6be9361980414cf432fdea5abe8c5f424862cb62afa8492",
+      "log_sha256": "42ec1c786126629398266a894fac0702ded10468809f46982910b13c54646825"
+    },
+    {
+      "directory": "tests/kalman_carma_shared_modes",
+      "command": "./carma_shared_modes_realization-test",
+      "exit_code": 0,
+      "binary_sha256": "e45accea6da4e07168265cd4023d3fa4649ddbcf126bac2b1d184263d1101cc8",
+      "log_sha256": "18513ee435c10d3dea2ad1327d6368b2a32246759ab11acfe4108481d081bc37"
+    },
+    {
+      "directory": "tests/kalman_tangent_shared_modes",
+      "command": "./geometry-test",
+      "exit_code": 0,
+      "binary_sha256": "998ed5640c9a3ab1aadae3efbf2bb14522332e4a2bfeca662c70877c2456b3e6",
+      "log_sha256": "d25707c019d63afe9b7ec27f0e93c16006093b17018d69e31e93c1babfdaed06"
+    },
+    {
+      "directory": "tests/util",
+      "command": "./marine-turn-test",
+      "exit_code": 0,
+      "binary_sha256": "5bc4dbce84b6d2bf5e4086e55b7af66bedcb066ca32e6ea31e050c0002f164be",
+      "log_sha256": "f993299fffa148a425f2d46ab7cbe58bacd037dc1f90985f26c7033fd42b1dd7"
+    },
+    {
+      "directory": "tests/kalman_tfg",
+      "command": "./tfg_device_heave-test --legacy-rs",
+      "exit_code": 0,
+      "binary_sha256": "b3139a70c5ea5ad1796c310d4850e62e18b17a2f705ec35a24a02808fdaec672",
+      "log_sha256": "5826e15da495e572545d7ee566bcce51463bc011fa4aef3c435e3c68f660e3b0"
+    }
+  ],
+  "live_bias_suite": {
+    "directory": "tests/live_bias_consistency",
+    "command": "bash run_tests.sh",
+    "exit_code": 0,
+    "log_sha256": "93a139f9054bb63d3453a02f9105ce67354369c4d6c5a3d860c95ce071ec7fc8",
+    "scope": "Timing, defaults, reinitialization, rejected packets, Schmidt covariance, noise bounds, sensor audit, QMEKF/TFG parity and OU2/OU3/TFG gyro rollout"
+  },
+  "device_build": {
+    "source_revision": "db90a8fb3ce29d02335b31b1797f65eeb4b57e95",
+    "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965590856",
+    "scope": "Link every shipped sketch with Arduino IDE default flags",
+    "platforms": {
+      "ubuntu-latest": {
+        "job_id": 133644204685,
+        "conclusion": "success"
+      },
+      "windows-latest": {
+        "job_id": 133644204142,
+        "conclusion": "success"
+      }
+    }
+  }
+}

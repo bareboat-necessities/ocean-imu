@@ -12,6 +12,7 @@ from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'tools'))
 from heading_kinematics_diagnosis import control, harmonic_amplitude, indices, cached_trace_valid
+import heading_turn_validation
 from underway_reference import track
 
 
@@ -81,6 +82,24 @@ class HeadingControlTests(unittest.TestCase):
         p, _, a, _ = track(t)
         self.assertAlmostEqual(harmonic_amplitude(t, p[:, 1]), .428557, places=5)
         self.assertAlmostEqual(np.max(np.abs(a[:, 1])), .04231145, places=6)
+
+    def test_comparison_rejects_refreshed_baseline_metrics(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            content = b'{"records": {}}\n'
+            expected = {}
+            for case in ('following', 'head'):
+                relative = Path('reports/results/sim_v1.4.0')/case/'measurements.json'
+                path = root/relative
+                path.parent.mkdir(parents=True)
+                path.write_bytes(content)
+                expected[case] = hashlib.sha256(content).hexdigest()
+            with (patch.object(heading_turn_validation, 'ROOT', root),
+                  patch.object(heading_turn_validation, 'BASELINE_SHA256', expected)):
+                self.assertEqual(set(heading_turn_validation.load_baseline()), {'following', 'head'})
+                path.write_text(path.read_text()+'\n')
+                with self.assertRaisesRegex(ValueError, 'baseline changed'):
+                    heading_turn_validation.load_baseline()
 
     def test_tfg_bias_chart_distinguishes_estimates_from_injected_truth(self):
         import pandas as pd

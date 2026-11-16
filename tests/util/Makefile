@@ -38,7 +38,7 @@ ins-helpers-test: ins-helpers-test.cpp $(HEADERS)
 replay-gates-test: replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(REPO_ROOT)/src/util/W3dSimCommon.h
 	$(CXX) $(CXXFLAGS) -o $@ replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp
 
-marine-turn-test: marine-turn-test.cpp $(REPO_ROOT)/src/kalman_common/MarineTurnSeparator.h $(REPO_ROOT)/src/tuner/VerticalAccelComplementary.h $(REPO_ROOT)/src/ahrs/Mahony_AHRS.h
+marine-turn-test: marine-turn-test.cpp $(REPO_ROOT)/src/kalman_common/MarineTurnSeparator.h $(REPO_ROOT)/src/kalman_common/MarineTurnModel.h $(REPO_ROOT)/src/tuner/VerticalAccelComplementary.h $(REPO_ROOT)/src/ahrs/Mahony_AHRS.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:

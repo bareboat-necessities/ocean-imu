@@ -15,6 +15,13 @@ For U = 5 kn and ψ = ±3° sin(2πt/20 s), the lateral acceleration peaks at **
 
 `MovingVesselRao` in oceanography-waves-lib correctly differentiates the total track and wave response, including rotating-response terms. In this repository, `W3dSimulationRunner` subtracts the declared track from displacement and velocity truth, but retains total acceleration and body IMU measurements. Thus the scored displacement/velocity and acceleration columns intentionally belong to different decompositions. A desired wave-only error is meaningful, but it is not an inertial-integration error against one p/v/a history.
 
+An independent check of all 16 released records differentiates their
+world-to-body quaternion rotation matrices with a fourth-order centered
+stencil and compares `vee(-Rdot R^T)` with the body gyro columns. The largest
+record RMS discrepancy is **1.16e-6 rad/s**, consistent with the stated
+heading motion. The input hashes and per-record results are retained with
+the native validation receipt.
+
 The filter output and scored displacement are world vectors. A boat-frame sway product would project **wave-relative** displacement onto the current lateral axis. That projection can legitimately change with heading; it does not remove physical turning acceleration.
 
 Bias columns are sensor-body quantities in the harness basis `(x,y,z) -> (y,x,-z)`. In particular, plotted bias Y corresponds to the generator body X, whereas displacement Y is geographic west. Bias Y and displacement Y are not the same axis. The TFG gallery also had an independent presentation bug: its plot titled estimated bias read the true-bias columns. It now plots true and estimated body bias separately.
@@ -183,12 +190,32 @@ observer controls include a mounting rotation out of the horizontal plane
 and clearing learned motion after an IMU gap. The OU-III optimized replay
 also caught a matrix-layout-sensitive crash; retaining its established
 covariance-buffer layout fixes that crash in all 16 replay records.
+In total, **48** targeted native unit invocations pass, including OU numerical,
+startup and covariance checks, TFG device checks, CARMA lever-arm and coupling
+checks, shared-mode realization and tangent geometry. Their executable and
+log hashes are in `runtime-unit-checks.json` beside the comparison reports.
+The complete `tests/live_bias_consistency/run_tests.sh` suite also passes,
+including packet rejection, reinitialization, timing, noise bounds and paired
+QMEKF/TFG replays.
+The [Arduino default-flags build](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965590856)
+links every shipped sketch on both Linux and Windows at `db90a8fb`.
 
-The required `make all -j1 SIM_JOBS=2` is a separate acceptance run. Historical
-OU/stability evidence does not establish acceptance of this changed model;
-its source binding must be regenerated and its applicability reviewed.
-The native-target [CI matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43959597252)
-completed both directions at `a86c1eb7`: every horizontal default/legacy
+The required `make all -j1 SIM_JOBS=4` compiles every native target and
+completes both replay directions, then returns **2**. The first failing test
+command is `W3D_COLLECT_ALL_GATES=1 ./carma3-sim --regression` in
+`tests/kalman_carma`: its first record exceeds Z RMS (3.54156% > 3.53949%),
+pitch RMS (0.0937334 > 0.07034 deg), and 3D bias (35.9498% > 34.1417% of
+maximum true bias) limits.
+
+This native comparison includes all **272** horizontal default/legacy cells,
+including the separate legacy TFG runner. Y improves in **272/272**, by
+**12.0–93.2%**; **32/272** pass every existing gate (15/128 for the eight
+default families). The complete command status, profile results and hashes
+are in [`runtime-native-validation.json`](../reports/results/heading_kinematics/runtime-native-validation.json).
+Historical OU/stability evidence does not establish acceptance of this changed
+model; its source binding must be regenerated and its applicability reviewed.
+The native-target [CI matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965579218)
+completed both directions at `db90a8fb` (the same runtime): every horizontal default/legacy
 profile reports quality-gate failure (exit 1), with no abnormal simulator
 exit. AHRS, NLO, PII and all three heave-only profiles pass in both directions.
 [`runtime-native-ci.json`](../reports/results/heading_kinematics/runtime-native-ci.json)
@@ -210,3 +237,9 @@ python3 tools/heading_turn_validation.py --work-dir /path/to/replays \
 Pass `--baseline-traces /path/to/pre-fix/traces` to reproduce the figure. Both
 plot sources are hash-checked; only the display is uniformly decimated to
 20 Hz. Scoring uses the entire 200 Hz window.
+
+The comparison also verifies both pre-fix metrics files against their hashes
+at `5426da8a`. If ordinary replay publication has refreshed those files, pass
+`--baseline-dir /path/to/pre-fix-metrics` containing the original
+`following/measurements.json` and `head/measurements.json`. Refreshed results
+cannot silently become the comparison's old baseline.
