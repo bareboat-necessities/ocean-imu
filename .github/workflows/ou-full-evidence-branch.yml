@@ -12,6 +12,10 @@ on:
       # The publisher validates and fingerprints the proof records too.
       # A source-bound proof refresh must supersede an older in-flight run.
       - "reports/results/ou3_stability/**"
+      # The final fingerprint also protects the published two-case results.
+      # A newer result bundle cannot be rebased under an older fingerprint.
+      - "reports/results/sim_v1.4.0/**"
+      - "docs/ou3-proof-research-state.md"
       - "Makefile"
       - "tools/startup_ablation.py"
       - "tools/ou3_lever_arm_study.py"

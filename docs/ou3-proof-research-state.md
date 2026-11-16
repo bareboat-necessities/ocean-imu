@@ -24,6 +24,11 @@ input and executable hashes; the immutable qualifying receipts are separate.
 The remaining publication limiter is regeneration of the stale full OU
 bundles. The next falsifiable check is the unchanged evidence contract against
 the complete new CI bundles, followed by the required `make all` result.
+The branch trigger also tracks the published two-case results and this ledger:
+the earlier full run at 77ec3f4 predates the additional heave result bundle,
+so its protected-results fingerprint cannot be rebased onto that newer tree.
+This is another class E publication-integration issue; a fresh run must bind
+the actual current results, with the fingerprint check preserved.
 
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
