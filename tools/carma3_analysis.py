@@ -52,6 +52,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.integrate import trapezoid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma_fit as cf  # noqa: E402
@@ -111,7 +112,7 @@ def part_spectrum(f, hs, fp, gamma):
     """One-sided elevation PSD per Hz, band-limited as in the benchmark."""
     s = np.where((f >= 0.55 * fp) & (f <= 4.5 * fp), pv.jonswap(f, fp, gamma), 0.0)
     fl = np.linspace(0.55 * fp, 4.5 * fp, 20001)
-    m0 = np.trapezoid(pv.jonswap(fl, fp, gamma), fl)
+    m0 = trapezoid(pv.jonswap(fl, fp, gamma), fl)
     return s * (hs / 4.0) ** 2 / m0
 
 
@@ -160,9 +161,9 @@ def psd_check(S):
 
 def moments(f, s):
     w = TWO_PI * f
-    m0 = np.trapezoid(s, f)
-    m2 = np.trapezoid(w ** 2 * s, f)
-    m4 = np.trapezoid(w ** 4 * s, f)
+    m0 = trapezoid(s, f)
+    m2 = trapezoid(w ** 2 * s, f)
+    m4 = trapezoid(w ** 4 * s, f)
     return m0, m2, m4
 
 
@@ -459,7 +460,7 @@ def s_inf_variance(m):
     f = np.geomspace(1e-6, 50.0, 400000)
     w = TWO_PI * f
     S = m.psd_onesided(f) / np.maximum(w ** 2, 1e-300)
-    return float(np.trapezoid(S, f))
+    return float(trapezoid(S, f))
 
 
 # ---------------------------------------------------------------------------
@@ -513,10 +514,10 @@ def budget(T, S, f, noise=N_ONE_SIDED):
     sig = np.abs(1.0 + w ** 2 * T) ** 2 * S
     noi = np.abs(T) ** 2 * noise
     e = sig + noi
-    return {"rms_m": float(np.sqrt(np.trapezoid(e, f))),
-            "signal_m": float(np.sqrt(np.trapezoid(sig, f))),
-            "noise_m": float(np.sqrt(np.trapezoid(noi, f))),
-            "band_rms_m": {f"{a}-{b}": float(np.sqrt(np.trapezoid(np.where((f >= a) & (f < b), e, 0), f)))
+    return {"rms_m": float(np.sqrt(trapezoid(e, f))),
+            "signal_m": float(np.sqrt(trapezoid(sig, f))),
+            "noise_m": float(np.sqrt(trapezoid(noi, f))),
+            "band_rms_m": {f"{a}-{b}": float(np.sqrt(trapezoid(np.where((f >= a) & (f < b), e, 0), f)))
                            for a, b in BANDS}}, e
 
 
@@ -626,9 +627,9 @@ def wiener_bound(S, f, noise_scale_h=1.0):
         S2 = Sk[:2, :2]
         E2 = S2 - w[k] ** 4 * S2 @ np.linalg.solve(w[k] ** 4 * S2 + np.diag(Nd[:2]), S2)
         e_xy[k] = np.real(np.diag(E2))
-    rj = np.sqrt(np.trapezoid(e_joint, f, axis=0))
-    ri = np.sqrt(np.trapezoid(e_ind, f, axis=0))
-    rxy = np.sqrt(np.trapezoid(e_xy, f, axis=0))
+    rj = np.sqrt(trapezoid(e_joint, f, axis=0))
+    ri = np.sqrt(trapezoid(e_ind, f, axis=0))
+    rxy = np.sqrt(trapezoid(e_xy, f, axis=0))
     return {"rms_joint_m": rj.tolist(), "rms_independent_m": ri.tolist(), "rms_xy_only_m": rxy.tolist(),
             "gain_joint_pct": (100 * (1 - rj / ri)).tolist(), "gain_xy_only_pct": (100 * (1 - rxy / ri[:2])).tolist()}
 
@@ -736,7 +737,7 @@ def _coupled_eval(mz, N, sh, kappa, res_std, alpha, wz, c, S, f, noise_scale_h):
         Ti = mma.steady_transfer(Fi, Qi, np.eye(N)[[2]], np.array([[R[i, i]]]), np.eye(N)[[0]], f)[0]
         Tfull = np.zeros((len(f), 3), dtype=complex); Tfull[:, i] = Ti
         e_i = joint_error_psd(Tfull, S, f, i, nd)
-        out[ax] = {"rms": float(np.sqrt(np.trapezoid(e_c, f))), "rms_ind": float(np.sqrt(np.trapezoid(e_i, f)))}
+        out[ax] = {"rms": float(np.sqrt(trapezoid(e_c, f))), "rms_ind": float(np.sqrt(trapezoid(e_i, f)))}
     # The coupled model's own cross-spectral matrix is Hermitian PSD by
     # construction (W >= 0); check it.
     fk = np.geomspace(0.02, 2.0, 60)
@@ -852,7 +853,7 @@ def run(args):
             }
             curves[("spec", key)] = (Sd, g_xy, g_xz, g_yz, ph_xz)
     legacy = cross_spectrum("jonswap_fp0.29_hs0.8_g3.3", f, 0.0, model="legacy")
-    out["legacy_truth_horizontal_std_m"] = [float(np.sqrt(np.trapezoid(np.real(legacy[:, i, i]), f)))
+    out["legacy_truth_horizontal_std_m"] = [float(np.sqrt(trapezoid(np.real(legacy[:, i, i]), f)))
                                             for i in range(2)]
     curves[("spec", "legacy")] = np.real(np.stack([legacy[:, i, i] for i in range(3)], 1))
     out["spectra"] = spectra

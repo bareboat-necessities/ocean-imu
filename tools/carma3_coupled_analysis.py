@@ -64,6 +64,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.integrate import trapezoid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma3_analysis as ca  # noqa: E402
@@ -560,7 +561,7 @@ def system_checks(f):
                      # stationary covariance vs quadrature of the spectrum (p_x)
                      "var_px_lyap_vs_quadrature": float(
                          (sy.Cp @ P @ sy.Cp.T)[0, 0] /
-                         np.trapezoid(np.real(sy.spectrum(np.linspace(1e-4, 20.0, 40001))[:, 0, 0]),
+                         trapezoid(np.real(sy.spectrum(np.linspace(1e-4, 20.0, 40001))[:, 0, 0]),
                                       np.linspace(1e-4, 20.0, 40001)))}
         # Kinematic consistency: v = dp/dt and a = dv/dt are noise-free
         # derivatives (Cp G = 0, Cp A G = 0, Cp A^2 G != 0).
@@ -604,7 +605,7 @@ def band_cross(S, f, f_op, bw_frac=0.25):
     w4 = (TWO_PI * f) ** 4
     wp, wm = demod_weight(f, f_op, bw_frac)
     Sa = w4[:, None, None] * S
-    M = np.trapezoid(wp[:, None, None] * Sa, f, axis=0) + np.trapezoid(wm[:, None, None] * np.conj(Sa), f, axis=0)
+    M = trapezoid(wp[:, None, None] * Sa, f, axis=0) + trapezoid(wm[:, None, None] * np.conj(Sa), f, axis=0)
     return 0.5 * (M + np.conj(M).T)
 
 
@@ -616,21 +617,21 @@ def representable(S, f):
     out = {}
     for name, (i, j) in (("xz", (0, 2)), ("yz", (1, 2)), ("xy", (0, 1))):
         s = w4 * S[:, i, j]
-        e = np.trapezoid(np.abs(s) ** 2, f)
+        e = trapezoid(np.abs(s) ** 2, f)
         if e <= 0:
             continue
         # COR: best real multiple of a common real shape -> only Re survives.
-        re_frac = np.trapezoid(np.real(s) ** 2, f) / e
+        re_frac = trapezoid(np.real(s) ** 2, f) / e
         # SHM: best constant complex coefficient times a real shape.
         mag = np.abs(s)
-        c = np.trapezoid(s * mag, f) / np.trapezoid(mag ** 2, f)
-        shm_frac = 1.0 - np.trapezoid(np.abs(s - c * mag) ** 2, f) / e
+        c = trapezoid(s * mag, f) / trapezoid(mag ** 2, f)
+        shm_frac = 1.0 - trapezoid(np.abs(s - c * mag) ** 2, f) / e
         coh, ph = ca.coherence(S, i, j)
         wgt = w4 * np.sqrt(np.real(S[:, i, i]) * np.real(S[:, j, j]))
         ok = np.isfinite(coh)
         out[name] = {"real_part_energy_fraction": float(re_frac),
                      "constant_phase_fit_energy_fraction": float(shm_frac),
-                     "energy_weighted_coherence": float(np.trapezoid(np.where(ok, coh, 0) * wgt, f) / np.trapezoid(wgt, f)),
+                     "energy_weighted_coherence": float(trapezoid(np.where(ok, coh, 0) * wgt, f) / trapezoid(wgt, f)),
                      "phase_deg_at_peak": float(ph[np.argmax(np.where(ok, wgt, 0))]),
                      "phase_deg_p10_p90": [float(x) for x in np.nanpercentile(np.where(wgt > 0.1 * wgt.max(), ph, np.nan), [10, 90])]}
     return out
@@ -703,12 +704,12 @@ def steady_eval(sy, S, f, h_noise=1.0):
         G = np.eye(3) + w[k] ** 2 * T
         Ek = G @ S[k] @ np.conj(G).T + T @ np.diag(Nd) @ np.conj(T).T
         E[k] = np.real(np.diag(Ek))
-    rms = np.sqrt(np.trapezoid(E, f, axis=0))
+    rms = np.sqrt(trapezoid(E, f, axis=0))
     pred = np.sqrt(np.diag(sy.Cp @ Ppost @ sy.Cp.T))
     bands = {}
     for a, b in ca.BANDS:
         m = (f >= a) & (f < b)
-        bands[f"{a}-{b}"] = np.sqrt(np.trapezoid(np.where(m[:, None], E, 0), f, axis=0)).tolist()
+        bands[f"{a}-{b}"] = np.sqrt(trapezoid(np.where(m[:, None], E, 0), f, axis=0)).tolist()
     return {"rms_m": rms.tolist(), "pred_std_m": pred.tolist(),
             "var_ratio": (rms ** 2 / pred ** 2).tolist(), "bands": bands}, E
 
@@ -814,7 +815,7 @@ def whittle_fim(spec_fn, theta, f, T_s, h_noise=1.0, rel_step=1e-4):
         Aj = Si @ d[j]
         for k in range(j, n):
             v = np.real(np.einsum("fab,fba->f", Aj, Si @ d[k]))
-            F[j, k] = F[k, j] = T_s * np.trapezoid(v, f)
+            F[j, k] = F[k, j] = T_s * trapezoid(v, f)
     return F
 
 
