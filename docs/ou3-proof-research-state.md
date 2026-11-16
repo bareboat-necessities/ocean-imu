@@ -133,6 +133,21 @@ parallelism assumption, retains every source/proof fact, and does not justify
 a runtime or numerical change. The existing six-item shipping handoff below
 still applies.
 
+Class E publication-quality failure on merged-main run 43896140120 (also PR
+run 43895447549): Ruff rejected two unused imports in the new shared-mode
+article-evidence test. Failed quantity: the Python static-quality gate only;
+the five focused evidence-rejection tests, full 1,231-test validation suite,
+both 544-cell matrices, all 42 studies and generated article inputs retain
+their prior results. Invalidated assumption: imports removed while reducing
+the test fixture were still referenced. Structures preserved: every shipping
+estimator operation, numerical gate, scoring window, source/input binding and
+original evidence byte. Relaxations introduced: none; no stale evidence is
+restamped and no mathematical or shipping claim is promoted. Current limiter:
+main cannot be green until the exact merged source passes Ruff and the
+remaining article jobs publish. Next falsifiable check: run Ruff and the
+focused evidence tests locally, then require the new main quality gate and
+complete build/article fan-out to succeed.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
