@@ -63,6 +63,37 @@ required native `make all` reaches validation but its command
 bundles' source/input bindings; the subsequent two-case replay matrix remains
 independent of that honest publication gate.
 
+Class E publication-test failure on main run 43797146842: every replay shard,
+combiner and MCU build succeeded, but `make -C tests/validation evidence-test`
+failed because the source-archive fixture omitted `tools/sim_dataset_manifest.json`.
+The adversarial restatement test raised `FileNotFoundError` during import instead
+of reaching the required rejection of changed estimator bytes. Reproducing with
+the completed CI bundles gives the same failure; copying the manifest into the
+fixture makes all six archive/provenance tests pass with their original assertions.
+Invalidated assumption: the Python files alone form the study entry points'
+runtime dependency closure. Retained facts: the completed replay outputs and
+their source/input identities, all shipping operations and all numerical gates.
+Structures preserved: every estimator state, covariance, chronology and physical
+history. Relaxations introduced: none; no shipping counterexample or theorem
+promotion. Current limiter: publication remains blocked until the corrected
+fixture is used. Next falsifiable check: the complete evidence suite against the
+same CI bundles, then successful CI publication under the unchanged provenance
+and fingerprint checks.
+
+Class E article-export failure on main study run 43797146679: both shared-mode
+validation cases completed all 1,038 scored replays, then PGF export raised
+`FileNotFoundError: pdflatex`. Invalidated assumption: the Python plotting
+packages alone provide the renderer's dependencies. Install
+`texlive-latex-recommended` only for that study. Rendering the original CI
+artifacts produces all 11 SVG/PGF pairs and the table set per direction;
+the original protocol, full-rate runs, traces and failed CI receipts remain
+unchanged. Structures preserved: all shipping operations, numerical gates,
+180,000-sample scoring windows and source/input identities. Relaxations
+introduced: none; this establishes no mathematical result or shipping
+counterexample. Current limiter: the corrected workflow must complete in CI.
+Next falsifiable check: both shared-mode study jobs finish their complete
+publication products with the installed TeX dependency.
+
 Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
 physical record, frontend, magnetic service and clocks are preserved; (2) only
 the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
