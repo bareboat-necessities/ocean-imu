@@ -1,7 +1,7 @@
 # OU-III robustness study
 
-The full study uses the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
-with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+The full study uses the checksum-pinned v1.4.0 28 ft / 5 kn moving boat in both
+following and head seas, with ±3° heading over 20 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). The 310 new
 simulator rows retain ten paired seed triplets, five sensitivity multipliers,
 and all low-motion and transition conditions.

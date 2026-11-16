@@ -8,13 +8,7 @@ EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-isystem $(EIGEN_DIR
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 
 LDFLAGS  =
 
@@ -53,7 +47,7 @@ regularizer_floor-test: regularizer_floor-test.o
 
 # -MMD -MP records the headers each object depends on, so editing a filter
 # header rebuilds the simulator instead of silently reusing a stale object.
-%.o: %.cpp
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 -include $(wildcard *.d)

@@ -1,3 +1,54 @@
+## Bidirectional v1.4.0 replay qualification
+
+Class E integration failure: changing `src/util/UnderwayReference.h` invalidated
+the finite native secant report's whole-source digest; updating the dataset
+pointer in the bound gyro-projection document invalidated its document hash.
+A fresh complete 252-column replay at both original epsilons reproduces both
+native state-byte hashes. The receipt is
+`reports/results/ou3_stability/v140-replay-reference-source-scope.json`.
+The source-binding gate and mathematical qualifications remain unchanged.
+
+Further class E integration failures: a child lever-arm study deleted its
+wrapper's open `study.log`, causing `FileNotFoundError` after successful
+replays; the head-sea startup control requested the nonexistent
+`nlo/default/wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv` irregular-sea
+cap; and GCC/CPU-dependent arithmetic exceeded the following JONSWAP H4
+OU-III pitch cap of 0.11387 deg. These invalidate assumptions about output
+ownership, diagnostic-control gate lookup and host reproducibility, not
+shipping stability. Sibling logs survive child cleanup, explicitly requested
+regular-wave controls keep their original global gates, and GCC 14 with the
+fixed host instruction set passes all 544 cells without changing numeric caps
+(OU-III H4 pitch 0.113302581 deg). Both full 288-run OU-III lever-arm studies
+and ten regular-wave startup controls pass. Current measurements retain their
+input and executable hashes; the immutable qualifying receipts are separate.
+The remaining publication limiter is regeneration of the stale full OU
+bundles. The next falsifiable check is the unchanged evidence contract against
+the complete new CI bundles, followed by the required `make all` result.
+The branch trigger also tracks the published two-case results and this ledger:
+the earlier full run at 77ec3f4 predates the additional heave result bundle,
+so its protected-results fingerprint cannot be rebased onto that newer tree.
+This is another class E publication-integration issue; a fresh run must bind
+the actual current results, with the fingerprint check preserved.
+The required native build exposed a further class E incremental-build failure:
+the shared-mode benchmark exited 139 because its explicit `bench_engine.o`
+rule did not inherit the generic Makefile/host-flag dependencies. Its retained
+AVX-512 object was linked with rebuilt AVX2 objects. Both explicit object rules
+now name those dependencies. Rebuilding removes AVX-512 instructions from the
+engine and the original smoke commands pass unchanged: maximum QMEKF
+equivalence error 2.2136e-5 < 1e-4 and TFG error 3.3394e-5 < 0.01. The receipt
+is `reports/results/filter_sim_gates/incremental_host_build.json`. No filter
+equation or numeric limit changed. The next check is the complete native suite
+with a consistent build, plus the fresh publication fingerprints.
+
+Six-item handoff: (1) the complete shipping wrapper, inherited state, covariance,
+physical record, frontend, magnetic service and clocks are preserved; (2) only
+the existing off-orbit finite-secant diagnostic relaxation remains; (3) the
+stale binding was E, while the retained sufficient-bound failure remains D;
+(4) no shipping counterexample was found; (5) existing algebra and open theorem
+qualifications are retained; (6) validate the refreshed provenance and both
+external-record regression cases before publication. No new stability claim is
+made. The current replay inventory is 544 cells across the two directions.
+
 ## Current low-wave model follow-up
 
 Current hypothesis: encounter-spectrum mismatch contributes to the moving

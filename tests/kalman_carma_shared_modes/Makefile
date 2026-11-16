@@ -8,13 +8,7 @@ EIGEN_DIR ?= $(REPO_ROOT)/third_party/eigen
 EIGEN_CPPFLAGS := $(if $(wildcard $(EIGEN_DIR)/Eigen/Dense),-isystem $(EIGEN_DIR),-isystem /usr/include/eigen3)
 BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -Wconversion -funroll-loops -fno-finite-math-only -I$(REPO_ROOT)/src -I$(BENCH_DIR) $(EIGEN_CPPFLAGS) $(CPPFLAGS)
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 LDFLAGS =
 VPATH = $(REPO_ROOT)/src/util
 TARGETS = tfg_shared_modes-test carma_shared_modes-test carma_shared_modes_realization-test kalman_carma_shared_modes-sim kalman_carma_shared_modes-bench
@@ -32,7 +26,7 @@ test: ensure-sim-data $(TARGETS)
 	bash ./run_tests.sh
 ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
-tfg_shared_modes-test.o: tfg_shared_modes-test.cpp
+tfg_shared_modes-test.o: tfg_shared_modes-test.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(filter-out -O3 -funroll-loops,$(CXXFLAGS)) -O1 -DEIGEN_UNROLLING_LIMIT=0 -MMD -MP -c $< -o $@
 tfg_shared_modes-test: tfg_shared_modes-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -48,9 +42,9 @@ kalman_carma_shared_modes-sim: kalman_carma_shared_modes-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 kalman_carma_shared_modes-bench: kalman_carma_shared_modes-bench.o csm_filters.o tfg_csm_filters.o $(BENCH_OBJS) W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp
+bench_engine.o: $(BENCH_DIR)/carma3_bench.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -Dmain=carma3_bench_main -MMD -MP -c $< -o $@
-%.o: %.cpp
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)
 clean:

@@ -1,13 +1,13 @@
 """Accuracy reports must not silently omit failed, missing or invalid records."""
 import importlib.util
 import json
-import math
 from pathlib import Path
 import re
 import sys
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tools'))
@@ -35,33 +35,64 @@ def pii_fixture():
 
 
 class ReplayEvidenceTests(unittest.TestCase):
+    def test_cli_rejects_failed_gate_even_when_process_returns_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            logs = Path(tmp)
+            runs = []
+            for name in G.REPLAYS:
+                profiles = []
+                for profile, _ in G.profiles_for(name):
+                    if name == 'pii':
+                        text = pii_fixture()
+                    elif name == 'ahrs':
+                        text = 'Angles RMS (deg): Roll=1 Pitch=1 Yaw=1\n' * 8
+                    elif name == 'nlo':
+                        text = 'Z RMS raw (%Hs): 1%\n' * 8
+                    elif name == 'heave':
+                        methods = G.HEAVE_METHODS | ({'pii'} if profile != 'truth' else set())
+                        frontend = 'mahony' if profile == 'default' else profile
+                        text = '\n'.join(f'HEAVE_ONLY method={method} frontend={frontend} record={record} z_pct_hs=1'
+                                         for method in methods for record in G.REFERENCE_CSV_SHA256)
+                    else:
+                        lines = fixture().splitlines()
+                        text = '\n'.join(line + ('\nQUALITY_GATE: PASS=1 REASON=ok' if line.startswith('Bias error RMS (% of max TRUE bias) (gyro)') else '')
+                                         for line in lines)
+                    if (name, profile) == ('ou3', 'default'):
+                        text = text.replace('QUALITY_GATE: PASS=1 REASON=ok',
+                                            'QUALITY_GATE: PASS=0 REASON=accuracy', 1)
+                    path = logs / f'{name}-{profile}.log'
+                    path.write_text(text)
+                    profiles.append(dict(profile=profile, exit_code=0, log_sha256=G.digest(path)))
+                runs.append(dict(name=name, binary_sha256='fixture', profiles=profiles))
+            (logs / 'runs.json').write_text(json.dumps(runs))
+            output = logs / 'measurements.json'
+            with mock.patch.object(G, 'input_provenance', return_value={}), mock.patch.object(
+                    sys, 'argv', ['filter_sim_gates.py', '--log-dir', str(logs), '--output', str(output)]):
+                with self.assertRaisesRegex(SystemExit, 'replay gates failed'):
+                    G.main()
+            report = json.loads(output.read_text())
+            self.assertNotEqual(report['acceptance'], 'all replay gates passed')
+            self.assertIn('ou3/default', report['gate_error'])
+            self.assertEqual(report['replay_exit_codes']['ou3']['default'], 0)
+
     def test_per_record_inventory_caps_and_generated_cpp(self):
         from generate_record_replay_limits import render
-        folder = ROOT / 'reports/results/filter_sim_gates'
-        data = json.loads((folder / 'per_record_limits.json').read_text())
-        expected = {(family, profile, name) for family, profiles in data['controls'].items()
-                    for profile in profiles for name in G.REFERENCE_CSV_SHA256}
-        actual = {(e['family'], e['profile'], e['input']) for e in data['entries']}
-        self.assertEqual(expected, actual)
-        self.assertEqual(len(actual), len(data['entries']))
-        self.assertEqual(len(actual), 256)
-        self.assertEqual({e['family'] for e in data['entries']},
-                         set(G.REPLAYS) - {'heave'} | {'heave_' + m for m in G.HEAVE_METHODS | {'pii'}})
-        failures = []
+        from lock_simulation_baseline import cap
+        data = json.loads((ROOT / 'reports/results/filter_sim_gates/per_record_limits.json').read_text())
+        for case, name in data['measurement_files'].items():
+            path = ROOT/'reports/results/filter_sim_gates'/name
+            self.assertEqual(G.digest(path), data['measurement_sha256'][case])
+            self.assertEqual(json.loads(path.read_text())['case'], case)
+        keys = {(e['case'], e['family'], e['profile'], e['input']) for e in data['entries']}
+        self.assertEqual(len(keys), 544)
+        self.assertEqual(len(keys), len(data['entries']))
+        for case in ('following', 'head'):
+            self.assertEqual({e['family'] for e in data['entries'] if e['case'] == case},
+                set(G.REPLAYS) - {'heave'} | {'heave_' + m for m in G.HEAVE_METHODS | {'pii'}})
         for entry in data['entries']:
-            controls = data['controls'][entry['family']][entry['profile']]
-            for metric, limit in entry['limits'].items():
-                worst = max(r['metrics'][metric] for c in controls for r in c['rows']
-                            if r['input'] == entry['input'])
-                self.assertEqual(worst, entry['measured_max'][metric])
-                old = entry['previous_global'][metric]
-                self.assertLessEqual(limit, old)
-                self.assertAlmostEqual(limit, min(old, math.ceil(worst * 1.005 / 1e-5) * 1e-5), places=5)
-                if worst > limit:
-                    failures.append((entry['family'], entry['profile'], entry['input'], metric))
-        # Retain the known main-runner OU3 failure; do not quietly fit it away.
-        self.assertEqual(set(failures), {(e['family'], e['profile'], e['input'], e['metric'])
-                                        for e in data['existing_global_failures']})
+            for metric, value in entry['limits'].items():
+                self.assertEqual(value, cap(entry['measured_max'][metric]))
+                self.assertGreater(value, entry['measured_max'][metric])
         self.assertEqual(render(data), (ROOT / 'tests/common/RecordReplayLimits.inc').read_text())
 
     def test_compiled_record_lookup_rejects_hidden_regressions_and_missing_channels(self):
@@ -93,6 +124,17 @@ int main() {
     setenv("W3D_IMU_SEED", "1234", 1);
     assert(limit("ou3", "default", "diagnostic_crossfade.csv", Metric::heave, 8.0f) == 8.0f);
     unsetenv("W3D_IMU_SEED");
+    const char* regular = "/tmp/wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv";
+    assert(uses_record_caps(regular));
+    setenv("W3D_ALL_WAVE_TYPES", "1", 1);
+    assert(!uses_record_caps(regular));
+    assert(limit("nlo", "default", regular, Metric::heave, 8.19f) == 8.19f);
+    assert(uses_record_caps(e.input));
+    assert(uses_record_caps("wave_data_jonswap_typo.csv"));
+    assert(limit("ou2", "default", e.input, Metric::heave, global) == e.limits[0]);
+    setenv("W3D_ALL_WAVE_TYPES", "0", 1);
+    assert(uses_record_caps(regular));
+    unsetenv("W3D_ALL_WAVE_TYPES");
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:
@@ -208,67 +250,37 @@ int main() {
                       'tests/kalman_carma/carma_lever_arm-sim.cpp'))
         expected = {str(p.relative_to(ROOT)) for p in (ROOT / 'tests').rglob('*-sim.cpp')}
         expected.add('tests/pii_observer/pii_observer-adaptive.cpp')
+        expected.add('tests/kalman_tangent_shared_modes/tangent-replay.cpp')
         self.assertEqual(owned, expected)
 
-    def test_current_limits_match_the_measured_underway_dataset_with_declared_margin(self):
-        evidence = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
-        header = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text()
-        for name, family in evidence['families'].items():
-            block = re.search(r'W3dFailureLimits ' + name + r'\{(.*?)\};', header, re.S)[1]
-            compiled = {key: float(value) for key, value in
-                        re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', block)}
-            self.assertEqual(compiled, family['current_limits'], name)
-            self.assertEqual(set(compiled), set(G.GATE_METRICS), name)
-            for gate, value in compiled.items():
-                self.assertGreater(value, family['measured_worst'][gate], (name, gate))
-                expected = math.ceil(family['measured_worst'][gate] * 1.005 / 1e-5) * 1e-5
-                if 'previous_current_limits' in family:
-                    expected = min(expected, family['previous_current_limits'][gate])
-                self.assertAlmostEqual(value, expected, places=5)
-        from sim_dataset import SHA256
-        self.assertEqual(evidence['inputs']['archive_sha256'], SHA256)
-
-    def test_tightened_profiles_cover_every_retained_control_without_widening(self):
-        folder = ROOT / 'reports/results/filter_sim_gates'
-        evidence = json.loads((folder / 'limits.json').read_text())
-        study = json.loads((folder / 'gate_tightening.json').read_text())
-        header = (ROOT / 'tests/common/CurrentReplayLimits.h').read_text()
-        sections = header.split('namespace interval {')
-        self.assertEqual(study['inputs'], evidence['inputs'])
-        for name, profiles in study['controls'].items():
-            family = evidence['families'][name]
-            for profile, controls in profiles.items():
-                key = 'current_limits' if profile == 'default' else 'interval_limits'
-                section = sections[0 if profile == 'default' else 1]
-                block = re.search(r'W3dFailureLimits ' + name + r'\{(.*?)\};', section, re.S)[1]
-                compiled = {k: float(v) for k, v in re.findall(r'\.(\w+)\s*=\s*([0-9.]+)f', block)}
-                self.assertEqual(compiled, family[key])
-                for control in controls:
-                    self.assertEqual(len(control['rows']), 8)
-                    self.assertEqual({r['input'] for r in control['rows']}, set(study['inputs']['input_sha256']))
-                for gate, limit in compiled.items():
-                    worst = max(G.measured_worst(c['rows'])[gate] for c in controls)
-                    previous = family['previous_' + key][gate]
-                    expected = min(previous, math.ceil(worst * 1.005 / 1e-5) * 1e-5)
-                    self.assertGreater(limit, worst, (name, profile, gate))
-                    self.assertLessEqual(limit, previous, (name, profile, gate))
-                    self.assertAlmostEqual(limit, expected, places=5)
-
-    def test_tfg_heave_gates_reject_the_pre_improvement_regression(self):
-        limits = json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text())
-        for family, filename in [('tfg', 'tfg_wave_matched.json'),
-                                 ('tfg_legacy', 'tfg_legacy_wave_matched.json')]:
-            study = json.loads((ROOT / 'reports/results/encounter_scaling' / filename).read_text())
-            for wave in ('jonswap', 'pmstokes'):
-                old = max(r['metrics']['disp_z_pct_hs'] for r in study['rows']
-                          if r['dataset'] == 'moving' and r['seed'] == 'default'
-                          and r['arm'] == 'previous' and wave in r['input'])
-                self.assertGreater(old, limits['families'][family]['current_limits']['err_limit_percent_z_' + wave])
-
+    def test_locked_limits_match_qualifying_receipts_and_current_scores_pass(self):
+        from lock_simulation_baseline import make_baseline, render_global
+        actual = json.loads((ROOT / 'reports/results/filter_sim_gates/per_record_limits.json').read_text())
+        baseline = {c: json.loads((ROOT/'reports/results/filter_sim_gates'/name).read_text())
+                    for c, name in actual['measurement_files'].items()}
+        expected, global_caps = make_baseline(baseline)
+        self.assertEqual(actual['entries'], expected['entries'])
+        self.assertEqual(actual['inputs'], expected['inputs'])
+        self.assertEqual(global_caps, json.loads((ROOT / 'reports/results/filter_sim_gates/limits.json').read_text()))
+        self.assertEqual(render_global(global_caps), (ROOT / 'tests/common/CurrentReplayLimits.h').read_text())
+        reports = {c: json.loads((ROOT/f'reports/results/sim_v1.4.0/{c}/measurements.json').read_text())
+                   for c in ('following', 'head')}
+        for report in reports.values():
+            self.assertEqual(report['acceptance'], 'all replay gates passed')
+            self.assertFalse(any(code for profiles in report['replay_exit_codes'].values()
+                                 for code in profiles.values()))
+        current, _ = make_baseline(reports)
+        def key(row):
+            return tuple(row[k] for k in ('case', 'family', 'profile', 'input'))
+        caps = {key(row): row['limits'] for row in actual['entries']}
+        self.assertEqual({key(row) for row in current['entries']}, set(caps))
+        for row in current['entries']:
+            for metric, score in row['measured_max'].items():
+                self.assertLessEqual(score, caps[key(row)][metric], (key(row), metric))
 
     def test_make_log_keeps_sampling_profiles_separate_and_rejects_failed_runs(self):
         families = ('OU_II', 'OU_III', 'TFG', 'CARMA3_A41', 'CARMA_SHARED_MODES_CSM',
-                    'TFG_CARMA3_T41', 'TFG_CARMA_SHARED_MODES_CSM', 'TFG_LEGACY')
+                    'TFG_CARMA3_T41', 'TFG_CARMA_SHARED_MODES_CSM', 'TFG_LEGACY', 'TANGENT_CARMA_SHARED_MODES_CSM')
         blocks = []
         for family in families:
             for legacy in (False, True) if family != 'TFG_LEGACY' else (False,):

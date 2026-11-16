@@ -2,10 +2,11 @@
 """Pair legacy and explicit instantaneous contracts on an existing replay."""
 import argparse,concurrent.futures,hashlib,json,os,subprocess
 from sim_dataset import ROOT,SHA256,REFERENCE_CSV_SHA256,digest
+from pathlib import Path
 
 def main():
- parser=argparse.ArgumentParser();parser.add_argument('--jobs',type=int,default=2);parser.add_argument('--all-records',action='store_true');parser.add_argument('--localize',action='store_true');args=parser.parse_args()
- out=ROOT/'reports/results/live_bias_consistency';dest=out/'runs/csv';dest.mkdir(parents=True,exist_ok=True)
+ parser=argparse.ArgumentParser();parser.add_argument('--jobs',type=int,default=2);parser.add_argument('--all-records',action='store_true');parser.add_argument('--localize',action='store_true');parser.add_argument('--output-dir',type=Path,default=ROOT/'reports/results/live_bias_consistency');args=parser.parse_args()
+ out=args.output_dir;dest=out/'runs/csv';dest.mkdir(parents=True,exist_ok=True)
  names=list(REFERENCE_CSV_SHA256) if args.all_records else ['wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv']
  for name in names:
   if digest(ROOT/'.sim-data'/SHA256/name)!=REFERENCE_CSV_SHA256[name]:raise ValueError('pinned input hash mismatch')

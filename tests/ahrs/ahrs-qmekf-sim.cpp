@@ -37,6 +37,7 @@ using Eigen::Matrix3f;
 
 // Noise model
 bool add_noise = true;
+static bool any_gate_failed = false;
 
 struct NoiseModel {
     std::default_random_engine rng;
@@ -204,23 +205,27 @@ static void print_summary_and_fail_if_needed(const std::string& output_name,
     if (!(roll_rms <= limits.err_limit_roll_deg)) {
         std::cerr << "ERROR: Roll RMS above limit (" << roll_rms << " deg > "
                   << limits.err_limit_roll_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_gate_failed = true;
+        if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
     }
     if (!(pitch_rms <= limits.err_limit_pitch_deg)) {
         std::cerr << "ERROR: Pitch RMS above limit (" << pitch_rms << " deg > "
                   << limits.err_limit_pitch_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_gate_failed = true;
+        if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
     }
     if (with_mag && !(yaw_rms <= limits.err_limit_yaw_deg)) {
         std::cerr << "ERROR: Yaw RMS above limit (" << yaw_rms << " deg > "
                   << limits.err_limit_yaw_deg << " deg). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_gate_failed = true;
+        if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
     }
     if (processing_hz < limits.min_processing_hz) {
         std::cerr << "ERROR: Processing throughput below limit (" << processing_hz
                   << " samples/s < " << limits.min_processing_hz
                   << " samples/s). Failing.\n";
-        std::exit(EXIT_FAILURE);
+        any_gate_failed = true;
+        if (!std::getenv("W3D_COLLECT_ALL_GATES")) std::exit(EXIT_FAILURE);
     }
 }
 
@@ -576,5 +581,5 @@ int main(int argc, char* argv[]) {
         process_wave_file(fname, dt, with_mag);
     }
 
-    return 0;
+    return any_gate_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -30,7 +30,7 @@ def num(row, key):
 def main():
     mismatch = {r['family']: r for r in rows('model_mismatch_ablation', 'model_mismatch_summary.csv')}
     path = DOC / 'w3d-model-mismatch-ablation.tex-part'
-    text = path.read_text().replace('equal-length stationary records', 'equal-length v1.3.1 underway records').replace('over eight stationary\n  records', 'over eight underway\n  records')
+    text = path.read_text().replace('equal-length stationary records', 'equal-length underway records').replace('over eight stationary\n  records', 'over eight underway\n  records')
     for family, row in mismatch.items():
         label = family.replace('OU-', 'OU--')
         values = [f'{num(row,k):.3f}' for k in ('disp_x_rms_m','disp_y_rms_m','disp_z_rms_m','disp_3d_rms_m')]
@@ -45,7 +45,7 @@ def main():
     engine = {(r['family'],r['label']): r for r in rows('engine_noise_degradation','engine_noise_summary.csv')}
     guard = {(r['condition'],r['guard']): r for r in rows('engine_noise_mitigation','guard_summary.csv')}
     path = DOC / 'w3d-engine-noise-degradation.tex-part'
-    text = path.read_text().replace('Archived Zero-Speed Engine-Noise Degradation','Underway Engine-Noise Degradation').replace('eight stationary v1.2.1 vessel-response records','eight v1.3.1 5 kn vessel-response records')
+    text = path.read_text().replace('Archived Zero-Speed Engine-Noise Degradation','Underway Engine-Noise Degradation').replace('eight stationary v1.2.1 vessel-response records','eight pinned 5 kn vessel-response records')
     text = text.replace('unchanged; encounter-frequency and propulsion-induced motion are outside\nthis experiment.', 'unchanged within each paired arm. The reference records include the prescribed\nencounter and steering kinematics; hull-specific propulsion hydrodynamics remain outside this experiment.')
     fractions = []
     for family in ('OU-II','OU-III','TFG'):

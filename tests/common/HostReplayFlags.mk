@@ -1,4 +1,4 @@
-# The OU-III/TFG fixed-draw fixtures were measured with AVX2 Eigen packets.
+# The fixed-draw replay protocol uses AVX2 Eigen packets on Linux x86-64.
 # -march=native silently selects AVX-512 on some hosted runners, changing
 # floating-point reductions and the long-running nonlinear replay. Keep the
 # host regression arithmetic independent of the runner CPU. Firmware flags

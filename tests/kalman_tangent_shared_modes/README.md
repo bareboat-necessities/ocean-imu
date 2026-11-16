@@ -107,11 +107,11 @@ cd tests/kalman_tangent_shared_modes
 W3D_WRITE_TIMESERIES=0 W3D_COLLECT_ALL_GATES=1 ./tangent-replay
 ```
 
-This uses the exact existing shared replay and the **unchanged TFG bars**
-from `tests/common/TfgSharedRegressionBars.h`. A failed candidate replay
-remains an experimental negative result; its bars are not widened and it
-does not replace the accepted default replay. Original QMEKF, TFG,
-independent CARMA and unrelated root quality gates remain mandatory.
+This uses the common shared replay with its own per-case, per-sea v1.4.0
+limits in `tests/common/RecordReplayLimits.inc`. Select `OCEAN_IMU_SIM_CASE=head`
+for head seas; the root `make sim-regression` command runs both directions.
+The synthetic paired study retains its original acceptance criteria.
+Original QMEKF, TFG, independent CARMA and unrelated root quality gates remain mandatory.
 
 ## Window observability
 

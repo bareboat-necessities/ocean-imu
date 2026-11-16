@@ -40,7 +40,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 ROOT = Path(__file__).resolve().parents[1]
 TDIR = ROOT / "tests" / "kalman_carma"
 BENCH = TDIR / "carma3_bench"
-OUT = ROOT / "reports" / "results" / "carma3_benchmark"
+from sim_dataset import study_output, require_complete_metrics
+OUT = study_output("carma3_benchmark")
 RAW = OUT / "raw_runs.csv"
 DATASET_RAW = OUT / "dataset_runs.csv"
 TRUTH_RAW = OUT / "truth_motion.csv"
@@ -216,9 +217,7 @@ def cmd_dataset(args):
             for fut in as_completed(futs):
                 fam, seed = futs[fut]
                 p, metrics = fut.result()
-                if p.returncode not in (0, 1) or not metrics:
-                    print(f"ERROR {fam} seed {seed}: rc={p.returncode} {p.stderr[-300:]}", flush=True)
-                    continue
+                require_complete_metrics(metrics, p.returncode)
                 for m in metrics:
                     m["family"] = fam
                     m["seed"] = str(seed)

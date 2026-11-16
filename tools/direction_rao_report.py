@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Summarize the paired direction study, including availability and isolation."""
 from pathlib import Path
+import argparse
 import csv
 import hashlib
 import json
@@ -14,7 +15,12 @@ METRICS = ('dir_axis_abs_error_deg', 'dir_axis_available_pct', 'dir_travel_rmse_
 
 
 def main():
-    out = ROOT / 'reports/results/direction_rao_ablation'
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--results', type=Path, default=ROOT/'reports/results/direction_rao_ablation')
+    parser.add_argument('--doc-dir', type=Path, default=ROOT/'doc/kalman_ou_iii')
+    args = parser.parse_args()
+    out = args.results
+    args.doc_dir.mkdir(parents=True, exist_ok=True)
     with (out / 'direction_runs.csv').open() as f:
         rows = list(csv.DictReader(f))
     assert len(rows) == 96
@@ -62,7 +68,7 @@ Family & Arm & RPM & Axis error & Available & Directed RMS & Correct & Wrong & U
     (out / 'direction_report.md').write_text(md + '\n' + conclusion)
     tex += conclusion.replace('%', r'\%').replace('RAO-on/off', 'RAO on/off').replace('guard-on/off', 'guard on/off')
     (out / 'direction_ablation.tex').write_text(tex)
-    (ROOT / 'doc/kalman_ou_iii/w3d-direction-rao-generated.tex-part').write_text(tex)
+    (args.doc_dir / 'w3d-direction-rao-generated.tex-part').write_text(tex)
     manifest_path = out / 'manifest.json'
     manifest = json.loads(manifest_path.read_text())
     manifest['report_producer_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()

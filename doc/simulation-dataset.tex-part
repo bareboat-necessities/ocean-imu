@@ -1,7 +1,9 @@
 \paragraph{Simulation dataset}
-Current external-data simulations use the oceanography-waves-lib v1.3.1
+Current external-data simulations use the oceanography-waves-lib v1.4.0
 28 ft (8.53 m) fin-keel sailboat RAO records at 5 kn. Heading oscillates
-$\pm3^\circ$ about north with a 120 s sine period. The incident wave field
+$\pm3^\circ$ about north (following seas) or south (head and bow-quartering seas)
+with a 20 s sine period. Both cases are replayed independently; archive hashes,
+metrics, regression limits and charts are retained separately. The incident wave field
 is sampled along the moving track; the estimated response uses instantaneous
 heading and signed encounter frequency. Records include turning acceleration,
 response modulation, rotating-frame terms and full yaw--pitch--roll body rates.
@@ -21,3 +23,9 @@ response. Largest cases remain extrapolated stress tests. The default IMU
 is at the centre of gravity; lever-arm studies add an explicit sensor offset.
 Sections explicitly identified as archived v1.2.3 comparisons retain their
 original zero-speed experiment and are not underway evidence.
+
+\IfFileExists{../simulation-case.tex-part}{\input{../simulation-case.tex-part}}{}
+
+The active build case labels deterministic replay tables and traces.
+Seeded and derived studies retain the case recorded in their own manifests;
+case-specific study metrics and charts are published as separate artifacts.

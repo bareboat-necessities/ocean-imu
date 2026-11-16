@@ -49,7 +49,7 @@ from typing import Any, Iterable, Sequence
 
 import ou3_lever_arm_study as ou3
 import ou_validation as ouv
-from sim_dataset import input_provenance
+from sim_dataset import input_provenance, DESCRIPTION
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT_DIR = ROOT / "reports" / "results" / "carma_lever_arm_study"
@@ -676,7 +676,7 @@ def main() -> int:
         "source_commit": ou3.source_commit(),
         "binary_sha256": ou3.sha256(BINARY),
         "build_environment": ou_evidence_provenance.environment_metadata(),
-        "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft-5kn",
+        "simulation_data": DESCRIPTION,
         "simulation_provenance": dataset,
         "mode": args.mode,
         "scoring_window_sec": args.window_sec,

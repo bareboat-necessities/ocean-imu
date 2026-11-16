@@ -3,7 +3,9 @@ name: ou3-lever-arm-study
 on:
   pull_request:
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "src/kalman_ou_iii/**"
       - "src/tuner/**"
       - "src/util/W3dSimCommon.*"
@@ -37,6 +39,12 @@ jobs:
   study:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [following, head]
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -51,9 +59,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
+          python3 tools/sim_dataset.py --archive simulation-case.zip
           mkdir -p /tmp/ou3-lever-data
-          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d /tmp/ou3-lever-data >/dev/null
+          unzip -o simulation-case.zip -d /tmp/ou3-lever-data >/dev/null
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Build OU-III simulator
         run: make -C tests/kalman_ou_iii kalman_ou_iii-sim
@@ -119,6 +130,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ou3-lever-arm-study
+          name: ou3-lever-arm-study-${{ matrix.case }}
           path: reports/results/ou3_lever_arm_study/**
           if-no-files-found: warn

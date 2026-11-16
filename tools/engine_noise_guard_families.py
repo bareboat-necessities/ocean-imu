@@ -103,6 +103,8 @@ def parse_args() -> argparse.Namespace:
                         help="parallel simulator processes (default: 4)")
     parser.add_argument("--no-self-check", action="store_true",
                         help="skip the comparison against the committed degradation summary")
+    parser.add_argument('--degradation-summary', type=Path, default=DEGRADATION_SUMMARY)
+    parser.add_argument('--output-dir', type=Path)
     return parser.parse_args()
 
 
@@ -186,11 +188,11 @@ def pooled(rows: list[dict[str, Any]], family: str, condition: str, arm: str,
     return math.sqrt(sum(v * v for v in values) / len(values))
 
 
-def committed_degradation() -> dict[tuple[str, str], float]:
+def committed_degradation(path=DEGRADATION_SUMMARY) -> dict[tuple[str, str], float]:
     """The engine-off and unguarded-cruise cells this study must reproduce."""
     wanted = {"baseline": "engine off", "cruise": "2400 rpm"}
     out: dict[tuple[str, str], float] = {}
-    with DEGRADATION_SUMMARY.open(encoding="utf-8", newline="") as stream:
+    with path.open(encoding="utf-8", newline="") as stream:
         for row in csv.DictReader(stream):
             if row["arm"] == "baseline":
                 out[(row["family"], wanted["baseline"])] = float(row["disp_3d_rms_m"])
@@ -222,8 +224,14 @@ def main() -> int:
         rows = list(pool.map(
             lambda job: run_one(*job, args.window_sec), jobs))
 
+    if args.output_dir:
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        with (args.output_dir/'guard_families.csv').open('w') as stream:
+            writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
     if not args.no_self_check:
-        committed = committed_degradation()
+        committed = committed_degradation(args.degradation_summary)
         for (family, condition), expected in committed.items():
             got = pooled(rows, family, condition, "off", "disp_3d_rms_m")
             if abs(got - expected) > SELF_CHECK_REL_TOL * max(abs(expected), 1.0):

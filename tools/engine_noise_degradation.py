@@ -60,7 +60,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-from sim_dataset import input_provenance
+from sim_dataset import input_provenance, DESCRIPTION
 from typing import Any, Iterable
 
 import ou_validation as ouv
@@ -1095,7 +1095,7 @@ def main() -> int:
     manifest = {
         "study": "engine-noise degradation",
         "source_commit": commit,
-        "simulation_data": "oceanography-waves-lib v1.3.1 vessel-rao-28ft-5kn",
+        "simulation_data": DESCRIPTION,
         "simulation_provenance": dataset,
         "families": list(FAMILIES),
         "records": [record.__dict__ for record in RECORDS],

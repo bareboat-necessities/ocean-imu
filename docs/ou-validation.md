@@ -1,7 +1,7 @@
 # Paired OU-II/OU-III validation
 
-The full study uses the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
-with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+The full study uses the checksum-pinned v1.4.0 28 ft / 5 kn moving boat in both
+following and head seas, with ±3° heading over 20 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). The complete
 840-row study below was regenerated from these inputs.
 

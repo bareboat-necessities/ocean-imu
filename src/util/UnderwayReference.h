@@ -1,18 +1,30 @@
 #pragma once
-// Replay truth only: the declared track of oceanography-waves-lib v1.3.0.
+// Replay truth only: the declared track of oceanography-waves-lib v1.4.0.
 // Never supply this reference to an estimator or remove its acceleration
 // from the sensor input. World axes are north, west, up.
 #include <array>
 #include <cmath>
+#include <cstdlib>
+#include <stdexcept>
+#include <string_view>
 
 struct UnderwayReference {
     std::array<double, 3> displacement{}, velocity{}, acceleration{};
 
+    static std::string_view scenario() {
+        const char* value = std::getenv("OCEAN_IMU_SIM_CASE");
+        const std::string_view name = value ? value : "following";
+        if (name != "following" && name != "head")
+            throw std::invalid_argument("OCEAN_IMU_SIM_CASE must be following or head");
+        return name;
+    }
+
     static UnderwayReference at(double time) {
+        const double sign = scenario() == "head" ? -1.0 : 1.0;
         constexpr double pi = 3.14159265358979323846;
         constexpr double speed = 5.0 * 1852.0 / 3600.0;
         constexpr double amplitude = 3.0 * pi / 180.0;
-        constexpr double frequency = 2.0 * pi / 120.0;
+        constexpr double frequency = 2.0 * pi / 20.0;
         // Fourier-Bessel primitive of (cos(A sin(wt)), sin(A sin(wt))).
         // Same analytic track as the upstream generator, without quadrature
         // drift or subtracting a fitted trend from a scored filter output.
@@ -38,8 +50,8 @@ struct UnderwayReference {
         }
         const double heading = amplitude * std::sin(phase);
         const double rate = amplitude * frequency * std::cos(phase);
-        return {{speed * x, speed * y, 0.0},
-                {speed * std::cos(heading), speed * std::sin(heading), 0.0},
-                {-speed * rate * std::sin(heading), speed * rate * std::cos(heading), 0.0}};
+        return {{sign * speed * x, sign * speed * y, 0.0},
+                {sign * speed * std::cos(heading), sign * speed * std::sin(heading), 0.0},
+                {-sign * speed * rate * std::sin(heading), sign * speed * rate * std::cos(heading), 0.0}};
     }
 };

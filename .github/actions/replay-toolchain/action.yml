@@ -1,0 +1,14 @@
+name: Replay toolchain
+description: Select the GCC 14 compiler used by the fixed-draw host regression baseline
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        sudo apt-get install -y --no-install-recommends g++-14
+        replay_bin="${RUNNER_TEMP}/ocean-imu-replay-toolchain"
+        mkdir -p "${replay_bin}"
+        ln -sf "$(command -v g++-14)" "${replay_bin}/g++"
+        ln -sf "$(command -v g++-14)" "${replay_bin}/c++"
+        echo "${replay_bin}" >> "${GITHUB_PATH}"
+        "${replay_bin}/g++" --version

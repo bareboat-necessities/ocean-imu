@@ -13,11 +13,14 @@ python3 tools/tfg_shared_modes_sim_table.py
 cp plots/kalman_tfg_shared_modes/*.pgf doc/kalman_tfg_shared_modes/
 ```
 
-The pinned v1.3.1 5 kn underway vessel-RAO inputs contain eight scored JONSWAP/PM-Stokes
-records, 1200 seconds at 200 Hz. Scores and gates use the final 900 seconds.
+Each pinned v1.4.0 5 kn vessel-RAO case (following or head seas) contains eight
+scored JONSWAP/PM-Stokes records, 1200 seconds at 200 Hz. Set
+`OCEAN_IMU_SIM_CASE=head` before running to select head seas; `make sim-regression`
+at the repository root runs both cases. Scores and gates use the final 900 seconds.
 The TFG limits in the simulator are its own measured worst errors plus 0.5%,
-rounded upward to 0.0001; provenance, per-record scores and limits are in
-`reports/results/filter_sim_gates/limits.json`. They cover
+rounded upward to 0.00001. Case/sea limits and measured values are in
+`reports/results/filter_sim_gates/per_record_limits.json`; the global ceilings
+are in `limits.json` in that directory. They cover
 vertical and 3-D displacement, roll/pitch/yaw, accelerometer Z and 3-D bias,
 and the gyroscope's own 3-D bias error. They are regression sentinels on fixed
 records, not statistical population bounds or independent validation results.

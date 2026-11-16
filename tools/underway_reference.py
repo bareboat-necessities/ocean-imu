@@ -1,13 +1,16 @@
-"""Declared v1.3.1 5 kn track; truth-side decomposition, never filter aid."""
+"""Declared v1.4.0 5 kn track; truth-side decomposition, never filter aid."""
 import numpy as np
 from scipy.special import jv
+from sim_dataset import CASES, selected_case
 
 SPEED_MPS = 5 * 1852 / 3600
 AMPLITUDE_RAD = np.deg2rad(3)
-FREQUENCY_RADPS = 2 * np.pi / 120
+FREQUENCY_RADPS = 2 * np.pi / 20
 
 
-def track(times):
+def track(times, case=None):
+    mean = CASES[selected_case(case)]["mean_heading_deg"]
+    sign = -1 if mean == 180 else 1
     times = np.asarray(times, dtype=float)
     phase = FREQUENCY_RADPS * times
     x = jv(0, AMPLITUDE_RAD) * times
@@ -21,10 +24,10 @@ def track(times):
     heading = AMPLITUDE_RAD * np.sin(phase)
     rate = AMPLITUDE_RAD * FREQUENCY_RADPS * np.cos(phase)
     zero = np.zeros_like(times)
-    position = SPEED_MPS * np.column_stack((x, y, zero))
-    velocity = SPEED_MPS * np.column_stack((np.cos(heading), np.sin(heading), zero))
-    acceleration = SPEED_MPS * np.column_stack((-rate * np.sin(heading), rate * np.cos(heading), zero))
-    return position, velocity, acceleration, np.rad2deg(heading)
+    position = sign * SPEED_MPS * np.column_stack((x, y, zero))
+    velocity = sign * SPEED_MPS * np.column_stack((np.cos(heading), np.sin(heading), zero))
+    acceleration = sign * SPEED_MPS * np.column_stack((-rate * np.sin(heading), rate * np.cos(heading), zero))
+    return position, velocity, acceleration, mean + np.rad2deg(heading)
 
 
 def change_track(columns, data, sign):

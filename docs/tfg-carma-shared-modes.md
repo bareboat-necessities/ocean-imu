@@ -9,8 +9,8 @@ refresh the cached calculation. The [encounter-scaling report](encounter-scaling
 contains the paired current-code qualification and its per-record costs.
 Historical experiments below retain their recorded source/settings.
 
-Current external-data replays use v1.3.1, the 28 ft boat at 5 kn with
-±3° heading oscillation over 120 s. The [current comparison](moving-vessel-results.md)
+Current external-data replays use both v1.4.0 directions, the 28 ft boat at
+5 kn with ±3° heading oscillation over 20 s. The [current comparison](moving-vessel-results.md)
 and [before/after report](moving-vessel-comparison.md) describe this changed
 experiment; earlier multi-seed synthetic and v1.2.3 results retain their
 original scope.

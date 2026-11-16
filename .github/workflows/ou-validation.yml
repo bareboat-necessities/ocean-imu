@@ -3,6 +3,7 @@ name: ou-validation
 on:
   pull_request:
     paths:
+      - ".github/actions/replay-toolchain/**"
       - "src/kalman_ou_ii/**"
       - "src/kalman_ou_iii/**"
       - "src/kalman_tfg/**"
@@ -15,6 +16,7 @@ on:
       - "src/util/WaveFilesSupport.h"
       - "src/util/UnderwayReference.h"
       - "tools/sim_dataset.py"
+      - "tools/sim_dataset_manifest.json"
       - "tools/underway_reference.py"
       - "tests/kalman_ou_ii/**"
       - "tests/kalman_ou_iii/**"
@@ -196,6 +198,9 @@ jobs:
           echo "apt-get did not succeed after 3 attempts"
           exit 1
 
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
+
       - name: Download versioned simulation data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -318,6 +323,10 @@ jobs:
           done
           exit 1
 
+      - name: Select the reproducible replay compiler
+        if: steps.decide.outputs.replay_required == 'false'
+        uses: ./.github/actions/replay-toolchain
+
       - name: Verify reusable committed evidence
         if: steps.decide.outputs.replay_required == 'false'
         run: |
@@ -375,6 +384,9 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Reuse fingerprinted simulation data
         uses: actions/download-artifact@v8
@@ -469,6 +481,9 @@ jobs:
           echo "apt-get did not succeed after 3 attempts"
           exit 1
 
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
+
       - name: Reuse fingerprinted simulation data
         uses: actions/download-artifact@v8
         with:
@@ -546,6 +561,9 @@ jobs:
         with:
           name: ou-fingerprinted-simulation-data
           path: .
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
+
       - name: Verify and unpack the shared archive
         run: |
           python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
@@ -652,6 +670,10 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Select the reproducible replay compiler
+        if: steps.published.outputs.already != 'true'
+        uses: ./.github/actions/replay-toolchain
 
       - name: Reuse fingerprinted simulation data
         if: steps.published.outputs.already != 'true'

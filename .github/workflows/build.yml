@@ -121,15 +121,18 @@ jobs:
           && (github.ref != 'refs/heads/main'
               || (needs['ou-evidence'].result == 'success'
                   && needs['evidence-contract'].result == 'success')) }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # kalman_ou_iii PGF generation alone takes 22-28 min on hosted runners;
     # 45 min cancelled that job on slower runners before LaTeX finished.
     timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
+        case: [following, head]
         dir: [wave_sim, freq, spectrum, ahrs, pii_observer, kalman_ou_ii, kalman_ou_iii, kalman_tfg, kalman_carma, kalman_carma_shared_modes, kalman_tfg_carma, kalman_tfg_shared_modes, kalman_tangent_shared_modes, imu_calibrate, detrend, nlo]
 
+    env:
+      OCEAN_IMU_SIM_CASE: ${{ matrix.case }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -144,11 +147,22 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 tools/sim_dataset.py --archive sim-data-files-vessel-rao-28ft-5kn.zip
+          python3 tools/sim_dataset.py --archive simulation-case.zip
+
+      - name: Label the active simulation case in the manuscript
+        run: |
+          python3 - <<'PYCASE'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'tools')
+          from sim_dataset import DESCRIPTION
+          Path('doc/simulation-case.tex-part').write_text(
+              '\\paragraph{Deterministic replay case for this build}\n' + DESCRIPTION.replace('_', r'\_') + '.\n')
+          PYCASE
 
       - name: Unpack simulation data (${{ matrix.dir }})
         run: |
-          unzip -o sim-data-files-vessel-rao-28ft-5kn.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
+          unzip -o simulation-case.zip -d ${{ github.workspace }}/plots/${{ matrix.dir }}
 
       # Retries and per-connection timeouts, because the archive stalling is
       # what actually burns the twenty minutes when this step fails.
@@ -199,6 +213,9 @@ jobs:
           done
           echo "apt-get did not succeed after 3 attempts"
           exit 1
+
+      - name: Select the reproducible replay compiler
+        uses: ./.github/actions/replay-toolchain
 
       - name: Compile tests (${{ matrix.dir }})
         run: |
@@ -340,10 +357,17 @@ jobs:
           args: "-shell-escape"
           extra_system_packages: "inkscape ghostscript graphviz ncurses"
 
+      - name: Name head-sea PDFs independently
+        if: matrix.case == 'head'
+        run: |
+          for file in doc/${{ matrix.dir }}/*.pdf; do
+            [ -f "$file" ] && mv "$file" "${file%.pdf}-head.pdf"
+          done
+
       - name: Upload PDF artifacts (${{ matrix.dir }})
         uses: actions/upload-artifact@v6
         with:
-          name: latex-pdfs-${{ matrix.dir }}
+          name: latex-pdfs-${{ matrix.dir }}${{ matrix.case == 'head' && '-head' || '' }}
           path: doc/${{ matrix.dir }}/**/*.pdf
           if-no-files-found: error
 
@@ -360,7 +384,12 @@ jobs:
           if [ ${#files[@]} -gt 0 ]; then
             mkdir -p release-svg/${{ matrix.dir }}
             for f in "${files[@]}"; do
-              cp -v "$f" release-svg/${{ matrix.dir }}/
+              if [ "$OCEAN_IMU_SIM_CASE" = head ]; then
+                name="$(basename "$f" .svg)"
+                cp -v "$f" "release-svg/${{ matrix.dir }}/${name}-head.svg"
+              else
+                cp -v "$f" release-svg/${{ matrix.dir }}/
+              fi
             done
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
@@ -371,7 +400,7 @@ jobs:
         if: steps.find_svgs.outputs.found == 'true'
         uses: actions/upload-artifact@v6
         with:
-          name: release-svgs-${{ matrix.dir }}
+          name: release-svgs-${{ matrix.dir }}${{ matrix.case == 'head' && '-head' || '' }}
           path: release-svg/${{ matrix.dir }}/**/*.svg
           if-no-files-found: error
 

@@ -70,7 +70,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TDIR = ROOT / "tests" / "kalman_carma_shared_modes"
 SIM = TDIR / "kalman_carma_shared_modes-sim"        # dataset replay
 BENCH = TDIR / "kalman_carma_shared_modes-bench"    # paired Monte Carlo
-OUT = ROOT / "reports" / "results" / "kalman_carma_shared_modes"
+from sim_dataset import study_output, require_complete_metrics
+OUT = study_output("kalman_carma_shared_modes")
 RAW = OUT / "raw_runs.csv"
 ROB = OUT / "robustness_runs.csv"
 SMOKE = OUT / "smoke_runs.csv"
@@ -401,8 +402,11 @@ def stage_dataset(args):
     rows = []
     for variant in DATASET_VARIANTS:
         env = {k: v for k, v in os.environ.items() if not k.startswith("W3D_")}
-        env.update(W3D_CSM_VARIANT=variant, W3D_WRITE_TIMESERIES="0")
+        env.update(W3D_CSM_VARIANT=variant, W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1")
         p = subprocess.run([str(SIM)], cwd=SIM.parent, capture_output=True, text=True, env=env)
+        parsed = [dict(tok.split("=", 1) for tok in line.split()[1:] if "=" in tok)
+                  for line in p.stdout.splitlines() if line.startswith("VALIDATION_METRICS ")]
+        require_complete_metrics(parsed, p.returncode)
         for line in p.stdout.splitlines():
             if not line.startswith("VALIDATION_METRICS family="):
                 continue

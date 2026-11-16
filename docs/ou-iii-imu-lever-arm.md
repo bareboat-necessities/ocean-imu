@@ -1,7 +1,7 @@
 # OU-III IMU installation lever-arm study
 
-External-data runs now use the checksum-pinned v1.3.1 28 ft / 5 kn moving boat,
-with ±3° heading over 120 s. See the [current measured baseline](moving-vessel-results.md)
+External-data runs now use the checksum-pinned v1.4.0 28 ft / 5 kn moving boat in both
+following and head seas, with ±3° heading over 20 s. See the [current measured baseline](moving-vessel-results.md)
 and [reference-coordinate convention](moving-vessel-replays.md). The complete current study was regenerated in CI on these moving-vessel inputs; its artifact and source identity are retained in the manifest.
 
 
@@ -60,4 +60,4 @@ A separate sweep varies the `gyro` model's derivative band over 1-100 Hz on a 30
 
 With `--mirror-doc` the five figures are copied byte-for-byte into `doc/kalman_ou_iii/` for the article; `tools/ou3_lever_arm_tex.py` generates the section's numeric fragment from the two summary CSVs. `tests/validation/test_ou3_lever_arm_article.py` fails if the committed article stops matching the committed evidence.
 
-The full study is run in CI by `.github/workflows/ou3-lever-arm-study.yml` against `oceanography-waves-lib` release `v1.3.1` (5 kn, ±3° heading). The simulator stage has its own unit test in `tests/kalman_ou_iii/imu_lever_arm-test.cpp`.
+The full study is run in CI by `.github/workflows/ou3-lever-arm-study.yml` against `oceanography-waves-lib` release `v1.4.0` in both directions (5 kn, ±3° heading, 20 s period). The simulator stage has its own unit test in `tests/kalman_ou_iii/imu_lever_arm-test.cpp`.

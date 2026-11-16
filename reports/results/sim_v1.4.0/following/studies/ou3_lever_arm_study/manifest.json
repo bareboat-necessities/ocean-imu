@@ -1,0 +1,84 @@
+{
+  "axes": {
+    "x-fore-aft": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "y-port": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "z-vertical": [
+      0.0,
+      0.0,
+      1.0
+    ]
+  },
+  "cutoff_sweep_hz": [
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+    15.0,
+    25.0,
+    50.0,
+    100.0
+  ],
+  "derivative_cutoff_hz": 15.0,
+  "distances_m": [
+    0.1,
+    0.2,
+    0.3
+  ],
+  "exact_arm": "oracle: truth angular kinematics; an upper bound, not a claim",
+  "files": {
+    "lever_arm_cutoff_runs.csv": "44d0333095e2c0efcdd88701cf8347a98b08dbe2cd185809f29e5bcef14de8a6",
+    "lever_arm_cutoff_summary.csv": "7013f137f94d409141dcd95284c9a71bd8e41160d945cfb69e944b70069a7199",
+    "lever_arm_report.md": "b1166ba2a8b2567c8fe2228fe91bd94522b3f6cfec3ca04f25423167885d1da3",
+    "lever_arm_runs.csv": "59411ed4ba56e0d2089d433a71b5207650430669a13fa7514dae96dfce394ac8",
+    "lever_arm_summary.csv": "e478b1dc63e9aecf15817c67440c2e1988a3101dd0b46bbad992f06695b7e0a7",
+    "ou3_lever_arm_cutoff.svg": "53e411d5bbb2d8ea90d4b8c0ff9647431e179486e97542b215844881a3e3ab85",
+    "ou3_lever_arm_mechanism.svg": "9ef6214601944011ad69c85b6dbc822b41a5fc8cd71b878300aaf945d1348bd4",
+    "ou3_lever_arm_penalty.svg": "86c6d5af6dee04553c8e403a9fb3cc746e8614c3b7fdebe389c45d16a3e83e6d",
+    "ou3_lever_arm_sea_state.svg": "ced888cdeded087c622a4441d09a9803d27a848820428e1ae53df0bbfd4561dc",
+    "ou3_lever_arm_tilt.svg": "4d5422ebe9f8f8996a9d5773cb91d3b0c76d7ee6bcb9de68c360aad71652a292"
+  },
+  "gyro_arm": "deployable: two-pole low-pass on the measured rate followed by a causal second-order difference",
+  "installation_stage": "simulator applies the rigid-body term to the accelerometer truth before sensor corruption (W3D_IMU_LEVER_ARM_M)",
+  "mode": "full",
+  "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
+  "model_stage": "simulator removes the filter's modelled term after sensor corruption, immediately before fusion (W3D_IMU_LEVER_ARM_MODEL)",
+  "modes": {
+    "exact": "exact",
+    "gyro": "gyro",
+    "unmodeled": "none"
+  },
+  "scoring_window_sec": 900.0,
+  "simulation_data": "oceanography-waves-lib v1.4.0, estimated 28 ft fin-keel sailboat RAO at CG, 5 kn, northbound, following seas, heading +/-3 deg with 20 s period",
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "case": "following",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "mean_heading_deg": 0.0,
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.4.0",
+    "speed_kn": 5.0
+  },
+  "source_commit": "2167579321a01c7caaf8a957161387665d1a5a98",
+  "study": "OU-III IMU lever-arm installation"
+}

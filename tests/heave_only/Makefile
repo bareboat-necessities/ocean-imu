@@ -9,13 +9,7 @@ BASEFLAGS = -O3 -std=c++20 -Wall -Wextra -Wshadow -funroll-loops -fno-finite-mat
 BASEFLAGS += -MMD -MP
 
 UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else ifeq ($(UNAME_S),Darwin)
-    CXXFLAGS = $(BASEFLAGS) -march=native
-else
-    CXXFLAGS = $(BASEFLAGS)
-endif
+include $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 
 LDFLAGS =
 
@@ -39,7 +33,7 @@ heave_only-sim: heave_only-sim.o W3dSimCommon.o
 heave_only-test: heave_only-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-%.o: %.cpp Makefile
+%.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 -include $(wildcard *.d)

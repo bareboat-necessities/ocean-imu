@@ -103,8 +103,8 @@ class SimDatasetTests(unittest.TestCase):
                 verify_operating_points(path, expected)
 
     def test_committed_results_consumed_the_pinned_motion_bytes(self):
-        # Older bundles name the release they were run from; their inputs must
-        # still be byte-identical to the motion CSVs of the pinned release.
+        # Historical bundles retain their original release; current case receipts
+        # must match the case-specific pinned CSV bytes.
         checked = 0
         for path in (ROOT/'reports').rglob('*.json'):
             stack = [json.loads(path.read_text())]

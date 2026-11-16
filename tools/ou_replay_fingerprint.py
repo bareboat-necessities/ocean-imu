@@ -49,6 +49,7 @@ SOURCE_SUFFIXES = {
     ".yml", ".yaml", ".mk", ".make", ".cmake", ".ninja", ".ac", ".am",
 }
 SOURCE_BASENAMES = {
+    "sim_dataset_manifest.json",
     "Makefile",
     "CMakeLists.txt",
     "CMakePresets.json",
