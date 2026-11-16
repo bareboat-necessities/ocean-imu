@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 import numpy as np
 
@@ -23,6 +24,9 @@ from filter_sim_gates import REPLAYS
 from sim_dataset import CASES, REFERENCE_CSV_SHA256_BY_CASE, ROOT, digest
 from underway_reference import track
 from ou_validation import _quaternion_rotate, _world_to_body_quaternion_from_euler_deg
+
+sys.path.insert(0, str(ROOT / "plots"))
+from vector_export import save_figure
 
 FAMILIES = tuple(name for name, (_, _, full) in REPLAYS.items() if full)
 VARIANTS = ('released', 'wave_yaw', 'wave_fixed_yaw')
@@ -111,8 +115,10 @@ def publish(report, work, output):
         writer.writeheader()
         for row in rows:
             writer.writerow({**{k: row[k] for k in fields[:4]}, **row['metrics']})
-    for case in dict.fromkeys(row['case'] for row in rows):
-        selected = [row for row in rows if row['case'] == case and row['family'] == 'ou3']
+    for case, record in dict.fromkeys((row['case'], row['input']) for row in rows):
+        selected = [row for row in rows if row['case'] == case and row['input'] == record
+                    and row['family'] == 'ou3']
+        stem = f'{output.stem}-{case}-{Path(record).stem}'
         if len(selected) != 3 or {r['variant'] for r in selected} != set(VARIANTS):
             continue
         fig, axes = plt.subplots(2, 3, figsize=(12, 5.6), sharex=True, sharey='row')
@@ -125,7 +131,7 @@ def publish(report, work, output):
             keep = ['time', 'disp_ref_y', 'disp_est_y', 'acc_bias_y', 'acc_bias_est_y']
             values = np.loadtxt(path, delimiter=',', skiprows=1, usecols=[names.index(n) for n in keep])
             values = values[values[:, 0] >= 1140][::10]  # 200 Hz -> uniform 20 Hz, plot only
-            compact = output.parent/f'{output.stem}-{case}-{variant}-tail.csv'
+            compact = output.parent/f'{stem}-{variant}-tail.csv'
             np.savetxt(compact, values, delimiter=',', header=','.join(keep), comments='', fmt='%.9g')
             for ax, (true_index, estimate_index) in zip(axes[:, col], ((1, 2), (3, 4))):
                 ax.plot(values[:, 0], values[:, true_index], color='#263445', lw=1.1, label='True')
@@ -141,11 +147,17 @@ def publish(report, work, output):
         height = float(selected[0]['input'].split('_')[3][1:])
         fig.suptitle(f'OU-III · {case} seas · {height:g} m incident waves')
         fig.tight_layout()
-        figure_path = output.parent/f'{output.stem}-{case}.svg'
+        figure_path = output.parent/f'{stem}.svg'
         with matplotlib.rc_context({'svg.hashsalt': 'heading-kinematics'}):
-            fig.savefig(figure_path, metadata={'Date': None})
+            save_figure(fig, figure_path, metadata={'Date': None})
         figure_path.write_text('\n'.join(line.rstrip() for line in figure_path.read_text().splitlines())+'\n')
         plt.close(fig)
+
+
+def cached_trace_valid(run_dir, receipt):
+    traces = list(run_dir.glob('w3d*.csv'))
+    return (len(traces) == 1 and traces[0].is_file() and
+            receipt.get('trace_sha256') == digest(traces[0]))
 
 
 def main():
@@ -215,7 +227,9 @@ def main():
                     'input_sha256': digest(source), 'binary_sha256': binary_hash}
         if receipt.exists():
             previous = json.loads(receipt.read_text())
-            if previous.get('method_version', 1) == METHOD_VERSION and all(previous.get(k) == v for k, v in protocol.items()):
+            if (previous.get('method_version', 1) == METHOD_VERSION
+                    and all(previous.get(k) == v for k, v in protocol.items())
+                    and cached_trace_valid(run_dir, previous)):
                 return previous
         env = {k: v for k, v in os.environ.items()
                if not k.startswith(('W3D_', 'SF_', 'OU_', 'TFG_', 'CSM_', 'CARMA_'))}

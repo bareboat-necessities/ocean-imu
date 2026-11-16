@@ -391,7 +391,7 @@ private:
         // MEKF updates first (attitude + latent a_w)
         if (drive_mekf) {
             mekf_->time_update(gyro, dt);
-            mekf_->measurement_update_acc_only(acc_in, tempC);
+            mekf_->measurement_update_acc_only(acc_in-this->manoeuvreAccelerationBody(), tempC);
         }
 
         // The tilt watchdog reads and rewrites MEKF attitude, so it only has

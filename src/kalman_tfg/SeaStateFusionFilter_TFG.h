@@ -53,6 +53,7 @@
 #include "tuner/MagAutoTuner.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/VerticalAccelComplementary.h"
+#include "kalman_common/MarineTurnSeparator.h"
 #include "tuner/WavePeriodEstimator.h"
 
 namespace ocean_imu::tfg {
@@ -115,6 +116,7 @@ public:
     using RSLaw = RSAdaptationLaw;
 
     struct Config {
+        ::seastate::common::MarineTurnSeparator::Config turn_separator{};
         ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
         ocean_imu::kalman::filter_detail::GyroSampleMode frontend_gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
         float gyro_sample_period_sec = 0.0f;
@@ -207,6 +209,7 @@ public:
 
     void begin(const Config& cfg) {
         cfg_ = cfg;
+        turn_separator_.reset(cfg.turn_separator);
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
         mekf_.initialize_identity(cfg.initial_covariance);
         mekf_.set_gyro_sample_mode(cfg.gyro_sample_mode);
@@ -250,6 +253,7 @@ public:
     void update(float dt, const Vector3f& gyro, const Vector3f& acc, float tempC = 35.0f) {
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
 
+        turn_separator_.update(dt, gyro, acc, cfg_.gravity_magnitude);
         applyPendingTune_();
         elapsed_sec_ += dt;
 
@@ -310,7 +314,8 @@ public:
 
         periodicAwCovSyncTick_(dt);
         mekf_.time_update(gyro, dt);
-        mekf_.measurement_update_acc_only(acc_in, tempC);
+        mekf_.measurement_update_acc_only(acc_in-turn_separator_.correctionBodyMs2(
+            mekf_.quaternion().conjugate()*Vector3f::UnitZ(), gyro), tempC);
 
         // Unlike the OU wrappers, whose MEKFs fire their own zero
         // pseudo-measurements on set_pseudo_update_period_s(), TFG fires the
@@ -1068,6 +1073,7 @@ private:
     StartupStage stage_{StartupStage::Cold};
     ::SeaStateAutoTuner tuner_{TUNER_SIGMA_VAR_K_PERIODS_DEFAULT, 1.0f};
     ::WavePeriodEstimator wave_period_{};
+    ::seastate::common::MarineTurnSeparator turn_separator_;
     ::VerticalAccelComplementary vertical_complementary_{};
     ::AdaptiveWaveBandPass sigma_wave_band_{SIGMA_BAND_LOW_RATIO_DEFAULT,
                                             SIGMA_BAND_HIGH_RATIO_DEFAULT,

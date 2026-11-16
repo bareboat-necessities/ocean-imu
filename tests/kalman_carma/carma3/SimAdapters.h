@@ -44,6 +44,7 @@ public:
         cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
+        cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();

@@ -114,6 +114,7 @@ public:
                       const Vector3f& sigma_m)
     {
         Fusion::Config cfg;
+        cfg.turn_separator.forward_body = Vector3f::UnitY();
         cfg.with_mag = with_mag;
         cfg.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
         cfg.gyro_noise_density = sigma_g.x() * SIGMA_G_RESCALE;

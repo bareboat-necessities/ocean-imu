@@ -25,7 +25,7 @@ HEADERS = \
 	$(REPO_ROOT)/src/wave_dir/WaveDirectionReport.h \
 	$(REPO_ROOT)/src/detrend/AdaptiveWaveDetrender.h
 
-TARGETS = ins-helpers-test replay-gates-test
+TARGETS = ins-helpers-test replay-gates-test marine-turn-test
 
 all: build test
 build: $(TARGETS)
@@ -37,6 +37,9 @@ ins-helpers-test: ins-helpers-test.cpp $(HEADERS)
 
 replay-gates-test: replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp $(REPO_ROOT)/src/util/W3dSimCommon.h
 	$(CXX) $(CXXFLAGS) -o $@ replay-gates-test.cpp $(REPO_ROOT)/src/util/W3dSimCommon.cpp
+
+marine-turn-test: marine-turn-test.cpp $(REPO_ROOT)/src/kalman_common/MarineTurnSeparator.h $(REPO_ROOT)/src/tuner/VerticalAccelComplementary.h $(REPO_ROOT)/src/ahrs/Mahony_AHRS.h
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f $(TARGETS) $(addsuffix .exe,$(TARGETS)) *.o

@@ -3,13 +3,15 @@ from pathlib import Path
 import importlib.util
 import sys
 import unittest
+import tempfile
+import hashlib
 from unittest.mock import patch
 
 import numpy as np
 from scipy.spatial.transform import Rotation
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'tools'))
-from heading_kinematics_diagnosis import control, harmonic_amplitude, indices
+from heading_kinematics_diagnosis import control, harmonic_amplitude, indices, cached_trace_valid
 from underway_reference import track
 
 
@@ -62,6 +64,17 @@ class HeadingControlTests(unittest.TestCase):
                         for prefix in ('gyro_', 'q_wb_zu_'):
                             selected = [i for i, name in enumerate(columns) if name.startswith(prefix)]
                             np.testing.assert_array_equal(data[:, selected], original[:, selected])
+
+    def test_receipt_cannot_reuse_a_missing_or_changed_trace(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'w3d-test.csv'
+            content = b'time,disp_est_y\n0,1\n'
+            receipt = {'trace_sha256': hashlib.sha256(content).hexdigest()}
+            self.assertFalse(cached_trace_valid(Path(folder), receipt))
+            path.write_bytes(content)
+            self.assertTrue(cached_trace_valid(Path(folder), receipt))
+            path.write_bytes(content + b'1,2\n')
+            self.assertFalse(cached_trace_valid(Path(folder), receipt))
 
     def test_steering_signature(self):
         t = np.arange(12000)/200

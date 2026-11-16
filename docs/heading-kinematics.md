@@ -61,29 +61,45 @@ The 10 s sinusoidal component of body-Y bias error falls by **94.5–99.6%** acr
 
 Eliminating this ripple is not equivalent to solving bias estimation. For example, low-wave northbound OU-III body-Y bias RMS changes from **0.01116 to 0.01444 m/s²** in the waves-plus-yaw control even though its 10 s amplitude falls from **0.002110 to 0.000107 m/s²**. Fixed yaw can further worsen the slowly varying bias error by removing useful excitation. These effects are retained in the raw metrics, not hidden by detrending.
 
-![OU-III southbound controls, 1.5 m incident waves](../reports/results/heading_kinematics/medium-head.svg)
+![OU-III southbound controls, 1.5 m incident waves](../reports/results/heading_kinematics/medium-head-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.svg)
 
-## What a runtime correction requires
+## Runtime separation
 
-The shared measurement model needs separate wave and manoeuvre acceleration. With body-to-navigation attitude R, it should represent `f_b = Rᵀ(a_wave + a_manoeuvre − g) + b_a + noise`, while the OU/CARMA motion states and zero-mean constraints apply to wave-relative p/v/a. Bias updates must use the residual after manoeuvre prediction, with uncertainty propagated for the added prediction.
+`MarineTurnSeparator` is shared by the OU-II, OU-III, independent CARMA,
+shared-mode CARMA, TFG and tangent wrappers. It estimates the speed of steady
+forward travel from gyro and accelerometer history; it does not read a speed,
+track, steering period or simulated attitude.
 
-Independent speed/course or velocity aiding is the most direct source. For varying speed the manoeuvre model includes both `U_dot * forward` and `U * heading_rate * lateral`; yaw rate alone does not supply U. A gyro-driven model with unknown speed is another research option, but requires explicit motion assumptions and an observability assessment. An IMU and magnetometer do not generally identify an arbitrary split between wave and manoeuvre acceleration without additional information.
+For measured specific force f and angular rate omega, the transported derivative
+`df/dt + omega cross f` cancels the gravity term. In the level bow frame, steady
+forward speed U contributes jerk `U * (-r*r, dr/dt)`, where r is heading rate.
+The observer regresses this vector against the transported sensor derivative.
+Both sides pass through the same low-pass response; the wave measurement itself
+is not notched. Centering rejects a constant nuisance offset. Excitation,
+coherence, speed bounds and a settling interval prevent a constant heading or
+noise-only regression from supplying a correction.
 
-The correction belongs in a shared runtime component, including startup/reference learning, so all filters receive the same physical model. It must be tested with noisy/delayed speed, speed changes, sideslip/current, multiple steering periods, real low-frequency waves and zero-speed yaw. Subtracting the simulator’s exact track, changing Y into total motion, freezing all bias learning, or inserting a fixed 0.05 Hz notch would not establish the requested wave-only behaviour. **The runtime estimator correction remains open.**
+The learned turning acceleration is evaluated in the main estimator's gravity
+plane and accounted for in its accelerometer measurement update. It therefore
+has no vertical component in that navigation frame. The raw measurement-only
+startup, magnetic-reference and sea-state tuning paths retain their sensor
+stream. Bias remains a sensor-body state; this correction is not a relabeling or
+smoothing of the reported bias.
 
-## Reproduce
+`Config::turn_separator.forward_body` declares the bow in the calibrated body
+frame (X by default). The replay explicitly uses Y because its body conversion
+is `(x,y,z) -> (y,x,-z)`. This is a mounting convention, not navigation truth.
+`Config::turn_separator.enabled = false` disables the model for applications
+that do not satisfy its forward-travel assumption.
 
-Build the eight executables listed by `tools/filter_sim_gates.py` and fetch both cases with `python3 tools/sim_dataset.py --case all`. Use a disk-backed working directory; dense traces are deliberately not committed.
+The IMU-only model assumes approximately steady forward travel with changing
+heading and wave jerk that can be separated statistically from that turn.
+Arbitrary sideslip, rapid speed changes, and wave motion coherent with steering
+need independent navigation aiding; yaw alone does not make those motions
+identifiable. Synthetic tests cover different turn periods and speeds, reverse
+travel, mounting rotation, zero-speed yaw, constant heading and preservation of
+the navigation vertical.
 
-```sh
-python3 tools/heading_kinematics_diagnosis.py \
-  --work-dir /workspace/heading-diagnosis-work \
-  --output reports/results/heading_kinematics/measurements.json --jobs 2
-python3 tools/heading_kinematics_diagnosis.py \
-  --work-dir /workspace/heading-diagnosis-work \
-  --families ou3 csm --records wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv \
-  --output reports/results/heading_kinematics/medium.json --jobs 2
-python3 -m unittest discover -s tests/validation -p test_heading_kinematics_diagnosis.py -v
-```
-
-JSON receipts record input, executable and trace hashes. CSV tables contain full-rate RMS and fitted 20 s / 10 s amplitudes. Figure tails are uniformly reduced from 200 Hz to 20 Hz for the final 60 s only. The numerical metrics do not use that plotting reduction.
+Full replay validation of the runtime change is in progress. Existing quality
+limits are retained; the attribution tables above describe the original runtime
+and are not acceptance results for this implementation.

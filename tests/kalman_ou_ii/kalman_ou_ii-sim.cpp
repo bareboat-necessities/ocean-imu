@@ -70,6 +70,7 @@ public:
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         apply_env_overrides();
+        cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
         load_fixed_tuning();
 

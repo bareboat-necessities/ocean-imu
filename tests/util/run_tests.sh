@@ -2,6 +2,7 @@
 set -e
 
 ./ins-helpers-test
+./marine-turn-test
 W3D_COLLECT_ALL_GATES=1 ./replay-gates-test valid >/dev/null
 W3D_COLLECT_ALL_GATES=1 ./replay-gates-test quiet >/dev/null
 for failure in nan inf truth_nan missing acc_bias overflow gyro_bias roll; do

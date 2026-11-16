@@ -41,6 +41,7 @@
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/MagneticStartupCommon.h"
 #include "kalman_common/GyroInterval.h"
+#include "kalman_common/MarineTurnSeparator.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
@@ -53,6 +54,7 @@ extern const float g_std;
 namespace seastate::common {
 
 struct ProxyStartupFusionConfig {
+    MarineTurnSeparator::Config turn_separator{};
     bool with_mag = true;
 
     // Earliest and latest the proxy bootstrap may hand over.
@@ -274,6 +276,9 @@ public:
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro_body_ned.allFinite() ||
             !acc_body_ned.allFinite() || !std::isfinite(tempC)) return;
 
+        turn_separator_.update(dt, gyro_body_ned, acc_body_ned, cfg_.gravity_magnitude);
+        impl_.setManoeuvreAccelerationBody(turn_separator_.correctionBodyMs2(
+            attitudeReferenceQuat_().conjugate()*Eigen::Vector3f::UnitZ(), gyro_body_ned));
         t_ += dt;
 
         last_acc_body_ned_  = acc_body_ned;
@@ -558,6 +563,7 @@ protected:
     template <typename SeedFn>
     void beginStartup_(const Config& cfg, SeedFn&& seed) {
         cfg_ = cfg;
+        turn_separator_.reset(cfg.turn_separator);
 
         begun_ = true;
         stage_ = Stage::Bootstrap;
@@ -908,6 +914,7 @@ private:
     typename Filter::StartupStage last_impl_startup_stage_ = Filter::StartupStage::Cold;
 
     // Last IMU sample for mag-init gating.
+    MarineTurnSeparator turn_separator_;
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool have_last_imu_ = false;

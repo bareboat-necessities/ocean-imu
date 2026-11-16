@@ -77,6 +77,7 @@ public:
         apply_env_overrides();
         load_fixed_tuning();
 
+        cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
