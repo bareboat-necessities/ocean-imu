@@ -1,15 +1,16 @@
-\section{Archived Comparative Validation on Zero-Speed Records}
+\section{Comparative Validation on Underway Records}
 \label{sec:csm-validation}
 \subsection{Protocol, comparators and scoring}
-This section retains the v1.2.3 stationary-vessel experiment, including its
-original paired comparisons and machinery/transition traces. It is not
-underway evidence. The current v1.3.1 deterministic baseline is stated
-separately; its rebaselining does not transfer these confidence intervals.
+This section uses the complete v1.4.0 study for the direction declared in
+this build. Both following and head seas use a 5~kn vessel with a
+$\pm3^\circ$ heading oscillation of period 20~s. Tables and traces come
+from that case's verified CI artifact; the archived zero-speed study is not
+substituted for these underway results.
 
 The following experiments evaluate the complete shared-mode estimator,
 including its proxy, magnetic acquisition, bias release and adaptation.
 They use the same simulation machinery as the OU--III article: the
-versioned \texttt{oceanography-waves-lib} v1.2.3 estimated 28~ft fin-keel
+versioned \texttt{oceanography-waves-lib} v1.4.0 estimated 28~ft fin-keel
 vessel-response records. JONSWAP and PM--Stokes each supply four stationary
 incident significant heights, $H_s=0.27,1.5,4.0,8.5$~m. The response of
 this one prescribed hull is not a measured sea trial or a population of
@@ -80,9 +81,10 @@ seeds 11/101/1009. The position, velocity, acceleration and attitude examples
 show the final 60~s. Bias and adaptation plots retain the complete 1200~s
 to expose convergence and the startup holds. The plotting harness uses a
 vertical-up convention; the method equations use NED. The released records
-have constant yaw, and the harness expresses the plotted reference in its
-magnetic heading gauge. The yaw panel therefore tests magnetic alignment
-and drift on that heading, not arbitrary vessel-turn performance.
+have the declared sinusoidal heading oscillation;
+the harness expresses the plotted reference in its magnetic heading gauge.
+The yaw panel tests alignment and tracking on this prescribed motion; it
+does not qualify arbitrary vessel turns.
 \CSMValidationNominalTable
 
 \begin{figure*}[tp]\centering

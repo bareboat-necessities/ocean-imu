@@ -24,6 +24,7 @@ python3 ../../tools/carma_shared_modes_analysis.py --figures-only --outdir . --e
 python3 ../../tools/carma_shared_modes_study.py figures --outdir . --ext pgf,svg
 
 # 3. Comparisons, machinery degradation and low--high--low transition in the
-# standalone method article. Uses compact committed traces, not a new replay.
-python3 ../../tools/carma_shared_modes_validation.py figures --outdir .
+# standalone method article, from the verified complete study for this case.
+python3 ../../tools/carma_shared_modes_validation.py figures --outdir . \
+  --results "../../reports/results/sim_v1.4.0/${OCEAN_IMU_SIM_CASE:-following}/studies/carma_shared_modes_validation"
 cp csm-validation-tables-generated.tex-part ../../doc/kalman_carma_shared_modes/

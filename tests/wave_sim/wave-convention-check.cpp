@@ -5,6 +5,7 @@
 
 #define EIGEN_NON_ARDUINO
 #include "util/WaveFilesSupport.h"
+#include "util/UnderwayReference.h"
 #include "ahrs/FrameConversions.h"
 
 using Eigen::Quaternionf;
@@ -59,6 +60,7 @@ Vector3f body_rate_from_quat_delta(const Quaternionf& q_prev, const Quaternionf&
 }
 
 int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
+    const float mean_heading_deg = UnderwayReference::scenario() == "head" ? 180.0f : 0.0f;
     WaveDataCSVReader reader(file.string());
     bool has_prev = false;
     Wave_Data_Sample prev{};
@@ -70,12 +72,12 @@ int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
         float r_q = 0.0f, p_q = 0.0f, y_q = 0.0f;
         quat_wb_zu_to_euler_nautical(q, r_q, p_q, y_q);
         euler_err_world.add(Vector3f(diff_deg(rec.imu.roll_deg, r_q), diff_deg(rec.imu.pitch_deg, p_q), diff_deg(rec.imu.yaw_deg, y_q)));
-        yaw_quat_world_abs.add(wrap_deg(y_q));
+        yaw_quat_world_abs.add(diff_deg(y_q, mean_heading_deg));
 
         float r_b = 0.0f, p_b = 0.0f, y_b = 0.0f;
         matrix_to_euler_zyx_deg(q.conjugate().toRotationMatrix(), r_b, p_b, y_b);
         euler_err_body.add(Vector3f(diff_deg(rec.imu.roll_deg, r_b), diff_deg(rec.imu.pitch_deg, p_b), diff_deg(rec.imu.yaw_deg, y_b)));
-        yaw_quat_body_abs.add(wrap_deg(y_b));
+        yaw_quat_body_abs.add(diff_deg(y_b, mean_heading_deg));
 
         if (has_prev) {
             const float dt = float(rec.time - prev.time);
@@ -104,8 +106,8 @@ int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
     std::cout << "[convention] " << file.filename().string() << "\n"
               << "  Euler CSV-vs-selected-q RMS deg: roll=" << rms_e.x() << " pitch=" << rms_e.y() << " yaw=" << rms_e.z() << "\n"
               << "  Preferred Euler convention:       " << (euler_matches_world ? "world->body (q_wb_zu)" : "body->world (q_bw_zu)") << "\n"
-              << "  Yaw RMS from q_wb_zu (world->body): " << yaw_quat_world_rms << " deg\n"
-              << "  Yaw RMS from q_bw_zu (body->world): " << yaw_quat_body_rms << " deg\n"
+              << "  Yaw deviation RMS from q_wb_zu (world->body): " << yaw_quat_world_rms << " deg\n"
+              << "  Yaw deviation RMS from q_bw_zu (body->world): " << yaw_quat_body_rms << " deg\n"
               << "  Gyro RMS (csv - dQ):      " << norm_same << " rad/s\n"
               << "  Gyro RMS (csv + dQ):      " << norm_inv << " rad/s\n"
               << "  Preferred gyro sign:      " << (prefer_inverted_out ? "inverted (csv ~= -dQ)" : "same (csv ~= +dQ)") << "\n";
@@ -115,8 +117,9 @@ int check_file(const std::filesystem::path& file, bool& prefer_inverted_out) {
     // authoritative attitude source. Euler columns may use legacy conventions,
     // so they are diagnostics only and should not fail this check.
 
-    // For canonical wave datasets the body yaw is near zero for at least one
-    // quaternion orientation interpretation.
+    // The declared vessel direction sets the mean yaw: north/following is
+    // zero and south/head is 180 degrees. Keep the original 3-degree RMS
+    // cap on heading deviations, with wrapping across the +/-180 boundary.
     if (std::min(yaw_quat_world_rms, yaw_quat_body_rms) > 3.0f) ok = false;
 
     if (std::min(norm_same, norm_inv) > 0.25f) ok = false;
