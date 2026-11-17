@@ -430,6 +430,28 @@ class WorkflowContractTests(unittest.TestCase):
             "needs['evidence-contract'].result=='success'))}}",
         )
 
+    def test_push_delta_classifiers_fail_open_when_event_commits_are_unavailable(self):
+        for path, output in (
+            (BUILD_WORKFLOW, "run_build"),
+            (WORKFLOW, "run_smoke"),
+        ):
+            with self.subTest(workflow=path.name):
+                workflow = path.read_text(encoding="utf-8")
+                guard = workflow.index(
+                    'if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null ||'
+                )
+                diff = workflow.index('git diff --name-only "$BEFORE" "$AFTER"')
+                self.assertLess(guard, diff)
+                fail_open = workflow[guard:diff]
+                self.assertIn(
+                    '! git cat-file -e "${AFTER}^{commit}" 2>/dev/null; then',
+                    fail_open,
+                )
+                self.assertIn(
+                    f'echo "{output}=true" >> "$GITHUB_OUTPUT"', fail_open
+                )
+                self.assertIn("exit 0", fail_open)
+
 
 if __name__ == "__main__":
     unittest.main()

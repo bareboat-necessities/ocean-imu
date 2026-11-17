@@ -17,10 +17,13 @@ bundles. The combined replay fingerprint is
 `2c41692bc30a741aa0954ed5b3815c6bb9d1be1d5ed88cc9679029164d33dd23` and the
 results fingerprint is
 `1136250138bc4382c045e04a3d418715844cefeea9f7306c1c081e68d3f52a9f`.
-Post-merge build 44101355729, quality 44101355470, proof 44101355613,
-bidirectional simulation 44101355640, firmware 44101355475 and the 42-job study
-run 44101355745 pass without weakening a gate, scoring window or provenance
-requirement.
+Post-merge build 44101355729, quality 44101355470, proof 44101355613 and
+firmware 44101355475 pass. Bidirectional simulation run 44101355640 covers
+both following and head seas, and study run 44101355745 covers the complete
+42-job matrix (21 studies in each direction); all 44 jobs pass from source
+`da1aeda358446a55ac0c9d58fccd3301945d5760`, which contains the 565eea4a
+review fixes. These runs close that final-source rerun obligation without
+weakening a gate, scoring window or provenance requirement.
 
 Shipping-faithfulness handoff: structures preserved are the literal shipping
 prediction/correction chronology, covariance/gains, frontend/tuner state,
@@ -145,7 +148,8 @@ failures against the former caps. The 24 held-out OU-III pairs reduce pooled
 yaw RMS from 2.161 to 0.797 deg, with small mixed changes in translation and
 bias. The fresh enforced 9e73439e run 43994230010 passes all 544 cells in
 both directions and reproduces those numerical records exactly. The review
-fixes in 565eea4a retain a separate final-source rerun obligation.
+fixes in 565eea4a are included in post-merge source da1aeda; runs 44101355640
+and 44101355745 close the separate final-source replay and study obligation.
 
 Class E candidate-qualification failures: short-window gyro-pair fits did not
 improve the low-wave startup holdout; using a drifting full private-proxy yaw
