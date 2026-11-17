@@ -1,7 +1,9 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 // Shared implementation: do not duplicate host and embedded equations.
+#if !defined(OCEAN_IMU_GYRO_MAG_CALIBRATION_DECLARED)
 #include "GyroMagCalibration.h"
+#endif
 #if defined(ARDUINO) && !defined(EIGEN_NON_ARDUINO)
 #define OCEAN_IMU_MAG_INLINE EIGEN_DONT_INLINE
 #else

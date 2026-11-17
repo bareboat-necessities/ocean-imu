@@ -219,7 +219,7 @@ public:
     level_mag_sum_ += R * m;
     body_mag_sum_ += m;
     mag_sq_sum_ += m.squaredNorm();
-    for (int j=0;j<3;++j)
+    for (Eigen::Index j=0;j<3;++j)
       rotated_mag_sum_.block<3,3>(0,3*j) += m[j] * R;
 
     solve_elapsed_sec_ += dt;
@@ -265,7 +265,8 @@ public:
     if (!(weight_sum_ > 1.0e-6) || !correction.allFinite() || !bias.allFinite()) return false;
     const Eigen::Matrix3d C = correction.cast<double>();
     Eigen::Vector3d mean = -rot_sum_ * C * bias.cast<double>();
-    for (int j=0;j<3;++j) mean += rotated_mag_sum_.block<3,3>(0,3*j) * C.col(j);
+    for (Eigen::Index j=0;j<3;++j)
+      mean += rotated_mag_sum_.block<3,3>(0,3*j) * C.col(j);
     reference = (mean / weight_sum_).cast<float>();
     return reference.allFinite() && reference.norm() > cfg_.min_mag_norm_uT;
   }
