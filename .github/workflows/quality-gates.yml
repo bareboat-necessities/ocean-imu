@@ -109,18 +109,25 @@ jobs:
             "${#selected[@]}" "${#translation_units[@]}"
           log="$(mktemp)"
           trap 'rm -f "$log"' EXIT
+          set +e
           printf '%s\0' "${selected[@]}" \
             | xargs -0 -P "$(nproc)" -I TU bash -c '
                 clang-tidy --quiet "$1" -- \
                   -std=c++20 -I src \
                   -isystem /usr/include/eigen3 \
-                  -isystem "$PWD/third_party/Lie-plusplus/include" \
-                  2>/dev/null
+                  -isystem "$PWD/third_party/Lie-plusplus/include"
               ' _ TU > "$log" 2>&1
+          xargs_status=$?
+          set -e
           if grep -q 'warning:\|error:' "$log"; then
             grep -A3 'warning:\|error:' "$log" | head -60
             echo "clang-tidy: $(grep -c 'warning:\|error:' "$log") diagnostic(s)"
             exit 1
+          fi
+          if (( xargs_status != 0 )); then
+            cat "$log"
+            echo "clang-tidy shard command failed with xargs status $xargs_status"
+            exit "$xargs_status"
           fi
           echo "clang-tidy shard clean"
 
