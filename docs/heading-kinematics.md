@@ -1,5 +1,13 @@
 # Heading oscillations, horizontal wave motion and bias
 
+The final yaw correction and both-direction matrix are in
+[yaw-regression.md](../reports/results/heading_kinematics/yaw-regression.md).
+The live magnetic calibration, PII frame conversion and AHRS replay noise
+corrections reduce the main wave filters' worst yaw RMS from 2.5–2.6 degrees
+to 0.93–1.10 degrees. That report compares v2.7.7, includes held-out sensor
+initializations, and retains adverse changes. The steering attribution and
+isolated steering-model comparisons below remain separate experiments.
+
 The v1.4.0 replay exposes physical steering acceleration in every tested horizontal filter. The scoring target is wave displacement after removing the entire curved cruise track, while the filters receive the total specific force. The runtime now models steady forward turning separately from wave motion. Previously the characteristic 20 s displacement error and 10 s body-bias ripple were predominantly responses to this unmodelled motion. They are not explained by rotating a displacement axis alone.
 
 ## What the generator and scorer mean
