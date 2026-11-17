@@ -1,0 +1,126 @@
+{
+  "arms": {
+    "exact": {
+      "estimator_placement": null,
+      "input_stage_model": "exact"
+    },
+    "mekf": {
+      "estimator_placement": "mekf",
+      "input_stage_model": "none"
+    },
+    "mekf_ou3": {
+      "estimator_placement": "ou3",
+      "input_stage_model": "none"
+    },
+    "unmodeled": {
+      "estimator_placement": null,
+      "input_stage_model": "none"
+    },
+    "wrapper": {
+      "estimator_placement": "wrapper",
+      "input_stage_model": "none"
+    }
+  },
+  "axes_body_ned": {
+    "x-forward": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "y-starboard": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "z-up": [
+      0.0,
+      0.0,
+      -1.0
+    ]
+  },
+  "binary_sha256": "5a72641d848f7e5cecb25a87408f4c352a9cc4c575248a30085884881512744d",
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "command": "g++",
+      "version": "14.2.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+  },
+  "cutoff_sweep_case": {
+    "axis": "z-up",
+    "distance_m": 1.0
+  },
+  "cutoff_sweep_hz": [
+    1.0,
+    2.0,
+    5.0,
+    10.0,
+    15.0,
+    25.0,
+    50.0,
+    100.0
+  ],
+  "derivative_cutoff_hz": 15.0,
+  "distances_m": [
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    1.0,
+    2.0
+  ],
+  "files": {
+    "carma_lever_arm_cutoff.svg": "f1285ad4ba44781f238a4aaf7b740f5cc435ae4e1418c01b0cafe8f15f299876",
+    "carma_lever_arm_penalty.svg": "29adcaa9e29113fe593e04b71845022e2776e2e45f9c4fbcbfda5e8c98858f75",
+    "carma_lever_arm_sea_state.svg": "0ce52c8cc94d44a6f57a8a6c5130e6a56c6dce5bff2eb0f1981d5b8876247bc6",
+    "carma_lever_arm_tilt.svg": "01a10f5af71a33b2e4e9af33b9ac4e3bc3d0d1d7f9252000f8ec076ad8995c59",
+    "carma_lever_arm_yaw.svg": "d68dbb77bb18b2b20e6e05569de56d8cc348c6fc8aded2a3bfc94c67f3b4350e",
+    "lever_arm_cutoff_runs.csv": "076a54a82a3ce929c2e268f6cc0a43c61de27f8f06952b9189e96cc5d46d4587",
+    "lever_arm_cutoff_summary.csv": "b4e3962ed3d86ca79dbaba091174c023d6bbec96eb08fa08fc291044c831d2f1",
+    "lever_arm_report.md": "993410e0c6112d3071819b02c2fffedde4dc597e252d91ed936d705687f8e52e",
+    "lever_arm_runs.csv": "735caac8074e9fcb7b4a73568aab4a7d3421ac4b31ee3724c5106f22abcfbed2",
+    "lever_arm_summary.csv": "c5992cce34c0a398d8cc6c9f3bd7a003cbce815c3dce4d1abfd36f38b2aa7dba"
+  },
+  "filters": {
+    "carma3": "A41",
+    "tfg_carma3": "T41"
+  },
+  "mode": "full",
+  "model": "a_imu = a_cg + alpha x r + omega x (omega x r)",
+  "scoring_window_sec": 900.0,
+  "simulation_data": "oceanography-waves-lib v1.4.0, estimated 28 ft fin-keel sailboat RAO at CG, 5 kn, southbound, head / bow-quartering seas, heading +/-3 deg with 20 s period",
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+    "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+    "case": "head",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+    },
+    "mean_heading_deg": 180.0,
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.4.0",
+    "speed_kn": 5.0
+  },
+  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "study": "CARMA IMU lever-arm installation"
+}

@@ -4,38 +4,15 @@ on:
   push:
     paths:
       - ".github/actions/replay-toolchain/**"
-      - "tools/sim_dataset.py"
-      - "tools/sim_dataset_manifest.json"
-      - "tools/simulation_studies.py"
-      - "src/kalman_carma*/**"
-      - "tests/common/**"
-      - "tools/carma*.py"
-      - "tools/tfg*.py"
-      - "tools/live_bias_csv*.py"
-      - "tools/heave_only_comparison.py"
-      - "plots/heave_only/**"
-      - "tests/heave_only/**"
-      - 'tools/underway_reference.py'
-      - 'src/util/UnderwayReference.h'
-      - 'src/util/WaveFilesSupport.h'
-      - 'src/util/W3dSimCommon.*'
-      - 'tools/model_mismatch_ablation.py'
-      - 'tools/startup_ablation.py'
-      - 'tools/startup_publication_sync.py'
-      - 'tools/ou3_reduced_mse_study.py'
-      - 'tools/ou2_dual_mse_coefficients.py'
-      - 'tools/direction_rao_ablation.py'
-      - 'tools/direction_rao_report.py'
-      - 'src/wave_dir/**'
-      - 'src/kalman_ou_ii/**'
-      - 'src/kalman_ou_iii/**'
-      - 'src/kalman_tfg/**'
-      - 'tests/kalman_ou_ii/kalman_ou_ii-sim.cpp'
-      - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
-      - 'tests/kalman_tfg/kalman_tfg-sim.cpp'
-      - 'tools/engine_noise_degradation.py'
-      - 'tools/ou3_engine_noise_mitigation.py'
-      - '.github/workflows/simulation-studies.yml'
+      # Shared calibration, frontends, build rules and report helpers affect
+      # these studies just as the filter classes do. A hand-picked subset
+      # missed tuner/AHRS changes and several study entry points.
+      - "src/**"
+      - "tests/**"
+      - "tools/**"
+      - "plots/**"
+      - "Makefile"
+      - ".github/workflows/simulation-studies.yml"
 permissions:
   contents: read
 concurrency:

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <utility>
 #include "tuner/VerticalAccelComplementary.h"
 
 namespace seastate::common {
@@ -20,10 +21,11 @@ public:
         // Sensor/body coordinates, after mounting calibration; not world north.
         Eigen::Vector3f forward_body = Eigen::Vector3f::UnitX();
     };
-    void reset(const Config& config) {
-        const Config saved = config;
+    void reset(Config config) {
         *this = MarineTurnSeparator();
-        cfg_ = saved;
+        // Take Config by value so reset(cfg_) remains safe when resetting the
+        // object invalidates the member that supplied the argument.
+        cfg_ = std::move(config);
         if (!cfg_.forward_body.allFinite() || cfg_.forward_body.norm() < 0.5f)
             cfg_.enabled = false;
         else cfg_.forward_body.normalize();

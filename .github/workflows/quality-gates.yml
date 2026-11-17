@@ -2,10 +2,10 @@ name: quality-gates
 
 # Sanitizer, static-analysis and coverage layer.
 #
-# Every job here shells out to tools/quality_gates.sh, so a red gate on a PR is
-# reproducible locally with the single command named in the job. See
-# docs/quality-gates.md for what each gate covers and what it deliberately does
-# not.
+# Each gate is reproducible through tools/quality_gates.sh. CI shards the
+# complete clang-tidy translation-unit list only to fit hosted-runner lifetimes;
+# the local command still audits that same list in one invocation. See
+# docs/quality-gates.md for coverage and deliberate exclusions.
 #
 # These gates are about defects. They do not enforce formatting, and they do not
 # touch the OU evidence tree — the replay dependency closure is frozen, and
@@ -47,13 +47,11 @@ jobs:
   static-analysis:
     name: ${{ matrix.gate }}
     runs-on: ubuntu-24.04
-    # The complete Eigen-heavy host TU audit exceeded 45 minutes on this PR.
-    # Keep every check and translation unit; only clang-tidy needs more time.
-    timeout-minutes: ${{ matrix.gate == 'clang-tidy' && 90 || 45 }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        gate: [cppcheck, clang-tidy, python]
+        gate: [cppcheck, python]
     steps:
       - uses: actions/checkout@v6
       - name: Install Eigen
@@ -61,14 +59,89 @@ jobs:
       - name: Install cppcheck
         if: matrix.gate == 'cppcheck'
         run: sudo apt-get install -y -qq cppcheck
-      - name: Install clang-tidy
-        if: matrix.gate == 'clang-tidy'
-        run: sudo apt-get install -y -qq clang-tidy
       - name: Install ruff
         if: matrix.gate == 'python'
         run: pipx install ruff
       - name: Run ${{ matrix.gate }}
         run: tools/quality_gates.sh ${{ matrix.gate }}
+
+  # A single hosted runner repeatedly shut down during the complete 133-TU
+  # clang-tidy audit. Partition the exact same ordered TU set across bounded
+  # jobs; the aggregate job below preserves the canonical required-check name.
+  clang-tidy-shards:
+    name: clang-tidy shard ${{ matrix.label }}/4
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - index: 0
+            label: 1
+          - index: 1
+            label: 2
+          - index: 2
+            label: 3
+          - index: 3
+            label: 4
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen and clang-tidy
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libeigen3-dev clang-tidy
+      - name: Run complete clang-tidy shard
+        env:
+          SHARD_INDEX: ${{ matrix.index }}
+          SHARD_COUNT: 4
+        run: |
+          set -uo pipefail
+          mapfile -t translation_units < <(
+            git ls-files 'tests/*.cpp' \
+              | grep -Ev '(-sim|certificate-sim|neighborhood-sim)\.cpp$'
+          )
+          selected=()
+          for ((index=SHARD_INDEX; index<${#translation_units[@]}; index+=SHARD_COUNT)); do
+            selected+=("${translation_units[index]}")
+          done
+          printf 'clang-tidy shard %s/%s: %s of %s translation units\n' \
+            "$((SHARD_INDEX + 1))" "$SHARD_COUNT" \
+            "${#selected[@]}" "${#translation_units[@]}"
+          log="$(mktemp)"
+          trap 'rm -f "$log"' EXIT
+          set +e
+          printf '%s\0' "${selected[@]}" \
+            | xargs -0 -P "$(nproc)" -I TU bash -c '
+                clang-tidy --quiet "$1" -- \
+                  -std=c++20 -I src \
+                  -isystem /usr/include/eigen3 \
+                  -isystem "$PWD/third_party/Lie-plusplus/include"
+              ' _ TU > "$log" 2>&1
+          xargs_status=$?
+          set -e
+          if grep -q 'warning:\|error:' "$log"; then
+            grep -A3 'warning:\|error:' "$log" | head -60
+            echo "clang-tidy: $(grep -c 'warning:\|error:' "$log") diagnostic(s)"
+            exit 1
+          fi
+          if (( xargs_status != 0 )); then
+            cat "$log"
+            echo "clang-tidy shard command failed with xargs status $xargs_status"
+            exit "$xargs_status"
+          fi
+          echo "clang-tidy shard clean"
+
+  clang-tidy:
+    name: clang-tidy
+    needs: clang-tidy-shards
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every clang-tidy shard
+        env:
+          SHARD_RESULT: ${{ needs.clang-tidy-shards.result }}
+        run: test "$SHARD_RESULT" = success
 
   sanitizers:
     name: sanitizers (ASan + UBSan)

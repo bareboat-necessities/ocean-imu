@@ -6,8 +6,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.00033269597700348336,
-    "gyro_centered_increment_rms": 9.677772298310947e-07
+    "gyro_endpoint_increment_rms": 0.0003326959770035273,
+    "gyro_centered_increment_rms": 9.677772298314035e-07
   },
   {
     "file": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
@@ -16,8 +16,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0008802326535792553,
-    "gyro_centered_increment_rms": 2.1451699051389712e-06
+    "gyro_endpoint_increment_rms": 0.0008802326535794595,
+    "gyro_centered_increment_rms": 2.1451699051373665e-06
   },
   {
     "file": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
@@ -26,8 +26,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.00118079538949642,
-    "gyro_centered_increment_rms": 2.776823387881485e-06
+    "gyro_endpoint_increment_rms": 0.0011807953894967121,
+    "gyro_centered_increment_rms": 2.7768233878842614e-06
   },
   {
     "file": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
@@ -36,8 +36,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0013924402600197327,
-    "gyro_centered_increment_rms": 3.3940620482234653e-06
+    "gyro_endpoint_increment_rms": 0.0013924402600200862,
+    "gyro_centered_increment_rms": 3.3940620482290824e-06
   },
   {
     "file": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
@@ -46,8 +46,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0003166275383349852,
-    "gyro_centered_increment_rms": 9.487267389150064e-07
+    "gyro_endpoint_increment_rms": 0.0003166275383350283,
+    "gyro_centered_increment_rms": 9.487267389146436e-07
   },
   {
     "file": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
@@ -56,8 +56,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0010536559634752537,
-    "gyro_centered_increment_rms": 2.587163625622349e-06
+    "gyro_endpoint_increment_rms": 0.0010536559634754773,
+    "gyro_centered_increment_rms": 2.587163625624047e-06
   },
   {
     "file": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
@@ -66,8 +66,8 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0014562587255873601,
-    "gyro_centered_increment_rms": 3.417324377662022e-06
+    "gyro_endpoint_increment_rms": 0.0014562587255877151,
+    "gyro_centered_increment_rms": 3.4173243776620834e-06
   },
   {
     "file": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
@@ -76,7 +76,7 @@
     "grid_max_error": 2.2737367544323206e-13,
     "min_interval": 0.004999999999768079,
     "max_interval": 0.005000000000222826,
-    "gyro_endpoint_increment_rms": 0.0017208944914936545,
-    "gyro_centered_increment_rms": 4.188678199868683e-06
+    "gyro_endpoint_increment_rms": 0.0017208944914940776,
+    "gyro_centered_increment_rms": 4.1886781998664465e-06
   }
 ]

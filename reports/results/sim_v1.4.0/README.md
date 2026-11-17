@@ -16,7 +16,13 @@ are fixed separately for each cell; normal runs do not fit new limits.
 Charts show production defaults. CSV/JSON also retain interval-rate profiles and
 heave truth/proxy frontends. Per-case studies are kept under `CASE/studies/` and
 published by the `simulation-studies` workflow; each receipt identifies its inputs,
-executables, commands and completion status.
+executables, commands and completion status. The [artifact ledger](study-artifacts.json)
+binds all 42 following/head study archives to their workflow URLs, archive digests,
+source commit, complete receipts, retained files and artifact-only diagnostics.
+The shared-mode validation bundle also retains its 96 gzip-compressed,
+decimated publication traces (48 per direction, about 1.04 MB total) because
+the article evidence check verifies those hashes in-tree. Full run logs, PGF
+duplicates and other build products remain bound to the immutable CI artifacts.
 
 The full OU-III lever-arm sweep is also recorded for
 [following seas](following/studies/ou3_lever_arm_study/lever_arm_report.md) and

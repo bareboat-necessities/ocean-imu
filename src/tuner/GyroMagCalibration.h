@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 // Residual magnetic calibration from raw magnetometer and relative gyro motion.
 // No gravity, attitude estimate, geographical field or heading is observed.
+#define OCEAN_IMU_GYRO_MAG_CALIBRATION_DECLARED 1
 #include "util/MagneticRotation.h"
 #include "kalman_common/GyroInterval.h"
 #include <cmath>

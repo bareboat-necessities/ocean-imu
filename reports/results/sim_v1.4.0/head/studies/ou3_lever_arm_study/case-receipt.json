@@ -24,40 +24,40 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
     }
   },
-  "source_commit": "2167579321a01c7caaf8a957161387665d1a5a98",
+  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
   "binary_sha256": {
-    "kalman_ou_iii/kalman_ou_iii-sim": "8a0991121f1ec6c29252856fd926622f49c4970af343e002e9c147728b403fa0"
+    "kalman_ou_iii/kalman_ou_iii-sim": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39"
   },
   "command": [
-    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+    "/usr/bin/python3",
     "-u",
-    "/workspace/scratch/c209b58e35d0/ocean-imu/tools/ou3_lever_arm_study.py",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_lever_arm_study.py",
     "--data-dir",
-    "/workspace/scratch/c209b58e35d0/ocean-imu/.sim-data/cases/head",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/head",
     "--jobs",
     "2",
     "--mode",
     "full",
     "--output-dir",
-    "/tmp/ocean-full-study-verification/head/studies/ou3_lever_arm_study"
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/head/studies/ou3_lever_arm_study"
   ],
   "status": "completed",
   "commands": [
     [
-      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "/usr/bin/python3",
       "-u",
-      "/workspace/scratch/c209b58e35d0/ocean-imu/tools/ou3_lever_arm_study.py",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_lever_arm_study.py",
       "--data-dir",
-      "/workspace/scratch/c209b58e35d0/ocean-imu/.sim-data/cases/head",
+      "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/head",
       "--jobs",
       "2",
       "--mode",
       "full",
       "--output-dir",
-      "/tmp/ocean-full-study-verification/head/studies/ou3_lever_arm_study"
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/head/studies/ou3_lever_arm_study"
     ]
   ],
   "exit_code": 0,
-  "seconds": 435.5475339609984,
-  "log_sha256": "1686eaea2d0ccbceddcac8cbf99aeec3b1eae93d9f856b4296c653d24b957f40"
+  "seconds": 391.4640638259999,
+  "log_sha256": "c8a3354edf912463830288e09b1e74910b9b5e5035b5a619e6f4dbe0040a5af1"
 }

@@ -1,0 +1,145 @@
+{
+  "dataset": {
+    "release": "v1.4.0",
+    "case": "following",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 0.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    }
+  },
+  "seed_triplets": [
+    [
+      11,
+      101,
+      1009
+    ],
+    [
+      29,
+      211,
+      1103
+    ],
+    [
+      47,
+      307,
+      1201
+    ],
+    [
+      71,
+      401,
+      1301
+    ],
+    [
+      97,
+      503,
+      1409
+    ],
+    [
+      131,
+      601,
+      1511
+    ],
+    [
+      173,
+      701,
+      1601
+    ],
+    [
+      211,
+      809,
+      1709
+    ],
+    [
+      257,
+      907,
+      1801
+    ],
+    [
+      307,
+      1009,
+      1901
+    ]
+  ],
+  "source_revision": "71f410938ca1a8f393979f4933933868fb612461",
+  "binary_sha256": {
+    "CSM": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
+    "Independent": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
+    "OU-II": "ee8c7502262ca618f4df9e461ef211d43b2d0086eb3c63b9ae2aa6ce4e99fb07",
+    "OU-III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39",
+    "TFG": "5b14ce70b5be5e52e59a834cc0bd7a9e1a9da8a039d69bea0b90dfc7d9d7e272",
+    "PII": "1104ca373f4bfed08f5ff3e04a2e357412291335507c51db7c22f5e7b90444e0",
+    "TVG-NLO": "f78413072d3ff3c71417338d50c76d054ba50c836bf9a5ab3fd3122e6bf5dc62"
+  },
+  "source_hashes": {
+    "tools/carma_shared_modes_validation.py": "c6af76cb4af7be8e4ff197ccca826189fd3350cd4a8744921fcef6ef974c0693",
+    "tools/ou_validation.py": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343",
+    "tools/ou_roundtrip_transition.py": "99d9693d10d49ce2ba312b1e68668c28112c2b9d8236cf234ea1cae9a0753a4a",
+    "tools/engine_noise_degradation.py": "53bfdead55c904ca0de7db734b2840159f1589ca3ed6e1dbda030d83f5acb665",
+    "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim.cpp": "3ec0fa5fa9f2cc0f30de465bfde6063f66d22ffa841075961ff38d92d21fd5aa",
+    "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406"
+  },
+  "stationary_methods": [
+    "CSM",
+    "Independent",
+    "OU-II",
+    "OU-III",
+    "TFG"
+  ],
+  "observers": [
+    "PII",
+    "TVG-NLO"
+  ],
+  "scored_seconds": 900,
+  "sample_rate_hz": 200,
+  "transition_segments": [
+    [
+      "low_start",
+      300.0,
+      400.0
+    ],
+    [
+      "rise",
+      400.0,
+      520.0
+    ],
+    [
+      "high_recover",
+      520.0,
+      640.0
+    ],
+    [
+      "high",
+      640.0,
+      800.0
+    ],
+    [
+      "fall",
+      800.0,
+      920.0
+    ],
+    [
+      "low_recover",
+      920.0,
+      1040.0
+    ],
+    [
+      "low_return",
+      1040.0,
+      1200.0
+    ]
+  ],
+  "plot_geometry": "plots/vector_export.py; 2000-point drawing traces; full-rate scores"
+}

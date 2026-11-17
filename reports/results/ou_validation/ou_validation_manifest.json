@@ -19,7 +19,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -167,9 +167,9 @@
       }
     }
   },
-  "git_branch": "main",
-  "git_commit": "0a0f63a9ba57465e9b9029956129a4fb46fdb76f",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 120275 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    700 +-\n .../ou_validation/ou_validation_covsync.svg        |    704 +-\n .../ou_validation/ou_validation_displacement.svg   |    808 +-\n .../results/ou_validation/ou_validation_macros.tex |    196 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4982 +-\n .../ou_validation/ou_validation_publication.tex    |     74 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5568 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  21512 ++--\n .../ou_validation/ou_validation_transition.svg     |   6208 +-\n .../ou_validation/ou_validation_vertical.svg       |    680 +-\n 13 files changed, 81794 insertions(+), 81761 deletions(-)",
+  "git_branch": "fix/merged-main-ci",
+  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -228,8 +228,8 @@
       "sha256": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a"
     },
     "src/kalman_common/MarineTurnSeparator.h": {
-      "bytes": 6618,
-      "sha256": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8"
+      "bytes": 6753,
+      "sha256": "f13b24124a0ea14b7f3ef7763739260c93e11ada4dd3c78d7227544876b11f1c"
     },
     "src/kalman_common/MarineWaveFrontEnd.h": {
       "bytes": 19772,
@@ -296,16 +296,16 @@
       "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021"
     },
     "src/tuner/ContinuousMagHardIronEstimator.h": {
-      "bytes": 14932,
-      "sha256": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25"
+      "bytes": 14956,
+      "sha256": "6c489eaf6e710432d061aa339d13a0ede5a833c33896f97a76e38739ddc5b18a"
     },
     "src/tuner/GyroMagCalibration.h": {
-      "bytes": 3348,
-      "sha256": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7"
+      "bytes": 3398,
+      "sha256": "0e94f5046444262d608f4fb8a78386ced2bfcba1c8177728a1d6d665a9123402"
     },
     "src/tuner/GyroMagCalibrationImpl.h": {
-      "bytes": 5809,
-      "sha256": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c"
+      "bytes": 5870,
+      "sha256": "e64c307b51cb5b35cf4f063d89f3f079d47dae703d91f3bbb173523763834b20"
     },
     "src/tuner/MagAutoTuner.h": {
       "bytes": 23065,
@@ -417,7 +417,7 @@
     }
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -560,11 +560,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-17T04:08:37+00:00",
-    "git_commit": "0a0f63a9ba57465e9b9029956129a4fb46fdb76f",
+    "generated_at": "2026-11-17T12:48:10+00:00",
+    "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -623,8 +623,8 @@
         "size_bytes": 2061
       },
       "src/kalman_common/MarineTurnSeparator.h": {
-        "sha256": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8",
-        "size_bytes": 6618
+        "sha256": "f13b24124a0ea14b7f3ef7763739260c93e11ada4dd3c78d7227544876b11f1c",
+        "size_bytes": 6753
       },
       "src/kalman_common/MarineWaveFrontEnd.h": {
         "sha256": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
@@ -691,16 +691,16 @@
         "size_bytes": 5864
       },
       "src/tuner/ContinuousMagHardIronEstimator.h": {
-        "sha256": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25",
-        "size_bytes": 14932
+        "sha256": "6c489eaf6e710432d061aa339d13a0ede5a833c33896f97a76e38739ddc5b18a",
+        "size_bytes": 14956
       },
       "src/tuner/GyroMagCalibration.h": {
-        "sha256": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7",
-        "size_bytes": 3348
+        "sha256": "0e94f5046444262d608f4fb8a78386ced2bfcba1c8177728a1d6d665a9123402",
+        "size_bytes": 3398
       },
       "src/tuner/GyroMagCalibrationImpl.h": {
-        "sha256": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c",
-        "size_bytes": 5809
+        "sha256": "e64c307b51cb5b35cf4f063d89f3f079d47dae703d91f3bbb173523763834b20",
+        "size_bytes": 5870
       },
       "src/tuner/MagAutoTuner.h": {
         "sha256": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
@@ -851,8 +851,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44006189906",
-      "workflow": "build"
+      "run_id": "44074557116",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {

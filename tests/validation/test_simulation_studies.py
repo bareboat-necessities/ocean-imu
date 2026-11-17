@@ -1,15 +1,68 @@
 """Study diagnostics survive output-directory replacement and launch failures."""
 import os
+from fnmatch import fnmatchcase
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
-from simulation_studies import run_commands
+from simulation_studies import prepare_output, run_commands
+
+
+class StudyTriggerTests(unittest.TestCase):
+    def test_shared_runtime_and_report_dependencies_regenerate_all_studies(self):
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root/'.github/workflows/simulation-studies.yml').read_text()
+        push = workflow.split('  push:\n', 1)[1].split('\npermissions:', 1)[0]
+        paths = re.findall(r'^      - "([^"\n]+)"$', push, re.MULTILINE)
+        self.assertTrue(paths)
+        for path in (
+            'src/tuner/GyroMagCalibrationImpl.h',
+            'src/ahrs/FrameConversions.h',
+            'src/kalman_common/MarineTurnModel.h',
+            'src/lie/TangentBiasGroup.h',
+            'tests/kalman_tfg_shared_modes/kalman_tfg_shared_modes-sim.cpp',
+            'tools/ou_validation.py',
+            'tools/ou_robustness.py',
+            'plots/vector_export.py',
+            'Makefile',
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(any(fnmatchcase(path, pattern) for pattern in paths))
+        # Publishing completed studies must not restart all expensive replays.
+        for case in ('following', 'head'):
+            for path in (f'reports/results/sim_v1.4.0/{case}/studies/ou_validation/case-receipt.json',
+                         f'reports/results/sim_v1.4.0/{case}/studies/ou_validation/ou_validation.json'):
+                with self.subTest(path=path):
+                    self.assertFalse(any(fnmatchcase(path, pattern) for pattern in paths))
 
 
 class StudyDiagnosticsTests(unittest.TestCase):
+    def test_protocol_bound_replays_discard_committed_results_and_cache(self):
+        for study, protocol in (
+                ('tfg_shared_modes_dataset', 'dataset_protocol.json'),
+                ('carma_shared_modes_validation', 'protocol.json')):
+            with self.subTest(study=study), tempfile.TemporaryDirectory() as tmp:
+                out = Path(tmp)/'study'
+                cache = out/'dataset_cache'
+                cache.mkdir(parents=True)
+                (out/protocol).write_text('{"binaries":"old"}\n')
+                (cache/'partial.json').write_text('{"stale":true}\n')
+                prepare_output(study, out)
+                self.assertTrue(out.is_dir())
+                self.assertEqual(list(out.iterdir()), [])
+
+    def test_other_study_output_is_not_reset_by_dataset_preparation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)/'study'
+            out.mkdir()
+            marker = out/'metrics.json'
+            marker.write_text('{}\n')
+            prepare_output('ou_validation', out)
+            self.assertTrue(marker.exists())
+
     def test_successful_study_can_replace_its_output_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)/'study'

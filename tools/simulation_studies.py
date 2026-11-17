@@ -50,6 +50,20 @@ DATASET_STUDIES = {'carma3_benchmark': 'carma3_benchmark',
                    'tfg_carma3_benchmark': 'tfg_carma3',
                    'carma_excitation_study': 'carma_excitation',
                    'carma_shared_modes_study': 'kalman_carma_shared_modes'}
+PROTOCOL_BOUND_STUDIES = {'carma_shared_modes_validation',
+                          'tfg_shared_modes_dataset'}
+
+
+def prepare_output(study, out):
+    """Start non-resumable studies without committed results or stale caches."""
+    if study not in PROTOCOL_BOUND_STUDIES:
+        return
+    # These protocols bind the freshly built executables and source revision.
+    # A source change must therefore perform every replay again, rather than
+    # comparing new bindings with the committed publication or reusing an old
+    # partial cache.
+    shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True, exist_ok=True)
 
 
 def run_commands(commands, env, out):
@@ -168,6 +182,7 @@ def main():
     if not args.skip_build:
         for directory, binary in targets:
             subprocess.run(['make', '-C', str(ROOT/'tests'/directory), binary], check=True)
+    prepare_output(args.study, out)
     env = {**os.environ, 'OCEAN_IMU_SIM_CASE': CASE,
            'OCEAN_IMU_STUDY_ROOT': str(out), 'OPENBLAS_NUM_THREADS': '1'}
     command = command_for(args.study, data, out, args.jobs, args.mode)

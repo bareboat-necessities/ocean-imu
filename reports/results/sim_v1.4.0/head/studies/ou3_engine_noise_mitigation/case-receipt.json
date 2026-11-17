@@ -1,0 +1,59 @@
+{
+  "study": "ou3_engine_noise_mitigation",
+  "case": "head",
+  "mode": "full",
+  "inputs": {
+    "release": "v1.4.0",
+    "case": "head",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+    "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 180.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+    }
+  },
+  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "binary_sha256": {
+    "kalman_ou_iii/kalman_ou_iii-sim": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-u",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_engine_noise_mitigation.py",
+    "--data-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/head",
+    "--jobs",
+    "2",
+    "--output-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/head/studies/ou3_engine_noise_mitigation"
+  ],
+  "status": "completed",
+  "commands": [
+    [
+      "/usr/bin/python3",
+      "-u",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_engine_noise_mitigation.py",
+      "--data-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/head",
+      "--jobs",
+      "2",
+      "--output-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/head/studies/ou3_engine_noise_mitigation"
+    ]
+  ],
+  "exit_code": 0,
+  "seconds": 275.961922212,
+  "log_sha256": "ae28f4616608322658c42cd90afb8c17d39ed2cabf093ab31776dea36b280db0"
+}

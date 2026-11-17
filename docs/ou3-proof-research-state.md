@@ -4,8 +4,34 @@ The refreshed source-bound reproduction check and all 824 OU-III validation
 tests pass locally. Seventeen native generation commands completed, including
 fresh 240/1200-s carried histories, full planar secants and historical AG
 readout/enclosures. `heading-runtime-source-refresh.json` records commands,
-artifact hashes and scope. The required serialized `make all` and final
-embedded/full-evidence CI are still running; their completion is not inferred.
+artifact hashes and scope. The complete 544-cell bidirectional replay matrix
+and all 14 shipped sketches with Arduino IDE default flags pass on the merged
+runtime source; Linux and Windows linking both pass in run 44002744401.
+The required serialized `make all` and full-evidence publication remain open.
+
+Class E publication/CI qualification: `make -C tests/validation evidence-test`
+rejects the committed OU validation and robustness bundles because their replay
+dependencies predate the merged steering and gyro/magnetic-calibration changes.
+The local 1,241-test validation run has six failures, all at these stale-source
+checks, and one skip. The current limiter is complete regeneration/publication
+of both sea-direction study sets and the full OU bundles. Retain the immutable
+old replay provenance until actual replacement runs finish. Separately,
+`tools/quality_gates.sh clang-tidy` in job 133782126577 received a runner shutdown
+signal and exited 143 without a diagnostic; it requires a fresh runner, not a
+weaker check. These failures invalidate neither the completed replay matrix nor
+the qualified proof identities. Shipping structures are unchanged; no
+relaxation or shipping counterexample is introduced. Next falsifiable check:
+all 42 case-specific study jobs complete on the refresh branch, followed by the
+unchanged evidence contract and complete CI checks.
+
+Class E ledger-binding failure: the CI-status-only ledger update omitted its
+source-manifest entry. All three proof jobs stopped at the ledger blob mismatch
+`87f53dadf642ed86a468886bdf92b2ad4295f18a` to
+`a9437a95829290c4024b73299a64bd6a180a3b88`. Only this document's manifest entry
+is refreshed after the qualification update. Every shipping-source, lemma,
+native-diagnostic and numerical-certificate binding is retained. Exact proof
+reproduction and the adversarial stale-binding tests must pass before this
+repair is published; the theorem remains conditional and open.
 
 Class E source-refresh failure: the readout observer's prediction-entry anchor
 omitted the newly shipped `marine_turn_.endpoint_gyro = gyr_body` assignment.
@@ -54,7 +80,8 @@ fixes OU-II in 9e73439e, but OU-III then fails at `time_update` offsets
 large prediction now has an Arduino-only explicit instantiation and a matching
 sketch extern declaration, keeping that function and its literals in a
 separate object without changing its header equations or compiler flags.
-Final embedded linking remains a separate required check.
+Final embedded linking now passes for all shipped sketches on Linux and
+Windows in run 44002744401.
 
 Class E world-frame observer defect: the finite diagnostic compared later
 magnetic rows with the reference at the word root. The actual reference now
