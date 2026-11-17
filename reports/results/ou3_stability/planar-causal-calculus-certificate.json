@@ -25,8 +25,9 @@
   "planar_reference_real_bound": {
     "continuous_information_gate_value": "0",
     "float32_transfer_verified": false,
-    "norm_upper": "75",
-    "proof": "weighted normalized pitch rotations fix e_y; (I-A^T A)e_y=0; canonical reference preserves weighted-mean norm",
+    "norm_upper": "303/4",
+    "proof": "weighted normalized pitch rotations fix e_y; (I-A^T A)e_y=0; proxy/refinement preserve the weighted-mean norm bound; the wave handover uses the orthogonal gyro-bias correction bound",
+    "proxy_and_refinement_norm_upper": "75",
     "reference_alignment_lower_bound": null,
     "source_field_norm": "75",
     "startup_hard_iron_enabled": false

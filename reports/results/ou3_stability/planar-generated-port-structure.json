@@ -18,6 +18,7 @@
     "locked_Live_corrected_mag_reverse_MEKF_port": 0,
     "locked_Live_reference_reverse_MEKF_port": 0,
     "proof": "app:locked-live-causal-reference",
+    "real_wave_handover_reference_norm_over_delivered_field": "101/100",
     "reference_increment_bound": "|B_ref-B_anchor| <= ||K-K_anchor||*M_mag + |K*b-K_anchor*b_anchor| at the SAME statistics",
     "refinement_yaw_write_remains_actual_estimator_jump": true,
     "same_input_finite_MEKF_root_changes_preserve_reference_execution": true,
@@ -34,8 +35,9 @@
   "source_git_blob_sha": {
     "src/kalman_common/MagneticStartupCommon.h": "dbad1d5a3077b4ffd39cdc4702ca0283bd2b83f1",
     "src/kalman_common/MarineWaveFrontEnd.h": "a9674135d2c02f050d1e4e041c549f58f6da0b42",
-    "src/kalman_common/ProxyStartupFusion.h": "14923576800a4bc2f77c4a4505cdfe92cdbe1350",
+    "src/kalman_common/ProxyStartupFusion.h": "4e3b0e64570cd26b6207611663deb84cc8f74e16",
     "src/kalman_common/SeaStateFusionDefaults.h": "0fc888c49de794e4f889871044726185b655c312",
+    "src/kalman_common/WaveStartup.h": "e40e3e03ad3365079d34d061bbfeef7ad0946b5e",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "d9227ef315382d7f5580c69890462960543361c1",
     "src/tuner/ContinuousMagHardIronEstimator.h": "62cda3c6adddafa693720167e497ba2bda15ce74",
     "src/tuner/GyroMagCalibration.cpp": "d20405273b6e39c9e4ebb938971c9c3740ed439c",

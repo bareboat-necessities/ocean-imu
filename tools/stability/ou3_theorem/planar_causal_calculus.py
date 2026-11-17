@@ -8,6 +8,7 @@ from __future__ import annotations
 from fractions import Fraction as F
 from .matrix_certificates import add, identity, transpose
 from .planar_linked_riccati_mean import product
+from .planar_generated_port_structure import wave_handover_reference_factor
 
 
 def covariance_prediction_differential(f, p, df, dp, dq):
@@ -70,10 +71,11 @@ def certificate():
                                     'reference acquisition/refinement/continuous HI sufficient statistics',
                                     'startup/watchdog/gravity/validity/LDLT/projection branches'],
         },
-        'planar_reference_real_bound': {'norm_upper': '75', 'source_field_norm': '75',
+        'planar_reference_real_bound': {'norm_upper': str(75 * wave_handover_reference_factor()),
+                                        'proxy_and_refinement_norm_upper': '75', 'source_field_norm': '75',
                                         'startup_hard_iron_enabled': False,
                                         'continuous_information_gate_value': '0',
-                                        'proof': 'weighted normalized pitch rotations fix e_y; (I-A^T A)e_y=0; canonical reference preserves weighted-mean norm',
+                                        'proof': 'weighted normalized pitch rotations fix e_y; (I-A^T A)e_y=0; proxy/refinement preserve the weighted-mean norm bound; the wave handover uses the orthogonal gyro-bias correction bound',
                                         'reference_alignment_lower_bound': None,
                                         'float32_transfer_verified': False},
         'one_way_scope': 'Complementary tuner/S-period/AW-target; locked-Live reference has a separate zero-reverse-port proof in app:locked-live-causal-reference; reacquisition/gate/reset and source ports remain qualified separately',

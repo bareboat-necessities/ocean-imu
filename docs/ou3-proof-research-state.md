@@ -1,3 +1,37 @@
+## Wave-startup handover qualification
+
+The shared startup fit commits a current attitude, magnetic reference and body
+gyro bias at the actual handover. All 17 source-bound diagnostics were
+re-exercised, including the 240 s and 1,200 s carried histories. The mean-action
+observer and untapped control agreed on the terminal readout, and the native
+trace matched all 37,355,824 previously enclosed bytes. Its committed field,
+observer fingerprint and rational factor summary also matched. The retained
+interval enclosure therefore applies to the reproduced trace. The source-bound
+validator and all 824 OU-III validation tests passed. The signed
+balance and other changed outputs retain their fresh native values.
+
+- **Structures preserved.** Both handover branches inherit the same continuous
+  sensor history, gyro endpoints, full covariance, tuner, magnetic scheduler
+  and release state. The study observes their actual subsequent corrections.
+- **Relaxations introduced.** The native diagnostics cover finite float
+  histories. The magnetic amplitude estimate in the appendix uses exact-real
+  operations on the represented guard constants.
+- **Failure classification.** Class E covers the 13 stale source or evidence
+  checks after integration, compiler memory and time limits during regeneration,
+  and the old pre-refinement magnetic amplitude claim. Compilation retries
+  changed resource limits. The native inputs and numerical checks were retained.
+- **Counterexamples.** No genuine shipping counterexample was found. The
+  historical sufficient-bound failure remains. Its recomputed signed rotation
+  margin is approximately −30.45439.
+- **Retained results.** With delivered-field norm at most M, an accepted wave
+  handover has real reference norm below 1.01 M. After magnetic refinement the
+  default continuous calibration retains the existing 1.8 M reference bound.
+  The conditional planar results and the verified finite diagnostics keep
+  their original scope. Finite capture and the end-to-end theorem remain open.
+- **Next falsifiable check.** Bound finite attitude, field and bias errors and
+  their correlations on the reachable construction-to-Live family, including
+  rejected fits. The replayed handovers alone cannot supply that enclosure.
+
 ## Yaw regression qualification in progress
 
 The refreshed source-bound reproduction check and all 824 OU-III validation

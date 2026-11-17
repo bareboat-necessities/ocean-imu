@@ -10,6 +10,7 @@ class GeneratedPortStructureTest(unittest.TestCase):
   self.assertFalse(c["all_time_magnetic_service_verified"])
  def test_locked_live_reference_port_has_its_own_qualified_source_proof(self):
   c=certificate()["locked_live_reference"]
+  self.assertEqual(c["real_wave_handover_reference_norm_over_delivered_field"],"101/100")
   self.assertEqual(c["locked_Live_reference_reverse_MEKF_port"],0)
   self.assertEqual(c["locked_Live_corrected_mag_reverse_MEKF_port"],0)
   self.assertTrue(c["live_gravity_gate_reads_MEKF"])

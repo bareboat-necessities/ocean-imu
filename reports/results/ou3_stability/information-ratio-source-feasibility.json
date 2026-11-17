@@ -177,7 +177,7 @@
             "kappa_covariance": 19380.0,
             "kappa_information": 19380.0,
             "kappa_information_exceeds": null,
-            "relative_difference": 3.012e-06,
+            "relative_difference": 9.416e-06,
             "slow_marginal": 19380.0
           },
           "exact_margin": 0.06967,
@@ -188,7 +188,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 8.575e-14,
+            "diffuse_scale_relative_difference": 8.686e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 19390.0,
@@ -201,9 +201,9 @@
             "kappa_nu": 198.4,
             "kernel_rotation_rad": 0.008805,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.00504,
+            "margin_mu_equals_inverse_c": 0.005041,
             "next_root_kernel_ceiling": 0.06405,
-            "propagated_next_kernel_variance": 0.06356,
+            "propagated_next_kernel_variance": 0.06355,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -249,7 +249,7 @@
             "kappa_covariance": 509.2,
             "kappa_information": 509.2,
             "kappa_information_exceeds": null,
-            "relative_difference": 3.581e-07,
+            "relative_difference": 1.088e-06,
             "slow_marginal": 509.2
           },
           "exact_margin": 0.2355,
@@ -260,7 +260,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 8.575e-14,
+            "diffuse_scale_relative_difference": 8.686e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 515.9,
@@ -270,12 +270,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.0621,
-            "kappa_nu": 45.94,
+            "kappa_nu": 45.93,
             "kernel_rotation_rad": 0.004772,
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.02177,
             "next_root_kernel_ceiling": 0.06138,
-            "propagated_next_kernel_variance": 0.05552,
+            "propagated_next_kernel_variance": 0.05551,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -328,66 +328,66 @@
             "fast_given_slow": 1.001,
             "finite_kernel_observable": true,
             "gyro_persistence_cap": 71.19,
-            "k0_margin": 0.08037,
-            "kappa_covariance": 570.5,
-            "kappa_information": 570.5,
+            "k0_margin": 0.08042,
+            "kappa_covariance": 569.7,
+            "kappa_information": 569.7,
             "kappa_information_exceeds": null,
-            "relative_difference": 4.963e-06,
-            "slow_marginal": 570.5
+            "relative_difference": 5.01e-06,
+            "slow_marginal": 569.7
           },
-          "exact_margin": 0.1056,
+          "exact_margin": 0.1058,
           "ideal_C": {
-            "k": 10.62,
+            "k": 10.6,
             "kappa": 12.41,
-            "margin": 0.08598
+            "margin": 0.08609
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 1.869e-14,
+            "diffuse_scale_relative_difference": 1.515e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 570.5,
-            "loss_factor": 1.315,
+            "loss_factor": 1.316,
             "margin": 0.08037,
-            "over_P0_lambda_max": 7.005
+            "over_P0_lambda_max": 6.999
           },
           "kernel_bounded_diameter": {
-            "c_nu": 0.001046,
-            "kappa_nu": 461.7,
+            "c_nu": 0.001049,
+            "kappa_nu": 462.3,
             "kernel_rotation_rad": 0.00945,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.002166,
-            "next_root_kernel_ceiling": 0.001012,
-            "propagated_next_kernel_variance": 0.0002891,
+            "margin_mu_equals_inverse_c": 0.002163,
+            "next_root_kernel_ceiling": 0.001009,
+            "propagated_next_kernel_variance": 0.0002873,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
-            "BA_marginal_lambda_max": 4.138e-05,
+            "BA_marginal_lambda_max": 4.132e-05,
             "ceiling_actual_tilt": {
-              "c_nu": 2.6e-05,
+              "c_nu": 2.657e-05,
               "margin": 0.08037
             },
             "ceiling_tilt_premise": {
               "1e-3": {
-                "c_nu": 0.001046,
+                "c_nu": 0.001049,
                 "margin": 0.08037
               },
               "1e-4": {
-                "c_nu": 0.0001149,
+                "c_nu": 0.0001161,
                 "margin": 0.08037
               }
             },
             "k": 0.0,
             "kappa": 570.5,
             "margin_exact_nu_variance": 0.08037,
-            "nu_P0_nu": 1.836e-05,
-            "nu_ba_norm": 0.02874,
-            "tilt_variance_along_theta_hat": 1.919e-05
+            "nu_P0_nu": 1.831e-05,
+            "nu_ba_norm": 0.03091,
+            "tilt_variance_along_theta_hat": 1.92e-05
           },
           "root_time_s": 289.0,
           "slowest_direction_block_shares": {
             "ba": 0.698,
-            "theta": 0.29
+            "theta": 0.289
           },
           "word_s": 16
         },
@@ -400,61 +400,61 @@
             "fast_given_slow": 1.0,
             "finite_kernel_observable": true,
             "gyro_persistence_cap": 4.449,
-            "k0_margin": 0.2807,
-            "kappa_covariance": 37.53,
-            "kappa_information": 37.53,
+            "k0_margin": 0.2808,
+            "kappa_covariance": 37.48,
+            "kappa_information": 37.48,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.276e-06,
-            "slow_marginal": 37.53
+            "relative_difference": 1.289e-06,
+            "slow_marginal": 37.48
           },
-          "exact_margin": 0.3432,
+          "exact_margin": 0.3435,
           "ideal_C": {
-            "k": 2.375,
+            "k": 2.371,
             "kappa": 3.962,
-            "margin": 0.2939
+            "margin": 0.2942
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 1.869e-14,
+            "diffuse_scale_relative_difference": 1.515e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 37.59,
-            "loss_factor": 1.224,
+            "loss_factor": 1.225,
             "margin": 0.2805,
-            "over_P0_lambda_max": 7.005
+            "over_P0_lambda_max": 6.999
           },
           "kernel_bounded_diameter": {
-            "c_nu": 0.001046,
-            "kappa_nu": 35.31,
-            "kernel_rotation_rad": 0.005122,
+            "c_nu": 0.001049,
+            "kappa_nu": 35.3,
+            "kernel_rotation_rad": 0.005123,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.02832,
-            "next_root_kernel_ceiling": 0.001019,
-            "propagated_next_kernel_variance": 9.397e-05,
+            "margin_mu_equals_inverse_c": 0.02833,
+            "next_root_kernel_ceiling": 0.001018,
+            "propagated_next_kernel_variance": 9.354e-05,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
-            "BA_marginal_lambda_max": 4.138e-05,
+            "BA_marginal_lambda_max": 4.132e-05,
             "ceiling_actual_tilt": {
-              "c_nu": 2.6e-05,
+              "c_nu": 2.657e-05,
               "margin": 0.2805
             },
             "ceiling_tilt_premise": {
               "1e-3": {
-                "c_nu": 0.001046,
+                "c_nu": 0.001049,
                 "margin": 0.2805
               },
               "1e-4": {
-                "c_nu": 0.0001149,
+                "c_nu": 0.0001161,
                 "margin": 0.2805
               }
             },
             "k": 0.0,
             "kappa": 37.59,
             "margin_exact_nu_variance": 0.2805,
-            "nu_P0_nu": 1.836e-05,
-            "nu_ba_norm": 0.02874,
-            "tilt_variance_along_theta_hat": 1.919e-05
+            "nu_P0_nu": 1.831e-05,
+            "nu_ba_norm": 0.03091,
+            "tilt_variance_along_theta_hat": 1.92e-05
           },
           "root_time_s": 289.0,
           "slowest_direction_block_shares": {
@@ -799,7 +799,7 @@
             "kappa_covariance": 18840.0,
             "kappa_information": 18840.0,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.178e-06,
+            "relative_difference": 8.335e-06,
             "slow_marginal": 18840.0
           },
           "exact_margin": 0.022,
@@ -810,7 +810,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 8.97e-14,
+            "diffuse_scale_relative_difference": 8.716e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 19390.0,
@@ -871,7 +871,7 @@
             "kappa_covariance": 505.8,
             "kappa_information": 505.8,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.39e-07,
+            "relative_difference": 9.726e-07,
             "slow_marginal": 505.8
           },
           "exact_margin": 0.09302,
@@ -882,7 +882,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 8.97e-14,
+            "diffuse_scale_relative_difference": 8.716e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 515.9,
@@ -934,7 +934,7 @@
     }
   ],
   "driver_sha256": "ef3e961053be3602b1377c8ae6376ff8fd8b03520889a1e2753e11b56bda5f76",
-  "header_sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+  "header_sha256": "14e1de883ba1d1634a753ff8d668a2597892f509ef822bc6d3da1b2c1f954d2b",
   "history_s": 64,
   "kernel_set_invariant_on_every_word": true,
   "kill_criterion": {
