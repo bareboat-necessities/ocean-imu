@@ -1,5 +1,5 @@
 {
-  "source_revision": "a02d9fd4c3a882dd50649ed4b1cdd27b93b859c7",
+  "source_revision": "9e73439ef78989e5d42029e759ed17f46e3814a1",
   "paired_baseline": "b43f7b8505b9d21f8a2b0f44573fdd75e08426a2",
   "release": {
     "tag": "v2.7.7",
@@ -8,11 +8,11 @@
     "measurement_sha256": "7ec5585bdefd63c8248741e2f8e7b0e7499846c1f4e77f9df92627386a69912f",
     "dataset": "v1.3.1, following sea, 120 s heading oscillation; comparison is descriptive, not a matched-input improvement claim"
   },
-  "qualification": "Full 544-cell CI measurement run; old gate failures retained; new caps require a fresh enforced run",
-  "workflow_run": 43989028514,
+  "qualification": "All 544 replay cells pass the enforced regenerated caps; numerical records are identical to the original measurement run",
+  "workflow_run": 43994230010,
   "artifact_sha256": {
-    "following": "d10a466390be6444ebe992fc19e14950fc08fc0c766522ee0632405ea9571aea",
-    "head": "c8ad71d5c79cebc3bf60261c54d61f07770f6feb1a6e993f52690d8a8cfcc054"
+    "following": "196a1a77e2fab6592a89309aadfff9fabca209b5ecc800bb116d5260eaddbeac",
+    "head": "f3a236c92583c6a6d612ee3f455a848acebb138c55dd5accd7c2d2f544f21a9e"
   },
   "worst_yaw_deg": [
     {
@@ -12808,5 +12808,14 @@
         }
       }
     }
-  ]
+  ],
+  "original_measurement_run": {
+    "source_revision": "a02d9fd4c3a882dd50649ed4b1cdd27b93b859c7",
+    "qualification": "Full 544-cell CI measurement run; old gate failures retained; new caps require a fresh enforced run",
+    "workflow_run": 43989028514,
+    "artifact_sha256": {
+      "following": "d10a466390be6444ebe992fc19e14950fc08fc0c766522ee0632405ea9571aea",
+      "head": "c8ad71d5c79cebc3bf60261c54d61f07770f6feb1a6e993f52690d8a8cfcc054"
+    }
+  }
 }

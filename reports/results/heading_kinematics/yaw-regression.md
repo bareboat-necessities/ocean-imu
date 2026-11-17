@@ -34,6 +34,6 @@ Across 24 OU-III held-out sensor-initialization replays (four JONSWAP sea states
 
 ## Gates and reproduction
 
-`CurrentReplayLimits.h`, `RecordReplayLimits.inc` and their JSON sources are regenerated from all 544 CI measurement cells using the unchanged 0.5% margin and upward 1e-5 rounding. All 272 horizontal Y gates remain independent of the 3-D gate. The qualifying receipts retain their original failures against the previous caps. A fresh enforced matrix is required before claiming all gates pass.
+`CurrentReplayLimits.h`, `RecordReplayLimits.inc` and their JSON sources are regenerated from all 544 CI measurement cells using the unchanged 0.5% margin and upward 1e-5 rounding. All 272 horizontal Y gates remain independent of the 3-D gate. The qualifying receipts retain their original failures against the previous caps. The fresh enforced run [43994230010](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43994230010), at `9e73439e`, passes all 544 cells in both directions and reproduces the original numerical records exactly.
 
 Run `python3 tools/sim_matrix.py --build --jobs 2` to reproduce both cases. Run `make all` for native regression coverage. The six-seed/headings synthetic calibration tests and Mahony basis/tracking regression are in the normal native suites. The full matrix source, artifacts and every paired metric are bound in `yaw-regression.json`; `yaw-heldout.json` includes input, binary and log hashes for the additional paired draws.

@@ -1,7 +1,7 @@
 """World-frame factorization of the historical AG rows.
 
 Exact real-arithmetic algebra for regular A21: fixed deployment frame, zero
-lever arm, constant committed reference, literal predictions, applied
+lever arm, zero modeled steering speed, constant committed reference, literal predictions, applied
 corrections and resets. It enters V_next<=rho V+c_d|d|^2 only through the
 historical reader: the six-column floor (c, a, b0), then B_*, J_AG, the full
 covariance upper bound and rho_0<1. The injection budget also bounds the
@@ -346,7 +346,7 @@ def certificate():
     assert cadence > F(1, 25)
     return {
         'qualification': 'OU3_WORLD_FRAME_HISTORICAL_ROWS_V1',
-        'scope': 'real-arithmetic regular A21: fixed deployment frame, zero lever arm, constant committed reference; supplied exact words audit algebra only',
+        'scope': 'real-arithmetic regular A21: fixed deployment frame, zero lever arm and modeled steering speed, constant committed reference; supplied exact words audit algebra only',
         'world_row_factorization_exact_residual': str(result['row_factorization_residual']),
         'predictions_world_neutral_when_covariance_rotation_matches_mean': True,
         'reset_discrepancy_gram_identity': True,

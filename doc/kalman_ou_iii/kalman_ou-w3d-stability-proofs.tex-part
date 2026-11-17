@@ -1,6 +1,15 @@
 \section{Proof appendix: complete arguments for the current lemma chain}\label{sec:proofappendix}
 This section proves the implications labeled PROVED and the implication part of each CONDITIONAL lemma.  Raw exact-rational or interval arithmetic is delegated only where explicitly stated.
 
+The current steering model adds specific force and attitude/gyro-bias
+Jacobian terms when its learned speed is nonzero. Cross-product-only
+accelerometer geometry in the retained lemmas therefore has the additional
+qualification of zero modeled steering speed. Generic chronological
+covariance identities retain the complete applied rows, but extending the
+specialized geometric floors to nonzero speed is open. The affine magnetic
+learner also carries a separate, not jointly augmented, uncertainty. Fresh
+finite source diagnostics do not close either source-uniform obligation.
+
 \subsection{Shipping OU prediction identities}
 For one OU axis,
 \[
@@ -4100,9 +4109,10 @@ bookkeeping reservoir or a uniform equivalence assumption.
 Hold fixed the delivered sensor/time history and inherited private frontend,
 magnetic acquisition, reference, hard-iron and tuning state. Then throughout
 such a continuation, the derivative from the MEKF root mean/covariance to the
-reference $B_r$, applied offset $b$, and corrected magnetic input is zero:
+reference $B_r$, applied offset $b$, correction matrix $K$, and corrected
+magnetic input is zero:
 \[
- D_{(\widehat x_0,P_0)}(B_{r,i},b_i,m_i-b_i)=0.             \tag{LR1}
+ D_{(\widehat x_0,P_0)}(B_{r,i},b_i,K_i,K_i(m_i-b_i))=0.   \tag{LR1}
 \]
 This statement concerns parameter/input derivatives. It does \emph{not} set
 the attitude-dependent magnetic row or innovation derivative to zero.
@@ -4120,9 +4130,12 @@ write and completion/hold-release flags have no MEKF reader. Its subsequent
 \texttt{writeMekfYaw\_} \emph{does} read current MEKF tilt: that is an actual
 estimator jump, retained in the MEKF map, not an input to the learned reference.
 
-Continuous accumulation uses the same private tilt and \emph{raw} magnetic
-sample. Its solve, validity flags and slew use only these statistics, the
-inherited applied offset/anchor/reference, and time. The wrapper's mirror
+Continuous reference accumulation uses the same private tilt and \emph{raw}
+magnetic sample. The residual calibration transports its own field by raw
+gyro increments and estimates affine distortion, offset and a private gyro
+bias from raw magnetometer innovations. It reads no MEKF state. Its solve,
+validity flags and slew use only these statistics, delivered gyro history,
+inherited calibration/offset/anchor/reference state, and time. The wrapper's mirror
 \texttt{mag\_world\_ref\_uT\_} is written by
 \texttt{setMagWorldRef\_}, never read back from the MEKF. In Live the tilt
 watchdog's reset preserves the Live stage and does not call the Cold frontend
@@ -4152,41 +4165,48 @@ port work, uniformly over this entire qualified family. Reacquisition in
 Live may use the MEKF frame and is explicitly outside this proof.
 
 \paragraph{The source reference is paired, not frozen.}
-For the real-operation lift of the continuous tracker, write its normalized
-same-history statistics as $A=\sum_j w_jR_j/\sum_jw_j$ and
-$w=\sum_jw_jR_jm_j/\sum_jw_j$, with $w_j\ge0$ and $R_j$ normalized private
-tilt rotations. Define $c(v)=(\|v_{xy}\|,0,v_z)^T$ and retain the actual
-anchor $b_a,B_a$. The literal code evaluates both levels against the
+For the real-operation lift of the continuous tracker, define the normalized
+same-history operator
+$L(K,b)=\sum_j w_jR_jK(m_j-b)/\sum_jw_j$, with $w_j\ge0$ and $R_j$
+normalized private tilt rotations. The raw sufficient statistics retain
+every $m_{j,k}R_j$ and $R_j$, so the affine correction is applied after
+accumulation without feeding corrected samples back into its own fit.
+Define $c(v)=(\|v_{xy}\|,0,v_z)^T$ and retain the actual
+anchor $K_a,b_a,B_a$. The literal code evaluates both levels against the
 \emph{current same statistics}, giving exactly
 \[
- B_r=B_a+c(w-Ab)-c(w-Ab_a).                                \tag{LR3}
+ B_r=B_a+c(L(K,b))-c(L(K_a,b_a)).                          \tag{LR3}
 \]
 Canonicalization is globally nonexpansive:
 $\|c(v)-c(v')\|^2=(\|v_{xy}\|-\|v'_{xy}\|)^2+(v_z-v'_z)^2
-\le\|v-v'\|^2$. Since $\|A\|\le1$ by its rotation average,
+\le\|v-v'\|^2$. For a delivered envelope $\|m_j\|\le M$, the
+triangle inequality applied to the same weighted rotation average gives
 \[
- \boxed{\|B_r-B_a\|\le\|A(b-b_a)\|\le\|b-b_a\|.}       \tag{LR4}
+ \boxed{\|B_r-B_a\|\le\|K-K_a\|M+\|Kb-K_ab_a\|.}       \tag{LR4}
 \]
 This uniform finite-increment bound remains valid at zero horizontal level;
 no derivative of a zero norm is used. It retains correlation of the two
 level evaluations and proves no reference alignment or magnetic service.
 
-One required domain fact now follows without comparison retention. If the
-existing delivered magnetic envelope is $\|m_i\|\le M$, the tracker's
-nonnegative exponential statistics give its field RMS at most $M$. Every
-accepted estimate obeys the literal $\|b_{\rm est}\|\le\beta M$ gate.
-For the default apply fraction one and real $0\le\alpha\le1$, the slew is
-a convex combination; rejected updates leave the applied offset unchanged.
-Starting from the actual zero applied offset therefore gives
-$\|b_i\|\le\beta M$ at every prefix. With default startup hard iron disabled,
+One required domain fact now follows without comparison retention. The
+accepted affine matrix obeys $\|A_{\rm cal}-I\|_F\le1/4$, hence its inverse
+satisfies $\|A_{\rm cal}^{-1}\|\le4/3$ and
+$\|A_{\rm cal}^{-1}-I\|\le1/3$. Every accepted offset obeys
+$\|b_{\rm est}\|\le\beta\|m_i\|\le\beta M$, with represented
+$\beta=\mathrm{RN}_{32}(.35)<7/20$.
+For the default apply fraction one and real $0\le\alpha\le1$, both slews
+are convex combinations; rejected updates leave both applied values unchanged.
+Starting from the actual $K=I,b=0$ therefore gives
+$\|K_i\|\le4/3$, $\|K_i-I\|\le1/3$ and
+$\|b_i\|\le(7/20)M$ at every prefix. With default startup hard iron disabled,
 acquisition/refinement use nonnegative weighted means of normalized rotations
 of the raw record, so $\|B_a\|\le M$. Continuous application starts only
-after refinement, hence $b_a=0$ at the first anchor. No subsequent reanchor
-occurs on this continuation. Using the represented default
-$\beta=\mathrm{RN}_{32}(.35)<7/20$ in (LR4) proves
+after refinement, hence $K_a=I,b_a=0$ at the first anchor. No subsequent
+reanchor occurs on this continuation. Applying (LR4) gives
+$\|B_r-B_a\|\le[1/3+(4/3)(7/20)]M=(4/5)M$ and proves
 \[
- \|B_{r,i}\|\le\frac{27}{20}M,\qquad
- \|m_i-b_i\|\le\frac{27}{20}M.                            \tag{LR5}
+ \|B_{r,i}\|\le\frac95M,\qquad
+ \|K_i(m_i-b_i)\|\le\frac95M.                            \tag{LR5}
 \]
 This is a real-operation, default-configuration amplitude bound conditional
 on actual acquisition, not a bound on its time, horizontal alignment, float
@@ -4194,16 +4214,17 @@ accumulation, NIS affordability, or the complete MEKF domain. It introduces
 no new physical magnetic envelope. Nondefault startup offsets retain their
 actual anchor terms instead of using (LR5).
 
-For the full source derivative let $\ell=w-Ab$, $\ell_a=w-Ab_a$,
-$C=Dc(\ell)$, $C_a=Dc(\ell_a)$ and $\Delta b=b-b_a$. Where both horizontal
-norms are nonzero, direct differentiation of (LR3) and regrouping prove
+For the full source derivative let $\ell=L(K,b)$, $\ell_a=L(K_a,b_a)$,
+$C=Dc(\ell)$, $C_a=Dc(\ell_a)$ and $\Delta\ell=\ell-\ell_a$.
+Where both horizontal norms are nonzero, direct differentiation of (LR3)
+and regrouping prove
 \[
- \boxed{dB_r=dB_a+(C-C_a)(dw-dA\,b_a-A\,db_a)
-                 -C(dA\,\Delta b+A\,d\Delta b).}          \tag{LR6}
+ \boxed{dB_r=dB_a+(C-C_a)d\ell_a+C\,d\Delta\ell.}          \tag{LR6}
 \]
 Here $Dc(v)$ has first row $(v_x,v_y,0)/\|v_{xy}\|$, zero second row and
 third row $(0,0,1)$. Shared-statistics work cancels exactly when
-$\Delta b=d\Delta b=0$, even when $dA,dw$ are nonzero. Away from that case,
+$\Delta\ell=d\Delta\ell=0$, including identical applied/anchor calibration
+and identical calibration variations, even when the raw statistics vary. Away from that case,
 neither it nor $dB_a$ is deleted. Zero horizontal norms require (LR4) or a
 valid directional/finite-increment treatment; the final-reference acceptance
 gate alone does not bound these two intermediate horizontal denominators.
@@ -4211,7 +4232,7 @@ gate alone does not bound these two intermediate horizontal denominators.
 At the literal magnetic boundary with world-to-body rotation $R$ and fixed
 deheel rotation $D_h$, the paired input/reference source port is
 \[
- dr\big|_{\rm source}=D_h(dm-db)-R\,dB_r,\qquad
+ dr\big|_{\rm source}=D_h\{dK(m-b)+K(dm-db)\}-R\,dB_r,\qquad
  dH\big|_{\rm source}=-[R\,dB_r]_\times E_\theta^T.        \tag{LR7}
 \]
 Its gain/innovation and Joseph derivatives still use the same actual $P$.

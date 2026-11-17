@@ -796,18 +796,17 @@ def bordered_restoration(P, e, D, de, initial_slack, budget, dbudget):
             'uniform_absorption_verified': False}
 
 
-def paired_reference_tangent(A, level_mean, bias, anchor_bias, dA, dmean,
-                             dbias, danchor_bias, danchor_ref, horizontal,
-                             anchor_horizontal):
-    """Literal canonical reference differential at the SAME accumulated stats.
+def paired_level_reference_tangent(ell, ell0, dell, dell0, danchor_ref,
+                                   horizontal, anchor_horizontal):
+    """Canonical paired-level differential, including affine calibration.
 
     The horizontal norms are supplied exactly (rational examples in tests).
     A zero horizontal norm needs finite-increment treatment, not a derivative.
+    The caller must differentiate both levels from the SAME raw statistics,
+    including K, b and their anchor variations in mean(R K (m-b)).
     This is a source port; homogeneous locked-Live MEKF variations set it to
     zero only by the separate source-control-flow theorem.
     """
-    ell = add(level_mean, product(A, bias), -1)
-    ell0 = add(level_mean, product(A, anchor_bias), -1)
     def reader(v, h):
         h = F(h)
         if h <= 0 or h*h != v[0][0]**2+v[1][0]**2:
@@ -815,14 +814,32 @@ def paired_reference_tangent(A, level_mean, bias, anchor_bias, dA, dmean,
         return [[v[0][0]/h, v[1][0]/h, F(0)],
                 [F(0), F(0), F(0)], [F(0), F(0), F(1)]]
     C, C0 = reader(ell, horizontal), reader(ell0, anchor_horizontal)
+    direct = add(add(danchor_ref, product(C, dell)), product(C0, dell0), -1)
+    shared = product(add(C, C0, -1), dell0)
+    change = product(C, add(dell, dell0, -1))
+    grouped = add(add(danchor_ref, shared), change)
+    if direct != grouped:
+        raise ArithmeticError('same-statistics reference cancellation failed')
+    return {'reference_tangent': grouped, 'new_reader': C, 'anchor_reader': C0,
+            'shared_statistics_port': shared, 'calibration_port': change}
+
+
+def paired_reference_tangent(A, level_mean, bias, anchor_bias, dA, dmean,
+                             dbias, danchor_bias, danchor_ref, horizontal,
+                             anchor_horizontal):
+    """Additive-only K=I specialization of the paired affine level map."""
+    ell = add(level_mean, product(A, bias), -1)
+    ell0 = add(level_mean, product(A, anchor_bias), -1)
     dell = add(add(dmean, product(dA, bias), -1), product(A, dbias), -1)
     dell0 = add(add(dmean, product(dA, anchor_bias), -1), product(A, danchor_bias), -1)
-    direct = add(add(danchor_ref, product(C, dell)), product(C0, dell0), -1)
+    result = paired_level_reference_tangent(ell, ell0, dell, dell0, danchor_ref,
+                                           horizontal, anchor_horizontal)
+    C, C0 = result['new_reader'], result['anchor_reader']
     delta = add(bias, anchor_bias, -1)
     ddelta = add(dbias, danchor_bias, -1)
     grouped = add(danchor_ref, product(add(C, C0, -1), dell0))
     grouped = add(grouped, product(C, add(product(dA, delta), product(A, ddelta))), -1)
-    if direct != grouped:
+    if result['reference_tangent'] != grouped:
         raise ArithmeticError('same-statistics reference cancellation failed')
     return {'reference_tangent': grouped, 'new_reader': C, 'anchor_reader': C0,
             'shared_statistics_port': product(add(C, C0, -1), dell0),
@@ -921,6 +938,7 @@ def certificate():
         'locked_live_reference_proof': 'app:locked-live-causal-reference',
         'locked_live_fixed_auxiliary_reference_work_is_zero': True,
         'paired_reference_source_statistics_cancellation_verified': True,
+        'paired_reference_affine_calibration_variations_retained': True,
         'remaining_MEKF_net_work_uniformly_dominated': False,
         'comparison_word_budget': 'chi_loss <= E_loss = V_0-V_N+Supply_W-sum NIS <= V_0+Supply_W-sum NIS',
         'comparison_supply': 'sum corrections ||r+H e||_(R^-1)^2 plus actual prediction/reset/projection signed cross-plus-square work',

@@ -189,12 +189,14 @@ is following-sea, 1.5 m shared TFG: **0.01539 → 0.02470 m/s²**. Its
 zero-speed control is **0.02396 m/s²**, so simply removing the steering
 force does not solve this slower tilt/reference/bias error. Broader bias priors, bias-covariance resets and changing
 the bias relaxation time did not provide an across-sea remedy and were
-not selected. The current locked baseline now uses the completed native
-measurements for both directions and all default/interval profiles, retaining
-the existing 0.5% allowance. All 272 per-record 3-D displacement caps tighten,
-and 272 independent Y caps protect the wave-only output directly in metres.
-The explicit update also increases 213 3-D accelerometer-bias caps and 200
-pitch caps; it does not repair or conceal those estimator regressions.
+not selected. Those numbers describe the isolated steering-model change.
+The current locked baseline additionally includes the yaw correction at the
+top of this document, using complete native measurements for both directions
+and all default/interval profiles with the existing 0.5% allowance. All 272
+independent Y caps protect the wave-only output directly in metres. Relative
+to the steering-only baseline, 181 3-D displacement caps tighten and 91
+increase; 201 accelerometer-bias caps tighten and 71 increase. Individual
+regressions remain visible alongside the improved family maxima.
 [`heading_limit_update.md`](../reports/results/filter_sim_gates/heading_limit_update.md)
 lists the new ceilings, per-record examples and all increase counts.
 

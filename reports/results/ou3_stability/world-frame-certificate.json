@@ -68,7 +68,7 @@
   "same_cell_floor_from_motion_and_bias_bounds_alone": false,
   "same_cell_route_refuted_under_three_assumptions": false,
   "same_cell_supplied_world_floor": "7585431157189/1000000000000",
-  "scope": "real-arithmetic regular A21: fixed deployment frame, zero lever arm, constant committed reference; supplied exact words audit algebra only",
+  "scope": "real-arithmetic regular A21: fixed deployment frame, zero lever arm and modeled steering speed, constant committed reference; supplied exact words audit algebra only",
   "source_uniform_six_pivots": false,
   "theorem_closed": false,
   "uniform_historical_AG_readout_action": false,

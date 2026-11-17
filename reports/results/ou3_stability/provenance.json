@@ -1,15 +1,15 @@
 {
   "qualification": "OU3_SHIPPING_PROVENANCE_V1",
-  "base_main_commit": "573a0f8a24b01083bcbd2bd83fa47cc98ff26d2a",
+  "base_main_commit": "5426da8a394b33f5f473f70faa05247f832f85fa",
   "estimator_behavior_authority": "shipping implementation, not proof model",
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "fd433a84ada303cd5afe6e67b57bf452aea2c879"
+      "git_blob_sha": "1d266d786dd90cfc096be4dcd3a7bd4a9dd35a63"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "2efa28418a4dc26ea20093adde2d5198f483c4fd"
+      "git_blob_sha": "d9227ef315382d7f5580c69890462960543361c1"
     },
     {
       "path": "src/kalman_common/SeaStateTuning.h",
@@ -29,7 +29,7 @@
     },
     {
       "path": "src/kalman_common/MarineWaveFrontEnd.h",
-      "git_blob_sha": "d594a15e9c2690026e07f714e114a385ad1a388c"
+      "git_blob_sha": "a9674135d2c02f050d1e4e041c549f58f6da0b42"
     },
     {
       "path": "src/kalman_common/SeaStateAdaptationCommon.h",
@@ -37,19 +37,47 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "0510597886cf16a04de3a8436f0ce436f243659a"
+      "git_blob_sha": "14923576800a4bc2f77c4a4505cdfe92cdbe1350"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
-      "git_blob_sha": "da00c8831719b80026321605965fbbc6f26bc1aa"
+      "git_blob_sha": "dbad1d5a3077b4ffd39cdc4702ca0283bd2b83f1"
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "bcc5c095bce2c923ccc19824372ba4d316ec1256"
+      "git_blob_sha": "1069e92dc9d03a88115f16b1543ff0c8ed9acb9b"
     },
     {
       "path": "src/kalman_common/GyroInterval.h",
       "git_blob_sha": "29ad1646785b0c8aa16d2894193e74c58ec30115"
+    },
+    {
+      "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.cpp",
+      "git_blob_sha": "508971cd677fca0e7053f427bb5c27542e682685"
+    },
+    {
+      "path": "src/kalman_common/MarineTurnModel.h",
+      "git_blob_sha": "1144838d4ded5ab9c536625c1b3e5d61b2389a2c"
+    },
+    {
+      "path": "src/kalman_common/MarineTurnSeparator.h",
+      "git_blob_sha": "01fd649e842a56913cf0b37805dc4e5a8c1d5f76"
+    },
+    {
+      "path": "src/tuner/GyroMagCalibration.h",
+      "git_blob_sha": "efe51f7f44ecad59de98b3179c44a25ae6dee3bb"
+    },
+    {
+      "path": "src/tuner/GyroMagCalibrationImpl.h",
+      "git_blob_sha": "44626587c44235cd8e6859d35190a1e844fd68a4"
+    },
+    {
+      "path": "src/tuner/GyroMagCalibration.cpp",
+      "git_blob_sha": "d20405273b6e39c9e4ebb938971c9c3740ed439c"
+    },
+    {
+      "path": "src/util/MagneticRotation.h",
+      "git_blob_sha": "e3366073a66d000a50197cc1cbd614e0e6179d10"
     }
   ],
   "semantic_bindings": {
@@ -128,16 +156,18 @@
     "so3_coefficient_transfer": "Shipping SO(3) covariance/integral coefficients use degree-18 alternating Taylor series for |omega|h<1 and closed forms otherwise. Exact historical row factorization retains actual Rs and Bs in W and Gamma. Ideal rotation-integral simplification and norm-one inverse bounds require the deterministic coefficient remainder as well as mean-quaternion and floating-point defects; source-uniform implementation transfer remains open and finite replays are non-promoting.",
     "physical_compatibility_scope": "Homogeneous kernel exclusion is not physical tilt/BA identifiability. Exact planar MOVING sensor-compatible pair satisfies current source spans with constant SLOW BA; all-time applied magnetic-service admission remains OPEN.",
     "quiet_entry_scope": "Universal absolute V<.0225 entry on indefinite STILL is refuted. Quiet constant-record fibre uses B_s+C/H, not B_s+B_f; a uniform covariance-metric practical tube remains OPEN.",
-    "gyro_sampling": "Live prediction uses measured endpoint centering, retains the endpoint frontend and legacy held-bias defaults, and carries previous raw sample, previous dt, mode and exposure through execution boundaries. See docs/ou3-gyro-sampling-audit.md; finite source records are regenerated, physical continuation and hardware qualification remain open."
+    "gyro_sampling": "Live prediction uses measured endpoint centering, retains the endpoint frontend and legacy held-bias defaults, and carries previous raw sample, previous dt, mode and exposure through execution boundaries. See docs/ou3-gyro-sampling-audit.md; finite source records are regenerated, physical continuation and hardware qualification remain open.",
+    "steering_wave_separation": "The wave coordinate excludes cruise displacement/velocity only. The IMU retains actual steering force and the causal sensor-only model contributes its full attitude/BG measurement terms. Existing cross-product-only world geometry is restricted to zero modeled steering speed; no source-uniform extension is inferred.",
+    "continuous_affine_magnetic_calibration": "Default gyro-relative raw-sensor field/offset/BG/affine learner; corrected input K(m-b) and canonical reference use paired current raw statistics. The real-operation default bounds are 9M/5; float accumulation and coupled learner/navigation uncertainty remain unqualified."
   },
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "be57fd3b2b39c24351223e85b5a98c8f5f243cf6"
+      "git_blob_sha": "8db1dacaedb0ef388cbfefd84cc0d831796720e6"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "d411df359b9aac31ccc0e125b4f6f8646092a7a5"
+      "git_blob_sha": "7e8605398ca24d4b5c082f2733157c00498dba6f"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -173,7 +203,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "06aedc8b5f28b724e0c9b6197fc2305ff0e2066a"
+      "git_blob_sha": "87f53dadf642ed86a468886bdf92b2ad4295f18a"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -201,11 +231,11 @@
     },
     {
       "path": "docs/ou3-world-frame-rows.md",
-      "git_blob_sha": "e08d590568faf6bda4925c940cc884747d91099c"
+      "git_blob_sha": "437594556cc9239bd772f1154087accb221c8166"
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "git_blob_sha": "dc30dfe7a76fc377981ee05b86c471e6abe2fc5c"
+      "git_blob_sha": "9d6791587afc91db725c7334f4370dae5ec64eb9"
     },
     {
       "path": "reports/results/ou3_stability/aggregate-floor-certificate.json",
@@ -221,7 +251,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "1a015d47ac86318637a6000cf3fa8fa1ab44d152"
+      "git_blob_sha": "8c4cf7e269eb6aa90ad0ceee4158808f1ec437e3"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -229,11 +259,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "45c3695a11cef772536ea0efc4bdb1dc30dcf7bd"
+      "git_blob_sha": "744330847a656bd2eee485634c163f6ebdef1eeb"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "5c9eac5b503f8cfc279ab6c2f6c64bc28d0bb089"
+      "git_blob_sha": "cb7462ce2c18e92da1ba879865fdb552be4ce5de"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -245,7 +275,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "b0abaf781b067b50302ded65e3433bb78c4f13ee"
+      "git_blob_sha": "1ff1ad78533e0a33a62165d1415a47e64c044fa0"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -257,11 +287,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "32e7c36c39e0ff3d9b6aadf2e94328ba65a6f000"
+      "git_blob_sha": "52c6754d3c7b3452d36bb48fa0e7334e1d75b23a"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "305d1f9b67e6596f8a817658149b87d7c2cc4335"
+      "git_blob_sha": "ef83b97a294ff8ba11284ae2bb8e1fa763661781"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -281,11 +311,11 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-certificate.json",
-      "git_blob_sha": "e563bca440acd646fd61d93a8557f1a4bab2ceb1"
+      "git_blob_sha": "417155606cfee3fb3b0d38472252dc5bc51248c7"
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "358c424243c3d7ba5f9327fec596d9e3504edab5"
+      "git_blob_sha": "5c7f73bd6d8f74332109266b6a607ff8db8529ff"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -313,7 +343,7 @@
     },
     {
       "path": "src/tuner/ContinuousMagHardIronEstimator.h",
-      "git_blob_sha": "8c53e63344e3532a7231195f51fc0e75549abcff"
+      "git_blob_sha": "8c195be941b6704564aa1ba434fd58a2834493a4"
     },
     {
       "path": "src/tuner/MagAutoTuner.h",
@@ -509,7 +539,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/ag_readout_source_diagnostic.py",
-      "git_blob_sha": "14b136aa0dc860889e6771d7cd584e49f9f15e35"
+      "git_blob_sha": "043da0180695553a784952e89fa2fb873ce53722"
     },
     {
       "path": "tools/stability/ou3_theorem/aggregate_floor.py",
@@ -573,7 +603,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_ratio_source_diagnostic.py",
-      "git_blob_sha": "c7ff5fff9d6d03424fac119c6777ab1ee5ce8c9c"
+      "git_blob_sha": "d035bef1e31240b0760d16fc2e80cbe4c6723454"
     },
     {
       "path": "tools/stability/ou3_theorem/interval_riccati.py",
@@ -737,7 +767,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/theorem_status.py",
-      "git_blob_sha": "af3108afc74e20c4f9109c73ed7d6db9d613adbb"
+      "git_blob_sha": "cefe0e5e57543dc899f9b2c09f6edf19b517401d"
     },
     {
       "path": "tools/stability/ou3_theorem/word_diameter.py",
@@ -749,11 +779,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame.py",
-      "git_blob_sha": "525db2ec3e8be36845c91d02a999af2a261f4a28"
+      "git_blob_sha": "cdfa998e8966ee3ebcbf5d18d64f519cdaa708c5"
     },
     {
       "path": "tools/stability/ou3_theorem/world_frame_source_diagnostic.py",
-      "git_blob_sha": "706ffc2d42c5eddb3e541d1c7b27b87fcf8b5463"
+      "git_blob_sha": "5f285cda9324f3da3b64225d3819cb67b9030516"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_joint_phase_cell.py",
@@ -769,7 +799,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "7df4ece9753135b4c495846ee999caa865ef1c59"
+      "git_blob_sha": "014fa0913f696b35a1abe2fc74f97c40800090df"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
@@ -777,11 +807,11 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "87a89d06bc38d554f916a6a3ea906e89a78d35c9"
+      "git_blob_sha": "c9a16753c27958ddc07e20ae657eddf86a8cbea9"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
-      "git_blob_sha": "88b00983f39fde20067b931eb8df2ce324363e6f"
+      "git_blob_sha": "2fa5062853f5af1cbe52e4aa14cc6d2a02624cd9"
     },
     {
       "path": "tools/stability/ou3_theorem/planar_every_root_service.py",
@@ -845,7 +875,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "ac5dca704186d9c5f7d74a1d5422b3b43fc5dae2"
+      "git_blob_sha": "b96ca6b9ccd2c4956f2be30284ce966670560cec"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -853,7 +883,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
-      "git_blob_sha": "86bd4273abfcd05a680e80589d304b56966a0205"
+      "git_blob_sha": "4d6a8cb4ee6d9451bf9155508d76683d6c9ff77d"
     },
     {
       "path": "reports/results/ou3_stability/planar-service-operation-audit.json",
@@ -861,7 +891,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "3e1814ee7d1fd2a6f289401d6e6f51bb18f0eefb"
+      "git_blob_sha": "721f378ba2990e8667bfc8f3d79e28804b726713"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -969,11 +999,11 @@
     },
     {
       "path": "tools/stability/ou3_theorem/information_shear_word.py",
-      "git_blob_sha": "5c2871d42f0989fcc63291495a7df6c30798bdc5"
+      "git_blob_sha": "a091ca483dc27a46d64d2050d5f389027c3ec27a"
     },
     {
       "path": "tests/validation/test_ou3_information_shear_word.py",
-      "git_blob_sha": "d1e8ccc0f548ba06c76944423d690470c87494e6"
+      "git_blob_sha": "aaf755e999256232ce7016bc1931d8f067640639"
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
@@ -981,7 +1011,7 @@
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
-      "git_blob_sha": "c170b1f54b8a677e5afb135e74a4e9507e5263d9"
+      "git_blob_sha": "8720ecd104faa29bb0a412e5c7154663b0e706e0"
     },
     {
       "path": "tools/stability/ou3_theorem/measurement_frame.py",
@@ -1010,6 +1040,14 @@
     {
       "path": "reports/results/ou3_stability/v140-replay-reference-source-scope.json",
       "git_blob_sha": "bd3949f31f49b40d619f0bd93939470e76c24ae9"
+    },
+    {
+      "path": "tests/validation/test_ou3_information_ratio_replay.py",
+      "git_blob_sha": "3f356323ea98b04280e320f246c7d210b2bca2ed"
+    },
+    {
+      "path": "reports/results/ou3_stability/heading-runtime-source-refresh.json",
+      "git_blob_sha": "ccb0c2eb6e5e01c7396340630344c662b35da94b"
     }
   ],
   "regime_continuation_base_main_commit": "1c8776e701a647f0986604c1264c0fd1f78f987f",
@@ -1032,35 +1070,35 @@
     "finite_native_record": "planar-service-stream-diagnostic.json",
     "finite_operation_audit": "planar-service-operation-audit.json",
     "finite_covariance_partial_derivative": "planar-service-frechet-diagnostic.json",
-    "operation_stream_sha256": "a1d0baed42d44034e71f9291fd4e4d6d363ddcb1e9db230335ec978562776cf5",
+    "operation_stream_sha256": "123ca8a3f96649c56b8606f5785ccccd18fe05bb7dcc95c58b192c640c308445",
     "untapped_complete_tail_samples_bitwise_equal": true,
     "all_time_magnetic_service_verified": false,
-    "source_binding_notes": "Raw private Mahony normalization and literal frontend/tuner chronology are not bound by the old ideal interval replica. Shipping generation is fail-closed; no physical assumptions or shipping files changed."
+    "source_binding_notes": "Fresh observed/untapped finite replay after steering and gyro-relative magnetic calibration changes. Literal private Mahony/frontend/tuner chronology is retained. No all-time source-domain or IEEE-754 enclosure is promoted."
   },
   "planar_joint_phase_cell_threshold": {
-    "result_type": "CONDITIONAL",
-    "covariance_partial_gain_max": 0.8738212970667968,
-    "mahony_homogeneous_20s_gain": 0.5827057639270218,
-    "coupling_product_budget": null,
-    "symmetric_coupling_norm_budget": null,
-    "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485,
-    "generated_mean_coefficient_couplings_bounded": false,
-    "joint_phase_cell_forward_invariant": false,
-    "all_time_magnetic_service_verified": false,
     "additive_mahony_charge_retained_separately": true,
+    "all_time_magnetic_service_verified": false,
     "carried_physical_2x2_service_floor": 7.024764605642485,
+    "coupling_product_budget": null,
+    "covariance_partial_gain_max": 0.8738212985428235,
     "every_placed_window_magnetic_service_verified": false,
     "gauge_forcing_required": "C_Q alpha, with amplitude from the physical SLOW+FAST constraints",
+    "generated_mean_coefficient_couplings_bounded": false,
     "generated_one_way_coefficient_ranges_all_time_bounded": false,
     "generated_reverse_feedback_ports_zero": true,
+    "joint_phase_cell_forward_invariant": false,
     "joint_two_block_small_gain_condition": "b_Q*c_Q < (1-rho_P)*(1-rho_Q), with certified linked quotient blocks",
     "mahony_gain_used_as_mekf_mean_gain": false,
+    "mahony_homogeneous_20s_gain": 0.5827057639270218,
     "mahony_steps": 4000,
     "qualification": "OU3_PLANAR_JOINT_PHASE_CELL_THRESHOLD_V1",
     "remaining_bidirectional_loop": "MEKF mean <-> covariance through state-dependent H and P-dependent K",
     "required_information_condition": "for each physical +/- 2x2 block, ||I_cell-I_carried||_2 < carried_floor-1",
+    "result_type": "CONDITIONAL",
     "rho_quotient_uniform": null,
-    "theorem_closed": false
+    "symmetric_coupling_norm_budget": null,
+    "theorem_closed": false,
+    "weyl_information_perturbation_budget_to_muM_1": 6.024764605642485
   },
   "planar_generated_port_structure": {
     "result_type": "PROVED analytical source-control-flow theorem",
@@ -1070,21 +1108,23 @@
     "remaining_bidirectional_loop": "MEKF mean <-> P via state-dependent acc/mag H and P-dependent K",
     "all_time_magnetic_service_verified": false,
     "locked_live_reference": {
-      "proof": "app:locked-live-causal-reference",
-      "locked_Live_reference_reverse_MEKF_port": 0,
-      "locked_Live_corrected_mag_reverse_MEKF_port": 0,
-      "same_input_finite_MEKF_root_changes_preserve_reference_execution": true,
-      "scope": "magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration",
-      "live_gravity_gate_reads_MEKF": true,
-      "live_gravity_gate_controls_locked_refinement_or_slew": false,
-      "refinement_yaw_write_remains_actual_estimator_jump": true,
-      "source_reference_derivatives_discarded": false,
-      "inherited_auxiliary_root_correlations_discarded": false,
       "actual_correlated_lift_map": "M_lift=M+R_a*Lambda if da_0=Lambda*v_0+zeta is proved; otherwise retain augmented lift",
       "canonical_reference_map_global_Lipschitz_constant": 1,
-      "reference_increment_bound": "|B_ref-B_anchor| <= |A (b-b_anchor)| <= |b-b_anchor| at the SAME statistics",
-      "default_real_reference_norm_bound": "(1+7/20)*M_mag after the actual acquisition/refinement, startup hard iron disabled and initial applied offset zero",
+      "default_real_corrected_measurement_norm_bound": "(9/5)*M_mag",
+      "default_real_correction_norm_bound": "||K|| <= 4/3 and ||K-I|| <= 1/3 from ||A-I||_F <= 1/4 and convex slew",
+      "default_real_reference_norm_bound": "(9/5)*M_mag after actual acquisition/refinement, startup hard iron disabled, initial K=I and applied offset zero",
       "float_reference_accumulation_qualified": false,
+      "inherited_auxiliary_root_correlations_discarded": false,
+      "live_gravity_gate_controls_locked_refinement_or_slew": false,
+      "live_gravity_gate_reads_MEKF": true,
+      "locked_Live_corrected_mag_reverse_MEKF_port": 0,
+      "locked_Live_reference_reverse_MEKF_port": 0,
+      "proof": "app:locked-live-causal-reference",
+      "reference_increment_bound": "|B_ref-B_anchor| <= ||K-K_anchor||*M_mag + |K*b-K_anchor*b_anchor| at the SAME statistics",
+      "refinement_yaw_write_remains_actual_estimator_jump": true,
+      "same_input_finite_MEKF_root_changes_preserve_reference_execution": true,
+      "scope": "magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration",
+      "source_reference_derivatives_discarded": false,
       "uniform_complete_net_work_domination": false
     }
   },
@@ -1857,5 +1897,24 @@
     "replay_performed": true,
     "native_state_bytes_identical": true,
     "theorem_promoted": false
+  },
+  "heading_wave_runtime_refresh": {
+    "runtime_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0",
+    "receipt": "reports/results/ou3_stability/heading-runtime-source-refresh.json",
+    "structures_preserved": [
+      "literal prediction/correction/sync/reset order and full P/K",
+      "same continuous physical history and inherited construction/startup/Live state",
+      "actual source-generated steering and raw-gyro/raw-magnetic learner paths",
+      "paired canonical reference and its source variation"
+    ],
+    "relaxations_introduced": [
+      "finite exported float words are diagnostics, not source-uniform real-trajectory enclosures",
+      "specialized world-frame geometric floors are restricted to zero modeled steering speed",
+      "joint calibration/navigation uncertainty and float accumulation remain open"
+    ],
+    "failure_classification": "E for corrected observer, QR conditioning, compilation and source-binding defects; historical D sufficient-bound failures retained",
+    "genuine_shipping_counterexample_found": false,
+    "theorem_promoted": false,
+    "next_falsifiable_check": "source-bound exact reproduction, all native tests and default-flag embedded linking"
   }
 }

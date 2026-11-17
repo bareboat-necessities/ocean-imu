@@ -2,7 +2,7 @@
 
 The limits qualify the complete 544-cell two-direction CI measurement run on `a02d9fd4c3a882dd50649ed4b1cdd27b93b859c7`. Both the steering model and yaw corrections are active. The existing 0.5% allowance and upward 1e-5 rounding are unchanged. All 272 horizontal cells independently gate geographic wave Y RMS in metres.
 
-Qualifying `baseline_*.json` receipts retain their failures against the earlier limits. Refitting caps is not a replay pass; a fresh enforced run is required. Accuracy improvements and adverse changes, including held-out draws, are reported in [yaw-regression.md](../heading_kinematics/yaw-regression.md).
+Qualifying `baseline_*.json` receipts retain their failures against the earlier limits. The independent enforced run [43994230010](https://github.com/bareboat-necessities/ocean-imu/actions/runs/43994230010) passes all 544 cells using these caps; the numerical records match the qualifying measurements exactly. Accuracy improvements and adverse changes, including held-out draws, are reported in [yaw-regression.md](../heading_kinematics/yaw-regression.md).
 
 ## Global default yaw ceilings
 

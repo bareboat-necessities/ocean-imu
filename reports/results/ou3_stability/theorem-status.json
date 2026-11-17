@@ -133,7 +133,7 @@
     "linked_exogenous_supply_matrix_certified": false,
     "linked_noise_and_held_gain_differentials_verified": true,
     "linked_suffix_score_normal_form_verified": true,
-    "locked_live_default_reference_real_amplitude_bound": "27/20 times delivered magnetic envelope; actual acquisition and stated defaults",
+    "locked_live_default_reference_real_amplitude_bound": "9/5 times delivered magnetic envelope; actual acquisition, affine calibration and stated defaults",
     "locked_live_fixed_auxiliary_reference_work_is_zero": true,
     "locked_live_reference_source_pairing_verified": true,
     "mag_S_conditional_AW_storage_invariant": true,
@@ -519,6 +519,13 @@
   "regime_role": "qualification of portions of the single carried proof path, not independent estimator restarts",
   "regional_practical_stability_claimed": false,
   "required_capture_time": "history dependent T_c(h,x_0) < infinity; open under the amended marine-motion domain",
+  "runtime_extension_scope": {
+    "affine_magnetic_learner_joint_navigation_uncertainty_certified": false,
+    "cross_product_geometry_lemmas": "zero modeled steering speed and original lever-arm/reference qualifications; nonzero-speed transfer remains open",
+    "finite_source_replays_establish_uniform_extension": false,
+    "nonzero_speed_geometric_floor_certified": false,
+    "steering_model": "nonzero learned speed adds acceleration and attitude/gyro-bias Jacobians; generic ordered covariance identities retain the actual rows"
+  },
   "shipping_filter_changed_for_proof": false,
   "shipping_mode_switch_enabled": false,
   "shipping_residual_gyro_bias_hardening": true,

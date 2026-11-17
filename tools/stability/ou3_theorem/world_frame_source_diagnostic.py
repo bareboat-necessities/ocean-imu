@@ -38,7 +38,7 @@ def observer_source(source):
         ('readout_reset(dtheta); }\n',
          'readout_reset(dtheta); readout_quaternion(qref.coeffs()); }\n', 1),
         ('        readout_correction("',
-         '        readout_state(qref.coeffs(),xext,Pext.template topLeftCorner<3,3>().eval(),r,S_mat);\n'
+         '        readout_state(qref.coeffs(),xext,Pext.template topLeftCorner<3,3>().eval(),r,S_mat,v2ref);\n'
          '        readout_correction("', 3),
     ]
     for old, new, count in taps:
@@ -52,11 +52,11 @@ MAIN = r'''
 template<class A> static void readout_quaternion(const A& q) {
     if (recording) events.push_back("{\"kind\":\"quaternion\",\"q\":"+matrix_json(q)+'}');
 }
-template<class A, class B, class C, class D, class E>
-static void readout_state(const A& q, const B& x, const C& ptt, const D& r, const E& s) {
+template<class A, class B, class C, class D, class E, class F>
+static void readout_state(const A& q, const B& x, const C& ptt, const D& r, const E& s, const F& reference) {
     if (recording) events.push_back("{\"kind\":\"state\",\"q\":"+matrix_json(q)+",\"x\":"
         +matrix_json(x)+",\"P_theta\":"+matrix_json(ptt)+",\"r\":"+matrix_json(r)
-        +",\"S\":"+matrix_json(s)+'}');
+        +",\"S\":"+matrix_json(s)+",\"reference\":"+matrix_json(reference)+'}');
 }
 #define private public
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
@@ -219,6 +219,7 @@ def analyze(trace, profile, dps=80):
         body_a, body_b = mp.eye(3), mp.zeros(3)
         world_a, world_b = mp.eye(3), mp.zeros(3)
         pred_defect = reset_defect = row_defect = force_defect = field_defect = mp.mpf(0)
+        reference_change = mp.mpf(0)
         injection_float_angle = mp.mpf(0)
         max_rate = mp.mpf(0)
         steps, rows, anchor, groups, injections, ops, aw_errors = 0, [], None, [], [], [], []
@@ -380,7 +381,12 @@ def analyze(trace, profile, dps=80):
                                   'force': world_vec, 'angle': mp.mpf(0), 'op': len(ops),
                                   'transport': (body_a.copy(), body_b.copy())}
                     else:
-                        field_defect = max(field_defect, mp.norm(world_vec-reference))
+                        # Continuous calibration can change magnitude/dip
+                        # during the word. Compare with the literal reference
+                        # at this correction, not a frozen word-root copy.
+                        applied_reference = col(e['reference'])
+                        reference_change = max(reference_change, mp.norm(applied_reference-reference))
+                        field_defect = max(field_defect, mp.norm(world_vec-applied_reference))
                         if anchor is not None:
                             # World vectors are read from the literal rows, so the
                             # comparison uses exactly the exported operands.
@@ -467,6 +473,7 @@ def analyze(trace, profile, dps=80):
             'row_factorization_defect_max': fmt(row_defect),
             'acc_force_state_vs_row_defect_max': fmt(force_defect),
             'mag_row_vs_reference_defect_max': fmt(field_defect),
+            'reference_change_from_root_max': fmt(reference_change),
             'maximum_nominal_rotation_rate_rad_s': fmt(max_rate),
             'same_cell_actual_singular_min': fmt(min(gr['actual'] for gr in groups)),
             'same_cell_actual_singular_max': fmt(max(gr['actual'] for gr in groups)),
@@ -516,7 +523,7 @@ def analyze(trace, profile, dps=80):
 METRICS = (
     'prediction_world_discrepancy_max', 'reset_gram_identity_defect_max', 'reset_injection_float_angle_max',
     'row_factorization_defect_max', 'acc_force_state_vs_row_defect_max',
-    'mag_row_vs_reference_defect_max', 'maximum_nominal_rotation_rate_rad_s',
+    'mag_row_vs_reference_defect_max', 'reference_change_from_root_max', 'maximum_nominal_rotation_rate_rad_s',
     'same_cell_actual_singular_min', 'same_cell_actual_singular_max', 'same_cell_world_floor_min',
     'same_cell_floor_to_actual_ratio_max', 'same_cell_force_field_sine_min',
     'same_cell_reset_angle_bound_slack_min', 'injection_norm_max_rad',
