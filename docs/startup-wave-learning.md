@@ -78,6 +78,48 @@ already-calibrated profile. The code does not choose a method using truth or
 the dataset label. Both are explicit experiment arms; a future device policy
 would need externally justified calibration uncertainty/quality.
 
+## Force-slope weighting in low waves
+
+The fixed slope uncertainty can give a noisy gyro-bias estimate too much
+influence on terminal tilt in low waves. The experimental
+`--scale-force-slope` arm measures the time-weighted RMS fluctuation of
+specific force after gyro transport into the initial frame. It scales the
+existing slope standard deviation by `clamp(RMS / (1 m/s²), 0.15, 1)`.
+Lower force variation increases the weight of the slope observation.
+The scale uses the calibration-prior gyro trajectory and stays fixed through
+each solve. The reference amplitude and floor are experimental settings.
+
+On the original 480 starts, the number of direction/profile/record groups
+with lower matched-time tilt RMS than shipping increases from 27/32 to
+30/32. The two remaining regressions occur in 0.270 m head seas with
+residual magnetic calibration. The largest increases from shipping are
+0.0851° with fixed weighting and 0.0065° with scaling.
+
+On a further 480 starts using seeds 31–35 and offsets 41, 191 and 421 s,
+scaling improves tilt over shipping in all 32 groups. These seeds and phases
+reuse the same 16 wave records. Pooled calibrated errors at the actual
+shipping handover are:
+
+| Cohort | Seas | Matched starts | Fixed → scaled tilt RMS | Fixed → scaled yaw RMS |
+|---|---|---:|---:|---:|
+| Original | Following | 109 | 0.333° → 0.327° | 0.802° → 0.793° |
+| Original | Head | 120 | 0.408° → 0.393° | 0.966° → 0.932° |
+| Further starts | Following | 95 | 0.374° → 0.380° | 0.662° → 0.675° |
+| Further starts | Head | 120 | 0.489° → 0.471° | 0.944° → 0.897° |
+
+All 480 calibrated starts across both cohorts meet the 2° yaw and 1° tilt
+targets with scaling at 35 s, including starts that shipping misses.
+Both weightings reject the 32 field-step controls. With residual magnetic
+calibration, scaled yaw RMS on the original cohort increases from 1.876°
+to 1.892° following and from 1.640° to 1.678° head-on. The mixed results
+support keeping the fixed weighting as the default and comparing the two
+fits explicitly.
+
+[Original per-record results](../reports/results/startup_learning/slope_study/validation.csv)
+and [confirmation results](../reports/results/startup_learning/slope_study/confirmation.csv)
+give matched and 35 s RMS for tilt, yaw and gyro bias. Each handoff row is
+the shipping baseline shared by both arms.
+
 ## Handover contract
 
 | Field | Meaning |

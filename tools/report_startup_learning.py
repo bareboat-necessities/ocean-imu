@@ -24,6 +24,7 @@ def main():
     text = ['# Startup learning: measured results', '',
             f"Base: `{provenance['base_commit']}`. Seeds: {provenance['seeds']}; "
             f"power-on offsets: {provenance['offsets_s']} s. Both pinned v1.4.0 datasets.", '',
+            f"Force-slope model: {provenance.get('force_slope_model', 'fixed')}.", '',
             'These are held-out sensor seeds and startup phases on the existing wave records, '
             'not independent newly generated seas. Values below pool one endpoint error per trial; '
             'they are not live-filter RMS over a navigation run.', '',

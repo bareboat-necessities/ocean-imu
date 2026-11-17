@@ -160,6 +160,8 @@ def main():
     parser.add_argument('--profiles', default='ideal,calibrated,residual')
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/results/startup_learning')
+    parser.add_argument('--scale-force-slope', action='store_true',
+                        help='weight the joint force slope by transported force fluctuations')
     parser.add_argument('--check', action='store_true', help='require paired calibrated and residual accuracy bars')
     parser.add_argument('--check-controls', action='store_true', help='require ideal accuracy and field-step rejection')
     args = parser.parse_args()
@@ -184,7 +186,8 @@ def main():
         result = args.output/f'{case}-{path.stem}.csv'
         subprocess.run([str(TEST/'startup-learning'), '--input', str(path),
                         '--output', str(result), '--seeds', args.seeds,
-                        '--offsets', args.offsets, '--profiles', args.profiles], check=True)
+                        '--offsets', args.offsets, '--profiles', args.profiles,
+                        *(['--scale-force-slope'] if args.scale_force_slope else [])], check=True)
         with result.open() as stream:
             rows = [dict(case=case, **r) for r in csv.DictReader(stream)]
         result.unlink()
@@ -213,6 +216,7 @@ def main():
         'sources_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                            for p in sorted(sources)},
         'datasets': provenance, 'seeds': args.seeds, 'offsets_s': args.offsets,
+        'force_slope_model': 'scaled' if args.scale_force_slope else 'fixed',
         'profiles': args.profiles, 'imu_hz': 200, 'mag_hz': 25, 'deadline_s': 35,
         'truth_access': 'Only sensor generation and scoring; candidate takes Sample only.',
         'metrics_file': metrics_path.name, 'metrics_sha256': dataset.digest(metrics_path),

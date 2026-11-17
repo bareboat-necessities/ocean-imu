@@ -130,3 +130,20 @@ calibration and wave uncertainties are correlated. A future integration must
 transfer those correlations, qualify coverage and continue the gyro clock
 without replaying the last interval. This PR deliberately does not integrate
 the candidate into any live filter.
+
+## Reproducing the force-slope comparison
+
+Run both weighting models with the same seeds, offsets and sensor profiles.
+The comparison checks input hashes, epoch pairing and shipping control values.
+CI runs both cohorts and uploads the full raw metrics. Example for the newer
+480-start cohort:
+
+```sh
+for model in fixed scaled; do
+  flag=""
+  if [ "$model" = scaled ]; then flag=--scale-force-slope; fi
+  python3 tools/startup_learning.py --seeds 31,32,33,34,35 --offsets 41,191,421 \
+    --profiles calibrated,residual --check $flag --output "/tmp/startup-$model"
+done
+python3 tools/compare_startup_slope.py /tmp/startup-fixed /tmp/startup-scaled /tmp/confirmation.csv
+```

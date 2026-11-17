@@ -45,6 +45,7 @@ struct Config {
     // admits residual wave/turn acceleration; it is not per-sample white noise.
     double force_slope_sigma = 0.005; // m/s^3 at a 35 s horizon
     double min_seconds = 20, max_seconds = 35;
+    bool scale_force_slope = false; // experimental joint fit, fixed at the start of each solve
 };
 
 class Learner {

@@ -71,6 +71,20 @@ V force_slope(const std::vector<Sample>& s, const Transport& tr, const V& ba) {
     }
     return sum/norm;
 }
+// Keep this weight fixed during the bias optimization. A candidate gyro bias
+// must not reduce its cost by inflating the measured force fluctuations.
+double force_slope_scale(const std::vector<Sample>& samples, const Transport& tr, const V& accel_bias) {
+    const V mean = force_mean(samples, tr, accel_bias, false);
+    double energy = 0;
+    for (std::size_t i = 1; i < samples.size(); ++i) {
+        const V force = tr.q[i] * (samples[i].accel - accel_bias);
+        const double dt = samples[i].time - samples[i - 1].time;
+        energy += dt * (force - mean).squaredNorm();
+    }
+    const double duration = samples.back().time - samples.front().time;
+    constexpr double reference_rms = 1.0; // m/s^2
+    return std::clamp(std::sqrt(energy / duration) / reference_rms, 0.15, 1.0);
+}
 Eigen::VectorXd residual(const std::vector<Sample>& s,const Transport& tr,
                          const Config& c,bool joint) {
     Eigen::VectorXd r(tr.residual.size()+(joint?3:0));
@@ -121,6 +135,10 @@ Handover Learner::estimate(const std::string& method) const {
     if (tr.count<10) return out;
     if (method=="magfit" || method=="joint" || method=="joint_cal") {
         const bool joint=method!="magfit",calibrate=method=="joint_cal";
+        Config fit_config = config_;
+        if (joint && config_.scale_force_slope) {
+            fit_config.force_slope_sigma *= force_slope_scale(samples_, tr, config_.accel_bias_prior);
+        }
         const int size=calibrate?6:3;
         Eigen::VectorXd parameters=Eigen::VectorXd::Zero(size),prior=parameters;
         parameters.head<3>()=bg;prior.head<3>()=bg;
@@ -130,13 +148,13 @@ Handover Learner::estimate(const std::string& method) const {
         // the entire gyro history for EACH bias candidate; never correct only
         // the terminal quaternion. The prior retains weak/unobserved axes.
         for (int iteration=0; iteration<5; ++iteration) {
-            const Eigen::VectorXd r=residual(samples_,tr,config_,joint);
+            const Eigen::VectorXd r=residual(samples_,tr,fit_config,joint);
             Eigen::MatrixXd J(r.size(),size);
             constexpr double eps = 1e-5;
             for (int axis=0; axis<size; ++axis) {
                 Eigen::VectorXd perturbed=parameters;perturbed[axis]+=eps;
                 const V mb=calibrate?V(perturbed.tail<3>()):V::Zero();
-                J.col(axis)=(residual(samples_,transport(samples_,perturbed.head<3>(),mb),config_,joint)-r)/eps;
+                J.col(axis)=(residual(samples_,transport(samples_,perturbed.head<3>(),mb),fit_config,joint)-r)/eps;
             }
             Eigen::MatrixXd info=J.transpose()*J;
             info.diagonal()+=precisions;
@@ -151,7 +169,7 @@ Handover Learner::estimate(const std::string& method) const {
                 const Eigen::VectorXd proposal=parameters+scale*step;
                 const V mb=calibrate?V(proposal.tail<3>()):V::Zero();
                 auto trial = transport(samples_,proposal.head<3>(),mb);
-                const double cost = residual(samples_,trial,config_,joint).squaredNorm() +
+                const double cost = residual(samples_,trial,fit_config,joint).squaredNorm() +
                     ((proposal-prior).array().square()*precisions.array()).sum();
                 if (cost<=old) { parameters=proposal;tr=std::move(trial);accepted=true;break; }
                 scale*=0.5;

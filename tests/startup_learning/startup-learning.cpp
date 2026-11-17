@@ -68,8 +68,13 @@ void emit(std::ostream& out,const std::string& input,const std::string& profile,
 }
 int main(int argc,char** argv) try {
     std::string input,output,seed_text="1",offset_text="0",profile_text="calibrated";
+    sl::Config config;
     for(int i=1;i<argc;++i) {
         const std::string key=argv[i];
+        if (key == "--scale-force-slope") {
+            config.scale_force_slope = true;
+            continue;
+        }
         if(i+1>=argc) throw std::invalid_argument("option requires a value");
         const std::string value=argv[++i];
         if(key=="--input")input=value;else if(key=="--output")output=value;
@@ -98,7 +103,7 @@ int main(int argc,char** argv) try {
         auto an=make_imu_noise_model(noise?1.51e-3f*g_std:0,noise?8e-3f*g_std:0,noise?.0005f:0,w3d_expand_seed(seed,11),w3d_expand_seed(seed,12));
         auto gn=make_imu_noise_model(noise?.00157f:0,noise?float(.05*rad):0,noise?.00001f:0,w3d_expand_seed(seed,13),w3d_expand_seed(seed,14));
         auto mn=make_mag_noise_model(noise?.8f:0,residual?2.f:0,residual?.01f:0,residual?.015f:0,residual?.010f:0,residual?1.f:0,w3d_expand_seed(seed,15),w3d_expand_seed(seed,16));
-        sl::Learner learner;
+        sl::Learner learner(config);
         sl::ShippingBaseline shipping;
         std::size_t count=0;
         for(const auto& truth:records) {

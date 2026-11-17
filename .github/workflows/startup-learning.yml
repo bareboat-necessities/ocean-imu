@@ -4,6 +4,7 @@ on:
     paths:
       - 'tests/startup_learning/**'
       - 'tools/startup_learning.py'
+      - 'tools/compare_startup_slope.py'
       - 'tools/report_startup_learning.py'
       - 'tests/validation/test_startup_learning.py'
       - 'plots/vector_export.py'
@@ -24,6 +25,19 @@ concurrency:
 
 jobs:
   paired-startup:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cohort: validation
+            seeds: '11,12,13,14,15'
+            offsets: '67,307,607'
+          - cohort: confirmation
+            seeds: '31,32,33,34,35'
+            offsets: '41,191,421'
+    env:
+      SEEDS: ${{ matrix.seeds }}
+      OFFSETS: ${{ matrix.offsets }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -40,21 +54,36 @@ jobs:
         run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
       - name: Paired head-sea and following-sea startup regression
         run: |
-          python3 tools/startup_learning.py --seeds 11,12,13,14,15 \
-            --offsets 67,307,607 --profiles calibrated,residual --jobs 2 --check \
+          python3 tools/startup_learning.py --seeds "$SEEDS" \
+            --offsets "$OFFSETS" --profiles calibrated,residual --jobs 2 --check \
             --output reports/results/startup_learning/ci
           python3 tools/report_startup_learning.py reports/results/startup_learning/ci
       - name: Ideal sensors and magnetic disturbance controls
+        if: matrix.cohort == 'validation'
         run: |
           python3 tools/startup_learning.py --seeds 101 --offsets 17,107 \
             --profiles ideal,interference --jobs 2 --check-controls \
             --output reports/results/startup_learning/ci-controls
           python3 tools/report_startup_learning.py reports/results/startup_learning/ci-controls
+      - name: Reproduce motion-scaled force-slope comparison
+        run: |
+          root=reports/results/startup_learning
+          python3 tools/startup_learning.py --seeds "$SEEDS" --offsets "$OFFSETS" \
+            --profiles calibrated,residual --jobs 2 --scale-force-slope --check --output "$root/ci-scaled"
+          python3 tools/compare_startup_slope.py "$root/ci" "$root/ci-scaled" "$root/ci-scaled/paired.csv"
+      - name: Check motion-scaled disturbance rejection
+        if: matrix.cohort == 'validation'
+        run: |
+          root=reports/results/startup_learning
+          python3 tools/startup_learning.py --seeds 101 --offsets 17,107 --profiles ideal,interference \
+            --jobs 2 --scale-force-slope --check-controls --output "$root/ci-scaled-controls"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: isolated-startup-metrics
+          name: isolated-startup-metrics-${{ matrix.cohort }}
           path: |
             reports/results/startup_learning/ci/
             reports/results/startup_learning/ci-controls/
+            reports/results/startup_learning/ci-scaled/
+            reports/results/startup_learning/ci-scaled-controls/
           if-no-files-found: error
