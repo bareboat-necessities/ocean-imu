@@ -1,0 +1,52 @@
+name: isolated startup learning
+on:
+  pull_request:
+    paths:
+      - 'tests/startup_learning/**'
+      - 'tools/startup_learning.py'
+      - 'tools/sim_dataset*'
+      - 'src/kalman_common/**'
+      - 'src/kalman_ou_iii/**'
+      - 'src/ahrs/**'
+      - '.github/workflows/startup-learning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: startup-learning-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paired-startup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install host dependency
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Build and exercise handover invariants
+        run: |
+          make -C tests/startup_learning -j1
+          tests/startup_learning/startup-test
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Paired head-sea and following-sea startup regression
+        run: |
+          python3 tools/startup_learning.py --seeds 11,12,13,14,15 \
+            --offsets 67,307,607 --profiles calibrated,residual --jobs 2 --check \
+            --output reports/results/startup_learning/ci
+      - name: Ideal sensors and magnetic disturbance controls
+        run: |
+          python3 tools/startup_learning.py --seeds 101 --offsets 17,107 \
+            --profiles ideal,interference --jobs 2 --check-controls \
+            --output reports/results/startup_learning/ci-controls
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-startup-metrics
+          path: |
+            reports/results/startup_learning/ci/
+            reports/results/startup_learning/ci-controls/
+          if-no-files-found: error

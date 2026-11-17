@@ -1,0 +1,110 @@
+[
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "yaw_rms_deg",
+    "actual": 0.8022818582982103,
+    "limit": 1.87150000890395,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "tilt_rms_deg",
+    "actual": 0.33271498447504344,
+    "limit": 0.9050710089881645,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "bg_rms_dps",
+    "actual": 0.024445643899170522,
+    "limit": 0.053686961032029724,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "yaw_rms_deg",
+    "actual": 1.8756506217513293,
+    "limit": 2.119820922818313,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.3700855881344463,
+    "limit": 0.9050710215282031,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "bg_rms_dps",
+    "actual": 0.02467148857887444,
+    "limit": 0.053686961032029724,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "yaw_rms_deg",
+    "actual": 0.9655251926042122,
+    "limit": 2.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "tilt_rms_deg",
+    "actual": 0.4080740517070282,
+    "limit": 1.156686363479072,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "metric": "bg_rms_dps",
+    "actual": 0.02505340742655526,
+    "limit": 0.05353391152090524,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "yaw_rms_deg",
+    "actual": 1.639611952432618,
+    "limit": 2.5,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.4368979373047921,
+    "limit": 1.1566863340775064,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "metric": "bg_rms_dps",
+    "actual": 0.021894471540492618,
+    "limit": 0.05353391152090524,
+    "passed": true
+  }
+]

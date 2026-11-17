@@ -27,6 +27,18 @@ endif()
 
 set(W3D_SIM_COMMON "${OCEAN_IMU_SRC_DIR}/util/W3dSimCommon.cpp")
 
+# Isolated initialization experiment; no production estimator uses it.
+add_executable(startup-learning
+  "${OCEAN_IMU_TESTS_DIR}/startup_learning/startup-learning.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/startup_learning/StartupLearner.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/startup_learning/ShippingBaseline.cpp" ${W3D_SIM_COMMON})
+add_executable(startup-test
+  "${OCEAN_IMU_TESTS_DIR}/startup_learning/startup-test.cpp"
+  "${OCEAN_IMU_TESTS_DIR}/startup_learning/StartupLearner.cpp")
+target_compile_definitions(startup-learning PRIVATE EIGEN_UNROLLING_LIMIT=0)
+set_source_files_properties("${OCEAN_IMU_TESTS_DIR}/startup_learning/ShippingBaseline.cpp"
+  PROPERTIES COMPILE_OPTIONS "-O1")
+
 add_executable(ahrs-qmekf-sim "${OCEAN_IMU_TESTS_DIR}/ahrs/ahrs-qmekf-sim.cpp" ${W3D_SIM_COMMON})
 add_executable(detrend-basic-test "${OCEAN_IMU_TESTS_DIR}/detrend/detrend-basic-test.cpp")
 add_executable(freq-track "${OCEAN_IMU_TESTS_DIR}/freq/freq-track.cpp")
