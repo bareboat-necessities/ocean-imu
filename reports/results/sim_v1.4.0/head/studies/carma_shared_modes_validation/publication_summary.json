@@ -1,0 +1,145 @@
+{
+  "replays": 1038,
+  "paired_stationary_effects": [
+    {
+      "spectrum": "JONSWAP",
+      "comparator": "OU-III",
+      "endpoint": "disp_z_pct_hs",
+      "mean": -1.3695511987500002,
+      "ci_low": -1.3982774637125002,
+      "ci_high": -1.33894457524375
+    },
+    {
+      "spectrum": "JONSWAP",
+      "comparator": "OU-III",
+      "endpoint": "disp_3d_pct_hs",
+      "mean": -3.0942873756122005,
+      "ci_low": -3.1704086364961,
+      "ci_high": -3.028045011907973
+    },
+    {
+      "spectrum": "JONSWAP",
+      "comparator": "Independent",
+      "endpoint": "disp_z_pct_hs",
+      "mean": -0.058368378000000075,
+      "ci_low": -0.06391855508750016,
+      "ci_high": -0.05318816407500006
+    },
+    {
+      "spectrum": "JONSWAP",
+      "comparator": "Independent",
+      "endpoint": "disp_3d_pct_hs",
+      "mean": -0.17412336125844244,
+      "ci_low": -0.18375625430201553,
+      "ci_high": -0.16503485252197042
+    },
+    {
+      "spectrum": "PM-Stokes",
+      "comparator": "OU-III",
+      "endpoint": "disp_z_pct_hs",
+      "mean": -1.18992027525,
+      "ci_low": -1.2138361772125,
+      "ci_high": -1.1661971435125
+    },
+    {
+      "spectrum": "PM-Stokes",
+      "comparator": "OU-III",
+      "endpoint": "disp_3d_pct_hs",
+      "mean": -2.859999514922386,
+      "ci_low": -2.928006054763848,
+      "ci_high": -2.799048820967565
+    },
+    {
+      "spectrum": "PM-Stokes",
+      "comparator": "Independent",
+      "endpoint": "disp_z_pct_hs",
+      "mean": -0.0453600405,
+      "ci_low": -0.048841621325000015,
+      "ci_high": -0.04199305245000019
+    },
+    {
+      "spectrum": "PM-Stokes",
+      "comparator": "Independent",
+      "endpoint": "disp_3d_pct_hs",
+      "mean": -0.13758906061574067,
+      "ci_low": -0.1470782574709353,
+      "ci_high": -0.12950720641593821
+    }
+  ],
+  "transition_heights_m": {
+    "low": 1.5,
+    "high": 4.0,
+    "released_high_source": 8.5
+  },
+  "publication_source_sha256": {
+    "tools/carma_shared_modes_validation_plots.py": "be82bfd2f82cde56f59d6db492e606eb2b66729961afcb7532e7fa9951cbe97a",
+    "plots/vector_export.py": "910a5aa327fea890301bbbef0a8b37f729ccb973914676d0fb3ab4ae6752320a",
+    "plots/figure_decimation.py": "e2a73f698ba2a3fa5c370451d16754f14df8733c77d23c3f24522cb68abfec1d"
+  },
+  "files_sha256": {
+    "protocol.json": "07b99ff97ad2dbc7f93cd0ec5b32d37020c4f68edc94433f4f9bd346fbd07ae8",
+    "scores.csv": "d08d882d5ba2f487b2d3403fb1b1f4850db5f704c30658950703e33da56626fe",
+    "engine_summary.csv": "117a2d61eb185dcded97fd5b08637e1d2c1f9ef230d831a8962278b026a12534",
+    "traces/nominal_CSM_R_p0_applied.csv.gz": "f2b90b31f0c1fb3aa85ec39dbba32ad273d97dac26cad4d5452dd4030591a534",
+    "traces/nominal_CSM_Tp_tuner_s.csv.gz": "31ce0b1cc9b29827e7389acf372a01db978566b241419993eb3fde6faa5aad78",
+    "traces/nominal_CSM_acc_bias_x.csv.gz": "8485d115a307dee43f86d77a7a0e0e5d270bb573fba0019a4a5c26ea6fff505f",
+    "traces/nominal_CSM_acc_bias_y.csv.gz": "50cb77a8b5b577cbaea866c435ca358b21b6325ac8bc5378409de3c20a87439a",
+    "traces/nominal_CSM_acc_bias_z.csv.gz": "cee0fa8c13ed06243d61119583e9e3112b9467cc94ff91510b94f983aeb90b22",
+    "traces/nominal_CSM_acc_xy.csv.gz": "9eabecae63dd5eacb8eb5b45864b0bb38f104b1a5f161b3a3c723e7604db5d9c",
+    "traces/nominal_CSM_acc_z.csv.gz": "822507b601ff4d8ccbb245538cacdb50e26096b1e78a40bd388acb89475c4d0b",
+    "traces/nominal_CSM_disp_xy.csv.gz": "1697a99203cd6aeaac3c6b993bc0071a780af49d7064b0ccb64b52b6a79792a2",
+    "traces/nominal_CSM_disp_z.csv.gz": "20fa6054f282db348650ce3f27bb05b182441840eb9b97d42459be4681a85c03",
+    "traces/nominal_CSM_gyro_bias_x.csv.gz": "0836647862a2f9d6542fc4612f60a2bee4133c34b8d573ac89c0a5856c0bc60e",
+    "traces/nominal_CSM_gyro_bias_y.csv.gz": "a83f3d7b283d93373852319526f5089c5c07fad65ba62a90671ca913c6a7b966",
+    "traces/nominal_CSM_gyro_bias_z.csv.gz": "c5a120274ba2994e94c4e7d54f1bc88eb995ae25b1092226b3297c7b90aed90c",
+    "traces/nominal_CSM_pitch.csv.gz": "c5f700f935d3fa4f4669847beefb20236898d0744d77d3a292aa0cb3689b9b14",
+    "traces/nominal_CSM_roll.csv.gz": "7cea9b5a040e738b2bcc5b5e48538dfc4fb020ef17e068d5159d0ea5ebf10a75",
+    "traces/nominal_CSM_sigma_a_applied.csv.gz": "efa4e2a089004268c60795e3654566977895060a66d869263261eeeb66b4d63f",
+    "traces/nominal_CSM_tau_applied.csv.gz": "7b9eb5a7aecd1c1cd8b5cdfb9dfa269ff3ac3fdeb0a65ffcff9c9a9110c55113",
+    "traces/nominal_CSM_vel_xy.csv.gz": "0d5bca3fd13a8fb5052e3fbdbca95e17122b958717fbe014358b944b5d30657d",
+    "traces/nominal_CSM_vel_z.csv.gz": "f2f9080c3120fdb2da08f80f20a15c065899f9dde3abbd64f3b217e4c30ef591",
+    "traces/nominal_CSM_yaw.csv.gz": "0c08df2605b760c2816654d3bac0fb36fa357b2df3607ce00432245b03304a84",
+    "traces/nominal_CSM_z.csv.gz": "20fa6054f282db348650ce3f27bb05b182441840eb9b97d42459be4681a85c03",
+    "traces/nominal_Independent_z.csv.gz": "523200fda0141cb34fd64c77e01104570bff128329c208e4bc98820082492580",
+    "traces/nominal_OU-III_z.csv.gz": "06806809f302cfaf6dfd8668d12916cfac7112fc53277f5a0415737ee0db0680",
+    "traces/nominal_OU-II_z.csv.gz": "e58d56d516d259c11e7523b6c82dc4614dbe97a6e96e00c0a137de0eacf3657c",
+    "traces/nominal_PII_z.csv.gz": "f014656f8cb8e36444f92a437f43c89bcf4f7f14cbbc942304a1c2a9e5debfb4",
+    "traces/nominal_TFG_z.csv.gz": "1c8833bf14357b6d1a8a58b713453023f75b74fbf302445f422fe450e95eb68b",
+    "traces/nominal_TVG-NLO_z.csv.gz": "2a836f8e9ee92b09c62eac8666a3cb5c3190ed1ea13663f4b5dcdb3868ae7f44",
+    "traces/roundtrip_CSM_R_p0_applied.csv.gz": "f7eb3679d51f9b0d237a2248049075349ecd0854f4a0418fc12cbd76e676a2d9",
+    "traces/roundtrip_CSM_Tp_tuner_s.csv.gz": "776f722b76bc7cd34a7e1374715b301321410d2f8288dc24070b2deb39c05abe",
+    "traces/roundtrip_CSM_acc_bias_x.csv.gz": "be75fd729c9e8a41372b183adab1234d3e747fdb51e1ec5a1a182e18cd180fcb",
+    "traces/roundtrip_CSM_acc_bias_y.csv.gz": "0e25f19cfff49444b7dfc71d1a6ca8c3856d8d5e35190b9ec31db56de8afea94",
+    "traces/roundtrip_CSM_acc_bias_z.csv.gz": "ef48a1d09e38547f8e9b6ae98ad9f9becab24cf2589e5248712e7bbb1709258a",
+    "traces/roundtrip_CSM_acc_xy.csv.gz": "3f18eed22a19979ada7ef31896e697eba0cc76e09ae37034cc5bf167f706bc71",
+    "traces/roundtrip_CSM_acc_z.csv.gz": "9c4c46713913b4dc058e5cedcd3b55f9ec71099051fe3d447c6a79ab9d00e3fd",
+    "traces/roundtrip_CSM_disp_xy.csv.gz": "11cf49072ce09cca2e56805c24740a64b54df6254d2291d26e194cb178be8c12",
+    "traces/roundtrip_CSM_disp_z.csv.gz": "a61c97d95d33101bf48776d11e6490596ac4b957b20dcec4338b1e88992ca870",
+    "traces/roundtrip_CSM_gyro_bias_x.csv.gz": "1ca4f7f557ca7b221a4c29f2de9ebb19908513ada80a90f223f7f09ae9fc5cfa",
+    "traces/roundtrip_CSM_gyro_bias_y.csv.gz": "5b74bd387a58c98fdafe115876a74812986b754e3b259eb7a51bc5b8e47582cc",
+    "traces/roundtrip_CSM_gyro_bias_z.csv.gz": "9ca8c8638f1c3802eeb61f63f0138cfe46df5d647a738bd94c5791083b6e0f52",
+    "traces/roundtrip_CSM_pitch.csv.gz": "fb3250888608c02e4fd6c5e0023de2a0e9863d03c76185165a39d4c3123bfc0d",
+    "traces/roundtrip_CSM_roll.csv.gz": "c30a03697495cbc331e6bbea29255d9ff3a7861e5767adcbea675d59dbf848b3",
+    "traces/roundtrip_CSM_sigma_a_applied.csv.gz": "f0ecec0102c91cb18fe3409aded5f1f562c986c87fb6965e08ad6807d90b7379",
+    "traces/roundtrip_CSM_tau_applied.csv.gz": "fc898a4563ddec88d8a05a8beb54c31c040df181584d286bf222cc4a30a40bce",
+    "traces/roundtrip_CSM_vel_xy.csv.gz": "ca68e3526114ad5f1fd7712fe44cb0941a6467e659b8b15af97745bc4ada943c",
+    "traces/roundtrip_CSM_vel_z.csv.gz": "01634c1765dcce839686af8d537b5b71e9c1bb8e4c52d0ebc53ba0d02989682b",
+    "traces/roundtrip_CSM_yaw.csv.gz": "0b15ac6e6d147376a6e315d3518773cc7aa8f86b8d0a35040540974a03df0c04",
+    "traces/roundtrip_CSM_z.csv.gz": "04606023fee32ac20af19426d303007db48534a3a23696abba969f763511e5b7",
+    "traces/roundtrip_Independent_z.csv.gz": "904a7a12954d3a18e47eb7b8ea0639a8cc4ea7417a6ff0d69fb67693a55e7d58",
+    "traces/roundtrip_OU-III_z.csv.gz": "762d00dead9e945f2030be943f96b6fd88f8baf3d0c8ee932f27cf36b01c2145"
+  },
+  "figures": {
+    "csm_validation_acc_bias.svg": 110386,
+    "csm_validation_attitude.svg": 74156,
+    "csm_validation_comparison.svg": 172347,
+    "csm_validation_engine_mechanism.svg": 73685,
+    "csm_validation_engine_speed.svg": 73218,
+    "csm_validation_gyro_bias.svg": 105777,
+    "csm_validation_observers.svg": 79444,
+    "csm_validation_roundtrip.svg": 182192,
+    "csm_validation_tuning.svg": 83119,
+    "csm_validation_xy.svg": 110367,
+    "csm_validation_z.svg": 88164
+  }
+}

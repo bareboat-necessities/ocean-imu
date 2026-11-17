@@ -1,0 +1,269 @@
+{
+  "engine": {
+    "blades": 3,
+    "cruise_rpm": 2400.0,
+    "cylinders": 3,
+    "gear_ratio": 2.6,
+    "nominal_bandwidth_hz": 80.0,
+    "nominal_level_mps2": 0.6,
+    "stroke": 4
+  },
+  "families": [
+    "OU-II",
+    "OU-III",
+    "TFG"
+  ],
+  "filter_covariance_and_tuning_unchanged": true,
+  "magnetometer_enabled": true,
+  "outputs": [
+    "engine_noise_runs.csv",
+    "engine_noise_summary.csv",
+    "engine_noise_report.md",
+    "ou_engine_noise_speed.svg",
+    "ou_engine_noise_mechanism.svg"
+  ],
+  "record_count_per_family": 8,
+  "records": [
+    {
+      "filename": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "hs_m": 0.27,
+      "spectrum": "JONSWAP"
+    },
+    {
+      "filename": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "hs_m": 1.5,
+      "spectrum": "JONSWAP"
+    },
+    {
+      "filename": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "hs_m": 4.0,
+      "spectrum": "JONSWAP"
+    },
+    {
+      "filename": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "hs_m": 8.5,
+      "spectrum": "JONSWAP"
+    },
+    {
+      "filename": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "hs_m": 0.27,
+      "spectrum": "PM-Stokes"
+    },
+    {
+      "filename": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "hs_m": 1.5,
+      "spectrum": "PM-Stokes"
+    },
+    {
+      "filename": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "hs_m": 4.0,
+      "spectrum": "PM-Stokes"
+    },
+    {
+      "filename": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "hs_m": 8.5,
+      "spectrum": "PM-Stokes"
+    }
+  ],
+  "sensor_noise_injected": true,
+  "settings": [
+    {
+      "arm": "baseline",
+      "bandwidth_hz": null,
+      "hull_rms_mps2": 0.0,
+      "label": "engine off",
+      "level_mps2": 0.0,
+      "recorded_rms_mps2": 0.0,
+      "rpm": 0.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.381445,
+      "label": "speed 800 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.375112,
+      "rpm": 800.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.41992,
+      "label": "speed 1200 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.394336,
+      "rpm": 1200.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.442537,
+      "label": "speed 1600 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.380973,
+      "rpm": 1600.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.512922,
+      "label": "speed 2000 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.410564,
+      "rpm": 2000.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.6,
+      "label": "speed 2400 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.454334,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.698617,
+      "label": "speed 2800 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.506742,
+      "rpm": 2800.0
+    },
+    {
+      "arm": "speed",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.807673,
+      "label": "speed 3200 rpm",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.565733,
+      "rpm": 3200.0
+    },
+    {
+      "arm": "level",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.15,
+      "label": "level 0.15 m/s^2",
+      "level_mps2": 0.15,
+      "recorded_rms_mps2": 0.113583,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "level",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.3,
+      "label": "level 0.30 m/s^2",
+      "level_mps2": 0.3,
+      "recorded_rms_mps2": 0.227167,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "level",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 1.2,
+      "label": "level 1.20 m/s^2",
+      "level_mps2": 1.2,
+      "recorded_rms_mps2": 0.908668,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "level",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 2.4,
+      "label": "level 2.40 m/s^2",
+      "level_mps2": 2.4,
+      "recorded_rms_mps2": 1.81734,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "bandwidth",
+      "bandwidth_hz": 20.0,
+      "hull_rms_mps2": 0.6,
+      "label": "bandwidth 20 Hz",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.186454,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "bandwidth",
+      "bandwidth_hz": 40.0,
+      "hull_rms_mps2": 0.6,
+      "label": "bandwidth 40 Hz",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.293871,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "bandwidth",
+      "bandwidth_hz": 160.0,
+      "hull_rms_mps2": 0.6,
+      "label": "bandwidth 160 Hz",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.603447,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "path",
+      "bandwidth_hz": 80.0,
+      "hull_rms_mps2": 0.6,
+      "label": "accelerometer only",
+      "level_mps2": 0.6,
+      "recorded_rms_mps2": 0.454334,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "matched",
+      "bandwidth_hz": 20.0,
+      "hull_rms_mps2": 1.46202,
+      "label": "matched 20 Hz",
+      "level_mps2": 1.4620249498535833,
+      "recorded_rms_mps2": 0.454335,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "matched",
+      "bandwidth_hz": 40.0,
+      "hull_rms_mps2": 0.927619,
+      "label": "matched 40 Hz",
+      "level_mps2": 0.9276192615127047,
+      "recorded_rms_mps2": 0.454334,
+      "rpm": 2400.0
+    },
+    {
+      "arm": "matched",
+      "bandwidth_hz": 160.0,
+      "hull_rms_mps2": 0.451739,
+      "label": "matched 160 Hz",
+      "level_mps2": 0.45173876081909436,
+      "recorded_rms_mps2": 0.454334,
+      "rpm": 2400.0
+    }
+  ],
+  "simulation_data": "oceanography-waves-lib v1.4.0, estimated 28 ft fin-keel sailboat RAO at CG, 5 kn, northbound, following seas, heading +/-3 deg with 20 s period",
+  "simulation_provenance": {
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "case": "following",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "mean_heading_deg": 0.0,
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.4.0",
+    "speed_kn": 5.0
+  },
+  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "study": "engine-noise degradation",
+  "total_replays": 456,
+  "window_sec": 900.0
+}

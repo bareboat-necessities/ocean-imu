@@ -81,8 +81,8 @@ propagation-to, with no additional $180^\circ$ shift.
 Across the eight steady JONSWAP and PM--Stokes sea conditions, angular
 statistics use only finite resolved estimates. The mean absolute
 circular-mean wave-axis error is
-\OUValidationDirectionAbsError{} degrees, the pooled sample-level axial RMS
-error is \OUValidationDirectionRMSE{} degrees, and the worst scenario-level
+\OUValidationDirectionAbsError{} degrees, the mean of the eight scenario-level
+sample-wise axial RMS errors is \OUValidationDirectionRMSE{} degrees, and the worst scenario-level
 absolute circular-mean error is \OUValidationDirectionWorstAbsError{} degrees.
 Truth-referenced travel sense is correct for \OUValidationTravelCorrect\% of
 samples, wrong for \OUValidationTravelWrong\%, and unresolved for

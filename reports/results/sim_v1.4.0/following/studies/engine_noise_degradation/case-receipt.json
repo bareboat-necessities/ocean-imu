@@ -1,0 +1,73 @@
+{
+  "study": "engine_noise_degradation",
+  "case": "following",
+  "mode": "full",
+  "inputs": {
+    "release": "v1.4.0",
+    "case": "following",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 0.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    }
+  },
+  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "binary_sha256": {
+    "kalman_ou_ii/kalman_ou_ii-sim": "b72ac0470a95b596482e7f996b45b6d29ce8d8833eecfe1b1e69ed468ccf6d1f",
+    "kalman_ou_iii/kalman_ou_iii-sim": "7cc6c267d31137148556b87eead96a1053b10426dd77507431e89baf5a68cfc8",
+    "kalman_tfg/kalman_tfg-sim": "d8532d5b4074358ea2fb494d550e41bf273941301a54c94825b13e2f4e2d5c27"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-u",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/engine_noise_degradation.py",
+    "--data-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
+    "--jobs",
+    "2",
+    "--output-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/engine_noise_degradation"
+  ],
+  "status": "completed",
+  "commands": [
+    [
+      "/usr/bin/python3",
+      "-u",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/engine_noise_degradation.py",
+      "--data-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
+      "--jobs",
+      "2",
+      "--output-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/engine_noise_degradation"
+    ],
+    [
+      "/usr/bin/python3",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/engine_noise_guard_families.py",
+      "--data-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
+      "--jobs",
+      "2",
+      "--degradation-summary",
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/engine_noise_degradation/engine_noise_summary.csv",
+      "--output-dir",
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/engine_noise_degradation"
+    ]
+  ],
+  "exit_code": 0,
+  "seconds": 951.673678075,
+  "log_sha256": "73a5e0cd5acd8ada552b65c9466fa4f224e38adbd763d42fad27b9879880d8cc"
+}

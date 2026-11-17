@@ -1,0 +1,208 @@
+{
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "command": "g++",
+      "version": "14.2.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/ou_robustness.py",
+    "--data-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
+    "--jobs",
+    "2",
+    "--mode",
+    "full",
+    "--output-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/ou_robustness",
+    "--skip-build"
+  ],
+  "git_branch": "fix/merged-main-ci",
+  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "git_diff_stat": "",
+  "matplotlib": "3.6.3",
+  "nominal_tuning_point": {
+    "RS_ms": 2.333609016147021,
+    "R_p0_std_m": null,
+    "R_v0_std_mps": null,
+    "sigma_a_mps2": 0.229768336,
+    "tau_s": 3.56596017
+  },
+  "numpy": "1.26.4",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "protocol": {
+    "bootstrap_resamples": 10000,
+    "duration_sec": 1200.0,
+    "low_motion_heights_m": [
+      0.27,
+      0.05
+    ],
+    "mode": "full",
+    "pairing": "identical wave-realization, IMU-noise, and initialization seeds",
+    "r_s_semantics": "standard deviation; R_S = diag(r_S^2)",
+    "score_window_sec": 900.0,
+    "seed_triplets": [
+      {
+        "imu_noise_seed": 101,
+        "initialization_seed": 1009,
+        "wave_phase_seed": 11
+      },
+      {
+        "imu_noise_seed": 211,
+        "initialization_seed": 1103,
+        "wave_phase_seed": 29
+      },
+      {
+        "imu_noise_seed": 307,
+        "initialization_seed": 1201,
+        "wave_phase_seed": 47
+      },
+      {
+        "imu_noise_seed": 401,
+        "initialization_seed": 1301,
+        "wave_phase_seed": 71
+      },
+      {
+        "imu_noise_seed": 503,
+        "initialization_seed": 1409,
+        "wave_phase_seed": 97
+      },
+      {
+        "imu_noise_seed": 601,
+        "initialization_seed": 1511,
+        "wave_phase_seed": 131
+      },
+      {
+        "imu_noise_seed": 701,
+        "initialization_seed": 1601,
+        "wave_phase_seed": 173
+      },
+      {
+        "imu_noise_seed": 809,
+        "initialization_seed": 1709,
+        "wave_phase_seed": 211
+      },
+      {
+        "imu_noise_seed": 907,
+        "initialization_seed": 1801,
+        "wave_phase_seed": 257
+      },
+      {
+        "imu_noise_seed": 1009,
+        "initialization_seed": 1901,
+        "wave_phase_seed": 307
+      }
+    ],
+    "sensitivity_design": "one factor at a time around one frozen nominal OU-III point",
+    "sensitivity_parameters": [
+      "tau",
+      "sigma_aw",
+      "r_s",
+      "sigma_aw_rs",
+      "tau_rs"
+    ],
+    "sensitivity_scales": [
+      0.5,
+      0.75,
+      1.0,
+      1.25,
+      1.5
+    ],
+    "stats_seed": 20260329,
+    "transition_cases": [
+      {
+        "end_sec": 660.0,
+        "name": "controlled",
+        "start_sec": 540.0
+      },
+      {
+        "end_sec": 615.0,
+        "name": "rapid",
+        "start_sec": 585.0
+      }
+    ],
+    "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+    "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
+  },
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "result_files": {
+    "ou_robustness.json": {
+      "bytes": 1576598,
+      "sha256": "8693e4a507c5104f312e9c83fd05558bebc7cf9646230bf5d77e7596192b8e22"
+    },
+    "ou_robustness_macros.tex": {
+      "bytes": 1853,
+      "sha256": "054d694864d8d4c5066e4c01faed03f7cf3b29043ad338219e7501b80073c514"
+    },
+    "ou_robustness_paired_effects.csv": {
+      "bytes": 164602,
+      "sha256": "0426018a6a92ea7c4f21f206dc33e870c078d8f9d05184309a82bb0aaacad6a6"
+    },
+    "ou_robustness_publication.tex": {
+      "bytes": 2903,
+      "sha256": "48edb46a86b56f634b4c998789a99896c032c2cc42b92748d40c54b5b8500011"
+    },
+    "ou_robustness_raw.csv": {
+      "bytes": 209957,
+      "sha256": "7e2c9cb105fdcb0720561ed2c057a55b5c16d376b2f99bfabdb624ce41cd0048"
+    },
+    "ou_robustness_sensitivity.svg": {
+      "bytes": 114777,
+      "sha256": "60b5084f6aa39aade346957c5fc9c38896114a199351ba2eb130c399ce244ace"
+    },
+    "ou_robustness_stress.svg": {
+      "bytes": 43358,
+      "sha256": "2dc06de43ce5c88d912b18fb1c4a8ed8cc7089e46b0175d9c171d62f066143bb"
+    },
+    "ou_robustness_summary.csv": {
+      "bytes": 147570,
+      "sha256": "7c549b8e750fe769d738285e300e4de4106de57d0b874c1b959feb8bdc204728"
+    }
+  },
+  "source_files": {
+    ".sim-data/95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
+      "bytes": 71502573,
+      "sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d"
+    },
+    ".sim-data/95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
+      "bytes": 70001901,
+      "sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea"
+    },
+    ".sim-data/95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
+      "bytes": 68681432,
+      "sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8"
+    },
+    "src/util/W3dSimCommon.cpp": {
+      "bytes": 106370,
+      "sha256": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406"
+    },
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
+      "bytes": 35164,
+      "sha256": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7"
+    },
+    "tools/ou_robustness.py": {
+      "bytes": 14934,
+      "sha256": "4759f60e11e12d5b39841fccbefeb050fdaccbb4db82399bd8127d41433af120"
+    },
+    "tools/ou_robustness_core.py": {
+      "bytes": 54537,
+      "sha256": "c13fea5185057e1b9072112df44efb9c75fdbb6cb94eaa8e83aad8aabfaf4f00"
+    },
+    "tools/ou_validation.py": {
+      "bytes": 160630,
+      "sha256": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343"
+    }
+  }
+}

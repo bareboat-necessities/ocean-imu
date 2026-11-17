@@ -1,0 +1,45 @@
+{
+  "inputs": {
+    "release": "v1.4.0",
+    "case": "following",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 0.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    }
+  },
+  "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008
+  ],
+  "binaries": {
+    "Q independent": "d8e7d8e4ee7d8cf5eba6e2e75c920e3390cdb4e3b8abdf055617342466f10b9d",
+    "T independent": "d8e7d8e4ee7d8cf5eba6e2e75c920e3390cdb4e3b8abdf055617342466f10b9d",
+    "Q shared": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "T shared": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571"
+  },
+  "runner_sha256": "bdcd7e6b3ffdfac511ce013a651c5cd767b3413df69bb2853d6e1b1db12bbcfb",
+  "sample_rate_hz": 200,
+  "score_window_s": "last 900 seconds",
+  "wave_excitation": "Evidence on all four wrappers",
+  "role": "fixed-record conditional paired sensor and initialization resampling"
+}

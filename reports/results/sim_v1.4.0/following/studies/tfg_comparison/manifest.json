@@ -1,0 +1,227 @@
+{
+  "binary_sha256": {
+    "OU_III": "7cc6c267d31137148556b87eead96a1053b10426dd77507431e89baf5a68cfc8",
+    "TFG": "d8532d5b4074358ea2fb494d550e41bf273941301a54c94825b13e2f4e2d5c27"
+  },
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "command": "g++",
+      "version": "14.2.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+  },
+  "dataset": {
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "case": "following",
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "mean_heading_deg": 0.0,
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "release": "v1.4.0",
+    "speed_kn": 5.0
+  },
+  "generated_utc": "2026-11-17T04:21:16+00:00",
+  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "git_diff_stat": "",
+  "protocol": {
+    "bootstrap_resamples": 10000,
+    "dt_sec": 0.005,
+    "duration_sec": 1200.0,
+    "families": [
+      "OU_III",
+      "TFG"
+    ],
+    "inclusion": "all complete finite replays; regression gates never filter statistical rows",
+    "inputs": [
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv"
+    ],
+    "mode": "full",
+    "phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed",
+    "pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
+    "primary": "JONSWAP-plus-crossfade seed-level mean Z %Hs; difference TFG minus OU-III",
+    "sampling_unit": "seed triplet, not record or time sample",
+    "scenarios": [
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4"
+    ],
+    "scope": "development RAO ensemble; exploratory companion comparison, no unseen vessel claim",
+    "seed_triplets": [
+      {
+        "imu_noise_seed": 101,
+        "initialization_seed": 1009,
+        "wave_phase_seed": 11
+      },
+      {
+        "imu_noise_seed": 211,
+        "initialization_seed": 1103,
+        "wave_phase_seed": 29
+      },
+      {
+        "imu_noise_seed": 307,
+        "initialization_seed": 1201,
+        "wave_phase_seed": 47
+      },
+      {
+        "imu_noise_seed": 401,
+        "initialization_seed": 1301,
+        "wave_phase_seed": 71
+      },
+      {
+        "imu_noise_seed": 503,
+        "initialization_seed": 1409,
+        "wave_phase_seed": 97
+      },
+      {
+        "imu_noise_seed": 601,
+        "initialization_seed": 1511,
+        "wave_phase_seed": 131
+      },
+      {
+        "imu_noise_seed": 701,
+        "initialization_seed": 1601,
+        "wave_phase_seed": 173
+      },
+      {
+        "imu_noise_seed": 809,
+        "initialization_seed": 1709,
+        "wave_phase_seed": 211
+      },
+      {
+        "imu_noise_seed": 907,
+        "initialization_seed": 1801,
+        "wave_phase_seed": 257
+      },
+      {
+        "imu_noise_seed": 1009,
+        "initialization_seed": 1901,
+        "wave_phase_seed": 307
+      }
+    ],
+    "stats_seed": 20260317,
+    "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+    "transition_normalization": "endpoint incident Hs=4 m, matching the OU validation protocol",
+    "tuning": "shipping adaptive; periodic a_w covariance sync",
+    "window_sec": 900.0
+  },
+  "result_sha256": {
+    "comparison.tex": "bc507ec5ceefe60c01e1786115af6b207727e6348334ea0871fe89dcc5cf73f5",
+    "gate_diagnostics.json": "1895b185147401070795232233d50a1727a525d01f27c71de4b567167874216b",
+    "paired_summary.json": "f6d9fa7d375112ac4e9e0b8dc09dc59b04a4f9b0c934a828857f0f521c7dbf0d",
+    "raw_runs.csv": "1a66ab67a561224ece53926f90483f764f49970282c9085c29d78de002209d24",
+    "raw_runs.json": "b39a5761b5afe0d4ffddae0d7642ab2f3d5a09a3d00c0e42c17a66c06f396b98"
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "src/ahrs/FrameConversions.h": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
+    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
+    "src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
+    "src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
+    "src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
+    "src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+    "src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
+    "src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
+    "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
+    "src/kalman_common/CovarianceProjection.h": "f2f49915923cf9547898bb20034696f37fc14e8fa8f649386997827da0f17d31",
+    "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
+    "src/kalman_common/MagneticStartupCommon.h": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350",
+    "src/kalman_common/MarineTurnModel.h": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
+    "src/kalman_common/MarineTurnSeparator.h": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8",
+    "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
+    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
+    "src/kalman_common/ProxyStartupFusion.h": "04253fd0ceee6f469983088fcf842c90efe3313b4e576eadf0aea2166e3154bd",
+    "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
+    "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
+    "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
+    "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
+    "src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+    "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "1a63f626784e2374db3decc5e11aba16d2d7f3ee0db1d2da1b92d3ff0e6fa6a5",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "c77a63c2e10d9161f6498d7d3f24cec57ccd915571c8b3cf229ffd12ef3db78c",
+    "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
+    "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
+    "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
+    "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25",
+    "src/tuner/GyroMagCalibration.h": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7",
+    "src/tuner/GyroMagCalibrationImpl.h": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c",
+    "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
+    "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
+    "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
+    "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
+    "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/MagneticRotation.h": "1c2cbc7110f5135992a96593a02d7757204373e9ac87d60cdd30d1f4850200a9",
+    "src/util/UnderwayReference.h": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422",
+    "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406",
+    "src/util/W3dSimCommon.h": "5e3075f40f79c21f7297e80a66b721f57f2cf7ebf232aab1d94823846bb2660d",
+    "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
+    "src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+    "src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
+    "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
+    "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
+    "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+    "tests/common/CurrentReplayLimits.h": "f49a863e8b746de33c814cc5aa0cd0baa8893c0db2beeb36cdd5d27f9e890ca0",
+    "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
+    "tests/common/HostReplayFlags.mk": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
+    "tests/common/RecordReplayLimits.h": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c",
+    "tests/common/RecordReplayLimits.inc": "a95e4fe38d7dfb27a48c96be6b824432931427b2146e9687cd8f9b0406842139",
+    "tests/common/RecordW3dLimits.h": "1ed1a6a3f33c1260c7fbf79d848fbfc0c04becebda14c8d0ba822f58e30a1406",
+    "tests/kalman_ou_iii/Makefile": "3043f9e85a3e86b74eecee533df0f7c849ba3601cca84ee66d187510ad50691d",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
+    "tests/kalman_tfg/Makefile": "42ab6e385b147fe28214ea45d65c898185324f2a812eedbe0fca87196a195ba5",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "e4d23ed52623c478f635539662ad924712db463309bc30ceac21e2f3a4ea9be8",
+    "tools/ou_evidence_provenance.py": "2ea942433cb54811e06c767c7075e77f99df0741ab4fcddc0f57eb18f1d9b987",
+    "tools/ou_validation.py": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343",
+    "tools/sim_dataset.py": "6f85f9da08d17008c0375621b11c13ad235253205d83d178545689d20c3dcb67",
+    "tools/sim_dataset_manifest.json": "99d0c135f0ba85a342b09ae2ffe5e014b802a393ab6de4d98dba62748f59431e",
+    "tools/tfg_comparison.py": "2271479e4f5b0f1d3ffcbe0b7865f7e0c37848560f3a73ce9403da881de3c4b6",
+    "tools/underway_reference.py": "8f989958573896d09ea0042fabd4313e6b1781b020ca2cbc1fc22bee8db2c3a2"
+  },
+  "workflow": {
+    "job": "studies",
+    "run_attempt": "1",
+    "run_id": "44011462038",
+    "workflow": "simulation-studies"
+  }
+}

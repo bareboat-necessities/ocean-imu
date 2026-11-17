@@ -24,40 +24,40 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
     }
   },
-  "source_commit": "2167579321a01c7caaf8a957161387665d1a5a98",
+  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
   "binary_sha256": {
-    "kalman_ou_iii/kalman_ou_iii-sim": "8a0991121f1ec6c29252856fd926622f49c4970af343e002e9c147728b403fa0"
+    "kalman_ou_iii/kalman_ou_iii-sim": "7cc6c267d31137148556b87eead96a1053b10426dd77507431e89baf5a68cfc8"
   },
   "command": [
-    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+    "/usr/bin/python3",
     "-u",
-    "/workspace/scratch/c209b58e35d0/ocean-imu/tools/ou3_lever_arm_study.py",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_lever_arm_study.py",
     "--data-dir",
-    "/workspace/scratch/c209b58e35d0/ocean-imu/.sim-data/cases/following",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
     "--jobs",
     "2",
     "--mode",
     "full",
     "--output-dir",
-    "/tmp/ocean-full-study-verification/following/studies/ou3_lever_arm_study"
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/ou3_lever_arm_study"
   ],
   "status": "completed",
   "commands": [
     [
-      "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+      "/usr/bin/python3",
       "-u",
-      "/workspace/scratch/c209b58e35d0/ocean-imu/tools/ou3_lever_arm_study.py",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/ou3_lever_arm_study.py",
       "--data-dir",
-      "/workspace/scratch/c209b58e35d0/ocean-imu/.sim-data/cases/following",
+      "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
       "--jobs",
       "2",
       "--mode",
       "full",
       "--output-dir",
-      "/tmp/ocean-full-study-verification/following/studies/ou3_lever_arm_study"
+      "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/ou3_lever_arm_study"
     ]
   ],
   "exit_code": 0,
-  "seconds": 421.57111807899855,
-  "log_sha256": "d16af7a510c15b8bfa1facb5b0b4d32f3079413f6acf2fe7a15e5d5c78bb667b"
+  "seconds": 315.588180234,
+  "log_sha256": "dbeeddcf3e94196b3518e79780e8ff3631e8da560337ace1cccb166e30170711"
 }

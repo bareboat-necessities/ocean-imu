@@ -1,0 +1,53 @@
+{
+  "study": "carma_shared_modes_study",
+  "case": "head",
+  "mode": "full",
+  "inputs": {
+    "release": "v1.4.0",
+    "case": "head",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+    "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 180.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+    }
+  },
+  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "binary_sha256": {
+    "kalman_carma_shared_modes/kalman_carma_shared_modes-sim": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "-u",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/carma_shared_modes_study.py",
+    "dataset",
+    "--jobs",
+    "2"
+  ],
+  "status": "completed",
+  "commands": [
+    [
+      "/usr/bin/python3",
+      "-u",
+      "/home/runner/work/ocean-imu/ocean-imu/tools/carma_shared_modes_study.py",
+      "dataset",
+      "--jobs",
+      "2"
+    ]
+  ],
+  "exit_code": 0,
+  "seconds": 35.99378557800003,
+  "log_sha256": "b97c164f25b52cc7a856308457fd80600624e9b265559a8327ec210d1fb49085"
+}

@@ -1,0 +1,444 @@
+{
+  "build_environment": {
+    "compiler": {
+      "CPPFLAGS_env": "",
+      "CXXFLAGS_env": "",
+      "banner": "g++ (Debian 14.2.0-19) 14.2.0",
+      "command": "g++",
+      "version": "14.2.0"
+    },
+    "eigen": {
+      "identity_file_sha256": "277c9111da0aa9892ea25db516b5bb5fe15bb6233926a0b32fe85c83646a4e81",
+      "path": "/usr/include/eigen3/Eigen/src/Core/util/Macros.h",
+      "version": "3.4.0"
+    },
+    "numpy": "1.26.4",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
+  },
+  "command": [
+    "/usr/bin/python3",
+    "/home/runner/work/ocean-imu/ocean-imu/tools/ou_validation.py",
+    "--data-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/.sim-data/cases/following",
+    "--jobs",
+    "2",
+    "--mode",
+    "full",
+    "--output-dir",
+    "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/following/studies/ou_validation",
+    "--skip-build"
+  ],
+  "fixed_tuning_points": {
+    "OU_II": {
+      "nonstationary_endpoint_H4_0_Tp11_4": {
+        "RS_ms": null,
+        "R_p0_std_m": 3.3275715188329373,
+        "R_v0_std_mps": 1.3508770082932249,
+        "sigma_a_mps2": 0.276759773,
+        "tau_s": 4.92653513
+      },
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 0.3362564001718958,
+        "R_v0_std_mps": 0.2675657533780087,
+        "sigma_a_mps2": 0.0779698789,
+        "tau_s": 2.51344872
+      },
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 1.484373776627908,
+        "R_v0_std_mps": 0.87634152042562,
+        "sigma_a_mps2": 0.245553911,
+        "tau_s": 3.3876605
+      },
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 2.756473349846667,
+        "R_v0_std_mps": 1.446038609145998,
+        "sigma_a_mps2": 0.402080446,
+        "tau_s": 3.81244779
+      },
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 6.082400669816974,
+        "R_v0_std_mps": 2.4678663370066696,
+        "sigma_a_mps2": 0.587439597,
+        "tau_s": 4.92927885
+      },
+      "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 0.32587013149106936,
+        "R_v0_std_mps": 0.2793565710103353,
+        "sigma_a_mps2": 0.0894820616,
+        "tau_s": 2.33300495
+      },
+      "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 1.35739689343951,
+        "R_v0_std_mps": 0.824946373084498,
+        "sigma_a_mps2": 0.235233739,
+        "tau_s": 3.29087305
+      },
+      "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 2.9363632129018407,
+        "R_v0_std_mps": 1.5995415880490438,
+        "sigma_a_mps2": 0.475868702,
+        "tau_s": 3.67150593
+      },
+      "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": null,
+        "R_p0_std_m": 5.9636427677591595,
+        "R_v0_std_mps": 2.6072798914561437,
+        "sigma_a_mps2": 0.684350908,
+        "tau_s": 4.5746088
+      }
+    },
+    "OU_III": {
+      "nonstationary_endpoint_H4_0_Tp11_4": {
+        "RS_ms": 7.6994542579096334,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.257295996,
+        "tau_s": 5.18583536
+      },
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": 0.26344812421285424,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.0500000007,
+        "tau_s": 2.64573741
+      },
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": 2.333609016147021,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.229768336,
+        "tau_s": 3.56596017
+      },
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": 4.280139672203707,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.311413407,
+        "tau_s": 4.01310205
+      },
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": 16.26454320249765,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.614498556,
+        "tau_s": 5.18871737
+      },
+      "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00": {
+        "RS_ms": 0.2118079706827214,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.0500000007,
+        "tau_s": 2.45579505
+      },
+      "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00": {
+        "RS_ms": 2.064286383890631,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.219870314,
+        "tau_s": 3.4640801
+      },
+      "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00": {
+        "RS_ms": 4.535772011608398,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.378986627,
+        "tau_s": 3.86474514
+      },
+      "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00": {
+        "RS_ms": 14.973854272260951,
+        "R_p0_std_m": null,
+        "R_v0_std_mps": null,
+        "sigma_a_mps2": 0.720160365,
+        "tau_s": 4.81537771
+      }
+    }
+  },
+  "git_branch": "fix/merged-main-ci",
+  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "git_diff_stat": "",
+  "numpy": "1.26.4",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "protocol": {
+    "adaptation_modes": [
+      "Adaptive",
+      "FixedNominal",
+      "FixedOracle",
+      "AdaptiveHeldCovariance",
+      "FixedNominalHeldCovariance",
+      "AdaptiveRSOnly",
+      "AdaptiveOUOnly"
+    ],
+    "aw_covariance_sync_policies": {
+      "Adaptive": "periodic",
+      "AdaptiveHeldCovariance": "reconfigure",
+      "AdaptiveOUOnly": "periodic",
+      "AdaptiveRSOnly": "periodic",
+      "FixedNominal": "periodic",
+      "FixedNominalHeldCovariance": "reconfigure",
+      "FixedOracle": "periodic"
+    },
+    "bootstrap_method": "nonparametric percentile bootstrap of the mean; paired comparisons resample the seed-level differences with replacement",
+    "bootstrap_resamples": 10000,
+    "bootstrap_rng": "numpy.random.default_rng (PCG64)",
+    "duration_sec": 1200.0,
+    "fixed_nominal_definition": "noise-free full-trace operating point from Hs=1.5 m, L=50.710 m",
+    "fixed_oracle_definition": "scenario-calibrated fixed reference: the noise-free full-trace operating point of the stationary sea being scored, and the known final Hs=4.0 m/Tp=11.4 s point for the transition; it is selected from knowledge of the sea, not optimized against displacement error",
+    "mode": "full",
+    "multiplicity": "intervals are per-comparison and are not adjusted for multiplicity; only the primary endpoint is confirmatory and every other interval is descriptive",
+    "pairing": "identical wave, IMU-noise, and initialization seeds",
+    "partial_adaptation_definition": "AdaptiveRSOnly freezes tau and sigma_aw at the FixedNominal point while r_S keeps adapting; AdaptiveOUOnly freezes r_S at the FixedNominal point while tau and sigma_aw keep adapting.  r_S is derived from the live tau and sigma_aw estimates in both cases, so freezing the OU channel does not implicitly freeze r_S through the coupled law.  OU-III only",
+    "pmstokes_modes": [
+      "Adaptive",
+      "FixedNominal",
+      "FixedOracle"
+    ],
+    "pmstokes_pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
+    "primary_endpoint": "seed-level mean normalized vertical displacement RMS error over the four stationary JONSWAP seas, OU-III Adaptive minus OU-II Adaptive",
+    "primary_endpoint_inference": "the confirmatory endpoint carries four companion statements on the same paired seed-level differences: the percentile bootstrap interval, a Student-t interval, an exact sign test, and an exact paired randomization (sign-flip) test enumerated over all 2^n sign patterns.  They are companions, not independent confirmations: all four read the same n paired differences, and none of them widens the ensemble.",
+    "quality_gate_window_sec": 900.0,
+    "score_window_sec": 900.0,
+    "seed_triplets": [
+      {
+        "imu_noise_seed": 101,
+        "initialization_seed": 1009,
+        "wave_phase_seed": 11
+      },
+      {
+        "imu_noise_seed": 211,
+        "initialization_seed": 1103,
+        "wave_phase_seed": 29
+      },
+      {
+        "imu_noise_seed": 307,
+        "initialization_seed": 1201,
+        "wave_phase_seed": 47
+      },
+      {
+        "imu_noise_seed": 401,
+        "initialization_seed": 1301,
+        "wave_phase_seed": 71
+      },
+      {
+        "imu_noise_seed": 503,
+        "initialization_seed": 1409,
+        "wave_phase_seed": 97
+      },
+      {
+        "imu_noise_seed": 601,
+        "initialization_seed": 1511,
+        "wave_phase_seed": 131
+      },
+      {
+        "imu_noise_seed": 701,
+        "initialization_seed": 1601,
+        "wave_phase_seed": 173
+      },
+      {
+        "imu_noise_seed": 809,
+        "initialization_seed": 1709,
+        "wave_phase_seed": 211
+      },
+      {
+        "imu_noise_seed": 907,
+        "initialization_seed": 1801,
+        "wave_phase_seed": 257
+      },
+      {
+        "imu_noise_seed": 1009,
+        "initialization_seed": 1901,
+        "wave_phase_seed": 307
+      }
+    ],
+    "stats_seed": 20260317,
+    "transition_end_sec": 660.0,
+    "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+    "transition_midpoint_linear_hs_m": 2.75,
+    "transition_midpoint_mixture_hs_m": 2.1360009363293826,
+    "transition_segments_sec": {
+      "blend": [
+        540.0,
+        660.0
+      ],
+      "end": [
+        780.0,
+        1200.0
+      ],
+      "recover": [
+        660.0,
+        780.0
+      ],
+      "start": [
+        300.0,
+        540.0
+      ]
+    },
+    "transition_start_sec": 540.0,
+    "transition_window_composition_sec": {
+      "blended_sec": 120.0,
+      "pure_end_sea_sec": 540.0,
+      "pure_start_sea_sec": 240.0,
+      "recovery_sec": 120.0,
+      "settled_end_sea_sec": 420.0,
+      "window_end_sec": 1200.0,
+      "window_start_sec": 300.0
+    },
+    "wave_phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed"
+  },
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "result_files": {
+    "ou_validation.json": {
+      "bytes": 5324221,
+      "sha256": "fdd8f9447d1e9411769a1b2eb16920f0e9af85208d7bffaf322404108e34c47c"
+    },
+    "ou_validation_attitude.svg": {
+      "bytes": 80526,
+      "sha256": "b1985c5d35a835317ab4d19a66cfd29c73324249421f05a780f01d0dbc4f7bea"
+    },
+    "ou_validation_covsync.svg": {
+      "bytes": 90980,
+      "sha256": "8cf9725c817bf0015ec0e5e8d44070967ae3e5f4fb5aea2baaf6a7ddee1fa6c0"
+    },
+    "ou_validation_displacement.svg": {
+      "bytes": 79158,
+      "sha256": "964e7cc4427664cccc91d588f1ffac2ca63f50b9d72d48eca5c49c8854680639"
+    },
+    "ou_validation_macros.tex": {
+      "bytes": 10608,
+      "sha256": "47d0fc98b6e1e249783f20849a9e8357315497eda4d50df249e706205c1c0ad2"
+    },
+    "ou_validation_paired_effects.csv": {
+      "bytes": 714430,
+      "sha256": "f7861d2a4aa8be52fdb6bc59051e1f2a520bf7cfb2b00c7c6dfc2515908b4f37"
+    },
+    "ou_validation_publication.tex": {
+      "bytes": 13972,
+      "sha256": "51716dfc0182449e4b81547031c94f0d454c7798d7344e2e7a06d3fb14566122"
+    },
+    "ou_validation_raw.csv": {
+      "bytes": 604309,
+      "sha256": "3c1a22d44c13ee13a27e814587e5329fc9e024e9cfeaab988f8a75c7fc0c3695"
+    },
+    "ou_validation_summary.csv": {
+      "bytes": 783995,
+      "sha256": "6d2309cdf9ff5468a13eab30906d9c1fe63ab2e8abe3ee22cdef9260e4296e94"
+    },
+    "ou_validation_table.tex": {
+      "bytes": 15766,
+      "sha256": "560da1c3e1296a9d4264f6750d1c24e1b02b56e35c1f0d919784fd27689e0ed5"
+    },
+    "ou_validation_transition.csv": {
+      "bytes": 1208011,
+      "sha256": "bf0329cc48619c65550f81d3f4c38e058b9ff724886431c1722d476a4a9d22df"
+    },
+    "ou_validation_transition.svg": {
+      "bytes": 145386,
+      "sha256": "bd843da8a7016d6a94491f2b8b73eac54c5614695bf71ee407ee1b18f54de05c"
+    },
+    "ou_validation_tuning_points.tex": {
+      "bytes": 2122,
+      "sha256": "ca42dff0a95cdee073955fa11a170ae20a4e539c0b0d919de2cf0c428bfafe98"
+    },
+    "ou_validation_vertical.svg": {
+      "bytes": 80414,
+      "sha256": "5703cd7e6a30118147f5aa4b103e8e7683ffa9bda976ae8124c03e5b8b9c2266"
+    }
+  },
+  "source_files": {
+    ".sim-data/95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
+      "bytes": 70001901,
+      "sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea"
+    },
+    ".sim-data/95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
+      "bytes": 68681432,
+      "sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8"
+    },
+    ".sim-data/cases/following/wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": {
+      "bytes": 71502573,
+      "sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d"
+    },
+    ".sim-data/cases/following/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": {
+      "bytes": 70001901,
+      "sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea"
+    },
+    ".sim-data/cases/following/wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": {
+      "bytes": 69275267,
+      "sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b"
+    },
+    ".sim-data/cases/following/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": {
+      "bytes": 68681432,
+      "sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8"
+    },
+    ".sim-data/cases/following/wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": {
+      "bytes": 71512372,
+      "sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957"
+    },
+    ".sim-data/cases/following/wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": {
+      "bytes": 69870112,
+      "sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88"
+    },
+    ".sim-data/cases/following/wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": {
+      "bytes": 69125634,
+      "sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b"
+    },
+    ".sim-data/cases/following/wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": {
+      "bytes": 68478382,
+      "sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    }
+  },
+  "stationary_normalized_aggregate": {
+    "OU_II": {
+      "bootstrap_ci95_high": 7.816267753137501,
+      "bootstrap_ci95_low": 7.5273676154625,
+      "mean": 7.676891433,
+      "n": 10,
+      "std": 0.24302339085236055
+    },
+    "OU_III": {
+      "bootstrap_ci95_high": 6.436873022375001,
+      "bootstrap_ci95_low": 6.3068576568250005,
+      "mean": 6.372625148500001,
+      "n": 10,
+      "std": 0.11094162759068621
+    },
+    "OU_III_minus_OU_II": {
+      "bootstrap_ci95_high": -1.1903343379374998,
+      "bootstrap_ci95_low": -1.4132417454687498,
+      "cohen_dz": -6.861114805072387,
+      "hedges_gz": -6.270200550061805,
+      "mean_paired_difference": -1.3042662845,
+      "n_pairs": 10,
+      "randomization_exact": true,
+      "randomization_p_value": 0.001953125,
+      "randomization_patterns": 1024,
+      "sign_negative": 10,
+      "sign_p_value": 0.001953125,
+      "sign_positive": 0,
+      "sign_zero": 0,
+      "standard_error": 0.060113440039452175,
+      "std_paired_difference": 0.190095388512631,
+      "t_ci95_high": -1.168280235534313,
+      "t_ci95_low": -1.440252333465687,
+      "t_critical_value": 2.2621571627982036,
+      "t_p_value": 4.422499573703959e-09,
+      "t_statistic": -21.696750071930936
+    }
+  },
+  "transition_diagnostic": {
+    "decimation": 20,
+    "disp_z_pct_hs": 5.92214823,
+    "family": "OU_III",
+    "imu_noise_seed": 101,
+    "initialization_seed": 1009,
+    "midpoint_linear_hs_m": 2.75,
+    "midpoint_mixture_hs_m": 2.1360009363293826,
+    "wave_phase_seed": 11
+  }
+}
