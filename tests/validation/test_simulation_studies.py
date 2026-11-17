@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
-from simulation_studies import run_commands
+from simulation_studies import prepare_output, run_commands
 
 
 class StudyTriggerTests(unittest.TestCase):
@@ -40,6 +40,26 @@ class StudyTriggerTests(unittest.TestCase):
 
 
 class StudyDiagnosticsTests(unittest.TestCase):
+    def test_tfg_dataset_replay_discards_committed_protocol_and_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)/'study'
+            cache = out/'dataset_cache'
+            cache.mkdir(parents=True)
+            (out/'dataset_protocol.json').write_text('{"binaries":"old"}\n')
+            (cache/'partial.json').write_text('{"stale":true}\n')
+            prepare_output('tfg_shared_modes_dataset', out)
+            self.assertTrue(out.is_dir())
+            self.assertEqual(list(out.iterdir()), [])
+
+    def test_other_study_output_is_not_reset_by_dataset_preparation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)/'study'
+            out.mkdir()
+            marker = out/'metrics.json'
+            marker.write_text('{}\n')
+            prepare_output('ou_validation', out)
+            self.assertTrue(marker.exists())
+
     def test_successful_study_can_replace_its_output_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)/'study'

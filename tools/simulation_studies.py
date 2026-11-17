@@ -52,6 +52,18 @@ DATASET_STUDIES = {'carma3_benchmark': 'carma3_benchmark',
                    'carma_shared_modes_study': 'kalman_carma_shared_modes'}
 
 
+def prepare_output(study, out):
+    """Start non-resumable studies without committed results or stale caches."""
+    if study != 'tfg_shared_modes_dataset':
+        return
+    # The protocol binds the freshly built executables.  A source change must
+    # therefore perform every paired replay again, rather than comparing the
+    # new binary digests with the committed publication or reusing an old
+    # dataset_cache entry.
+    shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True, exist_ok=True)
+
+
 def run_commands(commands, env, out):
     """Preserve diagnostics when a legacy study replaces its results directory."""
     if not commands:
@@ -168,6 +180,7 @@ def main():
     if not args.skip_build:
         for directory, binary in targets:
             subprocess.run(['make', '-C', str(ROOT/'tests'/directory), binary], check=True)
+    prepare_output(args.study, out)
     env = {**os.environ, 'OCEAN_IMU_SIM_CASE': CASE,
            'OCEAN_IMU_STUDY_ROOT': str(out), 'OPENBLAS_NUM_THREADS': '1'}
     command = command_for(args.study, data, out, args.jobs, args.mode)
