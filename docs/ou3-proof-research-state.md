@@ -24,6 +24,15 @@ relaxation or shipping counterexample is introduced. Next falsifiable check:
 all 42 case-specific study jobs complete on the refresh branch, followed by the
 unchanged evidence contract and complete CI checks.
 
+Class E ledger-binding failure: the CI-status-only ledger update omitted its
+source-manifest entry. All three proof jobs stopped at the ledger blob mismatch
+`87f53dadf642ed86a468886bdf92b2ad4295f18a` to
+`a9437a95829290c4024b73299a64bd6a180a3b88`. Only this document's manifest entry
+is refreshed after the qualification update. Every shipping-source, lemma,
+native-diagnostic and numerical-certificate binding is retained. Exact proof
+reproduction and the adversarial stale-binding tests must pass before this
+repair is published; the theorem remains conditional and open.
+
 Class E source-refresh failure: the readout observer's prediction-entry anchor
 omitted the newly shipped `marine_turn_.endpoint_gyro = gyr_body` assignment.
 The signed-adjoint, moving-transport and world-frame exports stopped before
