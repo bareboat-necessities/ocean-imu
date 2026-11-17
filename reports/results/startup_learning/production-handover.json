@@ -1,0 +1,286 @@
+{
+  "source_commit": "6a2d811831d8bdbe57fb4cb9f8f3881137d3658d",
+  "deadline_s": 35,
+  "magnetometer_hz": 25,
+  "imu_hz": 200,
+  "case_results": [
+    {
+      "cohort": "validation",
+      "seeds": "11,12,13,14,15",
+      "offsets_s": "67,307,607",
+      "case": "following",
+      "profile": "calibrated",
+      "attempts": 120,
+      "learned": 109,
+      "deployed": {
+        "n": 109,
+        "mean_elapsed_s": 32.15903669724771,
+        "tilt_rms_deg": 0.33281306039575215,
+        "yaw_rms_deg": 0.7791974037436079,
+        "bg_rms_dps": 0.02268233002763428,
+        "field_direction_rms_deg": 0.12874409722312255,
+        "worst_tilt_deg": 0.5310283363,
+        "worst_yaw_deg": 1.419296265
+      },
+      "shipping": {
+        "n": 109,
+        "mean_elapsed_s": 32.15903669724771,
+        "tilt_rms_deg": 0.9050710089881645,
+        "yaw_rms_deg": 2.201764716357588,
+        "bg_rms_dps": 0.053686961032029724,
+        "field_direction_rms_deg": 0.30708458897504715,
+        "worst_tilt_deg": 2.112448591,
+        "worst_yaw_deg": 4.471618652
+      }
+    },
+    {
+      "cohort": "validation",
+      "seeds": "11,12,13,14,15",
+      "offsets_s": "67,307,607",
+      "case": "following",
+      "profile": "residual",
+      "attempts": 120,
+      "learned": 109,
+      "deployed": {
+        "n": 109,
+        "mean_elapsed_s": 32.15903669724771,
+        "tilt_rms_deg": 0.34364301958041726,
+        "yaw_rms_deg": 2.448810592286647,
+        "bg_rms_dps": 0.02346445482577286,
+        "field_direction_rms_deg": 1.0912525496511152,
+        "worst_tilt_deg": 0.6716777047,
+        "worst_yaw_deg": 3.881500244
+      },
+      "shipping": {
+        "n": 109,
+        "mean_elapsed_s": 32.15903669724771,
+        "tilt_rms_deg": 0.9050710215282031,
+        "yaw_rms_deg": 2.493906968021545,
+        "bg_rms_dps": 0.053686961032029724,
+        "field_direction_rms_deg": 1.102418928939624,
+        "worst_tilt_deg": 2.112448635,
+        "worst_yaw_deg": 5.709594727
+      }
+    },
+    {
+      "cohort": "validation",
+      "seeds": "11,12,13,14,15",
+      "offsets_s": "67,307,607",
+      "case": "head",
+      "profile": "calibrated",
+      "attempts": 120,
+      "learned": 120,
+      "deployed": {
+        "n": 120,
+        "mean_elapsed_s": 31.860000000000003,
+        "tilt_rms_deg": 0.4190504944229087,
+        "yaw_rms_deg": 0.9664945182370391,
+        "bg_rms_dps": 0.02360428124397121,
+        "field_direction_rms_deg": 0.13709575518319697,
+        "worst_tilt_deg": 0.6685462667,
+        "worst_yaw_deg": 1.736053467
+      },
+      "shipping": {
+        "n": 120,
+        "mean_elapsed_s": 31.860000000000003,
+        "tilt_rms_deg": 1.156686363479072,
+        "yaw_rms_deg": 3.715484552536356,
+        "bg_rms_dps": 0.05353391152090524,
+        "field_direction_rms_deg": 0.660703351402869,
+        "worst_tilt_deg": 3.930011392,
+        "worst_yaw_deg": 13.36541748
+      }
+    },
+    {
+      "cohort": "validation",
+      "seeds": "11,12,13,14,15",
+      "offsets_s": "67,307,607",
+      "case": "head",
+      "profile": "residual",
+      "attempts": 120,
+      "learned": 120,
+      "deployed": {
+        "n": 120,
+        "mean_elapsed_s": 31.860000000000003,
+        "tilt_rms_deg": 0.42440008589207345,
+        "yaw_rms_deg": 1.6612652141868443,
+        "bg_rms_dps": 0.024236695122423862,
+        "field_direction_rms_deg": 0.8123194168889432,
+        "worst_tilt_deg": 0.6476616607,
+        "worst_yaw_deg": 2.95223999
+      },
+      "shipping": {
+        "n": 120,
+        "mean_elapsed_s": 31.860000000000003,
+        "tilt_rms_deg": 1.1566863340775064,
+        "yaw_rms_deg": 4.679899525040672,
+        "bg_rms_dps": 0.05353391152090524,
+        "field_direction_rms_deg": 1.0343016812437626,
+        "worst_tilt_deg": 3.930008825,
+        "worst_yaw_deg": 14.20422363
+      }
+    },
+    {
+      "cohort": "confirmation",
+      "seeds": "31,32,33,34,35",
+      "offsets_s": "41,191,421",
+      "case": "following",
+      "profile": "calibrated",
+      "attempts": 120,
+      "learned": 95,
+      "deployed": {
+        "n": 95,
+        "mean_elapsed_s": 32.40636842105263,
+        "tilt_rms_deg": 0.3622401697112489,
+        "yaw_rms_deg": 0.6652679668627364,
+        "bg_rms_dps": 0.018888873051511237,
+        "field_direction_rms_deg": 0.19084908046049265,
+        "worst_tilt_deg": 0.706304629,
+        "worst_yaw_deg": 1.444473267
+      },
+      "shipping": {
+        "n": 95,
+        "mean_elapsed_s": 32.40636842105263,
+        "tilt_rms_deg": 0.5981469049971523,
+        "yaw_rms_deg": 1.9162388645587483,
+        "bg_rms_dps": 0.061013869372506524,
+        "field_direction_rms_deg": 0.31445922172706986,
+        "worst_tilt_deg": 1.362915246,
+        "worst_yaw_deg": 3.717834473
+      }
+    },
+    {
+      "cohort": "confirmation",
+      "seeds": "31,32,33,34,35",
+      "offsets_s": "41,191,421",
+      "case": "following",
+      "profile": "residual",
+      "attempts": 120,
+      "learned": 95,
+      "deployed": {
+        "n": 95,
+        "mean_elapsed_s": 32.40636842105263,
+        "tilt_rms_deg": 0.3880159444663936,
+        "yaw_rms_deg": 2.549474869678545,
+        "bg_rms_dps": 0.023734839242058946,
+        "field_direction_rms_deg": 1.4706469208609667,
+        "worst_tilt_deg": 0.713735511,
+        "worst_yaw_deg": 4.01260376
+      },
+      "shipping": {
+        "n": 95,
+        "mean_elapsed_s": 32.40636842105263,
+        "tilt_rms_deg": 0.5981469274238339,
+        "yaw_rms_deg": 3.633240025929474,
+        "bg_rms_dps": 0.061013869372506524,
+        "field_direction_rms_deg": 1.4059499323839908,
+        "worst_tilt_deg": 1.362915064,
+        "worst_yaw_deg": 7.330795288
+      }
+    },
+    {
+      "cohort": "confirmation",
+      "seeds": "31,32,33,34,35",
+      "offsets_s": "41,191,421",
+      "case": "head",
+      "profile": "calibrated",
+      "attempts": 120,
+      "learned": 120,
+      "deployed": {
+        "n": 120,
+        "mean_elapsed_s": 31.835,
+        "tilt_rms_deg": 0.4659928287870638,
+        "yaw_rms_deg": 0.9243032474958645,
+        "bg_rms_dps": 0.03255832575912954,
+        "field_direction_rms_deg": 0.20727656757812543,
+        "worst_tilt_deg": 0.7431615003,
+        "worst_yaw_deg": 1.418716431
+      },
+      "shipping": {
+        "n": 120,
+        "mean_elapsed_s": 31.835,
+        "tilt_rms_deg": 0.9704712291100667,
+        "yaw_rms_deg": 2.521194157960547,
+        "bg_rms_dps": 0.062097615826209346,
+        "field_direction_rms_deg": 0.4044613836653076,
+        "worst_tilt_deg": 2.667180674,
+        "worst_yaw_deg": 5.902008057
+      }
+    },
+    {
+      "cohort": "confirmation",
+      "seeds": "31,32,33,34,35",
+      "offsets_s": "41,191,421",
+      "case": "head",
+      "profile": "residual",
+      "attempts": 120,
+      "learned": 120,
+      "deployed": {
+        "n": 120,
+        "mean_elapsed_s": 31.835,
+        "tilt_rms_deg": 0.5234399161612052,
+        "yaw_rms_deg": 3.3048091220571787,
+        "bg_rms_dps": 0.03613415979783349,
+        "field_direction_rms_deg": 1.50905790289708,
+        "worst_tilt_deg": 0.8752940369,
+        "worst_yaw_deg": 5.358230591
+      },
+      "shipping": {
+        "n": 120,
+        "mean_elapsed_s": 31.835,
+        "tilt_rms_deg": 0.9704712029991491,
+        "yaw_rms_deg": 4.106359425182444,
+        "bg_rms_dps": 0.062097615826209346,
+        "field_direction_rms_deg": 1.5260139094351106,
+        "worst_tilt_deg": 2.66718015,
+        "worst_yaw_deg": 9.927429199
+      }
+    }
+  ],
+  "input_sha256": {
+    "following": {
+      "release": "v1.4.0",
+      "case": "following",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 0.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+      }
+    },
+    "head": {
+      "release": "v1.4.0",
+      "case": "head",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 180.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+      }
+    }
+  }
+}

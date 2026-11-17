@@ -1,10 +1,37 @@
-# Isolated gravity and magnetic-field startup in waves
+# Gravity and magnetic-field startup in waves
 
 The experiment in [`tests/startup_learning`](../tests/startup_learning/README.md)
-compares the actual shared Mahony-proxy handover with five standalone
-initializers. It changes **no file under `src/` and no live-filter behavior**.
+compares the previous Mahony-proxy handover with five full-history reference
+fits and the fixed-memory implementation used by the live wave filters.
 The base is `8c9f535709fe7ff4d87d75dc5c98f4d0a48daa7b`; both cases use the pinned
 `oceanography-waves-lib` v1.4.0 archives, at 5 kn with ±3° / 20 s heading motion.
+
+## Production handover
+
+The bounded-memory solver seeds attitude, the local magnetic field and gyro
+bias in the live wave filters. The table compares actual OU-III handovers with
+the learner disabled and enabled. Each cohort contains 120 starts per
+direction and sensor profile. Both policies use the same eligibility checks.
+The figures below use calibrated magnetometers.
+
+| Cohort | Seas | Handovers by 35 s | Previous → deployed tilt RMS | Previous → deployed yaw RMS |
+|---|---|---:|---:|---:|
+| Validation | Following | 109/120 | 0.905° → 0.333° | 2.202° → 0.779° |
+| Validation | Head | 120/120 | 1.157° → 0.419° | 3.715° → 0.967° |
+| Confirmation | Following | 95/120 | 0.598° → 0.362° | 1.916° → 0.665° |
+| Confirmation | Head | 120/120 | 0.971° → 0.466° | 2.521° → 0.924° |
+
+With residual magnetic calibration, following-sea yaw changed from 2.494° to
+2.449° in validation and from 3.633° to 2.550° in confirmation. Head-sea yaw
+changed from 4.680° to 1.661° and from 4.106° to 3.305°. All 888 matched
+handovers across 960 starts used the joint estimate. Each policy missed the
+same 72 deadlines. The full-history experiment below also scores the
+35-second endpoint on every trial. Its optional hard-iron fit is experimental.
+
+Run `tests/startup_learning/startup-learning --production-pair` once per input
+with `--input`, `--output`, `--profiles calibrated,residual`, and the
+`--seeds` and `--offsets` in the
+[production scores](../reports/results/startup_learning/production-handover.json).
 
 ## Results within 35 seconds
 
@@ -159,5 +186,5 @@ The focused `isolated startup learning` workflow reproduces the complete
 held-out paired matrix. Unit tests cover frames, sample timing, gravity/field
 recovery, gyro-bias recovery, quiet water, wave contamination, invalid packets,
 deadline enforcement, stale/vertical magnetic fields and field-step rejection.
-The experiment is in both Make and CMake host builds. Production filter
-integration remains deliberately outside this PR.
+The experiment is in both Make and CMake host builds. The production-pair run
+exercises the actual shared live wrapper with both startup policies.
