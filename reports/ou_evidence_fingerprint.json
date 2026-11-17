@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
   "replay_fingerprint": "494dfe3f771c361343603e35dc688e96241fa3df557d57365eee01cbe900e42e",
-  "results_file_count": 1362,
+  "results_file_count": 1314,
   "results_files": [
     {
       "kind": "file",
@@ -2866,7 +2866,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "dfc098a760576d854fba8f678e7eaf59b1a8341ad6cb52854f3a6ca208edab77"
+      "sha256": "dcc11120b5fdd60a683b5ad9ee341d65e80d4a53eeed21f7d9612a0afba3278a"
     },
     {
       "kind": "file",
@@ -2961,7 +2961,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "081242a25cf03100fd23d4c7a4c5f07eae6215e2ae01c4f3c52fedd7b3eb381b"
+      "sha256": "3502c54ec9298eeabc5027a7df2cf338c57055ff0c6514750682a56c85dfb348"
     },
     {
       "kind": "file",
@@ -3960,126 +3960,6 @@
     },
     {
       "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/ahrs-default.log",
-      "sha256": "8f656bcc1f2edc2eb2c9a6fa978cd957aaf72e8eda272ecbd421385e7bbbf090"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/carma-default.log",
-      "sha256": "f12f0d197e05d9b1a68d43deb7d231679cc5b27a6911b1f61201ec18427c98ae"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/carma-legacy.log",
-      "sha256": "e7d031f8f6c915b302f5b876ee45c65521cde35eaa04d071d9733c2df2780294"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/csm-default.log",
-      "sha256": "be3443e516da89e819393328a56ddcbb53ea61cbc189f00431936eaf256ece80"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/csm-legacy.log",
-      "sha256": "ab0abd6217b8573f888f48d9917359c56c6b3b27d64112f663cbc58e72709cd8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/heave-default.log",
-      "sha256": "aaf89cc24866a454d07e5afde383b32219fe1bce8462aa28e833c15d6778a2ba"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/heave-proxy.log",
-      "sha256": "061ef866c787d976d98c8690368ceb5e2a3f8b8e04ed34d3a1ccd4454f7bc644"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/heave-truth.log",
-      "sha256": "7c3c20ad483d270a97ee87a6dc33558828f062198e8503e263f5de2c9941d692"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/nlo-default.log",
-      "sha256": "01233aefb99050509b21f470a7b1852815b05907d9a080d188c28627e68b6a0c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/ou2-default.log",
-      "sha256": "b90831d85d0e26ec54c35906309b9bc2178332804d39c9eda5526d83b3869a95"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/ou2-legacy.log",
-      "sha256": "d086119d6f0cfdaed983ed8dbf1786c7cb74d22eb1ac1b36ece2cfd1ac3a16c7"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/ou3-default.log",
-      "sha256": "8ffaa4ff9f35a04031d07418cce3d117b3669e4dc22f3c70cdcb42680d56c6bc"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/ou3-legacy.log",
-      "sha256": "62bf5f62339fc045c31a147ca8a14e0e66a3035f16264aaabd5729fea7fdeab8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/pii-default.log",
-      "sha256": "05bba77e544ea68d673b96e6acd126d5bb625a217536b0653fdf5f26d840d965"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/runs.json",
-      "sha256": "a70e20406c04c0cb6c558c5e6f1a38f7d733536a9db3ff704687dcda32c5d601"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tangent-default.log",
-      "sha256": "40607d3fb337154624a8a8bda7c64664a82a6116499e041ab9c8539f4a395a5e"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tangent-legacy.log",
-      "sha256": "ed85df802e5ad979c48c1643608c371428b726f39df23e06c6a17cca25a7407e"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tcarma-default.log",
-      "sha256": "0c0f34220444ef4d30005067504e6f0a2e6e238c4a3a283968e7f3c70b50ed41"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tcarma-legacy.log",
-      "sha256": "f1bbe488e359537e5e4959939de654b7484f4c4ffda0be9a2f7d927aea853a4c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tcsm-default.log",
-      "sha256": "6d870f046c67881ee178c29d55f06efd8abb987710d2bfaa36e4b7908ea7988e"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tcsm-legacy.log",
-      "sha256": "970f717123a93efccbdd8b0aadea597f015f3efb092b5d8b93f4a91be993e03c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tfg-default.log",
-      "sha256": "7c30bb7e024fd6c1252dbd9a11dd5e798b77d54b377b2313053287d20907d5ac"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tfg-legacy.log",
-      "sha256": "1095eddc2fc4da25ad3d1cb7b6a9136b7f1197ec7472c35bacb4f26d3f38c74c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/following/logs/tfg_legacy-default.log",
-      "sha256": "d34be7841c795d6dd086584a77370c8fa5571e754c3cf69fa17b17844d95b7ad"
-    },
-    {
-      "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/measurements.json",
       "sha256": "c13e43dfd4756d785acc204569b7f754dea832fb3a604f3827b51a012defc470"
     },
@@ -4987,126 +4867,6 @@
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/gyro_bias_3d_rms_radps.svg",
       "sha256": "20d760ee97de47b17faa96fb300b878c4c0f42aebbef44c864e2b65941999b0f"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/ahrs-default.log",
-      "sha256": "e5ad43bd1d12f29f93788ca8d069f0f68440208d6730c3f3208dec78ca603a36"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/carma-default.log",
-      "sha256": "7d225bc8ffb0a82b83a0f821df00e0dc36a625c780184f776712cd2634daec7e"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/carma-legacy.log",
-      "sha256": "3b38eff339076367e5977215bb9617f05f6d7c3a56f71a0b6a7402fb43cc58ac"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/csm-default.log",
-      "sha256": "977ed021cba2e77b9a47b0acc23f579a90e3b0ffa7ae53d0e76586bc5c91414d"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/csm-legacy.log",
-      "sha256": "196ba71562031285f37edf652c5ee1727b15b167d978e5c5853a274b365d671a"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/heave-default.log",
-      "sha256": "c8b1f5d98d46d302ecd62691b266efe8d8849e59982da7deba30e85fe661da54"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/heave-proxy.log",
-      "sha256": "f99ec184b59aaaa8710d4af25a7ae350c000ef78261b555062b0eeaeb03a018c"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/heave-truth.log",
-      "sha256": "86c9fb974da313aa6f680d1d5d63aa2cc969b5231a5ce17aacdbe8413f24e770"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/nlo-default.log",
-      "sha256": "9873d4bef7919af3059141cf815f805028225f7979f061e085937443cf67e0b3"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/ou2-default.log",
-      "sha256": "40df4551900a7e1b3a2c030d1f95b7ed97b666d89406f147871d684c03e19957"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/ou2-legacy.log",
-      "sha256": "0367106a9f6fbe50219799ee9d2fed7440d15eb137d9ff5eb66d3737e62954b8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/ou3-default.log",
-      "sha256": "870f04d4efff2d3efe2305dd2b78316da6010e12711840e8d9a675b3de4a5b42"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/ou3-legacy.log",
-      "sha256": "6cf5c1b7f3e91f3458a684a6c30eafebd6cba545d53cdd8a064fff874ebc2cf0"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/pii-default.log",
-      "sha256": "07e23ff515dad0ab99933c4b7668a00e34fac79140181617994d38e4fa02832e"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/runs.json",
-      "sha256": "34d7fa9db1e54833bc1f99c4ce184464bc08cf67daecde2d383dabce2bdd8b7f"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tangent-default.log",
-      "sha256": "5a263617fcb21c70b70096506ed2c35cf18359602faa66298d853ad83fb9bb9b"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tangent-legacy.log",
-      "sha256": "f1a17a682f2992874d7833a587ffe46fdc231236f5c9d196f005e90e549b48d0"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tcarma-default.log",
-      "sha256": "bd291e47512535de0382e374ca9ded8828c8cbdcc21e25891f3ba24ae60f0f19"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tcarma-legacy.log",
-      "sha256": "7098ecc9fabc791687e831f59b0c0d0bf323b85e23263f949dcff5fb94e624bb"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tcsm-default.log",
-      "sha256": "e5dfd32764bcb0b4c424441ecd3540014eaf433ad699058760ac945b8146b85d"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tcsm-legacy.log",
-      "sha256": "41581dc4d243d07fa9d87dfe318772de168992b230cd93e41e4b09957b60c266"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tfg-default.log",
-      "sha256": "972e0efe4bafee719c355d0d4e9cbc536e193614d9523fa57a365f38eb26117d"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tfg-legacy.log",
-      "sha256": "06039e6deefa6ac5b942136df56fac2fb2b9567ee8e7175b068fc29074a3de62"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/sim_v1.4.0/head/logs/tfg_legacy-default.log",
-      "sha256": "75dd89c33cc55e1e9e3928489564afa600937b177f2864546831d61f5850b2e5"
     },
     {
       "kind": "file",
@@ -6814,7 +6574,7 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "7ed309cd9b57fccfa3e97d873435d0ffc7b26c24d8c78d8066fc5496bbe7a09d",
+  "results_fingerprint": "9a9d9db5d6a06980fb8bc860f760268110cb86f414fddf2604c3dd0998225766",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",

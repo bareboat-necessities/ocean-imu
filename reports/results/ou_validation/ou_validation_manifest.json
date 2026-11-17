@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "fix/merged-main-ci",
-  "git_commit": "357626471b6b2a7b853677da07969f4457549a7f",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 120275 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    700 +-\n .../ou_validation/ou_validation_covsync.svg        |    704 +-\n .../ou_validation/ou_validation_displacement.svg   |    808 +-\n .../results/ou_validation/ou_validation_macros.tex |    196 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4982 +-\n .../ou_validation/ou_validation_publication.tex    |     74 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5568 +-\n .../results/ou_validation/ou_validation_table.tex  |    168 +-\n .../ou_validation/ou_validation_transition.csv     |  21512 ++--\n .../ou_validation/ou_validation_transition.svg     |   6208 +-\n .../ou_validation/ou_validation_vertical.svg       |    680 +-\n 13 files changed, 81794 insertions(+), 81761 deletions(-)",
+  "git_commit": "6dc0bb308bad5347cb004fd18a707457fa03e650",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -563,8 +563,8 @@
       "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-17T04:48:45+00:00",
-    "git_commit": "357626471b6b2a7b853677da07969f4457549a7f",
+    "generated_at": "2026-11-17T07:41:56+00:00",
+    "git_commit": "6dc0bb308bad5347cb004fd18a707457fa03e650",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -851,7 +851,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44013230370",
+      "run_id": "44027950573",
       "workflow": "ou-full-evidence-branch"
     }
   },
