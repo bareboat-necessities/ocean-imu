@@ -1,16 +1,16 @@
 % Publication subset of macros generated from the committed OU--III robustness bundle.
 \providecommand{\OURobustnessPairs}{10}
-\providecommand{\OURobustnessLowReferenceMean}{8.32}
-\providecommand{\OURobustnessLowStressMean}{26.08}
-\providecommand{\OURobustnessLowStressAbsolute}{0.0130}
-\providecommand{\OURobustnessLowDifference}{+17.76}
-\providecommand{\OURobustnessLowDifferenceLow}{+15.57}
-\providecommand{\OURobustnessLowDifferenceHigh}{+20.17}
+\providecommand{\OURobustnessLowReferenceMean}{8.35}
+\providecommand{\OURobustnessLowStressMean}{26.24}
+\providecommand{\OURobustnessLowStressAbsolute}{0.0131}
+\providecommand{\OURobustnessLowDifference}{+17.89}
+\providecommand{\OURobustnessLowDifferenceLow}{+15.76}
+\providecommand{\OURobustnessLowDifferenceHigh}{+20.25}
 \providecommand{\OURobustnessControlledAdaptiveMean}{6.05}
 \providecommand{\OURobustnessRapidAdaptiveMean}{6.21}
-\providecommand{\OURobustnessRapidDifference}{+0.17}
+\providecommand{\OURobustnessRapidDifference}{+0.16}
 \providecommand{\OURobustnessRapidDifferenceLow}{+0.06}
-\providecommand{\OURobustnessRapidDifferenceHigh}{+0.30}
+\providecommand{\OURobustnessRapidDifferenceHigh}{+0.29}
 \providecommand{\OURobustnessRapidAdaptationDifference}{-3.95}
-\providecommand{\OURobustnessRapidAdaptationLow}{-4.39}
-\providecommand{\OURobustnessRapidAdaptationHigh}{-3.48}
+\providecommand{\OURobustnessRapidAdaptationLow}{-4.38}
+\providecommand{\OURobustnessRapidAdaptationHigh}{-3.50}

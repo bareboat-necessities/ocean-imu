@@ -41,13 +41,13 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "fd0d05534e9b103bb955fcfb4d5dcf2024a796ae",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
+  "git_branch": "fix/merged-main-ci",
+  "git_commit": "357626471b6b2a7b853677da07969f4457549a7f",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 38836 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    42 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1630 +-\n .../ou_robustness/ou_robustness_publication.tex    |    16 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |  1351 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   325 +-\n .../ou_robustness/ou_robustness_summary.csv        |  2066 +-\n 8 files changed, 22444 insertions(+), 22442 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
-      "bytes": 18427,
-      "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d"
+      "bytes": 19121,
+      "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac"
     },
     "src/ahrs/Mahony_AHRS.h": {
       "bytes": 12674,
@@ -94,12 +94,20 @@
       "sha256": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096"
     },
     "src/kalman_common/MagneticStartupCommon.h": {
-      "bytes": 16146,
-      "sha256": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41"
+      "bytes": 17483,
+      "sha256": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350"
+    },
+    "src/kalman_common/MarineTurnModel.h": {
+      "bytes": 2061,
+      "sha256": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a"
+    },
+    "src/kalman_common/MarineTurnSeparator.h": {
+      "bytes": 6618,
+      "sha256": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8"
     },
     "src/kalman_common/MarineWaveFrontEnd.h": {
-      "bytes": 19413,
-      "sha256": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4"
+      "bytes": 19772,
+      "sha256": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc"
     },
     "src/kalman_common/MekfAttitudeMath.h": {
       "bytes": 10440,
@@ -110,8 +118,8 @@
       "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba"
     },
     "src/kalman_common/ProxyStartupFusion.h": {
-      "bytes": 44590,
-      "sha256": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c"
+      "bytes": 45560,
+      "sha256": "04253fd0ceee6f469983088fcf842c90efe3313b4e576eadf0aea2166e3154bd"
     },
     "src/kalman_common/SeaStateAdaptationCommon.h": {
       "bytes": 21011,
@@ -138,12 +146,12 @@
       "sha256": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 96291,
-      "sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a"
+      "bytes": 97471,
+      "sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-      "bytes": 51625,
-      "sha256": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7"
+      "bytes": 51707,
+      "sha256": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38"
     },
     "src/tuner/AccelVibrationGuard.h": {
       "bytes": 11977,
@@ -154,8 +162,16 @@
       "sha256": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021"
     },
     "src/tuner/ContinuousMagHardIronEstimator.h": {
-      "bytes": 13919,
-      "sha256": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2"
+      "bytes": 14932,
+      "sha256": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25"
+    },
+    "src/tuner/GyroMagCalibration.h": {
+      "bytes": 3348,
+      "sha256": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7"
+    },
+    "src/tuner/GyroMagCalibrationImpl.h": {
+      "bytes": 5809,
+      "sha256": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c"
     },
     "src/tuner/MagAutoTuner.h": {
       "bytes": 23065,
@@ -185,17 +201,21 @@
       "bytes": 562,
       "sha256": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721"
     },
+    "src/util/MagneticRotation.h": {
+      "bytes": 5580,
+      "sha256": "1c2cbc7110f5135992a96593a02d7757204373e9ac87d60cdd30d1f4850200a9"
+    },
     "src/util/UnderwayReference.h": {
       "bytes": 2602,
       "sha256": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422"
     },
     "src/util/W3dSimCommon.cpp": {
-      "bytes": 105971,
-      "sha256": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad"
+      "bytes": 106370,
+      "sha256": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406"
     },
     "src/util/W3dSimCommon.h": {
-      "bytes": 34727,
-      "sha256": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445"
+      "bytes": 34989,
+      "sha256": "5e3075f40f79c21f7297e80a66b721f57f2cf7ebf232aab1d94823846bb2660d"
     },
     "src/util/WaveFilesSupport.h": {
       "bytes": 13255,
@@ -222,8 +242,8 @@
       "sha256": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2"
     },
     "tests/common/CurrentReplayLimits.h": {
-      "bytes": 7990,
-      "sha256": "e4c42640bd10c19ff132f72bd9e5c5de8fc32689b1af98e5f26355e5bdc92334"
+      "bytes": 8561,
+      "sha256": "f49a863e8b746de33c814cc5aa0cd0baa8893c0db2beeb36cdd5d27f9e890ca0"
     },
     "tests/common/GyroReplayContract.h": {
       "bytes": 1247,
@@ -234,24 +254,24 @@
       "sha256": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1"
     },
     "tests/common/RecordReplayLimits.h": {
-      "bytes": 2824,
-      "sha256": "de6c5f9f869f4a99a70a257aa34800cb09df6735396dbee56ec7cc2bb857a4ae"
+      "bytes": 2840,
+      "sha256": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c"
     },
     "tests/common/RecordReplayLimits.inc": {
-      "bytes": 97196,
-      "sha256": "8b0de13d1e338c297d367e0743c5ff373578ec6a55fabf5880cb8f3b4b4fdc75"
+      "bytes": 102465,
+      "sha256": "a95e4fe38d7dfb27a48c96be6b824432931427b2146e9687cd8f9b0406842139"
     },
     "tests/common/RecordW3dLimits.h": {
-      "bytes": 1653,
-      "sha256": "3016ddd0feb85f0ee9fa26ee0254226957daa7a82653ed9b71b05698ac95ec84"
+      "bytes": 1782,
+      "sha256": "1ed1a6a3f33c1260c7fbf79d848fbfc0c04becebda14c8d0ba822f58e30a1406"
     },
     "tests/kalman_ou_iii/Makefile": {
       "bytes": 750,
       "sha256": "62f23a3e4eaa4b215e4fcae96ab70bd3cf1570bd25cd1fb2656e495fb33042ce"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 34636,
-      "sha256": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d"
+      "bytes": 35164,
+      "sha256": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7"
     }
   },
   "matplotlib": "3.6.3",
@@ -377,12 +397,12 @@
       "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-16T17:29:12+00:00",
-    "git_commit": "fd0d05534e9b103bb955fcfb4d5dcf2024a796ae",
+    "generated_at": "2026-11-17T04:48:45+00:00",
+    "git_commit": "357626471b6b2a7b853677da07969f4457549a7f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
-        "sha256": "7d402b7a283a21df7c739ca6d3a15782fec68eeedf745949a18cff807458d78d",
-        "size_bytes": 18427
+        "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
+        "size_bytes": 19121
       },
       "src/ahrs/Mahony_AHRS.h": {
         "sha256": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
@@ -429,12 +449,20 @@
         "size_bytes": 2656
       },
       "src/kalman_common/MagneticStartupCommon.h": {
-        "sha256": "cb95d941a4452c6cd30062ddb2b66cb25867e7c11d5d91a656768f0eb41a9d41",
-        "size_bytes": 16146
+        "sha256": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350",
+        "size_bytes": 17483
+      },
+      "src/kalman_common/MarineTurnModel.h": {
+        "sha256": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
+        "size_bytes": 2061
+      },
+      "src/kalman_common/MarineTurnSeparator.h": {
+        "sha256": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8",
+        "size_bytes": 6618
       },
       "src/kalman_common/MarineWaveFrontEnd.h": {
-        "sha256": "5aad78ad7d4470ce57a75e4a4f613f9f44f7a22ce0df2189aacba75d2f5785d4",
-        "size_bytes": 19413
+        "sha256": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
+        "size_bytes": 19772
       },
       "src/kalman_common/MekfAttitudeMath.h": {
         "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
@@ -445,8 +473,8 @@
         "size_bytes": 1500
       },
       "src/kalman_common/ProxyStartupFusion.h": {
-        "sha256": "ea4d01aa4bc83fdc7f27f9ed2328537115c191de59589d089b5f64902a57a80c",
-        "size_bytes": 44590
+        "sha256": "04253fd0ceee6f469983088fcf842c90efe3313b4e576eadf0aea2166e3154bd",
+        "size_bytes": 45560
       },
       "src/kalman_common/SeaStateAdaptationCommon.h": {
         "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
@@ -473,12 +501,12 @@
         "size_bytes": 16146
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "40600392a32b7b4bd20b913973f7080697e7711c3db7fc142350847291fbdc7a",
-        "size_bytes": 96291
+        "sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+        "size_bytes": 97471
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
-        "sha256": "6c652753a2ef94d78fb54535f090ce8635e613b18fdd8be71b6e1912e4a4f0d7",
-        "size_bytes": 51625
+        "sha256": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38",
+        "size_bytes": 51707
       },
       "src/tuner/AccelVibrationGuard.h": {
         "sha256": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -489,8 +517,16 @@
         "size_bytes": 5864
       },
       "src/tuner/ContinuousMagHardIronEstimator.h": {
-        "sha256": "d65aadea8277da9174be4bb081588f1745aa77c8dac482d303e90cad662c3ca2",
-        "size_bytes": 13919
+        "sha256": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25",
+        "size_bytes": 14932
+      },
+      "src/tuner/GyroMagCalibration.h": {
+        "sha256": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7",
+        "size_bytes": 3348
+      },
+      "src/tuner/GyroMagCalibrationImpl.h": {
+        "sha256": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c",
+        "size_bytes": 5809
       },
       "src/tuner/MagAutoTuner.h": {
         "sha256": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
@@ -520,17 +556,21 @@
         "sha256": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
         "size_bytes": 562
       },
+      "src/util/MagneticRotation.h": {
+        "sha256": "1c2cbc7110f5135992a96593a02d7757204373e9ac87d60cdd30d1f4850200a9",
+        "size_bytes": 5580
+      },
       "src/util/UnderwayReference.h": {
         "sha256": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422",
         "size_bytes": 2602
       },
       "src/util/W3dSimCommon.cpp": {
-        "sha256": "965a78359ee949460e916d5e55df65273ab9c086c5d84bbed0db3ef1a4438cad",
-        "size_bytes": 105971
+        "sha256": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406",
+        "size_bytes": 106370
       },
       "src/util/W3dSimCommon.h": {
-        "sha256": "5280432a5caffa7dc19c046d5fd9841145cf9e111828b5420dca0cae14f13445",
-        "size_bytes": 34727
+        "sha256": "5e3075f40f79c21f7297e80a66b721f57f2cf7ebf232aab1d94823846bb2660d",
+        "size_bytes": 34989
       },
       "src/util/WaveFilesSupport.h": {
         "sha256": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
@@ -557,8 +597,8 @@
         "size_bytes": 2765
       },
       "tests/common/CurrentReplayLimits.h": {
-        "sha256": "e4c42640bd10c19ff132f72bd9e5c5de8fc32689b1af98e5f26355e5bdc92334",
-        "size_bytes": 7990
+        "sha256": "f49a863e8b746de33c814cc5aa0cd0baa8893c0db2beeb36cdd5d27f9e890ca0",
+        "size_bytes": 8561
       },
       "tests/common/GyroReplayContract.h": {
         "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
@@ -569,24 +609,24 @@
         "size_bytes": 831
       },
       "tests/common/RecordReplayLimits.h": {
-        "sha256": "de6c5f9f869f4a99a70a257aa34800cb09df6735396dbee56ec7cc2bb857a4ae",
-        "size_bytes": 2824
+        "sha256": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c",
+        "size_bytes": 2840
       },
       "tests/common/RecordReplayLimits.inc": {
-        "sha256": "8b0de13d1e338c297d367e0743c5ff373578ec6a55fabf5880cb8f3b4b4fdc75",
-        "size_bytes": 97196
+        "sha256": "a95e4fe38d7dfb27a48c96be6b824432931427b2146e9687cd8f9b0406842139",
+        "size_bytes": 102465
       },
       "tests/common/RecordW3dLimits.h": {
-        "sha256": "3016ddd0feb85f0ee9fa26ee0254226957daa7a82653ed9b71b05698ac95ec84",
-        "size_bytes": 1653
+        "sha256": "1ed1a6a3f33c1260c7fbf79d848fbfc0c04becebda14c8d0ba822f58e30a1406",
+        "size_bytes": 1782
       },
       "tests/kalman_ou_iii/Makefile": {
         "sha256": "62f23a3e4eaa4b215e4fcae96ab70bd3cf1570bd25cd1fb2656e495fb33042ce",
         "size_bytes": 750
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "5a6a62dfd5f766cc0bab278974fd4414f98cb90892284a1e6c3364878b32b37d",
-        "size_bytes": 34636
+        "sha256": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
+        "size_bytes": 35164
       }
     },
     "input_files": {
@@ -608,47 +648,47 @@
       }
     },
     "raw_rows_schema": "normalized statistical replay rows; deterministic simulator gate columns excluded",
-    "raw_rows_sha256": "bf18dc5d711c3081bce5abd79d8cc49d8fc0a5c9fc5b6f190e3ce5b94d12fbff",
-    "raw_rows_size_bytes": 210214,
+    "raw_rows_sha256": "7e2c9cb105fdcb0720561ed2c057a55b5c16d376b2f99bfabdb624ce41cd0048",
+    "raw_rows_size_bytes": 209957,
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "43909846029",
-      "workflow": "build"
+      "run_id": "44013230370",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1577915,
-      "sha256": "e0c3de95bd104f82e18149aaed24c02a5d2b04bf8ed881bfb4ddf39ba7e61145"
+      "bytes": 1576819,
+      "sha256": "47923fb38fe3540b91f3d591456bef3cf29ef4548b4238e45a45fcceabe7bde0"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
-      "sha256": "5f90b0e1eb7af7717580284c1ba7e56041f70396c5a6c58da271e35cf76be157"
+      "sha256": "054d694864d8d4c5066e4c01faed03f7cf3b29043ad338219e7501b80073c514"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 164045,
-      "sha256": "42edd9376b013477454441103d5862e5bf616fe508c1bfa7f8cdd99bd9827884"
+      "bytes": 164602,
+      "sha256": "0426018a6a92ea7c4f21f206dc33e870c078d8f9d05184309a82bb0aaacad6a6"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
-      "sha256": "476c160fbe1386bd1d7f02f7654157ab18705ec092732155bcd173c18924e807"
+      "sha256": "48edb46a86b56f634b4c998789a99896c032c2cc42b92748d40c54b5b8500011"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 210214,
-      "sha256": "bf18dc5d711c3081bce5abd79d8cc49d8fc0a5c9fc5b6f190e3ce5b94d12fbff"
+      "bytes": 209957,
+      "sha256": "7e2c9cb105fdcb0720561ed2c057a55b5c16d376b2f99bfabdb624ce41cd0048"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 112750,
-      "sha256": "52f56cdf3496043f446d33bb0064bcbfe10a68f174de3787af6b3019b9bd8892"
+      "bytes": 114777,
+      "sha256": "60b5084f6aa39aade346957c5fc9c38896114a199351ba2eb130c399ce244ace"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 42706,
-      "sha256": "536afc58f2f4cd9e62a05ac9c69773752592ad79f2c396511883581db516ec8e"
+      "bytes": 43358,
+      "sha256": "2dc06de43ce5c88d912b18fb1c4a8ed8cc7089e46b0175d9c171d62f066143bb"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 147736,
-      "sha256": "a7a3a11267a47139fb5127f2cfb27f890842d0fb9141682dc73ab74bd8abbd35"
+      "bytes": 147570,
+      "sha256": "7c549b8e750fe769d738285e300e4de4106de57d0b874c1b959feb8bdc204728"
     }
   },
   "schema_version": 2,
