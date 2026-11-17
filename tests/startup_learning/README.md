@@ -93,7 +93,10 @@ seed streams; residual calibration and measurement noise are also separate.
 The development set uses seeds 1–3 at offsets 0 and 7 s. The recorded validation
 set uses seeds 11–15 at 67, 307 and 607 s, after freezing both fits. The focused
 CI workflow repeats both directions and checks paired yaw improvement, tilt,
-gyro-bias error and complete fixed-horizon outputs. Run it locally with:
+gyro-bias error and complete fixed-horizon outputs. Separate 35-second gates
+include every startup, including shipping deadline misses: worst calibrated
+yaw ≤2°, worst tilt ≤1° in both profiles, residual-calibration yaw RMS ≤2.5°,
+and gyro-bias vector RMS ≤0.04°/s. Run it locally with:
 
 ```sh
 python3 tools/startup_learning.py --seeds 11,12,13,14,15 \

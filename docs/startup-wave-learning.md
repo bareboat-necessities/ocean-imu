@@ -14,14 +14,22 @@ across two sensor profiles. Every method receives identical noisy samples.
 Only sensor synthesis and scoring can read truth. This is held-out replay on
 the same wave files, not new independent ocean realizations.
 
-| Equal physical handover epoch | Shipping yaw RMS | Candidate yaw RMS | Candidate |
-|---|---:|---:|---|
-| Following, calibrated magnetometer | 2.202° | 0.802° | joint |
-| Head, calibrated magnetometer | 3.715° | 0.966° | joint |
-| Following, residual magnetic calibration | 2.494° | 1.876° | joint_cal |
-| Head, residual magnetic calibration | 4.680° | 1.640° | joint_cal |
+| Equal physical handover epoch | Shipping yaw RMS | Candidate yaw RMS | Shipping tilt RMS | Candidate tilt RMS | Candidate |
+|---|---:|---:|---:|---:|---|
+| Following, calibrated magnetometer | 2.202° | 0.802° | 0.905° | 0.333° | joint |
+| Head, calibrated magnetometer | 3.715° | 0.966° | 1.157° | 0.408° | joint |
+| Following, residual magnetic calibration | 2.494° | 1.876° | 0.905° | 0.370° | joint_cal |
+| Head, residual magnetic calibration | 4.680° | 1.640° | 1.157° | 0.437° | joint_cal |
+
+Tilt is the angle between the estimated and true unit gravity directions in
+the current body frame. It measures gravity orientation independently of yaw;
+it is not a separate roll or pitch Euler-angle RMS.
 
 All 240 calibrated-magnetometer trials meet yaw ≤2° and tilt ≤1° at 35 s.
+The worst calibrated endpoint errors are 1.387° yaw / 0.574° tilt following
+and 1.545° yaw / 0.610° tilt head. Independent fixed-deadline accuracy gates
+include every trial, even when shipping never hands over; paired gates alone
+would omit those deadline misses. The reports retain both RMS and worst errors.
 The shipping wrapper reaches Live by 35 s in 458/480 trials. The 22 deadline
 misses remain in the coverage file and the fixed-horizon results; they are
 excluded only from the comparison requiring an actual shipping handover.

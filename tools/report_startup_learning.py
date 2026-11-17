@@ -7,6 +7,7 @@ import gzip
 import json
 from pathlib import Path
 import statistics
+import sys
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
                                 f"{s['tilt_rms_deg']:.3f} | {s['field_direction_rms_deg']:.3f} | "
                                 f"{s['field_magnitude_rms_uT']:.3f} | {s['bg_rms_dps']:.4f} |")
     text += ['', '## Fixed 35-second endpoint', '',
-             '| Direction | Sensor profile | Method | N | Yaw RMS ° | Tilt RMS ° | Gyro bias RMS °/s | '
+             '| Direction | Sensor profile | Method | N | Yaw RMS / worst ° | Tilt RMS / worst ° | Gyro bias RMS °/s | '
              'Ready % | False ready % of ready |',
              '|---|---|---|---:|---:|---:|---:|---:|---:|']
     for s in summary:
@@ -51,7 +52,8 @@ def main():
             false = s['false_ready_fraction']
             false_text = f'{100*false:.1f}' if false is not None else '—'
             text.append(f"| {s['case']} | {s['profile']} | {s['method']} | {s['n']} | "
-                        f"{s['yaw_rms_deg']:.3f} | {s['tilt_rms_deg']:.3f} | {s['bg_rms_dps']:.4f} | "
+                        f"{s['yaw_rms_deg']:.3f} / {s['worst_yaw_deg']:.3f} | "
+                        f"{s['tilt_rms_deg']:.3f} / {s['worst_tilt_deg']:.3f} | {s['bg_rms_dps']:.4f} | "
                         f"{100*s['ready_fraction']:.1f} | {false_text} |")
     text += ['', 'The diagnostic readiness target is yaw ≤2° and tilt ≤1°. '
              'Readiness uses sensor statistics; target failures are evaluated using truth afterward. '
@@ -94,7 +96,9 @@ def main():
     matplotlib.rcParams['svg.fonttype'] = 'none'
     matplotlib.rcParams['svg.hashsalt'] = 'ocean-imu-startup-learning'
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(2, 3, figsize=(12, 6.5), constrained_layout=True)
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'plots'))
+    from vector_export import save_figure
+    fig, axes = plt.subplots(2, 3, figsize=(12, 6.5))
     colors = {'uniform': '#9aa2ad', 'tapered': '#7986b0', 'magfit': '#d99126',
               'joint': '#187c78', 'joint_cal': '#9d5aa0'}
     metrics = [('yaw_rms_deg', 'Yaw RMS (degrees)'), ('tilt_rms_deg', 'Tilt RMS (degrees)'),
@@ -107,20 +111,26 @@ def main():
                                s['method'] == method and s['schedule'] == 'fixed'), key=lambda s: float(s['horizon']))
                 ax.plot([float(s['horizon']) for s in cell], [s[metric] for s in cell],
                         '-o', markersize=3, color=color, label=method)
-            baseline = next(s for s in summary if s['case'] == case and s['profile'] == 'calibrated' and
-                            s['method'] == 'shipping')
-            ax.scatter([baseline['mean_elapsed_s']], [baseline[metric]], marker='x', s=70, linewidth=2,
-                       color='#333333', label='shipping at its handover', zorder=5)
+            baseline = next((s for s in summary if s['case'] == case and s['profile'] == 'calibrated' and
+                             s['method'] == 'shipping'), None)
+            if baseline is not None:
+                ax.scatter([baseline['mean_elapsed_s']], [baseline[metric]], marker='x', s=70, linewidth=2,
+                           color='#333333', label='shipping at its handover', zorder=5)
             ax.set(xlabel='Available startup data (s)', ylabel=label, title=f'{case.capitalize()} seas')
             ax.grid(alpha=.2)
             ax.set_ylim(bottom=0)
-    handles, labels = axes[0, 0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc='outside lower center', ncol=3, frameon=False)
+    legend = {}
+    for ax in axes.flat:
+        handles, labels = ax.get_legend_handles_labels()
+        legend.update(zip(labels, handles))
+    fig.legend(legend.values(), legend.keys(), loc='lower center', bbox_to_anchor=(.5, .01),
+               ncol=3, frameon=False)
     fig.suptitle('Isolated startup: noisy / biased IMU, calibrated magnetometer', fontsize=14)
+    fig.tight_layout(rect=(0, .12, 1, .94))
     svg = root/'convergence.svg'
-    fig.savefig(svg, metadata={'Date': None})
+    save_figure(fig, svg, metadata={'Date': None})
     svg.write_text('\n'.join(line.rstrip() for line in svg.read_text().splitlines())+'\n')
-    fig.savefig(root/'convergence.png', dpi=150)
+    save_figure(fig, root/'convergence.png', dpi=150)
     plt.close(fig)
 
 

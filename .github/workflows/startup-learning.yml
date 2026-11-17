@@ -4,10 +4,14 @@ on:
     paths:
       - 'tests/startup_learning/**'
       - 'tools/startup_learning.py'
+      - 'tools/report_startup_learning.py'
+      - 'tests/validation/test_startup_learning.py'
+      - 'plots/vector_export.py'
       - 'tools/sim_dataset*'
       - 'src/kalman_common/**'
       - 'src/kalman_ou_iii/**'
       - 'src/ahrs/**'
+      - 'src/util/**'
       - '.github/workflows/startup-learning.yml'
   workflow_dispatch:
 
@@ -24,8 +28,10 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
-      - name: Install host dependency
-        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - name: Install host dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-matplotlib
+      - name: Exercise startup report and deadline checks
+        run: python3 -m unittest discover -s tests/validation -p test_startup_learning.py -v
       - name: Build and exercise handover invariants
         run: |
           make -C tests/startup_learning -j1
@@ -37,11 +43,13 @@ jobs:
           python3 tools/startup_learning.py --seeds 11,12,13,14,15 \
             --offsets 67,307,607 --profiles calibrated,residual --jobs 2 --check \
             --output reports/results/startup_learning/ci
+          python3 tools/report_startup_learning.py reports/results/startup_learning/ci
       - name: Ideal sensors and magnetic disturbance controls
         run: |
           python3 tools/startup_learning.py --seeds 101 --offsets 17,107 \
             --profiles ideal,interference --jobs 2 --check-controls \
             --output reports/results/startup_learning/ci-controls
+          python3 tools/report_startup_learning.py reports/results/startup_learning/ci-controls
       - uses: actions/upload-artifact@v4
         if: always()
         with:

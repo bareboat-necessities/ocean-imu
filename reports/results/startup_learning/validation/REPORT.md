@@ -1,6 +1,6 @@
 # Startup learning: measured results
 
-Base: `8c9f535709fe7ff4d87d75dc5c98f4d0a48daa7b`. Seeds: 11,12,13,14,15; power-on offsets: 67,307,607 s. Both pinned v1.4.0 datasets.
+Base: `28b69057fcd49d741ab402dd064d53ff79ec583c`. Seeds: 11,12,13,14,15; power-on offsets: 67,307,607 s. Both pinned v1.4.0 datasets.
 
 These are held-out sensor seeds and startup phases on the existing wave records, not independent newly generated seas. Values below pool one endpoint error per trial; they are not live-filter RMS over a navigation run.
 
@@ -37,16 +37,16 @@ Every candidate row in this table uses exactly the shipping handover timestamp. 
 
 ## Fixed 35-second endpoint
 
-| Direction | Sensor profile | Method | N | Yaw RMS ° | Tilt RMS ° | Gyro bias RMS °/s | Ready % | False ready % of ready |
+| Direction | Sensor profile | Method | N | Yaw RMS / worst ° | Tilt RMS / worst ° | Gyro bias RMS °/s | Ready % | False ready % of ready |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| following | calibrated | joint | 120 | 0.797 | 0.337 | 0.0197 | 100.0 | 0.0 |
-| following | calibrated | joint_cal | 120 | 1.158 | 0.337 | 0.0198 | 100.0 | 5.0 |
-| following | residual | joint | 120 | 2.397 | 0.376 | 0.0213 | 100.0 | 60.0 |
-| following | residual | joint_cal | 120 | 1.857 | 0.375 | 0.0205 | 100.0 | 35.0 |
-| head | calibrated | joint | 120 | 0.926 | 0.398 | 0.0228 | 100.0 | 0.0 |
-| head | calibrated | joint_cal | 120 | 1.125 | 0.399 | 0.0230 | 100.0 | 8.3 |
-| head | residual | joint | 120 | 1.641 | 0.408 | 0.0221 | 100.0 | 22.5 |
-| head | residual | joint_cal | 120 | 1.644 | 0.416 | 0.0186 | 100.0 | 23.3 |
+| following | calibrated | joint | 120 | 0.797 / 1.387 | 0.337 / 0.574 | 0.0197 | 100.0 | 0.0 |
+| following | calibrated | joint_cal | 120 | 1.158 / 2.389 | 0.337 / 0.570 | 0.0198 | 100.0 | 5.0 |
+| following | residual | joint | 120 | 2.397 / 3.782 | 0.376 / 0.743 | 0.0213 | 100.0 | 60.0 |
+| following | residual | joint_cal | 120 | 1.857 / 4.194 | 0.375 / 0.743 | 0.0205 | 100.0 | 35.0 |
+| head | calibrated | joint | 120 | 0.926 / 1.545 | 0.398 / 0.610 | 0.0228 | 100.0 | 0.0 |
+| head | calibrated | joint_cal | 120 | 1.125 / 3.233 | 0.399 / 0.597 | 0.0230 | 100.0 | 8.3 |
+| head | residual | joint | 120 | 1.641 / 2.830 | 0.408 / 0.610 | 0.0221 | 100.0 | 22.5 |
+| head | residual | joint_cal | 120 | 1.644 / 3.867 | 0.416 / 0.605 | 0.0186 | 100.0 | 23.3 |
 
 The diagnostic readiness target is yaw ≤2° and tilt ≤1°. Readiness uses sensor statistics; target failures are evaluated using truth afterward. Neither the flag nor a small residual certifies accuracy.
 
@@ -63,7 +63,7 @@ The diagnostic readiness target is yaw ≤2° and tilt ≤1°. Readiness uses se
 | head | residual | joint | 120 | 0 | 31.84 | 93/120 | 20.0 | 29/120 |
 | head | residual | joint_cal | 120 | 0 | 31.84 | 92/120 | 20.0 | 33/120 |
 
-Host joint solve at 35 s: median 11.0 ms; maximum 87.8 ms in this run. This does not qualify ESP32 execution time or memory.
+Host joint solve at 35 s: median 11.5 ms; maximum 38.7 ms in this run. This does not qualify ESP32 execution time or memory.
 
 Accelerometer bias is retained as a calibration prior, so its error is unchanged. The gyroscope/field covariance is conditional and cannot be substituted for a full correlated live-filter handover covariance.
 

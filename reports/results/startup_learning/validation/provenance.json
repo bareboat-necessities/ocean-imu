@@ -1,5 +1,5 @@
 {
-  "base_commit": "8c9f535709fe7ff4d87d75dc5c98f4d0a48daa7b",
+  "base_commit": "28b69057fcd49d741ab402dd064d53ff79ec583c",
   "sources_sha256": {
     "tests/startup_learning/Makefile": "4514a8a2817047b8badc0e282239a9ae2083ae6956f83646ac8551399ebc9f82",
     "tests/startup_learning/ShippingBaseline.cpp": "165968fadf8cb11135642333e43c1cd1ae72c500b0afb77f3312e6f1dd8fc8f6",
@@ -8,7 +8,7 @@
     "tests/startup_learning/StartupLearner.h": "9ac90a23d80b1662e56e46a7392176208d5ba1e8ad86f67ae74f6d9c68a5e854",
     "tests/startup_learning/startup-learning.cpp": "e5a5baf889229a5b18dce699f3f55f1af8c31757b19f2a1574d6a3efca14f613",
     "tests/startup_learning/startup-test.cpp": "81d7dd80ee635c78ab3950ec74da1c0723c273507fea035aa791ee804e0426a6",
-    "tools/startup_learning.py": "6dcc32e4d6040e3eaf2dcbdf3758e32577846fed06b0b3b8c6b30b644e775429"
+    "tools/startup_learning.py": "ed0089418011d493709b54533548d9cc8ed68771cace7c95225086a1511b28b8"
   },
   "datasets": {
     "following": {
@@ -64,7 +64,7 @@
   "deadline_s": 35,
   "truth_access": "Only sensor generation and scoring; candidate takes Sample only.",
   "metrics_file": "metrics.csv.gz",
-  "metrics_sha256": "4b57d4f7815bcc4cb04f2dea8084c2966b45b8152e8f172570a2b08bfb34f9b1",
+  "metrics_sha256": "eca65a4fa30f3da6688301b2009be925ce0dcbb3f6417aafd0f8205271930cc8",
   "executable_sha256": "cfc433bba12e2b641537f8504e8bb95d6b9cbe5f782d5dcc0802d624ef0f9e7d",
   "compiler": "c++ (Debian 14.2.0-19) 14.2.0",
   "python": "3.12.14"

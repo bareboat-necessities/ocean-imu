@@ -50,6 +50,7 @@ def summarize(rows):
                                               float(r['tilt_error_deg']) > 1 for r in ready)/len(ready)
                                         if ready else None)
         item['worst_yaw_deg'] = max(abs(float(r['yaw_error_deg'])) for r in cell)
+        item['worst_tilt_deg'] = max(float(r['tilt_error_deg']) for r in cell)
         summary.append(item)
     return summary
 
@@ -113,7 +114,24 @@ def check_accuracy(summary):
                                   ('bg_rms_dps', baseline['bg_rms_dps'])):
                 actual = candidate[metric]
                 checks.append({'case': case, 'profile': profile, 'method': method,
-                               'metric': metric, 'actual': actual, 'limit': limit, 'passed': actual <= limit})
+                               'schedule': 'matched', 'metric': metric,
+                               'actual': actual, 'limit': limit, 'passed': actual <= limit})
+            # Paired comparisons omit shipping deadline misses. Gate every
+            # startup again at 35 s so those omissions cannot hide regressions.
+            endpoint = next((s for s in summary if s['case'] == case and s['profile'] == profile and
+                             s['method'] == method and s['schedule'] == 'fixed' and
+                             s['horizon'] == '35'), None)
+            if endpoint is None:
+                raise ValueError(f'missing 35-second accuracy cell {case}/{profile}')
+            # The calibrated arm must meet the declared target in EVERY
+            # trial. Residual-calibration yaw is still only an aggregate bar;
+            # retain its individual target failures in the coverage report.
+            yaw_metric = 'worst_yaw_deg' if profile == 'calibrated' else 'yaw_rms_deg'
+            for metric, limit in ((yaw_metric, yaw_limit), ('worst_tilt_deg', 1.0), ('bg_rms_dps', .04)):
+                actual = endpoint[metric]
+                checks.append({'case': case, 'profile': profile, 'method': method,
+                               'schedule': 'fixed', 'horizon_s': 35, 'metric': metric,
+                               'actual': actual, 'limit': limit, 'passed': actual <= limit})
     return checks
 
 
