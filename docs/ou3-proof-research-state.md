@@ -1,28 +1,36 @@
-## Yaw regression qualification in progress
+## Yaw regression evidence and CI qualification complete
 
-The refreshed source-bound reproduction check and all 824 OU-III validation
-tests pass locally. Seventeen native generation commands completed, including
-fresh 240/1200-s carried histories, full planar secants and historical AG
+The refreshed source-bound reproduction check and all OU-III validation tests
+pass. Seventeen native generation commands completed, including fresh
+240/1200-s carried histories, full planar secants and historical AG
 readout/enclosures. `heading-runtime-source-refresh.json` records commands,
 artifact hashes and scope. The complete 544-cell bidirectional replay matrix
 and all 14 shipped sketches with Arduino IDE default flags pass on the merged
 runtime source; Linux and Windows linking both pass in run 44002744401.
-The required serialized `make all` and full-evidence publication remain open.
 
-Class E publication/CI qualification: `make -C tests/validation evidence-test`
-rejects the committed OU validation and robustness bundles because their replay
-dependencies predate the merged steering and gyro/magnetic-calibration changes.
-The local 1,241-test validation run has six failures, all at these stale-source
-checks, and one skip. The current limiter is complete regeneration/publication
-of both sea-direction study sets and the full OU bundles. Retain the immutable
-old replay provenance until actual replacement runs finish. Separately,
-`tools/quality_gates.sh clang-tidy` in job 133782126577 received a runner shutdown
-signal and exited 143 without a diagnostic; it requires a fresh runner, not a
-weaker check. These failures invalidate neither the completed replay matrix nor
-the qualified proof identities. Shipping structures are unchanged; no
-relaxation or shipping counterexample is introduced. Next falsifiable check:
-all 42 case-specific study jobs complete on the refresh branch, followed by the
-unchanged evidence contract and complete CI checks.
+Class E publication/CI qualification is closed. Simulation-studies run
+44074557141 completed all 42 registered following/head-sea jobs from source
+`71f410938ca1a8f393979f4933933868fb612461`; the committed receipts retain the
+actual artifact digests and pinned case input/log hashes. Full OU
+validation/robustness/TFG publication run 44074557116 produced the canonical
+bundles. The combined replay fingerprint is
+`2c41692bc30a741aa0954ed5b3815c6bb9d1be1d5ed88cc9679029164d33dd23` and the
+results fingerprint is
+`1136250138bc4382c045e04a3d418715844cefeea9f7306c1c081e68d3f52a9f`.
+Post-merge build 44101355729, quality 44101355470, proof 44101355613,
+bidirectional simulation 44101355640, firmware 44101355475 and the 42-job study
+run 44101355745 pass without weakening a gate, scoring window or provenance
+requirement.
+
+Shipping-faithfulness handoff: structures preserved are the literal shipping
+prediction/correction chronology, covariance/gains, frontend/tuner state,
+integrated OU/S chain, scheduler, resets and same-history physical state.
+Relaxations introduced: none. The stale-bundle, ledger-binding, runner-shutdown
+and interrupted/local-memory build attempts remain class E; no shipping
+counterexample was found. All established conditional shipping-level results
+and every open theorem/device qualification remain unchanged. The next proof
+calculation must use more of the same-history shipping structure; this CI
+closure does not promote the end-to-end theorem.
 
 Class E ledger-binding failure: the CI-status-only ledger update omitted its
 source-manifest entry. All three proof jobs stopped at the ledger blob mismatch
@@ -54,16 +62,19 @@ continuation only. No shipping counterexample was found. Next experiment:
 regenerate the native diagnostics with parity checks, then the dependent
 certificates; do not transfer old numerical records by replacing hashes.
 
-Class E build qualification failures: concurrent Eigen compilations exhausted
+Class E local build qualification remains open. Concurrent Eigen compilations exhausted
 host memory in `make all -j1 SIM_JOBS=4` (`carma_lever_arm-repro.o`),
 `make all -j2 SIM_JOBS=3` (`carma_shared_modes-test.o`), and
 `make all -j1 SIM_JOBS=3` while native diagnostics also compiled
 (`carma3_filters_tfg.o`). Each reports `g++: fatal error: Killed signal
 terminated program cc1plus`; these are incomplete builds, not numerical
-qualification. An executor restart also interrupted a build without a terminal
-receipt. The architecture review rejects further concurrent native compiles:
-run the diagnostic batch and the required build sequentially. Retained facts
-are the completed CI measurements and standalone tests, not the failed build.
+qualification. An executor restart and two later operator interruptions also
+stopped serialized builds without a terminal receipt, although the latter
+passed the formerly limiting Eigen-heavy targets and OU-III compilation. The
+architecture review rejects further concurrent native compiles: run the
+diagnostic batch and required `make all -j1 SIM_JOBS=1` sequentially. Retained
+facts are the completed CI measurements and standalone tests, not a claimed
+local `make all` pass.
 
 Class E embedded build failure: Arduino Linux and Windows at a02d9fd4 fail
 with `dangerous relocation: l32r: literal target out of range` in OU-II and
