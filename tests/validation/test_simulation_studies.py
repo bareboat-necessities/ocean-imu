@@ -40,16 +40,19 @@ class StudyTriggerTests(unittest.TestCase):
 
 
 class StudyDiagnosticsTests(unittest.TestCase):
-    def test_tfg_dataset_replay_discards_committed_protocol_and_cache(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp)/'study'
-            cache = out/'dataset_cache'
-            cache.mkdir(parents=True)
-            (out/'dataset_protocol.json').write_text('{"binaries":"old"}\n')
-            (cache/'partial.json').write_text('{"stale":true}\n')
-            prepare_output('tfg_shared_modes_dataset', out)
-            self.assertTrue(out.is_dir())
-            self.assertEqual(list(out.iterdir()), [])
+    def test_protocol_bound_replays_discard_committed_results_and_cache(self):
+        for study, protocol in (
+                ('tfg_shared_modes_dataset', 'dataset_protocol.json'),
+                ('carma_shared_modes_validation', 'protocol.json')):
+            with self.subTest(study=study), tempfile.TemporaryDirectory() as tmp:
+                out = Path(tmp)/'study'
+                cache = out/'dataset_cache'
+                cache.mkdir(parents=True)
+                (out/protocol).write_text('{"binaries":"old"}\n')
+                (cache/'partial.json').write_text('{"stale":true}\n')
+                prepare_output(study, out)
+                self.assertTrue(out.is_dir())
+                self.assertEqual(list(out.iterdir()), [])
 
     def test_other_study_output_is_not_reset_by_dataset_preparation(self):
         with tempfile.TemporaryDirectory() as tmp:
