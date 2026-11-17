@@ -37,10 +37,10 @@
     "src/kalman_common/ProxyStartupFusion.h": "14923576800a4bc2f77c4a4505cdfe92cdbe1350",
     "src/kalman_common/SeaStateFusionDefaults.h": "0fc888c49de794e4f889871044726185b655c312",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "d9227ef315382d7f5580c69890462960543361c1",
-    "src/tuner/ContinuousMagHardIronEstimator.h": "8c195be941b6704564aa1ba434fd58a2834493a4",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "62cda3c6adddafa693720167e497ba2bda15ce74",
     "src/tuner/GyroMagCalibration.cpp": "d20405273b6e39c9e4ebb938971c9c3740ed439c",
-    "src/tuner/GyroMagCalibration.h": "efe51f7f44ecad59de98b3179c44a25ae6dee3bb",
-    "src/tuner/GyroMagCalibrationImpl.h": "44626587c44235cd8e6859d35190a1e844fd68a4",
+    "src/tuner/GyroMagCalibration.h": "778243880faf69b0ece2f4b65f0fd368f72614cd",
+    "src/tuner/GyroMagCalibrationImpl.h": "188c3d1f20a08b105d5b7eb7af7772f7f0d6e6a3",
     "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
   },
   "theorem_closed": false,
