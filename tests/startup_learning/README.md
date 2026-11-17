@@ -1,16 +1,29 @@
-# Isolated wave-startup experiment
+# Wave startup and live handover
 
 This host-only experiment reads the current v1.4.0 following-sea and head-sea
 records. `StartupLearner` has no access to truth, filenames, wave height, vessel
 speed, inclination, declination or field magnitude. It consumes calibrated
 body-axis accelerometer, instantaneous gyroscope and timestamp-matched
-magnetometer samples. No production filter includes this code.
+magnetometer samples. This full-history solver serves as the experimental reference. Production uses the fixed-memory implementation in `src/kalman_common/WaveStartup.h`.
 
-`ShippingBaseline` runs the unchanged shared `ProxyStartupFusion` through the
+`ShippingBaseline` runs the shared `ProxyStartupFusion` with the previous startup policy through the
 OU-III wrapper and stops at its **first live handover, before a live magnetic
 correction**. The test-only private-access shim reads the acquired magnetic
 reference; it does not modify any estimator equation or API. Bias and
 quaternion seeds are read from the actual live state.
+
+
+The OU-II, OU-III and CARMA wrappers and the TFG-OU proxy bootstrap use the
+same streaming solver. It accumulates gyro-transported field and force moments,
+fits a constant body gyro bias, then constructs magnetic north and down at the
+handover sample. The fitted bias and field enter the live core along with the
+attitude. The gyro interval history, configured covariance, accelerometer-bias
+release policy and tuner clocks continue through handover. The ordinary proxy
+handover remains available when the fit lacks a fresh field or fails its
+residual checks, and for explicit startup hard-iron estimation. Set
+`wave_startup_enabled=false` for a paired control. The host driver's
+`--production-pair` switch scores both policies on the same sensor stream
+and records `joint_seed_applied` for each live handover.
 
 ```sh
 make -C tests/startup_learning

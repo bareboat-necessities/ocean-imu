@@ -6,9 +6,10 @@ namespace startup_learning {
 // unit. The baseline runs unchanged until its FIRST live sample, then stops.
 class ShippingBaseline {
 public:
-    ShippingBaseline();
+    explicit ShippingBaseline(bool enable_wave_startup = false);
     ~ShippingBaseline();
     bool step(const Sample& s);
+    bool usedWaveStartup() const;
     Handover handover() const;
 private:
     struct Impl;

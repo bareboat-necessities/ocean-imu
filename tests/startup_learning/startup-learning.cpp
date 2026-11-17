@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 
@@ -44,7 +45,7 @@ double angle(const sl::V& a, const sl::V& b) {
 double yaw(const sl::Q& q) {const auto R=q.toRotationMatrix();return std::atan2(R(1,0),R(0,0))/rad;}
 void emit(std::ostream& out,const std::string& input,const std::string& profile,unsigned seed,
           double offset,const std::string& method,const std::string& schedule,
-          const sl::Handover& h,const Truth& truth,const sl::V& bg,const sl::V& ba,double ms) {
+          const sl::Handover& h,const Truth& truth,const sl::V& bg,const sl::V& ba,double ms,bool joint_seed_applied=false) {
     const sl::Q magnetic_from_geo(Eigen::AngleAxisd(-MagSim_WMM::default_declination_deg*rad,sl::V::UnitZ()));
     const sl::Q qtruth=magnetic_from_geo*truth.attitude;
     const sl::V B=magnetic_from_geo*MagSim_WMM::mag_world_aero().cast<double>();
@@ -63,14 +64,19 @@ void emit(std::ostream& out,const std::string& input,const std::string& profile,
     for(const auto& v:{h.field,h.down_body,h.gyro_bias,h.accel_bias,h.mag_bias,h.angular_rate,h.last_raw_gyro})
         for(int i=0;i<3;++i)out<<','<<v[i];
     for(int i=0;i<3;++i)for(int j=0;j<3;++j)out<<','<<h.gyro_bias_cov(i,j);
-    out<<'\n';
+    out<<','<<joint_seed_applied<<'\n';
 }
 }
 int main(int argc,char** argv) try {
     std::string input,output,seed_text="1",offset_text="0",profile_text="calibrated";
     sl::Config config;
+    bool production_pair = false;
     for(int i=1;i<argc;++i) {
         const std::string key=argv[i];
+        if (key == "--production-pair") {
+            production_pair = true;
+            continue;
+        }
         if (key == "--scale-force-slope") {
             config.scale_force_slope = true;
             continue;
@@ -93,7 +99,7 @@ int main(int argc,char** argv) try {
     for(const std::string name:{"field_uT","down_body","bg_rps","ba_mps2","bm_uT","omega_rps","last_gyro_rps"})
         for(const char axis:{'x','y','z'})out<<','<<name<<'_'<<axis;
     for(int i=0;i<3;++i)for(int j=0;j<3;++j)out<<",pbg_"<<i<<j;
-    out<<'\n';
+    out<<",joint_seed_applied\n";
     std::size_t trials=0;
     for(const auto& profile:split(profile_text)) for(const auto& seed_string:split(seed_text)) for(double offset:offsets) {
         if(profile!="ideal"&&profile!="calibrated"&&profile!="residual"&&profile!="interference")
@@ -105,6 +111,8 @@ int main(int argc,char** argv) try {
         auto mn=make_mag_noise_model(noise?.8f:0,residual?2.f:0,residual?.01f:0,residual?.015f:0,residual?.010f:0,residual?1.f:0,w3d_expand_seed(seed,15),w3d_expand_seed(seed,16));
         sl::Learner learner(config);
         sl::ShippingBaseline shipping;
+        std::optional<sl::ShippingBaseline> deployed;
+        if (production_pair) deployed.emplace(true);
         std::size_t count=0;
         for(const auto& truth:records) {
             if(truth.time<offset-1e-8) continue;
@@ -120,18 +128,22 @@ int main(int argc,char** argv) try {
                 sample.mag=apply_mag_noise(m.cast<float>(),mn,.04f).cast<double>();
                 if(profile=="interference"&&t>=15)sample.mag+=sl::V(10,0,0);
             }
-            learner.add(sample);
+            if (!production_pair) learner.add(sample);
             const sl::V bg=(gn.turn_on_bias+gn.bias_rw).cast<double>();
             const sl::V ba=(an.turn_on_bias+an.bias_rw).cast<double>();
+            if (deployed && deployed->step(sample)) {
+                emit(out,std::filesystem::path(input).filename(),profile,seed,offset,"deployed","handoff",
+                     deployed->handover(),truth,bg,ba,0,deployed->usedWaveStartup());
+            }
             if(shipping.step(sample)) {
                 emit(out,std::filesystem::path(input).filename(),profile,seed,offset,"shipping","handoff",shipping.handover(),truth,bg,ba,0);
-                for(const std::string method:{"uniform","tapered","magfit","joint","joint_cal"}) {
+                if (!production_pair) for(const std::string method:{"uniform","tapered","magfit","joint","joint_cal"}) {
                     const auto start=std::chrono::steady_clock::now();const auto h=learner.estimate(method);
                     const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
                     emit(out,std::filesystem::path(input).filename(),profile,seed,offset,method,"matched",h,truth,bg,ba,ms);
                 }
             }
-            if(count>=2000&&count%1000==0)for(const std::string method:{"uniform","tapered","magfit","joint","joint_cal"}) {
+            if(!production_pair&&count>=2000&&count%1000==0)for(const std::string method:{"uniform","tapered","magfit","joint","joint_cal"}) {
                 const auto start=std::chrono::steady_clock::now();const auto h=learner.estimate(method);
                 const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
                 emit(out,std::filesystem::path(input).filename(),profile,seed,offset,method,"fixed",h,truth,bg,ba,ms);

@@ -273,6 +273,9 @@ public:
     // set_quaternion_boat).  The covariance follows the write mode.
     void set_quaternion_boat(const Eigen::Quaternion<T>& q_bw);
 
+    void set_initial_gyro_bias_body(const Vector3& bias) {
+        X_.B.col(0) = bias;
+    }
     [[nodiscard]] Vector3 gyroscope_bias() const { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const { return X_.B.col(1); }
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }

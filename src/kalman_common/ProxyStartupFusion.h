@@ -39,6 +39,7 @@
 #include <cmath>
 
 #include "detrend/AdaptiveWaveDetrender3D.h"
+#include "kalman_common/WaveStartup.h"
 #include "kalman_common/MagneticStartupCommon.h"
 #include "kalman_common/GyroInterval.h"
 #include "kalman_common/MarineTurnSeparator.h"
@@ -56,6 +57,8 @@ namespace seastate::common {
 struct ProxyStartupFusionConfig {
     MarineTurnSeparator::Config turn_separator{};
     bool with_mag = true;
+    bool wave_startup_enabled = true;
+    bool wave_startup_scale_slope = true;
 
     // Earliest and latest the proxy bootstrap may hand over.
     //
@@ -295,6 +298,7 @@ public:
         // end, which runs from the first sample, so there is no phase in which
         // the wrapper withholds IMU data.
         if (stage_ != Stage::Live) {
+            if (useWaveStartup_()) wave_startup_.imu(dt, gyro_body_ned, acc_body_ned, cfg_.gyro_sample_mode);
             // Bootstrap: front end only, MEKF held.
             impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
             impl_.mekf().prime_gyro_sample(gyro_body_ned, dt);
@@ -352,6 +356,7 @@ public:
         // starts is the entire point.  The quality gate below still decides
         // when accumulation may begin.
         if (t_ < cfg_.mag_delay_sec) return;
+        if (stage_ != Stage::Live && useWaveStartup_()) wave_startup_.mag(mag_body_ned);
 
         // Ahead of every gate below, and deliberately.  The continuous
         // estimator wants the whole magnetometer record, not the part the
@@ -540,6 +545,7 @@ public:
             : NAN;
     }
 
+    bool usedWaveStartup() const { return wave_startup_used_; }
     bool  isLive() const { return stage_ == Stage::Live; }
     float freqHz() const { return impl_.getFreqHz(); }
     float waveDirectionDeg() const { return impl_.getWaveDirectionDeg(); }
@@ -573,6 +579,8 @@ protected:
     template <typename SeedFn>
     void beginStartup_(const Config& cfg, SeedFn&& seed) {
         cfg_ = cfg;
+        wave_startup_.reset();
+        wave_startup_used_ = false;
         turn_separator_.reset(cfg.turn_separator);
 
         begun_ = true;
@@ -891,11 +899,20 @@ private:
         // though the quaternion is passed in whole.
         const Eigen::Quaternionf q_proxy = impl_.startupProxyQuat();
 
-        const Eigen::Quaternionf q_seed =
+        Eigen::Quaternionf q_seed =
             have_yaw_gauge
                 ? boatQuatWithAbsoluteYaw(q_proxy, pending_yaw_abs_rad_)
                 : q_proxy;
 
+        WaveStartup::Seed learned;
+        const bool use_learned = useWaveStartup_() && have_yaw_gauge &&
+            wave_startup_.solve(cfg_.gravity_magnitude, cfg_.wave_startup_scale_slope, learned);
+        if (use_learned) {
+            q_seed = learned.attitude;
+            setMagWorldRef_(learned.field);
+            impl_.mekf().set_initial_gyro_bias_body(learned.gyro_bias);
+        }
+        wave_startup_used_ = use_learned;
         if (!q_seed.coeffs().allFinite()) return;
 
         const float yaw_sigma = have_yaw_gauge
@@ -916,6 +933,9 @@ private:
         last_impl_startup_stage_ = impl_.getStartupStage();
     }
 
+    bool useWaveStartup_() const { return cfg_.wave_startup_enabled && cfg_.with_mag && !cfg_.mag_estimate_hard_iron; }
+    WaveStartup wave_startup_{};
+    bool wave_startup_used_ = false;
     bool begun_ = false;
 
     Stage stage_ = Stage::Bootstrap;

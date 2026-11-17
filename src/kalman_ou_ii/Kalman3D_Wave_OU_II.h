@@ -168,6 +168,9 @@ class Kalman3D_Wave_OU_II {
         xext.template segment<3>(0).setZero();
     }
 
+    void set_initial_gyro_bias_body(const Vector3& bias) {
+        if constexpr (with_gyro_bias) xext.template segment<3>(3) = deheel_vector_(bias);
+    }
     [[nodiscard]] Vector3 gyroscope_bias() const {
         if constexpr (with_gyro_bias) {
             return xext.template segment<3>(3);

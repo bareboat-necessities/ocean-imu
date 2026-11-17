@@ -11,13 +11,15 @@ struct ShippingBaseline::Impl {
     Handover result;
     double previous=0;
     bool have_previous=false;
-    Impl() {
+    explicit Impl(bool enable_wave_startup) {
         ocean_imu::ou3::SeaStateFusionConfig_OU_III c;
+        c.wave_startup_enabled = enable_wave_startup;
         c.turn_separator.forward_body=Eigen::Vector3f::UnitY();
         fusion.begin(c);
     }
 };
-ShippingBaseline::ShippingBaseline():impl_(std::make_unique<Impl>()) {}
+ShippingBaseline::ShippingBaseline(bool enable_wave_startup)
+    : impl_(std::make_unique<Impl>(enable_wave_startup)) {}
 ShippingBaseline::~ShippingBaseline()=default;
 bool ShippingBaseline::step(const Sample& s) {
     auto& p=*impl_;
@@ -41,5 +43,6 @@ bool ShippingBaseline::step(const Sample& s) {
     if (s.magnetic) p.fusion.updateMag(s.mag.cast<float>());
     return false;
 }
+bool ShippingBaseline::usedWaveStartup() const { return impl_->fusion.usedWaveStartup(); }
 Handover ShippingBaseline::handover() const {return impl_->result;}
 }

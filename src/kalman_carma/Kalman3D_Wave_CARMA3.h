@@ -202,6 +202,9 @@ public:
         xext.template segment<3>(0).setZero();
     }
 
+    void set_initial_gyro_bias_body(const Vector3& bias) {
+        if constexpr (with_gyro_bias) xext.template segment<3>(3) = bias;
+    }
     [[nodiscard]] Vector3 gyroscope_bias() const {
         if constexpr (with_gyro_bias) return xext.template segment<3>(3);
         else return Vector3::Zero();
