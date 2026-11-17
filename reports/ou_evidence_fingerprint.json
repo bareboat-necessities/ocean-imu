@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
   "replay_fingerprint": "2c41692bc30a741aa0954ed5b3815c6bb9d1be1d5ed88cc9679029164d33dd23",
-  "results_file_count": 1410,
+  "results_file_count": 1414,
   "results_files": [
     {
       "kind": "file",
@@ -3986,7 +3986,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma3_benchmark/carma3_benchmark/dataset_runs.inputs.json",
-      "sha256": "3cb1ee0b40be6eb8d240c043094c0ec8450c984b320ab17b4b11e9784a38f031"
+      "sha256": "6e5641cd17fa62608bf9cd0aeed11a1481e9950af1e9aa0e59a0379e0bc5df8b"
     },
     {
       "kind": "file",
@@ -3996,12 +3996,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma3_benchmark/carma3_benchmark/heave_mean_m.svg",
-      "sha256": "78f5d2fc180275a612ad22e9c2f7700999581692eba5cf136f3db40e45ff2eff"
+      "sha256": "9e8ac88803ee675a8e145cfa09f5f9cce8eb3cbc8142416650fccc0c14b42a61"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma3_benchmark/case-receipt.json",
-      "sha256": "92d2db2aef2924eb8d52728b6fb648c358ca539400df12cd4a34c6dc07871a1c"
+      "sha256": "3c82395bd0eb62149a4456daf4d5397b049f8e0d44b28bce139cdcfc3def7f4e"
     },
     {
       "kind": "file",
@@ -4011,7 +4011,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_excitation_study/carma_excitation/dataset_runs.inputs.json",
-      "sha256": "f2321b3f736564fff5b0b99b8b76ec90bc53829f0a74b825916102b631c39c09"
+      "sha256": "1f1ece50e63498d99c796bf96bedcd34e99344e29fde4434413f2fe21becb1cf"
     },
     {
       "kind": "file",
@@ -4021,12 +4021,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_excitation_study/carma_excitation/heave_mean_m.svg",
-      "sha256": "4fa7c6e9f57554221234c728b1d27000c3830174ed1026aaa64e3a334ffacc14"
+      "sha256": "1782316b4c7b592d0a48a0e9cae12129797472c126e39570c22b32576ec46b11"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_excitation_study/case-receipt.json",
-      "sha256": "639901ced016a99a296f711beacd3773db80ef85fec7ca587958971b050d5156"
+      "sha256": "37da2ae84755ed64179bda5b51be2d7dfe6bc21f3c4e4646e6ff1166fafd5ca9"
     },
     {
       "kind": "file",
@@ -4056,7 +4056,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_lever_arm_study/case-receipt.json",
-      "sha256": "b4b4ea5f266f758472e96ca1e9cce17cab72372f1c54b979ef0fb27b5bc26620"
+      "sha256": "5d7cc32a15b778c5ffd24e0075bf0ce45401431b6dc9e398eae8333b913eea31"
     },
     {
       "kind": "file",
@@ -4071,7 +4071,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_lever_arm_study/lever_arm_report.md",
-      "sha256": "b6bbb7a4a94e2bc5adae61ae8f9cc4792f5b2d3958386125e84dc5a7b2251b16"
+      "sha256": "231e357561abda3fee1a05865ee7e23853d4bacd08baab2102c3edbc43a40966"
     },
     {
       "kind": "file",
@@ -4086,12 +4086,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_lever_arm_study/manifest.json",
-      "sha256": "bd90cbfe24658cadb0f4d2b837c3c77eee9d5f184eb6640927a93b908a2bb3d5"
+      "sha256": "8866800266902760d2b58af68675b03ab8fe8cb8dd3eebe463994a4d3afb6494"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_study/case-receipt.json",
-      "sha256": "f579491024789de36cbc55029029aeb43e4f1d3d59ea293c79205bdc75588cfa"
+      "sha256": "aaf2b119803372c22650f0a36aff39eadfcf782d0d57a86ba82edcc679ada3df"
     },
     {
       "kind": "file",
@@ -4106,7 +4106,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_study/kalman_carma_shared_modes/heave_mean_m.svg",
-      "sha256": "4150ffca4a4518cfed81999cb920532e4ce1446b619a10c0254cb364e85a23c4"
+      "sha256": "049cc71aef0742bad2d3101b67c918511cbe1a5c6dc3a8107f921af57d673428"
     },
     {
       "kind": "file",
@@ -4171,7 +4171,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/case-receipt.json",
-      "sha256": "4bc52687bd8150d3e4dca53286f0e25840c40143ba63322c344d0611715c906a"
+      "sha256": "267f3de8e8e2c833a459cb71ebd7905833affe170c2575d1ffcdb9a7e41eda05"
     },
     {
       "kind": "file",
@@ -4181,12 +4181,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/protocol.json",
-      "sha256": "2118cd0258c090e512908b4bb4094219f4a7e3e015f3dee95899be0453f1bf26"
+      "sha256": "c9ae0e346489febacd7a0a81621b954c60dcdc45ad2ab74b5fc42e597fb5de10"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/publication_summary.json",
-      "sha256": "de8c5bc1a257be69b81800741be006406363cc277985e66f78e5b000a5b3dd3a"
+      "sha256": "424d7e208b8677e0c39d1e9bc2dc749bc4b3a0898c88c3177dcbee3fc49e7fc6"
     },
     {
       "kind": "file",
@@ -4441,7 +4441,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/direction_rao_ablation/case-receipt.json",
-      "sha256": "70f5e52648d23b9a835cfe5b458e5bce4b8d56efc1984719c8cb11c61678e5e0"
+      "sha256": "84316d8eec568401534282e0f25405b439f1295f377b868efa360ad42496aea6"
     },
     {
       "kind": "file",
@@ -4466,17 +4466,17 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/direction_rao_ablation/manifest.json",
-      "sha256": "b222a0e1f8c2b5689ab6b037b1ba0ef6303f27712fbbdb517f0a2a8c8134d271"
+      "sha256": "6a6d9b061b8355ae18bab64ed04ee46a3393c2a6363a94c70d53257fdd3ab94f"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/engine_noise_degradation/case-receipt.json",
-      "sha256": "71daadf7edc41e5de36758288c8bd13accbc0af18efeeb5c704ebb0c8da1987a"
+      "sha256": "98b3bf332ce227d178884ca755471caa97c386a3193262d55e98b23402e31982"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/engine_noise_degradation/engine_noise_report.md",
-      "sha256": "5b2ebabb725ecc9abcdaedb94f77cf53fefca944472db6a35da62cb73669860c"
+      "sha256": "d65f0f0af758a808206b01f970133a16a5e6158d151357541263647bca5a9d6d"
     },
     {
       "kind": "file",
@@ -4496,7 +4496,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/engine_noise_degradation/manifest.json",
-      "sha256": "4f96463914fdc8864a13a86cb2cb80d6bcc1bc70d137351d50bee615ba30bac0"
+      "sha256": "bcf2e36392292e5f952f322925140013e54e70dce740118d10307cc23ad49cf9"
     },
     {
       "kind": "file",
@@ -4516,7 +4516,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/heave_only_comparison/case-receipt.json",
-      "sha256": "8b39b4adfbe86e04332008ef1c403de0336be7b51c4a35392f25d8387f599d56"
+      "sha256": "6e0465a7209618b683cacb720a2729d1674905d7159657600ff7b1cd4fc0e095"
     },
     {
       "kind": "file",
@@ -4561,12 +4561,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/live_bias_csv_replay/case-receipt.json",
-      "sha256": "6c69ac6d43125cd1bd358dd3e4e8d376b4b220b4aa1524ee89a5ed88a8367cd3"
+      "sha256": "5f0dae9a989d638bd6c6c3fc8b12478963d0e4c1c2df4d8d332ee67a1410fafc"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/live_bias_csv_replay/csv_rollout_all.json",
-      "sha256": "d0ed4a02935fe277b790684cec647c3512913e97e8b9d71067bd434798af8294"
+      "sha256": "9c3756d9019c5e945e58824ec0c34572a597515a09ce77ebc1588f36b9bd3065"
     },
     {
       "kind": "file",
@@ -4581,12 +4581,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/live_bias_csv_replay/heave_mean_m.svg",
-      "sha256": "40837b6b11195e14cd92e9d489d442706fc912a44d5516ed3a729071de57c588"
+      "sha256": "60ff060d1c450e0af2ae16749076aca0e9496abbde8e60d9668a7e465c9b9374"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/live_bias_csv_timing/case-receipt.json",
-      "sha256": "2cd712e9dc1c66f9659c70ae462a70f5ff6d69e2f719a067ff87c70e1b33c8d9"
+      "sha256": "a09a62f5d530f24767581f46b87bd35c92404a78ad793d7e2eadf77106f1e529"
     },
     {
       "kind": "file",
@@ -4601,22 +4601,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/live_bias_csv_timing/csv_timing.svg",
-      "sha256": "0e7e8cb64afdd8d7c745bea4c0e64879384c4757115b575e4e5fec259cd20dc3"
+      "sha256": "774dbc82e5c770d6b93f80e1c6db7da2dbdee95c6835547f7d46edc9c788d3fe"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/model_mismatch_ablation/case-receipt.json",
-      "sha256": "21ef46b835f01716f7f179ffc1228712a1b5234bc9f163ca3edfc4df08624718"
+      "sha256": "977b2b4b2b72672ac612b18b4a9743f5e8c8ebbab897d8bbe278f5509457a559"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/model_mismatch_ablation/manifest.json",
-      "sha256": "f7f8a6b970929c5adf288070c5fc30824b9359593b968578e1dcfb782d083f90"
+      "sha256": "46dacb56bcdfa1b59de161a4c59856871cacd96b3a7c03bbeb0ce26a62b7ffce"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/model_mismatch_ablation/model_mismatch_report.md",
-      "sha256": "b656440f31f825040fc5b9fca8124b85bd14f61758a6a8d3d69bda26789ce3e1"
+      "sha256": "45bff3206d7ffe76221b9e010f42d9dd699431013000c7e0b0d7d7809695e6e5"
     },
     {
       "kind": "file",
@@ -4641,12 +4641,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_engine_noise_mitigation/case-receipt.json",
-      "sha256": "568e6ea6267a83405d5ae5b4b26076a783368d4701de3fe75150fda7f5f96335"
+      "sha256": "2a68cee712c01b3c96fe547e7b481cabd957c396f03d3042b6af19e05f7cd91c"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_engine_noise_mitigation/guard_report.md",
-      "sha256": "3957e70615c16ed8a6c4441e7f7835087266416176b10324eb02b9b779a05757"
+      "sha256": "89ffb41c83fddb9b4f9342d5f5039862887b23041e5f8d9e2257223fb01339f3"
     },
     {
       "kind": "file",
@@ -4656,7 +4656,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_engine_noise_mitigation/manifest.json",
-      "sha256": "7c8843ba85f76ca70d9c58d30ec9f60066fd4203535526044fcde9d03a0ff3aa"
+      "sha256": "4aa8998bcba5a968042cd36030637a3e32dfab6b0f9c09bc3d4a40d3e9ed4450"
     },
     {
       "kind": "file",
@@ -4666,7 +4666,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_lever_arm_study/case-receipt.json",
-      "sha256": "085bf29b5ecdbf193fe7749bc3aa272ce1d47870eb94c27bb76e149b2da440ce"
+      "sha256": "b3407f28f75d67f74d29107929f44249a9dece7315d898d740662e9699320b49"
     },
     {
       "kind": "file",
@@ -4681,7 +4681,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_lever_arm_study/lever_arm_report.md",
-      "sha256": "08f2fd58d6d7a99988faffc84cd8340fce2aab7899f245c3dc82469c9c908696"
+      "sha256": "46bcd11e2c9233191698a050e8484eed504fafc2246e80e53e572f89424fda1d"
     },
     {
       "kind": "file",
@@ -4696,7 +4696,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou3_lever_arm_study/manifest.json",
-      "sha256": "ede054d60922ed472c5b674b47a5d84f2ad1716564c60b8ebb565587ed1442b6"
+      "sha256": "4bd86f0e349df0c3c6ebbb51b2afe85cec31c0a23eb33c09509df3dde632a81f"
     },
     {
       "kind": "file",
@@ -4726,7 +4726,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_robustness/case-receipt.json",
-      "sha256": "cae3b480af35fbf654e9e3f9a3def382c4788c0a0cb31094c20577d0c21713c8"
+      "sha256": "e1316442d78e5669661f3130a23c0067f64537e3e1382b9e199dfaa82ff6731e"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/sim_v1.4.0/following/studies/ou_robustness/ou_robustness.json",
+      "sha256": "8693e4a507c5104f312e9c83fd05558bebc7cf9646230bf5d77e7596192b8e22"
     },
     {
       "kind": "file",
@@ -4736,7 +4741,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "de97f55b2e036e77c8754d92b93fe6e8336a0634124e8306984fb7059865dae9"
+      "sha256": "c6359940e49fe859159cc4e7f1f502ae4f6fa0b3e30112549aad72ed19c6f6b2"
     },
     {
       "kind": "file",
@@ -4771,12 +4776,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_roundtrip_transition/case-receipt.json",
-      "sha256": "8f113d324da909fed9ee7e197eb92a1c053e72448722c84ca24d326c46321802"
+      "sha256": "742f64cfdd0196dd8c19c3bc8ac01565bbf2a40b94f674eba44c7c05e62ce060"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_roundtrip_transition/manifest.json",
-      "sha256": "655e980bf684a6fe3e9b29ff8014a8c0317d257e845023c915606243bf1e465a"
+      "sha256": "0b80ad8ac2b02e70dee407f70807c975f23ed633e1af318d40f4715cfb35298e"
     },
     {
       "kind": "file",
@@ -4796,7 +4801,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_validation/case-receipt.json",
-      "sha256": "526deff199e3946f0f9e423e4cf872b9e27c46c8b6b169da0bafe344e2784921"
+      "sha256": "f7b192dd383f94996d907eedb938e2bc564a61e3ac2a31c9220709be64fc39d1"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/sim_v1.4.0/following/studies/ou_validation/ou_validation.json",
+      "sha256": "fdd8f9447d1e9411769a1b2eb16920f0e9af85208d7bffaf322404108e34c47c"
     },
     {
       "kind": "file",
@@ -4821,7 +4831,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/ou_validation/ou_validation_manifest.json",
-      "sha256": "4a82ec2520b1ddea7259c45d0cc5fab798e4128d8fca18c2edc13bc7f0bfb649"
+      "sha256": "8fd3ae5144ee2507fcc92cd4c04da0ea3dd77441e64eef5c9f6ba9311ec7abbf"
     },
     {
       "kind": "file",
@@ -4881,12 +4891,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/startup_ablation/case-receipt.json",
-      "sha256": "89aa68bb2afaa0348a1dec15b44cf470c0f865a15473d3941824f2271357d202"
+      "sha256": "697db9a0a6bae2d18f012f79c73f2baf6213ef545c0251d3405c0047e25bbf59"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/startup_ablation/manifest.json",
-      "sha256": "8a5571f1a6955e216a7e2fd400284c52df8ac4f3e702d8b6c1b15530d87acf9d"
+      "sha256": "705537ce61a8b1f846a5a1802aee13f6268d99c6b13fd44b2d4e6662d2099e2c"
     },
     {
       "kind": "file",
@@ -4926,7 +4936,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/startup_transient_study/case-receipt.json",
-      "sha256": "9f2d5172008829a27b1df1643b12f797fd1d9034e646ff0c1969afa4c2e108a7"
+      "sha256": "f6460033a88d8341d8f13d58fd54a294afa3ef8d394b2648809d1ffcfd0dff4a"
     },
     {
       "kind": "file",
@@ -4986,17 +4996,17 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_carma3_benchmark/case-receipt.json",
-      "sha256": "96b5928fdf18d8e766748f604a93d7dba33037364080f7e4b0443cdadec2f786"
+      "sha256": "67349a9f5acd84df27239e24526f8d69fab3a2375b9d2f8d42851f32f4c3c165"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_carma3_benchmark/tfg_carma3/dataset_runs.csv",
-      "sha256": "6b577265e6b36a233cb2b77340620065b095251ec581b394ed2c97ae948d14dc"
+      "sha256": "b5c742c037746dccc4898cd89ae36664e7990bf7093885b830969d32178cf17a"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_carma3_benchmark/tfg_carma3/dataset_runs.inputs.json",
-      "sha256": "3cb1ee0b40be6eb8d240c043094c0ec8450c984b320ab17b4b11e9784a38f031"
+      "sha256": "6e5641cd17fa62608bf9cd0aeed11a1481e9950af1e9aa0e59a0379e0bc5df8b"
     },
     {
       "kind": "file",
@@ -5006,12 +5016,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_carma3_benchmark/tfg_carma3/heave_mean_m.svg",
-      "sha256": "3d069dea6e37cdcb74966488286c51c28ab206d027474b317f7741c18eed94ce"
+      "sha256": "8b9a3983e8c30a64dbcb7d15c84923dfc2a3786de3cd1361d9d5eb8cc9f81edf"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_comparison/case-receipt.json",
-      "sha256": "8ffb4437cbea38fe75a95a38166581c2843f4b3b846598605d35cb9f215515c0"
+      "sha256": "e0873da773be658ec87f9bc3fd7ae0173a301773b957f01bda20500110d7d8fc"
     },
     {
       "kind": "file",
@@ -5026,7 +5036,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_comparison/manifest.json",
-      "sha256": "901af3899e2367883e5f8ea54a60f9e129054edcd3c15f298b182d09cea66ea2"
+      "sha256": "67593b6ced90a18e6259ecb59ac71c23031d6f92373dde20e926e4a24bde2976"
     },
     {
       "kind": "file",
@@ -5046,7 +5056,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_shared_modes_dataset/case-receipt.json",
-      "sha256": "6416191e5265d4e210b8fe8841c88986156b1a29a1efc1c80d3a538d4d6951a2"
+      "sha256": "653ce0267ad4f405848b6a5e76bbb82f57c83e514d549b43e52189cb8154391d"
     },
     {
       "kind": "file",
@@ -5056,7 +5066,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_shared_modes_dataset/dataset_protocol.json",
-      "sha256": "c1437de981077789bcdaccd55f68b16f468c018758bc1fa995020a1383b7324f"
+      "sha256": "6f135e4a180f6e97cdcafbe89298937177ab4f6c22cf2b25e75234f034edb8f9"
     },
     {
       "kind": "file",
@@ -5071,7 +5081,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/tfg_shared_modes_dataset/heave_mean_m.svg",
-      "sha256": "233c4c304cd16a529243cdd45f690b1d46741ebe04b08601e16fb4296dcf80ac"
+      "sha256": "97239a3ee89f1afe801f1d34abfa59f14768c0fc9001e627d9f473bca36a5916"
     },
     {
       "kind": "file",
@@ -5131,12 +5141,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma3_benchmark/carma3_benchmark/dataset_runs.csv",
-      "sha256": "0454bc5434d71916337563cc1364060d177e2c80c2d1140ffd5d39a0c01e0c93"
+      "sha256": "bfd2b3552c2a4ab54637936481c85df0ae147e1e862fdfb74201617abc04ea5e"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma3_benchmark/carma3_benchmark/dataset_runs.inputs.json",
-      "sha256": "84a33b0239096f1f493103c828ee507f74fc7e6964380e38b8628577b58ff8a1"
+      "sha256": "1438fff65c281b7a26714638dee9413a1278f1499e8ebd00a77637fcd66e5d9e"
     },
     {
       "kind": "file",
@@ -5146,22 +5156,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma3_benchmark/carma3_benchmark/heave_mean_m.svg",
-      "sha256": "f71ffc555cbcf1e24a45be8116b3dfb65fd39be9dd6dbc54dcf46f1c8fc29928"
+      "sha256": "243a6d4a29b2d5b1c882a57f654464b1b4211620ffcc914a8a1a2694744ba9d9"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma3_benchmark/case-receipt.json",
-      "sha256": "6babb4c193acecfa74d2332ae5c8f2f1f290e5a61879c4278f7181cf80e67785"
+      "sha256": "6173a6f41ff464bf56ca368106fa0154f6d98d5c4bc421f70b74ba2d3688a5c1"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_excitation_study/carma_excitation/dataset_runs.csv",
-      "sha256": "3110848a8ad8d12507db6fcc93ad1bf2991f01efa045545b936f08a8e7af13b9"
+      "sha256": "0f7e4f428240740efa528e9d924c7a3b2d747dd154269cc6883838133bc01457"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_excitation_study/carma_excitation/dataset_runs.inputs.json",
-      "sha256": "df6d825f5ca1ea67218692e5ae7203231093dee35e5159d82394661cf82a3761"
+      "sha256": "a8daded240b0b99383a698498dcffe8762d5c58bb25a94d00e3214c90f04f375"
     },
     {
       "kind": "file",
@@ -5171,12 +5181,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_excitation_study/carma_excitation/heave_mean_m.svg",
-      "sha256": "e49a8c57371bf57302a6a2ec2e5d4e32b5dd5149bc8107f51ec255d166ca7cf7"
+      "sha256": "05a258714f4195a8f497b884331bc42bb394002da0993045a6804efe2b6d6e0b"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_excitation_study/case-receipt.json",
-      "sha256": "15a301fa86b7441cca24cb2cdb44f94ebe277a070e4d94023f31b62b228a810c"
+      "sha256": "bd848075b715179f92c64fb983f2c6e3b7d48d99adb9f5444cc17b3701089378"
     },
     {
       "kind": "file",
@@ -5206,7 +5216,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_lever_arm_study/case-receipt.json",
-      "sha256": "2c9c13d0d100d0aa3e8c77c92b7bbf3bebd4f0c407eba43d8640e67e484cd56f"
+      "sha256": "d5050b73fd65177bbae26f3f299787badceb1ee5f923442b652d819d630399dc"
     },
     {
       "kind": "file",
@@ -5221,7 +5231,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_lever_arm_study/lever_arm_report.md",
-      "sha256": "ceae506f39cbb7b18fa992f86f2d33627c483a41ff1c6830dca402116a8bd37d"
+      "sha256": "993410e0c6112d3071819b02c2fffedde4dc597e252d91ed936d705687f8e52e"
     },
     {
       "kind": "file",
@@ -5236,12 +5246,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_lever_arm_study/manifest.json",
-      "sha256": "6b10c09a4ef272ef69fb27109a5977d896c37c1d9e234e77b720cd932858f894"
+      "sha256": "2086bfe044ca3ab2f106fa976f986c87e6201d3a2a363099450510d3ed8763f3"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_study/case-receipt.json",
-      "sha256": "34a08e8af6de0b1ed9622a6de88a9753f11da0ee8572e0e51cd74edd294e3574"
+      "sha256": "6b6224b481a8b17a3be8c029b13a0f527ab26605e64dfe5393ce0a54724ddcc5"
     },
     {
       "kind": "file",
@@ -5256,7 +5266,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_study/kalman_carma_shared_modes/heave_mean_m.svg",
-      "sha256": "d3d392890b97ec9d5387115f158ca2a933ff17786393cda71e4c5d9adcab3fb3"
+      "sha256": "55e50eb3c1bd0dcff7867e58f680d744c27279c887df7f923612eeda4ca13a1b"
     },
     {
       "kind": "file",
@@ -5321,7 +5331,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/case-receipt.json",
-      "sha256": "fb3ea9262fa2ee339d871c08e0be98a53b9c64c8e1f69ea78da9b931db4f3549"
+      "sha256": "1daf688a1b7e4576fc2b642e73574c95a4737b001084da1a19e663b04e07876d"
     },
     {
       "kind": "file",
@@ -5331,12 +5341,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/protocol.json",
-      "sha256": "07b99ff97ad2dbc7f93cd0ec5b32d37020c4f68edc94433f4f9bd346fbd07ae8"
+      "sha256": "92949b2463933fc210aa20269b16c69bcf902de83ab4572f2b3f56626a116d0b"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/publication_summary.json",
-      "sha256": "4be4b4fd1f3eb48e477cedb91f7ba78c090ecf4fd85c1f099530c62082def7f9"
+      "sha256": "10c7a39bc125ee06fc700f76c22299684770f450bf8506ad9a5294ed933924d6"
     },
     {
       "kind": "file",
@@ -5591,7 +5601,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/direction_rao_ablation/case-receipt.json",
-      "sha256": "138579ff520d82caac5bf9fbb0269785631a4c8ecb1168715a90236dc03eb75b"
+      "sha256": "f7fabb8eede44a20ef4e1947fe803a76f33a6aee0c5275a511621d09f062fb0f"
     },
     {
       "kind": "file",
@@ -5616,17 +5626,17 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/direction_rao_ablation/manifest.json",
-      "sha256": "638568e6a91d00e8b0b3c6a14280b561d67b4a743da0adf19511285add4b824e"
+      "sha256": "d3582626fdbc8dec00022f276a67a20b9ba452492d9e650ac77f9ee24c37c6ed"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/engine_noise_degradation/case-receipt.json",
-      "sha256": "b0b6a5e211e08e15c0fbf757b853ff6a9439e9a38cd161caa0017c405d6fa08a"
+      "sha256": "da94e8f73224ea5538015eb098ec5531213e95baa0f9ef9c713043e9e5e37f0e"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/engine_noise_degradation/engine_noise_report.md",
-      "sha256": "397b31691cdbb88586b034287b9d2eee197dae71cd838f1f77c34519d12859d3"
+      "sha256": "47f23fc5f4f4a20e078a82d65d3d996c1a61394f71bf77ae0f4c6bcee1801e42"
     },
     {
       "kind": "file",
@@ -5646,7 +5656,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/engine_noise_degradation/manifest.json",
-      "sha256": "ce2fb4c0036151ff744b9223960314ed939962db1abeaa97690f7cc22e29af1e"
+      "sha256": "a2fcce50a5338869b8bc6c9821743d4da3a02cdc269f2f52243693a0312b9641"
     },
     {
       "kind": "file",
@@ -5666,7 +5676,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/heave_only_comparison/case-receipt.json",
-      "sha256": "827133b06dc7d6f1a401f180a9b91ea7ccd5049a9f6db2d7b490a10f7248e3b8"
+      "sha256": "0b263e563e7f1fbd3827299fb6f640fa093c83ce012acce8dce5be132567c16b"
     },
     {
       "kind": "file",
@@ -5711,12 +5721,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/live_bias_csv_replay/case-receipt.json",
-      "sha256": "ddb0b8516a3004d8b9aa55a769ba1073a43adba7682556d8b375613d0ed52eb4"
+      "sha256": "44682749ab1d21655b2e5fb86fd5a1bc27011e9537c6eec18189d9f2e0b6dc51"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/live_bias_csv_replay/csv_rollout_all.json",
-      "sha256": "9bde2838b040331474c093dfac04df98bba7a4b112b8eebb5d40199406bdfb12"
+      "sha256": "20a2e63bed4e56a32ee40a82f351ec9b881bd4721b0294e7c73b03fc214d4a0a"
     },
     {
       "kind": "file",
@@ -5731,12 +5741,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/live_bias_csv_replay/heave_mean_m.svg",
-      "sha256": "b70f66c0870df95415173cc5e4783dbdbfea8c3e85f90eef5e82c97017a27ed5"
+      "sha256": "006b237ec3c896f0b925fce22d61bd8ba4815df4d38130b4e6789d55cb73fa82"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/live_bias_csv_timing/case-receipt.json",
-      "sha256": "8620192bfba3a44bb3043d51dc708665f83f6b5049f9ca7e402e3a79027b39d2"
+      "sha256": "42d3fe0d8fc91929d697da3398ed0bdaff3abbe34f408f2f9586fa69099b989a"
     },
     {
       "kind": "file",
@@ -5751,22 +5761,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/live_bias_csv_timing/csv_timing.svg",
-      "sha256": "c03418d1d324a4d730f68c642e188dd968c2c7f5d2b3a19f593d4d94f03a53c9"
+      "sha256": "cf8d1c5319c34faf183146e942bb3094436d70290984ca55bfe647c82c009d3c"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/model_mismatch_ablation/case-receipt.json",
-      "sha256": "32714c45fbcd5f05cae1226098c00152822f0dd0d8b3cd5a68187cf4f106a25b"
+      "sha256": "afc97eaf26fbf933f42f826640dbdae42ae7134e8a2865b35a9ae68bbce5056a"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/model_mismatch_ablation/manifest.json",
-      "sha256": "26d2091a63ae31569223670c0bda85dd2a6dd822c12ab25ab33969eb05ae4a9c"
+      "sha256": "5ad241ea125ac1600c7ca1f2c6d6f011bc4f52ba09ab2907258362279daf7758"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/model_mismatch_ablation/model_mismatch_report.md",
-      "sha256": "c3afa24c1beee999845c9bd1876cecd1f9c9657f0cf4aa5b7c7296c491869616"
+      "sha256": "c5a013f48348cc3eb97afc8810eae3ef5b3f5f4042fd912bd5eb6837856a6f01"
     },
     {
       "kind": "file",
@@ -5791,12 +5801,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_engine_noise_mitigation/case-receipt.json",
-      "sha256": "fa9addb217fda177e99cb9d3dd6736bd753f87840fcc592cc6a5fdf3de320c0a"
+      "sha256": "82d3088440daa75df754a7303b7c3e073400029af99163e02ef7d1dddca71f97"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_engine_noise_mitigation/guard_report.md",
-      "sha256": "13eb8570567d75e29b4972e2fb08f2199ef8af6ed26ba6b27e49067117906609"
+      "sha256": "a6d771986d159a9afe7111727d047f4654dc821ccbd2187ca506bad70872874a"
     },
     {
       "kind": "file",
@@ -5806,7 +5816,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_engine_noise_mitigation/manifest.json",
-      "sha256": "cf85dbafbf27b8356f0edf01a700f265b12fc2fcb3227f859f8759d4370f07fd"
+      "sha256": "d9da8264d975c6d4e78de684f45fa879bb4c1065e55bc1f9758d29d97f091379"
     },
     {
       "kind": "file",
@@ -5816,7 +5826,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_lever_arm_study/case-receipt.json",
-      "sha256": "88d1d16e784073b61466dc5442c5f2eaac77d885ca01010a4a663cf6b4041924"
+      "sha256": "1548dd37be04b74f0d5987fc7d54c1f6f6442e29bdad87b9c068e557dceb0e46"
     },
     {
       "kind": "file",
@@ -5831,7 +5841,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_lever_arm_study/lever_arm_report.md",
-      "sha256": "33ecf720a80d6acb43dfdb0159f5e6371ad6eea8de33c74b98bc4160711cbfbf"
+      "sha256": "70cb3033b58c41199fdc6208a830f425c23783d155a22734bccbd41a627f48a4"
     },
     {
       "kind": "file",
@@ -5846,7 +5856,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou3_lever_arm_study/manifest.json",
-      "sha256": "1c6c3f6528718c565edf29f65f5e94ca2cad39e3702f5197307787efc0c84f59"
+      "sha256": "ff745a40bf92547a036378055185fa2781febe26db36e105c8184eb87dacad5b"
     },
     {
       "kind": "file",
@@ -5876,7 +5886,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/case-receipt.json",
-      "sha256": "7bbfd2168c5ebc6e34f29a65bbe78fb1d8290df5efa13885e32478f367ccff83"
+      "sha256": "ca07dd29af80bfd0ccfa5994f21e2c11a8b9286b6f04e90dcff071193cca1f49"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness.json",
+      "sha256": "4e1c517d3539f2435f098ae3e39ffa50ffb02f202330a4f02306c17ef32794e5"
     },
     {
       "kind": "file",
@@ -5886,12 +5901,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "d08c1a9a0d20af7638d5276ca5b90be1e473b56f85baf3a83592ec1f8e486d81"
+      "sha256": "39515cff435cdf9ad260752c47abb93ca9a8ae5188d7c4d99a3f2baed88b0649"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness_paired_effects.csv",
-      "sha256": "e65c84c214db230e88843d4a295df92b2141dae5a7d4fc061dad4247106cd70c"
+      "sha256": "a935ef9568d7d7886a46b886d456e5f2d6e5fb8e6ba8bcd5db2a7bbfd0e73df9"
     },
     {
       "kind": "file",
@@ -5901,7 +5916,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness_raw.csv",
-      "sha256": "d79a114f654dbc8b2223888ff455d20c861314108f7ddaede5bc7f13c3275940"
+      "sha256": "1df4fa7c7941404702290ef38eb65013fee3879b6101dfcc4e711e8a1f17d24f"
     },
     {
       "kind": "file",
@@ -5911,22 +5926,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness_stress.svg",
-      "sha256": "b7b3928686d4a64457a4fc2d5649bf8caa2a23cf6232814edf2477c8ae98f63a"
+      "sha256": "6867805203a228d7500777906f61fc067afb58d47ce9f09f966da7ee226ee445"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_robustness/ou_robustness_summary.csv",
-      "sha256": "2e54f96b4115326d3bd8cad64ebf0596e24137ad6493ce8c58d239c8972f3dff"
+      "sha256": "8b14cfd98c4c84fc64784c824d74447341a3b0763813fec367dbc45f9a275399"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_roundtrip_transition/case-receipt.json",
-      "sha256": "cbe33a34a7d6a58315c5be70aaf40ace2cb5479fb54803b59f2563f1a1099018"
+      "sha256": "2c38121bd1ce398ac94404727cb768e2a92059d18e0f70d39968e8bceb4fc8cc"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_roundtrip_transition/manifest.json",
-      "sha256": "7a6e340c412fe90c88fa47c48c60bf0166ce4fa74a76c02e1a4df8c8cd727dda"
+      "sha256": "f2bfe4ca7eba519df9866bb29ef6555539ad9c4903a70b2436d38dd370495527"
     },
     {
       "kind": "file",
@@ -5946,22 +5961,27 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/case-receipt.json",
-      "sha256": "acd449207fe2f23b0b4b7dab29babc133fe2d369e93b3e47da365c65d331bad7"
+      "sha256": "fded3363713f3e000d2a418386fa7519b4ac285981816a0860765f71ca8987fc"
+    },
+    {
+      "kind": "file",
+      "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation.json",
+      "sha256": "8c3abf7cf7c9d7b99d54ca589b010ba8f234b63e008b905455f1df587789736f"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_attitude.svg",
-      "sha256": "db7b289c1f3b6c31f313a29dae405f2a9c4a997fbe2a7f3b49e8c11e841a98a3"
+      "sha256": "a841452e6d9de57e0874d23b37244af62c5a735cb01652b6d032f953d2f010f0"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_covsync.svg",
-      "sha256": "de61f474d5a08c7130bcdfa7099466b8bf410c672dcac55b91c47a2fabf12660"
+      "sha256": "b8f164efdf21e5501e03cabda040747a8a2627561adab16b494a60ec63b62586"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_displacement.svg",
-      "sha256": "546c1eca60f18c185aa99501deddd5066a8c735a6382d468d4cd83316f1ac948"
+      "sha256": "f1c3a8807aa95bc410a07908286cd014398ec7120897034951dbe8e5c270a14c"
     },
     {
       "kind": "file",
@@ -5971,12 +5991,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_manifest.json",
-      "sha256": "2e8cb0f0a4515277aa6717de83acdcc619fbffbe2bf5046917569ed6cb735dc8"
+      "sha256": "95aaa8e89b4d018d66ba4da506610e4d1f7d2ec8ff5f336d9ff025ef84ff4e59"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "c61d1a398adc60c685eadf24b8f95e5d645146bb5ea98e71649c43b3ca98e00d"
+      "sha256": "527169e748f4d3472b341c2fb7004e15190e2f381107347e57322b95483b0972"
     },
     {
       "kind": "file",
@@ -5986,12 +6006,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_raw.csv",
-      "sha256": "6acbc98877f2c02972dd612b6424f3132313740f6e0ba2c48c2792db48eceaa3"
+      "sha256": "1cc1e547c8e7378c9abf59a5eb99bfd1e90e8cfb8b51784c253cc82337303432"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_summary.csv",
-      "sha256": "5df1ac0ac5015019646b759dd778c0319fe488369374994202f25a12894f77fc"
+      "sha256": "08439c71247a0a555c91cb66bae9e1fcd019e4db450de5b84b418230ea4a868d"
     },
     {
       "kind": "file",
@@ -6011,7 +6031,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/ou_validation/ou_validation_vertical.svg",
-      "sha256": "f2f94ef51a1770a8095f64a75bdce470950cfa402d66ea2e1cbee9217e3c4117"
+      "sha256": "d565eb7296fd0936a51cfec8ea7d438f08868770ab0e88e404eb2b8676e831d0"
     },
     {
       "kind": "file",
@@ -6031,22 +6051,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_ablation/case-receipt.json",
-      "sha256": "3002d1446a3aa7d642252d7f73529f4e443a8196df7893a7d59282350ddaec9c"
+      "sha256": "24b81270749950aa384c41df4b28f45afbfc6b5a380994e407e2f9f829dd0f35"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_ablation/manifest.json",
-      "sha256": "9f41cd247471875061b60b7aa62c3ab1ecb3df9c09e271770a67bae7de0050bf"
+      "sha256": "cec2f74414e18a26ca385d322491ae5c905db80f3849913b2e166bc690c76bde"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_ablation/ou2_dual_mse/manifest.json",
-      "sha256": "201392d2d1ce115943601cdfcc47ab34be479b0641aff7932c8613850b7531ce"
+      "sha256": "8692ce5bcf3847e9b4e2f100b6279b21a7c87b9dd0819fe408c63819dcdb7eca"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_ablation/ou3_reduced_mse/manifest.json",
-      "sha256": "9bf0776f396dd88f6558f0e5d42dd2fc692d2d08de702cea3794aa5d4a55e4cb"
+      "sha256": "53d2a42464757042daa2c47a9568a487f514445c594b39ce0baddd347093792e"
     },
     {
       "kind": "file",
@@ -6061,7 +6081,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_ablation/startup_runs.csv",
-      "sha256": "4ffd631415e69ae74d8287c00f3d75c0cf67837778254e27d1be65bf662597c8"
+      "sha256": "b4737ffde8416a4a49a769eebae32037660fa9698b085102b94b73c1fc9b24f5"
     },
     {
       "kind": "file",
@@ -6076,7 +6096,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/startup_transient_study/case-receipt.json",
-      "sha256": "db629b8cc512f9b4fb06f4995c1f6569e46453937b02648e1cdc84e4b2fdd0ac"
+      "sha256": "411fdc3696c4ae3bf9cff11609f50ed12ae23352dfd7470a288a01f278941ae2"
     },
     {
       "kind": "file",
@@ -6136,17 +6156,17 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_carma3_benchmark/case-receipt.json",
-      "sha256": "d4656cd6afbb12971a1257a4784ae844bcd4f5a7696feb0ea6374e3ea8c2413b"
+      "sha256": "e77a78824dbf277d77086d9dd6c989a2f83ce43639fc5a091da874076c111eda"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_carma3_benchmark/tfg_carma3/dataset_runs.csv",
-      "sha256": "1256945883a6f6a43da688b6bea665d07d09995937e45f32103f2769f11d2ac9"
+      "sha256": "2da3ff4892aea78bc27d7c8195eb0b31a65742993acef1091444605d3097ae0a"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_carma3_benchmark/tfg_carma3/dataset_runs.inputs.json",
-      "sha256": "84a33b0239096f1f493103c828ee507f74fc7e6964380e38b8628577b58ff8a1"
+      "sha256": "1438fff65c281b7a26714638dee9413a1278f1499e8ebd00a77637fcd66e5d9e"
     },
     {
       "kind": "file",
@@ -6156,12 +6176,12 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_carma3_benchmark/tfg_carma3/heave_mean_m.svg",
-      "sha256": "32692a05257befbcf97f251450ef0c6bb5d8d4391e81079aa33b38ce8c7a795e"
+      "sha256": "2a864225af4438d92542a272a9d6fd5556c96544e7f1a10236a88c1b66663601"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_comparison/case-receipt.json",
-      "sha256": "9b9a379689fe05251f3e447c12e580a5bf4f56ae79566b584ff9d88bbc97faa5"
+      "sha256": "2508c6b20589f15857ef52ff57451acff39bccf43604cce33b84d1a544bd0c37"
     },
     {
       "kind": "file",
@@ -6176,7 +6196,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_comparison/manifest.json",
-      "sha256": "58db4657653e9391a3a8043ffa2ab7d45356c51ec1046141a5795690209d01db"
+      "sha256": "19e2a68add0dcd7798f254af464a801989dc5297b0aeb99b50151418ed50d5d1"
     },
     {
       "kind": "file",
@@ -6196,7 +6216,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_shared_modes_dataset/case-receipt.json",
-      "sha256": "142ff0d82022eb42d331104882977a9289948a2b32acc14bdc10821b866424cf"
+      "sha256": "8eb453c98edd00f19729385aa15561d86401bfff1f650ba8248d5cbc092f5350"
     },
     {
       "kind": "file",
@@ -6206,7 +6226,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_shared_modes_dataset/dataset_protocol.json",
-      "sha256": "acce15b1c1b13ab2e20e6c219527de87e4dc60b8abcbefa86ee5fb22f3e5d3fe"
+      "sha256": "fa9c64884a3018562db4c0e279cd587190db056fd9dbb504aa8373544c8d9793"
     },
     {
       "kind": "file",
@@ -6221,7 +6241,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/tfg_shared_modes_dataset/heave_mean_m.svg",
-      "sha256": "6c72187dccce4bf1a409d86e6cba0e2e3a696884e08401554024e46036a5fc7d"
+      "sha256": "15b4bd88839e1af56a7c7a2e7149fd368a932e1c6df88314860b82ae65a3b87f"
     },
     {
       "kind": "file",
@@ -6231,7 +6251,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/study-artifacts.json",
-      "sha256": "96da039750706cf45771e02e66f0c7dbab27803e6718babb5476c880891ff273"
+      "sha256": "613c81e6e2afac472733f5914cd965f0786e3a8d8b1c30afae1d3683e16ff5d9"
     },
     {
       "kind": "file",
@@ -7054,7 +7074,7 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "d5c1bc3429e9c6831aee9cc69e84987df6af1978e7d8686bc85ee541c30dc790",
+  "results_fingerprint": "1136250138bc4382c045e04a3d418715844cefeea9f7306c1c081e68d3f52a9f",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",

@@ -162,8 +162,8 @@
     }
   },
   "git_branch": "fix/merged-main-ci",
-  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
-  "git_diff_stat": "",
+  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_diff_stat": ".../studies/ou_validation/case-receipt.json        | 27 ++++------------------\n 1 file changed, 4 insertions(+), 23 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
@@ -335,8 +335,8 @@
       "sha256": "560da1c3e1296a9d4264f6750d1c24e1b02b56e35c1f0d919784fd27689e0ed5"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1208011,
-      "sha256": "bf0329cc48619c65550f81d3f4c38e058b9ff724886431c1722d476a4a9d22df"
+      "bytes": 1207989,
+      "sha256": "dff4a8d5f415caffed2468fe858e29c3d8772c5b5887812de06da63570a876fe"
     },
     "ou_validation_transition.svg": {
       "bytes": 145386,

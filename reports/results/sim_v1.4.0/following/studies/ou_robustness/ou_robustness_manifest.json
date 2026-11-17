@@ -30,8 +30,8 @@
     "--skip-build"
   ],
   "git_branch": "fix/merged-main-ci",
-  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
-  "git_diff_stat": "",
+  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_diff_stat": ".../studies/ou_robustness/case-receipt.json        | 27 ++++------------------\n 1 file changed, 4 insertions(+), 23 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.333609016147021,

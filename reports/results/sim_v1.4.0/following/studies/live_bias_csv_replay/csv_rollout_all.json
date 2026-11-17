@@ -4,7 +4,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -28,7 +28,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -52,7 +52,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -76,7 +76,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -100,7 +100,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -124,7 +124,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -148,7 +148,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -172,7 +172,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -196,7 +196,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -220,7 +220,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -244,7 +244,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -268,7 +268,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -292,7 +292,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -316,7 +316,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -340,7 +340,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -364,7 +364,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -388,7 +388,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -412,7 +412,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -436,7 +436,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -460,7 +460,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -484,7 +484,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -508,7 +508,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -532,7 +532,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -556,7 +556,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "7ef13b44689c2a8a9acceee498e7adb1af91c04b15018ba18c901aa99f9bfdd3",
+    "binary_sha256": "f11f98a8e70570c612572dec360239b314dd8196733d7ed36f700b63d1bfd07d",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -580,7 +580,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -604,7 +604,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -628,7 +628,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -652,7 +652,7 @@
     "contract": "interval",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -676,7 +676,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -700,7 +700,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -724,7 +724,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -748,7 +748,7 @@
     "contract": "interval",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=legacy_interval",
@@ -772,7 +772,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -796,7 +796,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -820,7 +820,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -844,7 +844,7 @@
     "contract": "instantaneous",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -868,7 +868,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -892,7 +892,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -916,7 +916,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -940,7 +940,7 @@
     "contract": "instantaneous",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=0 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -964,7 +964,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -988,7 +988,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1012,7 +1012,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1036,7 +1036,7 @@
     "contract": "defaults",
     "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1060,7 +1060,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
     "input_sha256": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1084,7 +1084,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
     "input_sha256": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1108,7 +1108,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
     "input_sha256": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",
@@ -1132,7 +1132,7 @@
     "contract": "defaults",
     "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
     "input_sha256": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5",
-    "binary_sha256": "bcf1f8df29e21f6ab0c66848bbf7fe27df52c2d2f4f949804a2a390375eb2571",
+    "binary_sha256": "ae71fa67a16d0dd4c70e28457742bb7a73fb923912193e353891c73e832ce394",
     "exit_code": 0,
     "metrics": [
       "REGRESSION_PROTOCOL: GATED=1 FAMILY=TFG_CARMA_SHARED_MODES_ SAMPLING=production_defaults",

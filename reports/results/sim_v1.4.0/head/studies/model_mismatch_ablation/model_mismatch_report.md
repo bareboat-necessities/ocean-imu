@@ -12,7 +12,7 @@ The reported floor therefore contains model/estimator mismatch, intentional
 regularization bias, residual adaptation/startup effects, and numerical error;
 it is not a claim of pure plant-model mismatch in isolation.
 
-Source commit used for the replay: `37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8`.
+Source commit used for the replay: `71f410938ca1a8f393979f4933933868fb612461`.
 
 ## Pooled RMS across the eight equal-duration records
 

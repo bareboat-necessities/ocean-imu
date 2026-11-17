@@ -1,8 +1,8 @@
 {
   "binary_sha256": {
-    "OU-II": "b72ac0470a95b596482e7f996b45b6d29ce8d8833eecfe1b1e69ed468ccf6d1f",
-    "OU-III": "7cc6c267d31137148556b87eead96a1053b10426dd77507431e89baf5a68cfc8",
-    "TFG": "d8532d5b4074358ea2fb494d550e41bf273941301a54c94825b13e2f4e2d5c27"
+    "OU-II": "ee8c7502262ca618f4df9e461ef211d43b2d0086eb3c63b9ae2aa6ce4e99fb07",
+    "OU-III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39",
+    "TFG": "5b14ce70b5be5e52e59a834cc0bd7a9e1a9da8a039d69bea0b90dfc7d9d7e272"
   },
   "files": {
     "startup_runs.csv": "204fa000cebe72a62e317c2524634423eabd0d9b3e79831c7b3553c586e6c5db"
@@ -39,5 +39,5 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8"
+  "source_commit": "71f410938ca1a8f393979f4933933868fb612461"
 }

@@ -20,7 +20,7 @@ excess, so the covariance and the measurement describe the same conditions.
 Scoring uses the trailing **900 s** of each 1200 s record,
 pooled over the eight stationary records as `sqrt(mean(record_RMS^2))`.
 
-Source commit used for the replay: `37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8`.
+Source commit used for the replay: `71f410938ca1a8f393979f4933933868fb612461`.
 
 ## Result
 

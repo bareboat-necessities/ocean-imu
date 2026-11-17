@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "7cc6c267d31137148556b87eead96a1053b10426dd77507431e89baf5a68cfc8",
-    "TFG": "d8532d5b4074358ea2fb494d550e41bf273941301a54c94825b13e2f4e2d5c27"
+    "OU_III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39",
+    "TFG": "5b14ce70b5be5e52e59a834cc0bd7a9e1a9da8a039d69bea0b90dfc7d9d7e272"
   },
   "build_environment": {
     "compiler": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-17T03:57:58+00:00",
-  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
-  "git_diff_stat": "",
+  "generated_utc": "2026-11-17T12:38:08+00:00",
+  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_diff_stat": ".../head/studies/tfg_comparison/case-receipt.json  | 29 ++++------------------\n 1 file changed, 5 insertions(+), 24 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -162,7 +162,7 @@
     "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
     "src/kalman_common/MagneticStartupCommon.h": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350",
     "src/kalman_common/MarineTurnModel.h": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
-    "src/kalman_common/MarineTurnSeparator.h": "d67433fb8fd18ea20bfbffc121afc0eede70e1ee34b97cc10ed647d6fb3e93a8",
+    "src/kalman_common/MarineTurnSeparator.h": "f13b24124a0ea14b7f3ef7763739260c93e11ada4dd3c78d7227544876b11f1c",
     "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
@@ -181,9 +181,9 @@
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
     "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
     "src/tuner/AdaptiveWaveBandPass.h": "ddc8c59444008552de60f8ebe2298b0db08c8bc28aa9fff679ef1772a0ad5021",
-    "src/tuner/ContinuousMagHardIronEstimator.h": "df60fa49dc3a8d35718196c557d7e4001e64b7e476c6474de7c887f0d8ec8e25",
-    "src/tuner/GyroMagCalibration.h": "d4f076b0ac4bd7272de5940511fbf19fd8726fb6fabbba34df6cb651f30522f7",
-    "src/tuner/GyroMagCalibrationImpl.h": "02d0bcb31d1845e581bc738cf00c9ed8a4e505ab435992438b381cece0ac379c",
+    "src/tuner/ContinuousMagHardIronEstimator.h": "6c489eaf6e710432d061aa339d13a0ede5a833c33896f97a76e38739ddc5b18a",
+    "src/tuner/GyroMagCalibration.h": "0e94f5046444262d608f4fb8a78386ced2bfcba1c8177728a1d6d665a9123402",
+    "src/tuner/GyroMagCalibrationImpl.h": "e64c307b51cb5b35cf4f063d89f3f079d47dae703d91f3bbb173523763834b20",
     "src/tuner/MagAutoTuner.h": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
     "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
     "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
@@ -221,7 +221,7 @@
   "workflow": {
     "job": "studies",
     "run_attempt": "1",
-    "run_id": "44011462038",
+    "run_id": "44074557141",
     "workflow": "simulation-studies"
   }
 }

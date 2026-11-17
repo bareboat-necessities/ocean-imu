@@ -13,7 +13,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -162,10 +162,10 @@
     }
   },
   "git_branch": "fix/merged-main-ci",
-  "git_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
-  "git_diff_stat": "",
+  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_diff_stat": ".../head/studies/ou_validation/case-receipt.json   |  27 +-\n .../ou_validation/ou_validation_attitude.svg       |  36 +-\n .../ou_validation/ou_validation_covsync.svg        |  44 +-\n .../ou_validation/ou_validation_displacement.svg   |  40 +-\n .../ou_validation/ou_validation_paired_effects.csv | 754 ++++++++++-----------\n .../studies/ou_validation/ou_validation_raw.csv    |  20 +-\n .../ou_validation/ou_validation_summary.csv        | 406 +++++------\n .../ou_validation/ou_validation_vertical.svg       |  48 +-\n 8 files changed, 678 insertions(+), 697 deletions(-)",
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -295,48 +295,48 @@
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 5384230,
-      "sha256": "eb3b46c84ac4f9d0e23dfeef7cd722f180e5901704448a475b8208feb73ea209"
+      "bytes": 5384162,
+      "sha256": "8c3abf7cf7c9d7b99d54ca589b010ba8f234b63e008b905455f1df587789736f"
     },
     "ou_validation_attitude.svg": {
-      "bytes": 82049,
-      "sha256": "db7b289c1f3b6c31f313a29dae405f2a9c4a997fbe2a7f3b49e8c11e841a98a3"
+      "bytes": 82047,
+      "sha256": "a841452e6d9de57e0874d23b37244af62c5a735cb01652b6d032f953d2f010f0"
     },
     "ou_validation_covsync.svg": {
       "bytes": 92137,
-      "sha256": "de61f474d5a08c7130bcdfa7099466b8bf410c672dcac55b91c47a2fabf12660"
+      "sha256": "b8f164efdf21e5501e03cabda040747a8a2627561adab16b494a60ec63b62586"
     },
     "ou_validation_displacement.svg": {
       "bytes": 79871,
-      "sha256": "546c1eca60f18c185aa99501deddd5066a8c735a6382d468d4cd83316f1ac948"
+      "sha256": "f1c3a8807aa95bc410a07908286cd014398ec7120897034951dbe8e5c270a14c"
     },
     "ou_validation_macros.tex": {
       "bytes": 10613,
       "sha256": "a960fb516c0b11504b9edd49a887c15bd35a4dfb42306075686019676a01c2ae"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 736954,
-      "sha256": "c61d1a398adc60c685eadf24b8f95e5d645146bb5ea98e71649c43b3ca98e00d"
+      "bytes": 736830,
+      "sha256": "527169e748f4d3472b341c2fb7004e15190e2f381107347e57322b95483b0972"
     },
     "ou_validation_publication.tex": {
       "bytes": 13969,
       "sha256": "4e661bac464433cb0332898733599b66f7d2416949c7cc4f72371a021c520b14"
     },
     "ou_validation_raw.csv": {
-      "bytes": 615880,
-      "sha256": "6acbc98877f2c02972dd612b6424f3132313740f6e0ba2c48c2792db48eceaa3"
+      "bytes": 615855,
+      "sha256": "1cc1e547c8e7378c9abf59a5eb99bfd1e90e8cfb8b51784c253cc82337303432"
     },
     "ou_validation_summary.csv": {
-      "bytes": 796068,
-      "sha256": "5df1ac0ac5015019646b759dd778c0319fe488369374994202f25a12894f77fc"
+      "bytes": 796149,
+      "sha256": "08439c71247a0a555c91cb66bae9e1fcd019e4db450de5b84b418230ea4a868d"
     },
     "ou_validation_table.tex": {
       "bytes": 15843,
       "sha256": "2a6161944a48c3c1925a9c7e3c2c330898ac3fa161aa5f06f204a1052d89c412"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1263256,
-      "sha256": "c28d6cbaf01799bb07a0a7d72a5a5f8aef45fc9d33de6a003a2dd52b7f218bad"
+      "bytes": 1263234,
+      "sha256": "b3baf7b26c4ceb2db4832722efbe7674626b5a5e523ede5dee985a296f7a139f"
     },
     "ou_validation_transition.svg": {
       "bytes": 146672,
@@ -347,8 +347,8 @@
       "sha256": "a3cdccd2117b6f9384cc2cf298962f1b4939fa807aedadad051735d16bbbdd88"
     },
     "ou_validation_vertical.svg": {
-      "bytes": 81528,
-      "sha256": "f2f94ef51a1770a8095f64a75bdce470950cfa402d66ea2e1cbee9217e3c4117"
+      "bytes": 81530,
+      "sha256": "d565eb7296fd0936a51cfec8ea7d438f08868770ab0e88e404eb2b8676e831d0"
     }
   },
   "source_files": {

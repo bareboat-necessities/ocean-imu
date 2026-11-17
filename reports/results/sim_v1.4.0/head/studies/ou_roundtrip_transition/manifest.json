@@ -5,7 +5,7 @@
   "files": {
     "ou_rs_roundtrip_scores.csv": "c7fa79fe8d6052d8011c68e54898113e0d41121fc0eadab1bc0a8fa473aba12b",
     "ou_rs_roundtrip_scores.tex": "2131919b9f5a9e1df86b30d5190c4aa33e6c69502490c66a649120868693539b",
-    "ou_rs_roundtrip_transition.csv": "e21da10a4bf1742b6a57e35fe37f4c2f961c5a1a828f669fe4eeff331542871e",
+    "ou_rs_roundtrip_transition.csv": "c1f5159809c51acc8ae210e4171926320c619483dcbf54c0f68d554c2634bb40",
     "ou_rs_roundtrip_transition.svg": "4f498dd195daa8ab92278b42b7723e5708146503546566830583aacb84b81b3d"
   },
   "high_r_s_ms": 9.410939015832682,
@@ -105,6 +105,6 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "37d4ddb7a2d8431f91d2807c526f6adc4e22b1f8",
+  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
   "wave_phase_seed": 11
 }
