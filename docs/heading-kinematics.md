@@ -239,8 +239,10 @@ Pass `--baseline-traces /path/to/pre-fix/traces` to reproduce the figure. Both
 plot sources are hash-checked; only the display is uniformly decimated to
 20 Hz. Scoring uses the entire 200 Hz window.
 
-The comparison also verifies both pre-fix metrics files against their hashes
-at `5426da8a`. If ordinary replay publication has refreshed those files, pass
+The comparison verifies the committed `pre_fix` metrics and both harmonic
+attribution reports against their original hashes at `5426da8a`. It rejects
+mixed executable hashes within a family. To use another copy of the identical
+pre-fix metrics, pass
 `--baseline-dir /path/to/pre-fix-metrics` containing the original
 `following/measurements.json` and `head/measurements.json`. Refreshed results
 cannot silently become the comparison's old baseline.

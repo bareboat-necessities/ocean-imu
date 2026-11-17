@@ -19,7 +19,9 @@ TARGETS = ahrs-qmekf-sim
 
 all: build test
 
-TARGETS += qmekf_geometry-test
+TARGETS += qmekf_geometry-test mahony-frame-test
+mahony-frame-test: mahony-frame-test.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 qmekf_geometry-test: qmekf_geometry-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 qmekf_geometry-test.o: ../../src/ahrs/KalmanQMEKF.h

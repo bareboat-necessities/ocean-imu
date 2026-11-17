@@ -233,6 +233,9 @@ struct ProxyStartupFusionConfig {
     // startup acquisition has finished, so first heading, handoff and
     // refinement are unaffected by it.
     bool  mag_continuous_hard_iron    = true;
+    // Use relative gyro rotation and estimate residual affine distortion.
+    // False retains the fixed-heading additive fit for paired ablation.
+    bool  mag_gyro_calibration       = true;
     float mag_hi_memory_sec           = defaults::MAG_HI_MEMORY_SEC;
     // Absolute floor only; the relative term below carries the calibration.
     // See ContinuousMagHardIronEstimator::Config and
@@ -281,6 +284,7 @@ public:
         impl_.setManoeuvreMotion(dt <= 0.1f ? turn_separator_.speedMps() : 0.0f,
                                 cfg_.turn_separator.forward_body);
         turn_separator_.update(dt, gyro_body_ned, acc_body_ned, cfg_.gravity_magnitude);
+        if (cfg_.mag_continuous_hard_iron) hard_iron_.predict(dt, gyro_body_ned);
         t_ += dt;
 
         last_acc_body_ned_  = acc_body_ned;
@@ -478,7 +482,7 @@ public:
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
         if (mag_ref_set_ && stage_ == Stage::Live) {
-            impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
+            impl_.updateMag(hard_iron_.correct(mag_body_ned));
         }
     }
 
@@ -505,6 +509,10 @@ public:
     // Continuous estimator, for diagnostics and for tests that need to see why
     // it did or did not act.  estimate().valid is the gate; information() is
     // how much attitude excitation the memory window has actually collected.
+    const GyroMagCalibration& magContinuousCalibration() const noexcept {
+        return hard_iron_.calibration;
+    }
+
     const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept {
         return hard_iron_.estimator;
     }

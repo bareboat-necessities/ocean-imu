@@ -416,6 +416,7 @@ public:
         if (const char* r = std::getenv("SF_MAG_REFINE")) cfg_.mag_refine_enabled = (std::string(r) != "0");
         // Continuous exogenous hard-iron estimation.
         if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
+        if (const char* h = std::getenv("SF_MAG_GYRO_CAL")) cfg_.mag_gyro_calibration = (std::string(h) != "0");
         if (env_float("SF_MAG_HI_MEMORY_SEC", vf)) cfg_.mag_hi_memory_sec = vf;
         if (env_float("SF_MAG_HI_RIDGE", vf)) cfg_.mag_hi_model_ridge = vf;
         if (env_float("SF_MAG_HI_RIDGE_REL", vf)) cfg_.mag_hi_model_ridge_relative = vf;
@@ -460,13 +461,18 @@ public:
                 trace_elapsed_ = 0.0f;
                 const auto& e = fusion_.magContinuousHardIron().estimate();
                 const Vector3f& a = fusion_.magContinuousHardIronAppliedUT();
+                const auto& cal = fusion_.magContinuousCalibration();
                 std::cerr << "MAGHI t=" << int(t_trace_)
                           << " valid=" << e.valid
                           << " info=" << e.information
                           << " w=" << e.effective_weight
                           << " resid=" << e.residual_rms_uT
                           << " fit=[" << e.bias_body_uT.transpose() << "]"
-                          << " applied=[" << a.transpose() << "]\n";
+                          << " applied=[" << a.transpose() << "]"
+                          << " gyro_cal=" << cfg_.mag_gyro_calibration
+                          << " cal_valid=" << cal.valid()
+                          << " cal_resid=" << cal.residualRmsUT()
+                          << " cal_bias=[" << cal.biasBodyUT().transpose() << "]\n";
             }
             t_trace_ += dt;
         }

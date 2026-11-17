@@ -181,6 +181,7 @@ public:
         bool  mag_estimate_hard_iron       = false;
 
         bool  mag_continuous_hard_iron        = true;
+        bool  mag_gyro_calibration            = true;
         float mag_hi_memory_sec               = defaults::MAG_HI_MEMORY_SEC;
         float mag_hi_model_ridge              = defaults::MAG_HI_MODEL_RIDGE;
         float mag_hi_model_ridge_relative     = defaults::MAG_HI_MODEL_RIDGE_RELATIVE;
@@ -257,6 +258,7 @@ public:
                               cfg_.turn_separator.forward_body);
         turn_separator_.update(dt, gyro, acc, cfg_.gravity_magnitude);
         applyPendingTune_();
+        if (cfg_.mag_continuous_hard_iron && usingProxyInit_()) hard_iron_.predict(dt, gyro);
         elapsed_sec_ += dt;
 
         // Strip out-of-band accelerometer vibration before the attitude path
@@ -370,6 +372,7 @@ public:
     [[nodiscard]] float magNorthLockTimeSec() const noexcept { return mag_north_lock_time_sec_; }
     [[nodiscard]] const Vector3f& magHardIronBodyUT() const noexcept { return mag_hard_iron_body_uT_; }
     [[nodiscard]] const Vector3f& magContinuousHardIronAppliedUT() const noexcept { return hard_iron_.applied_body_uT; }
+    [[nodiscard]] const GyroMagCalibration& magContinuousCalibration() const noexcept { return hard_iron_.calibration; }
     [[nodiscard]] const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept { return hard_iron_.estimator; }
     [[nodiscard]] StartupInitPolicy startupInitPolicy() const noexcept { return cfg_.startup_init_policy; }
     [[nodiscard]] bool isTunerReady() const noexcept {
@@ -786,7 +789,7 @@ private:
         maybeRefineMagReference_(mag_body);
         maybeApplyContinuousHardIron_();
         if (mag_reference_learned_ && stage_ == StartupStage::Live) {
-            mekf_.measurement_update_mag_only(mag_body - mag_hard_iron_body_uT_);
+            mekf_.measurement_update_mag_only(hard_iron_.correct(mag_body));
         }
     }
 

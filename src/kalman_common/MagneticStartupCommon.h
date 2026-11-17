@@ -7,10 +7,8 @@
 // Startup-attitude and magnetic-acquisition primitives shared by the OU-II,
 // OU-III and TFG orchestrators.
 //
-// Everything here is measurement-side plumbing: yaw bookkeeping on BODY->NED
-// quaternions, the world-frame gravity gate that certifies a startup tilt, the
-// MagAutoTuner / continuous hard-iron configuration, and the slew that moves
-// an applied hard-iron offset toward the continuous estimate.  None of it reads
+// Measurement-side plumbing: startup yaw/gravity bookkeeping, magnetic
+// reference acquisition and sensor-only residual magnetic calibration.  None of it reads
 // or writes an estimator state; each wrapper decides *when* these run and what
 // the results are written into, and that part stays in the wrapper because it
 // differs (see the TFG north-frame acquisition, for example).
@@ -27,6 +25,7 @@
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
 #include "tuner/MagAutoTuner.h"
+#include "tuner/GyroMagCalibration.h"
 
 namespace seastate::common {
 
@@ -230,21 +229,14 @@ inline void beginMagRefinement(MagAutoTuner& tuner, float window_sec, int min_sa
     tuner.reset();
 }
 
-// Continuous hard-iron estimation, and the reference that goes with it.
-//
-// The startup estimate is a single window, and a single window is where the
-// offset is least identifiable: the excitation is whatever tilt the hull
-// happened to take in fifteen seconds.  The continuous estimator never closes
-// its accumulation, so the question stops being "can the offset be read out of
-// these fifteen seconds" and becomes "keep watching, and correct when the data
-// finally say something".
-//
-// Two things make that safe to leave running.  The estimator is exogenous --
-// gravity-referenced tilt from the private Mahony observer and the raw
-// magnetometer, never a filter state, so no loop is closed through the
-// estimator.  And the applied offset and the magnetic reference move together,
-// out of the same statistics, so the filter is never subtracting one offset
-// while steering to a reference that belongs to another.
+// Continuous residual calibration and its matching magnetic reference.
+// The default gyro-aided model follows the physical field through turns and
+// estimates a small affine distortion as well as the body offset. It reads raw
+// gyro/mag only; the navigation attitude and biases never feed this learner.
+// Private-proxy tilt statistics gate excitation and transport changes of the
+// measurement calibration into the reference's magnitude/dip. Startup's
+// canonical horizontal direction is retained, so correction can improve yaw.
+// The historical tilt-only additive fit remains an explicit ablation.
 struct ContinuousHardIronTracker {
     ContinuousMagHardIronEstimator estimator{};
 
@@ -268,11 +260,16 @@ struct ContinuousHardIronTracker {
         hi_cfg.max_bias_fraction    = cfg.mag_hi_max_bias_fraction;
         hi_cfg.min_mag_norm_uT      = cfg.mag_init_min_mag_norm;
         estimator.setConfig(hi_cfg);
+        gyro_calibration_enabled = cfg.mag_gyro_calibration;
+        calibration.setGyroMode(cfg.gyro_sample_mode);
     }
 
     // Clears the applied offset and its anchors; the estimator's statistics
     // are left to configure().
     void resetApplied() {
+        calibration.reset();
+        applied_correction.setIdentity();
+        anchor_correction.setIdentity();
         startup_body_uT.setZero();
         applied_body_uT.setZero();
         anchor_bias_body_uT.setZero();
@@ -282,14 +279,14 @@ struct ContinuousHardIronTracker {
         last_apply_t  = NAN;
     }
 
-    // Feed the exogenous accumulation.  Raw magnetometer -- not the corrected
-    // stream -- because the estimator is fitting the offset itself and must
-    // not be shown data with its own answer already subtracted.
+    // Both learners and the reference statistics see the raw measurement.
+    // Neither accumulates a stream containing its own correction.
     void accumulate(float t, float nominal_dt,
                     const Eigen::Quaternionf& q_tilt_bw,
                     const Eigen::Vector3f& mag_body_uT) {
         const float dt_mag = advanceSampleClock(last_sample_t, t, nominal_dt);
         estimator.update(dt_mag, q_tilt_bw, mag_body_uT);
+        if (gyro_calibration_enabled) calibration.update(mag_body_uT);
     }
 
     // Move the applied offset toward the fit, and re-gauge the reference.
@@ -329,15 +326,25 @@ struct ContinuousHardIronTracker {
                             Eigen::Vector3f& new_world_ref_uT)
     {
         const auto& est = estimator.estimate();
-        if (!est.valid) return false;
+        if (gyro_calibration_enabled) {
+            if (!calibration.valid() ||
+                estimator.information() < estimator.config().min_information ||
+                (estimator.config().max_residual_rms_uT > 0.0f &&
+                 calibration.residualRmsUT() > estimator.config().max_residual_rms_uT)) return false;
+        } else if (!est.valid) return false;
 
         if (!anchored) {
-            anchor_bias_body_uT = applied_body_uT;
+            anchor_bias_body_uT = startup_body_uT + applied_body_uT;
+            anchor_correction = applied_correction;
             anchor_world_ref_uT = current_world_ref_uT;
             anchored = true;
         }
 
-        const Eigen::Vector3f target = apply_fraction * est.bias_body_uT;
+        const Eigen::Vector3f target = apply_fraction *
+            (gyro_calibration_enabled ? (calibration.biasBodyUT() - startup_body_uT).eval() : est.bias_body_uT);
+        const Eigen::Matrix3f target_correction = gyro_calibration_enabled
+            ? (Eigen::Matrix3f::Identity() + apply_fraction * (calibration.correction() - Eigen::Matrix3f::Identity())).eval()
+            : Eigen::Matrix3f::Identity().eval();
         if (!target.allFinite()) return false;
 
         const float dt_apply = advanceSampleClock(last_apply_t, t, nominal_dt);
@@ -349,14 +356,15 @@ struct ContinuousHardIronTracker {
 
         const Eigen::Vector3f applied =
             applied_body_uT + alpha * (target - applied_body_uT);
-        if (!applied.allFinite()) return false;
+        const Eigen::Matrix3f correction = applied_correction + alpha*(target_correction-applied_correction);
+        if (!applied.allFinite() || !correction.allFinite()) return false;
 
         // Both evaluated against the statistics as they stand now, so the
         // difference is the offset's doing and nothing else.
         Eigen::Vector3f level_new;
         Eigen::Vector3f level_anchor;
-        if (!estimator.levelReferenceForBias(applied, level_new) ||
-            !estimator.levelReferenceForBias(anchor_bias_body_uT, level_anchor)) {
+        if (!estimator.levelReferenceForCalibration(correction, startup_body_uT + applied, level_new) ||
+            !estimator.levelReferenceForCalibration(anchor_correction, anchor_bias_body_uT, level_anchor)) {
             return false;
         }
 
@@ -372,9 +380,20 @@ struct ContinuousHardIronTracker {
         if (!ref.allFinite()) return false;
 
         applied_body_uT = applied;
+        applied_correction = correction;
         new_world_ref_uT = ref;
         return true;
     }
+    void predict(float dt, const Eigen::Vector3f& gyro) {
+        if (gyro_calibration_enabled) calibration.predict(dt, gyro);
+    }
+    Eigen::Vector3f correct(const Eigen::Vector3f& mag) const {
+        return applied_correction * (mag - startup_body_uT - applied_body_uT);
+    }
+    GyroMagCalibration calibration{};
+    Eigen::Matrix3f applied_correction = Eigen::Matrix3f::Identity();
+    Eigen::Matrix3f anchor_correction = Eigen::Matrix3f::Identity();
+    bool gyro_calibration_enabled = false;
 };
 
 }  // namespace seastate::common

@@ -23,11 +23,22 @@ BASELINE_SHA256 = {
     'head': '5d39a3b1e7e9c96b4be07260516a94c33c8a288b3e9e1b8ae23a4819c1490950',
 }
 
+ATTRIBUTION_SHA256 = {
+    'measurements': 'e6f8693ba37f642a5116e21fba69726241e8f0d00c5c568205bc1832a7fc81f6',
+    'medium': 'e0dd13670f028b1bb03dcfe12fa98e0f8b593c03c38ba716586e1e1e62da5605',
+}
+
+def load_attribution(name: str) -> dict:
+    path = ROOT/'reports/results/heading_kinematics'/f'{name}.json'
+    if digest(path) != ATTRIBUTION_SHA256[name]:
+        raise ValueError(f'{path}: attribution baseline changed')
+    return json.loads(path.read_text())
+
 
 def load_baseline(directory: Path | None = None) -> dict:
     """Do not silently label refreshed main-branch metrics as the pre-fix run."""
     baseline = {}
-    directory = directory or ROOT/'reports/results/sim_v1.4.0'
+    directory = directory or ROOT/'reports/results/heading_kinematics/pre_fix'
     for case in CASES:
         path = directory/case/'measurements.json'
         if digest(path) != BASELINE_SHA256[case]:
@@ -40,10 +51,11 @@ def summarize(work: Path, baseline_dir: Path | None = None) -> dict:
     baseline = load_baseline(baseline_dir)
     attribution = {}
     for name in ('measurements', 'medium'):
-        report = json.loads((ROOT/'reports/results/heading_kinematics'/f'{name}.json').read_text())
+        report = load_attribution(name)
         attribution.update({(r['case'], r['input'], r['family']): r['metrics']
                             for r in report['runs'] if r['variant'] == 'released'})
     rows = []
+    binary_by_family = {}
     for case in CASES:
         for name in REFERENCE_CSV_SHA256_BY_CASE[case]:
             for family in FAMILIES:
@@ -53,6 +65,9 @@ def summarize(work: Path, baseline_dir: Path | None = None) -> dict:
                     raise ValueError(f'{directory}: missing or changed trace; rerun the replay')
                 if digest(directory/'run.log') != receipt['log_sha256']:
                     raise ValueError(f'{directory}: changed replay log')
+                expected_binary = binary_by_family.setdefault(family, receipt['binary_sha256'])
+                if receipt['binary_sha256'] != expected_binary:
+                    raise ValueError(f'{directory}: mixed executable hashes for {family}')
                 if receipt['input_sha256'] != REFERENCE_CSV_SHA256_BY_CASE[case][name]:
                     raise ValueError(f'{directory}: not the released input')
                 if any(receipt[k] != v for k, v in
@@ -108,7 +123,7 @@ def plot_tails(work: Path, baseline_traces: Path, destination: Path) -> None:
     sys.path.insert(0, str(ROOT/'plots'))
     from vector_export import save_figure
     name = 'wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv'
-    old_report = json.loads((ROOT/'reports/results/heading_kinematics/measurements.json').read_text())
+    old_report = load_attribution('measurements')
     fig, axes = plt.subplots(2, 2, figsize=(10.5, 5.8), sharex=True, sharey='row')
     keep = ['time', 'disp_ref_y', 'disp_est_y', 'acc_bias_y', 'acc_bias_est_y']
     for col, case in enumerate(CASES):

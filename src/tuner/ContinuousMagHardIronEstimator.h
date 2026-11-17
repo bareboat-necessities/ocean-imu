@@ -169,6 +169,7 @@ public:
     level_mag_sum_.setZero();
     body_mag_sum_.setZero();
     mag_sq_sum_ = 0.0;
+    rotated_mag_sum_.setZero();
     solve_elapsed_sec_ = 0.0f;
     estimate_ = Estimate{};
   }
@@ -211,12 +212,15 @@ public:
     level_mag_sum_ *= lambda;
     body_mag_sum_ *= lambda;
     mag_sq_sum_ *= lambda;
+    rotated_mag_sum_ *= lambda;
 
     weight_sum_ += 1.0;
     rot_sum_ += R;
     level_mag_sum_ += R * m;
     body_mag_sum_ += m;
     mag_sq_sum_ += m.squaredNorm();
+    for (int j=0;j<3;++j)
+      rotated_mag_sum_.block<3,3>(0,3*j) += m[j] * R;
 
     solve_elapsed_sec_ += dt;
     if (solve_elapsed_sec_ >= std::max(0.02f, cfg_.solve_period_sec)) {
@@ -251,6 +255,19 @@ public:
     level_ref_uT = ref.cast<float>();
     return level_ref_uT.allFinite() &&
            (level_ref_uT.norm() > cfg_.min_mag_norm_uT);
+  }
+
+  // Mean R C (m-b), evaluated from raw sufficient statistics. Calibration
+  // changes never reuse statistics of an already corrected measurement.
+  bool levelReferenceForCalibration(const Eigen::Matrix3f& correction,
+                                    const Eigen::Vector3f& bias,
+                                    Eigen::Vector3f& reference) const {
+    if (!(weight_sum_ > 1.0e-6) || !correction.allFinite() || !bias.allFinite()) return false;
+    const Eigen::Matrix3d C = correction.cast<double>();
+    Eigen::Vector3d mean = -rot_sum_ * C * bias.cast<double>();
+    for (int j=0;j<3;++j) mean += rotated_mag_sum_.block<3,3>(0,3*j) * C.col(j);
+    reference = (mean / weight_sum_).cast<float>();
+    return reference.allFinite() && reference.norm() > cfg_.min_mag_norm_uT;
   }
 
 private:
@@ -359,4 +376,5 @@ private:
 
   float solve_elapsed_sec_ = 0.0f;
   Estimate estimate_{};
+  Eigen::Matrix<double,3,9> rotated_mag_sum_ = Eigen::Matrix<double,3,9>::Zero();
 };

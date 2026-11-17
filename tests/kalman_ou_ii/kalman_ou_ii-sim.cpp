@@ -451,6 +451,7 @@ public:
         // Continuous exogenous hard-iron estimation.  Same names as OU-III's,
         // so a paired study can set one environment and run both families.
         if (const char* h = std::getenv("SF_MAG_CONT_HI")) cfg_.mag_continuous_hard_iron = (std::string(h) != "0");
+        if (const char* h = std::getenv("SF_MAG_GYRO_CAL")) cfg_.mag_gyro_calibration = (std::string(h) != "0");
         if (env_float("SF_MAG_HI_MEMORY_SEC", vf)) cfg_.mag_hi_memory_sec = vf;
         if (env_float("SF_MAG_HI_RIDGE", vf)) cfg_.mag_hi_model_ridge = vf;
         if (env_float("SF_MAG_HI_RIDGE_REL", vf)) cfg_.mag_hi_model_ridge_relative = vf;

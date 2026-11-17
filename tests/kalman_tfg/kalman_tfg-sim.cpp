@@ -146,6 +146,7 @@ public:
         bool flag = false;
         if (env_bool("TFG_MAG_REFINE", flag))     cfg.mag_refine_enabled = flag;
         if (env_bool("TFG_MAG_HARD_IRON", flag))  cfg.mag_continuous_hard_iron = flag;
+        if (env_bool("TFG_MAG_GYRO_CAL", flag)) cfg.mag_gyro_calibration = flag;
         if (env_bool("TFG_WAVE_BAND", flag))      cfg.wave_band_tuning = flag;
         if (float v = 0.0f; env_float("TFG_MAG_MIN_WINDOW_SEC", v)) cfg.mag_min_window_sec = v;
         if (float v = 0.0f; env_float("TFG_MAG_REFINE_START_SEC", v)) cfg.mag_refine_start_sec = v;

@@ -1,3 +1,64 @@
+## Yaw regression qualification in progress
+
+Current hypothesis: the tilt-only magnetic offset fit aliases heading changes
+and residual multiplicative calibration into an additive offset. The southbound
+low-wave record exposes a persistent yaw offset (OU-III RMS 2.542 deg, mean
+-2.530 deg); with injected sensor errors disabled its RMS is 0.100 deg.
+The CSV quaternion/body-rate consistency audit remains valid. A causal,
+sensor-only field/offset/gyro-bias/affine-matrix learner is now integrated in
+the common facade. The first integrated OU-III comparison reduces the maximum
+across 16 released records from 2.542 to 1.093 deg; individual high-sea records
+can worsen. These preliminary overlay results do not qualify the final build
+or authorize wider gates. The final native matrix and held-out runs remain
+the next acceptance experiment.
+
+Class E candidate-qualification failures: short-window gyro-pair fits did not
+improve the low-wave startup holdout; using a drifting full private-proxy yaw
+fitted spurious magnetic offsets of about 13 uT; a vertical-component-only
+constraint retained about 2.29 deg of southbound offset. None is promoted.
+The retained architecture uses causal relative rotation with an independently
+estimated nuisance gyro bias, rather than an absolute proxy yaw or truth frame.
+Six synthetic noisy calibration replays (two headings, three seeds) reduce
+one-second magnetic-heading RMS from 2.65--3.10 to 0.49--0.64 deg and retain
+finite positive-semidefinite covariance. This is finite numerical evidence,
+not a physical identifiability theorem.
+
+Class E replay-frame defect: PII used different body-axis maps for gyro/accel
+and magnetometer, then a fixed `2*declination` yaw adjustment. One shared
+NWU/NED rotation now maps all sensors and reports the complete attitude.
+The exact basis round trip is tested separately from Mahony's finite-step
+feedback and approximate normalization; a 0.05-deg tracking assertion was
+too strict for that existing numerical observer (0.280 deg observed).
+The algebraic tolerance remains 1e-5 rad and the rotating-observer tolerance
+is 0.5 deg, which still rejects the former reversed 3-deg oscillation.
+
+Class E AHRS replay configuration mismatch: the replay used gyro-bias
+variance density 2e-4 rad^2/s^3 while the deployed compass uses 2e-7.
+The shared named default now prevents that 1000-fold divergence. The sensor
+noise draw, magnetic reference and scoring window are unchanged. In the
+16-record paired diagnostic, maximum AHRS yaw RMS falls from 8.810 to 1.654
+deg. The PII frame correction reduces its corresponding maximum from 14.973
+to 3.011 deg; some head-sea heave cells need review against the old caps.
+These replay comparisons are not claims that the old heading caps qualified
+the changed sources. The required full native matrix remains controlling.
+
+The pre-yaw `make all -j1 SIM_JOBS=4` was intentionally interrupted (130)
+after native build and initial suites, before editing runtime headers. Its
+partial log is not a complete qualification. The b43f7b85 CI matrix passed
+all 544 enforced cells in both directions; the new yaw implementation is
+being rebuilt and replayed independently.
+
+Six-item handoff: (1) shipping OU dynamics/covariance, turn force and tuner
+chronology are preserved; magnetic calibration and its parameter/reference
+slew now include the sensor-only affine learner; (2) no old source-bound proof
+or calibration covariance claim is transferred; unexcited directions remain
+prior-dependent and navigation covariance does not include the learner's joint
+uncertainty; (3) the rejected calibration candidates, PII frame defect and
+premature observer-test tolerance are E; (4) no admitted shipping stability
+counterexample is established; (5) earlier algebra remains under its original
+premises and source bindings; (6) complete all-family paired native replays,
+then regenerate actual operator/evidence receipts before any new proof claim.
+
 ## Heading-separation runtime qualification
 
 Current hypothesis: the IMU-only steady-forward turn model separates the

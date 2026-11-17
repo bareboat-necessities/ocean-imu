@@ -89,7 +89,7 @@ class HeadingControlTests(unittest.TestCase):
             content = b'{"records": {}}\n'
             expected = {}
             for case in ('following', 'head'):
-                relative = Path('reports/results/sim_v1.4.0')/case/'measurements.json'
+                relative = Path('reports/results/heading_kinematics/pre_fix')/case/'measurements.json'
                 path = root/relative
                 path.parent.mkdir(parents=True)
                 path.write_bytes(content)
@@ -100,6 +100,21 @@ class HeadingControlTests(unittest.TestCase):
                 path.write_text(path.read_text()+'\n')
                 with self.assertRaisesRegex(ValueError, 'baseline changed'):
                     heading_turn_validation.load_baseline()
+
+    def test_harmonic_baseline_cannot_be_replaced_by_fresh_runs(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path = root/'reports/results/heading_kinematics/measurements.json'
+            path.parent.mkdir(parents=True)
+            content = b'{"runs": []}\n'
+            path.write_bytes(content)
+            with (patch.object(heading_turn_validation, 'ROOT', root),
+                  patch.object(heading_turn_validation, 'ATTRIBUTION_SHA256',
+                               {'measurements': hashlib.sha256(content).hexdigest()})):
+                self.assertEqual(heading_turn_validation.load_attribution('measurements'), {'runs': []})
+                path.write_bytes(content+b'\n')
+                with self.assertRaisesRegex(ValueError, 'attribution baseline changed'):
+                    heading_turn_validation.load_attribution('measurements')
 
     def test_tfg_bias_chart_distinguishes_estimates_from_injected_truth(self):
         import pandas as pd
