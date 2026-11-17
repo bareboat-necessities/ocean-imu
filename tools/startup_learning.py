@@ -135,6 +135,50 @@ def check_accuracy(summary):
     return checks
 
 
+def production_coverage(rows, seeds, offsets, profiles):
+    expected = {(case, name, profile, int(seed), float(offset)): {}
+                for case in dataset.CASES for name in dataset.REFERENCE_CSV_SHA256_BY_CASE[case]
+                for profile in profiles.split(',') for seed in seeds.split(',') for offset in offsets.split(',')}
+    for row in rows:
+        key = (row['case'], row['input'], row['profile'], int(row['seed']), float(row['offset']))
+        method = row['method']
+        if (key not in expected or method not in ('shipping', 'deployed') or method in expected[key]
+                or row['schedule'] != 'handoff' or row['valid'] != '1'
+                or not 0 < float(row['elapsed_s']) <= 35):
+            raise ValueError(f'invalid production handover: {key} {method}')
+        expected[key][method] = row
+    coverage = []
+    for key, pair in sorted(expected.items()):
+        item = dict(zip(('case', 'input', 'profile', 'seed', 'offset_s'), key))
+        for method in ('shipping', 'deployed'):
+            item[method + '_handover_s'] = float(pair[method]['elapsed_s']) if method in pair else None
+        if item['shipping_handover_s'] != item['deployed_handover_s']:
+            raise ValueError(f'paired startup epochs differ: {key}')
+        item['joint_seed_applied'] = bool(int(pair['deployed']['joint_seed_applied'])) if pair else False
+        coverage.append(item)
+    return coverage
+
+
+def check_production(summary, coverage):
+    checks = []
+    for case in dataset.CASES:
+        for profile in ('calibrated', 'residual'):
+            trials = [r for r in coverage if (r['case'], r['profile']) == (case, profile)]
+            cells = {r['method']: r for r in summary if (r['case'], r['profile']) == (case, profile)}
+            if not trials or set(cells) != {'shipping', 'deployed'}:
+                raise ValueError(f'missing production pair: {case} {profile}')
+            # Count all attempted starts, including those missing the deadline.
+            acceptance = sum(r['joint_seed_applied'] for r in trials) / len(trials)
+            checks.append(dict(case=case, profile=profile, metric='joint_seed_fraction',
+                               actual=acceptance, minimum=.75, passed=acceptance >= .75))
+            for metric in ('tilt_rms_deg', 'yaw_rms_deg'):
+                limit = cells['shipping'][metric]
+                actual = cells['deployed'][metric]
+                checks.append(dict(case=case, profile=profile, metric=metric,
+                                   actual=actual, limit=limit, passed=actual <= limit))
+    return checks
+
+
 def check_controls(summary):
     checks = []
     for case in dataset.CASES:
@@ -160,11 +204,15 @@ def main():
     parser.add_argument('--profiles', default='ideal,calibrated,residual')
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--output', type=Path, default=ROOT/'reports/results/startup_learning')
+    parser.add_argument('--production-pair', action='store_true',
+                        help='score actual OU-III handovers with the streaming learner enabled and disabled')
     parser.add_argument('--scale-force-slope', action='store_true',
                         help='weight the joint force slope by transported force fluctuations')
     parser.add_argument('--check', action='store_true', help='require paired calibrated and residual accuracy bars')
     parser.add_argument('--check-controls', action='store_true', help='require ideal accuracy and field-step rejection')
     args = parser.parse_args()
+    if args.production_pair and (args.check_controls or args.scale_force_slope):
+        parser.error('production pair uses the configured production policies')
     if args.jobs < 1:
         parser.error('--jobs must be positive')
     subprocess.run(['make', '-C', str(TEST), '-j2'], check=True)
@@ -187,7 +235,8 @@ def main():
         subprocess.run([str(TEST/'startup-learning'), '--input', str(path),
                         '--output', str(result), '--seeds', args.seeds,
                         '--offsets', args.offsets, '--profiles', args.profiles,
-                        *(['--scale-force-slope'] if args.scale_force_slope else [])], check=True)
+                        *(['--scale-force-slope'] if args.scale_force_slope else []),
+                        *(['--production-pair'] if args.production_pair else [])], check=True)
         with result.open() as stream:
             rows = [dict(case=case, **r) for r in csv.DictReader(stream)]
         result.unlink()
@@ -197,7 +246,10 @@ def main():
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         for chunk in pool.map(run, jobs):
             rows.extend(chunk)
-    coverage = validate_completeness(rows, args.seeds, args.offsets, args.profiles)
+    coverage_fn = production_coverage if args.production_pair else validate_completeness
+    coverage = coverage_fn(rows, args.seeds, args.offsets, args.profiles)
+    if not rows:
+        raise ValueError('no scored handovers')
     # Six checkpoints per startup (no full-rate traces). Deterministic gzip
     # keeps the reviewable evidence small even with all handover components.
     metrics_path = args.output/'metrics.csv.gz'
@@ -211,12 +263,16 @@ def main():
     (args.output/'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False)+'\n')
     (args.output/'coverage.json').write_text(json.dumps(coverage, indent=2, allow_nan=False)+'\n')
     sources = [*TEST.glob('*.h'), *TEST.glob('*.cpp'), TEST/'Makefile', Path(__file__)]
+    if args.production_pair:
+        sources.extend([ROOT/'src/kalman_common/WaveStartup.h', ROOT/'src/kalman_common/ProxyStartupFusion.h',
+                        ROOT/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'])
     receipt = {
         'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
         'sources_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                            for p in sorted(sources)},
         'datasets': provenance, 'seeds': args.seeds, 'offsets_s': args.offsets,
-        'force_slope_model': 'scaled' if args.scale_force_slope else 'fixed',
+        'force_slope_model': 'scaled' if args.scale_force_slope or args.production_pair else 'fixed',
+        'production_pair': args.production_pair,
         'profiles': args.profiles, 'imu_hz': 200, 'mag_hz': 25, 'deadline_s': 35,
         'truth_access': 'Only sensor generation and scoring; candidate takes Sample only.',
         'metrics_file': metrics_path.name, 'metrics_sha256': dataset.digest(metrics_path),
@@ -227,12 +283,15 @@ def main():
     }
     (args.output/'provenance.json').write_text(json.dumps(receipt, indent=2)+'\n')
     if args.check or args.check_controls:
-        checks = (check_accuracy(summary) if args.check else []) + (check_controls(summary) if args.check_controls else [])
+        if args.production_pair:
+            checks = check_production(summary, coverage)
+        else:
+            checks = (check_accuracy(summary) if args.check else []) + (check_controls(summary) if args.check_controls else [])
         (args.output/'checks.json').write_text(json.dumps(checks, indent=2)+'\n')
         if not all(c['passed'] for c in checks):
             raise ValueError(f'accuracy regression: {[c for c in checks if not c["passed"]]}')
     for item in summary:
-        if item['method'] in ('shipping', 'joint') and (
+        if item['method'] in ('shipping', 'deployed', 'joint') and (
                 item['schedule'] != 'fixed' or item['horizon'] == '35'):
             print(f"{item['case']:9} {item['profile']:12} {item['method']:8} "
                   f"{item['schedule']:7} n={item['n']:3} t={item['mean_elapsed_s']:.2f} "

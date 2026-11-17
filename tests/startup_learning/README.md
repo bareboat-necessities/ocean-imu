@@ -14,7 +14,7 @@ quaternion seeds are read from the actual live state.
 
 
 The OU-II, OU-III and CARMA wrappers and the TFG-OU proxy bootstrap use the
-same streaming solver. It accumulates gyro-transported field and force moments,
+same streaming solver (880 bytes on the measured x86-64 host). It accumulates gyro-transported field and force moments,
 fits a constant body gyro bias, then constructs magnetic north and down at the
 handover sample. The fitted bias and field enter the live core along with the
 attitude. The gyro interval history, configured covariance, accelerometer-bias

@@ -1,3 +1,7 @@
+#ifndef EIGEN_NON_ARDUINO
+#define EIGEN_NON_ARDUINO
+#endif
+#include "kalman_common/WaveStartup.h"
 #include "StartupLearner.h"
 #include <cmath>
 #include <iostream>
@@ -24,8 +28,43 @@ Sample synthetic(double t,const V& bias, bool waves=false) {
     s.mag=q.conjugate()*V(20,0,48);s.magnetic=(std::llround(t*200)%8==0);
     return s;
 }
+void check_streaming_handover() {
+    using seastate::common::WaveStartup;
+    using ocean_imu::kalman::filter_detail::GyroSampleMode;
+    WaveStartup clean, stale, disturbed, vertical;
+    const V bias(.0008, -.0004, .0006);
+    for (int k = 0; k <= 7000; ++k) {
+        const double t = .005*k;
+        const Sample sample = synthetic(t, bias, true);
+        for (auto* learner : {&clean, &stale, &disturbed, &vertical}) {
+            learner->imu(.005f, sample.gyro.cast<float>(), sample.accel.cast<float>(),
+                         GyroSampleMode::Instantaneous);
+        }
+        if (!sample.magnetic) continue;
+        const Eigen::Vector3f field = sample.mag.cast<float>();
+        clean.mag(field);
+        if (t < 34) stale.mag(field);
+        disturbed.mag(t < 17 ? field : Eigen::Vector3f(field + Eigen::Vector3f(10, 0, 0)));
+        vertical.mag((attitude(t).conjugate() * (50 * V::UnitZ())).cast<float>());
+    }
+    WaveStartup::Seed seed;
+    require(clean.solve(gravity, true, seed), "streaming fit rejected wave startup");
+    require(angular_error(seed.attitude.cast<double>(), attitude(35)) < .01, "streaming handover epoch");
+    require((seed.gyro_bias.cast<double>() - bias).norm() < .0005, "streaming bias frame");
+    require(seed.field.cast<double>().isApprox(V(20, 0, 48), .01), "streaming field frame");
+    const auto accepted = seed;
+    for (const auto* learner : {&stale, &disturbed, &vertical}) {
+        require(!learner->solve(gravity, true, seed), "unqualified streaming seed");
+        require(accepted.attitude.coeffs() == seed.attitude.coeffs() && accepted.field == seed.field &&
+                accepted.gyro_bias == seed.gyro_bias, "rejection overwrote last accepted seed");
+    }
+    clean.imu(.11f, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), GyroSampleMode::IntervalRate);
+    require(!clean.solve(gravity, true, seed), "streaming window survived IMU gap");
+}
+
 }
 int main() try {
+    check_streaming_handover();
     Config exact_config;
     exact_config.mag_sigma=.01; // deterministic synthetic observations
     Learner fit(exact_config),zero,waves;

@@ -27,7 +27,7 @@ endif()
 
 set(W3D_SIM_COMMON "${OCEAN_IMU_SRC_DIR}/util/W3dSimCommon.cpp")
 
-# Isolated initialization experiment; no production estimator uses it.
+# Compare the full-history reference fit and both production startup policies.
 add_executable(startup-learning
   "${OCEAN_IMU_TESTS_DIR}/startup_learning/startup-learning.cpp"
   "${OCEAN_IMU_TESTS_DIR}/startup_learning/StartupLearner.cpp"

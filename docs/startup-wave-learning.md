@@ -33,6 +33,22 @@ with `--input`, `--output`, `--profiles calibrated,residual`, and the
 `--seeds` and `--offsets` in the
 [production scores](../reports/results/startup_learning/production-handover.json).
 
+## Accuracy after the startup transient
+
+Both v1.4.0 directions were rerun on the same 13 binaries with the pinned GCC
+toolchain. The 544 filter/profile/record cells include 2,768 gated
+measurements. Relative to the pre-integration locked measurements, 1,127 fell,
+606 were equal and 1,035 rose. With the existing 0.5% gate margin as the
+comparison threshold, 55 fell by more than 0.5% and 44 rose by more than 0.5%.
+The largest increase was TFG pitch on the following 8.5 m JONSWAP record
+(0.08603° to 0.09181°). For the eight production wave-filter families, gyro
+bias RMS decreased in every family when pooled over the 16 records. Yaw RMS
+decreased 0.044% for OU-III and rose 0.009–0.054% in the other seven families.
+The ordinary wave-filter gate scores the final 900 s of each 1,200 s run.
+
+[Paired RMS by family, profile and sea direction](../reports/results/startup_learning/live-replay.csv)
+· [Source measurements and CI artifacts](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44184184023)
+
 ## Results within 35 seconds
 
 The validation set has five unused sensor-noise/calibration seeds, three later

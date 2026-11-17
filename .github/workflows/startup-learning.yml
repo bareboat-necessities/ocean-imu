@@ -58,6 +58,11 @@ jobs:
             --offsets "$OFFSETS" --profiles calibrated,residual --jobs 2 --check \
             --output reports/results/startup_learning/ci
           python3 tools/report_startup_learning.py reports/results/startup_learning/ci
+      - name: Compare both production handovers at the same epoch
+        run: |
+          python3 tools/startup_learning.py --production-pair --check --seeds "$SEEDS" \
+            --offsets "$OFFSETS" --profiles calibrated,residual --jobs 2 \
+            --output reports/results/startup_learning/ci-production
       - name: Ideal sensors and magnetic disturbance controls
         if: matrix.cohort == 'validation'
         run: |
@@ -83,6 +88,7 @@ jobs:
           name: isolated-startup-metrics-${{ matrix.cohort }}
           path: |
             reports/results/startup_learning/ci/
+            reports/results/startup_learning/ci-production/
             reports/results/startup_learning/ci-controls/
             reports/results/startup_learning/ci-scaled/
             reports/results/startup_learning/ci-scaled-controls/
