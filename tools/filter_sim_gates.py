@@ -54,6 +54,7 @@ GATE_METRICS = {
     'acc_z_bias_percent': ('acc_bias_z_percent', None),
     'bias_3d_percent': ('acc_bias_3d_percent', None),
     'gyro_bias_3d_percent': ('gyro_bias_3d_percent', None),
+    'err_limit_y_rms_m': ('disp_y_rms_m', None),
 }
 
 

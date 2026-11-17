@@ -1105,7 +1105,8 @@ The Live gravity-gate readout is passive while lock holds; reacquisition is
 excluded and the refinement yaw write remains an actual estimator jump.
 The same-statistics reference map obeys
 $\|B_r-B_a\|\le\|A(b-b_a)\|\le\|b-b_a\|$, giving the default real-operation
-bound $\|B_r\|\le(27/20)M$ from the existing delivered-field envelope $M$.
+bound $\|B_r\|\le(9/5)M$ from the existing delivered-field envelope $M$,
+including the bounded affine correction and its convex slew.
 Its complete paired source differential and endpoint gauge work are retained.
 This removes the homogeneous reference-feedback port, not the remaining
 complete MEKF storage-gap obligation or float reference qualification.

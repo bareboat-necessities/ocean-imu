@@ -1,0 +1,344 @@
+{
+  "qualification": "OU3_HEADING_RUNTIME_SOURCE_REFRESH_V1",
+  "runtime_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "native_commands": [
+    {
+      "module": "world_frame_source_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.world_frame_source_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/world-frame-source-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/world-frame-source-feasibility.json",
+      "artifact_sha256": "31f73b39fd2677f8b4d679eb64bf357aab2cb7ba17e39db8de627f85249d196a",
+      "raw_output_sha256": "31f73b39fd2677f8b4d679eb64bf357aab2cb7ba17e39db8de627f85249d196a",
+      "log_sha256": "be83b0e8ccc338845d66dec8a90e9ad559eb812cdac834f9e74933c52b5008ac",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "signed_temporal_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.signed_temporal_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/signed-adjoint-diagnostic.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
+      "artifact_sha256": "2450f924a01c529d1d1f951c3dee18a19b4c3946b63c783f0b8810018e054b7c",
+      "raw_output_sha256": "2450f924a01c529d1d1f951c3dee18a19b4c3946b63c783f0b8810018e054b7c",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "signed_temporal_balance",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.signed_temporal_balance",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/signed-balance-diagnostic.json",
+        "--export",
+        "--directory",
+        "<scratch>/balance"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/signed-balance-diagnostic.json",
+      "artifact_sha256": "06f08693722abb5fecb8a89dbc981a7d61d62caba4912a58f89bf06a49ace903",
+      "raw_output_sha256": "06f08693722abb5fecb8a89dbc981a7d61d62caba4912a58f89bf06a49ace903",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "moving_transport_source_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.moving_transport_source_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/moving-transport-source-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
+      "artifact_sha256": "b0104a394105320e87ece5d412d7d096047df7abf91ff2f3a9db39b717a6d711",
+      "raw_output_sha256": "b0104a394105320e87ece5d412d7d096047df7abf91ff2f3a9db39b717a6d711",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "aw_tracking_source_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.aw_tracking_source_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/aw-tracking-source-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
+      "artifact_sha256": "0b85325ddb350bb53dccc253eec3793056f36571fbcd777c26ad4de0f18afa96",
+      "raw_output_sha256": "0b85325ddb350bb53dccc253eec3793056f36571fbcd777c26ad4de0f18afa96",
+      "log_sha256": "dde13ae4e10ef4a36a872a8be8256e47583504cfa0276b70aeddf743d940cdd0",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "construction_history_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.construction_history_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/construction-history-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/construction-history-feasibility.json",
+      "artifact_sha256": "a23be04177c2fcc0732271cc0060eaad84fca327adc67c0bfa689ec2b3a869f6",
+      "raw_output_sha256": "a23be04177c2fcc0732271cc0060eaad84fca327adc67c0bfa689ec2b3a869f6",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "construction_mean_action",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.construction_mean_action",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/construction-mean-action.json",
+        "--export",
+        "--intervals",
+        "--directory",
+        "<scratch>/mean"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/construction-mean-action.json",
+      "artifact_sha256": "37454d1b27b86faa843d18f3bf032fe1fb8b9adddf9932f561fcb40c54a97b4e",
+      "raw_output_sha256": "ecf6415e14e067a45461ae69272cbdbaf0e8ca02d891bba2dcca7ec5fb6d54ae",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "9e73439ef78989e5d42029e759ed17f46e3814a1"
+    },
+    {
+      "module": "planar_service_stream",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_service_stream",
+        "--output",
+        "<scratch>/planar-service-stream-diagnostic.json",
+        "--eigen",
+        "third_party/eigen",
+        "--stream",
+        "<scratch>/planar-stream.bin"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
+      "artifact_sha256": "16b7cd2526da43dd249f4f70d5bf1439ff3c1addcd6c9963d4fc692545c88ba2",
+      "raw_output_sha256": "16b7cd2526da43dd249f4f70d5bf1439ff3c1addcd6c9963d4fc692545c88ba2",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "planar_service_audit",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_service_audit",
+        "--output",
+        "<scratch>/planar-service-operation-audit.json",
+        "--stream",
+        "<scratch>/planar-stream.bin"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-service-operation-audit.json",
+      "artifact_sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5",
+      "raw_output_sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "planar_service_frechet",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_service_frechet",
+        "--output",
+        "<scratch>/planar-service-frechet-diagnostic.json",
+        "--stream",
+        "<scratch>/planar-stream.bin"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
+      "artifact_sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692",
+      "raw_output_sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "planar_moving_center",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_moving_center",
+        "--output",
+        "<scratch>/planar-moving-center-diagnostic.json",
+        "--stream",
+        "<scratch>/planar-stream.bin"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
+      "artifact_sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427",
+      "raw_output_sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427",
+      "log_sha256": "a0be3fdbcb419e3ca7330592a9ca17fbd408656e9ec08a0a4a1a0f0979b1129a",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "planar_compatibility_quotient_mean",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_compatibility_quotient_mean",
+        "--output",
+        "<scratch>/planar-quotient-mean-diagnostic.json",
+        "--stream",
+        "<scratch>/planar-stream.bin"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
+      "artifact_sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d",
+      "raw_output_sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d",
+      "log_sha256": "763ede77e324dbe59ef8885727938c8b06709b09cd63dbf307bf9b875ab61152",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "planar_native_secants",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.planar_native_secants",
+        "--output",
+        "<scratch>/planar-native-secants-diagnostic.json",
+        "--eigen",
+        "third_party/eigen"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+      "artifact_sha256": "c21658feb8dea934ac70806256a2c1baa9f87d4c47129b33f6ce3b32e57892b2",
+      "raw_output_sha256": "c21658feb8dea934ac70806256a2c1baa9f87d4c47129b33f6ce3b32e57892b2",
+      "log_sha256": "85669886317326b0563310f066456c82e2e7eff544c1ad359310d9ae98c30216",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "moving_compatibility_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.moving_compatibility_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--duration",
+        "240",
+        "--output",
+        "<scratch>/moving-compatibility-carried.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/moving-compatibility-carried.json",
+      "artifact_sha256": "a68e04d97d7b2e1e4b628d70908940ee403d623af021bbd8282b97ad9a7cc89a",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "module": "moving_compatibility_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.moving_compatibility_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--duration",
+        "1200",
+        "--output",
+        "<scratch>/moving-compatibility-carried-1200s.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/moving-compatibility-carried-1200s.json",
+      "artifact_sha256": "5d4e82784d7935d2bf4ef800660aa4870ef0396ca7337c2fa909afc39d0a1c0c",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "module": "ag_readout_source_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.ag_readout_source_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/ag-readout-source-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
+      "artifact_sha256": "ef47548c0c0b4a98de9b6c611e6d47036dcda199147dc0443fdc967f55d97f2c",
+      "batch_source_commit": "565eea4a0b79833dd9983b5191fb7afca905d4c0"
+    },
+    {
+      "module": "information_ratio_source_diagnostic",
+      "command": [
+        "python3",
+        "-m",
+        "tools.stability.ou3_theorem.information_ratio_source_diagnostic",
+        "--eigen",
+        "third_party/eigen",
+        "--output",
+        "<scratch>/information-ratio-source-feasibility.json"
+      ],
+      "exit_code": 0,
+      "artifact": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
+      "artifact_sha256": "3f117fc780dbfe623c35826cc9e0972848df6948b425f06ba84703e4ff9aac12",
+      "log_sha256": "e07d32715df776622dfb93b5aa853580008590fd91adefd137616861307c8d01"
+    }
+  ],
+  "unit_tests": {
+    "command": "python3 -m unittest discover -s tests/validation -p 'test_ou3_*.py'",
+    "count": 824,
+    "exit_code": 0,
+    "log_sha256": "e172bc0eeccc87395b973a7f1e22a5bcec095937b42ea275ed095e671b35a0ff"
+  },
+  "scope": "Finite native source replays and exact operation/source-structure checks. All records were regenerated; no record is transferred solely by replacing a fingerprint.",
+  "mean_action_wrapper": "The committed mean-action report combines the fresh --intervals output, analyze(directory, False), and the observer/parity/trace metadata in the fresh export.json.",
+  "final_source_changes_after_initial_batch": "565eea4a moves noinline attributes without changing the native calibration executable bytes, corrects only the optional legacy (disabled in these default gyro-learner histories) offset branch, and isolates an Arduino-only prediction instantiation. The final-source planar and historical-AG exports were run after these changes.",
+  "structures_preserved": [
+    "full state/covariance/gains and literal prediction/correction/sync/reset chronology",
+    "same physical construction-to-Live history and inherited auxiliary state",
+    "observed/control parity and actual reference at every exported correction"
+  ],
+  "relaxations_introduced": [
+    "finite diagnostics do not enclose all reachable source histories",
+    "geometric floor lemmas retain zero modeled steering speed",
+    "joint learner/navigation uncertainty and float reference accumulation remain open"
+  ],
+  "failure_classifications": [
+    "E: observer anchor/frozen-reference defects, diffuse-prior numerical conditioning and build resource failures",
+    "D: pre-existing non-promoting sufficient-bound failures are retained"
+  ],
+  "genuine_shipping_counterexample_found": false,
+  "source_uniform_verified": false,
+  "theorem_closed": false
+}

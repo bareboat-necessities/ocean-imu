@@ -94,11 +94,18 @@ class ReplayEvidenceTests(unittest.TestCase):
                 self.assertEqual(value, cap(entry['measured_max'][metric]))
                 self.assertGreater(value, entry['measured_max'][metric])
         self.assertEqual(render(data), (ROOT / 'tests/common/RecordReplayLimits.inc').read_text())
+        horizontal = set(G.REPLAYS) - {'ahrs', 'heave', 'nlo', 'pii'}
+        y_entries = [e for e in data['entries'] if 'displacement_y' in e['limits']]
+        self.assertEqual(len(y_entries), 272)
+        self.assertEqual({e['family'] for e in y_entries}, horizontal)
+        self.assertTrue(all(('displacement_y' in e['limits']) == (e['family'] in horizontal)
+                            for e in data['entries']))
 
     def test_compiled_record_lookup_rejects_hidden_regressions_and_missing_channels(self):
         # Exercise the actual C++ lookup, including path handling and failure modes.
         source = r'''
-#include "tests/common/RecordReplayLimits.h"
+#include "tests/common/RecordW3dLimits.h"
+#include "tests/common/CurrentReplayLimits.h"
 #include <cassert>
 using namespace ocean_imu::sim::record_limits;
 namespace rl = ocean_imu::sim::record_limits;
@@ -109,6 +116,14 @@ int main() {
     const float regression = (local + global) / 2;
     assert(regression <= global && !(regression <= local));
     assert(tighten(e, Metric::heave, 0.01f) == 0.01f);
+    const auto bars = ocean_imu::sim::current_limits::ou2;
+    const auto capped = w3d("ou2", "default", e.input, bars);
+    assert(capped.err_limit_y_rms_m == e.limits[static_cast<std::size_t>(Metric::displacement_y)]);
+    const float y_regression = (capped.err_limit_y_rms_m + bars.err_limit_y_rms_m) / 2;
+    assert(y_regression <= bars.err_limit_y_rms_m && y_regression > capped.err_limit_y_rms_m);
+    auto diagnostic = bars;
+    diagnostic.err_limit_y_rms_m = 0.0f;
+    assert(w3d("ou2", "default", e.input, diagnostic).err_limit_y_rms_m == 0.0f);
     int caught = 0;
     for (const auto* unknown : {"missing.csv", "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv.bak"}) {
         try { (void)rl::find("ou2", "default", unknown); }
@@ -122,6 +137,7 @@ int main() {
     catch (const std::invalid_argument&) { ++caught; }
     assert(caught == 5);
     setenv("W3D_IMU_SEED", "1234", 1);
+    assert(w3d("ou2", "default", e.input, bars).err_limit_y_rms_m == bars.err_limit_y_rms_m);
     assert(limit("ou3", "default", "diagnostic_crossfade.csv", Metric::heave, 8.0f) == 8.0f);
     unsetenv("W3D_IMU_SEED");
     const char* regular = "/tmp/wave_data_gerstner_H0.270_L14.047_A0.00_P60.00.csv";
@@ -140,7 +156,11 @@ int main() {
         with tempfile.TemporaryDirectory() as tmp:
             cpp, binary = Path(tmp) / 'test.cpp', Path(tmp) / 'test'
             cpp.write_text(source)
+            eigen = ROOT / 'third_party/eigen'
+            if not (eigen / 'Eigen/Dense').exists():
+                eigen = Path('/usr/include/eigen3')
             subprocess.run(['g++', '-std=c++20', '-Wall', '-Wextra', '-Werror', '-I', str(ROOT), '-I', str(ROOT / 'src'),
+                            '-isystem', str(eigen),
                             str(cpp), '-o', str(binary)], check=True, capture_output=True)
             subprocess.run([str(binary)], check=True, capture_output=True)
 
@@ -238,11 +258,14 @@ int main() {
         rows = G.parse_w3d(fixture())
         rows[0]['disp_z_pct_hs'] = 7.0
         rows[-1]['gyro_bias_3d_percent'] = 9.0
+        rows[-1]['disp_y_rms_m'] = 0.003
+        rows[0]['disp_y_rms_m'] = 0.2
         worst = G.measured_worst(rows)
         self.assertEqual(worst['err_limit_percent_z_jonswap'], 7.0)
         self.assertEqual(worst['err_limit_percent_z_pmstokes'], 0.1)
         self.assertEqual(worst['bias_3d_percent'], 4.0)
         self.assertEqual(worst['gyro_bias_3d_percent'], 9.0)
+        self.assertEqual(worst['err_limit_y_rms_m'], 0.2)
 
     def test_every_simulator_has_an_audit_owner(self):
         owned = {f'tests/{folder}/{binary}.cpp' for folder, binary, _ in G.REPLAYS.values()}

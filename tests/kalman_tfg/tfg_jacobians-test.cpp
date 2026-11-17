@@ -88,18 +88,18 @@ Filter make_filter() {
 // recompute the residual, central-difference.
 // ---------------------------------------------------------------------------
 
-template<typename ResidualFn>
-JacobianT numeric_jacobian(const Filter& base, ResidualFn residual, T eps) {
+template<typename CurrentFilter, typename ResidualFn>
+JacobianT numeric_jacobian(const CurrentFilter& base, ResidualFn residual, T eps) {
     JacobianT numeric;
     for (int j = 0; j < NX; ++j) {
         Tangent e = Tangent::Zero();
 
         e(j) = eps;
-        Filter plus = base;
+        CurrentFilter plus = base;
         plus.inject(e);
 
         e(j) = -eps;
-        Filter minus = base;
+        CurrentFilter minus = base;
         minus.inject(e);
 
         numeric.col(j) = (residual(plus) - residual(minus)) / (T(2) * eps);
@@ -146,7 +146,8 @@ void compare(const JacobianT& analytic, const JacobianT& numeric, T tol,
 // state, so the residual is evaluated near zero rather than at an arbitrary
 // offset. No temperature term: the callers leave k_a at zero, and the
 // temperature path gets its own dedicated check below.
-Vector3 consistent_accel(const Filter& f) {
+template<typename CurrentFilter>
+Vector3 consistent_accel(const CurrentFilter& f) {
     return f.R_wb() * (f.get_world_accel() - f.gravity_world()) + f.get_acc_bias();
 }
 
@@ -187,6 +188,37 @@ void test_accel_jacobian_at_consistent_state() {
             T(1e-6));
 
         compare(H, numeric, T(2e-8), "accelerometer (consistent state)");
+    }
+}
+
+template<bool TwoFrame>
+void test_turn_jacobian_through_group_retraction() {
+    using TurnFilter = ocean_imu::kalman::Kalman3D_Wave_TFG<T, true, true, TwoFrame>;
+    for (int trial=0; trial<8; ++trial) {
+        TurnFilter f;
+        f.state()=make_filter().state();
+        const Vector3 bow=trial%2 ? Vector3::UnitY() : Vector3::UnitX();
+        const Vector3 gyro(T(.03)*std::sin(T(trial)),T(-.07),T(.04)*std::cos(T(trial)));
+        const T speed=trial%2 ? T(-1.4) : T(3.1);
+        f.time_update(gyro,T(.005));
+        f.set_marine_turn(speed,bow);
+        const Vector3 d=f.R_wb()*Vector3::UnitZ();
+        const Vector3 w=gyro-f.state().B.col(0);
+        const T c=d.dot(bow), h2=T(1)-c*c;
+        const Vector3 force=speed*(w.dot(d)-c*w.dot(bow))*d.cross(bow)/(h2*std::sqrt(h2));
+        check((f.get_world_total_accel()-f.get_world_accel()-f.R_bw()*force).norm()<T(1e-12),
+              "total acceleration does not include the estimated turn force");
+        const Vector3 acc=consistent_accel(f)+force;
+        Vector3 r; JacobianT H; Matrix3 Rw;
+        f.accel_residual(acc,T(35),r,H,Rw);
+        check(r.norm()<T(1e-12), "turn force left a consistent-state residual");
+        const JacobianT numeric=numeric_jacobian(f,[&](const TurnFilter& g) {
+            Vector3 rr; JacobianT HH; Matrix3 RR;
+            g.accel_residual(acc,T(35),rr,HH,RR);
+            return rr;
+        },T(1e-6));
+        compare(H,numeric,T(2e-8),TwoFrame ? "turn model through two-frame TFG retraction"
+                                         : "turn model through additive-bias TFG retraction");
     }
 }
 
@@ -674,6 +706,8 @@ void test_float_instantiation() {
 int main() {
     test_accel_residual_is_zero_at_truth();
     test_accel_jacobian_at_consistent_state();
+    test_turn_jacobian_through_group_retraction<false>();
+    test_turn_jacobian_through_group_retraction<true>();
     test_accel_jacobian_neglected_term_is_exactly_the_innovation();
     test_accel_jacobian_is_estimate_independent();
     test_accel_bias_column_is_rotated_at_level_one();

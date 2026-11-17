@@ -287,9 +287,9 @@ for fname in files:
 
     # === Accelerometer bias estimates vs true ===
     acc_pairs = [
-        ("acc_bias_x",  "acc_bias_est_x",  "Accel bias X"),
-        ("acc_bias_y",  "acc_bias_est_y",  "Accel bias Y"),
-        ("acc_bias_z",  "acc_bias_est_z",  "Accel bias Z"),
+        ("acc_bias_x",  "acc_bias_est_x",  "Body accel bias X"),
+        ("acc_bias_y",  "acc_bias_est_y",  "Body accel bias Y"),
+        ("acc_bias_z",  "acc_bias_est_z",  "Body accel bias Z"),
     ]
     fig, axes = make_subplots(len(acc_pairs), latex_safe(f"{variant_label}: {basename}") + " (Accelerometer Biases)")
     for ax, (true_col, est_col, label) in zip(axes, acc_pairs):

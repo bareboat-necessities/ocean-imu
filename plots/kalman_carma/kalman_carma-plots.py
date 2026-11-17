@@ -201,7 +201,7 @@ def plot_bias(full, base, kind):
     for ax, axis in zip(axes, ("x", "y", "z")):
         ax.plot(full["time"], full[f"{kind}_bias_{axis}"], lw=1.2, label="true")
         ax.plot(full["time"], full[f"{kind}_bias_est_{axis}"], lw=0.9, ls="--", label="estimate")
-        ax.set_ylabel(f"{kind} bias {axis.upper()} [{unit}]")
+        ax.set_ylabel(f"Body {kind} bias {axis.upper()} [{unit}]")
         ax.legend(loc="upper right", fontsize="small")
     axes[-1].set_xlabel("time [s]")
     finalize(fig, base, f"_{kind}_bias")

@@ -16,7 +16,7 @@ not the vessel's encounter height and period.
 `make all` builds and tests the project, then runs every central replay profile
 on **both cases**. `make sim-regression` runs only that matrix. It writes
 `reports/results/sim_v1.4.0/{following,head}/`: input and executable provenance,
-full-rate metrics in JSON/CSV, seven metric charts, and per-profile logs.
+full-rate metrics in JSON/CSV, eight metric charts (including wave Y RMS), and per-profile logs.
 Any missing record, nonfinite metric or failed numeric gate fails the command;
 complete failed measurements remain available. Normal CI never refits limits.
 The fixed-draw acceptance build uses GCC 14 and Eigen 3.4 with the shared host
@@ -42,6 +42,24 @@ The scoring reference subtracts only the analytically declared cruise
 remain available to the estimator. The Python surrogate generator and C++
 scoring reference share the 20 s period and the 180° rotation. Neither guesses
 the case from identically named CSV files.
+
+This makes horizontal displacement error a **wave-only output error under
+steering contamination**, not an error against total bounded vessel motion.
+The removed cruise track is curved: its acceleration is nonzero. The current
+IMU/magnetometer filters have no independent cruise speed/course input. The
+shared runtime turn observer now estimates steady forward speed from sensor
+history and models the corresponding force separately from wave acceleration.
+This separation is conditional on its motion assumptions; subtracting the
+track from scoring alone cannot provide it. See
+[the paired heading investigation and runtime results](heading-kinematics.md).
+
+Displacement/velocity/acceleration columns use the generator's geographic
+Z-up axes (north, west, up), after undoing magnetic declination on estimated
+world vectors. Bias columns use **sensor-body axes after the harness's
+`(x,y,z) -> (y,x,-z)` basis conversion**. They are not world-frame biases;
+`acc_bias_y` is not the same physical axis as `disp_ref_y`. The historical
+`*_ned` snapshot member names denote this basis convention, not an attitude
+rotation of the sensor bias into the navigation frame.
 
 The study inventory is in `tools/simulation_studies.py`: paired OU validation
 and robustness, TFG comparison, model mismatch, engine noise, startup, wave

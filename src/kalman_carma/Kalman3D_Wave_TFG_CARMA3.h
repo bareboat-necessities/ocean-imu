@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman_common/MarineTurnModel.h"
 
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
@@ -221,6 +222,8 @@ public:
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    void set_marine_turn(T speed, const Vector3& bow) { marine_turn_.set(speed, bow); }
+
     struct MeasDiag3 {
         Vector3 r = Vector3::Zero();   // world-frame residual
         Matrix3 S = Matrix3::Zero();
@@ -281,6 +284,9 @@ public:
     [[nodiscard]] Vector3 get_position() const { return X_.X.col(IP); }
     [[nodiscard]] Vector3 get_velocity() const { return X_.X.col(IV); }
     [[nodiscard]] Vector3 get_world_accel() const { return X_.X.col(IA); }
+    [[nodiscard]] Vector3 get_world_total_accel() const {
+        return get_world_accel() + X_.R*turn_evaluation_().force;
+    }
 
     // Covariance in the CARMA3-equivalent coordinates e (see the header).
     [[nodiscard]] MatrixNX covariance_physical() const {
@@ -471,6 +477,11 @@ public:
     }
 
 private:
+    MarineTurnModel<T> marine_turn_;
+    typename MarineTurnModel<T>::Evaluation turn_evaluation_() const {
+        return marine_turn_.evaluate(Vector3(X_.R.row(2).transpose()),
+            Vector3(marine_turn_.endpoint_gyro-X_.B.col(0)), marine_turn_.bow);
+    }
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
     Group X_{};
@@ -1256,6 +1267,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
     project_gyro_bias_();
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr.allFinite()) return;
     const auto input = gyro_interval_.prepare(gyr, Ts);
+    marine_turn_.endpoint_gyro = gyr;
     if (!input.predict) return;
 
 
@@ -1671,14 +1683,16 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     const Matrix3& R = X_.R;
     // Off-CoG IMU: remove the rotational term L at the sensor (see the header).
     const bool lever = lever_.enabled();
-    const Vector3 f_cog = lever ? Vector3(acc_meas - lever_.acceleration()) : acc_meas;
+    const auto turn = turn_evaluation_();
+    Vector3 f_cog = acc_meas - turn.force;
+    if (lever) f_cog -= lever_.acceleration();
     if constexpr (kMotion) motion_.observe(R * (f_cog - ba_term) + g_world);
     const Vector3 r = R * (f_cog - ba_term) - (Vector3(X_.X.col(IA)) - g_world);
     last_acc_diag_.r = r;
     const Matrix3 Rw = R * Racc_ * R.transpose();
 
-    // H = [ [g]x | H_bg | 0 0 -I 0.. | -I ];  [g]x = [[0,-g,0],[g,0,0],[0,0,0]],
-    // H_bg = -R J_L R^T with a lever arm, 0 without.
+    // Start with H = [ [g]x | 0 | 0 0 -I 0.. | -I ]; append the
+    // turn attitude/rate and lever-arm gyro-bias derivatives below.
     const T g = gravity_magnitude_;
     MatrixNX3& PHt = PHt_scratch_;
     const T* const p = P_.data();
@@ -1688,9 +1702,12 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         ht[i + NX] = g * p[i + NX * OFF_PHI] - p[i + NX * (OFF_A + 1)] - p[i + NX * (OFF_BA + 1)];
         ht[i + 2 * NX] = -p[i + NX * (OFF_A + 2)] - p[i + NX * (OFF_BA + 2)];
     }
-    Matrix3 H_bg = Matrix3::Zero();
-    if (lever) {
-        H_bg = -(R * lever_.bias_jacobian() * R.transpose());
+    const Matrix3 H_turn_phi = -R * turn.down_jacobian * R.transpose() * lie::skew<T>(Vector3::UnitZ());
+    if (marine_turn_.speed != T(0))
+        PHt.noalias() += P_.template block<NX,3>(0,OFF_PHI) * H_turn_phi.transpose();
+    Matrix3 H_bg = R * turn.rate_jacobian * R.transpose();
+    if (lever) H_bg -= R * lever_.bias_jacobian() * R.transpose();
+    if (lever || marine_turn_.speed != T(0)) {
         T Hb[3][3];
         tfg_carma_detail::rows3<T>(H_bg, Hb);
         for (int b = 0; b < 3; ++b)
@@ -1705,7 +1722,9 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         S(1,b) += g * hb[OFF_PHI] - hb[OFF_A + 1] - hb[OFF_BA + 1];
         S(2,b) += -hb[OFF_A + 2] - hb[OFF_BA + 2];
     }
-    if (lever) {
+    if (marine_turn_.speed != T(0))
+        S.noalias() += H_turn_phi * PHt.template block<3,3>(OFF_PHI,0);
+    if (lever || marine_turn_.speed != T(0)) {
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
                 S(a,b) += H_bg(a,0) * PHt(OFF_BG, b) + H_bg(a,1) * PHt(OFF_BG + 1, b) +

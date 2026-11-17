@@ -15,7 +15,13 @@ and `aw_tracking_source_diagnostic.py`.
 ## 1. World-frame factorization
 
 Work in regular real-arithmetic A21: fixed deployment frame, zero lever arm,
-constant committed reference B_w, no frame/relock/reference event. Let R_k be
+zero modeled steering speed, constant committed reference B_w, no
+frame/relock/reference event. The current steering model adds attitude and
+gyro-bias terms to the accelerometer row when its learned speed is nonzero.
+The cross-product-only geometry below is not a certificate for those added
+terms. Generic covariance identities still use the actual complete rows;
+their source-uniform geometric qualification for nonzero speed remains open.
+Let R_k be
 the mean world-to-body rotation (`qref`) after operation k and
 `[[A_k,B_k],[0,I]]` the literal chronological AG transport from the root.
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "kalman_common/GyroInterval.h"
+#include "kalman_common/MarineTurnModel.h"
 
 /*
   Copyright (c) 2025-2026 Mikhail Grushinskiy
@@ -71,6 +72,7 @@ class Kalman3D_Wave_OU_III {
 
   public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    void set_marine_turn(T speed, const Vector3& bow) { marine_turn_.set(speed, bow); }
 
     struct MeasDiag3 {
         Vector3 r = Vector3::Zero();   // residual
@@ -230,6 +232,10 @@ class Kalman3D_Wave_OU_III {
 
     // Latent OU world-acceleration a_w (world, NED)
     [[nodiscard]] Vector3 get_world_accel() const { return xext.template segment<3>(OFF_AW); }
+    // Physical CoG acceleration; the wave-state getter above excludes travel.
+    [[nodiscard]] Vector3 get_world_total_accel() const {
+        return get_world_accel() + R_wb().transpose()*turn_evaluation_().force;
+    }
 
     // Read the active model, including parameter smoothing and applied floors.
     [[nodiscard]] T get_aw_time_constant() const { return tau_aw; }
@@ -599,6 +605,12 @@ class Kalman3D_Wave_OU_III {
     }
 
   private:
+    typename MarineTurnModel<T>::Evaluation turn_evaluation_() const {
+        Vector3 omega = deheel_vector_(marine_turn_.endpoint_gyro);
+        if constexpr (with_gyro_bias) omega -= xext.template segment<3>(3);
+        return marine_turn_.evaluate(Vector3(R_wb().col(2)), omega,
+                                     deheel_vector_(marine_turn_.bow));
+    }
     const T gravity_magnitude_ = T(STD_GRAVITY);
 
     // MEKF quaternion convention:
@@ -1161,6 +1173,10 @@ class Kalman3D_Wave_OU_III {
 	    log_tau_aw_f_.update(z);
 	    refresh_model_params_from_filtered_();
 	}
+    // Keep the established covariance-buffer layout independent of the
+    // optional nuisance-motion model.
+    MarineTurnModel<T> marine_turn_;
+
 };
 
 // Implementation
@@ -1611,6 +1627,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
 {
     if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr_body.allFinite()) return;
     const auto interval = gyro_interval_.prepare(gyr_body, Ts);
+    marine_turn_.endpoint_gyro = gyr_body;
     if (!interval.predict) return;
     project_gyro_bias_();
     last_dt_ = Ts;   // Remember last dt
@@ -2007,7 +2024,10 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     // Predicted specific force
     const Vector3 aw = xext.template segment<3>(OFF_AW);
-    const Vector3 f_pred = R_wb() * (aw - g_world) + lever + ba_term;
+    const Vector3 down = R_wb().col(2);
+    const auto turn = turn_evaluation_();
+    J_bg -= turn.rate_jacobian;
+    const Vector3 f_pred = R_wb() * (aw - g_world) + lever + ba_term + turn.force;
 
     const Vector3& f_meas = acc_meas;
     const Vector3 r = f_meas - f_pred;
@@ -2016,7 +2036,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 
     // Jacobians from linearization at CoG-only part (lever-arm is attitude-independent)
     const Vector3 f_cog_b = R_wb() * (aw - g_world);
-    const Matrix3 J_att = -skew_symmetric_matrix(f_cog_b);
+    const Matrix3 J_att = -skew_symmetric_matrix(f_cog_b)
+        - turn.down_jacobian * skew_symmetric_matrix(down);
     const Matrix3 J_aw  =  R_wb();
 
     // Innovation covariance S = C P Cᵀ + Racc (3×3)
@@ -2071,7 +2092,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
 		    }
 		}
         if constexpr (with_gyro_bias) {
-            if (use_imu_lever_arm_) {
+            if (use_imu_lever_arm_ || marine_turn_.speed != T(0)) {
                 constexpr int OFF_BG = 3;
 
                 const Matrix3 P_th_bg = Pext.template block<3,3>(0, OFF_BG);
@@ -2115,7 +2136,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::measurement_updat
             }
         }
         if constexpr (with_gyro_bias) {
-            if (use_imu_lever_arm_) {
+            if (use_imu_lever_arm_ || marine_turn_.speed != T(0)) {
                 const auto P_all_bg = Pext.template block<NX,3>(0, 3);
                 PCt.noalias() += P_all_bg * J_bg.transpose();
             }
@@ -2236,7 +2257,7 @@ Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::accelerometer_measurem
 
     // CoG specific force in B'
     const Vector3 f_cog_b = R_wb() * (aw - g_world);
-    Vector3 fb = f_cog_b;
+    Vector3 fb = f_cog_b + turn_evaluation_().force;
 
     // Optional IMU lever-arm correction:
     // Use ω^{B'}, α^{B'} and r_imu expressed in B' (via de-heel).

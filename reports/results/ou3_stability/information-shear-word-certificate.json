@@ -69,6 +69,7 @@
   "odd_covariance_signed_gap_proof": "app:odd-covariance-signed-gap",
   "optimal_additive_local_score": "J e+H^T S^-1 r-A^T C^-1(e+K r)=0",
   "optimal_correction_zero_loss": "H eta=0 and H dP=0; reached held BA uses active block and retained held ports",
+  "paired_reference_affine_calibration_variations_retained": true,
   "paired_reference_source_statistics_cancellation_verified": true,
   "physical_S_reset_by_pseudo_measurement": false,
   "physical_compatibility_equals_homogeneous_kernel": false,

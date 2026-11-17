@@ -27,6 +27,7 @@ const int   MAG_RATE_HZ = 100;
 const int   MAG_UPDATE_STRIDE = IMU_RATE_HZ / MAG_RATE_HZ;
 
 #include "ahrs/KalmanQMEKF.h"
+#include "ahrs/QmekfDefaults.h"
 #include "util/WaveFilesSupport.h"
 #include "util/CsvTimestamp.h"
 #include "ahrs/FrameConversions.h"
@@ -345,7 +346,10 @@ void process_wave_file(const std::string& filename, float dt, bool with_mag) {
     const Vector3f sigma_g(0.001f, 0.001f, 0.001f);
     const Vector3f sigma_m(0.8f, 0.8f, 1.8f);
 
-    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f, 2e-04f);
+    // Use the deployed compass bias density. The former 2e-4 value allowed
+    // wave-induced attitude corrections to become rapid gyro-bias changes.
+    QuaternionMEKF<float, true> mekf(sigma_a, sigma_g, sigma_m, 0.0001f, 0.1f,
+        ocean_imu::ahrs::qmekf_gyro_bias_rw_density);
 
     // Magnetic startup / mismatch config
     MagStartupConfig mag_cfg{};

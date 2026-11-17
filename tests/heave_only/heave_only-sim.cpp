@@ -264,12 +264,9 @@ public:
 
         const auto q = frontend_.quaternionWorldToBody();
         float roll = 0.0f, pitch = 0.0f, yaw = 0.0f;
-        quat_wb_zu_to_euler_nautical(
-            Quaternionf(float(q.w), float(q.x), float(q.y), float(q.z)), roll, pitch, yaw);
-        // Same magnetic-frame yaw convention as the PII simulator.
-        // The firmware's heading convention: Mahony yaw is CCW-positive about
-        // z up, compass heading CW-positive (atomS3R_ins_pii_observer.ino).
-        yaw = with_mag_ ? wrapDeg(-yaw) : 0.0f;
+        quat_to_euler_nautical(mahony_nwu_to_bw_ned(
+            Quaternionf(float(q.w), float(q.x), float(q.y), float(q.z))), roll, pitch, yaw);
+        if (!with_mag_) yaw = 0.0f;
         s.euler_nautical_deg = Vector3f(roll, pitch, yaw);
 
         if constexpr (M == Method::Godhavn || M == Method::GodhavnExt ||
@@ -315,7 +312,7 @@ private:
     // body frame; a magnetometer in a different frame would rotate
     // inconsistently with the gyro and steer tilt.
     static Vector3f ned_to_mahony_(const Vector3f& v_ned) {
-        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+        return ned_to_mahony_nwu(v_ned);
     }
 
     static Frontend::Config make_frontend_config_(bool with_mag) {

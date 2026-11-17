@@ -13,7 +13,7 @@ frontends where applicable. There are **544 independently gated cells**:
 
 All complete records contain 240,000 samples at 200 Hz. Scores use the trailing
 900 s, except the AHRS attitude regression, which retains its trailing 60 s.
-Each three-axis INS replay gates heave, 3-D displacement, roll, pitch, heading,
+Each three-axis INS replay gates heave, wave Y displacement, 3-D displacement, roll, pitch, heading,
 accelerometer Z/3-D bias and gyroscope 3-D bias. AHRS gates its three attitude
 components, PII gates heave/heading, and vertical-only methods gate heave.
 Metrics that a method does not estimate are not invented.
@@ -29,6 +29,12 @@ prevent one direction or sea from borrowing another's larger allowance.
 The original qualifying receipts are retained as `baseline_following.json`
 and `baseline_head.json` beside the gate table and checked against its hashes.
 Current replay reports may be refreshed without changing those locked caps.
+The Y gate is in metres RMS, independent of the 3-D percentage gate. It is
+enabled for all 272 horizontal default/interval cells, including legacy TFG;
+vertical-only and explicitly ungated diagnostic configurations do not acquire
+an invented horizontal requirement. The steering-separated baseline and all
+cap increases are documented in
+[`heading_limit_update.md`](../reports/results/filter_sim_gates/heading_limit_update.md).
 
 The fixed-draw host acceptance build is Linux x86-64, Debian GCC
 **14.2.0-19** and Eigen 3.4. The compiler package build is part of the protocol:
@@ -47,7 +53,7 @@ These host build settings do not change firmware or estimator code.
 The v1.4.0 baseline is initialized explicitly from complete measurements.
 The old v1.3.1 heading period was 120 s, so its thresholds are not carried over
 as if the input bytes had remained unchanged. `tools/lock_simulation_baseline.py
---write-reviewed-baseline` is a review action, never a CI step. Ordinary runs
+--write-reviewed-baseline --reason "reason for the baseline change"` is a review action, never a CI step. Ordinary runs
 never modify acceptance limits. `--measure` retains failures for investigating
 a new dataset and is not used by regression CI.
 

@@ -41,6 +41,7 @@
 #include "detrend/AdaptiveWaveDetrender3D.h"
 #include "kalman_common/MagneticStartupCommon.h"
 #include "kalman_common/GyroInterval.h"
+#include "kalman_common/MarineTurnSeparator.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
 #include "kalman_common/SeaStateFusionFilterCommon.h"
 #include "tuner/ContinuousMagHardIronEstimator.h"
@@ -53,6 +54,7 @@ extern const float g_std;
 namespace seastate::common {
 
 struct ProxyStartupFusionConfig {
+    MarineTurnSeparator::Config turn_separator{};
     bool with_mag = true;
 
     // Earliest and latest the proxy bootstrap may hand over.
@@ -231,6 +233,9 @@ struct ProxyStartupFusionConfig {
     // startup acquisition has finished, so first heading, handoff and
     // refinement are unaffected by it.
     bool  mag_continuous_hard_iron    = true;
+    // Use relative gyro rotation and estimate residual affine distortion.
+    // False retains the fixed-heading additive fit for paired ablation.
+    bool  mag_gyro_calibration       = true;
     float mag_hi_memory_sec           = defaults::MAG_HI_MEMORY_SEC;
     // Absolute floor only; the relative term below carries the calibration.
     // See ContinuousMagHardIronEstimator::Config and
@@ -274,6 +279,12 @@ public:
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro_body_ned.allFinite() ||
             !acc_body_ned.allFinite() || !std::isfinite(tempC)) return;
 
+        // This sample can train the speed used by the next innovation only.
+        // A gap that resets that learner also removes its stale correction.
+        impl_.setManoeuvreMotion(dt <= 0.1f ? turn_separator_.speedMps() : 0.0f,
+                                cfg_.turn_separator.forward_body);
+        turn_separator_.update(dt, gyro_body_ned, acc_body_ned, cfg_.gravity_magnitude);
+        if (cfg_.mag_continuous_hard_iron) hard_iron_.predict(dt, gyro_body_ned);
         t_ += dt;
 
         last_acc_body_ned_  = acc_body_ned;
@@ -471,7 +482,7 @@ public:
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
         if (mag_ref_set_ && stage_ == Stage::Live) {
-            impl_.updateMag(mag_body_ned - mag_hard_iron_body_uT_);
+            impl_.updateMag(hard_iron_.correct(mag_body_ned));
         }
     }
 
@@ -498,6 +509,10 @@ public:
     // Continuous estimator, for diagnostics and for tests that need to see why
     // it did or did not act.  estimate().valid is the gate; information() is
     // how much attitude excitation the memory window has actually collected.
+    const GyroMagCalibration& magContinuousCalibration() const noexcept {
+        return hard_iron_.calibration;
+    }
+
     const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept {
         return hard_iron_.estimator;
     }
@@ -558,6 +573,7 @@ protected:
     template <typename SeedFn>
     void beginStartup_(const Config& cfg, SeedFn&& seed) {
         cfg_ = cfg;
+        turn_separator_.reset(cfg.turn_separator);
 
         begun_ = true;
         stage_ = Stage::Bootstrap;
@@ -908,6 +924,7 @@ private:
     typename Filter::StartupStage last_impl_startup_stage_ = Filter::StartupStage::Cold;
 
     // Last IMU sample for mag-init gating.
+    MarineTurnSeparator turn_separator_;
     Eigen::Vector3f last_acc_body_ned_  = Eigen::Vector3f::Zero();
     Eigen::Vector3f last_gyro_body_ned_ = Eigen::Vector3f::Zero();
     bool have_last_imu_ = false;

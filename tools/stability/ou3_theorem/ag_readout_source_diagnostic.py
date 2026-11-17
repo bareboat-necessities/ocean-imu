@@ -25,7 +25,7 @@ def instrument(source):
             raise ValueError(f'shipping observer anchor changed: {old[:60]}')
         source = source.replace(old, new)
 
-    prediction_entry = 'void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\n    Vector3 const& gyr_body, T Ts)\n{\n    if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr_body.allFinite()) return;\n    const auto interval = gyro_interval_.prepare(gyr_body, Ts);\n    if (!interval.predict) return;'
+    prediction_entry = 'void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(\n    Vector3 const& gyr_body, T Ts)\n{\n    if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyr_body.allFinite()) return;\n    const auto interval = gyro_interval_.prepare(gyr_body, Ts);\n    marine_turn_.endpoint_gyro = gyr_body;\n    if (!interval.predict) return;'
     # Tap only an actual prediction, after admission/priming and before mean
     # projection. Preserve the literal guard and history map in the observer.
     once(prediction_entry, prediction_entry +

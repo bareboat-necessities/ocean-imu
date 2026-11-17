@@ -12,10 +12,10 @@
 #include "util/UnderwayReference.h"
 
 namespace ocean_imu::sim::record_limits {
-enum class Metric : std::size_t { heave, displacement, roll, pitch, yaw, acc_z, acc_3d, gyro_3d };
+enum class Metric : std::size_t { heave, displacement, roll, pitch, yaw, acc_z, acc_3d, gyro_3d, displacement_y };
 struct Entry {
     std::string_view scenario, family, profile, input;
-    std::array<float, 8> limits;
+    std::array<float, 9> limits;
 };
 #include "RecordReplayLimits.inc"
 

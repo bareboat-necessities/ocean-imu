@@ -17,7 +17,8 @@ from generate_record_replay_limits import render
 
 MAP = dict(heave='disp_z_pct_hs', displacement='disp_3d_pct_refmax', roll='roll_rms_deg',
            pitch='pitch_rms_deg', yaw='yaw_rms_deg', acc_z='acc_bias_z_percent',
-           acc_3d='acc_bias_3d_percent', gyro_3d='gyro_bias_3d_percent')
+           acc_3d='acc_bias_3d_percent', gyro_3d='gyro_bias_3d_percent',
+           displacement_y='disp_y_rms_m')
 
 
 def cap(value):
@@ -66,8 +67,9 @@ def make_baseline(reports):
     evidence = dict(release=RELEASE, margin_fraction=.005, rounding=1e-5,
                     protocol='full 1200 s, 200 Hz records; final 900 s (AHRS final 60 s); default noise/seeds',
                     inputs=inputs, entries=entries,
-                    note='New dataset baseline: both v1.4.0 directions and 20 s steering. '
-                         'Old v1.3.1 numeric caps are not comparable controls. CI never refits these limits.')
+                    note='Locked native replay baseline: both v1.4.0 directions and 20 s steering. '
+                         'Qualifying measurements retain their original gate outcomes. '
+                         'Updating limits is not an estimator improvement. CI never refits these limits.')
     families = {}
     for family, profiles in sorted(family_rows.items()):
         families[family] = {}
@@ -100,10 +102,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--measurements', type=Path, default=ROOT/'reports/results/sim_v1.4.0')
     parser.add_argument('--write-reviewed-baseline', action='store_true', required=True)
+    parser.add_argument('--reason', required=True, help='Reviewable reason for replacing the locked baseline')
     args = parser.parse_args()
     paths = {c: args.measurements/c/'measurements.json' for c in CASES}
     reports = {c: json.loads(p.read_text()) for c,p in paths.items()}
     evidence, global_caps = make_baseline(reports)
+    evidence['reason'] = args.reason
     evidence['measurement_sha256'] = {c:digest(p) for c,p in paths.items()}
     out = ROOT/'reports/results/filter_sim_gates'
     evidence['measurement_files'] = {c:f'baseline_{c}.json' for c in CASES}

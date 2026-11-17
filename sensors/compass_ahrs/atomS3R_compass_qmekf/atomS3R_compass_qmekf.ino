@@ -26,6 +26,7 @@
 
 #include "AtomS3R/AtomS3R_CompassAppBase.h"
 #include "ahrs/KalmanQMEKF.h"
+#include "ahrs/QmekfDefaults.h"
 
 using namespace atoms3r_compass;
 
@@ -45,7 +46,8 @@ class QmekfBackend : public IAttitudeBackend {
 
     // sigma_g is a gyro white-noise density (rad/s/sqrt(Hz)); the gyro-bias
     // random-walk density 2e-7 rad^2/s^3 equals the former 1e-9 per 200 Hz step.
-    mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f, 2e-7f);
+    mekf_ = new (storage_) QuaternionMEKF<float, true>(sigma_a, sigma_g, sigma_m, 0.5f, 1e-2f,
+        ocean_imu::ahrs::qmekf_gyro_bias_rw_density);
     inited_ = false;
   }
 

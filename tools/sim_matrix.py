@@ -57,6 +57,7 @@ def publish(report, destination):
     records = sorted(report['inputs']['input_sha256'])
     for metric, title, unit in [('disp_z_pct_hs', 'Heave RMS', '% incident Hs'),
                                 ('disp_3d_pct_refmax', '3-D displacement RMS', '% reference maximum'),
+                                ('disp_y_rms_m', 'Wave Y displacement RMS', 'm'),
                                 ('roll_rms_deg', 'Roll RMS', 'deg'),
                                 ('pitch_rms_deg', 'Pitch RMS', 'deg'),
                                 ('yaw_rms_deg', 'Yaw RMS', 'deg'),

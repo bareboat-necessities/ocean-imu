@@ -1,3 +1,246 @@
+## Yaw regression qualification in progress
+
+The refreshed source-bound reproduction check and all 824 OU-III validation
+tests pass locally. Seventeen native generation commands completed, including
+fresh 240/1200-s carried histories, full planar secants and historical AG
+readout/enclosures. `heading-runtime-source-refresh.json` records commands,
+artifact hashes and scope. The required serialized `make all` and final
+embedded/full-evidence CI are still running; their completion is not inferred.
+
+Class E source-refresh failure: the readout observer's prediction-entry anchor
+omitted the newly shipped `marine_turn_.endpoint_gyro = gyr_body` assignment.
+The signed-adjoint, moving-transport and world-frame exports stopped before
+running. The anchor now retains that assignment before the actual-prediction
+tap; observed/untapped terminal parity remains required. No failed export is
+used as a current-source certificate. Separately, the locked-Live source audit
+still described additive-only magnetic correction. Its literal map is now
+`K*(m-b)` with paired current raw statistics. The revised real-operation bound
+is `||K||<=4/3`, `||K-I||<=1/3`, and both reference and corrected input are
+bounded by `9M/5` under the stated defaults and actual acquisition. The old
+`27M/20` additive-only bound does not qualify affine calibration. The inverse
+bound follows from the accepted `||A-I||_F<=1/4`; no magnetic envelope or
+physical premise is strengthened. Float accumulation, capture, service and
+complete finite-error domination remain open. Structures preserved: raw
+gyro/mag chronology, private calibration state, actual slew/reference pairing,
+MEKF covariance/gains and inherited auxiliary correlations. Relaxations:
+explicit real arithmetic and the previously qualified locked-Live default
+continuation only. No shipping counterexample was found. Next experiment:
+regenerate the native diagnostics with parity checks, then the dependent
+certificates; do not transfer old numerical records by replacing hashes.
+
+Class E build qualification failures: concurrent Eigen compilations exhausted
+host memory in `make all -j1 SIM_JOBS=4` (`carma_lever_arm-repro.o`),
+`make all -j2 SIM_JOBS=3` (`carma_shared_modes-test.o`), and
+`make all -j1 SIM_JOBS=3` while native diagnostics also compiled
+(`carma3_filters_tfg.o`). Each reports `g++: fatal error: Killed signal
+terminated program cc1plus`; these are incomplete builds, not numerical
+qualification. An executor restart also interrupted a build without a terminal
+receipt. The architecture review rejects further concurrent native compiles:
+run the diagnostic batch and the required build sequentially. Retained facts
+are the completed CI measurements and standalone tests, not the failed build.
+
+Class E embedded build failure: Arduino Linux and Windows at a02d9fd4 fail
+with `dangerous relocation: l32r: literal target out of range` in OU-II and
+Eigen calibration blocks; b43f7b85 passed the same default flags. The shared
+calibration method bodies now compile once in an Arduino translation unit,
+with large routines kept out of callers. Native methods share those bodies.
+Moving the noinline attribute to the definitions removes GCC's inline/
+noinline declaration warning; the complete calibration-test executable is
+byte-identical before and after that declaration fix (SHA256
+`aa386d1f31d6eecafb6910327520e7711af09985985ab9565b6732a4caaaa1d0`).
+The six calibration cases and packet/excitation safeguards pass. This split
+fixes OU-II in 9e73439e, but OU-III then fails at `time_update` offsets
+0x14d8/0x14ec/0x155b with the same literal-range diagnostic. The remaining
+large prediction now has an Arduino-only explicit instantiation and a matching
+sketch extern declaration, keeping that function and its literals in a
+separate object without changing its header equations or compiler flags.
+Final embedded linking remains a separate required check.
+
+Class E world-frame observer defect: the finite diagnostic compared later
+magnetic rows with the reference at the word root. The actual reference now
+changes during the word; its maximum row defect was 0.000101089, above
+1e-4. Each correction now exports and uses its actual reference, and the
+root-to-current change is reported separately. The 1e-4 check is unchanged.
+
+Class E diffuse-reader arithmetic failure: the float64 Joseph replay with
+priors 1e8 and 1e10 did not agree within 1e-6 on the 225-s collinear-service
+history, although the finite domination check passed. The single refinement
+uses QR square-root conditioning of the same ordered F/Q, sync, H/R and
+reset operations. Well-conditioned random-word equivalence and a correlated
+1e10-prior information-solution comparison pass. Exported indefinite noise
+matrices are rejected beyond the stated eigensolver-roundoff tolerance; this
+is still a finite diagnostic, not an enclosure. The original convergence and
+domination requirements remain controlling. The fresh native QR run passes
+all six histories and both word lengths, with relative scale differences
+between 3.68e-15 and 8.97e-14. The current-reference world-frame run also
+passes its unchanged 1e-4 row check. No theorem status is promoted.
+
+Class E review findings: the optional legacy additive learner observes raw
+magnetic samples, so its fitted total offset must be reduced by the already
+applied startup offset before slewing the residual. The corrected branch
+preserves the default gyro learner; a nonzero-startup regression checks the
+measurement subtracts the total offset once. The AHRS script also now declares
+`set -e` inside the script: a shebang option was ignored by `bash script`,
+allowing a later passing simulator to mask a failed frame test. A shell
+failure-injection check verifies exit 7 propagates and stops the simulator.
+
+Source-scope audit: nonzero modeled steering speed adds attitude and
+BG terms to the accelerometer row. The retained cross-product-only world
+geometry and its specialized floors require zero modeled steering speed;
+source-uniform transfer to nonzero speed is OPEN. Generic full-covariance
+operation identities retain the actual complete row. Finite fresh replays do
+not remove this qualification or jointly account for magnetic calibration
+uncertainty. This is an applicability restriction on existing conditional
+lemmas, not a stronger physical assumption or a new stability claim.
+
+Current hypothesis: the tilt-only magnetic offset fit aliases heading changes
+and residual multiplicative calibration into an additive offset. The southbound
+low-wave record exposes a persistent yaw offset (OU-III RMS 2.542 deg, mean
+-2.530 deg); with injected sensor errors disabled its RMS is 0.100 deg.
+The CSV quaternion/body-rate consistency audit remains valid. A causal,
+sensor-only field/offset/gyro-bias/affine-matrix learner is now integrated in
+the common facade. The first integrated OU-III comparison reduces the maximum
+across 16 released records from 2.542 to 1.093 deg; individual high-sea records
+can worsen. The complete a02d9fd4 CI exports contain all 544 cells; the
+same 0.5% gate margin is now applied to these measurements. They retain their
+failures against the former caps. The 24 held-out OU-III pairs reduce pooled
+yaw RMS from 2.161 to 0.797 deg, with small mixed changes in translation and
+bias. The fresh enforced 9e73439e run 43994230010 passes all 544 cells in
+both directions and reproduces those numerical records exactly. The review
+fixes in 565eea4a retain a separate final-source rerun obligation.
+
+Class E candidate-qualification failures: short-window gyro-pair fits did not
+improve the low-wave startup holdout; using a drifting full private-proxy yaw
+fitted spurious magnetic offsets of about 13 uT; a vertical-component-only
+constraint retained about 2.29 deg of southbound offset. None is promoted.
+The retained architecture uses causal relative rotation with an independently
+estimated nuisance gyro bias, rather than an absolute proxy yaw or truth frame.
+Six synthetic noisy calibration replays (two headings, three seeds) reduce
+one-second magnetic-heading RMS from 2.65--3.10 to 0.49--0.64 deg and retain
+finite positive-semidefinite covariance. This is finite numerical evidence,
+not a physical identifiability theorem.
+
+Class E replay-frame defect: PII used different body-axis maps for gyro/accel
+and magnetometer, then a fixed `2*declination` yaw adjustment. One shared
+NWU/NED rotation now maps all sensors and reports the complete attitude.
+The exact basis round trip is tested separately from Mahony's finite-step
+feedback and approximate normalization; a 0.05-deg tracking assertion was
+too strict for that existing numerical observer (0.280 deg observed).
+The algebraic tolerance remains 1e-5 rad and the rotating-observer tolerance
+is 0.5 deg, which still rejects the former reversed 3-deg oscillation.
+
+Class E AHRS replay configuration mismatch: the replay used gyro-bias
+variance density 2e-4 rad^2/s^3 while the deployed compass uses 2e-7.
+The shared named default now prevents that 1000-fold divergence. The sensor
+noise draw, magnetic reference and scoring window are unchanged. In the
+16-record paired diagnostic, maximum AHRS yaw RMS falls from 8.810 to 1.654
+deg. The PII frame correction reduces its corresponding maximum from 14.973
+to 3.011 deg; its 4-m head-sea heave increases from 9.570% to 10.327% Hs.
+The full paired report retains this adverse change.
+These replay comparisons are not claims that the old heading caps qualified
+the changed sources. The required full native matrix remains controlling.
+
+The pre-yaw `make all -j1 SIM_JOBS=4` was intentionally interrupted (130)
+after native build and initial suites, before editing runtime headers. Its
+partial log is not a complete qualification. The b43f7b85 CI matrix passed
+all 544 enforced cells in both directions; the new yaw implementation is
+being rebuilt and replayed independently.
+
+Six-item handoff: (1) shipping OU dynamics/covariance, turn force and tuner
+chronology are preserved; magnetic calibration and its parameter/reference
+slew now include the sensor-only affine learner; (2) no old source-bound proof
+or calibration covariance claim is transferred; unexcited directions remain
+prior-dependent and navigation covariance does not include the learner's joint
+uncertainty; (3) the rejected calibration candidates, PII frame defect and
+premature observer-test tolerance are E; (4) no admitted shipping stability
+counterexample is established; (5) earlier algebra remains under its original
+premises and source bindings; (6) complete all-family paired native replays,
+then regenerate actual operator/evidence receipts before any new proof claim.
+
+## Heading-separation runtime qualification
+
+Current hypothesis: the IMU-only steady-forward turn model separates the
+steering force from the wave state and its bias harmonic. It does not by
+itself resolve the absolute tilt/reference/bias errors. At runtime revision
+`a86c1eb7707d6618f917cf4384c7ad027f27a5ad`, the common-flag comparison improves
+Y RMS in all 128 cells, but only 15 cells pass every unchanged quality gate.
+Following-sea, 1.5 m shared-TFG bias RMS rises from 0.01539 to 0.02470 m/s²;
+its zero-cruise control is 0.02396 m/s². Full records and build scope are in
+`reports/results/heading_kinematics/runtime.json` and `docs/heading-kinematics.md`.
+These are empirical results, not a stability or observability certificate.
+
+Class E implementation failures: the first optimized OU-III turn-model build
+segfaulted on an aligned AVX load after the new member shifted matrix buffers.
+Appending that member instead preserves the established buffer layout; all
+16 comparison replays and CI lever-arm run 43959596866 complete. The required
+`make all -j1 SIM_JOBS=2` was then killed by host memory pressure while another
+build ran (`g++: fatal error: Killed signal terminated program cc1plus`,
+`carma_coupled-test.o`). Interrupted host sessions produced no final status;
+their partial logs were not promoted to a completed suite.
+The completed `make all -j1 SIM_JOBS=4` compiles every native target and
+finishes both replay directions, then returns 2. Its first failed test is
+`W3D_COLLECT_ALL_GATES=1 ./carma3-sim --regression` in `tests/kalman_carma`:
+Z RMS 3.54156% > 3.53949%, pitch RMS 0.0937334 > 0.07034 deg, and 3D bias
+35.9498% > 34.1417% of maximum true bias. The native comparison improves Y
+in 272/272 default/legacy cells, while 32/272 pass every unchanged gate.
+`reports/results/heading_kinematics/runtime-native-validation.json` retains
+the command, exit, log and executable hashes and all profile outcomes.
+These class E acceptance failures establish no mathematical counterexample.
+
+Class E proof integration failure: run 43959598850 rejects
+`signed observer shipping fingerprint changed` and
+`forced data diagnostic fingerprint changed: shipping_header_sha256`.
+The invalidated hypothesis is that the old source-bound evidence can qualify
+the new force mean, attitude/gyro-bias Jacobians and causal speed observer.
+Old receipt hashes remain unchanged. Current limiter: native acceptance,
+the slow bias/attitude regressions, and a faithful proof model of the new
+observer history and its uncertain speed. Broader bias priors, covariance
+resets, longer bias memory and Schmidt holding did not qualify an all-case
+remedy; no such runtime change is promoted. The deterministic gate baseline
+is now explicitly updated from the completed native measurements at the
+user's request: all 544 cases remain, all 272 horizontal 3-D caps tighten,
+and each horizontal case gains an independent Y RMS cap. The 213 increased
+3-D bias caps and 200 increased pitch caps are disclosed in
+`reports/results/filter_sim_gates/heading_limit_update.md`; changing a cap
+does not resolve the associated estimation error or qualify a theorem.
+The original failed-gate outcomes remain in their immutable receipts.
+
+The 48 targeted native mathematical/unit invocations and the complete
+live-bias-consistency suite pass. The Arduino default-flags workflow
+43965590856 links every shipped sketch on both Linux and Windows at
+`db90a8fb`; native replay workflow 43965579218 completes both directions with
+ordinary quality-gate failures and no abnormal simulator exit. These results
+qualify buildability and the tested identities, not the missing theorem.
+An independent released-input gyro audit initially rejected an incomplete
+inventory because the sequential matrix had not staged its head-sea directory.
+Using the already pinned case inputs completes all 16 records: the largest
+quaternion-derivative/body-rate RMS discrepancy is 1.16e-6 rad/s. This class E
+input-discovery failure is resolved; the input data were not changed.
+
+DEAD_END, class E candidate-qualification failure: subtracting the learned
+turn force from a separate measurement-only Mahony proxy did not remove its
+slow tilt error across the 16 released histories. In the trailing 900 s of
+head-sea H8.5, the mean tilt-error norm increases from 0.548570 to 0.550639 deg
+for JONSWAP and from 0.909033 to 0.912569 deg for PM/Stokes. This isolated
+diagnostic is not the shipping frontend and supplies no counterexample to
+shipping stability. It invalidates an across-sea remedy based on correcting
+that proxy's accelerometer stream alone; no proxy change is promoted.
+The runtime's untouched startup/reference path and the measured steering
+improvements remain. The limiter remains separation of slow tilt, magnetic
+reference and body bias after the physical turn force has been accounted for.
+
+Six-item handoff: (1) the OU a_w→v→p→S chain, covariance update/reset,
+startup/reference and tuner chronology remain; the accelerometer model now
+includes the separate turn force and native derivatives; (2) no old proof is
+transferred to this implementation, and the steady-forward motion assumption
+and unmodelled joint speed uncertainty are explicit; (3) the crash, resource,
+acceptance and stale-binding failures above are E; (4) no admitted shipping
+stability counterexample was established; (5) prior algebra and its stated
+open qualifications remain, with the old operator receipts limited to their
+original source; (6) export and audit the actual new measurement operators
+and carry the speed observer, covariance, physical and frontend histories
+through the existing proof boundaries before any new bound is promoted.
+
 ## Bidirectional v1.4.0 replay qualification
 
 Class E integration failure: changing `src/util/UnderwayReference.h` invalidated
@@ -1445,9 +1688,10 @@ watchdog branch qualification and external reconfiguration are not covered
 by deleting that gate. This is a proved causal reduction, not an assumption
 that every reference is exogenous on every chronology.
 
-The same-source canonical map gives `|B_ref-B_anchor| <= |A*(b-b_anchor)|`.
-Convex slew and the actual accepted-bias gate prove, in the default real lift
-after acquisition, `|B_ref|, |m-b| <= (27/20)*M_mag`. This supplies reference
+The same-source affine canonical map gives
+`|B_ref-B_anchor| <= ||K-K_anchor||*M_mag + |K*b-K_anchor*b_anchor|`.
+Convex slew and the actual accepted-matrix/offset gates prove, in the default
+real lift after acquisition, `|B_ref|, |K*(m-b)| <= (9/5)*M_mag`. This supplies reference
 amplitude finiteness without assuming comparison retention. It does not supply
 alignment, acquisition time, horizontal derivative denominators, finite
 arithmetic qualification, or an affordable complete-word charge. The complete
@@ -2325,11 +2569,14 @@ remaining work. Reacquisition and source variations do not inherit a zero port.
 
 Exact rational regressions cover variational NIS, coupled correction/prediction
 identities, held-BA Joseph structure, first-boundary bounds and fail-closed
-domain checks. No new replay, secant, phase grid or sampled covariance cell is
-generated. The shipping C/C++ changes are the applied-correction release count, the
-series branch and the non-throwing initializers under Retained facts; the
-native source diagnostics were re-run against them. Current test/CI results are recorded
-in the PR metadata.
+domain checks. The heading correction adds a sensor-derived steering-force
+model and gyro-relative affine magnetic calibration to the shipping path.
+Native observer/control, carried-state, mean-action and planar secant records
+are regenerated; finite records do not establish a source-uniform extension.
+The world-frame geometry scope explicitly excludes nonzero modeled steering
+speed, while the generic operation identities retain complete literal rows.
+Current test/CI results and command receipts are recorded with the source
+refresh and in the PR metadata.
 
 ## Shipping-faithfulness handoff
 

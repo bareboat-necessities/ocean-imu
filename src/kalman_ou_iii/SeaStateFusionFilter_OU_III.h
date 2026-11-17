@@ -287,6 +287,7 @@ private:
         // MEKF updates first (attitude + latent a_w)
         if (drive_mekf) {
             mekf_->time_update(gyro, dt);
+            mekf_->set_marine_turn(this->manoeuvreSpeed(), this->manoeuvreBow());
             mekf_->measurement_update_acc_only(acc_in, tempC);
         }
 

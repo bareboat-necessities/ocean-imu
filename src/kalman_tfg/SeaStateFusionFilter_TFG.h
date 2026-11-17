@@ -53,6 +53,7 @@
 #include "tuner/MagAutoTuner.h"
 #include "tuner/SeaStateAutoTuner.h"
 #include "tuner/VerticalAccelComplementary.h"
+#include "kalman_common/MarineTurnSeparator.h"
 #include "tuner/WavePeriodEstimator.h"
 
 namespace ocean_imu::tfg {
@@ -115,6 +116,7 @@ public:
     using RSLaw = RSAdaptationLaw;
 
     struct Config {
+        ::seastate::common::MarineTurnSeparator::Config turn_separator{};
         ocean_imu::kalman::filter_detail::GyroSampleMode gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::Instantaneous;
         ocean_imu::kalman::filter_detail::GyroSampleMode frontend_gyro_sample_mode = ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate;
         float gyro_sample_period_sec = 0.0f;
@@ -179,6 +181,7 @@ public:
         bool  mag_estimate_hard_iron       = false;
 
         bool  mag_continuous_hard_iron        = true;
+        bool  mag_gyro_calibration            = true;
         float mag_hi_memory_sec               = defaults::MAG_HI_MEMORY_SEC;
         float mag_hi_model_ridge              = defaults::MAG_HI_MODEL_RIDGE;
         float mag_hi_model_ridge_relative     = defaults::MAG_HI_MODEL_RIDGE_RELATIVE;
@@ -207,6 +210,7 @@ public:
 
     void begin(const Config& cfg) {
         cfg_ = cfg;
+        turn_separator_.reset(cfg.turn_separator);
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
         mekf_.initialize_identity(cfg.initial_covariance);
         mekf_.set_gyro_sample_mode(cfg.gyro_sample_mode);
@@ -250,7 +254,11 @@ public:
     void update(float dt, const Vector3f& gyro, const Vector3f& acc, float tempC = 35.0f) {
         if (!(dt > 0.0f) || !std::isfinite(dt) || !gyro.allFinite() || !acc.allFinite()) return;
 
+        mekf_.set_marine_turn(dt <= 0.1f ? turn_separator_.speedMps() : 0.0f,
+                              cfg_.turn_separator.forward_body);
+        turn_separator_.update(dt, gyro, acc, cfg_.gravity_magnitude);
         applyPendingTune_();
+        if (cfg_.mag_continuous_hard_iron && usingProxyInit_()) hard_iron_.predict(dt, gyro);
         elapsed_sec_ += dt;
 
         // Strip out-of-band accelerometer vibration before the attitude path
@@ -364,6 +372,7 @@ public:
     [[nodiscard]] float magNorthLockTimeSec() const noexcept { return mag_north_lock_time_sec_; }
     [[nodiscard]] const Vector3f& magHardIronBodyUT() const noexcept { return mag_hard_iron_body_uT_; }
     [[nodiscard]] const Vector3f& magContinuousHardIronAppliedUT() const noexcept { return hard_iron_.applied_body_uT; }
+    [[nodiscard]] const GyroMagCalibration& magContinuousCalibration() const noexcept { return hard_iron_.calibration; }
     [[nodiscard]] const ContinuousMagHardIronEstimator& magContinuousHardIron() const noexcept { return hard_iron_.estimator; }
     [[nodiscard]] StartupInitPolicy startupInitPolicy() const noexcept { return cfg_.startup_init_policy; }
     [[nodiscard]] bool isTunerReady() const noexcept {
@@ -518,6 +527,7 @@ public:
     [[nodiscard]] Vector3f get_velocity() const { return mekf_.get_velocity(); }
     [[nodiscard]] Vector3f get_position() const { return mekf_.get_position(); }
     [[nodiscard]] Vector3f get_world_accel() const { return mekf_.get_world_accel(); }
+    [[nodiscard]] Vector3f get_world_total_accel() const { return mekf_.get_world_total_accel(); }
 
 private:
     void beginMagAcquisition_() {
@@ -779,7 +789,7 @@ private:
         maybeRefineMagReference_(mag_body);
         maybeApplyContinuousHardIron_();
         if (mag_reference_learned_ && stage_ == StartupStage::Live) {
-            mekf_.measurement_update_mag_only(mag_body - mag_hard_iron_body_uT_);
+            mekf_.measurement_update_mag_only(hard_iron_.correct(mag_body));
         }
     }
 
@@ -1068,6 +1078,7 @@ private:
     StartupStage stage_{StartupStage::Cold};
     ::SeaStateAutoTuner tuner_{TUNER_SIGMA_VAR_K_PERIODS_DEFAULT, 1.0f};
     ::WavePeriodEstimator wave_period_{};
+    ::seastate::common::MarineTurnSeparator turn_separator_;
     ::VerticalAccelComplementary vertical_complementary_{};
     ::AdaptiveWaveBandPass sigma_wave_band_{SIGMA_BAND_LOW_RATIO_DEFAULT,
                                             SIGMA_BAND_HIGH_RATIO_DEFAULT,

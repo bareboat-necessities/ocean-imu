@@ -1,0 +1,520 @@
+{
+  "baseline_revision": "b43f7b8505b9d21f8a2b0f44573fdd75e08426a2",
+  "qualified_runtime_revision": "a02d9fd4c3a882dd50649ed4b1cdd27b93b859c7",
+  "margin_fraction": 0.005,
+  "rounding": 1e-05,
+  "counts": {
+    "roll": {
+      "tightened": 213,
+      "increased": 69,
+      "unchanged": 6
+    },
+    "pitch": {
+      "tightened": 200,
+      "increased": 86,
+      "unchanged": 2
+    },
+    "yaw": {
+      "tightened": 143,
+      "increased": 161
+    },
+    "heave": {
+      "tightened": 161,
+      "increased": 112,
+      "unchanged": 255
+    },
+    "displacement": {
+      "tightened": 181,
+      "increased": 91
+    },
+    "acc_z": {
+      "tightened": 197,
+      "increased": 72,
+      "unchanged": 3
+    },
+    "acc_3d": {
+      "tightened": 201,
+      "increased": 71
+    },
+    "gyro_3d": {
+      "tightened": 162,
+      "increased": 110
+    },
+    "displacement_y": {
+      "tightened": 153,
+      "increased": 106,
+      "unchanged": 13
+    }
+  },
+  "largest_increases_by_metric": {
+    "roll": [
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "roll",
+        "before": 0.31378,
+        "after": 0.32592,
+        "change_percent": 3.868952769456291
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "roll",
+        "before": 0.30877,
+        "after": 0.32045,
+        "change_percent": 3.7827509149205074
+      },
+      {
+        "case": "following",
+        "family": "ou3",
+        "profile": "default",
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "roll",
+        "before": 0.19878,
+        "after": 0.20051,
+        "change_percent": 0.8703088841935713
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "roll",
+        "before": 0.10592,
+        "after": 0.10684,
+        "change_percent": 0.8685800604229632
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "roll",
+        "before": 0.10743,
+        "after": 0.10834,
+        "change_percent": 0.8470632039467629
+      }
+    ],
+    "pitch": [
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "pitch",
+        "before": 0.14133,
+        "after": 0.25078,
+        "change_percent": 77.44286421849571
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "pitch",
+        "before": 0.14734,
+        "after": 0.25452,
+        "change_percent": 72.74331478213658
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "pitch",
+        "before": 0.28809,
+        "after": 0.30939,
+        "change_percent": 7.393522857440371
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "pitch",
+        "before": 0.16219,
+        "after": 0.16864,
+        "change_percent": 3.976817313027947
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "pitch",
+        "before": 0.15716,
+        "after": 0.1632,
+        "change_percent": 3.843217103588703
+      }
+    ],
+    "yaw": [
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "yaw",
+        "before": 0.32336,
+        "after": 0.91829,
+        "change_percent": 183.98379515091543
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "yaw",
+        "before": 0.35462,
+        "after": 0.88366,
+        "change_percent": 149.18504314477468
+      },
+      {
+        "case": "head",
+        "family": "tcsm",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "yaw",
+        "before": 0.28222,
+        "after": 0.66956,
+        "change_percent": 137.2475373821841
+      },
+      {
+        "case": "head",
+        "family": "tangent",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "yaw",
+        "before": 0.28254,
+        "after": 0.66987,
+        "change_percent": 137.08855383308554
+      },
+      {
+        "case": "head",
+        "family": "csm",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "yaw",
+        "before": 0.28147,
+        "after": 0.66387,
+        "change_percent": 135.85817316232632
+      }
+    ],
+    "heave": [
+      {
+        "case": "head",
+        "family": "pii",
+        "profile": "default",
+        "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "heave",
+        "before": 9.61817,
+        "after": 10.37846,
+        "change_percent": 7.904726158926301
+      },
+      {
+        "case": "head",
+        "family": "pii",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "heave",
+        "before": 13.09041,
+        "after": 13.68767,
+        "change_percent": 4.562576726015455
+      },
+      {
+        "case": "head",
+        "family": "pii",
+        "profile": "default",
+        "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "heave",
+        "before": 8.67916,
+        "after": 8.85068,
+        "change_percent": 1.976228114241474
+      },
+      {
+        "case": "head",
+        "family": "pii",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "heave",
+        "before": 10.66335,
+        "after": 10.7993,
+        "change_percent": 1.2749276728232894
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "heave",
+        "before": 2.65583,
+        "after": 2.67917,
+        "change_percent": 0.8788213100989095
+      }
+    ],
+    "displacement": [
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "displacement",
+        "before": 31.03596,
+        "after": 31.30091,
+        "change_percent": 0.85368714226981
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "displacement",
+        "before": 31.03184,
+        "after": 31.25262,
+        "change_percent": 0.7114628072328433
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "default",
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "displacement",
+        "before": 7.29087,
+        "after": 7.31258,
+        "change_percent": 0.2977696763212023
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "displacement",
+        "before": 7.28725,
+        "after": 7.30798,
+        "change_percent": 0.28446945006688207
+      },
+      {
+        "case": "head",
+        "family": "tcsm",
+        "profile": "legacy",
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "displacement",
+        "before": 4.10606,
+        "after": 4.11582,
+        "change_percent": 0.23769745205866055
+      }
+    ],
+    "acc_z": [
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "acc_z",
+        "before": 6.75254,
+        "after": 7.75275,
+        "change_percent": 14.812352092694002
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "acc_z",
+        "before": 6.73254,
+        "after": 7.7011,
+        "change_percent": 14.386249468996848
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+        "metric": "acc_z",
+        "before": 4.23137,
+        "after": 4.29963,
+        "change_percent": 1.6131891089647077
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "acc_z",
+        "before": 2.35108,
+        "after": 2.38787,
+        "change_percent": 1.5648127668986156
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "acc_z",
+        "before": 2.34572,
+        "after": 2.38238,
+        "change_percent": 1.5628463755264832
+      }
+    ],
+    "acc_3d": [
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "acc_3d",
+        "before": 41.9485,
+        "after": 56.7206,
+        "change_percent": 35.214846776404386
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "acc_3d",
+        "before": 42.46286,
+        "after": 57.32189,
+        "change_percent": 34.99300329746984
+      },
+      {
+        "case": "head",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "acc_3d",
+        "before": 43.63037,
+        "after": 45.79936,
+        "change_percent": 4.971284910029405
+      },
+      {
+        "case": "following",
+        "family": "tfg_legacy",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "acc_3d",
+        "before": 76.57085,
+        "after": 80.13438,
+        "change_percent": 4.653898970691861
+      },
+      {
+        "case": "head",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+        "metric": "acc_3d",
+        "before": 30.25101,
+        "after": 30.65411,
+        "change_percent": 1.3325174928043637
+      }
+    ],
+    "gyro_3d": [
+      {
+        "case": "head",
+        "family": "tangent",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "gyro_3d",
+        "before": 7.45621,
+        "after": 11.11259,
+        "change_percent": 49.03805016221381
+      },
+      {
+        "case": "head",
+        "family": "tangent",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "gyro_3d",
+        "before": 7.45836,
+        "after": 11.1144,
+        "change_percent": 49.019355461522366
+      },
+      {
+        "case": "head",
+        "family": "ou2",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "gyro_3d",
+        "before": 7.66105,
+        "after": 11.4162,
+        "change_percent": 49.016127032195314
+      },
+      {
+        "case": "head",
+        "family": "tcsm",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "gyro_3d",
+        "before": 7.45828,
+        "after": 11.114,
+        "change_percent": 49.015590726011894
+      },
+      {
+        "case": "head",
+        "family": "tcsm",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+        "metric": "gyro_3d",
+        "before": 7.45696,
+        "after": 11.11058,
+        "change_percent": 48.99610565163286
+      }
+    ],
+    "displacement_y": [
+      {
+        "case": "following",
+        "family": "tfg",
+        "profile": "default",
+        "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "displacement_y",
+        "before": 0.18916,
+        "after": 0.19783,
+        "change_percent": 4.58342144216537
+      },
+      {
+        "case": "following",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "displacement_y",
+        "before": 0.18899,
+        "after": 0.19753,
+        "change_percent": 4.5187576062225565
+      },
+      {
+        "case": "following",
+        "family": "tfg",
+        "profile": "default",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "displacement_y",
+        "before": 0.18624,
+        "after": 0.19262,
+        "change_percent": 3.425687285223389
+      },
+      {
+        "case": "following",
+        "family": "tfg",
+        "profile": "legacy",
+        "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "displacement_y",
+        "before": 0.18626,
+        "after": 0.19249,
+        "change_percent": 3.344786857081483
+      },
+      {
+        "case": "following",
+        "family": "ou3",
+        "profile": "default",
+        "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+        "metric": "displacement_y",
+        "before": 0.21118,
+        "after": 0.21771,
+        "change_percent": 3.092148877734635
+      }
+    ]
+  },
+  "full_comparison": "Compare per_record_limits.json with baseline_revision for every cap."
+}

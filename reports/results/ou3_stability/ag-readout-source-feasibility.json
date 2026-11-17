@@ -4,9 +4,38 @@
     {
       "AG_action_lambda_max": "1199.0609667818814592953",
       "AG_action_minus_literal_covariance_lambda_min": "0.0000530817757579292879470037",
+      "AG_loss_schur_after_nuisance_lambda_min": "732.922571968769606949694",
       "AG_root_residual_diagnostic": "2.20391090224091631615053e-80",
       "active_step": 24064,
       "applied_rows": 225,
+      "contraction_feasibility": {
+        "decimal_digits": 60,
+        "first_prediction_relative_ratio_ideal": "1.95213830147e-23",
+        "forgetting_only_margin": "2.04208892757e-10",
+        "full_diffuse_limit_minus_literal_lambda_min": "2.26467101977e-9",
+        "information_only_margin": "2.6506214754e-26",
+        "joint_reader_Bmin_lambda_max": "778.180178991",
+        "joint_reader_Bmin_minus_literal_AG_lambda_min": "1.12807944963e-5",
+        "joint_reader_scale_convergence": "8.20782427251e-10",
+        "optimal_gain_real_arithmetic_replay": true,
+        "slowest_direction_block_shares": {
+          "S": "0.00229",
+          "aw": "0.000911",
+          "ba": "0.133",
+          "bg": "2.15e-120",
+          "p": "0.312",
+          "theta": "5.34e-119",
+          "v": "0.552"
+        },
+        "smoother_margin": "0.0004060673851",
+        "smoother_rho": "0.999593932615",
+        "source_uniform_verified": false,
+        "structured_chain_epsilon_best": "1.09448121352e-36"
+      },
+      "direct_complete_word_margin": "0.000418722337750653568571821",
+      "direct_complete_word_nonlinear_headroom": "0.000209383089514414084856655",
+      "direct_complete_word_rho": "0.999581277662249346431428",
+      "direct_complete_word_strict_contraction": true,
       "events": 278,
       "exact_exported_word_enclosure": {
         "AG_root_cancelled_exactly": true,
@@ -63,7 +92,7 @@
         "all_other_float_operations_enclosed": false,
         "complete_sync_operation_enclosed": true,
         "correlated_Q_R_enclosed_by_rational_factors": true,
-        "exported_coefficients_sha256": "5afa751e2be232e4dfa65a27eb214b447fceb67afb93e59a7d046b01e707ffc7",
+        "exported_coefficients_sha256": "0612a0e3e7a1c22e35c1f6708ecb68df15c21b466d9dd51c3d9a1c08bedb86a6",
         "full_matrix_action_ceiling_verified": true,
         "literal_root_nuisance_comparison_verified": true,
         "literal_terminal_AG_covariance_below_ceiling": true,
@@ -74,7 +103,7 @@
         "sync_boundaries_verified": 64,
         "theorem_closed": false
       },
-      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_Q_lambda_min": "3.87610405756080021004752e-25",
       "exported_sync_asymmetry_exact": "0",
       "factor_selected_rows": [
         223,
@@ -87,8 +116,105 @@
       "input_profile": "0",
       "literal_terminal_parity": true,
       "live_step": 18051,
+      "local_affine_defect": {
+        "b_local": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "endpoint_residual_used_as_input": false,
+        "local_b_endpoint_parity": true,
+        "local_b_endpoint_residual_max_abs": 0.0,
+        "local_defect_count": 214,
+        "maximum_interoperation_error_gap": 0.0,
+        "native_literal_boundary_export_complete": true,
+        "same_operation_pre_post_snapshots": true,
+        "worst_gap_after_operation": 212,
+        "worst_gap_kind_pair": [
+          "correction",
+          "reset"
+        ]
+      },
+      "loss_nuisance_lambda_min": "0.262191604501941639848731",
       "maximum_injection_rad": "0.0",
       "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
+      "physical_chain": {
+        "is_G_phys_W": false,
+        "max_trapezoid_S_defect": 0.0,
+        "max_trapezoid_p_defect": 0.0,
+        "max_trapezoid_v_defect": 0.0,
+        "prediction_epochs": 64,
+        "reason": "chain validation only; causal normalized source adjoints must still be paired",
+        "source_uniform_verified": false
+      },
+      "physical_lift": {
+        "aligned_event_count": 281,
+        "all_literal_boundaries_have_full_carried_truth_and_estimator_state": true,
+        "all_literal_boundaries_have_p_v_S_a": true,
+        "chronological": true,
+        "native_literal_boundary_export_complete": true,
+        "source_uniform_verified": false
+      },
       "raw_AG_array_sigma_min": "7.1517206581093855794008",
       "refined_step": 24064,
       "rigorous_enclosure": false,
@@ -97,11 +223,16 @@
     {
       "AG_action_lambda_max": "1199.06222140196348559763",
       "AG_action_minus_literal_covariance_lambda_min": "0.0000530817882176614140999911",
+      "AG_loss_schur_after_nuisance_lambda_min": "732.76178674550382535297",
       "AG_root_residual_diagnostic": "2.45869600022635386275059e-80",
       "active_step": 24064,
       "applied_rows": 225,
+      "direct_complete_word_margin": "0.000418722337750653568571821",
+      "direct_complete_word_nonlinear_headroom": "0.000209383089514414084856655",
+      "direct_complete_word_rho": "0.999581277662249346431428",
+      "direct_complete_word_strict_contraction": true,
       "events": 278,
-      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_Q_lambda_min": "3.87610405756080021004752e-25",
       "exported_sync_asymmetry_exact": "0",
       "factor_selected_rows": [
         224,
@@ -114,8 +245,105 @@
       "input_profile": "0.001",
       "literal_terminal_parity": true,
       "live_step": 18051,
+      "local_affine_defect": {
+        "b_local": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            -0.00018609217476009543
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            -1.7899528096960491e-06
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "endpoint_residual_used_as_input": false,
+        "local_b_endpoint_parity": true,
+        "local_b_endpoint_residual_max_abs": 4.049265511110717e-10,
+        "local_defect_count": 214,
+        "maximum_interoperation_error_gap": 5.52129731e-11,
+        "native_literal_boundary_export_complete": true,
+        "same_operation_pre_post_snapshots": true,
+        "worst_gap_after_operation": 26,
+        "worst_gap_kind_pair": [
+          "correction",
+          "reset"
+        ]
+      },
+      "loss_nuisance_lambda_min": "0.262191604501941639848731",
       "maximum_injection_rad": "5.52129730824191256033373e-11",
       "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
+      "physical_chain": {
+        "is_G_phys_W": false,
+        "max_trapezoid_S_defect": 0.0,
+        "max_trapezoid_p_defect": 0.0,
+        "max_trapezoid_v_defect": 0.0,
+        "prediction_epochs": 64,
+        "reason": "chain validation only; causal normalized source adjoints must still be paired",
+        "source_uniform_verified": false
+      },
+      "physical_lift": {
+        "aligned_event_count": 281,
+        "all_literal_boundaries_have_full_carried_truth_and_estimator_state": true,
+        "all_literal_boundaries_have_p_v_S_a": true,
+        "chronological": true,
+        "native_literal_boundary_export_complete": true,
+        "source_uniform_verified": false
+      },
       "raw_AG_array_sigma_min": "7.15172065810938557990398",
       "refined_step": 24064,
       "rigorous_enclosure": false,
@@ -124,11 +352,16 @@
     {
       "AG_action_lambda_max": "1199.06096678427959106275",
       "AG_action_minus_literal_covariance_lambda_min": "0.0000530817757579292879470037",
+      "AG_loss_schur_after_nuisance_lambda_min": "732.922571968210773406451",
       "AG_root_residual_diagnostic": "1.49899666080012950241163e-80",
       "active_step": 24064,
       "applied_rows": 225,
+      "direct_complete_word_margin": "0.000418722337750653568571821",
+      "direct_complete_word_nonlinear_headroom": "0.000209383089514414084856655",
+      "direct_complete_word_rho": "0.999581277662249346431428",
+      "direct_complete_word_strict_contraction": true,
       "events": 278,
-      "exported_Q_lambda_min": "3.8760376117203192925657e-25",
+      "exported_Q_lambda_min": "3.87610405756080021004752e-25",
       "exported_sync_asymmetry_exact": "0",
       "factor_selected_rows": [
         224,
@@ -141,66 +374,192 @@
       "input_profile": "0.000001",
       "literal_terminal_parity": true,
       "live_step": 18051,
+      "local_affine_defect": {
+        "b_local": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            -1.860919784749762e-07
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            -1.789951496835681e-09
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ],
+        "endpoint_residual_used_as_input": false,
+        "local_b_endpoint_parity": true,
+        "local_b_endpoint_residual_max_abs": 3.9716963160122355e-13,
+        "local_defect_count": 214,
+        "maximum_interoperation_error_gap": 5.41552785e-14,
+        "native_literal_boundary_export_complete": true,
+        "same_operation_pre_post_snapshots": true,
+        "worst_gap_after_operation": 26,
+        "worst_gap_kind_pair": [
+          "correction",
+          "reset"
+        ]
+      },
+      "loss_nuisance_lambda_min": "0.262191604501941639848731",
       "maximum_injection_rad": "5.41552784875335563308241e-14",
       "minimum_complete_sync_pair_Rayleigh_quotient_exact": "0",
+      "physical_chain": {
+        "is_G_phys_W": false,
+        "max_trapezoid_S_defect": 0.0,
+        "max_trapezoid_p_defect": 0.0,
+        "max_trapezoid_v_defect": 0.0,
+        "prediction_epochs": 64,
+        "reason": "chain validation only; causal normalized source adjoints must still be paired",
+        "source_uniform_verified": false
+      },
+      "physical_lift": {
+        "aligned_event_count": 281,
+        "all_literal_boundaries_have_full_carried_truth_and_estimator_state": true,
+        "all_literal_boundaries_have_p_v_S_a": true,
+        "chronological": true,
+        "native_literal_boundary_export_complete": true,
+        "source_uniform_verified": false
+      },
       "raw_AG_array_sigma_min": "7.1517206581093855794008",
       "refined_step": 24064,
       "rigorous_enclosure": false,
       "source_uniform_verified": false
     },
     {
-      "AG_action_lambda_max": "1450.25286111171170529768",
-      "AG_action_minus_literal_covariance_lambda_min": "0.0000667085936652326410230305",
-      "AG_root_residual_diagnostic": "3.33702049455332223581893e-80",
+      "AG_action_lambda_max": "1450.25304036462298541472",
+      "AG_action_minus_literal_covariance_lambda_min": "0.0000667085933879367182583246",
+      "AG_loss_schur_after_nuisance_lambda_min": "1120.85521801042462620082",
+      "AG_root_residual_diagnostic": "2.51229996504289572406762e-80",
       "active_step": 24016,
       "applied_rows": 228,
+      "contraction_feasibility": {
+        "decimal_digits": 60,
+        "first_prediction_relative_ratio_ideal": "3.74350223141e-22",
+        "forgetting_only_margin": "2.13778374826e-9",
+        "full_diffuse_limit_minus_literal_lambda_min": "2.12405426178e-9",
+        "information_only_margin": "2.99426406764e-10",
+        "joint_reader_Bmin_lambda_max": "193.009043175",
+        "joint_reader_Bmin_minus_literal_AG_lambda_min": "1.44497194962e-5",
+        "joint_reader_scale_convergence": "2.13704862507e-10",
+        "optimal_gain_real_arithmetic_replay": true,
+        "slowest_direction_block_shares": {
+          "S": "0.00651",
+          "aw": "0.00174",
+          "ba": "0.099",
+          "bg": "1.07e-6",
+          "p": "0.318",
+          "theta": "5.94e-5",
+          "v": "0.575"
+        },
+        "smoother_margin": "0.000698496493874",
+        "smoother_rho": "0.999301503506",
+        "source_uniform_verified": false,
+        "structured_chain_epsilon_best": "2.0738637108e-36"
+      },
+      "direct_complete_word_margin": "0.00069316718686615583687763",
+      "direct_complete_word_nonlinear_headroom": "0.00034664367435156189428355",
+      "direct_complete_word_rho": "0.999306832813133844163122",
+      "direct_complete_word_strict_contraction": true,
       "events": 280,
       "exact_exported_word_enclosure": {
         "AG_root_cancelled_exactly": true,
         "action_ceiling": [
           [
             "1121419/1000",
-            "-4741/1000",
+            "-4749/1000",
             "140171/250",
             "-104283/500",
-            "201/200",
+            "253/250",
             "-52139/500"
           ],
           [
-            "-4741/1000",
+            "-4749/1000",
             "3/100",
-            "-237/100",
-            "441/500",
+            "-1187/500",
+            "883/1000",
             "-1/250",
-            "441/1000"
+            "221/500"
           ],
           [
             "140171/250",
-            "-237/100",
+            "-1187/500",
             "140171/500",
             "-104279/1000",
-            "503/1000",
+            "253/500",
             "-52137/1000"
           ],
           [
             "-104283/500",
-            "441/500",
+            "883/1000",
             "-104279/1000",
             "389/10",
-            "-187/1000",
+            "-189/1000",
             "4861/250"
           ],
           [
-            "201/200",
+            "253/250",
             "-1/250",
-            "503/1000",
-            "-187/1000",
+            "253/500",
+            "-189/1000",
             "3/200",
             "-47/500"
           ],
           [
             "-52139/500",
-            "441/1000",
+            "221/500",
             "-52137/1000",
             "4861/250",
             "-47/500",
@@ -210,7 +569,7 @@
         "all_other_float_operations_enclosed": false,
         "complete_sync_operation_enclosed": true,
         "correlated_Q_R_enclosed_by_rational_factors": true,
-        "exported_coefficients_sha256": "66e364e485ea8aa7e41e6b0d082a1f1d63427b99561f05e77d3ae0401ba6d8fb",
+        "exported_coefficients_sha256": "e2164454716e6fe3e83c33b6f51a772340f76001fb4f980ad031a50f4c5f21d1",
         "full_matrix_action_ceiling_verified": true,
         "literal_root_nuisance_comparison_verified": true,
         "literal_terminal_AG_covariance_below_ceiling": true,
@@ -221,8 +580,8 @@
         "sync_boundaries_verified": 64,
         "theorem_closed": false
       },
-      "exported_Q_lambda_min": "7.3446428709622186857148e-25",
-      "exported_sync_asymmetry_exact": "1/562949953421312",
+      "exported_Q_lambda_min": "7.34458613395264611989041e-25",
+      "exported_sync_asymmetry_exact": "1/1125899906842624",
       "factor_selected_rows": [
         226,
         227,
@@ -234,9 +593,106 @@
       "input_profile": "wave",
       "literal_terminal_parity": true,
       "live_step": 6368,
-      "maximum_injection_rad": "0.00000365716816678833804792225",
+      "local_affine_defect": {
+        "b_local": [
+          [
+            -5.173217247487533e-05
+          ],
+          [
+            2.2167587149087077e-07
+          ],
+          [
+            -2.6616067334124988e-05
+          ],
+          [
+            -2.6509680257788e-07
+          ],
+          [
+            -6.671612643797151e-11
+          ],
+          [
+            -1.3907494741066054e-07
+          ],
+          [
+            -1.362094199444083e-08
+          ],
+          [
+            4.305073285734895e-05
+          ],
+          [
+            0.10631758254230465
+          ],
+          [
+            -3.0768214559984437e-08
+          ],
+          [
+            9.673424104763903e-05
+          ],
+          [
+            0.33592144553622055
+          ],
+          [
+            -6.113455605293056e-08
+          ],
+          [
+            7.443187956528915e-05
+          ],
+          [
+            0.5644012776688683
+          ],
+          [
+            -4.540262096102685e-09
+          ],
+          [
+            -2.345439563611084e-05
+          ],
+          [
+            0.01640276379541693
+          ],
+          [
+            -3.643970424962971e-08
+          ],
+          [
+            0.0005815485159745899
+          ],
+          [
+            -0.005081109408969162
+          ]
+        ],
+        "endpoint_residual_used_as_input": false,
+        "local_b_endpoint_parity": false,
+        "local_b_endpoint_residual_max_abs": 0.1258649507708988,
+        "local_defect_count": 216,
+        "maximum_interoperation_error_gap": 0.0346051454544067,
+        "native_literal_boundary_export_complete": true,
+        "same_operation_pre_post_snapshots": true,
+        "worst_gap_after_operation": 184,
+        "worst_gap_kind_pair": [
+          "correction",
+          "reset"
+        ]
+      },
+      "loss_nuisance_lambda_min": "1.53997977942795243077578",
+      "maximum_injection_rad": "0.00000435087754027249662760244",
       "minimum_complete_sync_pair_Rayleigh_quotient_exact": "-1/17592186044416",
-      "raw_AG_array_sigma_min": "6.27822399715465130649022",
+      "physical_chain": {
+        "is_G_phys_W": false,
+        "max_trapezoid_S_defect": 1.4828029377815e-10,
+        "max_trapezoid_p_defect": 9.00006618710647e-10,
+        "max_trapezoid_v_defect": 5.33809557158333e-11,
+        "prediction_epochs": 64,
+        "reason": "chain validation only; causal normalized source adjoints must still be paired",
+        "source_uniform_verified": false
+      },
+      "physical_lift": {
+        "aligned_event_count": 283,
+        "all_literal_boundaries_have_full_carried_truth_and_estimator_state": true,
+        "all_literal_boundaries_have_p_v_S_a": true,
+        "chronological": true,
+        "native_literal_boundary_export_complete": true,
+        "source_uniform_verified": false
+      },
+      "raw_AG_array_sigma_min": "6.27822407105094726040927",
       "refined_step": 24016,
       "rigorous_enclosure": false,
       "source_uniform_verified": false
@@ -245,7 +701,7 @@
   "decimal_digits": 80,
   "profile": "construction through wrapper release; 225 to 225.32 s",
   "qualification": "OU3_CARRIED_SOURCE_READOUT_DIAGNOSTIC_V1",
-  "shipping_header_sha256": "bc9cb8b144eb77bc31631c13d0e4891ea5d3287dd61d4e0990395bf293f71638",
+  "shipping_header_sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
   "source_uniform_verified": false,
   "theorem_closed": false,
   "wave_truth": "p_z=.4 sin(.6t), roll=.02 sin(.5t), B_world=(60,0,30); zero physical biases"

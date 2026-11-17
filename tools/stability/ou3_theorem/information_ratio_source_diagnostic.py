@@ -108,7 +108,9 @@ def compile_driver(tmp, eigen):
     for name, extra in (('observed', ['-DINFO_RATIO_TAP', '-I'+str(Path(tmp)/'observed')]),
                         ('control', [])):
         exe = Path(tmp)/(name+'.bin')
-        subprocess.run(['g++', '-O2', '-std=c++20', *extra, '-I'+str(REPO/'src'),
+        # Bound Eigen compile-time expansion; both observed and untapped
+        # binaries use identical arithmetic/compiler settings and must match.
+        subprocess.run(['g++', '-O1', '-DEIGEN_UNROLLING_LIMIT=0', '-std=c++20', *extra, '-I'+str(REPO/'src'),
                         '-isystem', str(eigen), str(DRIVER), '-o', str(exe)], check=True)
         out[name] = exe
     return out
@@ -201,6 +203,45 @@ def nuisance_upper():
     return np.diag([float(x) for x in bounds()[-1] for _ in range(3)])
 
 
+def psd_root(a):
+    """Finite-arithmetic PSD factor; reject negativity beyond eigensolver noise.
+
+    This is a diagnostic factorization, not an outward enclosure. Only negative
+    eigenvalues within 16*n*eps*||a||_2 are rounded to zero.
+    """
+    values, vectors = np.linalg.eigh(sym(a))
+    tolerance = 16*len(a)*np.finfo(float).eps*np.max(np.abs(values))
+    if values[0] < -tolerance:
+        raise ValueError(f'indefinite exported covariance: {values[0]} < {-tolerance}')
+    return vectors*np.sqrt(np.maximum(values, 0))
+
+
+def square_root_replay(p0, ops):
+    """QR form of the same frozen Riccati map, stable for diffuse priors.
+
+    Factoring the joint (measurement,state) covariance obtains the conditional
+    state root without subtracting large diffuse covariance matrices. Every
+    prediction, sync increment, applied row/noise and reset stays in order.
+    """
+    root = np.linalg.cholesky(sym(p0))
+    for op in ops:
+        if op[0] == 'P':
+            block = np.hstack((op[1]@root, psd_root(op[2])))
+        elif op[0] == 'Y':
+            block = np.hstack((root, psd_root(op[1])))
+        elif op[0] == 'C':
+            h, r = op[1:3]
+            m, n = h.shape
+            block = np.block([[np.linalg.cholesky(r), h@root],
+                              [np.zeros((n, m)), root]])
+            root = np.linalg.qr(block.T, mode='r').T[m:, m:]
+            continue
+        else:
+            block = op[1]@root
+        root = np.linalg.qr(block.T, mode='r').T
+    return sym(root@root.T)
+
+
 def joint_reader_full_upper(ops, scales=(1e8, 1e10)):
     """Full 21x21 diffuse limit lim_t Ric_W(diag(t I6, U_n)) over a window."""
     upper = nuisance_upper()
@@ -209,7 +250,7 @@ def joint_reader_full_upper(ops, scales=(1e8, 1e10)):
         prior = np.zeros((21, 21))
         prior[:6, :6] = t*np.eye(6)
         prior[6:, 6:] = upper
-        out.append(replay(prior, ops)[0])
+        out.append(square_root_replay(prior, ops))
     return out[-1], float(np.linalg.norm(out[-1]-out[0])/np.linalg.norm(out[-1]))
 
 
@@ -377,6 +418,7 @@ def analyze_split(ops, markers, root_index, word_s):
                            'over_P0_lambda_max': sig(float(np.max(np.linalg.eigvalsh(chat)))),
                            'dominates_P0_within_1e-3': defect > -1e-3,
                            'diffuse_scale_converged_1e-6': conv < 1e-6,
+                           'diffuse_scale_relative_difference': sig(conv),
                            'loss_factor': sig((1-rho)/(1-joint[0]))},
         'diameter': {'finite_kernel_observable': observable,
                      'kappa_information': sig(kappa_j) if observable else None,
@@ -446,7 +488,7 @@ def diagnostic(eigen):
         'kernel_set_invariant_on_every_word': all(w['kernel_bounded_diameter']['kernel_set_invariant']
                                                   for c in cases for w in c['words']),
         'cases': cases,
-        'replay': 'float64 optimal-gain replay of literal exported coefficients',
+        'replay': 'float64 optimal-gain replay of literal exported coefficients; QR square-root diffuse reader',
         'source_uniform_verified': False, 'rigorous_enclosure': False, 'theorem_closed': False,
     }
 
@@ -463,6 +505,11 @@ def differences(a, b, rel, path='$'):
     """
     if path.endswith('.relative_difference') and a is not None and b is not None:
         return [] if min(a, b) >= 0 and max(a, b) <= RELATIVE_DIFFERENCE_FLOOR else [f'{path}: {a} != {b}']
+    if path.endswith('.diffuse_scale_relative_difference') and a is not None and b is not None:
+        # QR roundoff is not reproducible relatively when convergence is at
+        # 1e-14. This comparison floor is 10,000 times below the 1e-6 gate.
+        if min(a, b) >= 0 and max(a, b) <= 1e-10:
+            return []
     if isinstance(a, dict) and isinstance(b, dict):
         if a.keys() != b.keys():
             return [f'{path}: keys {sorted(set(a) ^ set(b))}']
@@ -505,6 +552,9 @@ def verify_diagnostic(record):
                 raise ValueError('gyro-bias persistence cap violated')
             if not w['joint_reader_C']['dominates_P0_within_1e-3'] or not w['joint_reader_C']['diffuse_scale_converged_1e-6']:
                 raise ValueError('joint-reader upper comparison did not converge or dominate')
+            convergence = w['joint_reader_C']['diffuse_scale_relative_difference']
+            if not math.isfinite(convergence) or not 0 <= convergence < 1e-6:
+                raise ValueError('diffuse reader convergence value failed')
             if d['finite_kernel_observable']:
                 if d['relative_difference'] > 1e-3:
                     raise ValueError('diameter identity violated')

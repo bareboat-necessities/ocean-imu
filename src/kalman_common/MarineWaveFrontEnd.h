@@ -70,6 +70,13 @@ public:
         freq_stillness_.setTargetFreqHz(min_freq_hz_);
     }
 
+    void setManoeuvreMotion(float speed, const Eigen::Vector3f& bow) {
+        manoeuvre_speed_=speed; manoeuvre_bow_=bow;
+    }
+    float manoeuvreSpeed() const { return manoeuvre_speed_; }
+    const Eigen::Vector3f& manoeuvreBow() const { return manoeuvre_bow_; }
+
+
     void resetFrontendGyroHistory() { frontend_gyro_interval_.reset(); }
     void setFrontendGyroSampleMode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) { frontend_gyro_interval_.set_mode(mode); }
 
@@ -393,6 +400,8 @@ protected:
     // two_kp keeps the correction corner below the wave band, so the observer
     // does not level itself against orbital specific force instead of gravity.
     ocean_imu::kalman::filter_detail::GyroInterval<Eigen::Vector3f> frontend_gyro_interval_;
+    float manoeuvre_speed_=0;
+    Eigen::Vector3f manoeuvre_bow_=Eigen::Vector3f::UnitX();
     VerticalAccelComplementary   vertical_accel_comp_{
         defaults::STARTUP_PROXY_TWO_KP,
         defaults::STARTUP_PROXY_TWO_KI};

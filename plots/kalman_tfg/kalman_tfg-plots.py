@@ -209,15 +209,16 @@ def plot_bias(df: pd.DataFrame, base: str, label: str) -> None:
     Full run for the same reason as the tuner chart: a bias that walks away
     during startup and never comes back is the failure mode worth seeing.
     """
-    cols = [f"acc_bias_{a}" for a in ("x", "y", "z")]
+    cols = [f"acc_bias{suffix}_{a}" for a in ("x", "y", "z") for suffix in ("", "_est")]
     if not all(c in df.columns for c in cols):
         return
-    fig, axes = make_subplots(1, f"{label}: estimated accelerometer bias", row_height=2.8)
-    for a in ("x", "y", "z"):
-        axes[0].plot(df["time"], df[f"acc_bias_{a}"], lw=0.9, label=a.upper())
-    axes[0].set_ylabel(r"bias [m/s$^2$]")
-    axes[0].set_xlabel("time [s]")
-    axes[0].legend(loc="upper right", fontsize="small", ncol=3)
+    fig, axes = make_subplots(3, f"{label}: accelerometer bias in filter body axes")
+    for ax, a in zip(axes, ("x", "y", "z")):
+        ax.plot(df["time"], df[f"acc_bias_{a}"], lw=1.2, label="true")
+        ax.plot(df["time"], df[f"acc_bias_est_{a}"], lw=0.9, ls="--", label="estimate")
+        ax.set_ylabel(f"Body bias {a.upper()} [m/s$^2$]")
+        ax.legend(loc="upper right", fontsize="small")
+    axes[-1].set_xlabel("time [s]")
     finalize(fig, base, "_bias")
 
 

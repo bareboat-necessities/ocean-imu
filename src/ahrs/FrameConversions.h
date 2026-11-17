@@ -47,6 +47,20 @@ static inline Matrix3f basis_zu_to_ned() {
     return S;
 }
 
+// Mahony's right-handed sensor/world convention is North, West, Up.
+// The SAME body basis applies to gyro, specific force and magnetic field.
+static inline Vector3f ned_to_mahony_nwu(const Vector3f& v) {
+    return Vector3f(v.x(), -v.y(), -v.z());
+}
+
+// Mahony_AHRS integrates qdot = q * omega/2: its stored quaternion is
+// BODY->WORLD. Some historical wrappers label that getter WorldToBody.
+// Convert both bases before using the common nautical reporting convention.
+static inline Quaternionf mahony_nwu_to_bw_ned(const Quaternionf& q_bw_nwu) {
+    const Matrix3f D = Vector3f(1.0f, -1.0f, -1.0f).asDiagonal();
+    return Quaternionf(D * q_bw_nwu.normalized().toRotationMatrix() * D);
+}
+
 // Quaternion helpers
 //
 // quat_from_euler() is just a ZYX matrix/quaternion builder:

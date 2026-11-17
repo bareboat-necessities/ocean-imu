@@ -44,6 +44,7 @@ public:
         cfg_.sigma_g = sigma_g * SIGMA_G_RESCALE;
         cfg_.sigma_m = sigma_m * SIGMA_M_RESCALE;
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
+        cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
@@ -93,7 +94,7 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
         s.vel_est_zu = ned_to_zu(filter.mekf().get_velocity());
-        s.acc_est_zu = ned_to_zu(filter.mekf().get_world_accel());
+        s.acc_est_zu = ned_to_zu(filter.mekf().get_world_total_accel());
         const Quaternionf q_bw_ned = filter.mekf().quaternion_boat().normalized();
         float roll_deg = 0.0f, pitch_deg = 0.0f, yaw_deg = 0.0f;
         quat_to_euler_nautical(q_bw_ned, roll_deg, pitch_deg, yaw_deg);

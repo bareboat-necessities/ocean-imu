@@ -1,4 +1,5 @@
 #pragma once
+#include "kalman_common/MarineTurnModel.h"
 #include "kalman_common/GyroInterval.h"
 
 /*
@@ -166,6 +167,9 @@ class Kalman3D_Wave_TFG {
     [[nodiscard]] Vector3 get_position() const              { return X_.X.col(1); }
     [[nodiscard]] Vector3 get_integral_displacement() const { return X_.X.col(2); }
     [[nodiscard]] Vector3 get_world_accel() const           { return X_.X.col(3); }
+    [[nodiscard]] Vector3 get_world_total_accel() const {
+        return get_world_accel() + X_.R*turn_evaluation_().force;
+    }
     [[nodiscard]] Vector3 gyroscope_bias() const            { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const {
         if constexpr (with_accel_bias) return X_.B.col(1);
@@ -512,6 +516,7 @@ class Kalman3D_Wave_TFG {
     void time_update(const Vector3& gyro_meas, T Ts) {
         if (!(Ts > T(0)) || !std::isfinite(Ts) || !gyro_meas.allFinite()) return;
         const auto interval = gyro_interval_.prepare(gyro_meas, Ts);
+        marine_turn_.endpoint_gyro = gyro_meas;
         if (!interval.predict) return;
         MatrixNX& Phi = scratch_a_;
         MatrixNX& Qd  = scratch_b_;
@@ -596,6 +601,8 @@ class Kalman3D_Wave_TFG {
         if (have_mag_reference_) B_w_ = Q * B_w_;
     }
 
+    void set_marine_turn(T speed, const Vector3& bow) { marine_turn_.set(speed, bow); }
+
     struct MeasDiag3 {
         Vector3 r{Vector3::Zero()};
         Matrix3 S{Matrix3::Zero()};
@@ -659,9 +666,14 @@ class Kalman3D_Wave_TFG {
     void accel_residual(const Vector3& acc_meas_body, T tempC,
                         Vector3& r, Eigen::Matrix<T,3,NX>& H, Matrix3& Rw) const {
         const Vector3 ba = accel_bias_at_(tempC);
-        r = X_.R * (acc_meas_body - ba) - (X_.X.col(3) - gravity_world());
+        const auto turn = turn_evaluation_();
+        r = X_.R * (acc_meas_body - ba - turn.force) - (X_.X.col(3) - gravity_world());
         H.setZero();
-        H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(gravity_world());
+        H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(gravity_world())
+            - X_.R * turn.down_jacobian * X_.R.transpose() * ocean_imu::lie::skew<T>(Vector3::UnitZ());
+        H.template block<3,3>(0, OFF_BG) = X_.R * turn.rate_jacobian;
+        if constexpr (two_frame_bias)
+            H.template block<3,3>(0, OFF_BG) = (H.template block<3,3>(0, OFF_BG)*X_.R.transpose()).eval();
         if (linear_block_enabled_) H.template block<3,3>(0, OFF_AW) = -Matrix3::Identity();
         if constexpr (with_accel_bias) {
             if (acc_bias_updates_enabled_)
@@ -726,6 +738,11 @@ class Kalman3D_Wave_TFG {
     }
 
   private:
+    MarineTurnModel<T> marine_turn_;
+    typename MarineTurnModel<T>::Evaluation turn_evaluation_() const {
+        return marine_turn_.evaluate(Vector3(X_.R.row(2).transpose()),
+            Vector3(marine_turn_.endpoint_gyro-X_.B.col(0)), marine_turn_.bow);
+    }
     void world_transition_(T dt, Eigen::Matrix<T,4,4>& Phi) const {
         Phi.setIdentity();
         if (linear_block_enabled_)

@@ -51,6 +51,7 @@ public:
                              const Vector3f& sigma_g,
                              const Vector3f& sigma_m) {
         Fusion::Config cfg;
+        cfg.turn_separator.forward_body = Vector3f::UnitY();
         cfg.with_mag = with_mag;
         cfg.sigma_a = sigma_a_init;
         cfg.gyro_noise_density = sigma_g.x();
@@ -87,7 +88,7 @@ public:
         FilterSnapshot s;
         s.disp_est_zu = ned_to_zu(fusion_.get_position());
         s.vel_est_zu  = ned_to_zu(fusion_.get_velocity());
-        s.acc_est_zu  = ned_to_zu(fusion_.get_world_accel());
+        s.acc_est_zu  = ned_to_zu(fusion_.get_world_total_accel());
 
         const Quaternionf q_bw_ned = fusion_.quaternion().normalized();
         float roll_deg = 0.0f, pitch_deg = 0.0f, yaw_deg = 0.0f;

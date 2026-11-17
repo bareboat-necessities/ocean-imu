@@ -114,6 +114,7 @@ public:
                       const Vector3f& sigma_m)
     {
         Fusion::Config cfg;
+        cfg.turn_separator.forward_body = Vector3f::UnitY();
         cfg.with_mag = with_mag;
         cfg.sigma_a = sigma_a_init * SIGMA_A_RESCALE;
         cfg.gyro_noise_density = sigma_g.x() * SIGMA_G_RESCALE;
@@ -145,6 +146,7 @@ public:
         bool flag = false;
         if (env_bool("TFG_MAG_REFINE", flag))     cfg.mag_refine_enabled = flag;
         if (env_bool("TFG_MAG_HARD_IRON", flag))  cfg.mag_continuous_hard_iron = flag;
+        if (env_bool("TFG_MAG_GYRO_CAL", flag)) cfg.mag_gyro_calibration = flag;
         if (env_bool("TFG_WAVE_BAND", flag))      cfg.wave_band_tuning = flag;
         if (float v = 0.0f; env_float("TFG_MAG_MIN_WINDOW_SEC", v)) cfg.mag_min_window_sec = v;
         if (float v = 0.0f; env_float("TFG_MAG_REFINE_START_SEC", v)) cfg.mag_refine_start_sec = v;
@@ -258,7 +260,7 @@ public:
 
         s.disp_est_zu = ned_to_zu(fusion_.get_position());
         s.vel_est_zu  = ned_to_zu(fusion_.get_velocity());
-        s.acc_est_zu  = ned_to_zu(fusion_.get_world_accel());
+        s.acc_est_zu  = ned_to_zu(fusion_.get_world_total_accel());
 
         // BODY -> WORLD in NED. After magnetic lock this is the learned
         // magnetic-NED frame, not true north: no declination model is applied,

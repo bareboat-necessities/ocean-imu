@@ -109,8 +109,9 @@ public:
         s.vel_est_zu  = Vector3f(0.0f, 0.0f, filter_.velocity());
         s.acc_est_zu  = Vector3f(0.0f, 0.0f, filter_.accelFiltered());
 
+        // Historical getter name; Mahony stores the active body-to-world rotation.
         const auto& q_wb = hs.q_world_to_body;
-        Quaternionf q_wb_zu(
+        Quaternionf q_bw_nwu(
             float(q_wb.w),
             float(q_wb.x),
             float(q_wb.y),
@@ -121,32 +122,9 @@ public:
         float pitch_sim_deg = 0.0f;
         float yaw_sim_deg   = 0.0f;
 
-        quat_wb_zu_to_euler_nautical(
-            q_wb_zu,
-            roll_sim_deg,
-            pitch_sim_deg,
-            yaw_sim_deg
-        );
-
-        if (!with_mag_) {
-            yaw_sim_deg = 0.0f;
-        } else {
-            // W3dSimCommon compares against magnetic-frame reported yaw:
-            //
-            //   y_ref_mag_reported = y_ref_true_reported + declination
-            //
-            // With this Mahony mag convention, the decoded quaternion yaw lands on
-            // the opposite declination side:
-            //
-            //   y_mahony_reported ≈ y_ref_true_reported - declination
-            //
-            // Convert Mahony's reported yaw to the same magnetic-frame reference:
-            //
-            //   y_mahony_fixed = y_mahony_reported + 2*declination
-            yaw_sim_deg = wrapDeg(
-                yaw_sim_deg + 2.0f * MagSim_WMM::default_declination_deg
-            );
-        }
+        quat_to_euler_nautical(mahony_nwu_to_bw_ned(q_bw_nwu),
+                               roll_sim_deg, pitch_sim_deg, yaw_sim_deg);
+        if (!with_mag_) yaw_sim_deg = 0.0f;
 
         s.euler_nautical_deg = Vector3f(
             roll_sim_deg,
@@ -232,18 +210,10 @@ public:
 
 private:
     static Vector3f ned_to_mahony_body_(const Vector3f& v_ned) {
-        // body NED (North, East, Down) -> body Z-up nautical axes used by Mahony.
-        const Vector3f v_zu = ned_to_zu(v_ned);
-        return Vector3f(-v_zu.x(), -v_zu.y(), v_zu.z());
+        return ned_to_mahony_nwu(v_ned);
     }
-
     static Vector3f ned_to_mahony_mag_(const Vector3f& v_ned) {
-        // Do NOT use ned_to_mahony_body_() for magnetometer.
-        //
-        // This Mahony mag path expects magnetic north on +X with this convention.
-        // Using the accel/gyro body conversion here flips the magnetic horizontal
-        // convention and causes a large yaw error.
-        return Vector3f(v_ned.x(), -v_ned.y(), -v_ned.z());
+        return ned_to_mahony_nwu(v_ned);
     }
 
     static HeaveFilter::Config make_config_(bool with_mag,

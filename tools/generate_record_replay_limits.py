@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-METRICS = ('heave', 'displacement', 'roll', 'pitch', 'yaw', 'acc_z', 'acc_3d', 'gyro_3d')
+METRICS = ('heave', 'displacement', 'roll', 'pitch', 'yaw', 'acc_z', 'acc_3d', 'gyro_3d', 'displacement_y')
 
 
 def render(evidence):

@@ -1,0 +1,80 @@
+{
+  "source_revision": "db90a8fb3ce29d02335b31b1797f65eeb4b57e95",
+  "run_id": 43965579218,
+  "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965579218",
+  "role": "Native-target regression result; failures retained, not a passing acceptance receipt",
+  "cases": {
+    "head": {
+      "job_id": 133644031905,
+      "conclusion": "failure",
+      "profiles": {
+        "ou2/default": 1,
+        "ou3/default": 1,
+        "ou2/legacy": 1,
+        "ou3/legacy": 1,
+        "carma/default": 1,
+        "carma/legacy": 1,
+        "tfg/default": 1,
+        "csm/default": 1,
+        "csm/legacy": 1,
+        "tfg/legacy": 1,
+        "tcarma/default": 1,
+        "tcarma/legacy": 1,
+        "tangent/default": 1,
+        "tcsm/default": 1,
+        "tcsm/legacy": 1,
+        "tangent/legacy": 1,
+        "ahrs/default": 0,
+        "tfg_legacy/default": 1,
+        "nlo/default": 0,
+        "heave/default": 0,
+        "pii/default": 0,
+        "heave/proxy": 0,
+        "heave/truth": 0
+      }
+    },
+    "following": {
+      "job_id": 133644032206,
+      "conclusion": "failure",
+      "profiles": {
+        "ou2/default": 1,
+        "ou3/default": 1,
+        "ou2/legacy": 1,
+        "ou3/legacy": 1,
+        "carma/default": 1,
+        "carma/legacy": 1,
+        "tfg/default": 1,
+        "csm/default": 1,
+        "csm/legacy": 1,
+        "tfg/legacy": 1,
+        "tcarma/default": 1,
+        "tcarma/legacy": 1,
+        "tcsm/default": 1,
+        "tangent/default": 1,
+        "tcsm/legacy": 1,
+        "tfg_legacy/default": 1,
+        "tangent/legacy": 1,
+        "ahrs/default": 0,
+        "nlo/default": 0,
+        "pii/default": 0,
+        "heave/default": 0,
+        "heave/proxy": 0,
+        "heave/truth": 0
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "id": 14277792979,
+      "name": "simulation-v1.4.0-head",
+      "digest": "sha256:d6643c8e1bde387c502cb3e25507027013667c1ba2e15110dc5c131f46a78d9d",
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965579218/artifacts/14277792979"
+    },
+    {
+      "id": 14276162849,
+      "name": "simulation-v1.4.0-following",
+      "digest": "sha256:21ec0d5d4ba1377e1a21afd955870004228599d08f0b9fb6b189ce8028b13a72",
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/43965579218/artifacts/14276162849"
+    }
+  ]
+}

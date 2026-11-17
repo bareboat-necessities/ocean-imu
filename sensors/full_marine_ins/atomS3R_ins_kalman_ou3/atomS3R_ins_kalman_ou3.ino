@@ -68,6 +68,10 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
+// The library compiles this large prediction in its own translation unit so
+// Xtensa's literal loads stay within range with the default Arduino flags.
+extern template void ocean_imu::kalman::Kalman3D_Wave_OU_III<float, true, true>::time_update(
+    const Eigen::Vector3f&, float);
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
