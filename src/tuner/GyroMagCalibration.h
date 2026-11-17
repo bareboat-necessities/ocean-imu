@@ -34,8 +34,8 @@ public:
     void setGyroMode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) {
         interval_.set_mode(mode); interval_.reset();
     }
-    EIGEN_DONT_INLINE void predict(float dt, const Vector3& gyro);
-    EIGEN_DONT_INLINE bool update(const Vector3& mag);
+    void predict(float dt, const Vector3& gyro);
+    bool update(const Vector3& mag);
     Vector3 biasBodyUT() const { return x_.segment<3>(3); }
     Matrix3 correction() const { return matrix_().inverse(); }
     bool valid() const { return initialized_ && accepted_ >= 500; }
@@ -59,7 +59,7 @@ private:
         for (int j=0;j<3;++j) H.block<3,3>(0,9+3*j) = x_[j] * Matrix3::Identity();
         return H;
     }
-    EIGEN_DONT_INLINE void initialize_(const Vector3& mag);
+    void initialize_(const Vector3& mag);
     void clearRotation_() { rotation_.setIdentity(); bias_rotation_.setZero(); elapsed_=angle_variance_=0.0f; }
     Config cfg_{};
     State x_ = State::Zero();

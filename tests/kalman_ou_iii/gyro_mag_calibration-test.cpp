@@ -30,7 +30,7 @@ void recover(float heading, unsigned seed) {
     Q previous=attitude(0.0f,heading);
     V sum=V::Zero(),raw_sum=V::Zero(); double error2=0,raw_error2=0; int blocks=0,n=0;bool finite=true,psd=true;
     for(int k=1;k<=180000;++k) {
-        const float t=k*dt; const Q q=attitude(t,heading);
+        const float t=static_cast<float>(k)*dt; const Q q=attitude(t,heading);
         const Eigen::AngleAxisf da(previous.conjugate()*q);
         cal.predict(dt,da.axis()*(da.angle()/dt)+bg); previous=q;
         if(k%8) continue;
@@ -67,9 +67,30 @@ void quiet() {
     bool applied=false;
     for(int k=0;k<4000;++k) {
         tracker.predict(0.04f,V(0,0,0.01f));
-        tracker.accumulate(k*0.04f,0.04f,Q::Identity(),V(20,0,47));
-        applied = applied || tracker.slewTowardEstimate(k*0.04f,0.04f,ref,1,45,1e-3f,out);
+        const float t=static_cast<float>(k)*0.04f;
+        tracker.accumulate(t,0.04f,Q::Identity(),V(20,0,47));
+        applied = applied || tracker.slewTowardEstimate(t,0.04f,ref,1,45,1e-3f,out);
     }
     check(!applied && tracker.applied_correction.isIdentity(),"no tilt excitation leaves the applied calibration unchanged");
 }
-int main(){for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();return failures?1:0;}
+void legacyStartupOffset() {
+    seastate::common::ContinuousHardIronTracker tracker;
+    tracker.gyro_calibration_enabled=false;
+    const V field(20,0,47), bias(1.2f,-1.0f,1.6f);
+    tracker.startup_body_uT=0.4f*bias;
+    for(int k=1;k<=6000;++k) {
+        const float t=static_cast<float>(k)*0.04f;
+        const Q q=Eigen::AngleAxisf(0.3f*std::sin(t),V::UnitY())*
+                  Eigen::AngleAxisf(0.4f*std::sin(1.7f*t),V::UnitX());
+        tracker.accumulate(t,0.04f,q,q.conjugate()*field+bias);
+    }
+    V reference;
+    const bool moved=tracker.slewTowardEstimate(240,0.04f,field,1,0,1e-3f,reference);
+    const V fitted=tracker.estimator.estimate().bias_body_uT;
+    check(moved && (tracker.applied_body_uT+tracker.startup_body_uT-fitted).norm()<1e-5f,
+          "legacy correction adds only the offset remaining after startup");
+    const V raw=field+bias;
+    check((tracker.correct(raw)-(raw-fitted)).norm()<1e-5f,
+          "legacy magnetic measurement subtracts the total offset exactly once");
+}
+int main(){for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();legacyStartupOffset();return failures?1:0;}

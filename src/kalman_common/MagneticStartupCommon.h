@@ -341,7 +341,8 @@ struct ContinuousHardIronTracker {
         }
 
         const Eigen::Vector3f target = apply_fraction *
-            (gyro_calibration_enabled ? (calibration.biasBodyUT() - startup_body_uT).eval() : est.bias_body_uT);
+            (gyro_calibration_enabled ? (calibration.biasBodyUT() - startup_body_uT).eval()
+                                      : (est.bias_body_uT - startup_body_uT).eval());
         const Eigen::Matrix3f target_correction = gyro_calibration_enabled
             ? (Eigen::Matrix3f::Identity() + apply_fraction * (calibration.correction() - Eigen::Matrix3f::Identity())).eval()
             : Eigen::Matrix3f::Identity().eval();

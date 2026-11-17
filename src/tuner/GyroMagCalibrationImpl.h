@@ -3,9 +3,9 @@
 // Shared implementation: do not duplicate host and embedded equations.
 #include "GyroMagCalibration.h"
 #if defined(ARDUINO) && !defined(EIGEN_NON_ARDUINO)
-#define OCEAN_IMU_MAG_INLINE
+#define OCEAN_IMU_MAG_INLINE EIGEN_DONT_INLINE
 #else
-#define OCEAN_IMU_MAG_INLINE inline
+#define OCEAN_IMU_MAG_INLINE inline EIGEN_DONT_INLINE
 #endif
 
 OCEAN_IMU_MAG_INLINE void GyroMagCalibration::predict(float dt, const Vector3& gyro) {
