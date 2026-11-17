@@ -167,8 +167,8 @@
       }
     }
   },
-  "git_branch": "fix/merged-main-ci",
-  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "git_branch": "docs/complete-yaw-qualification",
+  "git_commit": "008587e9f1b26e85cf244b6809f19ff97d055ff9",
   "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -563,8 +563,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-17T12:48:10+00:00",
-    "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
+    "generated_at": "2026-11-17T21:37:22+00:00",
+    "git_commit": "008587e9f1b26e85cf244b6809f19ff97d055ff9",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -851,7 +851,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44074557116",
+      "run_id": "44163783650",
       "workflow": "ou-full-evidence-branch"
     }
   },
