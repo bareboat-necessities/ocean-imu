@@ -8,6 +8,15 @@ to 0.93–1.10 degrees. That report compares v2.7.7, includes held-out sensor
 initializations, and retains adverse changes. The steering attribution and
 isolated steering-model comparisons below remain separate experiments.
 
+The current-source [CI matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44000148681)
+passes all 544 cells on the PR merge of `6a9af2f8` into `5426da8a`
+(`ab6ea01d`). Both downloaded artifact digests match GitHub's receipts, and
+the complete `records` and `other_replays` measurements are identical to the
+committed enforced matrix from `9e73439e`. The later review and Arduino
+compilation fixes therefore preserve those measured Y, yaw and bias results.
+This deterministic qualification is separate from full OU Monte Carlo evidence
+regeneration and firmware linking.
+
 The v1.4.0 replay exposes physical steering acceleration in every tested horizontal filter. The scoring target is wave displacement after removing the entire curved cruise track, while the filters receive the total specific force. The runtime now models steady forward turning separately from wave motion. Previously the characteristic 20 s displacement error and 10 s body-bias ripple were predominantly responses to this unmodelled motion. They are not explained by rotating a displacement axis alone.
 
 ## What the generator and scorer mean
