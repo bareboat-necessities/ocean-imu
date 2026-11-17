@@ -33,6 +33,58 @@ with `--input`, `--output`, `--profiles calibrated,residual`, and the
 `--seeds` and `--offsets` in the
 [production scores](../reports/results/startup_learning/production-handover.json).
 
+## Which handover values help
+
+The previous handover already supplied proxy tilt, an acquired yaw, a local
+field and the last raw gyro sample. The shared learner supplies tilt and yaw
+at the handover epoch, a fitted magnetic reference and a body gyro-bias seed.
+Across the 888 matched handovers, corrected angular-rate RMS fell from 0.1439
+to 0.1311°/s in following seas and from 0.1227 to 0.1157°/s in head seas.
+The next prediction uses the existing raw gyro endpoint and the fitted bias.
+
+We restored one previous value at a time at the actual OU-III seed assignment.
+Each row below pools the first second of live output over the same 32 cold
+starts (16 records, two sensor-noise seeds). All seven policies received the
+same samples. The joint fit qualified on 29 starts. The three fallback starts
+contribute to every score.
+
+| Handover policy | Tilt RMS (°) | Yaw RMS (°) | Gyro-bias RMS (rad/s) | Accel-bias RMS (m/s²) |
+|---|---:|---:|---:|---:|
+| Previous handover | 0.8439 | 4.8111 | 0.000782 | 0.07859 |
+| Deployed handover | 0.5436 | 3.7367 | 0.000423 | 0.07859 |
+| Restore previous tilt | 0.7148 | 3.8927 | 0.000423 | 0.07859 |
+| Restore previous yaw | 0.6044 | 4.5959 | 0.000423 | 0.07859 |
+| Restore previous magnetic field | 0.5496 | 3.7350 | 0.000423 | 0.07859 |
+| Restore previous gyro bias | 0.5444 | 3.7374 | 0.000781 | 0.07859 |
+| Add experimental gravity-axis accel-bias seed | 0.5459 | 3.7363 | 0.000423 | 0.06527 |
+
+The learned yaw accounts for most of the pooled initial heading gain. Head-sea
+yaw fell from 5.5992° to 3.3475°. Following-sea yaw rose from 3.8656° to
+4.0891° in this smaller fixed-start cohort. Across both directions the
+10–60 s window gave 0.4576° to 0.4522° tilt and 3.7332° to 3.6685° yaw.
+
+The experimental accelerometer-bias seed uses the mean force along gravity to
+estimate one bias component and keeps the calibration prior in the two
+orthogonal directions. It reduced first-second bias RMS by 17%. In a second
+comparison, 48 starts (16 records, three seeds) ran for the full 1,200 s under
+each of three policies. The fit qualified on 44 starts.
+
+| Final 900 s, pooled RMS | Previous | Deployed | With gravity-axis accel-bias seed |
+|---|---:|---:|---:|
+| Yaw (°) | 0.81778 | 0.81605 | 0.81776 |
+| Accelerometer bias (m/s²) | 0.039893 | 0.039884 | 0.039833 |
+| Y displacement (m) | 0.246066 | 0.246011 | 0.246079 |
+| Heave (m) | 0.197872 | 0.197870 | 0.197949 |
+
+The extra bias seed reduced late accelerometer-bias RMS by 0.13% relative to
+the deployed handover, while following-sea yaw rose from 0.80318° to 0.80812°.
+The production filters therefore retain the calibrated accelerometer-bias prior.
+The late scores use the standard validation window. Each pooled RMS is the
+square root of the sample-weighted mean squared error.
+
+[Per-start results and production-control checks](../reports/results/startup_learning/handover_components)
+· [Reproduction commands](../tests/startup_learning/README.md#reproducing-the-handover-component-comparison)
+
 ## Accuracy after the startup transient
 
 Both v1.4.0 directions were rerun on the same 13 binaries with the pinned GCC

@@ -1,9 +1,11 @@
-name: isolated startup learning
+name: startup learning and live handover
 on:
   pull_request:
     paths:
       - 'tests/startup_learning/**'
       - 'tools/startup_learning.py'
+      - 'tools/startup_handover_components.py'
+      - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
       - 'tools/compare_startup_slope.py'
       - 'tools/report_startup_learning.py'
       - 'tests/validation/test_startup_learning.py'
@@ -92,4 +94,32 @@ jobs:
             reports/results/startup_learning/ci-controls/
             reports/results/startup_learning/ci-scaled/
             reports/results/startup_learning/ci-scaled-controls/
+          if-no-files-found: error
+
+  live-handover-components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        window: [early, steady]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install replay dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy python3-pandas
+      - uses: ./.github/actions/replay-toolchain
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Compare seed components and verify the intact production controls
+        env:
+          WINDOW: ${{ matrix.window }}
+        run: |
+          args=(--seeds 7 41)
+          if [[ "$WINDOW" == steady ]]; then args=(--long --seeds 7 41 101); fi
+          python3 tools/startup_handover_components.py --verify-controls --jobs 2 \
+            --data tests/startup_learning/data --output "handover-$WINDOW" "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-handover-components-${{ matrix.window }}
+          path: handover-${{ matrix.window }}/
           if-no-files-found: error

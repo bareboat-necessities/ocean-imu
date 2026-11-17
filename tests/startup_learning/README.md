@@ -129,7 +129,7 @@ four-sigma consistency with the supplied calibration priors. The report counts
 false readiness against an explicit target of yaw error ≤2° and tilt ≤1°.
 A small residual is not an accuracy certificate. In particular, an unavailable
 heading, a deadline fallback, and a verified accurate seed must remain distinct
-when this is eventually integrated.
+when comparing estimator policies.
 
 The field-step control revealed that a constant-field optimizer can absorb
 interference into a very large gyro/hard-iron correction. Such fits remain in
@@ -137,12 +137,10 @@ the evidence but cannot be marked ready. The fit equations and accuracy
 settings remain fixed; the prior-consistency guard is an additional model
 rejection, not a truth-based choice between candidate attitudes.
 
-The current gyro-fit covariance is conditional on the calibration and wave
-model. It is not a complete live-filter covariance: attitude, reference,
-calibration and wave uncertainties are correlated. A future integration must
-transfer those correlations, qualify coverage and continue the gyro clock
-without replaying the last interval. This PR deliberately does not integrate
-the candidate into any live filter.
+The experiment reports the fitted gyro covariance conditional on the calibration
+and wave model. Attitude, reference, calibration and wave uncertainties are
+correlated. The deployed filters keep their configured initial covariance and
+continue the gyro clock from the last observed sample.
 
 ## Reproducing the force-slope comparison
 
@@ -159,4 +157,19 @@ for model in fixed scaled; do
     --profiles calibrated,residual --check $flag --output "/tmp/startup-$model"
 done
 python3 tools/compare_startup_slope.py /tmp/startup-fixed /tmp/startup-scaled /tmp/confirmation.csv
+```
+
+## Reproducing the handover component comparison
+
+Use the pinned v1.4.0 input directories produced by the startup runner. Both
+commands build the real OU-III replay. The study changes only which startup
+values enter the core. The control checks compare the old and new endpoints
+against separate builds using the intact production handover. Each sea
+direction contributes its 4 m JONSWAP record to these checks.
+
+```sh
+python3 tools/startup_handover_components.py --verify-controls --jobs 2 --seeds 7 41 \
+  --data tests/startup_learning/data --output /tmp/startup-components-early
+python3 tools/startup_handover_components.py --long --verify-controls --jobs 2 --seeds 7 41 101 \
+  --data tests/startup_learning/data --output /tmp/startup-components-steady
 ```

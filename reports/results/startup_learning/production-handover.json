@@ -20,7 +20,10 @@
         "bg_rms_dps": 0.02268233002763428,
         "field_direction_rms_deg": 0.12874409722312255,
         "worst_tilt_deg": 0.5310283363,
-        "worst_yaw_deg": 1.419296265
+        "worst_yaw_deg": 1.419296265,
+        "rate_rms_dps": 0.13811743464463858,
+        "ba_rms_mps2": 0.06458499869206795,
+        "field_magnitude_rms_uT": 0.028003597433944108
       },
       "shipping": {
         "n": 109,
@@ -30,7 +33,10 @@
         "bg_rms_dps": 0.053686961032029724,
         "field_direction_rms_deg": 0.30708458897504715,
         "worst_tilt_deg": 2.112448591,
-        "worst_yaw_deg": 4.471618652
+        "worst_yaw_deg": 4.471618652,
+        "rate_rms_dps": 0.15141758288046353,
+        "ba_rms_mps2": 0.06458499869206795,
+        "field_magnitude_rms_uT": 0.04506104552756259
       }
     },
     {
@@ -49,7 +55,10 @@
         "bg_rms_dps": 0.02346445482577286,
         "field_direction_rms_deg": 1.0912525496511152,
         "worst_tilt_deg": 0.6716777047,
-        "worst_yaw_deg": 3.881500244
+        "worst_yaw_deg": 3.881500244,
+        "rate_rms_dps": 0.13982833543859274,
+        "ba_rms_mps2": 0.06458499869206795,
+        "field_magnitude_rms_uT": 0.5008173984886868
       },
       "shipping": {
         "n": 109,
@@ -59,7 +68,10 @@
         "bg_rms_dps": 0.053686961032029724,
         "field_direction_rms_deg": 1.102418928939624,
         "worst_tilt_deg": 2.112448635,
-        "worst_yaw_deg": 5.709594727
+        "worst_yaw_deg": 5.709594727,
+        "rate_rms_dps": 0.15141758288046353,
+        "ba_rms_mps2": 0.06458499869206795,
+        "field_magnitude_rms_uT": 0.4899381005534492
       }
     },
     {
@@ -78,7 +90,10 @@
         "bg_rms_dps": 0.02360428124397121,
         "field_direction_rms_deg": 0.13709575518319697,
         "worst_tilt_deg": 0.6685462667,
-        "worst_yaw_deg": 1.736053467
+        "worst_yaw_deg": 1.736053467,
+        "rate_rms_dps": 0.12215411422564297,
+        "ba_rms_mps2": 0.06476964804637565,
+        "field_magnitude_rms_uT": 0.02853429972692271
       },
       "shipping": {
         "n": 120,
@@ -88,7 +103,10 @@
         "bg_rms_dps": 0.05353391152090524,
         "field_direction_rms_deg": 0.660703351402869,
         "worst_tilt_deg": 3.930011392,
-        "worst_yaw_deg": 13.36541748
+        "worst_yaw_deg": 13.36541748,
+        "rate_rms_dps": 0.1285155902422649,
+        "ba_rms_mps2": 0.06476964804637565,
+        "field_magnitude_rms_uT": 0.039439208003272996
       }
     },
     {
@@ -107,7 +125,10 @@
         "bg_rms_dps": 0.024236695122423862,
         "field_direction_rms_deg": 0.8123194168889432,
         "worst_tilt_deg": 0.6476616607,
-        "worst_yaw_deg": 2.95223999
+        "worst_yaw_deg": 2.95223999,
+        "rate_rms_dps": 0.12130297445325693,
+        "ba_rms_mps2": 0.06476964804637565,
+        "field_magnitude_rms_uT": 1.0964025723643542
       },
       "shipping": {
         "n": 120,
@@ -117,7 +138,10 @@
         "bg_rms_dps": 0.05353391152090524,
         "field_direction_rms_deg": 1.0343016812437626,
         "worst_tilt_deg": 3.930008825,
-        "worst_yaw_deg": 14.20422363
+        "worst_yaw_deg": 14.20422363,
+        "rate_rms_dps": 0.1285155902422649,
+        "ba_rms_mps2": 0.06476964804637565,
+        "field_magnitude_rms_uT": 1.0875197662121938
       }
     },
     {
@@ -136,7 +160,10 @@
         "bg_rms_dps": 0.018888873051511237,
         "field_direction_rms_deg": 0.19084908046049265,
         "worst_tilt_deg": 0.706304629,
-        "worst_yaw_deg": 1.444473267
+        "worst_yaw_deg": 1.444473267,
+        "rate_rms_dps": 0.11962289298284019,
+        "ba_rms_mps2": 0.07005390287432675,
+        "field_magnitude_rms_uT": 0.030497540916161175
       },
       "shipping": {
         "n": 95,
@@ -146,7 +173,10 @@
         "bg_rms_dps": 0.061013869372506524,
         "field_direction_rms_deg": 0.31445922172706986,
         "worst_tilt_deg": 1.362915246,
-        "worst_yaw_deg": 3.717834473
+        "worst_yaw_deg": 3.717834473,
+        "rate_rms_dps": 0.13474477085528222,
+        "ba_rms_mps2": 0.07005390287432675,
+        "field_magnitude_rms_uT": 0.04520117740345466
       }
     },
     {
@@ -165,7 +195,10 @@
         "bg_rms_dps": 0.023734839242058946,
         "field_direction_rms_deg": 1.4706469208609667,
         "worst_tilt_deg": 0.713735511,
-        "worst_yaw_deg": 4.01260376
+        "worst_yaw_deg": 4.01260376,
+        "rate_rms_dps": 0.12301157537647059,
+        "ba_rms_mps2": 0.07005390287432675,
+        "field_magnitude_rms_uT": 1.6668673101011702
       },
       "shipping": {
         "n": 95,
@@ -175,7 +208,10 @@
         "bg_rms_dps": 0.061013869372506524,
         "field_direction_rms_deg": 1.4059499323839908,
         "worst_tilt_deg": 1.362915064,
-        "worst_yaw_deg": 7.330795288
+        "worst_yaw_deg": 7.330795288,
+        "rate_rms_dps": 0.13474477085528222,
+        "ba_rms_mps2": 0.07005390287432675,
+        "field_magnitude_rms_uT": 1.6653618352431017
       }
     },
     {
@@ -194,7 +230,10 @@
         "bg_rms_dps": 0.03255832575912954,
         "field_direction_rms_deg": 0.20727656757812543,
         "worst_tilt_deg": 0.7431615003,
-        "worst_yaw_deg": 1.418716431
+        "worst_yaw_deg": 1.418716431,
+        "rate_rms_dps": 0.11204859857901799,
+        "ba_rms_mps2": 0.06946563720407774,
+        "field_magnitude_rms_uT": 0.01512811890929234
       },
       "shipping": {
         "n": 120,
@@ -204,7 +243,10 @@
         "bg_rms_dps": 0.062097615826209346,
         "field_direction_rms_deg": 0.4044613836653076,
         "worst_tilt_deg": 2.667180674,
-        "worst_yaw_deg": 5.902008057
+        "worst_yaw_deg": 5.902008057,
+        "rate_rms_dps": 0.11655802304482014,
+        "ba_rms_mps2": 0.06946563720407774,
+        "field_magnitude_rms_uT": 0.025988603424788353
       }
     },
     {
@@ -223,7 +265,10 @@
         "bg_rms_dps": 0.03613415979783349,
         "field_direction_rms_deg": 1.50905790289708,
         "worst_tilt_deg": 0.8752940369,
-        "worst_yaw_deg": 5.358230591
+        "worst_yaw_deg": 5.358230591,
+        "rate_rms_dps": 0.10643626785064088,
+        "ba_rms_mps2": 0.06946563720407774,
+        "field_magnitude_rms_uT": 1.0678956762258052
       },
       "shipping": {
         "n": 120,
@@ -233,7 +278,10 @@
         "bg_rms_dps": 0.062097615826209346,
         "field_direction_rms_deg": 1.5260139094351106,
         "worst_tilt_deg": 2.66718015,
-        "worst_yaw_deg": 9.927429199
+        "worst_yaw_deg": 9.927429199,
+        "rate_rms_dps": 0.11655802304482014,
+        "ba_rms_mps2": 0.06946563720407774,
+        "field_magnitude_rms_uT": 1.0637422992682741
       }
     }
   ],
