@@ -161,7 +161,25 @@ The complete strict rerun passed all 544 cases with the updated global and per-r
 
 A fresh build against both updated headers passed every standard TFG gate in all 32 record, gyro-profile and direction combinations. Every numerical record reproduced its gate-setting measurement. [Executable and log hashes](../reports/results/startup_learning/tfg_horizontal_integral/strict-tfg-receipt.json)
 
-The same horizontal observation also reduced OU-III displacement, with a different effect on attitude. Across the eight following-sea records, 3-D RMS fell from 0.4853 to 0.3387 m, but pitch rose from 0.1047° to 0.1274° and yaw from 0.6607° to 0.7511°. All eight following-sea pitch scores worsened. Restricting attitude and gyro bias to the vertical pseudo-observation made the regressions larger. Both controls remain experimental. [OU-III scores, gain definitions and reproduction patches](../reports/results/startup_learning/tfg_horizontal_integral/ou3-horizontal-controls.json)
+### TFG yaw on the 4 m JONSWAP record
+
+The largest standard yaw regression occurs with interval gyro sampling in following seas. On the original sensor draw, late yaw RMS was 0.55819° on main, 0.56002° with the earlier startup-only filter and 0.62518° with the horizontal observation. From the startup-only filter to the selected filter, mean signed error rose from +0.36306° to +0.44817° and centered RMS rose from 0.42639° to 0.43588°. The change in squared mean accounts for 89.4% of the increase in mean squared error.
+
+We held the waveform fixed in each direction and crossed four initial sensor calibrations with four independent noise streams using default gyro sampling. Every comparison covers seconds 300–1,200. Lower yaw error occurred in 12 of 16 following-sea pairs and 13 of 16 head-sea pairs against main. All 32 pairs improved in 3-D displacement.
+
+| Late RMS on the 4 m record | Following, main | Following, selected | Head, main | Head, selected |
+|---|---:|---:|---:|---:|
+| Yaw (°) | 0.89891 | 0.88178 | 0.79124 | 0.74759 |
+| 3-D displacement (m) | 0.37137 | 0.23898 | 0.26480 | 0.20127 |
+| 3-D accelerometer bias (m/s²) | 0.07258 | 0.07117 | 0.07746 | 0.07441 |
+
+Withholding the integral observation's direct correction about world down reduced instantaneous-gyro yaw RMS on the original following-sea draw from 0.62170° to 0.56911°. Across all 16 standard records, this modification raised pooled yaw by 2.57%, pitch by 26.22% and accelerometer-bias RMS by 8.04%. The selected TFG retains its coupled correction. [Results and source identities](../reports/results/startup_learning/tfg_horizontal_integral/yaw-sensitivity.json) · [Scores, native logs, reproduction steps and gain patch](../reports/results/startup_learning/tfg_horizontal_integral/yaw-sensitivity.tar.gz)
+
+### OU-III horizontal observation experiment
+
+The same horizontal observation also reduced OU-III displacement, with a different effect on attitude. On the original sensor draw across eight following-sea records, 3-D RMS fell from 0.4853 to 0.3387 m, but pitch rose from 0.1047° to 0.1274° and yaw from 0.6607° to 0.7511°. All eight following-sea pitch scores worsened. Restricting attitude and gyro bias to the vertical pseudo-observation made the regressions larger. Both controls remain experimental. [OU-III scores, gain definitions and reproduction patches](../reports/results/startup_learning/tfg_horizontal_integral/ou3-horizontal-controls.json)
+
+Across four sensor draws and both directions, the full horizontal observation reduced late OU-III 3-D displacement from 0.42888 to 0.31877 m. X, Y and 3-D displacement improved in all 64 clean pairs, all 16 interval-gyro pairs and all eight engine-vibration pairs. Clean accelerometer-bias RMS fell from 0.03891 to 0.03724 m/s². On individual clean records, pitch rose as far as 0.06910° to 0.09444° and yaw as far as 0.28093° to 0.38976° by relative change. Halving the velocity coefficient and retaining the original observation variance still produced increases of 34.57% in pitch and 34.32% in yaw on those records. OU-III therefore keeps its existing deployed observation. A separately built production binary reproduced all 2,376 control metrics across the three scoring windows. [Matched OU-III comparisons](../reports/results/startup_learning/tfg_horizontal_integral/ou3-horizontal-confirmation.json) · [Record scores, logs and reproduction steps](../reports/results/startup_learning/tfg_horizontal_integral/ou3-horizontal-confirmation.tar.gz)
 
 Across all filters, 209 of 2,768 measured RMS channels improved by more than 0.5% against main and 51 worsened by more than 0.5%. Of those, 161 improvements and 19 regressions came from the live TFG family. The legacy TFG comparison had 16 improvements and 18 regressions. OU-II and OU-III each had four improvements and two regressions beyond that threshold. Each count refers to a reported metric for one record and gyro profile. [Full comparison with main](../reports/results/startup_learning/tfg_horizontal_integral/main-matrix.json)
 
