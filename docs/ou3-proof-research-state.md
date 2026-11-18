@@ -1,3 +1,14 @@
+## OU-III horizontal wave outputs
+
+The shipping wrapper estimates horizontal wave displacement and velocity using the displacement primitive, velocity and their estimated encounter-band residual variance. The projection reads the current posterior. Its output has no path back into the observer.
+
+- **Structures preserved.** All seventeen native experiments used the production headers. The inherited 21-state trajectory, full covariance, physical forcing, accepted magnetic service and scheduler were carried across each 20-second secant word. Both 252-column secant matrices reproduced their previous bytes. Both unperturbed forks matched their parents.
+- **Relaxations introduced.** The readout models a finite encounter band. The native stability experiments assess the recursive state on their specified trajectories. The empirical wave-output error has finite-replay support.
+- **Failure classification.** Source bindings from the preceding implementation expired (class E). Fresh native streams and the corresponding symbolic certificates supply the new bindings.
+- **Counterexamples.** The replays yielded no new shipping counterexample.
+- **Retained facts.** Finite perturbations have the scope recorded in each report. The end-to-end regional theorem remains open.
+- **Next falsifiable experiment.** Bound horizontal output sensitivity to perturbations of the inherited state, covariance and spectral moments across moving-to-quiet transitions.
+
 ## Native OU-III replay after the transverse-period CARMA update
 
 The independent-axis and shared-mode TFG-CARMA filters changed at `4b6d7fc`.

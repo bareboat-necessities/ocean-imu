@@ -6,6 +6,12 @@ fits and the fixed-memory implementation used by the live wave filters.
 The base is `8c9f535709fe7ff4d87d75dc5c98f4d0a48daa7b`; both cases use the pinned
 `oceanography-waves-lib` v1.4.0 archives, at 5 kn with ±3° / 20 s heading motion.
 
+## Handover components and live wave output
+
+Across the seven OU-III handover configurations, the wave readout reduced late X, Y and 3-D displacement RMS on every one of the 336 matched replays. The 672 early windows reproduced the previous estimator. With the production readout held fixed, the updated handover reduced first-second tilt RMS from 0.844° to 0.544° and yaw RMS from 4.811° to 3.737°. Its own late 3-D RMS moved from 0.344278 to 0.344280 m. The gravity-axis accelerometer-bias trial lowered late pooled bias RMS slightly and raised late 3-D and yaw RMS. [All seven component policies and both sea directions](../reports/results/startup_learning/directional_qualification/live-handover-rms.md)
+
+All 17 native OU-III diagnostics were regenerated on the production wave-output source. Both 252-column planar secants reproduced their previous bytes. The source-bound gate and the 824-test proof suite passed. The regional stability theorem remains open. [Native results, source manifest digest and workflow tests](../reports/results/startup_learning/directional_qualification/ou3-wave-output-proof.json)
+
 ## Live replay against main
 
 On the 5 kn v1.4.0 records, OU-III and standard TFG reduced late 3-D displacement RMS on all 32 combinations of sea, record and gyro profile. The independent-axis and shared-mode TFG-CARMA filters each reduced it by more than 0.5% in 24 of 32 combinations. The remaining eight per filter stayed within 0.5%.

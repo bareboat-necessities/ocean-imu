@@ -1,9 +1,9 @@
 {
-  "checked_out_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
-  "run": 44275660068,
-  "job": 134702991045,
+  "checked_out_commit": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "run": 44364470774,
+  "job": 135014387101,
   "platform": "windows",
-  "log_sha256": "098672b35816b10cebf924e5cc424794d46676a2a82f05c0ac5cac6a7cebb0b2",
+  "log_sha256": "3c1128e2523884b159554fc91d815de535bd36ab10191873aa2e9377bb0fdb97",
   "sketches": [
     {
       "sketch": "examples/Basic/dummy_ino/dummy_ino.ino",
@@ -35,7 +35,7 @@
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/atomS3R_ins_carma_shared_modes.ino",
-      "flash_bytes": 1157555,
+      "flash_bytes": 1157559,
       "flash_max": 1310720,
       "static_ram_bytes": 35732,
       "static_ram_max": 327680
@@ -49,9 +49,9 @@
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "flash_bytes": 1187315,
+      "flash_bytes": 1196387,
       "flash_max": 1310720,
-      "static_ram_bytes": 35468,
+      "static_ram_bytes": 35516,
       "static_ram_max": 327680
     },
     {
@@ -77,14 +77,14 @@
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "flash_bytes": 1058119,
+      "flash_bytes": 1061951,
       "flash_max": 1310720,
       "static_ram_bytes": 35740,
       "static_ram_max": 327680
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/atomS3R_ins_tfg_carma_shared_modes.ino",
-      "flash_bytes": 1094263,
+      "flash_bytes": 1105975,
       "flash_max": 1310720,
       "static_ram_bytes": 35740,
       "static_ram_max": 327680

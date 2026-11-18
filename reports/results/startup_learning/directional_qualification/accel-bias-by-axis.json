@@ -16,16 +16,16 @@
     ],
     [
       {
-        "case": "head",
-        "artifact": 14416731860,
-        "archive_sha256": "a37e500eb967a08caec8de445712f740b0cf885258fd8318b5d57c57d58afc38",
-        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff"
+        "case": "following",
+        "artifact": 14459442100,
+        "archive_sha256": "2a6826d631d561e5ca30f82350c74b8a7c13ca07e2a64d78ebf0868d682dac4f",
+        "recorded_source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
       },
       {
-        "case": "following",
-        "artifact": 14417087911,
-        "archive_sha256": "934c5fc1c83781e0dfa34cb124f94812334c7cc48c3d83bb888ff5676012bb2f",
-        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff"
+        "case": "head",
+        "artifact": 14459806936,
+        "archive_sha256": "8bd9cc39e447cbac7647a87c9b883d49a8aab710a4a92032470a3012ea1d259b",
+        "recorded_source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
       }
     ]
   ],
@@ -37,8 +37,8 @@
   ],
   "samples_per_record": 180000,
   "precision": "Per-axis RMS taken from the raw C++ bias summary at its printed precision. Each record contributes the same number of samples.",
-  "csv_sha256": "9fdbd1102628aafb7a128db4358cc78d14d9cba073215ab2add3de32047948f1",
-  "matrix_workflow": 44275659529,
-  "matrix_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "csv_sha256": "42c2a3f53920ca8d2ed757b925367b1e6fad126d185b0549cccaf8d03fe958d7",
+  "matrix_workflow": 44367501554,
+  "matrix_source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
   "main": "cee633f7f5464576dd190a3833d1ed235679616c"
 }

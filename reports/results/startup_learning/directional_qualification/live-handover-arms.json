@@ -1,0 +1,915 @@
+{
+  "source": "97a495db6e8d093b2173cbbc7ea4b51af0a06824",
+  "workflow": 44373741328,
+  "source_archives": {
+    "early": {
+      "archive": 14462143060,
+      "archive_sha256": "7b6f31a1e673922242ea1e522f105f0e753a0afbc561fc21eeaa138084cae0fb",
+      "records_sha256": "55728f8f3a1dba102b863ec959d9ef6ce134f52f2ffd91f2a32625eb54f80dc9"
+    },
+    "steady": {
+      "archive": 14463930081,
+      "archive_sha256": "99a30d71307a86ba9f61db7a9647ef835eb5d072f834732b776546e4bf4ef3c7",
+      "records_sha256": "8fc36e173090ac300fd7304232cc3d2e697b9d474d44b980e99a2632086bb2be"
+    }
+  },
+  "early_replays": 224,
+  "long_replays": 336,
+  "early_clock": "seconds after the first live sample",
+  "late_clock": "seconds from simulation start",
+  "windows": {
+    "0-1": {
+      "following": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.8655827589729275,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.0007819069893488876,
+            "tilt_deg": 0.6933449630141139
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.0891207045517435,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.0004364385379104406,
+            "tilt_deg": 0.659825908027133
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.118093129942319,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.00043649489254131283,
+            "tilt_deg": 0.6614650344627511
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.831049265160998,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.0004365424655401812,
+            "tilt_deg": 0.6784628514603029
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.089421462657875,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.00043645588029692724,
+            "tilt_deg": 0.6717403933824091
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.0946037903185,
+            "acc_bias_mps2": 0.07855169487686393,
+            "gyro_bias_radps": 0.0007816926029819282,
+            "tilt_deg": 0.6599478962508807
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.086140368325897,
+            "acc_bias_mps2": 0.06479927213339719,
+            "gyro_bias_radps": 0.0004364652358017513,
+            "tilt_deg": 0.6640138457808391
+          }
+        }
+      },
+      "both": {
+        "previous": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 4.811126057082752,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.000781790367467103,
+            "tilt_deg": 0.8438893402055125
+          }
+        },
+        "full": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.736738279140061,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.00042331379444329205,
+            "tilt_deg": 0.5436188846451506
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.8927284807503995,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.00042351683977565204,
+            "tilt_deg": 0.7148252966363274
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 4.595871752040255,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.00042322743987689465,
+            "tilt_deg": 0.6044055436593258
+          }
+        },
+        "previous_field": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.7349699167670263,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.00042334988987995293,
+            "tilt_deg": 0.5495744339508712
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.7374273174791055,
+            "acc_bias_mps2": 0.07858715834566034,
+            "gyro_bias_radps": 0.0007815128135742872,
+            "tilt_deg": 0.5443893316223655
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.7363035326317173,
+            "acc_bias_mps2": 0.0652675752961044,
+            "gyro_bias_radps": 0.0004233198413026646,
+            "tilt_deg": 0.5459221925446154
+          }
+        }
+      },
+      "head": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 5.599208676930384,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.0007816737281859063,
+            "tilt_deg": 0.9713759309803531
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.3474643832589916,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.00040976888578630804,
+            "tilt_deg": 0.3945538677821374
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.653488609919634,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.0004101283164236023,
+            "tilt_deg": 0.7644700240072324
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 5.250441490990306,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.00040947967899469773,
+            "tilt_deg": 0.5199041080820629
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.3431471189677695,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.00040982499079115576,
+            "tilt_deg": 0.3909334480487533
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.342296472066399,
+            "acc_bias_mps2": 0.07862260581832588,
+            "gyro_bias_radps": 0.0007813329827960257,
+            "tilt_deg": 0.3964697504255884
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.350132096835884,
+            "acc_bias_mps2": 0.06573254217697082,
+            "gyro_bias_radps": 0.0004097529426588025,
+            "tilt_deg": 0.39388791963803627
+          }
+        }
+      }
+    },
+    "1-10": {
+      "following": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.8170396328039713,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.0007543433444498905,
+            "tilt_deg": 0.5491870178383002
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.8804233917171618,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.00041382158986914646,
+            "tilt_deg": 0.5104629474743612
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.8951711704838288,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.00041350305362025403,
+            "tilt_deg": 0.5054540425611146
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.7486074481972675,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.00041584535752209827,
+            "tilt_deg": 0.5166122235058833
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.8820710510938796,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.00041327357109354336,
+            "tilt_deg": 0.5302864768780348
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.9318591108284666,
+            "acc_bias_mps2": 0.07889584703115053,
+            "gyro_bias_radps": 0.0007499996606468308,
+            "tilt_deg": 0.5213614331022195
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.883415415715631,
+            "acc_bias_mps2": 0.06497634902585916,
+            "gyro_bias_radps": 0.00041431572202625845,
+            "tilt_deg": 0.5121356493053387
+          }
+        }
+      },
+      "both": {
+        "previous": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 4.310320267263865,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.0007650731954053449,
+            "tilt_deg": 0.8990412814988612
+          }
+        },
+        "full": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.666014978622689,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.0004122524925659749,
+            "tilt_deg": 0.6152156230013103
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.819144615238381,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.0004164515673904142,
+            "tilt_deg": 0.6912319724553365
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 4.088080529148771,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.00041524468034171975,
+            "tilt_deg": 0.7524295406053716
+          }
+        },
+        "previous_field": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.669622738295074,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.00041241856188295326,
+            "tilt_deg": 0.6314707244673555
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.672044887800982,
+            "acc_bias_mps2": 0.07878780179497075,
+            "gyro_bias_radps": 0.0007563086446740817,
+            "tilt_deg": 0.6319259697305672
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.6681828225155018,
+            "acc_bias_mps2": 0.06526795272018426,
+            "gyro_bias_radps": 0.00041249946276538594,
+            "tilt_deg": 0.6158012121176606
+          }
+        }
+      },
+      "head": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.752676093989049,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.0007756546314821075,
+            "tilt_deg": 1.146710107706435
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.438262053419738,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.00041067740017182626,
+            "tilt_deg": 0.7045623498495843
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.7415735642694874,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.0004193793516741027,
+            "tilt_deg": 0.8367314326279474
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.401448287203946,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.00041464313298487444,
+            "tilt_deg": 0.9302753558358557
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.444094429176316,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.00041156177641612525,
+            "tilt_deg": 0.7185449214620718
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.3923901969917662,
+            "acc_bias_mps2": 0.07867960818791923,
+            "gyro_bias_radps": 0.00076256543394461,
+            "tilt_deg": 0.7258395955811693
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.439507980478862,
+            "acc_bias_mps2": 0.0655582593716318,
+            "gyro_bias_radps": 0.00041067517096279903,
+            "tilt_deg": 0.7043715939770423
+          }
+        }
+      }
+    },
+    "10-60": {
+      "following": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.387217925709274,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.0006357961491342356,
+            "tilt_deg": 0.459472544186747
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.223356077147457,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.000562127011501634,
+            "tilt_deg": 0.45243428898180854
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.223164281195264,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.0005612361867246053,
+            "tilt_deg": 0.45212557360235633
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.218639939493007,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.000568446011659595,
+            "tilt_deg": 0.4519260080899903
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.223339449272775,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.000562963198637172,
+            "tilt_deg": 0.4530963022872324
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.392028460588538,
+            "acc_bias_mps2": 0.07779282209616306,
+            "gyro_bias_radps": 0.000622595182990859,
+            "tilt_deg": 0.459104310212189
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 4.223240253889578,
+            "acc_bias_mps2": 0.06405186194381488,
+            "gyro_bias_radps": 0.0005423426597491174,
+            "tilt_deg": 0.44938268427626205
+          }
+        }
+      },
+      "both": {
+        "previous": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.7332256537298636,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.0006382129191314502,
+            "tilt_deg": 0.45761071771845035
+          }
+        },
+        "full": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.6684559898654645,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.00054394354495852,
+            "tilt_deg": 0.4521617249918422
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.672481744591354,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.0005438731178355533,
+            "tilt_deg": 0.4520802953337749
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.68251909262349,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.0005593341110368175,
+            "tilt_deg": 0.452092969019964
+          }
+        },
+        "previous_field": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.6683057568244237,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.0005441176660590518,
+            "tilt_deg": 0.45142320214385234
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.7153570319150337,
+            "acc_bias_mps2": 0.07783708697581379,
+            "gyro_bias_radps": 0.0006082238265442744,
+            "tilt_deg": 0.458039996505774
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 32,
+          "pooled_rms": {
+            "yaw_deg": 3.6818066118605115,
+            "acc_bias_mps2": 0.06459940082989875,
+            "gyro_bias_radps": 0.0005270170207523929,
+            "tilt_deg": 0.4488354922049524
+          }
+        }
+      },
+      "head": {
+        "previous": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 2.9370506355302677,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0006406205718197402,
+            "tilt_deg": 0.4557412852487126
+          }
+        },
+        "full": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.0130386895593047,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0005251308247897136,
+            "tilt_deg": 0.45188899660062765
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.023099036212674,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0005259371438861827,
+            "tilt_deg": 0.4520350125298775
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.053681515153062,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0005500712929857307,
+            "tilt_deg": 0.4522598683129183
+          }
+        },
+        "previous_field": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.012696159143625,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0005245955642352532,
+            "tilt_deg": 0.44974387791414755
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 2.8840668769259237,
+            "acc_bias_mps2": 0.07788132669694017,
+            "gyro_bias_radps": 0.0005935045783049175,
+            "tilt_deg": 0.4569732039656253
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 16,
+          "pooled_rms": {
+            "yaw_deg": 3.045593802890702,
+            "acc_bias_mps2": 0.06514233766679181,
+            "gyro_bias_radps": 0.0005112321583602789,
+            "tilt_deg": 0.4482876322166217
+          }
+        }
+      }
+    },
+    "300-1200": {
+      "following": {
+        "previous": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.802301734023322,
+            "acc_bias_mps2": 0.04616761967920295,
+            "gyro_bias_radps": 0.00014109373440315435,
+            "disp_x_m": 0.2468715908872719,
+            "disp_y_m": 0.18853023736623312,
+            "disp_z_m": 0.2200331601626065,
+            "disp_3d_m": 0.3806623518410196,
+            "roll_deg": 0.18810951398496903,
+            "pitch_deg": 0.1970838543526376
+          }
+        },
+        "full": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8031834313715419,
+            "acc_bias_mps2": 0.046139827850842176,
+            "gyro_bias_radps": 0.00014150296436783342,
+            "disp_x_m": 0.2469069251455549,
+            "disp_y_m": 0.18852763519970478,
+            "disp_z_m": 0.22003178868605516,
+            "disp_3d_m": 0.38068318713452803,
+            "roll_deg": 0.18811392397860952,
+            "pitch_deg": 0.19685860247832482
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8031819948107992,
+            "acc_bias_mps2": 0.04613653142970202,
+            "gyro_bias_radps": 0.00014154082801726112,
+            "disp_x_m": 0.24690850854364352,
+            "disp_y_m": 0.18853181053271414,
+            "disp_z_m": 0.22003166385429135,
+            "disp_3d_m": 0.38068620267819653,
+            "roll_deg": 0.18811194525956504,
+            "pitch_deg": 0.19683449933937908
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8027971133988626,
+            "acc_bias_mps2": 0.046152829354999765,
+            "gyro_bias_radps": 0.00014129842126837288,
+            "disp_x_m": 0.24689315611354276,
+            "disp_y_m": 0.18852867479376617,
+            "disp_z_m": 0.22003197025169088,
+            "disp_3d_m": 0.3806748738870861,
+            "roll_deg": 0.18813078635140904,
+            "pitch_deg": 0.19694593945230052
+          }
+        },
+        "previous_field": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8032554062276722,
+            "acc_bias_mps2": 0.04613762573608761,
+            "gyro_bias_radps": 0.00014152151866478555,
+            "disp_x_m": 0.24689243430652813,
+            "disp_y_m": 0.18851621361049167,
+            "disp_z_m": 0.22003153857492808,
+            "disp_3d_m": 0.3806679885173468,
+            "roll_deg": 0.18811400040073006,
+            "pitch_deg": 0.19684191201088552
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8026161688792216,
+            "acc_bias_mps2": 0.04616102991323795,
+            "gyro_bias_radps": 0.0001412389776883933,
+            "disp_x_m": 0.24689780889156435,
+            "disp_y_m": 0.18853803621126863,
+            "disp_z_m": 0.22003277664371057,
+            "disp_3d_m": 0.3806829938267537,
+            "roll_deg": 0.18809712995268693,
+            "pitch_deg": 0.19704196842449612
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8081159308496221,
+            "acc_bias_mps2": 0.0461068588459239,
+            "gyro_bias_radps": 0.00014275637943946323,
+            "disp_x_m": 0.24683768076006407,
+            "disp_y_m": 0.18855921186148958,
+            "disp_z_m": 0.22017274012433363,
+            "disp_3d_m": 0.38073541569367275,
+            "roll_deg": 0.18728983973674612,
+            "pitch_deg": 0.19737828338893404
+          }
+        }
+      },
+      "both": {
+        "previous": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8177769844365398,
+            "acc_bias_mps2": 0.0398932108598716,
+            "gyro_bias_radps": 0.00014270124905879064,
+            "disp_x_m": 0.21615459304193615,
+            "disp_y_m": 0.1806958233262407,
+            "disp_z_m": 0.19787214143233003,
+            "disp_3d_m": 0.34427775829145574,
+            "roll_deg": 0.1721825364980282,
+            "pitch_deg": 0.1623432276266443
+          }
+        },
+        "full": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8160545983618254,
+            "acc_bias_mps2": 0.03988455550551053,
+            "gyro_bias_radps": 0.0001425492219072493,
+            "disp_x_m": 0.21619155962337858,
+            "disp_y_m": 0.18065864343212862,
+            "disp_z_m": 0.1978702901071885,
+            "disp_3d_m": 0.34428039430842555,
+            "roll_deg": 0.1721902472067415,
+            "pitch_deg": 0.1622647609762117
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8162492111406454,
+            "acc_bias_mps2": 0.03988228397740306,
+            "gyro_bias_radps": 0.0001425806762580734,
+            "disp_x_m": 0.2161899373920647,
+            "disp_y_m": 0.18066577039515738,
+            "disp_z_m": 0.19787037037853253,
+            "disp_3d_m": 0.344283159046571,
+            "roll_deg": 0.1721899287879479,
+            "pitch_deg": 0.16224645226576592
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8183381278230829,
+            "acc_bias_mps2": 0.039886442352428754,
+            "gyro_bias_radps": 0.00014280551956852156,
+            "disp_x_m": 0.2161696724979683,
+            "disp_y_m": 0.18068588022961293,
+            "disp_z_m": 0.1978713233673501,
+            "disp_3d_m": 0.3442815345558524,
+            "roll_deg": 0.17219378626456683,
+            "pitch_deg": 0.16227643666364974
+          }
+        },
+        "previous_field": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8159078387231753,
+            "acc_bias_mps2": 0.039883201251051104,
+            "gyro_bias_radps": 0.00014252785155898347,
+            "disp_x_m": 0.21618587052849084,
+            "disp_y_m": 0.18065227838601575,
+            "disp_z_m": 0.19787022281911817,
+            "disp_3d_m": 0.34427344052428177,
+            "roll_deg": 0.17219095966532466,
+            "pitch_deg": 0.16225386125090788
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.815175417127065,
+            "acc_bias_mps2": 0.03989609494013262,
+            "gyro_bias_radps": 0.00014239391314027047,
+            "disp_x_m": 0.21618592012549598,
+            "disp_y_m": 0.1806672855863,
+            "disp_z_m": 0.1978708839879513,
+            "disp_3d_m": 0.34428172680902447,
+            "roll_deg": 0.17217971964392198,
+            "pitch_deg": 0.16236877192878016
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 48,
+          "pooled_rms": {
+            "yaw_deg": 0.8177600465584297,
+            "acc_bias_mps2": 0.039833561659904405,
+            "gyro_bias_radps": 0.0001432090643877243,
+            "disp_x_m": 0.21612945289145255,
+            "disp_y_m": 0.18069244521275601,
+            "disp_z_m": 0.1979492855804921,
+            "disp_3d_m": 0.3443045501736334,
+            "roll_deg": 0.17172776520036778,
+            "pitch_deg": 0.16231601258157435
+          }
+        }
+      },
+      "head": {
+        "previous": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8329647772453598,
+            "acc_bias_mps2": 0.032426647044935544,
+            "gyro_bias_radps": 0.000144290855836571,
+            "disp_x_m": 0.18027765751483885,
+            "disp_y_m": 0.1725059730378279,
+            "disp_z_m": 0.1728935427911893,
+            "disp_3d_m": 0.30356304715700133,
+            "roll_deg": 0.1546236155900138,
+            "pitch_deg": 0.11776502649760336
+          }
+        },
+        "full": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8287258838634133,
+            "acc_bias_mps2": 0.03244490440175391,
+            "gyro_bias_radps": 0.000143587856059766,
+            "disp_x_m": 0.18031791707965425,
+            "disp_y_m": 0.17243091851370795,
+            "disp_z_m": 0.17289105061228896,
+            "disp_3d_m": 0.3035428978635934,
+            "roll_deg": 0.1546354230815418,
+            "pitch_deg": 0.11792538293181463
+          }
+        },
+        "previous_tilt": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8291105068609356,
+            "acc_bias_mps2": 0.03244400743041092,
+            "gyro_bias_radps": 0.00014361299554221122,
+            "disp_x_m": 0.18031185892204438,
+            "disp_y_m": 0.17244128740591166,
+            "disp_z_m": 0.17289139321836533,
+            "disp_3d_m": 0.3035453875397023,
+            "roll_deg": 0.1546371210371544,
+            "pitch_deg": 0.11791523402627375
+          }
+        },
+        "previous_yaw": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8335894538778851,
+            "acc_bias_mps2": 0.0324310485429552,
+            "gyro_bias_radps": 0.00014429687794798685,
+            "disp_x_m": 0.1802842868362397,
+            "disp_y_m": 0.1724868499602402,
+            "disp_z_m": 0.17289318462406753,
+            "disp_3d_m": 0.3035559099462837,
+            "roll_deg": 0.1546227903093691,
+            "pitch_deg": 0.11781163238727242
+          }
+        },
+        "previous_field": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8283670411996504,
+            "acc_bias_mps2": 0.03244470643264314,
+            "gyro_bias_radps": 0.00014352712877659056,
+            "disp_x_m": 0.18032411684109115,
+            "disp_y_m": 0.17243006865996585,
+            "disp_z_m": 0.17289121489921025,
+            "disp_3d_m": 0.30354618465566247,
+            "roll_deg": 0.1546369167895075,
+            "pitch_deg": 0.11792324901204403
+          }
+        },
+        "previous_gyro_bias": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8275440815027375,
+            "acc_bias_mps2": 0.03244312100111982,
+            "gyro_bias_radps": 0.0001435395561520772,
+            "disp_x_m": 0.18031687687390555,
+            "disp_y_m": 0.17243765558555277,
+            "disp_z_m": 0.17289115264467858,
+            "disp_3d_m": 0.3035461629477589,
+            "roll_deg": 0.15463240739534886,
+            "pitch_deg": 0.11790546583903702
+          }
+        },
+        "gravity_axis_accel_bias": {
+          "paired_starts": 24,
+          "pooled_rms": {
+            "yaw_deg": 0.8272917440670728,
+            "acc_bias_mps2": 0.032366384357676733,
+            "gyro_bias_radps": 0.00014366032289727998,
+            "disp_x_m": 0.1802638071585916,
+            "disp_y_m": 0.1724672233675244,
+            "disp_z_m": 0.17289246319547044,
+            "disp_3d_m": 0.3035321890296024,
+            "roll_deg": 0.1546071363579613,
+            "pitch_deg": 0.11719551666851959
+          }
+        }
+      }
+    }
+  }
+}

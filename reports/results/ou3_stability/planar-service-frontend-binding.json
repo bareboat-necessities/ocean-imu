@@ -1,7 +1,11 @@
 {
-  "all_time_magnetic_service_verified": false,
-  "binary32_scope": "round-to-nearest ties-to-even, literal non-fused scalar evaluation",
+  "qualification": "OU3_PLANAR_FRONTEND_BINDING_AUDIT_V1",
+  "result_type": "PROVED exact arithmetic counterexample to an idealized proof replica",
   "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+  "shipping_counterexample": false,
+  "binary32_scope": "round-to-nearest ties-to-even, literal non-fused scalar evaluation",
+  "input_bits": "0x3f800000",
+  "inverse_sqrt_bits": "0x3f7f911f",
   "exact_operation_values": [
     "1",
     "8105283/8388608",
@@ -11,12 +15,17 @@
     "2166787/2097152",
     "16748831/16777216"
   ],
-  "input_bits": "0x3f800000",
-  "inverse_sqrt_bits": "0x3f7f911f",
-  "pre_normalization_quaternion_identity_retained": true,
-  "qualification": "OU3_PLANAR_FRONTEND_BINDING_AUDIT_V1",
   "raw_quaternion_squared_norm": "280523339866561/281474976710656",
   "raw_quaternion_squared_norm_float": 0.9966191067667332,
+  "unit_norm_after_shipping_float_normalization": false,
+  "pre_normalization_quaternion_identity_retained": true,
+  "unbound_reference_operations": [
+    "MahonyBox substitutes exact reciprocal square roots for the shipping float bit seed/Newton map",
+    "MahonyBox returns -down.dot(acc) without the shipping gravity subtraction",
+    "initial_adaptation does not execute the literal accelerometer tilt seeding/readiness gates",
+    "ClosedCausalAdaptationBox advances period before tuner use instead of the literal staged chronology",
+    "tuner profile constants, S cadence and independent AW-sync clock are not source-bound"
+  ],
   "required_cell_coordinates": [
     "planar nominal mean",
     "P_even",
@@ -29,21 +38,12 @@
     "AW synchronization clock and pending target",
     "reference/refinement/gate state"
   ],
-  "result_type": "PROVED exact arithmetic counterexample to an idealized proof replica",
-  "shipping_counterexample": false,
   "shipping_frontend_interval_binding_verified": false,
+  "all_time_magnetic_service_verified": false,
+  "theorem_closed": false,
   "source_sha256": {
     "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38",
-    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6"
-  },
-  "theorem_closed": false,
-  "unbound_reference_operations": [
-    "MahonyBox substitutes exact reciprocal square roots for the shipping float bit seed/Newton map",
-    "MahonyBox returns -down.dot(acc) without the shipping gravity subtraction",
-    "initial_adaptation does not execute the literal accelerometer tilt seeding/readiness gates",
-    "ClosedCausalAdaptationBox advances period before tuner use instead of the literal staged chronology",
-    "tuner profile constants, S cadence and independent AW-sync clock are not source-bound"
-  ],
-  "unit_norm_after_shipping_float_normalization": false
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "fc69a9316cbf4496cc4327b5d8ca90760a68cd0947b49e354e6faca90c50625d"
+  }
 }

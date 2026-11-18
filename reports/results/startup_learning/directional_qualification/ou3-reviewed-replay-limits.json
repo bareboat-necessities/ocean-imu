@@ -1,0 +1,37 @@
+{
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "preceding_hosted_source": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2",
+  "workflow": 44367501554,
+  "earlier_workflow": 44345721004,
+  "reviewed_headers": {
+    "RecordReplayLimits.inc": "02e9d78d2d69796ee6935d7a63222f475f435c419b557c3ea62f9d2e9d772ce5",
+    "CurrentReplayLimits.h": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558"
+  },
+  "per_record": {
+    "shipping_limits": 2768,
+    "new_tighter_ou3_limits": 64,
+    "prior_hosted_vs_accepted_variance_reproduced": 232,
+    "by_family": {
+      "csm": 13,
+      "tcsm": 219
+    },
+    "higher_if_refit": 123,
+    "lower_if_refit": 109,
+    "largest_relative_variance_pct": 0.03985651654044853
+  },
+  "global": {
+    "shipping_limits": 187,
+    "new_tighter_ou3_limits": 6,
+    "prior_hosted_vs_accepted_variance_reproduced": 20,
+    "by_family": {
+      "csm": 2,
+      "tcsm": 18
+    },
+    "higher_if_refit": 12,
+    "lower_if_refit": 8,
+    "largest_relative_variance_pct": 0.017241379310328764
+  },
+  "measured_channels_different_from_admitted_values": 309,
+  "largest_measured_relative_difference_pct": 0.03445906030493662,
+  "interpretation": "All 64 per-record and six global OU-III gate changes exactly match independently compiled hosted measurements. The older platform-dependent CARMA differences reproduce on the preceding and current hosted builds. The published settings retain the existing CARMA margins."
+}

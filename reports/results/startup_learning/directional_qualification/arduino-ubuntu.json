@@ -1,9 +1,9 @@
 {
-  "checked_out_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
-  "run": 44275660068,
-  "job": 134702990712,
+  "checked_out_commit": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "run": 44364470774,
+  "job": 135014386814,
   "platform": "ubuntu",
-  "log_sha256": "d4433a8cef75a77512a960071e63bb281a9dd836e2b6006c96718b4085c40f57",
+  "log_sha256": "64495eb22303d7e9937d90d44edb70adf5a483505e10e7700ddab8a2828b0401",
   "sketches": [
     {
       "sketch": "examples/Basic/dummy_ino/dummy_ino.ino",
@@ -49,9 +49,9 @@
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "flash_bytes": 1186611,
+      "flash_bytes": 1195683,
       "flash_max": 1310720,
-      "static_ram_bytes": 35468,
+      "static_ram_bytes": 35516,
       "static_ram_max": 327680
     },
     {
@@ -77,14 +77,14 @@
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "flash_bytes": 1057463,
+      "flash_bytes": 1061279,
       "flash_max": 1310720,
       "static_ram_bytes": 35740,
       "static_ram_max": 327680
     },
     {
       "sketch": "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/atomS3R_ins_tfg_carma_shared_modes.ino",
-      "flash_bytes": 1093607,
+      "flash_bytes": 1105323,
       "flash_max": 1310720,
       "static_ram_bytes": 35740,
       "static_ram_max": 327680
