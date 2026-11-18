@@ -209,6 +209,10 @@ public:
         float sigma_band_high_ratio = SIGMA_BAND_HIGH_RATIO_DEFAULT;
         float sigma_band_min_hz     = SIGMA_BAND_MIN_HZ_DEFAULT;
         float sigma_band_max_hz     = SIGMA_BAND_MAX_HZ_DEFAULT;
+
+        // Per-horizontal-axis standard deviation of an accepted wave tilt fit.
+        // The fallback proxy keeps its independently configured uncertainty.
+        float wave_handoff_tilt_sigma_rad = 0.00872664626f;  // 0.5 degrees
     };
 
     void begin(const Config& cfg) {
@@ -971,7 +975,9 @@ private:
 
     void seedHandoffAttitudeCovariance_() {
         auto& P = mekf_.covariance_full();
-        const float st = std::max(1e-6f, cfg_.proxy_handoff_tilt_sigma_rad);
+        const float tilt_sigma = wave_startup_used_
+            ? cfg_.wave_handoff_tilt_sigma_rad : cfg_.proxy_handoff_tilt_sigma_rad;
+        const float st = std::max(1e-6f, tilt_sigma);
         const float sy = have_mag_proxy_gauge_
             ? std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_rad)
             : std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_free_rad);
