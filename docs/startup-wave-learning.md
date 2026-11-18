@@ -50,6 +50,8 @@ This fixed-time experiment scores the reference fit. Production coverage
 above comes from the wrapper's actual handover decisions.
 [Fixed-deadline reference scores](../reports/results/startup_learning/field_steps/deadline-reference.json)
 
+Following the same 960 starts through the first live sample showed what happened after the deadline. All 72 late handovers occurred in following seas, between 35.015 and 40.270 s, with a median of 35.755 s. The streaming fit resets at 35 s, so all 72 used the previous proxy estimate. Their handover tilt RMS was 0.4910° and yaw RMS was 2.5942° with either policy. Across **all 480 following-sea starts**, including the late handovers, deployed startup reduced tilt RMS from 0.7415° to 0.3793° and yaw RMS from 2.6195° to 1.9706°. All 480 head-sea starts were already in the on-time cohort. [60-second observation and coverage](../reports/results/startup_learning/field_steps/extended-handover.json) · [Late handover records and reproduction steps](../reports/results/startup_learning/field_steps/extended-handover.tar.gz)
+
 Run `tests/startup_learning/startup-learning --production-pair` once per input
 with `--input`, `--output`, `--profiles calibrated,residual`, and the
 `--seeds` and `--offsets` in the
@@ -186,6 +188,19 @@ Across all filters, 209 of 2,768 measured RMS channels improved by more than 0.5
 The measurements use both v1.4.0 directions, the pinned replay compiler and the Ubuntu math library identified in the receipt. Reproduce the normal matrix with `python3 tools/sim_matrix.py --cases following head --build`. For the additional TFG draws, run `tests/kalman_tfg/kalman_tfg-sim --input INPUT.csv` with the matching `OCEAN_IMU_SIM_CASE`, `W3D_SEED` of 7, 41 or 101, `W3D_VALIDATION_WINDOW_SEC=900` and `W3D_VALIDATION_SEGMENTS=early:40:60,late:300:1200`. Leave the seed unset for the standard regression draw.
 
 [Per-record matched measurements](../reports/results/startup_learning/tfg_horizontal_integral/paired.csv) · [Production run and source receipt](../reports/results/startup_learning/tfg_horizontal_integral/receipt.json) · [Compiled global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc)
+
+## Directional studies on matched wave inputs
+
+The complete study run covered 21 protocols in each sea direction. For the TFG phase comparison, each main/PR pair used identical simulated input bytes and 180,000 samples in the 300–1,200 s window. All 180 paired draws improved 3-D displacement. The following-sea yaw change was smaller than one thousandth of a degree.
+
+| Seas | Paired draws | Late 3-D RMS, main → PR | Late yaw RMS, main → PR | Accel-bias RMS change |
+|---|---:|---:|---:|---:|
+| Following | 90 | 0.48721 → 0.31193 m | 1.08236° → 1.08292° | −0.61% |
+| Head | 90 | 0.39896 → 0.31896 m | 1.60533° → 1.54160° | −3.39% |
+
+With the production vibration guard at 2,400 rpm, all eight records per direction improved in both 3-D displacement and yaw. Following-sea 3-D RMS fell from 0.5154 to 0.3381 m and yaw from 2.1060° to 2.0266°. Head-sea 3-D fell from 0.3922 to 0.3101 m and yaw from 1.9751° to 1.9201°. The ordinary startup ablations show one tradeoff. The deployed following-sea arm reduced 3-D RMS 37.94% while yaw RMS rose 2.24%. In the adaptive OU-III validation arm, the following-sea accelerometer-bias change was +0.014% and the head-sea change was −0.032%.
+
+[Study jobs, input receipts and numerical files](../reports/results/startup_learning/directional-studies.json) · [Matched TFG draws](../reports/results/startup_learning/directional_qualification/phase-comparison.json) · [Startup and engine cases](../reports/results/startup_learning/directional_qualification/startup-and-engine-comparison.json) · [OU validation and robustness](../reports/results/startup_learning/directional_qualification/ou-comparison.json)
 
 ## Startup-only comparison before the live TFG change
 

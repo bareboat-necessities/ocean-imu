@@ -12,9 +12,9 @@ root-mean-square pooling used by the engine study.
 & \multicolumn{2}{c}{Mean yaw RMS [deg]} & \multicolumn{2}{c}{Worst yaw RMS [deg]} \\
 Family & off & on & off & on \\
 \midrule
-OU--II & 3.613 & 0.805 & 3.731 & 1.038 \\
-OU--III & 3.676 & 0.863 & 4.109 & 1.093 \\
-TFG & 3.380 & 0.731 & 3.574 & 1.046 \\
+OU--II & 3.611 & 0.805 & 3.724 & 1.038 \\
+OU--III & 3.675 & 0.862 & 4.100 & 1.088 \\
+TFG & 3.368 & 0.713 & 3.572 & 1.045 \\
 \bottomrule\end{tabular}\end{table}
 
 \subsection{TFG feature attribution}
@@ -28,15 +28,15 @@ comparison to a removed OU startup implementation is reported.
 \begin{tabular}{@{}lrrrrr@{}}\toprule
 Arm & Yaw [deg] & Roll [deg] & Pitch [deg] & 3-D [m] & Bias [m/s$^2$] \\
 \midrule
-Deployed & 0.7306 & 0.2034 & 0.1601 & 0.2537 & 0.0439 \\
-Hard iron off & 3.3804 & 0.2021 & 0.1653 & 0.2569 & 0.0440 \\
-Mag refinement off & 1.3430 & 0.2426 & 0.4430 & 0.2625 & 0.0886 \\
-Staged startup & 3.5006 & 0.4964 & 0.2471 & 0.2696 & 0.0949 \\
+Deployed & 0.7127 & 0.2027 & 0.1520 & 0.1946 & 0.0430 \\
+Hard iron off & 3.3675 & 0.2016 & 0.1581 & 0.1978 & 0.0433 \\
+Mag refinement off & 1.2659 & 0.1078 & 0.3869 & 0.2014 & 0.0709 \\
+Staged startup & 3.4685 & 0.4953 & 0.2344 & 0.2116 & 0.0940 \\
 \bottomrule\end{tabular}}\end{table}
 
 \subsection{Calibration-draw sensitivity}
 The five draws are default, 11, 23, 202 and 3033. Each changes the initial
 magnetic offset and distortion while holding the paired realization fixed.
-For OU--II, mean yaw RMS changes from 3.222 to 0.694 degrees; 6 of 40 pairs worsen.
-For OU--III, mean yaw RMS changes from 3.236 to 0.685 degrees; 6 of 40 pairs worsen.
+For OU--II, mean yaw RMS changes from 3.221 to 0.694 degrees; 6 of 40 pairs worsen.
+For OU--III, mean yaw RMS changes from 3.235 to 0.683 degrees; 6 of 40 pairs worsen.
 These finite draws do not prove uniform calibration improvement.

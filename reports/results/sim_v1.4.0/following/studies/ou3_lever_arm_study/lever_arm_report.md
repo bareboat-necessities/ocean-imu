@@ -24,40 +24,40 @@ The `gyro` arm is the deployable one: it sees only the noisy, biased rate and
 reconstructs `alpha` through a two-pole low-pass at 15 Hz
 followed by a causal second-order difference.
 
-Source commit: `71f410938ca1a8f393979f4933933868fb612461`.
+Source commit: `99592c4078a5ba45c9a9c6edd455782ed440e495`.
 
 ## Pooled results
 
 | Arm | Axis | Offset [cm] | 3D disp [m] | 3D / CG | Max roll/pitch RMS [deg] | Tilt / CG | Installed [m/s^2] | Residual [m/s^2] | 3D excess removed | Tilt excess removed |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| baseline | cg | 0 | 0.4853 | 1.000x | 0.2027 | 1.000x | 0.0000 | 0.0000 | n/a | n/a |
-| exact | x-fore-aft | 10 | 0.4853 | 1.000x | 0.2026 | 1.000x | 0.0088 | 0.0000 | n/a | n/a |
-| exact | x-fore-aft | 20 | 0.4853 | 1.000x | 0.2027 | 1.000x | 0.0175 | 0.0000 | n/a | n/a |
-| exact | x-fore-aft | 30 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0263 | 0.0000 | n/a | n/a |
-| exact | y-port | 10 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0166 | 0.0000 | n/a | n/a |
-| exact | y-port | 20 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0331 | 0.0000 | n/a | n/a |
-| exact | y-port | 30 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0497 | 0.0000 | n/a | n/a |
-| exact | z-vertical | 10 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0185 | 0.0000 | n/a | n/a |
-| exact | z-vertical | 20 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0370 | 0.0000 | n/a | n/a |
-| exact | z-vertical | 30 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0556 | 0.0000 | n/a | n/a |
-| gyro | x-fore-aft | 10 | 0.4853 | 1.000x | 0.2026 | 1.000x | 0.0088 | 0.0072 | n/a | n/a |
-| gyro | x-fore-aft | 20 | 0.4853 | 1.000x | 0.2028 | 1.000x | 0.0175 | 0.0144 | n/a | n/a |
-| gyro | x-fore-aft | 30 | 0.4854 | 1.000x | 0.2029 | 1.001x | 0.0263 | 0.0215 | n/a | n/a |
-| gyro | y-port | 10 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0166 | 0.0072 | n/a | n/a |
-| gyro | y-port | 20 | 0.4854 | 1.000x | 0.2030 | 1.001x | 0.0331 | 0.0144 | n/a | n/a |
-| gyro | y-port | 30 | 0.4854 | 1.000x | 0.2028 | 1.000x | 0.0497 | 0.0216 | n/a | n/a |
+| baseline | cg | 0 | 0.4853 | 1.000x | 0.2026 | 1.000x | 0.0000 | 0.0000 | n/a | n/a |
+| exact | x-fore-aft | 10 | 0.4853 | 1.000x | 0.2025 | 1.000x | 0.0088 | 0.0000 | n/a | n/a |
+| exact | x-fore-aft | 20 | 0.4853 | 1.000x | 0.2026 | 1.000x | 0.0175 | 0.0000 | n/a | n/a |
+| exact | x-fore-aft | 30 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0263 | 0.0000 | n/a | n/a |
+| exact | y-port | 10 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0166 | 0.0000 | n/a | n/a |
+| exact | y-port | 20 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0331 | 0.0000 | n/a | n/a |
+| exact | y-port | 30 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0497 | 0.0000 | n/a | n/a |
+| exact | z-vertical | 10 | 0.4853 | 1.000x | 0.2023 | 0.999x | 0.0185 | 0.0000 | n/a | n/a |
+| exact | z-vertical | 20 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0370 | 0.0000 | n/a | n/a |
+| exact | z-vertical | 30 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0556 | 0.0000 | n/a | n/a |
+| gyro | x-fore-aft | 10 | 0.4853 | 1.000x | 0.2025 | 0.999x | 0.0088 | 0.0072 | n/a | n/a |
+| gyro | x-fore-aft | 20 | 0.4853 | 1.000x | 0.2027 | 1.000x | 0.0175 | 0.0144 | n/a | n/a |
+| gyro | x-fore-aft | 30 | 0.4854 | 1.000x | 0.2028 | 1.001x | 0.0263 | 0.0215 | n/a | n/a |
+| gyro | y-port | 10 | 0.4853 | 1.000x | 0.2024 | 0.999x | 0.0166 | 0.0072 | n/a | n/a |
+| gyro | y-port | 20 | 0.4854 | 1.000x | 0.2029 | 1.001x | 0.0331 | 0.0144 | n/a | n/a |
+| gyro | y-port | 30 | 0.4854 | 1.000x | 0.2027 | 1.000x | 0.0497 | 0.0216 | n/a | n/a |
 | gyro | z-vertical | 10 | 0.4853 | 1.000x | 0.2031 | 1.002x | 0.0185 | 0.0072 | n/a | n/a |
 | gyro | z-vertical | 20 | 0.4854 | 1.000x | 0.2039 | 1.006x | 0.0370 | 0.0144 | n/a | n/a |
-| gyro | z-vertical | 30 | 0.4853 | 1.000x | 0.2040 | 1.006x | 0.0556 | 0.0216 | n/a | n/a |
-| unmodeled | x-fore-aft | 10 | 0.4848 | 0.999x | 0.2012 | 0.992x | 0.0088 | 0.0088 | n/a | n/a |
-| unmodeled | x-fore-aft | 20 | 0.4845 | 0.998x | 0.1994 | 0.984x | 0.0175 | 0.0175 | n/a | n/a |
+| gyro | z-vertical | 30 | 0.4853 | 1.000x | 0.2039 | 1.006x | 0.0556 | 0.0216 | n/a | n/a |
+| unmodeled | x-fore-aft | 10 | 0.4848 | 0.999x | 0.2011 | 0.992x | 0.0088 | 0.0088 | n/a | n/a |
+| unmodeled | x-fore-aft | 20 | 0.4845 | 0.998x | 0.1993 | 0.984x | 0.0175 | 0.0175 | n/a | n/a |
 | unmodeled | x-fore-aft | 30 | 0.4844 | 0.998x | 0.1977 | 0.976x | 0.0263 | 0.0263 | n/a | n/a |
-| unmodeled | y-port | 10 | 0.4855 | 1.000x | 0.1866 | 0.920x | 0.0166 | 0.0166 | n/a | n/a |
-| unmodeled | y-port | 20 | 0.4863 | 1.002x | 0.1716 | 0.846x | 0.0331 | 0.0331 | n/a | n/a |
-| unmodeled | y-port | 30 | 0.4871 | 1.004x | 0.1584 | 0.782x | 0.0497 | 0.0497 | n/a | n/a |
-| unmodeled | z-vertical | 10 | 0.4812 | 0.991x | 0.2036 | 1.005x | 0.0185 | 0.0185 | n/a | n/a |
-| unmodeled | z-vertical | 20 | 0.4771 | 0.983x | 0.2040 | 1.007x | 0.0370 | 0.0370 | n/a | n/a |
-| unmodeled | z-vertical | 30 | 0.4737 | 0.976x | 0.2047 | 1.010x | 0.0556 | 0.0556 | n/a | n/a |
+| unmodeled | y-port | 10 | 0.4856 | 1.000x | 0.1865 | 0.920x | 0.0166 | 0.0166 | n/a | n/a |
+| unmodeled | y-port | 20 | 0.4863 | 1.002x | 0.1715 | 0.846x | 0.0331 | 0.0331 | n/a | n/a |
+| unmodeled | y-port | 30 | 0.4871 | 1.004x | 0.1583 | 0.781x | 0.0497 | 0.0497 | n/a | n/a |
+| unmodeled | z-vertical | 10 | 0.4812 | 0.991x | 0.2035 | 1.005x | 0.0185 | 0.0185 | n/a | n/a |
+| unmodeled | z-vertical | 20 | 0.4771 | 0.983x | 0.2039 | 1.007x | 0.0370 | 0.0370 | n/a | n/a |
+| unmodeled | z-vertical | 30 | 0.4737 | 0.976x | 0.2046 | 1.010x | 0.0556 | 0.0556 | n/a | n/a |
 
 ## Derivative band of the deployable model
 
@@ -71,8 +71,8 @@ Port arm at 30 cm, pooled over the same eight seas.
 | 10 | 0.4855 | 1.000x | 0.0125 | 0.252 |
 | 15 | 0.4854 | 1.000x | 0.0216 | 0.435 |
 | 25 | 0.4860 | 1.001x | 0.0416 | 0.837 |
-| 50 | 0.4987 | 1.028x | 0.0877 | 1.766 |
-| 100 | 0.4900 | 1.010x | 0.1516 | 3.050 |
+| 50 | 0.4988 | 1.028x | 0.0877 | 1.766 |
+| 100 | 0.4901 | 1.010x | 0.1516 | 3.050 |
 
 ## Interpretation
 

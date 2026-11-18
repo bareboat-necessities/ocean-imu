@@ -1,5 +1,5 @@
 {
-  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
   "simulation_provenance": {
     "release": "v1.4.0",
     "case": "head",
@@ -25,14 +25,14 @@
   "protocol": "Full eight records x two OU families x engine off/2400 RPM (0.6 m/s2 reference level, 80 Hz sensor bandwidth) x three conditioning arms; default draw; final 900 s; unchanged gates",
   "producer_sha256": "19f884047f27389e82325824ab36b80900417152aafee8679140c79368efb8ff",
   "binary_sha256": {
-    "OU-II": "ee8c7502262ca618f4df9e461ef211d43b2d0086eb3c63b9ae2aa6ce4e99fb07",
-    "OU-III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39"
+    "OU-II": "566e34d475f8cc39132114d91982c1bfc7af851c12204a531b908d34527f5e96",
+    "OU-III": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66"
   },
   "files": {
-    "direction_runs.csv": "c6d6e4c93a3b6e5fbac1b00af63d85a542268d52213ff7ddca83abdbe8f1ab2e",
-    "direction_summary.csv": "cfa9f32d05ab07d418159f97c9490a1a98eeb198ce4d384230ee88478efd3097",
-    "direction_report.md": "949106e8bf3452d1aaeb011edd960f5ab4330bc4910a212200e2c079b52414b0",
-    "direction_ablation.tex": "e5f1dc137396c5fe7f6f68d4932384bd9cb4d527c874ce45f8c32e37cf51875a"
+    "direction_runs.csv": "04a148bcaa1134acd37f73d574c505a795675d7f6db75c201354a1a9449663ad",
+    "direction_summary.csv": "1faa7b19138fabccc675aaeac87db72b422a3253355454926ece30edd1585408",
+    "direction_report.md": "8e5b0767baccbcdca0a2b1aa6a478693ec85877b13931f915bca683cc0ff1e9a",
+    "direction_ablation.tex": "5a6ec6218d8dd5db0811d644b698533c11582815efa99c7c892224a4978914f8"
   },
   "report_producer_sha256": "4791ad229ff3381296df9a09eeab6be728a02a8ca8771a5925a68731a05c9458"
 }

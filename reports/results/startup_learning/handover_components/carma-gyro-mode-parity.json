@@ -1,0 +1,66 @@
+{
+  "native_source": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
+  "patch_sha256": "3e11562f3e22ff97dc18ebe06bcbdb216d79c4d9337f4212299fd5b08abc3ae0",
+  "previous_binary_sha256": "e073dab611a0be7b44bfb650d741dbf48e7d4b9276a32b8e9818c4ce1dc3e30b",
+  "candidate_binary_sha256": "85e365a19da6ef82486951d813fa009f0c054b0e4ae7e6a6196d2be01b88f496",
+  "paired": {
+    "qmekf-both_start": "samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0",
+    "qmekf-defaults": "samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0",
+    "tfg-both_start": "samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0",
+    "tfg-defaults": "samples=36000 sensor_hash=d7d03b57361a438d original_sensor_hash=d7d03b57361a438d recovery_bias=nan parity=0"
+  },
+  "unchanged_configured_startup": {
+    "qmekf-both_start": {
+      "_scores.csv": "c141c4cb63670bc1530bc9e8ff323a936c7fab06d611771042760290c4e5b62c",
+      "_trace.csv": "fca27559e772b3eb1a2e21af683a255bd329a258c7ad3ab82ff4ae68c0497ff8",
+      "_diag.csv": "40513f677432990d97996aac75f074c7cfb9d0bdd7f6493d5881db5666db2f6f"
+    },
+    "qmekf-defaults": {
+      "_scores.csv": "4cdeb47c86e3d509960b7a118fa34077432f87f6246a6465c1cad570766450f6",
+      "_trace.csv": "a9f8a43ad4fa41f0b4be2ec46a12f9ec24a83702402563aa2d8d3e278ace82d5",
+      "_diag.csv": "f88a60ff15ca9cf0db5635d41311ad3fe4b6013a83d49ead74eb70c2319e836a"
+    },
+    "tfg-both_start": {
+      "_scores.csv": "440c849a323a7684f1a0b11271a4afcc7c28e8668cd97f3720e05a3485426c40",
+      "_trace.csv": "608703dd5bd64b23403684b1b59ed6aa076c140fbd0e1c00c834b98d1960c7c8",
+      "_diag.csv": "264bc56e26bf17aaedfd0978f0df1ba0af5c75df78506e3217465b7cadb4857d"
+    },
+    "tfg-defaults": {
+      "_scores.csv": "c48cc076be8892f3e617834f61797ceaed60848018fa201ffff85a522e3a50fe",
+      "_trace.csv": "4908f86da1cb7041194b47cf623c64f17fc698a7d8ff7c15d80b9455623b230d",
+      "_diag.csv": "8d298d2444d44be9fd71eca79c80972674a3518d984cfb43da7ced4191f08f8f"
+    }
+  },
+  "runtime_source": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+  "src_tree": "4c1b9ede3db64a5309386ade7870afc093aa7599",
+  "repaired_blobs": {
+    "src/kalman_carma/SeaStateFusionFilter_CARMA3.h": "5164a38b1d30cea4b2e969c439a7c8ffdfb2c8a9",
+    "src/kalman_common/ProxyStartupFusion.h": "4e99d60a60c04e46ebde99d762367fb6dd3d353e"
+  },
+  "previous_failures": {
+    "qmekf-both_start": {
+      "exit": 1,
+      "output": "configuration and immediate setter paths differ",
+      "last_scored_second": "31.8",
+      "last_live": "0"
+    },
+    "qmekf-defaults": {
+      "exit": 1,
+      "output": "configuration and immediate setter paths differ",
+      "last_scored_second": "31.8",
+      "last_live": "0"
+    },
+    "tfg-both_start": {
+      "exit": 1,
+      "output": "configuration and immediate setter paths differ",
+      "last_scored_second": "31.8",
+      "last_live": "0"
+    },
+    "tfg-defaults": {
+      "exit": 1,
+      "output": "configuration and immediate setter paths differ",
+      "last_scored_second": "31.8",
+      "last_live": "0"
+    }
+  }
+}

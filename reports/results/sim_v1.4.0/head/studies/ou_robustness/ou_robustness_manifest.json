@@ -13,7 +13,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -29,9 +29,9 @@
     "/home/runner/work/ocean-imu/ocean-imu/reports/results/sim_v1.4.0/head/studies/ou_robustness",
     "--skip-build"
   ],
-  "git_branch": "fix/merged-main-ci",
-  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
-  "git_diff_stat": ".../head/studies/ou_robustness/case-receipt.json   | 27 +------\n .../ou_robustness/ou_robustness_paired_effects.csv | 92 +++++++++++-----------\n .../studies/ou_robustness/ou_robustness_raw.csv    |  2 +-\n .../studies/ou_robustness/ou_robustness_stress.svg |  8 +-\n .../ou_robustness/ou_robustness_summary.csv        | 46 +++++------\n 5 files changed, 78 insertions(+), 97 deletions(-)",
+  "git_branch": "experiment/startup-wave-handover",
+  "git_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "git_diff_stat": ".../head/studies/ou_robustness/case-receipt.json   |    27 +-\n .../head/studies/ou_robustness/ou_robustness.json  | 33598 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1566 +-\n .../studies/ou_robustness/ou_robustness_raw.csv    |   604 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   984 +-\n .../studies/ou_robustness/ou_robustness_stress.svg |   172 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1922 +-\n 7 files changed, 19427 insertions(+), 19446 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 0.9430788944386937,
@@ -41,7 +41,7 @@
     "tau_s": 1.74812508
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -139,36 +139,36 @@
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "result_files": {
     "ou_robustness.json": {
-      "bytes": 1578692,
-      "sha256": "4e1c517d3539f2435f098ae3e39ffa50ffb02f202330a4f02306c17ef32794e5"
+      "bytes": 1579115,
+      "sha256": "39cd29518e7e73c63069653b5ef6b9026bd4069d9dbaa771fbe688aadd646ff1"
     },
     "ou_robustness_macros.tex": {
       "bytes": 1853,
       "sha256": "4352deb76e07c3982a6597853a09a5c337bc45f9fba2f818c90619cfe40db0e1"
     },
     "ou_robustness_paired_effects.csv": {
-      "bytes": 166225,
-      "sha256": "a935ef9568d7d7886a46b886d456e5f2d6e5fb8e6ba8bcd5db2a7bbfd0e73df9"
+      "bytes": 166345,
+      "sha256": "1920bdfe1c2129b063f38a0d255257bb75ffde55cfc349ac74b478cae45e6d55"
     },
     "ou_robustness_publication.tex": {
       "bytes": 2903,
       "sha256": "bdc870f032aa5e4844e0dc999bd8a3731f81054a096f38bf7587295df489f1ee"
     },
     "ou_robustness_raw.csv": {
-      "bytes": 210081,
-      "sha256": "1df4fa7c7941404702290ef38eb65013fee3879b6101dfcc4e711e8a1f17d24f"
+      "bytes": 210037,
+      "sha256": "1bc443e50b3f7df5d31af477c46e5afa96b5cbf3af658214d6eddbd31f751401"
     },
     "ou_robustness_sensitivity.svg": {
-      "bytes": 113681,
-      "sha256": "af4a13785d61810e97cd7c18eb71e74236952253c03fc5526c51d211458aa1ca"
+      "bytes": 113666,
+      "sha256": "b3502038229b41c671d3842fcee4c57747d7631226a05df39b75ed6faed6c2b3"
     },
     "ou_robustness_stress.svg": {
-      "bytes": 45503,
-      "sha256": "6867805203a228d7500777906f61fc067afb58d47ce9f09f966da7ee226ee445"
+      "bytes": 45499,
+      "sha256": "2fbf6d1e0154d6b536cd3150560a7e00dd41e7e65a9330a1f233645a960b87a6"
     },
     "ou_robustness_summary.csv": {
-      "bytes": 147968,
-      "sha256": "8b14cfd98c4c84fc64784c824d74447341a3b0763813fec367dbc45f9a275399"
+      "bytes": 148315,
+      "sha256": "f432fe1f8bcabddc71e27490b210791604da7c6b06ceb11ecd183d1329592cb5"
     }
   },
   "source_files": {

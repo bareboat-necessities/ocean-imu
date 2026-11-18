@@ -21,7 +21,7 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
     }
   },
-  "operating_points_sha256": "204fa000cebe72a62e317c2524634423eabd0d9b3e79831c7b3553c586e6c5db",
+  "operating_points_sha256": "22ebe4cc178d976b15cb3fd430608f30911ee086a160ec56eaa5ed9d95b2892c",
   "producer_sha256": "3e5697b0e29e2f84e029d4f2b896aea417ad5e849b5fcf6f83b1eeddcfb4d721",
   "method": "finite CG-heave periodogram; current five-draw OU-II startup operating points; diagnostic optimum only; no deployed parameter changes",
   "exact_objective": true,

@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39",
-    "TFG": "5b14ce70b5be5e52e59a834cc0bd7a9e1a9da8a039d69bea0b90dfc7d9d7e272"
+    "OU_III": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
+    "TFG": "031376ae3d6e5aff80e2299301294f965b4ec58b9a9ee9d093b1b674262560ae"
   },
   "build_environment": {
     "compiler": {
@@ -17,7 +17,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-17T12:38:08+00:00",
-  "git_commit": "71f410938ca1a8f393979f4933933868fb612461",
-  "git_diff_stat": ".../head/studies/tfg_comparison/case-receipt.json  | 29 ++++------------------\n 1 file changed, 5 insertions(+), 24 deletions(-)",
+  "generated_utc": "2026-11-18T07:54:00+00:00",
+  "git_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "git_diff_stat": ".../head/studies/tfg_comparison/case-receipt.json  |   29 +-\n .../head/studies/tfg_comparison/comparison.tex     |   22 +-\n .../studies/tfg_comparison/paired_summary.json     | 4158 ++++++++++----------\n .../head/studies/tfg_comparison/raw_runs.csv       |  360 +-\n .../head/studies/tfg_comparison/raw_runs.json      | 3234 +++++++--------\n 5 files changed, 3892 insertions(+), 3911 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -140,11 +140,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "47a37d7b4fbad1e2978cf5888bba788893d62f7b09943c5719e7d79fd4776994",
+    "comparison.tex": "f8839db04e0250a31d9f486eb1eef5107c310b419246e354832f9df1efb431bb",
     "gate_diagnostics.json": "025ec822c49088832dbc9bdf490a53e3c4418be3239cfe90479690400d9fc5f8",
-    "paired_summary.json": "30a6e32609217a3af4ea0e1cc265ef01dbc4f9191e5773c16a4dd6b180139148",
-    "raw_runs.csv": "e168725482ef1ac3ea52235d1eb849ac7c0c9bdd3928bea30cc5fbe9f5135832",
-    "raw_runs.json": "2fab275f7dbc8bde3ff1170b80ba3c50994306697a59be3bad2f3089dc5e302d"
+    "paired_summary.json": "7deb0cbedc39f34a44865e73d0d2041c61ce05732cbc17a0047987ce18113e53",
+    "raw_runs.csv": "50e7a5848dd778beb0ea4a14925a0ae32352cca5662b6a75b8118a6b1813ba31",
+    "raw_runs.json": "38cf03ca92dfa0ccc3d6413b7371cddf5cec3805fe80e57ec14a282d4cf3bf1f"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -166,17 +166,18 @@
     "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
-    "src/kalman_common/ProxyStartupFusion.h": "04253fd0ceee6f469983088fcf842c90efe3313b4e576eadf0aea2166e3154bd",
+    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
     "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
     "src/kalman_common/SeaStateOUFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
     "src/kalman_common/SeaStateTuning.h": "c7ecfe52e9bbf4e65f14e0a7c76ae54a33e89b697e6189f19757e7830b779388",
+    "src/kalman_common/WaveStartup.h": "711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b",
     "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "14e1de883ba1d1634a753ff8d668a2597892f509ef822bc6d3da1b2c1f954d2b",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "1a63f626784e2374db3decc5e11aba16d2d7f3ee0db1d2da1b92d3ff0e6fa6a5",
-    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "c77a63c2e10d9161f6498d7d3f24cec57ccd915571c8b3cf229ffd12ef3db78c",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "bd4f2e719fb76d6ac5d4d473cc101065e8eca20546661e01d8c717486e2c16fa",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "8cc67232675feb02398600bcba343e1ab8d30df76fb5d945b02104ee51929f00",
     "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
     "src/tuner/AccelVibrationGuard.h": "b71c2d44d0313f0e36da8bd423de66640b6819895041d8cdec3ae833d740e4ec",
@@ -201,11 +202,11 @@
     "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
     "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
-    "tests/common/CurrentReplayLimits.h": "f49a863e8b746de33c814cc5aa0cd0baa8893c0db2beeb36cdd5d27f9e890ca0",
+    "tests/common/CurrentReplayLimits.h": "d66c71820485679b68b1ce42013b492d659894d499e7785f46dc07d43215075c",
     "tests/common/GyroReplayContract.h": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
     "tests/common/HostReplayFlags.mk": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
     "tests/common/RecordReplayLimits.h": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c",
-    "tests/common/RecordReplayLimits.inc": "a95e4fe38d7dfb27a48c96be6b824432931427b2146e9687cd8f9b0406842139",
+    "tests/common/RecordReplayLimits.inc": "2ba4a4da48332c739e39d8b0c8ed10ec281db7d7320668907296ae00d57265ce",
     "tests/common/RecordW3dLimits.h": "1ed1a6a3f33c1260c7fbf79d848fbfc0c04becebda14c8d0ba822f58e30a1406",
     "tests/kalman_ou_iii/Makefile": "3043f9e85a3e86b74eecee533df0f7c849ba3601cca84ee66d187510ad50691d",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
@@ -221,7 +222,7 @@
   "workflow": {
     "job": "studies",
     "run_attempt": "1",
-    "run_id": "44074557141",
+    "run_id": "44239902248",
     "workflow": "simulation-studies"
   }
 }

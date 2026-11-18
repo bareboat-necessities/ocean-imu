@@ -1,12 +1,12 @@
 {
   "decimation": 20,
-  "disp_z_pct_hs": 3.38629341,
+  "disp_z_pct_hs": 3.38629556,
   "family": "OU_III",
   "files": {
-    "ou_rs_roundtrip_scores.csv": "c7fa79fe8d6052d8011c68e54898113e0d41121fc0eadab1bc0a8fa473aba12b",
+    "ou_rs_roundtrip_scores.csv": "cc83b577c44a9492626e6ee9c87db6831a2ebfcae1f80d31f9253e1c2ff21933",
     "ou_rs_roundtrip_scores.tex": "2131919b9f5a9e1df86b30d5190c4aa33e6c69502490c66a649120868693539b",
-    "ou_rs_roundtrip_transition.csv": "c1f5159809c51acc8ae210e4171926320c619483dcbf54c0f68d554c2634bb40",
-    "ou_rs_roundtrip_transition.svg": "4f498dd195daa8ab92278b42b7723e5708146503546566830583aacb84b81b3d"
+    "ou_rs_roundtrip_transition.csv": "80e5c7a068bac78c8362787d7ba4ea02ad58ce3b1c27d628de766e9dc9266095",
+    "ou_rs_roundtrip_transition.svg": "e5d7e59791911bb1d2d56984c8ec286f21361ecf3007e4b16575754e41caa5df"
   },
   "high_r_s_ms": 9.410939015832682,
   "high_sigma_aw_mps2": 0.716842711,
@@ -19,71 +19,71 @@
   "producer_sha256": "99d9693d10d49ce2ba312b1e68668c28112c2b9d8236cf234ea1cae9a0753a4a",
   "segment_scores": [
     {
-      "disp_3d_rms_m": 0.106169529,
-      "disp_z_pct_hs": 1.74591005,
-      "disp_z_pct_refrms": 17.7672729,
+      "disp_3d_rms_m": 0.106176078,
+      "disp_z_pct_hs": 1.74591649,
+      "disp_z_pct_refrms": 17.7673378,
       "disp_z_ref_rms_m": 0.393062025,
-      "disp_z_rms_m": 0.0698364004,
+      "disp_z_rms_m": 0.0698366612,
       "segment": "low_start",
       "start_s": 300.0,
       "stop_s": 400.0
     },
     {
-      "disp_3d_rms_m": 0.305559248,
-      "disp_z_pct_hs": 3.45142174,
-      "disp_z_pct_refrms": 25.1456699,
+      "disp_3d_rms_m": 0.30555293,
+      "disp_z_pct_hs": 3.45142746,
+      "disp_z_pct_refrms": 25.1457119,
       "disp_z_ref_rms_m": 0.549028397,
-      "disp_z_rms_m": 0.138056874,
+      "disp_z_rms_m": 0.138057098,
       "segment": "rise",
       "start_s": 400.0,
       "stop_s": 520.0
     },
     {
-      "disp_3d_rms_m": 0.38166675,
-      "disp_z_pct_hs": 4.83825636,
-      "disp_z_pct_refrms": 22.7423878,
+      "disp_3d_rms_m": 0.381672889,
+      "disp_z_pct_hs": 4.83825588,
+      "disp_z_pct_refrms": 22.7423859,
       "disp_z_ref_rms_m": 0.850967169,
-      "disp_z_rms_m": 0.193530262,
+      "disp_z_rms_m": 0.193530232,
       "segment": "high_recover",
       "start_s": 520.0,
       "stop_s": 640.0
     },
     {
-      "disp_3d_rms_m": 0.395476252,
-      "disp_z_pct_hs": 4.55968618,
-      "disp_z_pct_refrms": 21.5856266,
+      "disp_3d_rms_m": 0.395482689,
+      "disp_z_pct_hs": 4.55970097,
+      "disp_z_pct_refrms": 21.5856972,
       "disp_z_ref_rms_m": 0.84494859,
-      "disp_z_rms_m": 0.182387456,
+      "disp_z_rms_m": 0.182388037,
       "segment": "high",
       "start_s": 640.0,
       "stop_s": 800.0
     },
     {
-      "disp_3d_rms_m": 0.285399646,
-      "disp_z_pct_hs": 3.67763567,
-      "disp_z_pct_refrms": 24.4122486,
+      "disp_3d_rms_m": 0.285395265,
+      "disp_z_pct_hs": 3.67762065,
+      "disp_z_pct_refrms": 24.4121494,
       "disp_z_ref_rms_m": 0.602588594,
-      "disp_z_rms_m": 0.147105426,
+      "disp_z_rms_m": 0.14710483,
       "segment": "fall",
       "start_s": 800.0,
       "stop_s": 920.0
     },
     {
-      "disp_3d_rms_m": 0.110432491,
-      "disp_z_pct_hs": 1.69404352,
-      "disp_z_pct_refrms": 17.6348495,
+      "disp_3d_rms_m": 0.110433556,
+      "disp_z_pct_hs": 1.69404018,
+      "disp_z_pct_refrms": 17.6348133,
       "disp_z_ref_rms_m": 0.384249061,
-      "disp_z_rms_m": 0.0677617416,
+      "disp_z_rms_m": 0.0677616075,
       "segment": "low_recover",
       "start_s": 920.0,
       "stop_s": 1040.0
     },
     {
-      "disp_3d_rms_m": 0.105409957,
-      "disp_z_pct_hs": 1.73870051,
-      "disp_z_pct_refrms": 15.6100349,
+      "disp_3d_rms_m": 0.105409354,
+      "disp_z_pct_hs": 1.73870182,
+      "disp_z_pct_refrms": 15.6100464,
       "disp_z_ref_rms_m": 0.44553405,
-      "disp_z_rms_m": 0.0695480183,
+      "disp_z_rms_m": 0.0695480704,
       "segment": "low_return",
       "start_s": 1040.0,
       "stop_s": 1200.0
@@ -105,6 +105,6 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "71f410938ca1a8f393979f4933933868fb612461",
+  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
   "wave_phase_seed": 11
 }

@@ -35,7 +35,7 @@
   "source_git_blob_sha": {
     "src/kalman_common/MagneticStartupCommon.h": "dbad1d5a3077b4ffd39cdc4702ca0283bd2b83f1",
     "src/kalman_common/MarineWaveFrontEnd.h": "a9674135d2c02f050d1e4e041c549f58f6da0b42",
-    "src/kalman_common/ProxyStartupFusion.h": "4e3b0e64570cd26b6207611663deb84cc8f74e16",
+    "src/kalman_common/ProxyStartupFusion.h": "4e99d60a60c04e46ebde99d762367fb6dd3d353e",
     "src/kalman_common/SeaStateFusionDefaults.h": "0fc888c49de794e4f889871044726185b655c312",
     "src/kalman_common/WaveStartup.h": "ba4179db9c41375a589706bb0d647c756946418c",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "d9227ef315382d7f5580c69890462960543361c1",

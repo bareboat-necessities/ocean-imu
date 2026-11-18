@@ -298,7 +298,7 @@ public:
         // end, which runs from the first sample, so there is no phase in which
         // the wrapper withholds IMU data.
         if (stage_ != Stage::Live) {
-            if (useWaveStartup_()) wave_startup_.imu(dt, gyro_body_ned, acc_body_ned, cfg_.gyro_sample_mode);
+            if (useWaveStartup_()) wave_startup_.imu(dt, gyro_body_ned, acc_body_ned, startupGyroSampleMode_());
             // Bootstrap: front end only, MEKF held.
             impl_.updateFrontEnd(dt, gyro_body_ned, acc_body_ned);
             impl_.mekf().prime_gyro_sample(gyro_body_ned, dt);
@@ -933,6 +933,11 @@ private:
         last_impl_startup_stage_ = impl_.getStartupStage();
     }
 
+    ocean_imu::kalman::filter_detail::GyroSampleMode startupGyroSampleMode_() const {
+        // A caller can change CARMA sampling through raw() after begin().
+        if constexpr (requires { impl_.gyroSampleMode(); }) return impl_.gyroSampleMode();
+        else return cfg_.gyro_sample_mode;
+    }
     bool useWaveStartup_() const { return cfg_.wave_startup_enabled && cfg_.with_mag && !cfg_.mag_estimate_hard_iron; }
     WaveStartup wave_startup_{};
     bool wave_startup_used_ = false;

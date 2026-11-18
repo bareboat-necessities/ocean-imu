@@ -10,9 +10,9 @@ Y displacement & m & $0.034\pm0.007$\\
 Heave & m & $0.049\pm0.002$\\
 Roll & deg & $0.107\pm0.064$\\
 Pitch & deg & $0.105\pm0.040$\\
-Yaw & deg & $0.728\pm0.268$\\
+Yaw & deg & $0.729\pm0.265$\\
 Accel. bias (3-D) & m/s$^2$ & $0.025\pm0.011$\\
-Gyro bias (3-D) & rad/s & $(1.46\pm0.41)\,10^{-4}$\\
+Gyro bias (3-D) & rad/s & $(1.47\pm0.41)\,10^{-4}$\\
 \bottomrule\end{tabular}\end{table}
 }
 \newcommand{\CSMValidationComparisonTable}{%
@@ -27,7 +27,7 @@ Shared CARMA & $2.316\pm0.042$ & $3.839\pm0.126$ & $0.175\pm0.069$ & $2.466\pm0.
 Uncoupled CARMA & $2.374\pm0.044$ & $4.013\pm0.126$ & $0.176\pm0.071$ & $2.511\pm0.044$ & $4.211\pm0.185$ & $0.174\pm0.067$\\
 OU--II & $5.454\pm0.207$ & $8.251\pm0.255$ & $0.247\pm0.109$ & $5.354\pm0.192$ & $8.086\pm0.237$ & $0.246\pm0.107$\\
 OU--III & $3.686\pm0.066$ & $6.933\pm0.230$ & $0.194\pm0.086$ & $3.656\pm0.068$ & $6.933\pm0.248$ & $0.190\pm0.082$\\
-TFG & $2.990\pm0.086$ & $6.920\pm0.687$ & $0.380\pm0.201$ & $2.963\pm0.085$ & $6.972\pm0.637$ & $0.357\pm0.193$\\
+TFG & $2.989\pm0.085$ & $5.623\pm0.560$ & $0.360\pm0.187$ & $2.962\pm0.085$ & $5.820\pm0.514$ & $0.339\pm0.181$\\
 \bottomrule\end{tabular}\end{table*}
 }
 \newcommand{\CSMValidationPairedTable}{%
@@ -53,11 +53,11 @@ PM--Stokes & Uncoupled & 3-D & $-0.138\,[-0.147,-0.130]$\\
 \begin{tabular}{@{}lrrrr@{}}\toprule
 &\multicolumn{2}{c}{JONSWAP}&\multicolumn{2}{c}{PM--Stokes}\\
 Method & $Z$ [\%] & Pitch & $Z$ [\%] & Pitch\\\midrule
-Shared CARMA & 2.368 & 0.287 & 2.491 & 0.283\\
+Shared CARMA & 2.368 & 0.287 & 2.491 & 0.284\\
 Uncoupled CARMA & 2.412 & 0.275 & 2.527 & 0.276\\
 OU--II & 5.644 & 0.390 & 5.523 & 0.391\\
 OU--III & 3.693 & 0.251 & 3.659 & 0.247\\
-TFG & 3.018 & 0.161 & 2.968 & 0.155\\
+TFG & 3.018 & 0.165 & 2.968 & 0.159\\
 PII & 8.664 & 1.403 & 11.978 & 1.581\\
 TVG--NLO & 6.398 & 0.276 & 6.544 & 0.284\\
 \bottomrule\end{tabular}\end{table}
@@ -68,19 +68,19 @@ TVG--NLO & 6.398 & 0.276 & 6.544 & 0.284\\
 \label{tab:csm-validation-engine}
 \begin{tabular}{@{}llrrrrr@{}}\toprule
 Method & Input / mitigation & Heave [m] & 3-D [m] & Offset [m] & Pitch [deg] & Yaw [deg]\\\midrule
-Shared CARMA & Engine off & 0.122 & 0.217 & 0.025 & 0.305 & 0.923\\
-Shared CARMA & Raw vibration & 0.397 & 2.421 & 0.474 & 0.643 & 93.806\\
-Shared CARMA & Accelerometer vibration only & 0.396 & 2.427 & 0.478 & 0.640 & 93.797\\
-Shared CARMA & Vibration guard & 0.129 & 0.263 & 0.026 & 0.264 & 1.780\\
-Shared CARMA & Guard + covariance & 0.131 & 0.254 & 0.026 & 0.286 & 1.356\\
-Uncoupled CARMA & Engine off & 0.126 & 0.231 & 0.026 & 0.294 & 0.914\\
-Uncoupled CARMA & Raw vibration & 0.397 & 2.421 & 0.474 & 0.629 & 93.598\\
-Uncoupled CARMA & Accelerometer vibration only & 0.396 & 2.427 & 0.478 & 0.626 & 93.582\\
-OU--III & Engine off & 0.178 & 0.367 & 0.039 & 0.260 & 0.902\\
-OU--III & Raw vibration & 1.075 & 13.568 & 0.954 & 1.637 & 91.154\\
-OU--III & Accelerometer vibration only & 1.084 & 13.644 & 1.022 & 1.638 & 91.194\\
-OU--III & Vibration guard & 0.186 & 0.432 & 0.048 & 0.326 & 4.424\\
-OU--III & Guard + covariance & 0.195 & 0.422 & 0.045 & 0.221 & 2.355\\
+Shared CARMA & Engine off & 0.122 & 0.217 & 0.025 & 0.305 & 0.924\\
+Shared CARMA & Raw vibration & 0.402 & 2.427 & 0.488 & 0.645 & 93.787\\
+Shared CARMA & Accelerometer vibration only & 0.402 & 2.430 & 0.485 & 0.642 & 93.874\\
+Shared CARMA & Vibration guard & 0.129 & 0.263 & 0.026 & 0.264 & 1.783\\
+Shared CARMA & Guard + covariance & 0.131 & 0.254 & 0.026 & 0.286 & 1.358\\
+Uncoupled CARMA & Engine off & 0.126 & 0.231 & 0.026 & 0.294 & 0.915\\
+Uncoupled CARMA & Raw vibration & 0.402 & 2.427 & 0.488 & 0.631 & 93.579\\
+Uncoupled CARMA & Accelerometer vibration only & 0.402 & 2.430 & 0.485 & 0.629 & 93.659\\
+OU--III & Engine off & 0.178 & 0.367 & 0.039 & 0.260 & 0.903\\
+OU--III & Raw vibration & 1.303 & 15.406 & 2.069 & 1.838 & 91.188\\
+OU--III & Accelerometer vibration only & 1.307 & 15.441 & 2.085 & 1.842 & 91.237\\
+OU--III & Vibration guard & 0.186 & 0.432 & 0.048 & 0.326 & 4.426\\
+OU--III & Guard + covariance & 0.195 & 0.422 & 0.045 & 0.221 & 2.357\\
 \bottomrule\end{tabular}\end{table*}
 }
 \newcommand{\CSMValidationRoundtripTable}{%
@@ -116,13 +116,13 @@ Low return (1040--1200) & $0.050\pm0.006$ & $0.070\pm0.006$ & $0.050\pm0.006$ & 
 \newcommand{\CSMPmStokesThreeDUncoupledDifference}{-0.138}
 \newcommand{\CSMPmStokesThreeDUncoupledInterval}{[-0.147,-0.130]}
 \newcommand{\CSMEngineBaselineThreeD}{0.217}
-\newcommand{\CSMEngineRawThreeD}{2.421}
+\newcommand{\CSMEngineRawThreeD}{2.427}
 \newcommand{\CSMEngineGuardOnlyThreeD}{0.263}
 \newcommand{\CSMEngineDeployedThreeD}{0.254}
-\newcommand{\CSMEngineGyroPathChange}{0.243}
+\newcommand{\CSMEngineGyroPathChange}{0.123}
 \newcommand{\CSMEngineIdleGuardPitch}{0.376}
 \newcommand{\CSMEngineIdleDeployedPitch}{0.350}
-\newcommand{\CSMEngineRawRatio}{11.155}
+\newcommand{\CSMEngineRawRatio}{11.185}
 \newcommand{\CSMEngineDeployedRatio}{1.172}
 \newcommand{\CSMTransitionLowStartHeave}{0.046}
 \newcommand{\CSMTransitionHighHeave}{0.115}

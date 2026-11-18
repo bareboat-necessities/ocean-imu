@@ -37,7 +37,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "4e3b0e64570cd26b6207611663deb84cc8f74e16"
+      "git_blob_sha": "4e99d60a60c04e46ebde99d762367fb6dd3d353e"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -207,7 +207,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "aca139937df9869388da714dba341315cd21b4be"
+      "git_blob_sha": "d5ac14b3000a28d649a5cee2ba73679e1e3a7996"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -811,7 +811,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "428065d34fc8493229afc63955cec37185370f48"
+      "git_blob_sha": "0452c7a7fe7fb8cec2fbb4c01c4ea4a48c91bab8"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -879,7 +879,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "f530f5f6eb3149970a18423c5126a8174700a627"
+      "git_blob_sha": "5abdcf8a3c216685990a0ecc21f61004e18e25e5"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1971,5 +1971,12 @@
     "theorem_closed": false,
     "ou3_validation_tests_passed": 824,
     "workflow_contract_tests_passed": 24
+  },
+  "carma_startup_gyro_mode_source_refresh": {
+    "runtime_source_commit": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+    "receipt": "reports/results/ou3_stability/carma-startup-gyro-mode-source-refresh.json",
+    "sha256": "e7c90464fc3b853b430760bdc0fc2aca16aedf0155e4ef8382bb6c95fadea9af",
+    "native_calculations": 17,
+    "theorem_promoted": false
   }
 }

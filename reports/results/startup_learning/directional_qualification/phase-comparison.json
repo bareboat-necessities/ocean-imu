@@ -1,0 +1,344 @@
+{
+  "following": {
+    "main_run": "44074557141",
+    "selected_run": 44239902248,
+    "archived_main_commit": "71f410938ca1a8f393979f4933933868fb612461",
+    "selected_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+    "matched_main_source_files": 69,
+    "matched_selected_source_files": 70,
+    "main_raw_csv_sha256": "1a66ab67a561224ece53926f90483f764f49970282c9085c29d78de002209d24",
+    "selected_raw_csv_sha256": "ee1796c9011c5353ddefa497f0f3cac8e215dc2f36ec908624e4d3004c0c52c7",
+    "artifact": 14400848794,
+    "artifact_sha256": "sha256:20ae7052d030ea6dcbe2e6d5846272b2de7caa103c5caa423a14bf6ae3249dd0",
+    "paired_draws_per_family": 90,
+    "samples_per_late_window": 180000,
+    "scores": {
+      "OU_III": {
+        "disp_z_pct_hs": {
+          "main": 6.295561348347072,
+          "branch": 6.295556341820042,
+          "change_pct": -7.952471198224842e-05,
+          "lower": 36,
+          "higher": 38,
+          "equal": 16
+        },
+        "disp_z_rms_m": {
+          "main": 0.2354971297605674,
+          "branch": 0.23549736648432062,
+          "change_pct": 0.00010052086556466833,
+          "lower": 36,
+          "higher": 38,
+          "equal": 16
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5066673287789658,
+          "branch": 0.5066640946553345,
+          "change_pct": -0.0006383130404574722,
+          "lower": 49,
+          "higher": 27,
+          "equal": 14
+        },
+        "roll_rms_deg": {
+          "main": 0.23460048222458646,
+          "branch": 0.23463117163313607,
+          "change_pct": 0.013081562432692984,
+          "lower": 32,
+          "higher": 44,
+          "equal": 14
+        },
+        "pitch_rms_deg": {
+          "main": 0.22045006069029124,
+          "branch": 0.22047945875725897,
+          "change_pct": 0.01333547692192738,
+          "lower": 44,
+          "higher": 32,
+          "equal": 14
+        },
+        "yaw_rms_deg": {
+          "main": 0.9397021499522025,
+          "branch": 0.939655504493466,
+          "change_pct": -0.0049638557003239825,
+          "lower": 46,
+          "higher": 30,
+          "equal": 14
+        },
+        "accel_3d_rms_mps2": {
+          "main": 0.02033734119140634,
+          "branch": 0.020341079314374295,
+          "change_pct": 0.018380588360944472,
+          "lower": 40,
+          "higher": 36,
+          "equal": 14
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.054026889187904124,
+          "branch": 0.054034214058413854,
+          "change_pct": 0.013557823927734525,
+          "lower": 41,
+          "higher": 35,
+          "equal": 14
+        },
+        "gyro_bias_3d_rms_radps": {
+          "main": 0.0001296476366144556,
+          "branch": 0.00012955811267726904,
+          "change_pct": -0.0690517309257177,
+          "lower": 38,
+          "higher": 38,
+          "equal": 14
+        }
+      },
+      "TFG": {
+        "disp_z_pct_hs": {
+          "main": 4.510535898102039,
+          "branch": 4.511055226613092,
+          "change_pct": 0.011513676485130908,
+          "lower": 38,
+          "higher": 52,
+          "equal": 0
+        },
+        "disp_z_rms_m": {
+          "main": 0.17195476771333573,
+          "branch": 0.17199177393026213,
+          "change_pct": 0.021520901931659786,
+          "lower": 38,
+          "higher": 52,
+          "equal": 0
+        },
+        "disp_3d_rms_m": {
+          "main": 0.4872095786542847,
+          "branch": 0.31192677101404304,
+          "change_pct": -35.976880447299095,
+          "lower": 90,
+          "higher": 0,
+          "equal": 0
+        },
+        "roll_rms_deg": {
+          "main": 0.3297532138691088,
+          "branch": 0.3281928874853337,
+          "change_pct": -0.4731800383284246,
+          "lower": 65,
+          "higher": 25,
+          "equal": 0
+        },
+        "pitch_rms_deg": {
+          "main": 0.3205404085635705,
+          "branch": 0.3159040799305487,
+          "change_pct": -1.446410034166512,
+          "lower": 62,
+          "higher": 28,
+          "equal": 0
+        },
+        "yaw_rms_deg": {
+          "main": 1.0823553318244978,
+          "branch": 1.082924916770443,
+          "change_pct": 0.0526245798581515,
+          "lower": 40,
+          "higher": 50,
+          "equal": 0
+        },
+        "accel_3d_rms_mps2": {
+          "main": 0.02171263742713624,
+          "branch": 0.020854402589720107,
+          "change_pct": -3.9526973187675396,
+          "lower": 90,
+          "higher": 0,
+          "equal": 0
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.07763641498782027,
+          "branch": 0.07716260547541387,
+          "change_pct": -0.610292879289609,
+          "lower": 55,
+          "higher": 35,
+          "equal": 0
+        },
+        "gyro_bias_3d_rms_radps": {
+          "main": 0.00011089546837800033,
+          "branch": 0.00010924273531994811,
+          "change_pct": -1.4903522048517526,
+          "lower": 90,
+          "higher": 0,
+          "equal": 0
+        }
+      }
+    },
+    "separate_native_phase_experiment": {
+      "matching_input_hashes": 0,
+      "total_inputs": 90,
+      "comparable_fields": 0,
+      "exact_fields": 0,
+      "max_absolute_difference": null
+    }
+  },
+  "head": {
+    "main_run": "44074557141",
+    "selected_run": 44239902248,
+    "archived_main_commit": "71f410938ca1a8f393979f4933933868fb612461",
+    "selected_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+    "matched_main_source_files": 69,
+    "matched_selected_source_files": 70,
+    "main_raw_csv_sha256": "e168725482ef1ac3ea52235d1eb849ac7c0c9bdd3928bea30cc5fbe9f5135832",
+    "selected_raw_csv_sha256": "50e7a5848dd778beb0ea4a14925a0ae32352cca5662b6a75b8118a6b1813ba31",
+    "artifact": 14408442720,
+    "artifact_sha256": "sha256:ff574015bbbc4c76bd3b7cf014c342eaf49895721067fd6363f0408a68f53099",
+    "paired_draws_per_family": 90,
+    "samples_per_late_window": 180000,
+    "scores": {
+      "OU_III": {
+        "disp_z_pct_hs": {
+          "main": 3.7801626732283373,
+          "branch": 3.7801571457945844,
+          "change_pct": -0.00014622211346182468,
+          "lower": 47,
+          "higher": 42,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.1757591159444962,
+          "branch": 0.1757582599142463,
+          "change_pct": -0.00048704742585670147,
+          "lower": 47,
+          "higher": 42,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.39039874744182285,
+          "branch": 0.3903875922007889,
+          "change_pct": -0.0028573967275846712,
+          "lower": 48,
+          "higher": 41,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.27304335142323727,
+          "branch": 0.2729922824952339,
+          "change_pct": -0.01870359696992674,
+          "lower": 48,
+          "higher": 42,
+          "equal": 0
+        },
+        "pitch_rms_deg": {
+          "main": 0.21360974842734246,
+          "branch": 0.2134978972787398,
+          "change_pct": -0.05236238019384887,
+          "lower": 59,
+          "higher": 31,
+          "equal": 0
+        },
+        "yaw_rms_deg": {
+          "main": 1.0671535403139178,
+          "branch": 1.062543815834732,
+          "change_pct": -0.43196450229925354,
+          "lower": 54,
+          "higher": 36,
+          "equal": 0
+        },
+        "accel_3d_rms_mps2": {
+          "main": 0.031421076124271974,
+          "branch": 0.031374404797497916,
+          "change_pct": -0.14853509978293156,
+          "lower": 54,
+          "higher": 36,
+          "equal": 0
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.05831571746864088,
+          "branch": 0.05829704515004567,
+          "change_pct": -0.03201935842639392,
+          "lower": 50,
+          "higher": 40,
+          "equal": 0
+        },
+        "gyro_bias_3d_rms_radps": {
+          "main": 0.00015717074423214213,
+          "branch": 0.00015695422377521123,
+          "change_pct": -0.1377612977457865,
+          "lower": 39,
+          "higher": 51,
+          "equal": 0
+        }
+      },
+      "TFG": {
+        "disp_z_pct_hs": {
+          "main": 3.0549497771525957,
+          "branch": 3.054137014957993,
+          "change_pct": -0.026604764526128033,
+          "lower": 45,
+          "higher": 45,
+          "equal": 0
+        },
+        "disp_z_rms_m": {
+          "main": 0.13774624850015524,
+          "branch": 0.13771173329698075,
+          "change_pct": -0.025057091245905827,
+          "lower": 45,
+          "higher": 45,
+          "equal": 0
+        },
+        "disp_3d_rms_m": {
+          "main": 0.39895970969548283,
+          "branch": 0.31896473616619514,
+          "change_pct": -20.050890249129694,
+          "lower": 90,
+          "higher": 0,
+          "equal": 0
+        },
+        "roll_rms_deg": {
+          "main": 0.5591930871215509,
+          "branch": 0.5515425004696447,
+          "change_pct": -1.3681475733699822,
+          "lower": 65,
+          "higher": 25,
+          "equal": 0
+        },
+        "pitch_rms_deg": {
+          "main": 0.5139688932772553,
+          "branch": 0.48358483873648705,
+          "change_pct": -5.9116524245325985,
+          "lower": 59,
+          "higher": 31,
+          "equal": 0
+        },
+        "yaw_rms_deg": {
+          "main": 1.605325903656392,
+          "branch": 1.5416030606385018,
+          "change_pct": -3.96946457244296,
+          "lower": 55,
+          "higher": 35,
+          "equal": 0
+        },
+        "accel_3d_rms_mps2": {
+          "main": 0.048722954077833426,
+          "branch": 0.04719865165340448,
+          "change_pct": -3.128509864147244,
+          "lower": 83,
+          "higher": 7,
+          "equal": 0
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.1291194609691261,
+          "branch": 0.12473749601773804,
+          "change_pct": -3.393729278683899,
+          "lower": 62,
+          "higher": 28,
+          "equal": 0
+        },
+        "gyro_bias_3d_rms_radps": {
+          "main": 0.00012058691303664617,
+          "branch": 0.00011989854561299358,
+          "change_pct": -0.5708475375295397,
+          "lower": 87,
+          "higher": 3,
+          "equal": 0
+        }
+      }
+    },
+    "separate_native_phase_experiment": {
+      "matching_input_hashes": 0,
+      "total_inputs": 90,
+      "comparable_fields": 0,
+      "exact_fields": 0,
+      "max_absolute_difference": null
+    }
+  }
+}
