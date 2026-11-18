@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-18T07:05:56+00:00",
-  "git_commit": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |   18 +-\n .../results/tfg_comparison/gate_diagnostics.json   |    4 +-\n reports/results/tfg_comparison/paired_summary.json | 4282 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  332 +-\n reports/results/tfg_comparison/raw_runs.json       | 2980 +++++++-------\n 5 files changed, 3808 insertions(+), 3808 deletions(-)",
+  "generated_utc": "2026-11-18T13:24:08+00:00",
+  "git_commit": "85e7284972e4dc046bdc34cbcb4f044fbbc2a4ab",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -166,7 +166,7 @@
     "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
-    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
+    "src/kalman_common/ProxyStartupFusion.h": "4d89a2a3fc06e5474fc6925c5f23541d7ff3af57342836bfa4cdb531fb7011f1",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
     "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
@@ -222,7 +222,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "44245770928",
+    "run_id": "44299828983",
     "workflow": "ou-full-evidence-branch"
   }
 }

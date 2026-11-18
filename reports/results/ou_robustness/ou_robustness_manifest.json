@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,8 +42,8 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "experiment/startup-wave-handover",
-  "git_commit": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 34646 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1586 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   596 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   160 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1948 +-\n 6 files changed, 19965 insertions(+), 19967 deletions(-)",
+  "git_commit": "85e7284972e4dc046bdc34cbcb4f044fbbc2a4ab",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -118,8 +118,8 @@
       "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba"
     },
     "src/kalman_common/ProxyStartupFusion.h": {
-      "bytes": 46631,
-      "sha256": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1"
+      "bytes": 46935,
+      "sha256": "4d89a2a3fc06e5474fc6925c5f23541d7ff3af57342836bfa4cdb531fb7011f1"
     },
     "src/kalman_common/SeaStateAdaptationCommon.h": {
       "bytes": 21011,
@@ -287,7 +287,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -398,11 +398,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-18T08:19:40+00:00",
-    "git_commit": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
+    "generated_at": "2026-11-18T14:02:53+00:00",
+    "git_commit": "85e7284972e4dc046bdc34cbcb4f044fbbc2a4ab",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -477,8 +477,8 @@
         "size_bytes": 1500
       },
       "src/kalman_common/ProxyStartupFusion.h": {
-        "sha256": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
-        "size_bytes": 46631
+        "sha256": "4d89a2a3fc06e5474fc6925c5f23541d7ff3af57342836bfa4cdb531fb7011f1",
+        "size_bytes": 46935
       },
       "src/kalman_common/SeaStateAdaptationCommon.h": {
         "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
@@ -661,7 +661,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44245770928",
+      "run_id": "44299828983",
       "workflow": "ou-full-evidence-branch"
     }
   },
