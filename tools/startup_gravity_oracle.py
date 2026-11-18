@@ -243,7 +243,7 @@ def main():
     p.add_argument("--policies", nargs="+", choices=(*POLICIES, MEASURED_WAVE), default=list(POLICIES))
     args = p.parse_args()
     paths = [p for p in (ROOT / "src").rglob("*") if p.is_file()]
-    paths.extend((ROOT / "tests/common").glob("*.h"))
+    paths.extend(p for p in (ROOT / "tests/common").iterdir() if p.suffix in {".h", ".inc"})
     paths.extend(ROOT / "tests" / folder / (folder + "-sim.cpp") for folder, *_ in FILTERS.values())
     paths.extend(
         ROOT / name
@@ -286,6 +286,7 @@ def main():
     hashes = {name: digest(args.output / name) for name in outputs}
     receipt.update(
         source_commit=snapshot.revision,
+        record_limits_sha256=snapshot.hashes["tests/common/RecordReplayLimits.inc"],
         source_inventory_sha256=hashlib.sha256(json.dumps(snapshot.hashes, sort_keys=True).encode()).hexdigest(),
         inputs=inputs,
         output_sha256=hashes,
