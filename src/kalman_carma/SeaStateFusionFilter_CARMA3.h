@@ -182,6 +182,7 @@ public:
         if (mekf_) mekf_->set_gyro_sample_mode(core);
         this->setFrontendGyroSampleMode(frontend);
     }
+    kalman::filter_detail::GyroSampleMode gyroSampleMode() const { return core_gyro_sample_mode_; }
     void setGyroSamplePeriod(float period) {
         core_gyro_sample_period_ = std::isfinite(period) && period > 0.0f ? period : 0.0f;
         if (mekf_) mekf_->set_gyro_sample_period(core_gyro_sample_period_);
