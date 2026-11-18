@@ -95,42 +95,65 @@ square root of the sample-weighted mean squared error.
 
 ## Accuracy after the startup transient
 
-Both v1.4.0 directions were rerun on the same 13 binaries with the pinned GCC
-toolchain. The 544 filter/profile/record cells include 2,768 gated
-measurements. Relative to the pre-integration locked measurements, 1,127 fell,
-606 were equal and 1,035 rose. With the existing 0.5% gate margin as the
-comparison threshold, 55 fell by more than 0.5% and 44 rose by more than 0.5%.
-The largest increase was TFG pitch on the following 8.5 m JONSWAP record
-(0.08603° to 0.09181°). For the eight production wave-filter families, gyro
-bias RMS decreased in every family when pooled over the 16 records. Yaw RMS
-decreased 0.044% for OU-III and rose 0.009–0.054% in the other seven families.
-The ordinary wave-filter gate scores the final 900 s of each 1,200 s run.
+The same 13 production executables scored all 544 filter, profile and record combinations in head and following seas. Against the pre-integration baseline, 1,136 of 2,768 measured RMS channels fell, 620 were equal and 1,012 rose. Changes exceeded 0.5% on 74 improving and 38 worsening channels. These counts use measured RMS before the regression margin is applied. Wave-filter scores use the final 900 s of each 1,200 s record.
 
-[Paired RMS by family, profile and sea direction](../reports/results/startup_learning/live-replay.csv)
-· [Source measurements and CI artifacts](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44184184023)
+On the default 8.5 m following JONSWAP record, TFG pitch RMS was 0.08603° before startup integration, 0.09181° with the original 2° handover uncertainty and 0.07858° with the accepted-fit uncertainty below.
+
+[Paired results by family, profile and sea direction](../reports/results/startup_learning/tfg_tilt_uncertainty/compared_to_preintegration.csv) · [Production matrix and raw logs](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44209357875)
+
+## Tilt uncertainty after an accepted TFG fit
+
+TFG uses a 0.5° standard deviation on each horizontal attitude-error axis when the wave fit supplies the attitude. The fallback Mahony proxy retains its own setting of roughly 2°. Both paths keep the configured yaw uncertainty. Over 458 validation handovers and 430 confirmation handovers with the fit accepted, radial tilt RMS was 0.384° and 0.446°, respectively. The corresponding maxima were 0.672° and 0.875°. These are measurements on the pinned wave records.
+
+We compared the unmodified TFG executable at each of the two revisions on 16 wave records with the default sensor draw and seeds 7, 41 and 101. Sensor samples, coordinates and scoring windows match within each pair. The table pools all 64 cases. The windows start at fixed times after power-on. On the seed-7 low JONSWAP following-sea record, handover occurred at about 41.85 s, after the 40 s window began.
+
+| Quantity | 40–60 s, 2° → 0.5° | 300–1,200 s, 2° → 0.5° | Late change |
+|---|---:|---:|---:|
+| Roll RMS (°) | 1.11949 → 1.10081 | 0.28083 → 0.27945 | -0.492% |
+| Pitch RMS (°) | 2.62114 → 2.56579 | 0.28410 → 0.27996 | -1.459% |
+| Yaw RMS (°) | 6.92899 → 6.81219 | 0.83170 → 0.82438 | -0.880% |
+| X displacement RMS (m) | 4.962573 → 4.855768 | 0.301549 → 0.301658 | +0.036% |
+| Y displacement RMS (m) | 2.117847 → 2.096080 | 0.245368 → 0.244853 | -0.210% |
+| Z displacement RMS (m) | 2.224566 → 2.213636 | 0.145095 → 0.145081 | -0.009% |
+| 3-D displacement RMS (m) | 5.836189 → 5.733430 | 0.414958 → 0.414728 | -0.055% |
+| 3-D accelerometer-bias RMS (m/s²) | 0.066638 → 0.066638 | 0.068160 → 0.067476 | -1.004% |
+
+Late pitch, Y displacement and accelerometer bias improved on each of the four pooled draws. The default 8.5 m following JONSWAP case moved from 0.09180° to 0.07857° late pitch RMS. Its late yaw increased from 0.43953° to 0.45945°. The pooled late X increase was 0.000110 m. The production change applies to TFG-OU. The OU-III experiment with a tighter prior had mixed results.
+
+The production replay uses its existing 0.5% margin for every record. The limits below compare the previous PR gates with the limits measured at `68f0978`. The global TFG pitch maximum occurs on the 8.5 m head-sea PM-Stokes record. Its change is smaller than the improvement on either high-wave following-sea record.
+
+| TFG default regression limit | Previous | Current |
+|---|---:|---:|
+| Following 8.5 m JONSWAP pitch (°) | 0.09228 | 0.07897 |
+| Following 8.5 m PM-Stokes pitch (°) | 0.12054 | 0.09599 |
+| Following 8.5 m JONSWAP yaw (°) | 0.44170 | 0.46176 |
+| Global pitch (°) | 0.23928 | 0.23880 |
+| Global roll (°) | 0.53260 | 0.52151 |
+| Global Y displacement (m) | 0.50981 | 0.50804 |
+| Global accelerometer-bias vector (% of maximum true bias) | 107.73600 | 104.55015 |
+
+Sixteen TFG per-record limits tightened by more than 0.5%. Two loosened by more than 0.5%. Both concern yaw on the same following-sea JONSWAP record, once for each gyro profile. Three limits in the separate legacy cubic TFG simulator also tightened by more than 0.5%.
+
+[Global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc) · [Exact cap changes and prior gate outcomes](../reports/results/startup_learning/tfg_tilt_uncertainty/quality-gates.json)
+
+[Scores and provenance](../reports/results/startup_learning/tfg_tilt_uncertainty) · [First live correction and wave-acceleration controls](startup-gravity-retention.md)
 
 ## Long-run displacement and accelerometer bias
 
-The deployed startup improvement has a small effect on these final-900-second
-metrics. Each row pools all 16 records under the default sensor configuration.
+Each row compares the pre-integration baseline with the current production configuration across all 16 records on the default sensor draw.
 
-| Filter | 3-D displacement RMS (m), previous → deployed | Accel-bias vector RMS (m/s²), previous → deployed |
+| Filter | 3-D displacement RMS (m), before → after | Accelerometer-bias vector RMS (m/s²), before → after |
 |---|---:|---:|
 | OU-II | 0.526912 → 0.526903 | 0.038953 → 0.038949 |
 | OU-III | 0.433715 → 0.433715 | 0.035788 → 0.035782 |
 | CARMA | 0.228164 → 0.228162 | 0.032648 → 0.032649 |
 | Shared-mode CARMA | 0.205276 → 0.205282 | 0.031877 → 0.031880 |
-| TFG-OU | 0.418260 → 0.418252 | 0.053934 → 0.053981 |
+| TFG-OU | 0.418260 → 0.418016 | 0.053934 → 0.053535 |
 | TFG-CARMA | 0.228222 → 0.228237 | 0.032678 → 0.032676 |
-| TFG shared-mode CARMA | 0.205369 → 0.205378 | 0.031887 → 0.031886 |
+| TFG shared-mode CARMA | 0.205369 → 0.205371 | 0.031887 → 0.031885 |
 | Tangent shared-mode CARMA | 0.205354 → 0.205369 | 0.031882 → 0.031880 |
 
-OU-III accelerometer-bias RMS decreased 0.016%. The shared-mode CARMA value
-rose 0.009%. These results establish the size of the current long-run effect.
-The global headers take the worst score across both directions for each
-channel. Individual-record limits use that record's own measurement.
-Both retain the prescribed 0.5% margin. Large initial-tilt gains have therefore
-produced very small changes in the displacement and accelerometer-bias gates.
+TFG-OU accelerometer-bias RMS decreased by 0.74% under the default draw. OU-III decreased by 0.016%. The shared-mode CARMA value rose by 0.009%. The large handover tilt improvement has translated into small long-run changes for most families.
 
 ## Where the X/Y advantage disappears
 

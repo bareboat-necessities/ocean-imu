@@ -1,0 +1,133 @@
+{
+  "sources": {
+    "guard": "abfd57856fc008556bf64e004d82f4b99f5e90f7",
+    "fit": "68f097807af2a070711c77288ca07ec136f6377a"
+  },
+  "binaries": {
+    "guard": "28c64e7e5fc580792493a1f2d14accf151bd12b01e31b75650149cfb4a1daf78",
+    "fit": "127c8cee8aaa2a9bbb4af64d512253d76f7361ba05bd5b327dd4120a29d51bcc"
+  },
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "inputs": {
+    "following": {
+      "release": "v1.4.0",
+      "case": "following",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 0.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+      }
+    },
+    "head": {
+      "release": "v1.4.0",
+      "case": "head",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 180.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+      }
+    }
+  },
+  "windows_sha256": "585886066afc537406d2db4ceac7f392ecbfdb885c5b876bc77929f661f8eb02",
+  "replays": 144,
+  "logs": {
+    "fit-following-default-legacy.log": {
+      "sha256": "ad48050e64741eb2822df652cc4b1a478a565793d0cb402302f35fbb40144aaf",
+      "exit": 1
+    },
+    "fit-head-default-legacy.log": {
+      "sha256": "454d85d719ce6a5dc0c89f8b6eb7ac278de78ee0901afb3f9697d68c1f9fda9e",
+      "exit": 0
+    },
+    "guard-following-default-default.log": {
+      "sha256": "c93836f3d4b6c3fb7b06031bfa66b7878318feb7b1d88f649ec37025ebf2b4c8",
+      "exit": 0
+    },
+    "fit-following-default-default.log": {
+      "sha256": "0ac73a67b959d8190cd14ec21dd63236b6a5bcb7a6441dbc5a732f7aaf82d94f",
+      "exit": 1
+    },
+    "guard-following-7-default.log": {
+      "sha256": "70764f1a9b482cdb4722f9a81b623719c4f324c9e8a93b3769a985405de7003e",
+      "exit": 1
+    },
+    "fit-following-7-default.log": {
+      "sha256": "6ab5e39ec60e2245857ac5fa6005ebe732ea9e856ced9cd20021060ff1336890",
+      "exit": 1
+    },
+    "guard-following-41-default.log": {
+      "sha256": "b3f4851219ef639f327840827dc0009dae82c08359093bef618ab4453f259e69",
+      "exit": 1
+    },
+    "fit-following-41-default.log": {
+      "sha256": "f1f7d3d42492900814f77f93d5aea19bc0065522306a00622c4d648236d667ac",
+      "exit": 1
+    },
+    "guard-following-101-default.log": {
+      "sha256": "349b367662ff5e7bb272b130e35ef549cb0fb0bf9ebace57b23cdfa91972a301",
+      "exit": 1
+    },
+    "fit-following-101-default.log": {
+      "sha256": "63350498b1ab31bd13523f430bfd9a0b9aef00d4175b656db764d3676660d86a",
+      "exit": 1
+    },
+    "guard-head-default-default.log": {
+      "sha256": "f482b642990c275c327403f285cae200c7f4e912d6690991290c9950100f5c75",
+      "exit": 0
+    },
+    "fit-head-default-default.log": {
+      "sha256": "59c4954e870cff8895a38c146d6079708a27699803db1fc07e6e7a7d0e3b133b",
+      "exit": 0
+    },
+    "guard-head-7-default.log": {
+      "sha256": "f1324420ebfd0dc4d5c67b1b48d7609dbfe41d414681136a2445da248cb80d45",
+      "exit": 1
+    },
+    "fit-head-7-default.log": {
+      "sha256": "1f2023887205d28cab738060ebef90d4421944ee6c919beafe8f81bd0389a2cd",
+      "exit": 1
+    },
+    "guard-head-41-default.log": {
+      "sha256": "335d194d4ca07777bcda0f8afb1e3ba245d6807aeae09a8011bf1837d9547dad",
+      "exit": 1
+    },
+    "fit-head-41-default.log": {
+      "sha256": "aae8f6f18ed9b2da13e53ca3d35cccb3fe64ba62e7ee68f63c3d060944e03609",
+      "exit": 1
+    },
+    "guard-head-101-default.log": {
+      "sha256": "d3104469f6685c461805b401add650ccdf9f52e73966fbbe64a3eb960206445e",
+      "exit": 1
+    },
+    "fit-head-101-default.log": {
+      "sha256": "5496e0e4c64311b9731afc0ee7350938bb15434b999576951dc74c512a82a141",
+      "exit": 1
+    }
+  }
+}

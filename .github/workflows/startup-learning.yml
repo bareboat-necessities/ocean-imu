@@ -6,8 +6,11 @@ on:
       - 'tools/startup_learning.py'
       - 'tools/startup_handover_components.py'
       - 'tools/startup_live_retention.py'
+      - 'tools/startup_gravity_oracle.py'
       - 'tools/startup_source_snapshot.py'
       - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
+      - 'tests/kalman_tfg/kalman_tfg-sim.cpp'
+      - 'src/kalman_tfg/**'
       - 'tools/compare_startup_slope.py'
       - 'tools/report_startup_learning.py'
       - 'tests/validation/test_startup_learning.py'
@@ -126,4 +129,31 @@ jobs:
         with:
           name: live-handover-components-${{ matrix.window }}
           path: handover-${{ matrix.window }}/
+          if-no-files-found: error
+
+  gravity-handover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [ou3, tfg]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - uses: ./.github/actions/replay-toolchain
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Trace the seeded attitude through live prediction and correction
+        env:
+          FAMILY: ${{ matrix.family }}
+        run: |
+          python3 tools/startup_gravity_oracle.py --families "$FAMILY" --jobs 2 \
+            --policies previous deployed previous_exact_tilt exact_tilt exact_field exact_both measured_wave \
+            --data tests/startup_learning/data --output "gravity-$FAMILY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gravity-handover-${{ matrix.family }}
+          path: gravity-${{ matrix.family }}/
           if-no-files-found: error

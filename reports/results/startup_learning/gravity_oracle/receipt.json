@@ -1,0 +1,108 @@
+{
+  "sources": {
+    "tests/startup_learning/GravityHandoverOracle.h": "51025fed625982ccc64e349ee8a8c33cbcf0a9d1bd4470af7e0af773d47813a2",
+    "tools/startup_gravity_oracle.py": "a3a0f886c68fadaffbf516e3373af31b41824816d18530c7cc49caafb24e4563",
+    "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "067851c57cc2ef563b1b835c952c9139e01341e291f13f1915894b9a2d619a38",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "14e1de883ba1d1634a753ff8d668a2597892f509ef822bc6d3da1b2c1f954d2b",
+    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
+    "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "54a537500ee8c28bb425deca6ae3d9c99327f216a7928f0b8210e341e1f0e60a",
+    "tests/kalman_tfg/kalman_tfg-sim.cpp": "e4d23ed52623c478f635539662ad924712db463309bc30ceac21e2f3a4ea9be8"
+  },
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "binaries": {
+    "ou3": "3cb37eb15b9d757cae7690b9f0a7d3a4a6ee9ef248b571a53bea88fefbb28bfe",
+    "tfg": "e1156040279f9b3b96f0e41100254261c4f95d16edbb5ff23ed5c8a2dbe87ea2"
+  },
+  "source_commit": "abfd57856fc008556bf64e004d82f4b99f5e90f7",
+  "source_inventory_sha256": "c27f0898319e878df7567d3f1946923d91c665ba3d8dbc128872192957be9cf0",
+  "inputs": {
+    "following": {
+      "release": "v1.4.0",
+      "case": "following",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 0.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+      }
+    },
+    "head": {
+      "release": "v1.4.0",
+      "case": "head",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 180.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+      }
+    }
+  },
+  "output_sha256": {
+    "handover.csv.gz": "83fe5b94818b6e8af9048f0fe557dc6bdf50cf473906aecbac3fb718ec65d9c0",
+    "windows.csv.gz": "aa3176a943db29c36ea3d54cd8c4bf24abf610ce437770df746f2dc3383305c7",
+    "updates.csv.gz": "f5922a7b144616b6e1acbd17195d38dc4539f72ea1e09d23ea1ed005ceda5217"
+  },
+  "runs": 672,
+  "seeds": [
+    "default",
+    "7",
+    "41"
+  ],
+  "policies": [
+    "previous",
+    "deployed",
+    "previous_exact_tilt",
+    "exact_tilt",
+    "exact_field",
+    "exact_both",
+    "measured_wave"
+  ],
+  "windows": {
+    "early": [
+      40,
+      60
+    ],
+    "pre_refine": [
+      60,
+      90
+    ],
+    "refining": [
+      90,
+      120
+    ],
+    "post_refine": [
+      120,
+      180
+    ],
+    "late": [
+      300,
+      1200
+    ]
+  }
+}

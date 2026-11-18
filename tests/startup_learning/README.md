@@ -221,3 +221,58 @@ The guarded production startup qualification uses the same two cohorts as
 modified header, binary, inputs and outputs; it is separate from the full
 live-navigation matrix. Both controls and wave-start measurements are in
 `reports/results/startup_learning/field_steps`.
+
+## Tracing gravity through the live handover
+
+Build test-only versions of the OU-III and TFG wave replays and run each of the
+16 pinned records through the previous and deployed startup, one-time exact
+tilt and field controls, and a sensor-only wave-acceleration seed. The
+accelerometer and gyro measurements seen by each paired run are identical.
+Run from the repository root with Eigen installed and the replay compiler
+selected.
+
+```sh
+python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+python3 tools/startup_gravity_oracle.py --data tests/startup_learning/data \
+  --families ou3 tfg --seeds default 7 41 --jobs 4 \
+  --policies previous deployed previous_exact_tilt exact_tilt exact_field exact_both measured_wave \
+  --output gravity-handover
+```
+
+The command above exercises the checked-out production configuration.
+To reproduce the 2° TFG baseline from the gravity-retention study on its
+original guarded source, create a detached worktree and copy the two
+test-only files into it before running the same commands there.
+
+```sh
+git worktree add --detach ../ocean-imu-gravity-baseline abfd57856fc008556bf64e004d82f4b99f5e90f7
+cp tools/startup_gravity_oracle.py ../ocean-imu-gravity-baseline/tools/
+cp tests/startup_learning/GravityHandoverOracle.h ../ocean-imu-gravity-baseline/tests/startup_learning/
+```
+
+Each compressed CSV contains either the handover, the first live updates, or
+the scored time windows. The receipt records source, executable, input and
+output hashes. The [study](../../docs/startup-gravity-retention.md) gives the
+meaning of each intervention and the observed accuracy.
+
+## Replaying the TFG tilt-uncertainty comparison
+
+The previous guarded TFG build is `abfd578` and the accepted-fit uncertainty
+change is `68f0978`. Build the same executable in a separate checkout at
+each revision using the pinned compiler. For each of the 16 records, use
+the identical input path and sensor seed with both binaries. This example
+runs the 8.5 m following JONSWAP case on the default sensor draw.
+
+```sh
+make -C tests/kalman_tfg kalman_tfg-sim
+record=tests/startup_learning/data/following/wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv
+env -u W3D_SEED OCEAN_IMU_SIM_CASE=following W3D_WRITE_TIMESERIES=0 \
+  W3D_COLLECT_ALL_GATES=1 W3D_VALIDATION_WINDOW_SEC=900 \
+  W3D_VALIDATION_SEGMENTS=early:40:60,late:300:1200 \
+  tests/kalman_tfg/kalman_tfg-sim --input "$record"
+```
+
+For the other sensor draws set `W3D_SEED` to 7, 41 or 101. Set
+`OCEAN_IMU_SIM_CASE=head` for the head-sea records. The per-run
+`VALIDATION_SEGMENT` lines contain the paired scores. The archived receipt
+retains the exit status against the limits present at the tested revision.
