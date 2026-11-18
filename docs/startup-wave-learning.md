@@ -6,6 +6,30 @@ fits and the fixed-memory implementation used by the live wave filters.
 The base is `8c9f535709fe7ff4d87d75dc5c98f4d0a48daa7b`; both cases use the pinned
 `oceanography-waves-lib` v1.4.0 archives, at 5 kn with ±3° / 20 s heading motion.
 
+## Live replay against main
+
+On the 5 kn v1.4.0 records, OU-III and standard TFG reduced late 3-D displacement RMS on all 32 combinations of sea, record and gyro profile. The independent-axis and shared-mode TFG-CARMA filters each reduced it by more than 0.5% in 24 of 32 combinations. The remaining eight per filter stayed within 0.5%.
+
+The table uses the default gyro profile and one sensor draw on the same 16 records for each revision. Each value is the square root of the mean squared record RMS over the trailing 900 s. The bias column reports the relative change in pooled 3-D accelerometer-bias RMS.
+
+| Filter | Main 3-D RMS (m) | PR 3-D RMS (m) | Change | Accel-bias RMS change |
+|---|---:|---:|---:|---:|
+| OU-II | 0.52691 | 0.52690 | −0.002% | −0.008% |
+| OU-III | 0.43371 | 0.34945 | −19.43% | −0.016% |
+| TFG | 0.41826 | 0.28287 | −32.37% | −1.99% |
+| Legacy cubic TFG | 0.68438 | 0.68455 | +0.025% | +1.18% |
+| Independent-axis QMEKF-CARMA | 0.22816 | 0.22816 | −0.001% | +0.005% |
+| Shared-mode QMEKF-CARMA | 0.20528 | 0.20528 | +0.003% | +0.009% |
+| Independent-axis TFG-CARMA | 0.22822 | 0.22438 | −1.68% | −1.11% |
+| Shared-mode TFG-CARMA | 0.20537 | 0.20166 | −1.81% | −1.22% |
+| Tangent shared-mode CARMA | 0.20535 | 0.20537 | +0.007% | −0.006% |
+
+Across all 17 families, including the attitude-only and heave-only controls, 520 of 2,768 scored channels improved by more than 0.5%, 49 worsened, and 2,199 stayed within that band. Following seas accounted for 47 of the increases. The largest was TFG interval-gyro yaw on the 4 m following JONSWAP record, from 0.55819° to 0.62518°. Both independent runs passed 544 of 544 replay cases and produced identical score CSVs in each direction. [Branch replay](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501554) · [Independent pull-request replay](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367522652) · [Main replay](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44101355640)
+
+Against main, 85 global ceilings tightened, 63 loosened and 39 were equal. At record level, 1,367 tightened, 684 loosened and 717 were equal. Both compiled headers reproduce from the reviewed settings. The OU-III horizontal output alone tightened all 32 Y and all 32 3-D record ceilings relative to the previous PR revision. [Global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc) · [OU-III paired output study](../reports/results/startup_learning/ou3_wave_motion/README.md)
+
+The qualified live changes use different observations. Standard TFG couples horizontal velocity to the displacement integral after bias release. Both TFG-CARMA variants use a transverse encounter-period estimate and carry the primitive through model retuning. OU-III conditions the reported horizontal wave displacement and velocity using the current posterior. Its heave, attitude and bias scores matched the preceding production version in the matched experiment. [Standard TFG](../reports/results/startup_learning/tfg_horizontal_integral/receipt.json) · [TFG-CARMA](../reports/results/startup_learning/tfg_carma_horizontal_wave/windowed/README.md) · [OU-III](../reports/results/startup_learning/ou3_wave_motion/README.md)
+
 ## Production handover
 
 The bounded-memory solver seeds attitude, the local magnetic field and gyro

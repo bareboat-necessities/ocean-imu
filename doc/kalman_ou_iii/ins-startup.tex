@@ -62,8 +62,11 @@ matched ablation.  Magnetic acquisition is performed provisionally for availabil
 and repeated after convergence for accuracy.  A continuously running hard-iron
 estimator then uses raw magnetometer data and yaw-stripped proxy tilt to solve a
 regularized body-offset identification problem without adding a magnetic-bias state
-to any navigation filter.  Current paired ablations use the v1.3.1 28 ft sailboat RAO records at 5 kn,
-with heading oscillating $\pm3^\circ$ about north every 120 s.
+to any navigation filter. With a calibrated magnetometer the live wrapper
+can seed attitude, the local magnetic field and gyro bias from a streaming
+joint fit. In 960 v1.4.0 starts the comparison observed both handovers on
+every trial, including 72 following-sea starts after 35 s. Earlier hard-iron
+ablations used the v1.3.1 northbound records with a 120 s steering period.
 They separate hard-iron tracking in all three families from startup-policy
 and refinement changes in TFG. Calibration-draw sweeps also record cases
 where an additive correction worsens yaw. The results distinguish finite
@@ -568,12 +571,13 @@ problem.  The long memory allows later motion to contribute information without
 requiring the device to restart calibration.
 
 
-\section{Prospective Joint Gravity-Direction and Magnetic-Field Startup in Waves}
+\section{Joint Gravity-Direction and Magnetic-Field Startup in Waves}
 \label{sec:joint-startup-proposal}
 
-The preceding sections document the \emph{deployed} Mahony-proxy and two-stage
-magnetic-reference policy.  This section instead specifies a \emph{research
-proposal}, not a shipping algorithm or a validated performance claim.  Cold
+The Mahony proxy and two-stage magnetic acquisition provide the reference
+policy. Section~\ref{sec:streaming-handover} describes the bounded-memory
+joint fit used at live handover. The more general full-history likelihood
+developed here also allows additional wave and calibration nuisance parameters.  Cold
 start on an already-moving vessel requires just two kinds of constant
 physical unknowns: the \emph{direction} of gravity (two degrees of
 freedom on the unit sphere) and the local magnetic field with \emph{both}
@@ -909,15 +913,28 @@ $\dot{\vct\omega}\times\vct r$ and
 $\vct\omega\times(\vct\omega\times\vct r)$ when wave motion is
 referenced to a different point on the vessel.
 
-The decisive comparison would use identical raw power-on records:
-the deployed \texttt{MahonyProxy}, simple gyro-transported
-averaging, the bounded-displacement baseline, and the proposed
-joint estimator.  Test partial cycles, irregular waves, low-frequency
-accelerations, near-stillness, limited heading/tilt excitation,
-residual calibration errors, magnetic interference, and asynchronous
-sampling.  Report time-to-verified accuracy, actual tilt and heading
-at handoff, covariance coverage, and false-readiness rate.  Such
-implementation and validation remain future work.
+\subsection{Streaming fit at live handover}
+\label{sec:streaming-handover}
+The production wrapper accumulates gyro-transported force and magnetic
+moments in fixed memory. When the joint fit qualifies at the handover
+epoch, it supplies attitude, the local magnetic vector and body gyro bias.
+The next prediction uses the existing raw gyro endpoint with that bias.
+The proxy supplies the handover if the fit fails its checks. Online
+hard-iron estimation uses the proxy acquisition path.
+
+Paired runs used identical power-on samples for the proxy and joint
+policies, crossing two sea directions with calibrated and residual
+magnetic-error profiles. Each direction contributed 480 starts on the
+v1.4.0 records at 5 kn with a 20 s steering period. Across all 480
+following-sea starts, tilt RMS fell from $0.7415^\circ$ to $0.3793^\circ$
+and yaw RMS from $2.6195^\circ$ to $1.9706^\circ$. In head seas tilt RMS
+fell from $1.0676^\circ$ to $0.4601^\circ$ and yaw RMS from $3.8381^\circ$
+to $1.9666^\circ$. The joint fit seeded 888 handovers by 35 s. On the
+remaining 72 trials both policies used the proxy in following seas between
+35.015 and 40.270 s. The figures above include these late starts.
+The \href{https://github.com/bareboat-necessities/ocean-imu/tree/1ad97346644532cb44c5f32f29aaa3ec148140ff/reports/results/startup_learning/field_steps}{paired handover records}
+contain the coverage and field-direction errors. Calibration of confidence
+bounds and false-readiness rates remains open.
 
 \section{Recommended Validation Contract}
 \label{sec:validation}
@@ -982,7 +999,7 @@ continuous regularized hard-iron identification.  The legacy staged quaternion M
 path remains valuable as a matched ablation and demonstrates why the separation is
 needed.
 
-The current moving-vessel ablations show distinct benefits. With the default
+The v1.3.1 hard-iron ablations show distinct benefits. With the default
 calibration draw, continuous hard-iron correction reduces mean yaw RMS from
 2.242 to 0.708 degrees for OU--II, from 2.044 to 0.592 degrees for OU--III,
 and from 1.554 to 0.863 degrees for TFG. Across five calibration draws,
