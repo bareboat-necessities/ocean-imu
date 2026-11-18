@@ -191,6 +191,17 @@ The measurements use both v1.4.0 directions, the pinned replay compiler and the 
 
 [Per-record matched measurements](../reports/results/startup_learning/tfg_horizontal_integral/paired.csv) · [Production run and source receipt](../reports/results/startup_learning/tfg_horizontal_integral/receipt.json) · [Compiled global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc)
 
+### OU-III with the measured transverse period
+
+OU-III can apply the cross-wave observation using its explicit displacement
+integral. On six noise draws covering 16 irregular head- and following-sea
+records, late 3D displacement RMS fell from 0.42728 to 0.39865 m. The candidate
+passed 10 of 32 fixed replay checks across the two gyro profiles. On the two
+reserved draws, pooled pitch RMS rose from 0.19164° to 0.19856° and 3D
+accelerometer-bias RMS rose from 0.05738 to 0.05802 m/s². The deployed OU-III
+filter retains its existing drift observation. [Paired results, ablations and
+reproduction](../reports/results/startup_learning/ou3_transverse_period/README.md)
+
 ## Directional studies on matched wave inputs
 
 The complete study run covered 21 protocols in each sea direction. For the TFG phase comparison, each main/PR pair used identical simulated input bytes and 180,000 samples in the 300–1,200 s window. All 180 paired draws improved 3-D displacement. The following-sea yaw change was smaller than one thousandth of a degree.
