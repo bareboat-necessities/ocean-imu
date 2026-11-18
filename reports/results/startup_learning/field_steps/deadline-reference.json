@@ -1,0 +1,87 @@
+{
+  "scope": "The full-history joint reference estimator ran at exactly 35 seconds on the recorded sensor samples from the 72 missed production starts. These figures measure the offline fit. Production handover coverage uses the actual admission and handoff decisions in before-live-audit.json.",
+  "archives": [
+    {
+      "cohort": "confirmation",
+      "artifact": 14390576952,
+      "source": "4f6100363bd0df4b1d7909e6123399e601fd0329",
+      "run": 44218747717,
+      "metrics_sha256": "7acb73529a7a798f95969d3136f8f4230e5204957719ae3dff92b570e66a9ec7",
+      "force_slope_model": "scaled"
+    },
+    {
+      "cohort": "validation",
+      "artifact": 14391567594,
+      "source": "4f6100363bd0df4b1d7909e6123399e601fd0329",
+      "run": 44218747717,
+      "metrics_sha256": "ba99b9be0be02f712836e60d74a751eee3eca00fa1d5d945fe6630da55ce46b5",
+      "force_slope_model": "scaled"
+    }
+  ],
+  "groups": {
+    "all_missed": {
+      "records": 72,
+      "reference_ready": 72,
+      "tilt_error_deg": {
+        "rms": 0.3913255515318281,
+        "worst_absolute": 0.6912987317
+      },
+      "yaw_error_deg": {
+        "rms": 2.176827506391765,
+        "worst_absolute": 4.864700317
+      },
+      "bg_error_dps": {
+        "rms": 0.01756502129257409,
+        "worst_absolute": 0.0543846205
+      },
+      "rate_error_dps": {
+        "rms": 0.1329643588148877,
+        "worst_absolute": 0.2341394522
+      },
+      "individual_both_tilt_le_1_and_yaw_le_2_deg": 47
+    },
+    "calibrated": {
+      "records": 36,
+      "reference_ready": 36,
+      "tilt_error_deg": {
+        "rms": 0.3659220601808828,
+        "worst_absolute": 0.6912987317
+      },
+      "yaw_error_deg": {
+        "rms": 0.6650741440667556,
+        "worst_absolute": 1.465835571
+      },
+      "bg_error_dps": {
+        "rms": 0.012971680744119559,
+        "worst_absolute": 0.02868171917
+      },
+      "rate_error_dps": {
+        "rms": 0.1339127387203192,
+        "worst_absolute": 0.2341394522
+      },
+      "individual_both_tilt_le_1_and_yaw_le_2_deg": 36
+    },
+    "residual": {
+      "records": 36,
+      "reference_ready": 36,
+      "tilt_error_deg": {
+        "rms": 0.4151775769912884,
+        "worst_absolute": 0.5867970884
+      },
+      "yaw_error_deg": {
+        "rms": 3.0057997884192904,
+        "worst_absolute": 4.864700317
+      },
+      "bg_error_dps": {
+        "rms": 0.021184792769574124,
+        "worst_absolute": 0.0543846205
+      },
+      "rate_error_dps": {
+        "rms": 0.1320091657368227,
+        "worst_absolute": 0.2323439381
+      },
+      "individual_both_tilt_le_1_and_yaw_le_2_deg": 11
+    }
+  },
+  "actual_handover_audit": "before-live-audit.json"
+}

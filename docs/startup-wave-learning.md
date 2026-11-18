@@ -28,6 +28,28 @@ handovers across 960 starts used the joint estimate. Each policy missed the
 same 72 deadlines. The full-history experiment below also scores the
 35-second endpoint on every trial. Its optional hard-iron fit is experimental.
 
+Pooling the calibrated and residual profiles, the production handover gave
+the following results. Tilt is the angle between the estimated and true
+gravity directions. Each RMS includes only the on-time handovers, while
+the coverage column includes every attempted start.
+
+| Seas | By 35 s | Previous → deployed tilt RMS | Previous → deployed yaw RMS | Previous → deployed gyro-bias RMS |
+|---|---:|---:|---:|---:|
+| Following | 408/480 | 0.7774° → 0.3560° | 2.6240° → 1.8387° | 0.0572 → 0.0223°/s |
+| Head | 480/480 | 1.0676° → 0.4601° | 3.8381° → 1.9666° | 0.0580 → 0.0296°/s |
+
+The median on-time handover was 31.835 s in each direction. The two policies
+used the same handover epoch and final raw gyro sample in every matched
+case. The two 8.5 m following records accounted for 38 of the 72 misses.
+[Recorded endpoints, bias corrections and deadline coverage](../reports/results/startup_learning/field_steps/before-live-audit.json)
+
+For those 72 misses, the offline full-history fit at exactly 35 s reached
+both 1° tilt and 2° yaw on all 36 calibrated draws and on 11 of 36
+residual-calibration draws. Residual-calibration yaw RMS was 3.006°.
+This fixed-time experiment scores the reference fit. Production coverage
+above comes from the wrapper's actual handover decisions.
+[Fixed-deadline reference scores](../reports/results/startup_learning/field_steps/deadline-reference.json)
+
 Run `tests/startup_learning/startup-learning --production-pair` once per input
 with `--input`, `--output`, `--profiles calibrated,residual`, and the
 `--seeds` and `--offsets` in the
@@ -134,6 +156,8 @@ The two compiled headers use the same 0.5% regression margin as before. The foll
 | 3-D accelerometer bias (% of maximum true bias) | 104.55015 | 105.61445 |
 
 Across both TFG sampling profiles, 240 of 288 record-level measurements improved and 48 worsened. On the unchanged shared-mode CARMA estimator, 29 legacy following-sea measurements differed from the earlier runner by at most 0.00367%. All 29 satisfied their earlier limits. All 2,451 other measured channels outside TFG reproduced exactly. [Full gate comparison](../reports/results/startup_learning/tfg_horizontal_integral/gate-receipt.json)
+
+The complete strict rerun passed all 544 cases with the updated global and per-record limits. Both directions used the same 13 executables. All 2,768 measured channels met their limits and 2,739 reproduced the gate-setting measurement exactly. [Current replay results and charts](../reports/results/sim_v1.4.0/README.md) · [Executable, source and log verification](../reports/results/startup_learning/final-source-matrix.json)
 
 A fresh build against both updated headers passed every standard TFG gate in all 32 record, gyro-profile and direction combinations. Every numerical record reproduced its gate-setting measurement. [Executable and log hashes](../reports/results/startup_learning/tfg_horizontal_integral/strict-tfg-receipt.json)
 
@@ -434,13 +458,14 @@ would need externally justified calibration uncertainty/quality.
 ## Force-slope weighting in low waves
 
 The fixed slope uncertainty can give a noisy gyro-bias estimate too much
-influence on terminal tilt in low waves. The experimental
-`--scale-force-slope` arm measures the time-weighted RMS fluctuation of
+influence on terminal tilt in low waves. Production uses the motion-scaled
+weight by default in the shared OU/CARMA startup and the TFG wrapper. The
+`--scale-force-slope` reference arm measures the time-weighted RMS fluctuation of
 specific force after gyro transport into the initial frame. It scales the
 existing slope standard deviation by `clamp(RMS / (1 m/s²), 0.15, 1)`.
 Lower force variation increases the weight of the slope observation.
 The scale uses the calibration-prior gyro trajectory and stays fixed through
-each solve. The reference amplitude and floor are experimental settings.
+each solve. The fixed-weight comparison uses a scale of one.
 
 On the original 480 starts, the number of direction/profile/record groups
 with lower matched-time tilt RMS than shipping increases from 27/32 to

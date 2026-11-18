@@ -446,6 +446,315 @@
     "gate_evidence": "tfg_horizontal_integral/gate-receipt.json",
     "paired_rms": "tfg_horizontal_integral/receipt.json",
     "phase_randomized_evidence": "tfg_horizontal_integral/phase-receipt.json",
-    "engine_evidence": "tfg_horizontal_integral/engine-receipt.json"
+    "engine_evidence": "tfg_horizontal_integral/engine-receipt.json",
+    "strict_replay": {
+      "qualification": "all 544 cases passed in their production executables",
+      "gate_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+      "estimator_source": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+      "gated_measurements": 2768,
+      "identical_to_measurement_run": 2739,
+      "observed_measurement_variation": [
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "heave",
+          "settings_run": 3.44488835,
+          "strict_run": 3.44489217
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "displacement",
+          "settings_run": 6.27704382,
+          "strict_run": 6.27705002
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "roll",
+          "settings_run": 0.146751344,
+          "strict_run": 0.146751225
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "pitch",
+          "settings_run": 0.0886683315,
+          "strict_run": 0.0886683837
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "yaw",
+          "settings_run": 0.713607609,
+          "strict_run": 0.713607371
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "acc_z",
+          "settings_run": 2.24634,
+          "strict_run": 2.24635
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "gyro_3d",
+          "settings_run": 9.73758,
+          "strict_run": 9.73754
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "displacement_y",
+          "settings_run": 0.00428699004,
+          "strict_run": 0.0042869919
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "heave",
+          "settings_run": 2.21962619,
+          "strict_run": 2.21962667
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "displacement",
+          "settings_run": 4.84497929,
+          "strict_run": 4.84501076
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "roll",
+          "settings_run": 0.180357143,
+          "strict_run": 0.180357978
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "pitch",
+          "settings_run": 0.135524228,
+          "strict_run": 0.135522947
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "yaw",
+          "settings_run": 0.909472048,
+          "strict_run": 0.909467101
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+          "metric": "displacement_y",
+          "settings_run": 0.101168707,
+          "strict_run": 0.101169683
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "heave",
+          "settings_run": 3.47933698,
+          "strict_run": 3.47934198
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "displacement",
+          "settings_run": 6.68134928,
+          "strict_run": 6.68135548
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "roll",
+          "settings_run": 0.149046361,
+          "strict_run": 0.149046674
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "pitch",
+          "settings_run": 0.089347288,
+          "strict_run": 0.0893470943
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "yaw",
+          "settings_run": 0.676153302,
+          "strict_run": 0.676151812
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "gyro_3d",
+          "settings_run": 9.96161,
+          "strict_run": 9.96157
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+          "metric": "displacement_y",
+          "settings_run": 0.0040707197,
+          "strict_run": 0.00407071877
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "heave",
+          "settings_run": 2.20121241,
+          "strict_run": 2.20122027
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "displacement",
+          "settings_run": 4.32109594,
+          "strict_run": 4.32115459
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "roll",
+          "settings_run": 0.228376165,
+          "strict_run": 0.228376895
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "pitch",
+          "settings_run": 0.181807876,
+          "strict_run": 0.181808501
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "yaw",
+          "settings_run": 0.782236516,
+          "strict_run": 0.78224194
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "acc_z",
+          "settings_run": 3.98683,
+          "strict_run": 3.98684
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "acc_3d",
+          "settings_run": 57.9933,
+          "strict_run": 57.9935
+        },
+        {
+          "case": "following",
+          "family": "csm",
+          "profile": "legacy",
+          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          "metric": "displacement_y",
+          "settings_run": 0.215609714,
+          "strict_run": 0.215617627
+        }
+      ],
+      "original_compiled_gate_tables": {
+        "global_sha256": "d66c71820485679b68b1ce42013b492d659894d499e7785f46dc07d43215075c",
+        "per_record_sha256": "2ba4a4da48332c739e39d8b0c8ed10ec281db7d7320668907296ae00d57265ce"
+      },
+      "per_direction": {
+        "following": {
+          "measurements_sha256": "e52788baecdb3fc92ca084e332fd8b0dd5112725b95af0ee6a0428703a451ed2",
+          "runner_reported_dirty": true,
+          "source_paths": 181,
+          "verified_replay_logs": 23,
+          "cells": 272,
+          "archive_sha256": "4d4477dcc49e78a549c1a8b910c2b69a4770945327a4f940036b906a160251b9"
+        },
+        "head": {
+          "measurements_sha256": "a719ef61fac37b2457aececa4edb3f213584ef227d3af541ea43ba5db7141a55",
+          "runner_reported_dirty": true,
+          "source_paths": 181,
+          "verified_replay_logs": 23,
+          "cells": 272,
+          "archive_sha256": "862f397fb2f9303e50eac7a4afc47334c560a24fa1cd0ca23d8fadc058472b3b"
+        }
+      },
+      "binary_sha256": {
+        "ou2": "566e34d475f8cc39132114d91982c1bfc7af851c12204a531b908d34527f5e96",
+        "ou3": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
+        "tfg": "031376ae3d6e5aff80e2299301294f965b4ec58b9a9ee9d093b1b674262560ae",
+        "carma": "e29621f8fe18f5e024c27a1b02bb9cea8f7660fe71d1c2eaa8189c29c3e0a827",
+        "csm": "589f553fd19ebe9e76c615b749da725db49fb66504ba8a53ffa054824b7ed6ee",
+        "tcarma": "d9c4738e6c870483b03b8f5f5e32279a1fe8a795002d34e2544f38a9516893cc",
+        "tangent": "a2433e71457c89c805fc0e4ecc1f5cba34e3ed3e7fc44a849d5d497d4456a483",
+        "tcsm": "b836bed8c5a5598e944139ad30b9959a0bbdde63a0c51cd46893f6ee54edb764",
+        "tfg_legacy": "f0d0a044ca753b4e0540b833cb7d894aaad87fc0115091fa618316c9ce36fa73",
+        "ahrs": "bb52df99767644183c6876b0c9e1b29bfd882b98ef042999982b3cc8de4b5103",
+        "heave": "8784bf59cf6225aaa1408aaf8967fe9c9b831d2fdf46fb60e8cda255e3c889a5",
+        "nlo": "64cd62a5c64f79913945c42b5997302566bb2121d56386b0c7812bd59c7cc915",
+        "pii": "40f1a9f9fcaf61f04a2167eea0d059200323eb86fd5cf4ee4bd1c9ba126881c0"
+      },
+      "actions_run": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44239902138",
+      "source_validation": "The workflow deletes a tracked measurements.json before collecting scores. Every file in the compiled source inventory matched the reviewed Git tree."
+    }
   }
 }
