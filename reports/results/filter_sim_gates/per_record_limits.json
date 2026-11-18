@@ -2969,25 +2969,25 @@
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 8.40541553,
-        "displacement": 20.4849072,
+        "displacement": 15.0814085,
         "roll": 0.210321203,
         "pitch": 0.083392106,
         "yaw": 0.660430908,
         "acc_z": 2.63635,
         "acc_3d": 45.313,
         "gyro_3d": 9.80912,
-        "displacement_y": 0.0130299982
+        "displacement_y": 0.00607952429
       },
       "limits": {
         "heave": 8.44745,
-        "displacement": 20.58734,
+        "displacement": 15.15682,
         "roll": 0.21138,
         "pitch": 0.08381,
         "yaw": 0.66374,
         "acc_z": 2.64954,
         "acc_3d": 45.53957,
         "gyro_3d": 9.85817,
-        "displacement_y": 0.0131
+        "displacement_y": 0.00611
       }
     },
     {
@@ -2997,25 +2997,25 @@
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 5.55785275,
-        "displacement": 11.6108017,
+        "displacement": 9.11325645,
         "roll": 0.0994239077,
         "pitch": 0.0691006035,
         "yaw": 0.631293595,
         "acc_z": 3.34862,
         "acc_3d": 23.0339,
         "gyro_3d": 9.81393,
-        "displacement_y": 0.0788434669
+        "displacement_y": 0.0527204312
       },
       "limits": {
         "heave": 5.58565,
-        "displacement": 11.66886,
+        "displacement": 9.15883,
         "roll": 0.09993,
         "pitch": 0.06945,
         "yaw": 0.63446,
         "acc_z": 3.36537,
         "acc_3d": 23.14907,
         "gyro_3d": 9.863,
-        "displacement_y": 0.07924
+        "displacement_y": 0.05299
       }
     },
     {
@@ -3025,25 +3025,25 @@
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 4.59621906,
-        "displacement": 11.7995863,
+        "displacement": 9.21855068,
         "roll": 0.250186056,
         "pitch": 0.10967274,
         "yaw": 0.803798854,
         "acc_z": 3.88547,
         "acc_3d": 53.923,
         "gyro_3d": 11.4102,
-        "displacement_y": 0.216625601
+        "displacement_y": 0.150808454
       },
       "limits": {
         "heave": 4.61921,
-        "displacement": 11.85859,
+        "displacement": 9.26465,
         "roll": 0.25144,
         "pitch": 0.11023,
         "yaw": 0.80782,
         "acc_z": 3.9049,
         "acc_3d": 54.19262,
         "gyro_3d": 11.46726,
-        "displacement_y": 0.21771
+        "displacement_y": 0.15157
       }
     },
     {
@@ -3053,25 +3053,25 @@
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 4.34652328,
-        "displacement": 11.120286,
+        "displacement": 8.84469795,
         "roll": 0.199200943,
         "pitch": 0.150215164,
         "yaw": 0.62391901,
         "acc_z": 4.41626,
         "acc_3d": 48.4585,
         "gyro_3d": 10.9178,
-        "displacement_y": 0.490740538
+        "displacement_y": 0.357603252
       },
       "limits": {
         "heave": 4.36826,
-        "displacement": 11.17589,
+        "displacement": 8.88893,
         "roll": 0.2002,
         "pitch": 0.15097,
         "yaw": 0.62704,
         "acc_z": 4.43835,
         "acc_3d": 48.7008,
         "gyro_3d": 10.97239,
-        "displacement_y": 0.4932
+        "displacement_y": 0.3594
       }
     },
     {
@@ -3081,25 +3081,25 @@
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 7.97319984,
-        "displacement": 20.2869453,
+        "displacement": 14.8056707,
         "roll": 0.237639353,
         "pitch": 0.0840520635,
         "yaw": 0.606503606,
         "acc_z": 2.61946,
         "acc_3d": 50.5577,
         "gyro_3d": 10.0626,
-        "displacement_y": 0.0126472227
+        "displacement_y": 0.00563057931
       },
       "limits": {
         "heave": 8.01307,
-        "displacement": 20.38839,
+        "displacement": 14.8797,
         "roll": 0.23883,
         "pitch": 0.08448,
         "yaw": 0.60954,
         "acc_z": 2.63256,
         "acc_3d": 50.81049,
         "gyro_3d": 10.11292,
-        "displacement_y": 0.01272
+        "displacement_y": 0.00566
       }
     },
     {
@@ -3109,25 +3109,25 @@
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 5.44832706,
-        "displacement": 11.3086824,
+        "displacement": 8.84164047,
         "roll": 0.103542574,
         "pitch": 0.0664587393,
         "yaw": 0.56843704,
         "acc_z": 3.3128,
         "acc_3d": 23.4045,
         "gyro_3d": 9.99152,
-        "displacement_y": 0.0791750252
+        "displacement_y": 0.0527782403
       },
       "limits": {
         "heave": 5.47557,
-        "displacement": 11.36523,
+        "displacement": 8.88585,
         "roll": 0.10407,
         "pitch": 0.0668,
         "yaw": 0.57128,
         "acc_z": 3.32937,
         "acc_3d": 23.52153,
         "gyro_3d": 10.04148,
-        "displacement_y": 0.07958
+        "displacement_y": 0.05305
       }
     },
     {
@@ -3137,25 +3137,25 @@
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 4.51120281,
-        "displacement": 11.5055695,
+        "displacement": 9.0539484,
         "roll": 0.252260327,
         "pitch": 0.108839102,
         "yaw": 0.786798835,
         "acc_z": 3.86577,
         "acc_3d": 54.1918,
         "gyro_3d": 11.8873,
-        "displacement_y": 0.210372314
+        "displacement_y": 0.146924153
       },
       "limits": {
         "heave": 4.53376,
-        "displacement": 11.5631,
+        "displacement": 9.09922,
         "roll": 0.25353,
         "pitch": 0.10939,
         "yaw": 0.79074,
         "acc_z": 3.8851,
         "acc_3d": 54.46276,
         "gyro_3d": 11.94674,
-        "displacement_y": 0.21143
+        "displacement_y": 0.14766
       }
     },
     {
@@ -3165,25 +3165,25 @@
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 4.28409195,
-        "displacement": 10.6972246,
+        "displacement": 8.65872002,
         "roll": 0.202993244,
         "pitch": 0.134560704,
         "yaw": 0.55830723,
         "acc_z": 4.40435,
         "acc_3d": 46.9874,
         "gyro_3d": 11.1388,
-        "displacement_y": 0.482055545
+        "displacement_y": 0.358990043
       },
       "limits": {
         "heave": 4.30552,
-        "displacement": 10.75072,
+        "displacement": 8.70202,
         "roll": 0.20401,
         "pitch": 0.13524,
         "yaw": 0.5611,
         "acc_z": 4.42638,
         "acc_3d": 47.22234,
         "gyro_3d": 11.1945,
-        "displacement_y": 0.48447
+        "displacement_y": 0.36079
       }
     },
     {
@@ -3193,25 +3193,25 @@
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 8.40584183,
-        "displacement": 20.3978271,
+        "displacement": 15.0362139,
         "roll": 0.209492549,
         "pitch": 0.0840577409,
         "yaw": 0.644329667,
         "acc_z": 2.63656,
         "acc_3d": 45.2256,
         "gyro_3d": 9.83287,
-        "displacement_y": 0.0129142618
+        "displacement_y": 0.00598504161
       },
       "limits": {
         "heave": 8.44788,
-        "displacement": 20.49982,
+        "displacement": 15.1114,
         "roll": 0.21055,
         "pitch": 0.08448,
         "yaw": 0.64756,
         "acc_z": 2.64975,
         "acc_3d": 45.45173,
         "gyro_3d": 9.88204,
-        "displacement_y": 0.01298
+        "displacement_y": 0.00602
       }
     },
     {
@@ -3221,25 +3221,25 @@
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 5.55278826,
-        "displacement": 11.5778151,
+        "displacement": 9.07337761,
         "roll": 0.100392163,
         "pitch": 0.0707998946,
         "yaw": 0.651834548,
         "acc_z": 3.34913,
         "acc_3d": 23.195,
         "gyro_3d": 9.82907,
-        "displacement_y": 0.0784763247
+        "displacement_y": 0.0522740297
       },
       "limits": {
         "heave": 5.58056,
-        "displacement": 11.63571,
+        "displacement": 9.11875,
         "roll": 0.1009,
         "pitch": 0.07116,
         "yaw": 0.6551,
         "acc_z": 3.36588,
         "acc_3d": 23.31098,
         "gyro_3d": 9.87822,
-        "displacement_y": 0.07887
+        "displacement_y": 0.05254
       }
     },
     {
@@ -3249,25 +3249,25 @@
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 4.60498238,
-        "displacement": 11.7845793,
+        "displacement": 9.19567871,
         "roll": 0.248484582,
         "pitch": 0.11368794,
         "yaw": 0.807227552,
         "acc_z": 3.89955,
         "acc_3d": 53.917,
         "gyro_3d": 11.3972,
-        "displacement_y": 0.216316164
+        "displacement_y": 0.150255412
       },
       "limits": {
         "heave": 4.62801,
-        "displacement": 11.84351,
+        "displacement": 9.24166,
         "roll": 0.24973,
         "pitch": 0.11426,
         "yaw": 0.81127,
         "acc_z": 3.91905,
         "acc_3d": 54.18659,
         "gyro_3d": 11.45419,
-        "displacement_y": 0.2174
+        "displacement_y": 0.15101
       }
     },
     {
@@ -3277,25 +3277,25 @@
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 4.34904099,
-        "displacement": 11.1101561,
+        "displacement": 8.83076286,
         "roll": 0.201299548,
         "pitch": 0.153110504,
         "yaw": 0.641638756,
         "acc_z": 4.45007,
         "acc_3d": 48.7057,
         "gyro_3d": 10.9107,
-        "displacement_y": 0.488678694
+        "displacement_y": 0.355553389
       },
       "limits": {
         "heave": 4.37079,
-        "displacement": 11.16571,
+        "displacement": 8.87492,
         "roll": 0.20231,
         "pitch": 0.15388,
         "yaw": 0.64485,
         "acc_z": 4.47233,
         "acc_3d": 48.94923,
         "gyro_3d": 10.96526,
-        "displacement_y": 0.49113
+        "displacement_y": 0.35734
       }
     },
     {
@@ -3305,25 +3305,25 @@
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 7.97357512,
-        "displacement": 20.2131329,
+        "displacement": 14.7701969,
         "roll": 0.236808538,
         "pitch": 0.0846543014,
         "yaw": 0.581244707,
         "acc_z": 2.61952,
         "acc_3d": 50.4536,
         "gyro_3d": 10.1038,
-        "displacement_y": 0.0125484206
+        "displacement_y": 0.00554347457
       },
       "limits": {
         "heave": 8.01345,
-        "displacement": 20.3142,
+        "displacement": 14.84405,
         "roll": 0.238,
         "pitch": 0.08508,
         "yaw": 0.58416,
         "acc_z": 2.63262,
         "acc_3d": 50.70587,
         "gyro_3d": 10.15432,
-        "displacement_y": 0.01262
+        "displacement_y": 0.00558
       }
     },
     {
@@ -3333,25 +3333,25 @@
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 5.44312,
-        "displacement": 11.2756414,
+        "displacement": 8.79974174,
         "roll": 0.104855858,
         "pitch": 0.0685909167,
         "yaw": 0.590689301,
         "acc_z": 3.31289,
         "acc_3d": 23.5701,
         "gyro_3d": 9.99646,
-        "displacement_y": 0.0787707642
+        "displacement_y": 0.0522793606
       },
       "limits": {
         "heave": 5.47034,
-        "displacement": 11.33202,
+        "displacement": 8.84375,
         "roll": 0.10539,
         "pitch": 0.06894,
         "yaw": 0.59365,
         "acc_z": 3.32946,
         "acc_3d": 23.68796,
         "gyro_3d": 10.04645,
-        "displacement_y": 0.07917
+        "displacement_y": 0.05255
       }
     },
     {
@@ -3361,25 +3361,25 @@
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 4.52221489,
-        "displacement": 11.4912271,
+        "displacement": 9.0306921,
         "roll": 0.249587521,
         "pitch": 0.114646077,
         "yaw": 0.79103601,
         "acc_z": 3.88465,
         "acc_3d": 54.1301,
         "gyro_3d": 11.8788,
-        "displacement_y": 0.210229591
+        "displacement_y": 0.1464791
       },
       "limits": {
         "heave": 4.54483,
-        "displacement": 11.54869,
+        "displacement": 9.07585,
         "roll": 0.25084,
         "pitch": 0.11522,
         "yaw": 0.795,
         "acc_z": 3.90408,
         "acc_3d": 54.40076,
         "gyro_3d": 11.9382,
-        "displacement_y": 0.21129
+        "displacement_y": 0.14722
       }
     },
     {
@@ -3389,25 +3389,25 @@
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 4.28731871,
-        "displacement": 10.6844625,
+        "displacement": 8.64218712,
         "roll": 0.206323385,
         "pitch": 0.138803929,
         "yaw": 0.57406044,
         "acc_z": 4.44945,
         "acc_3d": 47.3595,
         "gyro_3d": 11.1276,
-        "displacement_y": 0.479572654
+        "displacement_y": 0.356562048
       },
       "limits": {
         "heave": 4.30876,
-        "displacement": 10.73789,
+        "displacement": 8.6854,
         "roll": 0.20736,
         "pitch": 0.1395,
         "yaw": 0.57694,
         "acc_z": 4.4717,
         "acc_3d": 47.5963,
         "gyro_3d": 11.18324,
-        "displacement_y": 0.48198
+        "displacement_y": 0.35835
       }
     },
     {
@@ -8457,25 +8457,25 @@
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 3.22866583,
-        "displacement": 9.21325779,
+        "displacement": 6.54265547,
         "roll": 0.101466976,
         "pitch": 0.112138435,
         "yaw": 0.970929503,
         "acc_z": 2.25517,
         "acc_3d": 30.4837,
         "gyro_3d": 10.8966,
-        "displacement_y": 0.00828004442
+        "displacement_y": 0.00291307201
       },
       "limits": {
         "heave": 3.24481,
-        "displacement": 9.25933,
+        "displacement": 6.57537,
         "roll": 0.10198,
         "pitch": 0.1127,
         "yaw": 0.97579,
         "acc_z": 2.26645,
         "acc_3d": 30.63612,
         "gyro_3d": 10.95109,
-        "displacement_y": 0.00833
+        "displacement_y": 0.00293
       }
     },
     {
@@ -8485,25 +8485,25 @@
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 3.32811451,
-        "displacement": 6.36502695,
+        "displacement": 4.88022184,
         "roll": 0.0744717494,
         "pitch": 0.0693368986,
         "yaw": 0.540968716,
         "acc_z": 3.00514,
         "acc_3d": 19.5611,
         "gyro_3d": 11.4556,
-        "displacement_y": 0.0550003946
+        "displacement_y": 0.033981055
       },
       "limits": {
         "heave": 3.34476,
-        "displacement": 6.39686,
+        "displacement": 4.90463,
         "roll": 0.07485,
         "pitch": 0.06969,
         "yaw": 0.54368,
         "acc_z": 3.02017,
         "acc_3d": 19.65891,
         "gyro_3d": 11.51288,
-        "displacement_y": 0.05528
+        "displacement_y": 0.03416
       }
     },
     {
@@ -8513,25 +8513,25 @@
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 3.62086248,
-        "displacement": 8.23502445,
+        "displacement": 6.52482224,
         "roll": 0.132593542,
         "pitch": 0.208985046,
         "yaw": 0.894172311,
         "acc_z": 3.76881,
         "acc_3d": 49.7233,
         "gyro_3d": 12.5327,
-        "displacement_y": 0.167678222
+        "displacement_y": 0.11694333
       },
       "limits": {
         "heave": 3.63897,
-        "displacement": 8.2762,
+        "displacement": 6.55745,
         "roll": 0.13326,
         "pitch": 0.21003,
         "yaw": 0.89865,
         "acc_z": 3.78766,
         "acc_3d": 49.97192,
         "gyro_3d": 12.59537,
-        "displacement_y": 0.16852
+        "displacement_y": 0.11753
       }
     },
     {
@@ -8541,25 +8541,25 @@
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 3.52791333,
-        "displacement": 7.63828421,
+        "displacement": 6.11571693,
         "roll": 0.0978839546,
         "pitch": 0.235959485,
         "yaw": 1.02407885,
         "acc_z": 4.26642,
         "acc_3d": 51.3582,
         "gyro_3d": 10.7495,
-        "displacement_y": 0.413426399
+        "displacement_y": 0.302986026
       },
       "limits": {
         "heave": 3.54556,
-        "displacement": 7.67648,
+        "displacement": 6.1463,
         "roll": 0.09838,
         "pitch": 0.23714,
         "yaw": 1.0292,
         "acc_z": 4.28776,
         "acc_3d": 51.615,
         "gyro_3d": 10.80325,
-        "displacement_y": 0.4155
+        "displacement_y": 0.30451
       }
     },
     {
@@ -8569,25 +8569,25 @@
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 3.31463385,
-        "displacement": 9.3410759,
+        "displacement": 6.60923672,
         "roll": 0.0972870365,
         "pitch": 0.111349165,
         "yaw": 0.97753942,
         "acc_z": 2.26047,
         "acc_3d": 29.7979,
         "gyro_3d": 11.0894,
-        "displacement_y": 0.00843247399
+        "displacement_y": 0.00292063109
       },
       "limits": {
         "heave": 3.33121,
-        "displacement": 9.38779,
+        "displacement": 6.64229,
         "roll": 0.09778,
         "pitch": 0.11191,
         "yaw": 0.98243,
         "acc_z": 2.27178,
         "acc_3d": 29.94689,
         "gyro_3d": 11.14485,
-        "displacement_y": 0.00848
+        "displacement_y": 0.00294
       }
     },
     {
@@ -8597,25 +8597,25 @@
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 3.25050807,
-        "displacement": 6.43381023,
+        "displacement": 5.0200758,
         "roll": 0.0748436376,
         "pitch": 0.0655079633,
         "yaw": 0.533769071,
         "acc_z": 2.98108,
         "acc_3d": 19.0533,
         "gyro_3d": 11.4272,
-        "displacement_y": 0.0535213649
+        "displacement_y": 0.034035407
       },
       "limits": {
         "heave": 3.26677,
-        "displacement": 6.46598,
+        "displacement": 5.04518,
         "roll": 0.07522,
         "pitch": 0.06584,
         "yaw": 0.53644,
         "acc_z": 2.99599,
         "acc_3d": 19.14857,
         "gyro_3d": 11.48434,
-        "displacement_y": 0.05379
+        "displacement_y": 0.03421
       }
     },
     {
@@ -8625,25 +8625,25 @@
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 3.55402827,
-        "displacement": 8.0946207,
+        "displacement": 6.625144,
         "roll": 0.135300487,
         "pitch": 0.208864704,
         "yaw": 0.867719293,
         "acc_z": 3.75107,
         "acc_3d": 50.012,
         "gyro_3d": 12.3051,
-        "displacement_y": 0.16923283
+        "displacement_y": 0.124815695
       },
       "limits": {
         "heave": 3.5718,
-        "displacement": 8.1351,
+        "displacement": 6.65827,
         "roll": 0.13598,
         "pitch": 0.20991,
         "yaw": 0.87206,
         "acc_z": 3.76983,
         "acc_3d": 50.26206,
         "gyro_3d": 12.36663,
-        "displacement_y": 0.17008
+        "displacement_y": 0.12544
       }
     },
     {
@@ -8653,25 +8653,25 @@
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 3.55820441,
-        "displacement": 7.8043561,
+        "displacement": 6.54192543,
         "roll": 0.0696818009,
         "pitch": 0.239511997,
         "yaw": 1.08798432,
         "acc_z": 4.30948,
         "acc_3d": 50.1701,
         "gyro_3d": 10.3761,
-        "displacement_y": 0.43721956
+        "displacement_y": 0.343408436
       },
       "limits": {
         "heave": 3.576,
-        "displacement": 7.84338,
+        "displacement": 6.57464,
         "roll": 0.07004,
         "pitch": 0.24071,
         "yaw": 1.09343,
         "acc_z": 4.33103,
         "acc_3d": 50.42096,
         "gyro_3d": 10.42799,
-        "displacement_y": 0.43941
+        "displacement_y": 0.34513
       }
     },
     {
@@ -8681,25 +8681,25 @@
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 3.22866583,
-        "displacement": 9.22006989,
+        "displacement": 6.52167606,
         "roll": 0.101697236,
         "pitch": 0.111746259,
         "yaw": 1.02319717,
         "acc_z": 2.25508,
         "acc_3d": 30.451,
         "gyro_3d": 10.8771,
-        "displacement_y": 0.00828452315
+        "displacement_y": 0.00289001991
       },
       "limits": {
         "heave": 3.24481,
-        "displacement": 9.26618,
+        "displacement": 6.55429,
         "roll": 0.10221,
         "pitch": 0.11231,
         "yaw": 1.02832,
         "acc_z": 2.26636,
         "acc_3d": 30.60326,
         "gyro_3d": 10.93149,
-        "displacement_y": 0.00833
+        "displacement_y": 0.00291
       }
     },
     {
@@ -8709,25 +8709,25 @@
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 3.32772899,
-        "displacement": 6.34830427,
+        "displacement": 4.86267757,
         "roll": 0.0755835027,
         "pitch": 0.0697892383,
         "yaw": 0.516051769,
         "acc_z": 3.01965,
         "acc_3d": 19.5541,
         "gyro_3d": 11.624,
-        "displacement_y": 0.0547599867
+        "displacement_y": 0.0337878726
       },
       "limits": {
         "heave": 3.34437,
-        "displacement": 6.38005,
+        "displacement": 4.887,
         "roll": 0.07597,
         "pitch": 0.07014,
         "yaw": 0.51864,
         "acc_z": 3.03475,
         "acc_3d": 19.65188,
         "gyro_3d": 11.68212,
-        "displacement_y": 0.05504
+        "displacement_y": 0.03396
       }
     },
     {
@@ -8737,25 +8737,25 @@
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 3.62806034,
-        "displacement": 8.27337933,
+        "displacement": 6.54876089,
         "roll": 0.138616905,
         "pitch": 0.205839604,
         "yaw": 0.899410367,
         "acc_z": 3.83057,
         "acc_3d": 49.8952,
         "gyro_3d": 12.4991,
-        "displacement_y": 0.168815821
+        "displacement_y": 0.117723957
       },
       "limits": {
         "heave": 3.64621,
-        "displacement": 8.31475,
+        "displacement": 6.58151,
         "roll": 0.13931,
         "pitch": 0.20687,
         "yaw": 0.90391,
         "acc_z": 3.84973,
         "acc_3d": 50.14468,
         "gyro_3d": 12.5616,
-        "displacement_y": 0.16966
+        "displacement_y": 0.11832
       }
     },
     {
@@ -8765,25 +8765,25 @@
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 3.54012561,
-        "displacement": 7.63229799,
+        "displacement": 6.11245441,
         "roll": 0.0992650166,
         "pitch": 0.228211761,
         "yaw": 0.940955043,
         "acc_z": 4.33143,
         "acc_3d": 50.5605,
         "gyro_3d": 10.8807,
-        "displacement_y": 0.408872753
+        "displacement_y": 0.299514592
       },
       "limits": {
         "heave": 3.55783,
-        "displacement": 7.67046,
+        "displacement": 6.14302,
         "roll": 0.09977,
         "pitch": 0.22936,
         "yaw": 0.94566,
         "acc_z": 4.35309,
         "acc_3d": 50.81331,
         "gyro_3d": 10.93511,
-        "displacement_y": 0.41092
+        "displacement_y": 0.30102
       }
     },
     {
@@ -8793,25 +8793,25 @@
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
         "heave": 3.31467462,
-        "displacement": 9.34698391,
+        "displacement": 6.5880022,
         "roll": 0.0975572094,
         "pitch": 0.110898972,
         "yaw": 1.03099394,
         "acc_z": 2.26045,
         "acc_3d": 29.7562,
         "gyro_3d": 11.0718,
-        "displacement_y": 0.00843803305
+        "displacement_y": 0.00288816472
       },
       "limits": {
         "heave": 3.33125,
-        "displacement": 9.39372,
+        "displacement": 6.62095,
         "roll": 0.09805,
         "pitch": 0.11146,
         "yaw": 1.03615,
         "acc_z": 2.27176,
         "acc_3d": 29.90499,
         "gyro_3d": 11.12716,
-        "displacement_y": 0.00849
+        "displacement_y": 0.00291
       }
     },
     {
@@ -8821,25 +8821,25 @@
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
         "heave": 3.24805403,
-        "displacement": 6.43078613,
+        "displacement": 5.00909281,
         "roll": 0.0766004249,
         "pitch": 0.066501677,
         "yaw": 0.511790037,
         "acc_z": 2.99369,
         "acc_3d": 19.1101,
         "gyro_3d": 11.5933,
-        "displacement_y": 0.0534356683
+        "displacement_y": 0.0339464769
       },
       "limits": {
         "heave": 3.2643,
-        "displacement": 6.46295,
+        "displacement": 5.03414,
         "roll": 0.07699,
         "pitch": 0.06684,
         "yaw": 0.51435,
         "acc_z": 3.00866,
         "acc_3d": 19.20566,
         "gyro_3d": 11.65127,
-        "displacement_y": 0.05371
+        "displacement_y": 0.03412
       }
     },
     {
@@ -8849,25 +8849,25 @@
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
         "heave": 3.5599277,
-        "displacement": 8.14360523,
+        "displacement": 6.65832901,
         "roll": 0.145914063,
         "pitch": 0.203100428,
         "yaw": 0.86596477,
         "acc_z": 3.83246,
         "acc_3d": 50.2747,
         "gyro_3d": 12.2902,
-        "displacement_y": 0.17069903
+        "displacement_y": 0.125880197
       },
       "limits": {
         "heave": 3.57773,
-        "displacement": 8.18433,
+        "displacement": 6.69163,
         "roll": 0.14665,
         "pitch": 0.20412,
         "yaw": 0.8703,
         "acc_z": 3.85163,
         "acc_3d": 50.52608,
         "gyro_3d": 12.35166,
-        "displacement_y": 0.17156
+        "displacement_y": 0.12651
       }
     },
     {
@@ -8877,25 +8877,25 @@
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
         "heave": 3.57540727,
-        "displacement": 7.80423069,
+        "displacement": 6.54558706,
         "roll": 0.0734036043,
         "pitch": 0.22610043,
         "yaw": 0.976177156,
         "acc_z": 4.41706,
         "acc_3d": 48.4565,
         "gyro_3d": 10.4749,
-        "displacement_y": 0.431370676
+        "displacement_y": 0.338912308
       },
       "limits": {
         "heave": 3.59329,
-        "displacement": 7.84326,
+        "displacement": 6.57832,
         "roll": 0.07378,
         "pitch": 0.22724,
         "yaw": 0.98106,
         "acc_z": 4.43915,
         "acc_3d": 48.69879,
         "gyro_3d": 10.52728,
-        "displacement_y": 0.43353
+        "displacement_y": 0.34061
       }
     },
     {
@@ -11028,10 +11028,10 @@
     }
   ],
   "note": "Locked native replay baseline: both v1.4.0 directions and 20 s steering. Qualifying measurements retain their original gate outcomes. Updating limits is not an estimator improvement. CI never refits these limits.",
-  "reason": "Both TFG-CARMA(4,1) wrappers preserve and constrain the transverse displacement integral. All 544 canonical cells passed their existing limits before refitting.",
+  "reason": "All 32 OU-III records at 44cb449 passed the prior gates. Tighten the 32 per-record 3-D and 32 Y limits with the standard 0.5% margin. The other 512 cells retain their independently recorded baseline.",
   "measurement_sha256": {
-    "following": "bf2e0af6c6be1b2838f42ee65f6d0d6818bae8962d2124b4e43fe0b43c3664b6",
-    "head": "3cdf425cf61497c8d17aa42025c2dc928e36df09bf610dbde802ae4b4db15b91"
+    "following": "b0ca4fdfb49cd0061eebd3c1199e99125aec63c3cfa678c9aabeee8e8a0a2522",
+    "head": "d8d8f2ece868f48b390f72215e962533f0fdfb90dbd1db29ea9b5c573a6c30b0"
   },
   "measurement_files": {
     "following": "baseline_following.json",

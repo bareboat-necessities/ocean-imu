@@ -53,12 +53,12 @@ inline constexpr W3dFailureLimits ou3{
     .err_limit_yaw_deg = 1.09343f,
     .err_limit_roll_deg = 0.25353f,
     .err_limit_pitch_deg = 0.24071f,
-    .err_limit_percent_3d_jonswap = 20.58734f,
-    .err_limit_percent_3d_pmstokes = 20.38839f,
+    .err_limit_percent_3d_jonswap = 15.15682f,
+    .err_limit_percent_3d_pmstokes = 14.87970f,
     .acc_z_bias_percent = 4.43835f,
     .bias_3d_percent = 54.46276f,
     .gyro_bias_3d_percent = 12.59537f,
-    .err_limit_y_rms_m = 0.49320f,
+    .err_limit_y_rms_m = 0.36079f,
 };
 
 inline constexpr W3dFailureLimits tangent{
@@ -181,12 +181,12 @@ inline constexpr W3dFailureLimits ou3{
     .err_limit_yaw_deg = 1.03615f,
     .err_limit_roll_deg = 0.25084f,
     .err_limit_pitch_deg = 0.22936f,
-    .err_limit_percent_3d_jonswap = 20.49982f,
-    .err_limit_percent_3d_pmstokes = 20.31420f,
+    .err_limit_percent_3d_jonswap = 15.11140f,
+    .err_limit_percent_3d_pmstokes = 14.84405f,
     .acc_z_bias_percent = 4.47233f,
     .bias_3d_percent = 54.40076f,
     .gyro_bias_3d_percent = 12.56160f,
-    .err_limit_y_rms_m = 0.49113f,
+    .err_limit_y_rms_m = 0.35835f,
 };
 
 inline constexpr W3dFailureLimits tangent{

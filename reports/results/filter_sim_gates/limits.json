@@ -216,12 +216,12 @@
         "err_limit_yaw_deg": 1.09343,
         "err_limit_roll_deg": 0.25353,
         "err_limit_pitch_deg": 0.24071,
-        "err_limit_percent_3d_jonswap": 20.58734,
-        "err_limit_percent_3d_pmstokes": 20.38839,
+        "err_limit_percent_3d_jonswap": 15.15682,
+        "err_limit_percent_3d_pmstokes": 14.8797,
         "acc_z_bias_percent": 4.43835,
         "bias_3d_percent": 54.46276,
         "gyro_bias_3d_percent": 12.59537,
-        "err_limit_y_rms_m": 0.4932
+        "err_limit_y_rms_m": 0.36079
       },
       "current_measured_worst": {
         "err_limit_percent_z_jonswap": 8.40541553,
@@ -229,12 +229,12 @@
         "err_limit_yaw_deg": 1.08798432,
         "err_limit_roll_deg": 0.252260327,
         "err_limit_pitch_deg": 0.239511997,
-        "err_limit_percent_3d_jonswap": 20.4849072,
-        "err_limit_percent_3d_pmstokes": 20.2869453,
+        "err_limit_percent_3d_jonswap": 15.0814085,
+        "err_limit_percent_3d_pmstokes": 14.8056707,
         "acc_z_bias_percent": 4.41626,
         "bias_3d_percent": 54.1918,
         "gyro_bias_3d_percent": 12.5327,
-        "err_limit_y_rms_m": 0.490740538
+        "err_limit_y_rms_m": 0.358990043
       },
       "interval_limits": {
         "err_limit_percent_z_jonswap": 8.44788,
@@ -242,12 +242,12 @@
         "err_limit_yaw_deg": 1.03615,
         "err_limit_roll_deg": 0.25084,
         "err_limit_pitch_deg": 0.22936,
-        "err_limit_percent_3d_jonswap": 20.49982,
-        "err_limit_percent_3d_pmstokes": 20.3142,
+        "err_limit_percent_3d_jonswap": 15.1114,
+        "err_limit_percent_3d_pmstokes": 14.84405,
         "acc_z_bias_percent": 4.47233,
         "bias_3d_percent": 54.40076,
         "gyro_bias_3d_percent": 12.5616,
-        "err_limit_y_rms_m": 0.49113
+        "err_limit_y_rms_m": 0.35835
       },
       "interval_measured_worst": {
         "err_limit_percent_z_jonswap": 8.40584183,
@@ -255,12 +255,12 @@
         "err_limit_yaw_deg": 1.03099394,
         "err_limit_roll_deg": 0.249587521,
         "err_limit_pitch_deg": 0.228211761,
-        "err_limit_percent_3d_jonswap": 20.3978271,
-        "err_limit_percent_3d_pmstokes": 20.2131329,
+        "err_limit_percent_3d_jonswap": 15.0362139,
+        "err_limit_percent_3d_pmstokes": 14.7701969,
         "acc_z_bias_percent": 4.45007,
         "bias_3d_percent": 54.1301,
         "gyro_bias_3d_percent": 12.4991,
-        "err_limit_y_rms_m": 0.488678694
+        "err_limit_y_rms_m": 0.356562048
       }
     },
     "tangent": {
