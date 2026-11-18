@@ -1,3 +1,17 @@
+## Native OU-III replay after the transverse-period CARMA update
+
+The independent-axis and shared-mode TFG-CARMA filters changed at `4b6d7fc`.
+Two of the 376 tracked sources changed. Both are outside the 46 project files
+included by the OU-III planar probe. The source validator rejected the previous
+planar report because it identifies the entire shipping source tree (class E).
+
+- **Structures preserved.** Both perturbation radii carried the inherited OU-III state, covariance, forcing, clocks, and accepted magnetic corrections across samples 40,000–44,000. Each unperturbed fork matched its parent bit for bit.
+- **Relaxations introduced.** The 252 finite perturbation directions at each radius sample a neighborhood of one execution. Their reachability and a uniform derivative bound remain open.
+- **Failure classification.** The expired source binding was a diagnostic failure. An exact comparison of the compiler, options and preprocessed program established that the previous native executable implements the current probe.
+- **Counterexamples.** Neither replay produced a shipping counterexample.
+- **Retained results.** The two newly measured secant matrices matched the prior raw bytes. The other 16 previously measured reports matched their recorded checksums. The finite diagnostics retain their original scope.
+- **Next falsifiable check.** Bound coupled cross-gains and every-prefix retention on reachable continuations of the same inherited state and physical forcing.
+
 ## CARMA gyro mode and shared startup evidence
 
 The native configuration test exposed a mismatch when a caller selected instantaneous gyro samples after `begin()`. CARMA's live core accepted the setter while the startup wave fit retained its earlier timing. The shared startup now reads CARMA's active core mode. Four configuration and setter comparisons matched sample by sample through handover and bias activation on `218d4ded`.

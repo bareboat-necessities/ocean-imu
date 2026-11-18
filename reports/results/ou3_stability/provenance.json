@@ -207,7 +207,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "83aaec53dc27c1565d787379f51c798299f3d175"
+      "git_blob_sha": "bdfd7ab235c715bc86534eb90574044c909c7561"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -879,7 +879,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "5abdcf8a3c216685990a0ecc21f61004e18e25e5"
+      "git_blob_sha": "d729c4844c26c40973720e76e8175101846e0f2b"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1978,5 +1978,48 @@
     "sha256": "e7c90464fc3b853b430760bdc0fc2aca16aedf0155e4ef8382bb6c95fadea9af",
     "native_calculations": 17,
     "theorem_promoted": false
+  },
+  "tfg_carma_transverse_period_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "4b6d7fc999521713018358ff454b350ae07ea960",
+    "runtime_src_git_tree": "f8bb78f738fbd62eeeff803e74d34dcb0a289aac",
+    "previous_native_source": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+    "prior_native_receipt": "reports/results/ou3_stability/carma-startup-gyro-mode-source-refresh.json",
+    "prior_native_receipt_sha256": "e7c90464fc3b853b430760bdc0fc2aca16aedf0155e4ef8382bb6c95fadea9af",
+    "prior_source_files_verified": 376,
+    "changed_files_outside_ou3_probe": [
+      "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
+      "src/kalman_carma/SeaStateFusionFilter_CARMA3.h"
+    ],
+    "unchanged_probe_project_dependencies": 46,
+    "compiler_sha256": "6b3696e4dcb85e1c949c732a02befa50e3983ecf94ce7e8e58d9d503b954b79d",
+    "compiler_options": [
+      "-std=c++20",
+      "-O1",
+      "-DEIGEN_UNROLLING_LIMIT=0",
+      "-DEIGEN_NON_ARDUINO"
+    ],
+    "preprocessor_path_mapping": "Map selected source path to previous build path for __FILE__ strings only.",
+    "identical_preprocessed_bytes": 4944307,
+    "preprocessed_sha256": "4837258da762f2600f07f1b7404feaf19880cc40826299d10437e14309eba9cd",
+    "native_probe_binary_sha256": "14b6a3848c3237c33a4145d23b7011c3ed4103df82c4fb9f568117519d5116ef",
+    "native_replay_performed": true,
+    "reproduced_native_secant_matrices": [
+      {
+        "epsilon": 0.01,
+        "columns": 252,
+        "raw_matrix_sha256": "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50"
+      },
+      {
+        "epsilon": 0.005,
+        "columns": 252,
+        "raw_matrix_sha256": "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+      }
+    ],
+    "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+    "artifact_sha256": "94bc9d82f1d90f34e648eff839d4a867d967dee39259ae2551240fe7669a142c",
+    "other_native_records_verified": 16,
+    "genuine_shipping_counterexample_found": false,
+    "theorem_closed": false
   }
 }
