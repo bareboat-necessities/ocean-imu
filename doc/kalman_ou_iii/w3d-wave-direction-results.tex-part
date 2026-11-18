@@ -131,12 +131,12 @@ OU--III performance claim for this paper.
     \toprule
     Case & $H_s$ [m] & Axis RMS & Directed RMS & $n$ \\
     \midrule
-    JONSWAP     & 0.27 & $38.46\pm3.48$ & -- & 0 \\
+    JONSWAP     & 0.27 & $38.44\pm3.47$ & -- & 0 \\
     JONSWAP     & 1.50 & $24.00\pm1.85$ & $18.93\pm0.66$ & 10 \\
     JONSWAP     & 4.00 & $21.19\pm2.89$ & $18.96\pm2.02$ & 10 \\
     JONSWAP     & 8.50 & $28.99\pm1.77$ & $28.20\pm1.36$ & 10 \\
     \addlinespace
-    PM--Stokes  & 0.27 & $40.91\pm3.22$ & -- & 0 \\
+    PM--Stokes  & 0.27 & $40.92\pm3.22$ & -- & 0 \\
     PM--Stokes  & 1.50 & $24.83\pm1.56$ & $19.98\pm0.79$ & 10 \\
     PM--Stokes  & 4.00 & $19.04\pm2.34$ & $17.35\pm1.78$ & 10 \\
     PM--Stokes  & 8.50 & $26.88\pm1.11$ & $26.49\pm1.33$ & 10 \\
