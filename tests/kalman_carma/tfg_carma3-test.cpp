@@ -1474,6 +1474,50 @@ void test_behaviour() {
     }
 }
 
+void test_horizontal_integral_retune() {
+    F before = make_filter();
+    before.state() = make_state(rot_euler(0.4, -0.3, 1.2), 0.8, rvec(0.01), rvec(0.05));
+    before.covariance_full() = scaled_cov(0.02, 1e-3, 0.1, 0.015);
+    const double next = 1.27 * KAPPA;
+    const Eigen::Vector2d axis(0.8, 0.6);
+    auto retune = [&](F f, const Eigen::Vector2d& direction) {
+        f.update_horizontal_wave(0.005, direction);
+        f.set_vertical_carma(next, 0.7);
+        return f;
+    };
+    auto integral = [](const F& f) -> V3 {
+        const auto& m = f.vertical_model();
+        const double omega = 2 * std::numbers::pi * m.kappa() * m.shape().f1_hz;
+        return (f.state().X.col(3) - 2 * m.shape().zeta1 * omega * f.get_position() - f.get_velocity())
+            / (omega * omega);
+    };
+    const F after = retune(before, axis);
+    check("retune preserves the horizontal displacement integral",
+          (integral(after) - integral(before)).head<2>().norm(), 2e-14);
+    check("retune preserves vertical latent state and physical p/v/a",
+          std::abs(after.state().X(2,3) - before.state().X(2,3))
+          + (after.state().X.leftCols<3>() - before.state().X.leftCols<3>()).norm(), 0.0);
+    const F quiet = retune(before, Eigen::Vector2d::Zero());
+    check("unreliable wave axis preserves the original retune",
+          (quiet.state().X - before.state().X).norm() + (quiet.covariance_full() - before.covariance_full()).norm(), 0.0);
+
+    // Differentiate the actual mean map in right-invariant coordinates. Random
+    // cross terms ensure the comparison also exercises bias and attitude rows.
+    constexpr double eps = 1e-6;
+    MX jac;
+    for (int j = 0; j < NX; ++j) {
+        TX d = TX::Zero();
+        d(j) = eps;
+        F plus = before, minus = before;
+        plus.state() = G::Exp_G(d).compose(before.state());
+        minus.state() = G::Exp_G(-d).compose(before.state());
+        jac.col(j) = (retune(plus, axis).error_from(after.state()) -
+                      retune(minus, axis).error_from(after.state())) / (2 * eps);
+    }
+    check("retune covariance vs finite differences of the group mean",
+          rel_max(after.covariance_full(), jac * before.covariance_full() * jac.transpose()), 2e-8);
+}
+
 }  // namespace
 
 int main() {
@@ -1495,6 +1539,7 @@ int main() {
     test_yaw_information();
     test_behaviour();
     test_update_against_reference(true);
+    test_horizontal_integral_retune();
     std::printf("tfg_carma3-test: %d/%d checks passed\n", g_checks - g_failures, g_checks);
     return g_failures == 0 ? 0 : 1;
 }

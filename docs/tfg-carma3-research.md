@@ -35,6 +35,32 @@ Files:
   sketch: `atomS3R_ins_carma3` with this wrapper in place of CARMA3's.
   It compiles in CI; it is not hardware evidence.
 
+### Horizontal wave correction
+
+The independent-axis and shared-mode TFG wrappers apply one scalar wave
+observation across the measured wave axis once live accelerometer-bias
+learning is active. Both use the existing CARMA(4,1) states. For a numerator
+zero at DC and a fixed frequency scale, the horizontal displacement integral is
+
+$$
+S_* = (\ell - 2\zeta_1\omega_1 p - v)/\omega_1^2, \qquad \dot S_* = p .
+$$
+
+For sinusoidal transverse motion, $S_*+\beta v=0$ with
+$\beta=1/\omega^2$. The wrapper estimates $\beta$ from the ratio of the
+centered transverse displacement and velocity variances. The averaging
+horizon is eight encounter periods. The observation starts after four
+periods of history and requires a reliable wave axis. The allowed transverse
+period spans half to twice the vertical encounter period. Broadband motion
+contributes residual variance through the fitted CARMA spectrum and the
+existing horizontal integral noise scale.
+
+When the tuner changes the pole frequencies during directional waves, the
+filter maps the two horizontal components of $\ell$ so that $S_*$ remains
+continuous. It also transforms the full right-invariant covariance, including
+its correlations with roll and pitch. The update uses ordinary IMU and
+wave-direction inputs in both vessel headings.
+
 **Result in brief** (simulation; sections 7-13; generated tables in
 `reports/results/tfg_carma3/summary.md`):
 

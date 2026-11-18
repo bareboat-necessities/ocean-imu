@@ -234,6 +234,10 @@ private:
             mekf_->time_update(gyro, dt);
             mekf_->set_marine_turn(this->manoeuvreSpeed(), this->manoeuvreBow());
             mekf_->measurement_update_acc_only(acc_in, tempC);
+            if constexpr (requires { mekf_->update_horizontal_wave(dt, this->dir().getAxis()); }) {
+                if (startup_stage_ == StartupStage::Live)
+                    mekf_->update_horizontal_wave(dt, this->dir().getAxis());
+            }
         }
         if (drive_mekf && tilt_watchdog_.step(mekf_->quaternion_boat(), dt)) {
             if (startup_stage_ == StartupStage::Live) {
