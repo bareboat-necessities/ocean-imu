@@ -2,7 +2,7 @@
 \section{Validation Methodology}
 \label{sec:direction-validation}
 
-The ten-seed validation and the single-realization reference table use
+The detailed ten-seed and single-realization reference tables use
 the northbound, following-sea records from oceanography-waves-lib v1.4.0.
 The 28 ft vessel travels at 5 kn with a $\pm3^\circ$ heading oscillation
 of period 20~s. The inputs span four JONSWAP and four PM--Stokes conditions.
@@ -79,6 +79,42 @@ engine guarding on the same eight records for each configuration.
 
 \input{w3d-direction-rao-generated.tex-part}
 
+\paragraph{Response matching in following and head seas}
+The v1.4.0 study repeats all three configurations with the engine off
+and with 2400~rpm vibration. Table~\ref{tab:direction-both-seas}
+gives the fraction of scored samples in each travel-sense class,
+averaged over eight records per direction. Each record contributes the
+same 900~s window. The 96 replays per direction cover both OU families;
+the table shows OU--III.
+
+\begin{table}[t]\centering\footnotesize
+\caption{OU--III travel sense, correct / wrong / unresolved (\%).}
+\label{tab:direction-both-seas}
+\setlength{\tabcolsep}{3pt}\begin{tabular}{@{}rlll@{}}
+\toprule
+rpm & Conditioning & Following seas & Head seas \\
+\midrule
+0 & None & 60.3 / 1.4 / 38.3 & 76.3 / 0.4 / 23.3 \\
+0 & Guard & 60.3 / 1.4 / 38.3 & 76.3 / 0.4 / 23.3 \\
+0 & Guard + RAO & 63.9 / 0.2 / 35.9 & 70.4 / 0.2 / 29.4 \\
+\addlinespace
+2400 & None & 1.5 / 4.3 / 94.2 & 31.7 / 3.2 / 65.2 \\
+2400 & Guard & 31.3 / 2.7 / 66.1 & 76.5 / 0.3 / 23.2 \\
+2400 & Guard + RAO & 61.4 / 0.3 / 38.3 & 70.2 / 0.2 / 29.7 \\
+\bottomrule\end{tabular}\end{table}
+
+With vibration, adding response matching to the guard raised the correct
+fraction from 31.3\% to 61.4\% in following seas. In head seas the
+correct fraction fell from 76.5\% to 70.2\%, the unresolved fraction
+rose from 23.2\% to 29.7\%, and wrong decisions fell from 0.32\% to
+0.17\%. Thus the lower wrong-decision rate in head seas came with more
+abstentions. The
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14463668943}{following-sea}
+and
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14466402720}{head-sea archives}
+contain the individual records for both filters.
+
+
 \section{Results}
 \label{sec:direction-results}
 
@@ -93,6 +129,17 @@ samples, wrong for \OUValidationTravelWrong\%, and unresolved for
 \OUValidationTravelUnresolved\%.  The absolute error of the final directed
 estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
 reported by the committed validation bundle.
+
+The southbound ten-seed study repeats all eight scenarios in head seas.
+Across 80 OU--III runs in each direction, the mean of the scenario-level
+axial RMS errors was $28.04^\circ$ in following seas and $18.75^\circ$
+in head seas. Travel sense was correct for 63.3\% and 70.0\% of samples,
+respectively. Wrong decisions accounted for 0.2\% in each direction.
+The remaining 36.4\% and 29.7\% were unresolved (percentages rounded
+independently). Each directional archive retains the finite angular
+scores and the sample fractions for each draw.
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14459213502}{Northbound results} and
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14465763332}{southbound results}.
 
 These numbers answer two different questions.  The axial statistic measures
 whether horizontal vessel motion identifies the incident propagation plane;

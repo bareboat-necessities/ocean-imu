@@ -248,7 +248,7 @@ fighting an unrealistically overconfident seed.
 
 \subsection{Deployed MahonyProxy path}
 
-The wrapper-level default is \texttt{StartupInitPolicy::MahonyProxy}.  From the first
+The default policy is \texttt{StartupInitPolicy::}\allowbreak\texttt{MahonyProxy}. From the first
 sample, the measurement-only front end runs while the navigation MEKF is untouched.
 The proxy supplies tilt to the gravity gate and to magnetic accumulation.  When tilt,
 magnetic north, and the tuning operating point are ready, the navigation estimator is
@@ -518,7 +518,32 @@ the refined magnetic reference is in force.
 \section{Experimental Evidence and Attribution}
 \label{sec:results}
 
+The following feature-ablation tables use the earlier northbound v1.3.1 wave records with a 120 s steering period.
 \input{w3d-startup-results-generated.tex-part}
+
+% BEGIN v1.4.0 paired hard-iron study
+\subsection{Paired hard-iron correction in both sea directions}
+The v1.4.0 study uses the $5$ kn records with a $20$ s steering period.
+Each pair retains the same waveform, injected magnetic errors and sensor draw.
+Table~\ref{tab:two-direction-hard-iron} gives the arithmetic mean of the individual
+yaw RMS errors over the final $900$ s. OU--II and OU--III use five sensor draws
+on each of eight records per direction. TFG uses one draw on the same records.
+\begin{table}[t]\centering\footnotesize
+\caption{Late yaw RMS in degrees with continuous hard-iron correction off and on. The last column counts paired records with higher yaw RMS when correction is on.}
+\label{tab:two-direction-hard-iron}\setlength{\tabcolsep}{3.3pt}
+\begin{tabular}{@{}llrrrr@{}}\toprule
+Seas & Filter & Pairs & Off & On & Higher \\ \midrule
+Following & OU--II & 40 & 3.030 & 0.710 & 0 \\
+Following & OU--III & 40 & 2.903 & 0.595 & 0 \\
+Following & TFG & 8 & 1.784 & 0.656 & 0 \\
+Head & OU--II & 40 & 3.221 & 0.694 & 6 \\
+Head & OU--III & 40 & 3.235 & 0.683 & 6 \\
+Head & TFG & 8 & 3.368 & 0.713 & 0 \\
+\bottomrule\end{tabular}\end{table}
+The two directional artifacts contain the per-draw yaw scores and the inputs for every pair in Table~\ref{tab:two-direction-hard-iron}.
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540}{Full directional study records}.
+% END v1.4.0 paired hard-iron study
+
 
 \section{What Improved, and Why}
 \label{sec:what-improved}
@@ -720,9 +745,11 @@ $\norm{\vct\xi(t)}\le A$ over the complete interval.  For exact
 gyro transport and acceleration calibration, fitting the quadratic
 coefficient of twice-integrated force is equivalent to
 \begin{equation}
-\vct c_T=-\int_0^T w_T(t)\vct z_a(t)\,dt,\qquad
-w_T(t)=\frac{30t^2(T-t)^2}{T^5},\qquad
+\begin{aligned}
+\vct c_T&=-\int_0^T w_T(t)\vct z_a(t)\,dt,\\
+w_T(t)&=\frac{30t^2(T-t)^2}{T^5},\qquad
 \hat{\vct d}_{T}=\frac{\vct c_T}{\norm{\vct c_T}}.
+\end{aligned}
 \label{eq:joint-acc-weights}
 \end{equation}
 The three-component $\vct c_T$ is an \emph{intermediate

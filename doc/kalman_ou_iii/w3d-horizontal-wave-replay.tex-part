@@ -62,3 +62,23 @@ Eight rough-sea replays with simulated engine vibration gave 0.879 and
 The wave records are shared across sensor draws. The numerical comparison
 and its reproduction settings are available with the
 \href{https://github.com/bareboat-necessities/ocean-imu/tree/fee96e2b3be2d3d9d67b654f76ebea92b291df57/reports/results/startup_learning/ou3_wave_motion}{paired replay data}.
+
+% BEGIN paired production wave phase study
+\paragraph{Independent phase and sensor draws}
+Each sea direction has ten draws on four JONSWAP records, four PM--Stokes records
+and one changing-sea record. We compared the estimator on \texttt{main} at
+\texttt{cee633f} with the production filter using byte-identical generated inputs.
+Table~\ref{tab:ou3-production-phase} pools the per-record 3-D displacement RMS
+over equal $300$--$1200$ s windows. The last column counts draws with lower 3-D RMS.
+\begin{table}[t]\centering\footnotesize
+\caption{Matched phase-study 3-D displacement RMS in metres. Each direction has 90 candidate draws per estimator.}
+\label{tab:ou3-production-phase}\setlength{\tabcolsep}{3.3pt}
+\begin{tabular}{@{}llrrrr@{}}\toprule
+Seas & Filter & Pairs & Main & Production & Lower \\ \midrule
+Following & OU--III & 90 & 0.507 & 0.409 & 90 \\
+Following & TFG & 90 & 0.487 & 0.312 & 90 \\
+Head & OU--III & 90 & 0.390 & 0.323 & 90 \\
+Head & TFG & 90 & 0.399 & 0.319 & 90 \\
+\bottomrule\end{tabular}\end{table}
+The \href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540}{directional archives} and the independent \href{https://github.com/bareboat-necessities/ocean-imu/blob/73e14dfe0eb4c21575259c13df08b2ea7372c92d/reports/results/tfg_comparison/raw_runs.csv}{following-sea companion} retain the results and input hashes.
+% END paired production wave phase study

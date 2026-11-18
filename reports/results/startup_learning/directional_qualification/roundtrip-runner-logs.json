@@ -1,18 +1,30 @@
 [
   {
     "case": "following",
-    "job_id": 134702989578,
-    "github_actions_log_sha256": "dc088387566c61f77a94c190da61c65fe43db8516cf1ecd44322f3b2b1f7e194",
+    "workflow_run": 44367501540,
+    "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+    "job_id": 135025304884,
+    "artifact_id": 14468570882,
+    "github_actions_log_sha256": "24e3c00fd862829fb53de7abb4095d326626c768672e371c2503b35a12133c14",
     "github_actions_log_bytes": 61989,
+    "public_archive_member": "following/ou_roundtrip_transition.log",
+    "public_log_sha256": "24e3c00fd862829fb53de7abb4095d326626c768672e371c2503b35a12133c14",
+    "credential_redactions": false,
     "study_command_exit": 0,
-    "native_csv_sha256": "714496a027f2d0cc453305af2bfefb97744d94c39ff9b8357884d16fded9977c"
+    "native_csv_sha256": "89747c4603cd5537c506e669104264c5d407cab557e2d2281081bc8a3c14d8af"
   },
   {
     "case": "head",
-    "job_id": 134702989346,
-    "github_actions_log_sha256": "38e339deda43f46d2f63c0f1eb262e16569951730c45fd886097c9eca839c55d",
-    "github_actions_log_bytes": 61387,
+    "workflow_run": 44367501540,
+    "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+    "job_id": 135025305135,
+    "artifact_id": 14465515789,
+    "github_actions_log_sha256": "8e5250672b5bd67ff56e83a0d9b1cbb27f3d716b26d7f319c6f152138f8538b2",
+    "github_actions_log_bytes": 62454,
+    "public_archive_member": "head/ou_roundtrip_transition.log",
+    "public_log_sha256": "8e5250672b5bd67ff56e83a0d9b1cbb27f3d716b26d7f319c6f152138f8538b2",
+    "credential_redactions": false,
     "study_command_exit": 0,
-    "native_csv_sha256": "cc83b577c44a9492626e6ee9c87db6831a2ebfcae1f80d31f9253e1c2ff21933"
+    "native_csv_sha256": "40a66c7b16976683b8f7b05a7f0add1bb7c7ddfa2ff0904444cb114b5a386c9e"
   }
 ]

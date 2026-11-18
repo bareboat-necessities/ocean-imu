@@ -26,7 +26,7 @@ Method & Heave [\%] & 3-D [\%] & Pitch [deg] & Heave [\%] & 3-D [\%] & Pitch [de
 Shared CARMA & $2.316\pm0.042$ & $3.839\pm0.126$ & $0.175\pm0.069$ & $2.466\pm0.045$ & $4.073\pm0.189$ & $0.173\pm0.067$\\
 Uncoupled CARMA & $2.374\pm0.044$ & $4.013\pm0.126$ & $0.176\pm0.071$ & $2.511\pm0.044$ & $4.211\pm0.185$ & $0.174\pm0.067$\\
 OU--II & $5.454\pm0.207$ & $8.251\pm0.255$ & $0.247\pm0.109$ & $5.354\pm0.192$ & $8.086\pm0.237$ & $0.246\pm0.107$\\
-OU--III & $3.686\pm0.066$ & $6.933\pm0.230$ & $0.194\pm0.086$ & $3.656\pm0.068$ & $6.933\pm0.248$ & $0.190\pm0.082$\\
+OU--III & $3.686\pm0.066$ & $5.491\pm0.151$ & $0.194\pm0.086$ & $3.656\pm0.068$ & $5.605\pm0.200$ & $0.190\pm0.082$\\
 TFG & $2.989\pm0.085$ & $5.623\pm0.560$ & $0.360\pm0.187$ & $2.962\pm0.085$ & $5.820\pm0.514$ & $0.339\pm0.181$\\
 \bottomrule\end{tabular}\end{table*}
 }
@@ -37,11 +37,11 @@ TFG & $2.989\pm0.085$ & $5.623\pm0.560$ & $0.360\pm0.187$ & $2.962\pm0.085$ & $5
 \begin{tabular}{@{}lllr@{}}\toprule
 Spectrum & Comparator & Error & Difference [95\% CI]\\\midrule
 JONSWAP & OU--III & Heave & $-1.370\,[-1.398,-1.339]$\\
-JONSWAP & OU--III & 3-D & $-3.094\,[-3.170,-3.028]$\\
+JONSWAP & OU--III & 3-D & $-1.653\,[-1.686,-1.622]$\\
 JONSWAP & Uncoupled & Heave & $-0.058\,[-0.064,-0.053]$\\
 JONSWAP & Uncoupled & 3-D & $-0.174\,[-0.184,-0.165]$\\
 PM--Stokes & OU--III & Heave & $-1.190\,[-1.214,-1.166]$\\
-PM--Stokes & OU--III & 3-D & $-2.860\,[-2.928,-2.799]$\\
+PM--Stokes & OU--III & 3-D & $-1.532\,[-1.579,-1.500]$\\
 PM--Stokes & Uncoupled & Heave & $-0.045\,[-0.049,-0.042]$\\
 PM--Stokes & Uncoupled & 3-D & $-0.138\,[-0.147,-0.130]$\\
 \bottomrule\end{tabular}\end{table}
@@ -76,11 +76,11 @@ Shared CARMA & Guard + covariance & 0.131 & 0.254 & 0.026 & 0.286 & 1.358\\
 Uncoupled CARMA & Engine off & 0.126 & 0.231 & 0.026 & 0.294 & 0.915\\
 Uncoupled CARMA & Raw vibration & 0.402 & 2.427 & 0.488 & 0.631 & 93.579\\
 Uncoupled CARMA & Accelerometer vibration only & 0.402 & 2.430 & 0.485 & 0.629 & 93.659\\
-OU--III & Engine off & 0.178 & 0.367 & 0.039 & 0.260 & 0.903\\
-OU--III & Raw vibration & 1.303 & 15.406 & 2.069 & 1.838 & 91.188\\
-OU--III & Accelerometer vibration only & 1.307 & 15.441 & 2.085 & 1.842 & 91.237\\
-OU--III & Vibration guard & 0.186 & 0.432 & 0.048 & 0.326 & 4.426\\
-OU--III & Guard + covariance & 0.195 & 0.422 & 0.045 & 0.221 & 2.357\\
+OU--III & Engine off & 0.178 & 0.306 & 0.033 & 0.260 & 0.903\\
+OU--III & Raw vibration & 1.303 & 15.401 & 2.069 & 1.838 & 91.188\\
+OU--III & Accelerometer vibration only & 1.307 & 15.437 & 2.084 & 1.842 & 91.237\\
+OU--III & Vibration guard & 0.186 & 0.364 & 0.041 & 0.326 & 4.426\\
+OU--III & Guard + covariance & 0.195 & 0.353 & 0.039 & 0.221 & 2.357\\
 \bottomrule\end{tabular}\end{table*}
 }
 \newcommand{\CSMValidationRoundtripTable}{%
@@ -90,27 +90,27 @@ OU--III & Guard + covariance & 0.195 & 0.422 & 0.045 & 0.221 & 2.357\\
 \begin{tabular}{@{}lrrrrrr@{}}\toprule
 &\multicolumn{2}{c}{Shared CARMA}&\multicolumn{2}{c}{Uncoupled CARMA}&\multicolumn{2}{c}{OU--III}\\
 Interval [s] & Heave & 3-D & Heave & 3-D & Heave & 3-D\\\midrule
-Low start (300--400) & $0.046\pm0.007$ & $0.082\pm0.031$ & $0.046\pm0.007$ & $0.084\pm0.031$ & $0.066\pm0.007$ & $0.133\pm0.053$\\
-Rise crossfade (400--520) & $0.132\pm0.027$ & $0.221\pm0.039$ & $0.135\pm0.027$ & $0.227\pm0.039$ & $0.170\pm0.031$ & $0.328\pm0.046$\\
-High recovery (520--640) & $0.125\pm0.020$ & $0.224\pm0.030$ & $0.126\pm0.020$ & $0.229\pm0.029$ & $0.198\pm0.021$ & $0.416\pm0.042$\\
-High settled (640--800) & $0.115\pm0.015$ & $0.227\pm0.037$ & $0.119\pm0.015$ & $0.241\pm0.038$ & $0.196\pm0.025$ & $0.438\pm0.069$\\
-Fall crossfade (800--920) & $0.094\pm0.016$ & $0.174\pm0.017$ & $0.099\pm0.015$ & $0.183\pm0.016$ & $0.160\pm0.031$ & $0.320\pm0.040$\\
-Low recovery (920--1040) & $0.049\pm0.010$ & $0.077\pm0.012$ & $0.050\pm0.010$ & $0.078\pm0.012$ & $0.070\pm0.014$ & $0.120\pm0.018$\\
-Low return (1040--1200) & $0.050\pm0.006$ & $0.070\pm0.006$ & $0.050\pm0.006$ & $0.072\pm0.006$ & $0.069\pm0.009$ & $0.109\pm0.011$\\
+Low start (300--400) & $0.046\pm0.007$ & $0.082\pm0.031$ & $0.046\pm0.007$ & $0.084\pm0.031$ & $0.066\pm0.007$ & $0.113\pm0.051$\\
+Rise crossfade (400--520) & $0.132\pm0.027$ & $0.221\pm0.039$ & $0.135\pm0.027$ & $0.227\pm0.039$ & $0.170\pm0.031$ & $0.283\pm0.044$\\
+High recovery (520--640) & $0.125\pm0.020$ & $0.224\pm0.030$ & $0.126\pm0.020$ & $0.229\pm0.029$ & $0.198\pm0.021$ & $0.324\pm0.027$\\
+High settled (640--800) & $0.115\pm0.015$ & $0.227\pm0.037$ & $0.119\pm0.015$ & $0.241\pm0.038$ & $0.196\pm0.025$ & $0.348\pm0.051$\\
+Fall crossfade (800--920) & $0.094\pm0.016$ & $0.174\pm0.017$ & $0.099\pm0.015$ & $0.183\pm0.016$ & $0.160\pm0.031$ & $0.263\pm0.030$\\
+Low recovery (920--1040) & $0.049\pm0.010$ & $0.077\pm0.012$ & $0.050\pm0.010$ & $0.078\pm0.012$ & $0.070\pm0.014$ & $0.107\pm0.016$\\
+Low return (1040--1200) & $0.050\pm0.006$ & $0.070\pm0.006$ & $0.050\pm0.006$ & $0.072\pm0.006$ & $0.069\pm0.009$ & $0.090\pm0.009$\\
 \bottomrule\end{tabular}\end{table*}
 }
 \newcommand{\CSMJonswapHeaveDifference}{-1.370}
 \newcommand{\CSMJonswapHeaveInterval}{[-1.398,-1.339]}
-\newcommand{\CSMJonswapThreeDDifference}{-3.094}
-\newcommand{\CSMJonswapThreeDInterval}{[-3.170,-3.028]}
+\newcommand{\CSMJonswapThreeDDifference}{-1.653}
+\newcommand{\CSMJonswapThreeDInterval}{[-1.686,-1.622]}
 \newcommand{\CSMJonswapHeaveUncoupledDifference}{-0.058}
 \newcommand{\CSMJonswapHeaveUncoupledInterval}{[-0.064,-0.053]}
 \newcommand{\CSMJonswapThreeDUncoupledDifference}{-0.174}
 \newcommand{\CSMJonswapThreeDUncoupledInterval}{[-0.184,-0.165]}
 \newcommand{\CSMPmStokesHeaveDifference}{-1.190}
 \newcommand{\CSMPmStokesHeaveInterval}{[-1.214,-1.166]}
-\newcommand{\CSMPmStokesThreeDDifference}{-2.860}
-\newcommand{\CSMPmStokesThreeDInterval}{[-2.928,-2.799]}
+\newcommand{\CSMPmStokesThreeDDifference}{-1.532}
+\newcommand{\CSMPmStokesThreeDInterval}{[-1.579,-1.500]}
 \newcommand{\CSMPmStokesHeaveUncoupledDifference}{-0.045}
 \newcommand{\CSMPmStokesHeaveUncoupledInterval}{[-0.049,-0.042]}
 \newcommand{\CSMPmStokesThreeDUncoupledDifference}{-0.138}

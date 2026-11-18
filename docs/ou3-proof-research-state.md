@@ -9,6 +9,8 @@ The shipping wrapper estimates horizontal wave displacement and velocity using t
 - **Retained facts.** Finite perturbations have the scope recorded in each report. The end-to-end regional theorem remains open.
 - **Next falsifiable experiment.** Bound horizontal output sensitivity to perturbations of the inherited state, covariance and spectral moments across moving-to-quiet transitions.
 
+The directional manuscript check expected two unavailable axial angles in the eight deterministic records (class E). The two low-wave cases retain measurable axes of 65.0 and 67.3 degrees while travel sense remains unresolved. The correction exercises missing and measured axes on a controlled table and compares all eight published rows with the generated table. The full marine firmware build also receives 75 minutes for its nine sequential sketches after the 45-minute PR job reached eight links. Both job logs and the eight matching link sizes are recorded in the [firmware timing comparison](../reports/results/startup_learning/directional_qualification/nine-sketch-build-timing.json). The native proof continues to bind the same 377 source files and 17 reports.
+
 ## Native OU-III replay after the transverse-period CARMA update
 
 The independent-axis and shared-mode TFG-CARMA filters changed at `4b6d7fc`.

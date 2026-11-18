@@ -1,7 +1,7 @@
 {
   "binaries": {
-    "tests/kalman_carma/carma3-sim": "5f23e1fca3f3d4298363ddf644d76637a0848f9e51d568568df5acef31823a17",
-    "tests/kalman_ou_iii/kalman_ou_iii-sim": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66"
+    "tests/kalman_carma/carma3-sim": "a254a622c0ac29f1aa7a05ef33c255f4a8fc151f7368dcb6ef85bb06c89a5bc7",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim": "b2749d3a032dfaaf047a7eaf0c3540b227490a193e38bd0ad32d48cbe452c41a"
   },
   "dataset": {
     "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",

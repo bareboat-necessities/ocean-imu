@@ -1,0 +1,16 @@
+{
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "baseline": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "supplement": "5fa660c21f5352c11331a0cbbfc9a4ad3b0ee329",
+  "matched_dataset_rows": 512,
+  "dataset_pooled_accuracy_and_counts": 72,
+  "stationary_80_draw_pools_checked": 10,
+  "original_file_sha256": {
+    "reports/results/startup_learning/directional_qualification/ou3-companion-input-reproduction.json": "064b593b8bdfabfb0a6738984f34fc3f365d1d860d99148037de8892383e587f",
+    "reports/results/startup_learning/directional_qualification/ou-combined-repeatability.json": "312edbbc572fe2a82b05459d8bbf7652f403025e8497073a75a9ee2112d07a3c",
+    "reports/results/startup_learning/directional_qualification/paired-shared-carma-article.json": "53d9a1f865975715492d4ce5753719d3b01c6027faabcd1e16214bb5b38032cb",
+    "reports/results/startup_learning/directional_qualification/paired-tfg-shared-carma-study.json": "ce56b2f5d945797b2617239c9d73ece3b8ce8765a52ff557d1a973f18ec69234",
+    "doc/kalman_carma_shared_modes/csm-validation.tex-part": "d4301387c009db2de65514d4321ce069c025025f8cd6f295cdb2d97c0c44af38",
+    "doc/kalman_tfg_carma/transverse-wave-replay.tex-part": "ffb8e4cff2f1d8673f0dcf3946ba33fb6eba6782e6b8dbf5608b575e4614279a"
+  }
+}

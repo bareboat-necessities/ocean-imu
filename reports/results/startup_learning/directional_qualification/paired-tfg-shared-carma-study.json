@@ -1,0 +1,616 @@
+{
+  "study": "tfg_shared_modes_dataset",
+  "main": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "candidate": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "definition": "RMS pooled with equal weight over eight fixed wave records and eight matched sensor/initialization seeds per method per direction. Each row contains 180000 samples. Counts use a 0.5 percent threshold relative to the same main row.",
+  "directions": {
+    "following": {
+      "artifact_id": 14470160791,
+      "archive_sha256": "128ca52d6d8dd40d98a343a798c9fd213a9e7243ba84503af3a9bead21f33c92",
+      "main_score_sha256": "d14197e81a5e167aa2bd3def0bc071c7d141effa4cbdde44c2f29d266c142ac4",
+      "candidate_score_sha256": "cb9d163bdea16a1a6703397055c7b707171d2e8aac6dd1d377fda322691721b0",
+      "methods": {
+        "Q independent": {
+          "disp_3d_rms_m": {
+            "main": 0.2281253780830971,
+            "pr": 0.22812125396794905,
+            "change_percent": -0.0018078283015698915,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_x_rms_m": {
+            "main": 0.14569256581326584,
+            "pr": 0.145690796031262,
+            "change_percent": -0.0012147373436355302,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_y_rms_m": {
+            "main": 0.13328056219332005,
+            "pr": 0.133275392306554,
+            "change_percent": -0.003878950299252004,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_z_rms_m": {
+            "main": 0.11424165771692119,
+            "pr": 0.11424171260526611,
+            "change_percent": 4.8045823231035456e-05,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.24288680815855643,
+            "pr": 0.24287816792309652,
+            "change_percent": -0.003557309483137594,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "pitch_rms_deg": {
+            "main": 0.23097442256161718,
+            "pr": 0.23079852076307586,
+            "change_percent": -0.07615639714150246,
+            "better": 1,
+            "worse": 0,
+            "within": 63
+          },
+          "yaw_rms_deg": {
+            "main": 0.916322955598928,
+            "pr": 0.9149062388805466,
+            "change_percent": -0.15460888649847515,
+            "better": 13,
+            "worse": 9,
+            "within": 42
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.057407654908052996,
+            "pr": 0.05738566313435419,
+            "change_percent": -0.03830808580149725,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00014632914785952297,
+            "pr": 0.00014610271279857825,
+            "change_percent": -0.15474364763068404,
+            "better": 9,
+            "worse": 2,
+            "within": 53
+          }
+        },
+        "Q shared": {
+          "disp_3d_rms_m": {
+            "main": 0.196584365423643,
+            "pr": 0.19657665572922547,
+            "change_percent": -0.003921824810892982,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_x_rms_m": {
+            "main": 0.10997796320292336,
+            "pr": 0.10996957514934647,
+            "change_percent": -0.007627031209345159,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_y_rms_m": {
+            "main": 0.12175847750536599,
+            "pr": 0.12175403213241615,
+            "change_percent": -0.00365097612989862,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_z_rms_m": {
+            "main": 0.1082826551481873,
+            "pr": 0.1082821780973122,
+            "change_percent": -0.0004405607476498652,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.23754009390090308,
+            "pr": 0.23752828800747583,
+            "change_percent": -0.004970063467335528,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "pitch_rms_deg": {
+            "main": 0.22740026838756547,
+            "pr": 0.22723195830283976,
+            "change_percent": -0.0740149015298619,
+            "better": 2,
+            "worse": 0,
+            "within": 62
+          },
+          "yaw_rms_deg": {
+            "main": 0.9060281195548741,
+            "pr": 0.9045345079217063,
+            "change_percent": -0.16485267961677819,
+            "better": 13,
+            "worse": 9,
+            "within": 42
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.056332272601199246,
+            "pr": 0.05631076624290908,
+            "change_percent": -0.03817768624819751,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00014602949254103603,
+            "pr": 0.00014579376543785027,
+            "change_percent": -0.16142431168109095,
+            "better": 9,
+            "worse": 2,
+            "within": 53
+          }
+        },
+        "T independent": {
+          "disp_3d_rms_m": {
+            "main": 0.22809766339012474,
+            "pr": 0.22512768849206466,
+            "change_percent": -1.3020628330507766,
+            "better": 47,
+            "worse": 0,
+            "within": 17
+          },
+          "disp_x_rms_m": {
+            "main": 0.14567800790069285,
+            "pr": 0.14441608983783713,
+            "change_percent": -0.8662378632442347,
+            "better": 31,
+            "worse": 0,
+            "within": 33
+          },
+          "disp_y_rms_m": {
+            "main": 0.13325082965051813,
+            "pr": 0.12952144325026912,
+            "change_percent": -2.798771617430229,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_z_rms_m": {
+            "main": 0.11423956715043895,
+            "pr": 0.11423950576692102,
+            "change_percent": -5.373227460747643e-05,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.24268387506700057,
+            "pr": 0.24111493189768007,
+            "change_percent": -0.6464966693346841,
+            "better": 27,
+            "worse": 9,
+            "within": 28
+          },
+          "pitch_rms_deg": {
+            "main": 0.22895042502873167,
+            "pr": 0.22660649280883738,
+            "change_percent": -1.0237728187663997,
+            "better": 28,
+            "worse": 4,
+            "within": 32
+          },
+          "yaw_rms_deg": {
+            "main": 0.8957442675522126,
+            "pr": 0.8898963321744497,
+            "change_percent": -0.6528576949471732,
+            "better": 25,
+            "worse": 5,
+            "within": 34
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.05713869990840249,
+            "pr": 0.05666114967276585,
+            "change_percent": -0.8357737162416945,
+            "better": 29,
+            "worse": 1,
+            "within": 34
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00014414387794946837,
+            "pr": 0.00014380281740604292,
+            "change_percent": -0.23661118895733635,
+            "better": 17,
+            "worse": 3,
+            "within": 44
+          }
+        },
+        "T shared": {
+          "disp_3d_rms_m": {
+            "main": 0.19658755859033109,
+            "pr": 0.19333674244673868,
+            "change_percent": -1.65362252164023,
+            "better": 46,
+            "worse": 0,
+            "within": 18
+          },
+          "disp_x_rms_m": {
+            "main": 0.10997873666061385,
+            "pr": 0.10900112984382702,
+            "change_percent": -0.8889052979428658,
+            "better": 27,
+            "worse": 1,
+            "within": 36
+          },
+          "disp_y_rms_m": {
+            "main": 0.12176188711249886,
+            "pr": 0.1177440479337794,
+            "change_percent": -3.2997510748229986,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_z_rms_m": {
+            "main": 0.10828383469551181,
+            "pr": 0.10786189195719983,
+            "change_percent": -0.38966364600815373,
+            "better": 8,
+            "worse": 0,
+            "within": 56
+          },
+          "roll_rms_deg": {
+            "main": 0.23729382648232653,
+            "pr": 0.23592669143394385,
+            "change_percent": -0.5761359529024679,
+            "better": 25,
+            "worse": 9,
+            "within": 30
+          },
+          "pitch_rms_deg": {
+            "main": 0.2267840655813994,
+            "pr": 0.22464915826117884,
+            "change_percent": -0.9413832999013216,
+            "better": 26,
+            "worse": 3,
+            "within": 35
+          },
+          "yaw_rms_deg": {
+            "main": 0.8893123885303253,
+            "pr": 0.8838380640407925,
+            "change_percent": -0.615568225534302,
+            "better": 22,
+            "worse": 5,
+            "within": 37
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.05622783653865523,
+            "pr": 0.055800792436303,
+            "change_percent": -0.7594887668470829,
+            "better": 27,
+            "worse": 4,
+            "within": 33
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00014382702619977536,
+            "pr": 0.00014348189828042592,
+            "change_percent": -0.2399604083241358,
+            "better": 17,
+            "worse": 3,
+            "within": 44
+          }
+        }
+      }
+    },
+    "head": {
+      "artifact_id": 14470966600,
+      "archive_sha256": "93663b8800fc3fa9eeb84589d0e50b44a3d1bf8174cd7b39c028c1cc2c7d74b6",
+      "main_score_sha256": "fba0c3127052d34206d836dd7d48f19578710c65f2e7a74338acc1946c17e7d4",
+      "candidate_score_sha256": "33041df37647eb8e7ef3a84fc78aa90c1860388bbe01e5269cf053bee1440dc8",
+      "methods": {
+        "Q independent": {
+          "disp_3d_rms_m": {
+            "main": 0.22796991631657615,
+            "pr": 0.22796113126336118,
+            "change_percent": -0.0038536019826285184,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_x_rms_m": {
+            "main": 0.1300342765061263,
+            "pr": 0.13003061053575712,
+            "change_percent": -0.0028192338725530064,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_y_rms_m": {
+            "main": 0.14977100824998194,
+            "pr": 0.14976089786054309,
+            "change_percent": -0.006750565117363827,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_z_rms_m": {
+            "main": 0.11238333355325919,
+            "pr": 0.11238323567791383,
+            "change_percent": -8.709062301326398e-05,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.23710963642727986,
+            "pr": 0.23708513726256641,
+            "change_percent": -0.01033242051339256,
+            "better": 0,
+            "worse": 2,
+            "within": 62
+          },
+          "pitch_rms_deg": {
+            "main": 0.21318174670150175,
+            "pr": 0.21325354429912619,
+            "change_percent": 0.03367905495443857,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "yaw_rms_deg": {
+            "main": 0.6862452587387707,
+            "pr": 0.686405441149048,
+            "change_percent": 0.02334186039720798,
+            "better": 16,
+            "worse": 17,
+            "within": 31
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.05477153647717494,
+            "pr": 0.0547770672720331,
+            "change_percent": 0.010097936289343856,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00016229878020306045,
+            "pr": 0.0001622272112459665,
+            "change_percent": -0.04409703942593879,
+            "better": 9,
+            "worse": 13,
+            "within": 42
+          }
+        },
+        "Q shared": {
+          "disp_3d_rms_m": {
+            "main": 0.2171636125446897,
+            "pr": 0.21715468969349813,
+            "change_percent": -0.004108815048253778,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_x_rms_m": {
+            "main": 0.11796920588141623,
+            "pr": 0.11796530962646726,
+            "change_percent": -0.0033027728887913277,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_y_rms_m": {
+            "main": 0.14742710361450997,
+            "pr": 0.14741686265442935,
+            "change_percent": -0.006946456811218749,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "disp_z_rms_m": {
+            "main": 0.1072779128549391,
+            "pr": 0.10727820853325438,
+            "change_percent": 0.00027561900435291165,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.23621781122330962,
+            "pr": 0.2361922809979281,
+            "change_percent": -0.010807917171573589,
+            "better": 0,
+            "worse": 2,
+            "within": 62
+          },
+          "pitch_rms_deg": {
+            "main": 0.21748092247652162,
+            "pr": 0.21755829072264105,
+            "change_percent": 0.035574727768494796,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "yaw_rms_deg": {
+            "main": 0.6871916260561856,
+            "pr": 0.6873883822127582,
+            "change_percent": 0.028631919993249433,
+            "better": 16,
+            "worse": 17,
+            "within": 31
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.055169648189635045,
+            "pr": 0.055175795979133364,
+            "change_percent": 0.01114342704739979,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.00016203605917546878,
+            "pr": 0.00016196524450499405,
+            "change_percent": -0.04370303180358803,
+            "better": 10,
+            "worse": 13,
+            "within": 41
+          }
+        },
+        "T independent": {
+          "disp_3d_rms_m": {
+            "main": 0.2279502033229642,
+            "pr": 0.22402727793851657,
+            "change_percent": -1.720957177164506,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_x_rms_m": {
+            "main": 0.1300178136767124,
+            "pr": 0.1266730141806929,
+            "change_percent": -2.572570174373401,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_y_rms_m": {
+            "main": 0.14975634691373627,
+            "pr": 0.14667161187779423,
+            "change_percent": -2.059835926499276,
+            "better": 46,
+            "worse": 1,
+            "within": 17
+          },
+          "disp_z_rms_m": {
+            "main": 0.11238194589697152,
+            "pr": 0.11238152315955666,
+            "change_percent": -0.00037616132332329855,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.23714467882966359,
+            "pr": 0.23545109932316197,
+            "change_percent": -0.7141545468612787,
+            "better": 21,
+            "worse": 7,
+            "within": 36
+          },
+          "pitch_rms_deg": {
+            "main": 0.21246436580188022,
+            "pr": 0.20915513279587591,
+            "change_percent": -1.5575473061163136,
+            "better": 31,
+            "worse": 7,
+            "within": 26
+          },
+          "yaw_rms_deg": {
+            "main": 0.6712195463505743,
+            "pr": 0.6674636258923704,
+            "change_percent": -0.5595666095579155,
+            "better": 21,
+            "worse": 18,
+            "within": 25
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.054693072260519594,
+            "pr": 0.05409240892040749,
+            "change_percent": -1.0982439188110815,
+            "better": 23,
+            "worse": 5,
+            "within": 36
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.0001608333412360323,
+            "pr": 0.0001607699301190329,
+            "change_percent": -0.03942659930589176,
+            "better": 4,
+            "worse": 9,
+            "within": 51
+          }
+        },
+        "T shared": {
+          "disp_3d_rms_m": {
+            "main": 0.2171252825877659,
+            "pr": 0.21351323557405527,
+            "change_percent": -1.6635773460654257,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_x_rms_m": {
+            "main": 0.11794712053135163,
+            "pr": 0.1151266158098364,
+            "change_percent": -2.3913298678330364,
+            "better": 48,
+            "worse": 0,
+            "within": 16
+          },
+          "disp_y_rms_m": {
+            "main": 0.14738893511729803,
+            "pr": 0.14425209699950134,
+            "change_percent": -2.1282724617694426,
+            "better": 46,
+            "worse": 1,
+            "within": 17
+          },
+          "disp_z_rms_m": {
+            "main": 0.10727705350664961,
+            "pr": 0.10735499940724848,
+            "change_percent": 0.07265850249515982,
+            "better": 0,
+            "worse": 0,
+            "within": 64
+          },
+          "roll_rms_deg": {
+            "main": 0.2362333723912878,
+            "pr": 0.23457397141814224,
+            "change_percent": -0.7024413851219102,
+            "better": 20,
+            "worse": 7,
+            "within": 37
+          },
+          "pitch_rms_deg": {
+            "main": 0.2153190171479819,
+            "pr": 0.21191039406822015,
+            "change_percent": -1.5830571423327222,
+            "better": 30,
+            "worse": 6,
+            "within": 28
+          },
+          "yaw_rms_deg": {
+            "main": 0.6718348920267821,
+            "pr": 0.6680181765706446,
+            "change_percent": -0.5681031904466005,
+            "better": 21,
+            "worse": 18,
+            "within": 25
+          },
+          "accel_bias_3d_rms_mps2": {
+            "main": 0.054917052860446736,
+            "pr": 0.05430720025623758,
+            "change_percent": -1.1104976914163456,
+            "better": 24,
+            "worse": 6,
+            "within": 34
+          },
+          "gyro_bias_3d_rms_radps": {
+            "main": 0.0001606044951382802,
+            "pr": 0.00016055016298986542,
+            "change_percent": -0.033829780647176566,
+            "better": 4,
+            "worse": 9,
+            "within": 51
+          }
+        }
+      }
+    }
+  }
+}

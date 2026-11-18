@@ -1,0 +1,150 @@
+{
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "baseline": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "window_seconds": [
+    300,
+    1200
+  ],
+  "study": "carma_shared_modes_validation",
+  "protocol": "Equal-weight pooling of per-draw 3-D displacement RMS in eight stationary release records and ten phase/IMU/initialization seed triplets per direction. Each draw contains 180,000 scored samples. Matched by study key and seed triplet.",
+  "sources": {
+    "following": {
+      "job": 135025305097,
+      "workflow": 44367501540,
+      "artifact_id": 14468524646,
+      "archive_sha256": "sha256:3962d355f864874580836aaa557b9aba99be2ebcedae2a88b6457fe2b497d714",
+      "baseline_scores_sha256": "cda6998a936bacccf181c951498891c5bf456e5a4aa8bd593f5ce96f5197feea",
+      "revision_scores_sha256": "542fa9cc59339b55ead7aac0760959ba1b51ef20370aa46a14e04cbe2cc86f96",
+      "verified_total_rows": 1038,
+      "article_pgf_svgs_each": 11,
+      "generated_latex_tables_file": 1
+    },
+    "head": {
+      "job": 135025305144,
+      "workflow": 44367501540,
+      "artifact_id": 14469550653,
+      "archive_sha256": "sha256:5a91f17da9ab31108cc87fb133cd9e9ea0848e989cf6a39074f69032c0f90bd9",
+      "baseline_scores_sha256": "d08d882d5ba2f487b2d3403fb1b1f4850db5f704c30658950703e33da56626fe",
+      "revision_scores_sha256": "39bbf073f3f73d36d57f30d66fe0265c5090127f703bd7509a1868981cc350ad",
+      "verified_total_rows": 1038,
+      "article_pgf_svgs_each": 11,
+      "generated_latex_tables_file": 1
+    }
+  },
+  "results": {
+    "following": {
+      "stationary_3d_displacement_rms_m": {
+        "CSM": {
+          "main": 0.21912956500068276,
+          "pr": 0.2192184732550011,
+          "percent": 0.04057337234164571,
+          "lower": 33,
+          "within_half_percent": 78,
+          "materially_higher": 2,
+          "materially_lower": 0
+        },
+        "Independent": {
+          "main": 0.24950489737361817,
+          "pr": 0.24950459653981794,
+          "percent": -0.00012057230275308584,
+          "lower": 34,
+          "within_half_percent": 80,
+          "materially_higher": 0,
+          "materially_lower": 0
+        },
+        "OU-II": {
+          "main": 0.5944974331733207,
+          "pr": 0.594492721809955,
+          "percent": -0.0007924951568760719,
+          "lower": 42,
+          "within_half_percent": 80,
+          "materially_higher": 0,
+          "materially_lower": 0
+        },
+        "OU-III": {
+          "main": 0.5061396505649594,
+          "pr": 0.40746553063870994,
+          "percent": -19.495433684381002,
+          "lower": 80,
+          "within_half_percent": 0,
+          "materially_higher": 0,
+          "materially_lower": 80
+        },
+        "TFG": {
+          "main": 0.4895998549447245,
+          "pr": 0.3152264084141286,
+          "percent": -35.6155020818547,
+          "lower": 80,
+          "within_half_percent": 0,
+          "materially_higher": 0,
+          "materially_lower": 80
+        }
+      },
+      "shared_carma_draws_changing_more_than_half_percent": [
+        {
+          "key": "stationary/wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv/97/CSM",
+          "baseline_m": 0.192015335,
+          "revision_m": 0.195074126,
+          "percent": 1.592993080474514
+        },
+        {
+          "key": "stationary/wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv/97/CSM",
+          "baseline_m": 0.184337482,
+          "revision_m": 0.189517468,
+          "percent": 2.8100557433023754
+        }
+      ]
+    },
+    "head": {
+      "stationary_3d_displacement_rms_m": {
+        "CSM": {
+          "main": 0.2395484559249191,
+          "pr": 0.23954048829133398,
+          "percent": -0.0033261051733179947,
+          "lower": 47,
+          "within_half_percent": 80,
+          "materially_higher": 0,
+          "materially_lower": 0
+        },
+        "Independent": {
+          "main": 0.2520243573291035,
+          "pr": 0.2520146999359326,
+          "percent": -0.003831928498188031,
+          "lower": 46,
+          "within_half_percent": 80,
+          "materially_higher": 0,
+          "materially_lower": 0
+        },
+        "OU-II": {
+          "main": 0.465592848502965,
+          "pr": 0.4655799279241007,
+          "percent": -0.0027750810404070236,
+          "lower": 46,
+          "within_half_percent": 80,
+          "materially_higher": 0,
+          "materially_lower": 0
+        },
+        "OU-III": {
+          "main": 0.3936278763495677,
+          "pr": 0.326892906920047,
+          "percent": -16.953821982428806,
+          "lower": 80,
+          "within_half_percent": 0,
+          "materially_higher": 0,
+          "materially_lower": 80
+        },
+        "TFG": {
+          "main": 0.40395398874199445,
+          "pr": 0.3249959112859242,
+          "percent": -19.546304692265537,
+          "lower": 80,
+          "within_half_percent": 0,
+          "materially_higher": 0,
+          "materially_lower": 80
+        }
+      },
+      "shared_carma_draws_changing_more_than_half_percent": []
+    }
+  },
+  "manuscript_part_sha256": "d4301387c009db2de65514d4321ce069c025025f8cd6f295cdb2d97c0c44af38"
+}

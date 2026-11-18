@@ -38,7 +38,7 @@
       -1.0
     ]
   },
-  "binary_sha256": "674d6a35fdea0a1c354b58df3c0614eb92bf40c70fec5cd8d9380f989f6247b5",
+  "binary_sha256": "fbe81c16e616f95076a998feb38827bf91a9455ef486983e8ad404c1fb18614e",
   "build_environment": {
     "compiler": {
       "CPPFLAGS_env": "",
@@ -53,7 +53,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "cutoff_sweep_case": {
@@ -80,16 +80,16 @@
     2.0
   ],
   "files": {
-    "carma_lever_arm_cutoff.svg": "bce50d40ab52ccb5b4a2d424b2dbd23e79be8fff61b0d223b294f2ccf7f13b3b",
-    "carma_lever_arm_penalty.svg": "6b2dd26d0c605fa2535a537ddeb9b50638d35bc2dcddf2d70801fa238f7f0fe3",
-    "carma_lever_arm_sea_state.svg": "0fd5db8a09a28a1bd713eccd06f06c68c7f363abb9f3e986d82da1bc4723a7dd",
-    "carma_lever_arm_tilt.svg": "5140994ccc10a0b72a38da50a54713231ec5c020e3703a854bcbe202dde67aee",
-    "carma_lever_arm_yaw.svg": "ce029b5b34433450fc2e61c34b2a8e4dc07c2110400c89100c8a5ea2040e1fb7",
-    "lever_arm_cutoff_runs.csv": "4cc0dc1c3d428d0fbd86e7ba2d4a9157690841b6a6b092ebe848eaa3de857d57",
-    "lever_arm_cutoff_summary.csv": "262228a2b92b2168172e9c31ed335b66ff9dfed900609ad403064192f7fad54b",
-    "lever_arm_report.md": "aeec15848c3ef6e42bd52ce5d7a712d4eafc1b63448234bd93d8d041bac43865",
-    "lever_arm_runs.csv": "e4524d042c8443a7bd2ea050805969d52f74ee4c07d16b1c72130f0b0f165b6a",
-    "lever_arm_summary.csv": "a1f824e29a454e00bf811437689061b1945f10191e6c74ec4ded27160b95625e"
+    "carma_lever_arm_cutoff.svg": "4355f11a254cdb88043688cc2e3fc0d9e0626e922e7672242af741af2c4171fa",
+    "carma_lever_arm_penalty.svg": "86023570eeaa21c5fb591225822eafaaa3d6c9373e5e10ade8619f933e5ae63c",
+    "carma_lever_arm_sea_state.svg": "5dd7f7a5ae1c3406fc3df1922eca54567a0291dc2c2adc23dc090bf74f85d64a",
+    "carma_lever_arm_tilt.svg": "69935389b89b013290db7b8cb64419a4b4342b81acdaf28912843d397821b8d0",
+    "carma_lever_arm_yaw.svg": "297f96314075a3fd63cfde03e9dea32100c07dfafd29010ffe0ba408164d360d",
+    "lever_arm_cutoff_runs.csv": "b8f2b70d779a73f8febd3a235f8a5a3ec201777858dedb6202fa3b279f106223",
+    "lever_arm_cutoff_summary.csv": "a3898e33889cf17f185602c6d5b43ffe027d535d310bdcb235fbc4a651987331",
+    "lever_arm_report.md": "9534bb92bb91574ed99dfb623694564780f98e33f765c5303ea75907a43446b0",
+    "lever_arm_runs.csv": "27363d1acab819ba599c3f2f878bc06ce1fe89af24e20ec0e72401256276c828",
+    "lever_arm_summary.csv": "2196cd77e123534ad9afcec478f4a8b0f0eb73f66d068b8f2b55e93bbecb2203"
   },
   "filters": {
     "carma3": "A41",
@@ -121,6 +121,6 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
   "study": "CARMA IMU lever-arm installation"
 }

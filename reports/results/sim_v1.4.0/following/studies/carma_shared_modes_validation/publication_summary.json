@@ -13,9 +13,9 @@
       "spectrum": "JONSWAP",
       "comparator": "OU-III",
       "endpoint": "disp_3d_pct_hs",
-      "mean": -6.893536714992102,
-      "ci_low": -6.9625438055445,
-      "ci_high": -6.818266870080705
+      "mean": -4.40415394399537,
+      "ci_low": -4.452394690921295,
+      "ci_high": -4.348888776929834
     },
     {
       "spectrum": "JONSWAP",
@@ -45,9 +45,9 @@
       "spectrum": "PM-Stokes",
       "comparator": "OU-III",
       "endpoint": "disp_3d_pct_hs",
-      "mean": -6.49173250017293,
-      "ci_low": -6.552491992987362,
-      "ci_high": -6.425472393786887
+      "mean": -4.082953139274236,
+      "ci_low": -4.125775814037719,
+      "ci_high": -4.033781869521903
     },
     {
       "spectrum": "PM-Stokes",
@@ -77,9 +77,9 @@
     "plots/figure_decimation.py": "e2a73f698ba2a3fa5c370451d16754f14df8733c77d23c3f24522cb68abfec1d"
   },
   "files_sha256": {
-    "protocol.json": "a0628522e8682471ced17a933ffd10977af14b9fcbbb447a44ce9e24d82ce566",
-    "scores.csv": "e0aac8c7788954a40778a382ba3618ffd152714b80f0ba87a441a1eb04757bb0",
-    "engine_summary.csv": "9fd0b2e84dc90c449c33d01a7dd4b58f7a3b45ed30fa3a09b4172e3dd0c360a4",
+    "protocol.json": "d728e5c6db83c823417811d5757657de5992509d431c6ff53b62309bba195d4f",
+    "scores.csv": "542fa9cc59339b55ead7aac0760959ba1b51ef20370aa46a14e04cbe2cc86f96",
+    "engine_summary.csv": "b7437515e7ca31fde9f55248646d4df065bb34fe5711efefd3b366757e0c9ac5",
     "traces/nominal_CSM_R_p0_applied.csv.gz": "9cc59f896c45d4bbcdeffff8b73c7da4b5527e18e4899b88413db3ac82b60ff5",
     "traces/nominal_CSM_Tp_tuner_s.csv.gz": "64f6d0dfd34711371cd173bb56304a69bef33920ffab699efd01d8f7954b0637",
     "traces/nominal_CSM_acc_bias_x.csv.gz": "8a8a21152036532d4cb9f5ee400826b497ea8fbfae086272cb9b84d4657d566a",
@@ -132,9 +132,9 @@
   "figures": {
     "csm_validation_acc_bias.svg": 107702,
     "csm_validation_attitude.svg": 71339,
-    "csm_validation_comparison.svg": 174358,
-    "csm_validation_engine_mechanism.svg": 70068,
-    "csm_validation_engine_speed.svg": 73875,
+    "csm_validation_comparison.svg": 173692,
+    "csm_validation_engine_mechanism.svg": 70069,
+    "csm_validation_engine_speed.svg": 73862,
     "csm_validation_gyro_bias.svg": 107060,
     "csm_validation_observers.svg": 82434,
     "csm_validation_roundtrip.svg": 177909,

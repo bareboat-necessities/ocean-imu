@@ -162,8 +162,8 @@
     }
   },
   "git_branch": "experiment/startup-wave-handover",
-  "git_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
-  "git_diff_stat": ".../head/studies/ou_validation/case-receipt.json   | 23 ++--------------------\n 1 file changed, 2 insertions(+), 21 deletions(-)",
+  "git_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "git_diff_stat": ".../head/studies/ou_validation/case-receipt.json   |    27 +-\n .../head/studies/ou_validation/ou_validation.json  | 13640 +++++++++----------\n .../ou_validation/ou_validation_displacement.svg   |   688 +-\n .../ou_validation/ou_validation_paired_effects.csv |   620 +-\n .../ou_validation/ou_validation_publication.tex    |    28 +-\n .../studies/ou_validation/ou_validation_raw.csv    |   940 +-\n .../ou_validation/ou_validation_summary.csv        |   620 +-\n .../studies/ou_validation/ou_validation_table.tex  |    86 +-\n 8 files changed, 8315 insertions(+), 8334 deletions(-)",
   "numpy": "1.26.4",
   "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
@@ -295,8 +295,8 @@
   "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
   "result_files": {
     "ou_validation.json": {
-      "bytes": 5384344,
-      "sha256": "4ec92d162cb7768fb50e8b6907c69535ad4b136c7c1e0b325cd9cdd1040af923"
+      "bytes": 5384591,
+      "sha256": "6edb01b6fb70e379725a17715a79fb7129cc2d07c288960ed26906f48e5f0db6"
     },
     "ou_validation_attitude.svg": {
       "bytes": 82044,
@@ -307,32 +307,32 @@
       "sha256": "b2453ede9536f36020e31f7a9d0015645c4a2862e57e725ce73ff82dcb0a0872"
     },
     "ou_validation_displacement.svg": {
-      "bytes": 79887,
-      "sha256": "c5d3bd0bda1738e91602f5f8c6e704307c04315527262f159117a61bbaf5a138"
+      "bytes": 79857,
+      "sha256": "39c977767824b2ebb3de4e5cb8d7f28d9ab48bebe4630aad66e15062b6a31cfe"
     },
     "ou_validation_macros.tex": {
       "bytes": 10613,
       "sha256": "2d0bdab5773e9b06f4a1b8559ec1b3dedfd108c294fda363c4aaa039ae1dc592"
     },
     "ou_validation_paired_effects.csv": {
-      "bytes": 737157,
-      "sha256": "260e055025364b7fd26e029ad42d5e721124ceb49a49722b97d6c9012d90d1cb"
+      "bytes": 736979,
+      "sha256": "7f4ae01bb7fed24764baaad062810640ab537eaa5869cf0459d9a5cc139deaf1"
     },
     "ou_validation_publication.tex": {
       "bytes": 13969,
-      "sha256": "53c778445927d3bd33c6dae67c545911a5aecae114963de2829f03d26f55d925"
+      "sha256": "3ead918a22d58167287905902cb0158ce672f9cf589c74b8627b408b43125a78"
     },
     "ou_validation_raw.csv": {
-      "bytes": 615815,
-      "sha256": "9ea37ae22a0faf0404e677287ba170de8c8d2cef5f7c004ff1d5483a6d52156b"
+      "bytes": 615992,
+      "sha256": "8fb31f8a0074a5575fd86858c7a80b06c4c134a2913e4c79cd01bf6e0258bbe4"
     },
     "ou_validation_summary.csv": {
-      "bytes": 796040,
-      "sha256": "6210f40f55dfee40646d38d4da3929451d297de83d5501aa1f16ef293afd4074"
+      "bytes": 796288,
+      "sha256": "9916c4d31b1606ad06f6c6b9ed7456c99634fb71f94c06bd65ee330589c88b1f"
     },
     "ou_validation_table.tex": {
-      "bytes": 15832,
-      "sha256": "1778361e865b6561b91def5201678e30f5a0dd2ee592185f284ce38b9b017cdc"
+      "bytes": 15846,
+      "sha256": "7789fd24abd5d5b3cd27dd6d39eaeff8135d55c556f7280cb7ed95107d322e7d"
     },
     "ou_validation_transition.csv": {
       "bytes": 1263195,

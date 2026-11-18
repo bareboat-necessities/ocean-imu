@@ -3,8 +3,8 @@
   "disp_z_pct_hs": 5.30085182,
   "family": "OU_III",
   "files": {
-    "ou_rs_roundtrip_scores.csv": "714496a027f2d0cc453305af2bfefb97744d94c39ff9b8357884d16fded9977c",
-    "ou_rs_roundtrip_scores.tex": "7ad534c267f26c5a0439226d2d99dec0a4e3c96730ceef2f3cef1f2a09f3edd5",
+    "ou_rs_roundtrip_scores.csv": "89747c4603cd5537c506e669104264c5d407cab557e2d2281081bc8a3c14d8af",
+    "ou_rs_roundtrip_scores.tex": "cf62827891aff664f7cad96e7c1a5cbf6a3958787554603df3a66023da167ada",
     "ou_rs_roundtrip_transition.csv": "e92008d01ccd0f54f5051c01d385e0a5ac5878f48ff35f59e0161febc00a73a2",
     "ou_rs_roundtrip_transition.svg": "68ee1fa06135e11a523dbb4affc284abc008dbc945850bcf6eb729bf085b3128"
   },
@@ -19,7 +19,7 @@
   "producer_sha256": "99d9693d10d49ce2ba312b1e68668c28112c2b9d8236cf234ea1cae9a0753a4a",
   "segment_scores": [
     {
-      "disp_3d_rms_m": 0.179555818,
+      "disp_3d_rms_m": 0.156283677,
       "disp_z_pct_hs": 2.81347251,
       "disp_z_pct_refrms": 31.9519653,
       "disp_z_ref_rms_m": 0.352212757,
@@ -29,7 +29,7 @@
       "stop_s": 400.0
     },
     {
-      "disp_3d_rms_m": 0.503391922,
+      "disp_3d_rms_m": 0.421539664,
       "disp_z_pct_hs": 5.98041916,
       "disp_z_pct_refrms": 27.6574459,
       "disp_z_ref_rms_m": 0.864927173,
@@ -39,7 +39,7 @@
       "stop_s": 520.0
     },
     {
-      "disp_3d_rms_m": 0.699260414,
+      "disp_3d_rms_m": 0.511965513,
       "disp_z_pct_hs": 8.59828663,
       "disp_z_pct_refrms": 19.7890644,
       "disp_z_ref_rms_m": 1.73798752,
@@ -49,7 +49,7 @@
       "stop_s": 640.0
     },
     {
-      "disp_3d_rms_m": 0.575133085,
+      "disp_3d_rms_m": 0.465621889,
       "disp_z_pct_hs": 6.65046215,
       "disp_z_pct_refrms": 29.98242,
       "disp_z_ref_rms_m": 0.887248218,
@@ -59,7 +59,7 @@
       "stop_s": 800.0
     },
     {
-      "disp_3d_rms_m": 0.412551582,
+      "disp_3d_rms_m": 0.339682579,
       "disp_z_pct_hs": 4.81028605,
       "disp_z_pct_refrms": 26.6886921,
       "disp_z_ref_rms_m": 0.720947444,
@@ -69,7 +69,7 @@
       "stop_s": 920.0
     },
     {
-      "disp_3d_rms_m": 0.198564604,
+      "disp_3d_rms_m": 0.173986971,
       "disp_z_pct_hs": 2.56193686,
       "disp_z_pct_refrms": 25.3070526,
       "disp_z_ref_rms_m": 0.404936433,
@@ -79,7 +79,7 @@
       "stop_s": 1040.0
     },
     {
-      "disp_3d_rms_m": 0.149900317,
+      "disp_3d_rms_m": 0.12970525,
       "disp_z_pct_hs": 2.08376312,
       "disp_z_pct_refrms": 34.6745186,
       "disp_z_ref_rms_m": 0.240379751,
@@ -105,6 +105,6 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
   "wave_phase_seed": 11
 }
