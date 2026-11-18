@@ -81,7 +81,7 @@
     },
     {
       "path": "src/kalman_common/WaveStartup.h",
-      "git_blob_sha": "e40e3e03ad3365079d34d061bbfeef7ad0946b5e"
+      "git_blob_sha": "ba4179db9c41375a589706bb0d647c756946418c"
     }
   ],
   "semantic_bindings": {
@@ -207,7 +207,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "93a24ae0d5b34d6fb75c0c836de2fa11a7791344"
+      "git_blob_sha": "2555d043c258d8c0a6ded7e1864808a19892f440"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -811,7 +811,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "9593fef48bd9846eeb3e365e4f5bdfc9795ca501"
+      "git_blob_sha": "428065d34fc8493229afc63955cec37185370f48"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -879,7 +879,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "73d412a295277714a0fd253e7748f59456865849"
+      "git_blob_sha": "475bd6640073667aaed8a4dc342766750b8e9dbd"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1922,9 +1922,9 @@
     "next_falsifiable_check": "source-bound exact reproduction, all native tests and default-flag embedded linking"
   },
   "wave_startup_runtime_source_refresh": {
-    "runtime_source_commit": "897962600bea1c58f428a247db3ad0ef0adb88f1",
+    "runtime_source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
     "receipt": "reports/results/ou3_stability/wave-startup-runtime-source-refresh.json",
-    "sha256": "3dd51cc29ad34b40d85d46164472e3a707626eddcbfab40d0fa294e7270b184d",
+    "sha256": "ed8ded7326719f5167bed16a4fdab6afd66983c8ad61aa6321f4104913f5bad7",
     "genuine_shipping_counterexample_found": false,
     "theorem_promoted": false
   }

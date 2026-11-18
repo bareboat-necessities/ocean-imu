@@ -1,7 +1,36 @@
+## Magnetic guard and TFG handover qualification
+
+The native OU-III drivers ran on estimator commit `68f097807af2a070711c77288ca07ec136f6377a`.
+The native reports on this runtime passed the source validator. The OU-III suite recorded 824 passes across 824 tests.
+The compiled magnetic guard has SHA-256
+`711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b`.
+
+- **Structures preserved.** Each driver uses its original sensor history and
+  inherits the shipping mean, covariance, frontend, tuner, scheduler, magnetic
+  reference and gyro endpoints. The tapped mean action matches its untapped
+  control through the full native trace and the committed field.
+- **Relaxations introduced.** These finite float histories establish the
+  reported point diagnostics. The pre-refinement field bound uses exact-real
+  operations on the represented guard constants.
+- **Failure classification.** The stale guard binding, stale planar manifest,
+  stale whole-source native secants and interrupted or memory-limited builds
+  are class E. On the guard revision, the native default build stopped when
+  `cc1plus` was killed while compiling `tests/kalman_carma/carma3_bench.cpp`
+  with the default `-O3` options. Numerical inputs and optimizer flags were
+  retained during the serialized build recovery.
+- **Counterexamples.** No shipping counterexample was found.
+- **Retained results.** Seventeen native diagnostics were regenerated. The
+  exact trace, field, observer/control parity and rational-factor checks
+  preserve the existing finite mean-action enclosure. The native secants and
+  generated magnetic-port certificate now bind the tested source tree.
+  Finite capture, uniform dissipation and every-prefix retention remain open.
+- **Next falsifiable check.** Bound joint handover tilt, field and bias errors
+  over the reachable accepted and rejected starts on one continuing history.
+
 ## Wave-startup handover qualification
 
 The shared startup fit commits a current attitude, magnetic reference and body
-gyro bias at the actual handover. All 17 source-bound diagnostics were
+gyro bias at the actual handover. On runtime commit `8979626`, all 17 source-bound diagnostics were
 re-exercised, including the 240 s and 1,200 s carried histories. The mean-action
 observer and untapped control agreed on the terminal readout, and the native
 trace matched all 37,355,824 previously enclosed bytes. Its committed field,
@@ -92,12 +121,23 @@ Class E build qualification failures: concurrent Eigen compilations exhausted
 host memory in `make all -j1 SIM_JOBS=4` (`carma_lever_arm-repro.o`),
 `make all -j2 SIM_JOBS=3` (`carma_shared_modes-test.o`), and
 `make all -j1 SIM_JOBS=3` while native diagnostics also compiled
-(`carma3_filters_tfg.o`). Each reports `g++: fatal error: Killed signal
+(`carma3_filters_tfg.o`), and `make -j1 all SIM_JOBS=3` when the
+new timeline diagnostic compiled (`carma3-sim.o`). Each reports `g++: fatal error: Killed signal
 terminated program cc1plus`; these are incomplete builds, not numerical
 qualification. An executor restart also interrupted a build without a terminal
 receipt. The architecture review rejects further concurrent native compiles:
-run the diagnostic batch and the required build sequentially. Retained facts
+the timeline compiler and the study/build compilers now share one lock.
+The CARMA replay translation unit retries with more frequent compiler garbage
+collection, keeping the same source, optimization and numerical settings.
+Retained facts
 are the completed CI measurements and standalone tests, not the failed build.
+
+Class E additional build qualification: `make -j1 all SIM_JOBS=2` still
+exhausted compiler memory on `carma_excitation-test.o` with serialized native
+compilation. The previous CARMA replay object completed with more frequent
+compiler garbage collection. The next complete build applies those resource
+settings to every native translation unit; numerical compiler flags are
+unchanged. No completed `make all` result is claimed.
 
 Class E embedded build failure: Arduino Linux and Windows at a02d9fd4 fail
 with `dangerous relocation: l32r: literal target out of range` in OU-II and

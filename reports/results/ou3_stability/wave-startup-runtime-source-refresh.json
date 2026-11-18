@@ -1,6 +1,6 @@
 {
-  "qualification": "OU3_WAVE_STARTUP_RUNTIME_SOURCE_REFRESH_V1",
-  "runtime_source_commit": "897962600bea1c58f428a247db3ad0ef0adb88f1",
+  "qualification": "OU3_WAVE_STARTUP_FIELD_GUARD_SOURCE_REFRESH_V1",
+  "runtime_source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
   "native_evidence": [
     {
@@ -172,7 +172,7 @@
     {
       "module": "planar_native_secants",
       "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "40903e892fbd7a2c0170a5305dfb5da350f9412bb5c4ae83aef5bb3006fdc31d",
+      "sha256": "5f89f6ef9051625191895e476a3ba21f2be86e0b577e413ba8be39a2a0ed964a",
       "command": [
         "python3",
         "-m",
@@ -247,12 +247,14 @@
   "validation": {
     "native_receipts": 17,
     "ou3_python_tests_passed": 824,
-    "source_validation_failures": []
+    "source_validation_failures": [],
+    "ou3_python_tests_discovered": 824
   },
   "structures_preserved": [
     "actual persistent physical history, startup guards, covariance, tuner and scheduler",
     "accepted wave fit supplies current attitude, local field and gyro bias; fallback and subsequent live corrections follow shipping source",
-    "native control parity where required by each original study"
+    "native control parity where required by each original study",
+    "the field-continuity guard restricts accepted fits; original fit equations and post-startup dynamics are unchanged"
   ],
   "relaxations_introduced": [
     "finite float traces do not enclose all admitted trajectories",
@@ -265,5 +267,7 @@
   "genuine_shipping_counterexample_found": false,
   "source_uniform_verified": false,
   "theorem_closed": false,
-  "scope": "Finite same-source native reproductions and real-operation identities. Source-uniform capture, finite-error contraction, retention and target float transfer remain open."
+  "scope": "Finite same-source native reproductions and real-operation identities. Source-uniform capture, finite-error contraction, retention and target float transfer remain open.",
+  "wave_startup_header_sha256": "711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b",
+  "runtime_src_git_tree": "95a508d91898445b05bd83e6d7a63394c300599e"
 }
