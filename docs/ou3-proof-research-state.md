@@ -1,3 +1,27 @@
+## OU-III native secants after the TFG horizontal velocity correction
+
+The TFG change at `16a4a8d` touched two headers outside the OU-III probe's
+46 project dependencies. Both perturbation radii ran again on samples 40,000
+through 44,000. Each radius reproduced all 252 columns of the previously
+measured matrix, byte for byte. The source validator, 824 OU-III tests and
+24 workflow-contract tests passed.
+
+- **Structures preserved.** Both runs inherited the full OU-III state and
+  covariance, physical forcing, clock and magnetic corrections. The
+  unperturbed forks agreed bit for bit.
+- **Relaxations introduced.** The two finite perturbations sample points
+  around one history. Reachability of those neighboring states remains open.
+- **Failure classification.** The previous planar report bound the whole
+  shipping source tree. Its digest expired when TFG changed (class E).
+  The probe's compiler inputs and native executable matched the prior build.
+- **Counterexamples.** Neither native run produced a shipping counterexample.
+- **Retained results.** Both numerical matrices and their derived gains
+  reproduced exactly. The other 16 native records retain their original
+  measured values. The uniform dissipation and retention bounds remain open.
+- **Next falsifiable check.** Bound cross-gains and every-prefix retention
+  over the reachable family while carrying the same physical forcing and
+  estimator history across each word.
+
 ## Magnetic guard and TFG handover qualification
 
 The native OU-III drivers ran on estimator commit `68f097807af2a070711c77288ca07ec136f6377a`.

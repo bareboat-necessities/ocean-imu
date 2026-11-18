@@ -207,7 +207,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "7988110ff809bf0c598d6b65750909313a4197e8"
+      "git_blob_sha": "aca139937df9869388da714dba341315cd21b4be"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -879,7 +879,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "475bd6640073667aaed8a4dc342766750b8e9dbd"
+      "git_blob_sha": "f530f5f6eb3149970a18423c5126a8174700a627"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1927,5 +1927,49 @@
     "sha256": "ed8ded7326719f5167bed16a4fdab6afd66983c8ad61aa6321f4104913f5bad7",
     "genuine_shipping_counterexample_found": false,
     "theorem_promoted": false
+  },
+  "tfg_horizontal_integral_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+    "runtime_src_git_tree": "5c74c92f17ccca4f0f197d30edc91ef52e411ae5",
+    "prior_native_runtime": "68f097807af2a070711c77288ca07ec136f6377a",
+    "prior_native_receipt_sha256": "ed8ded7326719f5167bed16a4fdab6afd66983c8ad61aa6321f4104913f5bad7",
+    "changed_files_outside_ou3_probe": [
+      "src/kalman_tfg/Kalman3D_Wave_TFG.h",
+      "src/kalman_tfg/SeaStateFusionFilter_TFG.h"
+    ],
+    "prior_source_files_verified": 376,
+    "unchanged_probe_project_dependencies": 46,
+    "compiler_sha256": "6b3696e4dcb85e1c949c732a02befa50e3983ecf94ce7e8e58d9d503b954b79d",
+    "compiler_options": [
+      "-std=c++20",
+      "-O1",
+      "-DEIGEN_UNROLLING_LIMIT=0",
+      "-DEIGEN_NON_ARDUINO"
+    ],
+    "preprocessor_path_mapping": "Map selected source path to previous build path for __FILE__ strings only.",
+    "identical_preprocessed_bytes": 4944078,
+    "preprocessed_sha256": "0eb981ace20fdb6266b46a98fd82c4868d61ca4f1632519bc7561d7de8aadc43",
+    "native_probe_binary_sha256": "14b6a3848c3237c33a4145d23b7011c3ed4103df82c4fb9f568117519d5116ef",
+    "native_replay_performed": true,
+    "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+    "artifact_sha256": "d4f64744795bfea92996b757510107ef785531dd4166cc8dcffa5a50572eeedd",
+    "reproduced_native_secant_matrices": [
+      {
+        "epsilon": 0.01,
+        "columns": 252,
+        "sha256": "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50"
+      },
+      {
+        "epsilon": 0.005,
+        "columns": 252,
+        "sha256": "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+      }
+    ],
+    "other_native_records_verified": 16,
+    "genuine_shipping_counterexample_found": false,
+    "theorem_closed": false,
+    "ou3_validation_tests_passed": 824,
+    "workflow_contract_tests_passed": 24
   }
 }

@@ -1,0 +1,328 @@
+{
+  "main": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "main_scored_commit": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+  "main_strict_actions_run": 44101355640,
+  "selected_runtime": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+  "reviewed_headers_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "inputs_and_measurements": {
+    "following": {
+      "main_archive_id": 14337907440,
+      "main_archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+      "main_measurements_sha256": "fdff47df17951ce6f170b7f300c712978da551f9f170a54b174a386d8baa45f5",
+      "main_reported_dirty": true,
+      "main_compiled_inputs_identical_to_main": 179,
+      "selected_measurements_sha256": "09cc7cc5e756f939d17426a950231db2cb53c968c91c75d9b4fddb30d74f425d",
+      "selected_original_gate_outcome": "measurement only; gate failures retained"
+    },
+    "head": {
+      "main_archive_id": 14338570838,
+      "main_archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+      "main_measurements_sha256": "31942ef7daccfaad1f48f174c3269707a5f68eb555b2c60d47aac6b035199df8",
+      "main_reported_dirty": true,
+      "main_compiled_inputs_identical_to_main": 179,
+      "selected_measurements_sha256": "c1bd51507a0b0f0f615207c16628a8f75270b8395750bdbea0a2054086daa962",
+      "selected_original_gate_outcome": "all replay gates passed"
+    }
+  },
+  "window": "Full 1,200 s records; final 900 s except AHRS final 60 s. 16 direction-specific records. Default sensor draw.",
+  "comparison": "Source-setting native scores against strict main, before application of the 0.5% gate margin. The selected measurement retains each original gate exit code.",
+  "all": {
+    "channels": 2768,
+    "lower": 1223,
+    "higher": 913,
+    "identical": 632,
+    "lower_by_over_half_percent": 209,
+    "higher_by_over_half_percent": 51,
+    "within_half_percent": 2508
+  },
+  "by_family": {
+    "ahrs": {
+      "channels": 48,
+      "lower": 0,
+      "higher": 0,
+      "identical": 48,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 48
+    },
+    "carma": {
+      "channels": 288,
+      "lower": 140,
+      "higher": 103,
+      "identical": 45,
+      "lower_by_over_half_percent": 6,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 280
+    },
+    "csm": {
+      "channels": 288,
+      "lower": 140,
+      "higher": 107,
+      "identical": 41,
+      "lower_by_over_half_percent": 6,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 280
+    },
+    "heave_godhavn": {
+      "channels": 48,
+      "lower": 0,
+      "higher": 0,
+      "identical": 48,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 48
+    },
+    "heave_godhavn_ext": {
+      "channels": 48,
+      "lower": 0,
+      "higher": 0,
+      "identical": 48,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 48
+    },
+    "heave_kuchler": {
+      "channels": 48,
+      "lower": 0,
+      "higher": 0,
+      "identical": 48,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 48
+    },
+    "heave_pii": {
+      "channels": 32,
+      "lower": 0,
+      "higher": 0,
+      "identical": 32,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 32
+    },
+    "heave_richter_zd": {
+      "channels": 48,
+      "lower": 0,
+      "higher": 0,
+      "identical": 48,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 48
+    },
+    "nlo": {
+      "channels": 16,
+      "lower": 0,
+      "higher": 0,
+      "identical": 16,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 16
+    },
+    "ou2": {
+      "channels": 288,
+      "lower": 153,
+      "higher": 93,
+      "identical": 42,
+      "lower_by_over_half_percent": 4,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 282
+    },
+    "ou3": {
+      "channels": 288,
+      "lower": 144,
+      "higher": 95,
+      "identical": 49,
+      "lower_by_over_half_percent": 4,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 282
+    },
+    "pii": {
+      "channels": 32,
+      "lower": 0,
+      "higher": 0,
+      "identical": 32,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 32
+    },
+    "tangent": {
+      "channels": 288,
+      "lower": 111,
+      "higher": 132,
+      "identical": 45,
+      "lower_by_over_half_percent": 4,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 282
+    },
+    "tcarma": {
+      "channels": 288,
+      "lower": 119,
+      "higher": 125,
+      "identical": 44,
+      "lower_by_over_half_percent": 4,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 282
+    },
+    "tcsm": {
+      "channels": 288,
+      "lower": 117,
+      "higher": 131,
+      "identical": 40,
+      "lower_by_over_half_percent": 4,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 282
+    },
+    "tfg": {
+      "channels": 288,
+      "lower": 242,
+      "higher": 43,
+      "identical": 3,
+      "lower_by_over_half_percent": 161,
+      "higher_by_over_half_percent": 19,
+      "within_half_percent": 108
+    },
+    "tfg_legacy": {
+      "channels": 144,
+      "lower": 57,
+      "higher": 84,
+      "identical": 3,
+      "lower_by_over_half_percent": 16,
+      "higher_by_over_half_percent": 18,
+      "within_half_percent": 110
+    }
+  },
+  "by_metric": {
+    "roll": {
+      "channels": 288,
+      "lower": 187,
+      "higher": 57,
+      "identical": 44,
+      "lower_by_over_half_percent": 21,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 267
+    },
+    "pitch": {
+      "channels": 288,
+      "lower": 139,
+      "higher": 105,
+      "identical": 44,
+      "lower_by_over_half_percent": 23,
+      "higher_by_over_half_percent": 14,
+      "within_half_percent": 251
+    },
+    "yaw": {
+      "channels": 304,
+      "lower": 87,
+      "higher": 157,
+      "identical": 60,
+      "lower_by_over_half_percent": 17,
+      "higher_by_over_half_percent": 17,
+      "within_half_percent": 270
+    },
+    "heave": {
+      "channels": 528,
+      "lower": 121,
+      "higher": 117,
+      "identical": 290,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 528
+    },
+    "displacement": {
+      "channels": 272,
+      "lower": 148,
+      "higher": 96,
+      "identical": 28,
+      "lower_by_over_half_percent": 32,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 240
+    },
+    "acc_z": {
+      "channels": 272,
+      "lower": 110,
+      "higher": 81,
+      "identical": 81,
+      "lower_by_over_half_percent": 0,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 270
+    },
+    "acc_3d": {
+      "channels": 272,
+      "lower": 169,
+      "higher": 74,
+      "identical": 29,
+      "lower_by_over_half_percent": 23,
+      "higher_by_over_half_percent": 4,
+      "within_half_percent": 245
+    },
+    "gyro_3d": {
+      "channels": 272,
+      "lower": 151,
+      "higher": 93,
+      "identical": 28,
+      "lower_by_over_half_percent": 61,
+      "higher_by_over_half_percent": 14,
+      "within_half_percent": 197
+    },
+    "displacement_y": {
+      "channels": 272,
+      "lower": 111,
+      "higher": 133,
+      "identical": 28,
+      "lower_by_over_half_percent": 32,
+      "higher_by_over_half_percent": 0,
+      "within_half_percent": 240
+    }
+  },
+  "by_direction": {
+    "following": {
+      "channels": 1384,
+      "lower": 482,
+      "higher": 473,
+      "identical": 429,
+      "lower_by_over_half_percent": 121,
+      "higher_by_over_half_percent": 49,
+      "within_half_percent": 1214
+    },
+    "head": {
+      "channels": 1384,
+      "lower": 741,
+      "higher": 440,
+      "identical": 203,
+      "lower_by_over_half_percent": 88,
+      "higher_by_over_half_percent": 2,
+      "within_half_percent": 1294
+    }
+  },
+  "largest_material_decrease": {
+    "case": "following",
+    "family": "tfg",
+    "profile": "default",
+    "record": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+    "metric": "displacement",
+    "main": 10.8299408,
+    "selected": 6.46363688,
+    "percent_change": -40.31696941501286
+  },
+  "largest_material_increase": {
+    "case": "following",
+    "family": "tfg",
+    "profile": "legacy",
+    "record": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+    "metric": "yaw",
+    "main": 0.558187425,
+    "selected": 0.625177503,
+    "percent_change": 12.001359220874598
+  },
+  "same_global_header_fields": {
+    "channels": 187,
+    "lower": 64,
+    "higher": 64,
+    "identical": 59,
+    "lower_by_over_half_percent": 16,
+    "higher_by_over_half_percent": 6,
+    "within_half_percent": 165
+  },
+  "per_channel_csv": "main-matrix.csv.gz",
+  "per_channel_csv_sha256": "990db1f6518feb8dd0f38934c4751942a42951a56ed654b686c98d1149055492",
+  "main_baseline_provenance": "The official main replay marked its working directory dirty. All 179 recorded compilation and replay inputs matched the tracked source on current main, all 46 profile logs matched their recorded hashes, and both regenerated headers matched main."
+}
