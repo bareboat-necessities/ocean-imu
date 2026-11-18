@@ -213,6 +213,9 @@ public:
         // Per-horizontal-axis standard deviation of an accepted wave tilt fit.
         // The fallback proxy keeps its independently configured uncertainty.
         float wave_handoff_tilt_sigma_rad = 0.00872664626f;  // 0.5 degrees
+        // Match horizontal wave motion only once accelerometer bias can
+        // respond to the same innovations. Used with the spectral R_S law.
+        bool wave_matched_horizontal_integral = true;
     };
 
     void begin(const Config& cfg) {
@@ -1059,7 +1062,8 @@ private:
         // worsens its coupled attitude/bias calibration; retain its full gain.
         mekf_.set_integral_velocity_weight(
             wave_matched_vertical_integral_ && std::isfinite(beta) ? beta : 0.0f,
-            rs_law_ == RSLaw::SpectralMSE);
+            rs_law_ == RSLaw::SpectralMSE,
+            rs_law_ == RSLaw::SpectralMSE && cfg_.wave_matched_horizontal_integral);
     }
 
     void commitTune_() {

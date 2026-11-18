@@ -257,13 +257,15 @@ class Kalman3D_Wave_TFG {
     void set_aw_time_constant(T tau) { tau_aw_ = std::max(T(1e-3), tau); }
     [[nodiscard]] T aw_time_constant() const { return tau_aw_; }
 
-    // Vertical drift observation S_z + beta*v_z = 0.  For a sinusoid,
-    // beta=1/omega^2 preserves the wave while anchoring its integration DC.
+    // For a sinusoid, S + beta*v = 0 with beta=1/omega^2. Match the
+    // vertical coordinate and optionally the horizontal ones after bias release.
     // A zero weight retains the original three S=0 observations.
-    bool set_integral_velocity_weight(T beta_s2, bool protect_attitude = true) {
+    bool set_integral_velocity_weight(T beta_s2, bool protect_attitude = true,
+                                      bool match_horizontal_after_bias_release = false) {
         if (!std::isfinite(beta_s2) || beta_s2 < T(0)) return false;
         integral_velocity_weight_ = beta_s2;
         protect_integral_attitude_ = protect_attitude;
+        match_horizontal_after_bias_release_ = match_horizontal_after_bias_release;
         return true;
     }
     [[nodiscard]] T integral_velocity_weight() const { return integral_velocity_weight_; }
@@ -697,13 +699,26 @@ class Kalman3D_Wave_TFG {
         H.setZero();
         H.template block<3,3>(0, OFF_PHI) = ocean_imu::lie::skew<T>(Vector3(X_.X.col(2)));
         H.template block<3,3>(0, OFF_S) = -Matrix3::Identity();
-        if (integral_velocity_weight_ > T(0)) {
-            r(2) -= integral_velocity_weight_ * X_.X(2,0);
-            const Matrix3 velocity_cross = ocean_imu::lie::skew<T>(Vector3(X_.X.col(0)));
-            H.template block<1,3>(2,OFF_PHI) += integral_velocity_weight_ * velocity_cross.row(2);
-            H(2,OFF_V+2) = -integral_velocity_weight_;
-        }
         Rw = R_S_;
+        if (integral_velocity_weight_ > T(0)) {
+            const bool horizontal = match_horizontal_after_bias_release_ && acc_bias_updates_enabled_;
+            const Matrix3 velocity_cross = ocean_imu::lie::skew<T>(Vector3(X_.X.col(0)));
+            for (int i = horizontal ? 0 : 2; i < 3; ++i) {
+                r(i) -= integral_velocity_weight_ * X_.X(i,0);
+                H.template block<1,3>(i,OFF_PHI) += integral_velocity_weight_ * velocity_cross.row(i);
+                H(i,OFF_V+i) = -integral_velocity_weight_;
+            }
+            if (horizontal) {
+                // Matching a single encounter period removes part of the
+                // horizontal wave variance. Retain the broadband residual
+                // and transform a full noise matrix by D*R*D (Dzz = 1).
+                constexpr T variance_ratio = T(0.625);
+                constexpr T std_ratio = T(0.79056941504209483); // sqrt(5/8)
+                Rw.template topLeftCorner<2,2>() *= variance_ratio;
+                Rw.template topRightCorner<2,1>() *= std_ratio;
+                Rw.template bottomLeftCorner<1,2>() *= std_ratio;
+            }
+        }
     }
 
     bool measurement_update_acc_only(const Vector3& acc_meas_body, T tempC = T(35)) {
@@ -1016,6 +1031,7 @@ class Kalman3D_Wave_TFG {
     T tau_aw_{T(1.0)};
     T integral_velocity_weight_{T(0)};
     bool protect_integral_attitude_{true};
+    bool match_horizontal_after_bias_release_{false};
     Matrix3 Sigma_aw_{Matrix3::Identity()};
     Matrix3 aw_cov_floor_target_{Matrix3::Identity()};
     bool aw_cov_floor_pending_{false};

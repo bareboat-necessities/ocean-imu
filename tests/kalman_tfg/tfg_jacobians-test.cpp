@@ -522,6 +522,41 @@ void test_wave_matched_integral() {
           "vertical regularizer directly altered attitude or gyro bias");
 }
 
+void test_horizontal_wave_match_after_bias_release() {
+    Filter f = make_filter();
+    constexpr T beta = T(1.7);
+    f.set_integral_velocity_weight(beta, true, true);
+    Matrix3 R;
+    R << 4,1,0.5, 1,5,0.75, 0.5,0.75,3;
+    f.set_RS_noise_matrix(R);
+    Vector3 r; JacobianT H; Matrix3 Rw;
+    for (bool active : {false, true, false}) {
+        f.set_acc_bias_updates_enabled(active);
+        f.integral_residual(r, H, Rw);
+        Vector3 expected = -f.get_integral_displacement();
+        const Vector3 velocity = f.get_velocity();
+        expected.z() -= beta * velocity.z();
+        if (active) expected.head<2>() -= beta * velocity.head<2>();
+        check(r.isApprox(expected), "horizontal integral used the wrong bias release state");
+        const T sigma = active ? std::sqrt(T(5)/T(8)) : T(1);
+        const Vector3 scale(sigma, sigma, T(1));
+        check(Rw.isApprox(scale.asDiagonal() * R * scale.asDiagonal()),
+              "horizontal integral lost a covariance cross term");
+        const JacobianT numeric = numeric_jacobian(f, [](const Filter& g) {
+            Vector3 rr; JacobianT HH; Matrix3 RR;
+            g.integral_residual(rr, HH, RR);
+            return rr;
+        }, T(1e-6));
+        compare(H, numeric, T(2e-7), "horizontal wave integral on manifold");
+    }
+    f.set_acc_bias_updates_enabled(true);
+    const Vector3 v(0.3, -0.8, 1.2);
+    f.initialize_from_truth(Eigen::Quaternion<T>::Identity(), v, Vector3::Zero(),
+                            -beta*v, Vector3::Zero());
+    f.integral_residual(r, H, Rw);
+    check(r.norm() <= T(1e-14), "horizontal harmonic wave generated a drift innovation");
+}
+
 // ---------------------------------------------------------------------------
 // Noise rotation
 // ---------------------------------------------------------------------------
@@ -721,6 +756,7 @@ int main() {
     test_integral_jacobian();
     test_integral_keeps_the_S_cross_term();
     test_wave_matched_integral();
+    test_horizontal_wave_match_after_bias_release();
 
     test_measurement_noise_is_rotated_into_the_world();
     test_updates_reduce_error_and_covariance();
