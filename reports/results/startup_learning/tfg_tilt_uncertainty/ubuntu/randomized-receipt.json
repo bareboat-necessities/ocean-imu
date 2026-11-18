@@ -1,0 +1,221 @@
+{
+  "baseline": "0f932801758aa840023bf0fa35da187bab15f1a0",
+  "production": "68f097807af2a070711c77288ca07ec136f6377a",
+  "seed_controls": {
+    "before": 64,
+    "after": 64
+  },
+  "raw_csv_sha256": {
+    "before": "1a66ab67a561224ece53926f90483f764f49970282c9085c29d78de002209d24",
+    "after": "0937a660a8c93594659aa85bbec40ac7a8689ffbddf254012ca859592e183d67"
+  },
+  "binary_sha256": {
+    "before": "c4a5e52ade6b8f2a2522b5736358643424f2828d67a0998c13017d5e63ff6613",
+    "after": "127c8cee8aaa2a9bbb4af64d512253d76f7361ba05bd5b327dd4120a29d51bcc"
+  },
+  "system_math_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "numpy": "2.3.5",
+  "case": "following",
+  "archive_id": 14392661534,
+  "archive_sha256": "190f8b048c3bebf6065c0c11de2743bc328c657631e9d0cc34c752d62f4a4ca3",
+  "pinned_inputs": {
+    "release": "v1.4.0",
+    "case": "following",
+    "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+    "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+    "motion_model": "VESSEL_RAO_28FT_5KN",
+    "speed_kn": 5.0,
+    "mean_heading_deg": 0.0,
+    "heading_amplitude_deg": 3.0,
+    "heading_period_s": 20.0,
+    "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+    "input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    }
+  },
+  "cohorts": {
+    "exactly_matched_from_ci": 80,
+    "replayed_on_identical_inputs": 10,
+    "additional_control_pair": 1
+  },
+  "fresh_csv_sha256": "30c6b8155f5730913eed947f6c65828f60b07b6a5e3ecf593ba1a630947339c3",
+  "paired_csv_sha256": "97617fa8a8130a89089e1dbffca44b2fd13aeecf4fa762da55a88cc515f1c723",
+  "pooled": {
+    "all": {
+      "disp_z_pct_hs": {
+        "before": 4.510535777388679,
+        "after": 4.510527311217365,
+        "pairs": 90
+      },
+      "disp_z_rms_m": {
+        "before": 0.17195476267003834,
+        "after": 0.1719515934806635,
+        "pairs": 90
+      },
+      "disp_3d_rms_m": {
+        "before": 0.48720956360688095,
+        "after": 0.48712729178410985,
+        "pairs": 90
+      },
+      "roll_rms_deg": {
+        "before": 0.3297532084164935,
+        "after": 0.3298969446589395,
+        "pairs": 90
+      },
+      "pitch_rms_deg": {
+        "before": 0.32054032108619324,
+        "after": 0.3205253144967683,
+        "pairs": 90
+      },
+      "yaw_rms_deg": {
+        "before": 1.0823551497322894,
+        "after": 1.0828492526457523,
+        "pairs": 90
+      },
+      "accel_3d_rms_mps2": {
+        "before": 0.021712636708707787,
+        "after": 0.021715917352562723,
+        "pairs": 90
+      },
+      "accel_bias_3d_rms_mps2": {
+        "before": 0.07763640376601318,
+        "after": 0.0776529103306733,
+        "pairs": 90
+      },
+      "gyro_bias_3d_rms_radps": {
+        "before": 0.00011089554478063079,
+        "after": 0.00011089153769165625,
+        "pairs": 90
+      }
+    },
+    "transition": {
+      "disp_z_pct_hs": {
+        "before": 4.155988955683387,
+        "after": 4.155990873791234,
+        "pairs": 10
+      },
+      "disp_z_rms_m": {
+        "before": 0.16623955910443147,
+        "after": 0.16623963256518545,
+        "pairs": 10
+      },
+      "disp_3d_rms_m": {
+        "before": 0.46764760892674695,
+        "after": 0.4676504110526577,
+        "pairs": 10
+      },
+      "roll_rms_deg": {
+        "before": 0.35237472129009473,
+        "after": 0.35237871568693635,
+        "pairs": 10
+      },
+      "pitch_rms_deg": {
+        "before": 0.2422816137300008,
+        "after": 0.24237774902774634,
+        "pairs": 10
+      },
+      "yaw_rms_deg": {
+        "before": 1.083901139321698,
+        "after": 1.0839771764584187,
+        "pairs": 10
+      },
+      "accel_3d_rms_mps2": {
+        "before": 0.019360016462325578,
+        "after": 0.019360266049892716,
+        "pairs": 10
+      },
+      "accel_bias_3d_rms_mps2": {
+        "before": 0.07159519151660095,
+        "after": 0.07160527395264693,
+        "pairs": 10
+      },
+      "gyro_bias_3d_rms_radps": {
+        "before": 0.00011293374667416775,
+        "after": 0.00011292604478796423,
+        "pairs": 10
+      }
+    },
+    "stationary": {
+      "disp_z_pct_hs": {
+        "before": 4.5529132540628225,
+        "after": 4.55290359940917,
+        "pairs": 80
+      },
+      "disp_z_rms_m": {
+        "before": 0.17265586169927274,
+        "after": 0.1726523019935755,
+        "pairs": 80
+      },
+      "disp_3d_rms_m": {
+        "before": 0.4895998549447245,
+        "after": 0.48950741550187116,
+        "pairs": 80
+      },
+      "roll_rms_deg": {
+        "before": 0.32681544140854,
+        "after": 0.3269780549953918,
+        "pairs": 80
+      },
+      "pitch_rms_deg": {
+        "before": 0.32901643131968833,
+        "after": 0.3289911324556319,
+        "pairs": 80
+      },
+      "yaw_rms_deg": {
+        "before": 1.0821617457400479,
+        "after": 1.0827081795500353,
+        "pairs": 80
+      },
+      "accel_3d_rms_mps2": {
+        "before": 0.021989023108637085,
+        "after": 0.021992639952514183,
+        "pairs": 80
+      },
+      "accel_bias_3d_rms_mps2": {
+        "before": 0.0783588135272415,
+        "after": 0.0783760606687229,
+        "pairs": 80
+      },
+      "gyro_bias_3d_rms_radps": {
+        "before": 0.00011063812946486336,
+        "after": 0.00011063459370441445,
+        "pairs": 80
+      }
+    }
+  },
+  "input_generator": {
+    "source_files": {
+      "tools/tfg_comparison.py": "2271479e4f5b0f1d3ffcbe0b7865f7e0c37848560f3a73ce9403da881de3c4b6",
+      "tools/ou_validation.py": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343",
+      "tools/sim_dataset.py": "6f85f9da08d17008c0375621b11c13ad235253205d83d178545689d20c3dcb67"
+    },
+    "implementation": "tfg_comparison.protocol(\"full\"), ou_validation.read_wave_csv / phase_randomize_wave / make_nonstationary_wave / write_wave_csv",
+    "transition": {
+      "start": "jonswap H1.5 m",
+      "end": "jonswap H8.5 m scaled by 4/8.5",
+      "fade_start_s": 540,
+      "fade_end_s": 660,
+      "duration_s": 1200
+    },
+    "environment": {
+      "python": "3.12.14",
+      "numpy": "2.3.5",
+      "architecture": "x86_64",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1"
+    },
+    "replay_environment": "tfg_comparison.environment(\"TFG\", seed_triplet, protocol(\"full\")); load the recorded Ubuntu libm and use the listed --input file with both ordinary native executables.",
+    "scoring": "180,000 samples per arm. All 90 matched configurations have equal weight. The generated CSV was hashed once and passed unchanged to both binary revisions."
+  },
+  "fresh_digest_agreements_with_historical_inputs": 0,
+  "raw_logs_sha256": "345d63dac4f5cfcce387523ba7fcefceee14d5f9b1c040690b970f12b6ae3d4b",
+  "raw_log_count": 38
+}

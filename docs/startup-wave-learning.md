@@ -144,6 +144,28 @@ For local reproduction, the system math library can affect the final digits. Wit
 
 [Canonical four-draw scores and provenance](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu) · [Independent host scores](../reports/results/startup_learning/tfg_tilt_uncertainty/windows.csv.gz) · [First live correction and wave-acceleration controls](startup-gravity-retention.md)
 
+## Randomized waves and engine vibration
+
+In a second following-sea experiment, we compared the preintegration TFG executable with the deployed startup on 90 wave histories. Ten recorded wave-phase, IMU and initialization seed triplets were reused across the eight stationary sea states and one transition. The generated input bytes matched across the two original archives for 80 histories. We regenerated the other ten once each and gave both executables the identical file. The locally generated files differed in digest from the historical files, including a separate control. On the eight original release records, the two executables independently reproduced 64 archived numerical fields per revision. Each score used 180,000 samples from 300–1,200 s.
+
+| TFG late RMS | 90 matched following-sea histories, before → after integration |
+|---|---:|
+| Pitch (°) | 0.320540 → 0.320525 |
+| Yaw (°) | 1.082355 → 1.082849 |
+| 3-D displacement (m) | 0.487210 → 0.487127 |
+| 3-D accelerometer bias (m/s²) | 0.077636 → 0.077653 |
+
+[Matched randomized scores](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/randomized-paired.csv) · [Inputs, controls and binary hashes](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/randomized-receipt.json)
+
+An additional stress check isolates the change from 2° to 0.5° fitted tilt uncertainty under engine vibration. We replayed the 8.5 m JONSWAP and PM-Stokes records in both directions with a 2,400 rpm input and 80 Hz bandwidth. Each row below pools four wave records at the default sensor draw with the production vibration guard. We also repeated every configuration with the guard disabled, as in the existing engine-degradation ablation. The four overlapping unguarded following-sea replays reproduced all 36 archived pitch, bias and motion measurements exactly.
+
+| Simulated engine level | Late pitch (°), 2° → 0.5° | Late yaw (°) | Late 3-D displacement (m) | Late 3-D accel. bias (m/s²) |
+|---|---:|---:|---:|---:|
+| 0.60 m/s² | 1.01304 → 1.00138 | 2.77593 → 2.74699 | 0.83477 → 0.83392 | 0.20313 → 0.20098 |
+| 1.20 m/s² | 1.08526 → 1.08538 | 3.17847 → 3.17697 | 0.84912 → 0.84907 | 0.22139 → 0.22126 |
+
+[All 32 engine replays](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-matched.csv) · [Reproduction inputs](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-receipt.json) · [Archived engine-ablation scores](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928822/artifacts/14391733010)
+
 ## Long-run displacement and accelerometer bias
 
 Each row compares the pre-integration baseline with the current production configuration across all 16 records on the default sensor draw.
