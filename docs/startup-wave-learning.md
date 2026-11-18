@@ -281,6 +281,15 @@ An additional stress check isolates the change from 2° to 0.5° fitted tilt unc
 
 [All 32 engine replays](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-matched.csv) · [Reproduction inputs](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-receipt.json) · [Archived engine-ablation scores](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928822/artifacts/14391733010)
 
+### TFG-CARMA horizontal displacement
+
+The independent-axis and shared-mode TFG-CARMA(4,1) wrappers estimate the
+transverse period from horizontal motion and carry the displacement integral
+through frequency retunes. Both passed all fixed-draw head- and following-sea
+checks against the limits in effect before the change. [Paired displacement,
+bias and attitude measurements](../reports/results/startup_learning/tfg_carma_horizontal_wave/README.md)
+
+
 ## Startup integration compared with main before horizontal matching
 
 The table compares the default TFG filter on main `cee633f` with the PR immediately before the horizontal integral change. It pools 64 matched records per window across both sea directions and four sensor draws. Time is measured from the first input sample.
