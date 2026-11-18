@@ -1,7 +1,7 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "30917fb3dd6e56105048eaf5535f7b1e6c6cc2e583bd6f314f9e8cfc68155be5",
-  "results_file_count": 1430,
+  "replay_fingerprint": "3127ed416e08a20c50295784a037a044ed48984153255184df98cf54d7a65952",
+  "results_file_count": 1414,
   "results_files": [
     {
       "kind": "file",
@@ -2761,7 +2761,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "40a6456502b266a5d78dfcd015780acfdb4827dd8b3aeab359646f8379020abd"
+      "sha256": "d482a66691e48be4762ed2595c64da58979bcba49cd4dac8b6d70daac7c708e8"
     },
     {
       "kind": "file",
@@ -2866,7 +2866,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "8a648ede82976f7014869bd2bd07b07417b2cd83d54d625bb3be5f33e0775f06"
+      "sha256": "222700f1c6aea1dfc9620ff62158a7b08dd4bd972fb0c0504609abf52ca2619f"
     },
     {
       "kind": "file",
@@ -2961,7 +2961,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "800270081de229be308b7d0b9c02f22bcf09addf7eeb9ab702a3d1ad97372250"
+      "sha256": "1811662279843ad3104fc4031df345d0345d491086a7c75ed9a0735c44a7f2fa"
     },
     {
       "kind": "file",
@@ -6285,86 +6285,6 @@
     },
     {
       "kind": "file",
-      "path": "reports/results/startup_learning/controls/REPORT.md",
-      "sha256": "7dae5248c939ababc68623dfadffbd7e3817cd1a50c25fda6eaf18b289bf37c9"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/controls/checks.json",
-      "sha256": "377ee675b8fabe5dc2bcf98c84e0af02fe2e611c71aff26beba8b7ae64c284ae"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/controls/coverage.json",
-      "sha256": "ff3f4352821061451e69723378b9234d563332c480e8aff3e161746d81b63ec8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/controls/metrics.csv.gz",
-      "sha256": "399a3f0fa5f0aaf9a0b9bfa1a38ff573218c862b88190910f228b5f5764374bb"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/controls/provenance.json",
-      "sha256": "d6d9c9fc4c81f9c926c6736ff8e78a53be8938ae678aff459d22e0096539a410"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/controls/summary.json",
-      "sha256": "2111e9eea693a1c95d73d0a121d7a358f466e1b4f8e2f157bd2bb66ae87d46ca"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/slope_study/confirmation.csv",
-      "sha256": "5c535beb29e995e45c6261dbe0aec3e1b143f6bd38a872fdeafe7274d56fda05"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/slope_study/validation.csv",
-      "sha256": "41bdac4bfa577444d10d60b691d7f990c1ddc6cd5e0eab3617358ccba5403513"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/REPORT.md",
-      "sha256": "b2c7a2b8bc74da8ecf083dc49c30d4a3fda84cc2ed4b8ca704173b33b8bea17a"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/checks.json",
-      "sha256": "a47c06f7ba8c70943947a8a50961c0993129bf0bba8c356aacc0a7c1698e5146"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/convergence.png",
-      "sha256": "eecbd3e6f1f0bdddb0036212f1084474370c18952bc121c0396976bc543b35dc"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/convergence.svg",
-      "sha256": "050fb8ef8cb13f8fc74c7b929f47309c34933df2796e01c8f31fb9ab91cb3161"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/coverage.json",
-      "sha256": "853f4fa1b8730f042e5d346e97bcf9984dc9f5553cfe0c4df2ee2b1013a777d8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/metrics.csv.gz",
-      "sha256": "eca65a4fa30f3da6688301b2009be925ce0dcbb3f6417aafd0f8205271930cc8"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/provenance.json",
-      "sha256": "334ea6c0f73e7d66f289c99694dbda9e61c295d642ea8e22dc85b3a38a2f1010"
-    },
-    {
-      "kind": "file",
-      "path": "reports/results/startup_learning/validation/summary.json",
-      "sha256": "a3a0c0b5d6eb7daf1a7936927a91d64d89b4bd1f222305a83298fef84b14840a"
-    },
-    {
-      "kind": "file",
       "path": "reports/results/startup_transient/README.md",
       "sha256": "eaec77b21b23afc19ac7169ee8350a628bbb19408e14455450fbdf859d301c46"
     },
@@ -7154,13 +7074,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "6b63f4ca27b9615331e773bd0474b0f5f11f0737020739d6aacb87ab7d1524e1",
+  "results_fingerprint": "b6bdf30876c4bb0613e204a340baa21ec1644dea55c00e2d0deb18a40fbc7771",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1054,
+  "tracked_replay_file_count": 1039,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -7190,7 +7110,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/build.yml",
-      "sha256": "123cc05a3e473d1d2c6f0dfcd548e04d46af192183d9ac066504203cdf7fd4d1"
+      "sha256": "4d28f2ee7a44131dc8af8e6edc36cc9fe66f5288390fec9648e46ae19a2f37cf"
     },
     {
       "mode": "100644",
@@ -7220,7 +7140,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/ou-validation.yml",
-      "sha256": "03c4fd2f62ca7a7808e33e104d1c405286cb0056b173300430fe950386548912"
+      "sha256": "b320bd90e382983ec6226424ed8fb85b6b1e52da2a08d28ab949553d5e30eabe"
     },
     {
       "mode": "100644",
@@ -7259,11 +7179,6 @@
     },
     {
       "mode": "100644",
-      "path": ".github/workflows/startup-learning.yml",
-      "sha256": "7ea9454157021778be66e5e23458b1d3c029f7cea581f6d0260e4fe8a41a8eba"
-    },
-    {
-      "mode": "100644",
       "path": ".github/workflows/tangent-shared-modes.yml",
       "sha256": "fb15217833fab41082501bfe0ab793dc3e1bee6f5bb6d209769c939b86c891b0"
     },
@@ -7295,12 +7210,12 @@
     {
       "mode": "100644",
       "path": "CMakeLists.txt",
-      "sha256": "a6917a21bf4c359634b70f7e4998a99e8f79ddf74004092a8736b75797713475"
+      "sha256": "500d861cf8eddaaa66af2f6a1668489db3d792f5c6bdf2c84d29937ffca98ab5"
     },
     {
       "mode": "100644",
       "path": "Makefile",
-      "sha256": "3cc5fb2624f1663b56ed4e1b72e494b57c443345f661512d6396892abe3f41f4"
+      "sha256": "ee2478135e553bcfd327fe689d5282abbf6307bd7581548917ad6442be01bc72"
     },
     {
       "mode": "100644",
@@ -9474,56 +9389,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/startup_learning/.gitignore",
-      "sha256": "91fd4c29ed3b80210aee0d93ae3ca8eb128b16810ce014b40d76a8ba6f260825"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/Makefile",
-      "sha256": "4514a8a2817047b8badc0e282239a9ae2083ae6956f83646ac8551399ebc9f82"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/README.md",
-      "sha256": "1fce9ccbcfe873e1a2f83cdf7297e053173ccec705b35c64aaf749aff2a46633"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/ShippingBaseline.cpp",
-      "sha256": "165968fadf8cb11135642333e43c1cd1ae72c500b0afb77f3312e6f1dd8fc8f6"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/ShippingBaseline.h",
-      "sha256": "968db97551e9bc5db311d3169dbdb9bcfa670c1fb72ba689a715285a7eb2f6fd"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/StartupLearner.cpp",
-      "sha256": "653af5b57be8efed7bc09d754dcb6fb2af83084584a2604801a1226489879fe2"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/StartupLearner.h",
-      "sha256": "1dc6be81b351b9458e8908cc06cf84c68fb7ce0da3a2e6330c96e4ba48cd8dbb"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/run_tests.sh",
-      "sha256": "1571a54b7bb36d961fde232d0beb40e0a627eed5f71e99d51e5ae7d9da349d59"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/startup-learning.cpp",
-      "sha256": "416a64a33e2f086054c7fa771b2eba56103a267df81d94bbfe1d7323f0a97146"
-    },
-    {
-      "mode": "100644",
-      "path": "tests/startup_learning/startup-test.cpp",
-      "sha256": "81d7dd80ee635c78ab3950ec74da1c0723c273507fea035aa791ee804e0426a6"
-    },
-    {
-      "mode": "100644",
       "path": "tests/util/Makefile",
       "sha256": "7b658fe1d5d11e7d695d03047a2f4674395683f7fe79f70daa2f4c835fbe2ff3"
     },
@@ -10524,11 +10389,6 @@
     },
     {
       "mode": "100644",
-      "path": "tests/validation/test_startup_learning.py",
-      "sha256": "317b121bc6ecce8190498713b2376ecc5a11774d1b77ae74f79a522dc2955a68"
-    },
-    {
-      "mode": "100644",
       "path": "tests/validation/test_stationary_device_contract.py",
       "sha256": "d756a86164a750e4156e9c844484a67076a6ce86a0a3ac483f716cce6de75ece"
     },
@@ -10580,7 +10440,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_workflow_contract.py",
-      "sha256": "d6086eac7edc76a84424a1bd7f879346a876f309ad400ea41b6f9c356582c6f6"
+      "sha256": "e9a78e3a97f5b0a3e60c4539fa36cc1fe56161dd4a358278fc10b7ab621627df"
     },
     {
       "mode": "100644",
@@ -10796,11 +10656,6 @@
       "mode": "100644",
       "path": "tools/comparator_tuning_report.py",
       "sha256": "ba83309201b33d8f1bb889af419afeaf8a80cdb89cac45a7c8fb7a33ef5b0281"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/compare_startup_slope.py",
-      "sha256": "7950a15eabf5f4d3c2ac0f63ad77d8be05f9e2e45b261e98457d72b02cacd363"
     },
     {
       "mode": "100644",
@@ -11051,11 +10906,6 @@
       "mode": "100644",
       "path": "tools/replay_low_wave_followup.py",
       "sha256": "5adb8a5cf1b06435cc2442aeb24931e4af92fbd10e306cbfc298a520891439f0"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/report_startup_learning.py",
-      "sha256": "a9dbfd5b8c4c2c84cb85b1b68a0f195148ad73be3f782175bdba726831922b68"
     },
     {
       "mode": "100644",
@@ -12281,11 +12131,6 @@
       "mode": "100644",
       "path": "tools/startup_ablation.py",
       "sha256": "b2d63f54c0c671e3612910a18f823536c77128e2857af468806b9130547ad92e"
-    },
-    {
-      "mode": "100644",
-      "path": "tools/startup_learning.py",
-      "sha256": "06e8bb2163fc21f8dd59aa0bae08853efecc60e2cb7d7935f1d8119b34d15af4"
     },
     {
       "mode": "100644",

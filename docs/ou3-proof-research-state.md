@@ -61,31 +61,42 @@ balance and other changed outputs retain their fresh native values.
   their correlations on the reachable construction-to-Live family, including
   rejected fits. The replayed handovers alone cannot supply that enclosure.
 
-## Yaw regression qualification in progress
+## Yaw regression evidence and CI qualification complete
 
-The refreshed source-bound reproduction check and all 824 OU-III validation
-tests pass locally. Seventeen native generation commands completed, including
-fresh 240/1200-s carried histories, full planar secants and historical AG
+The refreshed source-bound reproduction check and all OU-III validation tests
+pass. Seventeen native generation commands completed, including fresh
+240/1200-s carried histories, full planar secants and historical AG
 readout/enclosures. `heading-runtime-source-refresh.json` records commands,
 artifact hashes and scope. The complete 544-cell bidirectional replay matrix
 and all 14 shipped sketches with Arduino IDE default flags pass on the merged
 runtime source; Linux and Windows linking both pass in run 44002744401.
-The required serialized `make all` and full-evidence publication remain open.
 
-Class E publication/CI qualification: `make -C tests/validation evidence-test`
-rejects the committed OU validation and robustness bundles because their replay
-dependencies predate the merged steering and gyro/magnetic-calibration changes.
-The local 1,241-test validation run has six failures, all at these stale-source
-checks, and one skip. The current limiter is complete regeneration/publication
-of both sea-direction study sets and the full OU bundles. Retain the immutable
-old replay provenance until actual replacement runs finish. Separately,
-`tools/quality_gates.sh clang-tidy` in job 133782126577 received a runner shutdown
-signal and exited 143 without a diagnostic; it requires a fresh runner, not a
-weaker check. These failures invalidate neither the completed replay matrix nor
-the qualified proof identities. Shipping structures are unchanged; no
-relaxation or shipping counterexample is introduced. Next falsifiable check:
-all 42 case-specific study jobs complete on the refresh branch, followed by the
-unchanged evidence contract and complete CI checks.
+Class E publication/CI qualification is closed. Simulation-studies run
+44074557141 completed all 42 registered following/head-sea jobs from source
+`71f410938ca1a8f393979f4933933868fb612461`; the committed receipts retain the
+actual artifact digests and pinned case input/log hashes. Full OU
+validation/robustness/TFG publication run 44074557116 produced the canonical
+bundles. The combined replay fingerprint is
+`2c41692bc30a741aa0954ed5b3815c6bb9d1be1d5ed88cc9679029164d33dd23` and the
+results fingerprint is
+`1136250138bc4382c045e04a3d418715844cefeea9f7306c1c081e68d3f52a9f`.
+Post-merge build 44101355729, quality 44101355470, proof 44101355613 and
+firmware 44101355475 pass. Bidirectional simulation run 44101355640 covers
+both following and head seas, and study run 44101355745 covers the complete
+42-job matrix (21 studies in each direction); all 44 jobs pass from source
+`da1aeda358446a55ac0c9d58fccd3301945d5760`, which contains the 565eea4a
+review fixes. These runs close that final-source rerun obligation without
+weakening a gate, scoring window or provenance requirement.
+
+Shipping-faithfulness handoff: structures preserved are the literal shipping
+prediction/correction chronology, covariance/gains, frontend/tuner state,
+integrated OU/S chain, scheduler, resets and same-history physical state.
+Relaxations introduced: none. The stale-bundle, ledger-binding, runner-shutdown
+and interrupted/local-memory build attempts remain class E; no shipping
+counterexample was found. All established conditional shipping-level results
+and every open theorem/device qualification remain unchanged. The next proof
+calculation must use more of the same-history shipping structure; this CI
+closure does not promote the end-to-end theorem.
 
 Class E ledger-binding failure: the CI-status-only ledger update omitted its
 source-manifest entry. All three proof jobs stopped at the ledger blob mismatch
@@ -117,20 +128,20 @@ continuation only. No shipping counterexample was found. Next experiment:
 regenerate the native diagnostics with parity checks, then the dependent
 certificates; do not transfer old numerical records by replacing hashes.
 
-Class E build qualification failures: concurrent Eigen compilations exhausted
+Class E local build qualification remains open. Concurrent Eigen compilations exhausted
 host memory in `make all -j1 SIM_JOBS=4` (`carma_lever_arm-repro.o`),
 `make all -j2 SIM_JOBS=3` (`carma_shared_modes-test.o`), and
 `make all -j1 SIM_JOBS=3` while native diagnostics also compiled
 (`carma3_filters_tfg.o`), and `make -j1 all SIM_JOBS=3` when the
 new timeline diagnostic compiled (`carma3-sim.o`). Each reports `g++: fatal error: Killed signal
 terminated program cc1plus`; these are incomplete builds, not numerical
-qualification. An executor restart also interrupted a build without a terminal
-receipt. The architecture review rejects further concurrent native compiles:
-the timeline compiler and the study/build compilers now share one lock.
-The CARMA replay translation unit retries with more frequent compiler garbage
-collection, keeping the same source, optimization and numerical settings.
-Retained facts
-are the completed CI measurements and standalone tests, not the failed build.
+qualification. An executor restart and two later operator interruptions also
+stopped serialized builds without terminal receipts. Those later builds had
+passed the formerly limiting Eigen targets and OU-III compilation. The timeline
+diagnostic and study/build compilers share one lock. The diagnostic batch and
+the required `make all -j1 SIM_JOBS=1` run sequentially. The CARMA replay
+compiler uses more frequent garbage collection with the same source,
+optimization and numerical settings.
 
 Class E additional build qualification: `make -j1 all SIM_JOBS=2` still
 exhausted compiler memory on `carma_excitation-test.o` with serialized native
@@ -208,7 +219,8 @@ failures against the former caps. The 24 held-out OU-III pairs reduce pooled
 yaw RMS from 2.161 to 0.797 deg, with small mixed changes in translation and
 bias. The fresh enforced 9e73439e run 43994230010 passes all 544 cells in
 both directions and reproduces those numerical records exactly. The review
-fixes in 565eea4a retain a separate final-source rerun obligation.
+fixes in 565eea4a are included in post-merge source da1aeda; runs 44101355640
+and 44101355745 close the separate final-source replay and study obligation.
 
 Class E candidate-qualification failures: short-window gyro-pair fits did not
 improve the low-wave startup holdout; using a drifting full private-proxy yaw
