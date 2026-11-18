@@ -1,52 +1,451 @@
 {
-  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44197069501",
-  "scope": "Fresh, complete c3481ce source execution with reviewed limits. Supersedes adoption-run status, not the preserved original measurements. This does not qualify later experimental field guards.",
+  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44225475401",
+  "scope": "Deployed wave startup, magnetic consistency guard and accepted-fit TFG tilt uncertainty. Both sea directions reran with the reviewed limits.",
+  "matrix_source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
+  "estimator_source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
+  "reviewed_headers_commit": "39b8487d696d6a531b76fd760d56ef8a4984c517",
+  "gated_measurements": 2768,
+  "identical_to_gate_setting_run": 2768,
   "cases": {
     "following": {
-      "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+      "source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
       "acceptance": "all replay gates passed",
       "cells": 272,
-      "changed_numeric_metrics": [],
-      "archive_sha256": "b94f302163bf1db57aa1567d270561f785b43695226356e28db5d2d1007c7d9a",
-      "measurements_sha256": "d3d5912324167a3589672e12db273626fc4d8f819807e443203365f1d9c4bfb7",
+      "artifact_id": 14394454011,
+      "archive_sha256": "f31dcf8d870038d38ac5a421f1f8034226691421450430e697d7f2291392c2e5",
+      "measurements_sha256": "f9fc053e6f5d0ed577de3645aa75aa6c2592c5bb68f809444acb0b01b9835e7a",
+      "verified_profile_logs": 23,
+      "compiled_source_files": 181,
       "binary_sha256": {
-        "ou2": "10bd908ef34dc472e0a1bf7c0b260ab3a0781f8f961be611143a08ad238e0f90",
-        "ou3": "2449d2f22bfbfaa8bd32847049ba168ed1c053e2dacb36dd1a3e4812b9997ba5",
-        "tfg": "5bec0cbd3425a4b207a63865add4a576d14679a33d02996375274479a45ef0b4",
-        "carma": "ce79c69d9a502b275d27f851b88b5d37754e0e21ce32b285944ddc9090a3a7d6",
-        "csm": "e717d4fe98d228237db70dd2eb684854c1ae96f72128841ce7581dc75317fa18",
-        "tcarma": "12d8a78cb1a9da63c3f27e503c2b0f4f0e5ade6b81398d29514dafcd1b7dab2b",
-        "tangent": "59a1118dbb53b93589f39df9acaddfdf6bc5757c9faf714aea8bf1786e06d613",
-        "tcsm": "da1643bd22458e3b30b84c18d17c25061e94d29769fe1d86e624de1adf46b2c0",
-        "tfg_legacy": "3be45b79d1fa9fca4d0eb2a05b72e669397271abfe6d4aaef0fe8d474a4523af",
-        "ahrs": "3f22605d3332ab16775bf3009530b3aa86620dcdffa8f343a9398d7659eb16ac",
-        "heave": "76b188cf63f0152069cc4497019990429bf9bfc82c5207f573e3966e9e971163",
-        "nlo": "e7610233340c46824bfc4e18a0bf366101476806f4f0fb0601f41374e06d5c9f",
-        "pii": "41440d24683890ac4f1be237069af4ca12585c2ed6a13e97bcf557ed53c7b7c6"
+        "ou2": "68fc3626229e83bbb63d195ca396deeafe46fcc3f51d8683f93e36c6cd519dc3",
+        "ou3": "ea452de9e9fd70fd94f6b1356827251b6a9f9a05f325342dec5a01025e2d6fd8",
+        "tfg": "1e94b11d5988c9489a345fab9f363f1d1f1fdc3b399773dee54325becf5ce2f3",
+        "carma": "0ed9cdf3fd7d64efaa6951dd5ee00e01037d7b8895108841c0f46e28d7877c18",
+        "csm": "38bc24dafdcce4585ad7bae0f7ebc0d33cdb157b6365b3dfa21923a426aa3374",
+        "tcarma": "f6e874b2b2b9ddbb56592b6f0ab8d9fb50b1ac4ffa7c23ffe44a7d2ccaaecc90",
+        "tangent": "5168903454e44c5439b32a5260d3c36e4cc2d7b2a0f28be0ce3d22021ab82745",
+        "tcsm": "f1c1a223430934aabdf339a9138c9bf1f08bcbe7584193ef28564073aa305f7e",
+        "tfg_legacy": "a3c0a1f5822740fd3308dfef2e9aaf844deeb48590609c185ddf0034f6d39a46",
+        "ahrs": "8e959a3d36949aad24f74b730e796b24ebfa46e857259e4e0031fe88e66fedd9",
+        "heave": "1374af902a8c46a11065da8c3dadde69c30ebc44b00fedb1ebac54d212d4e2a3",
+        "nlo": "8c8577ae38fc9096dcdf8402483ed742d97fc11f43b30a4843307d73fb1fc24d",
+        "pii": "5b98f55020522bcfb8b826f080e0b33ae343c77466c223bd547b886e25ac5b38"
       }
     },
     "head": {
-      "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+      "source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
       "acceptance": "all replay gates passed",
       "cells": 272,
-      "changed_numeric_metrics": [],
-      "archive_sha256": "ea693eed8206ec8f5993f53c70e64d5c521e7f05939206285016458a2a4d24b4",
-      "measurements_sha256": "b1f882a916694d23c8df5df7467620bbb20ed501903d5537b15d9f4107bdc499",
+      "artifact_id": 14395387165,
+      "archive_sha256": "62dc1c9a533da63f45fbf42b0980d0709aebb77fbb2274df073f25ddb5a78c43",
+      "measurements_sha256": "e66229e4d0bd227fff721c7ea44b0f24e54545f86a5ef05d8d5375b565b88230",
+      "verified_profile_logs": 23,
+      "compiled_source_files": 181,
       "binary_sha256": {
-        "ou2": "10bd908ef34dc472e0a1bf7c0b260ab3a0781f8f961be611143a08ad238e0f90",
-        "ou3": "2449d2f22bfbfaa8bd32847049ba168ed1c053e2dacb36dd1a3e4812b9997ba5",
-        "tfg": "5bec0cbd3425a4b207a63865add4a576d14679a33d02996375274479a45ef0b4",
-        "carma": "ce79c69d9a502b275d27f851b88b5d37754e0e21ce32b285944ddc9090a3a7d6",
-        "csm": "e717d4fe98d228237db70dd2eb684854c1ae96f72128841ce7581dc75317fa18",
-        "tcarma": "12d8a78cb1a9da63c3f27e503c2b0f4f0e5ade6b81398d29514dafcd1b7dab2b",
-        "tangent": "59a1118dbb53b93589f39df9acaddfdf6bc5757c9faf714aea8bf1786e06d613",
-        "tcsm": "da1643bd22458e3b30b84c18d17c25061e94d29769fe1d86e624de1adf46b2c0",
-        "tfg_legacy": "3be45b79d1fa9fca4d0eb2a05b72e669397271abfe6d4aaef0fe8d474a4523af",
-        "ahrs": "3f22605d3332ab16775bf3009530b3aa86620dcdffa8f343a9398d7659eb16ac",
-        "heave": "76b188cf63f0152069cc4497019990429bf9bfc82c5207f573e3966e9e971163",
-        "nlo": "e7610233340c46824bfc4e18a0bf366101476806f4f0fb0601f41374e06d5c9f",
-        "pii": "41440d24683890ac4f1be237069af4ca12585c2ed6a13e97bcf557ed53c7b7c6"
+        "ou2": "68fc3626229e83bbb63d195ca396deeafe46fcc3f51d8683f93e36c6cd519dc3",
+        "ou3": "ea452de9e9fd70fd94f6b1356827251b6a9f9a05f325342dec5a01025e2d6fd8",
+        "tfg": "1e94b11d5988c9489a345fab9f363f1d1f1fdc3b399773dee54325becf5ce2f3",
+        "carma": "0ed9cdf3fd7d64efaa6951dd5ee00e01037d7b8895108841c0f46e28d7877c18",
+        "csm": "38bc24dafdcce4585ad7bae0f7ebc0d33cdb157b6365b3dfa21923a426aa3374",
+        "tcarma": "f6e874b2b2b9ddbb56592b6f0ab8d9fb50b1ac4ffa7c23ffe44a7d2ccaaecc90",
+        "tangent": "5168903454e44c5439b32a5260d3c36e4cc2d7b2a0f28be0ce3d22021ab82745",
+        "tcsm": "f1c1a223430934aabdf339a9138c9bf1f08bcbe7584193ef28564073aa305f7e",
+        "tfg_legacy": "a3c0a1f5822740fd3308dfef2e9aaf844deeb48590609c185ddf0034f6d39a46",
+        "ahrs": "8e959a3d36949aad24f74b730e796b24ebfa46e857259e4e0031fe88e66fedd9",
+        "heave": "1374af902a8c46a11065da8c3dadde69c30ebc44b00fedb1ebac54d212d4e2a3",
+        "nlo": "8c8577ae38fc9096dcdf8402483ed742d97fc11f43b30a4843307d73fb1fc24d",
+        "pii": "5b98f55020522bcfb8b826f080e0b33ae343c77466c223bd547b886e25ac5b38"
       }
     }
+  },
+  "headers_sha256": {
+    "CurrentReplayLimits.h": "26579fe9cb4813ec36a15bc59ff7f9de8b874fafc1f23df5b444f2b22ae10ed4",
+    "RecordReplayLimits.inc": "1115f3eb5b9d0760dc55419629838e4036e9a43fde8b470992305b98c646a711"
+  },
+  "preintegration_change": {
+    "threshold_percent": 0.5,
+    "improved": 74,
+    "worsened": 38,
+    "within_band": 2656,
+    "metric_extrema_columns": [
+      "change_percent",
+      "direction",
+      "family",
+      "profile",
+      "record",
+      "before",
+      "after"
+    ],
+    "by_metric": {
+      "acc_3d": {
+        "n": 272,
+        "improved_over_half_percent": 9,
+        "worse_over_half_percent": 4,
+        "best": [
+          -2.726598650310208,
+          "following",
+          "tfg",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          106.543,
+          103.638
+        ],
+        "worst": [
+          1.8811075182678216,
+          "following",
+          "tfg_legacy",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          308.329,
+          314.129
+        ]
+      },
+      "acc_z": {
+        "n": 272,
+        "improved_over_half_percent": 0,
+        "worse_over_half_percent": 2,
+        "best": [
+          -0.22789798584927912,
+          "head",
+          "tfg_legacy",
+          "default",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          4.27823,
+          4.26848
+        ],
+        "worst": [
+          2.4371050715275677,
+          "following",
+          "tfg_legacy",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          7.66278,
+          7.84953
+        ]
+      },
+      "displacement": {
+        "n": 272,
+        "improved_over_half_percent": 0,
+        "worse_over_half_percent": 0,
+        "best": [
+          -0.14869279283272752,
+          "following",
+          "tfg",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          10.4947252,
+          10.4791203
+        ],
+        "worst": [
+          0.057473833426713306,
+          "following",
+          "tfg_legacy",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          18.0798798,
+          18.090271
+        ]
+      },
+      "displacement_y": {
+        "n": 272,
+        "improved_over_half_percent": 1,
+        "worse_over_half_percent": 0,
+        "best": [
+          -0.5037087988515543,
+          "following",
+          "tfg",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          0.502270162,
+          0.499740183
+        ],
+        "worst": [
+          0.08119812255853454,
+          "following",
+          "tfg",
+          "default",
+          "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+          0.0763518885,
+          0.0764138848
+        ]
+      },
+      "gyro_3d": {
+        "n": 272,
+        "improved_over_half_percent": 36,
+        "worse_over_half_percent": 14,
+        "best": [
+          -1.42083214930655,
+          "following",
+          "csm",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          10.9091,
+          10.7541
+        ],
+        "worst": [
+          0.7851160624433362,
+          "following",
+          "csm",
+          "default",
+          "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+          12.0237,
+          12.1181
+        ]
+      },
+      "heave": {
+        "n": 528,
+        "improved_over_half_percent": 0,
+        "worse_over_half_percent": 0,
+        "best": [
+          -0.029781626960234675,
+          "head",
+          "tfg_legacy",
+          "default",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          2.66583824,
+          2.66504431
+        ],
+        "worst": [
+          0.06318820113291324,
+          "following",
+          "tfg_legacy",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          2.67364788,
+          2.67533731
+        ]
+      },
+      "pitch": {
+        "n": 288,
+        "improved_over_half_percent": 16,
+        "worse_over_half_percent": 11,
+        "best": [
+          -16.68051636195589,
+          "following",
+          "tfg",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          0.114621535,
+          0.0955020711
+        ],
+        "worst": [
+          1.9954874064423533,
+          "following",
+          "tfg_legacy",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          1.46445274,
+          1.49367571
+        ]
+      },
+      "roll": {
+        "n": 288,
+        "improved_over_half_percent": 7,
+        "worse_over_half_percent": 0,
+        "best": [
+          -1.981222735840149,
+          "following",
+          "tfg",
+          "legacy",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          0.529735744,
+          0.519240499
+        ],
+        "worst": [
+          0.14721986958952105,
+          "head",
+          "tfg",
+          "default",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          0.424200892,
+          0.4248254
+        ]
+      },
+      "yaw": {
+        "n": 304,
+        "improved_over_half_percent": 5,
+        "worse_over_half_percent": 7,
+        "best": [
+          -2.4860379182396586,
+          "head",
+          "tfg_legacy",
+          "default",
+          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+          1.00493431,
+          0.979951262
+        ],
+        "worst": [
+          2.9848900509327647,
+          "following",
+          "tfg",
+          "default",
+          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+          0.446145713,
+          0.459462672
+        ]
+      }
+    }
+  },
+  "axis_bias": {
+    "sources": [
+      [
+        {
+          "case": "following",
+          "artifact": 14337907440,
+          "archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+          "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
+        },
+        {
+          "case": "head",
+          "artifact": 14338570838,
+          "archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+          "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
+        }
+      ],
+      [
+        {
+          "case": "following",
+          "artifact": 14389313876,
+          "archive_sha256": "ccea201b3df05f57ec41497770a2cf29451f978a71fedaa0c74d324717768d28",
+          "recorded_source": "439f71795c0b8644d24623afd9c926e8dac8c3e7"
+        },
+        {
+          "case": "head",
+          "artifact": 14391721963,
+          "archive_sha256": "62f6a62b4fed9cb88069e0b91f766b942fd4c772cc6573cf513bb737bbda3c1d",
+          "recorded_source": "439f71795c0b8644d24623afd9c926e8dac8c3e7"
+        }
+      ]
+    ],
+    "all_W3D_cells": 272,
+    "paired_max_true_axis_bias_equal": true,
+    "window_s": [
+      300,
+      1200
+    ],
+    "samples_per_record": 180000,
+    "precision": "Per-axis RMS taken from the raw C++ bias summary at its printed precision. Each record contributes the same number of samples.",
+    "csv_sha256": "bdf84178e0b3462493cd53884af8b677e391c1a7e0ae97200b2136324dbe69c0"
+  },
+  "prior_pre_guard_matrix": {
+    "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44197069501",
+    "receipt_url": "https://github.com/bareboat-necessities/ocean-imu/blob/439f71795c0b8644d24623afd9c926e8dac8c3e7/reports/results/startup_learning/final-source-matrix.json"
+  },
+  "direct_main_comparison": {
+    "main": {
+      "recorded": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+      "current": "cee633f7f5464576dd190a3833d1ed235679616c",
+      "artifacts": [
+        {
+          "case": "following",
+          "archive_id": 14337907440,
+          "archive_sha256": "sha256:b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+          "measurements_sha256": "fdff47df17951ce6f170b7f300c712978da551f9f170a54b174a386d8baa45f5",
+          "source_count": 179,
+          "log_count": 23
+        },
+        {
+          "case": "head",
+          "archive_id": 14338570838,
+          "archive_sha256": "sha256:0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+          "measurements_sha256": "31942ef7daccfaad1f48f174c3269707a5f68eb555b2c60d47aac6b035199df8",
+          "source_count": 179,
+          "log_count": 23
+        }
+      ],
+      "generated_headers_match": [
+        true,
+        true
+      ],
+      "src_tree": "cf97880cd45cbf0b8b9442af5bce0e4df133a06c"
+    },
+    "pr": {
+      "recorded": "439f71795c0b8644d24623afd9c926e8dac8c3e7",
+      "current": "482bbfa9cb646e80b2ea78a186a6e7bf350e6f27",
+      "artifacts": [
+        {
+          "case": "following",
+          "archive_id": 14389313876,
+          "archive_sha256": "sha256:ccea201b3df05f57ec41497770a2cf29451f978a71fedaa0c74d324717768d28",
+          "measurements_sha256": "f9c60fd48de1f0d8bdb76e3d640dd84b66d53ee5403deca497c6d69775a22701",
+          "source_count": 181,
+          "log_count": 23
+        },
+        {
+          "case": "head",
+          "archive_id": 14391721963,
+          "archive_sha256": "sha256:62f6a62b4fed9cb88069e0b91f766b942fd4c772cc6573cf513bb737bbda3c1d",
+          "measurements_sha256": "5ff6f5d5ee2fc00ac1cefe4cc5eab714f6d33461f4d5765dd7f9061ece857c42",
+          "source_count": 181,
+          "log_count": 23
+        }
+      ],
+      "generated_headers_match": [
+        true,
+        true
+      ],
+      "src_tree": "95a508d91898445b05bd83e6d7a63394c300599e"
+    },
+    "matched_gated_values": 2768,
+    "n_improved_over_0.5_percent": 74,
+    "n_regressed_over_0.5_percent": 38,
+    "previous_baseline_cells_with_different_values": 0,
+    "previous_baseline_maximum_difference": 0,
+    "best": [
+      "following",
+      "tfg",
+      "legacy",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "pitch",
+      0.114621535,
+      0.0955020711,
+      -16.68051636195589
+    ],
+    "worst": [
+      "following",
+      "tfg",
+      "default",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "yaw",
+      0.446145713,
+      0.459462672,
+      2.9848900509327647
+    ]
+  },
+  "paired_covariance_change": {
+    "count_table": "tfg_tilt_uncertainty/ubuntu/paired-direction-counts.csv",
+    "sha256": "c65e8ae980e588967454cb973b0e2ffa446696dade4d89cceec077189fcbc39b",
+    "source_windows_sha256": "81f932cfde8513895e38c640293b86e511cd91132a7fffdeeb1665f32bdb4b11",
+    "independent_sensor_draws": 4,
+    "physical_records": 16
+  },
+  "global_caps_against_main": {
+    "main": "cee633f7f5464576dd190a3833d1ed235679616c",
+    "caps": 187,
+    "tighter": 56,
+    "looser": 71,
+    "equal": 60,
+    "tighter_by_more_than_half_percent": 8,
+    "looser_by_more_than_half_percent": 6
+  },
+  "live_tfg_horizontal_observation": {
+    "estimator_commit": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+    "scope": "New default live TFG horizontal observation following accelerometer-bias release. The older hosted startup-only matrix above predates this change.",
+    "directions": [
+      "following",
+      "head"
+    ],
+    "cells": 544,
+    "gated_channels": 2768,
+    "tfg_record_metrics_improved": 240,
+    "tfg_record_metrics_worsened": 48,
+    "matched_default_sensor_draw_pairs": 64,
+    "additional_interval_profile_pairs": 16,
+    "paired_engine_cases": 16,
+    "phase_randomized_pairs": 180,
+    "gate_evidence": "tfg_horizontal_integral/gate-receipt.json",
+    "paired_rms": "tfg_horizontal_integral/receipt.json",
+    "phase_randomized_evidence": "tfg_horizontal_integral/phase-receipt.json",
+    "engine_evidence": "tfg_horizontal_integral/engine-receipt.json"
   }
 }

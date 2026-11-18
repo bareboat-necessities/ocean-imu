@@ -104,17 +104,17 @@ inline constexpr W3dFailureLimits tcsm{
 };
 
 inline constexpr W3dFailureLimits tfg{
-    .err_limit_percent_z_jonswap = 5.89715f,
-    .err_limit_percent_z_pmstokes = 5.59092f,
-    .err_limit_yaw_deg = 1.05203f,
-    .err_limit_roll_deg = 0.52151f,
-    .err_limit_pitch_deg = 0.23880f,
-    .err_limit_percent_3d_jonswap = 18.29033f,
-    .err_limit_percent_3d_pmstokes = 17.95435f,
-    .acc_z_bias_percent = 4.32742f,
-    .bias_3d_percent = 104.55015f,
-    .gyro_bias_3d_percent = 10.51803f,
-    .err_limit_y_rms_m = 0.50804f,
+    .err_limit_percent_z_jonswap = 5.89668f,
+    .err_limit_percent_z_pmstokes = 5.59053f,
+    .err_limit_yaw_deg = 1.05004f,
+    .err_limit_roll_deg = 0.52459f,
+    .err_limit_pitch_deg = 0.23708f,
+    .err_limit_percent_3d_jonswap = 13.76960f,
+    .err_limit_percent_3d_pmstokes = 13.69601f,
+    .acc_z_bias_percent = 4.32357f,
+    .bias_3d_percent = 105.61445f,
+    .gyro_bias_3d_percent = 10.38427f,
+    .err_limit_y_rms_m = 0.35967f,
 };
 
 inline constexpr W3dFailureLimits tfg_legacy{
@@ -153,8 +153,8 @@ inline constexpr W3dFailureLimits csm{
     .err_limit_yaw_deg = 0.93881f,
     .err_limit_roll_deg = 0.23018f,
     .err_limit_pitch_deg = 0.18272f,
-    .err_limit_percent_3d_jonswap = 6.30844f,
-    .err_limit_percent_3d_pmstokes = 6.71477f,
+    .err_limit_percent_3d_jonswap = 6.30843f,
+    .err_limit_percent_3d_pmstokes = 6.71476f,
     .acc_z_bias_percent = 4.05965f,
     .bias_3d_percent = 58.32478f,
     .gyro_bias_3d_percent = 12.26915f,
@@ -232,17 +232,17 @@ inline constexpr W3dFailureLimits tcsm{
 };
 
 inline constexpr W3dFailureLimits tfg{
-    .err_limit_percent_z_jonswap = 5.89792f,
-    .err_limit_percent_z_pmstokes = 5.59156f,
-    .err_limit_yaw_deg = 1.10602f,
-    .err_limit_roll_deg = 0.52184f,
-    .err_limit_pitch_deg = 0.24330f,
-    .err_limit_percent_3d_jonswap = 18.23005f,
-    .err_limit_percent_3d_pmstokes = 17.89884f,
-    .acc_z_bias_percent = 4.40050f,
-    .bias_3d_percent = 104.15619f,
-    .gyro_bias_3d_percent = 10.57331f,
-    .err_limit_y_rms_m = 0.50673f,
+    .err_limit_percent_z_jonswap = 5.89746f,
+    .err_limit_percent_z_pmstokes = 5.59119f,
+    .err_limit_yaw_deg = 1.10412f,
+    .err_limit_roll_deg = 0.52482f,
+    .err_limit_pitch_deg = 0.24160f,
+    .err_limit_percent_3d_jonswap = 13.76650f,
+    .err_limit_percent_3d_pmstokes = 13.69096f,
+    .acc_z_bias_percent = 4.39713f,
+    .bias_3d_percent = 105.21647f,
+    .gyro_bias_3d_percent = 10.42628f,
+    .err_limit_y_rms_m = 0.35700f,
 };
 } // namespace interval
 } // namespace ocean_imu::sim::current_limits

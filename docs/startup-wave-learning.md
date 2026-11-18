@@ -93,13 +93,59 @@ square root of the sample-weighted mean squared error.
 [Per-start results and production-control checks](../reports/results/startup_learning/handover_components)
 · [Reproduction commands](../tests/startup_learning/README.md#reproducing-the-handover-component-comparison)
 
-## Accuracy after the startup transient
+## Horizontal wave motion after accelerometer-bias release
+
+The TFG filter integrates displacement into a state $S$. In an orbital wave of angular frequency $\omega$, the wave component satisfies $S+v/\omega^2=0$. The previous horizontal observation pulled $S_x$ and $S_y$ toward zero throughout the wave cycle. The live spectral filter now uses the same encounter period it already estimates for vertical motion in the horizontal observation. It switches when the filter releases accelerometer bias, so the attitude and bias can respond together. The right-invariant Jacobian includes the velocity and attitude derivatives in each active axis. The existing Joseph covariance update handles their correlations.
+
+The horizontal residual retains five eighths of the S-only variance to allow for seas with more than one frequency. A quarter-variance trial reduced pooled displacement but raised late pitch on the default 8.5 m following PM-Stokes record from 0.09551° to 0.12990°. The selected variance reduced it to 0.08778°. The low-level two-argument integral setter, the legacy cubic model and the bias-held stage retain their previous observations. Applications can select the previous spectral horizontal observation with `Config::wave_matched_horizontal_integral = false`.
+
+The table pools the final 900 s from each 1,200 s replay across 16 physical wave records and four matched sensor-noise draws. The middle column isolates the previous PR, which already includes the startup changes. All 64 trials improved in X, Y and 3-D displacement. Pitch improved on 52 and accelerometer-bias RMS on 49.
+
+| Late RMS | Main | PR before horizontal matching | PR with horizontal matching | Change from previous PR |
+|---|---:|---:|---:|---:|
+| Roll (°) | 0.28064 | 0.27945 | 0.27753 | -0.69% |
+| Pitch (°) | 0.28354 | 0.27995 | 0.26949 | -3.74% |
+| Yaw (°) | 0.83059 | 0.82438 | 0.80528 | -2.32% |
+| X displacement (m) | 0.30157 | 0.30166 | 0.17357 | -42.46% |
+| Y displacement (m) | 0.24535 | 0.24485 | 0.16971 | -30.69% |
+| Z displacement (m) | 0.14509 | 0.14508 | 0.14499 | -0.06% |
+| 3-D displacement (m) | 0.41496 | 0.41473 | 0.28275 | -31.82% |
+| 3-D accelerometer bias (m/s²) | 0.06807 | 0.06747 | 0.06610 | -2.04% |
+
+Late body-frame accelerometer-bias RMS changed from 0.04709 to 0.04687 m/s² on X, 0.04827 to 0.04656 m/s² on Y, 0.00217 to 0.00216 m/s² on Z. [Per-axis measurements](../reports/results/startup_learning/tfg_horizontal_integral/accel-bias-axes.csv)
+
+For the default sensor draw in 8.5 m following seas, JONSWAP pitch fell from 0.07858° to 0.06674° and 3-D displacement from 0.85537 m to 0.51096 m. PM-Stokes pitch fell from 0.09551° to 0.08778° and 3-D displacement from 0.84737 m to 0.53558 m. Yaw on the 4 m following JONSWAP record increased from 0.55737° to 0.62170°. Accelerometer-bias RMS on the 8.5 m following PM-Stokes record increased from 0.08777 to 0.08866 m/s². The 40–60 s scores were identical on all 80 profile and sensor-draw combinations.
+
+With the deployed vibration guard, the eight 8.5 m engine-stress pairs at 2,400 rpm and 0.60 or 1.20 m/s² changed pooled pitch from 1.04422 to 1.00943°, 3-D displacement from 0.84153 to 0.59265 m and accelerometer-bias RMS from 0.21137 to 0.20605 m/s². [Engine measurements with and without the guard](../reports/results/startup_learning/tfg_horizontal_integral/engine.csv)
+
+A separate test evaluated 180 phase-randomized waveforms, with ten matched wave, IMU and initialization seed triplets for eight stationary seas and one transition in each direction. Late 3-D displacement RMS fell in all 180 pairs, by 35.97% pooled in following seas and 20.07% in head seas. The 20 transitions improved by 33.83% pooled. Pitch improved in 122 of 180 pairs and accelerometer bias improved in 120. [Randomized replay scores and raw-log hashes](../reports/results/startup_learning/tfg_horizontal_integral/phase-receipt.json)
+
+The two compiled headers use the same 0.5% regression margin as before. The following default TFG ceilings apply across both directions.
+
+| Global TFG ceiling | Previous PR | New live model |
+|---|---:|---:|
+| Y displacement RMS (m) | 0.50804 | 0.35967 |
+| JONSWAP 3-D displacement (% of reference maximum) | 18.29033 | 13.76960 |
+| PM-Stokes 3-D displacement (% of reference maximum) | 17.95435 | 13.69601 |
+| Pitch (°) | 0.23880 | 0.23708 |
+| Roll (°) | 0.52151 | 0.52459 |
+| 3-D accelerometer bias (% of maximum true bias) | 104.55015 | 105.61445 |
+
+Across both TFG sampling profiles, 240 of 288 record-level measurements improved and 48 worsened. On the unchanged shared-mode CARMA estimator, 29 legacy following-sea measurements differed from the earlier runner by at most 0.00367%. All 29 satisfied their earlier limits. All 2,451 other measured channels outside TFG reproduced exactly. [Full gate comparison](../reports/results/startup_learning/tfg_horizontal_integral/gate-receipt.json)
+
+The measurements use both v1.4.0 directions, the pinned replay compiler and the Ubuntu math library identified in the receipt. Reproduce the normal matrix with `python3 tools/sim_matrix.py --cases following head --build`. For the additional TFG draws, run `tests/kalman_tfg/kalman_tfg-sim --input INPUT.csv` with the matching `OCEAN_IMU_SIM_CASE`, `W3D_SEED` of 7, 41 or 101, `W3D_VALIDATION_WINDOW_SEC=900` and `W3D_VALIDATION_SEGMENTS=early:40:60,late:300:1200`. Leave the seed unset for the standard regression draw.
+
+[Per-record matched measurements](../reports/results/startup_learning/tfg_horizontal_integral/paired.csv) · [Production run and source receipt](../reports/results/startup_learning/tfg_horizontal_integral/receipt.json) · [Compiled global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc)
+
+## Startup-only comparison before the live TFG change
 
 The same 13 production executables scored all 544 filter, profile and record combinations in head and following seas. Against the pre-integration baseline, 1,136 of 2,768 measured RMS channels fell, 620 were equal and 1,012 rose. Changes exceeded 0.5% on 74 improving and 38 worsening channels. These counts use measured RMS before the regression margin is applied. Wave-filter scores use the final 900 s of each 1,200 s record.
 
 On the default 8.5 m following JONSWAP record, TFG pitch RMS was 0.08603° before startup integration, 0.09181° with the original 2° handover uncertainty and 0.07858° with the accepted-fit uncertainty below.
 
 A second run using the checked-in limits passed all 544 cases. All 2,768 numerical values reproduced exactly. Both sea directions used the same 13 binaries. [Passing production matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928709) · [Archive and measurement hashes](../reports/results/startup_learning/tfg_tilt_uncertainty/verified-matrix.json)
+
+The official main and PR archives reproduced every audited baseline and branch value on source trees identical to the respective published estimators. In default TFG, late accelerometer-bias RMS on X fell from 0.04776 to 0.04744 m/s² and on Y from 0.02498 to 0.02473 m/s². OU-III X fell from 0.026046 to 0.026037 m/s² and Y rose from 0.024454 to 0.024456 m/s². Each comparison uses all 16 records with matched bias truth. [Raw per-axis comparison](../reports/results/startup_learning/tfg_tilt_uncertainty/paired-axis-accel-bias.csv) · [Main replay](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44101355640) · [PR replay](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928709)
 
 [Paired results by family, profile and sea direction](../reports/results/startup_learning/tfg_tilt_uncertainty/compared_to_preintegration.csv) · [Production matrix and raw logs](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44209357875)
 
@@ -120,21 +166,23 @@ We compared the unmodified TFG executable at each of the two revisions on 16 wav
 | 3-D displacement RMS (m) | 5.836191 → 5.733445 | 0.414958 → 0.414726 | -0.056% |
 | 3-D accelerometer-bias RMS (m/s²) | 0.066638 → 0.066638 | 0.068162 → 0.067475 | -1.008% |
 
+Early 3-D displacement RMS improved in 58 of 64 pairs and tied in six. Late 3-D RMS improved in 35 pairs, worsened in 23 and tied in six. Every individual late change was below 0.5%. [Counts by axis, window and direction](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/paired-direction-counts.csv)
+
 Late pitch, Y displacement and accelerometer bias improved on each of the four pooled draws. The default 8.5 m following JONSWAP case moved from 0.09181° to 0.07858° late pitch RMS. Its late yaw increased from 0.43950° to 0.45946°. The pooled late X increase was 0.000110 m. The production change applies to TFG-OU. The OU-III experiment with a tighter prior had mixed results.
 
 We tested whether reducing accepted-fit yaw uncertainty from about 5° to 3.5° would recover the JONSWAP yaw loss. Its late yaw changed from 0.45946° to 0.45963°. Across all 64 matched cases late yaw rose by 0.018% and late pitch rose by 0.085%, so production keeps the existing yaw setting. [Yaw-prior sensitivity scores](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/fitted_yaw_comparison.csv.gz)
 
-The production replay uses its existing 0.5% margin for every record. The limits below compare the previous PR gates with the limits measured at `68f0978`. The global TFG pitch maximum occurs on the 8.5 m head-sea PM-Stokes record. Its change is smaller than the improvement on either high-wave following-sea record.
+The default TFG caps below compare main at the start of 2.8.0, the fitted handover with 2° tilt uncertainty, and the deployed 0.5° accepted fit. Each cap includes the 0.5% replay margin. The 8.5 m head-sea PM-Stokes record sets the global pitch cap. Across all 187 numerical caps in the global header, 56 tightened, 71 loosened and 60 tied against main. Eight tightened and six loosened by more than 0.5%.
 
-| TFG default regression limit | Previous | Current |
-|---|---:|---:|
-| Following 8.5 m JONSWAP pitch (°) | 0.09228 | 0.07897 |
-| Following 8.5 m PM-Stokes pitch (°) | 0.12054 | 0.09599 |
-| Following 8.5 m JONSWAP yaw (°) | 0.44170 | 0.46176 |
-| Global pitch (°) | 0.23928 | 0.23880 |
-| Global roll (°) | 0.53260 | 0.52151 |
-| Global Y displacement (m) | 0.50981 | 0.50804 |
-| Global accelerometer-bias vector (% of maximum true bias) | 107.73600 | 104.55015 |
+| Default TFG regression limit | Main (2.8.0) | Fitted handover, 2° | Accepted fit, 0.5° |
+|---|---:|---:|---:|
+| Following 8.5 m JONSWAP pitch (°) | 0.08647 | 0.09228 | 0.07897 |
+| Following 8.5 m PM-Stokes pitch (°) | 0.11489 | 0.12054 | 0.09599 |
+| Following 8.5 m JONSWAP yaw (°) | 0.44838 | 0.44170 | 0.46176 |
+| Global pitch (°) | 0.24267 | 0.23928 | 0.23880 |
+| Global roll (°) | 0.53176 | 0.53260 | 0.52151 |
+| Global Y displacement (m) | 0.50956 | 0.50981 | 0.50804 |
+| Global accelerometer-bias vector (% of maximum true bias) | 107.38425 | 107.73600 | 104.55015 |
 
 Sixteen TFG per-record limits tightened by more than 0.5%. Two loosened by more than 0.5%. Both concern yaw on the same following-sea JONSWAP record, once for each gyro profile. Three limits in the separate legacy cubic TFG simulator also tightened by more than 0.5%.
 
@@ -166,9 +214,28 @@ An additional stress check isolates the change from 2° to 0.5° fitted tilt unc
 
 [All 32 engine replays](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-matched.csv) · [Reproduction inputs](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/engine-receipt.json) · [Archived engine-ablation scores](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928822/artifacts/14391733010)
 
+## Startup integration compared with main before horizontal matching
+
+The table compares the default TFG filter on main `cee633f` with the PR immediately before the horizontal integral change. It pools 64 matched records per window across both sea directions and four sensor draws. Time is measured from the first input sample.
+
+| RMS | Main, 40–60 s | PR, 40–60 s | Main, 300–1,200 s | PR, 300–1,200 s |
+|---|---:|---:|---:|---:|
+| X (m) | 4.960861 | 4.855786 | 0.301573 | 0.301660 |
+| Y (m) | 2.200045 | 2.096079 | 0.245346 | 0.244848 |
+| Z (m) | 2.232815 | 2.213637 | 0.145093 | 0.145081 |
+| 3-D displacement (m) | 5.868202 | 5.733445 | 0.414962 | 0.414726 |
+| 3-D accelerometer bias (m/s²) | 0.066638 | 0.066638 | 0.068070 | 0.067475 |
+| Roll (°) | 1.165036 | 1.100815 | 0.280644 | 0.279446 |
+| Pitch (°) | 2.615686 | 2.565797 | 0.283540 | 0.279955 |
+| Yaw (°) | 6.956758 | 6.812196 | 0.830587 | 0.824376 |
+
+Early 3-D displacement improved in 50 pairs, worsened in eight and tied in six. Late 3-D displacement improved in 35 and worsened in 29. Late X rose by 0.086 mm pooled. Late accelerometer-bias RMS fell 1.443% in following seas and 0.024% in head seas. All 576 PR-side early readings reproduced the archived full-length replays at the precision printed by the simulator. The late comparison reuses 64 PR records and the 16 default-draw main records. The other 48 main records were replayed at full length.
+
+[Paired records, stratified scores, raw logs and source receipts](../reports/results/startup_learning/tfg_main_comparison/)
+
 ## Long-run displacement and accelerometer bias
 
-Each row compares the pre-integration baseline with the current production configuration across all 16 records on the default sensor draw.
+Each row compares the pre-integration baseline with the startup-only PR configuration across all 16 records on the default sensor draw.
 
 | Filter | 3-D displacement RMS (m), before → after | Accelerometer-bias vector RMS (m/s²), before → after |
 |---|---:|---:|

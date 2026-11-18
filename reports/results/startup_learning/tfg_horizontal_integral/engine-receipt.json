@@ -1,0 +1,75 @@
+{
+  "source": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+  "binary_sha256": "a937d9adbe0d2eaa1425a8bb3e64863b047b19552cd4363077e07ff4f8053580",
+  "baseline_receipt_sha256": "39f483a61be8117238df692707e62b776bf3953d9ed47d8e85d9457546916174",
+  "scores_sha256": "ebc12b9ce7e9922b79eef79e792c9a414ed1a6b1697bc179aba41d120fd43a72",
+  "pairs": 16,
+  "system_math_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "pooled": {
+    "deployed": {
+      "pitch_rms_deg": {
+        "before": 1.044222150262563,
+        "after": 1.0094309614501504,
+        "percent": -3.3317803882693564
+      },
+      "yaw_rms_deg": {
+        "before": 2.96977032597903,
+        "after": 2.8878707414100737,
+        "percent": -2.75777503238257
+      },
+      "disp_3d_rms_m": {
+        "before": 0.8415289815020068,
+        "after": 0.5926547405881616,
+        "percent": -29.574054653428682
+      },
+      "disp_x_rms_m": {
+        "before": 0.6109158235784773,
+        "after": 0.39285406453068605,
+        "percent": -35.694239800580206
+      },
+      "disp_y_rms_m": {
+        "before": 0.5188946939937971,
+        "after": 0.36238743902602943,
+        "percent": -30.161660309758066
+      },
+      "accel_bias_3d_rms_mps2": {
+        "before": 0.2113659249491585,
+        "after": 0.20605126763072265,
+        "percent": -2.5144343014202652
+      }
+    },
+    "off": {
+      "pitch_rms_deg": {
+        "before": 23.24598086243179,
+        "after": 24.773952787806326,
+        "percent": 6.573058518876773
+      },
+      "yaw_rms_deg": {
+        "before": 104.08497162694012,
+        "after": 103.65937056893186,
+        "percent": -0.4088977028630869
+      },
+      "disp_3d_rms_m": {
+        "before": 237.64595151861917,
+        "after": 190.8122645052773,
+        "percent": -19.707336360692228
+      },
+      "disp_x_rms_m": {
+        "before": 151.04165842422356,
+        "after": 130.847178744986,
+        "percent": -13.37013900000904
+      },
+      "disp_y_rms_m": {
+        "before": 146.57197234048357,
+        "after": 118.71266684719569,
+        "percent": -19.00725292047739
+      },
+      "accel_bias_3d_rms_mps2": {
+        "before": 14.150947729841162,
+        "after": 6.738202757447349,
+        "percent": -52.38338176291899
+      }
+    }
+  },
+  "logs_sha256": "49a2daf5f9f55722a6cfc1ca90d3d3cff9a7d80cda1b3d3d38b134daa09ed916"
+}

@@ -856,25 +856,25 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 3.44489217,
-        "displacement": 6.27705002,
-        "roll": 0.146751225,
-        "pitch": 0.0886683837,
-        "yaw": 0.713607371,
-        "acc_z": 2.24635,
+        "heave": 3.44488835,
+        "displacement": 6.27704382,
+        "roll": 0.146751344,
+        "pitch": 0.0886683315,
+        "yaw": 0.713607609,
+        "acc_z": 2.24634,
         "acc_3d": 34.3996,
-        "gyro_3d": 9.73754,
-        "displacement_y": 0.0042869919
+        "gyro_3d": 9.73758,
+        "displacement_y": 0.00428699004
       },
       "limits": {
         "heave": 3.46212,
-        "displacement": 6.30844,
+        "displacement": 6.30843,
         "roll": 0.14749,
         "pitch": 0.08912,
         "yaw": 0.71718,
-        "acc_z": 2.25759,
+        "acc_z": 2.25758,
         "acc_3d": 34.5716,
-        "gyro_3d": 9.78623,
+        "gyro_3d": 9.78627,
         "displacement_y": 0.00431
       }
     },
@@ -912,19 +912,19 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 2.21962667,
-        "displacement": 4.84501076,
-        "roll": 0.180357978,
-        "pitch": 0.135522947,
-        "yaw": 0.909467101,
+        "heave": 2.21962619,
+        "displacement": 4.84497929,
+        "roll": 0.180357143,
+        "pitch": 0.135524228,
+        "yaw": 0.909472048,
         "acc_z": 3.39791,
         "acc_3d": 44.8981,
         "gyro_3d": 11.546,
-        "displacement_y": 0.101169683
+        "displacement_y": 0.101168707
       },
       "limits": {
         "heave": 2.23073,
-        "displacement": 4.86924,
+        "displacement": 4.86921,
         "roll": 0.18126,
         "pitch": 0.13621,
         "yaw": 0.91402,
@@ -968,25 +968,25 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 3.47934198,
-        "displacement": 6.68135548,
-        "roll": 0.149046674,
-        "pitch": 0.0893470943,
-        "yaw": 0.676151812,
+        "heave": 3.47933698,
+        "displacement": 6.68134928,
+        "roll": 0.149046361,
+        "pitch": 0.089347288,
+        "yaw": 0.676153302,
         "acc_z": 2.24123,
         "acc_3d": 34.8739,
-        "gyro_3d": 9.96157,
-        "displacement_y": 0.00407071877
+        "gyro_3d": 9.96161,
+        "displacement_y": 0.0040707197
       },
       "limits": {
         "heave": 3.49674,
-        "displacement": 6.71477,
+        "displacement": 6.71476,
         "roll": 0.1498,
         "pitch": 0.0898,
         "yaw": 0.67954,
         "acc_z": 2.25244,
         "acc_3d": 35.04827,
-        "gyro_3d": 10.01138,
+        "gyro_3d": 10.01142,
         "displacement_y": 0.0041
       }
     },
@@ -1052,26 +1052,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 2.20122027,
-        "displacement": 4.32115459,
-        "roll": 0.228376895,
-        "pitch": 0.181808501,
-        "yaw": 0.78224194,
-        "acc_z": 3.98684,
-        "acc_3d": 57.9935,
+        "heave": 2.20121241,
+        "displacement": 4.32109594,
+        "roll": 0.228376165,
+        "pitch": 0.181807876,
+        "yaw": 0.782236516,
+        "acc_z": 3.98683,
+        "acc_3d": 57.9933,
         "gyro_3d": 10.7541,
-        "displacement_y": 0.215617627
+        "displacement_y": 0.215609714
       },
       "limits": {
-        "heave": 2.21223,
-        "displacement": 4.34277,
+        "heave": 2.21222,
+        "displacement": 4.34271,
         "roll": 0.22952,
         "pitch": 0.18272,
-        "yaw": 0.78616,
-        "acc_z": 4.00678,
-        "acc_3d": 58.28347,
+        "yaw": 0.78615,
+        "acc_z": 4.00677,
+        "acc_3d": 58.28327,
         "gyro_3d": 10.80788,
-        "displacement_y": 0.2167
+        "displacement_y": 0.21669
       }
     },
     {
@@ -4872,26 +4872,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 5.8678093,
-        "displacement": 18.1993332,
-        "roll": 0.242971689,
-        "pitch": 0.0905675068,
-        "yaw": 0.731689274,
-        "acc_z": 2.60878,
-        "acc_3d": 51.9326,
-        "gyro_3d": 9.20366,
-        "displacement_y": 0.0169930328
+        "heave": 5.86733437,
+        "displacement": 13.7010927,
+        "roll": 0.242069066,
+        "pitch": 0.0910313576,
+        "yaw": 0.733750701,
+        "acc_z": 2.60843,
+        "acc_3d": 51.8997,
+        "gyro_3d": 9.14192,
+        "displacement_y": 0.0119875679
       },
       "limits": {
-        "heave": 5.89715,
-        "displacement": 18.29033,
-        "roll": 0.24419,
-        "pitch": 0.09103,
-        "yaw": 0.73535,
-        "acc_z": 2.62183,
-        "acc_3d": 52.19227,
-        "gyro_3d": 9.24968,
-        "displacement_y": 0.01708
+        "heave": 5.89668,
+        "displacement": 13.7696,
+        "roll": 0.24328,
+        "pitch": 0.09149,
+        "yaw": 0.73742,
+        "acc_z": 2.62148,
+        "acc_3d": 52.1592,
+        "gyro_3d": 9.18763,
+        "displacement_y": 0.01205
       }
     },
     {
@@ -4900,26 +4900,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 3.90796232,
-        "displacement": 10.6246176,
-        "roll": 0.249565586,
-        "pitch": 0.171513677,
-        "yaw": 0.914622307,
-        "acc_z": 3.28679,
-        "acc_3d": 60.6054,
-        "gyro_3d": 10.4657,
-        "displacement_y": 0.0764138848
+        "heave": 3.90794539,
+        "displacement": 7.17241621,
+        "roll": 0.246242508,
+        "pitch": 0.171481252,
+        "yaw": 0.920173585,
+        "acc_z": 3.28664,
+        "acc_3d": 60.2366,
+        "gyro_3d": 10.3326,
+        "displacement_y": 0.0530480854
       },
       "limits": {
-        "heave": 3.92751,
-        "displacement": 10.67775,
-        "roll": 0.25082,
-        "pitch": 0.17238,
-        "yaw": 0.9192,
-        "acc_z": 3.30323,
-        "acc_3d": 60.90843,
-        "gyro_3d": 10.51803,
-        "displacement_y": 0.0768
+        "heave": 3.92749,
+        "displacement": 7.20828,
+        "roll": 0.24748,
+        "pitch": 0.17234,
+        "yaw": 0.92478,
+        "acc_z": 3.30308,
+        "acc_3d": 60.53779,
+        "gyro_3d": 10.38427,
+        "displacement_y": 0.05332
       }
     },
     {
@@ -4928,26 +4928,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 3.24769735,
-        "displacement": 10.8701363,
-        "roll": 0.274516314,
-        "pitch": 0.0608540773,
-        "yaw": 0.557365239,
-        "acc_z": 3.74038,
-        "acc_3d": 54.4973,
-        "gyro_3d": 9.3936,
-        "displacement_y": 0.196865663
+        "heave": 3.24785376,
+        "displacement": 6.88952684,
+        "roll": 0.264087915,
+        "pitch": 0.0452528,
+        "yaw": 0.621701419,
+        "acc_z": 3.73725,
+        "acc_3d": 52.4222,
+        "gyro_3d": 9.19704,
+        "displacement_y": 0.125011697
       },
       "limits": {
-        "heave": 3.26394,
-        "displacement": 10.92449,
-        "roll": 0.27589,
-        "pitch": 0.06116,
-        "yaw": 0.56016,
-        "acc_z": 3.75909,
-        "acc_3d": 54.76979,
-        "gyro_3d": 9.44057,
-        "displacement_y": 0.19785
+        "heave": 3.2641,
+        "displacement": 6.92398,
+        "roll": 0.26541,
+        "pitch": 0.04548,
+        "yaw": 0.62481,
+        "acc_z": 3.75594,
+        "acc_3d": 52.68432,
+        "gyro_3d": 9.24303,
+        "displacement_y": 0.12564
       }
     },
     {
@@ -4956,26 +4956,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 3.03517222,
-        "displacement": 10.8204451,
-        "roll": 0.444357276,
-        "pitch": 0.0785759315,
-        "yaw": 0.459462672,
-        "acc_z": 4.27464,
-        "acc_3d": 88.4601,
-        "gyro_3d": 10.2444,
-        "displacement_y": 0.505505323
+        "heave": 3.03300118,
+        "displacement": 6.46363688,
+        "roll": 0.443122208,
+        "pitch": 0.0667399019,
+        "yaw": 0.49145034,
+        "acc_z": 4.27077,
+        "acc_3d": 88.7395,
+        "gyro_3d": 9.88716,
+        "displacement_y": 0.306399554
       },
       "limits": {
-        "heave": 3.05035,
-        "displacement": 10.87455,
-        "roll": 0.44658,
-        "pitch": 0.07897,
-        "yaw": 0.46176,
-        "acc_z": 4.29602,
-        "acc_3d": 88.90241,
-        "gyro_3d": 10.29563,
-        "displacement_y": 0.50804
+        "heave": 3.04817,
+        "displacement": 6.49596,
+        "roll": 0.44534,
+        "pitch": 0.06708,
+        "yaw": 0.49391,
+        "acc_z": 4.29213,
+        "acc_3d": 89.1832,
+        "gyro_3d": 9.9366,
+        "displacement_y": 0.30794
       }
     },
     {
@@ -4984,26 +4984,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 5.56309938,
-        "displacement": 17.8650188,
-        "roll": 0.243811965,
-        "pitch": 0.105051473,
-        "yaw": 0.70954448,
-        "acc_z": 2.57817,
-        "acc_3d": 53.2614,
-        "gyro_3d": 9.47532,
-        "displacement_y": 0.0158214234
+        "heave": 5.56270695,
+        "displacement": 13.6278648,
+        "roll": 0.242095962,
+        "pitch": 0.106550686,
+        "yaw": 0.714193404,
+        "acc_z": 2.57771,
+        "acc_3d": 53.1533,
+        "gyro_3d": 9.4189,
+        "displacement_y": 0.0112706749
       },
       "limits": {
-        "heave": 5.59092,
-        "displacement": 17.95435,
-        "roll": 0.24504,
-        "pitch": 0.10558,
-        "yaw": 0.7131,
-        "acc_z": 2.59107,
-        "acc_3d": 53.52771,
-        "gyro_3d": 9.5227,
-        "displacement_y": 0.01591
+        "heave": 5.59053,
+        "displacement": 13.69601,
+        "roll": 0.24331,
+        "pitch": 0.10709,
+        "yaw": 0.71777,
+        "acc_z": 2.5906,
+        "acc_3d": 53.41907,
+        "gyro_3d": 9.466,
+        "displacement_y": 0.01133
       }
     },
     {
@@ -5012,26 +5012,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 3.86344457,
-        "displacement": 10.457427,
-        "roll": 0.236655697,
-        "pitch": 0.168234542,
-        "yaw": 0.865069628,
-        "acc_z": 3.265,
-        "acc_3d": 58.0795,
-        "gyro_3d": 10.4342,
-        "displacement_y": 0.0750274956
+        "heave": 3.86344051,
+        "displacement": 7.2000351,
+        "roll": 0.233479962,
+        "pitch": 0.168825835,
+        "yaw": 0.870949209,
+        "acc_z": 3.26461,
+        "acc_3d": 57.822,
+        "gyro_3d": 10.3135,
+        "displacement_y": 0.0525048934
       },
       "limits": {
-        "heave": 3.88277,
-        "displacement": 10.50972,
-        "roll": 0.23784,
-        "pitch": 0.16908,
-        "yaw": 0.8694,
-        "acc_z": 3.28133,
-        "acc_3d": 58.3699,
-        "gyro_3d": 10.48638,
-        "displacement_y": 0.07541
+        "heave": 3.88276,
+        "displacement": 7.23604,
+        "roll": 0.23465,
+        "pitch": 0.16967,
+        "yaw": 0.87531,
+        "acc_z": 3.28094,
+        "acc_3d": 58.11111,
+        "gyro_3d": 10.36507,
+        "displacement_y": 0.05277
       }
     },
     {
@@ -5040,26 +5040,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 3.22724986,
-        "displacement": 10.6983833,
-        "roll": 0.306410044,
-        "pitch": 0.208578736,
-        "yaw": 0.46377483,
-        "acc_z": 3.74638,
-        "acc_3d": 72.5997,
-        "gyro_3d": 9.51231,
-        "displacement_y": 0.191639572
+        "heave": 3.22692204,
+        "displacement": 7.00929976,
+        "roll": 0.294432759,
+        "pitch": 0.168012679,
+        "yaw": 0.461004943,
+        "acc_z": 3.73579,
+        "acc_3d": 66.5487,
+        "gyro_3d": 9.31495,
+        "displacement_y": 0.124295875
       },
       "limits": {
-        "heave": 3.24339,
-        "displacement": 10.75188,
-        "roll": 0.30795,
-        "pitch": 0.20963,
-        "yaw": 0.4661,
-        "acc_z": 3.76512,
-        "acc_3d": 72.9627,
-        "gyro_3d": 9.55988,
-        "displacement_y": 0.1926
+        "heave": 3.24306,
+        "displacement": 7.04435,
+        "roll": 0.29591,
+        "pitch": 0.16886,
+        "yaw": 0.46331,
+        "acc_z": 3.75447,
+        "acc_3d": 66.88145,
+        "gyro_3d": 9.36153,
+        "displacement_y": 0.12492
       }
     },
     {
@@ -5068,26 +5068,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 3.0114274,
-        "displacement": 10.4832315,
-        "roll": 0.518908381,
-        "pitch": 0.0955052152,
-        "yaw": 0.42355755,
-        "acc_z": 4.30589,
-        "acc_3d": 104.03,
-        "gyro_3d": 10.2618,
-        "displacement_y": 0.501405478
+        "heave": 3.01014996,
+        "displacement": 6.62591171,
+        "roll": 0.521975279,
+        "pitch": 0.0877844021,
+        "yaw": 0.436369479,
+        "acc_z": 4.30205,
+        "acc_3d": 105.089,
+        "gyro_3d": 9.93008,
+        "displacement_y": 0.320556134
       },
       "limits": {
-        "heave": 3.02649,
-        "displacement": 10.53565,
-        "roll": 0.52151,
-        "pitch": 0.09599,
-        "yaw": 0.42568,
-        "acc_z": 4.32742,
-        "acc_3d": 104.55015,
-        "gyro_3d": 10.31311,
-        "displacement_y": 0.50392
+        "heave": 3.02521,
+        "displacement": 6.65905,
+        "roll": 0.52459,
+        "pitch": 0.08823,
+        "yaw": 0.43856,
+        "acc_z": 4.32357,
+        "acc_3d": 105.61445,
+        "gyro_3d": 9.97974,
+        "displacement_y": 0.32216
       }
     },
     {
@@ -5096,26 +5096,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 5.86857176,
-        "displacement": 18.139349,
-        "roll": 0.242703989,
-        "pitch": 0.0915444046,
-        "yaw": 0.7137326,
-        "acc_z": 2.60917,
-        "acc_3d": 51.9526,
-        "gyro_3d": 9.21251,
-        "displacement_y": 0.01694756
+        "heave": 5.8681159,
+        "displacement": 13.6980038,
+        "roll": 0.241836995,
+        "pitch": 0.091981329,
+        "yaw": 0.715655565,
+        "acc_z": 2.60884,
+        "acc_3d": 51.9227,
+        "gyro_3d": 9.1493,
+        "displacement_y": 0.0120011149
       },
       "limits": {
-        "heave": 5.89792,
-        "displacement": 18.23005,
-        "roll": 0.24392,
-        "pitch": 0.09201,
-        "yaw": 0.71731,
-        "acc_z": 2.62222,
-        "acc_3d": 52.21237,
-        "gyro_3d": 9.25858,
-        "displacement_y": 0.01704
+        "heave": 5.89746,
+        "displacement": 13.7665,
+        "roll": 0.24305,
+        "pitch": 0.09245,
+        "yaw": 0.71924,
+        "acc_z": 2.62189,
+        "acc_3d": 52.18232,
+        "gyro_3d": 9.19505,
+        "displacement_y": 0.01207
       }
     },
     {
@@ -5124,26 +5124,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 3.90182161,
-        "displacement": 10.5914288,
-        "roll": 0.249901012,
-        "pitch": 0.173485771,
-        "yaw": 0.933948517,
-        "acc_z": 3.28991,
-        "acc_3d": 60.7485,
-        "gyro_3d": 10.506,
-        "displacement_y": 0.0760459453
+        "heave": 3.90183234,
+        "displacement": 7.16891861,
+        "roll": 0.246538669,
+        "pitch": 0.173381478,
+        "yaw": 0.939270437,
+        "acc_z": 3.28969,
+        "acc_3d": 60.3697,
+        "gyro_3d": 10.3744,
+        "displacement_y": 0.0530200154
       },
       "limits": {
-        "heave": 3.92134,
-        "displacement": 10.64439,
-        "roll": 0.25116,
-        "pitch": 0.17436,
-        "yaw": 0.93862,
-        "acc_z": 3.30636,
-        "acc_3d": 61.05225,
-        "gyro_3d": 10.55853,
-        "displacement_y": 0.07643
+        "heave": 3.92135,
+        "displacement": 7.20477,
+        "roll": 0.24778,
+        "pitch": 0.17425,
+        "yaw": 0.94397,
+        "acc_z": 3.30614,
+        "acc_3d": 60.67155,
+        "gyro_3d": 10.42628,
+        "displacement_y": 0.05329
       }
     },
     {
@@ -5152,26 +5152,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 3.26023221,
-        "displacement": 10.8601027,
-        "roll": 0.273834705,
-        "pitch": 0.0598396324,
-        "yaw": 0.560016334,
-        "acc_z": 3.75404,
-        "acc_3d": 54.3435,
-        "gyro_3d": 9.37929,
-        "displacement_y": 0.196564123
+        "heave": 3.26053643,
+        "displacement": 6.89447165,
+        "roll": 0.263349533,
+        "pitch": 0.0471399501,
+        "yaw": 0.625177503,
+        "acc_z": 3.75079,
+        "acc_3d": 52.3659,
+        "gyro_3d": 9.18171,
+        "displacement_y": 0.12507306
       },
       "limits": {
-        "heave": 3.27654,
-        "displacement": 10.91441,
-        "roll": 0.27521,
-        "pitch": 0.06014,
-        "yaw": 0.56282,
-        "acc_z": 3.77282,
-        "acc_3d": 54.61522,
-        "gyro_3d": 9.42619,
-        "displacement_y": 0.19755
+        "heave": 3.27684,
+        "displacement": 6.92895,
+        "roll": 0.26467,
+        "pitch": 0.04738,
+        "yaw": 0.62831,
+        "acc_z": 3.76955,
+        "acc_3d": 52.62773,
+        "gyro_3d": 9.22762,
+        "displacement_y": 0.1257
       }
     },
     {
@@ -5180,26 +5180,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 3.03789115,
-        "displacement": 10.8195772,
-        "roll": 0.44453603,
-        "pitch": 0.0792641118,
-        "yaw": 0.471519828,
-        "acc_z": 4.32124,
-        "acc_3d": 88.1818,
-        "gyro_3d": 10.2347,
-        "displacement_y": 0.504208148
+        "heave": 3.03581452,
+        "displacement": 6.46518373,
+        "roll": 0.443264246,
+        "pitch": 0.0682971552,
+        "yaw": 0.504340887,
+        "acc_z": 4.31747,
+        "acc_3d": 88.4773,
+        "gyro_3d": 9.87806,
+        "displacement_y": 0.305445105
       },
       "limits": {
-        "heave": 3.05309,
-        "displacement": 10.87368,
-        "roll": 0.44676,
-        "pitch": 0.07967,
-        "yaw": 0.47388,
-        "acc_z": 4.34285,
-        "acc_3d": 88.62271,
-        "gyro_3d": 10.28588,
-        "displacement_y": 0.50673
+        "heave": 3.051,
+        "displacement": 6.49751,
+        "roll": 0.44549,
+        "pitch": 0.06864,
+        "yaw": 0.50687,
+        "acc_z": 4.33906,
+        "acc_3d": 88.91969,
+        "gyro_3d": 9.92746,
+        "displacement_y": 0.30698
       }
     },
     {
@@ -5208,26 +5208,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 5.56373835,
-        "displacement": 17.8097858,
-        "roll": 0.243555605,
-        "pitch": 0.105920702,
-        "yaw": 0.679383337,
-        "acc_z": 2.57847,
-        "acc_3d": 53.2844,
-        "gyro_3d": 9.49175,
-        "displacement_y": 0.0157773495
+        "heave": 5.56337023,
+        "displacement": 13.6228428,
+        "roll": 0.241882682,
+        "pitch": 0.107390277,
+        "yaw": 0.683854997,
+        "acc_z": 2.57802,
+        "acc_3d": 53.1801,
+        "gyro_3d": 9.43369,
+        "displacement_y": 0.0112781748
       },
       "limits": {
-        "heave": 5.59156,
-        "displacement": 17.89884,
-        "roll": 0.24478,
-        "pitch": 0.10646,
-        "yaw": 0.68279,
-        "acc_z": 2.59137,
-        "acc_3d": 53.55083,
-        "gyro_3d": 9.53921,
-        "displacement_y": 0.01586
+        "heave": 5.59119,
+        "displacement": 13.69096,
+        "roll": 0.2431,
+        "pitch": 0.10793,
+        "yaw": 0.68728,
+        "acc_z": 2.59092,
+        "acc_3d": 53.44601,
+        "gyro_3d": 9.48086,
+        "displacement_y": 0.01134
       }
     },
     {
@@ -5236,26 +5236,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 3.85609055,
-        "displacement": 10.4230471,
-        "roll": 0.237184301,
-        "pitch": 0.170447841,
-        "yaw": 0.887865841,
-        "acc_z": 3.26764,
-        "acc_3d": 58.2315,
-        "gyro_3d": 10.4838,
-        "displacement_y": 0.0746156871
+        "heave": 3.85605812,
+        "displacement": 7.19505072,
+        "roll": 0.233936951,
+        "pitch": 0.171040565,
+        "yaw": 0.893687963,
+        "acc_z": 3.26724,
+        "acc_3d": 57.9721,
+        "gyro_3d": 10.3628,
+        "displacement_y": 0.0524361134
       },
       "limits": {
-        "heave": 3.87538,
-        "displacement": 10.47517,
-        "roll": 0.23838,
-        "pitch": 0.17131,
-        "yaw": 0.89231,
-        "acc_z": 3.28398,
-        "acc_3d": 58.52266,
-        "gyro_3d": 10.53622,
-        "displacement_y": 0.07499
+        "heave": 3.87534,
+        "displacement": 7.23103,
+        "roll": 0.23511,
+        "pitch": 0.1719,
+        "yaw": 0.89816,
+        "acc_z": 3.28358,
+        "acc_3d": 58.26197,
+        "gyro_3d": 10.41462,
+        "displacement_y": 0.0527
       }
     },
     {
@@ -5264,26 +5264,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 3.24307561,
-        "displacement": 10.6947823,
-        "roll": 0.305377811,
-        "pitch": 0.203500882,
-        "yaw": 0.463139117,
-        "acc_z": 3.76839,
-        "acc_3d": 71.945,
-        "gyro_3d": 9.49971,
-        "displacement_y": 0.191536888
+        "heave": 3.24288464,
+        "displacement": 7.02238846,
+        "roll": 0.293423533,
+        "pitch": 0.163637727,
+        "yaw": 0.461291194,
+        "acc_z": 3.7568,
+        "acc_3d": 66.0333,
+        "gyro_3d": 9.30267,
+        "displacement_y": 0.124555893
       },
       "limits": {
-        "heave": 3.2593,
-        "displacement": 10.74826,
-        "roll": 0.30691,
-        "pitch": 0.20452,
-        "yaw": 0.46546,
-        "acc_z": 3.78724,
-        "acc_3d": 72.30473,
-        "gyro_3d": 9.54721,
-        "displacement_y": 0.1925
+        "heave": 3.2591,
+        "displacement": 7.05751,
+        "roll": 0.2949,
+        "pitch": 0.16446,
+        "yaw": 0.4636,
+        "acc_z": 3.77559,
+        "acc_3d": 66.36347,
+        "gyro_3d": 9.34919,
+        "displacement_y": 0.12518
       }
     },
     {
@@ -5292,26 +5292,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 3.01613808,
-        "displacement": 10.4791203,
-        "roll": 0.519240499,
-        "pitch": 0.0955020711,
-        "yaw": 0.429420322,
-        "acc_z": 4.3786,
-        "acc_3d": 103.638,
-        "gyro_3d": 10.2524,
-        "displacement_y": 0.499740183
+        "heave": 3.01486564,
+        "displacement": 6.62416267,
+        "roll": 0.522199333,
+        "pitch": 0.0878740698,
+        "yaw": 0.442801148,
+        "acc_z": 4.37525,
+        "acc_3d": 104.693,
+        "gyro_3d": 9.91944,
+        "displacement_y": 0.319227546
       },
       "limits": {
-        "heave": 3.03122,
-        "displacement": 10.53152,
-        "roll": 0.52184,
-        "pitch": 0.09598,
-        "yaw": 0.43157,
-        "acc_z": 4.4005,
-        "acc_3d": 104.15619,
-        "gyro_3d": 10.30367,
-        "displacement_y": 0.50224
+        "heave": 3.02994,
+        "displacement": 6.65729,
+        "roll": 0.52482,
+        "pitch": 0.08832,
+        "yaw": 0.44502,
+        "acc_z": 4.39713,
+        "acc_3d": 105.21647,
+        "gyro_3d": 9.96904,
+        "displacement_y": 0.32083
       }
     },
     {
@@ -10360,26 +10360,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 2.77298212,
-        "displacement": 9.10318756,
-        "roll": 0.124899387,
-        "pitch": 0.140027463,
-        "yaw": 1.0467906,
-        "acc_z": 2.33236,
-        "acc_3d": 38.0186,
-        "gyro_3d": 9.69676,
-        "displacement_y": 0.0083376253
+        "heave": 2.77300334,
+        "displacement": 7.85060406,
+        "roll": 0.124687918,
+        "pitch": 0.13935633,
+        "yaw": 1.04481518,
+        "acc_z": 2.33238,
+        "acc_3d": 37.9062,
+        "gyro_3d": 9.66737,
+        "displacement_y": 0.00664677657
       },
       "limits": {
-        "heave": 2.78685,
-        "displacement": 9.14871,
-        "roll": 0.12553,
-        "pitch": 0.14073,
-        "yaw": 1.05203,
-        "acc_z": 2.34403,
-        "acc_3d": 38.2087,
-        "gyro_3d": 9.74525,
-        "displacement_y": 0.00838
+        "heave": 2.78687,
+        "displacement": 7.88986,
+        "roll": 0.12532,
+        "pitch": 0.14006,
+        "yaw": 1.05004,
+        "acc_z": 2.34405,
+        "acc_3d": 38.09574,
+        "gyro_3d": 9.71571,
+        "displacement_y": 0.00669
       }
     },
     {
@@ -10388,26 +10388,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 2.44752765,
-        "displacement": 5.21632528,
-        "roll": 0.102449596,
-        "pitch": 0.112161428,
-        "yaw": 0.528672516,
-        "acc_z": 2.94766,
-        "acc_3d": 30.5137,
-        "gyro_3d": 10.2995,
-        "displacement_y": 0.0429098718
+        "heave": 2.44730282,
+        "displacement": 4.18247223,
+        "roll": 0.102275491,
+        "pitch": 0.102774702,
+        "yaw": 0.510170758,
+        "acc_z": 2.94573,
+        "acc_3d": 29.1115,
+        "gyro_3d": 10.2508,
+        "displacement_y": 0.0331783071
       },
       "limits": {
-        "heave": 2.45977,
-        "displacement": 5.24241,
-        "roll": 0.10297,
-        "pitch": 0.11273,
-        "yaw": 0.53132,
-        "acc_z": 2.9624,
-        "acc_3d": 30.66627,
-        "gyro_3d": 10.351,
-        "displacement_y": 0.04313
+        "heave": 2.45954,
+        "displacement": 4.20339,
+        "roll": 0.10279,
+        "pitch": 0.10329,
+        "yaw": 0.51273,
+        "acc_z": 2.96046,
+        "acc_3d": 29.25706,
+        "gyro_3d": 10.30206,
+        "displacement_y": 0.03335
       }
     },
     {
@@ -10416,26 +10416,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 2.72927165,
-        "displacement": 7.39149475,
-        "roll": 0.216111347,
-        "pitch": 0.166015893,
-        "yaw": 0.754810929,
-        "acc_z": 3.66894,
-        "acc_3d": 54.2697,
-        "gyro_3d": 10.2411,
-        "displacement_y": 0.142059267
+        "heave": 2.72812176,
+        "displacement": 5.5579052,
+        "roll": 0.21700415,
+        "pitch": 0.149551526,
+        "yaw": 0.722177565,
+        "acc_z": 3.6632,
+        "acc_3d": 52.523,
+        "gyro_3d": 10.1244,
+        "displacement_y": 0.108857885
       },
       "limits": {
-        "heave": 2.74292,
-        "displacement": 7.42846,
-        "roll": 0.2172,
-        "pitch": 0.16685,
-        "yaw": 0.75859,
-        "acc_z": 3.68729,
-        "acc_3d": 54.54105,
-        "gyro_3d": 10.29231,
-        "displacement_y": 0.14277
+        "heave": 2.74177,
+        "displacement": 5.5857,
+        "roll": 0.21809,
+        "pitch": 0.1503,
+        "yaw": 0.72579,
+        "acc_z": 3.68152,
+        "acc_3d": 52.78562,
+        "gyro_3d": 10.17503,
+        "displacement_y": 0.10941
       }
     },
     {
@@ -10444,26 +10444,26 @@
       "profile": "default",
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 2.54828238,
-        "displacement": 7.27623177,
-        "roll": 0.284190953,
-        "pitch": 0.182053238,
-        "yaw": 0.611252785,
-        "acc_z": 3.98264,
-        "acc_3d": 65.505,
-        "gyro_3d": 10.4394,
-        "displacement_y": 0.393540114
+        "heave": 2.54864717,
+        "displacement": 5.25187635,
+        "roll": 0.280907422,
+        "pitch": 0.17935957,
+        "yaw": 0.593782723,
+        "acc_z": 3.98361,
+        "acc_3d": 65.0776,
+        "gyro_3d": 10.2507,
+        "displacement_y": 0.290527999
       },
       "limits": {
-        "heave": 2.56103,
-        "displacement": 7.31262,
-        "roll": 0.28562,
-        "pitch": 0.18297,
-        "yaw": 0.61431,
-        "acc_z": 4.00256,
-        "acc_3d": 65.83253,
-        "gyro_3d": 10.4916,
-        "displacement_y": 0.39551
+        "heave": 2.5614,
+        "displacement": 5.27814,
+        "roll": 0.28232,
+        "pitch": 0.18026,
+        "yaw": 0.59676,
+        "acc_z": 4.00353,
+        "acc_3d": 65.40299,
+        "gyro_3d": 10.30196,
+        "displacement_y": 0.29199
       }
     },
     {
@@ -10472,26 +10472,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 2.78166032,
-        "displacement": 9.06446552,
-        "roll": 0.123827733,
-        "pitch": 0.138493702,
-        "yaw": 1.04410136,
-        "acc_z": 2.33166,
-        "acc_3d": 37.6437,
-        "gyro_3d": 9.99035,
-        "displacement_y": 0.00837439392
+        "heave": 2.78166604,
+        "displacement": 7.78063393,
+        "roll": 0.123623736,
+        "pitch": 0.137809023,
+        "yaw": 1.04209161,
+        "acc_z": 2.33168,
+        "acc_3d": 37.5309,
+        "gyro_3d": 9.95988,
+        "displacement_y": 0.00662908982
       },
       "limits": {
-        "heave": 2.79557,
-        "displacement": 9.10979,
-        "roll": 0.12445,
-        "pitch": 0.13919,
-        "yaw": 1.04933,
-        "acc_z": 2.34332,
-        "acc_3d": 37.83192,
-        "gyro_3d": 10.04031,
-        "displacement_y": 0.00842
+        "heave": 2.79558,
+        "displacement": 7.81954,
+        "roll": 0.12425,
+        "pitch": 0.1385,
+        "yaw": 1.04731,
+        "acc_z": 2.34334,
+        "acc_3d": 37.71856,
+        "gyro_3d": 10.00968,
+        "displacement_y": 0.00667
       }
     },
     {
@@ -10500,26 +10500,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 2.38697028,
-        "displacement": 5.37115097,
-        "roll": 0.106333412,
-        "pitch": 0.131188959,
-        "yaw": 0.533278406,
-        "acc_z": 2.91339,
-        "acc_3d": 34.1132,
-        "gyro_3d": 10.2016,
-        "displacement_y": 0.0434731245
+        "heave": 2.38673401,
+        "displacement": 4.37886572,
+        "roll": 0.105930656,
+        "pitch": 0.121900722,
+        "yaw": 0.515062451,
+        "acc_z": 2.91143,
+        "acc_3d": 32.6115,
+        "gyro_3d": 10.1517,
+        "displacement_y": 0.034058433
       },
       "limits": {
-        "heave": 2.39891,
-        "displacement": 5.39801,
-        "roll": 0.10687,
-        "pitch": 0.13185,
-        "yaw": 0.53595,
-        "acc_z": 2.92796,
-        "acc_3d": 34.28377,
-        "gyro_3d": 10.25261,
-        "displacement_y": 0.0437
+        "heave": 2.39867,
+        "displacement": 4.40077,
+        "roll": 0.10647,
+        "pitch": 0.12252,
+        "yaw": 0.51764,
+        "acc_z": 2.92599,
+        "acc_3d": 32.77456,
+        "gyro_3d": 10.20246,
+        "displacement_y": 0.03423
       }
     },
     {
@@ -10528,26 +10528,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 2.67144036,
-        "displacement": 7.4336791,
-        "roll": 0.245276526,
-        "pitch": 0.166890308,
-        "yaw": 0.72844696,
-        "acc_z": 3.64465,
-        "acc_3d": 59.0362,
-        "gyro_3d": 9.97547,
-        "displacement_y": 0.152406856
+        "heave": 2.67034292,
+        "displacement": 5.91480732,
+        "roll": 0.245660082,
+        "pitch": 0.149545729,
+        "yaw": 0.693799436,
+        "acc_z": 3.63869,
+        "acc_3d": 57.2381,
+        "gyro_3d": 9.87412,
+        "displacement_y": 0.124862269
       },
       "limits": {
-        "heave": 2.6848,
-        "displacement": 7.47085,
-        "roll": 0.24651,
-        "pitch": 0.16773,
-        "yaw": 0.73209,
-        "acc_z": 3.66288,
-        "acc_3d": 59.33139,
-        "gyro_3d": 10.02535,
-        "displacement_y": 0.15317
+        "heave": 2.6837,
+        "displacement": 5.94439,
+        "roll": 0.24689,
+        "pitch": 0.1503,
+        "yaw": 0.69727,
+        "acc_z": 3.65689,
+        "acc_3d": 57.5243,
+        "gyro_3d": 9.9235,
+        "displacement_y": 0.12549
       }
     },
     {
@@ -10556,26 +10556,26 @@
       "profile": "default",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 2.63609219,
-        "displacement": 7.69569921,
-        "roll": 0.4248254,
-        "pitch": 0.23760657,
-        "yaw": 0.596266866,
-        "acc_z": 4.03938,
-        "acc_3d": 96.299,
-        "gyro_3d": 10.3457,
-        "displacement_y": 0.436304539
+        "heave": 2.63640714,
+        "displacement": 6.08921719,
+        "roll": 0.421442538,
+        "pitch": 0.235893279,
+        "yaw": 0.579511166,
+        "acc_z": 4.04062,
+        "acc_3d": 95.8719,
+        "gyro_3d": 10.1921,
+        "displacement_y": 0.357875079
       },
       "limits": {
-        "heave": 2.64928,
-        "displacement": 7.73418,
-        "roll": 0.42695,
-        "pitch": 0.2388,
-        "yaw": 0.59925,
-        "acc_z": 4.05958,
-        "acc_3d": 96.7805,
-        "gyro_3d": 10.39743,
-        "displacement_y": 0.43849
+        "heave": 2.64959,
+        "displacement": 6.11967,
+        "roll": 0.42355,
+        "pitch": 0.23708,
+        "yaw": 0.58241,
+        "acc_z": 4.06083,
+        "acc_3d": 96.35126,
+        "gyro_3d": 10.24307,
+        "displacement_y": 0.35967
       }
     },
     {
@@ -10584,26 +10584,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 2.77299833,
-        "displacement": 9.10661316,
-        "roll": 0.125025898,
-        "pitch": 0.13959375,
-        "yaw": 1.10051155,
-        "acc_z": 2.33227,
-        "acc_3d": 37.9714,
-        "gyro_3d": 9.72829,
-        "displacement_y": 0.00833760947
+        "heave": 2.77298999,
+        "displacement": 7.85124397,
+        "roll": 0.124820046,
+        "pitch": 0.138956219,
+        "yaw": 1.09861696,
+        "acc_z": 2.33229,
+        "acc_3d": 37.8618,
+        "gyro_3d": 9.7011,
+        "displacement_y": 0.00664504897
       },
       "limits": {
-        "heave": 2.78687,
-        "displacement": 9.15215,
-        "roll": 0.12566,
-        "pitch": 0.1403,
-        "yaw": 1.10602,
-        "acc_z": 2.34394,
-        "acc_3d": 38.16126,
-        "gyro_3d": 9.77694,
-        "displacement_y": 0.00838
+        "heave": 2.78686,
+        "displacement": 7.89051,
+        "roll": 0.12545,
+        "pitch": 0.13966,
+        "yaw": 1.10412,
+        "acc_z": 2.34396,
+        "acc_3d": 38.05111,
+        "gyro_3d": 9.74961,
+        "displacement_y": 0.00668
       }
     },
     {
@@ -10612,26 +10612,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 2.44806767,
-        "displacement": 5.20030308,
-        "roll": 0.103629626,
-        "pitch": 0.111431085,
-        "yaw": 0.466020733,
-        "acc_z": 2.9637,
-        "acc_3d": 30.5327,
-        "gyro_3d": 10.3543,
-        "displacement_y": 0.0426635109
+        "heave": 2.44782686,
+        "displacement": 4.1795783,
+        "roll": 0.103397831,
+        "pitch": 0.102124237,
+        "yaw": 0.450128138,
+        "acc_z": 2.96161,
+        "acc_3d": 29.1403,
+        "gyro_3d": 10.3038,
+        "displacement_y": 0.0330812335
       },
       "limits": {
-        "heave": 2.46031,
-        "displacement": 5.22631,
-        "roll": 0.10415,
-        "pitch": 0.11199,
-        "yaw": 0.46836,
-        "acc_z": 2.97852,
-        "acc_3d": 30.68537,
-        "gyro_3d": 10.40608,
-        "displacement_y": 0.04288
+        "heave": 2.46007,
+        "displacement": 4.20048,
+        "roll": 0.10392,
+        "pitch": 0.10264,
+        "yaw": 0.45238,
+        "acc_z": 2.97642,
+        "acc_3d": 29.28601,
+        "gyro_3d": 10.35532,
+        "displacement_y": 0.03325
       }
     },
     {
@@ -10640,26 +10640,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 2.7399857,
-        "displacement": 7.40906906,
-        "roll": 0.21867232,
-        "pitch": 0.162164137,
-        "yaw": 0.765455782,
-        "acc_z": 3.73383,
-        "acc_3d": 53.9511,
-        "gyro_3d": 10.3081,
-        "displacement_y": 0.142280206
+        "heave": 2.73886681,
+        "displacement": 5.58227825,
+        "roll": 0.219566807,
+        "pitch": 0.145684779,
+        "yaw": 0.732570767,
+        "acc_z": 3.72762,
+        "acc_3d": 52.2449,
+        "gyro_3d": 10.1927,
+        "displacement_y": 0.109291643
       },
       "limits": {
-        "heave": 2.75369,
-        "displacement": 7.44612,
-        "roll": 0.21977,
-        "pitch": 0.16298,
-        "yaw": 0.76929,
-        "acc_z": 3.7525,
-        "acc_3d": 54.22086,
-        "gyro_3d": 10.35965,
-        "displacement_y": 0.143
+        "heave": 2.75257,
+        "displacement": 5.61019,
+        "roll": 0.22067,
+        "pitch": 0.14642,
+        "yaw": 0.73624,
+        "acc_z": 3.74626,
+        "acc_3d": 52.50613,
+        "gyro_3d": 10.24367,
+        "displacement_y": 0.10984
       }
     },
     {
@@ -10668,26 +10668,26 @@
       "profile": "legacy",
       "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 2.56770921,
-        "displacement": 7.27168989,
-        "roll": 0.284525484,
-        "pitch": 0.185607925,
-        "yaw": 0.606046796,
-        "acc_z": 4.07033,
-        "acc_3d": 64.6619,
-        "gyro_3d": 10.5207,
-        "displacement_y": 0.390872866
+        "heave": 2.56806064,
+        "displacement": 5.25270033,
+        "roll": 0.28129074,
+        "pitch": 0.182569429,
+        "yaw": 0.590379179,
+        "acc_z": 4.0707,
+        "acc_3d": 64.2209,
+        "gyro_3d": 10.3314,
+        "displacement_y": 0.288654
       },
       "limits": {
-        "heave": 2.58055,
-        "displacement": 7.30805,
-        "roll": 0.28595,
-        "pitch": 0.18654,
-        "yaw": 0.60908,
-        "acc_z": 4.09069,
-        "acc_3d": 64.98521,
-        "gyro_3d": 10.57331,
-        "displacement_y": 0.39283
+        "heave": 2.58091,
+        "displacement": 5.27897,
+        "roll": 0.2827,
+        "pitch": 0.18349,
+        "yaw": 0.59334,
+        "acc_z": 4.09106,
+        "acc_3d": 64.54201,
+        "gyro_3d": 10.38306,
+        "displacement_y": 0.2901
       }
     },
     {
@@ -10696,26 +10696,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
       "measured_max": {
-        "heave": 2.78166986,
-        "displacement": 9.06755733,
-        "roll": 0.123976439,
-        "pitch": 0.138053238,
-        "yaw": 1.09938264,
-        "acc_z": 2.33164,
-        "acc_3d": 37.5949,
-        "gyro_3d": 10.0237,
-        "displacement_y": 0.00837513153
+        "heave": 2.7816813,
+        "displacement": 7.78119898,
+        "roll": 0.123776644,
+        "pitch": 0.137398168,
+        "yaw": 1.09740603,
+        "acc_z": 2.33165,
+        "acc_3d": 37.4847,
+        "gyro_3d": 9.99396,
+        "displacement_y": 0.00662732543
       },
       "limits": {
-        "heave": 2.79558,
-        "displacement": 9.1129,
-        "roll": 0.1246,
-        "pitch": 0.13875,
-        "yaw": 1.10488,
-        "acc_z": 2.3433,
-        "acc_3d": 37.78288,
-        "gyro_3d": 10.07382,
-        "displacement_y": 0.00842
+        "heave": 2.79559,
+        "displacement": 7.82011,
+        "roll": 0.1244,
+        "pitch": 0.13809,
+        "yaw": 1.1029,
+        "acc_z": 2.34331,
+        "acc_3d": 37.67213,
+        "gyro_3d": 10.04393,
+        "displacement_y": 0.00667
       }
     },
     {
@@ -10724,26 +10724,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
       "measured_max": {
-        "heave": 2.38477302,
-        "displacement": 5.36239195,
-        "roll": 0.107827954,
-        "pitch": 0.129986763,
-        "yaw": 0.45967567,
-        "acc_z": 2.92804,
-        "acc_3d": 34.145,
-        "gyro_3d": 10.2531,
-        "displacement_y": 0.0433072522
+        "heave": 2.38451314,
+        "displacement": 4.37978649,
+        "roll": 0.107417285,
+        "pitch": 0.120779574,
+        "yaw": 0.444446504,
+        "acc_z": 2.92594,
+        "acc_3d": 32.6506,
+        "gyro_3d": 10.2032,
+        "displacement_y": 0.034001261
       },
       "limits": {
-        "heave": 2.3967,
-        "displacement": 5.38921,
-        "roll": 0.10837,
-        "pitch": 0.13064,
-        "yaw": 0.46198,
-        "acc_z": 2.94269,
-        "acc_3d": 34.31573,
-        "gyro_3d": 10.30437,
-        "displacement_y": 0.04353
+        "heave": 2.39644,
+        "displacement": 4.40169,
+        "roll": 0.10796,
+        "pitch": 0.12139,
+        "yaw": 0.44667,
+        "acc_z": 2.94057,
+        "acc_3d": 32.81386,
+        "gyro_3d": 10.25422,
+        "displacement_y": 0.03418
       }
     },
     {
@@ -10752,26 +10752,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
       "measured_max": {
-        "heave": 2.68149471,
-        "displacement": 7.45555735,
-        "roll": 0.248961955,
-        "pitch": 0.161675498,
-        "yaw": 0.735716939,
-        "acc_z": 3.7332,
-        "acc_3d": 58.684,
-        "gyro_3d": 10.0621,
-        "displacement_y": 0.152985334
+        "heave": 2.68039227,
+        "displacement": 5.9409461,
+        "roll": 0.2494542,
+        "pitch": 0.144344822,
+        "yaw": 0.700698555,
+        "acc_z": 3.72649,
+        "acc_3d": 56.9495,
+        "gyro_3d": 9.96181,
+        "displacement_y": 0.125546977
       },
       "limits": {
-        "heave": 2.69491,
-        "displacement": 7.49284,
-        "roll": 0.25021,
-        "pitch": 0.16249,
-        "yaw": 0.7394,
-        "acc_z": 3.75187,
-        "acc_3d": 58.97742,
-        "gyro_3d": 10.11242,
-        "displacement_y": 0.15376
+        "heave": 2.6938,
+        "displacement": 5.97066,
+        "roll": 0.25071,
+        "pitch": 0.14507,
+        "yaw": 0.70421,
+        "acc_z": 3.74513,
+        "acc_3d": 57.23425,
+        "gyro_3d": 10.01162,
+        "displacement_y": 0.12618
       }
     },
     {
@@ -10780,26 +10780,26 @@
       "profile": "legacy",
       "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
       "measured_max": {
-        "heave": 2.66382194,
-        "displacement": 7.6798625,
-        "roll": 0.424886435,
-        "pitch": 0.24208796,
-        "yaw": 0.603697181,
-        "acc_z": 4.22938,
-        "acc_3d": 94.9938,
-        "gyro_3d": 10.4171,
-        "displacement_y": 0.432774931
+        "heave": 2.66422582,
+        "displacement": 6.08033133,
+        "roll": 0.42140156,
+        "pitch": 0.240389004,
+        "yaw": 0.589374006,
+        "acc_z": 4.22972,
+        "acc_3d": 94.5611,
+        "gyro_3d": 10.2635,
+        "displacement_y": 0.355222642
       },
       "limits": {
-        "heave": 2.67715,
-        "displacement": 7.71827,
-        "roll": 0.42702,
-        "pitch": 0.2433,
-        "yaw": 0.60672,
-        "acc_z": 4.25053,
-        "acc_3d": 95.46877,
-        "gyro_3d": 10.46919,
-        "displacement_y": 0.43494
+        "heave": 2.67755,
+        "displacement": 6.11074,
+        "roll": 0.42351,
+        "pitch": 0.2416,
+        "yaw": 0.59233,
+        "acc_z": 4.25087,
+        "acc_3d": 95.03391,
+        "gyro_3d": 10.31482,
+        "displacement_y": 0.357
       }
     },
     {
@@ -11028,10 +11028,10 @@
     }
   ],
   "note": "Locked native replay baseline: both v1.4.0 directions and 20 s steering. Qualifying measurements retain their original gate outcomes. Updating limits is not an estimator improvement. CI never refits these limits.",
-  "reason": "Qualify TFG accepted-fit tilt uncertainty at 68f097807af2a070711c77288ca07ec136f6377a from GitHub Actions run 44209357875. Both pinned v1.4.0 directions use identical executables. Preserve all 544 cells, the observed outcomes against the preceding limits and the existing 0.5% margin.",
+  "reason": "Measured live horizontal wave matching after accelerometer-bias release at 16a4a8de9dcd5374dde85d405fd3afdcb38da1a5. Both pinned v1.4.0 directions, identical executables, pre-existing guard outcomes preserved, 0.5% regression margin.",
   "measurement_sha256": {
-    "following": "08d377b8896b26f21f0a13667ee1148de8228b29be2e27f02a5a62d6c0b371ad",
-    "head": "03fcc2d3bc3ab70a6841af664aa9913dd2478e45261f3a6e9a8d1f2b6cee6ed6"
+    "following": "09cc7cc5e756f939d17426a950231db2cb53c968c91c75d9b4fddb30d74f425d",
+    "head": "c1bd51507a0b0f0f615207c16628a8f75270b8395750bdbea0a2054086daa962"
   },
   "measurement_files": {
     "following": "baseline_following.json",

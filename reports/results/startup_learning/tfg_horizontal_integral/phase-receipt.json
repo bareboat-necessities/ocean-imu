@@ -1,0 +1,327 @@
+{
+  "source_commit": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+  "binary_sha256": {
+    "before": "9bc2b5c3d901257709edaa48beeddfd9cee72951048a8a9119e0961513403b3e",
+    "after": "a937d9adbe0d2eaa1425a8bb3e64863b047b19552cd4363077e07ff4f8053580"
+  },
+  "system_math_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "protocol": {
+    "mode": "full",
+    "duration_sec": 1200.0,
+    "window_sec": 900.0,
+    "dt_sec": 0.005,
+    "seed_triplets": [
+      {
+        "wave_phase_seed": 11,
+        "imu_noise_seed": 101,
+        "initialization_seed": 1009
+      },
+      {
+        "wave_phase_seed": 29,
+        "imu_noise_seed": 211,
+        "initialization_seed": 1103
+      },
+      {
+        "wave_phase_seed": 47,
+        "imu_noise_seed": 307,
+        "initialization_seed": 1201
+      },
+      {
+        "wave_phase_seed": 71,
+        "imu_noise_seed": 401,
+        "initialization_seed": 1301
+      },
+      {
+        "wave_phase_seed": 97,
+        "imu_noise_seed": 503,
+        "initialization_seed": 1409
+      },
+      {
+        "wave_phase_seed": 131,
+        "imu_noise_seed": 601,
+        "initialization_seed": 1511
+      },
+      {
+        "wave_phase_seed": 173,
+        "imu_noise_seed": 701,
+        "initialization_seed": 1601
+      },
+      {
+        "wave_phase_seed": 211,
+        "imu_noise_seed": 809,
+        "initialization_seed": 1709
+      },
+      {
+        "wave_phase_seed": 257,
+        "imu_noise_seed": 907,
+        "initialization_seed": 1801
+      },
+      {
+        "wave_phase_seed": 307,
+        "imu_noise_seed": 1009,
+        "initialization_seed": 1901
+      }
+    ],
+    "inputs": [
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv"
+    ],
+    "scenarios": [
+      "stationary_jonswap_H0_270_L14_047_A30_00_P60_00",
+      "stationary_jonswap_H1_500_L50_710_A_30_00_P120_00",
+      "stationary_jonswap_H4_000_L112_766_A30_00_P30_00",
+      "stationary_jonswap_H8_500_L202_839_A_30_00_P72_00",
+      "stationary_pmstokes_H0_270_L14_047_A30_00_P60_00",
+      "stationary_pmstokes_H1_500_L50_710_A_30_00_P120_00",
+      "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "stationary_pmstokes_H8_500_L202_839_A_30_00_P72_00",
+      "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4"
+    ],
+    "families": [
+      "OU_III",
+      "TFG"
+    ],
+    "tuning": "shipping adaptive; periodic a_w covariance sync",
+    "bootstrap_resamples": 10000,
+    "stats_seed": 20260317,
+    "primary": "JONSWAP-plus-crossfade seed-level mean Z %Hs; difference TFG minus OU-III",
+    "pooling": "PM-Stokes is a separate declared ensemble and is not pooled into the primary JONSWAP aggregate",
+    "phase_method": "common random phase on the 0.02-1.60 Hz world-velocity and Euler spectra about the retained 5 kn/20 s cruise track; displacement and acceleration analytically derived from velocity; body IMU and quaternion reconstructed",
+    "transition_method": "C2 quintic crossfade between two independently phase-randomized stationary records, with exact first- and second-derivative cross terms; not a continuously evolving JONSWAP spectrum",
+    "sampling_unit": "seed triplet, not record or time sample",
+    "transition_normalization": "endpoint incident Hs=4 m, matching the OU validation protocol",
+    "inclusion": "all complete finite replays; regression gates never filter statistical rows",
+    "scope": "development RAO ensemble; exploratory companion comparison, no unseen vessel claim"
+  },
+  "directions": [
+    "following",
+    "head"
+  ],
+  "identical_input_in_each_pair": true,
+  "unique_directional_waveforms": 180,
+  "direction_check": "Checked each generated track against its own moving-vessel reference before both executions. Maximum absolute X wave displacement below 80 m and absolute mean X wave velocity below 0.1 m/s.",
+  "archives_sha256": {
+    "phase.csv.gz": "986ea6f909a66c8295c78ce78c947740318dbb8d1e84ec11dfd6cbec8cbfa75f",
+    "phase-logs.json.gz": "e5c6c9de42b753fdaa757a39dae65d85f9abbb8c78f735369d39e0856c824c60"
+  },
+  "summary": {
+    "all": {
+      "pairs": 180,
+      "metrics": {
+        "disp_x_rms_m": {
+          "before": 0.31394254668825533,
+          "after": 0.18658187024247128,
+          "change_percent": -40.56814783128235,
+          "improved_pairs": 180
+        },
+        "disp_y_rms_m": {
+          "before": 0.27464782535539645,
+          "after": 0.2010792855029614,
+          "change_percent": -26.786500041366356,
+          "improved_pairs": 180
+        },
+        "disp_z_rms_m": {
+          "before": 0.15578744887894194,
+          "after": 0.15579741531196475,
+          "change_percent": 0.006397455696549592,
+          "improved_pairs": 80
+        },
+        "disp_3d_rms_m": {
+          "before": 0.44526517883063116,
+          "after": 0.3154655417388358,
+          "change_percent": -29.1510864228546,
+          "improved_pairs": 180
+        },
+        "pitch_rms_deg": {
+          "before": 0.4247139534126099,
+          "after": 0.40844200919347273,
+          "change_percent": -3.8312713976997537,
+          "improved_pairs": 122
+        },
+        "roll_rms_deg": {
+          "before": 0.4564615913357092,
+          "after": 0.453822560994921,
+          "change_percent": -0.578149485275592,
+          "improved_pairs": 126
+        },
+        "yaw_rms_deg": {
+          "before": 1.3601011832440602,
+          "after": 1.3321536136571457,
+          "change_percent": -2.054815474849825,
+          "improved_pairs": 95
+        },
+        "accel_bias_3d_rms_mps2": {
+          "before": 0.10577339323692422,
+          "after": 0.10371480268523967,
+          "change_percent": -1.9462272020275173,
+          "improved_pairs": 120
+        }
+      }
+    },
+    "following": {
+      "pairs": 90,
+      "metrics": {
+        "disp_x_rms_m": {
+          "before": 0.36170321936122557,
+          "after": 0.1901361332532184,
+          "change_percent": -47.433110053871715,
+          "improved_pairs": 90
+        },
+        "disp_y_rms_m": {
+          "before": 0.27730242669440197,
+          "after": 0.1776668802603567,
+          "change_percent": -35.93028291232644,
+          "improved_pairs": 90
+        },
+        "disp_z_rms_m": {
+          "before": 0.17195141871760505,
+          "after": 0.17199176425335058,
+          "change_percent": 0.02346333403144829,
+          "improved_pairs": 38
+        },
+        "disp_3d_rms_m": {
+          "before": 0.48712744335484714,
+          "after": 0.31192697072572945,
+          "change_percent": -35.9660444138626,
+          "improved_pairs": 90
+        },
+        "pitch_rms_deg": {
+          "before": 0.3205253658131818,
+          "after": 0.3159041140823155,
+          "change_percent": -1.4417741070638979,
+          "improved_pairs": 61
+        },
+        "roll_rms_deg": {
+          "before": 0.3298970826178171,
+          "after": 0.3281926930973276,
+          "change_percent": -0.5166427987070121,
+          "improved_pairs": 65
+        },
+        "yaw_rms_deg": {
+          "before": 1.0828500334382873,
+          "after": 1.082924738101504,
+          "change_percent": 0.006898892820772495,
+          "improved_pairs": 40
+        },
+        "accel_bias_3d_rms_mps2": {
+          "before": 0.07765294683702527,
+          "after": 0.07716259167495594,
+          "change_percent": -0.6314701270751066,
+          "improved_pairs": 56
+        }
+      }
+    },
+    "head": {
+      "pairs": 90,
+      "metrics": {
+        "disp_x_rms_m": {
+          "before": 0.25746966102036156,
+          "after": 0.18295857301004279,
+          "change_percent": -28.93975457730773,
+          "improved_pairs": 90
+        },
+        "disp_y_rms_m": {
+          "before": 0.27196731438592486,
+          "after": 0.22203656855417978,
+          "change_percent": -18.359098020467545,
+          "improved_pairs": 90
+        },
+        "disp_z_rms_m": {
+          "before": 0.13773949345565623,
+          "after": 0.13771166350312353,
+          "change_percent": -0.020204773398313502,
+          "improved_pairs": 42
+        },
+        "disp_3d_rms_m": {
+          "before": 0.39903510232649714,
+          "after": 0.3189648585393448,
+          "change_percent": -20.065964954039938,
+          "improved_pairs": 90
+        },
+        "pitch_rms_deg": {
+          "before": 0.5079639498203226,
+          "after": 0.483584884434852,
+          "change_percent": -4.799369206041881,
+          "improved_pairs": 61
+        },
+        "roll_rms_deg": {
+          "before": 0.5548714117790798,
+          "after": 0.5515427362711806,
+          "change_percent": -0.5999003439781769,
+          "improved_pairs": 61
+        },
+        "yaw_rms_deg": {
+          "before": 1.589712635166018,
+          "after": 1.5416032279310303,
+          "change_percent": -3.026295833017867,
+          "improved_pairs": 55
+        },
+        "accel_bias_3d_rms_mps2": {
+          "before": 0.12785163777297553,
+          "after": 0.12473754462101783,
+          "change_percent": -2.435708455676855,
+          "improved_pairs": 64
+        }
+      }
+    },
+    "sea_transition": {
+      "pairs": 20,
+      "metrics": {
+        "disp_x_rms_m": {
+          "before": 0.3098020682595901,
+          "after": 0.17419912650149091,
+          "change_percent": -43.77083165386567,
+          "improved_pairs": 20
+        },
+        "disp_y_rms_m": {
+          "before": 0.2328887645444492,
+          "after": 0.1505887108966236,
+          "change_percent": -35.33878236196225,
+          "improved_pairs": 20
+        },
+        "disp_z_rms_m": {
+          "before": 0.15060224631444388,
+          "after": 0.1506097917797131,
+          "change_percent": 0.0050101943721792,
+          "improved_pairs": 10
+        },
+        "disp_3d_rms_m": {
+          "before": 0.4158070899103235,
+          "after": 0.2751465157779105,
+          "change_percent": -33.82832509247235,
+          "improved_pairs": 20
+        },
+        "pitch_rms_deg": {
+          "before": 0.22172115072713702,
+          "after": 0.21297156804596243,
+          "change_percent": -3.946210207046208,
+          "improved_pairs": 16
+        },
+        "roll_rms_deg": {
+          "before": 0.3717550068046659,
+          "after": 0.3683455598006374,
+          "change_percent": -0.9171220135899771,
+          "improved_pairs": 19
+        },
+        "yaw_rms_deg": {
+          "before": 0.9863189802502939,
+          "after": 0.9764098869450972,
+          "change_percent": -1.0046540220367661,
+          "improved_pairs": 12
+        },
+        "accel_bias_3d_rms_mps2": {
+          "before": 0.07254520019632409,
+          "after": 0.07157770671913243,
+          "change_percent": -1.333642301039073,
+          "improved_pairs": 16
+        }
+      }
+    }
+  }
+}
