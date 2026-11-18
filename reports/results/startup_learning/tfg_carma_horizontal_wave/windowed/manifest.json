@@ -1,0 +1,680 @@
+{
+  "prior": "00f1829351418f13768d8c5c01245244714407e2",
+  "source": "4b6d7fc999521713018358ff454b350ae07ea960",
+  "note": "Fixed-draw shipping gates apply only to the default initialization/noise draw. The other draws retain their actual gate outcomes for sensitivity.",
+  "pairs": 288,
+  "segments": 864,
+  "original_logs": 576,
+  "sha256": {
+    "original-windowed-logs.tar.gz": "c2c5b2185aca216ff8a82222beaf3afdc07cdf4160ff238c04a8a0ca1f1c7ca6",
+    "pooled-and-loss-counts.csv.gz": "4b05ed4e3f6b2f62bf0915b1486cdc21c7ed28a21fe15ef58ed7b529d1da6cdf",
+    "raw-input-index.json.gz": "64dba7b20f0ef8e4299b829e4a0bbe7a698b27558483a59c232f83e2f7cf2c3a",
+    "windowed-pairs.csv.gz": "5a15363ad41250add713e39f48ed7165b5595a7c5fccdc8ddf45cd095442e888"
+  },
+  "gates": [
+    {
+      "family": "independent",
+      "draw": "101",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "101",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "101",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "101",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "203",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "203",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "203",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "203",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "41",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "41",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "41",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "41",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "509",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "509",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "509",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "509",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "7",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "7",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "7",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "7",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "independent",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "101",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "101",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "101",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "101",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "1063",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "203",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "203",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "203",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "203",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "3559",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "41",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "41",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "41",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "41",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "509",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "509",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "509",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "509",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "7",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "7",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "7",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "7",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "default",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "default",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "default",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "default",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "following",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "following",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "head",
+      "arm": "production",
+      "exit": 0,
+      "count": 8
+    },
+    {
+      "family": "shared",
+      "draw": "default",
+      "profile": "legacy",
+      "sea": "head",
+      "arm": "stock",
+      "exit": 0,
+      "count": 8
+    }
+  ],
+  "compared_windows_s": {
+    "early": [
+      40,
+      60
+    ],
+    "release": [
+      60,
+      150
+    ],
+    "late": [
+      300,
+      1200
+    ]
+  },
+  "source_tree": "f8bb78f738fbd62eeeff803e74d34dcb0a289aac",
+  "earlier_source_tree": "4c1b9ede3db64a5309386ade7870afc093aa7599"
+}
