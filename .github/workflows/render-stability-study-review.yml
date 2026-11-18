@@ -31,12 +31,16 @@ jobs:
           sudo apt-get "${apt_options[@]}" update -qq
           sudo env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install -y --no-install-recommends \
             texlive-luatex texlive-publishers texlive-latex-extra texlive-science \
-            texlive-fonts-recommended texlive-fonts-extra tex-gyre lmodern
+            texlive-fonts-recommended texlive-fonts-extra texlive-plain-generic tex-gyre lmodern
       - name: Render two-column stability study
         working-directory: doc/kalman_ou_iii
         run: |
-          lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
-          lualatex -interaction=nonstopmode -halt-on-error kalman_ou-w3d-stability-study.tex
+          paper=kalman_ou-w3d-stability-study
+          latex=(lualatex -interaction=nonstopmode -halt-on-error "$paper.tex")
+          "${latex[@]}"
+          bibtex "$paper"
+          "${latex[@]}"
+          "${latex[@]}"
       - uses: actions/upload-artifact@v4
         with:
           name: kalman-ou-w3d-stability-study-two-column

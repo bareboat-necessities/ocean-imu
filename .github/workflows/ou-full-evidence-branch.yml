@@ -25,6 +25,7 @@ on:
       - "src/**"
       - ".github/workflows/ou-validation.yml"
       - ".github/workflows/ou-full-evidence-branch.yml"
+      - ".github/workflows/render-stability-study-review.yml"
 
 # Dataset and deployed-filter changes require full branch regeneration.
 concurrency:

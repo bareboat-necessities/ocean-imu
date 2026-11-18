@@ -34,6 +34,15 @@ The along-wave and vertical variant withholds direct transverse attitude and gyr
 
 The principal candidate passed 5/16 default and 5/16 legacy-gyro checks. Its largest default-draw pitch increase was 0.06910° to 0.09252° on the following-sea record `wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv`. The largest default-draw yaw increase was 0.80380° to 0.91668°. On reserved noise draws the largest pitch increase was 0.11967° to 0.15135°.
 
+Rechecking all nine limits in each fixed-draw log shows where the candidate lost accuracy. Both gyro profiles are included. A record can exceed several limits.
+
+| Sea direction | All checks passed | Pitch over limit | Yaw | Roll | 3D accel bias | 3D gyro bias | Y displacement |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Following | 2/16 | 14 | 11 | 6 | 8 | 2 | 4 |
+| Head | 8/16 | 4 | 4 | 4 | 4 | 0 | 0 |
+
+All 32 candidate replays met their 3D displacement, heave and vertical accelerometer-bias limits. The shipping OU-III control passed all nine limits on all 32 replays. The comparison uses the smaller of the global and per-record ceilings for each channel and matches every error emitted by the native executable.
+
 Both variants that retained the original inertial-state drift observation failed all 16 default replay checks. The disabled variant reproduced all 624 comparison fields across the three windows.
 
 ## Reproduction
