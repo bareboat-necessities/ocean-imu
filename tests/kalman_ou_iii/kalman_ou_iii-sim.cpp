@@ -515,8 +515,9 @@ public:
         const auto& d = filter.dir();
 
         FilterSnapshot s;
-        s.disp_est_zu = ned_to_zu(filter.mekf().get_position());
-        s.vel_est_zu  = ned_to_zu(filter.mekf().get_velocity());
+        const auto motion = filter.waveMotionNed();
+        s.disp_est_zu = ned_to_zu(motion.position);
+        s.vel_est_zu  = ned_to_zu(motion.velocity);
         s.acc_est_zu  = ned_to_zu(filter.mekf().get_world_total_accel());
 
         // Filter attitude is BODY->WORLD in NED.

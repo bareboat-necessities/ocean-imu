@@ -233,6 +233,39 @@ class Kalman3D_Wave_OU_III {
         return xext.template segment<3>(BASE_N + 6);
     }
 
+    struct WaveMotion {
+        Vector3 position;  // metres, world NED
+        Vector3 velocity;  // metres/second, world NED
+    };
+
+    // Estimate the wave component at the current sample. Hx = S_xy + beta*v_xy
+    // is approximate in broadband seas. Use its measured variance in the
+    // two-dimensional innovation. This readout never updates xext or Pext.
+    [[nodiscard]] WaveMotion wave_motion(T beta, T residual_variance, T weight) const {
+        WaveMotion motion{get_position(), get_velocity()};
+        if (!(weight > T(0) && weight <= T(1) && beta > T(0) && residual_variance >= T(0)) ||
+            !std::isfinite(beta) || !std::isfinite(residual_variance)) return motion;
+        using Matrix2 = Eigen::Matrix<T, 2, 2>;
+        using Vector2 = Eigen::Matrix<T, 2, 1>;
+        const Matrix2 v_cross = Pext.template block<2,2>(OFF_V, OFF_S)
+                              + beta * Pext.template block<2,2>(OFF_V, OFF_V);
+        Matrix2 innovation = Pext.template block<2,2>(OFF_S, OFF_S)
+                           + beta * (Pext.template block<2,2>(OFF_S, OFF_V) + v_cross);
+        innovation.diagonal().array() += residual_variance;
+        const Eigen::LLT<Matrix2> factor(innovation);
+        if (factor.info() != Eigen::Success) return motion;
+        const Vector2 residual = xext.template segment<2>(OFF_S) + beta * motion.velocity.template head<2>();
+        const Vector2 correction = weight * factor.solve(residual);
+        const Vector2 dp = (Pext.template block<2,2>(OFF_P, OFF_S)
+                          + beta * Pext.template block<2,2>(OFF_P, OFF_V)) * correction;
+        const Vector2 dv = v_cross * correction;
+        if (dp.allFinite() && dv.allFinite()) {
+            motion.position.template head<2>() -= dp;
+            motion.velocity.template head<2>() -= dv;
+        }
+        return motion;
+    }
+
     // Latent OU world-acceleration a_w (world, NED)
     [[nodiscard]] Vector3 get_world_accel() const { return xext.template segment<3>(OFF_AW); }
     // Physical CoG acceleration; the wave-state getter above excludes travel.

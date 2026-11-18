@@ -673,7 +673,10 @@ private:
     // passed through the adaptive detrender with the tracker frequency as its
     // external carrier.  Disabled, the detrender output is the raw signal.
     void updateDisplacementOutput_(float dt) {
-        const Eigen::Vector3f pos_ned_m = impl_.mekf().get_position();
+        const Eigen::Vector3f pos_ned_m = [&]() -> Eigen::Vector3f {
+            if constexpr (requires { impl_.waveMotionNed(); }) return impl_.waveMotionNed().position;
+            else return impl_.mekf().get_position();
+        }();
         displacement_up_m_ = Eigen::Vector3f(pos_ned_m.x(), pos_ned_m.y(), -pos_ned_m.z());
 
         if (cfg_.enable_displacement_detrend) {
