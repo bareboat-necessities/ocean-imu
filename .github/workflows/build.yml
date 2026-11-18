@@ -47,6 +47,16 @@ jobs:
             exit 0
           fi
 
+          # A synchronize event may name a commit that disappeared when the
+          # contributor rebased or force-pushed the branch. checkout cannot
+          # necessarily fetch that orphaned object even with fetch-depth: 0.
+          # Fail open to the full build instead of failing the classifier.
+          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null ||
+             ! git cat-file -e "${AFTER}^{commit}" 2>/dev/null; then
+            echo "run_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           git diff --name-only "$BEFORE" "$AFTER" > /tmp/build-changed.txt
           cat /tmp/build-changed.txt
           if [[ ! -s /tmp/build-changed.txt ]]; then
