@@ -99,26 +99,30 @@ The same 13 production executables scored all 544 filter, profile and record com
 
 On the default 8.5 m following JONSWAP record, TFG pitch RMS was 0.08603° before startup integration, 0.09181° with the original 2° handover uncertainty and 0.07858° with the accepted-fit uncertainty below.
 
+A second run using the checked-in limits passed all 544 cases. All 2,768 numerical values reproduced exactly. Both sea directions used the same 13 binaries. [Passing production matrix](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928709) · [Archive and measurement hashes](../reports/results/startup_learning/tfg_tilt_uncertainty/verified-matrix.json)
+
 [Paired results by family, profile and sea direction](../reports/results/startup_learning/tfg_tilt_uncertainty/compared_to_preintegration.csv) · [Production matrix and raw logs](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44209357875)
 
 ## Tilt uncertainty after an accepted TFG fit
 
 TFG uses a 0.5° standard deviation on each horizontal attitude-error axis when the wave fit supplies the attitude. The fallback Mahony proxy retains its own setting of roughly 2°. Both paths keep the configured yaw uncertainty. Over 458 validation handovers and 430 confirmation handovers with the fit accepted, radial tilt RMS was 0.384° and 0.446°, respectively. The corresponding maxima were 0.672° and 0.875°. These are measurements on the pinned wave records.
 
-We compared the unmodified TFG executable at each of the two revisions on 16 wave records with the default sensor draw and seeds 7, 41 and 101. Sensor samples, coordinates and scoring windows match within each pair. The table pools all 64 cases. The windows start at fixed times after power-on. On the seed-7 low JONSWAP following-sea record, handover occurred at about 41.85 s, after the 40 s window began.
+We compared the unmodified TFG executable at each of the two revisions on 16 wave records with the default sensor draw and seeds 7, 41 and 101. Sensor samples, coordinates and scoring windows match within each pair. The table pools all 64 cases using the Ubuntu system math library used by the pinned GitHub replay job. The windows start at fixed times after power-on. On the seed-7 low JONSWAP following-sea record, handover occurred at about 41.85 s, after the 40 s window began.
 
 | Quantity | 40–60 s, 2° → 0.5° | 300–1,200 s, 2° → 0.5° | Late change |
 |---|---:|---:|---:|
-| Roll RMS (°) | 1.11949 → 1.10081 | 0.28083 → 0.27945 | -0.492% |
-| Pitch RMS (°) | 2.62114 → 2.56579 | 0.28410 → 0.27996 | -1.459% |
-| Yaw RMS (°) | 6.92899 → 6.81219 | 0.83170 → 0.82438 | -0.880% |
-| X displacement RMS (m) | 4.962573 → 4.855768 | 0.301549 → 0.301658 | +0.036% |
-| Y displacement RMS (m) | 2.117847 → 2.096080 | 0.245368 → 0.244853 | -0.210% |
-| Z displacement RMS (m) | 2.224566 → 2.213636 | 0.145095 → 0.145081 | -0.009% |
-| 3-D displacement RMS (m) | 5.836189 → 5.733430 | 0.414958 → 0.414728 | -0.055% |
-| 3-D accelerometer-bias RMS (m/s²) | 0.066638 → 0.066638 | 0.068160 → 0.067476 | -1.004% |
+| Roll RMS (°) | 1.11949 → 1.10082 | 0.28084 → 0.27945 | -0.495% |
+| Pitch RMS (°) | 2.62114 → 2.56580 | 0.28411 → 0.27995 | -1.463% |
+| Yaw RMS (°) | 6.92899 → 6.81220 | 0.83171 → 0.82438 | -0.882% |
+| X displacement RMS (m) | 4.962575 → 4.855786 | 0.301550 → 0.301660 | +0.037% |
+| Y displacement RMS (m) | 2.117846 → 2.096079 | 0.245368 → 0.244848 | -0.212% |
+| Z displacement RMS (m) | 2.224566 → 2.213637 | 0.145095 → 0.145081 | -0.010% |
+| 3-D displacement RMS (m) | 5.836191 → 5.733445 | 0.414958 → 0.414726 | -0.056% |
+| 3-D accelerometer-bias RMS (m/s²) | 0.066638 → 0.066638 | 0.068162 → 0.067475 | -1.008% |
 
-Late pitch, Y displacement and accelerometer bias improved on each of the four pooled draws. The default 8.5 m following JONSWAP case moved from 0.09180° to 0.07857° late pitch RMS. Its late yaw increased from 0.43953° to 0.45945°. The pooled late X increase was 0.000110 m. The production change applies to TFG-OU. The OU-III experiment with a tighter prior had mixed results.
+Late pitch, Y displacement and accelerometer bias improved on each of the four pooled draws. The default 8.5 m following JONSWAP case moved from 0.09181° to 0.07858° late pitch RMS. Its late yaw increased from 0.43950° to 0.45946°. The pooled late X increase was 0.000110 m. The production change applies to TFG-OU. The OU-III experiment with a tighter prior had mixed results.
+
+We tested whether reducing accepted-fit yaw uncertainty from about 5° to 3.5° would recover the JONSWAP yaw loss. Its late yaw changed from 0.45946° to 0.45963°. Across all 64 matched cases late yaw rose by 0.018% and late pitch rose by 0.085%, so production keeps the existing yaw setting. [Yaw-prior sensitivity scores](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu/fitted_yaw_comparison.csv.gz)
 
 The production replay uses its existing 0.5% margin for every record. The limits below compare the previous PR gates with the limits measured at `68f0978`. The global TFG pitch maximum occurs on the 8.5 m head-sea PM-Stokes record. Its change is smaller than the improvement on either high-wave following-sea record.
 
@@ -134,9 +138,11 @@ The production replay uses its existing 0.5% margin for every record. The limits
 
 Sixteen TFG per-record limits tightened by more than 0.5%. Two loosened by more than 0.5%. Both concern yaw on the same following-sea JONSWAP record, once for each gyro profile. Three limits in the separate legacy cubic TFG simulator also tightened by more than 0.5%.
 
+For local reproduction, the system math library can affect the final digits. With the same compiled TFG executable and pinned inputs, Debian's system math library produced 0.09603627° pitch on the 8.5 m following PM-Stokes record. Using the Ubuntu math library from the repository's compiler qualification gave 0.09550522°, matching GitHub. All 288 gated numerical values across 32 TFG record/profile combinations matched GitHub with that library. [Compiler and math-library control](../reports/results/startup_learning/tfg_tilt_uncertainty/host-math-control.json)
+
 [Global limits](../tests/common/CurrentReplayLimits.h) · [Per-record limits](../tests/common/RecordReplayLimits.inc) · [Exact cap changes and prior gate outcomes](../reports/results/startup_learning/tfg_tilt_uncertainty/quality-gates.json)
 
-[Scores and provenance](../reports/results/startup_learning/tfg_tilt_uncertainty) · [First live correction and wave-acceleration controls](startup-gravity-retention.md)
+[Canonical four-draw scores and provenance](../reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu) · [Independent host scores](../reports/results/startup_learning/tfg_tilt_uncertainty/windows.csv.gz) · [First live correction and wave-acceleration controls](startup-gravity-retention.md)
 
 ## Long-run displacement and accelerometer bias
 

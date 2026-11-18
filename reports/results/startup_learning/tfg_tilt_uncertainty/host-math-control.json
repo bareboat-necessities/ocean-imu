@@ -1,0 +1,99 @@
+{
+  "source_commit": "439f71795c0b8644d24623afd9c926e8dac8c3e7",
+  "comparison_source": "68f097807af2a070711c77288ca07ec136f6377a",
+  "replay_matrix_run": 44209357875,
+  "purpose": "One freshly compiled production executable, identical sensor inputs, two system math libraries, 32 TFG record/profile/case combinations per library.",
+  "executable_sha256": "9f0a756297846c02572d4de2c1cc06a06b0799034d03854aaa4ef4a9758d894f",
+  "ubuntu_math_package": {
+    "version": "2.39-0ubuntu8.12",
+    "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9",
+    "method": "LD_PRELOAD libm.so.6, host libc retained"
+  },
+  "math_library_sha256": {
+    "debian": "6d567d53e895273ca14a1f9dc164fc6c8d39aed2f60aa46a733c2784228915f3",
+    "ubuntu": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a"
+  },
+  "current_gate": {
+    "metric": "pitch_rms_deg",
+    "record": "following/default/8.5 m PM-Stokes",
+    "degrees": 0.09599
+  },
+  "example": {
+    "debian": {
+      "pitch_deg": 0.0960362703,
+      "yaw_deg": 0.423606724,
+      "log_sha256": "eed4893f6185a040c3319a7643c109964e980fad82bb9efcfa01c067e399ffce"
+    },
+    "ubuntu": {
+      "pitch_deg": 0.0955052152,
+      "yaw_deg": 0.42355755,
+      "log_sha256": "f830a2b7df62c045b6079729d3301d669092f152761e7bc9aef7ad8bc4538cb2"
+    }
+  },
+  "totals": {
+    "debian": {
+      "numerical_channels": 288,
+      "identical_to_canonical_gate_setting_run": 13,
+      "records_passed": 31
+    },
+    "ubuntu": {
+      "numerical_channels": 288,
+      "identical_to_canonical_gate_setting_run": 288,
+      "records_passed": 32
+    }
+  },
+  "max_absolute_difference_from_canonical": {
+    "debian": {
+      "disp_z_pct_hs": 5.912999999990731e-05,
+      "disp_3d_pct_refmax": 0.0008020000000001914,
+      "roll_rms_deg": 0.00019830500000006523,
+      "pitch_rms_deg": 0.000623479499999996,
+      "yaw_rms_deg": 4.9173999999985174e-05,
+      "acc_bias_z_percent": 0.00015999999999927184,
+      "acc_bias_3d_percent": 0.058000000000006935,
+      "gyro_bias_3d_percent": 0.0015999999999998238,
+      "disp_y_rms_m": 3.942900000003524e-05
+    },
+    "ubuntu": {
+      "disp_z_pct_hs": 0.0,
+      "disp_3d_pct_refmax": 0.0,
+      "roll_rms_deg": 0.0,
+      "pitch_rms_deg": 0.0,
+      "yaw_rms_deg": 0.0,
+      "acc_bias_z_percent": 0.0,
+      "acc_bias_3d_percent": 0.0,
+      "gyro_bias_3d_percent": 0.0,
+      "disp_y_rms_m": 0.0
+    }
+  },
+  "passing_run_receipts": [
+    {
+      "case": "head",
+      "profile": "default",
+      "exit": 0,
+      "log_sha256": "8cab7c38e09e30a6534c2940adbedfd2ec0d16b0d5c7ac91d63c99401a71450c",
+      "rows": 8
+    },
+    {
+      "case": "head",
+      "profile": "legacy",
+      "exit": 0,
+      "log_sha256": "fe01f59a1b1401966d6923ed15398fec41c368f23586dc527cc98321603afa22",
+      "rows": 8
+    },
+    {
+      "case": "following",
+      "profile": "default",
+      "exit": 0,
+      "log_sha256": "f830a2b7df62c045b6079729d3301d669092f152761e7bc9aef7ad8bc4538cb2",
+      "rows": 8
+    },
+    {
+      "case": "following",
+      "profile": "legacy",
+      "exit": 0,
+      "log_sha256": "2338827c3172d6777e2b1f9efa276ca89d101db930d191d4fa644c4a513feb20",
+      "rows": 8
+    }
+  ]
+}

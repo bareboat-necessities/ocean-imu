@@ -1,0 +1,21 @@
+{
+  "production_source": "68f097807af2a070711c77288ca07ec136f6377a",
+  "gate_source": "39b8487d696d6a531b76fd760d56ef8a4984c517",
+  "base_wrapper_sha256": "b392feaf69efb6501c2b18488e0fa2e8631755d7448d90b87affdc1d6a70872b",
+  "experimental_wrapper_sha256": "8ad07ddd358a7b3776c04e8c27c9744034cbe17af2a70f016f60c5cc83b9ee5a",
+  "binary_sha256": "72e1b4b0434e5670a23f961b20c94ccd28ab32926af840d1e3c9fe40df9dd65c",
+  "ubuntu_math_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "rows": 160,
+  "runs": 80,
+  "default_profile_sensor_draws": [
+    "default",
+    7,
+    41,
+    101
+  ],
+  "legacy_profile_sensor_draws": [
+    "default"
+  ],
+  "intervention": "In seedHandoffAttitudeCovariance_ only the yaw standard deviation for an accepted wave fit with a magnetic gauge was changed from the configured 0.087 rad to 0.06108652382 rad (3.5 degrees). The 0.5 degree fitted tilt deviation and fallback settings were retained. The current production 5 degree scores on the same sensor streams are in windows.csv.gz, arm fit.",
+  "scores_sha256": "cb738689e6828c030abb8be02f26aeeb9d5c22f31c876d3c2a5844b422c57bf9"
+}

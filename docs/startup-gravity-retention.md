@@ -21,6 +21,12 @@ Both deployed handovers start the wave-acceleration mean at zero. The gyro predi
 
 Across all records and three sensor draws, first-sample tilt RMS starting from exact tilt changed between prediction and acceleration correction as follows. OU-III 0.009° → 0.520° (0 of 48 above 1°). TFG 0.018° → 2.562° (32 of 48 above 1°).
 
+## First correction with the production 0.5° setting
+
+On the default sensor draw across all 16 records, the TFG first accelerometer correction gave 2.6514° pooled body-down RMS with the 2° prior and 2.1753° with the 0.5° prior. Starting both from exact tilt gave 2.6463° and 2.1530°. One second after handover, the deployed arms measured 2.4645° and 2.5386°, respectively. Giving the fit more weight reduces the initial correction, while an appreciable attitude transient remains.
+
+On the 8.5 m following JONSWAP record, the new production handover starts at 0.2898°, changes to 3.8427° after the first accelerometer update, and yields 0.07857° late pitch RMS. Starting the same filter from exact tilt gives 3.7762° on the first correction and 0.07760° late pitch RMS. All nine early and late window metrics in the fitted instrumented arm matched the ordinary production executable on every record. [Fitted trace, control comparison and run inventory](../reports/results/startup_learning/tfg_tilt_uncertainty/fitted_trace)
+
 ## What persists
 
 This table pools the 16 records on the default sensor draw. Each cell is the sample-weighted RMS for the previous startup, deployed startup and deployed startup with exact tilt, in that order. The final window contains 180,000 samples per record.
@@ -47,6 +53,8 @@ Each pair below compares deployed TFG with the measured wave seed on the same 16
 | 41 | 5.00818 → 1.39065 | 2.08547 → 0.62676 | 0.30584 → 0.30664 | 0.24452 → 0.23430 | 0.08838 → 0.06411 |
 
 On the 8.5 m following-sea default draw, early TFG pitch changes from 5.5257° to 1.0693°. Late pitch changes from 0.0918° to 0.7883°. The early benefit comes with a repeatable late X penalty and draw-dependent bias changes. The measured wave seed stays in the replay experiment.
+
+A separate 48-run test at `c3481ce` retained the zero wave-acceleration mean and increased its initial covariance. On the default 8.5 m following JONSWAP record, the production reference had 5.5257° early and 0.0918° late pitch RMS. Using the measured specific-force covariance gave 1.9102° early and 1.0519° late. An isotropic covariance based on the same total variance gave 1.9249° early and 1.0535° late. Both variants were rejected. The production 0.5° change adjusts the attitude uncertainty alone. [All 48 runs and the covariance definitions](../reports/results/startup_learning/tfg_tilt_uncertainty/rejected_wave_covariance)
 
 ## Scope and evidence
 

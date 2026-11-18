@@ -1,0 +1,24 @@
+{
+  "matrix_source_commit": "439f71795c0b8644d24623afd9c926e8dac8c3e7",
+  "gate_commit": "39b8487d696d6a531b76fd760d56ef8a4984c517",
+  "runtime_commit": "68f097807af2a070711c77288ca07ec136f6377a",
+  "action_run": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44214928709",
+  "release": "v1.4.0",
+  "records_per_case": {
+    "following": 272,
+    "head": 272
+  },
+  "executables": 13,
+  "status": "all replay gates passed",
+  "all_exit_codes_zero": true,
+  "numerical_channels": 2768,
+  "numerically_identical_to_gate_setting_run": 2768,
+  "archive_sha256": {
+    "following": "ccea201b3df05f57ec41497770a2cf29451f978a71fedaa0c74d324717768d28",
+    "head": "62f6a62b4fed9cb88069e0b91f766b942fd4c772cc6573cf513bb737bbda3c1d"
+  },
+  "measurement_sha256": {
+    "following": "f9c60fd48de1f0d8bdb76e3d640dd84b66d53ee5403deca497c6d69775a22701",
+    "head": "5ff6f5d5ee2fc00ac1cefe4cc5eab714f6d33461f4d5765dd7f9061ece857c42"
+  }
+}
