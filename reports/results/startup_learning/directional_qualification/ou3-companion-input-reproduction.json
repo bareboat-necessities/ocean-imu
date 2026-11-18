@@ -1,0 +1,368 @@
+{
+  "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "sea": "following",
+  "studies": {
+    "companion": {
+      "workflow": 44367501515,
+      "artifact": 14457528983,
+      "archive_sha256": "sha256:2486a0a3d5b05dd17354d7514f3872e0bc833f39a6a91a0ca0323e363d0d5712",
+      "raw_sha256": "0cc8be6d3021367f5c2d362b15351c080b7a590b8157eee72c1dcd57afea2890"
+    },
+    "directional": {
+      "workflow": 44367501540,
+      "artifact": 14460856344,
+      "archive_sha256": "sha256:2c58dbaa174392170f752f7a7c48bdff2c8d650d631b0e02643430e902f18fa9",
+      "raw_sha256": "47c3b22e5e40c400973828040b2771c413434a80c0c1b340a7c18c8fa0b309eb"
+    }
+  },
+  "source_git_blobs": {
+    "tools/tfg_comparison.py": "fc832fd00fc8413f6e10d81febed0ea50be0148d",
+    "tools/ou_validation.py": "339db3716fb66c9322aa766e32cabbe033ddc617",
+    "tools/underway_reference.py": "753b99b5af7bf31a29546919382225134d36489f",
+    "src/util/WaveFilesSupport.h": "eb73f7dcb40aa48a32b13901aaa8b6dfd736e4ea"
+  },
+  "original_inputs": 90,
+  "original_family_rows": 180,
+  "reported_metrics_per_family": [
+    "disp_z_pct_hs",
+    "disp_z_rms_m",
+    "disp_3d_rms_m",
+    "roll_rms_deg",
+    "pitch_rms_deg",
+    "yaw_rms_deg",
+    "accel_3d_rms_mps2",
+    "accel_bias_3d_rms_mps2",
+    "gyro_bias_3d_rms_radps"
+  ],
+  "exact_original_score_matches": 1620,
+  "byte_identical_input_pairs": 80,
+  "parser_identical_input_pairs": 89,
+  "record_rows_per_input": 240000,
+  "decimal_fields_changed": 42,
+  "parsed_fields_changed": 1,
+  "reproduction": {
+    "numpy_version": "1.26.4",
+    "dataset_release": "v1.4.0",
+    "source_input_sha256": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "companion_profile": "Native dispatch on an x86-64 AVX-512 host",
+    "directional_profile": "Same host and packages, with NPY_DISABLE_CPU_FEATURES=AVX512F,AVX512CD,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL before importing NumPy",
+    "procedure": [
+      "Generate each listed 1,200 s following-sea record using the full protocol in tools/tfg_comparison.py. Its single-record run_pair generates the file with ou_validation.phase_randomize_wave or make_nonstationary_wave, then calls write_wave_csv with nine significant digits.",
+      "Compare each generated CSV SHA-256 to the matching archive row in raw_runs.csv. The two dispatch settings reproduce every listed pair of published SHA-256 values.",
+      "Parse each CSV with WaveDataCSVReader::for_each_record. Hash the 240,000 records in CSV column order. Encode time, disp_x and disp_y as little-endian binary64 and the other 20 fields as little-endian binary32, with no padding or header.",
+      "For the one differing parsed sample, replay both files through OU-III and standard TFG using tfg_comparison.environment with phase seed 71, sensor seed 401 and initialization seed 1301. Compare the nine declared metrics from 300 to 1,200 s to both archived rows."
+    ]
+  },
+  "exception": {
+    "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+    "wave_phase_seed": 71,
+    "imu_noise_seed": 401,
+    "initialization_seed": 1301,
+    "time": 587.26,
+    "channel": "gyro_y",
+    "companion_csv": "2.23520382e-07",
+    "directional_csv": "2.2352038e-07",
+    "companion_read": 2.2352038797635032e-07,
+    "directional_read": 2.235203737654956e-07,
+    "delta": 1.4210854715202004e-14,
+    "one_ulp": true,
+    "libm_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+    "local_replays": [
+      {
+        "family": "OU_III",
+        "input": "companion",
+        "binary_sha256": "dae0a04a222cb68ca221e12fd002cd0e5cde97ab2793b1be207fb74f750bde9f",
+        "samples": 180000,
+        "window_s": 900.0,
+        "metrics": {
+          "disp_z_pct_hs": 5.93514347,
+          "disp_z_rms_m": 0.237405732,
+          "disp_3d_rms_m": 0.413144797,
+          "roll_rms_deg": 0.141316235,
+          "pitch_rms_deg": 0.138893068,
+          "yaw_rms_deg": 0.449575603,
+          "accel_3d_rms_mps2": 0.0182316378,
+          "accel_bias_3d_rms_mps2": 0.0322460569,
+          "gyro_bias_3d_rms_radps": 0.000111478825
+        },
+        "matches_both_archived_score_rows": true,
+        "raw_log_sha256": "e75fd874ef039153c5e313ede6ccf24bb49ce3e0b662a54545685f1b8ab50346"
+      },
+      {
+        "family": "TFG",
+        "input": "companion",
+        "binary_sha256": "e9ce9b184e2de97c3a0d8620279cced4106be21b3e9f43b8c5505478f9dc9f27",
+        "samples": 180000,
+        "window_s": 900.0,
+        "metrics": {
+          "disp_z_pct_hs": 4.08690405,
+          "disp_z_rms_m": 0.163476154,
+          "disp_3d_rms_m": 0.277609736,
+          "roll_rms_deg": 0.196019635,
+          "pitch_rms_deg": 0.0681576058,
+          "yaw_rms_deg": 0.563746631,
+          "accel_3d_rms_mps2": 0.016934,
+          "accel_bias_3d_rms_mps2": 0.0335483253,
+          "gyro_bias_3d_rms_radps": 0.000105181985
+        },
+        "matches_both_archived_score_rows": true,
+        "raw_log_sha256": "5766629f1411dbd4c1982cf05d874ec7f9c7a1e6d84ece2cdbdfc5c9d45b1362"
+      },
+      {
+        "family": "OU_III",
+        "input": "directional",
+        "binary_sha256": "dae0a04a222cb68ca221e12fd002cd0e5cde97ab2793b1be207fb74f750bde9f",
+        "samples": 180000,
+        "window_s": 900.0,
+        "metrics": {
+          "disp_z_pct_hs": 5.93514347,
+          "disp_z_rms_m": 0.237405732,
+          "disp_3d_rms_m": 0.413144797,
+          "roll_rms_deg": 0.141316235,
+          "pitch_rms_deg": 0.138893068,
+          "yaw_rms_deg": 0.449575603,
+          "accel_3d_rms_mps2": 0.0182316378,
+          "accel_bias_3d_rms_mps2": 0.0322460569,
+          "gyro_bias_3d_rms_radps": 0.000111478825
+        },
+        "matches_both_archived_score_rows": true,
+        "raw_log_sha256": "80b78f4feef3eb87bd50a829f321a82a5aa42180d6d950232cc725f719a3f9d5"
+      },
+      {
+        "family": "TFG",
+        "input": "directional",
+        "binary_sha256": "e9ce9b184e2de97c3a0d8620279cced4106be21b3e9f43b8c5505478f9dc9f27",
+        "samples": 180000,
+        "window_s": 900.0,
+        "metrics": {
+          "disp_z_pct_hs": 4.08690405,
+          "disp_z_rms_m": 0.163476154,
+          "disp_3d_rms_m": 0.277609736,
+          "roll_rms_deg": 0.196019635,
+          "pitch_rms_deg": 0.0681576058,
+          "yaw_rms_deg": 0.563746631,
+          "accel_3d_rms_mps2": 0.016934,
+          "accel_bias_3d_rms_mps2": 0.0335483253,
+          "gyro_bias_3d_rms_radps": 0.000105181985
+        },
+        "matches_both_archived_score_rows": true,
+        "raw_log_sha256": "8ffded88f522e7c2b008dcb3c620c3b936a8d8141f1e7aa80ba5887f5fa77e65"
+      }
+    ]
+  },
+  "records": [
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "0a89bc7416522e0b102e9fdab0b406089ec14f9af74b041e5d03478262ddb03c",
+      "directional": "96a46079b866ddec048660eb037af49c6442101cd1106b5cb1a9815133ac6f6c",
+      "companion_parsed": "f1dfeabd95311b918785f96a84b6678aaaa7761c594f294b1fa0d2902718a1f8",
+      "directional_parsed": "f1dfeabd95311b918785f96a84b6678aaaa7761c594f294b1fa0d2902718a1f8",
+      "differing_lines": 6,
+      "text_differences": {
+        "gyro_z": 2,
+        "gyro_y": 4
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 9.999999960041972e-13,
+        "gyro_y": 1.000000013351432e-10
+      },
+      "imu_noise_seed": 101,
+      "initialization_seed": 1009,
+      "wave_phase_seed": 11
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "9e5e64e1563db3cdf7cb08acf49fb15d239a17c41ff3ef515679e0cd7dbf8996",
+      "directional": "c4241bc20199a0dd2d5140669b9960416293514b78d1324ff6edde611f8844e4",
+      "companion_parsed": "b3202fc0f605e0ffecd196e4a110bb725e55cca0678dcdeea2e16b61af2f12cc",
+      "directional_parsed": "b3202fc0f605e0ffecd196e4a110bb725e55cca0678dcdeea2e16b61af2f12cc",
+      "differing_lines": 2,
+      "text_differences": {
+        "gyro_z": 1,
+        "gyro_y": 1
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 9.9999998245167e-14,
+        "gyro_y": 9.9999998245167e-15
+      },
+      "imu_noise_seed": 601,
+      "initialization_seed": 1511,
+      "wave_phase_seed": 131
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "21744ddb7914e40d41254a4dd4f6fb0edeaeed4d00ed976539680082180564ab",
+      "directional": "a3aaaa59700eaea4ab3d5d6cc0a8bc28494682c522e80b629f25cc09c39e51e3",
+      "companion_parsed": "c38e6904a815ad873d66d280b2259e1d8aa6aaf8ea47e14fae20b443b0ca9bbe",
+      "directional_parsed": "c38e6904a815ad873d66d280b2259e1d8aa6aaf8ea47e14fae20b443b0ca9bbe",
+      "differing_lines": 3,
+      "text_differences": {
+        "gyro_x": 1,
+        "gyro_z": 2
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_x": 9.999999146890343e-14,
+        "gyro_z": 9.9999998245167e-15
+      },
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "wave_phase_seed": 173
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "ca45e3f48ff811dfc764cd0ac667b597873dc7c084bdf8f4143c21132c6b3113",
+      "directional": "9e985e80c09549d4fb9b459d8708de4482e82a17790d54306706c919e3a3768c",
+      "companion_parsed": "ecb89d1a4078620ec9178ebf72a64fa78b0f47dcabc10ff54bab842c8ab049d7",
+      "directional_parsed": "ecb89d1a4078620ec9178ebf72a64fa78b0f47dcabc10ff54bab842c8ab049d7",
+      "differing_lines": 5,
+      "text_differences": {
+        "gyro_z": 2,
+        "gyro_x": 2,
+        "pitch_deg": 1
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 9.999999960041972e-12,
+        "gyro_x": 9.999999960041972e-13,
+        "pitch_deg": 9.9999998245167e-15
+      },
+      "imu_noise_seed": 809,
+      "initialization_seed": 1709,
+      "wave_phase_seed": 211
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "56d3e8c445d2337d3e62ba42f640c024d016e8917ee8bf90f9e40f4582ace0f1",
+      "directional": "38b825ad141b54d6412a1cc08e9b829debff829b0ef9e1987077df7ee851a595",
+      "companion_parsed": "39cf888a23f8de11a9350e5b0ea53e15056e8da104405d698c2c6f3d208dd9a1",
+      "directional_parsed": "39cf888a23f8de11a9350e5b0ea53e15056e8da104405d698c2c6f3d208dd9a1",
+      "differing_lines": 1,
+      "text_differences": {
+        "gyro_z": 1
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 2.0000000072549875e-15
+      },
+      "imu_noise_seed": 907,
+      "initialization_seed": 1801,
+      "wave_phase_seed": 257
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "a5290ade43c1f5cc479dbedbc8c5cb6d06caa4f8fa01b1b75a3a7d2980333090",
+      "directional": "65ceba7c88e4b5dfa4356c668dae8138ff9e31952e6e6784d8608b5eddde1362",
+      "companion_parsed": "cc358a171c2c831aab0bef241f03f02ad72f52c8f2305d0d68c7b893bf8d268d",
+      "directional_parsed": "cc358a171c2c831aab0bef241f03f02ad72f52c8f2305d0d68c7b893bf8d268d",
+      "differing_lines": 6,
+      "text_differences": {
+        "gyro_z": 3,
+        "q_wb_zu_x": 1,
+        "gyro_y": 1,
+        "gyro_x": 1
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 9.999999960041972e-12,
+        "q_wb_zu_x": 1.0000000502143058e-13,
+        "gyro_y": 1.0000000671549648e-14,
+        "gyro_x": 9.999999960041972e-12
+      },
+      "imu_noise_seed": 1009,
+      "initialization_seed": 1901,
+      "wave_phase_seed": 307
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "1be0cd915df21f86b4d8ff129cde25efde2747e1fceb2d328334f54e1db06b3f",
+      "directional": "8c4663507fd8951eb6e033c8380149ff2c7d3736b3468f7cff0487213b1af712",
+      "companion_parsed": "b794ac1827fb93cbc8eb95731ee335401dbc6e4ff04973b95428b012ded1a536",
+      "directional_parsed": "b794ac1827fb93cbc8eb95731ee335401dbc6e4ff04973b95428b012ded1a536",
+      "differing_lines": 5,
+      "text_differences": {
+        "gyro_x": 3,
+        "gyro_y": 2
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_x": 1.000000082740371e-11,
+        "gyro_y": 9.9999998245167e-15
+      },
+      "imu_noise_seed": 307,
+      "initialization_seed": 1201,
+      "wave_phase_seed": 47
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "ddac3ac0d753d2b7cb066d58a4e860da6042ee719b8bbe9ad153e7e9d778837d",
+      "directional": "ed0cb1720cfe796cca141a99a2ef7500d5f3d4ab6a61daedc61d8b73abaa1127",
+      "companion_parsed": "a954f85582b46ae6756e5206d8fa588702b99399e816efc88038f840e5531af0",
+      "directional_parsed": "a45328593a2767704cba2eac08b42c205f0ff2bf5f1ed3b2042569ef5d977f57",
+      "differing_lines": 6,
+      "text_differences": {
+        "gyro_x": 2,
+        "gyro_y": 4
+      },
+      "parsed_differences": {
+        "gyro_y": 1
+      },
+      "max_abs_delta": {
+        "gyro_x": 1.0000001044244144e-12,
+        "gyro_y": 9.999999960041972e-12
+      },
+      "imu_noise_seed": 401,
+      "initialization_seed": 1301,
+      "wave_phase_seed": 71
+    },
+    {
+      "scenario": "nonstationary_H1_5_to_H4_0_Tp5_7_to_11_4",
+      "companion": "92225d64c8386d98bb3702ba53bceeb6923794b17d6d4c9cd533edfdf3a8455a",
+      "directional": "1d257490f7640cb35f82ece58ae1e764cdfaffb4a785c18f7797a3b086c5b605",
+      "companion_parsed": "43e15ca53c22d628329f21af21bbd032a4e2bf62e51fad00f66c8cf4f6af3f31",
+      "directional_parsed": "43e15ca53c22d628329f21af21bbd032a4e2bf62e51fad00f66c8cf4f6af3f31",
+      "differing_lines": 7,
+      "text_differences": {
+        "gyro_z": 3,
+        "gyro_y": 4
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_z": 1.000000082740371e-11,
+        "gyro_y": 1.000000013351432e-10
+      },
+      "imu_noise_seed": 503,
+      "initialization_seed": 1409,
+      "wave_phase_seed": 97
+    },
+    {
+      "scenario": "stationary_pmstokes_H4_000_L112_766_A30_00_P30_00",
+      "companion": "fb3adf87c12a3047f25ad9cb8b9ea34df7cfc0b4c9256b1885f1bf15deb8a22a",
+      "directional": "460ef36c4376f10b110cda9c7c826207826c57c4d99055cd17cde51c4ebada05",
+      "companion_parsed": "016a37fd139d140f73981237d418f020eee8ee52a25b76de4a47693af8677d3b",
+      "directional_parsed": "016a37fd139d140f73981237d418f020eee8ee52a25b76de4a47693af8677d3b",
+      "differing_lines": 1,
+      "text_differences": {
+        "gyro_y": 1
+      },
+      "parsed_differences": {},
+      "max_abs_delta": {
+        "gyro_y": 9.999999439624929e-11
+      },
+      "imu_noise_seed": 701,
+      "initialization_seed": 1601,
+      "wave_phase_seed": 173
+    }
+  ]
+}

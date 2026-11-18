@@ -1,0 +1,279 @@
+{
+  "source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
+  "origin": "GitHub Actions run 44209357875",
+  "records_per_case": 272,
+  "margin_fraction": 0.005,
+  "report_sha256": {
+    "following": "08d377b8896b26f21f0a13667ee1148de8228b29be2e27f02a5a62d6c0b371ad",
+    "head": "03fcc2d3bc3ab70a6841af664aa9913dd2478e45261f3a6e9a8d1f2b6cee6ed6"
+  },
+  "totals_by_family": {
+    "ahrs": {
+      "measured_channels": 48,
+      "identical": 48
+    },
+    "carma": {
+      "measured_channels": 288,
+      "identical": 288
+    },
+    "csm": {
+      "measured_channels": 288,
+      "identical": 276,
+      "loosened": 10,
+      "tightened": 2
+    },
+    "heave_godhavn": {
+      "measured_channels": 48,
+      "identical": 48
+    },
+    "heave_godhavn_ext": {
+      "measured_channels": 48,
+      "identical": 48
+    },
+    "heave_kuchler": {
+      "measured_channels": 48,
+      "identical": 48
+    },
+    "heave_pii": {
+      "measured_channels": 32,
+      "identical": 32
+    },
+    "heave_richter_zd": {
+      "measured_channels": 48,
+      "identical": 48
+    },
+    "nlo": {
+      "measured_channels": 16,
+      "identical": 16
+    },
+    "ou2": {
+      "measured_channels": 288,
+      "identical": 288
+    },
+    "ou3": {
+      "measured_channels": 288,
+      "identical": 288
+    },
+    "pii": {
+      "measured_channels": 32,
+      "identical": 32
+    },
+    "tangent": {
+      "measured_channels": 288,
+      "identical": 288
+    },
+    "tcarma": {
+      "measured_channels": 288,
+      "identical": 288
+    },
+    "tcsm": {
+      "measured_channels": 288,
+      "tightened": 109,
+      "identical": 72,
+      "loosened": 107
+    },
+    "tfg": {
+      "measured_channels": 288,
+      "identical": 64,
+      "tightened": 157,
+      "loosened": 67,
+      "over_0.5pct_tighter": 16,
+      "over_0.5pct_looser": 2
+    },
+    "tfg_legacy": {
+      "measured_channels": 144,
+      "identical": 26,
+      "loosened": 46,
+      "tightened": 72,
+      "over_0.5pct_tighter": 3
+    }
+  },
+  "TFG_global": {
+    "current": {
+      "err_limit_roll_deg": [
+        0.5326,
+        0.52151
+      ],
+      "err_limit_pitch_deg": [
+        0.23928,
+        0.2388
+      ],
+      "err_limit_y_rms_m": [
+        0.50981,
+        0.50804
+      ],
+      "bias_3d_percent": [
+        107.736,
+        104.55015
+      ],
+      "err_limit_yaw_deg": [
+        1.05205,
+        1.05203
+      ]
+    },
+    "interval": {
+      "err_limit_roll_deg": [
+        0.53276,
+        0.52184
+      ],
+      "err_limit_pitch_deg": [
+        0.24317,
+        0.2433
+      ],
+      "err_limit_y_rms_m": [
+        0.50846,
+        0.50673
+      ],
+      "bias_3d_percent": [
+        107.26968,
+        104.15619
+      ],
+      "err_limit_yaw_deg": [
+        1.10606,
+        1.10602
+      ]
+    }
+  },
+  "TFG_following_8_5m": {
+    "default": {
+      "pitch": [
+        0.09228,
+        0.07897
+      ],
+      "yaw": [
+        0.4417,
+        0.46176
+      ],
+      "displacement_y": [
+        0.50981,
+        0.50804
+      ],
+      "acc_3d": [
+        90.87562,
+        88.90241
+      ]
+    },
+    "legacy": {
+      "pitch": [
+        0.0915,
+        0.07967
+      ],
+      "yaw": [
+        0.45315,
+        0.47388
+      ],
+      "displacement_y": [
+        0.50846,
+        0.50673
+      ],
+      "acc_3d": [
+        90.49051,
+        88.62271
+      ]
+    }
+  },
+  "original_exit_codes": {
+    "following": {
+      "ou2": {
+        "default": 0,
+        "legacy": 0
+      },
+      "ou3": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tfg": {
+        "default": 1,
+        "legacy": 1
+      },
+      "carma": {
+        "default": 0,
+        "legacy": 0
+      },
+      "csm": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tcarma": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tangent": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tcsm": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tfg_legacy": {
+        "default": 0
+      },
+      "ahrs": {
+        "default": 0
+      },
+      "heave": {
+        "default": 0,
+        "proxy": 0,
+        "truth": 0
+      },
+      "nlo": {
+        "default": 0
+      },
+      "pii": {
+        "default": 0
+      }
+    },
+    "head": {
+      "ou2": {
+        "default": 0,
+        "legacy": 0
+      },
+      "ou3": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tfg": {
+        "default": 0,
+        "legacy": 0
+      },
+      "carma": {
+        "default": 0,
+        "legacy": 0
+      },
+      "csm": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tcarma": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tangent": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tcsm": {
+        "default": 0,
+        "legacy": 0
+      },
+      "tfg_legacy": {
+        "default": 0
+      },
+      "ahrs": {
+        "default": 0
+      },
+      "heave": {
+        "default": 0,
+        "proxy": 0,
+        "truth": 0
+      },
+      "nlo": {
+        "default": 0
+      },
+      "pii": {
+        "default": 0
+      }
+    }
+  }
+}

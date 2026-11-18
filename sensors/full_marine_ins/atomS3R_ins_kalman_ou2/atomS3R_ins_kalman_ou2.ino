@@ -68,6 +68,9 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
 #include "kalman_ou_ii/SeaStateFusionFilter_OU_II.h"
+// Keep the Xtensa prediction and its literal pool in one library translation unit.
+extern template void ocean_imu::kalman::Kalman3D_Wave_OU_II<float, true, true>::time_update(
+    const Eigen::Vector3f&, float);
 #include "util/AngleUtils.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"

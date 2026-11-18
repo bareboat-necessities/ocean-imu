@@ -1,0 +1,330 @@
+{
+  "shipping_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "scope": "Experimental OU-III controls only. Both use the actual OU-III core and wrapper with the published startup policy. Both zero-weight controls reproduced the unmodified OU-III metrics on all 16 records.",
+  "setting": "Set RESEARCH_OU_INTEGRAL_WEIGHT to 0 for the control or 1 for horizontal matching. Set RESEARCH_OU_INTEGRAL_VARIANCE to 1 or 0.625. Matching starts after bias release. Each pair uses the same 1,200 s default-draw input and final 900 s.",
+  "form": "H selects S and adds diag(beta,beta,0) times velocity, with beta=(tau_applied/tau_coeff/pi)^2. The observation noise is D R D with D diagonal (sqrt(variance),sqrt(variance),1). The constrained control updates attitude and gyro bias from the vertical innovation only.",
+  "models": {
+    "full_gain": {
+      "all_16_original_records": {
+        "off": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.2989556661409295,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.250258492509638,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.43371512624449476,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.19001318917060156,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.1419001722042603,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 0.7807275066206982,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.16001196711496354,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.0357819639938036,
+            "percent": 0.0,
+            "improved": 0
+          }
+        },
+        "1": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.1857724522554059,
+            "percent": -37.85953126312995,
+            "improved": 16
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.20435586737977615,
+            "percent": -18.342084885728315,
+            "improved": 16
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.3350927561658518,
+            "percent": -22.73897406636617,
+            "improved": 16
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.18977468535230685,
+            "percent": -0.12551961226258124,
+            "improved": 10
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.13765488238323037,
+            "percent": -2.991743952867776,
+            "improved": 8
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 0.7903500734885743,
+            "percent": 1.2325128532394647,
+            "improved": 8
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.1584676231831648,
+            "percent": -0.965142770033689,
+            "improved": 8
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.03531439633469395,
+            "percent": -1.3067132346078592,
+            "improved": 10
+          }
+        },
+        "0.625": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.1788466760092752,
+            "percent": -40.17618788835205,
+            "improved": 16
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.18751532522945993,
+            "percent": -25.07134389365895,
+            "improved": 16
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.32121065898418344,
+            "percent": -25.939714907911714,
+            "improved": 16
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.18981083788725484,
+            "percent": -0.10649328303470318,
+            "improved": 12
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.135136494331445,
+            "percent": -4.766504344391642,
+            "improved": 8
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 0.7861534351092325,
+            "percent": 0.694983645704994,
+            "improved": 8
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.1552005509932973,
+            "percent": -3.0069101757929095,
+            "improved": 12
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.03462156754416521,
+            "percent": -3.242964667449044,
+            "improved": 11
+          }
+        }
+      },
+      "binary_sha256": "1c015e3f32f2a74003e8e8f40116bc8fda0b7056a2fd0d14f67789a2d4d29050",
+      "experiment_sources_sha256": {
+        "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "87df5891ffd92640577a0774446863412f804ac568a4a5234ed1b98c4b33f293",
+        "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "229c933875df1b8cfcda768f6b9c6f892541a8fff949681881014281ee533968"
+      },
+      "reproduction_patch": "ou3-full-gain.patch.gz"
+    },
+    "vertical_attitude_gain": {
+      "all_16_original_records": {
+        "off": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.2989556661409295,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.250258492509638,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.43371512624449476,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.19001318917060156,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.1419001722042603,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 0.7807275066206982,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.16001196711496354,
+            "percent": 0.0,
+            "improved": 0
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.0357819639938036,
+            "percent": 0.0,
+            "improved": 0
+          }
+        },
+        "1": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.5861676006082205,
+            "percent": 96.07174808718881,
+            "improved": 4
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.4239659009096431,
+            "percent": 69.41119426479212,
+            "improved": 2
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.7502464233464756,
+            "percent": 72.98138292819078,
+            "improved": 3
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.19882193713404223,
+            "percent": 4.635861332516145,
+            "improved": 2
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.5985858118888453,
+            "percent": 321.8358600912775,
+            "improved": 0
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 1.573159689297079,
+            "percent": 101.49920118817705,
+            "improved": 1
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.38938033482819007,
+            "percent": 143.34450844444189,
+            "improved": 0
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.048315191298760045,
+            "percent": 35.026661217161916,
+            "improved": 3
+          }
+        },
+        "0.625": {
+          "disp_x_rms_m": {
+            "before": 0.2989556661409295,
+            "after": 0.5595996763575791,
+            "percent": 87.1848369964597,
+            "improved": 3
+          },
+          "disp_y_rms_m": {
+            "before": 0.250258492509638,
+            "after": 0.3939186410918815,
+            "percent": 57.40470468817791,
+            "improved": 2
+          },
+          "disp_3d_rms_m": {
+            "before": 0.43371512624449476,
+            "after": 0.714245452126164,
+            "percent": 64.68077982678615,
+            "improved": 3
+          },
+          "disp_z_rms_m": {
+            "before": 0.19001318917060156,
+            "after": 0.2045063623556658,
+            "percent": 7.6274564141185275,
+            "improved": 2
+          },
+          "pitch_rms_deg": {
+            "before": 0.1419001722042603,
+            "after": 0.5402384530076646,
+            "percent": 280.71726384518433,
+            "improved": 0
+          },
+          "yaw_rms_deg": {
+            "before": 0.7807275066206982,
+            "after": 1.482835267571372,
+            "percent": 89.92993778196414,
+            "improved": 1
+          },
+          "roll_rms_deg": {
+            "before": 0.16001196711496354,
+            "after": 0.3797906158665787,
+            "percent": 137.3513823461161,
+            "improved": 0
+          },
+          "accel_bias_3d_rms_mps2": {
+            "before": 0.0357819639938036,
+            "after": 0.04867603275671631,
+            "percent": 36.03510630424196,
+            "improved": 3
+          }
+        }
+      },
+      "binary_sha256": "17ffceeae233e972173ac0f6ce678feb036debbf546ecbfc2bc8664bf83afa9f",
+      "experiment_sources_sha256": {
+        "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "ab17678d3618360b70e446ed3bb9ff92f5b73413567db8d797032d730d000b01",
+        "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "229c933875df1b8cfcda768f6b9c6f892541a8fff949681881014281ee533968"
+      },
+      "reproduction_patch": "ou3-vertical-attitude-gain.patch.gz"
+    }
+  },
+  "results_sha256": "59d422d4948180239137cb47e1f423c3db569bacb953fe1a27201f36079b93e9",
+  "logs_sha256": "acbae5d149061adc68085ce382f5e44e393fa9ca8c6d21214ea8159ea50e6ed3"
+}

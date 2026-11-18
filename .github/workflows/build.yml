@@ -191,10 +191,7 @@ jobs:
         timeout-minutes: 27
         run: |
           set -uo pipefail
-          # Each attempt is capped at 8 minutes and there are two retries.
-          # A stalled mirror is then abandoned and retried against whatever
-          # the load balancer hands out next, instead of holding the step
-          # until its own timeout kills the job with nothing installed.
+          # Bound each attempt and keep any packages already downloaded.
           apt_get() {
             sudo timeout 8m env DEBIAN_FRONTEND=noninteractive apt-get \
               -o Acquire::Retries=2 \
@@ -220,6 +217,10 @@ jobs:
             fi
             echo "attempt ${attempt} failed; clearing any half-configured state"
             sudo dpkg --configure -a || true
+            if (( attempt == 1 )) && [[ -f /etc/apt/apt-mirrors.txt ]]; then
+              # Hosted runners can select the same slow regional mirror on every retry.
+              echo 'https://archive.ubuntu.com/ubuntu/' | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+            fi
             sleep $((attempt * 15))
           done
           echo "apt-get did not succeed after 3 attempts"
@@ -527,7 +528,8 @@ jobs:
     needs: classify
     if: needs.classify.outputs.run_build == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The full marine image job compiles nine ESP32 sketches in sequence.
+    timeout-minutes: ${{ matrix.ino_dir == 'full_marine_ins' && 75 || 45 }}
     strategy:
       fail-fast: false
       matrix:

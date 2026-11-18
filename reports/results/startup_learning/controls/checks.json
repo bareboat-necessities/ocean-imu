@@ -1,0 +1,110 @@
+[
+  {
+    "case": "following",
+    "method": "joint",
+    "profile": "ideal",
+    "metric": "yaw_rms_deg",
+    "actual": 0.11581271199628869,
+    "limit": 0.25,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "method": "joint",
+    "profile": "ideal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.04991369992238178,
+    "limit": 0.1,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "method": "joint",
+    "profile": "interference",
+    "metric": "ready_fraction",
+    "actual": 0.0,
+    "limit": 0.0,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "method": "joint_cal",
+    "profile": "ideal",
+    "metric": "yaw_rms_deg",
+    "actual": 0.1166655997448242,
+    "limit": 0.25,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "method": "joint_cal",
+    "profile": "ideal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.050010211220688536,
+    "limit": 0.1,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "method": "joint_cal",
+    "profile": "interference",
+    "metric": "ready_fraction",
+    "actual": 0.0,
+    "limit": 0.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint",
+    "profile": "ideal",
+    "metric": "yaw_rms_deg",
+    "actual": 0.05975384207696274,
+    "limit": 0.25,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint",
+    "profile": "ideal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.025726393982169322,
+    "limit": 0.1,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint",
+    "profile": "interference",
+    "metric": "ready_fraction",
+    "actual": 0.0,
+    "limit": 0.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint_cal",
+    "profile": "ideal",
+    "metric": "yaw_rms_deg",
+    "actual": 0.06038412436042237,
+    "limit": 0.25,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint_cal",
+    "profile": "ideal",
+    "metric": "tilt_rms_deg",
+    "actual": 0.025767461002965206,
+    "limit": 0.1,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "method": "joint_cal",
+    "profile": "interference",
+    "metric": "ready_fraction",
+    "actual": 0.0,
+    "limit": 0.0,
+    "passed": true
+  }
+]

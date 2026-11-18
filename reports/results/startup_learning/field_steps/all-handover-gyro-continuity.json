@@ -1,0 +1,50 @@
+{
+  "source": "6c494d1bb0fea9829bf01c353ceed268714a09a3",
+  "same_raw_gyro_and_first_live_epoch": 960,
+  "pooled_all_handover": {
+    "following": {
+      "attempts": 480,
+      "by_35": 408,
+      "by_60": 480,
+      "tilt_error_deg": {
+        "shipping": 0.7414913191012364,
+        "deployed": 0.37933230846428206
+      },
+      "yaw_error_deg": {
+        "shipping": 2.6195452868583273,
+        "deployed": 1.9705619262923868
+      },
+      "bg_error_dps": {
+        "shipping": 0.05802675061248794,
+        "deployed": 0.031756369419839545
+      },
+      "rate_error_dps": {
+        "shipping": 0.1475500123592817,
+        "deployed": 0.137004419366065
+      }
+    },
+    "head": {
+      "attempts": 480,
+      "by_35": 480,
+      "by_60": 480,
+      "tilt_error_deg": {
+        "shipping": 1.0676464046304281,
+        "deployed": 0.46012427997582966
+      },
+      "yaw_error_deg": {
+        "shipping": 3.8381275622213002,
+        "deployed": 1.966596907872407
+      },
+      "bg_error_dps": {
+        "shipping": 0.05797410445202063,
+        "deployed": 0.029623898983906473
+      },
+      "rate_error_dps": {
+        "shipping": 0.12268257755572826,
+        "deployed": 0.11567152500826879
+      }
+    }
+  },
+  "corrected_gyro_rows": 1920,
+  "corrected_gyro_max_abs_error_radps_on_published_digits": 9.45000189211953e-11
+}

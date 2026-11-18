@@ -9,6 +9,10 @@ refresh the cached calculation. The [encounter-scaling report](encounter-scaling
 contains the paired current-code qualification and its per-record costs.
 Historical experiments below retain their recorded source/settings.
 
+The live shared-mode wrapper uses the same transverse displacement-integral
+correction and covariance transport as the independent-axis TFG-CARMA(4,1).
+Both operate on the four physical CARMA coordinates. [Horizontal wave correction](tfg-carma3-research.md#horizontal-wave-correction)
+
 Current external-data replays use both v1.4.0 directions, the 28 ft boat at
 5 kn with ±3° heading oscillation over 20 s. The [current comparison](moving-vessel-results.md)
 and [before/after report](moving-vessel-comparison.md) describe this changed

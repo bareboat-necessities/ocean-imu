@@ -1,0 +1,274 @@
+{
+  "selected_gate_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "validated_solver_group": "Production OU-III handover with magnetic support and calibrated or residual sensor profiles. Body-frame gyro bias is applied to the latest raw endpoint.",
+  "original_native_guard_receipt": "reports/results/startup_learning/field_steps/guarded-receipt.json",
+  "original_record_sha256": "7f049142342e6f8ffd3274c4ad0d7dc1f2f1aa5581d33026a350bc36617891ee",
+  "production_solver_sha256": "711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b",
+  "same_solver_and_shared_handoff_as_guard_commit": "abfd57856fc008556bf64e004d82f4b99f5e90f7",
+  "raw_endpoint_identical_in_every_pair": true,
+  "largest_rate_identity_residual_radps_on_published_digits": 9.45000189211953e-11,
+  "attempts": 960,
+  "matched_on_time": 888,
+  "before_live_acceptance_scope": "The RMS values include matched handovers that occurred within the deadline. The coverage counts also include every missed startup.",
+  "directions": {
+    "following": {
+      "attempts": 480,
+      "within_35_s": 408,
+      "missed": 72,
+      "time_among_timely_s": {
+        "min": 31.835,
+        "median": 31.835,
+        "p95_nearest_rank": 34.425,
+        "max": 34.985
+      },
+      "rms": {
+        "tilt_error_deg": {
+          "previous": 0.7773661249736754,
+          "deployed": 0.356018840149935,
+          "absolute_error_lower": 303
+        },
+        "yaw_error_deg": {
+          "previous": 2.6239930218245706,
+          "deployed": 1.8386808785737796,
+          "absolute_error_lower": 287
+        },
+        "field_direction_error_deg": {
+          "previous": 0.912776391530346,
+          "deployed": 0.9135872874152123,
+          "absolute_error_lower": 244
+        },
+        "field_magnitude_error_uT": {
+          "previous": 0.8431610188461085,
+          "deployed": 0.845207708147189,
+          "absolute_error_lower": 197
+        },
+        "bg_error_dps": {
+          "previous": 0.05721585165529306,
+          "deployed": 0.022333536919379064,
+          "absolute_error_lower": 403
+        },
+        "rate_error_dps": {
+          "previous": 0.14389382934323933,
+          "deployed": 0.1310537553974592,
+          "absolute_error_lower": 315
+        },
+        "ba_error_mps2": {
+          "previous": 0.06718719781921519,
+          "deployed": 0.06718719781921519,
+          "absolute_error_lower": 0
+        }
+      },
+      "misses_by_record": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": 6,
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": 2,
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": 10,
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": 22,
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": 4,
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": 2,
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": 10,
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": 16
+      },
+      "by_sensor_profile": {
+        "calibrated": {
+          "tilt_error_deg": {
+            "previous": 0.7773661170551505,
+            "deployed": 0.3468276290247794,
+            "absolute_error_lower": 155
+          },
+          "yaw_error_deg": {
+            "previous": 2.073696116544942,
+            "deployed": 0.7283625073153263,
+            "absolute_error_lower": 169
+          },
+          "field_direction_error_deg": {
+            "previous": 0.3105406432301055,
+            "deployed": 0.16068023192173708,
+            "absolute_error_lower": 141
+          },
+          "field_magnitude_error_uT": {
+            "previous": 0.04512635715696394,
+            "deployed": 0.02919151269440311,
+            "absolute_error_lower": 109
+          },
+          "bg_error_dps": {
+            "previous": 0.05721585165529306,
+            "deployed": 0.021001191294107355,
+            "absolute_error_lower": 203
+          },
+          "rate_error_dps": {
+            "previous": 0.14389382934323933,
+            "deployed": 0.12983295974525452,
+            "absolute_error_lower": 164
+          },
+          "ba_error_mps2": {
+            "previous": 0.06718719781921519,
+            "deployed": 0.06718719781921519,
+            "absolute_error_lower": 0
+          }
+        },
+        "residual": {
+          "tilt_error_deg": {
+            "previous": 0.7773661328922002,
+            "deployed": 0.3649786635249518,
+            "absolute_error_lower": 148
+          },
+          "yaw_error_deg": {
+            "previous": 3.0774117653304875,
+            "deployed": 2.4961936632406996,
+            "absolute_error_lower": 118
+          },
+          "field_direction_error_deg": {
+            "previous": 1.2529509131536443,
+            "deployed": 1.2819771162243687,
+            "absolute_error_lower": 103
+          },
+          "field_magnitude_error_uT": {
+            "previous": 1.1915555460375977,
+            "deployed": 1.19494769567938,
+            "absolute_error_lower": 88
+          },
+          "bg_error_dps": {
+            "previous": 0.05721585165529306,
+            "deployed": 0.02359075469091324,
+            "absolute_error_lower": 200
+          },
+          "rate_error_dps": {
+            "previous": 0.14389382934323933,
+            "deployed": 0.13226328353455183,
+            "absolute_error_lower": 151
+          },
+          "ba_error_mps2": {
+            "previous": 0.06718719781921519,
+            "deployed": 0.06718719781921519,
+            "absolute_error_lower": 0
+          }
+        }
+      }
+    },
+    "head": {
+      "attempts": 480,
+      "within_35_s": 480,
+      "missed": 0,
+      "time_among_timely_s": {
+        "min": 31.835,
+        "median": 31.835,
+        "p95_nearest_rank": 31.835,
+        "max": 32.99
+      },
+      "rms": {
+        "tilt_error_deg": {
+          "previous": 1.0676464046304281,
+          "deployed": 0.46012427997582966,
+          "absolute_error_lower": 316
+        },
+        "yaw_error_deg": {
+          "previous": 3.8381275622213002,
+          "deployed": 1.966596907872407,
+          "absolute_error_lower": 365
+        },
+        "field_direction_error_deg": {
+          "previous": 0.9998270286710275,
+          "deployed": 0.8658633568449392,
+          "absolute_error_lower": 301
+        },
+        "field_magnitude_error_uT": {
+          "previous": 0.7609989782829336,
+          "deployed": 0.7654317151502775,
+          "absolute_error_lower": 230
+        },
+        "bg_error_dps": {
+          "previous": 0.05797410445202063,
+          "deployed": 0.029623898983906473,
+          "absolute_error_lower": 473
+        },
+        "rate_error_dps": {
+          "previous": 0.12268257755572826,
+          "deployed": 0.11567152500826879,
+          "absolute_error_lower": 307
+        },
+        "ba_error_mps2": {
+          "previous": 0.0671587003307089,
+          "deployed": 0.0671587003307089,
+          "absolute_error_lower": 0
+        }
+      },
+      "misses_by_record": {},
+      "by_sensor_profile": {
+        "calibrated": {
+          "tilt_error_deg": {
+            "previous": 1.0676464185274177,
+            "deployed": 0.44314367498422785,
+            "absolute_error_lower": 165
+          },
+          "yaw_error_deg": {
+            "previous": 3.174999641123655,
+            "deployed": 0.9456342176321794,
+            "absolute_error_lower": 193
+          },
+          "field_direction_error_deg": {
+            "previous": 0.547776382035333,
+            "deployed": 0.17572538455815126,
+            "absolute_error_lower": 178
+          },
+          "field_magnitude_error_uT": {
+            "previous": 0.03339804362456245,
+            "deployed": 0.022837099669611616,
+            "absolute_error_lower": 167
+          },
+          "bg_error_dps": {
+            "previous": 0.05797410445202063,
+            "deployed": 0.028435951446031213,
+            "absolute_error_lower": 240
+          },
+          "rate_error_dps": {
+            "previous": 0.12268257755572826,
+            "deployed": 0.11721031538600461,
+            "absolute_error_lower": 146
+          },
+          "ba_error_mps2": {
+            "previous": 0.0671587003307089,
+            "deployed": 0.0671587003307089,
+            "absolute_error_lower": 0
+          }
+        },
+        "residual": {
+          "tilt_error_deg": {
+            "previous": 1.0676463907334386,
+            "deployed": 0.47650014624134635,
+            "absolute_error_lower": 151
+          },
+          "yaw_error_deg": {
+            "previous": 4.4024792613515285,
+            "deployed": 2.6154890025671684,
+            "absolute_error_lower": 172
+          },
+          "field_direction_error_deg": {
+            "previous": 1.3035525343485594,
+            "deployed": 1.2118412827905571,
+            "absolute_error_lower": 123
+          },
+          "field_magnitude_error_uT": {
+            "previous": 1.0756967326237397,
+            "deployed": 1.0822429893487282,
+            "absolute_error_lower": 63
+          },
+          "bg_error_dps": {
+            "previous": 0.05797410445202063,
+            "deployed": 0.030766011236043347,
+            "absolute_error_lower": 233
+          },
+          "rate_error_dps": {
+            "previous": 0.12268257755572826,
+            "deployed": 0.11411198606014372,
+            "absolute_error_lower": 161
+          },
+          "ba_error_mps2": {
+            "previous": 0.0671587003307089,
+            "deployed": 0.0671587003307089,
+            "absolute_error_lower": 0
+          }
+        }
+      }
+    }
+  }
+}

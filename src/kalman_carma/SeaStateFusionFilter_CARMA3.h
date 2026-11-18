@@ -182,6 +182,7 @@ public:
         if (mekf_) mekf_->set_gyro_sample_mode(core);
         this->setFrontendGyroSampleMode(frontend);
     }
+    kalman::filter_detail::GyroSampleMode gyroSampleMode() const { return core_gyro_sample_mode_; }
     void setGyroSamplePeriod(float period) {
         core_gyro_sample_period_ = std::isfinite(period) && period > 0.0f ? period : 0.0f;
         if (mekf_) mekf_->set_gyro_sample_period(core_gyro_sample_period_);
@@ -233,6 +234,10 @@ private:
             mekf_->time_update(gyro, dt);
             mekf_->set_marine_turn(this->manoeuvreSpeed(), this->manoeuvreBow());
             mekf_->measurement_update_acc_only(acc_in, tempC);
+            if constexpr (requires { mekf_->update_horizontal_wave(dt, this->dir().getAxis()); }) {
+                if (startup_stage_ == StartupStage::Live)
+                    mekf_->update_horizontal_wave(dt, this->dir().getAxis());
+            }
         }
         if (drive_mekf && tilt_watchdog_.step(mekf_->quaternion_boat(), dt)) {
             if (startup_stage_ == StartupStage::Live) {

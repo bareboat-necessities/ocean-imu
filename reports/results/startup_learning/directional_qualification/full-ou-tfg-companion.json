@@ -1,0 +1,33 @@
+{
+  "raw_csv_byte_equal": true,
+  "rows": 180,
+  "paired_by": [
+    "family",
+    "scenario",
+    "wave_phase_seed",
+    "imu_noise_seed",
+    "initialization_seed",
+    "input_sha256"
+  ],
+  "scored_numeric_fields": 1620,
+  "different_fields": 0,
+  "difference_counts": {},
+  "artifacts": [
+    {
+      "source": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
+      "run": 44245770928,
+      "artifact": 14405178723,
+      "archive_sha256": "ce2c2393c28a8b49d9961ac13f791228b114198ef850d733d884b76e38f86abf",
+      "raw_csv_sha256": "ee1796c9011c5353ddefa497f0f3cac8e215dc2f36ec908624e4d3004c0c52c7",
+      "compiled_paths": 70
+    },
+    {
+      "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+      "run": 44275659256,
+      "artifact": 14416291870,
+      "archive_sha256": "41ca12df603b544872477f8135be2ddfff60ca9cee6c7c3841305717cc4c9916",
+      "raw_csv_sha256": "ee1796c9011c5353ddefa497f0f3cac8e215dc2f36ec908624e4d3004c0c52c7",
+      "compiled_paths": 70
+    }
+  ]
+}

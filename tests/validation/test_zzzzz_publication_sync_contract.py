@@ -112,11 +112,25 @@ class PublicationSyncRestatOverrideTests(unittest.TestCase):
             self.assertNotIn("nan", "\n".join(rows))
 
     def test_unresolved_deterministic_direction_is_preserved(self):
-        source = REPO_ROOT / "doc/kalman_ou_iii/w3d-sim-results-generated.tex-part"
-        rows = ou_publication_sync._deterministic_direction_rows(source)
-        self.assertEqual(sum(" & " in row for row in rows), 8)
-        self.assertEqual(sum("{--}" in row for row in rows), 2)
-        self.assertEqual(sum("0.0/0.0/100.0" in row for row in rows), 2)
+        # An axial direction can be measurable even if travel sense never commits.
+        axes = ['{--}', '65.0', '-34.3', '32.2', '{--}', '67.3', '-34.9', '31.7']
+        sense = ['0.0/0.0/100.0', '0.0/0.0/100.0', '62.0/10.0/28.0', '65.0/24.0/11.0'] * 2
+        rows = []
+        for i, (axis, fractions) in enumerate(zip(axes, sense)):
+            sea = 'JONSWAP' if i < 4 else 'PM--Stokes'
+            rows.append(f'    {sea} & 0.27 & 0.023 & 8.4 & 0.21 & 0.08 & 0.66 & {axis} & {fractions} ' + r'\\')
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / 'directions.tex'
+            source.write_text('\n'.join(rows) + '\n', encoding='utf-8')
+            excerpt = ou_publication_sync._deterministic_direction_rows(source)
+        values = [row.removesuffix(r'\\').strip().split('&') for row in excerpt if ' & ' in row]
+        self.assertEqual([(row[-2].strip(), row[-1].strip()) for row in values], list(zip(axes, sense)))
+
+    def test_committed_direction_excerpt_matches_the_full_table(self):
+        doc = REPO_ROOT / 'doc/kalman_ou_iii'
+        expected = ou_publication_sync._deterministic_direction_rows(doc / 'w3d-sim-results-generated.tex-part')
+        publication = (doc / 'w3d-wave-direction-results.tex-part').read_text(encoding='utf-8')
+        self.assertIn('\n'.join(expected), publication)
 
     def test_override_is_installed(self):
         self.assertIs(

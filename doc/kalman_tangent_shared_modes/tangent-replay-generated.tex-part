@@ -5,7 +5,7 @@
 % Requires: \usepackage{booktabs,siunitx,adjustbox}
 \begin{table*}[t]
   \centering
-  \caption{Experimental tangent-bias replay (last \SI{900}{s} RMS window). Single realization per record; unchanged TFG quality gates.}
+  \caption{Experimental tangent-bias replay (last \SI{900}{s} RMS window). Single realization per record; case-specific regression gates. v1.4.0, northbound, following seas.}
   \label{tab:tangent_native_replay}
   \setlength{\tabcolsep}{3pt}
   \renewcommand{\arraystretch}{1.08}
@@ -28,14 +28,14 @@
     {} & {\si{m}} & {\%$H_s$} & {\%$H_s$} & {\%$H_s$} & {\%} &
     {\si{deg}} & {\si{deg}} & {\si{deg}} \\
     \midrule
-    JONSWAP & 0.27 & 1.20 & 1.08 & 2.45 & 3.96 & 0.21 & 0.16 & 0.54 \\
-    JONSWAP & 1.50 & 2.27 & 2.16 & 2.19 & 4.33 & 0.19 & 0.19 & 0.62 \\
-    JONSWAP & 4.00 & 2.51 & 2.27 & 2.15 & 3.89 & 0.17 & 0.18 & 0.76 \\
-    JONSWAP & 8.50 & 2.45 & 2.32 & 2.02 & 4.40 & 0.32 & 0.20 & 0.55 \\
-    PM--Stokes & 0.27 & 1.16 & 1.05 & 2.40 & 4.00 & 0.21 & 0.16 & 0.76 \\
-    PM--Stokes & 1.50 & 2.19 & 2.04 & 2.30 & 4.23 & 0.19 & 0.19 & 0.47 \\
-    PM--Stokes & 4.00 & 2.51 & 2.24 & 2.37 & 4.07 & 0.15 & 0.17 & 0.58 \\
-    PM--Stokes & 8.50 & 2.77 & 2.37 & 2.30 & 4.86 & 0.35 & 0.21 & 0.46 \\
+    JONSWAP & 0.27 & 1.89 & 1.58 & 3.44 & 6.24 & 0.15 & 0.09 & 0.73 \\
+    JONSWAP & 1.50 & 2.31 & 2.55 & 2.61 & 4.74 & 0.13 & 0.08 & 0.74 \\
+    JONSWAP & 4.00 & 2.35 & 2.53 & 2.22 & 4.85 & 0.18 & 0.13 & 0.89 \\
+    JONSWAP & 8.50 & 2.31 & 2.44 & 2.22 & 4.34 & 0.23 & 0.17 & 0.80 \\
+    PM--Stokes & 0.27 & 2.07 & 1.49 & 3.48 & 6.63 & 0.15 & 0.09 & 0.69 \\
+    PM--Stokes & 1.50 & 2.35 & 2.54 & 2.63 & 4.79 & 0.13 & 0.07 & 0.68 \\
+    PM--Stokes & 4.00 & 2.35 & 2.46 & 2.23 & 4.79 & 0.18 & 0.13 & 0.86 \\
+    PM--Stokes & 8.50 & 2.37 & 2.55 & 2.20 & 4.33 & 0.22 & 0.17 & 0.75 \\
     \bottomrule
   \end{tabular}
   \end{adjustbox}

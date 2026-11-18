@@ -16,6 +16,8 @@ on:
       # The final fingerprint also protects the published two-case results.
       # A newer result bundle cannot be rebased under an older fingerprint.
       - "reports/results/sim_v1.4.0/**"
+      # Startup qualification changes the same scientific-results fingerprint.
+      - "reports/results/startup_learning/**"
       - "docs/ou3-proof-research-state.md"
       - "Makefile"
       - "tools/startup_ablation.py"
@@ -23,6 +25,7 @@ on:
       - "src/**"
       - ".github/workflows/ou-validation.yml"
       - ".github/workflows/ou-full-evidence-branch.yml"
+      - ".github/workflows/render-stability-study-review.yml"
 
 # Dataset and deployed-filter changes require full branch regeneration.
 concurrency:

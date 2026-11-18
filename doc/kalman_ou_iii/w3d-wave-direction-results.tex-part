@@ -2,14 +2,14 @@
 \section{Validation Methodology}
 \label{sec:direction-validation}
 
-The estimator is evaluated on the same directional records used by the marine
-motion study: four JONSWAP seas and four Pierson--Moskowitz seas, each passed through the v1.3.1
-28 ft vessel RAO at 5 kn with $\pm3^\circ$ heading oscillation over 120 s.  Each record is \SI{1200}{s} long at \SI{200}{Hz}; scoring
-uses the final \SI{900}{s} so that startup and magnetic-reference acquisition
-do not dominate the direction metric.  Ten paired seed triplets vary the wave
-realization, sensor noise and drift, and residual-error initialization.  The
-direction evidence is simulation based; it is not yet a comparison against a
-physical directional wave buoy.
+The detailed ten-seed and single-realization reference tables use
+the northbound, following-sea records from oceanography-waves-lib v1.4.0.
+The 28 ft vessel travels at 5 kn with a $\pm3^\circ$ heading oscillation
+of period 20~s. The inputs span four JONSWAP and four PM--Stokes conditions.
+Each record lasts 1200~s at 200~Hz. Scoring uses the final 900~s.
+For the ten-seed table, paired triplets vary the wave phases, IMU noise
+and initialization. The time-series figures use the deterministic sea
+direction identified for the individual PDF build.
 
 \begin{table}[t]
 \centering
@@ -73,7 +73,47 @@ thresholds are unchanged. The generator phase kernel
 $\cos(\mathbf{k}\cdot\mathbf{x}-\omega t+\phi)$ defines the reported azimuth as
 propagation-to, with no additional $180^\circ$ shift.
 
+Table~\ref{tab:direction-rao-ablation} uses the earlier v1.3.1 northbound
+records with a 120~s steering period. It compares response matching and
+engine guarding on the same eight records for each configuration.
+
 \input{w3d-direction-rao-generated.tex-part}
+
+\paragraph{Response matching in following and head seas}
+The v1.4.0 study repeats all three configurations with the engine off
+and with 2400~rpm vibration. Table~\ref{tab:direction-both-seas}
+gives the fraction of scored samples in each travel-sense class,
+averaged over eight records per direction. Each record contributes the
+same 900~s window. The 96 replays per direction cover both OU families;
+the table shows OU--III.
+
+\begin{table}[t]\centering\footnotesize
+\caption{OU--III travel sense, correct / wrong / unresolved (\%).}
+\label{tab:direction-both-seas}
+\setlength{\tabcolsep}{3pt}\begin{tabular}{@{}rlll@{}}
+\toprule
+rpm & Conditioning & Following seas & Head seas \\
+\midrule
+0 & None & 60.3 / 1.4 / 38.3 & 76.3 / 0.4 / 23.3 \\
+0 & Guard & 60.3 / 1.4 / 38.3 & 76.3 / 0.4 / 23.3 \\
+0 & Guard + RAO & 63.9 / 0.2 / 35.9 & 70.4 / 0.2 / 29.4 \\
+\addlinespace
+2400 & None & 1.5 / 4.3 / 94.2 & 31.7 / 3.2 / 65.2 \\
+2400 & Guard & 31.3 / 2.7 / 66.1 & 76.5 / 0.3 / 23.2 \\
+2400 & Guard + RAO & 61.4 / 0.3 / 38.3 & 70.2 / 0.2 / 29.7 \\
+\bottomrule\end{tabular}\end{table}
+
+With vibration, adding response matching to the guard raised the correct
+fraction from 31.3\% to 61.4\% in following seas. In head seas the
+correct fraction fell from 76.5\% to 70.2\%, the unresolved fraction
+rose from 23.2\% to 29.7\%, and wrong decisions fell from 0.32\% to
+0.17\%. Thus the lower wrong-decision rate in head seas came with more
+abstentions. The
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14463668943}{following-sea}
+and
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14466402720}{head-sea archives}
+contain the individual records for both filters.
+
 
 \section{Results}
 \label{sec:direction-results}
@@ -89,6 +129,17 @@ samples, wrong for \OUValidationTravelWrong\%, and unresolved for
 \OUValidationTravelUnresolved\%.  The absolute error of the final directed
 estimate is \OUValidationTravelAbsError{} degrees under the aggregate metric
 reported by the committed validation bundle.
+
+The southbound ten-seed study repeats all eight scenarios in head seas.
+Across 80 OU--III runs in each direction, the mean of the scenario-level
+axial RMS errors was $28.04^\circ$ in following seas and $18.75^\circ$
+in head seas. Travel sense was correct for 63.3\% and 70.0\% of samples,
+respectively. Wrong decisions accounted for 0.2\% in each direction.
+The remaining 36.4\% and 29.7\% were unresolved (percentages rounded
+independently). Each directional archive retains the finite angular
+scores and the sample fractions for each draw.
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14459213502}{Northbound results} and
+\href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540/artifacts/14465763332}{southbound results}.
 
 These numbers answer two different questions.  The axial statistic measures
 whether horizontal vessel motion identifies the incident propagation plane;
@@ -131,12 +182,12 @@ OU--III performance claim for this paper.
     \toprule
     Case & $H_s$ [m] & Axis RMS & Directed RMS & $n$ \\
     \midrule
-    JONSWAP     & 0.27 & $38.46\pm3.48$ & -- & 0 \\
+    JONSWAP     & 0.27 & $38.44\pm3.47$ & -- & 0 \\
     JONSWAP     & 1.50 & $24.00\pm1.85$ & $18.93\pm0.66$ & 10 \\
     JONSWAP     & 4.00 & $21.19\pm2.89$ & $18.96\pm2.02$ & 10 \\
     JONSWAP     & 8.50 & $28.99\pm1.77$ & $28.20\pm1.36$ & 10 \\
     \addlinespace
-    PM--Stokes  & 0.27 & $40.91\pm3.22$ & -- & 0 \\
+    PM--Stokes  & 0.27 & $40.92\pm3.22$ & -- & 0 \\
     PM--Stokes  & 1.50 & $24.83\pm1.56$ & $19.98\pm0.79$ & 10 \\
     PM--Stokes  & 4.00 & $19.04\pm2.34$ & $17.35\pm1.78$ & 10 \\
     PM--Stokes  & 8.50 & $26.88\pm1.11$ & $26.49\pm1.33$ & 10 \\
@@ -145,16 +196,16 @@ OU--III performance claim for this paper.
 \end{table}
 
 The directed RMS can be much larger than the scenario-level circular
-mean error.  Wrong travel-sense decisions produces errors
-near $180^\circ$ and therefore carries large quadratic weight in RMS, even
+mean error.  Wrong travel-sense decisions produce errors
+near $180^\circ$ and therefore carry large quadratic weight in RMS, even
 though the truth-referenced travel-sense decision is correct for
 \OUValidationTravelCorrect\% of samples.  Reporting both metrics prevents the
 aggregate correct-decision fraction from hiding large sense-flip errors.
 
 \begin{table}[t]
   \centering
-  \caption{Direction-relevant results from the deterministic integrated OU--III
-  replay, scored over the final \SI{900}{s}.  R/P/Y are upstream attitude RMS
+  \caption{Direction-relevant results from the northbound v1.4.0 deterministic OU--III
+  reference replay, scored over the final \SI{900}{s}.  R/P/Y are upstream attitude RMS
   errors in degrees; $\bar\theta$ is the mean axial direction estimate.}
   \label{tab:direction-ou3-integration}
   \scriptsize
@@ -164,15 +215,15 @@ aggregate correct-decision fraction from hiding large sense-flip errors.
     \toprule
     Case & $H_s$ & R & P & Y & $\bar\theta$ & T/A/U [\%] \\
     \midrule
-    JONSWAP     & 0.27 & 0.30 & 0.15 & 0.38 &  {--} & 0.0/0.0/100.0 \\
-    JONSWAP     & 1.50 & 0.13 & 0.14 & 0.74 & -33.6 & 62.6/9.4/28.0 \\
-    JONSWAP     & 4.00 & 0.23 & 0.13 & 0.87 &  34.0 & 45.4/45.3/9.3 \\
-    JONSWAP     & 8.50 & 0.17 & 0.16 & 0.62 & -32.7 & 19.0/74.4/6.6 \\
+    JONSWAP     & 0.27 & 0.21 & 0.08 & 0.66 &  65.0 & 0.0/0.0/100.0 \\
+    JONSWAP     & 1.50 & 0.10 & 0.07 & 0.63 & -34.3 & 61.2/10.0/28.9 \\
+    JONSWAP     & 4.00 & 0.25 & 0.11 & 0.80 &  32.2 & 65.5/23.6/10.9 \\
+    JONSWAP     & 8.50 & 0.20 & 0.15 & 0.62 & -31.8 & 52.0/39.8/8.2 \\
     \addlinespace
-    PM--Stokes  & 0.27 & 0.34 & 0.15 & 0.37 &  {--} & 0.0/0.0/100.0 \\
-    PM--Stokes  & 1.50 & 0.13 & 0.14 & 0.68 & -35.7 & 65.1/8.6/26.2 \\
-    PM--Stokes  & 4.00 & 0.23 & 0.13 & 0.69 &  31.7 & 18.6/74.0/7.4 \\
-    PM--Stokes  & 8.50 & 0.18 & 0.15 & 0.42 & -31.3 & 41.7/54.9/3.4 \\
+    PM--Stokes  & 0.27 & 0.24 & 0.08 & 0.61 &  67.3 & 0.0/0.0/100.0 \\
+    PM--Stokes  & 1.50 & 0.10 & 0.07 & 0.57 & -34.9 & 64.4/9.6/26.0 \\
+    PM--Stokes  & 4.00 & 0.25 & 0.11 & 0.79 &  31.7 & 85.1/5.6/9.3 \\
+    PM--Stokes  & 8.50 & 0.20 & 0.13 & 0.56 & -32.9 & 43.3/52.8/4.0 \\
     \bottomrule
   \end{tabular}
   \vspace{1pt}

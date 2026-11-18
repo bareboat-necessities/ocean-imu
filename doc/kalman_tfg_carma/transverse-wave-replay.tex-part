@@ -1,0 +1,40 @@
+\subsection{Transverse wave correction on the moving vessel}
+\label{sec:transverse-wave-replay}
+A separate paired experiment held the two-frame geometry fixed and changed
+the horizontal observation. The independent-axis and shared-mode CARMA
+filters both estimate the transverse encounter time scale from the ratio of
+the centered displacement and velocity variances across the estimated wave
+axis. After four cycles with live bias learning and a usable wave axis, they
+use that time scale in a scalar integral--velocity observation. A change of
+CARMA parameters transports the displacement primitive and its covariance
+to the new realization. This experiment measures the combined effect of the
+observation and that transport.
+
+Six sensor draws on the same 16 moving-vessel records gave 96 pairs per
+filter. Pooled 3-D displacement RMS over 300--1,200 s fell from 0.22223
+to 0.21884 m for independent axes and from 0.20187 to 0.19852 m for shared
+modes. At 40--60 s the differences were below 0.000001 m. On two further
+sensor draws reserved until the implementation was fixed, late 3-D RMS
+fell in 30 of 32 pairs for each filter. Across all eight draws each filter
+also had two head-sea records with an increase above 0.5\% in 3-D
+accelerometer-bias RMS. The
+\href{https://github.com/bareboat-necessities/ocean-imu/tree/e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2/reports/results/startup_learning/tfg_carma_horizontal_wave/windowed}{paired records and native logs}
+give the individual gains and losses.
+
+\paragraph{Paired comparison with main on the released records}
+The two directional studies each scored eight fixed wave records with eight
+matched sensor and initialization seeds per record. Each of the 64 pairs per
+method and direction contributes its final 900~s to the pooled displacement
+RMS. Independent-axis TFG--CARMA reduced this error from 0.22810 to 0.22513~m
+in following seas and from 0.22795 to 0.22403~m in head seas. Shared-mode
+TFG--CARMA reduced it from 0.19659 to 0.19334~m and from 0.21713 to
+0.21351~m, respectively. The two QMEKF variants changed by less than
+0.01\% in either direction.
+
+Across the 256 TFG comparisons, 189 reduced displacement RMS by more than
+0.5\% and the other 67 stayed within that band. Accelerometer-bias RMS
+exceeded its main value by more than 0.5\% in 16 pairs, and yaw RMS did
+so in 46 pairs. These counts describe variation across sensor draws on
+the released wave records.
+The \href{https://github.com/bareboat-necessities/ocean-imu/blob/c9de274920de17a0bebcdc5f6828efc32833aeb0/reports/results/startup_learning/directional_qualification/paired-tfg-shared-carma-study.json}{paired results}
+include axis-specific errors and pooled attitude and bias metrics.

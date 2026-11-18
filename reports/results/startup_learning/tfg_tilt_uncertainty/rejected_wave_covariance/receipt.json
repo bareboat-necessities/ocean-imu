@@ -1,0 +1,34 @@
+{
+  "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+  "runs": 48,
+  "sensor_draws": [
+    "default",
+    7,
+    41,
+    101
+  ],
+  "arms": {
+    "0": "production reference",
+    "1": "sample covariance",
+    "2": "isotropic total variance"
+  },
+  "production_reference_mask": 0,
+  "binary_sha256": "3d413dbc9b55e5b6e736c93cd65bff5a9ce95e924ca5915492bf7f0b4433f984",
+  "experimental_source_sha256": {
+    "kalman_common/WaveStartup.h": "de925a9a8bc144f175ff9f7c6ea54a4650ba189c1aadcc546ce33baf9a8a607e",
+    "kalman_tfg/SeaStateFusionFilter_TFG.h": "19fdbd371cf2b3f9b8396faad149bef435274923ed35e92d792b3da064f236a9"
+  },
+  "windows_file_sha256": "7c133c332c09936a9d3e96c42384f6085fea38d2cbbcba73983f5c35e935ef2f",
+  "source_data": {
+    "release": "v1.4.0",
+    "cases": [
+      "following",
+      "head"
+    ],
+    "records": [
+      "JONSWAP 8.5 m",
+      "PM-Stokes 1.5 m"
+    ]
+  },
+  "method": "One executable selects each policy at an accepted fit. All arms retain the same zero initial wave-acceleration mean. The two experimental arms add the positive semidefinite part of target minus prior to the live wave-acceleration covariance block. Mask 1 uses the covariance of the gyro-transported startup specific-force samples in the estimated NED frame. Mask 2 uses the trace of that covariance times the identity matrix. A mask 0 run keeps the deployed covariance."
+}

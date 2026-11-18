@@ -1,0 +1,29 @@
+{
+  "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "run": 44275659256,
+  "job": 134757730631,
+  "failed_step": "Check the manuscript against the regenerated evidence",
+  "failed_test": "test_actual_panels_share_one_row_and_fit_the_column (test_ou3_article_figure_layout.ArticleHorizontalPanelTests.test_actual_panels_share_one_row_and_fit_the_column)",
+  "failed_quantity": "3 != 1",
+  "tests_run": 1250,
+  "failed_tests": 1,
+  "skipped_tests": [
+    "test_underway_records_have_consistent_total_motion_and_heading (test_record_conventions.GeneratorMotionConventionTests.test_underway_records_have_consistent_total_motion_and_heading) ... skipped 'simulation records not fetched'"
+  ],
+  "combined_workflow_jobs": {
+    "evidence / fingerprint": 134702988163,
+    "evidence / classify latest push": 134702988863,
+    "evidence / tfg_companion": 134703310259,
+    "evidence / regenerate (validation, 2)": 134703310414,
+    "evidence / regenerate (validation, 1)": 134703310436,
+    "evidence / regenerate (validation, 0)": 134703310525,
+    "evidence / regenerate (robustness, 1)": 134703310547,
+    "evidence / regenerate (robustness, 0)": 134703310605,
+    "evidence / regenerate (robustness, 2)": 134703310701,
+    "evidence / combine (validation)": 134747156737,
+    "evidence / combine (robustness)": 134747156773
+  },
+  "log_bytes": 318723,
+  "log_sha256": "991ff88d2396f2df3d8e269056ae0fd81118639c140effdf164234bb9648ee3f",
+  "reviewed_fix": "72a658c953db9483c10ae08ab559bf3ca6917c57"
+}

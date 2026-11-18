@@ -119,6 +119,7 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <numbers>
 #include <type_traits>
 
 #include "kalman_common/ImuLeverArm.h"
@@ -200,6 +201,8 @@ public:
 
     using Vector3 = Eigen::Matrix<T,3,1>;
     using Matrix3 = Eigen::Matrix<T,3,3>;
+    using Vector2 = Eigen::Matrix<T,2,1>;
+    using Matrix2 = Eigen::Matrix<T,2,2>;
     using MatrixNX = Eigen::Matrix<T,NX,NX>;
     using MatrixNX3 = Eigen::Matrix<T,NX,3>;
     using Tangent = Eigen::Matrix<T,NX,1>;
@@ -273,6 +276,9 @@ public:
     // set_quaternion_boat).  The covariance follows the write mode.
     void set_quaternion_boat(const Eigen::Quaternion<T>& q_bw);
 
+    void set_initial_gyro_bias_body(const Vector3& bias) {
+        X_.B.col(0) = bias;
+    }
     [[nodiscard]] Vector3 gyroscope_bias() const { return X_.B.col(0); }
     [[nodiscard]] Vector3 get_acc_bias() const { return X_.B.col(1); }
     bool acc_bias_updates_enabled() const { return acc_bias_updates_enabled_; }
@@ -307,12 +313,16 @@ public:
     }
     [[nodiscard]] Vector3 get_RS_noise_std() const { return R_S_.diagonal().cwiseMax(T(0)).cwiseSqrt(); }
     void set_aw_time_constant(T tau_seconds) { tau_aw_ = std::max(T(1e-3), tau_seconds); }
-    // No S state: the wrapper's cadence is kept for interface parity only.
+    // The CARMA(4,1) transverse wave relation uses the wrapper's integral cadence.
     void set_pseudo_update_period_s(T period_s) {
         if (!(period_s > T(0)) || !std::isfinite(period_s)) return;
         pseudo_update_period_s_ = std::max(T(1e-4), period_s);
     }
     [[nodiscard]] T get_pseudo_update_period_s() const { return pseudo_update_period_s_; }
+
+    // The direction tracker supplies a unit axis in the level boat frame or zero
+    // while unreliable. Only the DC-zero CARMA(4,1) has the integral used here.
+    void update_horizontal_wave(T dt, const Vector2& boat_axis) requires (Model::ORDER == 4);
 
     // Stationary CARMA prior covariance Sigma_s (x) P_inf, decorrelated from
     // everything else (CARMA3's reset_aw_covariance_to_stationary).
@@ -495,6 +505,24 @@ private:
     // audited persistent-bias policy explicitly at startup.
     bool schmidt_acc_bias_hold_ = false;
     bool tangent_bias_geometry_ = false;
+    struct HorizontalMoments {
+        Vector2 mean = Vector2::Zero();
+        Matrix2 covariance = Matrix2::Zero();
+        void update(const Vector2& value, T weight) {
+            const Vector2 delta = value - mean;
+            mean += weight * delta;
+            covariance = ((T(1) - weight) * (covariance + weight * delta * delta.transpose())).eval();
+        }
+    };
+    struct HorizontalWave {
+        HorizontalMoments position, velocity;
+        T elapsed = T(0), cycles = T(0);
+        bool initialized = false, axis_reliable = false;
+    };
+    struct NoHorizontalWave {};
+    [[no_unique_address]] std::conditional_t<Model::ORDER == 4, HorizontalWave, NoHorizontalWave> horizontal_wave_;
+    void transport_horizontal_integral_(T old_kappa, T kappa) requires (Model::ORDER == 4);
+
     bool bias_gain_scaling_ = false;
     Matrix3 bias_gain_scale_ = Matrix3::Identity();
     T sigma_bacc0_ = T(0.004);
@@ -745,15 +773,125 @@ TFGC3_CLS::Kalman3D_Wave_TFG_CARMA3(
 
 TFGC3_TPL
 bool TFGC3_CLS::set_vertical_carma(T kappa, T accel_std) {
+    const T old_kappa = vertical_model().kappa();
     if constexpr (kMotion) {
-        return motion_.set_vertical(kappa, accel_std);
+        if (!motion_.set_vertical(kappa, accel_std)) return false;
     } else {
-    if (!(accel_std > T(0)) || !std::isfinite(accel_std)) return false;
-    if (!model_.configure(kappa, T(1))) return false;
-    Sigma_s_(2,2) = accel_std * accel_std;
-    return true;
-
+        if (!(accel_std > T(0)) || !std::isfinite(accel_std)) return false;
+        if (!model_.configure(kappa, T(1))) return false;
+        Sigma_s_(2,2) = accel_std * accel_std;
     }
+    if constexpr (Model::ORDER == 4) {
+        if (horizontal_wave_.axis_reliable && old_kappa != kappa &&
+            vertical_model().shape().fz_hz == 0.0 && !tangent_bias_geometry_)
+            transport_horizontal_integral_(old_kappa, kappa);
+    }
+    return true;
+}
+
+// At a fixed scale S = (ell - 2*zeta1*w1*p - v)/w1^2 has derivative p.
+// Preserve its horizontal components when changing the scale in directional seas.
+TFGC3_TPL
+void TFGC3_CLS::transport_horizontal_integral_(T old_kappa, T kappa) requires (Model::ORDER == 4) {
+    constexpr int latent = world_index(3, 0);
+    const auto& shape = vertical_model().shape();
+    const T ratio = kappa / old_kappa;
+    const T l_scale = ratio * ratio;
+    const T v_scale = T(1) - l_scale;
+    const T p_scale = T(4 * std::numbers::pi * shape.zeta1 * shape.f1_hz) * (kappa - l_scale * old_kappa);
+    const Vector3 delta = (l_scale - T(1)) * X_.X.col(3) + v_scale * X_.X.col(IV) + p_scale * X_.X.col(IP);
+    Matrix3 horizontal = Matrix3::Identity();
+    horizontal(2,2) = T(0);
+    const Vector3 shift = horizontal * delta;
+    X_.X.col(3) += shift;
+
+    // The fixed NED projection does not commute with roll/pitch error. Its
+    // commutator carries the attitude and all cross-covariances through J P J^T.
+    const Matrix3 attitude = lie::skew<T>(shift) - horizontal * lie::skew<T>(delta);
+    const Matrix3 lat_map = Matrix3::Identity() + (l_scale - T(1)) * horizontal;
+    P_.template middleRows<3>(latent) = (lat_map * P_.template middleRows<3>(latent)
+        + v_scale * horizontal * P_.template middleRows<3>(OFF_V)
+        + p_scale * horizontal * P_.template middleRows<3>(OFF_P)
+        + attitude * P_.template middleRows<3>(OFF_PHI)).eval();
+    P_.template middleCols<3>(latent) = (P_.template middleCols<3>(latent) * lat_map.transpose()
+        + v_scale * P_.template middleCols<3>(OFF_V) * horizontal
+        + p_scale * P_.template middleCols<3>(OFF_P) * horizontal
+        + P_.template middleCols<3>(OFF_PHI) * attitude.transpose()).eval();
+}
+
+TFGC3_TPL
+void TFGC3_CLS::update_horizontal_wave(T dt, const Vector2& boat_axis) requires (Model::ORDER == 4) {
+    if (tangent_bias_geometry_ || !acc_bias_updates_enabled_ || !(dt > T(0)) || !std::isfinite(dt)) return;
+    auto& history = horizontal_wave_;
+    history.axis_reliable = boat_axis.allFinite() && boat_axis.squaredNorm() > T(0.5);
+    history.elapsed += dt;
+    if (history.elapsed < pseudo_update_period_s_) return;
+    const T observation_dt = history.elapsed;
+    history.elapsed = T(0);
+    const Model& model = horizontal_model();
+    const auto& shape = model.shape();
+    if (shape.fz_hz != 0.0) return;
+
+    const double scale = 2 * std::numbers::pi * model.kappa();
+    const double w1 = scale * shape.f1_hz, w2 = scale * shape.f2_hz;
+    const double encounter = scale * model.base_zero_crossing_hz();
+    if (!(w1 > 0 && w2 > 0 && encounter > 0)) return;
+    const T period = T(2 * std::numbers::pi / encounter);
+    const Vector2 position = X_.X.col(IP).template head<2>();
+    const Vector2 velocity = X_.X.col(IV).template head<2>();
+    if (!history.initialized) {
+        history.position.mean = position;
+        history.velocity.mean = velocity;
+        history.initialized = true;
+        return;
+    }
+    // The vessel's transverse period can differ from its vertical encounter
+    // period. Use centered moments over eight cycles and allow four to warm up.
+    const T weight = -std::expm1(-observation_dt / (T(8) * period));
+    history.position.update(position, weight);
+    history.velocity.update(velocity, weight);
+    history.cycles = std::min(T(4), history.cycles + observation_dt / period);
+    if (history.cycles < T(4) || !history.axis_reliable) return;
+    const Vector2 bow = X_.R.col(0).template head<2>();
+    const T length = bow.norm();
+    if (!(length > T(1e-5))) return;
+    const Vector2 forward = bow / length, starboard(-forward.y(), forward.x());
+    const Vector2 across = -boat_axis.y() * forward + boat_axis.x() * starboard;
+    const T var_p = across.dot(history.position.covariance * across);
+    const T var_v = across.dot(history.velocity.covariance * across);
+    if (!(var_p > T(0) && var_v > T(1e-12))) return;
+    const T beta0 = T(1 / (encounter * encounter));
+    const T beta = std::clamp(var_p / var_v, T(0.25) * beta0, T(4) * beta0);
+
+    // For narrow-band motion, S + beta*v vanishes at omega = 1/sqrt(beta).
+    const T latent = T(1 / (w1 * w1)), pos = T(-2 * shape.zeta1 / w1), vel = beta - latent;
+    const Vector3 wave = pos * X_.X.col(IP) + vel * X_.X.col(IV) + latent * X_.X.col(3);
+    Eigen::Matrix<T,3,NX> H = Eigen::Matrix<T,3,NX>::Zero();
+    const Vector2 perp(-across.y(), across.x());
+    const Vector3 yaw_gradient(-forward.x()*X_.R(2,0)/length, -forward.y()*X_.R(2,0)/length, T(1));
+    H.template block<1,3>(0,OFF_PHI) = across.transpose() * lie::skew<T>(wave).template topRows<2>()
+        - perp.dot(wave.template head<2>()) * yaw_gradient.transpose();
+    H.template block<1,2>(0,OFF_P) = -pos * across.transpose();
+    H.template block<1,2>(0,OFF_V) = -vel * across.transpose();
+    H.template block<1,2>(0,world_index(3,0)) = -latent * across.transpose();
+
+    // Convert the CARMA residual's two-sided DC spectrum to sampled variance.
+    // Add it to the same broadband residual fraction used by the TFG-OU match.
+    const double poles = w1 * w2;
+    const T noise_gain = T(model.kappa() / (model.base_var_a() * poles*poles*poles*poles * pseudo_update_period_s_));
+    const Matrix2 wave_noise = T(0.625) * R_S_.template topLeftCorner<2,2>() + noise_gain * horizontal_sigma();
+    const T variance = across.dot(wave_noise * across);
+    if (!(variance > T(0)) || !std::isfinite(variance)) return;
+    // Only row zero is active. The two zero rows let the scalar observation use
+    // the same Joseph update, bias projections and group reset as the sensors.
+    Matrix3 noise = Matrix3::Identity();
+    noise(0,0) = variance;
+    PHt_scratch_.noalias() = P_ * H.transpose();
+    Matrix3 innovation = noise + H * PHt_scratch_;
+    innovation = (T(0.5) * (innovation + innovation.transpose())).eval();
+    MeasDiag3 diag{};
+    correct3_(Vector3(-across.dot(wave.template head<2>()), T(0), T(0)),
+              innovation, PHt_scratch_, noise.norm(), false, diag);
 }
 
 TFGC3_TPL
@@ -887,6 +1025,9 @@ void TFGC3_CLS::set_initial_acc_bias_std(T s) {
 
 TFGC3_TPL
 void TFGC3_CLS::set_acc_bias_updates_enabled(bool en) {
+    if constexpr (Model::ORDER == 4) {
+        if (!en) horizontal_wave_ = HorizontalWave{};
+    }
     if (acc_bias_updates_enabled_ == en) return;
     begin_write_();
     if (!en && !schmidt_acc_bias_hold_) {
@@ -1025,6 +1166,7 @@ bool TFGC3_CLS::initialize_from_acc(Vector3 const& acc) {
 TFGC3_TPL
 bool TFGC3_CLS::initialize_from_attitude(Eigen::Quaternion<T> const& q_bw, T tilt_sigma_rad, T yaw_sigma_rad) {
     if (!q_bw.coeffs().allFinite() || !(q_bw.norm() > T(1e-8))) return false;
+    if constexpr (Model::ORDER == 4) horizontal_wave_ = HorizontalWave{};
     set_quaternion_boat(q_bw);
     // As in CARMA3: the wrapper hands over here after holding the prediction.
     lever_.reset_kinematics();

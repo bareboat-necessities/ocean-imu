@@ -43,6 +43,7 @@
 #include <cmath>
 #include <cstdint>
 
+#include "kalman_common/WaveStartup.h"
 #include "kalman_common/AccelVibrationConditioning.h"
 #include "kalman_common/MagneticStartupCommon.h"
 #include "kalman_common/SeaStateFusionDefaults.h"
@@ -136,6 +137,8 @@ public:
         float    online_tune_warmup_sec = defaults::STARTUP_ONLINE_TUNE_WARMUP_SEC;
         StartupInitPolicy startup_init_policy = StartupInitPolicy::MahonyProxy;
 
+        bool wave_startup_enabled = true;
+        bool wave_startup_scale_slope = true;
         float proxy_startup_min_sec     = defaults::PROXY_STARTUP_MIN_SEC;
         float proxy_startup_timeout_sec = defaults::PROXY_STARTUP_TIMEOUT_SEC;
         float proxy_handoff_tilt_sigma_rad = defaults::PROXY_HANDOFF_TILT_SIGMA_RAD;
@@ -206,10 +209,19 @@ public:
         float sigma_band_high_ratio = SIGMA_BAND_HIGH_RATIO_DEFAULT;
         float sigma_band_min_hz     = SIGMA_BAND_MIN_HZ_DEFAULT;
         float sigma_band_max_hz     = SIGMA_BAND_MAX_HZ_DEFAULT;
+
+        // Per-horizontal-axis standard deviation of an accepted wave tilt fit.
+        // The fallback proxy keeps its independently configured uncertainty.
+        float wave_handoff_tilt_sigma_rad = 0.00872664626f;  // 0.5 degrees
+        // Match horizontal wave motion only once accelerometer bias can
+        // respond to the same innovations. Used with the spectral R_S law.
+        bool wave_matched_horizontal_integral = true;
     };
 
     void begin(const Config& cfg) {
         cfg_ = cfg;
+        wave_startup_.reset();
+        wave_startup_used_ = false;
         turn_separator_.reset(cfg.turn_separator);
         mekf_ = Mekf(cfg.gyro_noise_density, cfg.gravity_magnitude);
         mekf_.initialize_identity(cfg.initial_covariance);
@@ -303,6 +315,7 @@ public:
         if (stage_ == StartupStage::Cold) {
             mekf_.prime_gyro_sample(gyro, dt);
             if (cfg_.startup_init_policy == StartupInitPolicy::MahonyProxy) {
+                if (useWaveStartup_()) wave_startup_.imu(dt, gyro, acc, cfg_.gyro_sample_mode);
                 tryProxyHandoff_();
             } else {
                 stagedColdStep_(interval.rate, acc_in, dt);
@@ -345,6 +358,7 @@ public:
         if (!cfg_.with_mag || !mag_body.allFinite()) return;
         if (!(mag_body.norm() > 1e-9f)) return;
         if (elapsed_sec_ < cfg_.mag_delay_sec) return;
+        if (stage_ == StartupStage::Cold && usingProxyInit_() && useWaveStartup_()) wave_startup_.mag(mag_body);
 
         accumulateContinuousHardIron_(mag_body);
         if (usingProxyInit_()) {
@@ -380,6 +394,7 @@ public:
                tuner_warm_sec_ >= cfg_.online_tune_warmup_sec;
     }
     [[nodiscard]] float pseudoUpdatePeriodSec() const noexcept { return pseudo_period_sec_; }
+    [[nodiscard]] bool usedWaveStartup() const { return wave_startup_used_; }
     [[nodiscard]] bool handoffTimedOut() const noexcept { return handoff_timed_out_; }
     [[nodiscard]] float getRSFilterInput() const noexcept { return RS_filter_input_; }
 
@@ -743,15 +758,22 @@ private:
         // The learned angle aligns the proxy's WORLD frame with magnetic
         // north; it is not an absolute boat heading to freeze at acquisition.
         // Carry every subsequent gyro-observed turn into the actual handoff.
-        const Eigen::Quaternionf q_bw = have_mag_proxy_gauge_
+        Eigen::Quaternionf q_bw = have_mag_proxy_gauge_
             ? Eigen::Quaternionf(
                   Eigen::AngleAxisf(mag_proxy_yaw_offset_rad_, Vector3f::UnitZ()) *
                   vertical_complementary_.quaternion())
             : vertical_complementary_.tiltQuaternion();
 
+        ::seastate::common::WaveStartup::Seed learned;
+        wave_startup_used_ = useWaveStartup_() && have_mag_proxy_gauge_ &&
+            wave_startup_.solve(cfg_.gravity_magnitude, cfg_.wave_startup_scale_slope, learned);
+        if (wave_startup_used_) {
+            q_bw = learned.attitude;
+            setMagWorldRef_(learned.field);
+        }
         mekf_.initialize_from_truth(q_bw.normalized(), Vector3f::Zero(), Vector3f::Zero(),
                                     Vector3f::Zero(), Vector3f::Zero(),
-                                    Vector3f::Zero(), Vector3f::Zero());
+                                    learned.gyro_bias, Vector3f::Zero());
         seedHandoffAttitudeCovariance_();
         mekf_.set_initial_linear_uncertainty(1.0f, 2.0f, 5.0f, 1.0f);
         mekf_.set_initial_acc_bias_std(cfg_.handoff_acc_bias_std);
@@ -956,7 +978,9 @@ private:
 
     void seedHandoffAttitudeCovariance_() {
         auto& P = mekf_.covariance_full();
-        const float st = std::max(1e-6f, cfg_.proxy_handoff_tilt_sigma_rad);
+        const float tilt_sigma = wave_startup_used_
+            ? cfg_.wave_handoff_tilt_sigma_rad : cfg_.proxy_handoff_tilt_sigma_rad;
+        const float st = std::max(1e-6f, tilt_sigma);
         const float sy = have_mag_proxy_gauge_
             ? std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_rad)
             : std::max(1e-6f, cfg_.proxy_handoff_yaw_sigma_free_rad);
@@ -1038,7 +1062,8 @@ private:
         // worsens its coupled attitude/bias calibration; retain its full gain.
         mekf_.set_integral_velocity_weight(
             wave_matched_vertical_integral_ && std::isfinite(beta) ? beta : 0.0f,
-            rs_law_ == RSLaw::SpectralMSE);
+            rs_law_ == RSLaw::SpectralMSE,
+            rs_law_ == RSLaw::SpectralMSE && cfg_.wave_matched_horizontal_integral);
     }
 
     void commitTune_() {
@@ -1141,6 +1166,9 @@ private:
 
     float tuner_warm_sec_ = 0.0f;
     bool mag_reference_learned_ = false;
+    bool useWaveStartup_() const { return cfg_.wave_startup_enabled && cfg_.with_mag && !cfg_.mag_estimate_hard_iron; }
+    ::seastate::common::WaveStartup wave_startup_{};
+    bool wave_startup_used_ = false;
     bool handoff_timed_out_ = false;
     bool acc_bias_unlocked_ = false;
     bool acc_bias_hold_ = false;

@@ -1,0 +1,84 @@
+\subsection{Horizontal wave output on paired underway replays}
+\label{sec:wave-readout-replay}
+We compared Eq.~\eqref{eq:horizontal-wave-readout} with the recursive
+position and velocity on identical wave and sensor histories. Eight
+records in each sea direction span JONSWAP and PM--Stokes seas at
+$H_s=0.27$, $1.5$, $4$, and $8.5$ m. Each displacement RMS uses all
+180,000 samples from 300 to 1,200 s. We pooled records with equal weight
+by taking the square root of the mean squared record RMS.
+
+On the standard sensor draw, across both gyro sampling profiles, pooled
+3-D displacement RMS fell from 0.434 to 0.349 m. North and east RMS fell
+from 0.299 to 0.228 m and from 0.249 to 0.184 m, respectively. With the
+default gyro profile, 3-D velocity RMS fell from 0.0782 to 0.0661 m/s.
+The paired heave, attitude and bias scores were identical on the two
+profiles. At 40--60 s the displacement outputs also agreed. This
+timing locates the displacement gain after the bias-learning gate opens.
+
+\begin{figure}[t]
+\centering
+% Filter the original, full-rate RMS table directly. Each displayed point is
+% one complete record; repeated sensors on a wave record can overlap.
+\def\WaveDrawA{1063}\def\WaveDrawB{3559}\def\WaveWindow{window}
+\pgfplotsset{reserved sea/.style={x filter/.append code={
+  \edef\WaveRowWindow{\thisrow{window}}\edef\WaveRowSea{\thisrow{sea}}
+  \edef\WaveRowDraw{\thisrow{seed}}\def\WavePlotSea{#1}
+  \ifx\WaveRowWindow\WaveWindow\else\def\pgfmathresult{}\fi
+  \ifx\WaveRowSea\WavePlotSea\else\def\pgfmathresult{}\fi
+  \ifx\WaveRowDraw\WaveDrawA\else\ifx\WaveRowDraw\WaveDrawB\else
+    \def\pgfmathresult{}\fi\fi}}}
+\begin{tikzpicture}
+\begin{loglogaxis}[
+  width=0.96\columnwidth,height=0.86\columnwidth,
+  xmin=0.009,xmax=1,ymin=0.009,ymax=1,
+  xlabel={Recursive 3-D displacement RMS (m)},
+  ylabel={Wave-output 3-D displacement RMS (m)},
+  tick label style={font=\scriptsize},label style={font=\footnotesize},
+  grid=major,grid style={black!12},unbounded coords=discard,filter discard warning=false,
+  legend style={at={(0.03,0.97)},anchor=north west,font=\scriptsize,draw=none},
+  legend cell align=left]
+\addplot[gray,dashed,forget plot] coordinates {(0.009,0.009) (1,1)};
+\addplot[only marks,mark=o,blue!70!black,reserved sea=following]
+  table[col sep=comma,x=parent_3d_m,y=ou3_3d_m]
+  {../../reports/results/startup_learning/ou3_wave_motion/paired-rms.csv};
+\addlegendentry{Following seas}
+\addplot[only marks,mark=triangle,orange!70!black,reserved sea=head]
+  table[col sep=comma,x=parent_3d_m,y=ou3_3d_m]
+  {../../reports/results/startup_learning/ou3_wave_motion/paired-rms.csv};
+\addlegendentry{Head seas}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Two reserved sensor draws on the same 16 wave records. Each of
+the 32 points falls below the equal-error line. The axes use identical
+logarithmic ranges to show the low and rough seas together.}
+\label{fig:ou3-wave-readout-pairs}
+\end{figure}
+
+On the two reserved draws, pooled 3-D displacement RMS fell from
+0.433 to 0.349 m (19.39\%, Fig.~\ref{fig:ou3-wave-readout-pairs}).
+Eight rough-sea replays with simulated engine vibration gave 0.879 and
+0.711 m. In the low--high--low transition, following-sea RMS fell from
+0.407 to 0.350 m and head-sea RMS from 0.333 to 0.265 m.
+The wave records are shared across sensor draws. The numerical comparison
+and its reproduction settings are available with the
+\href{https://github.com/bareboat-necessities/ocean-imu/tree/fee96e2b3be2d3d9d67b654f76ebea92b291df57/reports/results/startup_learning/ou3_wave_motion}{paired replay data}.
+
+% BEGIN paired production wave phase study
+\paragraph{Independent phase and sensor draws}
+Each sea direction has ten draws on four JONSWAP records, four PM--Stokes records
+and one changing-sea record. We compared the estimator on \texttt{main} at
+\texttt{cee633f} with the production filter using byte-identical generated inputs.
+Table~\ref{tab:ou3-production-phase} pools the per-record 3-D displacement RMS
+over equal $300$--$1200$ s windows. The last column counts draws with lower 3-D RMS.
+\begin{table}[t]\centering\footnotesize
+\caption{Matched phase-study 3-D displacement RMS in metres. Each direction has 90 candidate draws per estimator.}
+\label{tab:ou3-production-phase}\setlength{\tabcolsep}{3.3pt}
+\begin{tabular}{@{}llrrrr@{}}\toprule
+Seas & Filter & Pairs & Main & Production & Lower \\ \midrule
+Following & OU--III & 90 & 0.507 & 0.409 & 90 \\
+Following & TFG & 90 & 0.487 & 0.312 & 90 \\
+Head & OU--III & 90 & 0.390 & 0.323 & 90 \\
+Head & TFG & 90 & 0.399 & 0.319 & 90 \\
+\bottomrule\end{tabular}\end{table}
+The \href{https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501540}{directional archives} and the independent \href{https://github.com/bareboat-necessities/ocean-imu/blob/73e14dfe0eb4c21575259c13df08b2ea7372c92d/reports/results/tfg_comparison/raw_runs.csv}{following-sea companion} retain the results and input hashes.
+% END paired production wave phase study

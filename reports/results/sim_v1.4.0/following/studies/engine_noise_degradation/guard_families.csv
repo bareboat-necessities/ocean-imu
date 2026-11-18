@@ -3,95 +3,95 @@ OU-II,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.031683
 OU-II,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0316835,0.773668,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795507 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.082925
 OU-II,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.132904,104.657,
 OU-II,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0327269,1.28162,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.119271
-OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.171969,0.847125,
-OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.171969,0.847125,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,7.96648,103.719,
-OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.17916,4.39371,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
-OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.455469,0.908633,
-OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.455469,0.908633,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,38.6993,104.097,
-OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.469942,4.24063,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
-OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,1.05656,0.842739,
-OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,1.05656,0.842739,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,96.8809,104.143,
-OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,1.12175,3.78765,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.171968,0.848559,
+OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.171968,0.848559,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,7.96163,103.714,
+OU-II,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.179158,4.39123,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.455466,0.909565,
+OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.455466,0.909565,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,38.7545,104.201,
+OU-II,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.469944,4.24257,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,1.05655,0.843381,
+OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,1.05655,0.843381,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,96.4239,103.993,
+OU-II,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,1.12169,3.77807,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
 OU-II,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0300618,0.724311,
 OU-II,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0300618,0.724311,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795509 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.082925
 OU-II,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.128768,104.752,
 OU-II,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0310696,1.46251,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.119271
-OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.169247,0.810793,
-OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.169247,0.810793,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,8.19448,103.648,
-OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.175707,4.49379,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
-OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.449063,0.9067,
-OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.449063,0.9067,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,33.0593,103.777,
-OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.464366,4.03171,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
-OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,1.03447,0.791193,
-OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,1.03447,0.791193,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,78.3789,104.14,
-OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,1.09378,3.41801,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
-OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0375667,0.660431,
-OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0375667,0.660431,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795507 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.117754
-OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.0666797,6.5396,
-OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0432899,0.395209,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.145653
-OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.158792,0.629802,
-OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.158792,0.629802,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
-OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,2.34941,104.242,
-OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.169611,3.20604,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.399368,0.803247,
-OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.399368,0.803247,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
-OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,20.0665,104.357,
-OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.426488,5.53804,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.879068,0.623357,
-OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.879068,0.623357,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
-OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,100.131,103.671,
-OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.946264,5.90868,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0356431,0.606504,
-OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0356431,0.606504,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795509 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.117754
-OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.0648308,6.81834,
-OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.040988,0.429403,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.145653
-OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.153655,0.567402,
-OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.153655,0.567402,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
-OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,2.93489,104.172,
-OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.167976,3.80661,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.390932,0.784156,
-OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.390932,0.784156,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
-OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,18.1116,103.474,
-OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.423252,5.63484,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.864667,0.559715,
-OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.864667,0.559715,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,264.022,101.886,
-OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.937036,5.80127,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
-TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0333754,0.731694,
-TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0333754,0.731694,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795507 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.709227,58.8382,
-TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0329861,0.411838,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
-TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.145282,0.912314,
-TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.145282,0.912314,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,6.64555,103.827,
-TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.159376,1.17904,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
-TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.367912,0.556454,
-TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.367912,0.556454,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,27.1181,103.877,
-TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.395941,2.06564,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952269
-TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.856124,0.446146,
-TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.856124,0.446146,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,193.563,104.15,
-TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.939208,3.25535,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
-TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0313881,0.709549,
-TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0313881,0.709549,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795509 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.654624,62.8954,
-TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0308353,0.487009,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
-TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.14207,0.86295,
-TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.14207,0.86295,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,4.57276,103.569,
-TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.157172,1.24571,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952269
-TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.363519,0.465536,
-TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.363519,0.465536,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,26.9488,103.982,
-TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.407958,2.48315,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
-TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.84856,0.428741,
-TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.84856,0.428741,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
-TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,106.362,104.32,
-TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.931566,3.33193,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.169245,0.812103,
+OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.169245,0.812103,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,8.17557,103.584,
+OU-II,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.175704,4.49174,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.449062,0.91014,
+OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.449062,0.91014,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,33.1545,103.671,
+OU-II,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.46437,4.03669,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,1.03446,0.78986,
+OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,1.03446,0.78986,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,78.1039,104.139,
+OU-II,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,1.09372,3.40748,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0881975
+OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0276574,0.660431,
+OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0276574,0.660431,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795507 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.117754
+OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.0541447,6.5396,
+OU-III,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.034953,0.395209,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.145653
+OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.124636,0.631294,
+OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.124636,0.631294,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
+OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,2.31369,103.948,
+OU-III,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.129798,3.20377,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.31201,0.803799,
+OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.31201,0.803799,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
+OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,20.0167,104.319,
+OU-III,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.332628,5.53936,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.699187,0.623919,
+OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.699187,0.623919,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
+OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,323.66,104.608,
+OU-III,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.743825,5.90034,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0260128,0.606504,
+OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0260128,0.606504,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795509 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.117754
+OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.0522764,6.81834,
+OU-III,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0329113,0.429403,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.145653
+OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.120136,0.568437,
+OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.120136,0.568437,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
+OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,2.975,104.058,
+OU-III,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.128175,3.8051,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.307629,0.786799,
+OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.307629,0.786799,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0.0294384
+OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,18.498,103.704,
+OU-III,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.333856,5.63912,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.699897,0.558307,
+OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.699897,0.558307,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,205.407,104.826,
+OU-III,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.751245,5.79267,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0906401
+TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0251261,0.733751,
+TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0251261,0.733751,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795507 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.514157,58.5918,
+TFG,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0245818,0.410083,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.0980927,0.920174,
+TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.0980927,0.920174,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,5.10558,103.863,
+TFG,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.111093,1.09987,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.233182,0.621701,
+TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.233182,0.621701,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795521 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,21.8149,103.594,
+TFG,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.267043,1.98708,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952269
+TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.51096,0.49145,
+TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.51096,0.49145,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795514 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,150.358,104.506,
+TFG,wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.59332,3.1506,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,off,0.0239434,0.714193,
+TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,engine off,guard+R,0.0239434,0.714193,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795509 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,off,0.477893,62.632,
+TFG,wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv,2400 rpm,guard+R,0.0234363,0.481387,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,off,0.0978303,0.870949,
+TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,engine off,guard+R,0.0978303,0.870949,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795511 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,off,3.69106,104.142,
+TFG,wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv,2400 rpm,guard+R,0.111685,1.16288,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952269
+TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,off,0.238158,0.461005,
+TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,engine off,guard+R,0.238158,0.461005,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795529 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,off,21.6135,103.621,
+TFG,wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv,2400 rpm,guard+R,0.288012,2.38413,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268
+TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,off,0.535582,0.436369,
+TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,engine off,guard+R,0.535582,0.436369,cutoff_hz=14 poles=2 engagement=0 out_of_band_rms_mps2=0.00795518 delay_sec=0 racc_gain=0.75 racc_std_mps2=0
+TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,off,76.5194,103.608,
+TFG,wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv,2400 rpm,guard+R,0.618356,3.21498,cutoff_hz=14 poles=2 engagement=1 out_of_band_rms_mps2=0.144302 delay_sec=0.0227364 racc_gain=0.75 racc_std_mps2=0.0952268

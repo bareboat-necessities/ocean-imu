@@ -5,11 +5,11 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "1d266d786dd90cfc096be4dcd3a7bd4a9dd35a63"
+      "git_blob_sha": "67dc66ff2416bb289c5f5a94558b0f83f393e8fc"
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "d9227ef315382d7f5580c69890462960543361c1"
+      "git_blob_sha": "1261cd7d4a83d033c9c4a258d5311f2d981d8a46"
     },
     {
       "path": "src/kalman_common/SeaStateTuning.h",
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "14923576800a4bc2f77c4a4505cdfe92cdbe1350"
+      "git_blob_sha": "5461fc4f31ed76e55860abd850636f920beb86fc"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -45,7 +45,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "1069e92dc9d03a88115f16b1543ff0c8ed9acb9b"
+      "git_blob_sha": "4ba78d0b1b130ca4f0b932d603abe12adf0f5e47"
     },
     {
       "path": "src/kalman_common/GyroInterval.h",
@@ -78,6 +78,14 @@
     {
       "path": "src/util/MagneticRotation.h",
       "git_blob_sha": "e3366073a66d000a50197cc1cbd614e0e6179d10"
+    },
+    {
+      "path": "src/kalman_common/WaveStartup.h",
+      "git_blob_sha": "ba4179db9c41375a589706bb0d647c756946418c"
+    },
+    {
+      "path": "src/kalman_ou_iii/HorizontalWaveBand.h",
+      "git_blob_sha": "c653880ae852b924510f48464be8f7e21ff9910e"
     }
   ],
   "semantic_bindings": {
@@ -85,7 +93,7 @@
     "accelerometer_bias_estimate_projection_radius_mps2": 0.4,
     "magnetometer_acceptance": "lastMagDiag().accepted becomes true only after the correction is actually applied",
     "magnetic_attempt_counter": "the wrapper counts forwarded attempts and applied corrections separately; only applied corrections advance the release count and its 1-s clock, and neither count is an informative-service certificate",
-    "live_handoff": "the certified tail inherits the actual reached execution",
+    "live_handoff": "The tail inherits the actual reached execution, including accepted wave attitude, magnetic field, body gyro bias and gyro interval history, or the guarded proxy fallback.",
     "accel_bias_release": "release enables estimator bias dynamics and does not reset physical accelerometer bias",
     "magnetic_information_covariance": "lastMagDiag().S records the actual innovation covariance factored by an applied shipping magnetometer correction and is the covariance used by MAGNETIC SERVICE whitening",
     "joint_bias_prediction": "z=[e_b;b_true] uses [[phi_e I,(1-phi_e) I],[0,I]] with one shared physical-increment column [I;I]. Corrections and projection are separate operations.",
@@ -163,7 +171,7 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "8db1dacaedb0ef388cbfefd84cc0d831796720e6"
+      "git_blob_sha": "69a50dd840b787ff3a0d37ee7cfa3b1444cd2756"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
@@ -203,7 +211,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "8a585d9c5f67e75319912768ecb657cbdf4d9f35"
+      "git_blob_sha": "2b9185220a8ef32c34cadd73c0a11a690ca5ded2"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -235,7 +243,7 @@
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "git_blob_sha": "9d6791587afc91db725c7334f4370dae5ec64eb9"
+      "git_blob_sha": "1e9749f57093409bbb70fbcb9c949392f430a214"
     },
     {
       "path": "reports/results/ou3_stability/aggregate-floor-certificate.json",
@@ -251,7 +259,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "8c4cf7e269eb6aa90ad0ceee4158808f1ec437e3"
+      "git_blob_sha": "de08af2af0d74b09ac5cdf1b53d653600192b1e5"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -259,11 +267,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "744330847a656bd2eee485634c163f6ebdef1eeb"
+      "git_blob_sha": "30f3161896254ad2ca6b562e528631183f025526"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "cb7462ce2c18e92da1ba879865fdb552be4ce5de"
+      "git_blob_sha": "b70b9d5a28a353880b3dc4b80eb4b34d012faa8a"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -275,7 +283,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "1ff1ad78533e0a33a62165d1415a47e64c044fa0"
+      "git_blob_sha": "3128bcd8da2f591557c5e4950c3b4f90c65086b2"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -287,11 +295,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "52c6754d3c7b3452d36bb48fa0e7334e1d75b23a"
+      "git_blob_sha": "8ae87f0b90bbede855fde821742248e6c62206f0"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "ef83b97a294ff8ba11284ae2bb8e1fa763661781"
+      "git_blob_sha": "86a8fa853264a03922b003e23558d93a8f7a0be5"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -315,7 +323,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "5c7f73bd6d8f74332109266b6a607ff8db8529ff"
+      "git_blob_sha": "e446bacce71c5836e308bf48cdce51b808c205a8"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -799,15 +807,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "014fa0913f696b35a1abe2fc74f97c40800090df"
+      "git_blob_sha": "b4f53c350cc81605784f4595c25dc28e2be2ebeb"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
-      "git_blob_sha": "d9214c99e5339ac7a4267a73ff7f1b23af11f4de"
+      "git_blob_sha": "eeaa41e2351fe3589cface018c97ac2b98c60f40"
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "8bd81633e4fd8d9e4d048bd89a17869faeb15b6d"
+      "git_blob_sha": "339b9115d1cc3758b6d60572798ce88ebdfbd25a"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -875,7 +883,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "4a1ed6e5da1d0185d365ec78f7f89008adaacc26"
+      "git_blob_sha": "e021dbaf15f586979b7f5644a84e1442954e0735"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -891,7 +899,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "721f378ba2990e8667bfc8f3d79e28804b726713"
+      "git_blob_sha": "fa0133df9e8a4c5ced42c347fa9fe7815d1749c7"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -935,7 +943,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_causal_calculus.py",
-      "git_blob_sha": "825ce47ca4c1062cda2608a09ad3935ee31d5528"
+      "git_blob_sha": "7821045108d1013940cccc6fdbfef363cf04a61c"
     },
     {
       "path": "tests/validation/test_ou3_planar_causal_calculus.py",
@@ -955,7 +963,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-causal-calculus-certificate.json",
-      "git_blob_sha": "c5e0dda9adc7b4ec1f6ef4a690765ae156340ecb"
+      "git_blob_sha": "5fd748342e138a76bee37578a26f63c97f33c1d0"
     },
     {
       "path": "reports/results/ou3_stability/planar-mean-covariance-ports.json",
@@ -1916,5 +1924,111 @@
     "genuine_shipping_counterexample_found": false,
     "theorem_promoted": false,
     "next_falsifiable_check": "source-bound exact reproduction, all native tests and default-flag embedded linking"
+  },
+  "wave_startup_runtime_source_refresh": {
+    "runtime_source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
+    "receipt": "reports/results/ou3_stability/wave-startup-runtime-source-refresh.json",
+    "sha256": "ed8ded7326719f5167bed16a4fdab6afd66983c8ad61aa6321f4104913f5bad7",
+    "genuine_shipping_counterexample_found": false,
+    "theorem_promoted": false
+  },
+  "tfg_horizontal_integral_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+    "runtime_src_git_tree": "5c74c92f17ccca4f0f197d30edc91ef52e411ae5",
+    "prior_native_runtime": "68f097807af2a070711c77288ca07ec136f6377a",
+    "prior_native_receipt_sha256": "ed8ded7326719f5167bed16a4fdab6afd66983c8ad61aa6321f4104913f5bad7",
+    "changed_files_outside_ou3_probe": [
+      "src/kalman_tfg/Kalman3D_Wave_TFG.h",
+      "src/kalman_tfg/SeaStateFusionFilter_TFG.h"
+    ],
+    "prior_source_files_verified": 376,
+    "unchanged_probe_project_dependencies": 46,
+    "compiler_sha256": "6b3696e4dcb85e1c949c732a02befa50e3983ecf94ce7e8e58d9d503b954b79d",
+    "compiler_options": [
+      "-std=c++20",
+      "-O1",
+      "-DEIGEN_UNROLLING_LIMIT=0",
+      "-DEIGEN_NON_ARDUINO"
+    ],
+    "preprocessor_path_mapping": "Map selected source path to previous build path for __FILE__ strings only.",
+    "identical_preprocessed_bytes": 4944078,
+    "preprocessed_sha256": "0eb981ace20fdb6266b46a98fd82c4868d61ca4f1632519bc7561d7de8aadc43",
+    "native_probe_binary_sha256": "14b6a3848c3237c33a4145d23b7011c3ed4103df82c4fb9f568117519d5116ef",
+    "native_replay_performed": true,
+    "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+    "artifact_sha256": "d4f64744795bfea92996b757510107ef785531dd4166cc8dcffa5a50572eeedd",
+    "reproduced_native_secant_matrices": [
+      {
+        "epsilon": 0.01,
+        "columns": 252,
+        "sha256": "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50"
+      },
+      {
+        "epsilon": 0.005,
+        "columns": 252,
+        "sha256": "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+      }
+    ],
+    "other_native_records_verified": 16,
+    "genuine_shipping_counterexample_found": false,
+    "theorem_closed": false,
+    "ou3_validation_tests_passed": 824,
+    "workflow_contract_tests_passed": 24
+  },
+  "carma_startup_gyro_mode_source_refresh": {
+    "runtime_source_commit": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+    "receipt": "reports/results/ou3_stability/carma-startup-gyro-mode-source-refresh.json",
+    "sha256": "e7c90464fc3b853b430760bdc0fc2aca16aedf0155e4ef8382bb6c95fadea9af",
+    "native_calculations": 17,
+    "theorem_promoted": false
+  },
+  "tfg_carma_transverse_period_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "4b6d7fc999521713018358ff454b350ae07ea960",
+    "runtime_src_git_tree": "f8bb78f738fbd62eeeff803e74d34dcb0a289aac",
+    "previous_native_source": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+    "prior_native_receipt": "reports/results/ou3_stability/carma-startup-gyro-mode-source-refresh.json",
+    "prior_native_receipt_sha256": "e7c90464fc3b853b430760bdc0fc2aca16aedf0155e4ef8382bb6c95fadea9af",
+    "prior_source_files_verified": 376,
+    "changed_files_outside_ou3_probe": [
+      "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
+      "src/kalman_carma/SeaStateFusionFilter_CARMA3.h"
+    ],
+    "unchanged_probe_project_dependencies": 46,
+    "compiler_sha256": "6b3696e4dcb85e1c949c732a02befa50e3983ecf94ce7e8e58d9d503b954b79d",
+    "compiler_options": [
+      "-std=c++20",
+      "-O1",
+      "-DEIGEN_UNROLLING_LIMIT=0",
+      "-DEIGEN_NON_ARDUINO"
+    ],
+    "preprocessor_path_mapping": "Map selected source path to previous build path for __FILE__ strings only.",
+    "identical_preprocessed_bytes": 4944307,
+    "preprocessed_sha256": "4837258da762f2600f07f1b7404feaf19880cc40826299d10437e14309eba9cd",
+    "native_probe_binary_sha256": "14b6a3848c3237c33a4145d23b7011c3ed4103df82c4fb9f568117519d5116ef",
+    "native_replay_performed": true,
+    "reproduced_native_secant_matrices": [
+      {
+        "epsilon": 0.01,
+        "columns": 252,
+        "raw_matrix_sha256": "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50"
+      },
+      {
+        "epsilon": 0.005,
+        "columns": 252,
+        "raw_matrix_sha256": "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+      }
+    ],
+    "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+    "artifact_sha256": "94bc9d82f1d90f34e648eff839d4a867d967dee39259ae2551240fe7669a142c",
+    "other_native_records_verified": 16,
+    "genuine_shipping_counterexample_found": false,
+    "theorem_closed": false
+  },
+  "horizontal_wave_output_refresh": {
+    "runtime_source_commit": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+    "receipt": "reports/results/ou3_stability/horizontal-wave-output-source-refresh.json",
+    "sha256": "d235b5010f996185412bc6b35e59319933f5357ae4321328f15d43f5f9937b31"
   }
 }

@@ -1,0 +1,254 @@
+[
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "yaw_rms_deg",
+    "actual": 0.8022818582982103,
+    "limit": 1.87150000890395,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "tilt_rms_deg",
+    "actual": 0.33271498447504344,
+    "limit": 0.9050710089881645,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "bg_rms_dps",
+    "actual": 0.024445643899170522,
+    "limit": 0.053686961032029724,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_yaw_deg",
+    "actual": 1.387298584,
+    "limit": 2.0,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_tilt_deg",
+    "actual": 0.5735168696,
+    "limit": 1.0,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "bg_rms_dps",
+    "actual": 0.01973229141894757,
+    "limit": 0.04,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "yaw_rms_deg",
+    "actual": 1.8756506217513293,
+    "limit": 2.119820922818313,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "tilt_rms_deg",
+    "actual": 0.3700855881344463,
+    "limit": 0.9050710215282031,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "bg_rms_dps",
+    "actual": 0.02467148857887444,
+    "limit": 0.053686961032029724,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "yaw_rms_deg",
+    "actual": 1.8571956085627668,
+    "limit": 2.5,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_tilt_deg",
+    "actual": 0.7427552217,
+    "limit": 1.0,
+    "passed": true
+  },
+  {
+    "case": "following",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "bg_rms_dps",
+    "actual": 0.02054623696484566,
+    "limit": 0.04,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "yaw_rms_deg",
+    "actual": 0.9655251926042122,
+    "limit": 2.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "tilt_rms_deg",
+    "actual": 0.4080740517070282,
+    "limit": 1.156686363479072,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "matched",
+    "metric": "bg_rms_dps",
+    "actual": 0.02505340742655526,
+    "limit": 0.05353391152090524,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_yaw_deg",
+    "actual": 1.54486084,
+    "limit": 2.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_tilt_deg",
+    "actual": 0.6100849684,
+    "limit": 1.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "calibrated",
+    "method": "joint",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "bg_rms_dps",
+    "actual": 0.022782387428350783,
+    "limit": 0.04,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "yaw_rms_deg",
+    "actual": 1.639611952432618,
+    "limit": 2.5,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "tilt_rms_deg",
+    "actual": 0.4368979373047921,
+    "limit": 1.1566863340775064,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "matched",
+    "metric": "bg_rms_dps",
+    "actual": 0.021894471540492618,
+    "limit": 0.05353391152090524,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "yaw_rms_deg",
+    "actual": 1.6440428682428125,
+    "limit": 2.5,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "worst_tilt_deg",
+    "actual": 0.6050216822,
+    "limit": 1.0,
+    "passed": true
+  },
+  {
+    "case": "head",
+    "profile": "residual",
+    "method": "joint_cal",
+    "schedule": "fixed",
+    "horizon_s": 35,
+    "metric": "bg_rms_dps",
+    "actual": 0.018579883240014108,
+    "limit": 0.04,
+    "passed": true
+  }
+]

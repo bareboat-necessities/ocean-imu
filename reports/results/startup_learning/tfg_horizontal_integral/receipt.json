@@ -1,0 +1,1097 @@
+{
+  "source": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
+  "before_source": "68f097807af2a070711c77288ca07ec136f6377a",
+  "input_release": "v1.4.0",
+  "input_sha256": {
+    "following": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "head": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+    }
+  },
+  "system_math_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "source_binary_sha256": "a937d9adbe0d2eaa1425a8bb3e64863b047b19552cd4363077e07ff4f8053580",
+  "before_binary_sha256": "127c8cee8aaa2a9bbb4af64d512253d76f7361ba05bd5b327dd4120a29d51bcc",
+  "previous_results": "reports/results/startup_learning/tfg_tilt_uncertainty/ubuntu",
+  "windows": {
+    "early": [
+      40,
+      60
+    ],
+    "late": [
+      300,
+      1200
+    ]
+  },
+  "rows": 160,
+  "default_cases": 64,
+  "interval_cases": 16,
+  "production_logs": 80,
+  "same_scored_values_as_paired_development_binaries": 2880,
+  "out_sha256": {
+    "production-logs.json.gz": "7e8e7cdab55f892ebd4c175a58fe19e13a6883fbada6d61c1c930984e08a3ef9",
+    "paired.csv": "78784baf82a61574f13b8fb80e6c4a6490375373e80582f495acf76017bd97cc"
+  },
+  "pooled": {
+    "default-early-both": {
+      "roll_rms_deg": {
+        "pairs": 64,
+        "before": 1.1008150118521756,
+        "after": 1.1008150118521756,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 64,
+        "before": 2.5657971219699784,
+        "after": 2.5657971219699784,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 64,
+        "before": 6.812196229343953,
+        "after": 6.812196229343953,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 64,
+        "before": 4.855785890973689,
+        "after": 4.855785890973689,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 64,
+        "before": 2.0960785465153524,
+        "after": 2.0960785465153524,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 64,
+        "before": 2.2136371685528506,
+        "after": 2.2136371685528506,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 64,
+        "before": 5.733445014360381,
+        "after": 5.733445014360381,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 64,
+        "before": 0.06663823119788609,
+        "after": 0.06663823119788609,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 64,
+        "before": 0.011586626775262593,
+        "after": 0.011586626775262593,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "default-early-following": {
+      "roll_rms_deg": {
+        "pairs": 32,
+        "before": 1.0139292044391135,
+        "after": 1.0139292044391135,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 32,
+        "before": 3.2734535629862767,
+        "after": 3.2734535629862767,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 32,
+        "before": 8.396018061385798,
+        "after": 8.396018061385798,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 32,
+        "before": 6.325142876799596,
+        "after": 6.325142876799596,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 32,
+        "before": 1.8063275799998828,
+        "after": 1.8063275799998828,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 32,
+        "before": 2.1725485532225792,
+        "after": 2.1725485532225792,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 32,
+        "before": 6.927497333143312,
+        "after": 6.927497333143312,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 32,
+        "before": 0.06663823119788609,
+        "after": 0.06663823119788609,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 32,
+        "before": 0.01456708339148298,
+        "after": 0.01456708339148298,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "default-early-head": {
+      "roll_rms_deg": {
+        "pairs": 32,
+        "before": 1.1813276213750685,
+        "after": 1.1813276213750685,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 32,
+        "before": 1.5656089911568913,
+        "after": 1.5656089911568913,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 32,
+        "before": 4.724289962212249,
+        "after": 4.724289962212249,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 32,
+        "before": 2.6739261070623477,
+        "after": 2.6739261070623477,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 32,
+        "before": 2.350376825118813,
+        "after": 2.350376825118813,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 32,
+        "before": 2.2539768880553854,
+        "after": 2.2539768880553854,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 32,
+        "before": 4.2136165184648835,
+        "after": 4.2136165184648835,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 32,
+        "before": 0.06663823119788609,
+        "after": 0.06663823119788609,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 32,
+        "before": 0.007503327363513124,
+        "after": 0.007503327363513124,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "default-late-both": {
+      "roll_rms_deg": {
+        "pairs": 64,
+        "before": 0.27944646199783757,
+        "after": 0.27753089412691156,
+        "percent": -0.6854865354998907,
+        "better": 47,
+        "worse": 17
+      },
+      "pitch_rms_deg": {
+        "pairs": 64,
+        "before": 0.27995480559789976,
+        "after": 0.2694867463070167,
+        "percent": -3.7391961422224673,
+        "better": 52,
+        "worse": 12
+      },
+      "yaw_rms_deg": {
+        "pairs": 64,
+        "before": 0.8243756229975407,
+        "after": 0.8052829824841888,
+        "percent": -2.3160122619745205,
+        "better": 45,
+        "worse": 19
+      },
+      "disp_x_rms_m": {
+        "pairs": 64,
+        "before": 0.3016599079987795,
+        "after": 0.17356539741408517,
+        "percent": -42.463220066092646,
+        "better": 64,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 64,
+        "before": 0.24484829639144046,
+        "after": 0.16970614684865684,
+        "percent": -30.689267865132862,
+        "better": 64,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 64,
+        "before": 0.14508106422743966,
+        "after": 0.14499108745950215,
+        "percent": -0.06201827124486803,
+        "better": 44,
+        "worse": 20
+      },
+      "disp_3d_rms_m": {
+        "pairs": 64,
+        "before": 0.41472630028778334,
+        "after": 0.28274995782294327,
+        "percent": -31.822515806993714,
+        "better": 64,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 64,
+        "before": 0.06747491355526682,
+        "after": 0.06610123557468964,
+        "percent": -2.035835109965778,
+        "better": 49,
+        "worse": 15
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 64,
+        "before": 0.0001110459321626546,
+        "after": 0.0001098251332720928,
+        "percent": -1.0993638999523547,
+        "better": 64,
+        "worse": 0
+      }
+    },
+    "default-late-following": {
+      "roll_rms_deg": {
+        "pairs": 32,
+        "before": 0.27508114239324655,
+        "after": 0.273376514679484,
+        "percent": -0.6196817778681751,
+        "better": 22,
+        "worse": 10
+      },
+      "pitch_rms_deg": {
+        "pairs": 32,
+        "before": 0.33092661761679804,
+        "after": 0.31417169294880015,
+        "percent": -5.063033245454895,
+        "better": 28,
+        "worse": 4
+      },
+      "yaw_rms_deg": {
+        "pairs": 32,
+        "before": 0.937187956283383,
+        "after": 0.9106128085689135,
+        "percent": -2.835626251521517,
+        "better": 18,
+        "worse": 14
+      },
+      "disp_x_rms_m": {
+        "pairs": 32,
+        "before": 0.34420506204328644,
+        "after": 0.1783139325692308,
+        "percent": -48.195435735106514,
+        "better": 32,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 32,
+        "before": 0.2640206958070068,
+        "after": 0.16177737978489137,
+        "percent": -38.725492980615805,
+        "better": 32,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 32,
+        "before": 0.1590634846840782,
+        "after": 0.15893244710394758,
+        "percent": -0.08238067988443065,
+        "better": 22,
+        "worse": 10
+      },
+      "disp_3d_rms_m": {
+        "pairs": 32,
+        "before": 0.4620446353181309,
+        "after": 0.2884914227398322,
+        "percent": -37.56200144144134,
+        "better": 32,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 32,
+        "before": 0.07355493774499043,
+        "after": 0.0713081204171,
+        "percent": -3.054611147493569,
+        "better": 26,
+        "worse": 6
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 32,
+        "before": 0.00010163600713640117,
+        "after": 9.991795691214246e-05,
+        "percent": -1.6903952375391884,
+        "better": 32,
+        "worse": 0
+      }
+    },
+    "default-late-head": {
+      "roll_rms_deg": {
+        "pairs": 32,
+        "before": 0.28374463051456,
+        "after": 0.28162399686721273,
+        "percent": -0.7473740184974043,
+        "better": 25,
+        "worse": 7
+      },
+      "pitch_rms_deg": {
+        "pairs": 32,
+        "before": 0.21734065452055035,
+        "after": 0.21573678457780357,
+        "percent": -0.737952108538964,
+        "better": 24,
+        "worse": 8
+      },
+      "yaw_rms_deg": {
+        "pairs": 32,
+        "before": 0.6934472367689863,
+        "after": 0.6839193495051125,
+        "percent": -1.373988785111846,
+        "better": 27,
+        "worse": 5
+      },
+      "disp_x_rms_m": {
+        "pairs": 32,
+        "before": 0.2520322904935825,
+        "after": 0.16868324104876112,
+        "percent": -33.070782034155144,
+        "better": 32,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 32,
+        "before": 0.22404117629838785,
+        "after": 0.17728065869228596,
+        "percent": -20.871394436808433,
+        "better": 32,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 32,
+        "before": 0.12959875861631914,
+        "after": 0.12955812650285164,
+        "percent": -0.03135223971379997,
+        "better": 22,
+        "worse": 10
+      },
+      "disp_3d_rms_m": {
+        "pairs": 32,
+        "before": 0.3612624576046073,
+        "after": 0.2768894658583093,
+        "percent": -23.35504007411755,
+        "better": 32,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 32,
+        "before": 0.06078979397820033,
+        "after": 0.060447486726758086,
+        "percent": -0.5630998709503676,
+        "better": 23,
+        "worse": 9
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 32,
+        "before": 0.00011971850380419557,
+        "after": 0.00011890972072530123,
+        "percent": -0.6755706538206785,
+        "better": 32,
+        "worse": 0
+      }
+    },
+    "legacy-early-both": {
+      "roll_rms_deg": {
+        "pairs": 16,
+        "before": 1.03598528110514,
+        "after": 1.03598528110514,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 16,
+        "before": 2.434539809743737,
+        "after": 2.434539809743737,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 16,
+        "before": 5.126235314705577,
+        "after": 5.126235314705577,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 16,
+        "before": 4.901339175290563,
+        "after": 4.901339175290563,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 16,
+        "before": 2.0754629434045904,
+        "after": 2.0754629434045904,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 16,
+        "before": 2.288034587518451,
+        "after": 2.288034587518451,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 16,
+        "before": 5.793597688704465,
+        "after": 5.793597688704465,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 16,
+        "before": 0.0546461977,
+        "after": 0.0546461977,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 16,
+        "before": 0.012015710016160473,
+        "after": 0.012015710016160473,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "legacy-early-following": {
+      "roll_rms_deg": {
+        "pairs": 8,
+        "before": 0.9278243108349322,
+        "after": 0.9278243108349322,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 8,
+        "before": 3.1510462224077447,
+        "after": 3.1510462224077447,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 8,
+        "before": 6.321505439920404,
+        "after": 6.321505439920404,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 8,
+        "before": 6.5030706411720525,
+        "after": 6.5030706411720525,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 8,
+        "before": 1.6269404944629073,
+        "after": 1.6269404944629073,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 8,
+        "before": 2.279324421295802,
+        "after": 2.279324421295802,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 8,
+        "before": 7.080408310295584,
+        "after": 7.080408310295584,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 8,
+        "before": 0.0546461977,
+        "after": 0.0546461977,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 8,
+        "before": 0.015485838489994694,
+        "after": 0.015485838489994694,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "legacy-early-head": {
+      "roll_rms_deg": {
+        "pairs": 8,
+        "before": 1.133875237209401,
+        "after": 1.133875237209401,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "pitch_rms_deg": {
+        "pairs": 8,
+        "before": 1.3873989601783714,
+        "after": 1.3873989601783714,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 8,
+        "before": 3.5489640708981387,
+        "after": 3.5489640708981387,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 8,
+        "before": 2.3992339732510586,
+        "after": 2.3992339732510586,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 8,
+        "before": 2.442981270163176,
+        "after": 2.442981270163176,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 8,
+        "before": 2.296711721101717,
+        "after": 2.296711721101717,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "disp_3d_rms_m": {
+        "pairs": 8,
+        "before": 4.1230288037583085,
+        "after": 4.1230288037583085,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 8,
+        "before": 0.0546461977,
+        "after": 0.0546461977,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 8,
+        "before": 0.006995954591527667,
+        "after": 0.006995954591527667,
+        "percent": 0.0,
+        "better": 0,
+        "worse": 0
+      }
+    },
+    "legacy-late-both": {
+      "roll_rms_deg": {
+        "pairs": 16,
+        "before": 0.2847198151513421,
+        "after": 0.28255495921638213,
+        "percent": -0.7603460734930678,
+        "better": 13,
+        "worse": 3
+      },
+      "pitch_rms_deg": {
+        "pairs": 16,
+        "before": 0.14842881310460265,
+        "after": 0.14077401819482846,
+        "percent": -5.157216277394616,
+        "better": 13,
+        "worse": 3
+      },
+      "yaw_rms_deg": {
+        "pairs": 16,
+        "before": 0.7190957995946097,
+        "after": 0.7180595239586842,
+        "percent": -0.14410814755275725,
+        "better": 9,
+        "worse": 7
+      },
+      "disp_x_rms_m": {
+        "pairs": 16,
+        "before": 0.30774964857080417,
+        "after": 0.17856748509337797,
+        "percent": -41.97638050192774,
+        "better": 16,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 16,
+        "before": 0.24732769653411898,
+        "after": 0.1717086498196489,
+        "percent": -30.574435364151952,
+        "better": 16,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 16,
+        "before": 0.13662166649394544,
+        "after": 0.13659039018578462,
+        "percent": -0.022892641382188383,
+        "better": 11,
+        "worse": 5
+      },
+      "disp_3d_rms_m": {
+        "pairs": 16,
+        "before": 0.4177874023983577,
+        "after": 0.28289069015506546,
+        "percent": -32.28836280579591,
+        "better": 16,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 16,
+        "before": 0.05326736716946614,
+        "after": 0.052609725890403386,
+        "percent": -1.2346044379676457,
+        "better": 14,
+        "worse": 2
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 16,
+        "before": 0.00010750056692009053,
+        "after": 0.00010604588867684876,
+        "percent": -1.3531819272386558,
+        "better": 16,
+        "worse": 0
+      }
+    },
+    "legacy-late-following": {
+      "roll_rms_deg": {
+        "pairs": 8,
+        "before": 0.330226342514954,
+        "after": 0.32732358946742685,
+        "percent": -0.8790192282724041,
+        "better": 7,
+        "worse": 1
+      },
+      "pitch_rms_deg": {
+        "pairs": 8,
+        "before": 0.1318835603625147,
+        "after": 0.12282868273153459,
+        "percent": -6.865812240805846,
+        "better": 5,
+        "worse": 3
+      },
+      "yaw_rms_deg": {
+        "pairs": 8,
+        "before": 0.6676816629299498,
+        "after": 0.6814320157359725,
+        "percent": 2.0594174693495004,
+        "better": 1,
+        "worse": 7
+      },
+      "disp_x_rms_m": {
+        "pairs": 8,
+        "before": 0.3526046680219531,
+        "after": 0.18511000800502045,
+        "percent": -47.5021107793458,
+        "better": 8,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 8,
+        "before": 0.2718401580053804,
+        "after": 0.17036441497552035,
+        "percent": -37.329195132329055,
+        "better": 8,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 8,
+        "before": 0.14726119559473788,
+        "after": 0.1471994353294712,
+        "percent": -0.04193926649669333,
+        "better": 6,
+        "worse": 2
+      },
+      "disp_3d_rms_m": {
+        "pairs": 8,
+        "before": 0.4689487999744824,
+        "after": 0.2914745688485586,
+        "percent": -37.84511894167998,
+        "better": 8,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 8,
+        "before": 0.05910789751811629,
+        "after": 0.05846844119131969,
+        "percent": -1.0818458338847314,
+        "better": 6,
+        "worse": 2
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 8,
+        "before": 0.00010579788752722068,
+        "after": 0.00010383541351802864,
+        "percent": -1.854927404563833,
+        "better": 8,
+        "worse": 0
+      }
+    },
+    "legacy-late-head": {
+      "roll_rms_deg": {
+        "pairs": 8,
+        "before": 0.23039381282670143,
+        "after": 0.2292027001012469,
+        "percent": -0.516989892584685,
+        "better": 6,
+        "worse": 2
+      },
+      "pitch_rms_deg": {
+        "pairs": 8,
+        "before": 0.1633063122643735,
+        "after": 0.1566772577493996,
+        "percent": -4.059276351940544,
+        "better": 8,
+        "worse": 0
+      },
+      "yaw_rms_deg": {
+        "pairs": 8,
+        "before": 0.7670715318510517,
+        "after": 0.7529072770438294,
+        "percent": -1.8465363683934366,
+        "better": 8,
+        "worse": 0
+      },
+      "disp_x_rms_m": {
+        "pairs": 8,
+        "before": 0.2551267145557971,
+        "after": 0.17177595408417554,
+        "percent": -32.67033819517653,
+        "better": 8,
+        "worse": 0
+      },
+      "disp_y_rms_m": {
+        "pairs": 8,
+        "before": 0.22010203870331668,
+        "after": 0.17304244264290286,
+        "percent": -21.3808088001616,
+        "better": 8,
+        "worse": 0
+      },
+      "disp_z_rms_m": {
+        "pairs": 8,
+        "before": 0.12508037329323118,
+        "after": 0.12508475375078532,
+        "percent": 0.003502114231679343,
+        "better": 5,
+        "worse": 3
+      },
+      "disp_3d_rms_m": {
+        "pairs": 8,
+        "before": 0.35941570667964334,
+        "after": 0.27403806463220637,
+        "percent": -23.754566219760765,
+        "better": 8,
+        "worse": 0
+      },
+      "accel_bias_3d_rms_mps2": {
+        "pairs": 8,
+        "before": 0.046702047720858016,
+        "after": 0.046010954143377115,
+        "percent": -1.4797928810565741,
+        "better": 8,
+        "worse": 0
+      },
+      "gyro_bias_3d_rms_radps": {
+        "pairs": 8,
+        "before": 0.00010917669518289737,
+        "after": 0.00010821121896580409,
+        "percent": -0.8843244572258491,
+        "better": 8,
+        "worse": 0
+      }
+    }
+  },
+  "direct_main_evidence": {
+    "evidence_commit": "da0ded944f2ef71f453eefc83d470b18b32d0f01",
+    "scores_path": "reports/results/startup_learning/tfg_main_comparison/scores.csv.gz",
+    "scores_sha256": "98ebe9071fc7facc8450d920ebd123046e2319d3d99a356e731df7d7e1c928fc",
+    "matching_control_cells": 1152,
+    "pooled": {
+      "early": {
+        "roll_rms_deg": {
+          "cases": 64,
+          "main": 1.1650358144047044,
+          "selected": 1.1008150118521756,
+          "percent": -5.512345780146132,
+          "lower": 39,
+          "higher": 19
+        },
+        "pitch_rms_deg": {
+          "cases": 64,
+          "main": 2.615686164334009,
+          "selected": 2.5657971219699784,
+          "percent": -1.9073022996523248,
+          "lower": 48,
+          "higher": 10
+        },
+        "yaw_rms_deg": {
+          "cases": 64,
+          "main": 6.95675788814878,
+          "selected": 6.812196229343953,
+          "percent": -2.078003304543574,
+          "lower": 45,
+          "higher": 13
+        },
+        "disp_x_rms_m": {
+          "cases": 64,
+          "main": 4.960860604070462,
+          "selected": 4.855785890973689,
+          "percent": -2.118074291596872,
+          "lower": 47,
+          "higher": 11
+        },
+        "disp_y_rms_m": {
+          "cases": 64,
+          "main": 2.200045220648398,
+          "selected": 2.0960785465153524,
+          "percent": -4.725660779936359,
+          "lower": 37,
+          "higher": 21
+        },
+        "disp_z_rms_m": {
+          "cases": 64,
+          "main": 2.2328148165601167,
+          "selected": 2.2136371685528506,
+          "percent": -0.8589000693219662,
+          "lower": 46,
+          "higher": 12
+        },
+        "disp_3d_rms_m": {
+          "cases": 64,
+          "main": 5.868202327222084,
+          "selected": 5.733445014360381,
+          "percent": -2.296398545029299,
+          "lower": 50,
+          "higher": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "cases": 64,
+          "main": 0.06663823119788609,
+          "selected": 0.06663823119788609,
+          "percent": 0.0,
+          "lower": 0,
+          "higher": 0
+        },
+        "gyro_bias_3d_rms_radps": {
+          "cases": 64,
+          "main": 0.011962859509212713,
+          "selected": 0.011586626775262593,
+          "percent": -3.145006707304221,
+          "lower": 48,
+          "higher": 10
+        }
+      },
+      "late": {
+        "roll_rms_deg": {
+          "cases": 64,
+          "main": 0.2806436858645087,
+          "selected": 0.27753089412691156,
+          "percent": -1.1091615077703842,
+          "lower": 48,
+          "higher": 16
+        },
+        "pitch_rms_deg": {
+          "cases": 64,
+          "main": 0.28354016670225857,
+          "selected": 0.2694867463070167,
+          "percent": -4.956412545951261,
+          "lower": 52,
+          "higher": 12
+        },
+        "yaw_rms_deg": {
+          "cases": 64,
+          "main": 0.8305873177319557,
+          "selected": 0.8052829824841888,
+          "percent": -3.0465593090036824,
+          "lower": 46,
+          "higher": 18
+        },
+        "disp_x_rms_m": {
+          "cases": 64,
+          "main": 0.30157346791118467,
+          "selected": 0.17356539741408517,
+          "percent": -42.44672828274094,
+          "lower": 64,
+          "higher": 0
+        },
+        "disp_y_rms_m": {
+          "cases": 64,
+          "main": 0.24534571851186002,
+          "selected": 0.16970614684865684,
+          "percent": -30.829790763007246,
+          "lower": 64,
+          "higher": 0
+        },
+        "disp_z_rms_m": {
+          "cases": 64,
+          "main": 0.1450934530509393,
+          "selected": 0.14499108745950215,
+          "percent": -0.07055148890915408,
+          "lower": 42,
+          "higher": 22
+        },
+        "disp_3d_rms_m": {
+          "cases": 64,
+          "main": 0.4149616735089323,
+          "selected": 0.28274995782294327,
+          "percent": -31.861187219533203,
+          "lower": 64,
+          "higher": 0
+        },
+        "accel_bias_3d_rms_mps2": {
+          "cases": 64,
+          "main": 0.06807022013051066,
+          "selected": 0.06610123557468964,
+          "percent": -2.89257850502892,
+          "lower": 53,
+          "higher": 11
+        },
+        "gyro_bias_3d_rms_radps": {
+          "cases": 64,
+          "main": 0.0001110854543704191,
+          "selected": 0.0001098251332720928,
+          "percent": -1.13455096841365,
+          "lower": 64,
+          "higher": 0
+        }
+      }
+    }
+  }
+}

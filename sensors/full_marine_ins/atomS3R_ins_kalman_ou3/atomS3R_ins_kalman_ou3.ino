@@ -587,7 +587,7 @@ private:
     const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
     rot_.update(w_world.z(), dt_);
 
-    const Vector3f velocity_ned_mps = fusion_.raw().mekf().get_velocity();
+    const Vector3f velocity_ned_mps = fusion_.raw().waveMotionNed().velocity;
     heave_speed_mps_ = -velocity_ned_mps.z();
 
     const Vector3f displacement_raw_up_m = fusion_.displacementUpMeters();

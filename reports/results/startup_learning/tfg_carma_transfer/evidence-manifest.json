@@ -1,0 +1,70 @@
+{
+  "source": "85e7284972e4dc046bdc34cbcb4f044fbbc2a4ab",
+  "src_tree": "4c1b9ede3db64a5309386ade7870afc093aa7599",
+  "verified_native_replays": 1856,
+  "reserved_native_replays": 832,
+  "discovery_native_replays": 1024,
+  "official_hosted_control_scores": 576,
+  "files": {
+    "README.md": {
+      "sha256": "ea31560d9e5d40019dbdc7247d054b1d8d3c15179e8404b48dfe660d4a6b05e4",
+      "bytes": 7024
+    },
+    "independent-seeds.md": {
+      "sha256": "1dc2fc1da0888cf87f0f776bb630477999790cbaa269ce78f2a75864110af562",
+      "bytes": 11157
+    },
+    "late-bias-axes.csv.gz": {
+      "sha256": "01cba3691bf30cfc510ad81cbfa4373c875217ef59ca67c267af69f00134bea8",
+      "bytes": 60733
+    },
+    "pooled-bias-axes.csv.gz": {
+      "sha256": "8cd75f1af34d6ec5da583b31f4f01fe1eb178ee9d1d3bdbfc0b24d4c2a170070",
+      "bytes": 38847
+    },
+    "pooled-rms.csv.gz": {
+      "sha256": "27008c7ac765bd1c1f8770b53a3ef1311e0b2886355d68752b447b1ca1cc27d7",
+      "bytes": 184615
+    },
+    "reserved-record-rms.csv.gz": {
+      "sha256": "3f8bb8bdcb1a3cfb5a03a3b659ec8d883f43dd695d049d09bf6f8104e60af658",
+      "bytes": 92103
+    },
+    "shipping-main-comparison.json": {
+      "sha256": "37c0c2638a7c8d1cbf54849e01dd3b638ac7f7b80b8351da991fbf51d8969253",
+      "bytes": 33887
+    },
+    "study-summary.json": {
+      "sha256": "97267deccde6f2ff00e660dc8ca0b0639677b2b0a74219246c307248e324514b",
+      "bytes": 238690
+    },
+    "study.tar.gz": {
+      "sha256": "652381146e514bbe1a6ea5fb92c3076b1e8d50d31aee7c95363020d3a0932d4f",
+      "bytes": 292784
+    },
+    "tcarma-additional-logs.tar.gz": {
+      "sha256": "bddd7b4321e9fa6288e472e78cff51778cef81f92fc5c67b26d64410335a0ce4",
+      "bytes": 282756
+    },
+    "tcarma-default-logs.tar.gz": {
+      "sha256": "f78c443794c2d92cc59e645da34f47d62cd30f7a112ff52274618a9588b521af",
+      "bytes": 288451
+    },
+    "tcarma-reserved-logs.tar.gz": {
+      "sha256": "ef365d0a59b652451355f54b51a266ffec657642dd2371b7e45593bdb8ba6baf",
+      "bytes": 493939
+    },
+    "tcsm-additional-logs.tar.gz": {
+      "sha256": "3ea6f57183b14f030a3e9d3351a4377011e2903e2c67e977f629ccd19de2f9cc",
+      "bytes": 296564
+    },
+    "tcsm-default-logs.tar.gz": {
+      "sha256": "380fef8328b8824a4de49f9bc454fa483c661fcb560e4912a5752209ccd34a12",
+      "bytes": 302829
+    },
+    "tcsm-reserved-logs.tar.gz": {
+      "sha256": "8efa591d16679f56adf26fbd9b0f4d83ee7952c9345d1e887e7df41af8d58b8e",
+      "bytes": 494828
+    }
+  }
+}

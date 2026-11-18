@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "pr_commit": "00f1829351418f13768d8c5c01245244714407e2",
+    "native_build_commit": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+    "src_tree": "4c1b9ede3db64a5309386ade7870afc093aa7599"
+  },
+  "candidate": {
+    "commit": "4b6d7fc999521713018358ff454b350ae07ea960",
+    "src_tree": "f8bb78f738fbd62eeeff803e74d34dcb0a289aac"
+  },
+  "compiler": "GCC 14.2.0, x86-64-v3",
+  "eigen": "3.4.0",
+  "libm_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "windows": {
+    "record_seconds": 1200,
+    "scored_seconds": 900,
+    "sample_count_per_score": 180000
+  },
+  "pairs": 352,
+  "fixed_draw_gate_pairs": 64,
+  "six_draw_seeds": [
+    "default",
+    7,
+    41,
+    101,
+    203,
+    509
+  ],
+  "additional_seeds": [
+    1063,
+    3559
+  ],
+  "binaries_sha256": {
+    "independent": {
+      "before": [
+        "449a6cb3c9924f4895213cbde5bccfef8999542b6ac4f7d1d765fe4dbef32545"
+      ],
+      "after": [
+        "b092c54edaaadd86c6573acac2353cc149b8bdf2ec7f199c9921cc117cfc6dff"
+      ]
+    },
+    "shared": {
+      "before": [
+        "d1feb809371a172108961712f3a161eaae26b7e5d1fe659bf5d51c6dbb31eef0"
+      ],
+      "after": [
+        "9b04c435ba1fc0b8eee50e660ff96a3fdfed5405d9cccdc77df06b10ab164988"
+      ]
+    }
+  },
+  "paired_csv_sha256": "fa3ccda83c31c17612ba90bcba4e462ec8ee0e4156678ed5e8e74fcec378affe"
+}

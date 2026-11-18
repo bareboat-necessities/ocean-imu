@@ -1,3 +1,129 @@
+## OU-III horizontal wave outputs
+
+The shipping wrapper estimates horizontal wave displacement and velocity using the displacement primitive, velocity and their estimated encounter-band residual variance. The projection reads the current posterior. Its output has no path back into the observer.
+
+- **Structures preserved.** All seventeen native experiments used the production headers. The inherited 21-state trajectory, full covariance, physical forcing, accepted magnetic service and scheduler were carried across each 20-second secant word. Both 252-column secant matrices reproduced their previous bytes. Both unperturbed forks matched their parents.
+- **Relaxations introduced.** The readout models a finite encounter band. The native stability experiments assess the recursive state on their specified trajectories. The empirical wave-output error has finite-replay support.
+- **Failure classification.** Source bindings from the preceding implementation expired (class E). Fresh native streams and the corresponding symbolic certificates supply the new bindings.
+- **Counterexamples.** The replays yielded no new shipping counterexample.
+- **Retained facts.** Finite perturbations have the scope recorded in each report. The end-to-end regional theorem remains open.
+- **Next falsifiable experiment.** Bound horizontal output sensitivity to perturbations of the inherited state, covariance and spectral moments across moving-to-quiet transitions.
+
+The directional manuscript check expected two unavailable axial angles in the eight deterministic records (class E). The two low-wave cases retain measurable axes of 65.0 and 67.3 degrees while travel sense remains unresolved. The correction exercises missing and measured axes on a controlled table and compares all eight published rows with the generated table. The full marine firmware build also receives 75 minutes for its nine sequential sketches after the 45-minute PR job reached eight links. Both job logs and the eight matching link sizes are recorded in the [firmware timing comparison](../reports/results/startup_learning/directional_qualification/nine-sketch-build-timing.json). The native proof continues to bind the same 377 source files and 17 reports.
+
+## Native OU-III replay after the transverse-period CARMA update
+
+The independent-axis and shared-mode TFG-CARMA filters changed at `4b6d7fc`.
+Two of the 376 tracked sources changed. Both are outside the 46 project files
+included by the OU-III planar probe. The source validator rejected the previous
+planar report because it identifies the entire shipping source tree (class E).
+
+- **Structures preserved.** Both perturbation radii carried the inherited OU-III state, covariance, forcing, clocks, and accepted magnetic corrections across samples 40,000–44,000. Each unperturbed fork matched its parent bit for bit.
+- **Relaxations introduced.** The 252 finite perturbation directions at each radius sample a neighborhood of one execution. Their reachability and a uniform derivative bound remain open.
+- **Failure classification.** The expired source binding was a diagnostic failure. An exact comparison of the compiler, options and preprocessed program established that the previous native executable implements the current probe.
+- **Counterexamples.** Neither replay produced a shipping counterexample.
+- **Retained results.** The two newly measured secant matrices matched the prior raw bytes. The other 16 previously measured reports matched their recorded checksums. The finite diagnostics retain their original scope.
+- **Next falsifiable check.** Bound coupled cross-gains and every-prefix retention on reachable continuations of the same inherited state and physical forcing.
+
+## CARMA gyro mode and shared startup evidence
+
+The native configuration test exposed a mismatch when a caller selected instantaneous gyro samples after `begin()`. CARMA's live core accepted the setter while the startup wave fit retained its earlier timing. The shared startup now reads CARMA's active core mode. Four configuration and setter comparisons matched sample by sample through handover and bias activation on `218d4ded`.
+
+- **Structures preserved.** The native OU-III runs inherited mean, covariance, gyro history, magnetic state, tuner, scheduler and physical forcing through the live handover. Both planar perturbation radii used 252 columns on the same 4,000-sample history.
+- **Relaxations introduced.** These finite floating-point histories sample the reachable set. The interval mean-action factors use their original enclosure and the independently reproduced field and trace.
+- **Failure classification.** The sampling regression and the three expired proof checks on the changed common header were implementation or diagnostic failures (class E).
+- **Article input (class E).** The layout check found three guard summaries after the two directional studies were published. The manuscript reads the canonical engine-noise study. Selecting its declared output directory restored both figure checks and all 824 OU-III contracts. The 17 native records and both secant matrices retain their original source and numerical results.
+- **Counterexamples.** No native run established a shipping counterexample.
+- **Retained results.** All 17 diagnostic calculations completed. Both secant matrices reproduced byte for byte. Finite capture, uniform dissipation and every-prefix retention remain open.
+- **Next falsifiable check.** Bound coupled handover tilt, local field and gyro bias over both the accepted fits and the fallback starts on a continuing sensor history.
+
+## OU-III native secants after the TFG horizontal velocity correction
+
+The TFG change at `16a4a8d` touched two headers outside the OU-III probe's
+46 project dependencies. Both perturbation radii ran again on samples 40,000
+through 44,000. Each radius reproduced all 252 columns of the previously
+measured matrix, byte for byte. The source validator, 824 OU-III tests and
+24 workflow-contract tests passed.
+
+- **Structures preserved.** Both runs inherited the full OU-III state and
+  covariance, physical forcing, clock and magnetic corrections. The
+  unperturbed forks agreed bit for bit.
+- **Relaxations introduced.** The two finite perturbations sample points
+  around one history. Reachability of those neighboring states remains open.
+- **Failure classification.** The previous planar report bound the whole
+  shipping source tree. Its digest expired when TFG changed (class E).
+  The probe's compiler inputs and native executable matched the prior build.
+- **Counterexamples.** Neither native run produced a shipping counterexample.
+- **Retained results.** Both numerical matrices and their derived gains
+  reproduced exactly. The other 16 native records retain their original
+  measured values. The uniform dissipation and retention bounds remain open.
+- **Next falsifiable check.** Bound cross-gains and every-prefix retention
+  over the reachable family while carrying the same physical forcing and
+  estimator history across each word.
+
+## Magnetic guard and TFG handover qualification
+
+The native OU-III drivers ran on estimator commit `68f097807af2a070711c77288ca07ec136f6377a`.
+The native reports on this runtime passed the source validator. The OU-III suite recorded 824 passes across 824 tests.
+The compiled magnetic guard has SHA-256
+`711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b`.
+
+- **Structures preserved.** Each driver uses its original sensor history and
+  inherits the shipping mean, covariance, frontend, tuner, scheduler, magnetic
+  reference and gyro endpoints. The tapped mean action matches its untapped
+  control through the full native trace and the committed field.
+- **Relaxations introduced.** These finite float histories establish the
+  reported point diagnostics. The pre-refinement field bound uses exact-real
+  operations on the represented guard constants.
+- **Failure classification.** The stale guard binding, stale planar manifest,
+  stale whole-source native secants and interrupted or memory-limited builds
+  are class E. On the guard revision, the native default build stopped when
+  `cc1plus` was killed while compiling `tests/kalman_carma/carma3_bench.cpp`
+  with the default `-O3` options. Numerical inputs and optimizer flags were
+  retained during the serialized build recovery.
+- **Counterexamples.** No shipping counterexample was found.
+- **Retained results.** Seventeen native diagnostics were regenerated. The
+  exact trace, field, observer/control parity and rational-factor checks
+  preserve the existing finite mean-action enclosure. The native secants and
+  generated magnetic-port certificate now bind the tested source tree.
+  Finite capture, uniform dissipation and every-prefix retention remain open.
+- **Next falsifiable check.** Bound joint handover tilt, field and bias errors
+  over the reachable accepted and rejected starts on one continuing history.
+
+## Wave-startup handover qualification
+
+The shared startup fit commits a current attitude, magnetic reference and body
+gyro bias at the actual handover. On runtime commit `8979626`, all 17 source-bound diagnostics were
+re-exercised, including the 240 s and 1,200 s carried histories. The mean-action
+observer and untapped control agreed on the terminal readout, and the native
+trace matched all 37,355,824 previously enclosed bytes. Its committed field,
+observer fingerprint and rational factor summary also matched. The retained
+interval enclosure therefore applies to the reproduced trace. The source-bound
+validator and all 824 OU-III validation tests passed. The signed
+balance and other changed outputs retain their fresh native values.
+
+- **Structures preserved.** Both handover branches inherit the same continuous
+  sensor history, gyro endpoints, full covariance, tuner, magnetic scheduler
+  and release state. The study observes their actual subsequent corrections.
+- **Relaxations introduced.** The native diagnostics cover finite float
+  histories. The magnetic amplitude estimate in the appendix uses exact-real
+  operations on the represented guard constants.
+- **Failure classification.** Class E covers the 13 stale source or evidence
+  checks after integration, compiler memory and time limits during regeneration,
+  and the old pre-refinement magnetic amplitude claim. Compilation retries
+  changed resource limits. The native inputs and numerical checks were retained.
+- **Counterexamples.** No genuine shipping counterexample was found. The
+  historical sufficient-bound failure remains. Its recomputed signed rotation
+  margin is approximately −30.45439.
+- **Retained results.** With delivered-field norm at most M, an accepted wave
+  handover has real reference norm below 1.01 M. After magnetic refinement the
+  default continuous calibration retains the existing 1.8 M reference bound.
+  The conditional planar results and the verified finite diagnostics keep
+  their original scope. Finite capture and the end-to-end theorem remain open.
+- **Next falsifiable check.** Bound finite attitude, field and bias errors and
+  their correlations on the reachable construction-to-Live family, including
+  rejected fits. The replayed handovers alone cannot supply that enclosure.
+
 ## Yaw regression evidence and CI qualification complete
 
 The refreshed source-bound reproduction check and all OU-III validation tests
@@ -69,15 +195,23 @@ Class E local build qualification remains open. Concurrent Eigen compilations ex
 host memory in `make all -j1 SIM_JOBS=4` (`carma_lever_arm-repro.o`),
 `make all -j2 SIM_JOBS=3` (`carma_shared_modes-test.o`), and
 `make all -j1 SIM_JOBS=3` while native diagnostics also compiled
-(`carma3_filters_tfg.o`). Each reports `g++: fatal error: Killed signal
+(`carma3_filters_tfg.o`), and `make -j1 all SIM_JOBS=3` when the
+new timeline diagnostic compiled (`carma3-sim.o`). Each reports `g++: fatal error: Killed signal
 terminated program cc1plus`; these are incomplete builds, not numerical
 qualification. An executor restart and two later operator interruptions also
-stopped serialized builds without a terminal receipt, although the latter
-passed the formerly limiting Eigen-heavy targets and OU-III compilation. The
-architecture review rejects further concurrent native compiles: run the
-diagnostic batch and required `make all -j1 SIM_JOBS=1` sequentially. Retained
-facts are the completed CI measurements and standalone tests, not a claimed
-local `make all` pass.
+stopped serialized builds without terminal receipts. Those later builds had
+passed the formerly limiting Eigen targets and OU-III compilation. The timeline
+diagnostic and study/build compilers share one lock. The diagnostic batch and
+the required `make all -j1 SIM_JOBS=1` run sequentially. The CARMA replay
+compiler uses more frequent garbage collection with the same source,
+optimization and numerical settings.
+
+Class E additional build qualification: `make -j1 all SIM_JOBS=2` still
+exhausted compiler memory on `carma_excitation-test.o` with serialized native
+compilation. The previous CARMA replay object completed with more frequent
+compiler garbage collection. The next complete build applies those resource
+settings to every native translation unit; numerical compiler flags are
+unchanged. No completed `make all` result is claimed.
 
 Class E embedded build failure: Arduino Linux and Windows at a02d9fd4 fail
 with `dangerous relocation: l32r: literal target out of range` in OU-II and

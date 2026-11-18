@@ -1,0 +1,146 @@
+{
+  "control_gzip_sha256": "7f049142342e6f8ffd3274c4ad0d7dc1f2f1aa5581d33026a350bc36617891ee",
+  "extended_csv_sha256": "39c12daf0340f1e0e2fa9c3bd60f44aa25dc3aaa7a5bfa6272401f3c94d6d68c",
+  "original_rows": 1776,
+  "same_keys_by_35": true,
+  "same_values_by_35_counts": {
+    "elapsed_s": 1776,
+    "yaw_error_deg": 1745,
+    "tilt_error_deg": 1578,
+    "field_direction_error_deg": 1769,
+    "bg_error_dps": 1776,
+    "rate_error_dps": 1776,
+    "joint_seed_applied": 1776
+  },
+  "largest_absolute_differences_by_35": {
+    "elapsed_s": 0.0,
+    "yaw_error_deg": 1.5260000001404705e-05,
+    "tilt_error_deg": 2.1640000000822113e-06,
+    "field_direction_error_deg": 3.874300000039632e-06,
+    "bg_error_dps": 0.0,
+    "rate_error_dps": 0.0,
+    "joint_seed_applied": 0.0
+  },
+  "by_sea": {
+    "following": {
+      "attempts": 480,
+      "paired_handoffs_by_60_s": 480,
+      "late_pairs": 72,
+      "late_joint_seeds": 0,
+      "all_paired_epochs_and_raw_gyro_equal": true,
+      "counts_by_deadline": {
+        "35": 408,
+        "36": 450,
+        "37": 462,
+        "38": 474,
+        "39": 476,
+        "40": 478,
+        "45": 480,
+        "50": 480,
+        "55": 480,
+        "60": 480
+      },
+      "late_time_s": {
+        "min": 35.015,
+        "median": 35.755,
+        "p95_nearest_rank": 39.26,
+        "max": 40.27
+      },
+      "late_rms": {
+        "shipping": {
+          "tilt_error_deg": 0.4909582323334102,
+          "yaw_error_deg": 2.5941974200193303,
+          "field_direction_error_deg": 1.074262090224977,
+          "bg_error_dps": 0.06242318789784464,
+          "rate_error_dps": 0.1667610494614394
+        },
+        "deployed": {
+          "tilt_error_deg": 0.4909582323334102,
+          "yaw_error_deg": 2.5941974200193303,
+          "field_direction_error_deg": 1.074262090224977,
+          "bg_error_dps": 0.06242318789784464,
+          "rate_error_dps": 0.1667610494614394
+        }
+      },
+      "all_rms": {
+        "shipping": {
+          "tilt_error_deg": 0.7414913219721303,
+          "yaw_error_deg": 2.619545212501449,
+          "field_direction_error_deg": 0.93877179802556,
+          "bg_error_dps": 0.05802675061248794,
+          "rate_error_dps": 0.1475500123592817
+        },
+        "deployed": {
+          "tilt_error_deg": 0.37933230846428206,
+          "yaw_error_deg": 1.9705619262923868,
+          "field_direction_error_deg": 0.939442030006037,
+          "bg_error_dps": 0.031756369419839545,
+          "rate_error_dps": 0.137004419366065
+        }
+      },
+      "late_by_profile": {
+        "calibrated": 36,
+        "residual": 36
+      },
+      "late_identical_outputs": 72
+    },
+    "head": {
+      "attempts": 480,
+      "paired_handoffs_by_60_s": 480,
+      "late_pairs": 0,
+      "late_joint_seeds": 0,
+      "all_paired_epochs_and_raw_gyro_equal": true,
+      "counts_by_deadline": {
+        "35": 480,
+        "36": 480,
+        "37": 480,
+        "38": 480,
+        "39": 480,
+        "40": 480,
+        "45": 480,
+        "50": 480,
+        "55": 480,
+        "60": 480
+      },
+      "late_time_s": {},
+      "late_rms": {
+        "shipping": {},
+        "deployed": {}
+      },
+      "all_rms": {
+        "shipping": {
+          "tilt_error_deg": 1.067646401670993,
+          "yaw_error_deg": 3.838126993470021,
+          "field_direction_error_deg": 0.9998270347427941,
+          "bg_error_dps": 0.05797410445202063,
+          "rate_error_dps": 0.12268257755572826
+        },
+        "deployed": {
+          "tilt_error_deg": 0.46012427997582966,
+          "yaw_error_deg": 1.966596907872407,
+          "field_direction_error_deg": 0.8658633568449392,
+          "bg_error_dps": 0.029623898983906473,
+          "rate_error_dps": 0.11567152500826879
+        }
+      },
+      "late_by_profile": {},
+      "late_identical_outputs": 0
+    }
+  },
+  "study": "First live handover in the same 960 previous/deployed production OU-III start pairs observed for 60 s. The original 35 s estimator window, fit acceptance and wrapper timeout all remain in force.",
+  "estimator_source_tree": "5c74c92f17ccca4f0f197d30edc91ef52e411ae5",
+  "gate_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "binary_sha256": "c03351606afcfa006fed613ba233c8d09632e9a5f3f32798d248ad5144567781",
+  "reference_data": "v1.4.0 following and head seas, 8 records per direction, 2 sensor profiles, 2 cohorts",
+  "delayed_pairs_unchanged_fitted_fields": "The tilt, yaw, field, gyro-bias and corrected-rate error values were identical between the previous and deployed policies on all 72 late starts. The bounded streaming fit resets at 35 seconds and requires a fresh 20-second window.",
+  "archive": {
+    "file": "extended-handover.tar.gz",
+    "sha256": "19a1136738d2e607d067385234ea151ff5d3021dd4ef865325ff761bc178e6df",
+    "member_sha256": {
+      "README.md": "400db8626eb28f5803b37b28f2dfd9e67b9e569c6de4dbb8b9e0e1bf53041f1b",
+      "observe-60-seconds.patch": "d181022b014f4e766d6617058e900ff04b636c4a596cfaaf2c3eaeeffeb152d6",
+      "late-handovers.csv": "61ef50b40daf3ab2995f56f4bc0063f371fd3b639c7a4411e2bab9dc2a647354",
+      "inputs.json": "4734c05d7db99857ab70e51099bdbb488036026c4ac2b30f7d55e4060280ca96"
+    }
+  }
+}

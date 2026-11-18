@@ -29,15 +29,15 @@
     },
     {
       "active_step": 24016,
-      "all_six_pivot_budget": "0.2686214809761212826517673713050647633074",
-      "exported_trace_sha256": "a09647c2603fb3f701029786b4c38407ab031a16f85d02554ea0a00ed4d2fb2f",
+      "all_six_pivot_budget": "0.2686215069959595099708154968992160998108",
+      "exported_trace_sha256": "9a922195879c6b0f750d62e5cdfc6da5f5ae5c3b5869ce36b16d0dbde36057ee",
       "groups": 8,
       "input_profile": "wave",
-      "interanchor_attitude_norm": "1.000000053423510118401734433459384385741",
-      "interanchor_gyro_singular_value": "0.2799999311468213042151977618791337640799",
+      "interanchor_attitude_norm": "1.000000053423505227474541853681039560779",
+      "interanchor_gyro_singular_value": "0.2799999311468049917549276311133447845734",
       "literal_terminal_parity": true,
       "live_step": 6368,
-      "minimum_group_attitude_singular_value": "8.749387472665726910674756952481677929548",
+      "minimum_group_attitude_singular_value": "8.749388320169660203122429223049821533999",
       "real_trajectory_enclosed": false,
       "refined_step": 24016,
       "row_defect_exactly_zero": true,
@@ -50,15 +50,15 @@
         344
       ],
       "source_uniform_verified": false,
-      "two_group_actual_singular_value": "1.7175872992769633651740396647827231292",
-      "two_group_six_column_budget": "1.07448592390448513060706948522025905323"
+      "two_group_actual_singular_value": "1.717587379436243378173603049619757721775",
+      "two_group_six_column_budget": "1.074486027983838039883261987596864399243"
     }
   ],
   "decimal_digits": 80,
   "driver_sha256": "6183382d7e6943cf6ad73c3867dd4d26a1954954ebd3a6edcb30fb7ee3e5dee1",
-  "observer_header_sha256": "9f01f6a315fc0dc67ec973e707f3e4ad5da5643b1f07ff6cab2240c1602e1dd9",
+  "observer_header_sha256": "40d9821ec77801392fbd32780c459002c3101cac563fc89cb9f2f8e9f2a66ed4",
   "qualification": "OU3_CARRIED_SAME_CELL_GROUP_DIAGNOSTIC_V1",
-  "shipping_header_sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+  "shipping_header_sha256": "1a902c6294710659bb2aa160433308cf3d5fee58b99d7d164c2d654734f9af1a",
   "source_uniform_verified": false,
   "theorem_closed": false
 }

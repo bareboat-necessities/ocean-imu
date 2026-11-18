@@ -1,0 +1,121 @@
+{
+  "source": "97a495db6e8d093b2173cbbc7ea4b51af0a06824",
+  "estimator_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "workflow": 44373729220,
+  "job": 135047509892,
+  "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44373729220/job/135047509892",
+  "steps": {
+    "Compile sketch": "success",
+    "Make merged MCU binaries (full_marine_ins)": "success",
+    "Package MCU binaries (full_marine_ins)": "success",
+    "Upload MCU binary artifacts (full_marine_ins)": "success"
+  },
+  "archive": {
+    "source": "97a495db6e8d093b2173cbbc7ea4b51af0a06824",
+    "name": "mcu-binaries-full_marine_ins",
+    "id": 14462593078,
+    "size": 16033308,
+    "digest": "sha256:50e34b0f100adf9e86fbbfbf1822f41ca9ebd47988154617b18a897672fef2c3",
+    "run": 44373729220,
+    "created_at": "2026-11-18T19:31:52Z"
+  },
+  "original_job_log": {
+    "job": 135047509892,
+    "log_characters": 5917512,
+    "retained_linker_and_source_lines": 22
+  },
+  "application_offset": "0x10000",
+  "partitions_offset": "0x8000",
+  "packages": {
+    "atomS3R_ins_carma3": {
+      "flash_bytes": 1136115,
+      "flash_max": 1310720,
+      "package_sha256": "708bbbd6b806639700f0526cd173960bbc3d7f0bfa7d3a5261a1b6e3d7937a0a",
+      "application_sha256": "92381d996cfc314edee580a0329dcfa4c702523a21746ec967a829fe56daf0b9",
+      "application_bytes": 1136256,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "1252ad36eedf622fa19ccfd636dd5df3dbabdc3eb78460a3da99244e1b9a9d21",
+      "merged_bytes": 1201792
+    },
+    "atomS3R_ins_kalman_ou2": {
+      "flash_bytes": 1136043,
+      "flash_max": 1310720,
+      "package_sha256": "fd0f46209b5fb3de219f1aa00ff9e8b7830da33118470f10176126f3cbdd6c65",
+      "application_sha256": "a2ea00d804c8c65a05e1330b2e3d9fc5ab6e0ed9ad366a4bac080fb173f56880",
+      "application_bytes": 1136192,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "70fabdc700df09b56861205245f7cdd7b3ced0f989ae8d2c4df69d2f7ff3db8c",
+      "merged_bytes": 1201728
+    },
+    "atomS3R_ins_carma_shared_modes": {
+      "flash_bytes": 1171211,
+      "flash_max": 1310720,
+      "package_sha256": "09683bc3ce8c99826cba01e960fbdd81b0a7e8faa57ae596b59292552d7baa7d",
+      "application_sha256": "0ac0a10678851fd4c511c311c198ab289c328c3edff71a16fdbfa0fb3f131819",
+      "application_bytes": 1171360,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "6c7c5e8c2135f11e6f395ad2a33d4b46a101955bef6197d274eb74cfe515f5ac",
+      "merged_bytes": 1236896
+    },
+    "atomS3R_ins_kalman_ou3": {
+      "flash_bytes": 1205703,
+      "flash_max": 1310720,
+      "package_sha256": "50e58c52275e586d685c170ea1b89ab68afc58b530f142dfc99de97cf1cb7163",
+      "application_sha256": "3b9459b50251e9ee1418a011a4a433c2aabdb0f62e724cb100c5911bfc0cafd0",
+      "application_bytes": 1205856,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "0496205f6d07704efd4a0fc0d3139dd9ca181ae600934007c033db3d3b80b2eb",
+      "merged_bytes": 1271392
+    },
+    "atomS3R_ins_nlo": {
+      "flash_bytes": 834447,
+      "flash_max": 1310720,
+      "package_sha256": "67e4abc9ea021dfc66c86edb4f0b3261ea656d68f4c48111c3806fcb1a53e18e",
+      "application_sha256": "96b215e6d9860b05712a353673500eb10c36f8ecfb7f53df4219b6d725e91c42",
+      "application_bytes": 834592,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "ddec46806184abb9526dd8fa94d540ade0f798a76d2d0232e63bf0da4bcbbde7",
+      "merged_bytes": 900128
+    },
+    "atomS3R_ins_tfg": {
+      "flash_bytes": 1122807,
+      "flash_max": 1310720,
+      "package_sha256": "32f5e5285e30c331237a5580cb4897bb26adfcaab4d71645915ce6390201ff68",
+      "application_sha256": "3fd35e845f89b19805b64fa3530b1d4a4d9643002087cc1805dda694ff2d45b9",
+      "application_bytes": 1122960,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "a3c22abdb3bb888e83a9268e5c010972c6dd356e4a5460b212e843a9cb0eae21",
+      "merged_bytes": 1188496
+    },
+    "atomS3R_ins_pii_observer": {
+      "flash_bytes": 827251,
+      "flash_max": 1310720,
+      "package_sha256": "756475fa952c885798ba9c00c92a2f97ffc1969adb7657db46610723d9caeaff",
+      "application_sha256": "a41019ee0003b23e5011003c5ab6f9e406128855d69639fe39e9bd5550b735e1",
+      "application_bytes": 827392,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "9a774077b2c328967460b2ff700daa8b8f4ddc1f4ca9cd6a033f9ace20dde8fa",
+      "merged_bytes": 892928
+    },
+    "atomS3R_ins_tfg_carma3": {
+      "flash_bytes": 1076591,
+      "flash_max": 1310720,
+      "package_sha256": "724b661709852315deb63c84361786ce791c26a4fa72b919279e1a34cf4d9594",
+      "application_sha256": "50017c539f54356ff05f3f36c9fa5661509f30a3f3a63681bd57b9098a1e6017",
+      "application_bytes": 1076736,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "d47b5b87e9a51e2474fb46b598a0435a39a997ec2726441570a27e81dff8da2f",
+      "merged_bytes": 1142272
+    },
+    "atomS3R_ins_tfg_carma_shared_modes": {
+      "flash_bytes": 1119955,
+      "flash_max": 1310720,
+      "package_sha256": "c242fac1888e98ef666713c2cb2206145771fbb8555833f84d0027bf25609f1d",
+      "application_sha256": "8ba2717073e89ec75550d7ba342f41ba396e1175bf9c27623e1d306bb8a11714",
+      "application_bytes": 1120096,
+      "partitions_sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1",
+      "merged_sha256": "ba0a15d8a1df47ec1f9d73010654de2a27fa6eac895f0b251faa8bab2e457855",
+      "merged_bytes": 1185632
+    }
+  }
+}

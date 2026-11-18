@@ -86,6 +86,37 @@ followed by
 This transformation applies to the attitude marginal and all attitude
 cross-covariances whenever a correction induces nonzero attitude error.
 
+\subsubsection{Horizontal wave displacement and velocity at the output}
+The OU--III sketch reports horizontal wave motion about the vessel's cruise
+track. For a harmonic displacement with angular frequency $\omega$, its
+zero-mean primitive $S$ and its velocity $v$ satisfy $S+v/\omega^2=0$.
+In an irregular sea the filter estimates a coefficient $\beta$ from the ratio
+of horizontal displacement variance to horizontal velocity variance. Each
+variance is half the trace of the centered north/east covariance accumulated
+with an exponential time constant of eight encounter periods. The ratio is
+bounded to $[0.25,4](T/2\pi)^2$ using the applied encounter period $T$.
+The centered variance of $S+\beta v$ supplies a scalar noise variance $r$
+that allows for the width of the encounter spectrum.
+
+Let $C$ select $S_H+\beta v_H$ from the state, with subscript $H$ denoting
+the two horizontal components. From the current posterior $(x,P)$
+the reported horizontal displacement and velocity are
+\begin{equation}
+ \begin{bmatrix}p_H\\v_H\end{bmatrix}_{\!\rm wave}
+ =
+ \begin{bmatrix}p_H\\v_H\end{bmatrix}
+ - w\,P_{(p_H,v_H),:}C^\top (CPC^\top+rI_2)^{-1}
+      (S_H+\beta v_H).
+ \label{eq:horizontal-wave-readout}
+\end{equation}
+Accumulation starts in Live with accelerometer-bias updates enabled and a
+usable period. The blend $w$ rises linearly from zero to one between the
+third and fourth accumulated cycles. The implementation solves the two by
+two system at readout time, including magnetic corrections received since
+the last IMU sample. The recursive state and covariance feed the next
+prediction. Section~\ref{sec:wave-readout-replay} evaluates the reported
+wave motion on held-out sensor draws.
+
 \subsubsection{Numerical invariants}
 The innovation matrix uses an LDL$^{\top}$ solve with a scale-dependent diagonal
 safeguard only when needed.  The Joseph update, covariance symmetrization, and

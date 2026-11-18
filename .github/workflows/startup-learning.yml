@@ -1,0 +1,159 @@
+name: startup learning and live handover
+on:
+  pull_request:
+    paths:
+      - 'tests/startup_learning/**'
+      - 'tools/startup_learning.py'
+      - 'tools/startup_handover_components.py'
+      - 'tools/startup_live_retention.py'
+      - 'tools/startup_gravity_oracle.py'
+      - 'tools/startup_source_snapshot.py'
+      - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
+      - 'tests/kalman_tfg/kalman_tfg-sim.cpp'
+      - 'src/kalman_tfg/**'
+      - 'tools/compare_startup_slope.py'
+      - 'tools/report_startup_learning.py'
+      - 'tests/validation/test_startup_learning.py'
+      - 'plots/vector_export.py'
+      - 'tools/sim_dataset*'
+      - 'src/kalman_common/**'
+      - 'src/kalman_ou_iii/**'
+      - 'src/ahrs/**'
+      - 'src/util/**'
+      - '.github/workflows/startup-learning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: startup-learning-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  paired-startup:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cohort: validation
+            seeds: '11,12,13,14,15'
+            offsets: '67,307,607'
+          - cohort: confirmation
+            seeds: '31,32,33,34,35'
+            offsets: '41,191,421'
+    env:
+      SEEDS: ${{ matrix.seeds }}
+      OFFSETS: ${{ matrix.offsets }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install host dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-matplotlib
+      - name: Exercise startup report and deadline checks
+        run: python3 -m unittest discover -s tests/validation -p test_startup_learning.py -v
+      - name: Build and exercise handover invariants
+        run: |
+          make -C tests/startup_learning -j1
+          tests/startup_learning/startup-test
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Paired head-sea and following-sea startup regression
+        run: |
+          python3 tools/startup_learning.py --seeds "$SEEDS" \
+            --offsets "$OFFSETS" --profiles calibrated,residual --jobs 2 --check \
+            --output reports/results/startup_learning/ci
+          python3 tools/report_startup_learning.py reports/results/startup_learning/ci
+      - name: Compare both production handovers at the same epoch
+        run: |
+          python3 tools/startup_learning.py --production-pair --check --seeds "$SEEDS" \
+            --offsets "$OFFSETS" --profiles calibrated,residual --jobs 2 \
+            --output reports/results/startup_learning/ci-production
+      - name: Ideal sensors and magnetic disturbance controls
+        if: matrix.cohort == 'validation'
+        run: |
+          python3 tools/startup_learning.py --seeds 101 --offsets 17,107 \
+            --profiles ideal,interference --jobs 2 --check-controls \
+            --output reports/results/startup_learning/ci-controls
+          python3 tools/report_startup_learning.py reports/results/startup_learning/ci-controls
+      - name: Reproduce motion-scaled force-slope comparison
+        run: |
+          root=reports/results/startup_learning
+          python3 tools/startup_learning.py --seeds "$SEEDS" --offsets "$OFFSETS" \
+            --profiles calibrated,residual --jobs 2 --scale-force-slope --check --output "$root/ci-scaled"
+          python3 tools/compare_startup_slope.py "$root/ci" "$root/ci-scaled" "$root/ci-scaled/paired.csv"
+      - name: Check motion-scaled disturbance rejection
+        if: matrix.cohort == 'validation'
+        run: |
+          root=reports/results/startup_learning
+          python3 tools/startup_learning.py --seeds 101 --offsets 17,107 --profiles ideal,interference \
+            --jobs 2 --scale-force-slope --check-controls --output "$root/ci-scaled-controls"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-startup-metrics-${{ matrix.cohort }}
+          path: |
+            reports/results/startup_learning/ci/
+            reports/results/startup_learning/ci-production/
+            reports/results/startup_learning/ci-controls/
+            reports/results/startup_learning/ci-scaled/
+            reports/results/startup_learning/ci-scaled-controls/
+          if-no-files-found: error
+
+  live-handover-components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        window: [early, steady]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install replay dependencies
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev python3-numpy python3-pandas
+      - uses: ./.github/actions/replay-toolchain
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Compare seed components and verify the intact production controls
+        env:
+          WINDOW: ${{ matrix.window }}
+        run: |
+          args=(--seeds 7 41)
+          if [[ "$WINDOW" == steady ]]; then
+            args=(--long --seeds 7 41 101 --arms previous full previous_tilt previous_yaw previous_field previous_gyro_bias gravity_axis_accel_bias)
+          fi
+          python3 tools/startup_handover_components.py --verify-controls --jobs 2 \
+            --data tests/startup_learning/data --output "handover-$WINDOW" "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: live-handover-components-${{ matrix.window }}
+          path: handover-${{ matrix.window }}/
+          if-no-files-found: error
+
+  gravity-handover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [ou3, tfg]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Eigen
+        run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - uses: ./.github/actions/replay-toolchain
+      - name: Verify both pinned datasets
+        run: python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+      - name: Trace the seeded attitude through live prediction and correction
+        env:
+          FAMILY: ${{ matrix.family }}
+        run: |
+          python3 tools/startup_gravity_oracle.py --families "$FAMILY" --jobs 2 \
+            --policies previous deployed previous_exact_tilt exact_tilt exact_field exact_both measured_wave \
+            --data tests/startup_learning/data --output "gravity-$FAMILY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gravity-handover-${{ matrix.family }}
+          path: gravity-${{ matrix.family }}/
+          if-no-files-found: error

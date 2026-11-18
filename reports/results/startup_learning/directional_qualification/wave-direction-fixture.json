@@ -1,0 +1,38 @@
+{
+  "manuscript_source": "b6f2cf606ad0a6a903ec53dd59ed1542f09662ea",
+  "repair_supplement": "4c60cb4dc685e6e96d8865fcf6c99694e48314c8",
+  "fixture": "tests/validation/test_zzzzz_publication_sync_contract.py",
+  "original": {
+    "tests": 1,
+    "failed": 1,
+    "errors": 0,
+    "skips": 0,
+    "fixture_blob": "2bea7718224a11664d2f8fdfb3da874df4b16c0a",
+    "log_sha256": "4fbb7f464970f0d117cc7b98dec9d87e88f599248cef7bf2b7a146abdeb96c20"
+  },
+  "corrected": {
+    "tests": 2,
+    "failed": 0,
+    "errors": 0,
+    "skips": 0,
+    "fixture_blob": "feea62063370c68454b4c5f5fb71cd30a9542f30",
+    "log_sha256": "7306fda607f1c65804cb5c5da9cc0920e97d931aa8bf1aa22b0319850ac373f0"
+  },
+  "current_eight_rows_reproduced": true,
+  "unresolved_travel_sense": [
+    {
+      "sea": "JONSWAP",
+      "axial_estimate_deg": 65.0,
+      "true_alternate_unresolved_pct": "0.0/0.0/100.0"
+    },
+    {
+      "sea": "PM--Stokes",
+      "axial_estimate_deg": 67.3,
+      "true_alternate_unresolved_pct": "0.0/0.0/100.0"
+    }
+  ],
+  "input_file_sha256": {
+    "doc/kalman_ou_iii/w3d-sim-results-generated.tex-part": "7d5be9105fd57ab998bd2deb9ac6a306c73dc0464eb77f23e1e29eefd1cd6728",
+    "doc/kalman_ou_iii/w3d-wave-direction-results.tex-part": "da3fbfa89db6449b3f41a991419069ec0494aa4a01a6d25c29963cfc48b810b5"
+  }
+}

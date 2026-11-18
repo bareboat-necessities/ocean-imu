@@ -1,0 +1,33 @@
+{
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "branch_workflow": 44367501554,
+  "pr_workflow": 44367522652,
+  "cases": {
+    "following": {
+      "artifact": 14459611037,
+      "archive_sha256": "0319dd6d0a64246c5cb9f490fcce18e8a928f30e2c3143d60de1b27d11d304a6",
+      "measurements_sha256": "a6f7366e556f63347be69d04ff2f8e370b98ef4c5bc18579926ba2b28d80e778",
+      "checkout": "3f70f1196f060bb6b37d564164c09091965b7c90",
+      "checkout_tree": "b09360b7398460847e408d90705167f890aad934",
+      "equal_compiled_source_paths": 182,
+      "equal_binaries": 13,
+      "verified_profile_logs": 23
+    },
+    "head": {
+      "artifact": 14459881750,
+      "archive_sha256": "d2f38c4536f338b3eb2e5c7a2bfa31b2389ec5ee8ff493795ac444850899f6a8",
+      "measurements_sha256": "97c292cc83b52961ab2e414413eab420b57418de4d41c95cf69d9b3b03f6a4e6",
+      "checkout": "3f70f1196f060bb6b37d564164c09091965b7c90",
+      "checkout_tree": "b09360b7398460847e408d90705167f890aad934",
+      "equal_compiled_source_paths": 182,
+      "equal_binaries": 13,
+      "verified_profile_logs": 23
+    }
+  },
+  "cells": 544,
+  "scored_channels": 2768,
+  "exact_scores": 2768,
+  "different_scores": [],
+  "identical_recomputed_global_caps": true,
+  "identical_recomputed_per_record_caps": true
+}

@@ -1,0 +1,27 @@
+q_eff = 1.4400e-04 m^2/s^3   c_sigma = 0.85   band = 0.02-0.8 Hz
+
+          record    tau  sigma_aw      M_0      M_-2  omega_p*     chi*     C_P     C_V  C_P/C_V   C_P ex   C_V ex  ratio ex
+wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv  1.099    0.2824   0.0018    0.0003    0.6827  0.10137  0.1200  0.2829   0.4243   0.1347   0.2473    0.5448
+wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv  1.664    0.8610   0.1560    0.0742    0.2199  0.03452  0.1753  0.3452   0.5078   0.1823   0.3002    0.6073
+wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv  2.550    1.3722   1.1382    1.2753    0.1245  0.02606  0.1351  0.2657   0.5083   0.1395   0.2309    0.6040
+wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv  3.915    1.4432   4.6658   10.7293    0.0813  0.02282  0.1087  0.2292   0.4744   0.1118   0.1991    0.5618
+wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv  1.143    0.2645   0.0017    0.0003    0.6756  0.10970  0.1177  0.2742   0.4291   0.1333   0.2398    0.5556
+wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv  1.553    1.0321   0.1462    0.0650    0.2258  0.03402  0.1697  0.3226   0.5260   0.1765   0.2804    0.6296
+wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv  2.329    1.6717   1.1622    1.1814    0.1264  0.02438  0.1391  0.2624   0.5302   0.1434   0.2278    0.6295
+wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv  3.523    1.7308   4.6338    9.8054    0.0828  0.02177  0.1168  0.2310   0.5057   0.1201   0.2005    0.5988
+
+weak-regularization optimum, Eqs. (wp-opt) and (chi-opt):
+  C_P                         0.1353   spread 0.1087-0.1753
+  C_V                         0.2767   spread 0.2292-0.3452
+  C_P/C_V                     0.4882   spread 0.4243-0.5302
+
+unexpanded objective, exact |G-1|^2 on the finite band:
+  C_P                         0.1427   spread 0.1118-0.1823
+  C_V                         0.2407   spread 0.1991-0.3002
+  C_P/C_V                     0.5914   spread 0.5448-0.6296
+
+  expansion cost: C_P +5.5 %, C_V -13.0 %, ratio +21.1 %
+
+relative to the selected physical-MSE schedule at the same operating points:
+  asymptotic C_P/selected = 1.212, C_V/selected = 1.240
+  selected channel ratio = 0.500, diagnostic mean ratio = 0.488

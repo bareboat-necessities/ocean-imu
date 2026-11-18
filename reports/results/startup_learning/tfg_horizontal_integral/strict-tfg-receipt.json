@@ -1,0 +1,35 @@
+{
+  "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "binary_sha256": "e9ce9b184e2de97c3a0d8620279cced4106be21b3e9f43b8c5505478f9dc9f27",
+  "profiles": [
+    {
+      "case": "following",
+      "profile": "default",
+      "records": 8,
+      "log_sha256": "0a9e208f75cf3803b1448d71dec59239c47d13166cd58078b7184accd6735cde",
+      "all_pass": true
+    },
+    {
+      "case": "following",
+      "profile": "legacy",
+      "records": 8,
+      "log_sha256": "688f1ecf711776a6d4ff92196b7dd41cfef30547af7f5cbd949f729d135e4fe5",
+      "all_pass": true
+    },
+    {
+      "case": "head",
+      "profile": "default",
+      "records": 8,
+      "log_sha256": "83a240f4a988e560c22377f639f01712e2d96d2d522d9714171fe979064847b1",
+      "all_pass": true
+    },
+    {
+      "case": "head",
+      "profile": "legacy",
+      "records": 8,
+      "log_sha256": "a782c76079d019780e27f88ff99a8bfaaab5cbcfed11bad058301ad1fb20fca9",
+      "all_pass": true
+    }
+  ],
+  "native_log_bundle_sha256": "0c9845d3231c6e7063036b29975fec4dc032ed1a7f594572a4baf9f84e114bc2"
+}

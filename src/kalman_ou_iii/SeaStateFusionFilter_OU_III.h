@@ -75,6 +75,7 @@
 #include <limits>
 
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
+#include "kalman_ou_iii/HorizontalWaveBand.h"
 #include "kalman_common/SeaStateOUFamilyDefaults.h"
 #include "kalman_common/SeaStateTuning.h"
 #include "kalman_common/AccelVibrationConditioning.h"
@@ -330,6 +331,15 @@ private:
         if (drive_mekf) {
             const Eigen::Vector3f acc_bias = mekf_->get_acc_bias_body_at_temperature(tempC);
             updateWavePeriodAndDirection_(dt, mekf_->quaternion_boat(), acc_in, &acc_bias);
+            if (startup_stage_ == StartupStage::Live && mekf_->acc_bias_updates_enabled() &&
+                wavePeriodUsable()) {
+                // The online tuner maps encounter period to tau = tau_coeff * T / 2.
+                const float period = 2.0f * tune_.tau_applied / tau_coeff_;
+                wave_band_.update(dt, period, mekf_->get_integral_displacement().template head<2>(),
+                                  mekf_->get_position().template head<2>(), mekf_->get_velocity().template head<2>());
+            } else {
+                wave_band_.reset();
+            }
         } else {
             updateWavePeriodAndDirection_(dt, startupProxyQuat(), acc_in, nullptr);
         }
@@ -676,6 +686,7 @@ public:
         if (!mekf_) return;
 
         if (hold) {
+            wave_band_.reset();
             mekf_->set_acc_bias_updates_enabled(false);
             return;
         }
@@ -714,6 +725,13 @@ public:
         constexpr float K = std::numbers::sqrt2_v<float> / std::numbers::pi_v<float>;
         const float v_env = K * sigma * tau;
         return std::isfinite(v_env) ? v_env : NAN;
+    }
+
+    // This readout uses the current posterior, including a magnetic update
+    // delivered since the last IMU sample. Raw state and covariance are
+    // still available together through mekf().
+    auto waveMotionNed() const {
+        return mekf_->wave_motion(wave_band_.beta(), wave_band_.residualVariance(), wave_band_.weight());
     }
 
     inline auto& mekf() noexcept { return *mekf_; }
@@ -979,7 +997,10 @@ private:
         resetAdaptation_();
     }
 
+    HorizontalWaveBand wave_band_;
+
     void enterCold_() {
+        wave_band_.reset();
         startup_stage_   = StartupStage::Cold;
         startup_stage_t_ = 0.0f;
 

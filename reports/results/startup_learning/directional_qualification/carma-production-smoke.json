@@ -1,0 +1,118 @@
+{
+  "job": 135097728622,
+  "workflow": 44387565590,
+  "pr_head": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+  "case": "JONSWAP, 600 s, fp=0.29 Hz, Hs=0.8 m, gamma=3.3; seed 1; full wrapper; score starts at 200 s. This synthetic smoke is shared by both directional jobs.",
+  "ci_reported_x_ratio": 0.9798274949233645,
+  "production_candidate_smoke": {
+    "benchmark_sha256": "af4f42c5f01d722ffbc33ba5839e7483d4fc9e6195f2b5308d8c6dd30e7931db",
+    "rms_m": {
+      "A41": {
+        "x": 0.0149213,
+        "y": 0.0155406,
+        "z": 0.0151277
+      },
+      "T41": {
+        "x": 0.0146203,
+        "y": 0.0149949,
+        "z": 0.0151277
+      }
+    },
+    "ratios": {
+      "x": 0.9798274949233645,
+      "y": 0.9648855256553801,
+      "z": 1.0
+    },
+    "benchmark_checkout": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2"
+  },
+  "preceding_control_smoke": {
+    "benchmark_sha256": "5186fe0ec5bf9d53c6e347eabc3d592ee2c6542f2d0504c491f9e53b0e8b0829",
+    "rms_m": {
+      "A41": {
+        "x": 0.0149213,
+        "y": 0.0155406,
+        "z": 0.0151277
+      },
+      "T41": {
+        "x": 0.0149184,
+        "y": 0.015547,
+        "z": 0.0151277
+      }
+    },
+    "ratios": {
+      "x": 0.9998056469610557,
+      "y": 1.00041182451128,
+      "z": 1.0
+    },
+    "benchmark_checkout": "00f1829351418f13768d8c5c01245244714407e2"
+  },
+  "acceptance": {
+    "x_ratio_strict_upper": 0.99,
+    "y_ratio_strict_upper": 0.98,
+    "z_absolute_ratio_distance_from_one_strict_upper": 0.01,
+    "all_earlier_finite_range_and_failure_checks_preserved": true
+  },
+  "geometry_checks": {
+    "program": "tfg_carma3-test",
+    "passed": 243,
+    "total": 243
+  },
+  "scope": "The horizontal limits retain part of the measured production improvement. The two-sided heave limit and the separate rotating-sinusoid first-order geometry equivalence check remain in force.",
+  "original_failed_jobs": [
+    {
+      "source": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+      "run": 44387547817,
+      "job": 135097950767,
+      "event": "push",
+      "name": "build (following, kalman_carma)",
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44387547817/job/135097950767",
+      "checked_out_merge_or_head": [
+        "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+        "73e14dfe0eb4c21575259c13df08b2ea7372c92d"
+      ],
+      "started": "2026-11-18T21:12:04Z",
+      "completed": "2026-11-18T21:37:21Z",
+      "conclusion": "failure",
+      "production_and_control_output": [
+        "smoke3_full.csv: OU3  RMS x 0.0337 y 0.0250 z 0.0251 m",
+        "smoke3_full.csv: A41  RMS x 0.0149 y 0.0155 z 0.0151 m",
+        "smoke3_full.csv: A52  RMS x 0.0114 y 0.0115 z 0.0166 m",
+        "smoke3_full.csv: T41  RMS x 0.0146 y 0.0150 z 0.0151 m",
+        "smoke3_l1.csv: OU3  RMS x 0.0253 y 0.0183 z 0.0252 m",
+        "smoke3_l1.csv: A41  RMS x 0.0128 y 0.0110 z 0.0152 m",
+        "smoke3_l1.csv: A52  RMS x 0.0103 y 0.0089 z 0.0166 m"
+      ],
+      "test_failure": "AssertionError: ('T41/A41', 'x', 0.9798274949233645)",
+      "matched_geometry": "CHECK rotating sinusoid: |TFG/MEKF error ratio - 1| (first-order equivalence) value=4.281e-05 limit=1.0e-02 PASS",
+      "unit_result": "tfg_carma3-test: 243/243 checks passed",
+      "separate_native_csv_sha256": "171de9901207ea9772ee667571b4c1ad1246dfc7d612308f28384fd7a67b58de"
+    },
+    {
+      "source": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+      "run": 44387565590,
+      "job": 135097728622,
+      "event": "pull_request",
+      "name": "build (following, kalman_carma)",
+      "url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44387565590/job/135097728622",
+      "checked_out_merge_or_head": [
+        "0a72ce92884abdd4c62eb060d9093e43e7a21b99"
+      ],
+      "started": "2026-11-18T21:07:40Z",
+      "completed": "2026-11-18T21:33:22Z",
+      "conclusion": "failure",
+      "production_and_control_output": [
+        "smoke3_full.csv: OU3  RMS x 0.0337 y 0.0250 z 0.0251 m",
+        "smoke3_full.csv: A41  RMS x 0.0149 y 0.0155 z 0.0151 m",
+        "smoke3_full.csv: A52  RMS x 0.0114 y 0.0115 z 0.0166 m",
+        "smoke3_full.csv: T41  RMS x 0.0146 y 0.0150 z 0.0151 m",
+        "smoke3_l1.csv: OU3  RMS x 0.0253 y 0.0183 z 0.0252 m",
+        "smoke3_l1.csv: A41  RMS x 0.0128 y 0.0110 z 0.0152 m",
+        "smoke3_l1.csv: A52  RMS x 0.0103 y 0.0089 z 0.0166 m"
+      ],
+      "test_failure": "AssertionError: ('T41/A41', 'x', 0.9798274949233645)",
+      "matched_geometry": "CHECK rotating sinusoid: |TFG/MEKF error ratio - 1| (first-order equivalence) value=4.281e-05 limit=1.0e-02 PASS",
+      "unit_result": "tfg_carma3-test: 243/243 checks passed",
+      "separate_native_csv_sha256": "171de9901207ea9772ee667571b4c1ad1246dfc7d612308f28384fd7a67b58de"
+    }
+  ]
+}

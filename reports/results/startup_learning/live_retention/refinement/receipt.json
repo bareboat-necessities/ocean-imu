@@ -1,0 +1,138 @@
+{
+  "runtime_source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+  "binary_sha256": [
+    "cdeae2e933c33014339eac1b39f567178ebd930a569cda60e130ce3482a022b7"
+  ],
+  "source_sha256": {
+    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
+    "src/kalman_common/WaveStartup.h": "38eda6be27917589f163118ed9bcd5c58fb98997baf32bcc8837a52ee9e82379",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
+    "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406"
+  },
+  "inputs": {
+    "following": {
+      "release": "v1.4.0",
+      "case": "following",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 0.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+      }
+    },
+    "head": {
+      "release": "v1.4.0",
+      "case": "head",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 180.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+      }
+    }
+  },
+  "policies": {
+    "deployed": {
+      "W3D_REFINE_JOINT": "0"
+    },
+    "joint_field": {
+      "W3D_REFINE_JOINT": "1"
+    },
+    "joint_field_yaw": {
+      "W3D_REFINE_JOINT": "2"
+    }
+  },
+  "sensor_seed": "default",
+  "records_sha256": "0da2b24baad488016f13de98a58e63489ec0fe13cf9a9621e3f75f681f638c58",
+  "log_sha256": {
+    "head-joint_field_yaw-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "4898b27bd45496943d3a4bc7a1df3ec6d310484c8087d9cb88b76ffadfa34a3b",
+    "head-joint_field-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "7f8a9ba9b9ee89e19341ec7d4353e761c067831db6d18d20102ac7704d028128",
+    "head-deployed-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "0d852c648130236ce46800df212060227b11226bf205ea90612f107b050dcf5d",
+    "head-joint_field_yaw-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "52a6b1cdf912ab54ed0ac1f95a5e147eebc7a5850bac5c49a4c92fad1ca8d83b",
+    "head-joint_field-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "efa0f43a0e7635ba87a4e3f78dcee31f506042e2e3af70e1afef16bff90c11c9",
+    "head-deployed-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "ea9c81ef52f81575ea5c2120c8de3f50e82105b50ab9fabd68099e137cdd00f1",
+    "head-joint_field-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "6ea987bd24366c99626e46ffecd02b09238b261da6d0fc7e7b3af50df0e5f973",
+    "head-joint_field_yaw-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "ab31d4bf38cdde1b668ca82c4516baf25c79d8798e7b3aa98c39c3fd20beae94",
+    "head-deployed-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "45ccf0982379057cba599cc06279baaaf4bbc6ee503b8ae06d0e4426249a2be5",
+    "head-joint_field-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "c906c171e0a41038ba4588c4a5db8b375a23aebe316b0b54fcf23bb3c99829f7",
+    "head-joint_field_yaw-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "0faf6b5f251bcfa66c49fb7228c6cad29ec6fb834e029b25eb9483c698a1f110",
+    "head-deployed-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "39a5414e62f45103a8d342ac16fd528676ab1927126c0d8f8406c2effc71e035",
+    "head-joint_field_yaw-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "170115398b2ff41044bb9cdec26f27e0a1c57209a45a25138621d6401d97c937",
+    "head-joint_field-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "73c0b0e1825feab87248a4ef03039a2aac28cde8d7d622f55d62d7dd9c08490f",
+    "head-deployed-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "ecdad0031988d5d4e6d0939c01fa35079865140fc9b161ebe5827299f6192a1a",
+    "head-joint_field_yaw-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "c81b4d565874d4b2fab06c15904cf020187449baae1974cd71d1f2527461c025",
+    "head-deployed-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "2e3348b118f328c2cbb58a2f9f0a8fdf7cd8b3d5b8632be8740affaf239f3fbd",
+    "head-joint_field-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "4768df1adf93284c5bce48eee49c3d637ce04cf6342c12bcc05a0fcfe400a652",
+    "head-joint_field_yaw-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "68851f76502c411330f0340cfdf95c60b47247d27ebc0531c4e0e49dc257d505",
+    "head-joint_field-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "3c39759b32e5ee1b190e92b108ec3a125c9c2ab727d6ef35d34fcb91f68e2116",
+    "head-deployed-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "85978c454f25bf9855184edf91e286652fc0522b6b2a60eea6d87eb526bc3be9",
+    "head-joint_field-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "4905b5737ac7e9a41df3f886a4f0b319b0594e8a2e2ef6564ea9c6ef9c4cef06",
+    "head-joint_field_yaw-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "62255a8903bb6b158f0dd04a584e4ad9484d6603e8a9e39a6581d9c641ef3e38",
+    "head-deployed-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "1ab4a5348396498cf0ec78844b748adf37cc42bdae3ea653f1495e7fc6d6e561",
+    "following-joint_field-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "50325e499f7c4b2bf4b4cd79b3a0a7e712c10eda4de702c02d52aea4ddcbe9a8",
+    "following-deployed-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "ba77cb41b701bad61fe0ae919ca2a797d0c90f932ed25bf4ff9a239fae953621",
+    "following-joint_field_yaw-wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.log": "320aeda5e1beee97c0202f59d0bc185bcbb077330a20e130444bfa73087ae626",
+    "following-joint_field_yaw-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "22c5ee455376269f28a9b4ae3efd3622b3ec3099697dd4b73c4e2e9a4c1045a2",
+    "following-joint_field-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "9fd6aa228a3c049521740a94113aa4ec70a9f8835e3dabb30a5d000b5d309526",
+    "following-deployed-wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.log": "e0d61053d42a70875896345d4b6d0d8fb4124fca74819b763863212a459d11f9",
+    "following-joint_field-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "ace0c8c99622eb364730608d1fbfa48546e5ac685c9f52f39ee47f0ecc940658",
+    "following-joint_field_yaw-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "7f644db77183b384d2047eee01d9a5be7f096ffe7fcbdf40f235bfad69f51801",
+    "following-deployed-wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.log": "7e4b9010b524cd992874ce86b52416ffe96f700aaf2e5ce68fb5376330c8a5ff",
+    "following-joint_field-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "8e4554287c49c721088fc281c338cb039bebb7891c7e4ee18b8683b2c149302f",
+    "following-joint_field_yaw-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "062bb5508f12a2b7ea3cb2782d922a9290c4279966fa49f8091329dfbbcec4f8",
+    "following-deployed-wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.log": "405b10dd77084be68df180a63571d855f439bd17bb3a622ef5580ec1beb0d2f8",
+    "following-joint_field-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "e01232d1c97492912b51e347c32fa6733eaa8f160f7fc5fdf50e7a34bd197ebe",
+    "following-joint_field_yaw-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "f55d3b634df609612bca848ae50b4c2e11f25551a590ac7b7963f25072556503",
+    "following-deployed-wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.log": "606b72999ae50a9c77da4b419ede1bbca70e62b8a8996c4ad05ece19858ef313",
+    "following-deployed-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "19c4c7b73290d74ffe4e2978f7c2e8f058848c23c4727212147d0bcee6f9147d",
+    "following-joint_field_yaw-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "86316477114c4c33d155d9ff8fb571f7ed11857e4fcc0011b63200163965a00a",
+    "following-joint_field-wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.log": "866840a853d53162b366b4a38651f8ebe2bd94e90fbb80ff0bbd0a42cf1b80d6",
+    "following-joint_field-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "ed115d3ca864b286c537ef3c0b740e0c035c55d0794bb39b23c2f4c1104097f8",
+    "following-deployed-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "7ab3f0a28df7e6b2bdd3023ad4d251bee268a6940bdb9608e3040f49347710b1",
+    "following-joint_field_yaw-wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.log": "2bb72894e3f6790f0ecdfadb73274b7c611e6b853e11fc4c232395e693aba00d",
+    "following-joint_field-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "7a6cb481e0691e5dbb5eaa838fa39d95f8b17c8f31ca435f42681dae36fd56e8",
+    "following-deployed-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "c3c66e233fb6282008325f797ba0e249b3f4c6a2a3781c7db0bbb7b8d4a7bed4",
+    "following-joint_field_yaw-wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.log": "877ae82b6bffc99aec7246acb66a6e74cda0ceba41d78802bf0155a4807e9483"
+  },
+  "reproduction": [
+    "python3",
+    "tools/startup_live_retention.py",
+    "--study",
+    "refinement",
+    "--data",
+    "tests/startup_learning/data",
+    "--output",
+    "<output>",
+    "--policies",
+    "deployed",
+    "joint_field",
+    "joint_field_yaw"
+  ],
+  "reproduction_script_sha256": "dbf48352cc032ecea3b8c27d6bb612d7bc11c4bc7b2b101f2890a513e2d4ae92",
+  "source_equivalence": "The instrumented C++ headers generated by the reproduction script equal the compiled experiment headers byte for byte. Original compiled executables were reused for each study. Native measurements are preserved.",
+  "scope": "Experimental OU-III policies on identical default-seed inputs across all 16 records, 1200 seconds each."
+}

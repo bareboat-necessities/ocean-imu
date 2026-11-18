@@ -1,0 +1,77 @@
+{
+  "source": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+  "firmware_source_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "old_workflow_blob": "94b1ab7e2bf9a0ee19ae5b6955765b54adbdaa19",
+  "new_workflow_blob": "0d2f48ae4f56aacbc442d765e2086f34fea63047",
+  "semantic_diff": "Only the full_marine_ins job timeout changes, from 45 to 75 minutes.",
+  "original_jobs": {
+    "pull_request": {
+      "id": 135097727855,
+      "run": 44387565590,
+      "branch_sha": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+      "conclusion": "cancelled",
+      "seconds": 2715,
+      "sizes": [
+        1136115,
+        1171211,
+        1136043,
+        1205703,
+        834447,
+        827251,
+        1122807,
+        1076591
+      ],
+      "failed_steps": [
+        "Compile sketch"
+      ],
+      "errors": [
+        "2026-11-18T21:10:47.6863468Z ##[error]The operation was canceled."
+      ],
+      "raw_log_sha256": "1a9ba8e38daf280fc6fa890ee8d05a28429b25bb4209267b5a136aeb573eb961",
+      "raw_log_bytes": 5235601,
+      "github_checkout": "0a72ce92884abdd4c62eb060d9093e43e7a21b99"
+    },
+    "push": {
+      "id": 135097949712,
+      "run": 44387547817,
+      "branch_sha": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+      "conclusion": "success",
+      "seconds": 2025,
+      "sizes": [
+        1136115,
+        1171211,
+        1136043,
+        1205703,
+        834447,
+        827251,
+        1122807,
+        1076591,
+        1119955
+      ],
+      "failed_steps": [],
+      "errors": [],
+      "raw_log_sha256": "13ddefea34815b50b2769f4748592d08f6d359e5a452c99f166a789e8642e204",
+      "raw_log_bytes": 5917534,
+      "github_checkout": "73e14dfe0eb4c21575259c13df08b2ea7372c92d"
+    }
+  },
+  "original_timeouts_seconds": {
+    "full_marine_ins": 2700,
+    "compass_ahrs": 2700,
+    "imu_basic": 2700
+  },
+  "updated_timeouts_seconds": {
+    "full_marine_ins": 4500,
+    "compass_ahrs": 2700,
+    "imu_basic": 2700
+  },
+  "workflow_and_publication_fixture_tests": 30,
+  "test_log_sha256": "dd0ceda305559b8d0eb3279d824669600b02cdba0b79ca6253d4fb2568051e94",
+  "source_gate": {
+    "base_main_commit": "5426da8a394b33f5f473f70faa05247f832f85fa",
+    "failures": [],
+    "shipping_behavior_authority": "source implementation",
+    "theorem_closed": false,
+    "validation_pass": true
+  }
+}

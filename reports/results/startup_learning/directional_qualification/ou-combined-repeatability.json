@@ -1,0 +1,147 @@
+{
+  "comparison": "Two independent full OU runs on the identical estimator source tree. Original and repeat generation are compared before publication. SVG and TeX comparisons include the complete file bytes.",
+  "estimator_src_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "runs": [
+    44367501515,
+    44385621790
+  ],
+  "products": {
+    "ou-validation-full": {
+      "artifacts": [
+        {
+          "id": 14464387403,
+          "size": 1635425,
+          "digest": "sha256:d070a6d996b0ec8f5104a91739a58e85f3d56e9aa96e93097ff9af301b0590ab",
+          "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
+        },
+        {
+          "id": 14471498261,
+          "size": 1635423,
+          "digest": "sha256:83bacff31b08aa21385741597e757f71edfb670f91625d599e1e053498d7b0f1",
+          "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5"
+        }
+      ],
+      "cases": 840,
+      "matched_files": {
+        "PROVENANCE.md": "6e33e9290dc2e1c4e26678a118f5e2b68dcfe26f6d984e724cd9f58451996fa9",
+        "ou_validation.json": "77664dce250a7f2e0cce5ed87029f2fac6abb614c777c90fbde654dc8e291b74",
+        "ou_validation_attitude.svg": "e2c83486758da06b915757175c4faad2ecb588a8b79a4526409d94c78819755c",
+        "ou_validation_covsync.svg": "d8c9db2e3bef58461c3906f21526a9853cc71049ff2f5be517daf62dbfc9e22f",
+        "ou_validation_displacement.svg": "fc98bf3429c085f525ef10a0d839140d20783dc3a4c7b2faf094cdbef124f5a8",
+        "ou_validation_macros.tex": "339caa4a6c6f8925f036da288dfc7b524a886d965f8932870486a878d99d88b0",
+        "ou_validation_paired_effects.csv": "ca5df5138f9e66f463ed31e325133b1c437a3fc0fedc9a27022da29621065d0f",
+        "ou_validation_publication.tex": "65bb77d7b01ed1cbaf9212340e0fa5aa9378ddb9af0a8aceab9a96bbae0a0f5a",
+        "ou_validation_raw.csv": "7ee800afb4439550f205898b5121cbe8b2a2c5dfdcc918071f88b309f342d79e",
+        "ou_validation_summary.csv": "ef22244b9c1a4d76e330b467d21781be0407d9e42bb3162e6369b602457aa323",
+        "ou_validation_table.tex": "c7ac86cb2d2d6d7ae0278a19057eb72caa8a8586083ca9dadfb96290c06b0646",
+        "ou_validation_transition.svg": "54e9e1e1aeba044f71081f3c5c427d8add6609b04c865092e5d6de832ccd4cb0",
+        "ou_validation_tuning_points.tex": "ca42dff0a95cdee073955fa11a170ae20a4e539c0b0d919de2cf0c428bfafe98",
+        "ou_validation_vertical.svg": "9e662529057162323b456997f078d1d71991de17c3edc510b0637bc7e25e797d"
+      },
+      "differing_files": {
+        "ou_validation_manifest.json": {
+          "original_sha256": "f56863d9f8e4426c6e7fceb4fefe9c791af57ba4e9a761628e9223680e0355e4",
+          "repeat_sha256": "c0deae349fa11bbdd22caca236b029f97dce06ad584ff7256d2ac41b64b37d89",
+          "top_level_fields_differing": [
+            "build_environment",
+            "git_commit",
+            "git_diff_stat",
+            "platform",
+            "result_files"
+          ]
+        },
+        "ou_validation_transition.csv": {
+          "original_sha256": "60f36035f2b67e67cc30fa2d590e4e3e1d2e5a7df941b45a4ece9941116d3c05",
+          "repeat_sha256": "752bcbd406d932f0591035721ff0289caaea4d7938da5973a5d381b265cde8c9",
+          "rows": 12000,
+          "rows_with_any_difference": 282,
+          "differing_columns": {
+            "blend_weight": {
+              "rows": 282,
+              "max_abs_difference": 2.220446049250313e-16,
+              "max_binary64_ulps": 2
+            },
+            "mixture_hs_m": {
+              "rows": 171,
+              "max_abs_difference": 1.3322676295501878e-15,
+              "max_binary64_ulps": 3
+            }
+          }
+        }
+      }
+    },
+    "ou-robustness-full": {
+      "artifacts": [
+        {
+          "id": 14464493396,
+          "size": 350718,
+          "digest": "sha256:c218de4b231def273e508e8c013e1143f6e7a5cafd6c91207df35e1601d88c11",
+          "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
+        },
+        {
+          "id": 14471014035,
+          "size": 350720,
+          "digest": "sha256:1ae5e430c931d38b59787810e21949765c23f581da36a56e1a20b33f6c2895ff",
+          "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5"
+        }
+      ],
+      "cases": 310,
+      "matched_files": {
+        "ou_robustness.json": "9578e9459185422af425c7ef97fddfcf4df1e5964309d68aa2934cf697e40fa2",
+        "ou_robustness_macros.tex": "50f3f8487d0f129672926edf67038f93f40175a5d9ca3798d2df6776174bc17d",
+        "ou_robustness_paired_effects.csv": "5d73bd7e7bebc7c081c4ec4288aea3329558c5d893306f8237d71c07694cb94a",
+        "ou_robustness_publication.tex": "1c952d9eba3c9c4e4adea23e1a08e4d8739356d3d9c6febd1631d181010ca444",
+        "ou_robustness_raw.csv": "0186306fc6a486e89d93cf6079253cd2306597997c44a132187b7847baf70908",
+        "ou_robustness_sensitivity.svg": "16ca284fc176ef59897e384b3b384faefcb2e5c08c6f31e2e0380a7ad0ee3a21",
+        "ou_robustness_stress.svg": "8cc2db3f065f20f0faec4e3c20c5aea0038a7c5014300ba58311061df29307e2",
+        "ou_robustness_summary.csv": "f24bcdc39c2ee899d644656af78eff57bf162091d3b6629146986cb5ea4b92a4"
+      },
+      "differing_files": {
+        "ou_robustness_manifest.json": {
+          "original_sha256": "9d77ffb723a6d5f0fa8da9bcc3bb449cee14fcc9f4ffdcca55610a7f5b09410c",
+          "repeat_sha256": "280e6aaa4e44bed94df0452de6b9ce938d103197ba324a2a95ffece43cafe137",
+          "top_level_fields_differing": [
+            "build_environment",
+            "git_commit",
+            "platform"
+          ]
+        }
+      }
+    },
+    "ou-tfg-full": {
+      "artifacts": [
+        {
+          "id": 14457528983,
+          "size": 64075,
+          "digest": "sha256:2486a0a3d5b05dd17354d7514f3872e0bc833f39a6a91a0ca0323e363d0d5712",
+          "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
+        },
+        {
+          "id": 14466528686,
+          "size": 64074,
+          "digest": "sha256:382f6f68cd661ee8f2f4981f3f54074de00811a5e314182452802cb38f1fcf06",
+          "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5"
+        }
+      ],
+      "cases": 180,
+      "matched_files": {
+        "comparison.tex": "667608fc2512d21f867ef6d62f517ce0be49221379cd123078deda4d990a4aa7",
+        "gate_diagnostics.json": "a92145f471cbccc10e9aeb4c94d8a09d24039400bb012095f186f386b4fe6ea7",
+        "paired_summary.json": "9c2114dcf3be7ddccb64ffa3245b8f8963437e8ea26ff38110c4cd3c0d64a4d5",
+        "raw_runs.csv": "0cc8be6d3021367f5c2d362b15351c080b7a590b8157eee72c1dcd57afea2890",
+        "raw_runs.json": "eae38b79bad54b0e58ea867c8d2051a2ff9786025eed4931dcf7c3626183c107"
+      },
+      "differing_files": {
+        "manifest.json": {
+          "original_sha256": "d6a40ae292ec0fb39481c665aa62fd53f1844bc93cd0901e387b2a5dd7e112cb",
+          "repeat_sha256": "160a45b6dc5331fc29dc70160593452f0bd54ffa42014ff722935a2b1bf7afb5",
+          "top_level_fields_differing": [
+            "generated_utc",
+            "git_commit",
+            "workflow"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -340,6 +340,37 @@ void test_ablation_hooks() {
     }
 }
 
+void test_handoff_tilt_covariance_uses_accepted_source() {
+    const TiltedSea sea;
+    constexpr float dt = 0.005f;
+    for (const bool use_fit : {true, false}) {
+        Fusion f;
+        auto cfg = default_config();
+        cfg.wave_startup_enabled = use_fit;
+        cfg.proxy_startup_min_sec = 32.0f;
+        cfg.proxy_handoff_tilt_sigma_rad = 0.031f;
+        cfg.wave_handoff_tilt_sigma_rad = 0.009f;
+        f.begin(cfg);
+        for (int i = 0; i < 9000 && f.stage() != Stage::Live; ++i) {
+            const float t = static_cast<float>(i) * dt;
+            f.update(dt, sea.gyro(t), sea.acc_body(t));
+            if (f.stage() != Stage::Live && i % 5 == 0) f.updateMag(sea.mag_body(t));
+        }
+        check(f.stage() == Stage::Live && f.usedWaveStartup() == use_fit,
+              "expected the requested startup source at handover");
+        const float sigma = use_fit ? cfg.wave_handoff_tilt_sigma_rad : cfg.proxy_handoff_tilt_sigma_rad;
+        const auto& cov = f.mekf().covariance_full();
+        constexpr int phi = Fusion::Mekf::OFF_PHI;
+        for (int axis = 0; axis < 2; ++axis) {
+            check(std::abs(cov(phi + axis, phi + axis) - sigma * sigma) < 1e-8f,
+                  "handed-over tilt covariance must match the accepted attitude source");
+        }
+        check(std::abs(cov(phi + 2, phi + 2)
+                        - cfg.proxy_handoff_yaw_sigma_rad * cfg.proxy_handoff_yaw_sigma_rad) < 1e-7f,
+              "the wave tilt uncertainty must preserve the yaw uncertainty");
+    }
+}
+
 void test_magnetic_reference_timing() {
     Fusion f;
     auto cfg = default_config();
@@ -812,6 +843,7 @@ int main() {
     test_rs_units_are_a_standard_deviation();
     test_tuning_coefficients_are_live();
     test_ablation_hooks();
+    test_handoff_tilt_covariance_uses_accepted_source();
     test_magnetic_reference_timing();
     test_with_mag_disabled();
     test_tracks_heave();

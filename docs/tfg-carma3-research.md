@@ -35,6 +35,43 @@ Files:
   sketch: `atomS3R_ins_carma3` with this wrapper in place of CARMA3's.
   It compiles in CI; it is not hardware evidence.
 
+### Horizontal wave correction
+
+The independent-axis and shared-mode TFG wrappers apply one scalar wave
+observation across the measured wave axis once live accelerometer-bias
+learning is active. Both use the existing CARMA(4,1) states. For a numerator
+zero at DC and a fixed frequency scale, the horizontal displacement integral is
+
+$$
+S_* = (\ell - 2\zeta_1\omega_1 p - v)/\omega_1^2, \qquad \dot S_* = p .
+$$
+
+For sinusoidal transverse motion, $S_*+\beta v=0$ with
+$\beta=1/\omega^2$. The wrapper estimates $\beta$ from the ratio of the
+centered transverse displacement and velocity variances. The averaging
+horizon is eight encounter periods. The observation starts after four
+periods of history and requires a reliable wave axis. The allowed transverse
+period spans half to twice the vertical encounter period. Broadband motion
+contributes residual variance through the fitted CARMA spectrum and the
+existing horizontal integral noise scale.
+
+When the tuner changes the pole frequencies during directional waves, the
+filter maps the two horizontal components of $\ell$ so that $S_*$ remains
+continuous. It also transforms the full right-invariant covariance, including
+its correlations with roll and pitch. The update uses ordinary IMU and
+wave-direction inputs in both vessel headings.
+
+The current CARMA(4,1) wrappers therefore use different observations. On the
+600 s JONSWAP smoke replay (seed 1, 0.29 Hz peak, 0.8 m significant height,
+scored from 200 s), the TFG/Q-MEKF displacement RMS ratios were 0.97983 on
+X, 0.96489 on Y and 1.00000 on Z at the precision of the benchmark CSV.
+The horizontal improvements on this draw include the transverse update.
+The rotating-sinusoid core test still compares the two error geometries with
+the same measurements. The reported ±1% equivalence intervals in sections
+6–8 refer to the original paired geometry experiment.
+[Smoke replay on the PR](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44387565590/job/135097728622) ·
+[Moving-vessel comparison across sensor draws](../reports/results/startup_learning/tfg_carma_horizontal_wave/README.md)
+
 **Result in brief** (simulation; sections 7-13; generated tables in
 `reports/results/tfg_carma3/summary.md`):
 
@@ -86,7 +123,7 @@ group with a right-invariant error.  The hypothesis under test:
 > (accuracy, robustness, bias tracking or covariance consistency) than the
 > Q-MEKF with the same three-axis CARMA(4,1) prior.
 
-The comparison holds everything else fixed: the same CARMA model library,
+The original geometry comparison held everything else fixed: the same CARMA model library,
 shape, frequency/amplitude mapping and exact discretization; the same
 wrapper source code (front end, proxy startup, staged tune commit, tilt
 watchdog, magnetometer-service bias gate, vibration Racc inflation); the
@@ -401,10 +438,10 @@ invariant covariance (ablation `T41NW`).
 
 ### 4.3 What differs, structurally
 
-Only the estimator: error coordinates, the transition/noise in them, the
-group injection and the reset transport.  The measurement information, the
+The geometry experiment varied the error coordinates, their transition and
+noise, the group injection and the reset transport. The measurement information, the
 measurement-acceptance policy (no gating; held-bias semantics), startup,
-adaptation, magnetic service and the CARMA prior are identical.  The
+adaptation, magnetic service and the CARMA prior were identical. The
 controlled ablations isolate the remaining design choices: reset transport
 (`T41R0`, `T41RA`) and covariance-write coordinates (`T41NW`).
 
@@ -1221,7 +1258,7 @@ document, which with the generated summary remains the record.
         # esp32s3_link.csv, esp32s3_callgraph.csv (Espressif esp-14.2.0_20241119)
 
 The main grid took about 3.2 h with four jobs on a 4-core x86-64 host.
-Rows reproduce bit for bit (apart from `runtime_ns`) with this tree's
-benches on the host that produced them (GCC `-O3 -march=native`); as for
-CARMA3, a different compiler or CPU can move results in the fifth
-significant digit through FMA contraction, which no conclusion depends on.
+The original grid used GCC with `-O3 -march=native`. Running the commands
+above on the current branch exercises the transverse wave correction. The
+[archived summary](../reports/results/tfg_carma3/summary.md) gives the
+paired intervals for the original geometry experiment.

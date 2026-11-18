@@ -1,0 +1,131 @@
+{
+  "parent": "37317ad52e1c03a733644ed1964f47cab5f46a8c",
+  "production": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "production_src_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "stock_executable_sha256": "ce255a291a6c4c4b69ae5e34fb8fd9bbcde8ba777f26c22a9f2c0910bf168241",
+  "production_executable_sha256": "dae0a04a222cb68ca221e12fd002cd0e5cde97ab2793b1be207fb74f750bde9f",
+  "libm_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "paired_csv_sha256": "59b537fb16bcb6b063910c0820cddeb1c00f078f57072c697dd30d5265e5f159",
+  "groups": {
+    "fixed": {
+      "pairs": 32,
+      "before": 0.43359692177824316,
+      "after": 0.3492794042826043,
+      "percent_change": -19.446059983507414,
+      "lower_3d": 32
+    },
+    "six": {
+      "pairs": 96,
+      "before": 0.42728260540294993,
+      "after": 0.3447169621763811,
+      "percent_change": -19.323427207785603,
+      "lower_3d": 96
+    },
+    "held": {
+      "pairs": 32,
+      "before": 0.43287671723674975,
+      "after": 0.3489307280315841,
+      "percent_change": -19.392585893977234,
+      "lower_3d": 32
+    },
+    "engine": {
+      "pairs": 8,
+      "before": 0.8792949249555516,
+      "after": 0.7114538432398672,
+      "percent_change": -19.08814402905473,
+      "lower_3d": 8
+    }
+  },
+  "fixed_profile_logs_sha256": {
+    "following": {
+      "default": "79d684b1103aa5757845c408de2c6b75507964339431cd083d1fcecd9959c96c",
+      "legacy": "0f716543d26e9031594b434b151b318bd89813c93988071f94ba8c84d25fbb6a"
+    },
+    "head": {
+      "default": "0954035dcc48d375ff7479b850e59e43017e172f8d04eed205192213dfc11600",
+      "legacy": "b391ae9e86f26decc67f467cb974db5d455c8fa8629c8cd54b8bd094a56e3175"
+    }
+  },
+  "roundtrip": {
+    "wave_seed": 7753,
+    "imu_seed": 1063,
+    "initialization_seed": 3559,
+    "motion_generator": "tools/ou_roundtrip_transition.py:make_roundtrip_wave",
+    "cases": {
+      "head": {
+        "input_sha256": "3ef7b6bf7415afec698d94de9dc19de6ef3f4139ada8a17cd75c93ed135d5fa7",
+        "3d_rms_m": {
+          "window": [
+            0.33329165,
+            0.265077561
+          ],
+          "low_start": [
+            0.151493758,
+            0.12717557
+          ],
+          "rise": [
+            0.299151808,
+            0.250873685
+          ],
+          "high_recover": [
+            0.49769032,
+            0.382189453
+          ],
+          "high": [
+            0.478392839,
+            0.386775285
+          ],
+          "fall": [
+            0.368953317,
+            0.279122174
+          ],
+          "low_recover": [
+            0.126006812,
+            0.111354493
+          ],
+          "low_return": [
+            0.121796049,
+            0.105396636
+          ]
+        }
+      },
+      "following": {
+        "input_sha256": "1d26a336759bac0f5441cc0c2c3e5857d067e2b047a3c5da36dfc181eb2dda46",
+        "3d_rms_m": {
+          "window": [
+            0.406587958,
+            0.350447565
+          ],
+          "low_start": [
+            0.179892659,
+            0.151480958
+          ],
+          "rise": [
+            0.534642041,
+            0.465765625
+          ],
+          "high_recover": [
+            0.544986486,
+            0.454579443
+          ],
+          "high": [
+            0.473103166,
+            0.407366902
+          ],
+          "fall": [
+            0.473352671,
+            0.420625687
+          ],
+          "low_recover": [
+            0.242178828,
+            0.21008788
+          ],
+          "low_return": [
+            0.191612959,
+            0.164598346
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "published_commit": "73e14dfe0eb4c21575259c13df08b2ea7372c92d",
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "workflow_run": 44367501515,
+  "original_workflow_conclusion": "failure",
+  "estimator_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "studies": {
+    "ou_validation": {
+      "rows": 840,
+      "source_raw_sha256": "7ee800afb4439550f205898b5121cbe8b2a2c5dfdcc918071f88b309f342d79e",
+      "original_archive": 14464387403,
+      "archive_sha256": "sha256:d070a6d996b0ec8f5104a91739a58e85f3d56e9aa96e93097ff9af301b0590ab",
+      "successful_native_job": 135066522850,
+      "independent_fields": 7560
+    },
+    "ou_robustness": {
+      "rows": 310,
+      "source_raw_sha256": "0186306fc6a486e89d93cf6079253cd2306597997c44a132187b7847baf70908",
+      "original_archive": 14464493396,
+      "archive_sha256": "sha256:c218de4b231def273e508e8c013e1143f6e7a5cafd6c91207df35e1601d88c11",
+      "successful_native_job": 135066523160,
+      "independent_fields": 2790
+    },
+    "tfg_comparison": {
+      "rows": 180,
+      "source_raw_sha256": "0cc8be6d3021367f5c2d362b15351c080b7a590b8157eee72c1dcd57afea2890",
+      "original_archive": 14457528983,
+      "archive_sha256": "sha256:2486a0a3d5b05dd17354d7514f3872e0bc833f39a6a91a0ca0323e363d0d5712",
+      "successful_native_job": 135025773917,
+      "independent_fields": 1620
+    }
+  },
+  "independent_studies": 44367501540,
+  "proof_revision": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+  "ou_primary_fields": 10350,
+  "tfg_fields": 1620,
+  "matching_tfg_complete_rows": 160,
+  "matched_simulated_draw_hashes": 80,
+  "previous_marker": {
+    "replay_fingerprint": "41f599124bd9ebc747314be776e8e81c4759edb3eeb90348507c52ce6e9248c9",
+    "results_fingerprint": "097ef2fc4e7d39d5e1ffb32a56843c3c9bd54e671276e97ea505e60c8faafccd"
+  },
+  "canonical_fingerprint_verification": "pending on the final test fixture"
+}

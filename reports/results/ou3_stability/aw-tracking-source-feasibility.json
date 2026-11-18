@@ -7,7 +7,7 @@
     "0",
     "72"
   ],
-  "header_sha256": "a7d44ac2f8d12251ac68d13ac2205a2e9770a8a352b3a3588acffd26ece3f394",
+  "header_sha256": "1a902c6294710659bb2aa160433308cf3d5fee58b99d7d164c2d654734f9af1a",
   "literal_over_injection_free_min": 1.0000088801271634,
   "magnetic_service_certified": false,
   "onset_s": 160,
@@ -25,15 +25,15 @@
         "0"
       ],
       "attitude_error_max_rad": 0.000402855,
-      "corollary_A_star_ratio": 3.93145e-05,
+      "corollary_A_star_ratio": 3.93111e-05,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.000319573,
+        "A_tilde_minus_I_max": 0.000319571,
         "G0_floor_service_gap_1s": 0.0839933,
         "injection_free_sigma_min": 219.775,
         "literal_sigma_min": 219.818,
         "nominal_rate_max_rad_s": 0.005,
         "word_nominal_force_L1": 1.01701,
-        "word_nominal_transverse_mean_mps2": 2.8437e-05,
+        "word_nominal_transverse_mean_mps2": 2.84344e-05,
         "word_s": [
           2.0,
           102.0
@@ -51,13 +51,13 @@
           "V": "429074636011928881/2186021390400000000"
         }
       },
-      "nominal_16s_mean_max_mps2": 0.0003661,
+      "nominal_16s_mean_max_mps2": 0.000366099,
       "nominal_force_L1_max": 1.01702,
-      "nominal_transverse_mean_max_mps2": 7.71087e-05,
+      "nominal_transverse_mean_max_mps2": 7.7102e-05,
       "pointwise_aw_error_sup_mps2": 0.242306,
       "pointwise_ratio_to_corollary_A": 0.215607,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.0003661,
+      "signed_16s_mean_error_max_mps2": 0.000366099,
       "signed_mean_ratio_to_1_12383": 0.000325761,
       "tau_aw_range_s": [
         0.499388,
@@ -126,16 +126,16 @@
         "0.1",
         "0"
       ],
-      "attitude_error_max_rad": 0.000244606,
+      "attitude_error_max_rad": 0.000244516,
       "corollary_A_star_ratio": 0.0813815,
       "literal_array": {
-        "A_tilde_minus_I_max": 7.18088e-05,
+        "A_tilde_minus_I_max": 7.18095e-05,
         "G0_floor_service_gap_1s": 0.0786051,
         "injection_free_sigma_min": 248.756,
         "literal_sigma_min": 248.766,
         "nominal_rate_max_rad_s": 0.00500003,
         "word_nominal_force_L1": 1.05237,
-        "word_nominal_transverse_mean_mps2": 0.0510533,
+        "word_nominal_transverse_mean_mps2": 0.0510534,
         "word_s": [
           2.0,
           102.0
@@ -159,8 +159,8 @@
       "pointwise_aw_error_sup_mps2": 2.25181,
       "pointwise_ratio_to_corollary_A": 2.00369,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.0083402,
-      "signed_mean_ratio_to_1_12383": 0.00742123,
+      "signed_16s_mean_error_max_mps2": 0.00834016,
+      "signed_mean_ratio_to_1_12383": 0.0074212,
       "tau_aw_range_s": [
         4.98841,
         5.05626
@@ -177,10 +177,10 @@
         "0.2",
         "0"
       ],
-      "attitude_error_max_rad": 0.000245355,
+      "attitude_error_max_rad": 0.000245233,
       "corollary_A_star_ratio": 0.0364106,
       "literal_array": {
-        "A_tilde_minus_I_max": 2.80481e-05,
+        "A_tilde_minus_I_max": 2.80588e-05,
         "G0_floor_service_gap_1s": 0.083435,
         "injection_free_sigma_min": 225.222,
         "literal_sigma_min": 225.224,
@@ -206,12 +206,12 @@
       },
       "nominal_16s_mean_max_mps2": 0.233093,
       "nominal_force_L1_max": 1.04412,
-      "nominal_transverse_mean_max_mps2": 0.0714132,
+      "nominal_transverse_mean_max_mps2": 0.0714131,
       "pointwise_aw_error_sup_mps2": 2.12304,
       "pointwise_ratio_to_corollary_A": 1.88911,
       "recorded_accelerometer_rows": 56001,
-      "signed_16s_mean_error_max_mps2": 0.0100796,
-      "signed_mean_ratio_to_1_12383": 0.00896901,
+      "signed_16s_mean_error_max_mps2": 0.0100797,
+      "signed_mean_ratio_to_1_12383": 0.00896903,
       "tau_aw_range_s": [
         2.49009,
         2.5224
@@ -279,16 +279,16 @@
         "0.1",
         "0"
       ],
-      "attitude_error_max_rad": 0.000593205,
+      "attitude_error_max_rad": 0.000593241,
       "corollary_A_star_ratio": 0.102501,
       "literal_array": {
-        "A_tilde_minus_I_max": 0.000449501,
+        "A_tilde_minus_I_max": 0.000449504,
         "G0_floor_service_gap_1s": 0.0810637,
         "injection_free_sigma_min": 191.808,
         "literal_sigma_min": 191.815,
         "nominal_rate_max_rad_s": 0.00500005,
         "word_nominal_force_L1": 1.02182,
-        "word_nominal_transverse_mean_mps2": 0.0662348,
+        "word_nominal_transverse_mean_mps2": 0.0662349,
         "word_s": [
           2.0,
           102.0

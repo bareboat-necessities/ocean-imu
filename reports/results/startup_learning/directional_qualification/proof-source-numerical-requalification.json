@@ -1,0 +1,461 @@
+{
+  "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+  "original_jobs": {
+    "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+    "workflow": 44385621790,
+    "producers": [
+      {
+        "artifact_id": 14471498261,
+        "name": "ou-validation-full",
+        "bytes": 1635423,
+        "sha256": "sha256:83bacff31b08aa21385741597e757f71edfb670f91625d599e1e053498d7b0f1",
+        "job": 135123516642,
+        "job_name": "evidence / combine (validation)",
+        "started": "2026-11-18T20:51:50Z",
+        "completed": "2026-11-18T21:14:57Z",
+        "artifact_created": "2026-11-18T21:14:53Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14471014035,
+        "name": "ou-robustness-full",
+        "bytes": 350720,
+        "sha256": "sha256:1ae5e430c931d38b59787810e21949765c23f581da36a56e1a20b33f6c2895ff",
+        "job": 135123517994,
+        "job_name": "evidence / combine (robustness)",
+        "started": "2026-11-18T20:54:39Z",
+        "completed": "2026-11-18T21:18:11Z",
+        "artifact_created": "2026-11-18T21:18:08Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14470840094,
+        "name": "ou-validation-shard-0",
+        "bytes": 85389,
+        "sha256": "sha256:111b31fe7e986cc60844f6237c9d028d9b09b43d8ed2bc6ab3e420d896b62550",
+        "job": 135091748459,
+        "job_name": "evidence / regenerate (validation, 0)",
+        "started": "2026-11-18T20:19:57Z",
+        "completed": "2026-11-18T20:51:03Z",
+        "artifact_created": "2026-11-18T20:51:00Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14469780055,
+        "name": "ou-validation-shard-2",
+        "bytes": 64477,
+        "sha256": "sha256:91d488757d3f869acf370ee78c9de018fe8ad7bcbf1b1a1f0ccdd4db591a7282",
+        "job": 135091748407,
+        "job_name": "evidence / regenerate (validation, 2)",
+        "started": "2026-11-18T20:00:49Z",
+        "completed": "2026-11-18T20:27:59Z",
+        "artifact_created": "2026-11-18T20:27:56Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14469725989,
+        "name": "ou-robustness-shard-1",
+        "bytes": 22862,
+        "sha256": "sha256:f4290a39dce0f6145446ac13ade40bc11e5989bc450a47e6d372b88cd4174819",
+        "job": 135091748594,
+        "job_name": "evidence / regenerate (robustness, 1)",
+        "started": "2026-11-18T20:14:53Z",
+        "completed": "2026-11-18T20:32:34Z",
+        "artifact_created": "2026-11-18T20:32:32Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14469040065,
+        "name": "ou-validation-shard-1",
+        "bytes": 64487,
+        "sha256": "sha256:94092663f3e2022eeab5287bd44c78885c2ecac20e1d1bcc0b822f71da438f13",
+        "job": 135091748460,
+        "job_name": "evidence / regenerate (validation, 1)",
+        "started": "2026-11-18T20:03:44Z",
+        "completed": "2026-11-18T20:21:02Z",
+        "artifact_created": "2026-11-18T20:20:59Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14468366595,
+        "name": "ou-robustness-shard-2",
+        "bytes": 22754,
+        "sha256": "sha256:7b4d30b1264ccd49721e56f77d9435dd5a84ef39a6792644c05d4ed67e6ee5bf",
+        "job": 135091748424,
+        "job_name": "evidence / regenerate (robustness, 2)",
+        "started": "2026-11-18T20:03:45Z",
+        "completed": "2026-11-18T20:29:12Z",
+        "artifact_created": "2026-11-18T20:29:08Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14467159987,
+        "name": "ou-robustness-shard-0",
+        "bytes": 30473,
+        "sha256": "sha256:4c2ad0794955212de9d6c540324e7762fb46a5ec248363e117bff91e053b16be",
+        "job": 135091748430,
+        "job_name": "evidence / regenerate (robustness, 0)",
+        "started": "2026-11-18T20:02:43Z",
+        "completed": "2026-11-18T20:25:33Z",
+        "artifact_created": "2026-11-18T20:25:29Z",
+        "run_attempt": 1
+      },
+      {
+        "artifact_id": 14466528686,
+        "name": "ou-tfg-full",
+        "bytes": 64074,
+        "sha256": "sha256:382f6f68cd661ee8f2f4981f3f54074de00811a5e314182452802cb38f1fcf06",
+        "job": 135091748240,
+        "job_name": "evidence / tfg_companion",
+        "started": "2026-11-18T20:03:43Z",
+        "completed": "2026-11-18T20:11:46Z",
+        "artifact_created": "2026-11-18T20:11:44Z",
+        "run_attempt": 1
+      }
+    ]
+  },
+  "combined_and_independent_rows": {
+    "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+    "run": 44385621790,
+    "studies": {
+      "validation": {
+        "shards": {
+          "ou-validation-shard-0": {
+            "rows": 336,
+            "artifact_id": 14470840094,
+            "archive_sha256": "sha256:111b31fe7e986cc60844f6237c9d028d9b09b43d8ed2bc6ab3e420d896b62550",
+            "rows_sha256": "bff8f7c2badec799d611573b10358af7adbecbea32a696bd03524d1560cbb586"
+          },
+          "ou-validation-shard-1": {
+            "rows": 252,
+            "artifact_id": 14469040065,
+            "archive_sha256": "sha256:94092663f3e2022eeab5287bd44c78885c2ecac20e1d1bcc0b822f71da438f13",
+            "rows_sha256": "6216d5e15e7a9a08f602b0d9504ae80a68d87d911feca0e8848dcb52e6137d32"
+          },
+          "ou-validation-shard-2": {
+            "rows": 252,
+            "artifact_id": 14469780055,
+            "archive_sha256": "sha256:91d488757d3f869acf370ee78c9de018fe8ad7bcbf1b1a1f0ccdd4db591a7282",
+            "rows_sha256": "49c344211700a348dc6a033cd4b8d025ad7b04ae8b39bee35e46cf68cb93be83"
+          }
+        },
+        "native_rows": 840,
+        "expected": 840,
+        "published": {
+          "rows": 840,
+          "full_table_rows": 840,
+          "bytes": 604405,
+          "sha256": "7ee800afb4439550f205898b5121cbe8b2a2c5dfdcc918071f88b309f342d79e",
+          "artifact": 14471498261,
+          "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+          "workflow": 44385621790,
+          "exact": {
+            "disp_x_rms_m": 840,
+            "disp_y_rms_m": 840,
+            "disp_z_rms_m": 840,
+            "disp_3d_rms_m": 840,
+            "accel_bias_3d_rms_mps2": 840,
+            "gyro_bias_3d_rms_radps": 840,
+            "roll_rms_deg": 840,
+            "pitch_rms_deg": 840,
+            "yaw_rms_deg": 840
+          },
+          "differ": {
+            "disp_x_rms_m": 0,
+            "disp_y_rms_m": 0,
+            "disp_z_rms_m": 0,
+            "disp_3d_rms_m": 0,
+            "accel_bias_3d_rms_mps2": 0,
+            "gyro_bias_3d_rms_radps": 0,
+            "roll_rms_deg": 0,
+            "pitch_rms_deg": 0,
+            "yaw_rms_deg": 0
+          },
+          "max_absolute_difference": {
+            "disp_x_rms_m": 0.0,
+            "disp_y_rms_m": 0.0,
+            "disp_z_rms_m": 0.0,
+            "disp_3d_rms_m": 0.0,
+            "accel_bias_3d_rms_mps2": 0.0,
+            "gyro_bias_3d_rms_radps": 0.0,
+            "roll_rms_deg": 0.0,
+            "pitch_rms_deg": 0.0,
+            "yaw_rms_deg": 0.0
+          }
+        },
+        "directional": {
+          "rows": 840,
+          "full_table_rows": 840,
+          "bytes": 604405,
+          "sha256": "7ee800afb4439550f205898b5121cbe8b2a2c5dfdcc918071f88b309f342d79e",
+          "artifact": 14459213502,
+          "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+          "workflow": 44367501540,
+          "exact": {
+            "disp_x_rms_m": 840,
+            "disp_y_rms_m": 840,
+            "disp_z_rms_m": 840,
+            "disp_3d_rms_m": 840,
+            "accel_bias_3d_rms_mps2": 840,
+            "gyro_bias_3d_rms_radps": 840,
+            "roll_rms_deg": 840,
+            "pitch_rms_deg": 840,
+            "yaw_rms_deg": 840
+          },
+          "differ": {
+            "disp_x_rms_m": 0,
+            "disp_y_rms_m": 0,
+            "disp_z_rms_m": 0,
+            "disp_3d_rms_m": 0,
+            "accel_bias_3d_rms_mps2": 0,
+            "gyro_bias_3d_rms_radps": 0,
+            "roll_rms_deg": 0,
+            "pitch_rms_deg": 0,
+            "yaw_rms_deg": 0
+          },
+          "max_absolute_difference": {
+            "disp_x_rms_m": 0.0,
+            "disp_y_rms_m": 0.0,
+            "disp_z_rms_m": 0.0,
+            "disp_3d_rms_m": 0.0,
+            "accel_bias_3d_rms_mps2": 0.0,
+            "gyro_bias_3d_rms_radps": 0.0,
+            "roll_rms_deg": 0.0,
+            "pitch_rms_deg": 0.0,
+            "yaw_rms_deg": 0.0
+          }
+        }
+      },
+      "robustness": {
+        "shards": {
+          "ou-robustness-shard-0": {
+            "rows": 124,
+            "artifact_id": 14467159987,
+            "archive_sha256": "sha256:4c2ad0794955212de9d6c540324e7762fb46a5ec248363e117bff91e053b16be",
+            "rows_sha256": "5c4c671d57f8375f29e29e8f0b4c8b85f90b33430627e84b9a73ef972730648e"
+          },
+          "ou-robustness-shard-1": {
+            "rows": 93,
+            "artifact_id": 14469725989,
+            "archive_sha256": "sha256:f4290a39dce0f6145446ac13ade40bc11e5989bc450a47e6d372b88cd4174819",
+            "rows_sha256": "42eb986a9e11d6d60ce6d77f86562b21855ace0b304794395a6104ed73b38768"
+          },
+          "ou-robustness-shard-2": {
+            "rows": 93,
+            "artifact_id": 14468366595,
+            "archive_sha256": "sha256:7b4d30b1264ccd49721e56f77d9435dd5a84ef39a6792644c05d4ed67e6ee5bf",
+            "rows_sha256": "d78a53df7ac1750eb0fe05a54de4927cbdd6cf5b6088bbfe6cdfa2e92417efe1"
+          }
+        },
+        "native_rows": 310,
+        "expected": 310,
+        "published": {
+          "rows": 310,
+          "full_table_rows": 310,
+          "bytes": 210271,
+          "sha256": "0186306fc6a486e89d93cf6079253cd2306597997c44a132187b7847baf70908",
+          "artifact": 14471014035,
+          "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+          "workflow": 44385621790,
+          "exact": {
+            "disp_x_rms_m": 310,
+            "disp_y_rms_m": 310,
+            "disp_z_rms_m": 310,
+            "disp_3d_rms_m": 310,
+            "accel_bias_3d_rms_mps2": 310,
+            "gyro_bias_3d_rms_radps": 310,
+            "roll_rms_deg": 310,
+            "pitch_rms_deg": 310,
+            "yaw_rms_deg": 310
+          },
+          "differ": {
+            "disp_x_rms_m": 0,
+            "disp_y_rms_m": 0,
+            "disp_z_rms_m": 0,
+            "disp_3d_rms_m": 0,
+            "accel_bias_3d_rms_mps2": 0,
+            "gyro_bias_3d_rms_radps": 0,
+            "roll_rms_deg": 0,
+            "pitch_rms_deg": 0,
+            "yaw_rms_deg": 0
+          },
+          "max_absolute_difference": {
+            "disp_x_rms_m": 0.0,
+            "disp_y_rms_m": 0.0,
+            "disp_z_rms_m": 0.0,
+            "disp_3d_rms_m": 0.0,
+            "accel_bias_3d_rms_mps2": 0.0,
+            "gyro_bias_3d_rms_radps": 0.0,
+            "roll_rms_deg": 0.0,
+            "pitch_rms_deg": 0.0,
+            "yaw_rms_deg": 0.0
+          }
+        },
+        "directional": {
+          "rows": 310,
+          "full_table_rows": 310,
+          "bytes": 210271,
+          "sha256": "0186306fc6a486e89d93cf6079253cd2306597997c44a132187b7847baf70908",
+          "artifact": 14464665027,
+          "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+          "workflow": 44367501540,
+          "exact": {
+            "disp_x_rms_m": 310,
+            "disp_y_rms_m": 310,
+            "disp_z_rms_m": 310,
+            "disp_3d_rms_m": 310,
+            "accel_bias_3d_rms_mps2": 310,
+            "gyro_bias_3d_rms_radps": 310,
+            "roll_rms_deg": 310,
+            "pitch_rms_deg": 310,
+            "yaw_rms_deg": 310
+          },
+          "differ": {
+            "disp_x_rms_m": 0,
+            "disp_y_rms_m": 0,
+            "disp_z_rms_m": 0,
+            "disp_3d_rms_m": 0,
+            "accel_bias_3d_rms_mps2": 0,
+            "gyro_bias_3d_rms_radps": 0,
+            "roll_rms_deg": 0,
+            "pitch_rms_deg": 0,
+            "yaw_rms_deg": 0
+          },
+          "max_absolute_difference": {
+            "disp_x_rms_m": 0.0,
+            "disp_y_rms_m": 0.0,
+            "disp_z_rms_m": 0.0,
+            "disp_3d_rms_m": 0.0,
+            "accel_bias_3d_rms_mps2": 0.0,
+            "gyro_bias_3d_rms_radps": 0.0,
+            "roll_rms_deg": 0.0,
+            "pitch_rms_deg": 0.0,
+            "yaw_rms_deg": 0.0
+          }
+        }
+      }
+    }
+  },
+  "both_companions": {
+    "companion": {
+      "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+      "workflow": 44385621790,
+      "artifact": 14466528686,
+      "archive_sha256": "sha256:382f6f68cd661ee8f2f4981f3f54074de00811a5e314182452802cb38f1fcf06",
+      "raw_sha256": "0cc8be6d3021367f5c2d362b15351c080b7a590b8157eee72c1dcd57afea2890"
+    },
+    "second_companion": {
+      "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+      "workflow": 44367501515,
+      "artifact": 14457528983,
+      "archive_sha256": "sha256:2486a0a3d5b05dd17354d7514f3872e0bc833f39a6a91a0ca0323e363d0d5712",
+      "raw_sha256": "0cc8be6d3021367f5c2d362b15351c080b7a590b8157eee72c1dcd57afea2890"
+    },
+    "paired_scenarios": 90,
+    "family_rows": 180,
+    "matching_generated_inputs": 90,
+    "matching_complete_rows": 180,
+    "all_measured_fields_equal": 1620,
+    "raw_tables_byte_identical": true,
+    "same_binary_sha256": {
+      "OU_III": "b2749d3a032dfaaf047a7eaf0c3540b227490a193e38bd0ad32d48cbe452c41a",
+      "TFG": "5c87502866aecf6a5b43af5c28367bbf553df83b3ed243ff880ac49e59c5d3f4"
+    },
+    "same_release_inputs": {
+      "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+      "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+      "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+      "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+      "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+      "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+    },
+    "different_generated_inputs": []
+  },
+  "publisher": {
+    "source": "a68243db48fdb5225305e34ea5c5dd64fe866eb5",
+    "run": 44385621790,
+    "job": 135140278416,
+    "status": "failure",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "success"
+      },
+      {
+        "name": "Checkout",
+        "status": "success"
+      },
+      {
+        "name": "Skip when this commit's evidence is already published",
+        "status": "success"
+      },
+      {
+        "name": "Install dependencies",
+        "status": "success"
+      },
+      {
+        "name": "Select the reproducible replay compiler",
+        "status": "success"
+      },
+      {
+        "name": "Reuse fingerprinted simulation data",
+        "status": "success"
+      },
+      {
+        "name": "Unpack fingerprinted simulation data",
+        "status": "success"
+      },
+      {
+        "name": "Download regenerated bundles",
+        "status": "success"
+      },
+      {
+        "name": "Place bundles and mirror the manuscript copies",
+        "status": "success"
+      },
+      {
+        "name": "Check the manuscript against the regenerated evidence",
+        "status": "failure"
+      },
+      {
+        "name": "Record replay and results fingerprints",
+        "status": "skipped"
+      },
+      {
+        "name": "Verify final evidence fingerprints",
+        "status": "skipped"
+      },
+      {
+        "name": "Commit the regenerated evidence",
+        "status": "skipped"
+      },
+      {
+        "name": "Post Checkout",
+        "status": "success"
+      },
+      {
+        "name": "Complete job",
+        "status": "success"
+      }
+    ],
+    "started": "2026-11-18T21:37:23Z",
+    "completed": "2026-11-18T21:41:52Z",
+    "log_sha256": "d3667299bc84062ad37f713e3d9dec17cff2cd8aad71f45651e055df646325b5",
+    "bytes": 318294,
+    "actual_test_suites": [
+      "1250"
+    ],
+    "failed_tests": [
+      "test_unresolved_deterministic_direction_is_preserved (test_zzzzz_publication_sync_contract.PublicationSyncRestatOverrideTests.test_unresolved_deterministic_direction_is_preserved)"
+    ],
+    "failure_steps": [
+      "Check the manuscript against the regenerated evidence"
+    ],
+    "test_failures": [
+      "FAILED (failures=1, skipped=1)"
+    ],
+    "fingerprint_errors": []
+  }
+}

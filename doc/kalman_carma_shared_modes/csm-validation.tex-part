@@ -1,8 +1,9 @@
 \section{Comparative Validation on Underway Records}
 \label{sec:csm-validation}
 \subsection{Protocol, comparators and scoring}
-This section uses the complete v1.4.0 study for the direction declared in
-this build. Both following and head seas use a 5~kn vessel with a
+\IfFileExists{../simulation-case.tex-part}{\input{../simulation-case.tex-part}}{%
+\paragraph{Deterministic replay case for this build} Northbound, following seas.}
+This section uses the complete v1.4.0 study for that direction. Both following and head seas use a 5~kn vessel with a
 $\pm3^\circ$ heading oscillation of period 20~s. Tables and traces come
 from that case's verified CI artifact; the archived zero-speed study is not
 substituted for these underway results.
@@ -170,6 +171,34 @@ $\CSMJonswapThreeDUncoupledDifference$ percentage points for JONSWAP
 $\CSMPmStokesThreeDUncoupledDifference$ for PM--Stokes
 ($\CSMPmStokesThreeDUncoupledInterval$). Table~\ref{tab:csm-validation-paired}
 also retains the corresponding heave contrasts.
+
+\begin{table}[t]\centering\footnotesize
+\caption{Late 3-D displacement RMS in metres across estimator revisions.
+Each entry pools the final 900~s of 80 stationary-sea replays.}
+\label{tab:csm-revision-comparison}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+& \multicolumn{2}{c}{Following seas} & \multicolumn{2}{c}{Head seas} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+Estimator & Baseline & Updated & Baseline & Updated \\ \midrule
+Shared CARMA & 0.21913 & 0.21922 & 0.23955 & 0.23954 \\
+Uncoupled CARMA & 0.24950 & 0.24950 & 0.25202 & 0.25201 \\
+OU--II & 0.59450 & 0.59449 & 0.46559 & 0.46558 \\
+OU--III & 0.50614 & 0.40747 & 0.39363 & 0.32689 \\
+Standard TFG & 0.48960 & 0.31523 & 0.40395 & 0.32500 \\
+\bottomrule\end{tabular}
+\end{table}
+
+Table~\ref{tab:csm-revision-comparison} compares the baseline
+(\texttt{cee633f}) and updated estimators (\texttt{fee96e2}) on
+eight release records and ten common seed triplets per direction.
+Pooling gives each 900~s window equal weight. OU--III and standard TFG
+reduced 3-D RMS by more than 0.5\% on every draw in both directions.
+Shared CARMA's pooled change was $+0.041\%$ in following seas and
+$-0.003\%$ in head seas. Two following-sea draws exceeded the baseline
+by more than 0.5\%. The 4~m JONSWAP and PM--Stokes records with wave
+seed 97 increased by 1.59\% and 2.81\%, respectively.
+
 \CSMValidationComparisonTable
 \CSMValidationPairedTable
 

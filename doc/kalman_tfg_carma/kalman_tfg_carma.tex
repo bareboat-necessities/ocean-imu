@@ -82,7 +82,9 @@ misfits (a mixed swell and wind sea, manoeuvring) the invariant coordinates
 give 2.6--6\,\% lower tilt error, 3--7\,\% lower accelerometer-bias error and
 7.6--12\,\% lower attitude NEES, and through a magnetometer outage the filter
 without reset transport keeps an honest heading covariance (NEES 1.2 over
-\SI{2400}{s}). It costs 3.4 times CARMA3's multiply-adds. The results are
+\SI{2400}{s}). It costs 3.4 times CARMA3's multiply-adds. In a separate comparison
+within TFG-CARMA3, a transverse wave observation reduced late 3-D
+displacement RMS from 0.222 to 0.219 m on six sensor draws. The results are
 simulation only; nothing here changes the shipping OU-III estimator or bears
 on its stability study.
 \end{abstract}
@@ -111,15 +113,17 @@ the right-invariant two-frame group yields measurably better estimation
 (accuracy, robustness, bias tracking or covariance consistency) than the
 quaternion MEKF with the same three-axis CARMA(4,1) prior.
 \end{quote}
-Everything else is held fixed: the same CARMA model library, shape,
+The geometry comparison uses the same CARMA model library, shape,
 frequency/amplitude mapping and exact discretization; the same wrapper source
 (front end, proxy startup, staged tune commit, tilt watchdog,
 magnetometer-service bias gate, vibration-aware accelerometer covariance); the
 same sensor streams and the same physical initial uncertainty.
 
-\emph{Status.} TFG-CARMA3 is a research prototype. It is not included by the
-deployed configuration, it has no on-target timing or hardware evidence, and
-no result here is a stability, admissibility or hardware statement. The full
+The repository includes an AtomS3R TFG-CARMA3 sketch. The accuracy results
+below come from simulation. The fixed-geometry experiment in
+\cref{sec:transverse-wave-replay} measures the effect of the horizontal
+observation on the current implementation. On-target timing and sea-trial
+accuracy are separate measurements. The full
 report, with every table, is \texttt{docs/tfg-carma3-research.md}; the
 generated statistics are in \texttt{reports/results/tfg\_carma3}.
 
@@ -469,7 +473,7 @@ specific to TFG-CARMA3, in still-water arithmetic (\cref{sec:cost}).
 \section{Archived Stationary-Vessel Dataset}
 The multi-seed results in this section use the original zero-speed v1.2.3
 records. They are retained as that declared experiment; the current
-5 kn deterministic baseline is reported separately above.
+5 kn deterministic baseline follows below.
 
 \label{sec:dataset}
 The eight scored records of the pinned 28\,ft vessel-RAO dataset are a second
@@ -482,6 +486,7 @@ JONSWAP $H_s=\SI{1.5}{m}$ the heave error is 4.03\,\% of $H_s$ for OU-III
 against 2.21\,\% for both CARMA filters.
 
 \input{underway-baseline.tex-part}
+\input{transverse-wave-replay.tex-part}
 
 \section{Deterministic Replay}
 \label{sec:replay}
@@ -621,14 +626,14 @@ on every axis; an open trade-off between the correct first-order reset
 transport and the more consistent filter without it; and multiple-comparison
 correction only within each table.
 
-For the quantity the filter exists to estimate, wave displacement and
-velocity, the two-frame group yields no measurable improvement over the
+With the observation policy fixed, the two-frame group yielded no measurable
+improvement in wave displacement or velocity over the
 quaternion MEKF with the same prior: the filters are first-order equivalent
 and the CARMA prior, not the error geometry, sets the translational error.
 For attitude, heading consistency and the accelerometer bias it yields a
 conditional improvement where the prior misfits, at 3.4 times CARMA3's
-arithmetic. TFG-CARMA3 should not replace CARMA3's MEKF and should not be
-deployed. The variant without reset transport merits a targeted continuation
+arithmetic. The moving-vessel gains in \cref{sec:transverse-wave-replay}
+come from a different intervention within the two-frame filter. The variant without reset transport merits a targeted continuation
 against two falsifying experiments: an observability-constrained CARMA3 MEKF
 (if it matches, the group is unnecessary) and on-target timing on the
 ESP32-S3.

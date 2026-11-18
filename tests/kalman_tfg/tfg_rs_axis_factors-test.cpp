@@ -49,6 +49,18 @@ void test_default_horizontal_factors_without_changing_rs_law() {
     check(near(R(0,0), x_var), "default X R_S is not rho_x^2 times Z");
     check(near(R(1,1), y_var), "default Y R_S is not rho_y^2 times Z");
     check(near(R(2,2), 9.0f), "default Z R_S changed");
+    f.mekf().set_acc_bias_updates_enabled(true);
+    const Matrix3f after = integral_R(f);
+    check(near(after(0,0), x_var*0.625f) && near(after(1,1), y_var*0.625f) && near(after(2,2), 9),
+          "live spectral law did not select the matched horizontal observation");
+    f.setEmbeddedFriendlyLegacyRSLaw(true);
+    check(integral_R(f).isApprox(R), "legacy law changed its horizontal weighting");
+    cfg.wave_matched_horizontal_integral = false;
+    f.begin(cfg);
+    f.setRSLaw(Fusion::RSLaw::SpectralMSE);
+    f.setFixedTuning(2.0f, 0.5f, 3.0f);
+    f.mekf().set_acc_bias_updates_enabled(true);
+    check(integral_R(f).isApprox(R), "vertical-only configuration changed horizontal weighting");
 }
 
 void test_x_y_factors_are_independent() {

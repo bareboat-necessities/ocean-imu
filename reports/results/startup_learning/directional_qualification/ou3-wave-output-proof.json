@@ -1,0 +1,145 @@
+{
+  "source": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "src_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "native_diagnostics": 17,
+  "inputs": 377,
+  "source_manifest_sha256": "48db0a9a98fefec841c906ab299ecbe7a09b572a5c256c58519d226909afb725",
+  "native_records": [
+    {
+      "module": "world_frame_source_diagnostic",
+      "artifact": "reports/results/ou3_stability/world-frame-source-feasibility.json",
+      "sha256": "b250ff0756f529c41e2a2f89e9b419ad82d4684ce62c7f21111837826fa08b70",
+      "previous_sha256": "c674603b2b0b791fcd857c635eb1920a7a85085fd600d5acf0fbd03754a0c15e"
+    },
+    {
+      "module": "signed_temporal_diagnostic",
+      "artifact": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
+      "sha256": "23cd865c36d4e5d6bcb8b0f26e305826d2dee896b18d6505877c322cf662e2eb",
+      "previous_sha256": "4ecb475d2c3ff77906e839935a64db3c5e678989c5025d98dd26b9f9fa0209de"
+    },
+    {
+      "module": "signed_temporal_balance",
+      "artifact": "reports/results/ou3_stability/signed-balance-diagnostic.json",
+      "sha256": "e41c58a568b0956672d6e4139f1e7ecf93250cbc82ac16a83e23442d82f0e6be",
+      "previous_sha256": "518a668ec6e358f3319a91fb0108b55222e506dc68fcdd58f344fbea45825f0c"
+    },
+    {
+      "module": "moving_transport_source_diagnostic",
+      "artifact": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
+      "sha256": "25b18b4fbf4cfcebdd41ecb04cb6c9f201988bb76fee1c89fe8d7dd0c393d0f6",
+      "previous_sha256": "6e80bd337d98be78829dc152c62306c24837528c2af1d96c8b63c045b681d523"
+    },
+    {
+      "module": "aw_tracking_source_diagnostic",
+      "artifact": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
+      "sha256": "b7d7dcc5178d7ef67d6c8ef409798597d9fa1c4ff504d1deb4024e191c2fc1e5",
+      "previous_sha256": "4e78bf3cfb74b07dca65832b8b7afdfc8b75bff89ad496f62e86a8554d0850d0"
+    },
+    {
+      "module": "construction_history_diagnostic",
+      "artifact": "reports/results/ou3_stability/construction-history-feasibility.json",
+      "sha256": "a23be04177c2fcc0732271cc0060eaad84fca327adc67c0bfa689ec2b3a869f6",
+      "previous_sha256": "a23be04177c2fcc0732271cc0060eaad84fca327adc67c0bfa689ec2b3a869f6"
+    },
+    {
+      "module": "construction_mean_action",
+      "artifact": "reports/results/ou3_stability/construction-mean-action.json",
+      "sha256": "3ddaa205152e5a72a0be2a1db62c2a77719eeaff0db1b3c62972cff81a7121c0",
+      "previous_sha256": "a2c4f33880a84d472b5ca414f4547107793261f2ceb74f2521e42da74d3461d3"
+    },
+    {
+      "module": "planar_service_stream",
+      "artifact": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
+      "sha256": "668ea576cd09f7615963d99613d43ecd185087c06ebc13a6d7b211c8a0243a09",
+      "previous_sha256": "376a637fd3d971d927a69630748eeda1347831db437d9cdb591368c8cc41d08d"
+    },
+    {
+      "module": "planar_service_audit",
+      "artifact": "reports/results/ou3_stability/planar-service-operation-audit.json",
+      "sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5",
+      "previous_sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5"
+    },
+    {
+      "module": "planar_service_frechet",
+      "artifact": "reports/results/ou3_stability/planar-service-frechet-diagnostic.json",
+      "sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692",
+      "previous_sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692"
+    },
+    {
+      "module": "planar_moving_center",
+      "artifact": "reports/results/ou3_stability/planar-moving-center-diagnostic.json",
+      "sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427",
+      "previous_sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427"
+    },
+    {
+      "module": "planar_compatibility_quotient_mean",
+      "artifact": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
+      "sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d",
+      "previous_sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d"
+    },
+    {
+      "module": "planar_native_secants",
+      "artifact": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
+      "sha256": "99e6695fed3c6736370b45f911381680fa73b2f6e7a76e470a2c94a3899529cf",
+      "previous_sha256": "94bc9d82f1d90f34e648eff839d4a867d967dee39259ae2551240fe7669a142c"
+    },
+    {
+      "module": "moving_compatibility_diagnostic",
+      "artifact": "reports/results/ou3_stability/moving-compatibility-carried.json",
+      "sha256": "25631e66d115cf9bb6fee7f1f8f0ffec3426c738e801a38dfbfd3312797323c1",
+      "previous_sha256": "1898cb0398f018d9fe0085135e36485b84f19b9913f49ea5348bdf486cbaba36"
+    },
+    {
+      "module": "moving_compatibility_diagnostic",
+      "artifact": "reports/results/ou3_stability/moving-compatibility-carried-1200s.json",
+      "sha256": "54b00f56d8555f674503737b9522170a3344c5740439e73fd15fade19274f13e",
+      "previous_sha256": "1bb420ca187f89ef1339203c86eb702ccc58f501cf903f3f4adcd088f07a1f01"
+    },
+    {
+      "module": "ag_readout_source_diagnostic",
+      "artifact": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
+      "sha256": "c5f7c53409d89181745407596dcc6608eac3c296630894fab845884583f57965",
+      "previous_sha256": "b17f0cb8de9f1785c5e60cbc0ee1b20a932e0f971e3661d08e959f6a7bf5830a"
+    },
+    {
+      "module": "information_ratio_source_diagnostic",
+      "artifact": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
+      "sha256": "8f290caaa9a658cc3e54ac6f5b1a2ef332a038f4df4dfdd7fa19af648260d02d",
+      "previous_sha256": "8aa3b23941859ce4d1d9576318d74144bd80ed76c941bbf8adf657c9298ee7b4"
+    }
+  ],
+  "secants": [
+    {
+      "columns": 252,
+      "epsilon": 0.01,
+      "sha256": "5037de817798cc5ffc4015e8016402288420b48e377cc3a2c53a960a20778f50"
+    },
+    {
+      "columns": 252,
+      "epsilon": 0.005,
+      "sha256": "2a9ad62d420c55da844b939bc6809971e881e743db8be5c2e8f3940f3fe32537"
+    }
+  ],
+  "proof_gate": {
+    "base_main_commit": "5426da8a394b33f5f473f70faa05247f832f85fa",
+    "failures": [],
+    "shipping_behavior_authority": "source implementation",
+    "theorem_closed": false,
+    "validation_pass": true
+  },
+  "tests": {
+    "proof": {
+      "tests": 824,
+      "sha256": "c03c1d94561df301b9caba759b4472eb7717c39c59114d346d558d62b7ad94ff"
+    },
+    "workflow": {
+      "tests": 24,
+      "sha256": "69ad6b7cccb0408c185f35b19de1dcf2566ff90b86522c0e7753b1362da30297"
+    },
+    "branch_trigger": {
+      "tests": 1,
+      "sha256": "d10ffbd9f0faa72cd6837063279524e199b59fbc3d035051302a1e8dbc4b36ad"
+    }
+  },
+  "verified_at": "2026-11-18T19:36:13.995124+00:00"
+}

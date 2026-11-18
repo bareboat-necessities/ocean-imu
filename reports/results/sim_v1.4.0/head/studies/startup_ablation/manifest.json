@@ -1,11 +1,11 @@
 {
   "binary_sha256": {
-    "OU-II": "ee8c7502262ca618f4df9e461ef211d43b2d0086eb3c63b9ae2aa6ce4e99fb07",
-    "OU-III": "9b2eadad9f71c837c9a4759f453012c123eeadfce4454ddda2510d23a8251a39",
-    "TFG": "5b14ce70b5be5e52e59a834cc0bd7a9e1a9da8a039d69bea0b90dfc7d9d7e272"
+    "OU-II": "80ee9cf0d4a76a45a084be969cf7d7323ebe06bad747a81e873782191278b9c2",
+    "OU-III": "b2749d3a032dfaaf047a7eaf0c3540b227490a193e38bd0ad32d48cbe452c41a",
+    "TFG": "5c87502866aecf6a5b43af5c28367bbf553df83b3ed243ff880ac49e59c5d3f4"
   },
   "files": {
-    "startup_runs.csv": "b4737ffde8416a4a49a769eebae32037660fa9698b085102b94b73c1fc9b24f5"
+    "startup_runs.csv": "eba1928f59caf31fa996383802f66912cce573c0349e243e7f75d1e01974ab2b"
   },
   "producer_sha256": "b2d63f54c0c671e3612910a18f823536c77128e2857af468806b9130547ad92e",
   "protocol": "default sensor draw; final 900 s; paired initial-calibration seeds",
@@ -39,5 +39,5 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "71f410938ca1a8f393979f4933933868fb612461"
+  "source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
 }

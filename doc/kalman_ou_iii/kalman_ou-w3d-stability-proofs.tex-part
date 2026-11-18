@@ -671,8 +671,11 @@ gate fails in exact real arithmetic: its information is zero, below the
 unchanged positive threshold. The applied offset remains zero. At acquisition
 or refinement the learned mean is a convex weighted mean of rotations of the
 same norm-$75$ record; canonicalizing it to $(\sqrt{m_x^2+m_y^2},0,m_z)$
-preserves its norm. Hence every such committed reference has
-$\|B_{\rm ref}\|\le75$. This is an analytical upper bound, not a replay
+preserves its norm. The proxy and refined references therefore satisfy
+$\|B_{\rm ref}\|\le75$. The wave startup fit can replace the proxy reference
+before refinement. The orthogonal correction bound in
+Appendix~\ref{app:locked-live-causal-reference} gives
+$\|B_{\rm ref}\|\le(101/100)75=75.75$ for that interval. This is an analytical upper bound, not a replay
 value. It does not prove the required reference alignment/lower geometry,
 finite completion of acquisition/refinement, or float32 transfer. Those
 remain in the inherited cell obligation.
@@ -4200,7 +4203,18 @@ Starting from the actual $K=I,b=0$ therefore gives
 $\|K_i\|\le4/3$, $\|K_i-I\|\le1/3$ and
 $\|b_i\|\le(7/20)M$ at every prefix. With default startup hard iron disabled,
 acquisition/refinement use nonnegative weighted means of normalized rotations
-of the raw record, so $\|B_a\|\le M$. Continuous application starts only
+of the raw record, so the proxy and refined references have norm at most $M$.
+The streaming handover can commit a gyro-bias-corrected reference before
+refinement. Its pre-canonical mean is the mean of
+$y_j+y_j\times(A_j\hat b_g)$, where $y_j=R_jm_j$ and $A_j$ is the
+trapezoidal time integral of unit rotations. Thus $\|A_j\|\le t_j$.
+The two sample terms are orthogonal. The accepted time and bias guards give
+$t_j\le35.002$ s and $\|\hat b_g\|\le0.004001$ rad/s, enclosing the
+represented constants. Each corrected sample, its mean and the final
+orthogonal change of basis have norm at most
+$M\sqrt{1+(35.002\cdot0.004001)^2}<(101/100)M$.
+The default refinement then supplies a new anchor with $\|B_a\|\le M$.
+Continuous application starts only
 after refinement, hence $K_a=I,b_a=0$ at the first anchor. No subsequent
 reanchor occurs on this continuation. Applying (LR4) gives
 $\|B_r-B_a\|\le[1/3+(4/3)(7/20)]M=(4/5)M$ and proves

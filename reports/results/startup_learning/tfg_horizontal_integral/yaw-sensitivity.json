@@ -1,0 +1,617 @@
+{
+  "scope": "Paired sensor-initialization and noise experiment on both directions of the v1.4.0 4 m JONSWAP waveform. The gain experiment separately covers all 16 standard records.",
+  "comparison_main": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "estimator_commits": {
+    "main": "0f932801758aa840023bf0fa35da187bab15f1a0",
+    "previous": "68f097807af2a070711c77288ca07ec136f6377a",
+    "selected": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5"
+  },
+  "source_trees": {
+    "main": "cf97880cd45cbf0b8b9442af5bce0e4df133a06c",
+    "previous": "95a508d91898445b05bd83e6d7a63394c300599e",
+    "selected": "5c74c92f17ccca4f0f197d30edc91ef52e411ae5"
+  },
+  "production_executables_sha256": {
+    "main": "c4a5e52ade6b8f2a2522b5736358643424f2828d67a0998c13017d5e63ff6613",
+    "previous": "127c8cee8aaa2a9bbb4af64d512253d76f7361ba05bd5b327dd4120a29d51bcc",
+    "selected": "a937d9adbe0d2eaa1425a8bb3e64863b047b19552cd4363077e07ff4f8053580"
+  },
+  "libm_sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "record": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+  "input_sha256": {
+    "following": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+    "head": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362"
+  },
+  "crossed_initializations": [
+    "default",
+    17,
+    43,
+    83
+  ],
+  "crossed_noise_seeds": [
+    19,
+    47,
+    89,
+    131
+  ],
+  "pooled_window_seconds": [
+    300,
+    1200
+  ],
+  "samples_per_record": 180000,
+  "production_control": "The four canonical direction/profile records reproduce the previous paired study and the archived main and selected gates. Every arm in each of the 42 triplets has identical sensor seed identifiers.",
+  "sample_scope": "Each direction has one fixed physical waveform, four initial calibrations and four explicit noise-stream draws. The additional default-noise runs, including the canonical, coupled legacy RNG draw, are archived separately. The crossed comparisons use only the explicit noise draws.",
+  "production_replays": 126,
+  "production_segments": 882,
+  "crossed_late_results": {
+    "following": {
+      "main_to_selected": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.8989051736395589,
+          "after": 0.8817820914540345,
+          "percent": -1.9048819261096361,
+          "improved": 12,
+          "largest_absolute_increase": 0.06391286900000004
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.31772629814746906,
+          "after": 0.3062845593470077,
+          "percent": -3.601130553930665,
+          "improved": 11,
+          "largest_absolute_increase": 0.022919759000000012
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.28448113536321945,
+          "after": 0.28302691043183853,
+          "percent": -0.5111850139110974,
+          "improved": 11,
+          "largest_absolute_increase": 0.008308649000000001
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.2776071077314745,
+          "after": 0.14290132164530353,
+          "percent": -48.5238966635069,
+          "improved": 16,
+          "largest_absolute_increase": -0.132154256
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.2088478893242972,
+          "after": 0.13947515997885343,
+          "percent": -33.21686877942176,
+          "improved": 16,
+          "largest_absolute_increase": -0.06154014099999999
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.37137331418694036,
+          "after": 0.23897629032484036,
+          "percent": -35.65065630845369,
+          "improved": 16,
+          "largest_absolute_increase": -0.12620623399999997
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.07258330313360739,
+          "after": 0.07116847415136399,
+          "percent": -1.949248547753557,
+          "improved": 10,
+          "largest_absolute_increase": 0.0024794172000000003
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00012154201690370715,
+          "after": 0.00011986174656917704,
+          "percent": -1.3824604670344742,
+          "improved": 16,
+          "largest_absolute_increase": -1.3009710000000006e-06
+        }
+      },
+      "previous_to_selected": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.8964652876176213,
+          "after": 0.8817820914540345,
+          "percent": -1.6378990203410715,
+          "improved": 11,
+          "largest_absolute_increase": 0.060436249
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.3174370868186544,
+          "after": 0.3062845593470077,
+          "percent": -3.5133032448782187,
+          "improved": 11,
+          "largest_absolute_increase": 0.024106160000000015
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2843298572540788,
+          "after": 0.28302691043183853,
+          "percent": -0.4582518469300023,
+          "improved": 11,
+          "largest_absolute_increase": 0.008261858999999983
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.2776076334889163,
+          "after": 0.14290132164530353,
+          "percent": -48.52399415342122,
+          "improved": 16,
+          "largest_absolute_increase": -0.132165193
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.2088185616786244,
+          "after": 0.13947515997885343,
+          "percent": -33.207489383291374,
+          "improved": 16,
+          "largest_absolute_increase": -0.061581194000000006
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.37135728953160363,
+          "after": 0.23897629032484036,
+          "percent": -35.647879532333036,
+          "improved": 16,
+          "largest_absolute_increase": -0.12622951
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.07252865233510274,
+          "after": 0.07116847415136399,
+          "percent": -1.8753666860571783,
+          "improved": 9,
+          "largest_absolute_increase": 0.002592340099999993
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.0001215386694199578,
+          "after": 0.00011986174656917704,
+          "percent": -1.3797442894379675,
+          "improved": 16,
+          "largest_absolute_increase": -1.330961999999994e-06
+        }
+      }
+    },
+    "head": {
+      "main_to_selected": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.7912399630253956,
+          "after": 0.7475851816553413,
+          "percent": -5.517261944547814,
+          "improved": 13,
+          "largest_absolute_increase": 0.0201103680000001
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.3534666778905936,
+          "after": 0.32998001670563426,
+          "percent": -6.644660629715437,
+          "improved": 13,
+          "largest_absolute_increase": 0.005124985999999998
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2860272649228353,
+          "after": 0.2857596283138441,
+          "percent": -0.09357031367740465,
+          "improved": 7,
+          "largest_absolute_increase": 0.005010872999999999
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.1872961140899494,
+          "after": 0.12121961811267051,
+          "percent": -35.27916011409905,
+          "improved": 16,
+          "largest_absolute_increase": -0.06013959599999999
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.15594842087880734,
+          "after": 0.1228929618198171,
+          "percent": -21.19640511440557,
+          "improved": 16,
+          "largest_absolute_increase": -0.030289023999999998
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.2648022765123757,
+          "after": 0.20126681580698483,
+          "percent": -23.99354776786502,
+          "improved": 16,
+          "largest_absolute_increase": -0.05849424
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.07746180988937734,
+          "after": 0.07441155338396552,
+          "percent": -3.9377552754936596,
+          "improved": 13,
+          "largest_absolute_increase": 0.0008642374999999966
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00011518756205761882,
+          "after": 0.00011415704912346739,
+          "percent": -0.8946390701766505,
+          "improved": 16,
+          "largest_absolute_increase": -8.843779999999943e-07
+        }
+      },
+      "previous_to_selected": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.7919619305450218,
+          "after": 0.7475851816553413,
+          "percent": -5.603394200923373,
+          "improved": 13,
+          "largest_absolute_increase": 0.016864538000000096
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.3533352494361703,
+          "after": 0.32998001670563426,
+          "percent": -6.609935682274781,
+          "improved": 13,
+          "largest_absolute_increase": 0.004545272000000045
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2861468100119353,
+          "after": 0.2857596283138441,
+          "percent": -0.13530875919079977,
+          "improved": 7,
+          "largest_absolute_increase": 0.005134105
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.18730144323219766,
+          "after": 0.12121961811267051,
+          "percent": -35.28100156580507,
+          "improved": 16,
+          "largest_absolute_increase": -0.060148357999999985
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.1559545969800298,
+          "after": 0.1228929618198171,
+          "percent": -21.19952588793923,
+          "improved": 16,
+          "largest_absolute_increase": -0.030319422000000013
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.2648093858697311,
+          "after": 0.20126681580698483,
+          "percent": -23.99558831876338,
+          "improved": 16,
+          "largest_absolute_increase": -0.058493614
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.07745687546209183,
+          "after": 0.07441155338396552,
+          "percent": -3.9316355842635597,
+          "improved": 13,
+          "largest_absolute_increase": 0.0006876847999999977
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00011518575069777672,
+          "after": 0.00011415704912346739,
+          "percent": -0.8930805833860633,
+          "improved": 16,
+          "largest_absolute_increase": -8.354549999999993e-07
+        }
+      }
+    }
+  },
+  "original_following_draw": {
+    "default": {
+      "by_arm": {
+        "main": {
+          "rms_deg": 0.556454301,
+          "mean_deg": 0.356784821,
+          "centered_rms_deg": 0.42701988314994965
+        },
+        "previous": {
+          "rms_deg": 0.557365239,
+          "mean_deg": 0.358432919,
+          "centered_rms_deg": 0.42682766103272474
+        },
+        "selected": {
+          "rms_deg": 0.621701419,
+          "mean_deg": 0.443150014,
+          "centered_rms_deg": 0.4360398140977649
+        }
+      },
+      "mean_squared_contribution": 0.8952119846207564
+    },
+    "interval": {
+      "by_arm": {
+        "main": {
+          "rms_deg": 0.558187425,
+          "mean_deg": 0.359707147,
+          "centered_rms_deg": 0.42683014165502764
+        },
+        "previous": {
+          "rms_deg": 0.560016334,
+          "mean_deg": 0.363060832,
+          "centered_rms_deg": 0.42638612385286095
+        },
+        "selected": {
+          "rms_deg": 0.625177503,
+          "mean_deg": 0.448165685,
+          "centered_rms_deg": 0.4358835039844887
+        }
+      },
+      "mean_squared_contribution": 0.8939602589664768
+    }
+  },
+  "gain_control": {
+    "records_per_mode": 16,
+    "replays": 64,
+    "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+    "binary_sha256": "3ff7719bf848f573ad1830c8707586eb81915931b635ad7311e0dc412ec8ce96",
+    "source_patch_sha256": "d8c83b105b58b64cfe2ff131aab87bf76fe6f29b5f33588756c108630172f0b2",
+    "production_control": "All eight listed late metrics reproduce the independent selected executable on all 16 records with the projection disabled.",
+    "results": {
+      "withhold_yaw": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.710597488589925,
+          "after": 0.7288552139871519,
+          "percent": 2.569348427258955,
+          "improved": 6,
+          "largest_absolute_increase": 0.316729665
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.14061542154498868,
+          "after": 0.17749022823689092,
+          "percent": 26.223870957215368,
+          "improved": 10,
+          "largest_absolute_increase": 0.2221262529
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2821877330538885,
+          "after": 0.29158743320536423,
+          "percent": 3.3310094842714966,
+          "improved": 2,
+          "largest_absolute_increase": 0.046795189000000015
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.17827004998270943,
+          "after": 0.17915831273371133,
+          "percent": 0.49826807760924297,
+          "improved": 0,
+          "largest_absolute_increase": 0.002270550000000038
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.17245044956222613,
+          "after": 0.17301575885165132,
+          "percent": 0.32780969308010555,
+          "improved": 12,
+          "largest_absolute_increase": 0.00427937500000003
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.2828711117844225,
+          "after": 0.2837780492269948,
+          "percent": 0.32061861561298866,
+          "improved": 3,
+          "largest_absolute_increase": 0.0037466289999998903
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.05285871528403152,
+          "after": 0.057109166989774286,
+          "percent": 8.04115590570702,
+          "improved": 10,
+          "largest_absolute_increase": 0.019409217199999995
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00010567076395226998,
+          "after": 0.00010815594598889208,
+          "percent": 2.3518160971606195,
+          "improved": 6,
+          "largest_absolute_increase": 7.191431999999988e-06
+        }
+      },
+      "withhold_world_down_gyro_bias": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.710597488589925,
+          "after": 0.7133660108365855,
+          "percent": 0.3896048453751577,
+          "improved": 11,
+          "largest_absolute_increase": 0.15042090399999997
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.14061542154498868,
+          "after": 0.14214394463108748,
+          "percent": 1.0870237910638902,
+          "improved": 7,
+          "largest_absolute_increase": 0.12553111490000002
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2821877330538885,
+          "after": 0.28927485852977064,
+          "percent": 2.5114931110519656,
+          "improved": 6,
+          "largest_absolute_increase": 0.029374361000000015
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.17827004998270943,
+          "after": 0.1789677529393487,
+          "percent": 0.39137418579673344,
+          "improved": 4,
+          "largest_absolute_increase": 0.004449994000000013
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.17245044956222613,
+          "after": 0.17293775040177814,
+          "percent": 0.2825744095124483,
+          "improved": 8,
+          "largest_absolute_increase": 0.0019192100000000045
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.2828711117844225,
+          "after": 0.28363262624149055,
+          "percent": 0.2692089878900017,
+          "improved": 3,
+          "largest_absolute_increase": 0.003048896999999995
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.05285871528403152,
+          "after": 0.05388891766753834,
+          "percent": 1.9489735570967115,
+          "improved": 8,
+          "largest_absolute_increase": 0.009692482599999996
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00010567076395226998,
+          "after": 0.0001058891253001188,
+          "percent": 0.20664310513307527,
+          "improved": 8,
+          "largest_absolute_increase": 3.8006330000000025e-06
+        }
+      },
+      "withhold_both": {
+        "yaw_rms_deg": {
+          "pairs": 16,
+          "before": 0.710597488589925,
+          "after": 0.7067571796746402,
+          "percent": -0.540433786630079,
+          "improved": 13,
+          "largest_absolute_increase": 0.06997060700000002
+        },
+        "pitch_rms_deg": {
+          "pairs": 16,
+          "before": 0.14061542154498868,
+          "after": 0.14173536589675437,
+          "percent": 0.7964591219515427,
+          "improved": 8,
+          "largest_absolute_increase": 0.08301145589999999
+        },
+        "roll_rms_deg": {
+          "pairs": 16,
+          "before": 0.2821877330538885,
+          "after": 0.28676149628320874,
+          "percent": 1.6208228401079383,
+          "improved": 5,
+          "largest_absolute_increase": 0.016436337999999995
+        },
+        "disp_x_rms_m": {
+          "pairs": 16,
+          "before": 0.17827004998270943,
+          "after": 0.17909038618482345,
+          "percent": 0.4601649027380583,
+          "improved": 1,
+          "largest_absolute_increase": 0.003462911000000013
+        },
+        "disp_y_rms_m": {
+          "pairs": 16,
+          "before": 0.17245044956222613,
+          "after": 0.17311911388367465,
+          "percent": 0.3877428694131879,
+          "improved": 6,
+          "largest_absolute_increase": 0.002086460999999984
+        },
+        "disp_3d_rms_m": {
+          "pairs": 16,
+          "before": 0.2828711117844225,
+          "after": 0.283810557012768,
+          "percent": 0.332110699611321,
+          "improved": 2,
+          "largest_absolute_increase": 0.0028933879999999412
+        },
+        "accel_bias_3d_rms_mps2": {
+          "pairs": 16,
+          "before": 0.05285871528403152,
+          "after": 0.05346918992383551,
+          "percent": 1.1549176640477388,
+          "improved": 7,
+          "largest_absolute_increase": 0.005282461599999996
+        },
+        "gyro_bias_3d_rms_radps": {
+          "pairs": 16,
+          "before": 0.00010567076395226998,
+          "after": 0.00010607402130480247,
+          "percent": 0.3816167665018799,
+          "improved": 8,
+          "largest_absolute_increase": 3.428430999999994e-06
+        }
+      },
+      "following_4m_jonswap": {
+        "0": {
+          "yaw_rms_deg": 0.621701419,
+          "pitch_rms_deg": 0.0452528,
+          "roll_rms_deg": 0.264087915,
+          "disp_x_rms_m": 0.147879064,
+          "disp_y_rms_m": 0.125011697,
+          "disp_3d_rms_m": 0.233181953,
+          "accel_bias_3d_rms_mps2": 0.0442282222,
+          "gyro_bias_3d_rms_radps": 9.8332901e-05
+        },
+        "1": {
+          "yaw_rms_deg": 0.569106877,
+          "pitch_rms_deg": 0.0590167046,
+          "roll_rms_deg": 0.271731555,
+          "disp_x_rms_m": 0.148574218,
+          "disp_y_rms_m": 0.12505351,
+          "disp_3d_rms_m": 0.233638093,
+          "accel_bias_3d_rms_mps2": 0.0457795151,
+          "gyro_bias_3d_rms_radps": 0.000101714126
+        },
+        "2": {
+          "yaw_rms_deg": 0.633893967,
+          "pitch_rms_deg": 0.0492482819,
+          "roll_rms_deg": 0.261033624,
+          "disp_x_rms_m": 0.14802824,
+          "disp_y_rms_m": 0.125307739,
+          "disp_3d_rms_m": 0.233440369,
+          "accel_bias_3d_rms_mps2": 0.0439007916,
+          "gyro_bias_3d_rms_radps": 9.99846379e-05
+        },
+        "3": {
+          "yaw_rms_deg": 0.609318733,
+          "pitch_rms_deg": 0.0449876525,
+          "roll_rms_deg": 0.264760941,
+          "disp_x_rms_m": 0.148541138,
+          "disp_y_rms_m": 0.12541613,
+          "disp_3d_rms_m": 0.233820006,
+          "accel_bias_3d_rms_mps2": 0.0442781076,
+          "gyro_bias_3d_rms_radps": 9.90516419e-05
+        }
+      }
+    }
+  },
+  "archive": {
+    "file": "yaw-sensitivity.tar.gz",
+    "sha256": "6f6bea147aa0fd98614a08baf7f75fc518d2629f4ff6f833889938e924080a9e",
+    "sensors_csv_sha256": "7359788563b17ee012008f26322162dd17936df878fc339b32e5588c0d01f8ca",
+    "gain_csv_sha256": "ff56e7644b27272e1d215012a36490249a3170cf1350c705d7b54fdf66a75773",
+    "raw_sensor_logs": 126,
+    "raw_gain_logs": 8
+  }
+}

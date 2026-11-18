@@ -1,0 +1,16 @@
+{
+  "unmodified_runs": 32,
+  "paired_windows": 160,
+  "metrics": 9,
+  "maximum_absolute_difference": {
+    "roll_rms_deg": 0.0,
+    "pitch_rms_deg": 0.0,
+    "yaw_rms_deg": 0.0,
+    "disp_x_rms_m": 0.0,
+    "disp_y_rms_m": 0.0,
+    "disp_z_rms_m": 0.0,
+    "disp_3d_rms_m": 0.0,
+    "accel_bias_3d_rms_mps2": 0.0,
+    "gyro_bias_3d_rms_radps": 0.0
+  }
+}

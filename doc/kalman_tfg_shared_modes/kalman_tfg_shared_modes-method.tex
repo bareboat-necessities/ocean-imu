@@ -1192,18 +1192,18 @@ rather than assigning a numerically identical but physically different
 matrix in the invariant tangent frame.
 
 \input{underway-baseline.tex-part}
+\input{../kalman_tfg_carma/transverse-wave-replay.tex-part}
 
 \section{Deterministic Replay and Quality Gates}
 \label{sec:validation}
 The dedicated simulator replays the pinned
-\texttt{oceanography-waves-lib v1.3.1} 5 kn underway vessel-response records,
-with heading oscillating $\pm3^\circ$ about north every 120 s. There are eight
-scored records: JONSWAP and PM--Stokes, each at incident significant wave
-heights 0.27, 1.5, 4.0 and 8.5~m. Each history lasts 1200~s at 200~Hz. The
+\texttt{oceanography-waves-lib v1.4.0} 5 kn underway vessel-response records.
+Heading oscillates $\pm3^\circ$ every 20 s about north in following seas
+and about south in head or bow-quartering seas. Each direction supplies
+eight scored records spanning JONSWAP and PM--Stokes spectra at incident
+significant wave heights of 0.27, 1.5, 4.0 and 8.5~m. Each history lasts 1200~s at 200~Hz. The
 sensor and initialization seeds, simulated noise, magnetic schedule and
-frontend are the same as the shared-mode quaternion replay. The simulated
-wave realizations are fixed; these eight deterministic results are neither
-independent sea trials nor population confidence intervals.
+frontend are the same as the shared-mode quaternion replay. The table reports the eight fixed wave realizations for the active build direction.
 
 The first 300~s are excluded from the scored window. Statistics use all
 180,000 remaining samples; rendering decimation never changes the gate or
@@ -1218,10 +1218,11 @@ not be interpreted as interchangeable percentages.
 \input{tfg-shared-sim-results-generated.tex-part}
 \input{tfg-shared-gates-generated.tex-part}
 
-The executable's limits are its own measured worst errors over these eight
-records, enlarged by 0.5\% and rounded upward to 0.00001. The limits are locked
-regression sentinels, not estimated uncertainty bounds and not tuned anew at
-each CI run. The baseline JSON pins input hashes, compiler, source revision,
+The default global limits use the worst measured error across both directions
+for each applicable channel, with a 0.5\% margin and upward rounding to
+0.00001. Each record also has a fixed limit for its sea direction and gyro
+profile. CI compares new measurements with these published limits. The baseline JSON pins input hashes, compiler,
+source revision,
 per-record measurements and the baseline executable hash. A regression change
 must be assessed against that fixed baseline rather than silently relaxing
 its limits.

@@ -1,0 +1,738 @@
+{
+  "workflow": 44367501554,
+  "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "runtime_source": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "runtime_src_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+  "previous_hosted_run": 44345721004,
+  "current_main": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "main_hosted_run": 44101355640,
+  "cases": 544,
+  "profiles": 46,
+  "shared_binaries": 13,
+  "scored_channels": 2768,
+  "material_threshold_pct": 0.5,
+  "main_comparison": {
+    "within": 2199,
+    "better": 520,
+    "worse": 49
+  },
+  "by_direction": {
+    "following": {
+      "within": 1063,
+      "better": 274,
+      "worse": 47
+    },
+    "head": {
+      "within": 1136,
+      "better": 246,
+      "worse": 2
+    }
+  },
+  "by_family_metric": {
+    "ahrs/pitch": {
+      "within": 16
+    },
+    "ahrs/roll": {
+      "within": 16
+    },
+    "ahrs/yaw": {
+      "within": 16
+    },
+    "carma/acc_3d": {
+      "within": 32
+    },
+    "carma/acc_z": {
+      "within": 32
+    },
+    "carma/displacement": {
+      "within": 32
+    },
+    "carma/displacement_y": {
+      "within": 32
+    },
+    "carma/gyro_3d": {
+      "within": 24,
+      "better": 6,
+      "worse": 2
+    },
+    "carma/heave": {
+      "within": 32
+    },
+    "carma/pitch": {
+      "within": 32
+    },
+    "carma/roll": {
+      "within": 32
+    },
+    "carma/yaw": {
+      "within": 32
+    },
+    "csm/acc_3d": {
+      "within": 32
+    },
+    "csm/acc_z": {
+      "within": 32
+    },
+    "csm/displacement": {
+      "within": 32
+    },
+    "csm/displacement_y": {
+      "within": 32
+    },
+    "csm/gyro_3d": {
+      "within": 24,
+      "better": 6,
+      "worse": 2
+    },
+    "csm/heave": {
+      "within": 32
+    },
+    "csm/pitch": {
+      "within": 32
+    },
+    "csm/roll": {
+      "within": 32
+    },
+    "csm/yaw": {
+      "within": 32
+    },
+    "heave_godhavn/heave": {
+      "within": 48
+    },
+    "heave_godhavn_ext/heave": {
+      "within": 48
+    },
+    "heave_kuchler/heave": {
+      "within": 48
+    },
+    "heave_pii/heave": {
+      "within": 32
+    },
+    "heave_richter_zd/heave": {
+      "within": 48
+    },
+    "nlo/heave": {
+      "within": 16
+    },
+    "ou2/acc_3d": {
+      "within": 32
+    },
+    "ou2/acc_z": {
+      "within": 32
+    },
+    "ou2/displacement": {
+      "within": 32
+    },
+    "ou2/displacement_y": {
+      "within": 32
+    },
+    "ou2/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "ou2/heave": {
+      "within": 32
+    },
+    "ou2/pitch": {
+      "within": 32
+    },
+    "ou2/roll": {
+      "within": 32
+    },
+    "ou2/yaw": {
+      "within": 32
+    },
+    "ou3/acc_3d": {
+      "within": 32
+    },
+    "ou3/acc_z": {
+      "within": 32
+    },
+    "ou3/displacement": {
+      "better": 32
+    },
+    "ou3/displacement_y": {
+      "better": 32
+    },
+    "ou3/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "ou3/heave": {
+      "within": 32
+    },
+    "ou3/pitch": {
+      "within": 32
+    },
+    "ou3/roll": {
+      "within": 32
+    },
+    "ou3/yaw": {
+      "within": 32
+    },
+    "pii/heave": {
+      "within": 16
+    },
+    "pii/yaw": {
+      "within": 16
+    },
+    "tangent/acc_3d": {
+      "within": 32
+    },
+    "tangent/acc_z": {
+      "within": 32
+    },
+    "tangent/displacement": {
+      "within": 32
+    },
+    "tangent/displacement_y": {
+      "within": 32
+    },
+    "tangent/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "tangent/heave": {
+      "within": 32
+    },
+    "tangent/pitch": {
+      "within": 32
+    },
+    "tangent/roll": {
+      "within": 32
+    },
+    "tangent/yaw": {
+      "within": 32
+    },
+    "tcarma/acc_3d": {
+      "within": 11,
+      "better": 21
+    },
+    "tcarma/acc_z": {
+      "within": 32
+    },
+    "tcarma/displacement": {
+      "within": 8,
+      "better": 24
+    },
+    "tcarma/displacement_y": {
+      "within": 8,
+      "better": 24
+    },
+    "tcarma/gyro_3d": {
+      "within": 27,
+      "better": 4,
+      "worse": 1
+    },
+    "tcarma/heave": {
+      "within": 32
+    },
+    "tcarma/pitch": {
+      "within": 8,
+      "better": 24
+    },
+    "tcarma/roll": {
+      "within": 18,
+      "better": 14
+    },
+    "tcarma/yaw": {
+      "within": 20,
+      "better": 12
+    },
+    "tcsm/acc_3d": {
+      "within": 8,
+      "better": 24
+    },
+    "tcsm/acc_z": {
+      "within": 32
+    },
+    "tcsm/displacement": {
+      "within": 8,
+      "better": 24
+    },
+    "tcsm/displacement_y": {
+      "within": 8,
+      "better": 24
+    },
+    "tcsm/gyro_3d": {
+      "within": 27,
+      "better": 4,
+      "worse": 1
+    },
+    "tcsm/heave": {
+      "within": 32
+    },
+    "tcsm/pitch": {
+      "within": 8,
+      "better": 24
+    },
+    "tcsm/roll": {
+      "within": 13,
+      "better": 19
+    },
+    "tcsm/yaw": {
+      "within": 19,
+      "better": 13
+    },
+    "tfg/acc_3d": {
+      "within": 12,
+      "better": 20
+    },
+    "tfg/acc_z": {
+      "within": 32
+    },
+    "tfg/displacement": {
+      "better": 32
+    },
+    "tfg/displacement_y": {
+      "better": 32
+    },
+    "tfg/gyro_3d": {
+      "better": 25,
+      "within": 7
+    },
+    "tfg/heave": {
+      "within": 32
+    },
+    "tfg/pitch": {
+      "worse": 7,
+      "better": 20,
+      "within": 5
+    },
+    "tfg/roll": {
+      "within": 14,
+      "better": 18
+    },
+    "tfg/yaw": {
+      "within": 6,
+      "worse": 12,
+      "better": 14
+    },
+    "tfg_legacy/acc_3d": {
+      "within": 9,
+      "worse": 4,
+      "better": 3
+    },
+    "tfg_legacy/acc_z": {
+      "within": 14,
+      "worse": 2
+    },
+    "tfg_legacy/displacement": {
+      "within": 16
+    },
+    "tfg_legacy/displacement_y": {
+      "within": 16
+    },
+    "tfg_legacy/gyro_3d": {
+      "within": 12,
+      "better": 4
+    },
+    "tfg_legacy/heave": {
+      "within": 16
+    },
+    "tfg_legacy/pitch": {
+      "within": 6,
+      "worse": 7,
+      "better": 3
+    },
+    "tfg_legacy/roll": {
+      "within": 13,
+      "better": 3
+    },
+    "tfg_legacy/yaw": {
+      "within": 8,
+      "worse": 5,
+      "better": 3
+    }
+  },
+  "largest_regressions": [
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.558187425,
+      "corrected": 0.625177503,
+      "change_pct": 12.001359220874598
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.556454301,
+      "corrected": 0.621701419,
+      "change_pct": 11.725512388482716
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.446145713,
+      "corrected": 0.49145034,
+      "change_pct": 10.154670476459327
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.458163351,
+      "corrected": 0.504340887,
+      "change_pct": 10.078836707303562
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_z",
+      "main": 7.66278,
+      "corrected": 7.84953,
+      "change_pct": 2.4371050715275677
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.432565033,
+      "corrected": 0.442801148,
+      "change_pct": 2.3663759710323085
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.676322758,
+      "corrected": 0.689950645,
+      "change_pct": 2.014997549439257
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "pitch",
+      "main": 1.46445274,
+      "corrected": 1.49367571,
+      "change_pct": 1.9954874064423533
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_z",
+      "main": 7.71417,
+      "corrected": 7.86355,
+      "change_pct": 1.9364364539542045
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_3d",
+      "main": 308.329,
+      "corrected": 314.129,
+      "change_pct": 1.8811075182678216
+    }
+  ],
+  "largest_improvements": [
+    {
+      "case": "head",
+      "family": "ou3",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.00843792222,
+      "corrected": 0.00288816472,
+      "change_pct": -65.77161243375387
+    },
+    {
+      "case": "head",
+      "family": "ou3",
+      "profile": "default",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.00843233336,
+      "corrected": 0.00292063109,
+      "change_pct": -65.36390385306115
+    },
+    {
+      "case": "head",
+      "family": "ou3",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.00828440115,
+      "corrected": 0.00289001991,
+      "change_pct": -65.1149207085415
+    },
+    {
+      "case": "head",
+      "family": "ou3",
+      "profile": "default",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.00827993173,
+      "corrected": 0.00291307201,
+      "change_pct": -64.81768080954939
+    },
+    {
+      "case": "following",
+      "family": "ou3",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.0125484206,
+      "corrected": 0.00554347457,
+      "change_pct": -55.82332831591571
+    },
+    {
+      "case": "following",
+      "family": "ou3",
+      "profile": "default",
+      "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.0126472227,
+      "corrected": 0.00563057931,
+      "change_pct": -55.47971721886419
+    },
+    {
+      "case": "following",
+      "family": "ou3",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.0129142618,
+      "corrected": 0.00598504161,
+      "change_pct": -53.6555654307705
+    },
+    {
+      "case": "following",
+      "family": "ou3",
+      "profile": "default",
+      "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
+      "metric": "displacement_y",
+      "main": 0.0130299982,
+      "corrected": 0.00607952429,
+      "change_pct": -53.34209416851646
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.8299408,
+      "corrected": 6.46363688,
+      "change_pct": -40.31696941501286
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.8292847,
+      "corrected": 6.46518373,
+      "change_pct": -40.29906952210796
+    }
+  ],
+  "receipts": {
+    "main": {
+      "following": {
+        "artifact_id": 14337907440,
+        "archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+        "measurements_sha256": "fdff47df17951ce6f170b7f300c712978da551f9f170a54b174a386d8baa45f5",
+        "compiled_source_paths": 179,
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true
+      },
+      "head": {
+        "artifact_id": 14338570838,
+        "archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+        "measurements_sha256": "31942ef7daccfaad1f48f174c3269707a5f68eb555b2c60d47aac6b035199df8",
+        "compiled_source_paths": 179,
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true
+      }
+    },
+    "previous": {
+      "head": {
+        "artifact_id": 14446869464,
+        "archive_sha256": "9c6f796dc093f745a83663f44017419c360ba790fddd6658894f5f0fc68f800b",
+        "measurements_sha256": "5046e0be55adf66e1fef88169205ec12c5b21fbf41ea10dba81598b3a8821555",
+        "compiled_source_paths": 181,
+        "recorded_source": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true
+      },
+      "following": {
+        "artifact_id": 14447358590,
+        "archive_sha256": "b869fd07bf239a6d4336b38b8bb0ba56b7f278cd727bceef0686cc78b2af1f80",
+        "measurements_sha256": "88bfca40b1e593798424a88d2f121b75520c474bcc1021135c08c325bb07adb4",
+        "compiled_source_paths": 181,
+        "recorded_source": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true
+      }
+    },
+    "corrected": {
+      "following": {
+        "artifact_id": 14459442100,
+        "archive_sha256": "2a6826d631d561e5ca30f82350c74b8a7c13ca07e2a64d78ebf0868d682dac4f",
+        "measurements_sha256": "f0e67b887c228783ca98cef612a06eb902cf89110752d39eaa73d912c6111b04",
+        "compiled_source_paths": 182,
+        "recorded_source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true,
+        "binary_sha256": {
+          "ou2": "80ee9cf0d4a76a45a084be969cf7d7323ebe06bad747a81e873782191278b9c2",
+          "ou3": "b2749d3a032dfaaf047a7eaf0c3540b227490a193e38bd0ad32d48cbe452c41a",
+          "tfg": "5c87502866aecf6a5b43af5c28367bbf553df83b3ed243ff880ac49e59c5d3f4",
+          "carma": "a254a622c0ac29f1aa7a05ef33c255f4a8fc151f7368dcb6ef85bb06c89a5bc7",
+          "csm": "75063487cc2dcebe56c9f426be158c24bf65feb1f24bf98e8d07f1991b098091",
+          "tcarma": "40879ee2296efad565ec1a58a296c68eba6fb7e8d3a08c33256e4d5203ec6a23",
+          "tangent": "5cc7348a2576442a4a5ecf10136b1395c23cb17e7e144779a4e625ee1b6c5084",
+          "tcsm": "84c45a9b2ad1d1d1018aa69152ce214faa9f64bcb9b52526629d828d01194a6f",
+          "tfg_legacy": "b91d01d419e7908415cfdd11121317127388d6c552ed769e88ec04569fffa9e6",
+          "ahrs": "07ee4909e695e7c7026bbab001f80417c333ba316b47b68cda23f6000fea302b",
+          "heave": "a704a900ed0e0dca015b1ffaf9cbb91e15bfcdf817ce8b87a6c9d8e7bf755104",
+          "nlo": "94e9b3676ed6d395ea50caee6e8d9edc3fa00325d05fb206f797a63bb494d1c7",
+          "pii": "8672881bb1fe9c133b39f402aca66713984baf45be3bda092e774969bb5e1625"
+        }
+      },
+      "head": {
+        "artifact_id": 14459806936,
+        "archive_sha256": "8bd9cc39e447cbac7647a87c9b883d49a8aab710a4a92032470a3012ea1d259b",
+        "measurements_sha256": "8691caa0bdfaf64d1e6d5d02edbb10cf53246af270cfa425e4ff982f30d57c2b",
+        "compiled_source_paths": 182,
+        "recorded_source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true,
+        "binary_sha256": {
+          "ou2": "80ee9cf0d4a76a45a084be969cf7d7323ebe06bad747a81e873782191278b9c2",
+          "ou3": "b2749d3a032dfaaf047a7eaf0c3540b227490a193e38bd0ad32d48cbe452c41a",
+          "tfg": "5c87502866aecf6a5b43af5c28367bbf553df83b3ed243ff880ac49e59c5d3f4",
+          "carma": "a254a622c0ac29f1aa7a05ef33c255f4a8fc151f7368dcb6ef85bb06c89a5bc7",
+          "csm": "75063487cc2dcebe56c9f426be158c24bf65feb1f24bf98e8d07f1991b098091",
+          "tcarma": "40879ee2296efad565ec1a58a296c68eba6fb7e8d3a08c33256e4d5203ec6a23",
+          "tangent": "5cc7348a2576442a4a5ecf10136b1395c23cb17e7e144779a4e625ee1b6c5084",
+          "tcsm": "84c45a9b2ad1d1d1018aa69152ce214faa9f64bcb9b52526629d828d01194a6f",
+          "tfg_legacy": "b91d01d419e7908415cfdd11121317127388d6c552ed769e88ec04569fffa9e6",
+          "ahrs": "07ee4909e695e7c7026bbab001f80417c333ba316b47b68cda23f6000fea302b",
+          "heave": "a704a900ed0e0dca015b1ffaf9cbb91e15bfcdf817ce8b87a6c9d8e7bf755104",
+          "nlo": "94e9b3676ed6d395ea50caee6e8d9edc3fa00325d05fb206f797a63bb494d1c7",
+          "pii": "8672881bb1fe9c133b39f402aca66713984baf45be3bda092e774969bb5e1625"
+        }
+      }
+    }
+  },
+  "reviewed_headers_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "headers_sha256": {
+    "CurrentReplayLimits.h": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558",
+    "RecordReplayLimits.inc": "02e9d78d2d69796ee6935d7a63222f475f435c419b557c3ea62f9d2e9d772ce5"
+  },
+  "raw_logs_sha256": "4184ec3ed5752f246a2db07ecd8a526f331f86569c8f6a30fe2039849a94d5a1",
+  "channel_table_sha256": "d4dd9a44e45e9537cf1fa71547513751314137c6aa949a5a038e06b642f44f26",
+  "previous_hosted_source": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2",
+  "material_regressions_by_metric": {
+    "acc_3d": 4,
+    "acc_z": 2,
+    "gyro_3d": 12,
+    "pitch": 14,
+    "yaw": 17
+  },
+  "smallest_held_out_gate_headroom": {
+    "case": "head",
+    "family": "tcsm",
+    "profile": "default",
+    "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+    "metric": "acc_3d",
+    "measured_rms": 26.5161,
+    "reviewed_ceiling": 26.64286,
+    "percent_above_measured_rms": 0.4780491852119928,
+    "nonzero_rms_channels": 2768
+  },
+  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44367501554",
+  "matrix_source_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+  "estimator_source_commit": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
+  "gated_measurements": 2768,
+  "identical_to_gate_setting_run": 2459,
+  "compared_to_previous_hosted": {
+    "exact_channels": 2704,
+    "changed_channels": 64,
+    "families": [
+      "ou3"
+    ],
+    "max_absolute_relative_change_pct": 65.77206200916693
+  },
+  "locked_limit_review": {
+    "both_headers_reproduced_from_reviewed_settings": true,
+    "all_2768_scores_within_reviewed_limits": true,
+    "margin_fraction_in_reviewed_settings": 0.005,
+    "tighter_than_main": 85,
+    "looser_than_main": 63,
+    "equal_to_main": 39
+  },
+  "raw_log_archive": "reports/results/startup_learning/directional_qualification/strict-replay-logs.tar.gz",
+  "channel_comparison_csv_gz": "reports/results/startup_learning/directional_qualification/strict-main-channels.csv.gz",
+  "channel_comparison_gzip_sha256": "4b7eab50723aeefe11b34bd1ffb35ce26b40b5c708c17fc2c207555b964e64b9",
+  "previous_qualification": "https://github.com/bareboat-necessities/ocean-imu/blob/fee96e2b3be2d3d9d67b654f76ebea92b291df57/reports/results/startup_learning/final-source-matrix.json",
+  "comparison_to_preceding_estimator": {
+    "previous_runtime_tree": "f8bb78f738fbd62eeeff803e74d34dcb0a289aac",
+    "current_runtime_tree": "90cab657f82bcef5dc749362686b13833af6a42c",
+    "changed_compiled_sources": {
+      "following": [
+        "src/kalman_common/ProxyStartupFusion.h",
+        "src/kalman_ou_iii/HorizontalWaveBand.h",
+        "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
+        "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
+        "tests/common/CurrentReplayLimits.h",
+        "tests/common/RecordReplayLimits.inc",
+        "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
+      ],
+      "head": [
+        "src/kalman_common/ProxyStartupFusion.h",
+        "src/kalman_ou_iii/HorizontalWaveBand.h",
+        "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
+        "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
+        "tests/common/CurrentReplayLimits.h",
+        "tests/common/RecordReplayLimits.inc",
+        "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp"
+      ]
+    },
+    "source": "e663f0e6b7cf4df9f23727ed80bcf8d81404d3e2",
+    "workflow": 44345721004,
+    "matched_scores": 2768,
+    "exact_scores": 2704,
+    "identical_filter_binaries_per_direction": {
+      "following": 0,
+      "head": 0
+    },
+    "previous_channel_table_sha256": "8482656219f86c83e1b5e4efa112865c0ea3e1eea1800d1d893f4cc6c2354434",
+    "current_channel_table_sha256": "d4dd9a44e45e9537cf1fa71547513751314137c6aa949a5a038e06b642f44f26"
+  }
+}

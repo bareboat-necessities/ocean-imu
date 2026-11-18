@@ -10,6 +10,7 @@ the OU tuner/model schedule.  The remaining bidirectional small-gain loop is
 MEKF mean <-> covariance through state-dependent measurement Jacobians/gains.
 """
 from __future__ import annotations
+from fractions import Fraction
 import hashlib
 from pathlib import Path
 
@@ -17,6 +18,7 @@ ROOT=Path(__file__).resolve().parents[3]
 WRAPPER=ROOT/"src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h"
 FRONT=ROOT/"src/kalman_common/MarineWaveFrontEnd.h"
 PROXY=ROOT/"src/kalman_common/ProxyStartupFusion.h"
+WAVE_STARTUP=ROOT/"src/kalman_common/WaveStartup.h"
 MAG_COMMON=ROOT/"src/kalman_common/MagneticStartupCommon.h"
 HARD_IRON=ROOT/"src/tuner/ContinuousMagHardIronEstimator.h"
 GYRO_MAG=ROOT/"src/tuner/GyroMagCalibration.h"
@@ -24,6 +26,28 @@ GYRO_MAG_IMPL=ROOT/"src/tuner/GyroMagCalibrationImpl.h"
 GYRO_MAG_CPP=ROOT/"src/tuner/GyroMagCalibration.cpp"
 MAG_TUNER=ROOT/"src/tuner/MagAutoTuner.h"
 DEFAULTS=ROOT/"src/kalman_common/SeaStateFusionDefaults.h"
+
+
+def wave_handover_reference_factor():
+    """Real arithmetic on an accepted seed, before the refined reference takes over."""
+    source = WAVE_STARTUP.read_text()
+    for anchor in (
+            'if (time_ + dt > 35.001) reset();',
+            'b.norm() > 0.004f',
+            'j.col(k) = y.cross(a.col(k))',
+            'integrated_rotation_ += (0.5f*dt)*(old_r+r)',
+            'const V field = relative_ * body;',
+            'mean_j_ += alpha*dj',
+            'const V field = mean_field_ + mean_j_*b;',
+            'frame*field, b'):
+        if anchor not in source:
+            raise ValueError('wave handover reference argument changed: ' + anchor)
+    # The decimal upper bounds enclose the represented time and bias guards.
+    # The transported sample and its first-order correction are orthogonal.
+    upper = Fraction(101, 100)
+    if 1 + (Fraction("35.002") * Fraction("0.004001"))**2 >= upper**2:
+        raise ValueError('insufficient reference norm bound')
+    return upper
 
 
 def locked_live_reference_audit():
@@ -55,6 +79,8 @@ def locked_live_reference_audit():
         raise ValueError('refinement acquired an unproved MEKF/gate dependency')
     for anchor in ['gravity_gate_.step(attitudeReferenceQuat_()',
                    'if (!mag_ref_set_) {',
+                   'setMagWorldRef_(learned.field);',
+                   'if (cfg_.mag_refine_enabled && !mag_refine_done_) return;',
                    'impl_.startupProxyTiltQuat(), mag_body_ned);',
                    'maybeRefineMagReference_(mag_body_ned);',
                    'maybeApplyContinuousHardIron_();',
@@ -99,6 +125,7 @@ def locked_live_reference_audit():
         'canonical_reference_map_global_Lipschitz_constant': 1,
         'reference_increment_bound': '|B_ref-B_anchor| <= ||K-K_anchor||*M_mag + |K*b-K_anchor*b_anchor| at the SAME statistics',
         'default_real_correction_norm_bound': '||K|| <= 4/3 and ||K-I|| <= 1/3 from ||A-I||_F <= 1/4 and convex slew',
+        'real_wave_handover_reference_norm_over_delivered_field': str(wave_handover_reference_factor()),
         'default_real_reference_norm_bound': '(9/5)*M_mag after actual acquisition/refinement, startup hard iron disabled, initial K=I and applied offset zero',
         'default_real_corrected_measurement_norm_bound': '(9/5)*M_mag',
         'float_reference_accumulation_qualified': False,
@@ -149,7 +176,7 @@ def certificate():
         str(FRONT.relative_to(ROOT)):git_blob_sha(FRONT),
         str(WRAPPER.relative_to(ROOT)):git_blob_sha(WRAPPER),
         **{str(p.relative_to(ROOT)):git_blob_sha(p)
-           for p in (PROXY,MAG_COMMON,HARD_IRON,GYRO_MAG,GYRO_MAG_IMPL,GYRO_MAG_CPP,MAG_TUNER,DEFAULTS)}}
+           for p in (PROXY,WAVE_STARTUP,MAG_COMMON,HARD_IRON,GYRO_MAG,GYRO_MAG_IMPL,GYRO_MAG_CPP,MAG_TUNER,DEFAULTS)}}
     }
 
 if __name__=="__main__":
