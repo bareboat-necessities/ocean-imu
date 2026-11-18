@@ -1,0 +1,76 @@
+{
+  "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+  "source_sha256": {
+    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
+    "src/kalman_common/WaveStartup.h": "38eda6be27917589f163118ed9bcd5c58fb98997baf32bcc8837a52ee9e82379",
+    "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "b2d9aba0c45474da366b87def0d274c2914575bf9513645399659f69f41156d7",
+    "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406",
+    "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
+    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6"
+  },
+  "script_sha256": "8ca350e311344a3cc13e3b492c37d2c44d474a7517f687e91b6655f54c1602d1",
+  "binary_sha256": "9ca70b4368bb0af624b7d1725a1b6071139407afec1754faf4eaebada8d5cd6a",
+  "records_sha256": "fdcc89a00569d05f689689b6357bec2dad3f1c82502ba5981515bdf8581f9a9d",
+  "policies": {
+    "deployed": {
+      "W3D_PROXY_SEED": "0"
+    },
+    "proxy_attitude": {
+      "W3D_PROXY_SEED": "1"
+    },
+    "proxy_gyro_bias": {
+      "W3D_PROXY_SEED": "2"
+    },
+    "proxy_both": {
+      "W3D_PROXY_SEED": "3"
+    }
+  },
+  "sensor_seed": null,
+  "inputs": {
+    "following": {
+      "release": "v1.4.0",
+      "case": "following",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "archive_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 0.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "2b33c8120a1ca579206062b799e2f1a7a65fb2127a0508ac12d608641138d0a8",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "9f4bf689b4d99603023050268f0b9806ceb677952ce4fb2de9ab537783455957",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "5c075f38e16288f1cfbf8ad980aea344f25002a4862bdb32800d5e07c9f93b88",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "8bc54e9765679dcc0297a8d1023b8f8387d66de7f7980227ce2722d19d4e734b",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
+      }
+    },
+    "head": {
+      "release": "v1.4.0",
+      "case": "head",
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "archive_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "motion_model": "VESSEL_RAO_28FT_5KN",
+      "speed_kn": 5.0,
+      "mean_heading_deg": 180.0,
+      "heading_amplitude_deg": 3.0,
+      "heading_period_s": 20.0,
+      "reference_coordinates": "wave displacement/velocity relative to declared cruise track; total acceleration",
+      "input_sha256": {
+        "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv": "8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976",
+        "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv": "d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6",
+        "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv": "11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362",
+        "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv": "72bd6a3b5f9f4af0d367600a2e8e4a7747b6abe10bdf2df47586a0a0f0f9da56",
+        "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv": "de7b167a9fcfe09d6d9d080af0c8eecf7c1b74ceaddfc6dc7766a40bbd6d47a7",
+        "wave_data_pmstokes_H1.500_L50.710_A-30.00_P120.00.csv": "b195d86740ae10c85451dbfb20522f6496f669804b1aef585916ae4bb56c5eca",
+        "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv": "6d963592b8770a3c6e7be49ff85471031a615ff3adfb01e1ce59695f1e504997",
+        "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "e39aca20cc534faaa5bc0e7630fc7e8a94ab9304130550fac5fe0cd673026b10"
+      }
+    }
+  },
+  "scope": "Selected sensor realization, both directions, full 1200-second replay. Experimental interventions."
+}

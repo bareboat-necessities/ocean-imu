@@ -6,7 +6,6 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 import csv
 import gzip
-import hashlib
 import io
 import json
 import math
@@ -17,6 +16,7 @@ import shlex
 import subprocess
 
 import sim_dataset as dataset
+from startup_source_snapshot import startup_snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST = ROOT / 'tests/startup_learning'
@@ -215,7 +215,9 @@ def main():
         parser.error('production pair uses the configured production policies')
     if args.jobs < 1:
         parser.error('--jobs must be positive')
+    sources_before_build = startup_snapshot(__file__)
     subprocess.run(['make', '-C', str(TEST), '-j2'], check=True)
+    sources_before_build.verify()
     args.output.mkdir(parents=True, exist_ok=True)
     paths = {}
     provenance = {}
@@ -250,6 +252,7 @@ def main():
     coverage = coverage_fn(rows, args.seeds, args.offsets, args.profiles)
     if not rows:
         raise ValueError('no scored handovers')
+    sources_before_build.verify()
     # Six checkpoints per startup (no full-rate traces). Deterministic gzip
     # keeps the reviewable evidence small even with all handover components.
     metrics_path = args.output/'metrics.csv.gz'
@@ -262,14 +265,9 @@ def main():
     summary = summarize(rows)
     (args.output/'summary.json').write_text(json.dumps(summary, indent=2, allow_nan=False)+'\n')
     (args.output/'coverage.json').write_text(json.dumps(coverage, indent=2, allow_nan=False)+'\n')
-    sources = [*TEST.glob('*.h'), *TEST.glob('*.cpp'), TEST/'Makefile', Path(__file__)]
-    if args.production_pair:
-        sources.extend([ROOT/'src/kalman_common/WaveStartup.h', ROOT/'src/kalman_common/ProxyStartupFusion.h',
-                        ROOT/'src/kalman_ou_iii/Kalman3D_Wave_OU_III.h'])
     receipt = {
-        'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
-        'sources_sha256': {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                           for p in sorted(sources)},
+        'base_commit': sources_before_build.revision,
+        'sources_sha256': sources_before_build.hashes,
         'datasets': provenance, 'seeds': args.seeds, 'offsets_s': args.offsets,
         'force_slope_model': 'scaled' if args.scale_force_slope or args.production_pair else 'fixed',
         'production_pair': args.production_pair,

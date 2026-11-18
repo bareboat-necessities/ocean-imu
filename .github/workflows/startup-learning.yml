@@ -5,6 +5,8 @@ on:
       - 'tests/startup_learning/**'
       - 'tools/startup_learning.py'
       - 'tools/startup_handover_components.py'
+      - 'tools/startup_live_retention.py'
+      - 'tools/startup_source_snapshot.py'
       - 'tests/kalman_ou_iii/kalman_ou_iii-sim.cpp'
       - 'tools/compare_startup_slope.py'
       - 'tools/report_startup_learning.py'
@@ -115,7 +117,9 @@ jobs:
           WINDOW: ${{ matrix.window }}
         run: |
           args=(--seeds 7 41)
-          if [[ "$WINDOW" == steady ]]; then args=(--long --seeds 7 41 101); fi
+          if [[ "$WINDOW" == steady ]]; then
+            args=(--long --seeds 7 41 101 --arms previous full previous_tilt previous_yaw previous_field previous_gyro_bias gravity_axis_accel_bias)
+          fi
           python3 tools/startup_handover_components.py --verify-controls --jobs 2 \
             --data tests/startup_learning/data --output "handover-$WINDOW" "${args[@]}"
       - uses: actions/upload-artifact@v4

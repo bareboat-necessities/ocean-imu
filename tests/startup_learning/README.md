@@ -173,3 +173,51 @@ python3 tools/startup_handover_components.py --verify-controls --jobs 2 --seeds 
 python3 tools/startup_handover_components.py --long --verify-controls --jobs 2 --seeds 7 41 101 \
   --data tests/startup_learning/data --output /tmp/startup-components-steady
 ```
+
+## Tracing the live startup gain
+
+The retention driver reuses the component driver's compiler setup and the
+normal OU-III simulator. Source-anchored temporary headers select experimental
+handover or refinement interventions. Every policy consumes the same full
+1,200 s input. The receipt includes input, executable and source hashes.
+The optional `--seed` argument selects an independent sensor realization.
+The shared source snapshot is captured before compilation and checked after
+compilation and before writing the results; changed source or HEAD rejects the
+receipt. Each completed replay log is preserved for audit.
+
+```sh
+for study in timeline reference refinement retention bias_prior frontend; do
+  python3 tools/startup_live_retention.py --study "$study" --jobs 2 \
+    --data tests/startup_learning/data --output "/tmp/startup-live-$study"
+done
+```
+
+Complete the four additional long-run component interventions with:
+
+```sh
+python3 tools/startup_handover_components.py --long --jobs 2 --seeds 7 41 101 \
+  --arms previous_tilt previous_yaw previous_field previous_gyro_bias \
+  --data tests/startup_learning/data --output /tmp/startup-components-restored
+```
+
+The deterministic magnetic-step probe prints accepted and rejected cases.
+The noisy probe reproduces the 1,440 matched clean/step controls. The archived
+previous results retain the acceptance defect before the continuity guard:
+
+```sh
+c++ -O1 -std=c++20 -I src -isystem third_party/eigen \
+  tests/startup_learning/field-step-probe.cpp -o /tmp/startup-field-step
+/tmp/startup-field-step
+```
+
+```sh
+c++ -O1 -std=c++20 -I src -isystem third_party/eigen \
+  tests/startup_learning/field-noise-probe.cpp -o /tmp/startup-field-noise
+/tmp/startup-field-noise
+```
+
+The guarded production startup qualification uses the same two cohorts as
+`production-handover.json`. Its receipt records the base commit and exact
+modified header, binary, inputs and outputs; it is separate from the full
+live-navigation matrix. Both controls and wave-start measurements are in
+`reports/results/startup_learning/field_steps`.

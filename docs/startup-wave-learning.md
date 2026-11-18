@@ -76,6 +76,14 @@ each of three policies. The fit qualified on 44 starts.
 | Y displacement (m) | 0.246066 | 0.246011 | 0.246079 |
 | Heave (m) | 0.197872 | 0.197870 | 0.197949 |
 
+The four restored-component policies were also run for all 48 full-length
+starts, completing 336 long replays across the seven policies. Late Y RMS
+was 0.246011 m with the complete handover, 0.246016 m with previous tilt,
+0.246048 m with previous yaw, 0.246010 m with the previous field and
+0.246022 m with the previous gyro bias. Late bias RMS across those five
+policies was 0.039882–0.039896 m/s². The component gains are predominantly
+transient; no component supplies a large sustained Y or bias improvement.
+
 The extra bias seed reduced late accelerometer-bias RMS by 0.13% relative to
 the deployed handover, while following-sea yaw rose from 0.80318° to 0.80812°.
 The production filters therefore retain the calibrated accelerometer-bias prior.
@@ -100,6 +108,130 @@ The ordinary wave-filter gate scores the final 900 s of each 1,200 s run.
 
 [Paired RMS by family, profile and sea direction](../reports/results/startup_learning/live-replay.csv)
 · [Source measurements and CI artifacts](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44184184023)
+
+## Long-run displacement and accelerometer bias
+
+The deployed startup improvement has a small effect on these final-900-second
+metrics. Each row pools all 16 records under the default sensor configuration.
+
+| Filter | 3-D displacement RMS (m), previous → deployed | Accel-bias vector RMS (m/s²), previous → deployed |
+|---|---:|---:|
+| OU-II | 0.526912 → 0.526903 | 0.038953 → 0.038949 |
+| OU-III | 0.433715 → 0.433715 | 0.035788 → 0.035782 |
+| CARMA | 0.228164 → 0.228162 | 0.032648 → 0.032649 |
+| Shared-mode CARMA | 0.205276 → 0.205282 | 0.031877 → 0.031880 |
+| TFG-OU | 0.418260 → 0.418252 | 0.053934 → 0.053981 |
+| TFG-CARMA | 0.228222 → 0.228237 | 0.032678 → 0.032676 |
+| TFG shared-mode CARMA | 0.205369 → 0.205378 | 0.031887 → 0.031886 |
+| Tangent shared-mode CARMA | 0.205354 → 0.205369 | 0.031882 → 0.031880 |
+
+OU-III accelerometer-bias RMS decreased 0.016%. The shared-mode CARMA value
+rose 0.009%. These results establish the size of the current long-run effect.
+The global headers take the worst score across both directions for each
+channel. Individual-record limits use that record's own measurement.
+Both retain the prescribed 0.5% margin. Large initial-tilt gains have therefore
+produced very small changes in the displacement and accelerometer-bias gates.
+
+## Where the X/Y advantage disappears
+
+A separate controlled replay toggles the production startup flag on the same
+16 default-seed records. All handovers occur between 31.84 and 38.29 s.
+Each time window below therefore scores live output.
+
+| Time since power-on | X displacement RMS (m), previous → deployed | Y displacement RMS (m), previous → deployed | Accel-bias RMS (m/s²), previous → deployed |
+|---|---:|---:|---:|
+| 40–60 s | 0.87622 → 0.84422 | 0.49928 → 0.45737 | 0.05465 → 0.05465 |
+| 60–90 s | 0.53119 → 0.53552 | 0.81046 → 0.79562 | 0.05596 → 0.05596 |
+| 90–120 s | 0.26636 → 0.26740 | 0.59260 → 0.59155 | 0.05655 → 0.05655 |
+| 120–180 s | 0.48663 → 0.48681 | 0.39738 → 0.39736 | 0.03733 → 0.03733 |
+| 300–1,200 s | 0.29893 → 0.29896 | 0.25029 → 0.25026 | 0.03579 → 0.03578 |
+
+The previous startup also continues converging. Its roll/pitch RMS falls
+from 0.28035° / 0.40726° at 40–60 s to 0.09523° / 0.13759° at 90–120 s.
+The corresponding deployed values are 0.26908° / 0.39165° and
+0.09522° / 0.13747°. The direction of gravity in the moving body is encoded
+in the evolving attitude; known constant world gravity is used by both arms.
+These measurements do not show the learned direction simply returning to its
+larger initial error.
+
+The initial X/Y advantage reaches the live estimator. The production
+accelerometer-bias hold keeps the bias means identical before refinement.
+The live attitude continues changing under prediction and corrections, with
+the configured 2° tilt uncertainty. At about 120 s the proxy-based magnetic
+refinement replaces the initial field and releases the bias hold.
+
+We tested five mechanisms using the actual OU-III replay and shared startup
+solver. These experimental policies are available in
+[the reproducible driver](../tools/startup_live_retention.py).
+
+| Final 900 s, all 16 records | 3-D displacement RMS (m) | Accel-bias RMS (m/s²) | Yaw RMS (°) |
+|---|---:|---:|---:|
+| Deployed startup and refinement | 0.433717 | 0.035782 | 0.780739 |
+| Retain startup field, skip refinement | 0.433787 | 0.038382 | 0.778797 |
+| Disable continuous magnetic calibration | 0.436112 | 0.035220 | 2.922357 |
+| Joint fit at refinement, field and yaw | 0.433695 | 0.038607 | 0.769398 |
+| 0.5° handover tilt uncertainty | 0.433719 | 0.035784 | 0.780580 |
+| Release bias hold at accepted handover | 0.433910 | 0.037206 | 0.800998 |
+| Bias uncertainty matched to configured sensor distribution | 0.433653 | 0.030832 | 0.730925 |
+| Seed the private observer attitude too | 0.433711 | 0.035610 | 0.780898 |
+
+The matched bias prior uses 0.045295 m/s² per axis, from the configured
+uniform residual range ±0.0784532 m/s². The deployed OU-III prior is
+0.004 m/s². This test uses distribution parameters available to the simulator
+and supplies no realized bias to the estimator. It reduces pooled bias RMS
+13.8% on this default-seed cohort, while X/Y changes remain mixed.
+A further 96 full replays used independent seeds 7 and 41, all 16 records,
+and an additional previous-startup control with the same larger bias prior.
+On seed 7 the proposed prior increased bias RMS from 0.023843 to
+0.029137 m/s². On seed 41 it reduced it from 0.054626 to 0.049804 m/s².
+The previous-startup control with the same prior gave nearly identical late
+scores. This effect is primarily a calibration-prior change, and it does not
+establish a general way to preserve the gravity startup advantage.
+
+A further 64 full replays seeded the private Mahony observer with the
+accepted sensor-only startup attitude, gyro bias, or both. Its clocks, gains,
+raw gyro endpoints and wave statistics were preserved. Seeding attitude
+reduced late bias RMS by 0.51% following and 0.44% head-on, while 3-D RMS
+changed by less than 0.002% and pooled yaw increased 0.020%. Seeding gyro
+bias alone slightly worsened bias RMS. This is another mixed diagnostic,
+not an adopted production change.
+
+Earlier bias release improves the initial bias readout but increases late bias
+RMS. A smaller tilt covariance alone gives negligible late changes. The
+instrumented refinement's disabled control agrees with the original build
+within 0.0000012 m in 3-D displacement and 0.000005° in yaw across every record.
+Those differences are much smaller than the candidate regressions.
+
+[All per-record metrics, time windows and provenance](../reports/results/startup_learning/live_retention)
+
+## Magnetic-step consistency guard
+
+A stationary sensor-only probe exposed a failure of the previous residual gate.
+With true attitude and gyro bias both zero, a 5 µT X field step at 15 s was
+accepted at 35 s and produced 2.391° tilt and 0.002384 rad/s false gyro bias
+with the deployed slope weighting. A 2 µT Y step was also accepted, producing
+−7.205° yaw. Rejecting the existing 10 µT control alone is insufficient.
+
+The shared solver now compares adjacent half-second magnetic means in the
+gyro-transported frame. The threshold combines a conservative estimate of
+white measurement noise with the rotation permitted by the existing gyro-bias
+acceptance bound. A detected discontinuity invalidates the startup fit until
+the window resets; the ordinary proxy fallback remains available.
+
+[The deterministic probe](../tests/startup_learning/field-step-probe.cpp) rejects
+all 30 nonzero 1–10 µT steps and accepts the six clean controls under both
+slope policies. A further 1,440 trials cover three axes, 12 step phases,
+10 noise seeds, 0 or 0.8 µT white noise, and an injected gyro bias. All 720
+clean controls pass and all 720 trials with a 5 µT step reject.
+
+Across the same 960 production wave starts, the guarded solver preserves
+all 888 joint handovers, all 72 deadline misses, and every measured seed
+value exactly. [Measurements and source receipts](../reports/results/startup_learning/field_steps)
+retain the previous failures as well as the guarded results. This is a
+sensor-consistency heuristic, not a guarantee against every smooth or low-SNR
+field disturbance. It repairs false acceptance; it supplies no evidence of
+broad long-run displacement or accelerometer-bias gains. Final-source live
+matrix, directional studies, builds and proof regeneration remain required.
 
 ## Results within 35 seconds
 

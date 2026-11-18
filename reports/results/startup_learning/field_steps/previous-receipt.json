@@ -1,0 +1,10 @@
+{
+  "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+  "source_sha256": {
+    "tests/startup_learning/field-step-probe.cpp": "11556d45143b06bbe4ad0dbe894d1294757bc032c6c85114bccae99c39e82eb3",
+    "src/kalman_common/WaveStartup.h": "38eda6be27917589f163118ed9bcd5c58fb98997baf32bcc8837a52ee9e82379"
+  },
+  "binary_sha256": "72cdb9d737f58f586e60573d961da34a8f873bf8b13c88ee6e1002c261ab7514",
+  "records_sha256": "0d3e509ee636cc798eb76c0e12049c66ecb68571646b7da39e6e00858e8b08c6",
+  "scope": "36 deterministic stationary sensor-only startups: three field-step axes, six amplitudes, both force-slope policies. True attitude and gyro bias are zero. The field changes at 15 s. This exposes an acceptance defect; it is not a qualified repair or an admitted stability counterexample."
+}

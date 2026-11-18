@@ -10,6 +10,8 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools'))
 import report_startup_learning as report
 import startup_learning as experiment
+import compare_startup_slope as slope
+from startup_source_snapshot import SourceSnapshot
 
 
 class StartupAccuracyTests(unittest.TestCase):
@@ -48,6 +50,55 @@ class StartupAccuracyTests(unittest.TestCase):
         summary = [s for s in self.summary() if s['schedule'] != 'fixed']
         with self.assertRaisesRegex(ValueError, 'missing 35-second accuracy cell'):
             experiment.check_accuracy(summary)
+
+
+class StartupComparisonTests(unittest.TestCase):
+    def test_source_or_revision_changes_reject_the_receipt(self):
+        with tempfile.TemporaryDirectory() as temp, patch('startup_source_snapshot.subprocess.check_output',
+                                                        return_value='original-commit\n') as revision:
+            root = Path(temp)
+            source = root / 'filter.h'
+            source.write_text('original estimator')
+            snapshot = SourceSnapshot(root, [source])
+            snapshot.verify()
+            source.write_text('changed estimator')
+            with self.assertRaisesRegex(ValueError, 'filter.h'):
+                snapshot.verify()
+            source.write_text('original estimator')
+            revision.return_value = 'different-commit\n'
+            with self.assertRaisesRegex(ValueError, 'HEAD'):
+                snapshot.verify()
+            revision.return_value = 'original-commit\n'
+            source.unlink()
+            with self.assertRaisesRegex(ValueError, 'filter.h'):
+                snapshot.verify()
+
+    def test_different_or_missing_executable_cannot_be_attributed_to_weighting(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            folders = [root / name for name in ('fixed', 'scaled')]
+            for folder in folders:
+                folder.mkdir()
+                metrics = folder / 'metrics.csv.gz'
+                with gzip.open(metrics, 'wt') as stream:
+                    stream.write('method,profile,schedule,elapsed_s,case,input,seed,offset,epoch_s,valid,'
+                                 'yaw_error_deg,tilt_error_deg,bg_error_dps\n'
+                                 'joint,calibrated,fixed,35,following,wave.csv,7,0,35,1,.8,.3,.02\n')
+                protocol = dict.fromkeys(('datasets', 'seeds', 'offsets_s', 'profiles', 'imu_hz',
+                                          'mag_hz', 'deadline_s'), 'matched')
+                protocol.update(force_slope_model=folder.name, metrics_file=metrics.name,
+                                metrics_sha256=slope.digest(metrics), executable_sha256='same-binary')
+                (folder / 'provenance.json').write_text(json.dumps(protocol))
+            output = root / 'comparison.csv'
+            slope.compare(*folders, output)
+            self.assertEqual(len(output.read_text().splitlines()), 2)
+            receipt = folders[1] / 'provenance.json'
+            for replacement in ('different-binary', None):
+                changed = json.loads(receipt.read_text())
+                changed['executable_sha256'] = replacement
+                receipt.write_text(json.dumps(changed))
+                with self.assertRaisesRegex(ValueError, 'same recorded executable'):
+                    slope.compare(*folders, output)
 
 
 class StartupReportTests(unittest.TestCase):

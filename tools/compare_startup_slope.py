@@ -36,6 +36,8 @@ def read_run(folder, model):
 def compare(fixed, scaled, output):
     first, baseline = read_run(fixed, 'fixed')
     second, candidate = read_run(scaled, 'scaled')
+    if not first.get('executable_sha256') or first['executable_sha256'] != second.get('executable_sha256'):
+        raise ValueError('force-slope policies must use the same recorded executable')
     for key in ('datasets', 'seeds', 'offsets_s', 'profiles', 'imu_hz', 'mag_hz', 'deadline_s'):
         if first[key] != second[key]:
             raise ValueError(f'unmatched input protocol: {key}')

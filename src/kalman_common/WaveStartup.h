@@ -47,6 +47,13 @@ public:
         relative_.setIdentity(); integrated_rotation_.setZero();
         mean_field_.setZero(); mean_j_.setZero(); info_.setZero(); gradient_.setZero();
         scatter_ = 0; force_energy_ = 0;
+        field_block_sum_.setZero(); field_previous_mean_.setZero();
+        field_block_n_ = field_previous_n_ = 0;
+        field_block_start_ = field_time_sum_ = field_previous_time_ = 0;
+        field_block_norm_ = field_previous_norm_ = 0;
+        field_discontinuity_ = false;
+        field_diff_n_ = 0; field_diff_energy_ = 0;
+        field_last_.setZero();
         for (auto& m : moment_) m.setZero();
     }
 
@@ -88,6 +95,7 @@ public:
     void mag(const V& body) {
         if (!have_imu_ || !body.allFinite() || body.squaredNorm() < 1e-8f || last_mag_ == time_) return;
         const V field = relative_ * body;
+        checkFieldContinuity_(field);
         const M j = derivative(field, integrated_rotation_);
         const V delta = field-mean_field_;
         const M dj = j-mean_j_;
@@ -102,7 +110,7 @@ public:
     }
 
     bool solve(float gravity, bool scale_slope, Seed& out) const {
-        if (time_ < 19.99 || nmag_ < 10 || time_-last_mag_ > 0.2 || !(gravity > 0)) return false;
+        if (field_discontinuity_ || time_ < 19.99 || nmag_ < 10 || time_-last_mag_ > 0.2 || !(gravity > 0)) return false;
         // For w(x)=30 x²(1-x)², E[x]=1/2 and Var[x]=1/28.
         const double k = 35/time_;
         const double c = 30*k*k/time_;
@@ -142,6 +150,53 @@ public:
     }
 
 private:
+    // Compare adjacent half-second means in the gyro-transported frame.
+    // The existing 0.8 uT observation model sets the uncertainty of their
+    // difference. Include rotation over the mean epochs at the accepted
+    // four-sigma gyro-bias limit. A fit must not absorb a local field jump
+    // as a slowly accumulating gyro bias. This remains a consistency gate,
+    // not a certificate against every smoothly varying magnetic disturbance.
+    void checkFieldContinuity_(const V& field) {
+        if (field_diff_n_ > 0) field_diff_energy_ += (field-field_last_).squaredNorm();
+        ++field_diff_n_; field_last_ = field;
+        if (field_block_n_ == 0) field_block_start_ = time_;
+        ++field_block_n_;
+        field_block_sum_ += field;
+        field_time_sum_ += time_;
+        field_block_norm_ = std::max(field_block_norm_, field.norm());
+        if (time_ - field_block_start_ < 0.5 || field_block_n_ < 2) return;
+        const float count = static_cast<float>(field_block_n_);
+        const V mean = field_block_sum_ / count;
+        const double epoch = field_time_sum_ / count;
+        if (field_previous_n_ > 0) {
+            // Adjacent gyro-transported differences upper-estimate white
+            // magnetic noise: genuine smooth motion/model residual adds energy.
+            // Keep the existing prior until 25 samples, then allow a conservative
+            // twofold sample standard deviation, capped by that prior.
+            const float observed = field_diff_n_ >= 25
+                ? std::min(0.8f, std::max(1e-4f, 2.0f*std::sqrt(field_diff_energy_ /
+                    (6.0f*static_cast<float>(field_diff_n_-1))))) : 0.8f;
+            const float sigma = observed * std::sqrt(1.0f/count + 1.0f/static_cast<float>(field_previous_n_));
+            const float rotation = 0.004f * static_cast<float>(epoch-field_previous_time_) *
+                std::max(field_previous_norm_, field_block_norm_);
+            if ((mean-field_previous_mean_).norm() > 6.0f*sigma + rotation)
+                field_discontinuity_ = true;
+        }
+        field_previous_mean_ = mean;
+        field_previous_time_ = epoch;
+        field_previous_n_ = field_block_n_;
+        field_previous_norm_ = field_block_norm_;
+        field_block_sum_.setZero(); field_time_sum_ = 0;
+        field_block_n_ = 0; field_block_norm_ = 0;
+    }
+    V field_last_;
+    unsigned field_diff_n_{};
+    float field_diff_energy_{};
+    V field_block_sum_, field_previous_mean_;
+    double field_block_start_{}, field_time_sum_{}, field_previous_time_{};
+    unsigned field_block_n_{}, field_previous_n_{};
+    float field_block_norm_{}, field_previous_norm_{};
+    bool field_discontinuity_{};
     double time_{}, last_mag_{}, force_energy_{};
     unsigned nmag_{};
     bool have_imu_{};

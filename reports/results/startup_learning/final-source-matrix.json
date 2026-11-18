@@ -1,0 +1,52 @@
+{
+  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44197069501",
+  "scope": "Fresh, complete c3481ce source execution with reviewed limits. Supersedes adoption-run status, not the preserved original measurements. This does not qualify later experimental field guards.",
+  "cases": {
+    "following": {
+      "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+      "acceptance": "all replay gates passed",
+      "cells": 272,
+      "changed_numeric_metrics": [],
+      "archive_sha256": "b94f302163bf1db57aa1567d270561f785b43695226356e28db5d2d1007c7d9a",
+      "measurements_sha256": "d3d5912324167a3589672e12db273626fc4d8f819807e443203365f1d9c4bfb7",
+      "binary_sha256": {
+        "ou2": "10bd908ef34dc472e0a1bf7c0b260ab3a0781f8f961be611143a08ad238e0f90",
+        "ou3": "2449d2f22bfbfaa8bd32847049ba168ed1c053e2dacb36dd1a3e4812b9997ba5",
+        "tfg": "5bec0cbd3425a4b207a63865add4a576d14679a33d02996375274479a45ef0b4",
+        "carma": "ce79c69d9a502b275d27f851b88b5d37754e0e21ce32b285944ddc9090a3a7d6",
+        "csm": "e717d4fe98d228237db70dd2eb684854c1ae96f72128841ce7581dc75317fa18",
+        "tcarma": "12d8a78cb1a9da63c3f27e503c2b0f4f0e5ade6b81398d29514dafcd1b7dab2b",
+        "tangent": "59a1118dbb53b93589f39df9acaddfdf6bc5757c9faf714aea8bf1786e06d613",
+        "tcsm": "da1643bd22458e3b30b84c18d17c25061e94d29769fe1d86e624de1adf46b2c0",
+        "tfg_legacy": "3be45b79d1fa9fca4d0eb2a05b72e669397271abfe6d4aaef0fe8d474a4523af",
+        "ahrs": "3f22605d3332ab16775bf3009530b3aa86620dcdffa8f343a9398d7659eb16ac",
+        "heave": "76b188cf63f0152069cc4497019990429bf9bfc82c5207f573e3966e9e971163",
+        "nlo": "e7610233340c46824bfc4e18a0bf366101476806f4f0fb0601f41374e06d5c9f",
+        "pii": "41440d24683890ac4f1be237069af4ca12585c2ed6a13e97bcf557ed53c7b7c6"
+      }
+    },
+    "head": {
+      "source_commit": "c3481cef635faee2d77efb5e4beba85a903e37e1",
+      "acceptance": "all replay gates passed",
+      "cells": 272,
+      "changed_numeric_metrics": [],
+      "archive_sha256": "ea693eed8206ec8f5993f53c70e64d5c521e7f05939206285016458a2a4d24b4",
+      "measurements_sha256": "b1f882a916694d23c8df5df7467620bbb20ed501903d5537b15d9f4107bdc499",
+      "binary_sha256": {
+        "ou2": "10bd908ef34dc472e0a1bf7c0b260ab3a0781f8f961be611143a08ad238e0f90",
+        "ou3": "2449d2f22bfbfaa8bd32847049ba168ed1c053e2dacb36dd1a3e4812b9997ba5",
+        "tfg": "5bec0cbd3425a4b207a63865add4a576d14679a33d02996375274479a45ef0b4",
+        "carma": "ce79c69d9a502b275d27f851b88b5d37754e0e21ce32b285944ddc9090a3a7d6",
+        "csm": "e717d4fe98d228237db70dd2eb684854c1ae96f72128841ce7581dc75317fa18",
+        "tcarma": "12d8a78cb1a9da63c3f27e503c2b0f4f0e5ade6b81398d29514dafcd1b7dab2b",
+        "tangent": "59a1118dbb53b93589f39df9acaddfdf6bc5757c9faf714aea8bf1786e06d613",
+        "tcsm": "da1643bd22458e3b30b84c18d17c25061e94d29769fe1d86e624de1adf46b2c0",
+        "tfg_legacy": "3be45b79d1fa9fca4d0eb2a05b72e669397271abfe6d4aaef0fe8d474a4523af",
+        "ahrs": "3f22605d3332ab16775bf3009530b3aa86620dcdffa8f343a9398d7659eb16ac",
+        "heave": "76b188cf63f0152069cc4497019990429bf9bfc82c5207f573e3966e9e971163",
+        "nlo": "e7610233340c46824bfc4e18a0bf366101476806f4f0fb0601f41374e06d5c9f",
+        "pii": "41440d24683890ac4f1be237069af4ca12585c2ed6a13e97bcf557ed53c7b7c6"
+      }
+    }
+  }
+}

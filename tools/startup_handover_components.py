@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from sim_dataset import ROOT, CASES, REFERENCE_CSV_SHA256_BY_CASE, digest, input_provenance
+from startup_source_snapshot import startup_snapshot
 
 # Keep the intervention at the actual assignment site. The shipping replay and
 # all its sensor, covariance, prediction, refinement and release code are reused.
@@ -40,7 +41,7 @@ def substitute(text, old, new):
     return text.replace(old, new)
 
 
-def build(work, control=False):
+def build(work, control=False, transform_wrapper=None, transform_sources=None):
     source = ROOT / "src/kalman_common"
     overlay = work / ("control" if control else "instrumented") / "kalman_common"
     overlay.mkdir(parents=True)
@@ -86,7 +87,11 @@ def build(work, control=False):
         )
     else:
         wrapper = substitute(wrapper, old, new)
+    if transform_wrapper is not None:
+        wrapper = transform_wrapper(wrapper)
     (overlay / "ProxyStartupFusion.h").write_text(wrapper)
+    if transform_sources is not None:
+        transform_sources(overlay.parent)
     binary = work / ("production-control" if control else "ablation")
     eigen = ROOT / "third_party/eigen"
     if not (eigen / "Eigen/Dense").is_file():
@@ -159,14 +164,21 @@ def main():
         action="store_true",
         help="compare the two endpoint arms with the intact production policies",
     )
-    parser.add_argument("--long", action="store_true", help="compare the three bias policies on the final 900 seconds")
+    parser.add_argument("--long", action="store_true", help="score the final 900 seconds of the full replay")
     parser.add_argument("--seeds", type=int, nargs="+", default=[7, 41])
+    parser.add_argument("--arms", nargs="+", choices=ARMS, help="select component policies explicitly")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     arms = {k: ARMS[k] for k in ("previous", "full", "gravity_axis_accel_bias")} if args.long else ARMS
+    if args.arms:
+        arms = {key: ARMS[key] for key in args.arms}
+    if args.verify_controls and not {"previous", "full"} <= arms.keys():
+        parser.error("--verify-controls requires the previous and full arms")
+    sources_before_build = startup_snapshot(__file__)
     with tempfile.TemporaryDirectory(prefix="wave-handover-") as temp:
         work = Path(temp)
         binary = build(work)
+        sources_before_build.verify()
         inputs, sources = {}, {}
         for case in CASES:
             files = [args.data.resolve() / case / n for n in REFERENCE_CSV_SHA256_BY_CASE[case]]
@@ -198,6 +210,7 @@ def main():
                 local.symlink_to(inputs[(case, name)])
                 r = subprocess.run([str(executable), "--input", name], cwd=tmp, env=env, capture_output=True, text=True)
                 log = r.stdout + r.stderr
+                (args.output / f"{case}-{seed}-{arm}-{Path(name).stem}.log").write_text(log)
                 if r.returncode not in (0, 1) or not re.search(r"^QUALITY_GATE:", log, re.M):
                     raise ValueError(log[-1600:])
                 live = float(re.search(r"STARTUP live_s=([.0-9]+)", log).group(1))
@@ -212,8 +225,10 @@ def main():
                         pitch_deg="pitch_rms_deg",
                         acc_bias_mps2="accel_bias_3d_rms_mps2",
                         gyro_bias_radps="gyro_bias_3d_rms_radps",
+                        x_m="disp_x_rms_m",
                         y_m="disp_y_rms_m",
                         z_m="disp_z_rms_m",
+                        xyz_m="disp_3d_rms_m",
                     )
                     values = {column: float(metrics[key]) for column, key in keys.items()}
                     if not all(math.isfinite(v) for v in values.values()):
@@ -249,6 +264,7 @@ def main():
         control_binary_sha256 = None
         if args.verify_controls:
             control = build(work, control=True)
+            sources_before_build.verify()
             control_binary_sha256 = digest(control)
             for (case, name), (arm, mask) in product(inputs, [("previous", 0), ("full", 15)]):
                 if "jonswap_H4.000" not in name:
@@ -266,21 +282,15 @@ def main():
                     ):
                         raise ValueError(f"production control differs: {observed} {baseline}")
                     control_checks.append(dict(case=case, input=name, arm=arm, start_s=baseline["start_s"]))
+        sources_before_build.verify()
         with (args.output / "records.csv").open("w") as out:
             w = csv.DictWriter(out, fieldnames=list(rows[0]), lineterminator="\n")
             w.writeheader()
             w.writerows(rows)
-        bound_files = [
-            ROOT / "src/kalman_common/WaveStartup.h",
-            ROOT / "src/kalman_common/ProxyStartupFusion.h",
-            ROOT / "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-            ROOT / "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp",
-            ROOT / "src/util/W3dSimCommon.cpp",
-        ]
         receipt = dict(
-            source_sha256={str(p.relative_to(ROOT)): digest(p) for p in bound_files},
-            runtime_source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-            script_sha256=digest(Path(__file__)),
+            source_sha256=sources_before_build.hashes,
+            runtime_source=sources_before_build.revision,
+            script_sha256=sources_before_build.hashes[str(Path(__file__).resolve().relative_to(ROOT))],
             compiler=subprocess.check_output(["g++", "--version"], text=True).splitlines()[0],
             control_binary_sha256=control_binary_sha256,
             control_checks=control_checks,

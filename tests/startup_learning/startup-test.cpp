@@ -5,6 +5,7 @@
 #include "StartupLearner.h"
 #include <cmath>
 #include <iostream>
+#include <random>
 #include <stdexcept>
 
 using namespace startup_learning;
@@ -62,9 +63,47 @@ void check_streaming_handover() {
     require(!clean.solve(gravity, true, seed), "streaming window survived IMU gap");
 }
 
+void check_small_field_steps() {
+    using seastate::common::WaveStartup;
+    using ocean_imu::kalman::filter_detail::GyroSampleMode;
+    using F = Eigen::Vector3f;
+    // A low global fit residual can hide a local field step as false gyro
+    // bias and tilt. Include off-block steps, noise and matched clean controls.
+    for (int axis = 0; axis < 3; ++axis) {
+        for (float noise : {0.f, .8f}) {
+            for (unsigned seed : {7u, 41u}) {
+                WaveStartup clean, stepped;
+                std::mt19937 random(seed);
+                std::normal_distribution<float> gaussian(0, 1);
+                for (int k = 0; k <= 7000; ++k) {
+                    for (auto* learner : {&clean, &stepped})
+                        learner->imu(.005f, F(.0008f, -.0004f, .0006f),
+                                     F(0, 0, -gravity), GyroSampleMode::Instantaneous);
+                    if (k % 8 != 0) continue;
+                    F field(20, 0, 48);
+                    for (int i = 0; i < 3; ++i) field[i] += noise*gaussian(random);
+                    clean.mag(field);
+                    if (.005f*k >= 15.125f) field[axis] += noise == 0 ? 1.f : 5.f;
+                    stepped.mag(field);
+                }
+                for (bool scaled : {false, true}) {
+                    WaveStartup::Seed state;
+                    require(clean.solve(gravity, scaled, state), "clean field continuity rejected");
+                    const auto accepted = state;
+                    require(!stepped.solve(gravity, scaled, state), "small magnetic step falsely accepted");
+                    require(state.attitude.coeffs() == accepted.attitude.coeffs() &&
+                            state.field == accepted.field && state.gyro_bias == accepted.gyro_bias,
+                            "field continuity rejection overwrote accepted seed");
+                }
+            }
+        }
+    }
+}
+
 }
 int main() try {
     check_streaming_handover();
+    check_small_field_steps();
     Config exact_config;
     exact_config.mag_sigma=.01; // deterministic synthetic observations
     Learner fit(exact_config),zero,waves;
