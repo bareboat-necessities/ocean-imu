@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "docs/complete-yaw-qualification",
-  "git_commit": "008587e9f1b26e85cf244b6809f19ff97d055ff9",
+  "git_commit": "f36fa718df16b25696b00faed36aeed582bc8f9f",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -283,7 +283,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -394,11 +394,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-17T21:37:22+00:00",
-    "git_commit": "008587e9f1b26e85cf244b6809f19ff97d055ff9",
+    "generated_at": "2026-11-18T01:30:44+00:00",
+    "git_commit": "f36fa718df16b25696b00faed36aeed582bc8f9f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -653,7 +653,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44163783650",
+      "run_id": "44185684210",
       "workflow": "ou-full-evidence-branch"
     }
   },
