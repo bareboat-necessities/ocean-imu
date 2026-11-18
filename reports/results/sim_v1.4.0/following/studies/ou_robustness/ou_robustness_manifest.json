@@ -13,7 +13,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -30,8 +30,8 @@
     "--skip-build"
   ],
   "git_branch": "experiment/startup-wave-handover",
-  "git_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
-  "git_diff_stat": ".../studies/ou_robustness/case-receipt.json        |    27 +-\n .../studies/ou_robustness/ou_robustness.json       | 34644 +++++++++----------\n .../ou_robustness/ou_robustness_paired_effects.csv |  1586 +-\n .../studies/ou_robustness/ou_robustness_raw.csv    |   596 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   996 +-\n .../studies/ou_robustness/ou_robustness_stress.svg |   160 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1948 +-\n 7 files changed, 19969 insertions(+), 19988 deletions(-)",
+  "git_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "git_diff_stat": ".../studies/ou_robustness/case-receipt.json        | 23 ++--------------------\n 1 file changed, 2 insertions(+), 21 deletions(-)",
   "matplotlib": "3.6.3",
   "nominal_tuning_point": {
     "RS_ms": 2.333609016147021,
@@ -41,7 +41,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,

@@ -36,7 +36,7 @@
   "files": {
     "lever_arm_cutoff_runs.csv": "a8b20c684007a894d58a13420aaeb211392e3928bb4555c1ddb082828f5d16ce",
     "lever_arm_cutoff_summary.csv": "ab04dd335bbfa6bed40f5acac30a86ba9ccf32371b74dd989bbd22e1914e54dc",
-    "lever_arm_report.md": "dbc58003b99021a5618bdd1e2f5e29eef627760cda000fbdf77bf74a076215bc",
+    "lever_arm_report.md": "201c43b0fa97f7e5965d35e5a2e2283ad9c819773fe81e1445d9a8719fc0623d",
     "lever_arm_runs.csv": "e8cd3d7c0bd8c250ecccb8e603e0353eb56acb6f33bb6f6f91f1626c1336a500",
     "lever_arm_summary.csv": "91de3cb5eb5443c5a9c6ff15ebccbf3244353dcbd1214830ffd7dda356e32ff8",
     "ou3_lever_arm_cutoff.svg": "9796fcc560c9c5b414f709a9f1f2450b20fb9fb929fee27853ecefc3cbd72419",
@@ -79,6 +79,6 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
   "study": "OU-III IMU lever-arm installation"
 }

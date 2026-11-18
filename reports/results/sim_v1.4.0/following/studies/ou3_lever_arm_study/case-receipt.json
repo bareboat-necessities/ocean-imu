@@ -24,7 +24,7 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
     }
   },
-  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
   "binary_sha256": {
     "kalman_ou_iii/kalman_ou_iii-sim": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66"
   },
@@ -58,6 +58,6 @@
     ]
   ],
   "exit_code": 0,
-  "seconds": 600.621483833,
-  "log_sha256": "cc694a66296f4c0860f6866c8dad0d0ac7915e7a5ca7c396eeded889314b22ce"
+  "seconds": 445.191698506,
+  "log_sha256": "65642130d5820f76c86df7298343df6da7ec5fe4d9473a5c59ed6e8ed61c8791"
 }

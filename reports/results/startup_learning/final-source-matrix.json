@@ -1,760 +1,675 @@
 {
-  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44225475401",
-  "scope": "Deployed wave startup, magnetic consistency guard and accepted-fit TFG tilt uncertainty. Both sea directions reran with the reviewed limits.",
-  "matrix_source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
-  "estimator_source_commit": "68f097807af2a070711c77288ca07ec136f6377a",
-  "reviewed_headers_commit": "39b8487d696d6a531b76fd760d56ef8a4984c517",
-  "gated_measurements": 2768,
-  "identical_to_gate_setting_run": 2768,
-  "cases": {
+  "workflow": 44275659529,
+  "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "runtime_source": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+  "runtime_src_tree": "4c1b9ede3db64a5309386ade7870afc093aa7599",
+  "previous_hosted_run": 44239902138,
+  "current_main": "cee633f7f5464576dd190a3833d1ed235679616c",
+  "main_hosted_run": 44101355640,
+  "cases": 544,
+  "profiles": 46,
+  "shared_binaries": 13,
+  "scored_channels": 2768,
+  "material_threshold_pct": 0.5,
+  "main_comparison": {
+    "within": 2508,
+    "better": 209,
+    "worse": 51
+  },
+  "by_direction": {
     "following": {
-      "source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
-      "acceptance": "all replay gates passed",
-      "cells": 272,
-      "artifact_id": 14394454011,
-      "archive_sha256": "f31dcf8d870038d38ac5a421f1f8034226691421450430e697d7f2291392c2e5",
-      "measurements_sha256": "f9fc053e6f5d0ed577de3645aa75aa6c2592c5bb68f809444acb0b01b9835e7a",
-      "verified_profile_logs": 23,
-      "compiled_source_files": 181,
-      "binary_sha256": {
-        "ou2": "68fc3626229e83bbb63d195ca396deeafe46fcc3f51d8683f93e36c6cd519dc3",
-        "ou3": "ea452de9e9fd70fd94f6b1356827251b6a9f9a05f325342dec5a01025e2d6fd8",
-        "tfg": "1e94b11d5988c9489a345fab9f363f1d1f1fdc3b399773dee54325becf5ce2f3",
-        "carma": "0ed9cdf3fd7d64efaa6951dd5ee00e01037d7b8895108841c0f46e28d7877c18",
-        "csm": "38bc24dafdcce4585ad7bae0f7ebc0d33cdb157b6365b3dfa21923a426aa3374",
-        "tcarma": "f6e874b2b2b9ddbb56592b6f0ab8d9fb50b1ac4ffa7c23ffe44a7d2ccaaecc90",
-        "tangent": "5168903454e44c5439b32a5260d3c36e4cc2d7b2a0f28be0ce3d22021ab82745",
-        "tcsm": "f1c1a223430934aabdf339a9138c9bf1f08bcbe7584193ef28564073aa305f7e",
-        "tfg_legacy": "a3c0a1f5822740fd3308dfef2e9aaf844deeb48590609c185ddf0034f6d39a46",
-        "ahrs": "8e959a3d36949aad24f74b730e796b24ebfa46e857259e4e0031fe88e66fedd9",
-        "heave": "1374af902a8c46a11065da8c3dadde69c30ebc44b00fedb1ebac54d212d4e2a3",
-        "nlo": "8c8577ae38fc9096dcdf8402483ed742d97fc11f43b30a4843307d73fb1fc24d",
-        "pii": "5b98f55020522bcfb8b826f080e0b33ae343c77466c223bd547b886e25ac5b38"
-      }
+      "within": 1214,
+      "better": 121,
+      "worse": 49
     },
     "head": {
-      "source_commit": "b0f9ffd5f6d0968abe71c49a754615831a0c8409",
-      "acceptance": "all replay gates passed",
-      "cells": 272,
-      "artifact_id": 14395387165,
-      "archive_sha256": "62dc1c9a533da63f45fbf42b0980d0709aebb77fbb2274df073f25ddb5a78c43",
-      "measurements_sha256": "e66229e4d0bd227fff721c7ea44b0f24e54545f86a5ef05d8d5375b565b88230",
-      "verified_profile_logs": 23,
-      "compiled_source_files": 181,
-      "binary_sha256": {
-        "ou2": "68fc3626229e83bbb63d195ca396deeafe46fcc3f51d8683f93e36c6cd519dc3",
-        "ou3": "ea452de9e9fd70fd94f6b1356827251b6a9f9a05f325342dec5a01025e2d6fd8",
-        "tfg": "1e94b11d5988c9489a345fab9f363f1d1f1fdc3b399773dee54325becf5ce2f3",
-        "carma": "0ed9cdf3fd7d64efaa6951dd5ee00e01037d7b8895108841c0f46e28d7877c18",
-        "csm": "38bc24dafdcce4585ad7bae0f7ebc0d33cdb157b6365b3dfa21923a426aa3374",
-        "tcarma": "f6e874b2b2b9ddbb56592b6f0ab8d9fb50b1ac4ffa7c23ffe44a7d2ccaaecc90",
-        "tangent": "5168903454e44c5439b32a5260d3c36e4cc2d7b2a0f28be0ce3d22021ab82745",
-        "tcsm": "f1c1a223430934aabdf339a9138c9bf1f08bcbe7584193ef28564073aa305f7e",
-        "tfg_legacy": "a3c0a1f5822740fd3308dfef2e9aaf844deeb48590609c185ddf0034f6d39a46",
-        "ahrs": "8e959a3d36949aad24f74b730e796b24ebfa46e857259e4e0031fe88e66fedd9",
-        "heave": "1374af902a8c46a11065da8c3dadde69c30ebc44b00fedb1ebac54d212d4e2a3",
-        "nlo": "8c8577ae38fc9096dcdf8402483ed742d97fc11f43b30a4843307d73fb1fc24d",
-        "pii": "5b98f55020522bcfb8b826f080e0b33ae343c77466c223bd547b886e25ac5b38"
-      }
+      "within": 1294,
+      "better": 88,
+      "worse": 2
     }
   },
-  "headers_sha256": {
-    "CurrentReplayLimits.h": "26579fe9cb4813ec36a15bc59ff7f9de8b874fafc1f23df5b444f2b22ae10ed4",
-    "RecordReplayLimits.inc": "1115f3eb5b9d0760dc55419629838e4036e9a43fde8b470992305b98c646a711"
-  },
-  "preintegration_change": {
-    "threshold_percent": 0.5,
-    "improved": 74,
-    "worsened": 38,
-    "within_band": 2656,
-    "metric_extrema_columns": [
-      "change_percent",
-      "direction",
-      "family",
-      "profile",
-      "record",
-      "before",
-      "after"
-    ],
-    "by_metric": {
-      "acc_3d": {
-        "n": 272,
-        "improved_over_half_percent": 9,
-        "worse_over_half_percent": 4,
-        "best": [
-          -2.726598650310208,
-          "following",
-          "tfg",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          106.543,
-          103.638
-        ],
-        "worst": [
-          1.8811075182678216,
-          "following",
-          "tfg_legacy",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          308.329,
-          314.129
-        ]
-      },
-      "acc_z": {
-        "n": 272,
-        "improved_over_half_percent": 0,
-        "worse_over_half_percent": 2,
-        "best": [
-          -0.22789798584927912,
-          "head",
-          "tfg_legacy",
-          "default",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          4.27823,
-          4.26848
-        ],
-        "worst": [
-          2.4371050715275677,
-          "following",
-          "tfg_legacy",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          7.66278,
-          7.84953
-        ]
-      },
-      "displacement": {
-        "n": 272,
-        "improved_over_half_percent": 0,
-        "worse_over_half_percent": 0,
-        "best": [
-          -0.14869279283272752,
-          "following",
-          "tfg",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          10.4947252,
-          10.4791203
-        ],
-        "worst": [
-          0.057473833426713306,
-          "following",
-          "tfg_legacy",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          18.0798798,
-          18.090271
-        ]
-      },
-      "displacement_y": {
-        "n": 272,
-        "improved_over_half_percent": 1,
-        "worse_over_half_percent": 0,
-        "best": [
-          -0.5037087988515543,
-          "following",
-          "tfg",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          0.502270162,
-          0.499740183
-        ],
-        "worst": [
-          0.08119812255853454,
-          "following",
-          "tfg",
-          "default",
-          "wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv",
-          0.0763518885,
-          0.0764138848
-        ]
-      },
-      "gyro_3d": {
-        "n": 272,
-        "improved_over_half_percent": 36,
-        "worse_over_half_percent": 14,
-        "best": [
-          -1.42083214930655,
-          "following",
-          "csm",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          10.9091,
-          10.7541
-        ],
-        "worst": [
-          0.7851160624433362,
-          "following",
-          "csm",
-          "default",
-          "wave_data_pmstokes_H4.000_L112.766_A30.00_P30.00.csv",
-          12.0237,
-          12.1181
-        ]
-      },
-      "heave": {
-        "n": 528,
-        "improved_over_half_percent": 0,
-        "worse_over_half_percent": 0,
-        "best": [
-          -0.029781626960234675,
-          "head",
-          "tfg_legacy",
-          "default",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          2.66583824,
-          2.66504431
-        ],
-        "worst": [
-          0.06318820113291324,
-          "following",
-          "tfg_legacy",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          2.67364788,
-          2.67533731
-        ]
-      },
-      "pitch": {
-        "n": 288,
-        "improved_over_half_percent": 16,
-        "worse_over_half_percent": 11,
-        "best": [
-          -16.68051636195589,
-          "following",
-          "tfg",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          0.114621535,
-          0.0955020711
-        ],
-        "worst": [
-          1.9954874064423533,
-          "following",
-          "tfg_legacy",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          1.46445274,
-          1.49367571
-        ]
-      },
-      "roll": {
-        "n": 288,
-        "improved_over_half_percent": 7,
-        "worse_over_half_percent": 0,
-        "best": [
-          -1.981222735840149,
-          "following",
-          "tfg",
-          "legacy",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          0.529735744,
-          0.519240499
-        ],
-        "worst": [
-          0.14721986958952105,
-          "head",
-          "tfg",
-          "default",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          0.424200892,
-          0.4248254
-        ]
-      },
-      "yaw": {
-        "n": 304,
-        "improved_over_half_percent": 5,
-        "worse_over_half_percent": 7,
-        "best": [
-          -2.4860379182396586,
-          "head",
-          "tfg_legacy",
-          "default",
-          "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          1.00493431,
-          0.979951262
-        ],
-        "worst": [
-          2.9848900509327647,
-          "following",
-          "tfg",
-          "default",
-          "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-          0.446145713,
-          0.459462672
-        ]
-      }
+  "by_family_metric": {
+    "ahrs/pitch": {
+      "within": 16
+    },
+    "ahrs/roll": {
+      "within": 16
+    },
+    "ahrs/yaw": {
+      "within": 16
+    },
+    "carma/acc_3d": {
+      "within": 32
+    },
+    "carma/acc_z": {
+      "within": 32
+    },
+    "carma/displacement": {
+      "within": 32
+    },
+    "carma/displacement_y": {
+      "within": 32
+    },
+    "carma/gyro_3d": {
+      "within": 24,
+      "better": 6,
+      "worse": 2
+    },
+    "carma/heave": {
+      "within": 32
+    },
+    "carma/pitch": {
+      "within": 32
+    },
+    "carma/roll": {
+      "within": 32
+    },
+    "carma/yaw": {
+      "within": 32
+    },
+    "csm/acc_3d": {
+      "within": 32
+    },
+    "csm/acc_z": {
+      "within": 32
+    },
+    "csm/displacement": {
+      "within": 32
+    },
+    "csm/displacement_y": {
+      "within": 32
+    },
+    "csm/gyro_3d": {
+      "within": 24,
+      "better": 6,
+      "worse": 2
+    },
+    "csm/heave": {
+      "within": 32
+    },
+    "csm/pitch": {
+      "within": 32
+    },
+    "csm/roll": {
+      "within": 32
+    },
+    "csm/yaw": {
+      "within": 32
+    },
+    "heave_godhavn/heave": {
+      "within": 48
+    },
+    "heave_godhavn_ext/heave": {
+      "within": 48
+    },
+    "heave_kuchler/heave": {
+      "within": 48
+    },
+    "heave_pii/heave": {
+      "within": 32
+    },
+    "heave_richter_zd/heave": {
+      "within": 48
+    },
+    "nlo/heave": {
+      "within": 16
+    },
+    "ou2/acc_3d": {
+      "within": 32
+    },
+    "ou2/acc_z": {
+      "within": 32
+    },
+    "ou2/displacement": {
+      "within": 32
+    },
+    "ou2/displacement_y": {
+      "within": 32
+    },
+    "ou2/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "ou2/heave": {
+      "within": 32
+    },
+    "ou2/pitch": {
+      "within": 32
+    },
+    "ou2/roll": {
+      "within": 32
+    },
+    "ou2/yaw": {
+      "within": 32
+    },
+    "ou3/acc_3d": {
+      "within": 32
+    },
+    "ou3/acc_z": {
+      "within": 32
+    },
+    "ou3/displacement": {
+      "within": 32
+    },
+    "ou3/displacement_y": {
+      "within": 32
+    },
+    "ou3/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "ou3/heave": {
+      "within": 32
+    },
+    "ou3/pitch": {
+      "within": 32
+    },
+    "ou3/roll": {
+      "within": 32
+    },
+    "ou3/yaw": {
+      "within": 32
+    },
+    "pii/heave": {
+      "within": 16
+    },
+    "pii/yaw": {
+      "within": 16
+    },
+    "tangent/acc_3d": {
+      "within": 32
+    },
+    "tangent/acc_z": {
+      "within": 32
+    },
+    "tangent/displacement": {
+      "within": 32
+    },
+    "tangent/displacement_y": {
+      "within": 32
+    },
+    "tangent/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "tangent/heave": {
+      "within": 32
+    },
+    "tangent/pitch": {
+      "within": 32
+    },
+    "tangent/roll": {
+      "within": 32
+    },
+    "tangent/yaw": {
+      "within": 32
+    },
+    "tcarma/acc_3d": {
+      "within": 32
+    },
+    "tcarma/acc_z": {
+      "within": 32
+    },
+    "tcarma/displacement": {
+      "within": 32
+    },
+    "tcarma/displacement_y": {
+      "within": 32
+    },
+    "tcarma/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "tcarma/heave": {
+      "within": 32
+    },
+    "tcarma/pitch": {
+      "within": 32
+    },
+    "tcarma/roll": {
+      "within": 32
+    },
+    "tcarma/yaw": {
+      "within": 32
+    },
+    "tcsm/acc_3d": {
+      "within": 32
+    },
+    "tcsm/acc_z": {
+      "within": 32
+    },
+    "tcsm/displacement": {
+      "within": 32
+    },
+    "tcsm/displacement_y": {
+      "within": 32
+    },
+    "tcsm/gyro_3d": {
+      "within": 26,
+      "better": 4,
+      "worse": 2
+    },
+    "tcsm/heave": {
+      "within": 32
+    },
+    "tcsm/pitch": {
+      "within": 32
+    },
+    "tcsm/roll": {
+      "within": 32
+    },
+    "tcsm/yaw": {
+      "within": 32
+    },
+    "tfg/acc_3d": {
+      "within": 12,
+      "better": 20
+    },
+    "tfg/acc_z": {
+      "within": 32
+    },
+    "tfg/displacement": {
+      "better": 32
+    },
+    "tfg/displacement_y": {
+      "better": 32
+    },
+    "tfg/gyro_3d": {
+      "better": 25,
+      "within": 7
+    },
+    "tfg/heave": {
+      "within": 32
+    },
+    "tfg/pitch": {
+      "worse": 7,
+      "better": 20,
+      "within": 5
+    },
+    "tfg/roll": {
+      "within": 14,
+      "better": 18
+    },
+    "tfg/yaw": {
+      "within": 6,
+      "worse": 12,
+      "better": 14
+    },
+    "tfg_legacy/acc_3d": {
+      "within": 9,
+      "worse": 4,
+      "better": 3
+    },
+    "tfg_legacy/acc_z": {
+      "within": 14,
+      "worse": 2
+    },
+    "tfg_legacy/displacement": {
+      "within": 16
+    },
+    "tfg_legacy/displacement_y": {
+      "within": 16
+    },
+    "tfg_legacy/gyro_3d": {
+      "within": 12,
+      "better": 4
+    },
+    "tfg_legacy/heave": {
+      "within": 16
+    },
+    "tfg_legacy/pitch": {
+      "within": 6,
+      "worse": 7,
+      "better": 3
+    },
+    "tfg_legacy/roll": {
+      "within": 13,
+      "better": 3
+    },
+    "tfg_legacy/yaw": {
+      "within": 8,
+      "worse": 5,
+      "better": 3
     }
   },
-  "axis_bias": {
-    "sources": [
-      [
-        {
-          "case": "following",
-          "artifact": 14337907440,
-          "archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
-          "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
-        },
-        {
-          "case": "head",
-          "artifact": 14338570838,
-          "archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
-          "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
-        }
-      ],
-      [
-        {
-          "case": "following",
-          "artifact": 14389313876,
-          "archive_sha256": "ccea201b3df05f57ec41497770a2cf29451f978a71fedaa0c74d324717768d28",
-          "recorded_source": "439f71795c0b8644d24623afd9c926e8dac8c3e7"
-        },
-        {
-          "case": "head",
-          "artifact": 14391721963,
-          "archive_sha256": "62f6a62b4fed9cb88069e0b91f766b942fd4c772cc6573cf513bb737bbda3c1d",
-          "recorded_source": "439f71795c0b8644d24623afd9c926e8dac8c3e7"
-        }
-      ]
-    ],
-    "all_W3D_cells": 272,
-    "paired_max_true_axis_bias_equal": true,
-    "window_s": [
-      300,
-      1200
-    ],
-    "samples_per_record": 180000,
-    "precision": "Per-axis RMS taken from the raw C++ bias summary at its printed precision. Each record contributes the same number of samples.",
-    "csv_sha256": "bdf84178e0b3462493cd53884af8b677e391c1a7e0ae97200b2136324dbe69c0"
-  },
-  "prior_pre_guard_matrix": {
-    "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44197069501",
-    "receipt_url": "https://github.com/bareboat-necessities/ocean-imu/blob/439f71795c0b8644d24623afd9c926e8dac8c3e7/reports/results/startup_learning/final-source-matrix.json"
-  },
-  "direct_main_comparison": {
+  "largest_regressions": [
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.558187425,
+      "corrected": 0.625177503,
+      "change_pct": 12.001359220874598
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.556454301,
+      "corrected": 0.621701419,
+      "change_pct": 11.725512388482716
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.446145713,
+      "corrected": 0.49145034,
+      "change_pct": 10.154670476459327
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.458163351,
+      "corrected": 0.504340887,
+      "change_pct": 10.078836707303562
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_z",
+      "main": 7.66278,
+      "corrected": 7.84953,
+      "change_pct": 2.4371050715275677
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "yaw",
+      "main": 0.432565033,
+      "corrected": 0.442801148,
+      "change_pct": 2.3663759710323085
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "yaw",
+      "main": 0.676322758,
+      "corrected": 0.689950645,
+      "change_pct": 2.014997549439257
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "pitch",
+      "main": 1.46445274,
+      "corrected": 1.49367571,
+      "change_pct": 1.9954874064423533
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_z",
+      "main": 7.71417,
+      "corrected": 7.86355,
+      "change_pct": 1.9364364539542045
+    },
+    {
+      "case": "following",
+      "family": "tfg_legacy",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "acc_3d",
+      "main": 308.329,
+      "corrected": 314.129,
+      "change_pct": 1.8811075182678216
+    }
+  ],
+  "largest_improvements": [
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.8299408,
+      "corrected": 6.46363688,
+      "change_pct": -40.31696941501286
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.8292847,
+      "corrected": 6.46518373,
+      "change_pct": -40.29906952210796
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement_y",
+      "main": 0.505696714,
+      "corrected": 0.305445105,
+      "change_pct": -39.599151716061975
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement_y",
+      "main": 0.507024109,
+      "corrected": 0.306399554,
+      "change_pct": -39.569036548516465
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.4978981,
+      "corrected": 6.62591171,
+      "change_pct": -36.883444220133946
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement",
+      "main": 10.4947252,
+      "corrected": 6.62416267,
+      "change_pct": -36.8810279091443
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "displacement",
+      "main": 10.8702326,
+      "corrected": 6.88952684,
+      "change_pct": -36.62024453828154
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "displacement",
+      "main": 10.8602018,
+      "corrected": 6.89447165,
+      "change_pct": -36.51617366815413
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "default",
+      "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
+      "metric": "displacement_y",
+      "main": 0.196839839,
+      "corrected": 0.125011697,
+      "change_pct": -36.490652687436906
+    },
+    {
+      "case": "following",
+      "family": "tfg",
+      "profile": "legacy",
+      "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
+      "metric": "displacement_y",
+      "main": 0.502270162,
+      "corrected": 0.319227546,
+      "change_pct": -36.443059900500316
+    }
+  ],
+  "receipts": {
     "main": {
-      "recorded": "da1aeda358446a55ac0c9d58fccd3301945d5760",
-      "current": "cee633f7f5464576dd190a3833d1ed235679616c",
-      "artifacts": [
-        {
-          "case": "following",
-          "archive_id": 14337907440,
-          "archive_sha256": "sha256:b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
-          "measurements_sha256": "fdff47df17951ce6f170b7f300c712978da551f9f170a54b174a386d8baa45f5",
-          "source_count": 179,
-          "log_count": 23
-        },
-        {
-          "case": "head",
-          "archive_id": 14338570838,
-          "archive_sha256": "sha256:0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
-          "measurements_sha256": "31942ef7daccfaad1f48f174c3269707a5f68eb555b2c60d47aac6b035199df8",
-          "source_count": 179,
-          "log_count": 23
-        }
-      ],
-      "generated_headers_match": [
-        true,
-        true
-      ],
-      "src_tree": "cf97880cd45cbf0b8b9442af5bce0e4df133a06c"
+      "following": {
+        "artifact_id": 14337907440,
+        "archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+        "measurements_sha256": "fdff47df17951ce6f170b7f300c712978da551f9f170a54b174a386d8baa45f5",
+        "compiled_source_paths": 179,
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true
+      },
+      "head": {
+        "artifact_id": 14338570838,
+        "archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+        "measurements_sha256": "31942ef7daccfaad1f48f174c3269707a5f68eb555b2c60d47aac6b035199df8",
+        "compiled_source_paths": 179,
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true
+      }
     },
-    "pr": {
-      "recorded": "439f71795c0b8644d24623afd9c926e8dac8c3e7",
-      "current": "482bbfa9cb646e80b2ea78a186a6e7bf350e6f27",
-      "artifacts": [
-        {
-          "case": "following",
-          "archive_id": 14389313876,
-          "archive_sha256": "sha256:ccea201b3df05f57ec41497770a2cf29451f978a71fedaa0c74d324717768d28",
-          "measurements_sha256": "f9c60fd48de1f0d8bdb76e3d640dd84b66d53ee5403deca497c6d69775a22701",
-          "source_count": 181,
-          "log_count": 23
-        },
-        {
-          "case": "head",
-          "archive_id": 14391721963,
-          "archive_sha256": "sha256:62f6a62b4fed9cb88069e0b91f766b942fd4c772cc6573cf513bb737bbda3c1d",
-          "measurements_sha256": "5ff6f5d5ee2fc00ac1cefe4cc5eab714f6d33461f4d5765dd7f9061ece857c42",
-          "source_count": 181,
-          "log_count": 23
-        }
-      ],
-      "generated_headers_match": [
-        true,
-        true
-      ],
-      "src_tree": "95a508d91898445b05bd83e6d7a63394c300599e"
+    "previous": {
+      "following": {
+        "artifact_id": 14399698367,
+        "archive_sha256": "4d4477dcc49e78a549c1a8b910c2b69a4770945327a4f940036b906a160251b9",
+        "measurements_sha256": "e52788baecdb3fc92ca084e332fd8b0dd5112725b95af0ee6a0428703a451ed2",
+        "compiled_source_paths": 181,
+        "recorded_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true
+      },
+      "head": {
+        "artifact_id": 14401155537,
+        "archive_sha256": "862f397fb2f9303e50eac7a4afc47334c560a24fa1cd0ca23d8fadc058472b3b",
+        "measurements_sha256": "a719ef61fac37b2457aececa4edb3f213584ef227d3af541ea43ba5db7141a55",
+        "compiled_source_paths": 181,
+        "recorded_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true
+      }
     },
-    "matched_gated_values": 2768,
-    "n_improved_over_0.5_percent": 74,
-    "n_regressed_over_0.5_percent": 38,
-    "previous_baseline_cells_with_different_values": 0,
-    "previous_baseline_maximum_difference": 0,
-    "best": [
-      "following",
-      "tfg",
-      "legacy",
-      "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-      "pitch",
-      0.114621535,
-      0.0955020711,
-      -16.68051636195589
-    ],
-    "worst": [
-      "following",
-      "tfg",
-      "default",
-      "wave_data_jonswap_H8.500_L202.839_A-30.00_P72.00.csv",
-      "yaw",
-      0.446145713,
-      0.459462672,
-      2.9848900509327647
-    ]
-  },
-  "paired_covariance_change": {
-    "count_table": "tfg_tilt_uncertainty/ubuntu/paired-direction-counts.csv",
-    "sha256": "c65e8ae980e588967454cb973b0e2ffa446696dade4d89cceec077189fcbc39b",
-    "source_windows_sha256": "81f932cfde8513895e38c640293b86e511cd91132a7fffdeeb1665f32bdb4b11",
-    "independent_sensor_draws": 4,
-    "physical_records": 16
-  },
-  "global_caps_against_main": {
-    "main": "cee633f7f5464576dd190a3833d1ed235679616c",
-    "caps": 187,
-    "tighter": 56,
-    "looser": 71,
-    "equal": 60,
-    "tighter_by_more_than_half_percent": 8,
-    "looser_by_more_than_half_percent": 6
-  },
-  "live_tfg_horizontal_observation": {
-    "estimator_commit": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
-    "scope": "New default live TFG horizontal observation following accelerometer-bias release. The older hosted startup-only matrix above predates this change.",
-    "directions": [
-      "following",
-      "head"
-    ],
-    "cells": 544,
-    "gated_channels": 2768,
-    "tfg_record_metrics_improved": 240,
-    "tfg_record_metrics_worsened": 48,
-    "matched_default_sensor_draw_pairs": 64,
-    "additional_interval_profile_pairs": 16,
-    "paired_engine_cases": 16,
-    "phase_randomized_pairs": 180,
-    "gate_evidence": "tfg_horizontal_integral/gate-receipt.json",
-    "paired_rms": "tfg_horizontal_integral/receipt.json",
-    "phase_randomized_evidence": "tfg_horizontal_integral/phase-receipt.json",
-    "engine_evidence": "tfg_horizontal_integral/engine-receipt.json",
-    "strict_replay": {
-      "qualification": "all 544 cases passed in their production executables",
-      "gate_source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
-      "estimator_source": "16a4a8de9dcd5374dde85d405fd3afdcb38da1a5",
-      "gated_measurements": 2768,
-      "identical_to_measurement_run": 2739,
-      "observed_measurement_variation": [
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "heave",
-          "settings_run": 3.44488835,
-          "strict_run": 3.44489217
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "displacement",
-          "settings_run": 6.27704382,
-          "strict_run": 6.27705002
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "roll",
-          "settings_run": 0.146751344,
-          "strict_run": 0.146751225
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "pitch",
-          "settings_run": 0.0886683315,
-          "strict_run": 0.0886683837
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "yaw",
-          "settings_run": 0.713607609,
-          "strict_run": 0.713607371
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "acc_z",
-          "settings_run": 2.24634,
-          "strict_run": 2.24635
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "gyro_3d",
-          "settings_run": 9.73758,
-          "strict_run": 9.73754
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "displacement_y",
-          "settings_run": 0.00428699004,
-          "strict_run": 0.0042869919
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "heave",
-          "settings_run": 2.21962619,
-          "strict_run": 2.21962667
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "displacement",
-          "settings_run": 4.84497929,
-          "strict_run": 4.84501076
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "roll",
-          "settings_run": 0.180357143,
-          "strict_run": 0.180357978
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "pitch",
-          "settings_run": 0.135524228,
-          "strict_run": 0.135522947
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "yaw",
-          "settings_run": 0.909472048,
-          "strict_run": 0.909467101
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv",
-          "metric": "displacement_y",
-          "settings_run": 0.101168707,
-          "strict_run": 0.101169683
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "heave",
-          "settings_run": 3.47933698,
-          "strict_run": 3.47934198
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "displacement",
-          "settings_run": 6.68134928,
-          "strict_run": 6.68135548
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "roll",
-          "settings_run": 0.149046361,
-          "strict_run": 0.149046674
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "pitch",
-          "settings_run": 0.089347288,
-          "strict_run": 0.0893470943
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "yaw",
-          "settings_run": 0.676153302,
-          "strict_run": 0.676151812
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "gyro_3d",
-          "settings_run": 9.96161,
-          "strict_run": 9.96157
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H0.270_L14.047_A30.00_P60.00.csv",
-          "metric": "displacement_y",
-          "settings_run": 0.0040707197,
-          "strict_run": 0.00407071877
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "heave",
-          "settings_run": 2.20121241,
-          "strict_run": 2.20122027
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "displacement",
-          "settings_run": 4.32109594,
-          "strict_run": 4.32115459
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "roll",
-          "settings_run": 0.228376165,
-          "strict_run": 0.228376895
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "pitch",
-          "settings_run": 0.181807876,
-          "strict_run": 0.181808501
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "yaw",
-          "settings_run": 0.782236516,
-          "strict_run": 0.78224194
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "acc_z",
-          "settings_run": 3.98683,
-          "strict_run": 3.98684
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "acc_3d",
-          "settings_run": 57.9933,
-          "strict_run": 57.9935
-        },
-        {
-          "case": "following",
-          "family": "csm",
-          "profile": "legacy",
-          "input": "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv",
-          "metric": "displacement_y",
-          "settings_run": 0.215609714,
-          "strict_run": 0.215617627
-        }
-      ],
-      "original_compiled_gate_tables": {
-        "global_sha256": "d66c71820485679b68b1ce42013b492d659894d499e7785f46dc07d43215075c",
-        "per_record_sha256": "2ba4a4da48332c739e39d8b0c8ed10ec281db7d7320668907296ae00d57265ce"
-      },
-      "per_direction": {
-        "following": {
-          "measurements_sha256": "e52788baecdb3fc92ca084e332fd8b0dd5112725b95af0ee6a0428703a451ed2",
-          "runner_reported_dirty": true,
-          "source_paths": 181,
-          "verified_replay_logs": 23,
-          "cells": 272,
-          "archive_sha256": "4d4477dcc49e78a549c1a8b910c2b69a4770945327a4f940036b906a160251b9"
-        },
-        "head": {
-          "measurements_sha256": "a719ef61fac37b2457aececa4edb3f213584ef227d3af541ea43ba5db7141a55",
-          "runner_reported_dirty": true,
-          "source_paths": 181,
-          "verified_replay_logs": 23,
-          "cells": 272,
-          "archive_sha256": "862f397fb2f9303e50eac7a4afc47334c560a24fa1cd0ca23d8fadc058472b3b"
+    "corrected": {
+      "head": {
+        "artifact_id": 14416731860,
+        "archive_sha256": "a37e500eb967a08caec8de445712f740b0cf885258fd8318b5d57c57d58afc38",
+        "measurements_sha256": "de3b41b6c3a944c094bea063c94a3365142096afca403803a8c7f40ab07f80db",
+        "compiled_source_paths": 181,
+        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+        "source_dirty": true,
+        "binary_sha256": {
+          "ou2": "566e34d475f8cc39132114d91982c1bfc7af851c12204a531b908d34527f5e96",
+          "ou3": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
+          "tfg": "031376ae3d6e5aff80e2299301294f965b4ec58b9a9ee9d093b1b674262560ae",
+          "carma": "5f23e1fca3f3d4298363ddf644d76637a0848f9e51d568568df5acef31823a17",
+          "csm": "e8d3f31251bbd2107b04fd59020c788217cda504d18394c07b472e489189a871",
+          "tcarma": "6ff0646998f1abddd2c3174a2661776f8df8adab6ed7f210f0b372d8bcbd8623",
+          "tangent": "b4d0764bbd93636153f182cba3fd8cea957a876584adfed966ef2f7a733853e8",
+          "tcsm": "8689ec2dd15dcfd5f2897491a1779ab300cd1a8ebc8055a91795904e017dd756",
+          "tfg_legacy": "f0d0a044ca753b4e0540b833cb7d894aaad87fc0115091fa618316c9ce36fa73",
+          "ahrs": "bb52df99767644183c6876b0c9e1b29bfd882b98ef042999982b3cc8de4b5103",
+          "heave": "8784bf59cf6225aaa1408aaf8967fe9c9b831d2fdf46fb60e8cda255e3c889a5",
+          "nlo": "64cd62a5c64f79913945c42b5997302566bb2121d56386b0c7812bd59c7cc915",
+          "pii": "40f1a9f9fcaf61f04a2167eea0d059200323eb86fd5cf4ee4bd1c9ba126881c0"
         }
       },
-      "binary_sha256": {
-        "ou2": "566e34d475f8cc39132114d91982c1bfc7af851c12204a531b908d34527f5e96",
-        "ou3": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
-        "tfg": "031376ae3d6e5aff80e2299301294f965b4ec58b9a9ee9d093b1b674262560ae",
-        "carma": "e29621f8fe18f5e024c27a1b02bb9cea8f7660fe71d1c2eaa8189c29c3e0a827",
-        "csm": "589f553fd19ebe9e76c615b749da725db49fb66504ba8a53ffa054824b7ed6ee",
-        "tcarma": "d9c4738e6c870483b03b8f5f5e32279a1fe8a795002d34e2544f38a9516893cc",
-        "tangent": "a2433e71457c89c805fc0e4ecc1f5cba34e3ed3e7fc44a849d5d497d4456a483",
-        "tcsm": "b836bed8c5a5598e944139ad30b9959a0bbdde63a0c51cd46893f6ee54edb764",
-        "tfg_legacy": "f0d0a044ca753b4e0540b833cb7d894aaad87fc0115091fa618316c9ce36fa73",
-        "ahrs": "bb52df99767644183c6876b0c9e1b29bfd882b98ef042999982b3cc8de4b5103",
-        "heave": "8784bf59cf6225aaa1408aaf8967fe9c9b831d2fdf46fb60e8cda255e3c889a5",
-        "nlo": "64cd62a5c64f79913945c42b5997302566bb2121d56386b0c7812bd59c7cc915",
-        "pii": "40f1a9f9fcaf61f04a2167eea0d059200323eb86fd5cf4ee4bd1c9ba126881c0"
-      },
-      "actions_run": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44239902138",
-      "source_validation": "The workflow deletes a tracked measurements.json before collecting scores. Every file in the compiled source inventory matched the reviewed Git tree."
+      "following": {
+        "artifact_id": 14417087911,
+        "archive_sha256": "934c5fc1c83781e0dfa34cb124f94812334c7cc48c3d83bb888ff5676012bb2f",
+        "measurements_sha256": "945e23537e49b6e9ef7ebea94005667410b6dcc593690ca0065a2b7eaa5dd04e",
+        "compiled_source_paths": 181,
+        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+        "archive_input_sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+        "source_dirty": true,
+        "binary_sha256": {
+          "ou2": "566e34d475f8cc39132114d91982c1bfc7af851c12204a531b908d34527f5e96",
+          "ou3": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
+          "tfg": "031376ae3d6e5aff80e2299301294f965b4ec58b9a9ee9d093b1b674262560ae",
+          "carma": "5f23e1fca3f3d4298363ddf644d76637a0848f9e51d568568df5acef31823a17",
+          "csm": "e8d3f31251bbd2107b04fd59020c788217cda504d18394c07b472e489189a871",
+          "tcarma": "6ff0646998f1abddd2c3174a2661776f8df8adab6ed7f210f0b372d8bcbd8623",
+          "tangent": "b4d0764bbd93636153f182cba3fd8cea957a876584adfed966ef2f7a733853e8",
+          "tcsm": "8689ec2dd15dcfd5f2897491a1779ab300cd1a8ebc8055a91795904e017dd756",
+          "tfg_legacy": "f0d0a044ca753b4e0540b833cb7d894aaad87fc0115091fa618316c9ce36fa73",
+          "ahrs": "bb52df99767644183c6876b0c9e1b29bfd882b98ef042999982b3cc8de4b5103",
+          "heave": "8784bf59cf6225aaa1408aaf8967fe9c9b831d2fdf46fb60e8cda255e3c889a5",
+          "nlo": "64cd62a5c64f79913945c42b5997302566bb2121d56386b0c7812bd59c7cc915",
+          "pii": "40f1a9f9fcaf61f04a2167eea0d059200323eb86fd5cf4ee4bd1c9ba126881c0"
+        }
+      }
     }
-  }
+  },
+  "reviewed_headers_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "headers_sha256": {
+    "CurrentReplayLimits.h": "d66c71820485679b68b1ce42013b492d659894d499e7785f46dc07d43215075c",
+    "RecordReplayLimits.inc": "2ba4a4da48332c739e39d8b0c8ed10ec281db7d7320668907296ae00d57265ce"
+  },
+  "raw_logs_sha256": "91059efa10dc8b215bc12c657ba887d0ee3756a6b8b91b99c0da0d9fbcb40c1a",
+  "channel_table_sha256": "dde403275ee5b98dc21efc04da340d0ecc1898a3fa2dae1c01308e60224ebb83",
+  "run_url": "https://github.com/bareboat-necessities/ocean-imu/actions/runs/44275659529",
+  "matrix_source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "estimator_source_commit": "218d4dedb2217001c0d7bec8cabdbff312c317e7",
+  "gated_measurements": 2768,
+  "identical_to_gate_setting_run": 2394,
+  "compared_to_previous_hosted": {
+    "exact_channels": 2409,
+    "changed_channels": 359,
+    "families": [
+      "csm",
+      "tangent",
+      "tcsm"
+    ],
+    "max_absolute_relative_change_pct": 0.037468066988355364
+  },
+  "locked_limit_review": {
+    "both_headers_reproduced_from_reviewed_settings": true,
+    "all_2768_scores_within_reviewed_limits": true,
+    "margin_fraction_in_reviewed_settings": 0.005,
+    "tighter_than_main": 64,
+    "looser_than_main": 64,
+    "equal_to_main": 59
+  },
+  "raw_log_archive": "reports/results/startup_learning/directional_qualification/strict-replay-logs.tar.gz",
+  "channel_comparison_csv_gz": "reports/results/startup_learning/directional_qualification/strict-main-channels.csv.gz",
+  "channel_comparison_gzip_sha256": "be9b048ae15db83ea401d7e2743aecf57a36d9d85ed6a84903e91a4fcabc5c39",
+  "previous_qualification": "https://github.com/bareboat-necessities/ocean-imu/blob/1ad97346644532cb44c5f32f29aaa3ec148140ff/reports/results/startup_learning/final-source-matrix.json"
 }

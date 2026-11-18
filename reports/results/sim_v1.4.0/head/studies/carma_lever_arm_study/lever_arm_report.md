@@ -24,7 +24,7 @@ keep the largest.  The inner-filter arms report no residual: the simulator canno
 see a correction made inside the estimator.  The removed fraction of the
 uncorrected 3-D excess is shown where that excess exceeds 5 % of the baseline.
 
-Source commit: `99592c4078a5ba45c9a9c6edd455782ed440e495`.
+Source commit: `1ad97346644532cb44c5f32f29aaa3ec148140ff`.
 
 ## CARMA3
 

@@ -24,10 +24,10 @@
       "wave_data_pmstokes_H8.500_L202.839_A-30.00_P72.00.csv": "ee7415dd49eaef7d029fa329dc2d435b00cb0125106c4c790896211bd6e0cba5"
     }
   },
-  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
   "binary_sha256": {
     "kalman_ou_iii/kalman_ou_iii-sim": "a466c5953b74ad792d459867a37db3550d137703a61e43cbd3089340f0893a66",
-    "kalman_carma/carma3-sim": "e29621f8fe18f5e024c27a1b02bb9cea8f7660fe71d1c2eaa8189c29c3e0a827"
+    "kalman_carma/carma3-sim": "5f23e1fca3f3d4298363ddf644d76637a0848f9e51d568568df5acef31823a17"
   },
   "command": [
     "/usr/bin/python3",
@@ -49,6 +49,6 @@
     ]
   ],
   "exit_code": 0,
-  "seconds": 318.09204775499984,
-  "log_sha256": "53e592fa8cab9c8fa9c6634c6f9d0e4315a2c5fd7c95db875d96791987258d1f"
+  "seconds": 273.91302634400006,
+  "log_sha256": "34bb32bb6b1b6e08f8f959beb0dcb0d2c9e2eeb34922835c83808aaad830d24a"
 }

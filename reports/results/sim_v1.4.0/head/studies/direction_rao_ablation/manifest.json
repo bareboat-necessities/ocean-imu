@@ -1,5 +1,5 @@
 {
-  "source_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+  "source_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
   "simulation_provenance": {
     "release": "v1.4.0",
     "case": "head",
@@ -30,9 +30,9 @@
   },
   "files": {
     "direction_runs.csv": "04a148bcaa1134acd37f73d574c505a795675d7f6db75c201354a1a9449663ad",
+    "direction_ablation.tex": "5a6ec6218d8dd5db0811d644b698533c11582815efa99c7c892224a4978914f8",
     "direction_summary.csv": "1faa7b19138fabccc675aaeac87db72b422a3253355454926ece30edd1585408",
-    "direction_report.md": "8e5b0767baccbcdca0a2b1aa6a478693ec85877b13931f915bca683cc0ff1e9a",
-    "direction_ablation.tex": "5a6ec6218d8dd5db0811d644b698533c11582815efa99c7c892224a4978914f8"
+    "direction_report.md": "8e5b0767baccbcdca0a2b1aa6a478693ec85877b13931f915bca683cc0ff1e9a"
   },
   "report_producer_sha256": "4791ad229ff3381296df9a09eeab6be728a02a8ca8771a5925a68731a05c9458"
 }

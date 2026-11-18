@@ -1,0 +1,662 @@
+{
+  "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "workflow": 44275672409,
+  "jobs": [
+    {
+      "id": 134703033424,
+      "name": "gravity-handover (ou3)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:52:19Z",
+      "completed_at": "2026-11-18T09:57:21Z"
+    },
+    {
+      "id": 134703033736,
+      "name": "paired-startup (confirmation, 31,32,33,34,35, 41,191,421)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:32:40Z",
+      "completed_at": "2026-11-18T09:47:10Z"
+    },
+    {
+      "id": 134703033865,
+      "name": "live-handover-components (steady)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:38:45Z",
+      "completed_at": "2026-11-18T09:52:00Z"
+    },
+    {
+      "id": 134703033908,
+      "name": "live-handover-components (early)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:43:21Z",
+      "completed_at": "2026-11-18T09:48:12Z"
+    },
+    {
+      "id": 134703033913,
+      "name": "paired-startup (validation, 11,12,13,14,15, 67,307,607)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:49:29Z",
+      "completed_at": "2026-11-18T09:59:39Z"
+    },
+    {
+      "id": 134703034306,
+      "name": "gravity-handover (tfg)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-18T09:56:02Z",
+      "completed_at": "2026-11-18T10:05:10Z"
+    }
+  ],
+  "paired_cohorts": [
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "isolated-startup-metrics-confirmation",
+        "id": 14415508933,
+        "size": 7421048,
+        "digest": "sha256:57d8f3884d92bae90642ac552e65c7f72d21de9b867a0ba6b4c2041fe6a168cf",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "cohort": "confirmation",
+      "stages": {
+        "ci": {
+          "cells": 480,
+          "metric_rows": 16980,
+          "passed_checks": 24,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "08e6993e356d5119423ab019000f88bfd5459944bcf55d04f51922d1b9ff1bb5",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        },
+        "ci-production": {
+          "cells": 480,
+          "metric_rows": 860,
+          "passed_checks": 12,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "2f2a9bb293f93a8f13c385eede19f80fbdb7fbdee0bf4ca311fcaadf50cbe4db",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b",
+          "directions": {
+            "following": {
+              "attempts": 240,
+              "on_time": 190,
+              "accepted_fit": 190,
+              "rms": {
+                "shipping": {
+                  "tilt_error_deg": 0.5981469154000509,
+                  "yaw_error_deg": 2.9045142804297193,
+                  "rate_error_dps": 0.13474477085528222
+                },
+                "deployed": {
+                  "tilt_error_deg": 0.3753493797201361,
+                  "yaw_error_deg": 1.8631161502783602,
+                  "rate_error_dps": 0.121329065359841
+                }
+              }
+            },
+            "head": {
+              "attempts": 240,
+              "on_time": 240,
+              "accepted_fit": 240,
+              "rms": {
+                "shipping": {
+                  "tilt_error_deg": 0.9704712217549859,
+                  "yaw_error_deg": 3.4072425599081844,
+                  "rate_error_dps": 0.11655802304482014
+                },
+                "deployed": {
+                  "tilt_error_deg": 0.4955495244230486,
+                  "yaw_error_deg": 2.426530427025771,
+                  "rate_error_dps": 0.109278468962315
+                }
+              }
+            }
+          }
+        },
+        "ci-scaled": {
+          "cells": 480,
+          "metric_rows": 16980,
+          "passed_checks": 24,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "66cbc0d43af29a1bd8a33a5b19f6f87bfff0c7a47200b7a917dc72828c8ccb04",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        }
+      }
+    },
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "isolated-startup-metrics-validation",
+        "id": 14415624703,
+        "size": 8490531,
+        "digest": "sha256:f636904e271cce3ea8f5f362fe9adea86d8f1c5f2d89fe7e867457d1b39e81c7",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "cohort": "validation",
+      "stages": {
+        "ci": {
+          "cells": 480,
+          "metric_rows": 17148,
+          "passed_checks": 24,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "11995824e407356dbe2b0643b015329b1416a7b2fb9b3d7d8f934094ae0034f5",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        },
+        "ci-controls": {
+          "cells": 64,
+          "metric_rows": 2304,
+          "passed_checks": 12,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "30140835933795ebf6cc72fe3b6725d75954e0a0726a66b09b0f1cb829050843",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        },
+        "ci-production": {
+          "cells": 480,
+          "metric_rows": 916,
+          "passed_checks": 12,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "f5d0c57f098f712143f7335f992dc721e009401086287978692c1e51508c09a2",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b",
+          "directions": {
+            "following": {
+              "attempts": 240,
+              "on_time": 218,
+              "accepted_fit": 218,
+              "rms": {
+                "shipping": {
+                  "tilt_error_deg": 0.9050710209037524,
+                  "yaw_error_deg": 2.352375015428723,
+                  "rate_error_dps": 0.15141758288046353
+                },
+                "deployed": {
+                  "tilt_error_deg": 0.3382713837116093,
+                  "yaw_error_deg": 1.8171161095120008,
+                  "rate_error_dps": 0.13897551788776255
+                }
+              }
+            },
+            "head": {
+              "attempts": 240,
+              "on_time": 240,
+              "accepted_fit": 240,
+              "rms": {
+                "shipping": {
+                  "tilt_error_deg": 1.1566863385323713,
+                  "yaw_error_deg": 4.225297122565083,
+                  "rate_error_dps": 0.1285155902422649
+                },
+                "deployed": {
+                  "tilt_error_deg": 0.4217337725279323,
+                  "yaw_error_deg": 1.3590279183389702,
+                  "rate_error_dps": 0.12172928824539091
+                }
+              }
+            }
+          }
+        },
+        "ci-scaled": {
+          "cells": 480,
+          "metric_rows": 17148,
+          "passed_checks": 24,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "151f41029bd41b81e71c6f49fad228b8f20db4d0d379657128df4cc8c67c0874",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        },
+        "ci-scaled-controls": {
+          "cells": 64,
+          "metric_rows": 2304,
+          "passed_checks": 12,
+          "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+          "digest": "72b90a71254564fd8150e157b6192d8252edbbb4f25b85bc80aa2790e5955a7c",
+          "binary": "236505f6138fa782d19780754418b9a69a34a855832cc591ffd15dc5c93dd11b"
+        }
+      }
+    }
+  ],
+  "live_handover_components": [
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "live-handover-components-steady",
+        "id": 14415703421,
+        "size": 760882,
+        "digest": "sha256:83425857d68b8a6fa52432017d5b96b39e492d3545fee5315bd988ef483cd1da",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "window": "steady",
+      "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "source_paths": 151,
+      "records_sha256": "a27523b218cbe50e484e9914d397281a1e5daca5e4b8e2f1c5da68d04230ea62",
+      "binary": "428deea19b8daf607222c6fcddc9a5acabcf0b4fe975f3eda798d6b1a974747e",
+      "control_binary": "37f6d4ef9a6d00f4ba6d21cd6cbaf655a52b3c4bdac26f08344c10419b693124",
+      "replays": 336,
+      "windows": 336,
+      "intact_control_comparisons": 4,
+      "archived_controls_overwriting_ablation_logs": [],
+      "full_deadlines": {
+        "following": {
+          "attempted": 24,
+          "on_time": 20,
+          "accepted": 20
+        },
+        "head": {
+          "attempted": 24,
+          "on_time": 24,
+          "accepted": 24
+        }
+      },
+      "rms": {
+        "previous/300/yaw_deg": 0.8177769844365398,
+        "previous/300/roll_deg": 0.1721825364980282,
+        "previous/300/pitch_deg": 0.1623432276266443,
+        "previous/300/acc_bias_mps2": 0.0398932108598716,
+        "previous/300/gyro_bias_radps": 0.00014270124905879064,
+        "previous/300/x_m": 0.28782636687498275,
+        "previous/300/y_m": 0.24606840706086489,
+        "previous/300/z_m": 0.19787214143233003,
+        "previous/300/xyz_m": 0.42725527148099274,
+        "full/300/yaw_deg": 0.8160545983618253,
+        "full/300/roll_deg": 0.1721902472067415,
+        "full/300/pitch_deg": 0.1622647609762117,
+        "full/300/acc_bias_mps2": 0.03988455550551053,
+        "full/300/gyro_bias_radps": 0.00014254922190724928,
+        "full/300/x_m": 0.28785602939579663,
+        "full/300/y_m": 0.24601281843362896,
+        "full/300/z_m": 0.1978702901071885,
+        "full/300/xyz_m": 0.427242380713392,
+        "previous_tilt/300/yaw_deg": 0.8162492111406455,
+        "previous_tilt/300/roll_deg": 0.1721899287879479,
+        "previous_tilt/300/pitch_deg": 0.16224645226576592,
+        "previous_tilt/300/acc_bias_mps2": 0.03988228397740306,
+        "previous_tilt/300/gyro_bias_radps": 0.0001425806762580734,
+        "previous_tilt/300/x_m": 0.2878543126736489,
+        "previous_tilt/300/y_m": 0.2460215716735621,
+        "previous_tilt/300/z_m": 0.19787037037853253,
+        "previous_tilt/300/xyz_m": 0.4272463048858425,
+        "previous_yaw/300/yaw_deg": 0.8183381278230829,
+        "previous_yaw/300/roll_deg": 0.17219378626456683,
+        "previous_yaw/300/pitch_deg": 0.16227643666364974,
+        "previous_yaw/300/acc_bias_mps2": 0.039886442352428754,
+        "previous_yaw/300/gyro_bias_radps": 0.00014280551956852156,
+        "previous_yaw/300/x_m": 0.28783434816534087,
+        "previous_yaw/300/y_m": 0.24604939028657893,
+        "previous_yaw/300/z_m": 0.1978713233673501,
+        "previous_yaw/300/xyz_m": 0.4272493146043526,
+        "previous_field/300/yaw_deg": 0.8159078387231752,
+        "previous_field/300/roll_deg": 0.17219095966532466,
+        "previous_field/300/pitch_deg": 0.1622538612509079,
+        "previous_field/300/acc_bias_mps2": 0.03988320125105111,
+        "previous_field/300/gyro_bias_radps": 0.00014252785155898347,
+        "previous_field/300/x_m": 0.2878578063166623,
+        "previous_field/300/y_m": 0.24601044894524812,
+        "previous_field/300/z_m": 0.19787022281911817,
+        "previous_field/300/xyz_m": 0.42724218579767886,
+        "previous_gyro_bias/300/yaw_deg": 0.815175417127065,
+        "previous_gyro_bias/300/roll_deg": 0.17217971964392198,
+        "previous_gyro_bias/300/pitch_deg": 0.16236877192878016,
+        "previous_gyro_bias/300/acc_bias_mps2": 0.03989609494013262,
+        "previous_gyro_bias/300/gyro_bias_radps": 0.00014239391314027047,
+        "previous_gyro_bias/300/x_m": 0.287849869308685,
+        "previous_gyro_bias/300/y_m": 0.24602455042670252,
+        "previous_gyro_bias/300/z_m": 0.1978708839879513,
+        "previous_gyro_bias/300/xyz_m": 0.4272452622352242,
+        "gravity_axis_accel_bias/300/yaw_deg": 0.8177600465584297,
+        "gravity_axis_accel_bias/300/roll_deg": 0.17172776520036778,
+        "gravity_axis_accel_bias/300/pitch_deg": 0.16231601258157435,
+        "gravity_axis_accel_bias/300/acc_bias_mps2": 0.039833561659904405,
+        "gravity_axis_accel_bias/300/gyro_bias_radps": 0.00014320906438772434,
+        "gravity_axis_accel_bias/300/x_m": 0.287818657071748,
+        "gravity_axis_accel_bias/300/y_m": 0.24608127251469913,
+        "gravity_axis_accel_bias/300/z_m": 0.1979492855804921,
+        "gravity_axis_accel_bias/300/xyz_m": 0.4272932166134386
+      }
+    },
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "live-handover-components-early",
+        "id": 14416581456,
+        "size": 192568,
+        "digest": "sha256:134860c259591d9cf79b3011ebca829a7b2f477e9f54f2e142146aab80c0ded4",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "window": "early",
+      "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "source_paths": 151,
+      "records_sha256": "580100a3fdb7e642e92603a044b04fe25424ce62e86472fb04f5ea15caec557f",
+      "binary": "428deea19b8daf607222c6fcddc9a5acabcf0b4fe975f3eda798d6b1a974747e",
+      "control_binary": "37f6d4ef9a6d00f4ba6d21cd6cbaf655a52b3c4bdac26f08344c10419b693124",
+      "replays": 224,
+      "windows": 672,
+      "intact_control_comparisons": 12,
+      "archived_controls_overwriting_ablation_logs": [],
+      "full_deadlines": {
+        "following": {
+          "attempted": 16,
+          "on_time": 13,
+          "accepted": 13
+        },
+        "head": {
+          "attempted": 16,
+          "on_time": 16,
+          "accepted": 16
+        }
+      },
+      "rms": {
+        "previous/0/tilt_deg": 0.8438893402055125,
+        "previous/0/yaw_deg": 4.811126057082752,
+        "previous/0/acc_bias_mps2": 0.07858715834566032,
+        "previous/0/gyro_bias_radps": 0.000781790367467103,
+        "previous/1/tilt_deg": 0.8990412814988612,
+        "previous/1/yaw_deg": 4.310320267263865,
+        "previous/1/acc_bias_mps2": 0.07878780179497075,
+        "previous/1/gyro_bias_radps": 0.0007650731954053448,
+        "previous/10/tilt_deg": 0.45761071771845035,
+        "previous/10/yaw_deg": 3.7332256537298636,
+        "previous/10/acc_bias_mps2": 0.07783708697581379,
+        "previous/10/gyro_bias_radps": 0.0006382129191314502,
+        "full/0/tilt_deg": 0.5436188846451506,
+        "full/0/yaw_deg": 3.736738279140061,
+        "full/0/acc_bias_mps2": 0.07858715834566032,
+        "full/0/gyro_bias_radps": 0.00042331379444329205,
+        "full/1/tilt_deg": 0.6152156230013103,
+        "full/1/yaw_deg": 3.666014978622689,
+        "full/1/acc_bias_mps2": 0.07878780179497075,
+        "full/1/gyro_bias_radps": 0.0004122524925659749,
+        "full/10/tilt_deg": 0.4521617249918422,
+        "full/10/yaw_deg": 3.6684559898654645,
+        "full/10/acc_bias_mps2": 0.07783708697581379,
+        "full/10/gyro_bias_radps": 0.00054394354495852,
+        "previous_tilt/0/tilt_deg": 0.7148252966363275,
+        "previous_tilt/0/yaw_deg": 3.8927284807503995,
+        "previous_tilt/0/acc_bias_mps2": 0.07858715834566032,
+        "previous_tilt/0/gyro_bias_radps": 0.000423516839775652,
+        "previous_tilt/1/tilt_deg": 0.6912319724553365,
+        "previous_tilt/1/yaw_deg": 3.8191446152383803,
+        "previous_tilt/1/acc_bias_mps2": 0.07878780179497075,
+        "previous_tilt/1/gyro_bias_radps": 0.00041645156739041414,
+        "previous_tilt/10/tilt_deg": 0.4520802953337749,
+        "previous_tilt/10/yaw_deg": 3.672481744591354,
+        "previous_tilt/10/acc_bias_mps2": 0.07783708697581379,
+        "previous_tilt/10/gyro_bias_radps": 0.0005438731178355532,
+        "previous_yaw/0/tilt_deg": 0.6044055436593258,
+        "previous_yaw/0/yaw_deg": 4.595871752040255,
+        "previous_yaw/0/acc_bias_mps2": 0.07858715834566032,
+        "previous_yaw/0/gyro_bias_radps": 0.00042322743987689465,
+        "previous_yaw/1/tilt_deg": 0.7524295406053716,
+        "previous_yaw/1/yaw_deg": 4.08808052914877,
+        "previous_yaw/1/acc_bias_mps2": 0.07878780179497075,
+        "previous_yaw/1/gyro_bias_radps": 0.00041524468034171975,
+        "previous_yaw/10/tilt_deg": 0.452092969019964,
+        "previous_yaw/10/yaw_deg": 3.6825190926234903,
+        "previous_yaw/10/acc_bias_mps2": 0.07783708697581379,
+        "previous_yaw/10/gyro_bias_radps": 0.0005593341110368175,
+        "previous_field/0/tilt_deg": 0.5495744339508712,
+        "previous_field/0/yaw_deg": 3.7349699167670263,
+        "previous_field/0/acc_bias_mps2": 0.07858715834566032,
+        "previous_field/0/gyro_bias_radps": 0.00042334988987995293,
+        "previous_field/1/tilt_deg": 0.6314707244673555,
+        "previous_field/1/yaw_deg": 3.669622738295074,
+        "previous_field/1/acc_bias_mps2": 0.07878780179497075,
+        "previous_field/1/gyro_bias_radps": 0.00041241856188295326,
+        "previous_field/10/tilt_deg": 0.45142320214385234,
+        "previous_field/10/yaw_deg": 3.6683057568244233,
+        "previous_field/10/acc_bias_mps2": 0.07783708697581379,
+        "previous_field/10/gyro_bias_radps": 0.0005441176660590518,
+        "previous_gyro_bias/0/tilt_deg": 0.5443893316223655,
+        "previous_gyro_bias/0/yaw_deg": 3.7374273174791055,
+        "previous_gyro_bias/0/acc_bias_mps2": 0.07858715834566032,
+        "previous_gyro_bias/0/gyro_bias_radps": 0.0007815128135742872,
+        "previous_gyro_bias/1/tilt_deg": 0.6319259697305672,
+        "previous_gyro_bias/1/yaw_deg": 3.672044887800982,
+        "previous_gyro_bias/1/acc_bias_mps2": 0.07878780179497075,
+        "previous_gyro_bias/1/gyro_bias_radps": 0.0007563086446740817,
+        "previous_gyro_bias/10/tilt_deg": 0.4580399965057739,
+        "previous_gyro_bias/10/yaw_deg": 3.7153570319150337,
+        "previous_gyro_bias/10/acc_bias_mps2": 0.07783708697581379,
+        "previous_gyro_bias/10/gyro_bias_radps": 0.0006082238265442744,
+        "gravity_axis_accel_bias/0/tilt_deg": 0.5459221925446153,
+        "gravity_axis_accel_bias/0/yaw_deg": 3.7363035326317173,
+        "gravity_axis_accel_bias/0/acc_bias_mps2": 0.06526757529610439,
+        "gravity_axis_accel_bias/0/gyro_bias_radps": 0.0004233198413026646,
+        "gravity_axis_accel_bias/1/tilt_deg": 0.6158012121176606,
+        "gravity_axis_accel_bias/1/yaw_deg": 3.6681828225155018,
+        "gravity_axis_accel_bias/1/acc_bias_mps2": 0.06526795272018426,
+        "gravity_axis_accel_bias/1/gyro_bias_radps": 0.00041249946276538594,
+        "gravity_axis_accel_bias/10/tilt_deg": 0.4488354922049524,
+        "gravity_axis_accel_bias/10/yaw_deg": 3.6818066118605115,
+        "gravity_axis_accel_bias/10/acc_bias_mps2": 0.06459940082989875,
+        "gravity_axis_accel_bias/10/gyro_bias_radps": 0.0005270170207523929
+      }
+    }
+  ],
+  "gravity": [
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "gravity-handover-ou3",
+        "id": 14416413868,
+        "size": 39009,
+        "digest": "sha256:606027bffc4edc22dd32169b093763036f1b2ab0bb5ec74715c457e03d3e3b2a",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "binary": "fb27e5c12585d8974c8d7faf8a83e04c667ee751343afa6b8262f4789640e7e9",
+      "family": "ou3",
+      "runs": 112,
+      "stage_observations": 1120,
+      "windows": 560,
+      "output_sha256": {
+        "handover.csv.gz": "c7e43821ccb586bd297c19510ee7c1038ba8c91ef75cc9b8fc304032954d6242",
+        "windows.csv.gz": "f5ff31a97727ac08c4d3a6c8e45e18d9bd843f181eadaff3bd0f663609626c24",
+        "updates.csv.gz": "e97396af8780ec05cd2227e296c5c300e3cdbcd99f2905fda5e32b7655aae1e5"
+      },
+      "timely_deployed": {
+        "following": 6,
+        "head": 8
+      },
+      "first_sample_tilt_deg": {
+        "deployed/accelerometer": 0.6074263438841722,
+        "deployed/prediction": 0.16242931017152507,
+        "exact_both/accelerometer": 0.5374906282578225,
+        "exact_both/prediction": 0.00043317159268751397,
+        "exact_field/accelerometer": 0.6074263438841722,
+        "exact_field/prediction": 0.16242931017152507,
+        "exact_tilt/accelerometer": 0.5374906282578225,
+        "exact_tilt/prediction": 0.00043317159268751397,
+        "measured_wave/accelerometer": 0.18848289446139238,
+        "measured_wave/prediction": 0.16242931017152507,
+        "previous/accelerometer": 0.6562225274817701,
+        "previous/prediction": 0.38361639453740115,
+        "previous_exact_tilt/accelerometer": 0.5375025888058644,
+        "previous_exact_tilt/prediction": 0.0005241034731026403
+      },
+      "late_rms": {
+        "deployed/accel_bias_3d_rms_mps2": 0.03578196399380361,
+        "deployed/disp_3d_rms_m": 0.43371512624449476,
+        "deployed/disp_x_rms_m": 0.2989556661409295,
+        "deployed/disp_y_rms_m": 0.250258492509638,
+        "deployed/disp_z_rms_m": 0.19001318917060156,
+        "deployed/gyro_bias_3d_rms_radps": 0.00011784084873469145,
+        "deployed/pitch_rms_deg": 0.1419001722042603,
+        "deployed/roll_rms_deg": 0.16001196711496354,
+        "deployed/yaw_rms_deg": 0.7807275066206982,
+        "exact_both/accel_bias_3d_rms_mps2": 0.03577171947357689,
+        "exact_both/disp_3d_rms_m": 0.43371768799663724,
+        "exact_both/disp_x_rms_m": 0.29895526439631076,
+        "exact_both/disp_y_rms_m": 0.25026307397262787,
+        "exact_both/disp_z_rms_m": 0.19001363469727753,
+        "exact_both/gyro_bias_3d_rms_radps": 0.00011784793511253542,
+        "exact_both/pitch_rms_deg": 0.14187789574805873,
+        "exact_both/roll_rms_deg": 0.15995693074383496,
+        "exact_both/yaw_rms_deg": 0.7808336073941026,
+        "exact_field/accel_bias_3d_rms_mps2": 0.03577157125110492,
+        "exact_field/disp_3d_rms_m": 0.4337149565139437,
+        "exact_field/disp_x_rms_m": 0.2989547257316632,
+        "exact_field/disp_y_rms_m": 0.2502590137659531,
+        "exact_field/disp_z_rms_m": 0.1900136018518741,
+        "exact_field/gyro_bias_3d_rms_radps": 0.00011786869042502656,
+        "exact_field/pitch_rms_deg": 0.1418735583998799,
+        "exact_field/roll_rms_deg": 0.15996014095030672,
+        "exact_field/yaw_rms_deg": 0.7807984425004529,
+        "exact_tilt/accel_bias_3d_rms_mps2": 0.035782584215525576,
+        "exact_tilt/disp_3d_rms_m": 0.43371575958275427,
+        "exact_tilt/disp_x_rms_m": 0.2989558108250898,
+        "exact_tilt/disp_y_rms_m": 0.250259294302564,
+        "exact_tilt/disp_z_rms_m": 0.19001333572123738,
+        "exact_tilt/gyro_bias_3d_rms_radps": 0.00011781989857247086,
+        "exact_tilt/pitch_rms_deg": 0.14190747703510742,
+        "exact_tilt/roll_rms_deg": 0.16000962059127716,
+        "exact_tilt/yaw_rms_deg": 0.7807718150023503,
+        "measured_wave/accel_bias_3d_rms_mps2": 0.03578259008085573,
+        "measured_wave/disp_3d_rms_m": 0.4337161844568329,
+        "measured_wave/disp_x_rms_m": 0.29895500586397805,
+        "measured_wave/disp_y_rms_m": 0.25026097613923654,
+        "measured_wave/disp_z_rms_m": 0.19001336081988338,
+        "measured_wave/gyro_bias_3d_rms_radps": 0.00011776364161088122,
+        "measured_wave/pitch_rms_deg": 0.1419065417607598,
+        "measured_wave/roll_rms_deg": 0.16001072077854148,
+        "measured_wave/yaw_rms_deg": 0.7808096547008742,
+        "previous/accel_bias_3d_rms_mps2": 0.03578773428437407,
+        "previous/disp_3d_rms_m": 0.4337149471022766,
+        "previous/disp_x_rms_m": 0.2989298486400977,
+        "previous/disp_y_rms_m": 0.250288386856333,
+        "previous/disp_z_rms_m": 0.19001402766491102,
+        "previous/gyro_bias_3d_rms_radps": 0.00011800945772399745,
+        "previous/pitch_rms_deg": 0.14189690148849537,
+        "previous/roll_rms_deg": 0.1600638817818768,
+        "previous/yaw_rms_deg": 0.7810742387630472,
+        "previous_exact_tilt/accel_bias_3d_rms_mps2": 0.03578636129339788,
+        "previous_exact_tilt/disp_3d_rms_m": 0.43371471254198185,
+        "previous_exact_tilt/disp_x_rms_m": 0.2989330339165654,
+        "previous_exact_tilt/disp_y_rms_m": 0.25028420141821883,
+        "previous_exact_tilt/disp_z_rms_m": 0.19001397198425038,
+        "previous_exact_tilt/gyro_bias_3d_rms_radps": 0.00011800373650003868,
+        "previous_exact_tilt/pitch_rms_deg": 0.14188563483361621,
+        "previous_exact_tilt/roll_rms_deg": 0.16006390037431378,
+        "previous_exact_tilt/yaw_rms_deg": 0.7810058312323676
+      }
+    },
+    {
+      "artifact": {
+        "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+        "name": "gravity-handover-tfg",
+        "id": 14416968122,
+        "size": 40633,
+        "digest": "sha256:801449ab8690278f00cb65a3859de9708bea0ca2a81a054c24acd2fbda618376",
+        "run": 44275672409,
+        "kind": "components"
+      },
+      "source": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "binary": "a0d2f076d9925f1e3c8b6a9aac273585c44cfe100a3f481335618043f246e0c8",
+      "family": "tfg",
+      "runs": 112,
+      "stage_observations": 1120,
+      "windows": 560,
+      "output_sha256": {
+        "handover.csv.gz": "1e3b786e0e5c9d8f39bc9eb415d372b8597723f511931e41c3d44db9038f245f",
+        "windows.csv.gz": "46e9332ef89bcc5c424ac5ff94dd0dd169ee9ea128b69a3fa67dc58308572bda",
+        "updates.csv.gz": "feb194f7f79c347d53219d6406733812a533c039c9764c52992f95e9cc5070b6"
+      },
+      "timely_deployed": {
+        "following": 6,
+        "head": 8
+      },
+      "first_sample_tilt_deg": {
+        "deployed/accelerometer": 2.175332493993605,
+        "deployed/prediction": 0.1624922767355806,
+        "exact_both/accelerometer": 2.153028820499926,
+        "exact_both/prediction": 0.0005424508954569667,
+        "exact_field/accelerometer": 2.175332493993605,
+        "exact_field/prediction": 0.1624922767355806,
+        "exact_tilt/accelerometer": 2.153028820499926,
+        "exact_tilt/prediction": 0.0005424508954569667,
+        "measured_wave/accelerometer": 0.18854853371159672,
+        "measured_wave/prediction": 0.1624922767355806,
+        "previous/accelerometer": 2.675222411981327,
+        "previous/prediction": 0.3836879257434517,
+        "previous_exact_tilt/accelerometer": 2.6463388448009146,
+        "previous_exact_tilt/prediction": 0.0006462879659684896
+      },
+      "late_rms": {
+        "deployed/accel_bias_3d_rms_mps2": 0.05285871528403152,
+        "deployed/disp_3d_rms_m": 0.2828711117844225,
+        "deployed/disp_x_rms_m": 0.17827004998270943,
+        "deployed/disp_y_rms_m": 0.1724504495622261,
+        "deployed/disp_z_rms_m": 0.13600257053913706,
+        "deployed/gyro_bias_3d_rms_radps": 0.00010567076395226998,
+        "deployed/pitch_rms_deg": 0.14061542154498868,
+        "deployed/roll_rms_deg": 0.2821877330538885,
+        "deployed/yaw_rms_deg": 0.710597488589925,
+        "exact_both/accel_bias_3d_rms_mps2": 0.05314518695537286,
+        "exact_both/disp_3d_rms_m": 0.2828624920589647,
+        "exact_both/disp_x_rms_m": 0.17823195166262298,
+        "exact_both/disp_y_rms_m": 0.1724756070393691,
+        "exact_both/disp_z_rms_m": 0.13600265942270517,
+        "exact_both/gyro_bias_3d_rms_radps": 0.00010566064520824428,
+        "exact_both/pitch_rms_deg": 0.14227371287968577,
+        "exact_both/roll_rms_deg": 0.2834432086281374,
+        "exact_both/yaw_rms_deg": 0.7103444626055007,
+        "exact_field/accel_bias_3d_rms_mps2": 0.05318684094158896,
+        "exact_field/disp_3d_rms_m": 0.28288714101219564,
+        "exact_field/disp_x_rms_m": 0.1782369715660066,
+        "exact_field/disp_y_rms_m": 0.1725101761071897,
+        "exact_field/disp_z_rms_m": 0.13600351242811184,
+        "exact_field/gyro_bias_3d_rms_radps": 0.00010566098025916018,
+        "exact_field/pitch_rms_deg": 0.1424225976417586,
+        "exact_field/roll_rms_deg": 0.2836365830207074,
+        "exact_field/yaw_rms_deg": 0.7103302427430412,
+        "exact_tilt/accel_bias_3d_rms_mps2": 0.052827854565252186,
+        "exact_tilt/disp_3d_rms_m": 0.28284134350302553,
+        "exact_tilt/disp_x_rms_m": 0.17826262574898716,
+        "exact_tilt/disp_y_rms_m": 0.17241039026469981,
+        "exact_tilt/disp_z_rms_m": 0.1360011607657547,
+        "exact_tilt/gyro_bias_3d_rms_radps": 0.00010566893515222205,
+        "exact_tilt/pitch_rms_deg": 0.14059666451219388,
+        "exact_tilt/roll_rms_deg": 0.28200490955305835,
+        "exact_tilt/yaw_rms_deg": 0.7107314488808069,
+        "measured_wave/accel_bias_3d_rms_mps2": 0.06698676431886262,
+        "measured_wave/disp_3d_rms_m": 0.2855010775505768,
+        "measured_wave/disp_x_rms_m": 0.17945796754411758,
+        "measured_wave/disp_y_rms_m": 0.17517468076230924,
+        "measured_wave/disp_z_rms_m": 0.13645342617325737,
+        "measured_wave/gyro_bias_3d_rms_radps": 0.00010607456217660808,
+        "measured_wave/pitch_rms_deg": 0.3050967495333399,
+        "measured_wave/roll_rms_deg": 0.24452295291173437,
+        "measured_wave/yaw_rms_deg": 1.0575491219198467,
+        "previous/accel_bias_3d_rms_mps2": 0.05319433997480674,
+        "previous/disp_3d_rms_m": 0.28304891227887796,
+        "previous/disp_x_rms_m": 0.17829584746376786,
+        "previous/disp_y_rms_m": 0.17271256531070558,
+        "previous/disp_z_rms_m": 0.13600606596518477,
+        "previous/gyro_bias_3d_rms_radps": 0.00010570340932431156,
+        "previous/pitch_rms_deg": 0.1419591284145796,
+        "previous/roll_rms_deg": 0.28368180014576355,
+        "previous/yaw_rms_deg": 0.7098049160738302,
+        "previous_exact_tilt/accel_bias_3d_rms_mps2": 0.053177446337622766,
+        "previous_exact_tilt/disp_3d_rms_m": 0.28304223053493316,
+        "previous_exact_tilt/disp_x_rms_m": 0.17829379302257747,
+        "previous_exact_tilt/disp_y_rms_m": 0.1727049209116792,
+        "previous_exact_tilt/disp_z_rms_m": 0.136004546720009,
+        "previous_exact_tilt/gyro_bias_3d_rms_radps": 0.00010570152020183262,
+        "previous_exact_tilt/pitch_rms_deg": 0.14195112388803013,
+        "previous_exact_tilt/roll_rms_deg": 0.28358024488030836,
+        "previous_exact_tilt/yaw_rms_deg": 0.7097970018915772
+      }
+    }
+  ],
+  "component_record_comparison": {
+    "previous": "ff384db5cdd480f24156cc67c70b0ffc270b956d",
+    "identical_record_digests": {
+      "steady": "a27523b218cbe50e484e9914d397281a1e5daca5e4b8e2f1c5da68d04230ea62",
+      "early": "580100a3fdb7e642e92603a044b04fe25424ce62e86472fb04f5ea15caec557f"
+    }
+  }
+}

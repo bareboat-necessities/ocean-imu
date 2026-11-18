@@ -24,7 +24,7 @@ The `gyro` arm is the deployable one: it sees only the noisy, biased rate and
 reconstructs `alpha` through a two-pole low-pass at 15 Hz
 followed by a causal second-order difference.
 
-Source commit: `99592c4078a5ba45c9a9c6edd455782ed440e495`.
+Source commit: `1ad97346644532cb44c5f32f29aaa3ec148140ff`.
 
 ## Pooled results
 

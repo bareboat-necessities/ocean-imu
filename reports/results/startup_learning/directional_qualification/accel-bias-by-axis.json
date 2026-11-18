@@ -1,0 +1,44 @@
+{
+  "sources": [
+    [
+      {
+        "case": "following",
+        "artifact": 14337907440,
+        "archive_sha256": "b7332645b9d911d3c9cf8a64f30a512f71a10b0f14baae0c4d536a8d41d105bb",
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
+      },
+      {
+        "case": "head",
+        "artifact": 14338570838,
+        "archive_sha256": "0b2b022ec0ed07685b437b08671155184cc75ca6ea6a19f180b33526641013be",
+        "recorded_source": "da1aeda358446a55ac0c9d58fccd3301945d5760"
+      }
+    ],
+    [
+      {
+        "case": "head",
+        "artifact": 14416731860,
+        "archive_sha256": "a37e500eb967a08caec8de445712f740b0cf885258fd8318b5d57c57d58afc38",
+        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff"
+      },
+      {
+        "case": "following",
+        "artifact": 14417087911,
+        "archive_sha256": "934c5fc1c83781e0dfa34cb124f94812334c7cc48c3d83bb888ff5676012bb2f",
+        "recorded_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff"
+      }
+    ]
+  ],
+  "all_W3D_cells": 272,
+  "paired_max_true_axis_bias_equal": true,
+  "window_s": [
+    300,
+    1200
+  ],
+  "samples_per_record": 180000,
+  "precision": "Per-axis RMS taken from the raw C++ bias summary at its printed precision. Each record contributes the same number of samples.",
+  "csv_sha256": "9fdbd1102628aafb7a128db4358cc78d14d9cba073215ab2add3de32047948f1",
+  "matrix_workflow": 44275659529,
+  "matrix_source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "main": "cee633f7f5464576dd190a3833d1ed235679616c"
+}

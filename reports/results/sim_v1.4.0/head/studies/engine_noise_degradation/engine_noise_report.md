@@ -20,7 +20,7 @@ Scoring uses the trailing **900 s** of each 1200 s record, and
 every reported number pools the eight equal-duration records as
 `sqrt(mean(record_RMS^2))`, which is the exact RMS over their concatenation.
 
-Source commit used for the replay: `99592c4078a5ba45c9a9c6edd455782ed440e495`.
+Source commit used for the replay: `1ad97346644532cb44c5f32f29aaa3ec148140ff`.
 
 ## Engine speed
 

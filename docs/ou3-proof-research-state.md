@@ -5,6 +5,7 @@ The native configuration test exposed a mismatch when a caller selected instanta
 - **Structures preserved.** The native OU-III runs inherited mean, covariance, gyro history, magnetic state, tuner, scheduler and physical forcing through the live handover. Both planar perturbation radii used 252 columns on the same 4,000-sample history.
 - **Relaxations introduced.** These finite floating-point histories sample the reachable set. The interval mean-action factors use their original enclosure and the independently reproduced field and trace.
 - **Failure classification.** The sampling regression and the three expired proof checks on the changed common header were implementation or diagnostic failures (class E).
+- **Article input (class E).** The layout check found three guard summaries after the two directional studies were published. The manuscript reads the canonical engine-noise study. Selecting its declared output directory restored both figure checks and all 824 OU-III contracts. The 17 native records and both secant matrices retain their original source and numerical results.
 - **Counterexamples.** No native run established a shipping counterexample.
 - **Retained results.** All 17 diagnostic calculations completed. Both secant matrices reproduced byte for byte. Finite capture, uniform dissipation and every-prefix retention remain open.
 - **Next falsifiable check.** Bound coupled handover tilt, local field and gyro bias over both the accepted fits and the fallback starts on a continuing sensor history.

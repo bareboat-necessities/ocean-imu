@@ -1,0 +1,33 @@
+{
+  "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "branch_workflow": 44275659529,
+  "pr_workflow": 44275672129,
+  "cases": {
+    "following": {
+      "artifact": 14417861639,
+      "archive_sha256": "5bd2783af92a516e07b0bd1a10f8fe9337cba7ca118ef6319b863c9658325601",
+      "measurements_sha256": "7b397856c6cbcb6d271eb4f1792b5892dda43176bc82709f847393417977cb84",
+      "checkout": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "checkout_tree": "3d286e862648a7f9b20aa44806d968599489eb1e",
+      "equal_compiled_source_paths": 181,
+      "equal_binaries": 13,
+      "verified_profile_logs": 23
+    },
+    "head": {
+      "artifact": 14418611057,
+      "archive_sha256": "4e152098b324ee026a6fd0aa1785ced47eb72259983abc084d42418b73ddf1e9",
+      "measurements_sha256": "23dfc6a16a37f99c0c21ed917b2cdba4d30814300be3bdbb6eac3ed7eee006ed",
+      "checkout": "b9a4062b23cb567b324f4d3462f34514103a84fc",
+      "checkout_tree": "3d286e862648a7f9b20aa44806d968599489eb1e",
+      "equal_compiled_source_paths": 181,
+      "equal_binaries": 13,
+      "verified_profile_logs": 23
+    }
+  },
+  "cells": 544,
+  "scored_channels": 2768,
+  "exact_scores": 2768,
+  "different_scores": [],
+  "identical_recomputed_global_caps": true,
+  "identical_recomputed_per_record_caps": true
+}

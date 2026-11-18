@@ -17,7 +17,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-18T05:31:21+00:00",
-  "git_commit": "99592c4078a5ba45c9a9c6edd455782ed440e495",
-  "git_diff_stat": ".../studies/tfg_comparison/case-receipt.json       |   29 +-\n .../studies/tfg_comparison/comparison.tex          |   18 +-\n .../studies/tfg_comparison/gate_diagnostics.json   |    4 +-\n .../studies/tfg_comparison/paired_summary.json     | 4282 ++++++++++----------\n .../following/studies/tfg_comparison/raw_runs.csv  |  332 +-\n .../following/studies/tfg_comparison/raw_runs.json | 2980 +++++++-------\n 6 files changed, 3813 insertions(+), 3832 deletions(-)",
+  "generated_utc": "2026-11-18T10:18:31+00:00",
+  "git_commit": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+  "git_diff_stat": ".../studies/tfg_comparison/case-receipt.json       | 23 ++--------------------\n 1 file changed, 2 insertions(+), 21 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -166,7 +166,7 @@
     "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
-    "src/kalman_common/ProxyStartupFusion.h": "583cdc55331c5656c0a1f3c650aa48326ff62a6bc61721f814455bae56937aa1",
+    "src/kalman_common/ProxyStartupFusion.h": "4d89a2a3fc06e5474fc6925c5f23541d7ff3af57342836bfa4cdb531fb7011f1",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
     "src/kalman_common/SeaStateFusionDefaults.h": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
     "src/kalman_common/SeaStateFusionFilterCommon.h": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
@@ -222,7 +222,7 @@
   "workflow": {
     "job": "studies",
     "run_attempt": "1",
-    "run_id": "44239902248",
+    "run_id": "44275659412",
     "workflow": "simulation-studies"
   }
 }

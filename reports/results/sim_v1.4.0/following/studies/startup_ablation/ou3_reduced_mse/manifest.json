@@ -26,7 +26,7 @@
   "producer_sha256": "c6cf4ff048d159a93f7128e4435be8b35113aaa785a26f47ca40a24dc8a48f32",
   "scope": "finite-periodogram reduced-model diagnostic; no filter retuning or proof promotion",
   "files": {
-    "reduced_mse.tex": "89dd332be85568168b0aeb5e02c5c64c82a3177e9d9aadcb1b9c06ba64dcfcc2",
-    "reduced_mse.csv": "8efbc315c23c3a4341b1f01f2a28828d77fcd4eb12a9a1e5da5ceb92bb226023"
+    "reduced_mse.csv": "8efbc315c23c3a4341b1f01f2a28828d77fcd4eb12a9a1e5da5ceb92bb226023",
+    "reduced_mse.tex": "89dd332be85568168b0aeb5e02c5c64c82a3177e9d9aadcb1b9c06ba64dcfcc2"
   }
 }

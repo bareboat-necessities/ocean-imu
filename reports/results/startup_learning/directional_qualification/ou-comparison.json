@@ -1,2396 +1,482 @@
 {
-  "following/ou_validation": {
-    "rows": 840,
+  "following/ou_robustness": {
+    "rows": 310,
     "archive": {
-      "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
-      "name": "simulation-study-v1.4.0-following-ou_validation",
-      "id": 14404208928,
-      "size": 1637805,
-      "digest": "sha256:caaa9b16c6c2f0c3bbdef62c0a13065a0260571904a52e1232f33d610005c115",
-      "run": 44239902248,
+      "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+      "name": "simulation-study-v1.4.0-following-ou_robustness",
+      "id": 14414254496,
+      "size": 354354,
+      "digest": "sha256:219a58601b8b12bbbb8247d114203ea02ce291ff1989fcd8f569718264b4e048",
+      "run": 44275659412,
       "kind": "studies"
     },
     "baseline_source": "71f410938ca1a8f393979f4933933868fb612461",
     "matched_current_main": "cee633f7f5464576dd190a3833d1ed235679616c",
-    "raw_main_sha256": "3c1a22d44c13ee13a27e814587e5329fc9e024e9cfeaab988f8a75c7fc0c3695",
-    "raw_selected_sha256": "9cfcb44865381ec02bf7c87fd1efb8f27d814eada919b2da8d8cadbe07e96ced",
-    "native_log_sha256": "c70582b625930372497c23fd3829f76dd54aa9c02fe13001d75b0fdc5f8e9ce5",
-    "matching_primary_input_hashes": 10,
+    "raw_main_sha256": "7e2c9cb105fdcb0720561ed2c057a55b5c16d376b2f99bfabdb624ce41cd0048",
+    "raw_selected_sha256": "c73805142e5d22ee477e53502c1a4acc970b15f2c668035d2c9ee37f21d2e141",
+    "native_log_sha256": "97a7dcb21499633d34d400f3483754fc959ae5a0843db85c6b7bb9d548b3b833",
+    "matching_primary_input_hashes": 8,
     "scores": {
-      "OU_II/Adaptive": {
+      "OU_III/FixedSensitivity": {
         "disp_x_rms_m": {
-          "main": 0.3951991461428638,
-          "selected": 0.3951960973074323,
-          "percent": -0.0007714681221404618,
-          "lower": 33,
-          "higher": 43,
-          "equal": 14
+          "main": 0.12583192704597637,
+          "selected": 0.1258325127378927,
+          "percent": 0.00046545573135770013,
+          "lower": 98,
+          "higher": 151,
+          "equal": 1
         },
         "disp_y_rms_m": {
-          "main": 0.26940640692518913,
-          "selected": 0.26940163855955834,
-          "percent": -0.0017699525728498422,
-          "lower": 49,
-          "higher": 27,
-          "equal": 14
+          "main": 0.10528382620271681,
+          "selected": 0.1052816929891808,
+          "percent": -0.0020261550258471317,
+          "lower": 155,
+          "higher": 95,
+          "equal": 0
         },
         "disp_z_rms_m": {
-          "main": 0.3367452518863287,
-          "selected": 0.3367453115415224,
-          "percent": 1.7715229350123707e-05,
-          "lower": 46,
-          "higher": 28,
-          "equal": 16
+          "main": 0.11466507505333284,
+          "selected": 0.11466499103293602,
+          "percent": -7.327461895023646e-05,
+          "lower": 134,
+          "higher": 114,
+          "equal": 2
         },
         "disp_3d_rms_m": {
-          "main": 0.5849440540671429,
-          "selected": 0.5849398268039894,
-          "percent": -0.0007226781987279551,
-          "lower": 45,
-          "higher": 29,
-          "equal": 16
+          "main": 0.2001660249394565,
+          "selected": 0.20016522303579015,
+          "percent": -0.00040061926922518865,
+          "lower": 132,
+          "higher": 117,
+          "equal": 1
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.06287882172526396,
-          "selected": 0.06287771541565572,
-          "percent": -0.0017594312009761026,
-          "lower": 41,
-          "higher": 34,
-          "equal": 15
+          "main": 0.05060923810088427,
+          "selected": 0.05060447562307804,
+          "percent": -0.009410293426537208,
+          "lower": 145,
+          "higher": 105,
+          "equal": 0
         },
         "roll_rms_deg": {
-          "main": 0.2538064041435542,
-          "selected": 0.25382285183953973,
-          "percent": 0.006480410153963945,
-          "lower": 29,
-          "higher": 47,
-          "equal": 14
+          "main": 0.2101895896552306,
+          "selected": 0.2101964685318153,
+          "percent": 0.003272700896372882,
+          "lower": 76,
+          "higher": 174,
+          "equal": 0
         },
         "pitch_rms_deg": {
-          "main": 0.27272959321721163,
-          "selected": 0.2727075702802216,
-          "percent": -0.0080750081904446,
-          "lower": 47,
-          "higher": 29,
-          "equal": 14
+          "main": 0.21559669457933373,
+          "selected": 0.2155515373804973,
+          "percent": -0.020945218536183585,
+          "lower": 163,
+          "higher": 87,
+          "equal": 0
         },
         "yaw_rms_deg": {
-          "main": 1.0961679083650375,
-          "selected": 1.0961634015012585,
-          "percent": -0.00041114721063273407,
-          "lower": 40,
-          "higher": 36,
-          "equal": 14
+          "main": 1.6751492145465778,
+          "selected": 1.674955132214641,
+          "percent": -0.01158597277493012,
+          "lower": 89,
+          "higher": 161,
+          "equal": 0
         }
       },
-      "OU_II/Adaptive/stationary": {
+      "OU_III/FixedSensitivity/sensitivity": {
         "disp_x_rms_m": {
-          "main": 0.40183890727411303,
-          "selected": 0.4018353934996797,
-          "percent": -0.0008744236483115841,
-          "lower": 30,
-          "higher": 37,
-          "equal": 13
+          "main": 0.12583192704597637,
+          "selected": 0.1258325127378927,
+          "percent": 0.00046545573135770013,
+          "lower": 98,
+          "higher": 151,
+          "equal": 1
         },
         "disp_y_rms_m": {
-          "main": 0.2741800596462741,
-          "selected": 0.27417484767242195,
-          "percent": -0.001900931037401854,
-          "lower": 42,
-          "higher": 25,
-          "equal": 13
+          "main": 0.10528382620271681,
+          "selected": 0.1052816929891808,
+          "percent": -0.0020261550258471317,
+          "lower": 155,
+          "higher": 95,
+          "equal": 0
         },
         "disp_z_rms_m": {
-          "main": 0.3417279332142206,
-          "selected": 0.3417280616235817,
-          "percent": 3.757648954216819e-05,
-          "lower": 39,
-          "higher": 26,
-          "equal": 15
+          "main": 0.11466507505333284,
+          "selected": 0.11466499103293602,
+          "percent": -7.327461895023646e-05,
+          "lower": 134,
+          "higher": 114,
+          "equal": 2
         },
         "disp_3d_rms_m": {
-          "main": 0.5944974331733207,
-          "selected": 0.594492721809955,
-          "percent": -0.0007924951568760719,
-          "lower": 42,
-          "higher": 23,
-          "equal": 15
+          "main": 0.2001660249394565,
+          "selected": 0.20016522303579015,
+          "percent": -0.00040061926922518865,
+          "lower": 132,
+          "higher": 117,
+          "equal": 1
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.06261174651637857,
-          "selected": 0.06261137619479604,
-          "percent": -0.000591457039844645,
-          "lower": 36,
-          "higher": 30,
-          "equal": 14
+          "main": 0.05060923810088427,
+          "selected": 0.05060447562307804,
+          "percent": -0.009410293426537208,
+          "lower": 145,
+          "higher": 105,
+          "equal": 0
         },
         "roll_rms_deg": {
-          "main": 0.2528341686917173,
-          "selected": 0.2528523263155079,
-          "percent": 0.007181633671016208,
-          "lower": 25,
-          "higher": 42,
-          "equal": 13
+          "main": 0.2101895896552306,
+          "selected": 0.2101964685318153,
+          "percent": 0.003272700896372882,
+          "lower": 76,
+          "higher": 174,
+          "equal": 0
         },
         "pitch_rms_deg": {
-          "main": 0.27151936162651163,
-          "selected": 0.27150178396252,
-          "percent": -0.006473816042562586,
-          "lower": 41,
-          "higher": 26,
-          "equal": 13
+          "main": 0.21559669457933373,
+          "selected": 0.2155515373804973,
+          "percent": -0.020945218536183585,
+          "lower": 163,
+          "higher": 87,
+          "equal": 0
         },
         "yaw_rms_deg": {
-          "main": 1.0871852909042332,
-          "selected": 1.0874013226966333,
-          "percent": 0.01987074275262568,
-          "lower": 35,
-          "higher": 32,
-          "equal": 13
-        }
-      },
-      "OU_II/AdaptiveHeldCovariance": {
-        "disp_x_rms_m": {
-          "main": 0.3936080746891753,
-          "selected": 0.39360614342978517,
-          "percent": -0.0004906554296857379,
-          "lower": 17,
-          "higher": 24,
-          "equal": 9
-        },
-        "disp_y_rms_m": {
-          "main": 0.26875561110904506,
-          "selected": 0.2687507471786138,
-          "percent": -0.001809796793150742,
-          "lower": 29,
-          "higher": 13,
-          "equal": 8
-        },
-        "disp_z_rms_m": {
-          "main": 0.33580312982690586,
-          "selected": 0.3358034851353248,
-          "percent": 0.00010580854894470804,
-          "lower": 27,
-          "higher": 15,
-          "equal": 8
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5830271279268359,
-          "selected": 0.5830237963555258,
-          "percent": -0.0005714264655010126,
-          "lower": 22,
-          "higher": 20,
-          "equal": 8
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06306845286814479,
-          "selected": 0.06306741054609999,
-          "percent": -0.0016526837069874567,
-          "lower": 22,
-          "higher": 20,
-          "equal": 8
-        },
-        "roll_rms_deg": {
-          "main": 0.2541448365066058,
-          "selected": 0.25415718803541826,
-          "percent": 0.004860035317744149,
-          "lower": 19,
-          "higher": 23,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.27393934428115935,
-          "selected": 0.27392130248321767,
-          "percent": -0.0065860557522445795,
-          "lower": 26,
-          "higher": 16,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 1.0994697083245861,
-          "selected": 1.0993417728543526,
-          "percent": -0.011636106867229934,
-          "lower": 22,
-          "higher": 20,
-          "equal": 8
-        }
-      },
-      "OU_II/AdaptiveHeldCovariance/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.4064546598785124,
-          "selected": 0.40645214570619104,
-          "percent": -0.0006185615689879853,
-          "lower": 14,
-          "higher": 18,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.2780899418910649,
-          "selected": 0.27808428115263284,
-          "percent": -0.0020355782713865622,
-          "lower": 24,
-          "higher": 9,
-          "equal": 7
-        },
-        "disp_z_rms_m": {
-          "main": 0.3454680039017831,
-          "selected": 0.34546855682800237,
-          "percent": 0.00016005135439201013,
-          "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "disp_3d_rms_m": {
-          "main": 0.6015708951649189,
-          "selected": 0.6015669073589737,
-          "percent": -0.0006628987501366979,
-          "lower": 19,
-          "higher": 14,
-          "equal": 7
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06256818248667921,
-          "selected": 0.06256865441471657,
-          "percent": 0.0007542620204192829,
-          "lower": 17,
-          "higher": 16,
-          "equal": 7
-        },
-        "roll_rms_deg": {
-          "main": 0.25225712928360716,
-          "selected": 0.2522718072441671,
-          "percent": 0.005818650438782491,
-          "lower": 14,
-          "higher": 19,
-          "equal": 7
-        },
-        "pitch_rms_deg": {
-          "main": 0.2717451573899065,
-          "selected": 0.2717373821313686,
-          "percent": -0.0028612316821274852,
-          "lower": 21,
-          "higher": 12,
-          "equal": 7
-        },
-        "yaw_rms_deg": {
-          "main": 1.0815704720656594,
-          "selected": 1.0818534916455602,
-          "percent": 0.026167465478255103,
-          "lower": 17,
-          "higher": 16,
-          "equal": 7
-        }
-      },
-      "OU_II/FixedNominal": {
-        "disp_x_rms_m": {
-          "main": 0.5574066298870708,
-          "selected": 0.557401518418657,
-          "percent": -0.0009170089015242411,
-          "lower": 31,
-          "higher": 45,
-          "equal": 14
-        },
-        "disp_y_rms_m": {
-          "main": 0.34520275089282265,
-          "selected": 0.34518997639120386,
-          "percent": -0.003700579322085673,
-          "lower": 50,
-          "higher": 26,
-          "equal": 14
-        },
-        "disp_z_rms_m": {
-          "main": 0.4877071109476965,
-          "selected": 0.4877085447603656,
-          "percent": 0.0002939905195065151,
-          "lower": 40,
-          "higher": 35,
-          "equal": 15
-        },
-        "disp_3d_rms_m": {
-          "main": 0.8171446116230852,
-          "selected": 0.8171365833570717,
-          "percent": -0.0009824779970690756,
-          "lower": 44,
-          "higher": 32,
-          "equal": 14
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06461100649619689,
-          "selected": 0.0646204617350928,
-          "percent": 0.014634099372012876,
-          "lower": 44,
-          "higher": 32,
-          "equal": 14
-        },
-        "roll_rms_deg": {
-          "main": 0.2674406212412428,
-          "selected": 0.267483691635773,
-          "percent": 0.016104656925453043,
-          "lower": 26,
-          "higher": 50,
-          "equal": 14
-        },
-        "pitch_rms_deg": {
-          "main": 0.2823526502672041,
-          "selected": 0.2823855178610234,
-          "percent": 0.011640618137720438,
-          "lower": 46,
-          "higher": 30,
-          "equal": 14
-        },
-        "yaw_rms_deg": {
-          "main": 1.1415012298800034,
-          "selected": 1.1414422976028158,
-          "percent": -0.005162699403638005,
-          "lower": 43,
-          "higher": 33,
-          "equal": 14
-        }
-      },
-      "OU_II/FixedNominal/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.5715365080631027,
-          "selected": 0.571530848220901,
-          "percent": -0.0009902853311816173,
-          "lower": 29,
-          "higher": 38,
-          "equal": 13
-        },
-        "disp_y_rms_m": {
-          "main": 0.35394671158250623,
-          "selected": 0.35393271794893494,
-          "percent": -0.003953598977857187,
-          "lower": 44,
-          "higher": 23,
-          "equal": 13
-        },
-        "disp_z_rms_m": {
-          "main": 0.5002074464932316,
-          "selected": 0.5002090557608054,
-          "percent": 0.00032172003538999405,
-          "lower": 33,
-          "higher": 33,
-          "equal": 14
-        },
-        "disp_3d_rms_m": {
-          "main": 0.8379377924864746,
-          "selected": 0.8379289802753978,
-          "percent": -0.001051654568617888,
-          "lower": 39,
-          "higher": 28,
-          "equal": 13
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06460176783746523,
-          "selected": 0.06461277954301246,
-          "percent": 0.017045517353242445,
-          "lower": 38,
-          "higher": 29,
-          "equal": 13
-        },
-        "roll_rms_deg": {
-          "main": 0.26805027042807406,
-          "selected": 0.2680963914338799,
-          "percent": 0.017206103068723166,
-          "lower": 23,
-          "higher": 44,
-          "equal": 13
-        },
-        "pitch_rms_deg": {
-          "main": 0.28227461819742455,
-          "selected": 0.2823166567183492,
-          "percent": 0.014892773991914687,
-          "lower": 40,
-          "higher": 27,
-          "equal": 13
-        },
-        "yaw_rms_deg": {
-          "main": 1.1396997114891627,
-          "selected": 1.1397624741279697,
-          "percent": 0.005506945221989135,
-          "lower": 38,
-          "higher": 29,
-          "equal": 13
-        }
-      },
-      "OU_II/FixedNominalHeldCovariance": {
-        "disp_x_rms_m": {
-          "main": 0.5550611393359379,
-          "selected": 0.5550550784131444,
-          "percent": -0.0010919378720664064,
-          "lower": 19,
-          "higher": 23,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.34474725966472436,
-          "selected": 0.34473788551688594,
-          "percent": -0.0027191362877099223,
-          "lower": 25,
-          "higher": 17,
-          "equal": 8
-        },
-        "disp_z_rms_m": {
-          "main": 0.48498428173297703,
-          "selected": 0.4849854994447202,
-          "percent": 0.0002510827235013835,
-          "lower": 22,
-          "higher": 18,
-          "equal": 10
-        },
-        "disp_3d_rms_m": {
-          "main": 0.8137280196384923,
-          "selected": 0.8137206444256608,
-          "percent": -0.0009063486390403774,
-          "lower": 25,
-          "higher": 17,
-          "equal": 8
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06458338186248916,
-          "selected": 0.06458903402883297,
-          "percent": 0.008751734859346882,
-          "lower": 24,
-          "higher": 18,
-          "equal": 8
-        },
-        "roll_rms_deg": {
-          "main": 0.2664763740850074,
-          "selected": 0.26651215882189805,
-          "percent": 0.013428859130004689,
-          "lower": 15,
-          "higher": 27,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.283037567308947,
-          "selected": 0.28304737026683835,
-          "percent": 0.0034634829519486487,
-          "lower": 26,
-          "higher": 16,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 1.1393560659308983,
-          "selected": 1.139023114770258,
-          "percent": -0.02922274876100417,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
-        }
-      },
-      "OU_II/FixedNominalHeldCovariance/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.5825331058015186,
-          "selected": 0.582525832479076,
-          "percent": -0.0012485680848439706,
-          "lower": 16,
-          "higher": 17,
-          "equal": 7
-        },
-        "disp_y_rms_m": {
-          "main": 0.3619374427560961,
-          "selected": 0.3619263758146753,
-          "percent": -0.003057694538732836,
-          "lower": 19,
-          "higher": 14,
-          "equal": 7
-        },
-        "disp_z_rms_m": {
-          "main": 0.5091461799447305,
-          "selected": 0.509147694802629,
-          "percent": 0.0002975290708473466,
-          "lower": 17,
-          "higher": 15,
-          "equal": 8
-        },
-        "disp_3d_rms_m": {
-          "main": 0.8541506655667079,
-          "selected": 0.8541419234607331,
-          "percent": -0.001023485238282884,
-          "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06455217135161258,
-          "selected": 0.06456002553467284,
-          "percent": 0.012167186472300529,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "roll_rms_deg": {
-          "main": 0.26745551719795746,
-          "selected": 0.2674958845892958,
-          "percent": 0.01509312343273006,
-          "lower": 12,
-          "higher": 21,
-          "equal": 7
-        },
-        "pitch_rms_deg": {
-          "main": 0.2830148371474646,
-          "selected": 0.2830373619141796,
-          "percent": 0.007958864256729647,
-          "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "yaw_rms_deg": {
-          "main": 1.134799476610058,
-          "selected": 1.1346433551659774,
-          "percent": -0.013757623906118788,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        }
-      },
-      "OU_II/FixedOracle": {
-        "disp_x_rms_m": {
-          "main": 0.40798283327095836,
-          "selected": 0.4079804662338009,
-          "percent": -0.0005801805773253399,
-          "lower": 33,
-          "higher": 43,
-          "equal": 14
-        },
-        "disp_y_rms_m": {
-          "main": 0.2706136868904293,
-          "selected": 0.2706093980680981,
-          "percent": -0.0015848504857585155,
-          "lower": 45,
-          "higher": 30,
-          "equal": 15
-        },
-        "disp_z_rms_m": {
-          "main": 0.3417950182261701,
-          "selected": 0.3417950272685146,
-          "percent": 2.645546004487187e-06,
-          "lower": 45,
-          "higher": 30,
-          "equal": 15
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5970808997491854,
-          "selected": 0.5970773442985228,
-          "percent": -0.0005954721821077591,
-          "lower": 39,
-          "higher": 37,
-          "equal": 14
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.0633656862952146,
-          "selected": 0.06336286082046023,
-          "percent": -0.004458998110101753,
-          "lower": 50,
-          "higher": 26,
-          "equal": 14
-        },
-        "roll_rms_deg": {
-          "main": 0.2548753346290283,
-          "selected": 0.2548923080137952,
-          "percent": 0.006659485034754553,
-          "lower": 28,
-          "higher": 48,
-          "equal": 14
-        },
-        "pitch_rms_deg": {
-          "main": 0.27577980864167184,
-          "selected": 0.27574331915719646,
-          "percent": -0.013231383637224425,
-          "lower": 50,
-          "higher": 26,
-          "equal": 14
-        },
-        "yaw_rms_deg": {
-          "main": 1.0981331195900996,
-          "selected": 1.0979790845626596,
-          "percent": -0.014026990416016183,
-          "lower": 39,
-          "higher": 37,
-          "equal": 14
-        }
-      },
-      "OU_II/FixedOracle/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.41439344041959125,
-          "selected": 0.414390766626937,
-          "percent": -0.000645230448514944,
-          "lower": 30,
-          "higher": 37,
-          "equal": 13
-        },
-        "disp_y_rms_m": {
-          "main": 0.2741188040107592,
-          "selected": 0.27411416660975124,
-          "percent": -0.001691748592258513,
-          "lower": 41,
-          "higher": 25,
-          "equal": 14
-        },
-        "disp_z_rms_m": {
-          "main": 0.3457099913624857,
-          "selected": 0.3457100045896686,
-          "percent": 3.826092176417717e-06,
-          "lower": 40,
-          "higher": 26,
-          "equal": 14
-        },
-        "disp_3d_rms_m": {
-          "main": 0.6052920353926806,
-          "selected": 0.6052881117625026,
-          "percent": -0.0006482210154090673,
-          "lower": 36,
-          "higher": 31,
-          "equal": 13
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06293694894781138,
-          "selected": 0.06293403542513216,
-          "percent": -0.00462927219688769,
-          "lower": 43,
-          "higher": 24,
-          "equal": 13
-        },
-        "roll_rms_deg": {
-          "main": 0.25299225465666875,
-          "selected": 0.25300941972779145,
-          "percent": 0.006784820802518965,
-          "lower": 24,
-          "higher": 43,
-          "equal": 13
-        },
-        "pitch_rms_deg": {
-          "main": 0.27395719109839656,
-          "selected": 0.27392031106619974,
-          "percent": -0.0134619690211224,
-          "lower": 45,
-          "higher": 22,
-          "equal": 13
-        },
-        "yaw_rms_deg": {
-          "main": 1.087106082632995,
-          "selected": 1.0871239558422539,
-          "percent": 0.0016441090289420757,
-          "lower": 33,
-          "higher": 34,
-          "equal": 13
+          "main": 1.6751492145465778,
+          "selected": 1.674955132214641,
+          "percent": -0.01158597277493012,
+          "lower": 89,
+          "higher": 161,
+          "equal": 0
         }
       },
       "OU_III/Adaptive": {
         "disp_x_rms_m": {
-          "main": 0.35752138170836006,
-          "selected": 0.357524171347741,
-          "percent": 0.0007802720406901997,
-          "lower": 37,
-          "higher": 39,
-          "equal": 14
-        },
-        "disp_y_rms_m": {
-          "main": 0.2709821858693104,
-          "selected": 0.2709722441212131,
-          "percent": -0.0036687829000126015,
-          "lower": 53,
-          "higher": 23,
-          "equal": 14
-        },
-        "disp_z_rms_m": {
-          "main": 0.2354971297605674,
-          "selected": 0.23549736648432062,
-          "percent": 0.00010052086556466833,
-          "lower": 36,
-          "higher": 38,
-          "equal": 16
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5066673287789658,
-          "selected": 0.5066640946553345,
-          "percent": -0.0006383130404574722,
-          "lower": 49,
-          "higher": 27,
-          "equal": 14
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.054026889187904124,
-          "selected": 0.054034214058413854,
-          "percent": 0.013557823927734525,
-          "lower": 41,
-          "higher": 35,
-          "equal": 14
-        },
-        "roll_rms_deg": {
-          "main": 0.23460048222458646,
-          "selected": 0.23463117163313607,
-          "percent": 0.013081562432692984,
-          "lower": 32,
-          "higher": 44,
-          "equal": 14
-        },
-        "pitch_rms_deg": {
-          "main": 0.22045006069029124,
-          "selected": 0.22047945875725897,
-          "percent": 0.01333547692192738,
-          "lower": 44,
-          "higher": 32,
-          "equal": 14
-        },
-        "yaw_rms_deg": {
-          "main": 0.9397021499522025,
-          "selected": 0.939655504493466,
-          "percent": -0.0049638557003239825,
-          "lower": 46,
-          "higher": 30,
-          "equal": 14
-        }
-      },
-      "OU_III/Adaptive/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.3555102125842092,
-          "selected": 0.3555134599583766,
-          "percent": 0.0009134404729937984,
-          "lower": 31,
-          "higher": 36,
-          "equal": 13
-        },
-        "disp_y_rms_m": {
-          "main": 0.27339500416151485,
-          "selected": 0.2733840425888386,
-          "percent": -0.004009426840068109,
-          "lower": 47,
-          "higher": 20,
-          "equal": 13
-        },
-        "disp_z_rms_m": {
-          "main": 0.2346167216302316,
-          "selected": 0.2346169673673337,
-          "percent": 0.00010473980729397425,
-          "lower": 33,
-          "higher": 32,
-          "equal": 15
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5061396505649594,
-          "selected": 0.5061361294280444,
-          "percent": -0.0006956848591088693,
-          "lower": 42,
-          "higher": 25,
-          "equal": 13
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.05429002799477187,
-          "selected": 0.05429926247582288,
-          "percent": 0.017009534516909675,
-          "lower": 35,
-          "higher": 32,
-          "equal": 13
-        },
-        "roll_rms_deg": {
-          "main": 0.23526528057488863,
-          "selected": 0.23530032006166393,
-          "percent": 0.014893607203614323,
-          "lower": 28,
-          "higher": 39,
-          "equal": 13
-        },
-        "pitch_rms_deg": {
-          "main": 0.22183248359448782,
-          "selected": 0.2218732341461729,
-          "percent": 0.018369965942222066,
-          "lower": 38,
-          "higher": 29,
-          "equal": 13
-        },
-        "yaw_rms_deg": {
-          "main": 0.9397226303191323,
-          "selected": 0.9397887659156381,
-          "percent": 0.007037778422280816,
-          "lower": 39,
-          "higher": 28,
-          "equal": 13
-        }
-      },
-      "OU_III/AdaptiveHeldCovariance": {
-        "disp_x_rms_m": {
-          "main": 0.36110038575317743,
-          "selected": 0.361102397086856,
-          "percent": 0.0005570012544753311,
-          "lower": 19,
-          "higher": 23,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.270399773980658,
-          "selected": 0.2703946020842991,
-          "percent": -0.001912685163441008,
-          "lower": 27,
-          "higher": 15,
-          "equal": 8
-        },
-        "disp_z_rms_m": {
-          "main": 0.23813480726659517,
-          "selected": 0.23813497974923603,
-          "percent": 7.243067188245078e-05,
-          "lower": 25,
-          "higher": 17,
-          "equal": 8
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5101153871834255,
-          "selected": 0.5101141508385583,
-          "percent": -0.00024236572711000548,
-          "lower": 27,
-          "higher": 15,
-          "equal": 8
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.0571308359650525,
-          "selected": 0.057134875855587006,
-          "percent": 0.007071296028260399,
-          "lower": 25,
-          "higher": 17,
-          "equal": 8
-        },
-        "roll_rms_deg": {
-          "main": 0.2571731231289572,
-          "selected": 0.2571884214511735,
-          "percent": 0.005948647366471604,
-          "lower": 17,
-          "higher": 25,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.22192441058016327,
-          "selected": 0.22194214402185475,
-          "percent": 0.00799075759405632,
-          "lower": 26,
+          "main": 0.26759561878326493,
+          "selected": 0.26759552889634364,
+          "percent": -3.35905803283687e-05,
+          "lower": 14,
           "higher": 16,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 0.9479831488085355,
-          "selected": 0.947839226414381,
-          "percent": -0.015181957014254177,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
-        }
-      },
-      "OU_III/AdaptiveHeldCovariance/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.35781624719858723,
-          "selected": 0.3578186813378453,
-          "percent": 0.000680276336550989,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
+          "equal": 10
         },
         "disp_y_rms_m": {
-          "main": 0.2753310579634962,
-          "selected": 0.2753248938560196,
-          "percent": -0.002238798456744018,
-          "lower": 22,
-          "higher": 11,
-          "equal": 7
-        },
-        "disp_z_rms_m": {
-          "main": 0.23713036302536178,
-          "selected": 0.2371306405730943,
-          "percent": 0.00011704436706505561,
+          "main": 0.17781570068404806,
+          "selected": 0.17781506691555854,
+          "percent": -0.00035641874540637275,
           "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5099710408631815,
-          "selected": 0.5099695500665407,
-          "percent": -0.00029232966607395383,
-          "lower": 21,
-          "higher": 12,
-          "equal": 7
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.05755158744903777,
-          "selected": 0.057558771460897176,
-          "percent": 0.012482734495855574,
-          "lower": 19,
-          "higher": 14,
-          "equal": 7
-        },
-        "roll_rms_deg": {
-          "main": 0.2579260963074656,
-          "selected": 0.2579478440329667,
-          "percent": 0.00843176623555042,
-          "lower": 13,
-          "higher": 20,
-          "equal": 7
-        },
-        "pitch_rms_deg": {
-          "main": 0.22459667431170852,
-          "selected": 0.2246345731412038,
-          "percent": 0.01687417216280629,
-          "lower": 21,
-          "higher": 12,
-          "equal": 7
-        },
-        "yaw_rms_deg": {
-          "main": 0.9421512202103925,
-          "selected": 0.9422502020113598,
-          "percent": 0.010505935654903098,
-          "lower": 16,
-          "higher": 17,
-          "equal": 7
-        }
-      },
-      "OU_III/AdaptiveOUOnly": {
-        "disp_x_rms_m": {
-          "main": 0.6517174230629899,
-          "selected": 0.6517387854226536,
-          "percent": 0.003277856154793035,
-          "lower": 19,
-          "higher": 23,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.5222810629472057,
-          "selected": 0.5222145429782917,
-          "percent": -0.012736431326565434,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
+          "higher": 10,
+          "equal": 10
         },
         "disp_z_rms_m": {
-          "main": 0.4642485132258183,
-          "selected": 0.46424837962258203,
-          "percent": -2.877838752857187e-05,
-          "lower": 13,
-          "higher": 27,
+          "main": 0.17404575217519982,
+          "selected": 0.1740455688187273,
+          "percent": -0.00010534958206909195,
+          "lower": 21,
+          "higher": 9,
           "equal": 10
         },
         "disp_3d_rms_m": {
-          "main": 0.9555311461405204,
-          "selected": 0.9555092988478031,
-          "percent": -0.0022864029922575746,
+          "main": 0.3654008256656349,
+          "selected": 0.3654003657416711,
+          "percent": -0.00012586834279293413,
           "lower": 21,
-          "higher": 20,
-          "equal": 9
+          "higher": 9,
+          "equal": 10
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.12947300824834115,
-          "selected": 0.12945447875053068,
-          "percent": -0.014311475465944579,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
+          "main": 0.0506477701239203,
+          "selected": 0.050641711214795444,
+          "percent": -0.011962834908685327,
+          "lower": 20,
+          "higher": 10,
+          "equal": 10
         },
         "roll_rms_deg": {
-          "main": 0.2737417621577491,
-          "selected": 0.27367796036589326,
-          "percent": -0.02330729200868964,
-          "lower": 19,
-          "higher": 23,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.7153823369863066,
-          "selected": 0.7152914743486146,
-          "percent": -0.012701269376425017,
-          "lower": 24,
-          "higher": 18,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 4.819895405894056,
-          "selected": 4.817560503277567,
-          "percent": -0.048443014212173896,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
-        }
-      },
-      "OU_III/AdaptiveOUOnly/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.6753416892394598,
-          "selected": 0.6753674411646979,
-          "percent": 0.0038131697847942903,
-          "lower": 13,
-          "higher": 20,
-          "equal": 7
-        },
-        "disp_y_rms_m": {
-          "main": 0.5604570062853311,
-          "selected": 0.560379480813744,
-          "percent": -0.013832545711389699,
-          "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "disp_z_rms_m": {
-          "main": 0.48650479919120004,
-          "selected": 0.4865046073255877,
-          "percent": -3.9437557997068495e-05,
-          "lower": 12,
-          "higher": 19,
-          "equal": 9
-        },
-        "disp_3d_rms_m": {
-          "main": 1.0034367712689538,
-          "selected": 1.0034107142678623,
-          "percent": -0.002596775585428368,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.1407248957494214,
-          "selected": 0.1407037427735163,
-          "percent": -0.015031438319745849,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "roll_rms_deg": {
-          "main": 0.2850661017149057,
-          "selected": 0.28498933499492385,
-          "percent": -0.02692944531813568,
-          "lower": 16,
-          "higher": 17,
-          "equal": 7
-        },
-        "pitch_rms_deg": {
-          "main": 0.7811379175866892,
-          "selected": 0.7810350027804241,
-          "percent": -0.013174985357633506,
-          "lower": 20,
-          "higher": 13,
-          "equal": 7
-        },
-        "yaw_rms_deg": {
-          "main": 5.301685919366825,
-          "selected": 5.299071629572537,
-          "percent": -0.04931053695087506,
-          "lower": 16,
-          "higher": 17,
-          "equal": 7
-        }
-      },
-      "OU_III/AdaptiveRSOnly": {
-        "disp_x_rms_m": {
-          "main": 0.3754748332932341,
-          "selected": 0.3754790363794428,
-          "percent": 0.001119405572880261,
-          "lower": 18,
-          "higher": 24,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.2659493478139773,
-          "selected": 0.26594228900377154,
-          "percent": -0.002654193463436094,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
-        },
-        "disp_z_rms_m": {
-          "main": 0.24494244757878206,
-          "selected": 0.24494242983275755,
-          "percent": -7.244977207054859e-06,
-          "lower": 23,
-          "higher": 19,
-          "equal": 8
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5212554151271241,
-          "selected": 0.5212548334215518,
-          "percent": -0.00011159703199314919,
-          "lower": 20,
-          "higher": 21,
-          "equal": 9
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.04992728516763555,
-          "selected": 0.049933639412522955,
-          "percent": 0.012726998606216178,
-          "lower": 20,
-          "higher": 22,
-          "equal": 8
-        },
-        "roll_rms_deg": {
-          "main": 0.21542464802290126,
-          "selected": 0.21544735362315234,
-          "percent": 0.010539926818720069,
+          "main": 0.23219587809373465,
+          "selected": 0.23219160954339524,
+          "percent": -0.0018383402730748344,
           "lower": 14,
-          "higher": 28,
+          "higher": 16,
+          "equal": 10
+        },
+        "pitch_rms_deg": {
+          "main": 0.19071178298341415,
+          "selected": 0.1906623171487998,
+          "percent": -0.02593748212119662,
+          "lower": 19,
+          "higher": 11,
+          "equal": 10
+        },
+        "yaw_rms_deg": {
+          "main": 1.9404281353815958,
+          "selected": 1.940228191928838,
+          "percent": -0.010304089551782525,
+          "lower": 20,
+          "higher": 10,
+          "equal": 10
+        }
+      },
+      "OU_III/Adaptive/low_motion": {
+        "disp_x_rms_m": {
+          "main": 0.020458612499993405,
+          "selected": 0.02045878044907826,
+          "percent": 0.0008209211883380974,
+          "lower": 3,
+          "higher": 9,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.015391264150027959,
+          "selected": 0.01539093915918569,
+          "percent": -0.0021115279362438066,
+          "lower": 11,
+          "higher": 1,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.018486080551037773,
+          "selected": 0.01848604338169072,
+          "percent": -0.00020106667256714061,
+          "lower": 8,
+          "higher": 4,
+          "equal": 8
+        },
+        "disp_3d_rms_m": {
+          "main": 0.031578173096007064,
+          "selected": 0.03157810135202955,
+          "percent": -0.00022719483263600182,
+          "lower": 7,
+          "higher": 5,
+          "equal": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.044633392941118816,
+          "selected": 0.044631194170909994,
+          "percent": -0.004926289631901337,
+          "lower": 8,
+          "higher": 4,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.20622281690814728,
+          "selected": 0.20622789859896049,
+          "percent": 0.0024641748616271997,
+          "lower": 5,
+          "higher": 7,
           "equal": 8
         },
         "pitch_rms_deg": {
-          "main": 0.20665261221375134,
-          "selected": 0.2066804054413923,
-          "percent": 0.013449250577202143,
-          "lower": 20,
-          "higher": 22,
+          "main": 0.16321752160165404,
+          "selected": 0.16319186418245663,
+          "percent": -0.015719770123723276,
+          "lower": 9,
+          "higher": 3,
           "equal": 8
         },
         "yaw_rms_deg": {
-          "main": 0.9057665790421663,
-          "selected": 0.9068468387621209,
-          "percent": 0.11926469191401168,
-          "lower": 17,
-          "higher": 25,
+          "main": 2.559406371518199,
+          "selected": 2.5595150110714076,
+          "percent": 0.004244716838153195,
+          "lower": 6,
+          "higher": 6,
           "equal": 8
         }
       },
-      "OU_III/AdaptiveRSOnly/stationary": {
+      "OU_III/Adaptive/transition_rate": {
         "disp_x_rms_m": {
-          "main": 0.372305552825178,
-          "selected": 0.37231078998478223,
-          "percent": 0.0014066831838688287,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
+          "main": 0.3778839445631052,
+          "selected": 0.37788380816484346,
+          "percent": -3.609527837733495e-05,
+          "lower": 11,
+          "higher": 7,
+          "equal": 2
         },
         "disp_y_rms_m": {
-          "main": 0.2689008246656261,
-          "selected": 0.2688921940937996,
-          "percent": -0.003209574324369857,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
+          "main": 0.25099791992640497,
+          "selected": 0.2509970418872847,
+          "percent": -0.0003498192815754031,
+          "lower": 9,
+          "higher": 9,
+          "equal": 2
         },
         "disp_z_rms_m": {
-          "main": 0.24217311241236522,
-          "selected": 0.24217307550897524,
-          "percent": -1.5238434036835002e-05,
-          "lower": 19,
-          "higher": 14,
-          "equal": 7
+          "main": 0.24544268684628331,
+          "selected": 0.24544242960612764,
+          "percent": -0.00010480660841416523,
+          "lower": 13,
+          "higher": 5,
+          "equal": 2
         },
         "disp_3d_rms_m": {
-          "main": 0.5191983183179807,
-          "selected": 0.5191975878004267,
-          "percent": -0.0001407010632004102,
-          "lower": 16,
-          "higher": 17,
-          "equal": 7
+          "main": 0.5157890516268973,
+          "selected": 0.5157884043707216,
+          "percent": -0.00012548854489979888,
+          "lower": 14,
+          "higher": 4,
+          "equal": 2
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.05104354010748279,
-          "selected": 0.05105143357983401,
-          "percent": 0.015464194557424094,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
+          "main": 0.056020116669055875,
+          "selected": 0.056010912654624795,
+          "percent": -0.01642983802667697,
+          "lower": 12,
+          "higher": 6,
+          "equal": 2
         },
         "roll_rms_deg": {
-          "main": 0.21833765474429978,
-          "selected": 0.21835976582441263,
-          "percent": 0.010127011824301313,
-          "lower": 12,
-          "higher": 21,
-          "equal": 7
+          "main": 0.25554256278340354,
+          "selected": 0.2555307044645748,
+          "percent": -0.004640447641890422,
+          "lower": 9,
+          "higher": 9,
+          "equal": 2
         },
         "pitch_rms_deg": {
-          "main": 0.21242125865003986,
-          "selected": 0.21246237773573107,
-          "percent": 0.0193573307834205,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
+          "main": 0.2147137838603738,
+          "selected": 0.2146454141735939,
+          "percent": -0.03184224391683532,
+          "lower": 10,
+          "higher": 8,
+          "equal": 2
         },
         "yaw_rms_deg": {
-          "main": 0.9122666245412743,
-          "selected": 0.9134669827742916,
-          "percent": 0.1315797597682522,
-          "lower": 13,
-          "higher": 20,
-          "equal": 7
+          "main": 0.9899301604623625,
+          "selected": 0.9888648955297311,
+          "percent": -0.10761010980147034,
+          "lower": 14,
+          "higher": 4,
+          "equal": 2
         }
       },
       "OU_III/FixedNominal": {
         "disp_x_rms_m": {
-          "main": 0.6891755543020176,
-          "selected": 0.6891981307815392,
-          "percent": 0.003275867720597958,
-          "lower": 34,
-          "higher": 41,
-          "equal": 15
-        },
-        "disp_y_rms_m": {
-          "main": 0.6289609111129425,
-          "selected": 0.6288626926819075,
-          "percent": -0.01561598333053027,
-          "lower": 41,
-          "higher": 35,
-          "equal": 14
-        },
-        "disp_z_rms_m": {
-          "main": 0.5141217376849029,
-          "selected": 0.5141211149165688,
-          "percent": -0.00012113246503631103,
-          "lower": 39,
-          "higher": 37,
-          "equal": 14
-        },
-        "disp_3d_rms_m": {
-          "main": 1.065305556355571,
-          "selected": 1.065261877519436,
-          "percent": -0.004100122812111806,
-          "lower": 42,
-          "higher": 33,
-          "equal": 15
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.1485405428574775,
-          "selected": 0.14851221925381283,
-          "percent": -0.019067927933891227,
-          "lower": 39,
-          "higher": 37,
-          "equal": 14
-        },
-        "roll_rms_deg": {
-          "main": 0.3009512551337285,
-          "selected": 0.30081984048548127,
-          "percent": -0.04366642305208002,
-          "lower": 24,
-          "higher": 52,
-          "equal": 14
-        },
-        "pitch_rms_deg": {
-          "main": 0.8253914863126253,
-          "selected": 0.8252627676894718,
-          "percent": -0.015594857142087193,
-          "lower": 44,
-          "higher": 32,
-          "equal": 14
-        },
-        "yaw_rms_deg": {
-          "main": 6.831830116591345,
-          "selected": 6.828457615203208,
-          "percent": -0.04936453820691966,
-          "lower": 35,
-          "higher": 41,
-          "equal": 14
-        }
-      },
-      "OU_III/FixedNominal/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.7015275398693835,
-          "selected": 0.701552523570002,
-          "percent": 0.0035613285578328657,
-          "lower": 28,
-          "higher": 39,
-          "equal": 13
-        },
-        "disp_y_rms_m": {
-          "main": 0.6547126381772838,
-          "selected": 0.6546064906150975,
-          "percent": -0.01621284759093511,
-          "lower": 38,
-          "higher": 29,
-          "equal": 13
-        },
-        "disp_z_rms_m": {
-          "main": 0.5265726351390847,
-          "selected": 0.526571939658112,
-          "percent": -0.00013207693038141954,
-          "lower": 38,
-          "higher": 29,
-          "equal": 13
-        },
-        "disp_3d_rms_m": {
-          "main": 1.094563046883459,
-          "selected": 1.0945152381345693,
-          "percent": -0.004367838748609021,
-          "lower": 37,
-          "higher": 29,
-          "equal": 14
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.15505293846511564,
-          "selected": 0.15502240373751408,
-          "percent": -0.01969309830811561,
-          "lower": 35,
-          "higher": 32,
-          "equal": 13
-        },
-        "roll_rms_deg": {
-          "main": 0.3102227103639883,
-          "selected": 0.3100779464609641,
-          "percent": -0.04666450849273307,
-          "lower": 23,
-          "higher": 44,
-          "equal": 13
-        },
-        "pitch_rms_deg": {
-          "main": 0.8624258575627882,
-          "selected": 0.8622877223216223,
-          "percent": -0.01601705699737499,
-          "lower": 40,
-          "higher": 27,
-          "equal": 13
-        },
-        "yaw_rms_deg": {
-          "main": 7.177723491742626,
-          "selected": 7.174111022912859,
-          "percent": -0.050328893749140846,
-          "lower": 29,
-          "higher": 38,
-          "equal": 13
-        }
-      },
-      "OU_III/FixedNominalHeldCovariance": {
-        "disp_x_rms_m": {
-          "main": 0.6953838316572944,
-          "selected": 0.6953978399173016,
-          "percent": 0.002014464439570318,
-          "lower": 19,
-          "higher": 22,
-          "equal": 9
-        },
-        "disp_y_rms_m": {
-          "main": 0.6154830308702215,
-          "selected": 0.6154151706525797,
-          "percent": -0.011025522108365493,
-          "lower": 20,
-          "higher": 21,
-          "equal": 9
-        },
-        "disp_z_rms_m": {
-          "main": 0.51381512233021,
-          "selected": 0.51381481863295,
-          "percent": -5.910632965289153e-05,
-          "lower": 18,
-          "higher": 22,
-          "equal": 10
-        },
-        "disp_3d_rms_m": {
-          "main": 1.061312409145669,
-          "selected": 1.0612820829525693,
-          "percent": -0.00285742377440501,
-          "lower": 22,
-          "higher": 20,
-          "equal": 8
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.14506824995414858,
-          "selected": 0.14504776736726538,
-          "percent": -0.014119276195634356,
-          "lower": 22,
-          "higher": 20,
-          "equal": 8
-        },
-        "roll_rms_deg": {
-          "main": 0.29517487664767916,
-          "selected": 0.29507050795656126,
-          "percent": -0.03535825687579486,
-          "lower": 14,
-          "higher": 28,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.806933905311766,
-          "selected": 0.8068436221542225,
-          "percent": -0.011188420383534403,
-          "lower": 25,
-          "higher": 17,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 6.694649848003929,
-          "selected": 6.692183714641876,
-          "percent": -0.036837376383291875,
-          "lower": 21,
-          "higher": 21,
-          "equal": 8
-        }
-      },
-      "OU_III/FixedNominalHeldCovariance/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.7211267390304337,
-          "selected": 0.7211436655450006,
-          "percent": 0.0023472315823003242,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
-        },
-        "disp_y_rms_m": {
-          "main": 0.6638721176121904,
-          "selected": 0.6637934627230302,
-          "percent": -0.011847897670891339,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "disp_z_rms_m": {
-          "main": 0.5383345700047212,
-          "selected": 0.5383341868574126,
-          "percent": -7.117271115797408e-05,
-          "lower": 15,
-          "higher": 16,
-          "equal": 9
-        },
-        "disp_3d_rms_m": {
-          "main": 1.1182817592667633,
-          "selected": 1.1182457918942839,
-          "percent": -0.0032163068190427246,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.15731584677256596,
-          "selected": 0.15729221784983646,
-          "percent": -0.015020052470404721,
-          "lower": 18,
-          "higher": 15,
-          "equal": 7
-        },
-        "roll_rms_deg": {
-          "main": 0.3124550894725099,
-          "selected": 0.31232936769539116,
-          "percent": -0.04023675124991133,
-          "lower": 13,
-          "higher": 20,
-          "equal": 7
-        },
-        "pitch_rms_deg": {
-          "main": 0.8767786010038889,
-          "selected": 0.8766755401056866,
-          "percent": -0.011754495158111666,
-          "lower": 21,
-          "higher": 12,
-          "equal": 7
-        },
-        "yaw_rms_deg": {
-          "main": 7.351937304602519,
-          "selected": 7.349127806339326,
-          "percent": -0.038214393659663504,
-          "lower": 15,
-          "higher": 18,
-          "equal": 7
-        }
-      },
-      "OU_III/FixedOracle": {
-        "disp_x_rms_m": {
-          "main": 0.37642275605172376,
-          "selected": 0.3764300154845902,
-          "percent": 0.0019285318832995557,
-          "lower": 32,
-          "higher": 44,
-          "equal": 14
-        },
-        "disp_y_rms_m": {
-          "main": 0.26787480029512123,
-          "selected": 0.2678630731056493,
-          "percent": -0.004377862142701527,
-          "lower": 54,
-          "higher": 22,
-          "equal": 14
-        },
-        "disp_z_rms_m": {
-          "main": 0.24509962639846727,
-          "selected": 0.24509994088835949,
-          "percent": 0.00012831104512223135,
-          "lower": 40,
-          "higher": 36,
-          "equal": 14
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5229960095859842,
-          "selected": 0.5229953751850076,
-          "percent": -0.00012130130345733292,
-          "lower": 45,
-          "higher": 31,
-          "equal": 14
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.05573475450063168,
-          "selected": 0.05573364906004108,
-          "percent": -0.001983395460347648,
-          "lower": 43,
-          "higher": 33,
-          "equal": 14
-        },
-        "roll_rms_deg": {
-          "main": 0.2405683327495054,
-          "selected": 0.24058745151432545,
-          "percent": 0.007947332303270827,
-          "lower": 26,
-          "higher": 50,
-          "equal": 14
-        },
-        "pitch_rms_deg": {
-          "main": 0.22900415260503687,
-          "selected": 0.22897501782770188,
-          "percent": -0.012722379486818092,
-          "lower": 47,
-          "higher": 29,
-          "equal": 14
-        },
-        "yaw_rms_deg": {
-          "main": 0.9627233547254078,
-          "selected": 0.9622473454010346,
-          "percent": -0.049444040391954935,
-          "lower": 38,
-          "higher": 38,
-          "equal": 14
-        }
-      },
-      "OU_III/FixedOracle/stationary": {
-        "disp_x_rms_m": {
-          "main": 0.3773380753285266,
-          "selected": 0.37734630626422166,
-          "percent": 0.0021813159692074535,
-          "lower": 26,
-          "higher": 41,
-          "equal": 13
-        },
-        "disp_y_rms_m": {
-          "main": 0.2676131484436442,
-          "selected": 0.26760028770727085,
-          "percent": -0.004805719168943234,
-          "lower": 46,
-          "higher": 21,
-          "equal": 13
-        },
-        "disp_z_rms_m": {
-          "main": 0.24501203163091037,
-          "selected": 0.2450123940112984,
-          "percent": 0.000147903099123603,
-          "lower": 33,
-          "higher": 34,
-          "equal": 13
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5234803865196994,
-          "selected": 0.5234799145080811,
-          "percent": -9.016796627125956e-05,
-          "lower": 39,
-          "higher": 28,
-          "equal": 13
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.05405801813104216,
-          "selected": 0.054058242386876204,
-          "percent": 0.00041484287029991407,
-          "lower": 37,
-          "higher": 30,
-          "equal": 13
-        },
-        "roll_rms_deg": {
-          "main": 0.23314063752085448,
-          "selected": 0.2331615051493368,
-          "percent": 0.008950661156381656,
-          "lower": 22,
-          "higher": 45,
-          "equal": 13
-        },
-        "pitch_rms_deg": {
-          "main": 0.22265940554666686,
-          "selected": 0.2226396491217314,
-          "percent": -0.008872935273918081,
-          "lower": 41,
-          "higher": 26,
-          "equal": 13
-        },
-        "yaw_rms_deg": {
-          "main": 0.9429328059352091,
-          "selected": 0.9426610432229268,
-          "percent": -0.028821005120593934,
-          "lower": 31,
-          "higher": 36,
-          "equal": 13
-        }
-      },
-      "OU_II/Adaptive/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.33740958316919695,
-          "selected": 0.33741092186070454,
-          "percent": 0.0003967556271078365,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.22764153392996997,
-          "selected": 0.22764096502520795,
-          "percent": -0.0002499125498767185,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.293857855605359,
-          "selected": 0.2938572762391447,
-          "percent": -0.00019715866131919668,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5020142757922395,
-          "selected": 0.5020145800206016,
-          "percent": 6.060153601161744e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06497591537922168,
-          "selected": 0.06496913444844037,
-          "percent": -0.010436068105756924,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.2614541684392822,
-          "selected": 0.26145739549360564,
-          "percent": 0.001234271514083396,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.28222467865742057,
-          "selected": 0.28216842565147315,
-          "percent": -0.01993199397551937,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.1655393154657019,
-          "selected": 1.1638877661949136,
-          "percent": -0.14169828927035333,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        }
-      },
-      "OU_II/AdaptiveHeldCovariance/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.33736481760072157,
-          "selected": 0.33736566768371085,
-          "percent": 0.0002519773683928861,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.22762211972714338,
-          "selected": 0.22762106855168243,
-          "percent": -0.0004618072541484608,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.29398323613464655,
-          "selected": 0.29398266635613196,
-          "percent": -0.00019381326706868762,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5020487942969166,
-          "selected": 0.5020485628565107,
-          "percent": -4.609918569098426e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06503106101826601,
-          "selected": 0.06502419014396638,
-          "percent": -0.010565526983652429,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.2615594626795614,
-          "selected": 0.2615628456593214,
-          "percent": 0.001293388404044471,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.2825457475639961,
-          "selected": 0.2824881951163169,
-          "percent": -0.020369249289853286,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.1683276310348134,
-          "selected": 1.1666763725086724,
-          "percent": -0.14133522843061685,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        }
-      },
-      "OU_II/FixedNominal/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.42788727369113955,
-          "selected": 0.42788782510606566,
-          "percent": 0.00012886920457422235,
-          "lower": 2,
-          "higher": 7,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.26506273954517,
-          "selected": 0.26506249740556675,
-          "percent": -9.13518073741848e-05,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.37291301720683456,
-          "selected": 0.3729126251141537,
-          "percent": -0.0001051432003684738,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.626426287862294,
-          "selected": 0.626426336340734,
-          "percent": 7.738889773456492e-06,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06468486826343785,
-          "selected": 0.06468188642516452,
-          "percent": -0.004609792604326479,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.2625124629357773,
-          "selected": 0.2625306207301665,
-          "percent": 0.006916926604594309,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.2829761321882328,
-          "selected": 0.28293580366177645,
-          "percent": -0.014251564661826865,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.1558122950592795,
-          "selected": 1.1547929205570437,
-          "percent": -0.08819550601713022,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        }
-      },
-      "OU_II/FixedNominalHeldCovariance/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.4278844056348566,
-          "selected": 0.42788470215625507,
-          "percent": 6.929941698263775e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.265063228978286,
-          "selected": 0.26506271429962674,
-          "percent": -0.00019417203255267523,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.3730005863681856,
-          "selected": 0.3730002317249941,
-          "percent": -9.507845416534266e-05,
-          "lower": 5,
-          "higher": 3,
-          "equal": 2
-        },
-        "disp_3d_rms_m": {
-          "main": 0.6264766649857851,
-          "selected": 0.6264764434276517,
-          "percent": -3.53657439777777e-05,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06470807336916054,
-          "selected": 0.06470493795482905,
-          "percent": -0.004845476257031578,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.262523284698627,
-          "selected": 0.26254039862600864,
-          "percent": 0.0065190131234516,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.28312846970661554,
-          "selected": 0.28308740013909206,
-          "percent": -0.014505629746819348,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.1574030483845388,
-          "selected": 1.1563762822781676,
-          "percent": -0.08871292570071798,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        }
-      },
-      "OU_II/FixedOracle/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.35252594584215285,
-          "selected": 0.35252643550500035,
-          "percent": 0.0001389012222352548,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.24074251409663724,
-          "selected": 0.24074136789454698,
-          "percent": -0.00047611120727042433,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.30869293049121166,
-          "selected": 0.30869290209243855,
-          "percent": -9.19968367041335e-06,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5268043495731196,
-          "selected": 0.5268041474239384,
-          "percent": -3.837272439799477e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06669644258951592,
-          "selected": 0.06669427758843198,
-          "percent": -0.0032460518130772442,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.269466655618491,
-          "selected": 0.26948221906731634,
-          "percent": 0.005775649231876123,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.28994859070833134,
-          "selected": 0.28991500137388315,
-          "percent": -0.011584582758661366,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.1826538191224454,
-          "selected": 1.1812343833061334,
-          "percent": -0.1200212431872294,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        }
-      },
-      "OU_III/Adaptive/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.37322078639129613,
-          "selected": 0.37322009081558005,
-          "percent": -0.00018637110832386838,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.2508455284089943,
-          "selected": 0.25084444546182333,
-          "percent": -0.000431718746540799,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.24242531753315089,
-          "selected": 0.24242548458505256,
-          "percent": 6.890860384523023e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5108691334147726,
-          "selected": 0.5108681740106455,
-          "percent": -0.00018779841338689707,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.0518737475079036,
-          "selected": 0.051865088034707435,
-          "percent": -0.01669336342982053,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.22921269246755957,
-          "selected": 0.2292076686074694,
-          "percent": -0.0021917896588008468,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.20906184994778007,
-          "selected": 0.20899490271579582,
-          "percent": -0.03202269184978679,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 0.9395382909450031,
-          "selected": 0.9385887319768588,
-          "percent": -0.10106655335879733,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        }
-      },
-      "OU_III/AdaptiveHeldCovariance/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.37394862737860896,
-          "selected": 0.3739490219962465,
-          "percent": 0.00010552723253010043,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.24970266904212732,
-          "selected": 0.24970185316556712,
-          "percent": -0.00032673922282233647,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.24211091649352093,
-          "selected": 0.2421106773903645,
-          "percent": -9.875769333422824e-05,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5106923644721685,
-          "selected": 0.5106921444945448,
-          "percent": -4.3074390565500664e-05,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.055415893196011166,
-          "selected": 0.055406872378934456,
-          "percent": -0.016278393356938814,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.2541389219971565,
-          "selected": 0.2541280379606099,
-          "percent": -0.004282711385195093,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.21089702607966215,
-          "selected": 0.21082886582193916,
-          "percent": -0.03231921236160895,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 0.9709606403706612,
-          "selected": 0.9698733024922731,
-          "percent": -0.11198578327263897,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        }
-      },
-      "OU_III/AdaptiveOUOnly/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.5471127934165785,
-          "selected": 0.547112876634769,
-          "percent": 1.521042671814854e-05,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.3277793770038812,
-          "selected": 0.32777964308633506,
-          "percent": 8.11773017250772e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.3617813312176767,
-          "selected": 0.36178150604317505,
-          "percent": 4.832352673567186e-05,
-          "lower": 1,
-          "higher": 8,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.7332512805883332,
-          "selected": 0.7332515631711489,
-          "percent": 3.853833239197968e-05,
-          "lower": 3,
-          "higher": 5,
-          "equal": 2
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.06784035811840179,
-          "selected": 0.06783905527758054,
-          "percent": -0.0019204509784320756,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.22276003312626882,
-          "selected": 0.22276096091277192,
-          "percent": 0.0004164959441332883,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.3437348617659709,
-          "selected": 0.34372483777900714,
-          "percent": -0.002916197359870143,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 1.9301461779728866,
-          "selected": 1.9297164227776633,
-          "percent": -0.022265422180334227,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
-        }
-      },
-      "OU_III/AdaptiveRSOnly/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.38789309548516593,
-          "selected": 0.3878933312726633,
-          "percent": 6.078672194487211e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.253800441272241,
-          "selected": 0.2538000339332468,
-          "percent": -0.00016049577855614672,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.25572005714736884,
-          "selected": 0.2557201119504945,
-          "percent": 2.143090622741539e-05,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5294038760907176,
-          "selected": 0.5294038780699672,
-          "percent": 3.7386382878423774e-07,
-          "lower": 4,
-          "higher": 4,
-          "equal": 2
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.04518735524718382,
-          "selected": 0.045186792790311126,
-          "percent": -0.0012447218245448255,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.20335576943374467,
-          "selected": 0.2033810748140765,
-          "percent": 0.012443895937797045,
-          "lower": 2,
-          "higher": 7,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.1817562823342481,
-          "selected": 0.18172204641872602,
-          "percent": -0.018836166256475106,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 0.8792860180515912,
-          "selected": 0.8798683028665076,
-          "percent": 0.0662224581037485,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        }
-      },
-      "OU_III/FixedNominal/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.580981400963854,
-          "selected": 0.5809810880187101,
-          "percent": -5.386491604975063e-05,
-          "lower": 6,
-          "higher": 2,
-          "equal": 2
-        },
-        "disp_y_rms_m": {
-          "main": 0.3621289006137647,
-          "selected": 0.36212886626302576,
-          "percent": -9.4857767085621e-06,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_z_rms_m": {
-          "main": 0.4008248118851166,
-          "selected": 0.40082493204022396,
-          "percent": 2.9976963444866556e-05,
-          "lower": 1,
-          "higher": 8,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.7933077881856837,
-          "selected": 0.7933076056586872,
-          "percent": -2.3008345462205426e-05,
-          "lower": 5,
-          "higher": 4,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.07904002807572585,
-          "selected": 0.07904016779320908,
-          "percent": 0.00017676800809773852,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.21269668895981245,
-          "selected": 0.21271230527594231,
-          "percent": 0.007342058875603463,
-          "lower": 1,
-          "higher": 8,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.4256912880867985,
-          "selected": 0.42568391216663803,
-          "percent": -0.0017326922976623749,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 2.8120114662584514,
-          "selected": 2.812036427751582,
-          "percent": 0.0008876739455043747,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        }
-      },
-      "OU_III/FixedNominalHeldCovariance/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.5811181219625092,
-          "selected": 0.581117916937283,
-          "percent": -3.528116203632692e-05,
-          "lower": 4,
-          "higher": 4,
-          "equal": 2
-        },
-        "disp_y_rms_m": {
-          "main": 0.3622044343660005,
-          "selected": 0.3622045233447466,
-          "percent": 2.456589087707073e-05,
-          "lower": 2,
-          "higher": 6,
-          "equal": 2
-        },
-        "disp_z_rms_m": {
-          "main": 0.40101553913454663,
-          "selected": 0.40101565091194386,
-          "percent": 2.787358253097949e-05,
-          "lower": 3,
-          "higher": 6,
-          "equal": 1
-        },
-        "disp_3d_rms_m": {
-          "main": 0.7935387681757274,
-          "selected": 0.7935387158945856,
-          "percent": -6.58835382916223e-06,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.07893594327503065,
-          "selected": 0.07893609381430017,
-          "percent": 0.00019071067409726083,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "roll_rms_deg": {
-          "main": 0.21243424222748658,
-          "selected": 0.2124487882495548,
-          "percent": 0.006847305743029608,
-          "lower": 1,
-          "higher": 8,
-          "equal": 1
-        },
-        "pitch_rms_deg": {
-          "main": 0.425145595055557,
-          "selected": 0.425138968545979,
-          "percent": -0.0015586447690063565,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
-        },
-        "yaw_rms_deg": {
-          "main": 2.8085146276404833,
-          "selected": 2.80853988701429,
-          "percent": 0.0008993855171057774,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        }
-      },
-      "OU_III/FixedOracle/nonstationary": {
-        "disp_x_rms_m": {
-          "main": 0.36901847747922506,
-          "selected": 0.3690177911829526,
-          "percent": -0.00018597883693072248,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
-        },
-        "disp_y_rms_m": {
-          "main": 0.2699588856455742,
-          "selected": 0.26995614746530344,
-          "percent": -0.0010142952932223892,
+          "main": 0.585156889556044,
+          "selected": 0.5851567426274341,
+          "percent": -2.5109267698386617e-05,
           "lower": 8,
-          "higher": 1,
-          "equal": 1
+          "higher": 9,
+          "equal": 3
+        },
+        "disp_y_rms_m": {
+          "main": 0.3651371819882354,
+          "selected": 0.36513751615431383,
+          "percent": 9.151795403727903e-05,
+          "lower": 4,
+          "higher": 13,
+          "equal": 3
         },
         "disp_z_rms_m": {
-          "main": 0.245799260769361,
-          "selected": 0.24579919336343203,
-          "percent": -2.7423161796935602e-05,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
+          "main": 0.40426917141940294,
+          "selected": 0.40426919314361515,
+          "percent": 5.373699929478448e-06,
+          "lower": 8,
+          "higher": 10,
+          "equal": 2
         },
         "disp_3d_rms_m": {
-          "main": 0.5191047233644235,
-          "selected": 0.5191027788762638,
-          "percent": -0.0003745849483149932,
+          "main": 0.7994793935248916,
+          "selected": 0.7994794502794956,
+          "percent": 7.098945187244965e-06,
           "lower": 6,
-          "higher": 3,
-          "equal": 1
+          "higher": 12,
+          "equal": 2
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.06766912988329676,
-          "selected": 0.06765950175891255,
-          "percent": -0.014228237308233638,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
+          "main": 0.08006350718512818,
+          "selected": 0.0800636664034097,
+          "percent": 0.00019886498494603444,
+          "lower": 8,
+          "higher": 10,
+          "equal": 2
         },
         "roll_rms_deg": {
-          "main": 0.29329447589043856,
-          "selected": 0.29330290923785146,
-          "percent": 0.0028753856980534565,
-          "lower": 4,
-          "higher": 5,
-          "equal": 1
+          "main": 0.2147671770359093,
+          "selected": 0.21478141143235338,
+          "percent": 0.006627826765948086,
+          "lower": 2,
+          "higher": 16,
+          "equal": 2
         },
         "pitch_rms_deg": {
-          "main": 0.2745331130592422,
-          "selected": 0.27444256633107433,
-          "percent": -0.03298207897723948,
-          "lower": 6,
-          "higher": 3,
-          "equal": 1
+          "main": 0.4313316665443055,
+          "selected": 0.4313251386058258,
+          "percent": -0.0015134382624903964,
+          "lower": 9,
+          "higher": 9,
+          "equal": 2
         },
         "yaw_rms_deg": {
-          "main": 1.1083988936898648,
-          "selected": 1.1065264769995118,
-          "percent": -0.1689298591881161,
-          "lower": 7,
-          "higher": 2,
-          "equal": 1
+          "main": 2.8492907390491324,
+          "selected": 2.8493151862162334,
+          "percent": 0.0008580088639575933,
+          "lower": 11,
+          "higher": 7,
+          "equal": 2
+        }
+      },
+      "OU_III/FixedNominal/transition_rate": {
+        "disp_x_rms_m": {
+          "main": 0.585156889556044,
+          "selected": 0.5851567426274341,
+          "percent": -2.5109267698386617e-05,
+          "lower": 8,
+          "higher": 9,
+          "equal": 3
+        },
+        "disp_y_rms_m": {
+          "main": 0.3651371819882354,
+          "selected": 0.36513751615431383,
+          "percent": 9.151795403727903e-05,
+          "lower": 4,
+          "higher": 13,
+          "equal": 3
+        },
+        "disp_z_rms_m": {
+          "main": 0.40426917141940294,
+          "selected": 0.40426919314361515,
+          "percent": 5.373699929478448e-06,
+          "lower": 8,
+          "higher": 10,
+          "equal": 2
+        },
+        "disp_3d_rms_m": {
+          "main": 0.7994793935248916,
+          "selected": 0.7994794502794956,
+          "percent": 7.098945187244965e-06,
+          "lower": 6,
+          "higher": 12,
+          "equal": 2
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.08006350718512818,
+          "selected": 0.0800636664034097,
+          "percent": 0.00019886498494603444,
+          "lower": 8,
+          "higher": 10,
+          "equal": 2
+        },
+        "roll_rms_deg": {
+          "main": 0.2147671770359093,
+          "selected": 0.21478141143235338,
+          "percent": 0.006627826765948086,
+          "lower": 2,
+          "higher": 16,
+          "equal": 2
+        },
+        "pitch_rms_deg": {
+          "main": 0.4313316665443055,
+          "selected": 0.4313251386058258,
+          "percent": -0.0015134382624903964,
+          "lower": 9,
+          "higher": 9,
+          "equal": 2
+        },
+        "yaw_rms_deg": {
+          "main": 2.8492907390491324,
+          "selected": 2.8493151862162334,
+          "percent": 0.0008580088639575933,
+          "lower": 11,
+          "higher": 7,
+          "equal": 2
         }
       }
     }
@@ -2398,18 +484,18 @@
   "head/ou_robustness": {
     "rows": 310,
     "archive": {
-      "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+      "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
       "name": "simulation-study-v1.4.0-head-ou_robustness",
-      "id": 14409110260,
-      "size": 347890,
-      "digest": "sha256:bdaf9c355f13d66390797f1573e4def3343a448e833f1f6858af0e5eb6ec6494",
-      "run": 44239902248,
+      "id": 14414913770,
+      "size": 347885,
+      "digest": "sha256:8118a6418a7719b3e5e73e8a71c3beb08569efe419257a1d1661b429f5de26de",
+      "run": 44275659412,
       "kind": "studies"
     },
     "baseline_source": "71f410938ca1a8f393979f4933933868fb612461",
     "matched_current_main": "cee633f7f5464576dd190a3833d1ed235679616c",
     "raw_main_sha256": "1df4fa7c7941404702290ef38eb65013fee3879b6101dfcc4e711e8a1f17d24f",
-    "raw_selected_sha256": "1bc443e50b3f7df5d31af477c46e5afa96b5cbf3af658214d6eddbd31f751401",
+    "raw_selected_sha256": "bf03177792fae16103c707a88a6265f6d76d6e9f5f674b17703730a3d6ea5435",
     "native_log_sha256": "a2ee70b9274e0ad04a43850e30ebfde97a4d5f8d1847d04871e0aea42e3a180c",
     "matching_primary_input_hashes": 8,
     "scores": {
@@ -2548,64 +634,64 @@
       "OU_III/Adaptive": {
         "disp_x_rms_m": {
           "main": 0.16953802633953743,
-          "selected": 0.16953785906507765,
-          "percent": -9.86648620360242e-05,
+          "selected": 0.16953782166341774,
+          "percent": -0.00012072578884358975,
           "lower": 20,
           "higher": 12,
           "equal": 8
         },
         "disp_y_rms_m": {
           "main": 0.15179344767451755,
-          "selected": 0.15179342171042742,
-          "percent": -1.7104882010787748e-05,
+          "selected": 0.1517934060995995,
+          "percent": -2.738913879030136e-05,
           "lower": 18,
           "higher": 14,
           "equal": 8
         },
         "disp_z_rms_m": {
           "main": 0.12411494459845694,
-          "selected": 0.12411491505452484,
-          "percent": -2.380368633314589e-05,
+          "selected": 0.1241149092640731,
+          "percent": -2.846908078169008e-05,
           "lower": 18,
           "higher": 14,
           "equal": 8
         },
         "disp_3d_rms_m": {
           "main": 0.2592082415357197,
-          "selected": 0.25920810402882744,
-          "percent": -5.304881181000809e-05,
+          "selected": 0.25920806748993064,
+          "percent": -6.714516020966954e-05,
           "lower": 20,
           "higher": 12,
           "equal": 8
         },
         "accel_bias_3d_rms_mps2": {
           "main": 0.04166980567519206,
-          "selected": 0.04166733607629056,
-          "percent": -0.005926590876725868,
+          "selected": 0.041667335998038256,
+          "percent": -0.0059267786681194146,
           "lower": 15,
           "higher": 17,
           "equal": 8
         },
         "roll_rms_deg": {
           "main": 0.18596406663374573,
-          "selected": 0.18596716850332018,
-          "percent": 0.001667994054233013,
+          "selected": 0.1859671705871287,
+          "percent": 0.0016691145978686706,
           "lower": 14,
           "higher": 18,
           "equal": 8
         },
         "pitch_rms_deg": {
           "main": 0.1642929997342339,
-          "selected": 0.16426696046599557,
-          "percent": -0.015849286506697258,
+          "selected": 0.16426696087425574,
+          "percent": -0.01584903801152837,
           "lower": 19,
           "higher": 13,
           "equal": 8
         },
         "yaw_rms_deg": {
           "main": 1.8541972616142788,
-          "selected": 1.8537446621165183,
-          "percent": -0.024409457781549015,
+          "selected": 1.8537446467423386,
+          "percent": -0.024410286937115444,
           "lower": 16,
           "higher": 16,
           "equal": 8
@@ -2680,64 +766,64 @@
       "OU_III/Adaptive/transition_rate": {
         "disp_x_rms_m": {
           "main": 0.2396375422862481,
-          "selected": 0.23963730614358647,
-          "percent": -9.854159718214461e-05,
+          "selected": 0.23963725322196547,
+          "percent": -0.0001206256247887616,
           "lower": 13,
           "higher": 7,
           "equal": 0
         },
         "disp_y_rms_m": {
           "main": 0.21443945220177726,
-          "selected": 0.21443942045458256,
-          "percent": -1.480473597048615e-05,
+          "selected": 0.2144393983539727,
+          "percent": -2.5110959767093988e-05,
           "lower": 9,
           "higher": 11,
           "equal": 0
         },
         "disp_z_rms_m": {
           "main": 0.17530715192616697,
-          "selected": 0.17530711022493284,
-          "percent": -2.3787525882390526e-05,
+          "selected": 0.17530710202581962,
+          "percent": -2.8464524581828243e-05,
           "lower": 10,
           "higher": 10,
           "equal": 0
         },
         "disp_3d_rms_m": {
           "main": 0.36625541306178855,
-          "selected": 0.36625522178787867,
-          "percent": -5.2224186475324785e-05,
+          "selected": 0.36625517006887187,
+          "percent": -6.634520829384982e-05,
           "lower": 13,
           "higher": 7,
           "equal": 0
         },
         "accel_bias_3d_rms_mps2": {
           "main": 0.03975244636053019,
-          "selected": 0.039748983929793306,
-          "percent": -0.008709981532917244,
+          "selected": 0.03974898376573552,
+          "percent": -0.008710394231514762,
           "lower": 8,
           "higher": 12,
           "equal": 0
         },
         "roll_rms_deg": {
           "main": 0.17641834104068016,
-          "selected": 0.17642150811530527,
-          "percent": 0.0017952071232674172,
+          "selected": 0.17642151250842003,
+          "percent": 0.0017976972922273404,
           "lower": 8,
           "higher": 12,
           "equal": 0
         },
         "pitch_rms_deg": {
           "main": 0.1618409742538831,
-          "selected": 0.16180738610372628,
-          "percent": -0.020753798790251743,
+          "selected": 0.16180738693265823,
+          "percent": -0.020753286601071785,
           "lower": 10,
           "higher": 10,
           "equal": 0
         },
         "yaw_rms_deg": {
           "main": 0.8669221156944841,
-          "selected": 0.8661642331930623,
-          "percent": -0.08742221333396527,
+          "selected": 0.8661641673861329,
+          "percent": -0.08742980420380908,
           "lower": 10,
           "higher": 10,
           "equal": 0
@@ -2880,12 +966,12 @@
   "head/ou_validation": {
     "rows": 840,
     "archive": {
-      "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
+      "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
       "name": "simulation-study-v1.4.0-head-ou_validation",
-      "id": 14410538927,
-      "size": 1694293,
-      "digest": "sha256:65bd5d805b4176d1cf2be73ffb4e93f7e5888236bf6beed1a4f2fa44074f2e2a",
-      "run": 44239902248,
+      "id": 14419288006,
+      "size": 1694150,
+      "digest": "sha256:640da6aa8acf0fd1367da6b44f29827306c0b8f96cc5e1a2db68992c51f0060a",
+      "run": 44275659412,
       "kind": "studies"
     },
     "baseline_source": "71f410938ca1a8f393979f4933933868fb612461",
@@ -5273,484 +3359,2398 @@
       }
     }
   },
-  "following/ou_robustness": {
-    "rows": 310,
+  "following/ou_validation": {
+    "rows": 840,
     "archive": {
-      "source": "99592c4078a5ba45c9a9c6edd455782ed440e495",
-      "name": "simulation-study-v1.4.0-following-ou_robustness",
-      "id": 14410971999,
-      "size": 354435,
-      "digest": "sha256:d53dd6c9ad08b007ac27c74db9741d5078a21bea2a22338c8493de569f9d54bd",
-      "run": 44239902248,
+      "source": "1ad97346644532cb44c5f32f29aaa3ec148140ff",
+      "name": "simulation-study-v1.4.0-following-ou_validation",
+      "id": 14421112674,
+      "size": 1637668,
+      "digest": "sha256:58df2dfb107935bc966e1ba1e159a1fe3db87e1cf8580be58eddb988da3fff39",
+      "run": 44275659412,
       "kind": "studies"
     },
     "baseline_source": "71f410938ca1a8f393979f4933933868fb612461",
     "matched_current_main": "cee633f7f5464576dd190a3833d1ed235679616c",
-    "raw_main_sha256": "7e2c9cb105fdcb0720561ed2c057a55b5c16d376b2f99bfabdb624ce41cd0048",
-    "raw_selected_sha256": "c73805142e5d22ee477e53502c1a4acc970b15f2c668035d2c9ee37f21d2e141",
-    "native_log_sha256": "97a7dcb21499633d34d400f3483754fc959ae5a0843db85c6b7bb9d548b3b833",
-    "matching_primary_input_hashes": 8,
+    "raw_main_sha256": "3c1a22d44c13ee13a27e814587e5329fc9e024e9cfeaab988f8a75c7fc0c3695",
+    "raw_selected_sha256": "9cfcb44865381ec02bf7c87fd1efb8f27d814eada919b2da8d8cadbe07e96ced",
+    "native_log_sha256": "c70582b625930372497c23fd3829f76dd54aa9c02fe13001d75b0fdc5f8e9ce5",
+    "matching_primary_input_hashes": 10,
     "scores": {
-      "OU_III/FixedSensitivity": {
+      "OU_II/Adaptive": {
         "disp_x_rms_m": {
-          "main": 0.12583192704597637,
-          "selected": 0.1258325127378927,
-          "percent": 0.00046545573135770013,
-          "lower": 98,
-          "higher": 151,
-          "equal": 1
+          "main": 0.3951991461428638,
+          "selected": 0.3951960973074323,
+          "percent": -0.0007714681221404618,
+          "lower": 33,
+          "higher": 43,
+          "equal": 14
         },
         "disp_y_rms_m": {
-          "main": 0.10528382620271681,
-          "selected": 0.1052816929891808,
-          "percent": -0.0020261550258471317,
-          "lower": 155,
-          "higher": 95,
-          "equal": 0
+          "main": 0.26940640692518913,
+          "selected": 0.26940163855955834,
+          "percent": -0.0017699525728498422,
+          "lower": 49,
+          "higher": 27,
+          "equal": 14
         },
         "disp_z_rms_m": {
-          "main": 0.11466507505333284,
-          "selected": 0.11466499103293602,
-          "percent": -7.327461895023646e-05,
-          "lower": 134,
-          "higher": 114,
-          "equal": 2
+          "main": 0.3367452518863287,
+          "selected": 0.3367453115415224,
+          "percent": 1.7715229350123707e-05,
+          "lower": 46,
+          "higher": 28,
+          "equal": 16
         },
         "disp_3d_rms_m": {
-          "main": 0.2001660249394565,
-          "selected": 0.20016522303579015,
-          "percent": -0.00040061926922518865,
-          "lower": 132,
-          "higher": 117,
-          "equal": 1
+          "main": 0.5849440540671429,
+          "selected": 0.5849398268039894,
+          "percent": -0.0007226781987279551,
+          "lower": 45,
+          "higher": 29,
+          "equal": 16
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.05060923810088427,
-          "selected": 0.05060447562307804,
-          "percent": -0.009410293426537208,
-          "lower": 145,
-          "higher": 105,
-          "equal": 0
+          "main": 0.06287882172526396,
+          "selected": 0.06287771541565572,
+          "percent": -0.0017594312009761026,
+          "lower": 41,
+          "higher": 34,
+          "equal": 15
         },
         "roll_rms_deg": {
-          "main": 0.2101895896552306,
-          "selected": 0.2101964685318153,
-          "percent": 0.003272700896372882,
-          "lower": 76,
-          "higher": 174,
-          "equal": 0
+          "main": 0.2538064041435542,
+          "selected": 0.25382285183953973,
+          "percent": 0.006480410153963945,
+          "lower": 29,
+          "higher": 47,
+          "equal": 14
         },
         "pitch_rms_deg": {
-          "main": 0.21559669457933373,
-          "selected": 0.2155515373804973,
-          "percent": -0.020945218536183585,
-          "lower": 163,
-          "higher": 87,
-          "equal": 0
+          "main": 0.27272959321721163,
+          "selected": 0.2727075702802216,
+          "percent": -0.0080750081904446,
+          "lower": 47,
+          "higher": 29,
+          "equal": 14
         },
         "yaw_rms_deg": {
-          "main": 1.6751492145465778,
-          "selected": 1.674955132214641,
-          "percent": -0.01158597277493012,
-          "lower": 89,
-          "higher": 161,
-          "equal": 0
+          "main": 1.0961679083650375,
+          "selected": 1.0961634015012585,
+          "percent": -0.00041114721063273407,
+          "lower": 40,
+          "higher": 36,
+          "equal": 14
         }
       },
-      "OU_III/FixedSensitivity/sensitivity": {
+      "OU_II/Adaptive/stationary": {
         "disp_x_rms_m": {
-          "main": 0.12583192704597637,
-          "selected": 0.1258325127378927,
-          "percent": 0.00046545573135770013,
-          "lower": 98,
-          "higher": 151,
-          "equal": 1
+          "main": 0.40183890727411303,
+          "selected": 0.4018353934996797,
+          "percent": -0.0008744236483115841,
+          "lower": 30,
+          "higher": 37,
+          "equal": 13
         },
         "disp_y_rms_m": {
-          "main": 0.10528382620271681,
-          "selected": 0.1052816929891808,
-          "percent": -0.0020261550258471317,
-          "lower": 155,
-          "higher": 95,
-          "equal": 0
+          "main": 0.2741800596462741,
+          "selected": 0.27417484767242195,
+          "percent": -0.001900931037401854,
+          "lower": 42,
+          "higher": 25,
+          "equal": 13
         },
         "disp_z_rms_m": {
-          "main": 0.11466507505333284,
-          "selected": 0.11466499103293602,
-          "percent": -7.327461895023646e-05,
-          "lower": 134,
-          "higher": 114,
-          "equal": 2
+          "main": 0.3417279332142206,
+          "selected": 0.3417280616235817,
+          "percent": 3.757648954216819e-05,
+          "lower": 39,
+          "higher": 26,
+          "equal": 15
         },
         "disp_3d_rms_m": {
-          "main": 0.2001660249394565,
-          "selected": 0.20016522303579015,
-          "percent": -0.00040061926922518865,
-          "lower": 132,
-          "higher": 117,
-          "equal": 1
+          "main": 0.5944974331733207,
+          "selected": 0.594492721809955,
+          "percent": -0.0007924951568760719,
+          "lower": 42,
+          "higher": 23,
+          "equal": 15
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.05060923810088427,
-          "selected": 0.05060447562307804,
-          "percent": -0.009410293426537208,
-          "lower": 145,
-          "higher": 105,
-          "equal": 0
+          "main": 0.06261174651637857,
+          "selected": 0.06261137619479604,
+          "percent": -0.000591457039844645,
+          "lower": 36,
+          "higher": 30,
+          "equal": 14
         },
         "roll_rms_deg": {
-          "main": 0.2101895896552306,
-          "selected": 0.2101964685318153,
-          "percent": 0.003272700896372882,
-          "lower": 76,
-          "higher": 174,
-          "equal": 0
+          "main": 0.2528341686917173,
+          "selected": 0.2528523263155079,
+          "percent": 0.007181633671016208,
+          "lower": 25,
+          "higher": 42,
+          "equal": 13
         },
         "pitch_rms_deg": {
-          "main": 0.21559669457933373,
-          "selected": 0.2155515373804973,
-          "percent": -0.020945218536183585,
-          "lower": 163,
-          "higher": 87,
-          "equal": 0
+          "main": 0.27151936162651163,
+          "selected": 0.27150178396252,
+          "percent": -0.006473816042562586,
+          "lower": 41,
+          "higher": 26,
+          "equal": 13
         },
         "yaw_rms_deg": {
-          "main": 1.6751492145465778,
-          "selected": 1.674955132214641,
-          "percent": -0.01158597277493012,
-          "lower": 89,
-          "higher": 161,
-          "equal": 0
+          "main": 1.0871852909042332,
+          "selected": 1.0874013226966333,
+          "percent": 0.01987074275262568,
+          "lower": 35,
+          "higher": 32,
+          "equal": 13
+        }
+      },
+      "OU_II/AdaptiveHeldCovariance": {
+        "disp_x_rms_m": {
+          "main": 0.3936080746891753,
+          "selected": 0.39360614342978517,
+          "percent": -0.0004906554296857379,
+          "lower": 17,
+          "higher": 24,
+          "equal": 9
+        },
+        "disp_y_rms_m": {
+          "main": 0.26875561110904506,
+          "selected": 0.2687507471786138,
+          "percent": -0.001809796793150742,
+          "lower": 29,
+          "higher": 13,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.33580312982690586,
+          "selected": 0.3358034851353248,
+          "percent": 0.00010580854894470804,
+          "lower": 27,
+          "higher": 15,
+          "equal": 8
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5830271279268359,
+          "selected": 0.5830237963555258,
+          "percent": -0.0005714264655010126,
+          "lower": 22,
+          "higher": 20,
+          "equal": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06306845286814479,
+          "selected": 0.06306741054609999,
+          "percent": -0.0016526837069874567,
+          "lower": 22,
+          "higher": 20,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.2541448365066058,
+          "selected": 0.25415718803541826,
+          "percent": 0.004860035317744149,
+          "lower": 19,
+          "higher": 23,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.27393934428115935,
+          "selected": 0.27392130248321767,
+          "percent": -0.0065860557522445795,
+          "lower": 26,
+          "higher": 16,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 1.0994697083245861,
+          "selected": 1.0993417728543526,
+          "percent": -0.011636106867229934,
+          "lower": 22,
+          "higher": 20,
+          "equal": 8
+        }
+      },
+      "OU_II/AdaptiveHeldCovariance/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.4064546598785124,
+          "selected": 0.40645214570619104,
+          "percent": -0.0006185615689879853,
+          "lower": 14,
+          "higher": 18,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.2780899418910649,
+          "selected": 0.27808428115263284,
+          "percent": -0.0020355782713865622,
+          "lower": 24,
+          "higher": 9,
+          "equal": 7
+        },
+        "disp_z_rms_m": {
+          "main": 0.3454680039017831,
+          "selected": 0.34546855682800237,
+          "percent": 0.00016005135439201013,
+          "lower": 20,
+          "higher": 13,
+          "equal": 7
+        },
+        "disp_3d_rms_m": {
+          "main": 0.6015708951649189,
+          "selected": 0.6015669073589737,
+          "percent": -0.0006628987501366979,
+          "lower": 19,
+          "higher": 14,
+          "equal": 7
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06256818248667921,
+          "selected": 0.06256865441471657,
+          "percent": 0.0007542620204192829,
+          "lower": 17,
+          "higher": 16,
+          "equal": 7
+        },
+        "roll_rms_deg": {
+          "main": 0.25225712928360716,
+          "selected": 0.2522718072441671,
+          "percent": 0.005818650438782491,
+          "lower": 14,
+          "higher": 19,
+          "equal": 7
+        },
+        "pitch_rms_deg": {
+          "main": 0.2717451573899065,
+          "selected": 0.2717373821313686,
+          "percent": -0.0028612316821274852,
+          "lower": 21,
+          "higher": 12,
+          "equal": 7
+        },
+        "yaw_rms_deg": {
+          "main": 1.0815704720656594,
+          "selected": 1.0818534916455602,
+          "percent": 0.026167465478255103,
+          "lower": 17,
+          "higher": 16,
+          "equal": 7
+        }
+      },
+      "OU_II/FixedNominal": {
+        "disp_x_rms_m": {
+          "main": 0.5574066298870708,
+          "selected": 0.557401518418657,
+          "percent": -0.0009170089015242411,
+          "lower": 31,
+          "higher": 45,
+          "equal": 14
+        },
+        "disp_y_rms_m": {
+          "main": 0.34520275089282265,
+          "selected": 0.34518997639120386,
+          "percent": -0.003700579322085673,
+          "lower": 50,
+          "higher": 26,
+          "equal": 14
+        },
+        "disp_z_rms_m": {
+          "main": 0.4877071109476965,
+          "selected": 0.4877085447603656,
+          "percent": 0.0002939905195065151,
+          "lower": 40,
+          "higher": 35,
+          "equal": 15
+        },
+        "disp_3d_rms_m": {
+          "main": 0.8171446116230852,
+          "selected": 0.8171365833570717,
+          "percent": -0.0009824779970690756,
+          "lower": 44,
+          "higher": 32,
+          "equal": 14
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06461100649619689,
+          "selected": 0.0646204617350928,
+          "percent": 0.014634099372012876,
+          "lower": 44,
+          "higher": 32,
+          "equal": 14
+        },
+        "roll_rms_deg": {
+          "main": 0.2674406212412428,
+          "selected": 0.267483691635773,
+          "percent": 0.016104656925453043,
+          "lower": 26,
+          "higher": 50,
+          "equal": 14
+        },
+        "pitch_rms_deg": {
+          "main": 0.2823526502672041,
+          "selected": 0.2823855178610234,
+          "percent": 0.011640618137720438,
+          "lower": 46,
+          "higher": 30,
+          "equal": 14
+        },
+        "yaw_rms_deg": {
+          "main": 1.1415012298800034,
+          "selected": 1.1414422976028158,
+          "percent": -0.005162699403638005,
+          "lower": 43,
+          "higher": 33,
+          "equal": 14
+        }
+      },
+      "OU_II/FixedNominal/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.5715365080631027,
+          "selected": 0.571530848220901,
+          "percent": -0.0009902853311816173,
+          "lower": 29,
+          "higher": 38,
+          "equal": 13
+        },
+        "disp_y_rms_m": {
+          "main": 0.35394671158250623,
+          "selected": 0.35393271794893494,
+          "percent": -0.003953598977857187,
+          "lower": 44,
+          "higher": 23,
+          "equal": 13
+        },
+        "disp_z_rms_m": {
+          "main": 0.5002074464932316,
+          "selected": 0.5002090557608054,
+          "percent": 0.00032172003538999405,
+          "lower": 33,
+          "higher": 33,
+          "equal": 14
+        },
+        "disp_3d_rms_m": {
+          "main": 0.8379377924864746,
+          "selected": 0.8379289802753978,
+          "percent": -0.001051654568617888,
+          "lower": 39,
+          "higher": 28,
+          "equal": 13
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06460176783746523,
+          "selected": 0.06461277954301246,
+          "percent": 0.017045517353242445,
+          "lower": 38,
+          "higher": 29,
+          "equal": 13
+        },
+        "roll_rms_deg": {
+          "main": 0.26805027042807406,
+          "selected": 0.2680963914338799,
+          "percent": 0.017206103068723166,
+          "lower": 23,
+          "higher": 44,
+          "equal": 13
+        },
+        "pitch_rms_deg": {
+          "main": 0.28227461819742455,
+          "selected": 0.2823166567183492,
+          "percent": 0.014892773991914687,
+          "lower": 40,
+          "higher": 27,
+          "equal": 13
+        },
+        "yaw_rms_deg": {
+          "main": 1.1396997114891627,
+          "selected": 1.1397624741279697,
+          "percent": 0.005506945221989135,
+          "lower": 38,
+          "higher": 29,
+          "equal": 13
+        }
+      },
+      "OU_II/FixedNominalHeldCovariance": {
+        "disp_x_rms_m": {
+          "main": 0.5550611393359379,
+          "selected": 0.5550550784131444,
+          "percent": -0.0010919378720664064,
+          "lower": 19,
+          "higher": 23,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.34474725966472436,
+          "selected": 0.34473788551688594,
+          "percent": -0.0027191362877099223,
+          "lower": 25,
+          "higher": 17,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.48498428173297703,
+          "selected": 0.4849854994447202,
+          "percent": 0.0002510827235013835,
+          "lower": 22,
+          "higher": 18,
+          "equal": 10
+        },
+        "disp_3d_rms_m": {
+          "main": 0.8137280196384923,
+          "selected": 0.8137206444256608,
+          "percent": -0.0009063486390403774,
+          "lower": 25,
+          "higher": 17,
+          "equal": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06458338186248916,
+          "selected": 0.06458903402883297,
+          "percent": 0.008751734859346882,
+          "lower": 24,
+          "higher": 18,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.2664763740850074,
+          "selected": 0.26651215882189805,
+          "percent": 0.013428859130004689,
+          "lower": 15,
+          "higher": 27,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.283037567308947,
+          "selected": 0.28304737026683835,
+          "percent": 0.0034634829519486487,
+          "lower": 26,
+          "higher": 16,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 1.1393560659308983,
+          "selected": 1.139023114770258,
+          "percent": -0.02922274876100417,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        }
+      },
+      "OU_II/FixedNominalHeldCovariance/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.5825331058015186,
+          "selected": 0.582525832479076,
+          "percent": -0.0012485680848439706,
+          "lower": 16,
+          "higher": 17,
+          "equal": 7
+        },
+        "disp_y_rms_m": {
+          "main": 0.3619374427560961,
+          "selected": 0.3619263758146753,
+          "percent": -0.003057694538732836,
+          "lower": 19,
+          "higher": 14,
+          "equal": 7
+        },
+        "disp_z_rms_m": {
+          "main": 0.5091461799447305,
+          "selected": 0.509147694802629,
+          "percent": 0.0002975290708473466,
+          "lower": 17,
+          "higher": 15,
+          "equal": 8
+        },
+        "disp_3d_rms_m": {
+          "main": 0.8541506655667079,
+          "selected": 0.8541419234607331,
+          "percent": -0.001023485238282884,
+          "lower": 20,
+          "higher": 13,
+          "equal": 7
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06455217135161258,
+          "selected": 0.06456002553467284,
+          "percent": 0.012167186472300529,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "roll_rms_deg": {
+          "main": 0.26745551719795746,
+          "selected": 0.2674958845892958,
+          "percent": 0.01509312343273006,
+          "lower": 12,
+          "higher": 21,
+          "equal": 7
+        },
+        "pitch_rms_deg": {
+          "main": 0.2830148371474646,
+          "selected": 0.2830373619141796,
+          "percent": 0.007958864256729647,
+          "lower": 20,
+          "higher": 13,
+          "equal": 7
+        },
+        "yaw_rms_deg": {
+          "main": 1.134799476610058,
+          "selected": 1.1346433551659774,
+          "percent": -0.013757623906118788,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        }
+      },
+      "OU_II/FixedOracle": {
+        "disp_x_rms_m": {
+          "main": 0.40798283327095836,
+          "selected": 0.4079804662338009,
+          "percent": -0.0005801805773253399,
+          "lower": 33,
+          "higher": 43,
+          "equal": 14
+        },
+        "disp_y_rms_m": {
+          "main": 0.2706136868904293,
+          "selected": 0.2706093980680981,
+          "percent": -0.0015848504857585155,
+          "lower": 45,
+          "higher": 30,
+          "equal": 15
+        },
+        "disp_z_rms_m": {
+          "main": 0.3417950182261701,
+          "selected": 0.3417950272685146,
+          "percent": 2.645546004487187e-06,
+          "lower": 45,
+          "higher": 30,
+          "equal": 15
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5970808997491854,
+          "selected": 0.5970773442985228,
+          "percent": -0.0005954721821077591,
+          "lower": 39,
+          "higher": 37,
+          "equal": 14
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.0633656862952146,
+          "selected": 0.06336286082046023,
+          "percent": -0.004458998110101753,
+          "lower": 50,
+          "higher": 26,
+          "equal": 14
+        },
+        "roll_rms_deg": {
+          "main": 0.2548753346290283,
+          "selected": 0.2548923080137952,
+          "percent": 0.006659485034754553,
+          "lower": 28,
+          "higher": 48,
+          "equal": 14
+        },
+        "pitch_rms_deg": {
+          "main": 0.27577980864167184,
+          "selected": 0.27574331915719646,
+          "percent": -0.013231383637224425,
+          "lower": 50,
+          "higher": 26,
+          "equal": 14
+        },
+        "yaw_rms_deg": {
+          "main": 1.0981331195900996,
+          "selected": 1.0979790845626596,
+          "percent": -0.014026990416016183,
+          "lower": 39,
+          "higher": 37,
+          "equal": 14
+        }
+      },
+      "OU_II/FixedOracle/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.41439344041959125,
+          "selected": 0.414390766626937,
+          "percent": -0.000645230448514944,
+          "lower": 30,
+          "higher": 37,
+          "equal": 13
+        },
+        "disp_y_rms_m": {
+          "main": 0.2741188040107592,
+          "selected": 0.27411416660975124,
+          "percent": -0.001691748592258513,
+          "lower": 41,
+          "higher": 25,
+          "equal": 14
+        },
+        "disp_z_rms_m": {
+          "main": 0.3457099913624857,
+          "selected": 0.3457100045896686,
+          "percent": 3.826092176417717e-06,
+          "lower": 40,
+          "higher": 26,
+          "equal": 14
+        },
+        "disp_3d_rms_m": {
+          "main": 0.6052920353926806,
+          "selected": 0.6052881117625026,
+          "percent": -0.0006482210154090673,
+          "lower": 36,
+          "higher": 31,
+          "equal": 13
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06293694894781138,
+          "selected": 0.06293403542513216,
+          "percent": -0.00462927219688769,
+          "lower": 43,
+          "higher": 24,
+          "equal": 13
+        },
+        "roll_rms_deg": {
+          "main": 0.25299225465666875,
+          "selected": 0.25300941972779145,
+          "percent": 0.006784820802518965,
+          "lower": 24,
+          "higher": 43,
+          "equal": 13
+        },
+        "pitch_rms_deg": {
+          "main": 0.27395719109839656,
+          "selected": 0.27392031106619974,
+          "percent": -0.0134619690211224,
+          "lower": 45,
+          "higher": 22,
+          "equal": 13
+        },
+        "yaw_rms_deg": {
+          "main": 1.087106082632995,
+          "selected": 1.0871239558422539,
+          "percent": 0.0016441090289420757,
+          "lower": 33,
+          "higher": 34,
+          "equal": 13
         }
       },
       "OU_III/Adaptive": {
         "disp_x_rms_m": {
-          "main": 0.26759561878326493,
-          "selected": 0.26759552889634364,
-          "percent": -3.35905803283687e-05,
-          "lower": 14,
-          "higher": 16,
-          "equal": 10
+          "main": 0.35752138170836006,
+          "selected": 0.357524171347741,
+          "percent": 0.0007802720406901997,
+          "lower": 37,
+          "higher": 39,
+          "equal": 14
         },
         "disp_y_rms_m": {
-          "main": 0.17781570068404806,
-          "selected": 0.17781506691555854,
-          "percent": -0.00035641874540637275,
-          "lower": 20,
-          "higher": 10,
-          "equal": 10
+          "main": 0.2709821858693104,
+          "selected": 0.2709722441212131,
+          "percent": -0.0036687829000126015,
+          "lower": 53,
+          "higher": 23,
+          "equal": 14
         },
         "disp_z_rms_m": {
-          "main": 0.17404575217519982,
-          "selected": 0.1740455688187273,
-          "percent": -0.00010534958206909195,
-          "lower": 21,
-          "higher": 9,
-          "equal": 10
+          "main": 0.2354971297605674,
+          "selected": 0.23549736648432062,
+          "percent": 0.00010052086556466833,
+          "lower": 36,
+          "higher": 38,
+          "equal": 16
         },
         "disp_3d_rms_m": {
-          "main": 0.3654008256656349,
-          "selected": 0.3654003657416711,
-          "percent": -0.00012586834279293413,
-          "lower": 21,
-          "higher": 9,
-          "equal": 10
+          "main": 0.5066673287789658,
+          "selected": 0.5066640946553345,
+          "percent": -0.0006383130404574722,
+          "lower": 49,
+          "higher": 27,
+          "equal": 14
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.0506477701239203,
-          "selected": 0.050641711214795444,
-          "percent": -0.011962834908685327,
-          "lower": 20,
-          "higher": 10,
-          "equal": 10
+          "main": 0.054026889187904124,
+          "selected": 0.054034214058413854,
+          "percent": 0.013557823927734525,
+          "lower": 41,
+          "higher": 35,
+          "equal": 14
         },
         "roll_rms_deg": {
-          "main": 0.23219587809373465,
-          "selected": 0.23219160954339524,
-          "percent": -0.0018383402730748344,
-          "lower": 14,
-          "higher": 16,
-          "equal": 10
+          "main": 0.23460048222458646,
+          "selected": 0.23463117163313607,
+          "percent": 0.013081562432692984,
+          "lower": 32,
+          "higher": 44,
+          "equal": 14
         },
         "pitch_rms_deg": {
-          "main": 0.19071178298341415,
-          "selected": 0.1906623171487998,
-          "percent": -0.02593748212119662,
+          "main": 0.22045006069029124,
+          "selected": 0.22047945875725897,
+          "percent": 0.01333547692192738,
+          "lower": 44,
+          "higher": 32,
+          "equal": 14
+        },
+        "yaw_rms_deg": {
+          "main": 0.9397021499522025,
+          "selected": 0.939655504493466,
+          "percent": -0.0049638557003239825,
+          "lower": 46,
+          "higher": 30,
+          "equal": 14
+        }
+      },
+      "OU_III/Adaptive/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.3555102125842092,
+          "selected": 0.3555134599583766,
+          "percent": 0.0009134404729937984,
+          "lower": 31,
+          "higher": 36,
+          "equal": 13
+        },
+        "disp_y_rms_m": {
+          "main": 0.27339500416151485,
+          "selected": 0.2733840425888386,
+          "percent": -0.004009426840068109,
+          "lower": 47,
+          "higher": 20,
+          "equal": 13
+        },
+        "disp_z_rms_m": {
+          "main": 0.2346167216302316,
+          "selected": 0.2346169673673337,
+          "percent": 0.00010473980729397425,
+          "lower": 33,
+          "higher": 32,
+          "equal": 15
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5061396505649594,
+          "selected": 0.5061361294280444,
+          "percent": -0.0006956848591088693,
+          "lower": 42,
+          "higher": 25,
+          "equal": 13
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.05429002799477187,
+          "selected": 0.05429926247582288,
+          "percent": 0.017009534516909675,
+          "lower": 35,
+          "higher": 32,
+          "equal": 13
+        },
+        "roll_rms_deg": {
+          "main": 0.23526528057488863,
+          "selected": 0.23530032006166393,
+          "percent": 0.014893607203614323,
+          "lower": 28,
+          "higher": 39,
+          "equal": 13
+        },
+        "pitch_rms_deg": {
+          "main": 0.22183248359448782,
+          "selected": 0.2218732341461729,
+          "percent": 0.018369965942222066,
+          "lower": 38,
+          "higher": 29,
+          "equal": 13
+        },
+        "yaw_rms_deg": {
+          "main": 0.9397226303191323,
+          "selected": 0.9397887659156381,
+          "percent": 0.007037778422280816,
+          "lower": 39,
+          "higher": 28,
+          "equal": 13
+        }
+      },
+      "OU_III/AdaptiveHeldCovariance": {
+        "disp_x_rms_m": {
+          "main": 0.36110038575317743,
+          "selected": 0.361102397086856,
+          "percent": 0.0005570012544753311,
           "lower": 19,
+          "higher": 23,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.270399773980658,
+          "selected": 0.2703946020842991,
+          "percent": -0.001912685163441008,
+          "lower": 27,
+          "higher": 15,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.23813480726659517,
+          "selected": 0.23813497974923603,
+          "percent": 7.243067188245078e-05,
+          "lower": 25,
+          "higher": 17,
+          "equal": 8
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5101153871834255,
+          "selected": 0.5101141508385583,
+          "percent": -0.00024236572711000548,
+          "lower": 27,
+          "higher": 15,
+          "equal": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.0571308359650525,
+          "selected": 0.057134875855587006,
+          "percent": 0.007071296028260399,
+          "lower": 25,
+          "higher": 17,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.2571731231289572,
+          "selected": 0.2571884214511735,
+          "percent": 0.005948647366471604,
+          "lower": 17,
+          "higher": 25,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.22192441058016327,
+          "selected": 0.22194214402185475,
+          "percent": 0.00799075759405632,
+          "lower": 26,
+          "higher": 16,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 0.9479831488085355,
+          "selected": 0.947839226414381,
+          "percent": -0.015181957014254177,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        }
+      },
+      "OU_III/AdaptiveHeldCovariance/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.35781624719858723,
+          "selected": 0.3578186813378453,
+          "percent": 0.000680276336550989,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        },
+        "disp_y_rms_m": {
+          "main": 0.2753310579634962,
+          "selected": 0.2753248938560196,
+          "percent": -0.002238798456744018,
+          "lower": 22,
           "higher": 11,
-          "equal": 10
+          "equal": 7
         },
-        "yaw_rms_deg": {
-          "main": 1.9404281353815958,
-          "selected": 1.940228191928838,
-          "percent": -0.010304089551782525,
+        "disp_z_rms_m": {
+          "main": 0.23713036302536178,
+          "selected": 0.2371306405730943,
+          "percent": 0.00011704436706505561,
           "lower": 20,
-          "higher": 10,
-          "equal": 10
-        }
-      },
-      "OU_III/Adaptive/low_motion": {
-        "disp_x_rms_m": {
-          "main": 0.020458612499993405,
-          "selected": 0.02045878044907826,
-          "percent": 0.0008209211883380974,
-          "lower": 3,
-          "higher": 9,
-          "equal": 8
-        },
-        "disp_y_rms_m": {
-          "main": 0.015391264150027959,
-          "selected": 0.01539093915918569,
-          "percent": -0.0021115279362438066,
-          "lower": 11,
-          "higher": 1,
-          "equal": 8
-        },
-        "disp_z_rms_m": {
-          "main": 0.018486080551037773,
-          "selected": 0.01848604338169072,
-          "percent": -0.00020106667256714061,
-          "lower": 8,
-          "higher": 4,
-          "equal": 8
+          "higher": 13,
+          "equal": 7
         },
         "disp_3d_rms_m": {
-          "main": 0.031578173096007064,
-          "selected": 0.03157810135202955,
-          "percent": -0.00022719483263600182,
-          "lower": 7,
-          "higher": 5,
-          "equal": 8
+          "main": 0.5099710408631815,
+          "selected": 0.5099695500665407,
+          "percent": -0.00029232966607395383,
+          "lower": 21,
+          "higher": 12,
+          "equal": 7
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.044633392941118816,
-          "selected": 0.044631194170909994,
-          "percent": -0.004926289631901337,
-          "lower": 8,
-          "higher": 4,
-          "equal": 8
+          "main": 0.05755158744903777,
+          "selected": 0.057558771460897176,
+          "percent": 0.012482734495855574,
+          "lower": 19,
+          "higher": 14,
+          "equal": 7
         },
         "roll_rms_deg": {
-          "main": 0.20622281690814728,
-          "selected": 0.20622789859896049,
-          "percent": 0.0024641748616271997,
-          "lower": 5,
-          "higher": 7,
-          "equal": 8
-        },
-        "pitch_rms_deg": {
-          "main": 0.16321752160165404,
-          "selected": 0.16319186418245663,
-          "percent": -0.015719770123723276,
-          "lower": 9,
-          "higher": 3,
-          "equal": 8
-        },
-        "yaw_rms_deg": {
-          "main": 2.559406371518199,
-          "selected": 2.5595150110714076,
-          "percent": 0.004244716838153195,
-          "lower": 6,
-          "higher": 6,
-          "equal": 8
-        }
-      },
-      "OU_III/Adaptive/transition_rate": {
-        "disp_x_rms_m": {
-          "main": 0.3778839445631052,
-          "selected": 0.37788380816484346,
-          "percent": -3.609527837733495e-05,
-          "lower": 11,
-          "higher": 7,
-          "equal": 2
-        },
-        "disp_y_rms_m": {
-          "main": 0.25099791992640497,
-          "selected": 0.2509970418872847,
-          "percent": -0.0003498192815754031,
-          "lower": 9,
-          "higher": 9,
-          "equal": 2
-        },
-        "disp_z_rms_m": {
-          "main": 0.24544268684628331,
-          "selected": 0.24544242960612764,
-          "percent": -0.00010480660841416523,
+          "main": 0.2579260963074656,
+          "selected": 0.2579478440329667,
+          "percent": 0.00843176623555042,
           "lower": 13,
-          "higher": 5,
-          "equal": 2
-        },
-        "disp_3d_rms_m": {
-          "main": 0.5157890516268973,
-          "selected": 0.5157884043707216,
-          "percent": -0.00012548854489979888,
-          "lower": 14,
-          "higher": 4,
-          "equal": 2
-        },
-        "accel_bias_3d_rms_mps2": {
-          "main": 0.056020116669055875,
-          "selected": 0.056010912654624795,
-          "percent": -0.01642983802667697,
-          "lower": 12,
-          "higher": 6,
-          "equal": 2
-        },
-        "roll_rms_deg": {
-          "main": 0.25554256278340354,
-          "selected": 0.2555307044645748,
-          "percent": -0.004640447641890422,
-          "lower": 9,
-          "higher": 9,
-          "equal": 2
+          "higher": 20,
+          "equal": 7
         },
         "pitch_rms_deg": {
-          "main": 0.2147137838603738,
-          "selected": 0.2146454141735939,
-          "percent": -0.03184224391683532,
-          "lower": 10,
-          "higher": 8,
-          "equal": 2
+          "main": 0.22459667431170852,
+          "selected": 0.2246345731412038,
+          "percent": 0.01687417216280629,
+          "lower": 21,
+          "higher": 12,
+          "equal": 7
         },
         "yaw_rms_deg": {
-          "main": 0.9899301604623625,
-          "selected": 0.9888648955297311,
-          "percent": -0.10761010980147034,
+          "main": 0.9421512202103925,
+          "selected": 0.9422502020113598,
+          "percent": 0.010505935654903098,
+          "lower": 16,
+          "higher": 17,
+          "equal": 7
+        }
+      },
+      "OU_III/AdaptiveOUOnly": {
+        "disp_x_rms_m": {
+          "main": 0.6517174230629899,
+          "selected": 0.6517387854226536,
+          "percent": 0.003277856154793035,
+          "lower": 19,
+          "higher": 23,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.5222810629472057,
+          "selected": 0.5222145429782917,
+          "percent": -0.012736431326565434,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.4642485132258183,
+          "selected": 0.46424837962258203,
+          "percent": -2.877838752857187e-05,
+          "lower": 13,
+          "higher": 27,
+          "equal": 10
+        },
+        "disp_3d_rms_m": {
+          "main": 0.9555311461405204,
+          "selected": 0.9555092988478031,
+          "percent": -0.0022864029922575746,
+          "lower": 21,
+          "higher": 20,
+          "equal": 9
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.12947300824834115,
+          "selected": 0.12945447875053068,
+          "percent": -0.014311475465944579,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.2737417621577491,
+          "selected": 0.27367796036589326,
+          "percent": -0.02330729200868964,
+          "lower": 19,
+          "higher": 23,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.7153823369863066,
+          "selected": 0.7152914743486146,
+          "percent": -0.012701269376425017,
+          "lower": 24,
+          "higher": 18,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 4.819895405894056,
+          "selected": 4.817560503277567,
+          "percent": -0.048443014212173896,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        }
+      },
+      "OU_III/AdaptiveOUOnly/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.6753416892394598,
+          "selected": 0.6753674411646979,
+          "percent": 0.0038131697847942903,
+          "lower": 13,
+          "higher": 20,
+          "equal": 7
+        },
+        "disp_y_rms_m": {
+          "main": 0.5604570062853311,
+          "selected": 0.560379480813744,
+          "percent": -0.013832545711389699,
+          "lower": 20,
+          "higher": 13,
+          "equal": 7
+        },
+        "disp_z_rms_m": {
+          "main": 0.48650479919120004,
+          "selected": 0.4865046073255877,
+          "percent": -3.9437557997068495e-05,
+          "lower": 12,
+          "higher": 19,
+          "equal": 9
+        },
+        "disp_3d_rms_m": {
+          "main": 1.0034367712689538,
+          "selected": 1.0034107142678623,
+          "percent": -0.002596775585428368,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.1407248957494214,
+          "selected": 0.1407037427735163,
+          "percent": -0.015031438319745849,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "roll_rms_deg": {
+          "main": 0.2850661017149057,
+          "selected": 0.28498933499492385,
+          "percent": -0.02692944531813568,
+          "lower": 16,
+          "higher": 17,
+          "equal": 7
+        },
+        "pitch_rms_deg": {
+          "main": 0.7811379175866892,
+          "selected": 0.7810350027804241,
+          "percent": -0.013174985357633506,
+          "lower": 20,
+          "higher": 13,
+          "equal": 7
+        },
+        "yaw_rms_deg": {
+          "main": 5.301685919366825,
+          "selected": 5.299071629572537,
+          "percent": -0.04931053695087506,
+          "lower": 16,
+          "higher": 17,
+          "equal": 7
+        }
+      },
+      "OU_III/AdaptiveRSOnly": {
+        "disp_x_rms_m": {
+          "main": 0.3754748332932341,
+          "selected": 0.3754790363794428,
+          "percent": 0.001119405572880261,
+          "lower": 18,
+          "higher": 24,
+          "equal": 8
+        },
+        "disp_y_rms_m": {
+          "main": 0.2659493478139773,
+          "selected": 0.26594228900377154,
+          "percent": -0.002654193463436094,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        },
+        "disp_z_rms_m": {
+          "main": 0.24494244757878206,
+          "selected": 0.24494242983275755,
+          "percent": -7.244977207054859e-06,
+          "lower": 23,
+          "higher": 19,
+          "equal": 8
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5212554151271241,
+          "selected": 0.5212548334215518,
+          "percent": -0.00011159703199314919,
+          "lower": 20,
+          "higher": 21,
+          "equal": 9
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.04992728516763555,
+          "selected": 0.049933639412522955,
+          "percent": 0.012726998606216178,
+          "lower": 20,
+          "higher": 22,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.21542464802290126,
+          "selected": 0.21544735362315234,
+          "percent": 0.010539926818720069,
           "lower": 14,
-          "higher": 4,
-          "equal": 2
+          "higher": 28,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.20665261221375134,
+          "selected": 0.2066804054413923,
+          "percent": 0.013449250577202143,
+          "lower": 20,
+          "higher": 22,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 0.9057665790421663,
+          "selected": 0.9068468387621209,
+          "percent": 0.11926469191401168,
+          "lower": 17,
+          "higher": 25,
+          "equal": 8
+        }
+      },
+      "OU_III/AdaptiveRSOnly/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.372305552825178,
+          "selected": 0.37231078998478223,
+          "percent": 0.0014066831838688287,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        },
+        "disp_y_rms_m": {
+          "main": 0.2689008246656261,
+          "selected": 0.2688921940937996,
+          "percent": -0.003209574324369857,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "disp_z_rms_m": {
+          "main": 0.24217311241236522,
+          "selected": 0.24217307550897524,
+          "percent": -1.5238434036835002e-05,
+          "lower": 19,
+          "higher": 14,
+          "equal": 7
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5191983183179807,
+          "selected": 0.5191975878004267,
+          "percent": -0.0001407010632004102,
+          "lower": 16,
+          "higher": 17,
+          "equal": 7
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.05104354010748279,
+          "selected": 0.05105143357983401,
+          "percent": 0.015464194557424094,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        },
+        "roll_rms_deg": {
+          "main": 0.21833765474429978,
+          "selected": 0.21835976582441263,
+          "percent": 0.010127011824301313,
+          "lower": 12,
+          "higher": 21,
+          "equal": 7
+        },
+        "pitch_rms_deg": {
+          "main": 0.21242125865003986,
+          "selected": 0.21246237773573107,
+          "percent": 0.0193573307834205,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        },
+        "yaw_rms_deg": {
+          "main": 0.9122666245412743,
+          "selected": 0.9134669827742916,
+          "percent": 0.1315797597682522,
+          "lower": 13,
+          "higher": 20,
+          "equal": 7
         }
       },
       "OU_III/FixedNominal": {
         "disp_x_rms_m": {
-          "main": 0.585156889556044,
-          "selected": 0.5851567426274341,
-          "percent": -2.5109267698386617e-05,
-          "lower": 8,
-          "higher": 9,
-          "equal": 3
+          "main": 0.6891755543020176,
+          "selected": 0.6891981307815392,
+          "percent": 0.003275867720597958,
+          "lower": 34,
+          "higher": 41,
+          "equal": 15
         },
         "disp_y_rms_m": {
-          "main": 0.3651371819882354,
-          "selected": 0.36513751615431383,
-          "percent": 9.151795403727903e-05,
-          "lower": 4,
-          "higher": 13,
-          "equal": 3
+          "main": 0.6289609111129425,
+          "selected": 0.6288626926819075,
+          "percent": -0.01561598333053027,
+          "lower": 41,
+          "higher": 35,
+          "equal": 14
         },
         "disp_z_rms_m": {
-          "main": 0.40426917141940294,
-          "selected": 0.40426919314361515,
-          "percent": 5.373699929478448e-06,
-          "lower": 8,
-          "higher": 10,
-          "equal": 2
+          "main": 0.5141217376849029,
+          "selected": 0.5141211149165688,
+          "percent": -0.00012113246503631103,
+          "lower": 39,
+          "higher": 37,
+          "equal": 14
         },
         "disp_3d_rms_m": {
-          "main": 0.7994793935248916,
-          "selected": 0.7994794502794956,
-          "percent": 7.098945187244965e-06,
-          "lower": 6,
-          "higher": 12,
-          "equal": 2
+          "main": 1.065305556355571,
+          "selected": 1.065261877519436,
+          "percent": -0.004100122812111806,
+          "lower": 42,
+          "higher": 33,
+          "equal": 15
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.08006350718512818,
-          "selected": 0.0800636664034097,
-          "percent": 0.00019886498494603444,
-          "lower": 8,
-          "higher": 10,
-          "equal": 2
+          "main": 0.1485405428574775,
+          "selected": 0.14851221925381283,
+          "percent": -0.019067927933891227,
+          "lower": 39,
+          "higher": 37,
+          "equal": 14
         },
         "roll_rms_deg": {
-          "main": 0.2147671770359093,
-          "selected": 0.21478141143235338,
-          "percent": 0.006627826765948086,
-          "lower": 2,
-          "higher": 16,
-          "equal": 2
+          "main": 0.3009512551337285,
+          "selected": 0.30081984048548127,
+          "percent": -0.04366642305208002,
+          "lower": 24,
+          "higher": 52,
+          "equal": 14
         },
         "pitch_rms_deg": {
-          "main": 0.4313316665443055,
-          "selected": 0.4313251386058258,
-          "percent": -0.0015134382624903964,
-          "lower": 9,
-          "higher": 9,
-          "equal": 2
+          "main": 0.8253914863126253,
+          "selected": 0.8252627676894718,
+          "percent": -0.015594857142087193,
+          "lower": 44,
+          "higher": 32,
+          "equal": 14
         },
         "yaw_rms_deg": {
-          "main": 2.8492907390491324,
-          "selected": 2.8493151862162334,
-          "percent": 0.0008580088639575933,
-          "lower": 11,
-          "higher": 7,
-          "equal": 2
+          "main": 6.831830116591345,
+          "selected": 6.828457615203208,
+          "percent": -0.04936453820691966,
+          "lower": 35,
+          "higher": 41,
+          "equal": 14
         }
       },
-      "OU_III/FixedNominal/transition_rate": {
+      "OU_III/FixedNominal/stationary": {
         "disp_x_rms_m": {
-          "main": 0.585156889556044,
-          "selected": 0.5851567426274341,
-          "percent": -2.5109267698386617e-05,
-          "lower": 8,
-          "higher": 9,
-          "equal": 3
+          "main": 0.7015275398693835,
+          "selected": 0.701552523570002,
+          "percent": 0.0035613285578328657,
+          "lower": 28,
+          "higher": 39,
+          "equal": 13
         },
         "disp_y_rms_m": {
-          "main": 0.3651371819882354,
-          "selected": 0.36513751615431383,
-          "percent": 9.151795403727903e-05,
-          "lower": 4,
-          "higher": 13,
-          "equal": 3
+          "main": 0.6547126381772838,
+          "selected": 0.6546064906150975,
+          "percent": -0.01621284759093511,
+          "lower": 38,
+          "higher": 29,
+          "equal": 13
         },
         "disp_z_rms_m": {
-          "main": 0.40426917141940294,
-          "selected": 0.40426919314361515,
-          "percent": 5.373699929478448e-06,
-          "lower": 8,
-          "higher": 10,
+          "main": 0.5265726351390847,
+          "selected": 0.526571939658112,
+          "percent": -0.00013207693038141954,
+          "lower": 38,
+          "higher": 29,
+          "equal": 13
+        },
+        "disp_3d_rms_m": {
+          "main": 1.094563046883459,
+          "selected": 1.0945152381345693,
+          "percent": -0.004367838748609021,
+          "lower": 37,
+          "higher": 29,
+          "equal": 14
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.15505293846511564,
+          "selected": 0.15502240373751408,
+          "percent": -0.01969309830811561,
+          "lower": 35,
+          "higher": 32,
+          "equal": 13
+        },
+        "roll_rms_deg": {
+          "main": 0.3102227103639883,
+          "selected": 0.3100779464609641,
+          "percent": -0.04666450849273307,
+          "lower": 23,
+          "higher": 44,
+          "equal": 13
+        },
+        "pitch_rms_deg": {
+          "main": 0.8624258575627882,
+          "selected": 0.8622877223216223,
+          "percent": -0.01601705699737499,
+          "lower": 40,
+          "higher": 27,
+          "equal": 13
+        },
+        "yaw_rms_deg": {
+          "main": 7.177723491742626,
+          "selected": 7.174111022912859,
+          "percent": -0.050328893749140846,
+          "lower": 29,
+          "higher": 38,
+          "equal": 13
+        }
+      },
+      "OU_III/FixedNominalHeldCovariance": {
+        "disp_x_rms_m": {
+          "main": 0.6953838316572944,
+          "selected": 0.6953978399173016,
+          "percent": 0.002014464439570318,
+          "lower": 19,
+          "higher": 22,
+          "equal": 9
+        },
+        "disp_y_rms_m": {
+          "main": 0.6154830308702215,
+          "selected": 0.6154151706525797,
+          "percent": -0.011025522108365493,
+          "lower": 20,
+          "higher": 21,
+          "equal": 9
+        },
+        "disp_z_rms_m": {
+          "main": 0.51381512233021,
+          "selected": 0.51381481863295,
+          "percent": -5.910632965289153e-05,
+          "lower": 18,
+          "higher": 22,
+          "equal": 10
+        },
+        "disp_3d_rms_m": {
+          "main": 1.061312409145669,
+          "selected": 1.0612820829525693,
+          "percent": -0.00285742377440501,
+          "lower": 22,
+          "higher": 20,
+          "equal": 8
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.14506824995414858,
+          "selected": 0.14504776736726538,
+          "percent": -0.014119276195634356,
+          "lower": 22,
+          "higher": 20,
+          "equal": 8
+        },
+        "roll_rms_deg": {
+          "main": 0.29517487664767916,
+          "selected": 0.29507050795656126,
+          "percent": -0.03535825687579486,
+          "lower": 14,
+          "higher": 28,
+          "equal": 8
+        },
+        "pitch_rms_deg": {
+          "main": 0.806933905311766,
+          "selected": 0.8068436221542225,
+          "percent": -0.011188420383534403,
+          "lower": 25,
+          "higher": 17,
+          "equal": 8
+        },
+        "yaw_rms_deg": {
+          "main": 6.694649848003929,
+          "selected": 6.692183714641876,
+          "percent": -0.036837376383291875,
+          "lower": 21,
+          "higher": 21,
+          "equal": 8
+        }
+      },
+      "OU_III/FixedNominalHeldCovariance/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.7211267390304337,
+          "selected": 0.7211436655450006,
+          "percent": 0.0023472315823003242,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        },
+        "disp_y_rms_m": {
+          "main": 0.6638721176121904,
+          "selected": 0.6637934627230302,
+          "percent": -0.011847897670891339,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "disp_z_rms_m": {
+          "main": 0.5383345700047212,
+          "selected": 0.5383341868574126,
+          "percent": -7.117271115797408e-05,
+          "lower": 15,
+          "higher": 16,
+          "equal": 9
+        },
+        "disp_3d_rms_m": {
+          "main": 1.1182817592667633,
+          "selected": 1.1182457918942839,
+          "percent": -0.0032163068190427246,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.15731584677256596,
+          "selected": 0.15729221784983646,
+          "percent": -0.015020052470404721,
+          "lower": 18,
+          "higher": 15,
+          "equal": 7
+        },
+        "roll_rms_deg": {
+          "main": 0.3124550894725099,
+          "selected": 0.31232936769539116,
+          "percent": -0.04023675124991133,
+          "lower": 13,
+          "higher": 20,
+          "equal": 7
+        },
+        "pitch_rms_deg": {
+          "main": 0.8767786010038889,
+          "selected": 0.8766755401056866,
+          "percent": -0.011754495158111666,
+          "lower": 21,
+          "higher": 12,
+          "equal": 7
+        },
+        "yaw_rms_deg": {
+          "main": 7.351937304602519,
+          "selected": 7.349127806339326,
+          "percent": -0.038214393659663504,
+          "lower": 15,
+          "higher": 18,
+          "equal": 7
+        }
+      },
+      "OU_III/FixedOracle": {
+        "disp_x_rms_m": {
+          "main": 0.37642275605172376,
+          "selected": 0.3764300154845902,
+          "percent": 0.0019285318832995557,
+          "lower": 32,
+          "higher": 44,
+          "equal": 14
+        },
+        "disp_y_rms_m": {
+          "main": 0.26787480029512123,
+          "selected": 0.2678630731056493,
+          "percent": -0.004377862142701527,
+          "lower": 54,
+          "higher": 22,
+          "equal": 14
+        },
+        "disp_z_rms_m": {
+          "main": 0.24509962639846727,
+          "selected": 0.24509994088835949,
+          "percent": 0.00012831104512223135,
+          "lower": 40,
+          "higher": 36,
+          "equal": 14
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5229960095859842,
+          "selected": 0.5229953751850076,
+          "percent": -0.00012130130345733292,
+          "lower": 45,
+          "higher": 31,
+          "equal": 14
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.05573475450063168,
+          "selected": 0.05573364906004108,
+          "percent": -0.001983395460347648,
+          "lower": 43,
+          "higher": 33,
+          "equal": 14
+        },
+        "roll_rms_deg": {
+          "main": 0.2405683327495054,
+          "selected": 0.24058745151432545,
+          "percent": 0.007947332303270827,
+          "lower": 26,
+          "higher": 50,
+          "equal": 14
+        },
+        "pitch_rms_deg": {
+          "main": 0.22900415260503687,
+          "selected": 0.22897501782770188,
+          "percent": -0.012722379486818092,
+          "lower": 47,
+          "higher": 29,
+          "equal": 14
+        },
+        "yaw_rms_deg": {
+          "main": 0.9627233547254078,
+          "selected": 0.9622473454010346,
+          "percent": -0.049444040391954935,
+          "lower": 38,
+          "higher": 38,
+          "equal": 14
+        }
+      },
+      "OU_III/FixedOracle/stationary": {
+        "disp_x_rms_m": {
+          "main": 0.3773380753285266,
+          "selected": 0.37734630626422166,
+          "percent": 0.0021813159692074535,
+          "lower": 26,
+          "higher": 41,
+          "equal": 13
+        },
+        "disp_y_rms_m": {
+          "main": 0.2676131484436442,
+          "selected": 0.26760028770727085,
+          "percent": -0.004805719168943234,
+          "lower": 46,
+          "higher": 21,
+          "equal": 13
+        },
+        "disp_z_rms_m": {
+          "main": 0.24501203163091037,
+          "selected": 0.2450123940112984,
+          "percent": 0.000147903099123603,
+          "lower": 33,
+          "higher": 34,
+          "equal": 13
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5234803865196994,
+          "selected": 0.5234799145080811,
+          "percent": -9.016796627125956e-05,
+          "lower": 39,
+          "higher": 28,
+          "equal": 13
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.05405801813104216,
+          "selected": 0.054058242386876204,
+          "percent": 0.00041484287029991407,
+          "lower": 37,
+          "higher": 30,
+          "equal": 13
+        },
+        "roll_rms_deg": {
+          "main": 0.23314063752085448,
+          "selected": 0.2331615051493368,
+          "percent": 0.008950661156381656,
+          "lower": 22,
+          "higher": 45,
+          "equal": 13
+        },
+        "pitch_rms_deg": {
+          "main": 0.22265940554666686,
+          "selected": 0.2226396491217314,
+          "percent": -0.008872935273918081,
+          "lower": 41,
+          "higher": 26,
+          "equal": 13
+        },
+        "yaw_rms_deg": {
+          "main": 0.9429328059352091,
+          "selected": 0.9426610432229268,
+          "percent": -0.028821005120593934,
+          "lower": 31,
+          "higher": 36,
+          "equal": 13
+        }
+      },
+      "OU_II/Adaptive/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.33740958316919695,
+          "selected": 0.33741092186070454,
+          "percent": 0.0003967556271078365,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.22764153392996997,
+          "selected": 0.22764096502520795,
+          "percent": -0.0002499125498767185,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.293857855605359,
+          "selected": 0.2938572762391447,
+          "percent": -0.00019715866131919668,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5020142757922395,
+          "selected": 0.5020145800206016,
+          "percent": 6.060153601161744e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06497591537922168,
+          "selected": 0.06496913444844037,
+          "percent": -0.010436068105756924,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.2614541684392822,
+          "selected": 0.26145739549360564,
+          "percent": 0.001234271514083396,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.28222467865742057,
+          "selected": 0.28216842565147315,
+          "percent": -0.01993199397551937,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1655393154657019,
+          "selected": 1.1638877661949136,
+          "percent": -0.14169828927035333,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        }
+      },
+      "OU_II/AdaptiveHeldCovariance/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.33736481760072157,
+          "selected": 0.33736566768371085,
+          "percent": 0.0002519773683928861,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.22762211972714338,
+          "selected": 0.22762106855168243,
+          "percent": -0.0004618072541484608,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.29398323613464655,
+          "selected": 0.29398266635613196,
+          "percent": -0.00019381326706868762,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5020487942969166,
+          "selected": 0.5020485628565107,
+          "percent": -4.609918569098426e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06503106101826601,
+          "selected": 0.06502419014396638,
+          "percent": -0.010565526983652429,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.2615594626795614,
+          "selected": 0.2615628456593214,
+          "percent": 0.001293388404044471,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.2825457475639961,
+          "selected": 0.2824881951163169,
+          "percent": -0.020369249289853286,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1683276310348134,
+          "selected": 1.1666763725086724,
+          "percent": -0.14133522843061685,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        }
+      },
+      "OU_II/FixedNominal/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.42788727369113955,
+          "selected": 0.42788782510606566,
+          "percent": 0.00012886920457422235,
+          "lower": 2,
+          "higher": 7,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.26506273954517,
+          "selected": 0.26506249740556675,
+          "percent": -9.13518073741848e-05,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.37291301720683456,
+          "selected": 0.3729126251141537,
+          "percent": -0.0001051432003684738,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.626426287862294,
+          "selected": 0.626426336340734,
+          "percent": 7.738889773456492e-06,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06468486826343785,
+          "selected": 0.06468188642516452,
+          "percent": -0.004609792604326479,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.2625124629357773,
+          "selected": 0.2625306207301665,
+          "percent": 0.006916926604594309,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.2829761321882328,
+          "selected": 0.28293580366177645,
+          "percent": -0.014251564661826865,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1558122950592795,
+          "selected": 1.1547929205570437,
+          "percent": -0.08819550601713022,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        }
+      },
+      "OU_II/FixedNominalHeldCovariance/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.4278844056348566,
+          "selected": 0.42788470215625507,
+          "percent": 6.929941698263775e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.265063228978286,
+          "selected": 0.26506271429962674,
+          "percent": -0.00019417203255267523,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.3730005863681856,
+          "selected": 0.3730002317249941,
+          "percent": -9.507845416534266e-05,
+          "lower": 5,
+          "higher": 3,
           "equal": 2
         },
         "disp_3d_rms_m": {
-          "main": 0.7994793935248916,
-          "selected": 0.7994794502794956,
-          "percent": 7.098945187244965e-06,
+          "main": 0.6264766649857851,
+          "selected": 0.6264764434276517,
+          "percent": -3.53657439777777e-05,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06470807336916054,
+          "selected": 0.06470493795482905,
+          "percent": -0.004845476257031578,
           "lower": 6,
-          "higher": 12,
+          "higher": 3,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.262523284698627,
+          "selected": 0.26254039862600864,
+          "percent": 0.0065190131234516,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.28312846970661554,
+          "selected": 0.28308740013909206,
+          "percent": -0.014505629746819348,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1574030483845388,
+          "selected": 1.1563762822781676,
+          "percent": -0.08871292570071798,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        }
+      },
+      "OU_II/FixedOracle/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.35252594584215285,
+          "selected": 0.35252643550500035,
+          "percent": 0.0001389012222352548,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.24074251409663724,
+          "selected": 0.24074136789454698,
+          "percent": -0.00047611120727042433,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.30869293049121166,
+          "selected": 0.30869290209243855,
+          "percent": -9.19968367041335e-06,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5268043495731196,
+          "selected": 0.5268041474239384,
+          "percent": -3.837272439799477e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06669644258951592,
+          "selected": 0.06669427758843198,
+          "percent": -0.0032460518130772442,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.269466655618491,
+          "selected": 0.26948221906731634,
+          "percent": 0.005775649231876123,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.28994859070833134,
+          "selected": 0.28991500137388315,
+          "percent": -0.011584582758661366,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1826538191224454,
+          "selected": 1.1812343833061334,
+          "percent": -0.1200212431872294,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        }
+      },
+      "OU_III/Adaptive/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.37322078639129613,
+          "selected": 0.37322009081558005,
+          "percent": -0.00018637110832386838,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.2508455284089943,
+          "selected": 0.25084444546182333,
+          "percent": -0.000431718746540799,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.24242531753315089,
+          "selected": 0.24242548458505256,
+          "percent": 6.890860384523023e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5108691334147726,
+          "selected": 0.5108681740106455,
+          "percent": -0.00018779841338689707,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.0518737475079036,
+          "selected": 0.051865088034707435,
+          "percent": -0.01669336342982053,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.22921269246755957,
+          "selected": 0.2292076686074694,
+          "percent": -0.0021917896588008468,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.20906184994778007,
+          "selected": 0.20899490271579582,
+          "percent": -0.03202269184978679,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 0.9395382909450031,
+          "selected": 0.9385887319768588,
+          "percent": -0.10106655335879733,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        }
+      },
+      "OU_III/AdaptiveHeldCovariance/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.37394862737860896,
+          "selected": 0.3739490219962465,
+          "percent": 0.00010552723253010043,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.24970266904212732,
+          "selected": 0.24970185316556712,
+          "percent": -0.00032673922282233647,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.24211091649352093,
+          "selected": 0.2421106773903645,
+          "percent": -9.875769333422824e-05,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5106923644721685,
+          "selected": 0.5106921444945448,
+          "percent": -4.3074390565500664e-05,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.055415893196011166,
+          "selected": 0.055406872378934456,
+          "percent": -0.016278393356938814,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.2541389219971565,
+          "selected": 0.2541280379606099,
+          "percent": -0.004282711385195093,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.21089702607966215,
+          "selected": 0.21082886582193916,
+          "percent": -0.03231921236160895,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 0.9709606403706612,
+          "selected": 0.9698733024922731,
+          "percent": -0.11198578327263897,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        }
+      },
+      "OU_III/AdaptiveOUOnly/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.5471127934165785,
+          "selected": 0.547112876634769,
+          "percent": 1.521042671814854e-05,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.3277793770038812,
+          "selected": 0.32777964308633506,
+          "percent": 8.11773017250772e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.3617813312176767,
+          "selected": 0.36178150604317505,
+          "percent": 4.832352673567186e-05,
+          "lower": 1,
+          "higher": 8,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.7332512805883332,
+          "selected": 0.7332515631711489,
+          "percent": 3.853833239197968e-05,
+          "lower": 3,
+          "higher": 5,
           "equal": 2
         },
         "accel_bias_3d_rms_mps2": {
-          "main": 0.08006350718512818,
-          "selected": 0.0800636664034097,
-          "percent": 0.00019886498494603444,
-          "lower": 8,
-          "higher": 10,
-          "equal": 2
+          "main": 0.06784035811840179,
+          "selected": 0.06783905527758054,
+          "percent": -0.0019204509784320756,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
         },
         "roll_rms_deg": {
-          "main": 0.2147671770359093,
-          "selected": 0.21478141143235338,
-          "percent": 0.006627826765948086,
-          "lower": 2,
-          "higher": 16,
-          "equal": 2
+          "main": 0.22276003312626882,
+          "selected": 0.22276096091277192,
+          "percent": 0.0004164959441332883,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
         },
         "pitch_rms_deg": {
-          "main": 0.4313316665443055,
-          "selected": 0.4313251386058258,
-          "percent": -0.0015134382624903964,
-          "lower": 9,
-          "higher": 9,
-          "equal": 2
+          "main": 0.3437348617659709,
+          "selected": 0.34372483777900714,
+          "percent": -0.002916197359870143,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
         },
         "yaw_rms_deg": {
-          "main": 2.8492907390491324,
-          "selected": 2.8493151862162334,
-          "percent": 0.0008580088639575933,
-          "lower": 11,
-          "higher": 7,
+          "main": 1.9301461779728866,
+          "selected": 1.9297164227776633,
+          "percent": -0.022265422180334227,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        }
+      },
+      "OU_III/AdaptiveRSOnly/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.38789309548516593,
+          "selected": 0.3878933312726633,
+          "percent": 6.078672194487211e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.253800441272241,
+          "selected": 0.2538000339332468,
+          "percent": -0.00016049577855614672,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.25572005714736884,
+          "selected": 0.2557201119504945,
+          "percent": 2.143090622741539e-05,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5294038760907176,
+          "selected": 0.5294038780699672,
+          "percent": 3.7386382878423774e-07,
+          "lower": 4,
+          "higher": 4,
           "equal": 2
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.04518735524718382,
+          "selected": 0.045186792790311126,
+          "percent": -0.0012447218245448255,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.20335576943374467,
+          "selected": 0.2033810748140765,
+          "percent": 0.012443895937797045,
+          "lower": 2,
+          "higher": 7,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.1817562823342481,
+          "selected": 0.18172204641872602,
+          "percent": -0.018836166256475106,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 0.8792860180515912,
+          "selected": 0.8798683028665076,
+          "percent": 0.0662224581037485,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        }
+      },
+      "OU_III/FixedNominal/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.580981400963854,
+          "selected": 0.5809810880187101,
+          "percent": -5.386491604975063e-05,
+          "lower": 6,
+          "higher": 2,
+          "equal": 2
+        },
+        "disp_y_rms_m": {
+          "main": 0.3621289006137647,
+          "selected": 0.36212886626302576,
+          "percent": -9.4857767085621e-06,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.4008248118851166,
+          "selected": 0.40082493204022396,
+          "percent": 2.9976963444866556e-05,
+          "lower": 1,
+          "higher": 8,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.7933077881856837,
+          "selected": 0.7933076056586872,
+          "percent": -2.3008345462205426e-05,
+          "lower": 5,
+          "higher": 4,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.07904002807572585,
+          "selected": 0.07904016779320908,
+          "percent": 0.00017676800809773852,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.21269668895981245,
+          "selected": 0.21271230527594231,
+          "percent": 0.007342058875603463,
+          "lower": 1,
+          "higher": 8,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.4256912880867985,
+          "selected": 0.42568391216663803,
+          "percent": -0.0017326922976623749,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 2.8120114662584514,
+          "selected": 2.812036427751582,
+          "percent": 0.0008876739455043747,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        }
+      },
+      "OU_III/FixedNominalHeldCovariance/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.5811181219625092,
+          "selected": 0.581117916937283,
+          "percent": -3.528116203632692e-05,
+          "lower": 4,
+          "higher": 4,
+          "equal": 2
+        },
+        "disp_y_rms_m": {
+          "main": 0.3622044343660005,
+          "selected": 0.3622045233447466,
+          "percent": 2.456589087707073e-05,
+          "lower": 2,
+          "higher": 6,
+          "equal": 2
+        },
+        "disp_z_rms_m": {
+          "main": 0.40101553913454663,
+          "selected": 0.40101565091194386,
+          "percent": 2.787358253097949e-05,
+          "lower": 3,
+          "higher": 6,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.7935387681757274,
+          "selected": 0.7935387158945856,
+          "percent": -6.58835382916223e-06,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.07893594327503065,
+          "selected": 0.07893609381430017,
+          "percent": 0.00019071067409726083,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.21243424222748658,
+          "selected": 0.2124487882495548,
+          "percent": 0.006847305743029608,
+          "lower": 1,
+          "higher": 8,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.425145595055557,
+          "selected": 0.425138968545979,
+          "percent": -0.0015586447690063565,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 2.8085146276404833,
+          "selected": 2.80853988701429,
+          "percent": 0.0008993855171057774,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        }
+      },
+      "OU_III/FixedOracle/nonstationary": {
+        "disp_x_rms_m": {
+          "main": 0.36901847747922506,
+          "selected": 0.3690177911829526,
+          "percent": -0.00018597883693072248,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "disp_y_rms_m": {
+          "main": 0.2699588856455742,
+          "selected": 0.26995614746530344,
+          "percent": -0.0010142952932223892,
+          "lower": 8,
+          "higher": 1,
+          "equal": 1
+        },
+        "disp_z_rms_m": {
+          "main": 0.245799260769361,
+          "selected": 0.24579919336343203,
+          "percent": -2.7423161796935602e-05,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
+        },
+        "disp_3d_rms_m": {
+          "main": 0.5191047233644235,
+          "selected": 0.5191027788762638,
+          "percent": -0.0003745849483149932,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "accel_bias_3d_rms_mps2": {
+          "main": 0.06766912988329676,
+          "selected": 0.06765950175891255,
+          "percent": -0.014228237308233638,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "roll_rms_deg": {
+          "main": 0.29329447589043856,
+          "selected": 0.29330290923785146,
+          "percent": 0.0028753856980534565,
+          "lower": 4,
+          "higher": 5,
+          "equal": 1
+        },
+        "pitch_rms_deg": {
+          "main": 0.2745331130592422,
+          "selected": 0.27444256633107433,
+          "percent": -0.03298207897723948,
+          "lower": 6,
+          "higher": 3,
+          "equal": 1
+        },
+        "yaw_rms_deg": {
+          "main": 1.1083988936898648,
+          "selected": 1.1065264769995118,
+          "percent": -0.1689298591881161,
+          "lower": 7,
+          "higher": 2,
+          "equal": 1
         }
       }
     }
