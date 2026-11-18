@@ -181,6 +181,29 @@ normal OU-III simulator. Source-anchored temporary headers select experimental
 handover or refinement interventions. Every policy consumes the same full
 1,200 s input. The receipt includes input, executable and source hashes.
 The optional `--seed` argument selects an independent sensor realization.
+
+The archived bias-prior experiment used estimator commit `c3481ce`. Its analysis
+driver was published in `abfd578`. To reproduce the archived scores, prepare a
+separate worktree with those two recorded inputs, then run the policy set
+from the bias-prior receipt.
+Run the following from the repository root and set `replay` to a new directory.
+
+```sh
+replay=/tmp/ocean-imu-bias-prior-replay
+git worktree add --detach "$replay" c3481cef635faee2d77efb5e4beba85a903e37e1
+git -C "$replay" restore --source=abfd57856fc008556bf64e004d82f4b99f5e90f7 --worktree -- \
+  tools/startup_live_retention.py tools/startup_handover_components.py tools/startup_source_snapshot.py
+cd "$replay"
+python3 tools/sim_dataset.py --case all --dest tests/startup_learning/data
+python3 tools/startup_live_retention.py --study bias_prior --data tests/startup_learning/data \
+  --output /tmp/startup-bias-prior-scores \
+  --policies bias_prior bias_prior_early bias_prior_tilt bias_prior_tilt_early deployed
+```
+
+The receipt records the SHA-256 values for the estimator files and the analysis
+driver. The component runner writes matched production logs under
+`production-controls/` and instrumented logs alongside `records.csv`.
+
 The shared source snapshot is captured before compilation and checked after
 compilation and before writing the results; changed source or HEAD rejects the
 receipt. Each completed replay log is preserved for audit.

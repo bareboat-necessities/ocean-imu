@@ -193,7 +193,7 @@ def main():
                         dst.writelines(islice(src, round(SECONDS / DT) + 2))
                 inputs[(case, file.name)] = path
 
-        def run(job, executable=binary):
+        def run(job, executable=binary, log_dir=args.output):
             (case, name), seed, (arm, mask) = job
             with tempfile.TemporaryDirectory(dir=work) as tmp:
                 env = {k: v for k, v in os.environ.items() if not k.startswith(("W3D_", "SF_", "OU_", "TFG_"))}
@@ -210,7 +210,7 @@ def main():
                 local.symlink_to(inputs[(case, name)])
                 r = subprocess.run([str(executable), "--input", name], cwd=tmp, env=env, capture_output=True, text=True)
                 log = r.stdout + r.stderr
-                (args.output / f"{case}-{seed}-{arm}-{Path(name).stem}.log").write_text(log)
+                (log_dir / f"{case}-{seed}-{arm}-{Path(name).stem}.log").write_text(log)
                 if r.returncode not in (0, 1) or not re.search(r"^QUALITY_GATE:", log, re.M):
                     raise ValueError(log[-1600:])
                 live = float(re.search(r"STARTUP live_s=([.0-9]+)", log).group(1))
@@ -263,13 +263,15 @@ def main():
         control_checks = []
         control_binary_sha256 = None
         if args.verify_controls:
+            control_logs = args.output / "production-controls"
+            control_logs.mkdir(exist_ok=True)
             control = build(work, control=True)
             sources_before_build.verify()
             control_binary_sha256 = digest(control)
             for (case, name), (arm, mask) in product(inputs, [("previous", 0), ("full", 15)]):
                 if "jonswap_H4.000" not in name:
                     continue
-                actual = run(((case, name), args.seeds[0], (arm, mask)), executable=control)
+                actual = run(((case, name), args.seeds[0], (arm, mask)), executable=control, log_dir=control_logs)
                 expected = [
                     r for r in rows if (r["case"], r["input"], r["arm"], r["seed"]) == (case, name, arm, args.seeds[0])
                 ]
@@ -281,7 +283,9 @@ def main():
                         not math.isclose(observed[k], baseline[k], abs_tol=1e-8, rel_tol=1e-6) for k in metrics
                     ):
                         raise ValueError(f"production control differs: {observed} {baseline}")
-                    control_checks.append(dict(case=case, input=name, arm=arm, start_s=baseline["start_s"]))
+                    control_checks.append(
+                        dict(case=case, input=name, seed=args.seeds[0], arm=arm, start_s=baseline["start_s"])
+                    )
         sources_before_build.verify()
         with (args.output / "records.csv").open("w") as out:
             w = csv.DictWriter(out, fieldnames=list(rows[0]), lineterminator="\n")
