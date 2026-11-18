@@ -252,8 +252,9 @@ The wrapper-level default is \texttt{StartupInitPolicy::MahonyProxy}.  From the 
 sample, the measurement-only front end runs while the navigation MEKF is untouched.
 The proxy supplies tilt to the gravity gate and to magnetic accumulation.  When tilt,
 magnetic north, and the tuning operating point are ready, the navigation estimator is
-seeded once and enters its full live configuration in one step.  It does not spend
-startup trying to estimate tilt with its translational block disabled.
+seeded once and enters its full live configuration. With a calibrated magnetometer,
+the wrapper can install the joint estimate at that same epoch. The proxy sets the
+eligibility time and supplies the fallback seed (Section~\ref{sec:streaming-handover}).
 
 This is also an exogeneity property.  The signal used to decide the magnetic reference
 is not a function of the filter that will later consume that reference.  Therefore a
@@ -935,6 +936,46 @@ remaining 72 trials both policies used the proxy in following seas between
 The \href{https://github.com/bareboat-necessities/ocean-imu/tree/1ad97346644532cb44c5f32f29aaa3ec148140ff/reports/results/startup_learning/field_steps}{paired handover records}
 contain the coverage and field-direction errors. Calibration of confidence
 bounds and false-readiness rates remains open.
+
+\paragraph{Persistence after handover}
+We matched the same OU--III runs across the early and late replay archives
+by sea direction, input record and sensor seed. Each direction contributed
+eight wave records and two sensor draws (seeds 7 and 41). Both policies went
+live at the same sample in each pair and used the same subsequent filter.
+Table~\ref{tab:paired-live-yaw} pools squared yaw errors across those
+16 runs per direction, including starts that used the proxy fallback.
+The first three windows measure elapsed time from handover.
+The final window uses simulation time, from 300 to 1200~s.
+
+\begin{table}[t]
+\centering\footnotesize
+\caption{OU--III yaw RMS in degrees on the same 32 starts throughout.}
+\label{tab:paired-live-yaw}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Following seas} & \multicolumn{2}{c}{Head seas} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-5}
+Window (s) & Proxy & Joint fit & Proxy & Joint fit \\
+\midrule
+0--1      & 3.866 & 4.089 & 5.599 & 3.347 \\
+1--10     & 3.817 & 3.880 & 4.753 & 3.438 \\
+10--60    & 4.387 & 4.223 & 2.937 & 3.013 \\
+300--1200 & 0.8091 & 0.8095 & 0.6683 & 0.6631 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+First-second tilt RMS fell in both directions, from $0.693^\circ$ to
+$0.660^\circ$ in following seas and from $0.971^\circ$ to $0.395^\circ$
+in head seas. The fit increased first-second
+yaw RMS by $0.224^\circ$ in following seas and reduced it by
+$2.252^\circ$ in head seas. Over the final 900~s, pooling both directions,
+3-D displacement RMS was 0.348643~m with the proxy and 0.348647~m with
+the joint fit. The corresponding accelerometer-bias errors were 0.042155
+and 0.042146~m/s$^2$. These paired runs isolate the effect of changing the
+handover with the horizontal wave-output model held fixed.
+The \href{https://github.com/bareboat-necessities/ocean-imu/tree/a68243db48fdb5225305e34ea5c5dd64fe866eb5/reports/results/startup_learning/directional_qualification}{paired replay archives}
+contain each window's sample count, handover time and RMS values.
 
 \section{Recommended Validation Contract}
 \label{sec:validation}
