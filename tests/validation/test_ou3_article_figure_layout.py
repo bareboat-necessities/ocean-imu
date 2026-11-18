@@ -25,9 +25,7 @@ class ArticleHorizontalPanelTests(unittest.TestCase):
     def test_actual_panels_share_one_row_and_fit_the_column(self):
         summaries = read_rows(lever.DEFAULT_OUTPUT_DIR / "lever_arm_summary.csv")
         runs = read_rows(lever.DEFAULT_OUTPUT_DIR / "lever_arm_runs.csv")
-        guard_paths = list((ROOT / "reports/results").rglob("guard_summary.csv"))
-        self.assertEqual(len(guard_paths), 1)
-        guards = read_rows(guard_paths[0])
+        guards = read_rows(guard.DEFAULT_OUTPUT_DIR / "guard_summary.csv")
         d = lever.worst_unmodeled_axis(summaries, 0.3, "disp_3d_ratio_to_baseline")
         t = lever.worst_unmodeled_axis(summaries, 0.3, "tilt_ratio_to_baseline")
         cases = [
