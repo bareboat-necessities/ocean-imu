@@ -1,4 +1,6 @@
-# Experimental shared-mode CARMA on the two-frame group
+# Shared-mode CARMA on the two-frame group
+
+The 27-state TFG–CARMA(4,1) filter is the primary INS method in the project documentation. [Method article](../doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) · [AtomS3R sketch](../sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/) · [Degradation studies](../reports/results/tfg_shared_modes/degradation/)
 
 The current shared wrapper applies a model-derived vertical band-to-total
 acceleration normalization (1.306347 for the default CARMA(4,1) shape).
@@ -22,8 +24,7 @@ original scope.
 
 `KalmanTfgCarmaSharedModes<float>` combines the existing six-state-per-axis
 minimal shared-mode CARMA(4,1) prior with the existing right-invariant TFG core.
-It has 27 error states on `TwoFrameGroup<float,6,2>`. It is experimental; the
-shipping OU-III estimator and its default selection are unchanged.
+It has 27 error states on `TwoFrameGroup<float,6,2>`. Its shared excitation couples surge, sway and heave when the acceleration history supports that coupling.
 
 ```cpp
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
@@ -174,7 +175,7 @@ The registered revision preserves the simulation sources. Subsequent constructor
 lint repairs use the same model order and covariance expressions; repeated
 numerical equivalence checks are recorded in `review_validation.json`.
 The existing OU-III finite secant
-diagnostic binds the entire `src` tree, including experimental modules, so
+diagnostic binds the entire `src` tree, so
 it was rerun rather than weakening its verifier. Both perturbation sizes
 reproduce the original raw shipping bytes exactly. Its refreshed source
 binding and round-off differences are recorded in `shipping_faithfulness.json`;

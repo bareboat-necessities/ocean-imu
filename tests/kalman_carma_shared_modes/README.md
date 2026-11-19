@@ -38,7 +38,7 @@ Filter names in the Monte Carlo benchmark: `CSM` (deployable default: estimated 
 
 The ESP32-S3 size and stack probe is [`arduino/csm_size_probe/build.sh`](arduino/csm_size_probe/build.sh) (Espressif Xtensa toolchain; variants A41 and CSM); the AtomS3R sketch is [`sensors/full_marine_ins/atomS3R_ins_carma_shared_modes`](../../sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/README.md).
 
-## Experimental TFG shared modes
+## TFG shared modes
 
 The same shared-mode motion and confidence code can now use the TFG geometry.
 See [the implementation and reproducibility guide](../../docs/tfg-carma-shared-modes.md).

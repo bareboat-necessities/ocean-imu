@@ -2,7 +2,7 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_kalman_ou3**
 
-This sketch runs the adaptive **SeaStateFusion OU-III** estimator on the M5Stack AtomS3R. It is the hardware application corresponding to the repository’s main higher-order 3-D marine navigation filter.
+This sketch runs the adaptive **SeaStateFusion OU-III** estimator on the M5Stack AtomS3R. It is the hardware application corresponding to the repository’s 21-state OU-III navigation filter.
 
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">

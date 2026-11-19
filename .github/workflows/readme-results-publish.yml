@@ -13,11 +13,8 @@ on:
     branches: [main]
 
 # This workflow turns successful main-branch build products into stable,
-# versioned README assets. The main build first closes the full OU evidence
-# workflow and then builds the OU-III article/plots; this publisher persists
-# those exact SVG products only after that complete build has succeeded.
-# The README gallery is presentation output, not scientific evidence, and is
-# deliberately outside the OU results fingerprint.
+# versioned README assets. The TFG module produces the following-sea tracking
+# figures. The OU-III plot job also renders the filter-independent input spectrum.
 permissions:
   actions: read
   contents: write
@@ -49,7 +46,11 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf incoming
-          mkdir -p incoming/kalman_ou_iii
+          mkdir -p incoming/kalman_tfg_shared_modes incoming/kalman_ou_iii
+          gh run download "$BUILD_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name release-svgs-kalman_tfg_shared_modes \
+            --dir incoming/kalman_tfg_shared_modes
           gh run download "$BUILD_RUN_ID" \
             --repo "$GITHUB_REPOSITORY" \
             --name release-svgs-kalman_ou_iii \
@@ -62,35 +63,35 @@ jobs:
           mkdir -p "$out"
 
           copy_figure() {
-            local name="$1"
+            local module="$1" name="$2"
             local src
-            src="$(find incoming/kalman_ou_iii -type f -name "$name" -print -quit)"
+            src="$(find "incoming/$module" -type f -name "$name" -print -quit)"
             if [ -z "$src" ]; then
               echo "required build SVG is missing: $name" >&2
-              find incoming/kalman_ou_iii -maxdepth 5 -type f -print >&2 || true
+              find "incoming/$module" -maxdepth 5 -type f -print >&2 || true
               exit 1
             fi
             cp -v "$src" "$out/$name"
           }
 
-          copy_figure w3d_ou3_pmstokes_medium.svg
-          copy_figure w3d_ou3_pmstokes_medium_zkin.svg
-          copy_figure w3d_ou3_pmstokes_medium_xykin.svg
-          copy_figure w3d_ou3_pmstokes_medium_acc_bias.svg
-          copy_figure w3d_ou3_pmstokes_medium_gyro_bias.svg
-          copy_figure spectrum_pmstokes_medium_3d.svg
+          for channel in att zkin xykin acc_bias gyro_bias; do
+            copy_figure kalman_tfg_shared_modes "w3d_tfg_csm_pmstokes_medium_${channel}.svg"
+          done
+          copy_figure kalman_ou_iii spectrum_pmstokes_medium_3d.svg
 
           # Run-specific provenance is intentionally outside reports/results so
           # changing workflow ids never alter the scientific evidence digest.
           cat > reports/readme-results-provenance.md <<EOF
           # README result gallery provenance
 
-          These SVGs are copied verbatim from the successful OU-III build on
-          main; they are not screenshots or raster conversions.
+          The shared-mode TFG tracking plots show the 1.5 m PM–Stokes following-sea
+          replay with the fixed interval-rate regression profile.
+          The directional spectrum describes its input sea.
 
           - build workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}
           - triggering source SHA: ${{ github.event.workflow_run.head_sha }}
-          - source artifact: release-svgs-kalman_ou_iii
+          - tracking artifact: release-svgs-kalman_tfg_shared_modes
+          - input spectrum artifact: release-svgs-kalman_ou_iii
           EOF
 
       - name: Verify README image targets resolve

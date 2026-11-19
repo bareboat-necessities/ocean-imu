@@ -50,7 +50,7 @@
 \pdfstringdefDisableCommands{\def\bm#1{#1}\def\vc#1{#1}\def\mt#1{#1}}
 
 \hypersetup{pdftitle={Adaptive Shared-Mode CARMA Two-Frame Group},pdfauthor={Mikhail S. Grushinskiy}}
-\title{Adaptive Shared-Mode CARMA Lie Group Filter for Marine Motion Estimation (draft)}
+\title{Adaptive Shared-Mode CARMA Two-Frame Group Filter for Marine Motion Estimation}
 \author{\IEEEauthorblockN{Mikhail S. Grushinskiy}
 \IEEEauthorblockA{Independent Researcher, Fair Lawn, NJ, USA\\
 Bareboat Necessities GitHub Project\\mgrouch@users.github.com}}
@@ -59,10 +59,10 @@ Bareboat Necessities GitHub Project\\mgrouch@users.github.com}}
 A vessel-mounted inertial unit measures specific force rather than wave
 acceleration. Recovering surge, sway and heave therefore requires separating
 orbital motion from gravity, attitude error and sensor bias. This article
-presents the experimental 27-state shared-mode CARMA estimator on the
+presents the 27-state shared-mode CARMA estimator on the
 right-invariant two-frame Lie group implemented in ocean-IMU. A stable
-CARMA(4,1) displacement prior supplies restoring dynamics without an
-integral-displacement pseudo-measurement. Shared complex excitation carries
+CARMA(4,1) displacement prior supplies restoring dynamics without a separate
+integral-displacement state. Shared complex excitation carries
 cross-axis phase; a minimal real realization retains six motion coordinates
 per spatial axis. Three attitude errors and six body-bias errors complete
 the 27-dimensional tangent covariance. We describe the spectral fit,
@@ -73,8 +73,8 @@ wave excitation, coupling confidence and staged magnetic startup determine
 the causal adaptive schedule. Parameter changes transport the full posterior
 through physical coordinates, retaining the attitude shear required by
 unequal axis scales. Deterministic vessel-response replay supplies explicit
-quality gates, with displacement, attitude and bias tracking. Existing paired
-simulation evidence supplies vibration and sea-state-transition diagnostics.
+quality gates, with displacement, attitude and bias tracking. Paired simulations measure sensitivity to engine vibration, sea-state
+growth and decay, and mounting the IMU away from the centre of gravity.
 The method estimates wave-relative motion, not absolute navigation; neither
 universal hull accuracy nor global adaptive stability is assumed.
 \end{abstract}
@@ -125,9 +125,10 @@ an optional calibrated accelerometer temperature correction. Intrinsic sensor
 calibration and physical alignment precede these equations. A configured
 body lever arm $\vc r_b$ adds rotational acceleration
 $\dot{\vc\omega}\times\vc r_b+
-\vc\omega\times(\vc\omega\times\vc r_b)$ to specific force; the wrapper can
-subtract it with the corresponding gyro-bias Jacobian. An unmodelled lever arm
-makes the inferred translation describe the sensor location.
+\vc\omega\times(\vc\omega\times\vc r_b)$ to specific force. The AtomS3R wrapper subtracts a measured-gyro estimate
+before fusion. The inner filter also supports a measurement-model placement
+with a gyro-bias Jacobian. An unmodelled offset mixes rotational acceleration
+into the translation inferred at the CoG.
 
 For illustration, a small body-frame world-to-body rotation error gives
 \begin{equation}
@@ -196,7 +197,7 @@ band. Vessel response and sensor bandwidth also alter the actual motion
 spectrum. The retained shape is a compact stochastic prior, not a hull
 hydrodynamic model.
 
-\subsection{Why the integral pseudo-measurement is absent}
+\subsection{Why the wave prior needs no integral-displacement state}
 An acceleration-driven chain with unrestrained velocity and position
 integrators has poles at zero. One way to control its drift is to add
 $S(t)=\int p(t)\,\dd t$ and repeatedly impose the soft constraint $S=0$.
@@ -213,7 +214,9 @@ recover absolute position or eliminate tilt and bias ambiguities. A
 covariance regularizer also cannot replace physical magnetic information.
 The implementation allocates no $S_x,S_y,S_z$ states and executes no
 integral-zero update; shared wrapper settings bearing that name have no
-measurement effect in this configuration.
+measurement effect in this configuration. The transverse integral--velocity
+observation in \cref{sec:transverse-wave-replay} uses a primitive of the
+existing CARMA coordinates.
 
 \section{The Offline Spectral Fit}
 \label{sec:fit}
@@ -667,10 +670,11 @@ In the tangent ordering above their Jacobians, absent a lever arm, are
  H_m&=[-\sk{B_w}\ \ 0\ \cdots\ \ 0].
 \end{align}
 Sensor covariance is rotated into the residual frame,
-$R_y=\hat R R_{y,b}\hat R\tr$. A configured lever arm adds
+$R_y=\hat R R_{y,b}\hat R\tr$. A lever arm configured inside the core adds
 $H_{a,\beta_g}=-\hat R J_L\hat R\tr$ for the derivative of rotational
 acceleration with respect to body gyro bias. The state-independent Jacobian
-statement therefore has this explicit optional exception.
+statement therefore has this explicit optional exception. With wrapper-side
+correction the core receives compensated force and its own lever arm is zero.
 
 For either sensor,
 \begin{align}
@@ -1204,6 +1208,8 @@ eight scored records spanning JONSWAP and PM--Stokes spectra at incident
 significant wave heights of 0.27, 1.5, 4.0 and 8.5~m. Each history lasts 1200~s at 200~Hz. The
 sensor and initialization seeds, simulated noise, magnetic schedule and
 frontend are the same as the shared-mode quaternion replay. The table reports the eight fixed wave realizations for the active build direction.
+The CI tracking gallery uses the interval-rate regression profile. The underway
+degradation tests below use the ordinary wrapper gyro sampling configuration.
 
 The first 300~s are excluded from the scored window. Statistics use all
 180,000 remaining samples; rendering decimation never changes the gate or
@@ -1292,6 +1298,8 @@ statistical dependence instead of assuming a universal hull response.
 \caption{Machinery-vibration degradation from the paired synthetic study.
 Error bars reflect seed variation. The engine-off case uses paired seeds.}
 \end{figure}
+In the companion's 24-seed synthetic JONSWAP runs, mean shared-mode TFG
+heave RMS rises from 13.7~mm with the engine off to 21.5~mm at 3200~rpm.
 Engine vibration adds accelerometer and gyro corruption outside the desired
 wave motion. A conditioning filter and measurement covariance inflation can
 reduce its influence, but neither guarantees separation of wave energy from
@@ -1310,9 +1318,99 @@ Period and energy statistics respond at their own horizons; staged commits
 carry the posterior rather than reseeding it. Fast confidence withdrawal
 reduces stale cross-axis dependence during a mismatch, while slower recovery
 requires renewed supporting evidence. Full-rate transient metrics precede
-the peak-preserving drawing reduction. The companion additionally examines
+the peak-preserving drawing reduction. In the 24-seed synthetic round trip,
+median heave/horizontal recovery times after the rise are 1/1~s. After the
+fall they are 26/69~s. Recovery starts at the first of 20 consecutive 1~Hz
+evaluations with trailing 10~s RMS at most 1.25 times the corresponding
+post-transition reference RMS. All 24 seeds reach the criterion in each
+channel and direction of change. The companion additionally examines
 abrupt direction changes and magnetic outage/reacquisition; these tests do
 not imply continued absolute yaw observability during an outage.
+
+\section{Degradation in Following and Head Seas}
+\label{sec:underway-degradation}
+Three tests use the same 27-state filter, its ordinary gyro sampling configuration
+and its causal startup and adaptation. The reference hull is the 28~ft vessel
+at 5~kn described in \cref{sec:validation}. We score the last 900~s of each
+1200~s record at 200~Hz with the magnetometer enabled. For engine speed and
+mounting offset we pair each run with the same wave, IMU noise (seed 101) and
+initialization (seed 1009) at the centre of gravity (CoG), engine off. Each
+direction has eight incident seas. For any channel with per-record RMS $e_i$,
+the pooled error is $\sqrt{\sum_{i=1}^8 e_i^2/8}$, equivalent here to pooling
+all equally long records. The round trip has its own seven scoring windows.
+These are fixed-record sensitivities for one hull and sensor draw.
+
+\subsection{Engine vibration}
+The same machinery model as the OU-III study injects vibration into the
+accelerometer and gyro measurements. It models a three-cylinder four-stroke
+engine, a 2.6:1 reduction gear, a three-blade propeller, a 10~Hz mount resonance
+and an 80~Hz sensor bandwidth. The nominal hull vibration level is
+0.60~m/s$^2$ at 2400~rpm. The normal vibration guard stays enabled throughout
+the sweep. Wave and vessel motion are identical to the engine-off controls.
+
+\input{degradation-engine.tex-part}
+
+At 800~rpm the pooled following-sea 3-D error rises from 0.185 to 0.257~m
+and yaw from $1.04^\circ$ to $10.96^\circ$. Three of the eight records exceed
+$14^\circ$ yaw RMS. In head seas the corresponding errors rise from 0.204 to
+0.240~m and from $0.84^\circ$ to $2.22^\circ$. The engine speed giving
+the largest heave error in both directions is 3200~rpm. Sensitivity therefore
+depends on which navigation output is used to judge the installation.
+The sweep varies engine speed as a whole and cannot attribute the heading
+error to an individual harmonic or sensor path.
+
+\subsection{Low sea to high sea and back}
+We use the OU-III article's round-trip generator. It independently phase-randomizes
+the two underway JONSWAP reference records (wave seed 11), with nominal incident
+heights 1.5~m and 4.0~m for the two endpoints. The high endpoint uses the 8.5~m
+source record scaled by $4/8.5$. A quintic crossfade runs from 400 to 520~s.
+The high record continues to 800~s. A second crossfade from 800 to 920~s restores
+the original low-sea realization. Velocity and acceleration retain the first-
+and second-derivative terms of the blend. One estimator carries its attitude,
+biases, motion, covariance and tuner through both transitions.
+
+\input{degradation-roundtrip.tex-part}
+
+Both directions have their largest heave RMS in the first 120~s after the rise
+(0.169~m following and 0.134~m head). In the final low window it is 0.052
+and 0.049~m. Absolute errors return near their initial low-sea values within
+this record. Relative errors also depend on wave energy in the window: in
+following seas the reference heave RMS drops from 0.352 to 0.240~m between
+the first and last low windows, so error as a fraction of reference heave
+actually rises from 17.8\% to 21.5\%.
+
+\subsection{IMU mounted away from the centre of gravity}
+The simulator adds $\dot{\vc\omega}\times\vc r_b+
+\vc\omega\times(\vc\omega\times\vc r_b)$ to rigid-body accelerometer truth
+before sensor corruption. We retain CoG displacement as the scoring reference.
+The sensor is 0.30 or 1.00~m forward, starboard or above CoG, one axis at a time.
+Three matched runs leave the lever arm unmodelled, set the measured offset
+in the actual fusion wrapper, or subtract the injected term using truth
+angular kinematics. In the wrapper, a two-pole 15~Hz low-pass and a causal
+second-order difference estimate angular acceleration from measured gyro
+rates. Compensation takes place before startup, tuning and the accelerometer
+update. The last arm is an oracle control for the injection and frame mapping.
+
+\input{degradation-mount.tex-part}
+
+One metre above CoG increases pooled uncorrected 3-D RMS by 23.8\% in
+following seas and 19.8\% in head seas. Wrapper correction brings the ratios
+to 0.995 and 1.039. A one-metre starboard offset instead produces the largest
+uncorrected heave penalties, 42.0\% and 29.0\%, respectively. Across all
+six mountings the largest single-record increase in corrected 3-D RMS is
+4.7\% following and 7.9\% head. The truth correction returns every individual
+3-D RMS to within 0.03\% of its control. Restoring displacement accuracy does
+not guarantee the same attitude accuracy: for example, a corrected one-metre
+forward installation raises pooled following-sea yaw RMS by 15.2\%. These
+tests assume a rigid mounting and an exactly known arm.
+
+\begin{figure*}[!t]\centering
+\IncludePGF{../../reports/results/tfg_shared_modes/degradation/underway_degradation.pgf}
+\caption{Shared-mode TFG on the two underway cases. Left: pooled 3-D error
+against engine speed. Centre: heave RMS through the consecutive sea-state
+windows. Right: pooled 3-D error relative to CoG for three one-metre offsets.
+A ratio of one equals the at-CoG reference.}
+\end{figure*}
 
 \section{Computational and Practical Limits}
 The covariance contains 729 scalar entries before symmetry is exploited.
@@ -1340,7 +1438,7 @@ remain necessary before treating simulation accuracy as operational performance.
 The method combines a stable CARMA displacement prior, complex directional
 excitation and right-invariant two-frame estimation. Minimal realization gives
 18 real motion coordinates and nine attitude/bias errors. The prior regularizes
-wave-relative displacement without an integral pseudo-measurement; the independent
+wave-relative displacement without a separate integral state. The independent
 frontend measures its operating scale, and magnetic aiding supplies complementary
 orientation information. A full group reset and physical-coordinate transport
 carry the covariance through finite corrections and anisotropic adaptive changes.
@@ -1431,6 +1529,13 @@ cp plots/kalman_tfg_shared_modes/*.pgf \
 Build with \texttt{latexmk -lualatex} on
 \path{doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex} from its
 directory.
+
+For the underway degradation tests, build the \texttt{installation-study}
+target in the same replay directory. The driver
+\path{tools/tfg_shared_modes_degradation.py} scores each sea direction.
+\path{tools/tfg_shared_modes_degradation_report.py} renders the tables and
+figure from both scored bundles. The commands and per-record results are in
+\path{reports/results/tfg_shared_modes/degradation/README.md}.
 
 The comparative study remains \path{kalman_tfg_shared_modes.tex}; the complete
 per-record gallery is \path{kalman_tfg_shared_modes-charts.tex}. The fit and

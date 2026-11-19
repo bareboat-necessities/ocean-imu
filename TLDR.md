@@ -1,4 +1,6 @@
-In simple terms:
+The primary method estimates wave-relative vessel motion with a 27-state shared-mode TFG–CARMA(4,1) filter. Its wave model links surge, sway and heave when acceleration measurements support the relationship. A wave-aware startup estimates tilt and magnetic heading before the filter tracks motion and IMU biases. [Method article](doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) · [Results](README.md#results)
+
+The OU-III alternative works as follows.
 
 - Common Quaternion Multiplicative EKF (Extended Kalman Filter) model, with additional states for 3D kinematics in ocean waves. 
 - Acceleration measurements are regularized with an Ornstein–Uhlenbeck (OU) stochastic autocorrelation process.

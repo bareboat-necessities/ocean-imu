@@ -1,0 +1,14 @@
+% Generated from the two case CSV bundles.
+\begin{table}[!ht]\centering\small
+\caption{Continuous round trip. Heave and 3-D displacement RMS (m) within each scoring interval.}\label{tab:tcsm-roundtrip}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrr}\toprule
+Phase & Time (s) & $z_F$ & 3-D$_F$ & $z_H$ & 3-D$_H$ \\ \midrule
+Low & 300--400 & 0.063 & 0.100 & 0.053 & 0.068 \\
+Rise & 400--520 & 0.113 & 0.165 & 0.094 & 0.175 \\
+Early high & 520--640 & 0.169 & 0.271 & 0.134 & 0.213 \\
+High & 640--800 & 0.136 & 0.224 & 0.106 & 0.211 \\
+Fall & 800--920 & 0.118 & 0.189 & 0.095 & 0.159 \\
+Early low & 920--1040 & 0.067 & 0.105 & 0.048 & 0.072 \\
+Return & 1040--1200 & 0.052 & 0.078 & 0.049 & 0.065 \\
+\bottomrule\end{tabular}\end{table}

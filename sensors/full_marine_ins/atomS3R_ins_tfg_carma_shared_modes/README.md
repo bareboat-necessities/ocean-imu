@@ -1,8 +1,8 @@
-# AtomS3R marine INS — shared-modes TFG (experimental)
+# AtomS3R marine INS — shared-mode TFG–CARMA(4,1)
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_tfg_carma_shared_modes**
 
-This sketch runs the **experimental** 27-state shared-mode TFG filter, [`KalmanTfgCarmaSharedModes`](../../../src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h), on the M5Stack AtomS3R. It is [atomS3R_ins_tfg_carma3](../atomS3R_ins_tfg_carma3/README.md) with one change: the three independent CARMA(4,1) motion priors are replaced by **shared directional stochastic modes**. Each axis carries one complexified CARMA(4,1) mode in its six-state minimal realization, the axes share its dynamics, and a Hermitian excitation is estimated from the filter's own world-frame acceleration. A **coupling confidence** withdraws the coupling and falls back toward the independent-axis prior when it cannot be trusted. The error state lives on the right-invariant two-frame Lie group of [`src/lie/TwoFrameGroup.h`](../../../src/lie/TwoFrameGroup.h) ([design](../../../docs/tfg-carma-shared-modes.md)).
+This sketch runs the 27-state shared-mode TFG filter, [`KalmanTfgCarmaSharedModes`](../../../src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h), on the M5Stack AtomS3R. It is [atomS3R_ins_tfg_carma3](../atomS3R_ins_tfg_carma3/README.md) with one change: the three independent CARMA(4,1) motion priors are replaced by **shared directional stochastic modes**. Each axis carries one complexified CARMA(4,1) mode in its six-state minimal realization, the axes share its dynamics, and a Hermitian excitation is estimated from the filter's own world-frame acceleration. A **coupling confidence** withdraws the coupling and falls back toward the independent-axis prior when it cannot be trusted. The error state lives on the right-invariant two-frame Lie group of [`src/lie/TwoFrameGroup.h`](../../../src/lie/TwoFrameGroup.h) ([design](../../../docs/tfg-carma-shared-modes.md)).
 
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
@@ -10,7 +10,7 @@ This sketch runs the **experimental** 27-state shared-mode TFG filter, [`KalmanT
 
 Open the sketch: [`atomS3R_ins_tfg_carma_shared_modes.ino`](atomS3R_ins_tfg_carma_shared_modes.ino).
 
-> **Research sketch, not the shipping estimator, and not run on hardware yet.** The evidence is simulation-only ([results and limitations](../../../reports/results/tfg_shared_modes/README.md)). In that study it has the lowest condition-balanced position error of the four CARMA estimators: −5.9% heave and −2.8% horizontal RMS against TFG-CARMA3. There is no sea trial, no stability analysis of the adaptive filter, no on-target timing and no measured stack high-water mark, and its covariance is poorly calibrated. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> The paired simulation measured 5.9% lower heave RMS and 2.8% lower horizontal RMS than independent-axis TFG–CARMA. The study found poorly calibrated covariance. The firmware has been compiled for the AtomS3R. Sea-trial accuracy, on-device update time and measured stack high-water remain unverified. [Study and limitations](../../../reports/results/tfg_shared_modes/README.md)
 
 ## Differences from atomS3R_ins_tfg_carma3
 
@@ -19,6 +19,10 @@ Open the sketch: [`atomS3R_ins_tfg_carma_shared_modes.ino`](atomS3R_ins_tfg_carm
 - The display shows `Fusion: TFG-SHARED`.
 
 Its quaternion counterpart is [atomS3R_ins_carma_shared_modes](../atomS3R_ins_carma_shared_modes/README.md), which runs the same shared modes on the CARMA3 quaternion MEKF error.
+
+## Mounting away from the centre of gravity
+
+Set `IMU_LEVER_ARM_X_M`, `IMU_LEVER_ARM_Y_M` and `IMU_LEVER_ARM_Z_M` to the sensor position relative to CoG in metres. Positive axes point forward, starboard and down. An IMU one metre above CoG uses `(0, 0, -1)`. The wrapper uses the measured gyro to correct specific force before startup and fusion. [Results for six mounting positions](../../../reports/results/tfg_shared_modes/degradation/)
 
 ## Memory and timing (ESP32-S3, Xtensa GCC 14.2.0, `-Os`)
 

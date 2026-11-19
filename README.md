@@ -3,6 +3,10 @@
 Marine IMU and wave-processing algorithms in modern C++ for sensor fusion, sea-state estimation, and simulation-driven validation.
 Designed for ship MRU (Motion Reference Unit), Marine INS (Inertial Navigation System), AHRS (Attitude and Heading Reference System).
 
+The primary marine INS method is the **27-state shared-mode TFG–CARMA(4,1) filter**. It estimates attitude, heading, sensor biases and wave-relative surge, sway and heave. Its two-frame Lie group carries attitude and motion together during corrections. Its CARMA prior uses measured cross-axis coupling when the wave record supports it.
+
+[Method article](doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) · [Main-build PDF](https://github.com/bareboat-necessities/ocean-imu/releases/download/vTest/kalman_tfg_shared_modes-method.pdf) · [AtomS3R sketch](sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/) · [Simulation results](#results)
+
 ## Motivation
 
 A marine AHRS cannot just reuse typical popular drone and aerospace IMU filters unchanged. In aerospace, motion is usually modeled as rotation about the center of mass (satellite), and drones often initialize while sitting still before takeoff, so the accelerometer gives a clean gravity direction. On a ship, the system may be turned on while already moving in waves and wind, with heave, roll, pitch, and translational accelerations all mixed into the IMU signals. That means the filter has to learn tilt during motion, avoid trusting wave-distorted acceleration as pure gravity, and keep working across very different sea conditions. In practice, a ship AHRS/INS needs wave-aware initialization, motion compensation, and tuning that can adapt to different sea states dynamically.
@@ -18,6 +22,8 @@ The articles describing the math behind the methods:
 
 INS Filters:
 
+- [Shared-mode TFG–CARMA(4,1) method and implementation](docs/tfg-carma-shared-modes.md)
+
 - [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/kalman_ou-w3d.pdf)
 
 - [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/kalman_ou-w3d-stability-study.pdf)
@@ -29,8 +35,6 @@ INS Filters:
 - [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/kalman_tfg_carma.pdf)
 
 - [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/kalman_carma_shared_modes.pdf)
-
-- [Adaptive Shared-Mode CARMA(4,1) Lie Group](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/kalman_tfg_shared_modes-method.pdf)
 
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.7.8/pii_observer-model.pdf)
 
@@ -84,25 +88,24 @@ Autopilot Use Cases:
 
 There are several versions of Kalman INS filters and two filters (PII observer and NLO) based on control theory:
 
-- CARMA(4,1) stochastic process with Two Frame Lie Group filter delivers the lowest RMS of heave error (below 3% of significant wave height).
-- CARMA(4,1) with QMEKF is a quaternion counterpart of the previous one.
-- OU_III uses higher-order integral drift correction. It is a 21-dimensional-state Kalman filter and is the OU variant used for the main 3-D navigation study.
+- Shared-mode TFG–CARMA(4,1) combines 18 wave-motion coordinates, three attitude errors and six sensor-bias errors. The shared-mode QMEKF uses the same wave prior with quaternion error coordinates. Independent-axis CARMA variants provide comparisons for both geometries.
+- OU-III uses higher-order integral drift correction in a 21-state Kalman filter.
 - TFG is a right-invariant two-frame Lie-group error-state EKF. Same 21 dimensional state and the same OU wave model as OU_III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
 - OU_II uses more direct integral drift correction and is more responsive to sea-state changes. It is an 18-dimensional-state Kalman filter.
 - PII observer is based on control theory. It is very computationally light-weight with no matrix operations. It's less accurate than Kalman filters.
 - NLO is a time-varying-gain nonlinear observer. It uses explicit attitude and translational injection terms with the gains published by Bryne/Fossen/Johansen instead of a propagated covariance, and its translational loop is scheduled on the tracked wave frequency.
 - All above filters are adaptive.
-- All filters tested to run on esp32s3.
+- The repository includes ESP32-S3 firmware builds. Device timing and sea-trial evidence vary by estimator.
 - All filters tested to run on Windows and Linux as well.
 
 Arduino .ino sketches for esp32s3 (on atomS3R):
 
+- [Shared-mode TFG–CARMA(4,1), 27 states](sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/)
 - Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou2
 - Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou3
 - Kalman CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_carma3
 - Kalman TFG-CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg_carma3
 - Shared-modes CARMA QMEKF, 27 states (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_carma_shared_modes
-- Shared-modes CARMA TFG, 27 states (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes
 - Reduced tangent-bias shared-mode CARMA research, 27 states: [implementation and reproducible comparison](tests/kalman_tangent_shared_modes/README.md), [standalone article](doc/kalman_tangent_shared_modes/kalman_tangent_shared_modes.tex). The geometry and conditional bias-gain veto remain opt-in; the study does not establish an adoption advantage or implement the full 30-state TG-INS.
 - Two-Frame Lie-Group (TFG): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg
 - PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_pii_observer
@@ -123,18 +126,16 @@ https://github.com/bareboat-necessities/ins-dashboard-gtk
 - Attitude and heading workflows (yaw/roll/pitch, AHRS-oriented utilities)
 - Wave and frequency-domain analysis
 - Wave direction detection
-- Kalman-based sea-state models (OU-II and OU-III variants)
+- Adaptive wave-motion models, including shared-mode CARMA(4,1) and the OU family
 - Tuning and filtering helpers for marine sensor pipelines
 
 ## Results
 
-Results of the tests, simulations and documentation built from the development branch are published at https://github.com/bareboat-necessities/ocean-imu/releases/tag/v2.7.0
-
-The figures below are the current **OU-III** diagnostics and validation evidence. The per-wave and spectrum figures under [`reports/results/readme/`](reports/results/readme/) are copied from SVG artifacts generated by successful `build` runs on `main`; the aggregate error plots come from the versioned full validation bundle under [`reports/results/ou_validation/`](reports/results/ou_validation/), and the transition, engine-vibration, and lever-arm figures come from their own versioned study bundles under [`reports/results/`](reports/results/). Every figure ships with the CSV, summary, and manifest that produced it, so the front page stays tied to reproducible outputs instead of manually copied sample images.
+The following-sea example uses a simulated 28 ft vessel at 5 kn in a PM–Stokes sea with 1.5 m significant wave height. The tracking figures show the fixed interval-rate regression replay against simulator truth. The score files identify the gyro sampling profile for each row. Both directions have eight scored records and a 900 s evaluation window. [Following-sea scores](reports/results/sim_v1.4.0/following/metrics.csv) · [Head-sea scores](reports/results/sim_v1.4.0/head/metrics.csv)
 
 ### Directional wave spectrum
 
-The simulator is driven by directional spectral seas, not only scalar sinusoidal heave. The existing build-generated 3-D spectrum below shows the frequency-direction energy surface for the same representative medium PM/Stokes case used by the motion plots above.
+The spectrum shows how incident wave energy is distributed over frequency and direction for this sea.
 
 <p align="center">
   <img src="./reports/results/readme/spectrum_pmstokes_medium_3d.svg" width="90%" alt="Medium PM Stokes three-dimensional directional spectrum">
@@ -142,12 +143,12 @@ The simulator is driven by directional spectral seas, not only scalar sinusoidal
 
 ### 3-D motion tracking on the same sea
 
-The two plots below use the same medium PM/Stokes wave case (`H_s = 1.5 m`). The vertical plot shows heave-chain tracking; the companion plot shows the more weakly observable horizontal surge/sway channels rather than presenting Z alone.
+The final 60 s show vertical and horizontal displacement, velocity and acceleration. The RMS annotations cover the full scoring window. Heave is more strongly observable than surge and sway.
 
 <table>
 <tr>
-<td width="50%"><img src="./reports/results/readme/w3d_ou3_pmstokes_medium_zkin.svg" alt="OU-III vertical displacement, velocity and acceleration tracking"></td>
-<td width="50%"><img src="./reports/results/readme/w3d_ou3_pmstokes_medium_xykin.svg" alt="OU-III horizontal X/Y displacement, velocity and acceleration tracking"></td>
+<td width="50%"><img src="./reports/results/readme/w3d_tfg_csm_pmstokes_medium_zkin.svg" alt="Shared-mode TFG vertical displacement, velocity and acceleration tracking"></td>
+<td width="50%"><img src="./reports/results/readme/w3d_tfg_csm_pmstokes_medium_xykin.svg" alt="Shared-mode TFG horizontal X/Y displacement, velocity and acceleration tracking"></td>
 </tr>
 <tr>
 <td align="center"><b>Z kinematics</b></td>
@@ -158,17 +159,17 @@ The two plots below use the same medium PM/Stokes wave case (`H_s = 1.5 m`). The
 The corresponding attitude trace from that same generated case is also retained with the gallery:
 
 <p align="center">
-  <img src="./reports/results/readme/w3d_ou3_pmstokes_medium.svg" width="100%" alt="OU-III roll pitch and yaw tracking">
+  <img src="./reports/results/readme/w3d_tfg_csm_pmstokes_medium_att.svg" width="100%" alt="Shared-mode TFG roll pitch and yaw tracking">
 </p>
 
 ### Bias tracking
 
-OU-III estimates inertial-sensor biases as filter states. These plots show the simulated truth and estimated accelerometer and gyroscope biases over the same wave record, so bias convergence is visible rather than only final RMS navigation error.
+The accelerometer and gyroscope plots follow all three bias components from startup through the end of the 20-minute replay.
 
 <table>
 <tr>
-<td width="50%"><img src="./reports/results/readme/w3d_ou3_pmstokes_medium_acc_bias.svg" alt="OU-III accelerometer bias tracking"></td>
-<td width="50%"><img src="./reports/results/readme/w3d_ou3_pmstokes_medium_gyro_bias.svg" alt="OU-III gyroscope bias tracking"></td>
+<td width="50%"><img src="./reports/results/readme/w3d_tfg_csm_pmstokes_medium_acc_bias.svg" alt="Shared-mode TFG accelerometer bias tracking"></td>
+<td width="50%"><img src="./reports/results/readme/w3d_tfg_csm_pmstokes_medium_gyro_bias.svg" alt="Shared-mode TFG gyroscope bias tracking"></td>
 </tr>
 <tr>
 <td align="center"><b>Accelerometer bias</b></td>
@@ -176,89 +177,15 @@ OU-III estimates inertial-sensor biases as filter states. These plots show the s
 </tr>
 </table>
 
-### Validation errors and sea-state transitions
+### Degradation in following and head seas
 
-The validation plots summarize the full paired noisy study rather than one selected trajectory. Displacement and attitude error plots expose performance across the declared sea cases, while the transition plot exercises adaptation as the sea state changes.
-
-<table>
-<tr>
-<td width="50%"><img src="./reports/results/ou_validation/ou_validation_displacement.svg" alt="OU validation displacement errors"></td>
-<td width="50%"><img src="./reports/results/ou_validation/ou_validation_attitude.svg" alt="OU validation attitude errors"></td>
-</tr>
-<tr>
-<td align="center"><b>3-D displacement error</b></td>
-<td align="center"><b>Attitude error</b></td>
-</tr>
-</table>
-
-The transition figure is the **round trip**, not a one-way build. A single realization holds `H_s = 1.5 m` for the first 400 s, blends up to `H_s = 4.0 m` over the next two minutes, holds the big sea until 800 s, blends back down to `H_s = 1.5 m` by 920 s, and finishes in the mild sea it started in. A low-to-high record only exercises the tightening half of the scheduler; coming back down is the direction where an adaptive filter can be left stuck on a sea that is no longer there, so it is the half worth showing. The low-sea and high-sea reference lines on the schedule panel are independently calibrated frozen operating points for the two endpoint records: the applied `tau`, `sigma_aw`, and `R_s` traces should leave the low fixed point, reach the high one, and come back to the low one without hysteresis.
+The same shared-mode TFG filter was replayed with engine vibration, a changing sea state, and a displaced IMU. Each engine speed and mounting offset has a matched engine-off, at-CoG reference on the same record. The transition uses one continuous filter run through both crossfades.
 
 <p align="center">
-  <img src="./reports/results/ou_rs_law/ou_rs_roundtrip_transition.svg" width="100%" alt="OU-III bidirectional low-high-low sea-state transition">
+  <img src="./reports/results/tfg_shared_modes/degradation/underway_degradation.svg" width="95%" alt="Shared-mode TFG engine-speed sweep, low–high–low transition and off-CoG mounting errors in following and head seas">
 </p>
 
-### Engine vibration on the IMU
-
-Motoring puts machinery vibration straight into the IMU. The [engine-noise degradation study](reports/results/engine_noise_degradation/engine_noise_report.md) replays the eight stationary JONSWAP / PM-Stokes records through OU-II, OU-III, and TFG with a sensor-path model of a mid-size cruising sailboat's auxiliary diesel added on top of the ordinary sensor noise: crank orders, shaft- and blade-rate lines, a broadband structural floor, governor hunting, mount transmissibility, the sensor's finite anti-alias bandwidth, accelerometer vibration rectification, and gyroscope g-sensitivity. The vessel's rigid-body response to the sea is unchanged, so what the figures bound is the sensor-path cost of running the engine.
-
-<table>
-<tr>
-<td width="50%"><img src="./reports/results/engine_noise_degradation/ou_engine_noise_speed.svg" alt="Displacement, pitch and yaw error against engine speed"></td>
-<td width="50%"><img src="./reports/results/engine_noise_degradation/ou_engine_noise_mechanism.svg" alt="Vibration level and bandwidth sweeps collapsed onto recorded vibration power"></td>
-</tr>
-<tr>
-<td align="center"><b>Response against engine speed</b></td>
-<td align="center"><b>What actually drives it</b></td>
-</tr>
-</table>
-
-The left figure sweeps engine speed at a fixed hull vibration level; the dotted horizontals are each family's engine-off baseline. The right figure is the mechanism: a level sweep, a bandwidth sweep with its matched-power control, every cell of the study collapsed onto recorded vibration RMS, and the rectified static tilt offset underneath it all. The damage tracks **recorded out-of-band accelerometer power**, not where the aliased crank orders happen to land, and it is largely a standing tilt bias rather than added jitter. At nominal cruise, OU-III's pooled 3-D error is 8.1x its engine-off baseline; a sensor bolted near the engine bed reaches 72x.
-
-Because the cause is out-of-band power in one sensor, it has a front-end remedy. [`AccelVibrationGuard`](reports/results/engine_noise_mitigation/guard_report.md) low-passes the accelerometer in the empty decade between the wave band and the machinery band (2 poles at 14 Hz), engages only when a separate high-pass detector says there is machinery to remove, and raises the commanded accelerometer sigma from the same gated excess so the covariance describes the conditioned signal.
-
-<p align="center">
-  <img src="./reports/results/engine_noise_mitigation/ou_engine_noise_guard.svg" width="100%" alt="Pooled 3-D error and standing tilt offset with the vibration guard off, on, and with the covariance arm">
-</p>
-
-Across the sweep the guard pulls OU-III back to within 1.08-1.17x of engine-off, and the engine-off rows are identical to every digit because the detector never crosses its lower rail with no machinery running. The residual does not reach 1.00 and cannot: conditioning costs group delay, which is paid whether or not there is anything left to remove. The 800 rpm row is the other limit showing itself - machinery whose orders reach into the wave band cannot be separated from the sea by any front-end filter.
-
-### Off-CG IMU installation and lever arm
-
-The wave records define motion at the vessel's centre of gravity, but an IMU is bolted wherever the installation allows. A rigid sensor displaced by a body-frame vector `r` additionally measures `alpha x r + omega x (omega x r)`. The [lever-arm study](reports/results/ou3_lever_arm_study/lever_arm_report.md) applies that term to the accelerometer truth before sensor corruption and the filter's own lever-arm model after it, over a matrix of 8 records, 3 axes (athwartships, fore-aft, vertical), 3 offsets (10/20/30 cm), and 3 modelling arms: `unmodeled` (no filter-side correction), `gyro` (compensated from the measured rate - the deployable one), and `exact` (compensated from truth kinematics - an oracle bound). Nothing else is retuned.
-
-<table>
-<tr>
-<td width="50%"><img src="./reports/results/ou3_lever_arm_study/ou3_lever_arm_penalty.svg" alt="Pooled 3-D displacement penalty against IMU offset from the CG, per axis and per modelling arm"></td>
-<td width="50%"><img src="./reports/results/ou3_lever_arm_study/ou3_lever_arm_tilt.svg" alt="Pooled attitude penalty against IMU offset from the CG, per axis and per modelling arm"></td>
-</tr>
-<tr>
-<td align="center"><b>Displacement penalty and its removal</b></td>
-<td align="center"><b>Attitude penalty and its removal</b></td>
-</tr>
-</table>
-
-The two channels are hurt by different axes. Displacement degrades most with a vertical offset (1.022x at 30 cm unmodeled); attitude degrades most with an athwartships offset, where 30 cm nearly doubles the tilt RMS. The `exact` arm returns to the CG baseline to numerical precision in every cell, so the whole penalty is deterministic and recoverable rather than an intrinsic OU-III limit, and the `gyro` arm recovers most of it from the measured rate alone.
-
-<table>
-<tr>
-<td width="50%"><img src="./reports/results/ou3_lever_arm_study/ou3_lever_arm_mechanism.svg" alt="Injected specific force against offset, and the residual each modelling arm leaves behind"></td>
-<td width="50%"><img src="./reports/results/ou3_lever_arm_study/ou3_lever_arm_cutoff.svg" alt="Pooled 3-D error against the derivative low-pass corner of the deployable lever-arm model"></td>
-</tr>
-<tr>
-<td align="center"><b>What is injected, what is left</b></td>
-<td align="center"><b>Derivative band of the deployable model</b></td>
-</tr>
-</table>
-
-The deployable arm reconstructs the angular acceleration through a two-pole low-pass followed by a causal second-order difference, and that corner is its one design parameter. The sweep on the right is why it is set to **15 Hz**: too narrow and the phase lag misaligns a correction of the right magnitude, too wide and differentiated gyro noise dominates. Both failure directions cost more than the raw penalty they were meant to remove.
-
-<p align="center">
-  <img src="./reports/results/ou3_lever_arm_study/ou3_lever_arm_sea_state.svg" width="100%" alt="Per-sea lever-arm penalty at a 30 cm offset across the eight wave records">
-</p>
-
-Pooled ratios understate the effect and the per-sea figure is the honest one. An RMS over all eight seas is dominated by the largest, where the injected rotational term is smallest relative to the wave signal; broken out sea by sea, the displacement penalty is worst in the mildest seas and the attitude penalty worst in the steepest.
-
-The experimental CARMA3 and TFG-CARMA3 filters carry the same deployable model, applied at their fusion wrapper's input; their own off-CoG study, out to 2 m and against OU-III's in-filter placement, is [`docs/carma-imu-lever-arm.md`](docs/carma-imu-lever-arm.md).
+[Study results and reproduction](reports/results/tfg_shared_modes/degradation/) · [24-seed synthetic comparison](reports/results/tfg_shared_modes/) · [OU-II and OU-III validation](docs/ou-validation.md)
 
 ### Embedded target: M5Stack AtomS3R
 
@@ -266,7 +193,7 @@ The experimental CARMA3 and TFG-CARMA3 filters carry the same deployable model, 
   <img src="./img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
 </p>
 
-The OU-III implementation is not only a desktop simulation. The repository includes an [AtomS3R marine-INS sketch](sensors/full_marine_ins/atomS3R_ins_kalman_ou3/) that runs the adaptive SeaStateFusion OU-III estimator at 200 Hz on the M5Stack AtomS3R. Keeping the embedded target visible here matters because computational feasibility, startup behavior, calibration, heading lock, and real-time estimator integration are part of the intended marine use case, not an after-the-fact port of an offline algorithm.
+The [AtomS3R marine INS sketch](sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/) runs the shared-mode TFG wrapper with IMU calibration, magnetic startup and NMEA output. The sketch guide gives the static memory estimates and identifies the timing and stack measurements still needed on the device.
 
 ## Repository layout
 
@@ -278,6 +205,7 @@ src/                 core algorithms and reusable components
   discrete/          discrete-time utilities
   freq/              frequency-domain utilities
   imu_calibrate/     IMU calibration logic
+  kalman_carma_shared_modes/  shared-mode TFG and QMEKF estimators
   kalman_ou_ii/      OU-II Kalman model components
   kalman_ou_iii/     OU-III Kalman model components
   kalman_tfg/        two-frame Lie-group filter components
@@ -294,6 +222,7 @@ tests/               module-level build and validation targets
   freq/              builds freq-track
   heave_only/        heave-only filters (Godhavn, Richter, Kuchler) and heave_only-sim
   imu_calibrate/     IMU calibration tests
+  kalman_tfg_shared_modes/  shared-mode TFG replay and degradation studies
   kalman_ou_ii/      builds kalman_ou_ii-sim
   kalman_ou_iii/     builds kalman_ou_iii-sim
   pii_observer/      builds pii_observer-adaptive
@@ -338,10 +267,11 @@ make fetch-sim-data
 Run builds from the specific test folder you want to validate:
 
 ```bash
-cd tests/freq && make all
-cd tests/kalman_ou_ii && make all
-cd tests/kalman_ou_iii && make all
-cd tests/pii_observer && make all
+make -C tests/kalman_tfg_shared_modes all
+make -C tests/freq all
+make -C tests/kalman_ou_ii all
+make -C tests/kalman_ou_iii all
+make -C tests/pii_observer all
 ```
 
 If Eigen is not on the default include path for your environment, pass an include override:
@@ -359,6 +289,10 @@ make all
 ```
 
 For module-level validation, run `make all` inside the relevant folder under `tests/`.
+
+### Shared-mode TFG validation
+
+Run the [deterministic replay](tests/kalman_tfg_shared_modes/) for its case-specific accuracy gates. The [degradation study](reports/results/tfg_shared_modes/degradation/) uses the same filter and exports full-rate RMS scores for engine noise, sea transitions and installation offsets.
 
 ### Paired OU validation
 

@@ -157,7 +157,8 @@ reports/results/kalman_carma_shared_modes/traces/*_ts.csv
 /reports/results/carma_shared_modes_validation/runs.jsonl
 /doc/kalman_carma_shared_modes/csm_validation_*.pgf
 
-# Experimental TFG/shared-mode replay and paired smoke output.
+# TFG shared-mode diagnostics and paired smoke output.
+tests/kalman_tfg_shared_modes/installation-study
 tests/kalman_carma_shared_modes/kalman_tfg_shared_modes-sim
 tests/kalman_carma_shared_modes/smoke_tfg_shared.csv
 tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe/build/

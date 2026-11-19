@@ -25,3 +25,5 @@ python3 kalman_tfg_shared_modes-plots.py
 # Both the method article and the comparative study reuse these bounded
 # figures and tables from the committed paired-study evidence.
 python3 "${script_dir}/../../tools/tfg_shared_modes_report.py"
+# Render both underway directions from the measured degradation bundles.
+python3 "${script_dir}/../../tools/tfg_shared_modes_degradation_report.py"

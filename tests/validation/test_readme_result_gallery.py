@@ -10,17 +10,17 @@ PROVENANCE = REPO_ROOT / "reports" / "readme-results-provenance.md"
 PUBLISH_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "readme-results-publish.yml"
 
 EXPECTED_GALLERY = (
-    "w3d_ou3_pmstokes_medium.svg",
-    "w3d_ou3_pmstokes_medium_zkin.svg",
-    "w3d_ou3_pmstokes_medium_xykin.svg",
-    "w3d_ou3_pmstokes_medium_acc_bias.svg",
-    "w3d_ou3_pmstokes_medium_gyro_bias.svg",
+    "w3d_tfg_csm_pmstokes_medium_att.svg",
+    "w3d_tfg_csm_pmstokes_medium_zkin.svg",
+    "w3d_tfg_csm_pmstokes_medium_xykin.svg",
+    "w3d_tfg_csm_pmstokes_medium_acc_bias.svg",
+    "w3d_tfg_csm_pmstokes_medium_gyro_bias.svg",
     "spectrum_pmstokes_medium_3d.svg",
 )
 
 
 class ReadmeResultGalleryTests(unittest.TestCase):
-    def test_expected_ou3_gallery_is_committed_as_svg(self):
+    def test_expected_shared_tfg_gallery_is_committed_as_svg(self):
         for name in EXPECTED_GALLERY:
             with self.subTest(name=name):
                 path = GALLERY / name
@@ -29,7 +29,7 @@ class ReadmeResultGalleryTests(unittest.TestCase):
                 header = path.read_bytes()[:4096].lower()
                 self.assertIn(b"<svg", header, f"not an SVG document: {path}")
 
-    def test_readme_references_every_expected_ou3_svg(self):
+    def test_readme_references_every_expected_shared_tfg_svg(self):
         text = README.read_text(encoding="utf-8")
         for name in EXPECTED_GALLERY:
             with self.subTest(name=name):
@@ -57,6 +57,7 @@ class ReadmeResultGalleryTests(unittest.TestCase):
         self.assertTrue(PROVENANCE.is_file())
 
         workflow = PUBLISH_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("--name release-svgs-kalman_tfg_shared_modes", workflow)
         self.assertIn("reports/readme-results-provenance.md", workflow)
         self.assertNotIn("reports/ou_evidence_fingerprint.json", workflow)
         self.assertNotIn("ou_replay_fingerprint.py", workflow)
