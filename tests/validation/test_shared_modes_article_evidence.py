@@ -59,68 +59,78 @@ class SharedModesArticleEvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'replay sources changed'):study.validate(r,root)
 
     def test_stale_source_refresh_preserves_bundle_until_validated(self):
-        for complete in (False, True):
-            with self.subTest(complete=complete), tempfile.TemporaryDirectory() as tmp:
-                root = Path(tmp)
-                results = self.fixture(root)
-                (root/'src/model.h').write_text('new model')
-                original = (results/'scores.csv').read_bytes()
+        self.check_stale_source_refresh(complete=False)
 
-                def produce(candidate, jobs):
-                    self.assertEqual(jobs, 2)
-                    self.assertEqual((results/'scores.csv').read_bytes(), original)
-                    candidate.mkdir(parents=True)
-                    (candidate/'replacement').write_text('new study')
+    def test_stale_source_installs_validated_bundle(self):
+        self.check_stale_source_refresh(complete=True)
 
-                validate = study.validate
+    def check_stale_source_refresh(self, complete):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            results = self.fixture(root)
+            (root/'src/model.h').write_text('new model')
+            original = (results/'scores.csv').read_bytes()
 
-                def check(path):
-                    if path == results:
-                        return validate(path, root)
-                    if not complete:
-                        raise ValueError('incomplete candidate')
-                    self.assertTrue((path/'replacement').is_file())
+            def produce(candidate, jobs):
+                self.assertEqual(jobs, 2)
+                self.assertEqual((results/'scores.csv').read_bytes(), original)
+                candidate.mkdir(parents=True)
+                (candidate/'replacement').write_text('new study')
 
-                with patch.object(study, 'produce', produce), patch.object(study, 'validate', check):
-                    if complete:
+            validate = study.validate
+
+            def check(path):
+                if path == results:
+                    return validate(path, root)
+                if not complete:
+                    raise ValueError('incomplete candidate')
+                self.assertTrue((path/'replacement').is_file())
+
+            with patch.object(study, 'produce', produce), patch.object(study, 'validate', check):
+                if complete:
+                    study.acquire(results, 2)
+                    self.assertTrue((results/'replacement').is_file())
+                    self.assertFalse((results/'scores.csv').exists())
+                else:
+                    with self.assertRaisesRegex(ValueError, 'incomplete candidate'):
                         study.acquire(results, 2)
-                        self.assertTrue((results/'replacement').is_file())
-                        self.assertFalse((results/'scores.csv').exists())
-                    else:
-                        with self.assertRaisesRegex(ValueError, 'incomplete candidate'):
-                            study.acquire(results, 2)
-                        self.assertEqual((results/'scores.csv').read_bytes(), original)
+                    self.assertEqual((results/'scores.csv').read_bytes(), original)
 
     def test_interrupted_install_keeps_previous_bundle(self):
-        for rollback_fails in (False, True):
-            with self.subTest(rollback_fails=rollback_fails), tempfile.TemporaryDirectory() as tmp:
-                root = Path(tmp)
-                results = root/'results'
-                results.mkdir()
-                (results/'score').write_text('old')
-                rename = Path.rename
+        self.check_interrupted_install(rollback_fails=False)
 
-                def interrupt(source, target):
-                    if source == results:
-                        rename(source, target)
-                        raise KeyboardInterrupt()
-                    if rollback_fails:
-                        raise OSError('rollback failed')
-                    return rename(source, target)
+    def test_interrupted_install_with_failed_rollback_retains_backup(self):
+        self.check_interrupted_install(rollback_fails=True)
 
-                def produce(candidate, jobs):
-                    candidate.mkdir(parents=True)
+    def check_interrupted_install(self, rollback_fails):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            results = root/'results'
+            results.mkdir()
+            (results/'score').write_text('old')
+            rename = Path.rename
 
-                with patch.object(study, 'validate', side_effect=[study.StaleSource('old'), None]), \
-                        patch.object(study, 'produce', produce), patch.object(Path, 'rename', interrupt):
-                    with self.assertRaises(OSError if rollback_fails else KeyboardInterrupt):
-                        study.acquire(results, 2)
+            def interrupt(source, target):
+                if source == results:
+                    rename(source, target)
+                    raise KeyboardInterrupt()
                 if rollback_fails:
-                    saved, = root.glob('.results-backup-*/previous/score')
-                    self.assertEqual(saved.read_text(), 'old')
-                else:
-                    self.assertEqual((results/'score').read_text(), 'old')
-                    self.assertFalse(list(root.glob('.results-backup-*')))
+                    raise OSError('rollback failed')
+                return rename(source, target)
+
+            def produce(candidate, jobs):
+                candidate.mkdir(parents=True)
+
+            with patch.object(study, 'validate', side_effect=[study.StaleSource('old'), None]), \
+                    patch.object(study, 'produce', produce), patch.object(Path, 'rename', interrupt):
+                with self.assertRaises(OSError if rollback_fails else KeyboardInterrupt):
+                    study.acquire(results, 2)
+            if rollback_fails:
+                saved, = root.glob('.results-backup-*/previous/score')
+                self.assertEqual(saved.read_text(), 'old')
+            else:
+                self.assertEqual((results/'score').read_text(), 'old')
+                self.assertFalse(list(root.glob('.results-backup-*')))
 
     def test_changed_input_or_product_rejected(self):
         for name in ('protocol.json','scores.csv'):
