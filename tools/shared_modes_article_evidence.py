@@ -22,6 +22,14 @@ STUDY = 'carma_shared_modes_validation'
 REPLAY_PATHS = ['src', 'tools', 'tests/common', '.github/actions/replay-toolchain', 'Makefile'] + [f'tests/{name}' for name in (
     'kalman_carma_shared_modes', 'kalman_ou_ii', 'kalman_ou_iii', 'kalman_tfg',
     'pii_observer', 'nlo')]
+# These gates only consume production code. They do not build, drive, or
+# score the article's replays.
+REPLAY_PATHS += [':(exclude)tools/quality/fusion_smoke.cpp', ':(exclude)tools/quality_gates.sh',
+                 ':(exclude)tools/shared_modes_article_evidence.py']
+
+
+class StaleSource(ValueError):
+    """An intact bundle produced with an older replay implementation."""
 
 
 def sha(path):
@@ -49,30 +57,23 @@ def validate(results, root=ROOT):
         raise ValueError('incomplete or duplicate replay inventory')
     if any(int(r['score_samples']) != 180000 for r in rows):
         raise ValueError('shortened scoring window')
-    for path, digest in protocol['source_hashes'].items():
-        if sha(root/path) != digest:
-            raise ValueError(f'stale study source: {path}')
-    # The narrow protocol hashes alone are insufficient: check runtime headers,
-    # shared helpers and build recipes against the actual producing source tree.
-    changed = subprocess.check_output(['git', 'diff', '--name-only',
-        protocol['source_revision'], '--', *REPLAY_PATHS], cwd=root, text=True).splitlines()
-    changed = [p for p in changed if p != 'tools/shared_modes_article_evidence.py']
-    if changed:
-        raise ValueError(f'replay sources changed: {changed}')
     if not {'protocol.json', 'scores.csv', 'engine_summary.csv'} <= set(summary['files_sha256']):
         raise ValueError('incomplete product hash inventory')
     for path, digest in summary['files_sha256'].items():
         if sha(results/path) != digest:
             raise ValueError(f'changed study product: {path}')
+    for path, digest in protocol['source_hashes'].items():
+        if not (root/path).is_file() or sha(root/path) != digest:
+            raise StaleSource(f'stale study source: {path}')
+    # The narrow protocol hashes alone are insufficient: check runtime headers,
+    # shared helpers and build recipes against the actual producing source tree.
+    changed = subprocess.check_output(['git', 'diff', '--name-only',
+        protocol['source_revision'], '--', *REPLAY_PATHS], cwd=root, text=True).splitlines()
+    if changed:
+        raise StaleSource(f'replay sources changed: {changed}')
 
 
-def acquire(results, jobs):
-    if results.exists():
-        try:
-            validate(results)
-            return
-        except (ValueError, OSError, KeyError) as error:
-            raise RuntimeError(f'refusing to overwrite an existing invalid bundle: {error}') from error
+def produce(results, jobs):
     repository = os.environ.get('GITHUB_REPOSITORY', 'bareboat-necessities/ocean-imu')
     name = f'simulation-study-{sim_dataset.RELEASE}-{sim_dataset.CASE}-{STUDY}'
     artifacts = json.loads(subprocess.check_output(['gh', 'api', '--paginate', '--slurp',
@@ -107,8 +108,43 @@ def acquire(results, jobs):
     # No eligible current bundle exists: generate the actual complete study.
     # Never replace its source revision or relabel old rows as this execution.
     subprocess.run(['python3', '-u', 'tools/simulation_studies.py', STUDY,
-                    '--jobs', str(jobs)], cwd=ROOT, check=True)
-    validate(results)
+                    '--jobs', str(jobs), '--output-root', str(results.parents[2])], cwd=ROOT, check=True)
+
+
+def acquire(results, jobs):
+    if results.exists():
+        try:
+            validate(results)
+            return
+        except StaleSource as error:
+            print(f'Refreshing complete study with stale sources: {error}', flush=True)
+        except (ValueError, OSError, KeyError) as error:
+            raise RuntimeError(f'refusing to overwrite an existing invalid bundle: {error}') from error
+
+    # Stage the download or full replay on the same filesystem. Keep the
+    # previous bundle available if retrieval, generation, or validation fails.
+    results.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=results.parent) as tmp:
+        candidate = Path(tmp)/sim_dataset.CASE/'studies'/STUDY
+        produce(candidate, jobs)
+        validate(candidate)
+        if not results.exists():
+            candidate.rename(results)
+            return
+
+        # A cancellation or failed rollback must leave a recoverable copy
+        # outside the candidate's auto-cleaned temporary directory.
+        backup = Path(tempfile.mkdtemp(dir=results.parent, prefix=f'.{results.name}-backup-'))
+        previous = backup/'previous'
+        try:
+            results.rename(previous)
+            candidate.rename(results)
+        finally:
+            if previous.exists() and not results.exists():
+                previous.rename(results)
+            if not previous.exists():
+                backup.rmdir()
+        shutil.rmtree(backup)
 
 
 def main():

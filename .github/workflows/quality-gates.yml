@@ -3,7 +3,7 @@ name: quality-gates
 # Sanitizer, static-analysis and coverage layer.
 #
 # Each gate is reproducible through tools/quality_gates.sh. CI shards the
-# complete clang-tidy translation-unit list only to fit hosted-runner lifetimes;
+# complete warnings and clang-tidy translation-unit lists only to fit hosted-runner lifetimes;
 # the local command still audits that same list in one invocation. See
 # docs/quality-gates.md for coverage and deliberate exclusions.
 #
@@ -33,16 +33,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  warnings:
-    name: warnings (-Wall -Wextra -Wpedantic -Werror)
+  warnings-shards:
+    name: warnings shard ${{ matrix.shard }}/8
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v6
-      - name: Install Eigen
+      - name: Install audit dependencies
         run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
-      - name: Compile every host translation unit with warnings as errors
+      - name: Run warnings shard
+        env:
+          SHARD_NUMBER: ${{ matrix.shard }}
+          SHARD_COUNT: 8
+          JOBS: 2
         run: tools/quality_gates.sh warnings
+
+  warnings:
+    name: warnings (-Wall -Wextra -Wpedantic -Werror)
+    needs: warnings-shards
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every warnings shard
+        env:
+          RESULT: ${{ needs.warnings-shards.result }}
+        run: test "$RESULT" = success
 
   static-analysis:
     name: ${{ matrix.gate }}
@@ -65,71 +84,24 @@ jobs:
       - name: Run ${{ matrix.gate }}
         run: tools/quality_gates.sh ${{ matrix.gate }}
 
-  # A single hosted runner repeatedly shut down during the complete 133-TU
-  # clang-tidy audit. Partition the exact same ordered TU set across bounded
-  # jobs; the aggregate job below preserves the canonical required-check name.
   clang-tidy-shards:
-    name: clang-tidy shard ${{ matrix.label }}/4
+    name: clang-tidy shard ${{ matrix.shard }}/8
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - index: 0
-            label: 1
-          - index: 1
-            label: 2
-          - index: 2
-            label: 3
-          - index: 3
-            label: 4
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v6
-      - name: Install Eigen and clang-tidy
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libeigen3-dev clang-tidy
-      - name: Run complete clang-tidy shard
+      - name: Install audit dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev clang-tidy
+      - name: Run clang-tidy shard
         env:
-          SHARD_INDEX: ${{ matrix.index }}
-          SHARD_COUNT: 4
-        run: |
-          set -uo pipefail
-          mapfile -t translation_units < <(
-            git ls-files 'tests/*.cpp' \
-              | grep -Ev '(-sim|certificate-sim|neighborhood-sim)\.cpp$'
-          )
-          selected=()
-          for ((index=SHARD_INDEX; index<${#translation_units[@]}; index+=SHARD_COUNT)); do
-            selected+=("${translation_units[index]}")
-          done
-          printf 'clang-tidy shard %s/%s: %s of %s translation units\n' \
-            "$((SHARD_INDEX + 1))" "$SHARD_COUNT" \
-            "${#selected[@]}" "${#translation_units[@]}"
-          log="$(mktemp)"
-          trap 'rm -f "$log"' EXIT
-          set +e
-          printf '%s\0' "${selected[@]}" \
-            | xargs -0 -P "$(nproc)" -I TU bash -c '
-                clang-tidy --quiet "$1" -- \
-                  -std=c++20 -I src \
-                  -isystem /usr/include/eigen3 \
-                  -isystem "$PWD/third_party/Lie-plusplus/include"
-              ' _ TU > "$log" 2>&1
-          xargs_status=$?
-          set -e
-          if grep -q 'warning:\|error:' "$log"; then
-            grep -A3 'warning:\|error:' "$log" | head -60
-            echo "clang-tidy: $(grep -c 'warning:\|error:' "$log") diagnostic(s)"
-            exit 1
-          fi
-          if (( xargs_status != 0 )); then
-            cat "$log"
-            echo "clang-tidy shard command failed with xargs status $xargs_status"
-            exit "$xargs_status"
-          fi
-          echo "clang-tidy shard clean"
+          SHARD_NUMBER: ${{ matrix.shard }}
+          SHARD_COUNT: 8
+          JOBS: 2
+        run: tools/quality_gates.sh clang-tidy
 
   clang-tidy:
     name: clang-tidy
@@ -143,20 +115,36 @@ jobs:
           SHARD_RESULT: ${{ needs.clang-tidy-shards.result }}
         run: test "$SHARD_RESULT" = success
 
-  sanitizers:
-    name: sanitizers (ASan + UBSan)
+  sanitizer-suites:
+    name: ASan + UBSan (${{ matrix.suite }})
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, ou2, ou3, tfg, carma, tfg_carma, shared, tfg_shared, tangent, observers]
     steps:
       - uses: actions/checkout@v6
-      - name: Install Eigen
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Install Eigen and Clang
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev clang
       - name: Fetch simulation data
+        if: matrix.suite == 'unit'
         run: make ensure-sim-data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run unit-test suites under ASan + UBSan
-        run: tools/quality_gates.sh sanitizers
+      - name: Build and run instrumented tests
+        run: tools/quality_gates.sh sanitizers "${{ matrix.suite }}"
+
+  sanitizers:
+    name: sanitizers (ASan + UBSan)
+    if: always()
+    needs: sanitizer-suites
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every sanitizer suite
+        env:
+          RESULT: ${{ needs.sanitizer-suites.result }}
+        run: test "$RESULT" = success
 
   coverage:
     name: coverage
