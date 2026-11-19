@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "cad734e249f5cb4752661d78025c72c628953b0f",
+  "git_commit": "afdda78576f205e4f48bebc8117a653092ce3c77",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -291,7 +291,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -402,11 +402,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-19T00:12:42+00:00",
-    "git_commit": "cad734e249f5cb4752661d78025c72c628953b0f",
+    "generated_at": "2026-11-19T18:35:51+00:00",
+    "git_commit": "afdda78576f205e4f48bebc8117a653092ce3c77",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -669,7 +669,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44410304048",
+      "run_id": "44581711849",
       "workflow": "build"
     }
   },
