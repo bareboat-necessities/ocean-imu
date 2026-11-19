@@ -128,15 +128,23 @@ def acquire(results, jobs):
         candidate = Path(tmp)/sim_dataset.CASE/'studies'/STUDY
         produce(candidate, jobs)
         validate(candidate)
-        previous = Path(tmp)/'previous'
-        if results.exists():
-            results.rename(previous)
-        try:
+        if not results.exists():
             candidate.rename(results)
-        except OSError:
-            if previous.exists():
+            return
+
+        # A cancellation or failed rollback must leave a recoverable copy
+        # outside the candidate's auto-cleaned temporary directory.
+        backup = Path(tempfile.mkdtemp(dir=results.parent, prefix=f'.{results.name}-backup-'))
+        previous = backup/'previous'
+        try:
+            results.rename(previous)
+            candidate.rename(results)
+        finally:
+            if previous.exists() and not results.exists():
                 previous.rename(results)
-            raise
+            if not previous.exists():
+                backup.rmdir()
+        shutil.rmtree(backup)
 
 
 def main():

@@ -91,6 +91,37 @@ class SharedModesArticleEvidenceTests(unittest.TestCase):
                             study.acquire(results, 2)
                         self.assertEqual((results/'scores.csv').read_bytes(), original)
 
+    def test_interrupted_install_keeps_previous_bundle(self):
+        for rollback_fails in (False, True):
+            with self.subTest(rollback_fails=rollback_fails), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                results = root/'results'
+                results.mkdir()
+                (results/'score').write_text('old')
+                rename = Path.rename
+
+                def interrupt(source, target):
+                    if source == results:
+                        rename(source, target)
+                        raise KeyboardInterrupt()
+                    if rollback_fails:
+                        raise OSError('rollback failed')
+                    return rename(source, target)
+
+                def produce(candidate, jobs):
+                    candidate.mkdir(parents=True)
+
+                with patch.object(study, 'validate', side_effect=[study.StaleSource('old'), None]), \
+                        patch.object(study, 'produce', produce), patch.object(Path, 'rename', interrupt):
+                    with self.assertRaises(OSError if rollback_fails else KeyboardInterrupt):
+                        study.acquire(results, 2)
+                if rollback_fails:
+                    saved, = root.glob('.results-backup-*/previous/score')
+                    self.assertEqual(saved.read_text(), 'old')
+                else:
+                    self.assertEqual((results/'score').read_text(), 'old')
+                    self.assertFalse(list(root.glob('.results-backup-*')))
+
     def test_changed_input_or_product_rejected(self):
         for name in ('protocol.json','scores.csv'):
             with self.subTest(name=name),tempfile.TemporaryDirectory() as t:
