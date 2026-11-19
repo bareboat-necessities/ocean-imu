@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "experiment/startup-wave-handover",
-  "git_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 7010 ++++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |    6 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  300 +-\n .../ou_robustness/ou_robustness_publication.tex    |   12 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |  620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    | 1804 +++--\n .../ou_robustness/ou_robustness_summary.csv        |  372 +-\n 7 files changed, 5021 insertions(+), 5103 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "cad734e249f5cb4752661d78025c72c628953b0f",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -291,14 +291,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "original_ci_artifact": {
-    "artifact": 14464493396,
-    "producer_job_id": 135066523160,
-    "run": 44367501515,
-    "sha256": "sha256:c218de4b231def273e508e8c013e1143f6e7a5cafd6c91207df35e1601d88c11",
-    "source": "fee96e2b3be2d3d9d67b654f76ebea92b291df57"
-  },
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -409,11 +402,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-18T19:48:55+00:00",
-    "git_commit": "fee96e2b3be2d3d9d67b654f76ebea92b291df57",
+    "generated_at": "2026-11-19T00:12:42+00:00",
+    "git_commit": "cad734e249f5cb4752661d78025c72c628953b0f",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -674,10 +667,10 @@
     "raw_rows_sha256": "0186306fc6a486e89d93cf6079253cd2306597997c44a132187b7847baf70908",
     "raw_rows_size_bytes": 210271,
     "workflow_run": {
-      "job": "combine",
+      "job": "commit",
       "run_attempt": "1",
-      "run_id": "44367501515",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "44410304048",
+      "workflow": "build"
     }
   },
   "result_files": {
