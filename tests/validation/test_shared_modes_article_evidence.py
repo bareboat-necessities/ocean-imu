@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'))
@@ -56,6 +57,39 @@ class SharedModesArticleEvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as t:
             root=Path(t);r=self.fixture(root);(root/'src/model.h').write_text('changed')
             with self.assertRaisesRegex(ValueError,'replay sources changed'):study.validate(r,root)
+
+    def test_stale_source_refresh_preserves_bundle_until_validated(self):
+        for complete in (False, True):
+            with self.subTest(complete=complete), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                results = self.fixture(root)
+                (root/'src/model.h').write_text('new model')
+                original = (results/'scores.csv').read_bytes()
+
+                def produce(candidate, jobs):
+                    self.assertEqual(jobs, 2)
+                    self.assertEqual((results/'scores.csv').read_bytes(), original)
+                    candidate.mkdir(parents=True)
+                    (candidate/'replacement').write_text('new study')
+
+                validate = study.validate
+
+                def check(path):
+                    if path == results:
+                        return validate(path, root)
+                    if not complete:
+                        raise ValueError('incomplete candidate')
+                    self.assertTrue((path/'replacement').is_file())
+
+                with patch.object(study, 'produce', produce), patch.object(study, 'validate', check):
+                    if complete:
+                        study.acquire(results, 2)
+                        self.assertTrue((results/'replacement').is_file())
+                        self.assertFalse((results/'scores.csv').exists())
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'incomplete candidate'):
+                            study.acquire(results, 2)
+                        self.assertEqual((results/'scores.csv').read_bytes(), original)
 
     def test_changed_input_or_product_rejected(self):
         for name in ('protocol.json','scores.csv'):

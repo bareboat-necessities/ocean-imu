@@ -5,7 +5,7 @@ repository. Every gate runs the same way locally as it does in CI:
 
 ```
 tools/quality_gates.sh warnings     # -Wall -Wextra -Wpedantic -Werror
-tools/quality_gates.sh sanitizers   # ASan + UBSan over the unit-test suites
+tools/quality_gates.sh sanitizers   # ASan + UBSan over filter replays and unit suites
 tools/quality_gates.sh clang-tidy   # bugprone / cert / performance / portability
 tools/quality_gates.sh cppcheck     # warning / performance / portability
 tools/quality_gates.sh python       # ruff + py_compile
@@ -31,7 +31,7 @@ have to re-derive them.
 | cppcheck | 5 findings — 3 false positives, 2 in frozen files | clean |
 | clang-tidy | 18 findings, 16 of them noise | blocking; former parse blockers fixed |
 | python | 96 ruff findings across 122 files | clean |
-| coverage | no tooling | 65.6% lines from the six sanitizer dirs |
+| coverage | no tooling | 65.6% lines from the original utility suites |
 
 The codebase was in much better shape than the absence of tooling suggested.
 The warnings gate cost exactly one real fix to turn on.
@@ -89,21 +89,20 @@ Practical consequences:
 
 ## Scope choices, and why
 
-**Sanitizers cover six unit-test suites**, not all fourteen:
+**ASan and UBSan run on every PR that triggers the quality workflow.** Each of
+the eight fusion jobs builds the production wrapper with Clang and both
+sanitizers, then feeds it 60 seconds of varying roll and vertical acceleration
+at 200 Hz with 100 Hz magnetic updates. A replay must produce finite positions
+and spend at least 2,000 IMU samples in the live filter. Run one case locally
+with `tools/quality_gates.sh sanitizers tfg_shared`. The other fusion cases are
+`ou2`, `ou3`, `tfg`, `carma`, `tfg_carma`, `shared`, and `tangent`.
 
-```
-spike_filter spectrum detrend imu_calibrate wave_dir wave_sim
-```
-
-The OU/TFG/AHRS/NLO simulation suites are excluded. Under
-`-fsanitize=address,undefined` they run past the 15-minute mark each — a first
-attempt timed out three of them at 900 s — which is too slow for a per-PR gate.
-They are still compiled and run by the existing `build` matrix in `build.yml`.
-If they ever need sanitizer coverage, run them on a schedule rather than per PR.
-
-**Sanitizer builds are memory-hungry.** Instrumenting the Eigen template
-instantiations OOM-killed `cc1plus` at `-j4` on a 16 GB machine. `SAN_JOBS`
-defaults to 2 for that reason; raise it only if you know the runner is bigger.
+The `observers` job runs existing QMEKF, Mahony, PLL, heave-only, NLO and PII
+tests under the same instrumentation. The `unit` job rebuilds and runs the spike
+filter, detrending, calibration, wave direction and wave simulation suites.
+The spectrum directory has no host executable. Full-duration accuracy replays
+run separately in the build matrix. Use `SAN_CXX` to select a filter sanitizer
+compiler and `SAN_JOBS` to limit parallel utility compilation (default 2).
 
 **The warnings gate skips `src/AtomS3R/`.** Those files include `<Wire.h>` and
 the M5Unified headers, which exist only in the Arduino core; they are covered by
@@ -124,7 +123,7 @@ papers it implements.
 
 `tools/quality_gates.sh coverage` writes `reports/coverage/index.html` and
 `summary.txt`, and CI uploads them as an artifact. It reports 65.6% lines /
-38.2% branches over `src/`, measured from the six sanitizer suites only — it is
+38.2% branches over `src/`, measured from the original utility suites only — it is
 a floorless report today, not a gate.
 
 To turn it into a gate, set `COVERAGE_MIN_LINES`:
@@ -134,5 +133,5 @@ COVERAGE_MIN_LINES=65 tools/quality_gates.sh coverage
 ```
 
 Do not set a floor from the current number without first widening the suite
-list: the figure reflects six of fourteen directories, so it understates the
+list: the figure reflects only the utility suites, so it understates the
 estimators and would ratchet on the wrong baseline.

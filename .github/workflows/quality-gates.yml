@@ -143,20 +143,36 @@ jobs:
           SHARD_RESULT: ${{ needs.clang-tidy-shards.result }}
         run: test "$SHARD_RESULT" = success
 
-  sanitizers:
-    name: sanitizers (ASan + UBSan)
+  sanitizer-suites:
+    name: ASan + UBSan (${{ matrix.suite }})
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, ou2, ou3, tfg, carma, tfg_carma, shared, tfg_shared, tangent, observers]
     steps:
       - uses: actions/checkout@v6
-      - name: Install Eigen
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev
+      - name: Install Eigen and Clang
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libeigen3-dev clang
       - name: Fetch simulation data
+        if: matrix.suite == 'unit'
         run: make ensure-sim-data
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run unit-test suites under ASan + UBSan
-        run: tools/quality_gates.sh sanitizers
+      - name: Build and run instrumented tests
+        run: tools/quality_gates.sh sanitizers "${{ matrix.suite }}"
+
+  sanitizers:
+    name: sanitizers (ASan + UBSan)
+    if: always()
+    needs: sanitizer-suites
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every sanitizer suite
+        env:
+          RESULT: ${{ needs.sanitizer-suites.result }}
+        run: test "$RESULT" = success
 
   coverage:
     name: coverage

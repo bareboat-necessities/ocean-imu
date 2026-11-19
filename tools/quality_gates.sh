@@ -5,7 +5,7 @@
 # fails on a PR can be reproduced with a single command.
 #
 #   tools/quality_gates.sh warnings     compile everything with -Wall -Wextra -Wpedantic -Werror
-#   tools/quality_gates.sh sanitizers   run the unit-test suites under ASan + UBSan
+#   tools/quality_gates.sh sanitizers   run filter replays and unit suites under ASan + UBSan
 #   tools/quality_gates.sh clang-tidy   static analysis (.clang-tidy)
 #   tools/quality_gates.sh cppcheck     static analysis (tools/cppcheck-suppressions.txt)
 #   tools/quality_gates.sh python       ruff over tools/, tests/, plots/ (ruff.toml)
@@ -36,11 +36,9 @@ else
 fi
 LIEPP_INC="-isystem $REPO_ROOT/third_party/Lie-plusplus/include"
 
-# Test directories whose suites are fast enough to run under sanitizers on a
-# per-PR gate. The OU/TFG simulation suites are deliberately absent: under
-# -fsanitize=address,undefined they run past 15 minutes each, and the plain
-# build already exercises them. See docs/quality-gates.md.
-SANITIZER_DIRS=(spike_filter spectrum detrend imu_calibrate wave_dir wave_sim)
+# Spectrum has no host executable. Coverage uses the same utility suites.
+UNIT_DIRS=(spike_filter detrend imu_calibrate wave_dir wave_sim)
+FUSION_CASES=(ou2 ou3 tfg carma tfg_carma shared tfg_shared tangent)
 
 STATUS=0
 step()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
@@ -83,23 +81,23 @@ gate_warnings() {
   rm -f "$log"
 }
 
-gate_sanitizers() {
+gate_unit_sanitizers() {
   step "sanitizers: AddressSanitizer + UndefinedBehaviorSanitizer"
   # -O1 keeps the instrumented build inside the runner's memory budget while
   # staying fast enough to be worth running.
-  local sanflags="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined"
-  export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=0"
-  export ASAN_OPTIONS="detect_leaks=1:abort_on_error=0"
+  local sanflags="-O1 -g1 -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all"
+  export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1"
+  export ASAN_OPTIONS="${ASAN_OPTIONS:-detect_leaks=1}:halt_on_error=1"
 
-  for d in "${SANITIZER_DIRS[@]}"; do
+  for d in "${UNIT_DIRS[@]}"; do
     [[ -f "tests/$d/Makefile" ]] || { fail "sanitizers: tests/$d has no Makefile"; continue; }
     local blog rlog
     blog="$(mktemp)"; rlog="$(mktemp)"
-    if ! make -j "$SAN_JOBS" -C "tests/$d" build CPPFLAGS="$sanflags" > "$blog" 2>&1; then
+    if ! make -B -j "$SAN_JOBS" -C "tests/$d" build CPPFLAGS="$sanflags" > "$blog" 2>&1; then
       tail -30 "$blog"; fail "sanitizers: $d failed to build"
       rm -f "$blog" "$rlog"; continue
     fi
-    ( cd "tests/$d" && bash ./run_tests.sh ) > "$rlog" 2>&1
+    ( cd "tests/$d" && bash -e ./run_tests.sh ) > "$rlog" 2>&1
     local rc=$?
     local ub as lk
     ub=$(grep -c 'runtime error:' "$rlog")
@@ -115,6 +113,49 @@ gate_sanitizers() {
     fi
     rm -f "$blog" "$rlog"
   done
+}
+
+# Build into a fresh temporary directory so an ordinary or coverage build
+# can never satisfy a filter sanitizer target.
+filter_sanitizer_case() (
+  set -eu
+  local suite="$1" tmp source
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  local flags=(-std=c++20 -O1 -g1 -fno-omit-frame-pointer -fsanitize=address,undefined
+               -fno-sanitize-recover=all -DEIGEN_UNROLLING_LIMIT=0 -I src
+               -isystem "${EIGEN_INC#-isystem }")
+  export ASAN_OPTIONS="${ASAN_OPTIONS:-detect_leaks=1}:halt_on_error=1"
+  export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+  if [[ "$suite" == observers ]]; then
+    local tests=(tests/ahrs/qmekf_geometry-test.cpp tests/ahrs/mahony-frame-test.cpp
+                 tests/freq/pll-coarse-test.cpp tests/heave_only/heave_only-test.cpp
+                 tests/nlo/device_heave-test.cpp tests/pii_observer/local_gravity-test.cpp)
+    for source in "${tests[@]}"; do
+      step "$source"
+      "${SAN_CXX:-clang++}" "${flags[@]}" "$source" -o "$tmp/test" || exit 1
+      "$tmp/test" || exit 1
+    done
+  else
+    step "sanitizers: $suite fusion replay"
+    "${SAN_CXX:-clang++}" "${flags[@]}" "-DFILTER_${suite^^}" tools/quality/fusion_smoke.cpp -o "$tmp/test" || exit 1
+    "$tmp/test"
+  fi
+)
+
+gate_sanitizers() {
+  local requested="${1:-all}" suite
+  if [[ "$requested" == all || "$requested" == unit ]]; then
+    gate_unit_sanitizers
+    [[ "$requested" == unit ]] && return
+  fi
+  for suite in "${FUSION_CASES[@]}" observers; do
+    if [[ "$requested" == all || "$requested" == "$suite" ]]; then
+      filter_sanitizer_case "$suite" || fail "sanitizers: $suite"
+      [[ "$requested" == "$suite" ]] && return
+    fi
+  done
+  [[ "$requested" == all ]] || fail "unknown sanitizer suite: $requested"
 }
 
 gate_clang_tidy() {
@@ -180,11 +221,11 @@ gate_coverage() {
   find tests -name '*.gcda' -o -name '*.gcno' | xargs -r rm -f
 
   local covflags="-O0 -g --coverage -fprofile-abs-path"
-  for d in "${SANITIZER_DIRS[@]}"; do
+  for d in "${UNIT_DIRS[@]}"; do
     [[ -f "tests/$d/Makefile" ]] || continue
-    make -j "$JOBS" -C "tests/$d" build CPPFLAGS="$covflags" LDFLAGS="--coverage" >/dev/null 2>&1 \
+    make -B -j "$JOBS" -C "tests/$d" build CPPFLAGS="$covflags" LDFLAGS="--coverage" >/dev/null 2>&1 \
       || { fail "coverage: $d failed to build"; continue; }
-    ( cd "tests/$d" && bash ./run_tests.sh ) >/dev/null 2>&1 || true
+    ( cd "tests/$d" && bash -e ./run_tests.sh ) >/dev/null 2>&1 || true
   done
 
   mkdir -p reports/coverage
@@ -210,7 +251,7 @@ gate_coverage() {
 
 case "${1:-all}" in
   warnings)   gate_warnings ;;
-  sanitizers) gate_sanitizers ;;
+  sanitizers) gate_sanitizers "${2:-all}" ;;
   clang-tidy) gate_clang_tidy ;;
   cppcheck)   gate_cppcheck ;;
   python)     gate_python ;;
