@@ -1332,6 +1332,16 @@ digest, the secant report's blob and this ledger's blob. No proof flag,
 payload or OPEN dependency changes; the current limiter and next experiment
 are unchanged.
 
+**Class E. Shared-mode TFG documentation and the native secant diagnostic.**
+The two TFG header comment edits in PR #768 invalidated the recorded
+`shipping_source_tree_sha256`. The native probe's compiler dependency list
+excludes both headers. The source-tree identity therefore needs a new binding
+even though the probe compiles the same OU-III operations and preserves their
+chronology. No additional physical histories or mathematical assumptions enter
+the diagnostic. Its finite secants still leave uniform contraction open.
+The reproducibility check is to rerun both perturbation sizes and compare
+the raw secant hashes with the committed measurements.
+
 **E — TFG-CARMA sample-path kernels rebound the whole-`src/` digest.** The
 experimental TFG-CARMA covariance prediction, reset transport, process-noise
 quadrature and group injection were restructured for processor load in
