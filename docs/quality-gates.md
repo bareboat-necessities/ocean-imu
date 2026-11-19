@@ -14,7 +14,10 @@ tools/quality_gates.sh all
 ```
 
 CI runs them in `.github/workflows/quality-gates.yml`. A red gate on a PR names
-the subcommand that reproduces it.
+the subcommand that reproduces it. CI partitions each warnings and clang-tidy
+audit into eight disjoint shards with two compiler processes per runner.
+For example, `SHARD_NUMBER=4 SHARD_COUNT=8 JOBS=2 tools/quality_gates.sh clang-tidy`
+reproduces the fourth shard. Omitting the shard settings audits every input.
 
 Eigen is found via `$EIGEN_DIR`, then `third_party/eigen`, then
 `/usr/include/eigen3` — the same order the test Makefiles use.

@@ -34,7 +34,6 @@ elif [[ -f "$REPO_ROOT/third_party/eigen/Eigen/Dense" ]]; then
 else
   EIGEN_INC="-isystem /usr/include/eigen3"
 fi
-LIEPP_INC="-isystem $REPO_ROOT/third_party/Lie-plusplus/include"
 
 # Spectrum has no host executable. Coverage uses the same utility suites.
 UNIT_DIRS=(spike_filter detrend imu_calibrate wave_dir wave_sim)
@@ -56,27 +55,36 @@ tu_list() {
   git ls-files 'tests/*.cpp' 'src/*.cpp' | grep -v '^src/AtomS3R/'
 }
 
-gate_warnings() {
-  step "warnings: -Wall -Wextra -Wpedantic -Werror"
-  local log; log="$(mktemp)"
-  local n=0
-  # -Werror is applied per TU so one failure does not mask the rest.
-  while read -r f; do
-    [[ -z "$f" ]] && continue
-    n=$((n + 1))
-    printf '%s\n' "$f"
-  done < <(tu_list) | xargs -P "$JOBS" -I TU bash -c '
-      out=$("$0" -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror \
-              -I src '"$EIGEN_INC"' '"$LIEPP_INC"' -c "$1" -o /dev/null 2>&1)
-      [[ -n "$out" ]] && { echo "--- $1"; echo "$out"; }
-      exit 0
-    ' "$CXX" TU > "$log" 2>&1
-
-  if [[ -s "$log" ]]; then
-    cat "$log"
-    fail "warnings gate: $(grep -c 'error:\|warning:' "$log") diagnostic(s)"
+# CI partitions this ordered inventory. With no shard settings the local
+# command runs every translation unit, using the same flags as CI.
+gate_host_audit() {
+  local gate="$1" shard="${SHARD_NUMBER:-1}" count="${SHARD_COUNT:-1}"
+  if (( shard < 1 || shard > count )); then
+    fail "$gate: invalid shard $shard/$count"; return
+  fi
+  local -a units command selected=()
+  local -a includes=(-I src -isystem "${EIGEN_INC#-isystem }" -isystem "$REPO_ROOT/third_party/Lie-plusplus/include")
+  if [[ "$gate" == warnings ]]; then
+    mapfile -t units < <(tu_list)
+    command=("$CXX" -std=c++20 -O2 -Wall -Wextra -Wpedantic -Werror "${includes[@]}" -c TU -o /dev/null)
   else
-    ok "warnings gate: $(tu_list | wc -l) translation units clean"
+    mapfile -t units < <(git ls-files 'tests/*.cpp' | grep -Ev '(-sim|certificate-sim|neighborhood-sim)\.cpp$')
+    command=(clang-tidy --quiet TU -- -std=c++20 "${includes[@]}")
+  fi
+  local i
+  for ((i=shard-1; i<${#units[@]}; i+=count)); do selected+=("${units[i]}"); done
+  if (( ${#selected[@]} == 0 )); then
+    fail "$gate: empty shard $shard/$count"; return
+  fi
+  step "$gate: shard $shard/$count, ${#selected[@]} of ${#units[@]} translation units"
+  local log rc=0
+  log=$(mktemp)
+  printf '%s\0' "${selected[@]}" | xargs -0 -P "$JOBS" -I TU "${command[@]}" > "$log" 2>&1 || rc=$?
+  if (( rc != 0 )) || grep -qE 'warning:|error:' "$log"; then
+    cat "$log"
+    fail "$gate: shard $shard/$count failed (xargs exit $rc)"
+  else
+    ok "$gate clean"
   fi
   rm -f "$log"
 }
@@ -158,29 +166,6 @@ gate_sanitizers() {
   [[ "$requested" == all ]] || fail "unknown sanitizer suite: $requested"
 }
 
-gate_clang_tidy() {
-  step "clang-tidy"
-  command -v clang-tidy >/dev/null || { fail "clang-tidy not installed"; return; }
-  local log; log="$(mktemp)"
-  # clang-tidy re-parses each TU with the clang frontend; the OU/TFG simulation
-  # drivers take many minutes each because of their Eigen instantiations, so the
-  # gate covers the unit-test TUs and lets the sims be covered by the compiler
-  # warnings gate instead.
-  git ls-files 'tests/*.cpp' \
-    | grep -Ev '(-sim|certificate-sim|neighborhood-sim)\.cpp$' \
-    | xargs -P "$JOBS" -I TU bash -c '
-        clang-tidy --quiet "$1" -- -std=c++20 -I src '"$EIGEN_INC"' '"$LIEPP_INC"' 2>/dev/null
-      ' _ TU > "$log" 2>&1
-
-  if grep -q 'warning:\|error:' "$log"; then
-    grep -A3 'warning:\|error:' "$log" | head -60
-    fail "clang-tidy: $(grep -c 'warning:\|error:' "$log") diagnostic(s)"
-  else
-    ok "clang-tidy clean"
-  fi
-  rm -f "$log"
-}
-
 gate_cppcheck() {
   step "cppcheck"
   command -v cppcheck >/dev/null || { fail "cppcheck not installed"; return; }
@@ -250,17 +235,17 @@ gate_coverage() {
 }
 
 case "${1:-all}" in
-  warnings)   gate_warnings ;;
+  warnings)   gate_host_audit warnings ;;
   sanitizers) gate_sanitizers "${2:-all}" ;;
-  clang-tidy) gate_clang_tidy ;;
+  clang-tidy) gate_host_audit clang-tidy ;;
   cppcheck)   gate_cppcheck ;;
   python)     gate_python ;;
   coverage)   gate_coverage ;;
   all)
-    gate_warnings
+    gate_host_audit warnings
     gate_python
     gate_cppcheck
-    gate_clang_tidy
+    gate_host_audit clang-tidy
     gate_sanitizers
     gate_coverage
     ;;
