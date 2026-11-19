@@ -677,6 +677,9 @@ void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm);
 bool w3d_underway_reference_from_env();
 
 struct W3dSimulationOptions {
+    // Optional host experiment sensor fixture, evaluated before the NED basis map.
+    float magnetic_inclination_deg = MagSim_WMM::default_inclination_deg;
+    std::function<Vector3f(const Vector3f&, MagNoiseModel&, float)> mag_sensor;
     float dt = 0.005f;
     bool with_mag = true;
     bool add_noise = true;
@@ -818,7 +821,7 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
 std::vector<std::string> collect_wave_data_files(const std::filesystem::path& directory);
 bool w3d_any_quality_gate_failed();
 
-template <typename AdapterT>
+template <typename AdapterT, typename Configure = std::nullptr_t>
 inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const std::string& filename,
                                                                            float dt,
                                                                            bool with_mag,
@@ -827,7 +830,8 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
                                                                            std::string output_suffix_with_mag = "_fusion",
                                                                            std::string output_suffix_no_mag = "_fusion_nomag",
                                                                            W3dRandomSeeds seeds = {},
-                                                                           bool write_timeseries = true)
+                                                                           bool write_timeseries = true,
+                                                                           Configure configure = nullptr)
 {
     const float acc_sigma = 1.51e-3f * g_std;
     const float gyr_sigma = 0.00157f;
@@ -876,6 +880,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
     // record is done.
     options.lever_arm = w3d_lever_arm_from_env(dt);
 
+    if constexpr (!std::is_same_v<Configure, std::nullptr_t>) configure(options);
     W3dSimulationRunner runner(options, std::move(noise_models), adapter);
     auto result = runner.run(filename);
     w3d_report_lever_arm(options.lever_arm);

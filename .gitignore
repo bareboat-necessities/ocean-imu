@@ -183,3 +183,6 @@ reports/results/sim_v1.4.0/*/studies/**/study.log
 reports/results/sim_v1.4.0/*/studies/**/runs/
 reports/results/sim_v1.4.0/*/studies/**/work/
 reports/results/sim_v1.4.0/*/studies/**/dataset_cache/
+
+# Standalone marine calibration research replay.
+tests/kalman_tfg_shared_modes/magnetic-study

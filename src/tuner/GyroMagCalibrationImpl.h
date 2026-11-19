@@ -39,10 +39,7 @@ OCEAN_IMU_MAG_INLINE void GyroMagCalibration::predict(float dt, const Vector3& g
         if (elapsed_ > 1.0f) reset();
     }
 
-OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
-        if (!mag.allFinite() || mag.norm() < 1.0e-3f) return false;
-        if (!initialized_) { initialize_(mag); return false; }
-        if (!(elapsed_ > 0.0f)) return false; // duplicate mag without IMU time
+OCEAN_IMU_MAG_INLINE void GyroMagCalibration::transportToPacket_() {
         const float dt = elapsed_;
         const Matrix3 R = rotation_.toRotationMatrix();
         x_.head<3>() = R * x_.head<3>();
@@ -57,6 +54,14 @@ OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
         P_.block<3,3>(3,3).diagonal().array() += sq_(cfg_.mag_bias_rw_uT) * dt;
         P_.block<3,3>(6,6).diagonal().array() += sq_(cfg_.gyro_bias_rw_radps) * dt;
         clearRotation_();
+}
+
+OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
+        if (!mag.allFinite() || mag.norm() < 1.0e-3f) return false;
+        if (!initialized_) { initialize_(mag); return false; }
+        if (!(elapsed_ > 0.0f)) return false; // duplicate mag without IMU time
+        const float dt = elapsed_;
+        transportToPacket_();
         const Measurement H = measurement_();
         const Vector3 residual = mag - (matrix_() * x_.head<3>() + biasBodyUT());
         const float variance = sq_(cfg_.mag_white_std_uT);
