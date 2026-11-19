@@ -18,8 +18,10 @@ ensure-sim-data:
 	@$(MAKE) -C "$(REPO_ROOT)" ensure-sim-data
 kalman_tfg_shared_modes-sim: kalman_tfg_shared_modes-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+installation-study: installation-study.o W3dSimCommon.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 %.o: %.cpp Makefile $(REPO_ROOT)/tests/common/HostReplayFlags.mk
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)
 clean:
-	rm -f *.o *.d $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) installation-study *.exe *.csv

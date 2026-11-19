@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
-// Independent numerical references for the experimental 27-state geometry.
+// Independent numerical references for the 27-state geometry.
 #define EIGEN_NON_ARDUINO
 #define EIGEN_RUNTIME_NO_MALLOC
 #include <Eigen/Dense>

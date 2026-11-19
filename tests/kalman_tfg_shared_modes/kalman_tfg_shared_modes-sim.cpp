@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
-// Gated default-seed 200 Hz replay of the experimental 27-state TFG shared-mode INS.
+// Gated default-seed 200 Hz replay of the 27-state TFG shared-mode INS.
 // Uses the same adapter, sensor stream and score window as the QMEKF replay.
 #define EIGEN_NON_ARDUINO
 #include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"

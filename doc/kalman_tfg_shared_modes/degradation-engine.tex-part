@@ -1,0 +1,12 @@
+% Generated from the two case CSV bundles.
+\begin{table}[!ht]\centering\small
+\caption{Engine sweep. Pooled heave and 3-D displacement RMS (m), and yaw RMS (degrees). F and H denote following and head seas.}\label{tab:tcsm-engine}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}\toprule
+rpm & $z_F$ & 3-D$_F$ & Yaw$_F$ & $z_H$ & 3-D$_H$ & Yaw$_H$ \\ \midrule
+0 & 0.105 & 0.185 & 1.041 & 0.108 & 0.204 & 0.844 \\
+800 & 0.114 & 0.257 & 10.955 & 0.118 & 0.240 & 2.216 \\
+1600 & 0.112 & 0.200 & 2.974 & 0.120 & 0.238 & 1.070 \\
+2400 & 0.113 & 0.195 & 2.539 & 0.121 & 0.236 & 1.038 \\
+3200 & 0.116 & 0.198 & 2.819 & 0.124 & 0.234 & 1.182 \\
+\bottomrule\end{tabular}\end{table}

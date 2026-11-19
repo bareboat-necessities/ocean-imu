@@ -1,6 +1,6 @@
 #pragma once
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
-// Experimental TwoFrameGroup(3,6,2), 27 invariant errors. The common TFG core
+// TwoFrameGroup(3,6,2), 27 invariant errors. The common TFG core
 // owns prediction, bias/noise correlations, sensor updates and group reset;
 // the existing six-state motion policy owns the minimal CARMA(4,1) process.
 #include "kalman_carma/Kalman3D_Wave_TFG_CARMA3.h"

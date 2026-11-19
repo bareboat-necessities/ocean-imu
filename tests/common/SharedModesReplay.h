@@ -19,7 +19,7 @@ namespace csm = ocean_imu::carma_shared_modes;
 inline bool legacy_sampling_protocol = false;
 // process_wave_file_for_tracker<> constructs the adapter from four arguments.
 template<class Core, int Variant>   // 0 CSM, 1 CSM_NOCONF, 2 CSM_OFF
-class CsmAdapter final : public IW3dFusionAdapter {
+class CsmAdapter : public IW3dFusionAdapter {
 public:
     CsmAdapter(bool m, const Vector3f& a, const Vector3f& g, const Vector3f& s) : impl_(m, a, g, s, nullptr) {
         csm::SharedModesConfig<float> c;
@@ -64,6 +64,8 @@ public:
     void updateMag(const Vector3f& b) override { impl_.updateMag(b); }
     void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }
     FilterSnapshot snapshot() const override { return impl_.snapshot(); }
+protected:
+    auto& filter() { return impl_.fusion().raw(); }
 private:
     CarmaAdapter<4, false, 4, false, Core> impl_;
 };

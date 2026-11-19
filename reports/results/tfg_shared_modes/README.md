@@ -3,8 +3,9 @@
 The 27-state shared-mode TFG filter is the most accurate of the four
 estimators in the condition-balanced position comparison. Most of its gain
 comes from the shared stochastic prior; the TFG geometry adds a small further
-improvement at about 1.6 times the host cost of shared QMEKF. It remains an
-experimental estimator: the shipping OU-III default is unchanged.
+improvement at about 1.6 times the host cost of shared QMEKF. See the
+[method article](../../../doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) and the
+[underway degradation studies](degradation/).
 
 | Shared TFG versus | Heave RMS change | Horizontal RMS change |
 |---|---:|---:|

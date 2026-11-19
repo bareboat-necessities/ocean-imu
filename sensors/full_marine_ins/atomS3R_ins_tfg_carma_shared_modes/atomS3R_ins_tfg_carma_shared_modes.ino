@@ -1,10 +1,10 @@
 /*
   Copyright 2026, Mikhail Grushinskiy
 
-  AtomS3R EXPERIMENTAL shared-modes TFG SeaStateFusion_TfgCarmaSharedModes
+  AtomS3R shared-modes TFG SeaStateFusion_TfgCarmaSharedModes
   (+ optional IMU Calibration Wizard)
 
-  EXPERIMENTAL research sketch.  It runs the 27-state shared-mode TFG filter
+  This sketch runs the 27-state shared-mode TFG filter
   of docs/tfg-carma-shared-modes.md: atomS3R_ins_tfg_carma3 with
   KalmanTfgCarmaSharedModes<float> as the inner filter.  The three independent
   CARMA(4,1) motion priors are replaced by shared directional modes in their
@@ -12,9 +12,8 @@
   estimated from the filter's own world-frame acceleration and a coupling
   confidence that falls back toward the independent-axis prior
   (docs/kalman-carma-shared-modes.md), on the right-invariant two-frame Lie
-  group of src/lie/TwoFrameGroup.h.  It is not a shipping estimator
-  (simulation evidence only, no on-target timing; see
-  reports/results/tfg_shared_modes/README.md); atomS3R_ins_kalman_ou3 is.
+  group of src/lie/TwoFrameGroup.h. Simulation results and hardware
+  qualification limits are in reports/results/tfg_shared_modes/README.md.
 
   SeaStateFusion_TfgCarmaSharedModes is the CARMA3 wrapper with the inner
   filter replaced, so this sketch is the TFG-CARMA3 sketch with the same I/O,
@@ -270,7 +269,7 @@ public:
 
 private:
   using UI = atoms3r_ical::M5Ui;
-  // EXPERIMENTAL shared-modes TFG (docs/tfg-carma-shared-modes.md): the CARMA3
+  // shared-modes TFG (docs/tfg-carma-shared-modes.md): the CARMA3
   // wrapper with KalmanTfgCarmaSharedModes<float> as its inner filter (27
   // error states on the two-frame Lie group); begin(cfg) selects the estimated
   // coupling with the coupling confidence.

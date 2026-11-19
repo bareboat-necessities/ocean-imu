@@ -41,7 +41,8 @@ The top-of-file switches control the calibration wizard, graphics UI, NMEA outpu
 
 ## Compare
 
-- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — higher-order integral regularization and the main 3-D navigation implementation
+- [Shared-mode TFG–CARMA marine INS](../atomS3R_ins_tfg_carma_shared_modes/README.md) — primary documented 3-D navigation method
+- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — 21-state OU filter with higher-order integral regularization
 - [TFG marine INS](../atomS3R_ins_tfg/README.md) — same state and wave model on a two-frame Lie group
 - [PII observer](../atomS3R_ins_pii_observer/README.md) — lighter observer-based alternative
 
