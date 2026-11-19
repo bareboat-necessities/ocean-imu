@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "18d19dae92ca6273999a6381441bf7acc663ea1a8c26e24ced1336d7231269d1",
+  "replay_fingerprint": "15a8f2837c451ce0089e03bdd4e18272dc3fc7dba14e168084577f0a29f72ea8",
   "results_file_count": 1879,
   "results_files": [
     {
@@ -2881,7 +2881,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "583f34cce8d72374314bad26771b583bfe206d821eb7d86a816a3656eccccfcd"
+      "sha256": "81a350ae9452fea48c9c9df66f9dd2d795a1540a7678094515f2136b44282b5e"
     },
     {
       "kind": "file",
@@ -2976,7 +2976,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "b7d0afab4532db56a6bd519fa53ae6d08167b2a70e11f7201692eb8f3d89f5d4"
+      "sha256": "952c18f036b75951de1a337d49615f17bb8f3d2b3d96281126da732804011caa"
     },
     {
       "kind": "file",
@@ -4241,7 +4241,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/case-receipt.json",
-      "sha256": "d6784673e1e373c0dc8549a3cfeae42f5e44b870b0644b9deb816e4de69b3b34"
+      "sha256": "1dc5b4c82bfdfa6b8573b673e6cb87851fc1625db3ba2e730f2cddab6d5282f3"
     },
     {
       "kind": "file",
@@ -4251,17 +4251,17 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/protocol.json",
-      "sha256": "d728e5c6db83c823417811d5757657de5992509d431c6ff53b62309bba195d4f"
+      "sha256": "8db3d34ded416a8121e9a33c91cb724285dbba5e725aff85abba4138471f48dc"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/publication_summary.json",
-      "sha256": "ad6fad28512ba174bcb53e8ea72f6cb4e14b0e7934c67fc60a2247e7479c885e"
+      "sha256": "25dfb893e5f61449b59c5fd7b1ef083cd609bc8f5515d9ba8d490ffb08316e88"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/following/studies/carma_shared_modes_validation/runs.jsonl",
-      "sha256": "94b5d999e49a297cf197f5fb4f48e3a8fefd644e62dc4f691151116abd7f191c"
+      "sha256": "79431839230f4c6e7f88e97dfaaafd3c056fae45b1b5432840ad09323fd316be"
     },
     {
       "kind": "file",
@@ -6021,7 +6021,7 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/case-receipt.json",
-      "sha256": "7a117b9dd22cc16f3a08254436160ded56cb8e3b8952c739d0adcd6438ff1208"
+      "sha256": "8e2793957ea2849e8123c0df4a681cb3e9b064c0d24d0c8d6234012fa31e8703"
     },
     {
       "kind": "file",
@@ -6031,22 +6031,22 @@
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/protocol.json",
-      "sha256": "396d4938fb821e1b748e03272e289a3823318fcf16055643533c26c1a72aae08"
+      "sha256": "c8fad3f14d58cb888ba471e942e21e79750b31e8d50528fd695a72e6f3969c7c"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/publication_summary.json",
-      "sha256": "46a75a337600e9b629ca29676d4e3ebf3a9c7ce357d085e24d5345275f37162e"
+      "sha256": "be0bc417416802d4f0cd46fa7643b27dde056c862ae57d3c839f7ab0a7068078"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/runs.jsonl",
-      "sha256": "947d808214182961cb538d0f0093307d4e0f98e56288ecc3876db9787a2977e7"
+      "sha256": "7a4e8fccacfa8a09b17962faa9b7ce53713421aab9f7a369a6db25e651c62e87"
     },
     {
       "kind": "file",
       "path": "reports/results/sim_v1.4.0/head/studies/carma_shared_modes_validation/scores.csv",
-      "sha256": "39bbf073f3f73d36d57f30d66fe0265c5090127f703bd7509a1868981cc350ad"
+      "sha256": "7c022569440c7a21b4b839f4abe2740a33b0e46e3fed84e4fb43585b0d7609e0"
     },
     {
       "kind": "file",
@@ -9399,13 +9399,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "6633124fce8a726c1642669426ccbc2847bc6dfbaa64423ab33f246a208ce63e",
+  "results_fingerprint": "09c22e7cc3575a380f47fc7ffe782cd685e468428b04cc34fdecccd73f54000c",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1067,
+  "tracked_replay_file_count": 1068,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -9480,7 +9480,7 @@
     {
       "mode": "100644",
       "path": ".github/workflows/quality-gates.yml",
-      "sha256": "a41264d5f9b473c1bdd12b61fc9f5a5b51c3c6c8605155bca19669a7be65e65b"
+      "sha256": "c0d53695591a374ac00bf8b50ae6d3c3045eda715085bff6391374bc8072417a"
     },
     {
       "mode": "100644",
@@ -12785,7 +12785,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_shared_modes_article_evidence.py",
-      "sha256": "0191498f4e4da07b0540e82445c3ae580decd936c30927f420776ce6a5a67b34"
+      "sha256": "3eb8ac8eb00fcbac7f7c24f6241817de278fb38a0d2c95f839c6001e4beb4a09"
     },
     {
       "mode": "100644",
@@ -13318,9 +13318,14 @@
       "sha256": "9300b619e5315cb70d2efd77f4b3b07b9c21c7288e871a0b2c2d9b1b1ae9b343"
     },
     {
+      "mode": "100644",
+      "path": "tools/quality/fusion_smoke.cpp",
+      "sha256": "68b6cfad61349e6d63a78bb7bc828170c544b51970017c4cc6d8a08ba2e347a1"
+    },
+    {
       "mode": "100755",
       "path": "tools/quality_gates.sh",
-      "sha256": "2c62794b418af979e3075ee78c9fb11a6df410d4708ca0f5661b78c9bf7bd51b"
+      "sha256": "fa919687dc11b3ebd1649ede7b2fd47c6fd2c4b9a97c69401e7da24753d25035"
     },
     {
       "mode": "100644",
@@ -13340,7 +13345,7 @@
     {
       "mode": "100644",
       "path": "tools/shared_modes_article_evidence.py",
-      "sha256": "94773af60ad1a73e4380da969d7615d1d944c970c853840b1ec77759621412e1"
+      "sha256": "14f21e84bd477e79a6827e82d0a25fb4052a2fe735788302fb83e8218a786947"
     },
     {
       "mode": "100644",
