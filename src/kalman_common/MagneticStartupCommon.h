@@ -339,7 +339,7 @@ struct ContinuousHardIronTracker {
                             float min_mag_norm,
                             Eigen::Vector3f& new_world_ref_uT)
     {
-        if (screen_installation && gyro_calibration_enabled && !installation_released) apply_fraction = 0.f;
+        if (screen_installation && !installation_released) apply_fraction = 0.f;
         const auto& est = estimator.estimate();
         if (gyro_calibration_enabled) {
             if (!calibration.valid() ||

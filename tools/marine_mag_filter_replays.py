@@ -47,12 +47,41 @@ def replay(task):
     return dict(family=family, case=case, record=path.name, mode=mode, **values, gate_pass=int(gates[0]["PASS"]), gate_reason=gates[0]["REASON"], exit_code=proc.returncode)
 
 
+def combine(folder, output):
+    rows = []
+    for family in BINARIES:
+        with (folder / f"{family}.csv").open() as stream:
+            arm = list(csv.DictReader(stream))
+        expected = {(case, name, mode) for case, names in REFERENCE_CSV_SHA256_BY_CASE.items()
+                    for name in names for mode in ("off", "native", "screened")}
+        if (len(arm) != len(expected) or {(r["case"], r["record"], r["mode"]) for r in arm} != expected
+                or any(r["family"] != family or r["gate_pass"] not in ("0", "1")
+                       or not all(math.isfinite(float(r[k])) for k in METRICS) for r in arm)):
+            raise ValueError(f"Invalid comparison panel for {family}")
+        rows.extend(arm)
+    write(rows, output)
+
+
+def write(rows, path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("family", choices=BINARIES)
+    parser.add_argument("family", choices=BINARIES, nargs="?")
+    parser.add_argument("--combine", type=Path, help="assemble all eight per-family CSVs")
     parser.add_argument("--jobs", type=int, default=3)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+    if (args.family is None) == (args.combine is None):
+        parser.error("Supply a filter family or --combine DIRECTORY")
+    if args.combine is not None:
+        combine(args.combine, args.out)
+        return
     tasks = []
     for case in ("following", "head"):
         records = REFERENCE_CSV_SHA256_BY_CASE[case]
@@ -65,11 +94,7 @@ def main():
             tasks.extend((args.family, case, path, mode) for mode in ("off", "native", "screened"))
     with ThreadPoolExecutor(args.jobs) as pool:
         rows = list(pool.map(replay, tasks))
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with args.out.open("w") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
+    write(rows, args.out)
 
 
 if __name__ == "__main__":

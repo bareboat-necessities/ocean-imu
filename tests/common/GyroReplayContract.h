@@ -20,6 +20,8 @@ inline bool default_seeds() {
            !std::getenv("W3D_INIT_SEED");
 }
 inline void require_regression(bool default_protocol) {
+    if (legacy && std::getenv("W3D_MAG_CALIBRATION"))
+        throw std::invalid_argument("--regression requires the native magnetic calibration policy");
     const char* reference = std::getenv("W3D_REFERENCE_MOTION");
     if (legacy && reference && std::string(reference) != "underway")
         throw std::invalid_argument("--regression requires the pinned underway reference");

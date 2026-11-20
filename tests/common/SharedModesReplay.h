@@ -162,7 +162,7 @@ int run(int argc, char* argv[], const W3dFailureLimits& regression_bars,
         if (require_gates && !gated)
             throw std::invalid_argument("--regression requires default variant, noise, magnetometer, seeds and excitation");
         if (require_gates) {
-            for (const char* key : {"W3D_ENGINE_RPM", "W3D_CSM_GUARD_HZ", "W3D_CSM_GUARD_RACC_GAIN",
+            for (const char* key : {"W3D_MAG_CALIBRATION", "W3D_ENGINE_RPM", "W3D_CSM_GUARD_HZ", "W3D_CSM_GUARD_RACC_GAIN",
                                     "W3D_IMU_LEVER_ARM_M", "W3D_IMU_LEVER_ARM_MODEL",
                                     "W3D_TUNING_MODE", "W3D_AW_COV_SYNC", "W3D_ALL_WAVE_TYPES", "W3D_REFERENCE_MOTION"})
                 if (std::getenv(key)) throw std::invalid_argument(std::string("--regression forbids ") + key);
