@@ -37,7 +37,8 @@ this budget), retaining ordered bucket
 coordinate extrema, endpoints and nonfinite breaks. SVG, PGF and PDF receive the
 same reduced geometry, so downstream LaTeX PDFs do not embed full time series.
 Dense overlaid curves share the axes budget, with at least 256 points per
-curve. Short curves are unchanged. Sampling is visual only: input CSVs, FFTs, scores,
+curve. The long wave-transition time series use a separate default of 6,000
+vertices per curve, including overlays. Short curves are unchanged. Sampling is visual only: input CSVs, FFTs, scores,
 axis limits and the in-memory source artists retain their original data.
 The existing rate-based input sampling can still reduce load time; the export
 budget additionally bounds charts whose duration grows on later study reruns.

@@ -36,12 +36,12 @@ def fmt(x,n=2):
 def interval(r,percent=True):
  """Render a paired percent change with its marginal confidence interval."""
  return f"{r['percent']:+.2f} [{r['pct_ci_low']:+.2f}, {r['pct_ci_high']:+.2f}]" if percent else ''
-def save(fig,out,name):
+def save(fig,out,name,*,transition=False):
  """Export the same bounded figure geometry to deterministic SVG and PGF."""
  fig.align_ylabels();fig.tight_layout(pad=.65)
  for ext in ('svg','pgf'):
   path=out/f'{name}.{ext}'
-  save_figure(fig,path,bbox_inches='tight',**({'metadata':{'Date':None}} if ext=='svg' else {}))
+  save_figure(fig,path,bbox_inches='tight',transition=transition,**({'metadata':{'Date':None}} if ext=='svg' else {}))
   path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
  plt.close(fig)
 def trace(results,name):
@@ -91,6 +91,25 @@ def tracking(results,out):
    for f in LABEL:ax.plot(d.t,scale*d[stem+a+'_'+f],lw=.7,color=COLOR[f],label=LABEL[f])
    ax.set_ylabel(f'{name} {a.upper()} [{unit}]')
   axs[0].legend(ncol=2);axs[-1].set_xlabel('Time [s]');save(fig,out,family)
+def roundtrip_figure(results,out):
+ """Show the 10 Hz heave and position-error traces across both 20 s ramps."""
+ d=trace(results,'roundtrip_position')
+ fig,axs=plt.subplots(3,1,figsize=(7.1,4.3),sharex=True)
+ axs[0].plot(d.t,d.z_true,color='black',lw=.65)
+ for f in LABEL:
+  ez=d['z_'+f]-d.z_true
+  eh=np.hypot(d['x_'+f]-d.x_true,d['y_'+f]-d.y_true)
+  axs[1].plot(d.t,ez,color=COLOR[f],lw=.55,label=LABEL[f])
+  axs[2].plot(d.t,eh,color=COLOR[f],lw=.55)
+ for ax in axs:
+  for center in (400,800):
+   ax.axvspan(center-10,center+10,color='0.8',alpha=.45,zorder=0)
+ axs[0].set_ylabel('True heave [m]')
+ axs[1].set_ylabel('Heave error [m]')
+ axs[2].set(xlabel='Time [s]',ylabel='Horizontal error [m]',xlim=(0,1200))
+ handles,labels=axs[1].get_legend_handles_labels()
+ axs[0].legend(handles,labels,ncol=4,loc='lower center',bbox_to_anchor=(.5,1.02),frameon=False)
+ save(fig,out,'roundtrip',transition=True)
 def degradation(results,out,df):
  """Plot engine and sea-transition degradation using the registered scores."""
  fig,axs=plt.subplots(2,1,figsize=(3.45,3.8),sharex=True)
@@ -101,14 +120,7 @@ def degradation(results,out,df):
     x=df[(df.stage=='primary')&(df['filter']==f)&(df.case==case)][m];ys.append(x.mean()*1000);err.append(stats.sem(x)*stats.t.ppf(.975,len(x)-1)*1000)
    ax.errorbar([0,800,1600,2400,3200],ys,yerr=err,label=LABEL[f],color=COLOR[f],marker='o',ms=3,lw=.8)
  axs[0].set_ylabel('Heave RMS [mm]');axs[1].set_ylabel('Horizontal RMS [mm]');axs[1].set_xlabel('Engine speed [rpm; 0 = off]');axs[0].legend(ncol=2);save(fig,out,'engine_degradation')
- d=trace(results,'roundtrip_position');fig,axs=plt.subplots(3,1,figsize=(7.1,3.6),sharex=True)
- axs[0].plot(d.t,d.z_true,color='black',lw=.8,label='True heave')
- for f in LABEL:
-  ez=d['z_'+f]-d.z_true;eh=np.hypot(d['x_'+f]-d.x_true,d['y_'+f]-d.y_true)
-  axs[1].plot(d.t,ez,color=COLOR[f],lw=.6,label=LABEL[f]);axs[2].plot(d.t,eh,color=COLOR[f],lw=.6)
- for ax in axs:
-  for t in [400,800]:ax.axvline(t,color='black',lw=.6,ls=':')
- axs[0].set_ylabel('Heave [m]');axs[1].set_ylabel('Heave error [m]');axs[2].set_ylabel('Horizontal error [m]');axs[2].set_xlabel('Time [s]');axs[1].legend(ncol=2);save(fig,out,'roundtrip')
+ roundtrip_figure(results,out)
  fig,axs=plt.subplots(2,1,figsize=(7.1,3.6))
  d=trace(results,'direction_step_position')
  for f in LABEL:axs[0].plot(d.t,np.hypot(d['x_'+f]-d.x_true,d['y_'+f]-d.y_true),lw=.65,color=COLOR[f],label=LABEL[f])

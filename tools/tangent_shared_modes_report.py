@@ -136,10 +136,10 @@ def write_macro(name, body):
     return '\\newcommand{\\'+name+'}{%\n'+body+'%\n}\n'
 
 
-def save(fig, name):
+def save(fig, name, *, transition=False):
     fig.tight_layout()
-    save_figure(fig, DOC/(name+'.svg'), metadata={'Date': None})
-    save_figure(fig, DOC/(name+'.pgf'))
+    save_figure(fig, DOC/(name+'.svg'), metadata={'Date': None}, transition=transition)
+    save_figure(fig, DOC/(name+'.pgf'), transition=transition)
     for suffix in ('.svg', '.pgf'):
         path = DOC/(name+suffix)
         path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines())+'\n')
@@ -148,6 +148,23 @@ def save(fig, name):
 
 def trace(raw, case='wave', *, seed, model='native'):
     return pd.read_csv(raw/f'{case}_{seed}_{model}_trace.csv')
+
+
+def degradation_figure(raw, representative, chosen):
+    fig, axes = plt.subplots(2, 2, figsize=(10.6, 4.8), sharex=True)
+    for j, case in enumerate(('transition', 'vibration')):
+        data = trace(raw, case, seed=representative)
+        for f in chosen:
+            d = data[data['filter'] == f]
+            axes[0, j].plot(d.t, d.true_pz-d.pz, label=f, color=COLORS[f], lw=.8)
+            axes[1, j].plot(d.t, 1000*np.hypot(d.bax-d.true_bax, d.bay-d.true_bay), color=COLORS[f], lw=.8)
+        axes[0, j].set_title(case); axes[0, j].set_ylabel('Heave error [m]'); axes[1, j].set_ylabel('Horizontal bias error [mm/s²]'); axes[1, j].set_xlabel('Time [s]')
+        for ax in axes[:, j]:
+            ax.grid(alpha=.2)
+            if case == 'transition':
+                for t in (300, 600): ax.axvline(t, color='grey', ls=':', lw=.8)
+    axes[0, 0].legend(ncol=4)
+    save(fig, 'tangent_degradation', transition=True)
 
 
 def ljung_box(values, lag=20):
@@ -367,20 +384,7 @@ def main():
     axes[0, 0].legend(ncol=2); axes[0, 1].legend(ncol=3)
     save(fig, 'tangent_motion')
 
-    fig, axes = plt.subplots(2, 2, figsize=(10.6, 4.8), sharex=True)
-    for j, case in enumerate(('transition', 'vibration')):
-        data = trace(a.raw, case, seed=representative)
-        for f in chosen:
-            d = data[data['filter'] == f]
-            axes[0, j].plot(d.t, d.true_pz-d.pz, label=f, color=COLORS[f], lw=.8)
-            axes[1, j].plot(d.t, 1000*np.hypot(d.bax-d.true_bax, d.bay-d.true_bay), color=COLORS[f], lw=.8)
-        axes[0, j].set_title(case); axes[0, j].set_ylabel('Heave error [m]'); axes[1, j].set_ylabel('Horizontal bias error [mm/s²]'); axes[1, j].set_xlabel('Time [s]')
-        for ax in axes[:, j]:
-            ax.grid(alpha=.2)
-            if case == 'transition':
-                for t in (300, 600): ax.axvline(t, color='grey', ls=':', lw=.8)
-    axes[0, 0].legend(ncol=4)
-    save(fig, 'tangent_degradation')
+    degradation_figure(a.raw, representative, chosen)
 
     fig, axes = plt.subplots(1, 3, figsize=(10.6, 3.4))
     x = np.arange(len(ORDER))

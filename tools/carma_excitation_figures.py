@@ -42,9 +42,9 @@ def fp_of(sc):
     return float(m.group(1)) if m else np.nan
 
 
-def save(fig, svgd, path):
+def save(fig, svgd, path, *, transition=False):
     path.parent.mkdir(parents=True, exist_ok=True)
-    svgd.save_svg(fig, path, bbox_inches="tight")
+    svgd.save_svg(fig, path, bbox_inches="tight", transition=transition)
 
 
 def line(ax, x, y, f, **kw):
@@ -354,7 +354,7 @@ def fig_transitions(r, plt, svgd, out):
         axs[1].set_title("Evidence mode: detection delay, all seeds", loc="left", fontsize=10, color=INK)
     style(axs[1])
     fig.suptitle("Detection and recovery during sea-state transitions", x=0.01, ha="left", fontsize=12, color=INK)
-    save(fig, svgd, out / "figures" / "fig07_transitions.svg")
+    save(fig, svgd, out / "figures" / "fig07_transitions.svg", transition=True)
     plt.close(fig)
 
 

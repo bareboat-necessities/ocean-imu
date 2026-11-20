@@ -372,14 +372,12 @@ illustrative trace, support Table~\ref{tab:csm-validation-roundtrip}.}
 \end{figure*}
 
 \subsection{Rendering and reproducibility}
-All metrics and seed resampling precede plot decimation. Drawing traces
-retain ordered coordinate extrema and endpoints using
-\path{plots/vector_export.py}; they are capped at 2000 points per stored
-trace. The same project exporter shares the point budget among overlaid
-curves at SVG and PGF export. No score, spectrum, covariance statistic or
-bootstrap sample is computed from those drawing traces. The compact traces
-and full-rate per-run scores are committed; the original long replay CSVs
-are regenerated when needed.
+Heave and attitude in the round-trip figure use synchronized 10~Hz drawing
+samples from the 200~Hz replay. Each overlaid curve has its own export
+budget of 6000 vertices. Other drawing traces retain at most 2000 ordered
+coordinate extrema and endpoints. Interval scores and bootstrap comparisons
+use the full-rate replay. The compact drawing traces and per-run scores are
+archived with the study.
 The run matrix, source and binary hashes, dataset checksums, fixed seed
 triplets and scoring intervals are recorded in
 \path{reports/results/carma_shared_modes_validation/protocol.json}.

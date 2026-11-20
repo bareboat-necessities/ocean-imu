@@ -37,7 +37,33 @@ def envelope_indices(coordinates, max_points=MAX_PLOT_POINTS):
     return np.unique(selected)
 
 
-def save_figure(figure, *args, **kwargs):
+# A 20-minute wave replay needs several samples per cycle on every overlay.
+TRANSITION_LINE_POINTS = 6000
+
+
+def transition_trace_indices(n):
+    """Keep a synchronized 10 Hz drawing grid from a 200 Hz replay, plus its end."""
+    if n == 0:
+        return np.array([], dtype=int)
+    return np.union1d(np.arange(0, n, 20), n - 1)
+
+
+def transition_line_indices(x, y, budget):
+    """Keep each time bucket's vertical extrema and both sides of finite-data gaps."""
+    from figure_decimation import minmax_indices
+
+    finite = np.isfinite(y)
+    edges = np.flatnonzero(finite[1:] != finite[:-1])
+    gap_edges = np.union1d(edges, edges + 1)
+    # minmax_indices also keeps both endpoints. Reserve space for them and
+    # for gap boundaries so overlaid waveforms never bridge missing samples.
+    remaining = budget - len(gap_edges) - 2
+    if remaining < 2:
+        return envelope_indices((x, y), max_points=budget)
+    return np.union1d(minmax_indices(y, remaining), gap_edges)
+
+
+def save_figure(figure, *args, transition=False, **kwargs):
     """Export bounded line and filled-band geometry to SVG, PGF, PDF or raster.
 
     Restore artists even if a backend fails, so repeated exports use identical
@@ -45,14 +71,14 @@ def save_figure(figure, *args, **kwargs):
     """
     from figure_decimation import max_line_points
 
-    budget = max_line_points()
+    budget = max_line_points(TRANSITION_LINE_POINTS) if transition else max_line_points()
     restore = []
     try:
         for axes in figure.axes:
             # Several overlaid filters share the same screen width. Share the
             # budget among dense curves rather than multiplying it per filter.
             dense = sum(len(line.get_xdata()) > 256 for line in axes.lines)
-            line_budget = max(min(256, budget), budget // max(1, dense))
+            line_budget = budget if transition else max(min(256, budget), budget // max(1, dense))
             for line in axes.lines:
                 if line.get_linestyle() in ("None", "none", "", " "):
                     continue
@@ -61,7 +87,10 @@ def save_figure(figure, *args, **kwargs):
                 if len(original[0]) <= line_budget:
                     continue
                 numeric = original if is_3d else (line.get_xdata(orig=False), line.get_ydata(orig=False))
-                indices = envelope_indices(numeric, max_points=line_budget)
+                if transition and not is_3d:
+                    indices = transition_line_indices(*numeric, line_budget)
+                else:
+                    indices = envelope_indices(numeric, max_points=line_budget)
                 setter = line.set_data_3d if is_3d else line.set_data
                 restore.append((setter, original))
                 setter(*(np.asanyarray(values)[indices] for values in numeric))
@@ -79,6 +108,10 @@ def save_figure(figure, *args, **kwargs):
                                     (vertices, codes)))
                     path.vertices = vertices[indices]
                     path.codes = codes[indices] if codes is not None else None
+        # The installed savefig hook normally bounds unprepared figures. A
+        # second pass here would discard the extra resolution of these traces.
+        if transition and getattr(figure.savefig, "_ocean_imu_line_decimation", False):
+            kwargs["_ocean_imu_prepared_lines"] = True
         return figure.savefig(*args, **kwargs)
     finally:
         for setter, original in reversed(restore):

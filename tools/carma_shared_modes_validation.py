@@ -30,7 +30,7 @@ import ou_validation as ov
 import ou_roundtrip_transition as rt
 import engine_noise_degradation as engine
 from sim_dataset import input_provenance
-from vector_export import envelope_indices
+from vector_export import envelope_indices, transition_trace_indices
 
 OUT = ROOT / "reports/results/carma_shared_modes_validation"
 CSM_SIM = ROOT / "tests/kalman_carma_shared_modes/kalman_carma_shared_modes-sim"
@@ -169,12 +169,13 @@ def rms(values):
     return float(np.sqrt(np.mean(np.asarray(values, dtype=float) ** 2)))
 
 
-def write_plot_trace(out, name, series, columns, tail=False):
+def write_plot_trace(out, name, series, columns, tail=False, transition=False):
     data = series.loc[series.time >= series.time.iloc[-1] - 60.0] if tail else series
     data = data[["time", *columns]]
-    # Retain coordinate extrema using the same renderer helper as every vector
-    # export. These files are explicitly drawing data, never scoring inputs.
-    idx = envelope_indices(tuple(data[c].to_numpy() for c in data), max_points=2000)
+    # Long transition overlays need a common time grid for truth, estimates
+    # and their derived errors. Other figures keep their compact extrema traces.
+    idx = (transition_trace_indices(len(data)) if transition else
+           envelope_indices(tuple(data[c].to_numpy() for c in data), max_points=2000))
     target = out / "traces" / f"{name}.csv.gz"
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz:
@@ -183,7 +184,8 @@ def write_plot_trace(out, name, series, columns, tail=False):
 
 def store_traces(out, scenario, method, series):
     tag = f"{scenario}_{method}"
-    write_plot_trace(out, tag + "_z", series, ["disp_ref_z", "disp_est_z"], tail=scenario == "nominal")
+    roundtrip = scenario == "roundtrip"
+    write_plot_trace(out, tag + "_z", series, ["disp_ref_z", "disp_est_z"], tail=not roundtrip, transition=roundtrip)
     if method != "CSM":
         return
     for kind in ("disp", "vel", "acc"):
@@ -193,7 +195,7 @@ def store_traces(out, scenario, method, series):
                          [f"{kind}_{what}_z" for what in ("ref", "est")], tail=True)
     for axis in ("roll", "pitch", "yaw"):
         write_plot_trace(out, tag + "_" + axis, series,
-                         [f"{axis}_ref", f"{axis}_est"], tail=scenario == "nominal")
+                         [f"{axis}_ref", f"{axis}_est"], tail=not roundtrip, transition=roundtrip)
     for kind in ("acc", "gyro"):
         for axis in "xyz":
             write_plot_trace(out, tag + f"_{kind}_bias_{axis}", series,
@@ -217,7 +219,7 @@ def execute(args):
                 "stationary_methods": KALMAN, "observers": ("PII", "TVG-NLO"),
                 "scored_seconds": 900, "sample_rate_hz": 200,
                 "transition_segments": rt.roundtrip_segments(),
-                "plot_geometry": "plots/vector_export.py; 2000-point drawing traces; full-rate scores"}
+                "plot_geometry": "plots/vector_export.py; 10 Hz round-trip heave/attitude; other traces at most 2000 points; full-rate scores"}
     manifest = out / "protocol.json"
     if manifest.exists() and json.loads(manifest.read_text()) != json.loads(json.dumps(protocol)):
         raise RuntimeError("existing results use another protocol; choose another --results directory")

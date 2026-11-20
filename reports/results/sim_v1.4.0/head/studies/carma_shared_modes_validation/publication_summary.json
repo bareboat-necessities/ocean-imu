@@ -118,16 +118,16 @@
     "traces/roundtrip_CSM_gyro_bias_x.csv.gz": "d750248bd08d3304e56a5ff2456428a42ed12361378a9690ee667b04750c724b",
     "traces/roundtrip_CSM_gyro_bias_y.csv.gz": "d7246d2587c8c85a03577e61b522da09a00d220d36a2fde670e51927691377b4",
     "traces/roundtrip_CSM_gyro_bias_z.csv.gz": "053948ea4b3f0db5d6ea54962ac0f3c5caa59775d35f3f1a87996e28bd49c2b1",
-    "traces/roundtrip_CSM_pitch.csv.gz": "8be66349513da658109a3bc11636adeccac56160c04049f09d6130d1451f29ae",
-    "traces/roundtrip_CSM_roll.csv.gz": "fcb61681b767ce084072cb768443257634b349ff8c3987005da747a82328059a",
+    "traces/roundtrip_CSM_pitch.csv.gz": "c4a1933fd2b1fa54b8c68691d85233cf59afa387054c97d42a954ff78a867c1a",
+    "traces/roundtrip_CSM_roll.csv.gz": "40fc63c801f8c7a069a6bb62090010b2c685bf6f141d4556dffe2e28fc18ebdf",
     "traces/roundtrip_CSM_sigma_a_applied.csv.gz": "f0ecec0102c91cb18fe3409aded5f1f562c986c87fb6965e08ad6807d90b7379",
     "traces/roundtrip_CSM_tau_applied.csv.gz": "fc898a4563ddec88d8a05a8beb54c31c040df181584d286bf222cc4a30a40bce",
     "traces/roundtrip_CSM_vel_xy.csv.gz": "aba06288a1b4f0613a149c1cd5a7de8a6df0df4f8a5b8c3ec09e33343824ac6c",
     "traces/roundtrip_CSM_vel_z.csv.gz": "b7e97e06550d3025402b985daee5325e9ef8831b15a6dc6861ac86203a26b484",
-    "traces/roundtrip_CSM_yaw.csv.gz": "29c25aa6e369e2c5e362d99b1d337fdae135a6897393af42e332d4860d422463",
-    "traces/roundtrip_CSM_z.csv.gz": "2d74755dfadfd1a2ef4065e36e54e12ecbe5b2d6137d0166acc4652d57085894",
-    "traces/roundtrip_Independent_z.csv.gz": "10bacfa895f2fe54a42f820baf6b036635cd79bc1ae729ac2762f30fe11e3af3",
-    "traces/roundtrip_OU-III_z.csv.gz": "5160ff06a6f1c6e778f19b1488825231b0f31fa5ac6fe4bf9afd11996fe5d70f"
+    "traces/roundtrip_CSM_yaw.csv.gz": "a766a4f3c336a070b2d4a028848bd7c0ed08583333836fbff61cb1b6db907c1f",
+    "traces/roundtrip_CSM_z.csv.gz": "45e86e31e730a5142bab165be82b5ea4b6e8c99e55c96bb7e518c3709089d0e2",
+    "traces/roundtrip_Independent_z.csv.gz": "3f1cbd925cd2982d2dfc65a3626d1794cf8f0474a55b7564d3cb63449d4ba69f",
+    "traces/roundtrip_OU-III_z.csv.gz": "b9be141de820d3ca2b519b05b0fd37eb679b8308a4b045485203a43ed470dbe6"
   },
   "figures": {
     "csm_validation_acc_bias.svg": 110235,
@@ -137,9 +137,20 @@
     "csm_validation_engine_speed.svg": 73216,
     "csm_validation_gyro_bias.svg": 105827,
     "csm_validation_observers.svg": 79434,
-    "csm_validation_roundtrip.svg": 182552,
+    "csm_validation_roundtrip.svg": 308594,
     "csm_validation_tuning.svg": 83119,
     "csm_validation_xy.svg": 110366,
     "csm_validation_z.svg": 88152
+  },
+  "roundtrip_render": {
+    "source_sha256": {
+      "tools/carma_shared_modes_validation.py": "13613ad2ed7544be398f3c38b87975af3af2eec9cf1bf25a118180dc05411a6f",
+      "tools/carma_shared_modes_validation_plots.py": "e254d0634cad8771dc1be1276a504ad7dbf46219f2ac2bcf5cd7835c716023d8",
+      "plots/vector_export.py": "9803d127f3247c26ad2589c5283a026f552371c488218f559d82ba12fc32bd74",
+      "plots/figure_decimation.py": "b326258d3c628e98256124ca673411c12b10ed046c41f5812e1953648ad66b21"
+    },
+    "trace_rate_hz": 10,
+    "replay_revision": "dd0d7b19fb231bf5c19278081c4c96c53962ff73",
+    "OU-III_z_source": "../ou_roundtrip_transition/ou_rs_roundtrip_transition.csv plus the original terminal sample"
   }
 }

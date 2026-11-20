@@ -15,7 +15,7 @@ import pandas as pd
 from scipy import stats
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'plots'))
-from vector_export import envelope_indices
+from vector_export import envelope_indices, transition_trace_indices
 OUT=ROOT/'reports/results/tfg_shared_modes'
 BINARY=ROOT/'tests/kalman_carma_shared_modes/kalman_carma_shared_modes-bench'
 BASE='jonswap_fp0.29_hs0.8_g3.3'
@@ -73,10 +73,10 @@ def sha(p):
 def clean_env():
  """Remove inherited filter overrides before running controlled simulations."""
  return {k:v for k,v in os.environ.items() if not k.startswith(('W3D_','CSM_','OU_','SF_','TFG_'))}
-def save_trace(frame,path):
- """Preserve joint extrema in bounded traces shared by SVG and PGF exports."""
- # A single shared extrema selection bounds both SVG and PGF geometry.
- idx=envelope_indices(tuple(frame[c].to_numpy() for c in frame),max_points=2000)
+def save_trace(frame,path,transition=False):
+ """Store aligned drawing samples for the SVG and PGF publications."""
+ idx=(transition_trace_indices(len(frame)) if transition else
+      envelope_indices(tuple(frame[c].to_numpy() for c in frame),max_points=2000))
  path.parent.mkdir(parents=True,exist_ok=True)
  with path.open('wb') as raw,gzip.GzipFile(filename='',mode='wb',fileobj=raw,mtime=0) as z:
   z.write(frame.iloc[idx].to_csv(index=False,float_format='%.8g').encode())
@@ -97,13 +97,14 @@ def execute_one(task,out):
   if trace:
    df=pd.read_csv(tr)
    # Store families independently: selecting extrema jointly over >100 channels
-   # can undersample narrow transients. Every family has a 2000-point bound.
+   # can undersample narrow transients. Round-trip positions use a common 10 Hz grid.
    for family,prefix in {'position':('x_','y_','z_'),'velocity':('vx_','vy_','vz_'),
                           'attitude':('droll_','dpitch_','dyaw_','roll_','pitch_','yaw_'),
                           'gyro_bias':('bgx_','bgy_','bgz_'),'accel_bias':('bax_','bay_','baz_'),
                           'uncertainty':('ex_','ey_','ez_','sx_','sy_','sz_')}.items():
     cols=['t']+[c for c in df if c.startswith(prefix)]
-    save_trace(df[cols],out/'traces'/f'{name}_{family}.csv.gz')
+    save_trace(df[cols],out/'traces'/f'{name}_{family}.csv.gz',
+               transition=name=='roundtrip' and family=='position')
     if name=='jonswap':save_trace(df.loc[df.t>=1170,cols],out/'traces'/f'{name}_tail_{family}.csv.gz')
    # Full-rate error windows for degradation and recovery, not drawing data.
    segments={'pre':(300,390),'rising':(390,440),'high':(500,780),'falling':(790,840),'recovered':(950,1200)} if name=='roundtrip' else {}

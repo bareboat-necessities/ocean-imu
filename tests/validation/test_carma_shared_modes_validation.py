@@ -82,7 +82,15 @@ class PublicationEvidenceTests(unittest.TestCase):
         for path in paths:
             with self.subTest(path=path.name):
                 d = pd.read_csv(path)
-                self.assertLessEqual(len(d), 2000)
+                dense = path.stem.removesuffix(".csv") in {
+                    "roundtrip_CSM_z", "roundtrip_Independent_z", "roundtrip_OU-III_z",
+                    "roundtrip_CSM_roll", "roundtrip_CSM_pitch", "roundtrip_CSM_yaw",
+                }
+                if dense:
+                    self.assertEqual(len(d), 12001)
+                    np.testing.assert_allclose(d.time.iloc[:-1], np.arange(12000) / 10, atol=.005)
+                else:
+                    self.assertLessEqual(len(d), 2000)
                 # The shared C++ harness serializes six significant digits:
                 # adjacent 200 Hz timestamps can coincide beyond 1000 s.
                 # Drawing must retain their order and the last sample within

@@ -351,6 +351,7 @@ def write_roundtrip_diagnostic(
             (return_start_sec, return_end_sec),
         ),
         window_start_sec,
+        roundtrip=True,
     )
 
     return {
