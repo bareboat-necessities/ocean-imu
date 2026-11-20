@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'tools/marine_mag_filter_replays.py'
+      - 'tools/marine_mag_yaw_response.py'
+      - 'src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h'
+      - 'src/kalman_common/ProxyStartupFusion.h'
       - 'tests/common/MagneticCalibrationReplayConfig.h'
       - 'src/kalman_common/MagneticStartupCommon.h'
       - 'src/tuner/GyroMagCalibration*.h'
@@ -40,3 +43,14 @@ jobs:
         with:
           name: mag-comparison-${{ matrix.family }}
           path: ${{ runner.temp }}/${{ matrix.family }}.csv
+
+      - name: Compare the shipping TFG shared-mode heading response
+        if: matrix.family == 'tfg_shared'
+        run: |
+          python3 tools/marine_mag_yaw_response.py released --jobs 2 --out "$RUNNER_TEMP/yaw-released.csv"
+          python3 tools/marine_mag_yaw_response.py validation --jobs 2 --out "$RUNNER_TEMP/yaw-validation.csv"
+      - uses: actions/upload-artifact@v6
+        if: matrix.family == 'tfg_shared'
+        with:
+          name: tfg-shared-yaw-response
+          path: ${{ runner.temp }}/yaw-*.csv

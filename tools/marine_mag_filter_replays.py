@@ -24,18 +24,20 @@ METRICS = ("yaw_rms_deg", "roll_rms_deg", "pitch_rms_deg", "disp_3d_rms_m",
            "accel_bias_3d_rms_mps2", "gyro_bias_3d_rms_radps")
 
 
-def replay(task):
+def replay(task, *, seed=None, window_seconds=900):
     family, case, path, mode = task
     env = {k: v for k, v in os.environ.items() if not k.startswith(("W3D_", "TFG_", "SF_", "OCEAN_IMU_SIM_CASE"))}
     env.update(OCEAN_IMU_SIM_CASE=case, W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1",
-               W3D_REFERENCE_MOTION="underway", W3D_VALIDATION_WINDOW_SEC="900", W3D_MAG_CALIBRATION=mode)
+               W3D_REFERENCE_MOTION="underway", W3D_VALIDATION_WINDOW_SEC=str(window_seconds), W3D_MAG_CALIBRATION=mode)
+    if seed is not None:
+        env["W3D_SEED"] = str(seed)
     binary = ROOT / "tests" / BINARIES[family]
     with tempfile.TemporaryDirectory() as tmp:
         proc = subprocess.run([binary, "--input", path], env=env, cwd=tmp, text=True,
                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     rows = [dict(f.split("=", 1) for f in s.split()[1:]) for s in proc.stdout.splitlines()
             if s.startswith("VALIDATION_METRICS ") and "segment=window" in s]
-    if len(rows) != 1 or int(rows[0]["samples"]) != 180000 or proc.returncode not in (0, 1):
+    if len(rows) != 1 or int(rows[0]["samples"]) != 200 * window_seconds or proc.returncode not in (0, 1):
         raise RuntimeError(f"{task}: replay failed ({proc.returncode})\n{proc.stdout[-2000:]}")
     gates = [dict(item.split("=", 1) for item in line.split()[1:]) for line in proc.stdout.splitlines()
              if line.startswith("QUALITY_GATE: PASS=")]

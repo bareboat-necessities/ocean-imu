@@ -257,6 +257,8 @@ struct ProxyStartupFusionConfig {
     // calibration nobody has checked should not arrive as a step.
     float mag_hi_apply_fraction = defaults::MAG_HI_APPLY_FRACTION;
     float mag_hi_slew_tau_sec   = defaults::MAG_HI_SLEW_TAU_SEC;
+    // Fraction of the bearing change from a calibration step applied as yaw.
+    float mag_hi_heading_transport_fraction = 0.f;
 
     // Keep off in waves.  Accel/gyro weighting can phase-select wave motion.
     bool  mag_enable_quality_weighting = false;
@@ -483,7 +485,7 @@ public:
         }
 
         maybeRefineMagReference_(mag_body_ned);
-        maybeApplyContinuousHardIron_();
+        maybeApplyContinuousHardIron_(mag_body_ned);
 
         // Magnetometer corrections go to the MEKF only once it owns the
         // attitude.  Before handoff its state is not the one being solved.
@@ -746,12 +748,16 @@ private:
 
     // Applied only once the startup acquisition, including refinement, has
     // finished and the MEKF is live.
-    void maybeApplyContinuousHardIron_() {
+    void maybeApplyContinuousHardIron_(const Eigen::Vector3f& raw) {
         if (!cfg_.mag_continuous_hard_iron) return;
         if (!mag_ref_set_ || stage_ != Stage::Live) return;
         if (cfg_.mag_refine_enabled && !mag_refine_done_) return;
         if (!mag_world_ref_valid_) return;
 
+        const float fraction = cfg_.mag_hi_heading_transport_fraction;
+        const bool transport = fraction > 0.f && fraction <= 1.f && raw.allFinite();
+        Eigen::Vector3f before;
+        if (transport) before = hard_iron_.correct(raw);
         Eigen::Vector3f ref;
         if (!hard_iron_.slewTowardEstimate(t_, cfg_.mag_sample_dt_sec,
                                            mag_world_ref_uT_,
@@ -760,6 +766,23 @@ private:
                                            cfg_.mag_init_min_mag_norm,
                                            ref)) {
             return;
+        }
+        if (transport) {
+            // Express the same packet with the old and new calibration. This
+            // part of its bearing change comes from the calibration update.
+            const Eigen::Quaternionf q = impl_.mekf().quaternion_boat().normalized();
+            const Eigen::Vector3f old_world = q * before;
+            const Eigen::Vector3f new_world = q * hard_iron_.correct(raw);
+            const float dot = old_world.head<2>().dot(new_world.head<2>());
+            const float reference_norm = mag_world_ref_uT_.norm();
+            const float norm = new_world.norm();
+            if (dot > cfg_.mag_init_min_mag_norm * cfg_.mag_init_min_mag_norm &&
+                norm > 0.5f * reference_norm && norm < 1.5f * reference_norm) {
+                const float cross = new_world.x()*old_world.y() - new_world.y()*old_world.x();
+                const float dyaw = fraction * std::atan2(cross, dot);
+                if (std::abs(dyaw) > 1.e-8f)
+                    impl_.mekf().set_quaternion_boat(Eigen::AngleAxisf(dyaw, Eigen::Vector3f::UnitZ()) * q);
+            }
         }
         mag_hard_iron_body_uT_ = hard_iron_.startup_body_uT + hard_iron_.applied_body_uT;
         setMagWorldRef_(ref);

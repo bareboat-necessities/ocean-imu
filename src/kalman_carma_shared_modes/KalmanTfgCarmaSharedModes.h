@@ -19,3 +19,11 @@ template<typename T = float>
 using KalmanTfgCarmaSharedModes = SharedModesEstimator<T,
     kalman::Kalman3D_Wave_TFG_CARMA3<T, 6, SharedModesMotion<T>>>;
 }  // namespace ocean_imu::carma_shared_modes
+
+namespace ocean_imu::carma {
+struct TransportedMagCarmaConfig;
+template<class Core> struct CarmaFusionConfigFor;
+template<class T> struct CarmaFusionConfigFor<carma_shared_modes::KalmanTfgCarmaSharedModes<T>> {
+    using type = TransportedMagCarmaConfig;
+};
+}  // namespace ocean_imu::carma
