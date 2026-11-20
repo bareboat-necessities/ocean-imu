@@ -2,7 +2,7 @@
 
 Read the standalone [article](marine-mag.tex) and the [paired evidence](../../reports/results/marine_mag/). The baseline is f1424f58ef019994a28aef03efc3da0dc5d5ca98. Each navigation run processes a 1200 s, 200 Hz release record or continuous regenerated maneuver and scores its final 900 s.
 
-On eight fresh draws, the installation screen reduced mean sustained yaw RMS on clean noisy inputs from 0.765° to 0.469° against always-on learning. Distorted inputs moved from 0.898° to 0.907°. Eight further draws in 0.27 m waves reproduced the clean benefit (0.624° to 0.392°), while distorted inputs moved from 0.778° to 0.801°. The largest delayed-release penalty was 1.182°. The screen remains a research option. [Primary paired effects](../../reports/results/marine_mag/installation-screen-paired.csv) · [Weak-wave confirmation](../../reports/results/marine_mag/installation-screen-weak-paired.csv)
+On eight fresh draws, the installation screen reduced mean sustained yaw RMS on clean noisy inputs from 0.765° to 0.469° against always-on learning. Distorted inputs moved from 0.898° to 0.907°. Eight further draws in 0.27 m waves reproduced the clean benefit (0.624° to 0.392°), while distorted inputs moved from 0.778° to 0.801°. The largest delayed-release penalty was 1.182°. The production implementation is available as an opt-in. [Primary paired effects](../../reports/results/marine_mag/installation-screen-paired.csv) · [Weak-wave confirmation](../../reports/results/marine_mag/installation-screen-weak-paired.csv)
 
 The committed research scores use Debian 13 glibc 2.41 and the repository's replay compiler. The focused CI uses that userspace because different libm implementations can shift the final digits. Run from the repository root with the replay compiler, Eigen, GNU patch, NumPy, SciPy, pandas, Matplotlib and TeX Live.
 
@@ -33,7 +33,7 @@ python3 tests/kalman_tfg_shared_modes/magnetic_study/check_evidence.py
 (cd doc/marine_mag && latexmk -pdf marine-mag.tex)
 ~~~
 
-The experiment builds a private include tree under the ignored build directory. Its instrumentation patch applies with zero fuzz to copies of baseline sources. It gives a named research adapter access to the posterior, reuses packet prediction during quarantine, and substitutes controlled sensor fixtures. The stock calibration equations, wrapper, reference slew and TFG update supply all arms. The calibration research adds no firmware setting. Use the magnetic-study executable's positional arguments (CSV, variant, scenario, dip in degrees). Arm -1 uses the sketch calibration switch. V0 through V8 are defined in the article. V9 is the supplemental V6-plus-covariance development arm. The separate magnetic-quarantine-study binary applies V8 packet rejection with the native measurement covariance. Its 32 post-hoc paired results are in quarantine-only.csv.
+The experiment builds a private include tree under the ignored build directory. Its instrumentation patch applies with zero fuzz to copies of baseline sources. It gives a named research adapter access to the posterior, reuses packet prediction during quarantine, and substitutes controlled sensor fixtures. The stock calibration equations, wrapper, reference slew and TFG update supply all arms. The isolated variants are diagnostic. The production integration below provides the screened installation setting. Use the magnetic-study executable's positional arguments (CSV, variant, scenario, dip in degrees). Arm -1 uses the sketch calibration switch. V0 through V8 are defined in the article. V9 is the supplemental V6-plus-covariance development arm. The separate magnetic-quarantine-study binary applies V8 packet rejection with the native measurement covariance. Its 32 post-hoc paired results are in quarantine-only.csv.
 
 Each stage publishes a SHA-256 input manifest. Weak-steering and larger-turn tests replace the release track and rebuild the IMU. A companion track file is read only by the displacement scorer. W3D expands the joint seed into independent sensor and initialization streams. The stress manifest also hashes the four maneuver scoring tracks. Resumable checkpoints key the physical and scoring inputs, executable, scoring script and experimental condition.
 
@@ -72,3 +72,24 @@ The independent weak-motion confirmation fixes V11 and the 0.27 m wave record, c
 The proxy-startup filters and the standalone TFG wrapper accept `mag_screen_installation` alongside `mag_continuous_hard_iron`. Enable both with the gyro-aided calibration to hold application until the posterior distortion passes three five-second checks. The seven saved-calibration AtomS3R INS sketches expose this combination through the build flag `-DOCEAN_IMU_SCREEN_MAG_INSTALLATION=1`. The ordinary navigation filters use elapsed seconds to support varying packet rates. The original V11 evidence uses 125 received packets per check at 25 Hz. Both paths use the same posterior distortion calculation.
 
 Build the normal simulator and run `python3 tools/marine_mag_filter_replays.py tfg_shared --jobs 4 --out /tmp/tfg_shared.csv` to compare disabled, native and screened continuous calibration on all 16 released records. The driver records individual scores and the original simulator exit status for every arm. The production comparison workflow runs the eight filter families and publishes their CSVs.
+
+### Production replay results
+
+Each value is the mean of 16 per-record yaw RMS values. Both directions, both spectra and four sea states contribute equally. Each score uses the final 900 seconds. Across the 128 always-on records, all gate results matched independent pre-integration reruns. The largest difference in yaw RMS was 0.000076 degrees. 112 records matched all six reported metrics exactly.
+
+| Filter | Off (°) | Always on (°) | Screened (°) | Gate passes out of 16 (off/on/screened) |
+| --- | ---: | ---: | ---: | ---: |
+| TFG shared-mode CARMA | 2.732 | 0.731 | 0.786 | 0/16/12 |
+| QMEKF shared-mode CARMA | 2.735 | 0.742 | 0.798 | 0/16/12 |
+| Tangent shared-mode CARMA | 2.738 | 0.736 | 0.791 | 0/16/12 |
+| TFG CARMA | 2.738 | 0.735 | 0.790 | 0/16/12 |
+| QMEKF CARMA | 2.741 | 0.747 | 0.802 | 0/16/12 |
+| OU-II | 2.830 | 0.816 | 0.865 | 0/16/12 |
+| OU-III | 2.776 | 0.759 | 0.813 | 0/16/12 |
+| TFG | 2.576 | 0.684 | 0.723 | 0/16/10 |
+
+Screening lowered yaw RMS against correction off in all 128 comparisons. The complete quality gates passed 0/128 with correction off, 128/128 always on and 94/128 screened. Each of the 34 screened failures exceeded its existing gyro-bias limit.
+
+For TFG shared-mode CARMA, screening reduced mean yaw RMS by 71% against correction off. With a distorted installation, always-on correction yielded the lowest average and passed all 16 quality gates. On all 12 records above 0.27 m, screened and always-on yaw RMS agreed at the printed precision. The four 0.27 m records exceeded the gyro-bias gate under screening. Mean 3-D displacement RMS was 0.15068 m off, 0.14754 m always on and 0.14754 m screened. On clean noisy installations the independent study above favors screening.
+
+[Hosted comparison run](https://github.com/bareboat-necessities/ocean-imu/actions/runs/44665619717) · [All 384 per-record scores, gate results and reasons](../../reports/results/marine_mag/production-filter-replays.csv)

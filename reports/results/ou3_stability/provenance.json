@@ -17,7 +17,7 @@
     },
     {
       "path": "src/kalman_common/SeaStateFusionDefaults.h",
-      "git_blob_sha": "0fc888c49de794e4f889871044726185b655c312"
+      "git_blob_sha": "8f9a49c8ecb13c6f854878866b7574619297cec9"
     },
     {
       "path": "src/kalman_common/SeaStateOUFamilyDefaults.h",
@@ -37,15 +37,15 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "5461fc4f31ed76e55860abd850636f920beb86fc"
+      "git_blob_sha": "9c922f8491f09696a9b3a241a5c2f8f04e08a2e0"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
-      "git_blob_sha": "dbad1d5a3077b4ffd39cdc4702ca0283bd2b83f1"
+      "git_blob_sha": "c80ba72d34db8ce133a1a0f8dc0e58276b1aaf23"
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "4ba78d0b1b130ca4f0b932d603abe12adf0f5e47"
+      "git_blob_sha": "d1781e1d71857719e1c7c1fccd802a1b01b78461"
     },
     {
       "path": "src/kalman_common/GyroInterval.h",
@@ -65,11 +65,11 @@
     },
     {
       "path": "src/tuner/GyroMagCalibration.h",
-      "git_blob_sha": "778243880faf69b0ece2f4b65f0fd368f72614cd"
+      "git_blob_sha": "3978177b68ed8920404bc2227617b8ddb2c51ce3"
     },
     {
       "path": "src/tuner/GyroMagCalibrationImpl.h",
-      "git_blob_sha": "188c3d1f20a08b105d5b7eb7af7772f7f0d6e6a3"
+      "git_blob_sha": "0d7d6c1135a19367a5b11c2168ca1fd292920dd0"
     },
     {
       "path": "src/tuner/GyroMagCalibration.cpp",
@@ -815,7 +815,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "339b9115d1cc3758b6d60572798ce88ebdfbd25a"
+      "git_blob_sha": "7143eb71e3705ca1d6e677a8bf9db6a4486e6d1f"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -883,7 +883,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "04420a62a76c443f54d7ee28db700aca25236493"
+      "git_blob_sha": "d65f8642edc168e236513b0be05594b702c7d669"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -2030,5 +2030,49 @@
     "runtime_source_commit": "44cb449d065b54f90ed0d52492c1fd6ad0089930",
     "receipt": "reports/results/ou3_stability/horizontal-wave-output-source-refresh.json",
     "sha256": "d235b5010f996185412bc6b35e59319933f5357ae4321328f15d43f5f9937b31"
+  },
+  "optional_magnetic_screen_default_replay": {
+    "runtime_source_commit": "0f7072a40600e7a89e7fd31b7062bb37bbfdf08b",
+    "scope": "Default magnetic calibration policy only. The opt-in screening policy has separate navigation replay evidence.",
+    "reproductions": {
+      "planar-service-stream-diagnostic": {
+        "sha256": "668ea576cd09f7615963d99613d43ecd185087c06ebc13a6d7b211c8a0243a09",
+        "changed_fields": []
+      },
+      "planar-service-operation-audit": {
+        "sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5",
+        "changed_fields": []
+      },
+      "planar-service-frechet-diagnostic": {
+        "sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692",
+        "changed_fields": []
+      },
+      "planar-moving-center-diagnostic": {
+        "sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427",
+        "changed_fields": []
+      },
+      "planar-quotient-mean-diagnostic": {
+        "sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d",
+        "changed_fields": []
+      },
+      "planar-native-secants-diagnostic": {
+        "sha256": "104b821f89d6dd1470543c2048e2cb6487b9662e2c051fcdbbda522046465989",
+        "changed_fields": [
+          "shipping_source_tree_sha256"
+        ]
+      },
+      "planar-generated-port-structure": {
+        "sha256": "208c55154165e24b1921ab4aa74a386470e624a82cfe44005a0f439deac5f86e",
+        "changed_fields": [
+          "source_git_blob_sha"
+        ]
+      }
+    },
+    "structures_preserved": "Default shipping OU-III prediction, update, tuning and reset chronology with persistent physical and covariance state.",
+    "relaxations_introduced": "None in the reproductions. Results have finite-record scope.",
+    "classification": "E: stale source attribution for the optional screen integration.",
+    "genuine_shipping_counterexample_found": false,
+    "theorem_closed": false,
+    "next_calculation": "Evaluate same-history reference and bias errors during delayed release on weak head-sea records."
   }
 }

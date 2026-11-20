@@ -81,6 +81,17 @@ Arm & Signed yaw & Centered yaw & Roll & Pitch & 3-D disp. (m) & Gyro bias (mrad
 \caption{Held-out uncertainty across independent sensor draws. Conditions sharing a draw do not provide independent replicates.}\end{figure*}
 \input{findings.tex}
 
+\section{Integration in the navigation filters}
+The calibration runs outside the navigation state. The filter feeds raw magnetic measurements to the learner and checks the preceding posterior every five seconds. Three successive distortion detections permit the ordinary calibration slew. The runtime option is shared by the proxy-startup filters and the standalone TFG. Seven AtomS3R sketches expose the option at build time.
+
+\begin{table*}[t]\centering\small
+\caption{Mean yaw RMS in degrees across 16 released records per filter, each scored over its last 900 seconds. The last column gives the number of complete quality-gate passes out of 16 for each mode in column order.}
+\begin{tabular}{lrrrr}\toprule
+Filter & Off & Always on & Screened & Gate passes (off/on/screened)\\\midrule
+\input{production-rows.tex}\end{tabular}\end{table*}
+
+On TFG shared-mode CARMA the screened policy lowered mean yaw RMS by 71\% relative to the saved-calibration sketch policy. Screening beat off on all 16 records and tied always on at the reported precision on all 12 records above $0.27$~m. Mean following-sea yaw RMS was $0.7605^\circ$ screened and $0.7602^\circ$ always on. In head seas it was $0.812^\circ$ screened and $0.702^\circ$ always on. On the two $0.27$~m head-sea records screening increased yaw RMS by $0.429^\circ$ and $0.448^\circ$. The four screened runs that exceeded the gyro-bias limit all had $0.27$~m waves. On the two head-sea records, gyro-bias RMS rose 25--27\% relative to always on. These records use the replay installation model. The independent clean-input panels above cover the complementary case where residual installation distortion is absent. The sketch feature remains opt-in pending device measurements.
+
 \section{Numerics and embedded cost}
 On Espressif GCC 14.2.0 (\texttt{esp-14.2.0\_20241119}), compiled for ESP32-S3 with \texttt{-Os}, the learner object is 1508 bytes. Its largest emitted frame is 3696 bytes in the magnetic update. The selective prototype adds a 216-byte object and at least 1168 heap bytes for two dense double matrices, plus decomposition temporaries. Its object file contains 167029 text/read-only bytes before linker garbage collection. Its largest emitted frame is 736 bytes. These measurements exclude whole-program linkage and runtime stack high-water. A 30000-packet x86 microbenchmark measured 3.23 microseconds for eight gyro predictions plus one native update and 0.077 microseconds per gate packet averaged across block solves. The separate V8 covariance/quarantine arithmetic cross-compiles to 6921 unlinked text bytes with a largest emitted frame of 1872 bytes. On the host its full-output checksum benchmark measured 1.00 microsecond of CPU time per packet. Physical board timing, peak heap and watchdog margin remain unmeasured. The dynamic double-precision gate needs a bounded-memory implementation and device measurements before an embedded trial.
 \section{Reproduction}
