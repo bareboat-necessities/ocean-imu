@@ -50,7 +50,7 @@ constexpr float ADAPT_RS_MULT              = 1.5f;   // dimensionless
 constexpr float ADAPT_RS_SLEW_LOG          = 0.0f;   // ln units
 
 // Self-similar S=0 pseudo-measurement cadence; the ratio and the lower clamp
-// are shared (SeaStateOUFamilyDefaults.h).  The 150 ms upper guard tightens
+// are shared (SeaStateFamilyDefaults.h).  The 150 ms upper guard tightens
 // the Live theorem's guaranteed S-update recurrence; OU-II and TFG keep 250 ms.
 constexpr float PSEUDO_UPDATE_PERIOD_MAX_S_DEFAULT = 0.15f;
 
