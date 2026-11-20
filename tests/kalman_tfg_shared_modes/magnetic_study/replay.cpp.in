@@ -125,7 +125,9 @@ public:
             // V8 adds packet quarantine; V9 retains the original selective-plus-R trial.
             if ((selective || settings.variant==8) && cal.valid())
                 reject = quarantinePacket(mag,cal.matrix_()*prediction+cal.biasBodyUT());
+#ifndef OCEAN_MAG_ABLATE_COVARIANCE
             if (settings.variant>=7 && f.hasRefinedMagReference()) setUncertainty(cal,cal.matrix_()*prediction+cal.biasBodyUT());
+#endif
         }
         if (reject) {
             // Consume the elapsed rotation and its process uncertainty only.

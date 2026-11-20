@@ -65,13 +65,15 @@ def special(data,case,cache,scenario):
     folder.mkdir(parents=True,exist_ok=True)
     low=ov.find_default_input(data,'1.500','50.710')
     path=folder/(ROUNDTRIP_WAVE_NAME if scenario=='roundtrip' else low.name)
-    if path.is_file() and (scenario=='roundtrip' or path.with_suffix('.track').is_file()):
-        return path
+    if digest(low) != REFERENCE_CSV_SHA256_BY_CASE[case][low.name]:
+        raise ValueError(f'Unexpected source for regenerated maneuver: {low}')
     # underway_reference selected_case() resolves OCEAN_IMU_SIM_CASE at call time
     os.environ['OCEAN_IMU_SIM_CASE']=case
     columns,values=ov.read_wave_csv(low,ROUNDTRIP_DURATION_SEC)
     if scenario=='roundtrip':
         hi=ov.find_default_input(data,'8.500','202.839')
+        if digest(hi) != REFERENCE_CSV_SHA256_BY_CASE[case][hi.name]:
+            raise ValueError(f'Unexpected high-sea source: {hi}')
         _,high=ov.read_wave_csv(hi,ROUNDTRIP_DURATION_SEC)
         values=make_roundtrip_wave(ov,columns,values,high,11,
                                   DIAGNOSTIC_HIGH_HEIGHT_M/DIAGNOSTIC_SOURCE_HEIGHT_M)
@@ -151,6 +153,7 @@ def main():
     args=p.parse_args()
     args.cache.mkdir(parents=True,exist_ok=True)
     identity=digest(BINARY)
+    scorer=digest(Path(__file__))
     conditions=list(plan(args.stage))
     records={}
     for case,spectrum,height,_seed,scenario,_dip,_variant in conditions:
@@ -163,11 +166,12 @@ def main():
         sha=digest(path)
         if scenario not in ('turn','weak','roundtrip') and sha!=REFERENCE_CSV_SHA256_BY_CASE[case][path.name]:
             raise ValueError(f'Unexpected release input {path}')
-        records[key]=path,sha
+        track_sha=digest(path.with_suffix('.track')) if scenario in ('turn','weak') else None
+        records[key]=path,sha,track_sha
     def run(condition):
         case,spectrum,height,seed,scenario,dip,v=condition
-        path,sha=records[case,spectrum,height,scenario]
-        ck=hashlib.sha256(json.dumps([identity,sha,condition]).encode()).hexdigest()
+        path,sha,track_sha=records[case,spectrum,height,scenario]
+        ck=hashlib.sha256(json.dumps([identity,sha,track_sha,scorer,condition]).encode()).hexdigest()
         checkpoint=args.cache/(ck+'.json')
         key=dict(case=case,spectrum=spectrum,height=height,seed=seed,scenario=scenario,dip=dip,variant=v)
         if not checkpoint.exists():
@@ -187,9 +191,9 @@ def main():
             except ValueError as e:
                 (args.cache/(ck+'.failed.log')).write_text(run.stdout)
                 raise ValueError(f'{condition}: {e}') from e
-            tmp=checkpoint.with_suffix('.tmp')
-            tmp.write_text(json.dumps([scores,trace],allow_nan=False))
-            tmp.replace(checkpoint)
+            with tempfile.NamedTemporaryFile(mode='w',dir=args.cache,delete=False) as stream:
+                json.dump([scores,trace],stream,allow_nan=False)
+            Path(stream.name).replace(checkpoint)
         scores,trace=json.loads(checkpoint.read_text())
         scores.setdefault('failed_metrics','')
         # Truth-qualified convergence is a scoring outcome only. Clean controls
@@ -213,8 +217,9 @@ def main():
         or (args.stage=='stress' and r['scenario'] in ('burst','turn','roundtrip') and r['variant'] in (0,6))
         or (args.stage=='validation' and r['scenario']=='burst' and r['seed']==101 and r['variant'] in (0,6,7)))
         for q in t[::2]])
-    write(args.out/(args.stage+'-inputs.csv'),[dict(case=k[0],spectrum=k[1],height=k[2],scenario=k[3],file=p.name,sha256=h)
-          for k,(p,h) in sorted(records.items())])
+    write(args.out/(args.stage+'-inputs.csv'),[dict(case=k[0],spectrum=k[1],height=k[2],scenario=k[3],file=p.name,sha256=h,
+          **({'track_sha256':track_sha or ''} if args.stage=='stress' else {}))
+          for k,(p,h,track_sha) in sorted(records.items())])
 
 
 if __name__=='__main__':

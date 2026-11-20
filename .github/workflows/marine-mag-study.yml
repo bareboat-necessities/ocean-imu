@@ -26,7 +26,10 @@ jobs:
         run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check
       - name: Cross-check paired evidence and numerical consistency
         run: python3 tests/kalman_tfg_shared_modes/magnetic_study/check_evidence.py
-      - name: Reproduce two held-out full-rate navigations
+      - name: Reproduce paired full-rate navigations in both directions
         run: |
-          python3 tools/sim_dataset.py --dest "$RUNNER_TEMP/magnetic-following"
-          python3 tests/kalman_tfg_shared_modes/magnetic_study/check_replay.py "$RUNNER_TEMP/magnetic-following"
+          for direction in following head; do
+            data="$RUNNER_TEMP/magnetic-$direction"
+            OCEAN_IMU_SIM_CASE="$direction" python3 tools/sim_dataset.py --dest "$data"
+            python3 tests/kalman_tfg_shared_modes/magnetic_study/check_replay.py "$data" "$direction"
+          done

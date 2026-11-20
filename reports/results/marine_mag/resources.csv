@@ -9,4 +9,4 @@ ESP32-S3,V8 covariance and residual helper,unlinked text,6921,bytes
 ESP32-S3,V8 covariance and residual helper,largest emitted static frame,1872,bytes
 x86-64,native learner,observed mean per packet including eight predictions,3.226,microseconds
 x86-64,selective information gate,observed mean per packet,0.077,microseconds
-x86-64,V8 covariance and residual helper,observed mean per packet,1.3609,microseconds
+x86-64,V8 covariance and residual helper,observed mean CPU time per packet,0.9950,microseconds

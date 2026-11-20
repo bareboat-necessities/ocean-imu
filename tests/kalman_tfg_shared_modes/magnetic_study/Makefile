@@ -27,6 +27,11 @@ $(OUT)/W3dSimCommon.o: $(OVERLAY)/ready
 	$(CXX) $(FLAGS) -MMD -MP -c $(OVERLAY)/src/util/W3dSimCommon.cpp -o $@
 $(OUT)/magnetic-study: $(OUT)/replay.o $(OUT)/SelectiveMag.o $(OUT)/W3dSimCommon.o
 	$(CXX) $(FLAGS) $^ -o $@
+# Same V8 packet decision, without the uncertainty intervention.
+$(OUT)/quarantine-only.o: replay.cpp.in $(OVERLAY)/ready
+	$(CXX) $(FLAGS) -DOCEAN_MAG_ABLATE_COVARIANCE -MMD -MP -x c++ -c $< -o $@
+$(OUT)/magnetic-quarantine-study: $(OUT)/quarantine-only.o $(OUT)/SelectiveMag.o $(OUT)/W3dSimCommon.o
+	$(CXX) $(FLAGS) $^ -o $@
 $(OUT)/magnetic-reference-study: $(OUT)/reference.o $(OUT)/W3dSimCommon.o
 	$(CXX) $(FLAGS) $^ -o $@
 $(OUT)/information-test: $(OUT)/information-test.o $(OUT)/SelectiveMag.o

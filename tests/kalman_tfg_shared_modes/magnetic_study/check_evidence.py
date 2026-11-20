@@ -26,8 +26,32 @@ for key,arms in groups.items():
             assert abs(float(arms[0][field])-float(arms[v][field]))<=1e-7,(key,v,field)
     assert abs(float(arms[0]['matrix_err_rms'])-float(arms[7]['matrix_err_rms']))<1e-7
 with (root/'reports/results/marine_mag/paired.csv').open() as f:
-    scores={int(r['variant']):float(r['delta']) for r in csv.DictReader(f) if r['metric']=='yaw_rms_deg'}
+    yaw_rows=[r for r in csv.DictReader(f) if r['metric']=='yaw_rms_deg']
+    expected=set(range(-1,9))
+    assert len(yaw_rows)==len(expected) and {int(r['variant']) for r in yaw_rows}==expected
+    scores={int(r['variant']):float(r['delta']) for r in yaw_rows}
 for v,delta in scores.items():
     actual=mean(float(g[v]['yaw_rms_deg'])-float(g[0]['yaw_rms_deg']) for g in groups.values())
     assert abs(actual-delta)<1e-6
 print(f'{len(groups)} complete paired conditions, {len(rows)} finite scores; covariance and control identities pass')
+
+
+with (root / "reports/results/marine_mag/stress-inputs.csv").open() as stream:
+    fixtures = list(csv.DictReader(stream))
+tracks = [r for r in fixtures if r["scenario"] in ("turn", "weak")]
+assert len(tracks) == 4
+for row in tracks:
+    assert len(bytes.fromhex(row["track_sha256"])) == 32
+
+with (root / "reports/results/marine_mag/quarantine-only.csv").open() as stream:
+    quarantine_rows = list(csv.DictReader(stream))
+assert len(quarantine_rows) == len(groups)
+seen = set()
+for row in quarantine_rows:
+    key = tuple(row[name] for name in ("case", "height", "seed", "scenario", "dip"))
+    assert key not in seen and key in groups
+    seen.add(key)
+    native = groups[key][0]
+    assert float(row["matrix_err_rms"]) == float(native["matrix_err_rms"])
+    if row["scenario"] != "burst":
+        assert float(row["rejected"]) == 0 and float(row["yaw_rms_deg"]) == float(native["yaw_rms_deg"])

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate the LaTeX evidence tables and figures from the verified replay rows."""
 import argparse
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -11,7 +12,8 @@ import pandas as pd
 from scipy.stats import t as student
 
 from marine_mag_study import OUT,ROOT,NAV,plan
-from ou_validation import _fd_spec
+sys.path.insert(0, str(ROOT / 'plots'))
+from vector_export import save_figure
 
 LABEL={-1:'Sketch opt-out',0:'Replay default',1:'Existing enabled',2:'Hard iron',3:'Diagonal',
        4:'Symmetric',5:'Full affine',6:'Selective',7:'Affine + covariance',8:'V7 + quarantine',9:'V6 + covariance'}
@@ -43,10 +45,6 @@ def table(file,rows):
 
 def figures(info,traces,stats,doc):
     # Reuse the repository's figure envelope/decimation and embedded-font settings.
-    import importlib.util
-    mod=importlib.util.module_from_spec(_fd_spec)
-    _fd_spec.loader.exec_module(mod)
-    mod.install()
     plt.rcParams.update({'font.family':'serif','font.size':9,'svg.fonttype':'none','pdf.fonttype':42})
     fig,ax=plt.subplots(1,2,figsize=(7,2.35),sharey=True,layout='constrained')
     for a,case in zip(ax,('following','head')):
@@ -60,7 +58,7 @@ def figures(info,traces,stats,doc):
         a.set(title=case.capitalize()+' seas',xlabel='Steering amplitude (degrees)',xticks=[0,1,3,5,10])
     ax[0].set_ylabel('Weakest singular value')
     ax[1].legend(fontsize=7)
-    fig.savefig(doc/'observability.pdf');plt.close(fig)
+    save_figure(fig,doc/'observability.pdf',metadata={'CreationDate':None});plt.close(fig)
     fig,axes=plt.subplots(2,1,figsize=(6.9,3.5),sharex=True,layout='constrained')
     for v in [0,6,7]:
         d=traces[traces.variant==v]
@@ -70,14 +68,14 @@ def figures(info,traces,stats,doc):
     axes[1].set_ylabel('Offset error norm (µT)')
     axes[1].set_xlabel('Elapsed time (s)')
     axes[0].legend(ncol=3,fontsize=8)
-    fig.savefig(doc/'convergence.pdf');plt.close(fig)
+    save_figure(fig,doc/'convergence.pdf',metadata={'CreationDate':None});plt.close(fig)
     fig,ax=plt.subplots(figsize=(6.8,2.7),layout='constrained')
     d=stats[(stats.metric=='yaw_rms_deg')&stats.variant.isin([-1,2,3,4,6,7,8])].sort_values('variant')
     ax.errorbar(d.delta,np.arange(len(d)),xerr=[d.delta-d.ci_low,d.ci_high-d.delta],
                 fmt='o',color='#145f73',capsize=3)
     ax.axvline(0,ls=':',lw=.8,color='.3');ax.set_yticks(np.arange(len(d)),[LABEL[v] for v in d.variant])
     ax.set_xlabel('Paired change in yaw RMS vs V0 (degrees), 95% interval')
-    fig.savefig(doc/'paired.pdf');plt.close(fig)
+    save_figure(fig,doc/'paired.pdf',metadata={'CreationDate':None});plt.close(fig)
 
 
 def main():
@@ -96,6 +94,10 @@ def main():
                 assert np.allclose(piv[0],piv[1],atol=1e-7,rtol=0) and np.allclose(piv[0],piv[5],atol=1e-7,rtol=0),m
     d=pd.read_csv(o/'validation.csv')
     st=statistics(d); st.to_csv(o/'paired.csv',index=False,float_format='%.8g')
+    quarantine=pd.read_csv(o/'quarantine-only.csv').assign(variant=10)
+    trial=pd.concat([d[d.variant==0],quarantine],ignore_index=True)
+    ablation=statistics(trial)
+    ablation[ablation.variant==10].to_csv(o/'quarantine-paired.csv',index=False,float_format='%.8g')
     y=st[st.metric=='yaw_rms_deg'].set_index('variant')
     table(doc/'paired-rows.tex',[(LABEL[v],f'{r["mean"]:.3f}',f'{r.delta:+.3f}',f'{r.pct:+.1f}',
           f'[{r.ci_low:+.2f}, {r.ci_high:+.2f}]',f'{int(r.improved)}/{int(r.worse)}',f'{r.worst_delta:+.2f}')

@@ -18,5 +18,10 @@ int main() {
     const auto propagated = correctedMagneticCovariance(identity,field,identity,Vector(1,0,0),p);
     assert(propagated.isApprox(propagated.transpose()));
     assert(propagated.selfadjointView<Eigen::Lower>().eigenvalues().minCoeff()>=1.f);
+    p(3,9)=p(9,3)=0.f;
+    const auto independent = correctedMagneticCovariance(identity,field,identity,Vector(1,0,0),p);
+    Matrix cross=Matrix::Zero();
+    cross(0,0)=2.f*.9f*field.x();
+    assert((propagated-independent).isApprox(cross,1e-5f));
     std::cout<<"magnetic packet covariance and rejection checks passed\n";
 }
