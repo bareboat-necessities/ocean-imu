@@ -62,5 +62,6 @@
   "sample_rate_hz": 200,
   "nominal_magnetometer_rate_hz": 25,
   "confidence_unit": "one independent joint sensor/initialization draw; eight paired conditions per held-out draw",
-  "observability_rows": 960
+  "observability_rows": 960,
+  "host_libc": "Debian glibc 2.41"
 }

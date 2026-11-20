@@ -10,10 +10,14 @@ on:
 jobs:
   replay:
     runs-on: ubuntu-24.04
+    container: debian:13
     timeout-minutes: 45
     steps:
+      - name: Install Debian replay userspace
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends git ca-certificates curl sudo python3 g++ make patch libeigen3-dev
       - uses: actions/checkout@v6
-      - run: sudo apt-get update -qq && sudo apt-get install -y libeigen3-dev
       - uses: ./.github/actions/replay-toolchain
       - name: Build isolated instrumentation and verify rank checks
         run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check

@@ -2,7 +2,7 @@
 
 Read the standalone [article](marine-mag.tex) and the [paired evidence](../../reports/results/marine_mag/). The baseline is f1424f58ef019994a28aef03efc3da0dc5d5ca98. Each navigation run processes a 1200 s, 200 Hz release record or continuous regenerated maneuver and scores its final 900 s.
 
-Run from the repository root on a GNU/Linux host with the repository's replay compiler, Eigen, GNU patch, NumPy, SciPy, pandas, Matplotlib and TeX Live.
+The committed research scores use Debian 13 glibc 2.41 and the repository's replay compiler. The focused CI uses that userspace because different libm implementations can shift the final digits. Run from the repository root with the replay compiler, Eigen, GNU patch, NumPy, SciPy, pandas, Matplotlib and TeX Live.
 
 ~~~sh
 for side in following head; do
