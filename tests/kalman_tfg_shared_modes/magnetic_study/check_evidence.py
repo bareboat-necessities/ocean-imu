@@ -1,6 +1,7 @@
 """Fail closed on missing, unpaired, nonfinite or numerically inconsistent holdout rows."""
 import csv
 import math
+import sys
 from pathlib import Path
 from statistics import mean
 
@@ -53,6 +54,7 @@ for row in quarantine_rows:
     seen.add(key)
     native = groups[key][0]
     assert float(row["matrix_err_rms"]) == float(native["matrix_err_rms"])
+    assert math.isfinite(float(row["yaw_rms_deg"])), (key, "nonfinite quarantine yaw")
     if row["scenario"] != "burst":
         assert float(row["rejected"]) == 0 and float(row["yaw_rms_deg"]) == float(native["yaw_rms_deg"])
 
@@ -89,3 +91,9 @@ for study, stage, factor, expected_seeds in (
         delta = mean(float(cell[scale][metric])-float(cell[1.0][metric]) for cell in arms.values())
         assert math.isclose(float(row["delta"]),delta,abs_tol=1e-8)
     print(f"{study} {stage}: {len(arms)} complete paired cells and all published mean differences reproduced")
+
+
+sys.path.insert(0, str(root / "tools"))
+from marine_mag_attribution import check_evidence
+
+check_evidence(root / "reports/results/marine_mag")

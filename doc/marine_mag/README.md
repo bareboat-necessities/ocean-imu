@@ -2,6 +2,8 @@
 
 Read the standalone [article](marine-mag.tex) and the [paired evidence](../../reports/results/marine_mag/). The baseline is f1424f58ef019994a28aef03efc3da0dc5d5ca98. Each navigation run processes a 1200 s, 200 Hz release record or continuous regenerated maneuver and scores its final 900 s.
 
+On eight fresh draws, the installation screen reduced mean sustained yaw RMS on clean noisy inputs from 0.765° to 0.469° against always-on learning. Distorted inputs moved from 0.898° to 0.907°. Eight further draws in 0.27 m waves reproduced the clean benefit (0.624° to 0.392°), while distorted inputs moved from 0.778° to 0.801°. The largest delayed-release penalty was 1.182°. The screen remains a research option. [Primary paired effects](../../reports/results/marine_mag/installation-screen-paired.csv) · [Weak-wave confirmation](../../reports/results/marine_mag/installation-screen-weak-paired.csv)
+
 The committed research scores use Debian 13 glibc 2.41 and the repository's replay compiler. The focused CI uses that userspace because different libm implementations can shift the final digits. Run from the repository root with the replay compiler, Eigen, GNU patch, NumPy, SciPy, pandas, Matplotlib and TeX Live.
 
 ~~~sh
@@ -21,6 +23,9 @@ python3 tools/marine_mag_yaw.py
 python3 tools/marine_mag_yaw.py --gyro-bias
 python3 tools/marine_mag_yaw.py --replicate-gyro-bias
 python3 tools/marine_mag_yaw.py --gyro-stress
+python3 tools/marine_mag_attribution.py
+python3 tools/marine_mag_attribution.py --weak
+python3 tools/marine_mag_attribution.py --stress
 python3 tools/marine_mag_reference.py
 python3 tools/marine_mag_transients.py
 python3 tools/marine_mag_report.py
@@ -57,3 +62,7 @@ The sustained-heading extension compares post-refinement magnetic standard devia
 The gyro-bias experiment uses the same development screen with the native TFG magnetic weight. It scales the external learner's initial gyro-bias standard deviation and gyro-bias random-walk amplitude together by 0, 0.25, 1 or 4. The zero factor freezes that nuisance state at its initial zero. The chosen alternative and the native learner are evaluated on four further joint draws (547, 1151, 2371 and 4099). The three gyro-bias CSVs contain the scored arms and their paired comparisons.
 
 The independent confirmation panel fixes the native and fourfold gyro-bias factors before evaluation, keeping the same eight uninterrupted physical conditions. Twelve further independent joint draws test transfer across sensor and initialization errors. Evidence for a sustained yaw improvement requires the upper endpoints of the paired 95% intervals for both total yaw RMS and absolute within-record bias to fall below zero on this panel, together with the development roll, pitch and displacement limits.
+
+The installation screen crosses three magnetic inputs (ideal, white noise only, and white noise plus installation distortion) with three settings (sketch opt-out, native continuous calibration, and gated application V11). It runs the same eight release records under each of eight previously unused joint draws. V11 estimates distortion at the most recent posterior every five seconds. Three successive scores above 16.27 release the native application slew. The input generator consumes the same random draws in every arm. The candidate uses only the calibration posterior and its covariance. The two installation-screen CSVs contain 576 per-run scores and paired draw-level intervals. A V11 release time of -1 means that application stayed gated for the entire record.
+
+The independent weak-motion confirmation fixes V11 and the 0.27 m wave record, changes dip between 45 and 76 degrees in both directions, and repeats all nine input/policy combinations on eight new draws. The separate stress run repeats the original 14 stress fixtures for V0 and V11.

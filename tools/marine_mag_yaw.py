@@ -49,19 +49,23 @@ def panel(stage, factors, jobs, parameter, prefix, validation_seeds):
     return frame
 
 
+def stress_inputs(temporary):
+    fixtures = pd.read_csv(OUT / "stress-inputs.csv")
+    for row in fixtures.itertuples(index=False):
+        data = ROOT / ".sim-data/cases" / row.case
+        scenario = row.scenario
+        path = special(data, row.case, temporary, scenario) if scenario in ("turn", "weak", "roundtrip") else data / row.file
+        if digest(path) != row.sha256:
+            raise ValueError(f"Changed stress input {path}")
+        if scenario in ("turn", "weak") and digest(path.with_suffix(".track")) != row.track_sha256:
+            raise ValueError(f"Changed scoring track {path}")
+        yield row.case, scenario, path
+
+
 def gyro_stress(jobs):
-    fixtures = pd.read_csv(OUT/"stress-inputs.csv")
-    tasks = []
     with tempfile.TemporaryDirectory() as temporary:
-        for row in fixtures.itertuples(index=False):
-            data = ROOT/".sim-data/cases"/row.case
-            scenario = row.scenario
-            path = special(data,row.case,Path(temporary),scenario) if scenario in ("turn","weak","roundtrip") else data/row.file
-            if digest(path) != row.sha256:
-                raise ValueError(f"changed stress input {path}")
-            if scenario in ("turn","weak") and digest(path.with_suffix(".track")) != row.track_sha256:
-                raise ValueError(f"changed scoring track {path}")
-            tasks.extend((row.case,1.5,3037,scenario,66.5,k,path,"gyro_bias_factor") for k in (1.,4.))
+        tasks = [(case, 1.5, 3037, scenario, 66.5, k, path, "gyro_bias_factor")
+                 for case, scenario, path in stress_inputs(Path(temporary)) for k in (1., 4.)]
         with ThreadPoolExecutor(jobs) as pool:
             scored = pd.DataFrame(pool.map(simulate,tasks))
     native = scored[scored.gyro_bias_factor==1].set_index(KEY)

@@ -131,5 +131,79 @@
     "stress_rows": 28,
     "stress_inputs": "stress-inputs.csv",
     "qualified_on_replication": false
+  },
+  "installation_screen": {
+    "draws": [
+      6011,
+      6029,
+      6043,
+      6067,
+      6089,
+      6101,
+      6121,
+      6133
+    ],
+    "rows": 576,
+    "spectrum": "pmstokes",
+    "height_m_and_dip_deg": [
+      [
+        0.27,
+        45
+      ],
+      [
+        1.5,
+        66.5
+      ],
+      [
+        4,
+        55
+      ],
+      [
+        8.5,
+        76
+      ]
+    ],
+    "inputs": "same released records and hashes as validation-inputs.csv",
+    "scenarios": [
+      "ideal",
+      "clean",
+      "combined"
+    ],
+    "variants": [
+      -1,
+      0,
+      11
+    ],
+    "criterion": "Three consecutive five-second checks above 16.27 on posterior distortion distance before applying the native correction.",
+    "outputs": [
+      "installation-screen.csv",
+      "installation-screen-paired.csv"
+    ],
+    "weak_confirmation": {
+      "draws": [
+        7001,
+        7013,
+        7027,
+        7043,
+        7057,
+        7079,
+        7103,
+        7121
+      ],
+      "height_m": 0.27,
+      "dip_deg": [
+        45,
+        76
+      ],
+      "rows": 288,
+      "outputs": [
+        "installation-screen-weak.csv",
+        "installation-screen-weak-paired.csv"
+      ]
+    },
+    "stress_seed": 3037,
+    "stress_rows": 28,
+    "stress_inputs": "stress-inputs.csv",
+    "stress_output": "installation-screen-stress.csv"
   }
 }

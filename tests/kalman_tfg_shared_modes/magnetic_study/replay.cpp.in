@@ -73,6 +73,37 @@ class MagneticCalibrationReplay final : public replay::CsmAdapter<Core,0> {
     std::optional<M3> native_magnetic_covariance_;
 #endif
     bool released_ = false, kicked_ = false;
+    bool installation_released_ = false;
+    int consecutive_distortions_ = 0;
+    float native_apply_fraction_ = 1.f;
+
+    // Test the distortion at the last posterior before consuming this packet.
+    // Three consecutive 5 s checks release the ordinary application slew.
+    void checkInstallation(const GyroMagCalibration& cal) {
+        if (installation_released_ || ticks_ % 125 != 0) return;
+        if (!cal.valid()) {
+            consecutive_distortions_ = 0;
+            return;
+        }
+        const V3 field = cal.x_.head<3>();
+        const M3 distortion = cal.matrix_() - M3::Identity();
+        const V3 shift = distortion * field + cal.biasBodyUT();
+        // Jacobian of (A-I)f+b at the last posterior, including field, offset
+        // and gain cross-covariances. No incoming measurement or truth enters.
+        auto jacobian = cal.measurement_();
+        jacobian.leftCols<3>() = distortion;
+        const M3 covariance = jacobian * cal.P_ * jacobian.transpose();
+        const Eigen::LDLT<M3> solve(covariance);
+        const bool valid = solve.info() == Eigen::Success && (solve.vectorD().array() > 0.f).all();
+        const float score = valid ? shift.dot(solve.solve(shift)) : 0.f;
+        const bool detected = std::isfinite(score) && score > 16.27f;
+        consecutive_distortions_ = detected ? consecutive_distortions_ + 1 : 0;
+        if (consecutive_distortions_ == 3) {
+            installation_released_ = true;
+            facade().cfg_.mag_hi_apply_fraction = native_apply_fraction_;
+            std::cout << "INSTALLATION_RELEASE " << ticks_ / 25 << "\n";
+        }
+    }
     unsigned missing_ = 0, rejects_ = 0;
     float first_applied_ = -1;
     int ticks_ = 0;
@@ -109,6 +140,10 @@ public:
             cfg.gyro_bias_rw_radps *= scale;
         }
 #endif
+        if (settings.variant==11) {
+            native_apply_fraction_ = f.cfg_.mag_hi_apply_fraction;
+            f.cfg_.mag_hi_apply_fraction = 0.f;
+        }
         if (settings.variant==-1) f.cfg_.mag_continuous_hard_iron = false;
         if (settings.variant==1) {
             f.cfg_.mag_continuous_hard_iron = true;
@@ -138,6 +173,7 @@ public:
         }
 #endif
         ++ticks_;
+        if (settings.variant==11) checkInstallation(cal);
         bool reject = false;
         const bool selective = settings.variant==6 || settings.variant==9;
         if ((selective || settings.variant==7 || settings.variant==8) && cal.initialized_) {
@@ -212,7 +248,7 @@ int main(int argc,char** argv) {
     settings = {argv[3],std::stoi(argv[2]),std::stof(argv[4])};
     const std::set<std::string> cases = {"combined","ideal","known","clean","hard","diagonal","cross",
         "alignment","latency","outlier","burst","weak","turn","dip_error","yaw_kick","tilt_kick","uncoupled"};
-    if (!cases.count(settings.scenario) || settings.variant < -1 || settings.variant>9 ||
+    if (!cases.count(settings.scenario) || settings.variant < -1 || (settings.variant>9 && settings.variant!=11) ||
         !std::isfinite(settings.dip) || std::abs(settings.dip)>=90.f) return 2;
     std::cout<<std::setprecision(9);
     auto result = process_wave_file_for_tracker<ocean_imu::research::MagneticCalibrationReplay>(argv[1],0.005f,true,true,25.f,

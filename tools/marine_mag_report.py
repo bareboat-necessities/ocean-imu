@@ -102,6 +102,40 @@ def sustained_yaw_figure(results, doc):
     plt.close(fig)
 
 
+def installation_screen_table(results, doc):
+    rows = []
+    for label, filename in (("Four seas", "installation-screen.csv"), ("0.27 m", "installation-screen-weak.csv")):
+        panel = pd.read_csv(results / filename)
+        for scenario, name in (("ideal", "Ideal"), ("clean", "Clean"), ("combined", "Distorted")):
+            group = panel[panel.scenario == scenario]
+            means = group.groupby("variant").yaw_rms_deg.mean()
+            releases = group[group.variant == 11].release_s
+            rows.append((label, name, *[f"{means[v]:.3f}" for v in (-1, 0, 11)],
+                         f"{(releases >= 0).sum()}/{len(releases)}"))
+    table(doc / "installation-rows.tex", rows)
+
+
+def installation_screen_figure(results, doc):
+    data = pd.read_csv(results / "installation-screen.csv")
+    fig, axes = plt.subplots(1, 2, figsize=(7, 2.4), layout="constrained")
+    for axis, scenario, title in zip(axes, ("clean", "combined"),
+                                     ("White noise, calibrated installation", "White noise and installation distortion")):
+        arms = data[data.scenario == scenario].pivot(index=["height", "dip", "seed", "case"],
+                                                    columns="variant", values="yaw_rms_deg")
+        paired = (arms[11] - arms[0]).groupby(level=["height", "dip", "seed"]).mean()
+        by_sea = paired.groupby(level=["height", "dip"])
+        center = by_sea.mean()
+        margin = by_sea.sem() * student.ppf(.975, by_sea.size() - 1)
+        axis.axhline(0, color=".45", lw=.8, ls=":")
+        axis.errorbar(range(len(center)), center, yerr=margin, fmt="o", color="#145f73", capsize=3)
+        axis.set_xticks(range(len(center)), [f"{height:g} / {dip:g}" for height, dip in center.index])
+        axis.set(title=title, xlabel="Wave height (m) / field dip (deg)")
+        axis.title.set_fontsize(9)
+    axes[0].set_ylabel("Change in yaw RMS (deg)")
+    save_figure(fig, doc / "installation-screen.pdf", metadata={"CreationDate": None})
+    plt.close(fig)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out',type=Path,default=OUT)
@@ -133,6 +167,8 @@ def main():
            for case in ('following','head') for v in (-1,0)]) for s in q.scenario.unique()])
     figures(pd.read_csv(o/'information.csv'),pd.read_csv(o/'development-trace.csv'),st,doc)
     sustained_yaw_figure(o,doc)
+    installation_screen_table(o,doc)
+    installation_screen_figure(o,doc)
 
 
 if __name__=='__main__':
