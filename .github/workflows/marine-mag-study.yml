@@ -16,9 +16,12 @@ jobs:
       - name: Install Debian replay userspace
         run: |
           apt-get update -qq
-          apt-get install -y --no-install-recommends git ca-certificates curl sudo python3 g++ make patch libeigen3-dev
+          apt-get install -y --no-install-recommends git ca-certificates curl python3 g++ make patch libeigen3-dev
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/replay-toolchain
+      - name: Verify the native replay compiler
+        run: |
+          test "$(dpkg-query -W -f='${Version}' g++-14)" = "14.2.0-19"
+          g++ --version
       - name: Build isolated instrumentation and verify rank checks
         run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check
       - name: Cross-check paired evidence and numerical consistency
