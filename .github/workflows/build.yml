@@ -161,6 +161,7 @@ jobs:
           python3 tools/sim_dataset.py --archive simulation-case.zip
 
       - name: Label the active simulation case in the manuscript
+        if: matrix.case == 'following'
         run: |
           python3 - <<'PYCASE'
           import sys
@@ -358,16 +359,47 @@ jobs:
           chmod +x *.sh
           plot_status=0
           bash -E -c 'status=0; trap "status=1" ERR; source ./draw_plots.sh; exit "$status"' || plot_status=$?
+          exit "$plot_status"
+
+      - name: Collect head-sea plots and replay tables
+        if: matrix.case == 'head'
+        env:
+          COMPONENT: ${{ matrix.dir }}
+        run: |
+          mkdir head-replay
+          shopt -s nullglob
+          # Plot directories start without rendered figures. Read their outputs
+          # before they are moved alongside committed manuscript illustrations.
+          cd "plots/$COMPONENT"
+          for file in *.svg *.pgf *.png *generated.tex-part; do
+            if [[ "$file" == *.pgf && -f "${file%.pgf}.svg" ]]; then
+              continue
+            fi
+            cp -- "$file" ../../head-replay/
+          done
+          cd "../../doc/$COMPONENT"
+          # The deterministic table generators above write directly to doc/.
+          for file in *-sim-results-generated.tex-part tangent-replay-generated.tex-part \
+                      w3d-tfg-comparison-generated.tex-part; do
+            if [[ -f "$file" ]]; then cp -- "$file" ../../head-replay/; fi
+          done
+          cd ../..
+          test -n "$(ls -A head-replay)"
+          git rev-parse HEAD > head-replay/source-commit.txt
+
+      - name: Move plots alongside the manuscripts
+        working-directory: plots/${{ matrix.dir }}
+        run: |
           mv -v *.pgf ../../doc/${{ matrix.dir }}/ || true
           mv -v *.svg ../../doc/${{ matrix.dir }}/ || true
           mv -v *.png ../../doc/${{ matrix.dir }}/ || true
-          exit "$plot_status"
 
       # Keep one retry for transient TeX/package failures. PlantUML is not used
       # by any document in this repository, so the build deliberately has no
       # runtime PlantUML/CTAN download dependency. Keep the two `with:` blocks
       # identical.
       - name: Compile LaTeX document (${{ matrix.dir }})
+        if: matrix.case == 'following'
         id: latex
         continue-on-error: true
         uses: xu-cheng/latex-action@v4
@@ -386,7 +418,7 @@ jobs:
           extra_system_packages: "inkscape ghostscript graphviz ncurses"
 
       - name: Compile LaTeX document, retry (${{ matrix.dir }})
-        if: steps.latex.outcome == 'failure'
+        if: matrix.case == 'following' && steps.latex.outcome == 'failure'
         uses: xu-cheng/latex-action@v4
         with:
           root_file: "*.tex"
@@ -402,18 +434,20 @@ jobs:
           args: "-shell-escape"
           extra_system_packages: "inkscape ghostscript graphviz ncurses"
 
-      - name: Name head-sea PDFs independently
-        if: matrix.case == 'head'
-        run: |
-          for file in doc/${{ matrix.dir }}/*.pdf; do
-            [ -f "$file" ] && mv "$file" "${file%.pdf}-head.pdf"
-          done
-
       - name: Upload PDF artifacts (${{ matrix.dir }})
+        if: matrix.case == 'following'
         uses: actions/upload-artifact@v6
         with:
-          name: latex-pdfs-${{ matrix.dir }}${{ matrix.case == 'head' && '-head' || '' }}
-          path: doc/${{ matrix.dir }}/**/*.pdf
+          name: latex-pdfs-${{ matrix.dir }}
+          path: doc/${{ matrix.dir }}/*.pdf
+          if-no-files-found: error
+
+      - name: Retain head-sea charts and tables (${{ matrix.dir }})
+        if: matrix.case == 'head'
+        uses: actions/upload-artifact@v6
+        with:
+          name: head-replay-${{ matrix.dir }}
+          path: head-replay/
           if-no-files-found: error
 
       - name: Find SVGs (${{ matrix.dir }})
@@ -493,6 +527,18 @@ jobs:
           overwrite: true
           file_glob: true
 
+      - name: Package head-sea charts and tables by component
+        working-directory: release-assets
+        run: zip -qr ../head-sea-replay-results.zip head-replay-*/
+
+      - name: Upload head-sea replay results
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: head-sea-replay-results.zip
+          tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
+          overwrite: true
+
       - name: Upload SVGs to release
         shell: bash
         run: |
@@ -523,6 +569,25 @@ jobs:
           tag: ${{ github.ref == 'refs/heads/main' && 'vTest' || github.ref_name }}
           overwrite: true
           file_glob: true
+
+      # Overwriting an asset does not remove an older, differently named one.
+      # Limit migration to the rolling release and to counterparts shipped here.
+      - name: Retire superseded head-sea PDFs from vTest
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_id=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/vTest" --jq '.id')
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases/$release_id/assets?per_page=100" \
+            --jq '.[] | select(.name | endswith("-head.pdf")) | [.id, .name] | @tsv' > old-pdfs.tsv
+          while IFS=$'\t' read -r asset_id name; do
+            for replacement in release-assets/latex-pdfs-*/"${name%-head.pdf}.pdf"; do
+              if [[ -f "$replacement" ]]; then
+                gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id"
+                break
+              fi
+            done
+          done < old-pdfs.tsv
 
   build-MCU:
     needs: classify

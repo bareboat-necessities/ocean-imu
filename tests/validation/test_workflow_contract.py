@@ -419,6 +419,19 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn("- name: Compile LaTeX document (${{ matrix.dir }})", stage)
         self.assertIn("working_directory: doc/${{ matrix.dir }}", stage)
 
+    def test_replay_directions_share_one_pdf_edition(self):
+        workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
+        build = _job_block(workflow, "build", "release")
+        self.assertEqual(_inline_sequence(build, "case"), ["following", "head"])
+        steps = build.split("      - name: ")[1:]
+        latex = [step for step in steps if "uses: xu-cheng/latex-action@" in step]
+        uploads = [step for step in steps if "name: latex-pdfs-" in step]
+        self.assertTrue(latex)
+        self.assertEqual(len(uploads), 1)
+        for step in latex + uploads:
+            self.assertIn("if: matrix.case == 'following'", step)
+        self.assertIn("name: head-replay-${{ matrix.dir }}", build)
+
     def test_main_pdf_build_requires_successful_evidence(self):
         workflow = BUILD_WORKFLOW.read_text(encoding="utf-8")
         stage = _job_block(workflow, "build", "release")
