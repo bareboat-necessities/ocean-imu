@@ -83,7 +83,11 @@ def locked_live_reference_audit():
                    'if (cfg_.mag_refine_enabled && !mag_refine_done_) return;',
                    'impl_.startupProxyTiltQuat(), mag_body_ned);',
                    'maybeRefineMagReference_(mag_body_ned);',
-                   'maybeApplyContinuousHardIron_();',
+                   'maybeApplyContinuousHardIron_(mag_body_ned);',
+                   'float mag_hi_heading_transport_fraction = 0.f;',
+                   'const float fraction = cfg_.mag_hi_heading_transport_fraction;',
+                   'const bool transport = fraction > 0.f && fraction <= 1.f && raw.allFinite();',
+                   'if (transport) {',
                    'hard_iron_.predict(dt, gyro_body_ned);',
                    'impl_.updateMag(hard_iron_.correct(mag_body_ned));']:
         if anchor not in p:

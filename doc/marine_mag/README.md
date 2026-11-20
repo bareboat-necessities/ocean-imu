@@ -2,6 +2,31 @@
 
 Read the standalone [article](marine-mag.tex) and the [paired evidence](../../reports/results/marine_mag/). The baseline is f1424f58ef019994a28aef03efc3da0dc5d5ca98. Each navigation run processes a 1200 s, 200 Hz release record or continuous regenerated maneuver and scores its final 900 s.
 
+### Heading improvement against the previous always-on filter
+
+TFG shared-mode CARMA now uses a 60-second calibration slew. Each calibration step explains part of the change in the measured horizontal field bearing. The filter applies 20% of that rotation about world vertical before the existing magnetic update. The normal simulator uses this response automatically. `W3D_MAG_CALIBRATION=native` reproduces the earlier 45-second response, and `production` selects the current filter configuration. The saved-calibration sketch still controls whether continuous learning is enabled.
+
+| Panel | Paired records | Previous yaw RMS | New yaw RMS | Paired change (95% CI) |
+|---|---:|---:|---:|---:|
+| Released records | 16 | 0.731° | 0.711° | -0.020°  |
+| 8 fresh sensor draws | 48 | 0.959° | 0.931° | -0.028° [-0.062, +0.007] |
+| 32 fresh sensor draws | 192 | 0.789° | 0.767° | -0.022° [-0.036, -0.009] |
+
+On the 16 released records, following-sea yaw RMS went from 0.760° to 0.747° and head-sea RMS from 0.702° to 0.676°. All original navigation gates passed on both default and interval-rate profiles. The only yaw increase was 0.0012° in the 8.5 m PM–Stokes head sea. The focused replay also checks a mean yaw ceiling independently for each direction.
+
+The response was selected using the released records. Independent draws vary sensor noise and installation/initialization together. Each draw covers PM–Stokes at 0.27, 1.5 and 8.5 m in both directions. The simulator applies its per-record limits to the default seed. We evaluate fresh draws by paired yaw RMS. Intervals use paired draw means. The new response improved yaw in 7 of 8 validation draws and 22 of 32 subsequent replication draws. The earlier fixed-time switch that gave 0.626° on released records gave 1.109° on four fresh draws, compared with 1.040° for the previous learner.
+
+~~~sh
+make -C tests/kalman_tfg_shared_modes kalman_tfg_shared_modes-sim
+for panel in released validation replication; do
+  python3 tools/marine_mag_yaw_response.py "$panel" --out "/tmp/yaw-$panel.csv"
+done
+~~~
+
+[Released records](../../reports/results/marine_mag/yaw-response-released.csv) · [Eight-draw validation](../../reports/results/marine_mag/yaw-response-validation.csv) · [32-draw replication](../../reports/results/marine_mag/yaw-response-replication.csv) · [Timing comparison](../../reports/results/marine_mag/yaw-response-timing-ablation.csv) · [Interval-rate gates](../../reports/results/marine_mag/yaw-response-interval-rate.csv)
+
+### Installation screening
+
 On eight fresh draws, the installation screen reduced mean sustained yaw RMS on clean noisy inputs from 0.765° to 0.469° against always-on learning. Distorted inputs moved from 0.898° to 0.907°. Eight further draws in 0.27 m waves reproduced the clean benefit (0.624° to 0.392°), while distorted inputs moved from 0.778° to 0.801°. The largest delayed-release penalty was 1.182°. The production implementation is available as an opt-in. [Primary paired effects](../../reports/results/marine_mag/installation-screen-paired.csv) · [Weak-wave confirmation](../../reports/results/marine_mag/installation-screen-weak-paired.csv)
 
 The committed research scores use Debian 13 glibc 2.41 and the repository's replay compiler. The focused CI uses that userspace because different libm implementations can shift the final digits. Run from the repository root with the replay compiler, Eigen, GNU patch, NumPy, SciPy, pandas, Matplotlib and TeX Live.

@@ -6,6 +6,8 @@ on:
       - 'tools/marine_mag_filter_replays.py'
       - 'tools/marine_mag_yaw_response.py'
       - 'src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h'
+      - 'src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h'
+      - 'src/kalman_carma/SeaStateFusionFilter_CARMA3.h'
       - 'src/kalman_common/ProxyStartupFusion.h'
       - 'tests/common/MagneticCalibrationReplayConfig.h'
       - 'src/kalman_common/MagneticStartupCommon.h'

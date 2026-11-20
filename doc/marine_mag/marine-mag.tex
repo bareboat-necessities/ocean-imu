@@ -13,6 +13,7 @@
 \maketitle
 \begin{abstract}
 A 27-state right-invariant marine navigation filter estimates yaw from a magnetic reference acquired during startup. We isolate its independent 18-state gyro--magnetic calibration and compare constrained alternatives on paired 20-minute replays. At wave height 1.5 m the default realization gives yaw RMS of $0.720^\circ$ following and $0.460^\circ$ head. Removing magnetic noise and distortion leaves $0.178^\circ$ and $0.224^\circ$. Marine motion provides useful offset information under a restricted model. Joint gain, field and gyro-bias uncertainty leaves several affine directions poorly determined. Across four held-out draws, propagating calibration covariance changed mean yaw RMS by $+0.0007^\circ$. Withholding disturbed packets reduced it from $1.014^\circ$ to $0.855^\circ$; uninterrupted records showed essentially unchanged heading. In a separate confirmation on twelve new draws, quadrupling gyro-bias uncertainty in the learner changed sustained yaw RMS from $0.758^\circ$ to $0.751^\circ$; the paired interval included zero. Screening corrections reduced yaw RMS on clean noisy installations on two independent panels. Late application on a distorted installation increased one head-sea RMS by $1.182^\circ$.
+Transporting part of each calibration-induced bearing change into the navigation attitude reduced released-record mean yaw RMS from $0.731^\circ$ to $0.711^\circ$ against the previous always-on filter.
 \end{abstract}
 \section{Magnetic measurement path}
 The reference implementation is \texttt{bareboat-necessities/ocean-imu} at \texttt{f1424f58}. The shared TFG estimates attitude and six world motion columns with two body bias columns. One simulation adapter exercises the actual facade, acquisition, learner, invariant update and CARMA motion model.
@@ -85,12 +86,32 @@ Arm & Signed yaw & Centered yaw & Roll & Pitch & 3-D disp. (m) & Gyro bias (mrad
 The calibration runs outside the navigation state. The filter feeds raw magnetic measurements to the learner and checks the preceding posterior every five seconds. Three successive distortion detections permit the ordinary calibration slew. The runtime option is shared by the proxy-startup filters and the standalone TFG. Seven AtomS3R sketches expose the option at build time.
 
 \begin{table*}[t]\centering\small
-\caption{Mean yaw RMS in degrees across 16 released records per filter, each scored over its last 900 seconds. The last column gives the number of complete quality-gate passes out of 16 for each mode in column order.}
+\caption{Mean yaw RMS in degrees across 16 released records per filter, each scored over its last 900 seconds with the earlier 45-second calibration response. The last column gives the number of complete quality-gate passes out of 16 for each mode in column order.}
 \begin{tabular}{lrrrr}\toprule
 Filter & Off & Always on & Screened & Gate passes (off/on/screened)\\\midrule
 \input{production-rows.tex}\end{tabular}\end{table*}
 
 On TFG shared-mode CARMA the screened policy lowered mean yaw RMS by 71\% relative to the saved-calibration sketch policy. Screening beat off on all 16 records and tied always on at the reported precision on all 12 records above $0.27$~m. Mean following-sea yaw RMS was $0.7605^\circ$ screened and $0.7602^\circ$ always on. In head seas it was $0.812^\circ$ screened and $0.702^\circ$ always on. On the two $0.27$~m head-sea records screening increased yaw RMS by $0.429^\circ$ and $0.448^\circ$. The four screened runs that exceeded the gyro-bias limit all had $0.27$~m waves. On the two head-sea records, gyro-bias RMS rose 25--27\% relative to always on. These records use the replay installation model. The independent clean-input panels above cover the complementary case where residual installation distortion is absent. The sketch feature remains opt-in pending device measurements.
+
+\section{Calibration and heading response in the TFG shared-mode filter}
+The calibration slew changes the body-frame bearing delivered to navigation even if the vessel and the sampled field are stationary. Assigning the entire change to the magnetic innovation can also move the gyro-bias estimate. The TFG shared-mode configuration now slews the correction over 60~s. For each applied step, let $u=R K_{\rm old}(m-b_{\rm old})$ and $v=R K_{\rm new}(m-b_{\rm new})$, computed from the same raw packet $m$ and predicted attitude $R$. Before the ordinary magnetic update, we apply a world-vertical rotation of
+\[
+  0.2\,\operatorname{atan2}(v_xu_y-v_yu_x,\;v_xu_x+v_yu_y).
+\]
+The transport requires a finite input, a positive horizontal dot product above the squared minimum field threshold, and a corrected field norm between half and 1.5 times the reference norm. The estimator uses its existing attitude-write operation. The comparison uses the previous always-on learner with a 45~s slew and zero bearing transport. Both receive identical sensor packets.
+
+An alternative changed the slew from 45 to 180~s at elapsed time 300~s. On the 16 released records it reduced mean yaw RMS from $0.731^\circ$ to $0.626^\circ$, passing every original gate. With four new joint sensor draws its mean increased from $1.040^\circ$ to $1.109^\circ$. This sensitivity motivated the independent validation of the smaller, continuous correction.
+
+\begin{table*}[t]\centering\small
+\caption{Mean per-record yaw RMS in degrees. Independent panels contain both sea directions at three heights per draw. Paired intervals use the sensor draw as the independent unit.}
+\begin{tabular}{lrrrrr}\toprule
+Panel & Records & Previous & Transported & Paired change & 95\% interval on change\\\midrule
+Released records & 16 & 0.731 & 0.711 & $-0.020$ & --- \\
+8 fresh sensor draws & 48 & 0.959 & 0.931 & $-0.028$ & $[-0.062, +0.007]$ \\
+32 fresh sensor draws & 192 & 0.789 & 0.767 & $-0.022$ & $[-0.036, -0.009]$ \\
+\end{tabular}\end{table*}
+
+Seven of eight validation draws and 22 of 32 replication draws improved. The 32-draw panel reduced mean yaw RMS in following seas from 0.831 to 0.809 degrees and in head seas from 0.747 to 0.724 degrees. The new configuration passed all 16 original production gates and all 16 legacy interval-rate gates. On production defaults, 15 of 16 records improved. The 8.5~m head-sea PM--Stokes record increased by $0.0012^\circ$. Mean gyro-bias RMS fell from 0.1150 to 0.1090~mrad/s. Mean 3-D displacement RMS was 0.14754~m for both settings. The pinned case and independent draws use the simulator's residual magnetic installation model.
 
 \section{Numerics and embedded cost}
 On Espressif GCC 14.2.0 (\texttt{esp-14.2.0\_20241119}), compiled for ESP32-S3 with \texttt{-Os}, the learner object is 1508 bytes. Its largest emitted frame is 3696 bytes in the magnetic update. The selective prototype adds a 216-byte object and at least 1168 heap bytes for two dense double matrices, plus decomposition temporaries. Its object file contains 167029 text/read-only bytes before linker garbage collection. Its largest emitted frame is 736 bytes. These measurements exclude whole-program linkage and runtime stack high-water. A 30000-packet x86 microbenchmark measured 3.23 microseconds for eight gyro predictions plus one native update and 0.077 microseconds per gate packet averaged across block solves. The separate V8 covariance/quarantine arithmetic cross-compiles to 6921 unlinked text bytes with a largest emitted frame of 1872 bytes. On the host its full-output checksum benchmark measured 1.00 microsecond of CPU time per packet. Physical board timing, peak heap and watchdog margin remain unmeasured. The dynamic double-precision gate needs a bounded-memory implementation and device measurements before an embedded trial.

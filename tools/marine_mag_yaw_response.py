@@ -1,6 +1,7 @@
 """Compare the original and transported TFG shared-mode response on matched records."""
 import argparse
 import random
+from statistics import mean
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -36,6 +37,14 @@ def main():
     with ThreadPoolExecutor(args.jobs) as pool:
         scores = list(pool.map(replay_score, tasks))
     write(scores, args.out)
+    if args.panel == "released":
+        # Match the repository's 0.5% replay margin. Both sea directions must
+        # retain the measured gain and pass the existing per-record limits.
+        for case, cap in (("following", 0.75060), ("head", 0.67905)):
+            production = [r for r in scores if r["case"] == case and r["mode"] == "production"]
+            if (len(production) != 8 or not all(r["gate_pass"] for r in production)
+                    or mean(r["yaw_rms_deg"] for r in production) > cap):
+                raise SystemExit(f"TFG shared-mode yaw or navigation gates failed for {case}")
 
 
 if __name__ == "__main__":

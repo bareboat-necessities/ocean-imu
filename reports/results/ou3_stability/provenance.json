@@ -37,7 +37,7 @@
     },
     {
       "path": "src/kalman_common/ProxyStartupFusion.h",
-      "git_blob_sha": "9c922f8491f09696a9b3a241a5c2f8f04e08a2e0"
+      "git_blob_sha": "b7058b5122f1c8d974f39faf84ece2947a96fd44"
     },
     {
       "path": "src/kalman_common/MagneticStartupCommon.h",
@@ -807,7 +807,7 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "b4f53c350cc81605784f4595c25dc28e2be2ebeb"
+      "git_blob_sha": "0ea76dc64dfed49b9d50b26ae31bf1c6d4e40cd6"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
@@ -815,7 +815,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "7143eb71e3705ca1d6e677a8bf9db6a4486e6d1f"
+      "git_blob_sha": "fe57de4273959806c8a7cc8b9d0d4eda013bdbaf"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -883,7 +883,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "d65f8642edc168e236513b0be05594b702c7d669"
+      "git_blob_sha": "09673595674ecaf124bbe183ad14bb36fc8b1e2d"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1303,7 +1303,7 @@
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
     "certificate": "measurement-frame-loss-certificate.json",
-    "result_type": "PROVED \u2014 analytical identities and qualified uniform operation inequalities",
+    "result_type": "PROVED — analytical identities and qualified uniform operation inequalities",
     "complete_21_state_frame_and_mask_congruence": true,
     "moving_frame_derivative_retained": true,
     "radial_magnetic_feedback_and_square_charge_retained": true,
@@ -2074,5 +2074,50 @@
     "genuine_shipping_counterexample_found": false,
     "theorem_closed": false,
     "next_calculation": "Evaluate same-history reference and bias errors during delayed release on weak head-sea records."
+  },
+  "tfg_shared_heading_response_default_ou3_replay": {
+    "runtime_source_commit": "c8f0ea12a8c4f3a06852d67c4666450d4988f335",
+    "scope": "Default OU-III magnetic calibration. The TFG shared-mode heading response is qualified separately on navigation simulations.",
+    "reproductions": {
+      "planar-service-stream-diagnostic": {
+        "sha256": "668ea576cd09f7615963d99613d43ecd185087c06ebc13a6d7b211c8a0243a09",
+        "changed_fields": []
+      },
+      "planar-service-operation-audit": {
+        "sha256": "a12e95938d2461b0bd4b0fcf0c242bd1f4c8e0587e0bfcea099e050fa8e781b5",
+        "changed_fields": []
+      },
+      "planar-service-frechet-diagnostic": {
+        "sha256": "5ce8cd8861a5a16d3b8a3062b62e4cc3f9e0c97216a4a3f13a502461bdf14692",
+        "changed_fields": []
+      },
+      "planar-moving-center-diagnostic": {
+        "sha256": "71e5b81752ef93c6109c349b73f5eb5cc92a634552fd356e1425db2be31b0427",
+        "changed_fields": []
+      },
+      "planar-quotient-mean-diagnostic": {
+        "sha256": "ad6798d7b7098a020fa7340f02f8a646c23ad30a4953ccc070600826a8a32b9d",
+        "changed_fields": []
+      },
+      "planar-native-secants-diagnostic": {
+        "sha256": "db2b0605d9c6d628a146bdf35409bfe79f42deb089ed686994b7d0ea0c459411",
+        "changed_fields": [
+          "shipping_source_tree_sha256"
+        ]
+      },
+      "planar-generated-port-structure": {
+        "sha256": "538d9217db5be9d536b8369716ab1d2ae19827561d7374690ce86cc370a127f7",
+        "changed_fields": [
+          "source_git_blob_sha"
+        ]
+      }
+    },
+    "structures_preserved": "Same persistent shipping OU-III state, covariance, reference, default correction settings, clocks and packet history.",
+    "relaxations_introduced": "None beyond the existing finite-record probe and secant scopes.",
+    "classification": "E: attribution update following a shared-header change.",
+    "genuine_shipping_counterexample_found": false,
+    "next_calculation": "The open stability calculations retain their documented scope. Navigation performance of the TFG-specific option is measured in its own paired panels.",
+    "result": "Fresh default OU-III stream, operation audit, Frechet, moving-center, quotient-mean and native secant numerical outputs match the previous artifacts. The structural check verifies zero bearing transport by default. The reproductions have finite-record scope.",
+    "theorem_closed": false
   }
 }

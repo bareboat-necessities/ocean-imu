@@ -119,6 +119,9 @@ class MagneticCalibrationReplay final : public replay::CsmAdapter<Core,0> {
 public:
     MagneticCalibrationReplay(bool m,const V3& a,const V3& g,const V3& s) : CsmAdapter(m,a,g,s) {
         auto& f = facade();
+        // Reproduce the 45-second, zero-transport baseline of these published comparisons.
+        f.cfg_.mag_hi_slew_tau_sec = 45.f;
+        f.cfg_.mag_hi_heading_transport_fraction = 0.f;
         auto& cfg = f.hard_iron_.calibration.cfg_;
 #ifdef OCEAN_MAG_YAW_WEIGHT_STUDY
         if (const char* value = std::getenv("MARINE_MAG_GYRO_BIAS_FACTOR")) {
