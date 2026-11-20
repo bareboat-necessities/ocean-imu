@@ -1,9 +1,7 @@
 # Three-axis CARMA motion priors versus OU-III (experimental)
 
-**Status: experimental research.**  Nothing here changes the shipping OU-III
-estimator, its tuning, gates, magnetic handling or the OU-III stability study.
-`Kalman3D_Wave_OU_III` / `SeaStateFusionFilter_OU_III` remain the deployed,
-authoritative implementation.  The three-axis prototype filter, its wrapper
+**Experimental independent-axis CARMA research.** The project’s primary marine INS is [shared-mode TFG–CARMA(4,1)](tfg-carma-shared-modes.md).
+This study uses `Kalman3D_Wave_OU_III` and `SeaStateFusionFilter_OU_III` as its OU-III baseline.  The three-axis prototype filter, its wrapper
 and the CARMA model library live in `src/kalman_carma/`
 (`Kalman3D_Wave_CARMA3.h`, `SeaStateFusionFilter_CARMA3.h`,
 `CarmaVerticalModel.h`); nothing in the deployed OU-III configuration includes

@@ -6,7 +6,7 @@ This sketch runs the **experimental** standalone shared-modes QMEKF, [`KalmanCar
 
 Open the sketch: [`atomS3R_ins_carma_shared_modes.ino`](atomS3R_ins_carma_shared_modes.ino).
 
-> **Research sketch, not the shipping estimator, and not run on hardware yet.** The evidence is simulation-only: the validation in [`docs/kalman-carma-shared-modes.md`](../../../docs/kalman-carma-shared-modes.md) and [`doc/kalman_carma_shared_modes`](../../../doc/kalman_carma_shared_modes). There is no sea trial, no stability analysis of the adaptive filter, and no measured stack high-water mark. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> **Research sketch with simulation evidence only.** Validation results are in [`docs/kalman-carma-shared-modes.md`](../../../docs/kalman-carma-shared-modes.md) and [`doc/kalman_carma_shared_modes`](../../../doc/kalman_carma_shared_modes). There is no sea trial, no stability analysis of the adaptive filter, and no measured stack high-water mark. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## Differences from atomS3R_ins_carma3
 

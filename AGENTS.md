@@ -4,7 +4,7 @@
 
 - Keep changes minimal and targeted.
 - Do not change public estimator APIs or deployed behavior merely to simplify analysis.
-- Treat the shipping OU-III implementation as authoritative for estimator behavior.
+- The primary marine INS estimator is the 27-state [shared-mode TFG–CARMA(4,1)](docs/tfg-carma-shared-modes.md). Use [its AtomS3R sketch](sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) for firmware examples and deployment guidance.
 
 ## Build and validation
 
@@ -19,6 +19,8 @@
 Remove files, tests, workflows, generated evidence, and documentation made obsolete by the change. Documentation describes current behavior; chronological change history belongs in PR metadata.
 
 ## OU-III stability research protocol
+
+For OU-III stability work, the OU-III implementation is authoritative.
 
 **Mandatory first read:** `docs/ou3-shipping-faithfulness-protocol.md`. Its permanent rule is: **WE ARE PROVING STABILITY OF THE ACTUAL SHIPPING OU-III FILTER.** Every important proof result must record `Structures preserved` and `Relaxations introduced`; every failed attempt must be classified A/B/C/D/E as defined there; every handoff must include the six-item shipping-faithfulness record. This protocol overrides mathematically convenient surrogate reasoning unless the enlargement is explicit and its role justified.
 

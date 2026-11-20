@@ -31,22 +31,22 @@ Expand **Assets** and choose the ZIP for exactly one sketch:
 | `atomS3R_mag_diagnostics` | Guided magnetometer/compass diagnostics |
 | `atomS3R_compass_mahony` | Mahony compass / AHRS |
 | `atomS3R_compass_qmekf` | Quaternion-MEKF compass / AHRS |
+| `atomS3R_ins_tfg_carma_shared_modes` | **Primary marine INS** · 27-state shared-mode TFG–CARMA(4,1) |
 | `atomS3R_ins_kalman_ou2` | OU-II marine INS |
 | `atomS3R_ins_kalman_ou3` | OU-III marine INS |
 | `atomS3R_ins_carma3` | Experimental three-axis CARMA marine INS |
 | `atomS3R_ins_tfg_carma3` | Experimental TFG-CARMA3 (CARMA3 on the two-frame Lie group) marine INS |
 | `atomS3R_ins_carma_shared_modes` | Experimental shared-modes CARMA QMEKF marine INS |
-| `atomS3R_ins_tfg_carma_shared_modes` | 27-state shared-mode CARMA TFG marine INS |
 | `atomS3R_ins_tfg` | Two-frame Lie-group marine INS |
 | `atomS3R_ins_pii_observer` | PII marine motion observer |
 | `atomS3R_ins_nlo` | Time-varying-gain nonlinear observer |
 
-Asset names have the form `atomS3R_ins_kalman_ou3_bin-YYYY-MM-DD.zip`.
+Asset names have the form `atomS3R_ins_tfg_carma_shared_modes_bin-YYYY-MM-DD.zip`.
 Use the **actual filename in Assets**, not today's date. The rolling release
 can retain several dates: select the newest matching ZIP unless deliberately
 installing an older build. Do not select GitHub's **Source code (zip)** or a PDF.
 
-The commands below use OU-III as an example. Change `SKETCH`/`$Sketch` for another
+The commands below install the primary shared-mode TFG–CARMA sketch. Change `SKETCH`/`$Sketch` for another
 row and `RELEASE`/`$Release` for another release tag. Keep using the same terminal
 and working directory through the following steps; stop if any command fails.
 
@@ -127,7 +127,7 @@ The commands intentionally do not overwrite an existing extraction directory.
 ```powershell
 $ErrorActionPreference = 'Stop'
 $Release = 'vTest'
-$Sketch = 'atomS3R_ins_kalman_ou3'
+$Sketch = 'atomS3R_ins_tfg_carma_shared_modes'
 $Asset = Read-Host 'Paste the exact ZIP asset filename from GitHub Releases'
 if ($Asset -notlike "${Sketch}_bin-*.zip") { throw "Select the ZIP for $Sketch." }
 $Url = "https://github.com/bareboat-necessities/ocean-imu/releases/download/$Release/$Asset"
@@ -142,7 +142,7 @@ Get-ChildItem -LiteralPath $BinDir
 
 ```bash
 RELEASE='vTest'
-SKETCH='atomS3R_ins_kalman_ou3'
+SKETCH='atomS3R_ins_tfg_carma_shared_modes'
 read -r -p 'Paste the exact ZIP asset filename from GitHub Releases: ' ASSET
 [[ "$ASSET" == "${SKETCH}_bin-"*.zip ]] || { echo "Select the ZIP for $SKETCH."; exit 1; }
 URL="https://github.com/bareboat-necessities/ocean-imu/releases/download/$RELEASE/$ASSET"

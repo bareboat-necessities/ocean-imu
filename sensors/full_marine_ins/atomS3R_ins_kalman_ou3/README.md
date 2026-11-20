@@ -2,7 +2,7 @@
 
 [ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_kalman_ou3**
 
-This sketch runs the adaptive **SeaStateFusion OU-III** estimator on the M5Stack AtomS3R. It is the hardware application corresponding to the repository’s 21-state OU-III navigation filter.
+This sketch runs the adaptive **SeaStateFusion OU-III** estimator on the M5Stack AtomS3R. Choose this 21-state alternative for the OU wave model with integral drift regularization. The primary marine INS firmware is [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">

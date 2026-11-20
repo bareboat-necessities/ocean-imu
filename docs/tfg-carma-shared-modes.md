@@ -1,6 +1,6 @@
 # Shared-mode CARMA on the two-frame group
 
-The 27-state TFG–CARMA(4,1) filter is the primary INS method in the project documentation. [Method article](../doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) · [AtomS3R sketch](../sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/) · [Degradation studies](../reports/results/tfg_shared_modes/degradation/)
+The 27-state shared-mode TFG–CARMA(4,1) filter is the project’s primary marine INS estimator. [Method article](../doc/kalman_tfg_shared_modes/kalman_tfg_shared_modes-method.tex) · [AtomS3R sketch](../sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/) · [Degradation studies](../reports/results/tfg_shared_modes/degradation/)
 
 The current shared wrapper applies a model-derived vertical band-to-total
 acceleration normalization (1.306347 for the default CARMA(4,1) shape).

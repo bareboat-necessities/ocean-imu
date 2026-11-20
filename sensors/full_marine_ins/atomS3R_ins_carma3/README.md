@@ -10,7 +10,7 @@ This sketch runs the **experimental** three-axis CARMA Kalman filter, **SeaState
 
 Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 
-> **Research sketch, not the shipping estimator.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. The sketch drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom motion and heave startup transient of the benchmarked floor-driven configuration; heave on mixed swell + wind seas remains worse than OU-III's. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> **Independent-axis research sketch.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. The sketch drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom motion and heave startup transient of the benchmarked floor-driven configuration; heave on mixed swell + wind seas remains worse than OU-III's. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## What it does
 
@@ -53,7 +53,7 @@ The compile-time controls at the top of the sketch include calibration-wizard en
 
 ## Compare
 
-- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — the shipping 3-D navigation estimator this filter is derived from
+- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — the OU-family estimator from which CARMA3 was derived
 - [OU-II marine INS](../atomS3R_ins_kalman_ou2/README.md) — more direct integral drift correction
 - [TFG marine INS](../atomS3R_ins_tfg/README.md) — OU-III's state and wave model on a two-frame Lie group
 
