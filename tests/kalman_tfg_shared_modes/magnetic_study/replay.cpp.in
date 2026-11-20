@@ -85,18 +85,7 @@ class MagneticCalibrationReplay final : public replay::CsmAdapter<Core,0> {
             consecutive_distortions_ = 0;
             return;
         }
-        const V3 field = cal.x_.head<3>();
-        const M3 distortion = cal.matrix_() - M3::Identity();
-        const V3 shift = distortion * field + cal.biasBodyUT();
-        // Jacobian of (A-I)f+b at the last posterior, including field, offset
-        // and gain cross-covariances. No incoming measurement or truth enters.
-        auto jacobian = cal.measurement_();
-        jacobian.leftCols<3>() = distortion;
-        const M3 covariance = jacobian * cal.P_ * jacobian.transpose();
-        const Eigen::LDLT<M3> solve(covariance);
-        const bool valid = solve.info() == Eigen::Success && (solve.vectorD().array() > 0.f).all();
-        const float score = valid ? shift.dot(solve.solve(shift)) : 0.f;
-        const bool detected = std::isfinite(score) && score > 16.27f;
+        const bool detected = cal.hasSignificantDistortion();
         consecutive_distortions_ = detected ? consecutive_distortions_ + 1 : 0;
         if (consecutive_distortions_ == 3) {
             installation_released_ = true;

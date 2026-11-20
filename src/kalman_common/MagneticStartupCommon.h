@@ -260,6 +260,7 @@ struct ContinuousHardIronTracker {
         hi_cfg.max_bias_fraction    = cfg.mag_hi_max_bias_fraction;
         hi_cfg.min_mag_norm_uT      = cfg.mag_init_min_mag_norm;
         estimator.setConfig(hi_cfg);
+        screen_installation = cfg.mag_screen_installation;
         gyro_calibration_enabled = cfg.mag_gyro_calibration;
         calibration.setGyroMode(cfg.gyro_sample_mode);
     }
@@ -268,6 +269,9 @@ struct ContinuousHardIronTracker {
     // are left to configure().
     void resetApplied() {
         calibration.reset();
+        installation_released = false;
+        consecutive_detections = 0;
+        next_screen_sec = 5.f;
         applied_correction.setIdentity();
         anchor_correction.setIdentity();
         startup_body_uT.setZero();
@@ -286,7 +290,17 @@ struct ContinuousHardIronTracker {
                     const Eigen::Vector3f& mag_body_uT) {
         const float dt_mag = advanceSampleClock(last_sample_t, t, nominal_dt);
         estimator.update(dt_mag, q_tilt_bw, mag_body_uT);
-        if (gyro_calibration_enabled) calibration.update(mag_body_uT);
+        if (gyro_calibration_enabled) {
+            if (screen_installation && !installation_released && t >= next_screen_sec) {
+                // A gap spanning a check breaks persistence. Evaluate the last
+                // posterior before updating it with the incoming magnetic packet.
+                if (t >= next_screen_sec + 5.f) consecutive_detections = 0;
+                next_screen_sec = 5.f * (1.f + std::floor(t / 5.f));
+                consecutive_detections = calibration.hasSignificantDistortion() ? consecutive_detections + 1 : 0;
+                installation_released = consecutive_detections >= 3;
+            }
+            calibration.update(mag_body_uT);
+        }
     }
 
     // Move the applied offset toward the fit, and re-gauge the reference.
@@ -325,6 +339,7 @@ struct ContinuousHardIronTracker {
                             float min_mag_norm,
                             Eigen::Vector3f& new_world_ref_uT)
     {
+        if (screen_installation && gyro_calibration_enabled && !installation_released) apply_fraction = 0.f;
         const auto& est = estimator.estimate();
         if (gyro_calibration_enabled) {
             if (!calibration.valid() ||
@@ -395,6 +410,10 @@ struct ContinuousHardIronTracker {
     Eigen::Matrix3f applied_correction = Eigen::Matrix3f::Identity();
     Eigen::Matrix3f anchor_correction = Eigen::Matrix3f::Identity();
     bool gyro_calibration_enabled = false;
+    bool screen_installation = false;
+    bool installation_released = false;
+    int consecutive_detections = 0;
+    float next_screen_sec = 5.f;
 };
 
 }  // namespace seastate::common

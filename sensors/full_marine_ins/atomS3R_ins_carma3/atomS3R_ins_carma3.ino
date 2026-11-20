@@ -414,12 +414,9 @@ private:
 
     fcfg.gravity_magnitude = g_local;
 
-    // No continuous hard-iron learning in Live.  Heel excitation lets the
-    // additive-offset fit absorb calibration residuals (axis gain, soft iron,
-    // mag latency) as a fake offset with a horizontal component, and applying
-    // it rotates magnetic north; the error persists after the motion stops.
-    // North stays on the startup/refined magnetic reference instead.
-    fcfg.mag_continuous_hard_iron = false;
+    // Saved calibration can be supplemented by the screened gyro-mag fit.
+    fcfg.mag_screen_installation = seastate::common::defaults::SCREEN_SAVED_MAG_INSTALLATION;
+    fcfg.mag_continuous_hard_iron = fcfg.mag_screen_installation;
 
     fcfg.enable_displacement_detrend = true;
 

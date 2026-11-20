@@ -1,0 +1,42 @@
+name: Production magnetic calibration comparisons
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/marine_mag_filter_replays.py'
+      - 'tests/common/MagneticCalibrationReplayConfig.h'
+      - 'src/kalman_common/MagneticStartupCommon.h'
+      - 'src/tuner/GyroMagCalibration*.h'
+      - '.github/workflows/marine-mag-filter-replays.yml'
+permissions:
+  contents: read
+concurrency:
+  group: magnetic-replays-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [tfg_shared, q_shared, tangent_shared, tfg_carma, carma, ou2, ou3, tfg]
+    env:
+      FAMILY: ${{ matrix.family }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: sudo apt-get update && sudo apt-get install -y libeigen3-dev
+      - uses: ./.github/actions/replay-toolchain
+      - name: Build the normal simulator and compare all three modes
+        shell: bash
+        run: |
+          binary=$(PYTHONPATH=tools python3 -c 'import os; from marine_mag_filter_replays import BINARIES; print(BINARIES[os.environ["FAMILY"]])')
+          make -j1 -C "tests/${binary%/*}" "${binary##*/}"
+          for side in following head; do
+            OCEAN_IMU_SIM_CASE="$side" python3 tools/sim_dataset.py --dest ".sim-data/cases/$side"
+          done
+          python3 tools/marine_mag_filter_replays.py "$FAMILY" --jobs 2 --out "$RUNNER_TEMP/$FAMILY.csv"
+      - uses: actions/upload-artifact@v6
+        with:
+          name: mag-comparison-${{ matrix.family }}
+          path: ${{ runner.temp }}/${{ matrix.family }}.csv

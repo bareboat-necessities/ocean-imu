@@ -107,4 +107,20 @@ OCEAN_IMU_MAG_INLINE void GyroMagCalibration::initialize_(const Vector3& mag) {
         initialized_ = true; accepted_ = 0; residual_sq_ = 0.0f; clearRotation_();
     }
 
+OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::hasSignificantDistortion() const {
+        if (!valid()) return false;
+        const Vector3 field = x_.head<3>();
+        const Matrix3 distortion = matrix_() - Matrix3::Identity();
+        const Vector3 shift = distortion * field + biasBodyUT();
+        // Jacobian of (A-I)f+b at the last posterior, including field, offset
+        // and gain cross-covariances. No incoming measurement or truth enters.
+        auto jacobian = measurement_();
+        jacobian.leftCols<3>() = distortion;
+        const Matrix3 covariance = jacobian * P_ * jacobian.transpose();
+        const Eigen::LDLT<Matrix3> solve(covariance);
+        const bool valid = solve.info() == Eigen::Success && (solve.vectorD().array() > 0.f).all();
+        const float score = valid ? shift.dot(solve.solve(shift)) : 0.f;
+        return std::isfinite(score) && score > 16.27f;
+}
+
 #undef OCEAN_IMU_MAG_INLINE

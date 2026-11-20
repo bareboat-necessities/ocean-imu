@@ -236,6 +236,7 @@ struct ProxyStartupFusionConfig {
     // startup acquisition has finished, so first heading, handoff and
     // refinement are unaffected by it.
     bool  mag_continuous_hard_iron    = true;
+    bool  mag_screen_installation = false;  // Require sustained posterior evidence before applying the gyro-mag fit.
     // Use relative gyro rotation and estimate residual affine distortion.
     // False retains the fixed-heading additive fit for paired ablation.
     bool  mag_gyro_calibration       = true;

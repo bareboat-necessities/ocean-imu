@@ -1,3 +1,4 @@
+#include "../common/MagneticCalibrationReplayConfig.h"
 #include "../common/RecordW3dLimits.h"
 #include <filesystem>
 #include <iostream>
@@ -79,6 +80,7 @@ public:
 
         cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
+        magnetic_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
 
