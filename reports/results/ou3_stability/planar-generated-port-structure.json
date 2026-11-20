@@ -35,16 +35,16 @@
   "all_time_magnetic_service_verified": false,
   "theorem_closed": false,
   "source_git_blob_sha": {
+    "src/kalman_common/MagneticStartupCommon.h": "c80ba72d34db8ce133a1a0f8dc0e58276b1aaf23",
     "src/kalman_common/MarineWaveFrontEnd.h": "a9674135d2c02f050d1e4e041c549f58f6da0b42",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "1261cd7d4a83d033c9c4a258d5311f2d981d8a46",
-    "src/kalman_common/ProxyStartupFusion.h": "5461fc4f31ed76e55860abd850636f920beb86fc",
+    "src/kalman_common/ProxyStartupFusion.h": "b7058b5122f1c8d974f39faf84ece2947a96fd44",
+    "src/kalman_common/SeaStateFusionDefaults.h": "8f9a49c8ecb13c6f854878866b7574619297cec9",
     "src/kalman_common/WaveStartup.h": "ba4179db9c41375a589706bb0d647c756946418c",
-    "src/kalman_common/MagneticStartupCommon.h": "dbad1d5a3077b4ffd39cdc4702ca0283bd2b83f1",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "1261cd7d4a83d033c9c4a258d5311f2d981d8a46",
     "src/tuner/ContinuousMagHardIronEstimator.h": "62cda3c6adddafa693720167e497ba2bda15ce74",
-    "src/tuner/GyroMagCalibration.h": "778243880faf69b0ece2f4b65f0fd368f72614cd",
-    "src/tuner/GyroMagCalibrationImpl.h": "188c3d1f20a08b105d5b7eb7af7772f7f0d6e6a3",
     "src/tuner/GyroMagCalibration.cpp": "d20405273b6e39c9e4ebb938971c9c3740ed439c",
-    "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42",
-    "src/kalman_common/SeaStateFusionDefaults.h": "0fc888c49de794e4f889871044726185b655c312"
+    "src/tuner/GyroMagCalibration.h": "3978177b68ed8920404bc2227617b8ddb2c51ce3",
+    "src/tuner/GyroMagCalibrationImpl.h": "0d7d6c1135a19367a5b11c2168ca1fd292920dd0",
+    "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
   }
 }

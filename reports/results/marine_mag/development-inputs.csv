@@ -1,0 +1,7 @@
+case,spectrum,height,scenario,file,sha256
+following,jonswap,0.270,clean,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,f6eb84f7cbafa4515cdee7cfeebf8794dbe51580e5beb4fc1343b24f14185e1d
+following,jonswap,1.500,hard,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,c31f7cfb33c51a551a2a50996f413cd00a04469f886cf25ecbc9fc36e2af90ea
+following,jonswap,4.000,combined,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,474d03df85f77b97770038a0cef9cebccb5735c2949f0b3ed3b36896a887327b
+head,jonswap,0.270,clean,wave_data_jonswap_H0.270_L14.047_A30.00_P60.00.csv,8bc8565cf95fb5e9f57801fff25baec46cce49740c5fbdf154650cb593965976
+head,jonswap,1.500,hard,wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv,d85954d749849161a4fdca42ac55378a0badbb823f3184a7bac767fab328bdb6
+head,jonswap,4.000,combined,wave_data_jonswap_H4.000_L112.766_A30.00_P30.00.csv,11150e8be8582fcbd06785ec0a17fd74b7461650e9cb03a5f885ad767d0e9362

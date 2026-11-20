@@ -1,0 +1,50 @@
+// Counterfactual only. A supplied external magnetic map is enforced at the
+// actual update, after any native acquisition, refinement and calibration.
+#define EIGEN_NON_ARDUINO
+#include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"
+#include "tests/common/SharedModesReplay.h"
+#include <string>
+
+using NativeCore = ocean_imu::carma_shared_modes::KalmanTfgCarmaSharedModes<float>;
+namespace replay = ocean_imu::sim::shared_modes;
+namespace {
+std::string intervention;
+class MapCore : public NativeCore {
+public:
+    using NativeCore::NativeCore;
+    void measurement_update_mag_only(const Eigen::Vector3f& m) {
+        if (intervention=="map" || intervention=="wrong_dip") {
+            const float inclination=MagSim_WMM::default_inclination_deg+(intervention=="wrong_dip"?5.f:0.f);
+            set_mag_world_ref(MagSim_WMM::mag_world_aero(0,inclination));
+        }
+        NativeCore::measurement_update_mag_only(m);
+    }
+};
+class StartupProbe : public replay::CsmAdapter<MapCore,0> {
+public:
+    using CsmAdapter::CsmAdapter;
+    void update(float dt,const Vector3f& gyro,const Vector3f& acc,float temp) override {
+        const bool live=facade().isLive();
+        CsmAdapter::update(dt,gyro,acc,temp);
+        if (live || !facade().isLive()) return;
+        const bool tilt=intervention=="handoff_tilt";
+        if (!tilt && intervention!="handoff_yaw") return;
+        const Eigen::Vector3f axis=tilt?Eigen::Vector3f::UnitY():Eigen::Vector3f::UnitZ();
+        auto& c=filter().mekf();
+        c.set_quaternion_boat(Eigen::AngleAxisf((tilt?2.f:5.f)*0.01745329252f,axis)*c.quaternion_boat());
+        std::cout<<"HANDOFF_INJECTED\n";
+    }
+};
+}
+int main(int argc,char** argv) {
+    if (argc!=3) return 2;
+    intervention=argv[2];
+    if (intervention!="native" && intervention!="map" && intervention!="wrong_dip" &&
+        intervention!="handoff_tilt" && intervention!="handoff_yaw") return 2;
+    auto r=process_wave_file_for_tracker<StartupProbe>(argv[1],.005f,true,true,25.f,
+        "_map","_map",w3d_random_seeds_from_env(),false,[](auto& o) {
+            o.mag_sensor=[](const Eigen::Vector3f& ideal,MagNoiseModel&,float){return ideal;};
+        });
+    if (!r || r->errs_yaw.size()!=240000) return 1;
+    print_validation_metrics(*r,.005f,900.f,"MAG_MAP");
+}

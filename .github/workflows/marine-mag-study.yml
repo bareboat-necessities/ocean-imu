@@ -1,0 +1,35 @@
+name: Marine magnetic calibration research
+on:
+  pull_request:
+    paths:
+      - 'tests/kalman_tfg_shared_modes/magnetic_study/**'
+      - 'tools/marine_mag*'
+      - 'doc/marine_mag/**'
+      - 'reports/results/marine_mag/**'
+      - '.github/workflows/marine-mag-study.yml'
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    container: debian:13
+    timeout-minutes: 45
+    steps:
+      - name: Install Debian replay userspace
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends git ca-certificates curl python3 g++ make patch libeigen3-dev
+      - uses: actions/checkout@v6
+      - name: Verify the native replay compiler
+        run: |
+          test "$(dpkg-query -W -f='${Version}' g++-14)" = "14.2.0-19"
+          g++ --version
+      - name: Build isolated instrumentation and verify rank checks
+        run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check build/magnetic-heading-study
+      - name: Cross-check paired evidence and numerical consistency
+        run: python3 tests/kalman_tfg_shared_modes/magnetic_study/check_evidence.py
+      - name: Reproduce paired full-rate navigations in both directions
+        run: |
+          for direction in following head; do
+            data="$RUNNER_TEMP/magnetic-$direction"
+            OCEAN_IMU_SIM_CASE="$direction" python3 tools/sim_dataset.py --dest "$data"
+            python3 tests/kalman_tfg_shared_modes/magnetic_study/check_replay.py "$data" "$direction"
+          done

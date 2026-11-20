@@ -43,7 +43,7 @@ public:
     // the Legacy floor and stillness attenuation make the amplitude jump on
     // small seas, and Evidence is the mode the filter's regression bars and
     // studies use (docs/kalman-carma-shared-modes.md).
-    void begin(const Config& cfg, const SharedModes& shared_modes = SharedModes{},
+    void begin(const carma::SeaStateFusionConfig_CARMA3& cfg, const SharedModes& shared_modes = SharedModes{},
                carma::CarmaExcitationMode excitation = carma::CarmaExcitationMode::Evidence,
                bool normalize_vertical_band = true) {
         Base::begin(cfg);

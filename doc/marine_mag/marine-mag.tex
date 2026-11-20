@@ -1,0 +1,123 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,bm,newtxtext,newtxmath}
+\usepackage{graphicx,booktabs}
+\usepackage[hidelinks]{hyperref}
+\interdisplaylinepenalty=2500
+\raggedbottom
+\newcommand{\uT}{\,\mu\mathrm T}
+\newcommand{\sk}[1]{[#1]_{\times}}
+\begin{document}
+\title{Can ordinary vessel motion calibrate a magnetometer well enough to improve marine yaw?}
+\author{\IEEEauthorblockN{Ocean-IMU simulation study}}
+\maketitle
+\begin{abstract}
+A 27-state right-invariant marine navigation filter estimates yaw from a magnetic reference acquired during startup. We isolate its independent 18-state gyro--magnetic calibration and compare constrained alternatives on paired 20-minute replays. At wave height 1.5 m the default realization gives yaw RMS of $0.720^\circ$ following and $0.460^\circ$ head. Removing magnetic noise and distortion leaves $0.178^\circ$ and $0.224^\circ$. Marine motion provides useful offset information under a restricted model. Joint gain, field and gyro-bias uncertainty leaves several affine directions poorly determined. Across four held-out draws, propagating calibration covariance changed mean yaw RMS by $+0.0007^\circ$. Withholding disturbed packets reduced it from $1.014^\circ$ to $0.855^\circ$; uninterrupted records showed essentially unchanged heading. In a separate confirmation on twelve new draws, quadrupling gyro-bias uncertainty in the learner changed sustained yaw RMS from $0.758^\circ$ to $0.751^\circ$; the paired interval included zero. Screening corrections reduced yaw RMS on clean noisy installations on two independent panels. Late application on a distorted installation increased one head-sea RMS by $1.182^\circ$.
+Transporting part of each calibration-induced bearing change into the navigation attitude reduced released-record mean yaw RMS from $0.731^\circ$ to $0.711^\circ$ against the previous always-on filter.
+\end{abstract}
+\section{Magnetic measurement path}
+The reference implementation is \texttt{bareboat-necessities/ocean-imu} at \texttt{f1424f58}. The shared TFG estimates attitude and six world motion columns with two body bias columns. One simulation adapter exercises the actual facade, acquisition, learner, invariant update and CARMA motion model.
+
+On AtomS3R, \texttt{readMagBody\_} maps the M5 source or Bosch-trim-compensated BMM150 AUX burst to body axes. The runtime validates the saved calibration source and applies $A_0(m_{\rm raw}-b_0)$, including installation alignment when present in the fit. The sketch processes calibrated IMU data first and polls a fresh magnetic vector within 5--200 $\mu$T at 25 Hz. The IMU uses its sample clock. Optional magnetic timing metadata is diagnostic. The shared TFG sketch turns continuous correction off. The simulation injects residual distortion before the common $[y,x,-z]$ NED basis change. Its 200 Hz core and learner interpret gyro as instantaneous. The private frontend uses the separate interval-rate convention.
+
+The shared CARMA facade uses \texttt{ProxyStartupFusion}. The private observer and wave-startup handoff establish tilt and a magnetic yaw gauge. Once live, a second independent acquisition replaces the canonical $(H,0,Z)$ reference and resets the gauge once. The CARMA wrapper schedules refinement from 90 s with a 30 s window. The startup offset fit defaults off. The legacy tilt-only offset fit solves $(I-\bar R^T\bar R)b=\bar m-\bar R^T\overline{Rm}$ with ridge and excitation checks. Its independent tilt statistics also gate the gyro-aided path.
+
+The learner receives pre-correction magnetic samples and body gyro. Following refinement, accepted offset and inverse-matrix targets slew over 45 s. The tracker subtracts the total offset once, applies $C=A^{-1}$, and changes $H,Z$ by the difference between applied and anchored calibrations evaluated on the same statistics. It preserves canonical north. During refinement the stream is bias-corrected and the affine application is still identity. The invariant update uses $r=Rm_c-B$, $H_\phi=-\sk B$ and $R R_m R^T$. Cross-covariance transfers the update into motion and biases. The scorer accounts for declination. Navigation yaw and vessel track are unavailable to the learner.
+
+\section{Identifiability}
+Let $m_k=A f_k+b+\eta_k$, $f_k=R_k^T B$, and
+\[
+ f_{k+1}=\exp[-\sk{\omega_k-b_g}\Delta t]f_k .
+\]
+The EKF estimates $(f,b,b_g,\mathrm{vec}(A-I))$. Its first packet correlates field, offset and gain priors. Offset and gyro bias have random walks. An NIS threshold of 25, interval validation and bounds on the fitted parameters guard updates. An expanded Joseph correction preserves the covariance structure in exact arithmetic. Five hundred accepted packets qualify the fit for additional application tests.
+
+For every $c>0$, $(A/c,cf_0)$ gives identical observations. Absolute geographic yaw also needs an external reference. With single-axis rotation the axial offset can exchange with field, and transforms commuting with all relative rotations introduce further ambiguities. Noncommuting rotations can remove exact ambiguities while leaving poor finite-record conditioning. A gain prior supplies a scale convention. Kok and Sch\"on give related inertial-aided calibration and alignment methods~\cite{kok}.
+
+For initial-to-current field transport $U_k$, the local sensitivity at identity calibration is
+\[
+J_k=\left[U_k,\;-\sk{f_k}U_k\!\int_0^{t_k}\!U_s^T ds,\;I,\;(f_k^T\!\otimes I)D\right].
+\]
+The gain basis $D$ is orthonormal in Frobenius norm. Quotient the scalar gauge with a trace-free basis and restore the isotropic column in a separate null test. Coordinates are normalized to $1\uT$, 1 mrad/s and 1\% gain. Whiten by $0.8\uT$. In each 20 s block let $N$ contain field and gyro-bias columns and $K$ calibration columns. Stack $(I-NN^+)K$ across blocks. Its squared singular values are the profiled information eigenvalues. Free nuisance parameters in each block discard cross-block information. Using one packet in ten reduces dependence on the white-noise assumption; within-block gyro correlations can still make this optimistic. A singular value of 2 corresponds to a noise-only local standard error of half a normalized unit.
+
+Both directions use the v1.4.0 28-foot RAO at 5 kn. The design sweep changes the yaw factor while retaining the release roll and pitch. Flat controls remove both. We compare steering of 0, 1, 3, 5 and 10 degrees, an occasional 30-degree excursion and windows of 30 to 1200 s. The release uses a 20 s steering period; the default magnetic field is $52\uT$ at $66.5^\circ$ dip. The evidence includes weak eigenvector coefficients and all singular values.
+
+\begin{figure*}[t]\centering\includegraphics[width=.84\textwidth]{observability.pdf}
+\caption{Weakest singular value after profiling field and gyro bias, at 1.5 m wave height.}\end{figure*}
+At $\pm3^\circ$ the 1.5 m following-sea offset-only minimum is 0.42, 0.87, 1.41 and 2.91 at 30, 120, 300 and 1200 s; the head-sea values are 0.42, 0.94, 1.53 and 3.09. The weakest scale-fixed affine direction at 1200 s gives 0.094 and 0.103. Four of eleven reach 2 in each sea. The free-scale null is below $10^{-12}$. At 0.27 m only two offset-only directions in following seas and zero in head seas reach 2 in 1200 s.
+\section{Controlled causes of yaw error}
+\begin{table}[t]\centering\small
+\caption{Yaw RMS (degrees), fixed draw, final 900 s. Off denotes the sketch calibration switch. On denotes V0.}
+\begin{tabular}{lrrrr}\toprule
+ & \multicolumn{2}{c}{Following} & \multicolumn{2}{c}{Head}\\
+Input or intervention & Off & On & Off & On\\\midrule
+\input{cause-rows.tex}\end{tabular}\end{table}
+Each arm shares the 200 Hz physical record, IMU noise, exposure schedule and start. The magnetic generator advances the same random stream when a distortion is removed. Ideal is noiseless; clean retains white magnetic noise. The off control changes only the continuous learner. The known-field arm imposes a supplied magnetic map after lock. Diagonal and symmetric cross-axis arms take components of the generated $A$; the alignment arm uses its polar rotation. The combined generator includes white noise, turn-on offset and offset random walk. The component RMS contributions cannot be added.
+
+Default signed mean / centered RMS in following seas are $+0.529/0.489^\circ$, versus $-0.052/0.457^\circ$ in head seas. With ideal magnetic data V0 still gives signed means near $+0.075^\circ$ and $-0.136^\circ$. Replacing the acquired field by the exact map changes total RMS by under $0.001^\circ$ on each record. A $+5^\circ$ map dip perturbation and single $2^\circ$ tilt or $5^\circ$ yaw kicks following refinement probe separate sensitivities. A second executable pins the map at the actual magnetic update and injects attitude kicks at the initial live handoff. With an exact map its following/head RMS is $0.1771/0.2242^\circ$, versus $0.1780/0.2244^\circ$ for native acquisition. A persistent $+5^\circ$ dip error increases yaw RMS to $0.298/0.294^\circ$ and roll RMS to $0.944/0.674^\circ$. A $5^\circ$ handoff yaw kick gives $0.181/0.220^\circ$ late yaw RMS; a $2^\circ$ tilt kick gives $0.178/0.224^\circ$. The 80 ms latency arm delays delivered packets while retaining gyro timestamps. It substantially increases head-sea error. Switching gyro convention on this draw has a smaller effect. Device latency remains unmeasured.
+
+Zeroing motion/nonmotion covariance blocks before every live magnetic update tests sensitivity to two-frame coupling. Following-sea displacement overflows in one intervention and exceeds 800 m RMS in the other. Its yaw RMS cannot identify a separable fraction caused by coupling. This failed diagnostic is retained in the score table.
+\section{Candidate design and validation}
+V0 and explicitly enabled V1 both run the gyro-aided learner. V2, V3 and V4 restrict the same EKF by zeroing prior variance in excluded affine directions; V4 retains symmetric correlated axis pairs. V5 retains the full original prior and should reproduce V0/V1. The small matrix-norm and determinant guards preclude singular corrections. V6 starts hard-only. An independent gyro and field design computes profiled information for three offsets and two trace-free diagonal gains. The weakest conditional offset information sets the applied fraction $\min(1,\lambda_b/4)$. If $\lambda_s\ge4$, both gain directions are released through a PSD prior addition that compensates the local field. The native tilt gate, startup anchor and slew remain active. A $6\uT$ predicted-vector residual quarantine advances gyro transport and covariance while withholding that packet from fitting, reference statistics and navigation. A transient leaves the earlier calibration available. A permanent field discontinuity at fixed attitude can be indistinguishable from a changed installation. Autonomous recovery from permanent interference remains unvalidated.
+
+Development uses two joint sensor/installation draws (13, 29) on JONSWAP and both directions. The existing affine model has the lowest mean yaw RMS (0.929 degrees over 12 cells) among the baseline and constrained alternatives. V7 carries this prior. For $z=C(m-b)$ the calibration error Jacobian is $J_b=-C$, $J_{A_{:j}}=-z_j C$. Before the incoming packet the sensor-only prediction supplies a nominal vector. V7 uses
+\[
+ R'_m=C R_m C^T+J P_{\rm cal}J^T+dd^T
+\]
+where $d$ is the difference between posterior and slewed corrections on that forecast. This retains bias/gain covariance and the navigation tuning already present in $R_m$. The reference and learner share earlier observations with navigation. Temporal correlations and uncertain anchor/attitude cross-covariances are absent from this per-packet approximation. V8 adds packet quarantine to V7. A supplementary development arm retains V6 with covariance adjustment.
+
+The holdout uses four independent joint sensor/installation draws (101, 307, 1009, 2027). Each has both directions and four PM--Stokes conditions: 0.27 m clean at $45^\circ$ dip, 1.5 m combined at $66.5^\circ$, 8.5 m combined at $76^\circ$, and 4 m with a ten-second interference burst at $55^\circ$. Dip and sea height are coupled in the panel. Paired stress cases include 1600 rpm engine vibration, an unmodeled 1 m installation offset, isolated outliers, delay, a rebuilt low--high--low round trip, weak steering and a larger turn. The full-rate estimator supplies the scores. Plots use uniform summary epochs and the repository figure decimator.
+\begin{table*}[t]\centering\small
+\caption{Held-out yaw RMS and paired change from V0. Intervals use four independent draw means and three Student degrees of freedom.}
+\begin{tabular}{lrrrrrr}\toprule
+Method & Mean (deg) & Change (deg) & Change (\%) & 95\% interval (deg) & Improved/worse & Worst increase (deg)\\\midrule
+\input{paired-rows.tex}\end{tabular}\end{table*}
+\begin{table*}[t]\centering\small
+\caption{Means of per-record held-out scores. Signed yaw can cancel across tracks.}
+\begin{tabular}{rrrrrrrr}\toprule
+Arm & Signed yaw & Centered yaw & Roll & Pitch & 3-D disp. (m) & Gyro bias (mrad/s) & Acc. bias (m/s$^2$)\\\midrule
+\input{nav-rows.tex}\end{tabular}\end{table*}
+\begin{figure*}[t]\centering\includegraphics[width=.80\textwidth]{convergence.pdf}
+\caption{Following-sea 4 m development record, draw 13. Signed yaw error and applied hard-iron error. Each yaw point summarizes five seconds.}\end{figure*}
+\begin{figure*}[t]\centering\includegraphics[width=.75\textwidth]{paired.pdf}
+\caption{Held-out uncertainty across independent sensor draws. Conditions sharing a draw do not provide independent replicates.}\end{figure*}
+\input{findings.tex}
+
+\section{Integration in the navigation filters}
+The calibration runs outside the navigation state. The filter feeds raw magnetic measurements to the learner and checks the preceding posterior every five seconds. Three successive distortion detections permit the ordinary calibration slew. The runtime option is shared by the proxy-startup filters and the standalone TFG. Seven AtomS3R sketches expose the option at build time.
+
+\begin{table*}[t]\centering\small
+\caption{Mean yaw RMS in degrees across 16 released records per filter, each scored over its last 900 seconds with the earlier 45-second calibration response. The last column gives the number of complete quality-gate passes out of 16 for each mode in column order.}
+\begin{tabular}{lrrrr}\toprule
+Filter & Off & Always on & Screened & Gate passes (off/on/screened)\\\midrule
+\input{production-rows.tex}\end{tabular}\end{table*}
+
+On TFG shared-mode CARMA the screened policy lowered mean yaw RMS by 71\% relative to the saved-calibration sketch policy. Screening beat off on all 16 records and tied always on at the reported precision on all 12 records above $0.27$~m. Mean following-sea yaw RMS was $0.7605^\circ$ screened and $0.7602^\circ$ always on. In head seas it was $0.812^\circ$ screened and $0.702^\circ$ always on. On the two $0.27$~m head-sea records screening increased yaw RMS by $0.429^\circ$ and $0.448^\circ$. The four screened runs that exceeded the gyro-bias limit all had $0.27$~m waves. On the two head-sea records, gyro-bias RMS rose 25--27\% relative to always on. These records use the replay installation model. The independent clean-input panels above cover the complementary case where residual installation distortion is absent. The sketch feature remains opt-in pending device measurements.
+
+\section{Calibration and heading response in the TFG shared-mode filter}
+The calibration slew changes the body-frame bearing delivered to navigation even if the vessel and the sampled field are stationary. Assigning the entire change to the magnetic innovation can also move the gyro-bias estimate. The TFG shared-mode configuration now slews the correction over 60~s. For each applied step, let $u=R K_{\rm old}(m-b_{\rm old})$ and $v=R K_{\rm new}(m-b_{\rm new})$, computed from the same raw packet $m$ and predicted attitude $R$. Before the ordinary magnetic update, we apply a world-vertical rotation of
+\[
+  0.2\,\operatorname{atan2}(v_xu_y-v_yu_x,\;v_xu_x+v_yu_y).
+\]
+The transport requires a finite input, a positive horizontal dot product above the squared minimum field threshold, and a corrected field norm between half and 1.5 times the reference norm. The estimator uses its existing attitude-write operation. The comparison uses the previous always-on learner with a 45~s slew and zero bearing transport. Both receive identical sensor packets.
+
+An alternative changed the slew from 45 to 180~s at elapsed time 300~s. On the 16 released records it reduced mean yaw RMS from $0.731^\circ$ to $0.626^\circ$, passing every original gate. With four new joint sensor draws its mean increased from $1.040^\circ$ to $1.109^\circ$. This sensitivity motivated the independent validation of the smaller, continuous correction.
+
+\begin{table*}[t]\centering\small
+\caption{Mean per-record yaw RMS in degrees. Independent panels contain both sea directions at three heights per draw. Paired intervals use the sensor draw as the independent unit.}
+\begin{tabular}{lrrrrr}\toprule
+Panel & Records & Previous & Transported & Paired change & 95\% interval on change\\\midrule
+Released records & 16 & 0.731 & 0.711 & $-0.020$ & --- \\
+8 fresh sensor draws & 48 & 0.959 & 0.931 & $-0.028$ & $[-0.062, +0.007]$ \\
+32 fresh sensor draws & 192 & 0.789 & 0.767 & $-0.022$ & $[-0.036, -0.009]$ \\
+\end{tabular}\end{table*}
+
+Seven of eight validation draws and 22 of 32 replication draws improved. The 32-draw panel reduced mean yaw RMS in following seas from 0.831 to 0.809 degrees and in head seas from 0.747 to 0.724 degrees. The new configuration passed all 16 original production gates and all 16 legacy interval-rate gates. On production defaults, 15 of 16 records improved. The 8.5~m head-sea PM--Stokes record increased by $0.0012^\circ$. Mean gyro-bias RMS fell from 0.1150 to 0.1090~mrad/s. Mean 3-D displacement RMS was 0.14754~m for both settings. The pinned case and independent draws use the simulator's residual magnetic installation model.
+
+\section{Numerics and embedded cost}
+On Espressif GCC 14.2.0 (\texttt{esp-14.2.0\_20241119}), compiled for ESP32-S3 with \texttt{-Os}, the learner object is 1508 bytes. Its largest emitted frame is 3696 bytes in the magnetic update. The selective prototype adds a 216-byte object and at least 1168 heap bytes for two dense double matrices, plus decomposition temporaries. Its object file contains 167029 text/read-only bytes before linker garbage collection. Its largest emitted frame is 736 bytes. These measurements exclude whole-program linkage and runtime stack high-water. A 30000-packet x86 microbenchmark measured 3.23 microseconds for eight gyro predictions plus one native update and 0.077 microseconds per gate packet averaged across block solves. The separate V8 covariance/quarantine arithmetic cross-compiles to 6921 unlinked text bytes with a largest emitted frame of 1872 bytes. On the host its full-output checksum benchmark measured 1.00 microsecond of CPU time per packet. Physical board timing, peak heap and watchdog margin remain unmeasured. The dynamic double-precision gate needs a bounded-memory implementation and device measurements before an embedded trial.
+\section{Reproduction}
+The adjacent README gives commands. The per-cell CSVs include bias, centered and total yaw, displacement components, sensor-bias RMS, applied and posterior calibration errors, conditional information and covariance checks. Raw waves and full-rate logs are regenerable.
+\begin{thebibliography}{1}
+\bibitem{kok} M. Kok and T. B. Sch\"on, Magnetometer calibration using inertial sensors. \emph{IEEE Sensors Journal}, vol. 16, pp. 5679--5689, 2016. \url{https://arxiv.org/abs/1601.05257}.
+\end{thebibliography}
+\end{document}

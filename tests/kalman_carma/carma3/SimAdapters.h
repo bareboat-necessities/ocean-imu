@@ -11,6 +11,7 @@
     carma3-sim.cpp.
 */
 
+#include "../../common/MagneticCalibrationReplayConfig.h"
 #include <cstdlib>
 #include <stdexcept>
 #include <string>
@@ -46,6 +47,7 @@ public:
         cfg_.mag_delay_sec = MAG_DELAY_SEC;
         cfg_.turn_separator.forward_body = Vector3f::UnitY();
         gyro_replay::configure(cfg_);
+        magnetic_replay::configure(cfg_);
         fusion_.begin(cfg_);
         auto& filter = fusion_.raw();
         wave_direction::VesselRaoEqualizer::Config direction_rao;

@@ -35,6 +35,7 @@ public:
     void setGyroMode(ocean_imu::kalman::filter_detail::GyroSampleMode mode) {
         interval_.set_mode(mode); interval_.reset();
     }
+    bool hasSignificantDistortion() const;
     void predict(float dt, const Vector3& gyro);
     bool update(const Vector3& mag);
     Vector3 biasBodyUT() const { return x_.segment<3>(3); }

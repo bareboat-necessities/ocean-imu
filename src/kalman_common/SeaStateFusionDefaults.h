@@ -213,6 +213,12 @@ inline constexpr float MAG_HI_MIN_INFORMATION      = 0.1f;
 inline constexpr float MAG_HI_MIN_EFFECTIVE_WEIGHT = 500.0f;
 inline constexpr float MAG_HI_MAX_RESIDUAL_RMS_UT  = 3.0f;
 inline constexpr float MAG_HI_MAX_BIAS_FRACTION    = 0.35f;
+// Opt in on a saved-calibration marine sketch with -DOCEAN_IMU_SCREEN_MAG_INSTALLATION=1.
+#if defined(OCEAN_IMU_SCREEN_MAG_INSTALLATION) && OCEAN_IMU_SCREEN_MAG_INSTALLATION
+inline constexpr bool SCREEN_SAVED_MAG_INSTALLATION = true;
+#else
+inline constexpr bool SCREEN_SAVED_MAG_INSTALLATION = false;
+#endif
 inline constexpr float MAG_HI_APPLY_FRACTION       = 1.0f;
 inline constexpr float MAG_HI_SLEW_TAU_SEC         = 45.0f;
 

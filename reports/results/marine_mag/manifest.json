@@ -1,0 +1,209 @@
+{
+  "baseline": "f1424f58ef019994a28aef03efc3da0dc5d5ca98",
+  "dataset": "bareboat-necessities/oceanography-waves-lib",
+  "release": "v1.4.0",
+  "archives": {
+    "following": {
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "mean_heading_deg": 0.0,
+      "description": "northbound, following seas"
+    },
+    "head": {
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "mean_heading_deg": 180.0,
+      "description": "southbound, head / bow-quartering seas"
+    }
+  },
+  "reference": "canonical magnetic north, geographic scorer includes simulator declination",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "cxxflags": "-O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=x86-64-v3",
+  "eigen": "3.4.0",
+  "stages": {
+    "diagnosis": {
+      "rows": 60,
+      "seeds": [
+        0
+      ],
+      "inputs": "diagnosis-inputs.csv"
+    },
+    "development": {
+      "rows": 132,
+      "seeds": [
+        13,
+        29
+      ],
+      "inputs": "development-inputs.csv"
+    },
+    "validation": {
+      "rows": 320,
+      "seeds": [
+        101,
+        307,
+        1009,
+        2027
+      ],
+      "inputs": "validation-inputs.csv"
+    },
+    "stress": {
+      "rows": 140,
+      "seeds": [
+        3037
+      ],
+      "inputs": "stress-inputs.csv"
+    }
+  },
+  "seed_zero": "fixed native W3D startup and sensor stream defaults",
+  "score_window_s": [
+    300,
+    1200
+  ],
+  "sample_rate_hz": 200,
+  "nominal_magnetometer_rate_hz": 25,
+  "confidence_unit": "one independent joint sensor/initialization draw; eight paired conditions per held-out draw",
+  "observability_rows": 960,
+  "host_libc": "Debian glibc 2.41",
+  "post_hoc_quarantine": "32 matched validation conditions with V8 packet rejection and native measurement covariance; study-only variant 10 in quarantine-paired.csv",
+  "sustained_yaw": {
+    "development_draws": [
+      13,
+      29
+    ],
+    "validation_draws": [
+      421,
+      829,
+      1609,
+      3517
+    ],
+    "development_rows": 48,
+    "validation_rows": 64,
+    "interference": false,
+    "baseline": "native measurement covariance at reference refinement",
+    "sigma_factors": [
+      0.5,
+      1,
+      2,
+      4
+    ],
+    "qualified": false
+  },
+  "learner_gyro_bias": {
+    "development_draws": [
+      13,
+      29
+    ],
+    "validation_draws": [
+      547,
+      1151,
+      2371,
+      4099
+    ],
+    "development_rows": 48,
+    "validation_rows": 64,
+    "learner_std_and_rw_multipliers": [
+      0,
+      0.25,
+      1,
+      4
+    ],
+    "selected_multiplier": 4,
+    "qualified_on_development": true,
+    "selection_criteria": "same sustained-yaw predeclared screen",
+    "interference": false,
+    "navigation_magnetic_weight": "native",
+    "replication_draws": [
+      5003,
+      5011,
+      5021,
+      5023,
+      5039,
+      5051,
+      5059,
+      5077,
+      5081,
+      5087,
+      5099,
+      5101
+    ],
+    "replication_rows": 192,
+    "stress_seed": 3037,
+    "stress_rows": 28,
+    "stress_inputs": "stress-inputs.csv",
+    "qualified_on_replication": false
+  },
+  "installation_screen": {
+    "draws": [
+      6011,
+      6029,
+      6043,
+      6067,
+      6089,
+      6101,
+      6121,
+      6133
+    ],
+    "rows": 576,
+    "spectrum": "pmstokes",
+    "height_m_and_dip_deg": [
+      [
+        0.27,
+        45
+      ],
+      [
+        1.5,
+        66.5
+      ],
+      [
+        4,
+        55
+      ],
+      [
+        8.5,
+        76
+      ]
+    ],
+    "inputs": "same released records and hashes as validation-inputs.csv",
+    "scenarios": [
+      "ideal",
+      "clean",
+      "combined"
+    ],
+    "variants": [
+      -1,
+      0,
+      11
+    ],
+    "criterion": "Three consecutive five-second checks above 16.27 on posterior distortion distance before applying the native correction.",
+    "outputs": [
+      "installation-screen.csv",
+      "installation-screen-paired.csv"
+    ],
+    "weak_confirmation": {
+      "draws": [
+        7001,
+        7013,
+        7027,
+        7043,
+        7057,
+        7079,
+        7103,
+        7121
+      ],
+      "height_m": 0.27,
+      "dip_deg": [
+        45,
+        76
+      ],
+      "rows": 288,
+      "outputs": [
+        "installation-screen-weak.csv",
+        "installation-screen-weak-paired.csv"
+      ]
+    },
+    "stress_seed": 3037,
+    "stress_rows": 28,
+    "stress_inputs": "stress-inputs.csv",
+    "stress_output": "installation-screen-stress.csv"
+  }
+}

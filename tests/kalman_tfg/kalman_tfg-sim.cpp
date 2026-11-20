@@ -28,6 +28,7 @@
     because the current value is acceptable. See the table below.
 */
 
+#include "../common/MagneticCalibrationReplayConfig.h"
 #include "../common/RecordW3dLimits.h"
 #include <cstdlib>
 #include <filesystem>
@@ -171,6 +172,7 @@ public:
         load_fixed_tuning_();
 
         gyro_replay::configure(cfg);
+        magnetic_replay::configure(cfg);
         fusion_.begin(cfg);
         if (bool enabled = true; env_bool("TFG_WAVE_MATCHED_INTEGRAL", enabled))
             fusion_.setWaveMatchedVerticalIntegral(enabled);

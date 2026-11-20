@@ -184,6 +184,7 @@ public:
         bool  mag_estimate_hard_iron       = false;
 
         bool  mag_continuous_hard_iron        = true;
+        bool  mag_screen_installation = false;  // Require sustained posterior evidence before applying the gyro-mag fit.
         bool  mag_gyro_calibration            = true;
         float mag_hi_memory_sec               = defaults::MAG_HI_MEMORY_SEC;
         float mag_hi_model_ridge              = defaults::MAG_HI_MODEL_RIDGE;

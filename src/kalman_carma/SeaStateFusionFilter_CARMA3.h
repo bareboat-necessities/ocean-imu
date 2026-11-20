@@ -691,6 +691,15 @@ struct SeaStateFusionConfig_CARMA3 : seastate::common::ProxyStartupFusionConfig 
     float initial_acc_bias_std = NAN; // calibrated residual uncertainty, m/s^2; NaN keeps native prior
 };
 
+struct TransportedMagCarmaConfig : SeaStateFusionConfig_CARMA3 {
+    TransportedMagCarmaConfig() {
+        mag_hi_slew_tau_sec = 60.f;
+        mag_hi_heading_transport_fraction = 0.2f;
+    }
+};
+
+template<class Core> struct CarmaFusionConfigFor { using type = SeaStateFusionConfig_CARMA3; };
+
 template<TrackerType trackerT, int NHC, bool SH, int NZC, bool SZ,
          class MekfT = kalman::Kalman3D_Wave_CARMA3<float, NHC, SH, NZC, SZ>>
 class SeaStateFusion_CARMA3
@@ -700,11 +709,11 @@ class SeaStateFusion_CARMA3
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    using Config = SeaStateFusionConfig_CARMA3;
+    using Config = typename CarmaFusionConfigFor<MekfT>::type;
     using Impl = SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ, MekfT>;
 
-    void begin(const Config& cfg) {
-        this->beginStartup_(cfg, [](Impl& impl, const Config& c) {
+    void begin(const SeaStateFusionConfig_CARMA3& cfg) {
+        this->beginStartup_(cfg, [](Impl& impl, const SeaStateFusionConfig_CARMA3& c) {
             impl.initialize_ext(c.sigma_a, c.sigma_g, c.sigma_m, c.Pq0, c.Pb0, c.b0, c.R_S_noise,
                                 c.gravity_magnitude);
             if (std::isfinite(c.initial_acc_bias_std) && c.initial_acc_bias_std > 0.0f)
