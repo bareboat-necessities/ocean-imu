@@ -167,9 +167,9 @@
       }
     }
   },
-  "git_branch": "research/marine-online-mag-calibration",
-  "git_commit": "a004bd8e5112f59107e89c3f05cff42044ab3826",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "bd049fa8d2cc5c0c3da40b726f24107c09bfcc6a",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |   3 +-\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n .../ou_validation/ou_validation_transition.csv     | 564 ++++++++++-----------\n 3 files changed, 284 insertions(+), 285 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -575,8 +575,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-20T06:35:59+00:00",
-    "git_commit": "a004bd8e5112f59107e89c3f05cff42044ab3826",
+    "generated_at": "2026-11-20T17:19:14+00:00",
+    "git_commit": "bd049fa8d2cc5c0c3da40b726f24107c09bfcc6a",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -875,8 +875,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44673536192",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "44769433716",
+      "workflow": "build"
     }
   },
   "result_files": {
@@ -921,8 +921,8 @@
       "sha256": "c7ac86cb2d2d6d7ae0278a19057eb72caa8a8586083ca9dadfb96290c06b0646"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1209245,
-      "sha256": "752bcbd406d932f0591035721ff0289caaea4d7938da5973a5d381b265cde8c9"
+      "bytes": 1209223,
+      "sha256": "60f36035f2b67e67cc30fa2d590e4e3e1d2e5a7df941b45a4ece9941116d3c05"
     },
     "ou_validation_transition.svg": {
       "bytes": 145431,
