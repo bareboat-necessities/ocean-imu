@@ -16,8 +16,8 @@
   qualification limits are in reports/results/tfg_shared_modes/README.md.
 
   SeaStateFusion_TfgCarmaSharedModes is the CARMA3 wrapper with the inner
-  filter replaced, so this sketch is the TFG-CARMA3 sketch with the same I/O,
-  calibration and wrapper settings; only the estimator differs.  Its
+  filter replaced. This sketch uses the same I/O and saved calibration as
+  TFG-CARMA3 and enables screened online magnetic correction by default. Its
   quaternion counterpart is atomS3R_ins_carma_shared_modes.
 
     - filter learns tilt during startup
@@ -440,8 +440,12 @@ private:
 
     fcfg.gravity_magnitude = g_local;
 
-    // Saved calibration can be supplemented by the screened gyro-mag fit.
+    // Screen residual distortion after saved calibration unless the build opts out.
+#ifdef OCEAN_IMU_SCREEN_MAG_INSTALLATION
     fcfg.mag_screen_installation = seastate::common::defaults::SCREEN_SAVED_MAG_INSTALLATION;
+#else
+    fcfg.mag_screen_installation = true;
+#endif
     fcfg.mag_continuous_hard_iron = fcfg.mag_screen_installation;
 
     fcfg.enable_displacement_detrend = true;
