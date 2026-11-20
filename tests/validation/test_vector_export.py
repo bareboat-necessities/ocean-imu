@@ -89,12 +89,13 @@ class VectorExportTests(unittest.TestCase):
         import re
 
         install()
-        fig, ax = plt.subplots()
         t = np.arange(12000) / 10
-        for i in range(4):
-            line, = ax.plot(t, np.sin(t * (2.0 + i / 10)))
-            line.set_gid(f"wave-{i}")
-        with matplotlib.rc_context({"path.simplify": False}):
+        # Set text rendering before creating artists, which capture rcParams.
+        with matplotlib.rc_context({"path.simplify": False, "text.usetex": False}):
+            fig, ax = plt.subplots()
+            for i in range(4):
+                line, = ax.plot(t, np.sin(t * (2.0 + i / 10)))
+                line.set_gid(f"wave-{i}")
             stream = BytesIO()
             save_figure(fig, stream, format="svg", transition=True)
         svg = ElementTree.fromstring(stream.getvalue())
