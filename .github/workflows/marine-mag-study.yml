@@ -23,7 +23,7 @@ jobs:
           test "$(dpkg-query -W -f='${Version}' g++-14)" = "14.2.0-19"
           g++ --version
       - name: Build isolated instrumentation and verify rank checks
-        run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check
+        run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check build/magnetic-heading-study
       - name: Cross-check paired evidence and numerical consistency
         run: python3 tests/kalman_tfg_shared_modes/magnetic_study/check_evidence.py
       - name: Reproduce paired full-rate navigations in both directions

@@ -69,6 +69,9 @@ struct SensorFixture {
 namespace ocean_imu::research {
 class MagneticCalibrationReplay final : public replay::CsmAdapter<Core,0> {
     SelectiveMag information_;
+#ifdef OCEAN_MAG_YAW_WEIGHT_STUDY
+    std::optional<M3> native_magnetic_covariance_;
+#endif
     bool released_ = false, kicked_ = false;
     unsigned missing_ = 0, rejects_ = 0;
     float first_applied_ = -1;
@@ -110,6 +113,21 @@ public:
         auto& f = facade();
         auto& cal = f.hard_iron_.calibration;
         auto& core = this->filter().mekf();
+#ifdef OCEAN_MAG_YAW_WEIGHT_STUDY
+        // Change only the live magnetic correction after reference refinement.
+        // The external calibration and startup see their ordinary configuration.
+        static const float factor = [] {
+            const char* value = std::getenv("MARINE_MAG_SIGMA_FACTOR");
+            const float scale = value ? std::stof(value) : 1.f;
+            if (!(scale > 0.f && std::isfinite(scale))) throw std::invalid_argument("invalid magnetic sigma factor");
+            return scale;
+        }();
+        if (settings.variant != 0) throw std::invalid_argument("weight study requires V0");
+        if (factor != 1.f && f.hasRefinedMagReference()) {
+            if (!native_magnetic_covariance_) native_magnetic_covariance_ = core.Rmag_;
+            core.Rmag_ = (*native_magnetic_covariance_) * (factor * factor);
+        }
+#endif
         ++ticks_;
         bool reject = false;
         const bool selective = settings.variant==6 || settings.variant==9;

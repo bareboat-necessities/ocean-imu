@@ -64,5 +64,28 @@
   "confidence_unit": "one independent joint sensor/initialization draw; eight paired conditions per held-out draw",
   "observability_rows": 960,
   "host_libc": "Debian glibc 2.41",
-  "post_hoc_quarantine": "32 matched validation conditions with V8 packet rejection and native measurement covariance; study-only variant 10 in quarantine-paired.csv"
+  "post_hoc_quarantine": "32 matched validation conditions with V8 packet rejection and native measurement covariance; study-only variant 10 in quarantine-paired.csv",
+  "sustained_yaw": {
+    "development_draws": [
+      13,
+      29
+    ],
+    "validation_draws": [
+      421,
+      829,
+      1609,
+      3517
+    ],
+    "development_rows": 48,
+    "validation_rows": 64,
+    "interference": false,
+    "baseline": "native measurement covariance at reference refinement",
+    "sigma_factors": [
+      0.5,
+      1,
+      2,
+      4
+    ],
+    "qualified": false
+  }
 }

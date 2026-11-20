@@ -16,6 +16,8 @@ for stage in diagnosis development validation stress; do
 done
 make -C tests/kalman_tfg_shared_modes/magnetic_study build/magnetic-quarantine-study
 python3 tools/marine_mag_quarantine.py
+make -C tests/kalman_tfg_shared_modes/magnetic_study build/magnetic-heading-study
+python3 tools/marine_mag_yaw.py
 python3 tools/marine_mag_reference.py
 python3 tools/marine_mag_transients.py
 python3 tools/marine_mag_report.py
@@ -46,3 +48,5 @@ make -j1 -C "$study" OUT="$sanout" CXX=clang++ \
   CXXFLAGS="-std=c++20 -O1 -g0 -DEIGEN_UNROLLING_LIMIT=0 -fsanitize=address,undefined -fno-omit-frame-pointer" all check
 UBSAN_OPTIONS=halt_on_error=1 "$sanout/magnetic-study" .sim-data/cases/following/wave_data_jonswap_H1.500_L50.710_A-30.00_P120.00.csv 8 burst 66.5
 ~~~
+
+The sustained-heading extension compares post-refinement magnetic standard deviation factors of 0.5, 1, 2 and 4. The development screen requires lower average yaw RMS and absolute signed yaw, mean displacement growth at most 2% with a 10% worst-case cap, and mean roll/pitch RMS growth at most 0.01 degrees with a 0.1-degree worst-case cap. If every alternative fails, the lowest-yaw development candidate is tested for falsification. The fresh 32-cell panel uses four new seeds and uninterrupted records. yaw-weight-paired.csv reports paired draw-level intervals, counts and worst changes.
