@@ -42,3 +42,24 @@ jobs:
     uses: ./.github/workflows/ou-validation.yml
     with:
       validation_mode: full
+
+  check-published-evidence:
+    needs: evidence
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      # The publisher pushes with GITHUB_TOKEN. That push does not trigger
+      # the PR gate, whose earlier run checked the pre-replay source commit.
+      - name: Run the evidence contract on the published branch tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          message=$(gh api --method GET "repos/$GITHUB_REPOSITORY/commits" \
+            -f sha="$GITHUB_REF_NAME" -F per_page=1 --jq '.[0].commit.message')
+          if [[ "$message" == *"Produced by ou-validation run $GITHUB_RUN_ID from $GITHUB_SHA."* ]]; then
+            gh workflow run evidence-contract.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+          fi
