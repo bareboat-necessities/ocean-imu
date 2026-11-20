@@ -44,6 +44,6 @@
   "source_sha256": {
     "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
     "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "fc69a9316cbf4496cc4327b5d8ca90760a68cd0947b49e354e6faca90c50625d"
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "cd98dac8c8b43c3e1f5dfdb5539b54db6a1d4b2ec7b3cb635058f4681a72a469"
   }
 }
