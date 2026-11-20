@@ -71,6 +71,40 @@ class VectorExportTests(unittest.TestCase):
             save_figure(fig, "filters.pgf")
         self.assertTrue(all(len(line.get_xdata()) == len(t) for line in ax.lines))
 
+    def test_transition_sampling_retains_spikes_and_disconnected_segments(self):
+        from vector_export import transition_line_indices
+        t = np.arange(12000)
+        y = np.sin(t * .03)
+        y[3025:3030] = np.nan
+        y[8134] = 10
+        indices = transition_line_indices(t, y, 6000)
+        self.assertLessEqual(len(indices), 6000)
+        for j in (0, 3024, 3025, 3029, 3030, 8134, len(t)-1):
+            self.assertIn(j, indices)
+
+    def test_transition_overlay_keeps_each_waveform_through_savefig_hook(self):
+        from figure_decimation import install
+        from io import BytesIO
+        from xml.etree import ElementTree
+        import re
+
+        install()
+        fig, ax = plt.subplots()
+        t = np.arange(12000) / 10
+        for i in range(4):
+            line, = ax.plot(t, np.sin(t * (2.0 + i / 10)))
+            line.set_gid(f"wave-{i}")
+        with matplotlib.rc_context({"path.simplify": False}):
+            stream = BytesIO()
+            save_figure(fig, stream, format="svg", transition=True)
+        svg = ElementTree.fromstring(stream.getvalue())
+        for i, line in enumerate(ax.lines):
+            path = svg.find(f".//*[@id='wave-{i}']/{{*}}path")
+            vertices = len(re.findall(r"[ML]", path.attrib["d"]))
+            self.assertGreater(vertices, 2000)
+            self.assertLessEqual(vertices, 6000)
+            np.testing.assert_array_equal(line.get_xdata(), t)
+
     def test_plot_generators_use_the_shared_exporter(self):
         root = Path(__file__).resolve().parents[2]
         for directory in (root / "plots", root / "tools"):

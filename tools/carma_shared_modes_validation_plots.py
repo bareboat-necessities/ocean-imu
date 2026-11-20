@@ -35,7 +35,7 @@ def trace(results, name):
     return pd.read_csv(results / "traces" / (name + ".csv.gz"))
 
 
-def save(fig, out, name):
+def save(fig, out, name, *, transition=False):
     fig.align_ylabels()
     fig.tight_layout(pad=.65)
     for ext in ("svg", "pgf"):
@@ -44,7 +44,7 @@ def save(fig, out, name):
         temporary=out/(name+"."+ext+".pending")
         # Readers (including an article build) must never see a partial PGF.
         with temporary.open("w",encoding="utf-8") as stream:
-            save_figure(fig, stream, format=ext, bbox_inches="tight", **kwargs)
+            save_figure(fig, stream, format=ext, bbox_inches="tight", transition=transition, **kwargs)
         ending=temporary.read_text().rstrip()
         if not ending.endswith(r"\endgroup%" if ext=="pgf" else "</svg>"):
             raise RuntimeError(f"incomplete {ext} export: {target}")
@@ -223,7 +223,7 @@ def transition_figure(results,out):
         ax.axvline(300,color="0.5",ls="-.",lw=.6)
         ax.set_xlim(0,1200)
     for ax in axes[-1]: ax.set_xlabel("Time [s]")
-    save(fig,out,"csm_validation_roundtrip")
+    save(fig,out,"csm_validation_roundtrip",transition=True)
 
 
 def pm(values):

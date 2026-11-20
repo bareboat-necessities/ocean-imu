@@ -37,12 +37,12 @@ DEFAULT_MAX_LINE_POINTS = 2000
 _INSTALLED_ATTR = "_ocean_imu_line_decimation"
 
 
-def max_line_points() -> int:
+def max_line_points(default: int = DEFAULT_MAX_LINE_POINTS) -> int:
     raw = os.getenv("PLOT_MAX_POINTS", "").strip()
     try:
-        value = int(raw) if raw else DEFAULT_MAX_LINE_POINTS
+        value = int(raw) if raw else default
     except ValueError:
-        value = DEFAULT_MAX_LINE_POINTS
+        value = default
     return max(16, value)
 
 
@@ -182,7 +182,8 @@ def install(matplotlib_module=None) -> None:
     # after this, builds its wrapper from that qualified name.
     @functools.wraps(original)
     def savefig(self, *args, **kwargs):
-        decimate_figure(self)
+        if not kwargs.pop('_ocean_imu_prepared_lines', False):
+            decimate_figure(self)
         return original(self, *args, **kwargs)
 
     setattr(savefig, _INSTALLED_ATTR, True)

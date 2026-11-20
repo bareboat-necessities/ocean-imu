@@ -118,16 +118,16 @@
     "traces/roundtrip_CSM_gyro_bias_x.csv.gz": "736e3a99d4ac69447e8dc73b11775ae41ec8b776dd437bf7b9438dc98c62ed92",
     "traces/roundtrip_CSM_gyro_bias_y.csv.gz": "7d68738eea8ef08e9eaf722dc5db94b04ebd55e27a79cbc2f708eb467bfd4dc5",
     "traces/roundtrip_CSM_gyro_bias_z.csv.gz": "77081f23e6b9eb3f49b2a5a1b6430171602c899608ec8541fde5c6087f6b6a7c",
-    "traces/roundtrip_CSM_pitch.csv.gz": "c75f2e16624e9e342c4d205ec11f0890bc21ce963cf2ea45e7b04911021224fd",
-    "traces/roundtrip_CSM_roll.csv.gz": "bd9fe63f77e5f5906dc5dce2c16c48bb0faf8383941be4b4af201551aedd7041",
+    "traces/roundtrip_CSM_pitch.csv.gz": "90c0b5beac8ebdd33d41b59572bc0b3dcf83e53234a7a34c5cf022906786ab26",
+    "traces/roundtrip_CSM_roll.csv.gz": "1a16241f5c2394f364f69d805b6db1e92ff88b0113107ba5a30b966b14e091d2",
     "traces/roundtrip_CSM_sigma_a_applied.csv.gz": "70b1f1e13d097723238d03f3cabc6182e28ad0d55364f9f94dfe5e8510b4a3d7",
     "traces/roundtrip_CSM_tau_applied.csv.gz": "8e4361be4f19cbfa9bbdb11f6d50753a0caab351d679fd3bda91a587b0aacecb",
     "traces/roundtrip_CSM_vel_xy.csv.gz": "37ef4886efa77fc747af7bfdd8149a45c2f24e5783e8b70112cb987cb7365e77",
     "traces/roundtrip_CSM_vel_z.csv.gz": "9ecf144ee11cadf82cda46330020eabd48d81664a88653c6c707f5c22684606d",
-    "traces/roundtrip_CSM_yaw.csv.gz": "9a6e2daab06bd144c0662905e9483a0cb2ab36c0d71ff6b1d5d2dd621cb46349",
-    "traces/roundtrip_CSM_z.csv.gz": "4226908eb93b3ae0e3e92e06358b32ae074ea8678e061fa040a940d841506496",
-    "traces/roundtrip_Independent_z.csv.gz": "fe3d405827957b825ea39981580797de8cfc3765be50188e8bf0549de879948f",
-    "traces/roundtrip_OU-III_z.csv.gz": "12e559f3c712ee050e2b24b7067c104eaf19e8f2fabb2e288480f5727a455034"
+    "traces/roundtrip_CSM_yaw.csv.gz": "141d86c927893cf98f3924b7e7f198e502bc7106f0d4589a6817e333e143d75b",
+    "traces/roundtrip_CSM_z.csv.gz": "0524b8d7a5c50f1eabe9351fad8d0b345d2101b528dff4da9ca9edcfd31a3bf9",
+    "traces/roundtrip_Independent_z.csv.gz": "ac799d936339e90b4ff462e9e1259ff53befc9876fccfab7289e13b9d076f686",
+    "traces/roundtrip_OU-III_z.csv.gz": "76b42bf6ba244e896b85c2dd5014ffaf3ffe64a35d0b62c09e57b1480500815f"
   },
   "figures": {
     "csm_validation_acc_bias.svg": 108313,
@@ -137,9 +137,19 @@
     "csm_validation_engine_speed.svg": 74753,
     "csm_validation_gyro_bias.svg": 115052,
     "csm_validation_observers.svg": 83228,
-    "csm_validation_roundtrip.svg": 195878,
+    "csm_validation_roundtrip.svg": 356310,
     "csm_validation_tuning.svg": 83870,
     "csm_validation_xy.svg": 108441,
     "csm_validation_z.svg": 95172
+  },
+  "roundtrip_render": {
+    "source_sha256": {
+      "tools/carma_shared_modes_validation.py": "13613ad2ed7544be398f3c38b87975af3af2eec9cf1bf25a118180dc05411a6f",
+      "tools/carma_shared_modes_validation_plots.py": "e254d0634cad8771dc1be1276a504ad7dbf46219f2ac2bcf5cd7835c716023d8",
+      "plots/vector_export.py": "9803d127f3247c26ad2589c5283a026f552371c488218f559d82ba12fc32bd74",
+      "plots/figure_decimation.py": "b326258d3c628e98256124ca673411c12b10ed046c41f5812e1953648ad66b21"
+    },
+    "trace_rate_hz": 10,
+    "replay_revision": "f990d64e7ce44aca8ca8fce18f5729f8057e93d3"
   }
 }

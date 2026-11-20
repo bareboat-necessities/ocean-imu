@@ -2771,6 +2771,8 @@ def plot_transition_diagnostic(
     reference_points: Sequence[tuple[str, TuningPoint, str]],
     shaded_intervals: Sequence[tuple[float, float]],
     window_start_sec: float,
+    *,
+    roundtrip: bool = False,
 ) -> None:
     """Draw the four-panel time-domain view of one transition realization.
 
@@ -2832,7 +2834,7 @@ def plot_transition_diagnostic(
             window_start_sec, color="#444444", linewidth=0.8, linestyle="-.",
         )
     figure.tight_layout()
-    save_figure(figure, svg_path, format="svg", metadata={"Date": None})
+    save_figure(figure, svg_path, format="svg", transition=roundtrip, metadata={"Date": None})
     plt.close(figure)
 
 

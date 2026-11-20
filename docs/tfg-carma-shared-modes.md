@@ -183,9 +183,9 @@ all theorem qualifications remain unchanged.
 
 The report keeps compact per-run scores (gzip), paired intervals, factorial
 interactions, failures and one-second full-covariance audits. Raw 200 Hz
-streams and restart caches are regenerated, not committed. Drawing families
-have a 2000-point extrema-preserving budget, with the same additional vector
-export decimation for SVG and PGF. Scores use the full-rate stream before
+streams and restart caches are regenerated, not committed. The round-trip position trace retains a shared 10 Hz time grid
+and the final sample. Each curve can use up to 6,000 vertices in SVG and PGF.
+Other drawing families retain up to 2,000 points before vector export. Scores use the full-rate stream before
 any drawing decimation.
 
 The executable registry is shared with the existing CARMA benchmark:

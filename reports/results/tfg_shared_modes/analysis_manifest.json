@@ -45,5 +45,20 @@
     "weak_protocol.json": "031cbdeb0be775eb77b179b34e59a3b6e17ffefa19f670731cd71ff301c2378d",
     "weak_runs.csv": "cbd12e25e96668cefcc213de5591c048a8a4c901dd0d442de32c9bb4df435f1b",
     "weak_summary.csv": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
+  },
+  "roundtrip_render": {
+    "replay_revision": "95e52f53ac235fd2d7b12d75fd3bcab277a68bcf",
+    "scenario": "jonswap_fp0.29_hs0.8_g3.3+start0.5+lev400w20x4+lev800w20x0.5+T1200",
+    "seed": 1001,
+    "trace_rate_hz": 10,
+    "sha256": {
+      "reports/results/tfg_shared_modes/traces/roundtrip_position.csv.gz": "16170b6f31f4d0de0b3b085e1f20d7d66f9251f87b3f778ba6a4081913438a68",
+      "reports/results/tfg_shared_modes/figures/roundtrip.svg": "0d94fd91f40771fee3572a20faef4d15b668e01d79b61c7ec8146daca5b191ae",
+      "reports/results/tfg_shared_modes/figures/roundtrip.pgf": "38c9a127b71ede7ec7faca6694b47ee01201ce82036559ba11bb25e98acfd31c",
+      "tools/tfg_shared_modes_report.py": "b79380c60bc9cfe2bd6f660947c2331ecd3a75a94f7aa4ddd7912ecac36fa300",
+      "tools/tfg_shared_modes_study.py": "06bd08d83111cc060eae3afb246ad0f7c564ef068553995676e77c1382eac414",
+      "plots/vector_export.py": "9803d127f3247c26ad2589c5283a026f552371c488218f559d82ba12fc32bd74",
+      "plots/figure_decimation.py": "b326258d3c628e98256124ca673411c12b10ed046c41f5812e1953648ad66b21"
+    }
   }
 }
