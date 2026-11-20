@@ -96,7 +96,7 @@
 #include <algorithm>
 
 #include "kalman_ou_ii/Kalman3D_Wave_OU_II.h"
-#include "kalman_common/SeaStateOUFamilyDefaults.h"
+#include "kalman_common/SeaStateFamilyDefaults.h"
 #include "kalman_common/AccelVibrationConditioning.h"
 #include "kalman_common/MarineWaveFrontEnd.h"
 #include "kalman_common/SeaStateAdaptationCommon.h"
@@ -140,7 +140,7 @@ constexpr float ADAPT_R_SLEW_LOG           = 0.0f;   // ln units
 // The S=0 pseudo updates of OU-III and the p=0/v=0 pseudo updates here share
 // one mechanism and one 15 ms / 1.1 s nominal operating point, a single
 // periodic tick inside the MEKF fires them, and the ratio and lower clamp are
-// shared (SeaStateOUFamilyDefaults.h).  One pseudo update has covariance r^2,
+// shared (SeaStateFamilyDefaults.h).  One pseudo update has covariance r^2,
 // so at one update per T_S seconds the continuous-equivalent information rate
 // goes as 1/(r^2 T_S); scaling T_S with tau while holding r fixed would
 // therefore change the regularization strength with sea state as a side

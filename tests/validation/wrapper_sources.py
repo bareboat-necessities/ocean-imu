@@ -36,7 +36,7 @@ ESTIMATOR_HEADERS = {
     "tfg": (),
 }
 _OU_SHARED = (
-    _COMMON + "SeaStateOUFamilyDefaults.h",
+    _COMMON + "SeaStateFamilyDefaults.h",
     _COMMON + "SeaStateFusionDefaults.h",
     _COMMON + "AccelVibrationConditioning.h",
     _COMMON + "MarineWaveFrontEnd.h",

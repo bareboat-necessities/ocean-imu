@@ -76,7 +76,7 @@
 
 #include "kalman_ou_iii/Kalman3D_Wave_OU_III.h"
 #include "kalman_ou_iii/HorizontalWaveBand.h"
-#include "kalman_common/SeaStateOUFamilyDefaults.h"
+#include "kalman_common/SeaStateFamilyDefaults.h"
 #include "kalman_common/SeaStateTuning.h"
 #include "kalman_common/AccelVibrationConditioning.h"
 #include "kalman_common/MarineWaveFrontEnd.h"

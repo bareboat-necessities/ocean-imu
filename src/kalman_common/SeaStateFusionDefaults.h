@@ -170,7 +170,7 @@ inline constexpr float MAG_DELAY_SEC = 7.0f;
 
 // Online-tuner warmup the deployed proxy-startup front ends use.  (The inner
 // OU filters keep a 5 s compatibility default for direct callers; see
-// SeaStateOUFamilyDefaults.h.)
+// SeaStateFamilyDefaults.h.)
 inline constexpr float STARTUP_ONLINE_TUNE_WARMUP_SEC = 10.0f;
 
 // Earliest and latest the proxy bootstrap may hand over.
