@@ -34,8 +34,13 @@ and per-record gates. Set it **before starting Python or a simulator**. The
 standalone default is `following`. `tools/sim_dataset.py --case all --dest DIR`
 creates `DIR/following` and `DIR/head`; it never extracts both into one folder.
 The study and build workflows use separate jobs and case-named artifacts.
-The existing following-sea PDF/SVG release filenames stay stable; head-sea
-products carry a `-head` suffix.
+The build compiles each article and chart book once, under its existing PDF
+filename. Deterministic traces in the PDFs use the following-sea replay unless
+the figure identifies another case. The [underway results](moving-vessel-results.md)
+compare both directions. In each release, `head-sea-replay-results.zip` contains
+the head-sea charts and generated table sources by component. The same files
+are available per component in the build's `head-replay-*` artifacts. Individual
+head-sea SVG release assets retain the `-head.svg` suffix.
 
 The scoring reference subtracts only the analytically declared cruise
 **displacement and velocity**. All total acceleration and recorded IMU samples
