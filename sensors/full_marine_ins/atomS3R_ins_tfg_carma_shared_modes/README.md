@@ -34,7 +34,7 @@ Set `IMU_LEVER_ARM_X_M`, `IMU_LEVER_ARM_Y_M` and `IMU_LEVER_ARM_Z_M` to the sens
 | largest single stack frame | 1.3 kB | 1.7 kB |
 | worst static call chain of one update | 3.3 kB | 3.7 kB |
 
-These figures come from `tests/kalman_carma_shared_modes/arduino/csm_size_probe/build.sh`, a static analysis recorded in [`esp32s3_size_stack.csv`](../../../reports/results/tfg_shared_modes/esp32s3_size_stack.csv). They were taken before the excitation-cap change, which adds a few scalars to the filter object. Calls through function pointers and library frames are not counted, so the call-chain figure is a lower bound; measure the loop task's stack high-water mark on the device before relying on the 8 KB default loop stack. Host update time of the filter core is about 1.75 times that of TFG-CARMA3; the embedded per-update time has not been measured.
+These figures come from `tests/kalman_carma_shared_modes/arduino/csm_size_probe/build.sh`, a static analysis recorded in [`esp32s3_size_stack.csv`](../../../reports/results/tfg_shared_modes/esp32s3_size_stack.csv). They were taken before the excitation-cap change, which adds a few scalars to the filter object. The call-chain figure excludes indirect calls and library frames. The complete sketch reserves 12 KiB for the Arduino loop task, which also runs the startup observer and screened magnetic calibration. The ESP32-S3 compiler reports a 1,872-byte frame for the gyro–mag calibration update with Arduino-ESP32 3.3.11. On-device peak use remains to be measured. Host update time of the filter core is about 1.75 times that of TFG-CARMA3; the embedded per-update time has not been measured.
 
 ## Install and upload
 

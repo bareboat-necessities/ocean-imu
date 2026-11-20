@@ -499,6 +499,10 @@ static inline bool configureAtomS3RMag(Print& log, bool compensate = true) {
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) return false;
   using Preset = Bmm150AuxPreset<m5::IMU_Base>;
   Preset aux(imu0, [](uint32_t ms) { delay(ms); });
+  if (!aux.ensureDataMode()) {
+    log.printf("[MAGCFG] AUX startup failed: %s\n", aux.failure());
+    return false;
+  }
   Bmm150RegState before, after;
   const bool low = aux.apply(Preset::LOW_NOISE_REP_XY, Preset::LOW_NOISE_REP_Z, before, after);
   if (low) {

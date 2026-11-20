@@ -60,26 +60,33 @@ OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
         const Measurement H = measurement_();
         const Vector3 residual = mag - (matrix_() * x_.head<3>() + biasBodyUT());
         const float variance = sq_(cfg_.mag_white_std_uT);
-        const Matrix3 S = H * P_ * H.transpose() + variance * Matrix3::Identity();
+        const Measurement HP = H.lazyProduct(P_);
+        const Matrix3 S = HP.lazyProduct(H.transpose()) + variance * Matrix3::Identity();
         const Eigen::LDLT<Matrix3> solve(S);
         if (solve.info() != Eigen::Success || !solve.isPositive()) { reset(); return false; }
         const float nis = residual.dot(solve.solve(residual));
         if (!std::isfinite(nis) || nis > 25.0f) return false;
-        const Eigen::Matrix<float,18,3> gain = P_ * H.transpose() * solve.solve(Matrix3::Identity());
+        const Matrix3 inverse_S = solve.solve(Matrix3::Identity());
+        const Eigen::Matrix<float,18,3> gain = HP.transpose().lazyProduct(inverse_S);
         const State next = x_ + gain * residual;
         const Matrix3 A = matrixFor_(next);
         if (!next.allFinite() || (A - Matrix3::Identity()).norm() > 0.25f ||
             A.determinant() < 0.5f || next.segment<3>(3).norm() > 0.35f*mag.norm() ||
             next.segment<3>(6).norm() > 0.1f) return false;
-        // Expanded Joseph update; only the three measurement rows are dense.
-        // Avoid several 18x18 stack temporaries on the embedded target.
-        const Eigen::Matrix<float,3,18> HP = H * P_;
-        Covariance Pnext = P_;
-        Pnext.noalias() -= gain * HP;
-        Pnext.noalias() -= HP.transpose() * gain.transpose();
-        Pnext.noalias() += gain * S * gain.transpose();
-        if (!Pnext.allFinite()) { reset(); return false; }
-        x_ = next; P_ = (0.5f * (Pnext + Pnext.transpose())).eval();
+        // Expanded Joseph update: P - K HP - (K HP)' + K S K'. All terms
+        // use the prior held in HP, so each symmetric pair can be committed
+        // immediately without an 18x18 temporary or a transpose copy.
+        const Eigen::Matrix<float,18,3> gain_S = gain.lazyProduct(S);
+        for (int j = 0; j < P_.cols(); ++j) {
+            for (int i = 0; i <= j; ++i) {
+                const float prior = 0.5f * (P_(i,j) + P_(j,i));
+                const float value = prior - gain.row(i).dot(HP.col(j)) - gain.row(j).dot(HP.col(i))
+                                    + gain_S.row(i).dot(gain.row(j));
+                if (!std::isfinite(value)) { reset(); return false; }
+                P_(i,j) = P_(j,i) = value;
+            }
+        }
+        x_ = next;
         const float alpha = accepted_ ? -std::expm1(-dt/30.0f) : 1.0f;
         residual_sq_ += alpha * (residual.squaredNorm() - residual_sq_);
         ++accepted_;
@@ -100,10 +107,10 @@ OCEAN_IMU_MAG_INLINE void GyroMagCalibration::initialize_(const Vector3& mag) {
         // offset uncertainty is correlated with that field. Do not pretend
         // the initial field is an independently known magnetic reference.
         const auto Hc = measurement_().block<3,15>(0,3).eval();
-        P_.block<3,15>(0,3) = -Hc * P_.block<15,15>(3,3);
+        P_.block<3,15>(0,3) = -Hc.lazyProduct(P_.block<15,15>(3,3));
         P_.block<15,3>(3,0) = P_.block<3,15>(0,3).transpose();
         P_.block<3,3>(0,0) = sq_(cfg_.mag_white_std_uT)*Matrix3::Identity() +
-            Hc*P_.block<15,15>(3,3)*Hc.transpose();
+            (-P_.block<3,15>(0,3)).lazyProduct(Hc.transpose());
         initialized_ = true; accepted_ = 0; residual_sq_ = 0.0f; clearRotation_();
     }
 
@@ -116,7 +123,8 @@ OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::hasSignificantDistortion() const {
         // and gain cross-covariances. No incoming measurement or truth enters.
         auto jacobian = measurement_();
         jacobian.leftCols<3>() = distortion;
-        const Matrix3 covariance = jacobian * P_ * jacobian.transpose();
+        const Measurement projected = jacobian.lazyProduct(P_);
+        const Matrix3 covariance = projected.lazyProduct(jacobian.transpose());
         const Eigen::LDLT<Matrix3> solve(covariance);
         const bool valid = solve.info() == Eigen::Success && (solve.vectorD().array() > 0.f).all();
         const float score = valid ? shift.dot(solve.solve(shift)) : 0.f;

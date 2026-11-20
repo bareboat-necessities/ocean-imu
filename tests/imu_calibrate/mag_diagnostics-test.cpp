@@ -183,6 +183,18 @@ static void testAuxPreset() {
   using atoms3r_ical::Bmm150RegState;
   FakeBmi270 dev;
   Bmm150AuxPreset<FakeBmi270> preset(&dev, noWait);
+  require(preset.ensureDataMode() && dev.writes == 0, "running AUX polling needs no recovery");
+  FakeBmi270 boot;
+  boot.reg[0x4C] = 0x80; boot.reg[0x4D] = 0x40; boot.reg[0x7D] = 0x0E;
+  boot.bmm[0x4C] = 0x06;
+  Bmm150AuxPreset<FakeBmi270> retry(&boot, noWait);
+  boot.bmm[0x40] = 0;
+  require(!retry.ensureDataMode() && boot.bmm[0x4C] == 0x06 && boot.reg[0x7D] == 0x0E,
+          "no sensor configuration without confirmed chip identity");
+  boot.bmm[0x40] = 0x32;
+  require(retry.ensureDataMode() && boot.bmm[0x4C] == 0x38 && boot.reg[0x4C] == 0x4F &&
+          boot.reg[0x4D] == 0x42 && boot.reg[0x7D] == 0x0F,
+          "retry resumes eight-byte BMM150 polling after a missed startup chip ID");
   Bmm150RegState q;
   require(preset.query(q) && q.chip_id == 0x32 && q.nXY() == 1 && q.nZ() == 1 && q.mode == 0x38,
           "query reads the M5Unified default configuration");

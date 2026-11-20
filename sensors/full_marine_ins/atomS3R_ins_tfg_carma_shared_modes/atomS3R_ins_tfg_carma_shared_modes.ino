@@ -163,14 +163,6 @@ static constexpr float CARMA_ACC_WHITE_SIGMA_MPS2      = 0.0148f;
 static constexpr float CARMA_ACC_BIAS_RW_MPS2_SQRTS    = 5.0e-4f;
 static constexpr float CARMA_ACC_NOISE_REL_UNCERTAINTY = 0.5f;
 
-// Loop-task stack: like atomS3R_ins_tfg_carma3, this sketch keeps the Arduino
-// default.  The shared-modes TFG core keeps its covariance scratch in members
-// and has no NX x NX stack temporary; the deepest static chain of one update
-// on the ESP32-S3 is 3664 B, recorded in
-// reports/results/tfg_shared_modes/esp32s3_size_stack.csv.  That figure is a
-// compiler call-chain lower bound, not a measured high-water mark: measure the
-// loop task's stack on the device before relying on the default.
-
 using namespace atoms3r_ical;
 using Vector3f = Eigen::Vector3f;
 
@@ -835,6 +827,10 @@ private:
 #endif
   }
 };
+
+// The sketch runs the startup observer, screened gyro-mag learner, navigation
+// filter, and display on loopTask. The core-only stack probe omits these calls.
+SET_LOOP_TASK_STACK_SIZE(12 * 1024);
 
 static FusionApp g_app;
 
