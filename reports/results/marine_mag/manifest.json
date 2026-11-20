@@ -87,5 +87,49 @@
       4
     ],
     "qualified": false
+  },
+  "learner_gyro_bias": {
+    "development_draws": [
+      13,
+      29
+    ],
+    "validation_draws": [
+      547,
+      1151,
+      2371,
+      4099
+    ],
+    "development_rows": 48,
+    "validation_rows": 64,
+    "learner_std_and_rw_multipliers": [
+      0,
+      0.25,
+      1,
+      4
+    ],
+    "selected_multiplier": 4,
+    "qualified_on_development": true,
+    "selection_criteria": "same sustained-yaw predeclared screen",
+    "interference": false,
+    "navigation_magnetic_weight": "native",
+    "replication_draws": [
+      5003,
+      5011,
+      5021,
+      5023,
+      5039,
+      5051,
+      5059,
+      5077,
+      5081,
+      5087,
+      5099,
+      5101
+    ],
+    "replication_rows": 192,
+    "stress_seed": 3037,
+    "stress_rows": 28,
+    "stress_inputs": "stress-inputs.csv",
+    "qualified_on_replication": false
   }
 }

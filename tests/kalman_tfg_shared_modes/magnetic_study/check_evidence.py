@@ -55,3 +55,37 @@ for row in quarantine_rows:
     assert float(row["matrix_err_rms"]) == float(native["matrix_err_rms"])
     if row["scenario"] != "burst":
         assert float(row["rejected"]) == 0 and float(row["yaw_rms_deg"]) == float(native["yaw_rms_deg"])
+
+
+# Recompute all published holdout effect means for the two sustained-yaw studies.
+for study, stage, factor, expected_seeds in (
+    ("yaw-weight", "validation", "sigma_factor", {421,829,1609,3517}),
+    ("gyro-bias", "validation", "gyro_bias_factor", {547,1151,2371,4099}),
+    ("gyro-bias", "replication", "gyro_bias_factor", {5003,5011,5021,5023,5039,5051,5059,5077,5081,5087,5099,5101}),
+):
+    folder = root / "reports/results/marine_mag"
+    with (folder / f"{study}-{stage}.csv").open() as stream:
+        arms = {}
+        for row in csv.DictReader(stream):
+            key = tuple(row[name] for name in ("case","height","seed","scenario","dip"))
+            scale = float(row[factor])
+            assert scale not in arms.setdefault(key, {})
+            arms[key][scale] = row
+            assert float(row["min_eig"]) >= -1e-5 and not row["failed_metrics"]
+    for seed in expected_seeds:
+        assert {(k[0],float(k[1])) for k in arms if int(k[2])==seed} == {
+            (case,height) for case in ("following","head") for height in (.27,1.5,4.,8.5)}
+    assert len(arms)==8*len(expected_seeds)
+    scales = set(next(iter(arms.values())))
+    assert len(scales) == 2 and 1.0 in scales and all(set(cell)==scales for cell in arms.values())
+    stats_file = f"{study}-paired.csv" if stage=="validation" else f"{study}-{stage}-paired.csv"
+    with (folder / stats_file).open() as stream:
+        published = [r for r in csv.DictReader(stream) if r.get("stage",stage) == stage]
+    metrics = {"yaw_rms_deg","abs_signed_yaw_deg","centered_deg","roll_rms_deg","pitch_rms_deg","disp_3d_rms_m"}
+    assert len(published)==len(scales)*len(metrics)
+    assert {(float(r[factor]),r["metric"]) for r in published}=={(s,m) for s in scales for m in metrics}
+    for row in published:
+        scale, metric = float(row[factor]), row["metric"]
+        delta = mean(float(cell[scale][metric])-float(cell[1.0][metric]) for cell in arms.values())
+        assert math.isclose(float(row["delta"]),delta,abs_tol=1e-8)
+    print(f"{study} {stage}: {len(arms)} complete paired cells and all published mean differences reproduced")

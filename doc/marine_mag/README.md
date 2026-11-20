@@ -18,6 +18,9 @@ make -C tests/kalman_tfg_shared_modes/magnetic_study build/magnetic-quarantine-s
 python3 tools/marine_mag_quarantine.py
 make -C tests/kalman_tfg_shared_modes/magnetic_study build/magnetic-heading-study
 python3 tools/marine_mag_yaw.py
+python3 tools/marine_mag_yaw.py --gyro-bias
+python3 tools/marine_mag_yaw.py --replicate-gyro-bias
+python3 tools/marine_mag_yaw.py --gyro-stress
 python3 tools/marine_mag_reference.py
 python3 tools/marine_mag_transients.py
 python3 tools/marine_mag_report.py
@@ -50,3 +53,7 @@ UBSAN_OPTIONS=halt_on_error=1 "$sanout/magnetic-study" .sim-data/cases/following
 ~~~
 
 The sustained-heading extension compares post-refinement magnetic standard deviation factors of 0.5, 1, 2 and 4. The development screen requires lower average yaw RMS and absolute signed yaw, mean displacement growth at most 2% with a 10% worst-case cap, and mean roll/pitch RMS growth at most 0.01 degrees with a 0.1-degree worst-case cap. If every alternative fails, the lowest-yaw development candidate is tested for falsification. The fresh 32-cell panel uses four new seeds and uninterrupted records. yaw-weight-paired.csv reports paired draw-level intervals, counts and worst changes.
+
+The gyro-bias experiment uses the same development screen with the native TFG magnetic weight. It scales the external learner's initial gyro-bias standard deviation and gyro-bias random-walk amplitude together by 0, 0.25, 1 or 4. The zero factor freezes that nuisance state at its initial zero. The chosen alternative and the native learner are evaluated on four further joint draws (547, 1151, 2371 and 4099). The three gyro-bias CSVs contain the scored arms and their paired comparisons.
+
+The independent confirmation panel fixes the native and fourfold gyro-bias factors before evaluation, keeping the same eight uninterrupted physical conditions. Twelve further independent joint draws test transfer across sensor and initialization errors. Evidence for a sustained yaw improvement requires the upper endpoints of the paired 95% intervals for both total yaw RMS and absolute within-record bias to fall below zero on this panel, together with the development roll, pitch and displacement limits.

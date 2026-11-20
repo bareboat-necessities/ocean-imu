@@ -100,6 +100,15 @@ public:
     MagneticCalibrationReplay(bool m,const V3& a,const V3& g,const V3& s) : CsmAdapter(m,a,g,s) {
         auto& f = facade();
         auto& cfg = f.hard_iron_.calibration.cfg_;
+#ifdef OCEAN_MAG_YAW_WEIGHT_STUDY
+        if (const char* value = std::getenv("MARINE_MAG_GYRO_BIAS_FACTOR")) {
+            const float scale = std::stof(value);
+            if (!std::isfinite(scale) || scale < 0.f)
+                throw std::invalid_argument("invalid gyro-bias standard deviation factor");
+            cfg.gyro_bias_std_radps *= scale;
+            cfg.gyro_bias_rw_radps *= scale;
+        }
+#endif
         if (settings.variant==-1) f.cfg_.mag_continuous_hard_iron = false;
         if (settings.variant==1) {
             f.cfg_.mag_continuous_hard_iron = true;

@@ -78,6 +78,30 @@ def figures(info,traces,stats,doc):
     save_figure(fig,doc/'paired.pdf',metadata={'CreationDate':None});plt.close(fig)
 
 
+
+def sustained_yaw_figure(results, doc):
+    metrics = ["yaw_rms_deg","centered_deg","abs_signed_yaw_deg","roll_rms_deg"]
+    labels = ["Total yaw RMS","Centered yaw RMS","Absolute yaw bias","Roll RMS"]
+    fig, axes = plt.subplots(1,2,figsize=(7,2.3),sharey=True,layout="constrained")
+    for axis, prefix, factor, title in zip(axes, ("yaw-weight","gyro-bias"),
+            ("sigma_factor","gyro_bias_factor"), ("Magnetic measurement weight","Learner gyro-bias uncertainty")):
+        if prefix == "gyro-bias":
+            data = pd.read_csv(results / "gyro-bias-replication-paired.csv")
+        else:
+            data = pd.read_csv(results / "yaw-weight-paired.csv").query("stage=='validation'")
+        scores = data[data[factor]!=1].set_index("metric").loc[metrics]
+        axis.axvline(0,ls=":",color=".4",lw=.9)
+        axis.errorbar(scores.delta, range(len(metrics)),
+                      xerr=[scores.delta-scores.low,scores.high-scores.delta],
+                      fmt="o",color="#145f73",capsize=3,ms=4)
+        axis.set_title(title, fontsize=9)
+        axis.set_xlabel("Change from native (degrees)")
+    axes[0].set_yticks(range(len(labels)),labels)
+    axes[0].invert_yaxis()
+    save_figure(fig,doc/"sustained-yaw.pdf",metadata={"CreationDate":None})
+    plt.close(fig)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--out',type=Path,default=OUT)
@@ -108,6 +132,7 @@ def main():
     table(doc/'cause-rows.tex',[(s.replace('_',r'\_'),*[f'{q[(q.scenario==s)&(q.case==case)&(q.variant==v)].yaw_rms_deg.iloc[0]:.3f}'
            for case in ('following','head') for v in (-1,0)]) for s in q.scenario.unique()])
     figures(pd.read_csv(o/'information.csv'),pd.read_csv(o/'development-trace.csv'),st,doc)
+    sustained_yaw_figure(o,doc)
 
 
 if __name__=='__main__':

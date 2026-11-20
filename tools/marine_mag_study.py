@@ -107,6 +107,17 @@ def special(data,case,cache,scenario):
     return path
 
 
+def physical_scenario(scenario, env):
+    """Apply the simulator fixture for a named physical stress case."""
+    physical=scenario
+    if scenario in ('engine','mount','interval','roundtrip'):
+        physical='combined'
+    if scenario=='interval': env['W3D_CSM_GYRO_INPUT']='interval'
+    if scenario=='mount': env.update(W3D_IMU_LEVER_ARM_M='1,0,0',W3D_IMU_LEVER_ARM_MODEL='none')
+    if scenario=='engine': env['W3D_ENGINE_RPM']='1600'
+    return physical
+
+
 def parse(stdout, allow_intervention_failure=False):
     metrics={}
     for line in stdout.splitlines():
@@ -178,12 +189,7 @@ def main():
             env={k:val for k,val in os.environ.items() if not k.startswith(('W3D_','OCEAN_IMU_SIM_CASE'))}
             env['OCEAN_IMU_SIM_CASE']=case
             if seed: env['W3D_SEED']=str(seed)
-            physical=scenario
-            if scenario in ('engine','mount','interval','roundtrip'):
-                physical='combined'
-            if scenario=='interval': env['W3D_CSM_GYRO_INPUT']='interval'
-            if scenario=='mount': env.update(W3D_IMU_LEVER_ARM_M='1,0,0',W3D_IMU_LEVER_ARM_MODEL='none')
-            if scenario=='engine': env['W3D_ENGINE_RPM']='1600'
+            physical = physical_scenario(scenario, env)
             run=subprocess.run([BINARY,path,str(v),physical,str(dip)],env=env,capture_output=True,text=True)
             if run.returncode: raise RuntimeError(str(condition)+' '+run.stderr[-1000:]+run.stdout[-800:])
             try:

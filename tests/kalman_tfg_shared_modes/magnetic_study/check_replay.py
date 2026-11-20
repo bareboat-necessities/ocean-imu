@@ -1,4 +1,4 @@
-"""Reproduce two held-out navigation scores from a released physical record."""
+"""Reproduce held-out pairs from a pinned physical record in each sea direction."""
 import csv
 import hashlib
 import math
@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[3]
 DRIVER = Path(__file__).resolve().parent / "build/magnetic-study"
 
 
-def check_run(data, case, *, sustained=False):
+def check_run(data, case, study, parameter, environment, seed):
     evidence = ROOT / "reports/results/marine_mag"
     # The 4 m PM-Stokes physical record is identical for both interventions.
     with (evidence / "validation-inputs.csv").open() as stream:
@@ -19,23 +19,19 @@ def check_run(data, case, *, sustained=False):
     path = data / source["file"]
     with path.open("rb") as stream:
         assert hashlib.file_digest(stream, "sha256").hexdigest() == source["sha256"]
-    if sustained:
-        with (evidence / "yaw-weight-validation.csv").open() as stream:
-            rows = [r for r in csv.DictReader(stream) if float(r["height"]) == 4
-                    and r["case"] == case and r["seed"] == "421"]
-    else:
-        with (evidence / "validation.csv").open() as stream:
-            rows = [r for r in csv.DictReader(stream) if r["scenario"] == "burst"
-                and r["case"] == case and r["variant"] in ("0", "8") and r["seed"] == "101"]
+    with (evidence / f"{study}.csv").open() as stream:
+        rows = [r for r in csv.DictReader(stream) if float(r["height"]) == 4
+                and r["case"] == case and r["seed"] == seed
+                and (parameter != "variant" or r["variant"] in ("0", "8"))]
     assert len(rows) == 2
     for row in rows:
-        env = {k: v for k, v in os.environ.items() if not k.startswith(("W3D_", "OCEAN_IMU_SIM_CASE"))}
+        env = {k: v for k, v in os.environ.items() if not k.startswith(("W3D_", "OCEAN_IMU_SIM_CASE", "MARINE_MAG_"))}
         env.update(OCEAN_IMU_SIM_CASE=case, W3D_SEED=row["seed"])
-        driver = DRIVER.with_name("magnetic-heading-study") if sustained else DRIVER
+        driver = DRIVER.with_name("magnetic-heading-study") if environment else DRIVER
         variant = row.get("variant", "0")
-        label = f"sigma x{row['sigma_factor']}" if sustained else f"V{variant}"
-        if sustained:
-            env["MARINE_MAG_SIGMA_FACTOR"] = row["sigma_factor"]
+        label = f"{parameter}={row[parameter]}"
+        if environment:
+            env[environment] = row[parameter]
         output = subprocess.check_output([driver, path, variant, row["scenario"], row["dip"]], env=env, text=True)
         line = next(line for line in output.splitlines() if line.startswith("VALIDATION_METRICS ") and "segment=window" in line)
         fields = dict(f.split("=", 1) for f in line.split()[1:])
@@ -49,5 +45,6 @@ def check_run(data, case, *, sustained=False):
 if __name__ == "__main__":
     data = Path(sys.argv[1])
     direction = sys.argv[2] if len(sys.argv) > 2 else "following"
-    check_run(data, direction)
-    check_run(data, direction, sustained=True)
+    check_run(data, direction, "validation", "variant", None, "101")
+    check_run(data, direction, "yaw-weight-validation", "sigma_factor", "MARINE_MAG_SIGMA_FACTOR", "421")
+    check_run(data, direction, "gyro-bias-validation", "gyro_bias_factor", "MARINE_MAG_GYRO_BIAS_FACTOR", "547")
