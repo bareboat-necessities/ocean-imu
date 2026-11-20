@@ -10,7 +10,7 @@ This sketch runs the **experimental** TFG-CARMA3 Kalman filter, **SeaStateFusion
 
 Open the sketch: [`atomS3R_ins_tfg_carma3.ino`](atomS3R_ins_tfg_carma3.ino).
 
-> **Research sketch, not the shipping estimator.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's mixed-sea weakness); attitude and bias are somewhat better where the CARMA prior misfits. Like the CARMA3 sketch it drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom of the benchmarked floor-driven configuration. Use [OU-III](../atomS3R_ins_kalman_ou3/README.md) for deployment.
+> **Independent-axis research sketch.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's mixed-sea weakness); attitude and bias are somewhat better where the CARMA prior misfits. Like the CARMA3 sketch it drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom of the benchmarked floor-driven configuration. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## What it does
 
@@ -55,6 +55,6 @@ The compile-time controls at the top of the sketch include calibration-wizard en
 
 - [CARMA3 marine INS](../atomS3R_ins_carma3/README.md) — the same prior and wrapper with a quaternion MEKF error
 - [TFG marine INS](../atomS3R_ins_tfg/README.md) — OU-III's state and wave model on the two-frame Lie group
-- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — the shipping 3-D navigation estimator
+- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — OU-family alternative with integral drift regularization
 
 [Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)

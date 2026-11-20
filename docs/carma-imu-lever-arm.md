@@ -1,9 +1,8 @@
 # CARMA IMU lever arm: off-CoG installation study
 
-**Status: experimental research.**  The CARMA3 and TFG-CARMA3 filters and their
-sketches are research code; `Kalman3D_Wave_OU_III` / `SeaStateFusionFilter_OU_III`
-remain the shipping estimator, and nothing here changes it.  All results are
-simulation results.
+This simulation study covers the experimental independent-axis CARMA3 and
+TFG-CARMA3 filters. For mounting the primary marine INS away from the centre
+of gravity, see the [shared-mode TFG–CARMA sketch](../sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md#mounting-away-from-the-centre-of-gravity).
 
 ## What was added
 

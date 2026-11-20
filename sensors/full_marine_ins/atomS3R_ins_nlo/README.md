@@ -68,7 +68,7 @@ The method is described in [Nonlinear Observer with Time-Varying Gains for Inert
 
 ## Compare
 
-- [Shared-mode TFG–CARMA marine INS](../atomS3R_ins_tfg_carma_shared_modes/README.md) — primary documented 3-D navigation method
+- [Shared-mode TFG–CARMA marine INS](../atomS3R_ins_tfg_carma_shared_modes/README.md) — primary marine INS estimator
 - [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — 21-state OU navigation estimator
 - [OU-II marine INS](../atomS3R_ins_kalman_ou2/README.md) — more direct integral drift correction
 - [TFG marine INS](../atomS3R_ins_tfg/README.md) — OU-III's state and wave model on a two-frame Lie group

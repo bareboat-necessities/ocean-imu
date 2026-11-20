@@ -16,10 +16,9 @@ studies explicitly naming v1.2.3 retain their stationary-vessel scope; their
 results are not relabelled as underway evidence.
 
 
-**Status: experimental, simulation only, not a default.**  The shipping
-filter stays `SeaStateFusionFilter_OU_III`; the independent-axis CARMA3 QMEKF
-(`src/kalman_carma/`, benchmark name `A41`) is unchanged and remains the
-baseline.  Nothing here touches TFG or TFG-CARMA3.
+**Experimental shared-mode QMEKF, evaluated in simulation.** The primary marine INS
+uses [shared-mode TFG–CARMA(4,1)](tfg-carma-shared-modes.md). The independent-axis CARMA3 QMEKF
+(`src/kalman_carma/`, benchmark name `A41`) is the baseline for this study.
 
 This filter promotes Option C of the coupled-prior study
 ([carma-coupled-three-axis.md](carma-coupled-three-axis.md)) -- shared

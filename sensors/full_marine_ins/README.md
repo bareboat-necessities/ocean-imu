@@ -14,7 +14,7 @@ They are intended for **marine motion estimation**, where accelerometer measurem
 
 | Example | Method | Main character |
 | --- | --- | --- |
-| [atomS3R_ins_tfg_carma_shared_modes](atomS3R_ins_tfg_carma_shared_modes/README.md) | Shared-mode TFG–CARMA(4,1) INS | TFG-CARMA3 with shared directional stochastic modes and coupling confidence (27 error states); primary documented method, simulation evidence |
+| [atomS3R_ins_tfg_carma_shared_modes](atomS3R_ins_tfg_carma_shared_modes/README.md) | Shared-mode TFG–CARMA(4,1) INS | **Primary marine INS estimator.** 27 error states, shared directional modes and confidence-weighted coupling. Accuracy evaluated in simulation. |
 | [atomS3R_ins_kalman_ou2](atomS3R_ins_kalman_ou2/README.md) | Adaptive OU-II Kalman INS | More direct integral-drift correction; responsive sea-state adaptation |
 | [atomS3R_ins_kalman_ou3](atomS3R_ins_kalman_ou3/README.md) | Adaptive OU-III Kalman INS | Higher-order integral regularization; OU-family 3-D navigation implementation |
 | [atomS3R_ins_carma3](atomS3R_ins_carma3/README.md) | Experimental three-axis CARMA Kalman INS | OU-III with CARMA(4,1) motion priors on X/Y/Z; research sketch, simulation evidence only |

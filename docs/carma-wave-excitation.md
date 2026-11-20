@@ -990,9 +990,9 @@ the simulation shows costs.  The target ESP32-S3 build, code size, stack and
 execution time could not be measured in this environment (section 6.11).
 Those are the first hardware measurements to take.  They should include
 TFG-CARMA3 in still water, because its host cost there is subnormal float
-arithmetic (section 6.11).  It is not a deployment
-candidate: OU-III remains the shipping filter, and the CARMA research
-filters carry their own open obstacles (carma-three-axis.md section 12).
+arithmetic (section 6.11).  These independent-axis CARMA filters are research candidates
+with open deployment questions (carma-three-axis.md section 12). The primary
+marine INS uses [shared-mode TFG–CARMA(4,1)](tfg-carma-shared-modes.md).
 
 ## Reproduction
 

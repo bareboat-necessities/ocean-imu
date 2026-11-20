@@ -1,10 +1,8 @@
 # Three-axis CARMA on the two-frame Lie group (TFG-CARMA3), experimental
 
-**Status: experimental research.**  Nothing here changes the shipping OU-III
-estimator or the existing CARMA3 and TFG filters.  `Kalman3D_Wave_OU_III` /
-`SeaStateFusionFilter_OU_III` remain the deployed, authoritative
-implementation; nothing in the deployed configuration includes the files
-below.  All results are simulation results; no hardware was used.
+**Experimental independent-axis TFG-CARMA3 research.** The primary marine INS uses [shared-mode TFG–CARMA(4,1)](tfg-carma-shared-modes.md).
+This simulation study compares the independent-axis variant with CARMA3, TFG and
+the OU-III implementation (`Kalman3D_Wave_OU_III` and `SeaStateFusionFilter_OU_III`).
 
 Files:
 
