@@ -1,0 +1,12 @@
+target,component,quantity,value,unit
+ESP32-S3,native learner,object,1508,bytes
+ESP32-S3,native learner,largest emitted static frame,3696,bytes
+ESP32-S3,selective information gate,object,216,bytes
+ESP32-S3,selective information gate,persistent dynamic storage lower bound,1168,bytes
+ESP32-S3,selective information gate,unlinked text,167029,bytes
+ESP32-S3,selective information gate,largest emitted static frame,736,bytes
+ESP32-S3,V8 covariance and residual helper,unlinked text,6921,bytes
+ESP32-S3,V8 covariance and residual helper,largest emitted static frame,1872,bytes
+x86-64,native learner,observed mean per packet including eight predictions,3.226,microseconds
+x86-64,selective information gate,observed mean per packet,0.077,microseconds
+x86-64,V8 covariance and residual helper,observed mean per packet,1.3609,microseconds

@@ -73,7 +73,7 @@ def main():
         for height in ['0.270','1.500','8.500']:
             path=next((cache/case).glob(f'wave_data_jonswap_H{height}_*.csv'))
             df=pd.read_csv(path,usecols=['time','yaw_deg','q_wb_zu_x','q_wb_zu_y','q_wb_zu_z','q_wb_zu_w'])
-            data=df.iloc[7::8] # first magnetic tick at the eighth 200 Hz sample
+            data=df.iloc[8::8] # float phase accumulator first fires at t=0.040 s
             t=data.time.to_numpy()
             actual=Rotation.from_quat(data[['q_wb_zu_x','q_wb_zu_y','q_wb_zu_z','q_wb_zu_w']]).as_matrix()
             heading=data.yaw_deg.to_numpy()

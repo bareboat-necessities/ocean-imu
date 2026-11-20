@@ -1170,8 +1170,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
             << "dfilt_ax,dfilt_ay\n";
     }
 
-    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical(
-        MagSim_WMM::default_declination_deg, options_.magnetic_inclination_deg);
+    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
 
     const float mag_dt = (options_.mag_odr_hz > 0.0f)
         ? (1.0f / options_.mag_odr_hz)
@@ -1270,9 +1269,7 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
                 Vector3f mag_b_enu = C_wb_zu * mag_world_zu;
 
                 if (options_.add_noise && noise_models_.mag_noise) {
-                    mag_b_enu = options_.mag_sensor
-                        ? options_.mag_sensor(mag_b_enu, *noise_models_.mag_noise, mag_dt)
-                        : apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
+                    mag_b_enu = apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
                 }
                 if (options_.add_noise) {
                     for (auto& model : noise_models_.extra_mag_noise_models) {

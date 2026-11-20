@@ -2,8 +2,9 @@
 // Truth belongs to SensorFixture and the score/trace functions.
 #define EIGEN_NON_ARDUINO
 #include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"
-#include "../../common/SharedModesReplay.h"
+#include "tests/common/SharedModesReplay.h"
 #include "SelectiveMag.h"
+#include "MagneticPacket.h"
 #include <deque>
 #include <iomanip>
 #include <set>
@@ -65,13 +66,13 @@ struct SensorFixture {
     }
 } fixture;
 
-class StudyAdapter final : public replay::CsmAdapter<Core,0> {
+namespace ocean_imu::research {
+class MagneticCalibrationReplay final : public replay::CsmAdapter<Core,0> {
     SelectiveMag information_;
     bool released_ = false, kicked_ = false;
     unsigned missing_ = 0, rejects_ = 0;
     float first_applied_ = -1;
     int ticks_ = 0;
-    auto& facade() { return this->impl_.fusion(); }
 
     void admitScale(GyroMagCalibration& cal) {
         // Add a compensated trace-free diagonal prior once. The field shift
@@ -87,17 +88,13 @@ class StudyAdapter final : public replay::CsmAdapter<Core,0> {
         auto& f = facade();
         const M3 c = f.hard_iron_.applied_correction;
         const V3 field = c * (mag-f.magHardIronBodyUT());
-        GyroMagCalibration::Measurement j = GyroMagCalibration::Measurement::Zero();
-        j.middleCols<3>(3) = -c;
-        for (int k=0;k<3;++k) j.middleCols<3>(9+3*k) = -field[k]*c;
         const M3 prior = f.cfg_.sigma_m.array().square().matrix().asDiagonal();
         // Lag between applied and posterior correction is an explicit allowance.
         const V3 lag = cal.correction()*(mag-cal.biasBodyUT())-field;
-        this->filter().mekf().Rmag_ = c*prior*c.transpose() + j*cal.P_*j.transpose() +
-                                      lag*lag.transpose();
+        this->filter().mekf().Rmag_ = correctedMagneticCovariance(c,field,prior,lag,cal.P_);
     }
 public:
-    StudyAdapter(bool m,const V3& a,const V3& g,const V3& s) : CsmAdapter(m,a,g,s) {
+    MagneticCalibrationReplay(bool m,const V3& a,const V3& g,const V3& s) : CsmAdapter(m,a,g,s) {
         auto& f = facade();
         auto& cfg = f.hard_iron_.calibration.cfg_;
         if (settings.variant==-1) f.cfg_.mag_continuous_hard_iron = false;
@@ -105,9 +102,9 @@ public:
             f.cfg_.mag_continuous_hard_iron = true;
             f.hard_iron_.gyro_calibration_enabled = true;
         }
-        if (settings.variant==2 || settings.variant>=6) cfg.scale_std=0;
-        if (settings.variant==2 || settings.variant==3 || settings.variant>=6) cfg.cross_axis_std=0;
-        if (settings.variant>=2 && settings.variant!=5) cfg.alignment_std_rad=0;
+        if (settings.variant==2 || (settings.variant==6 || settings.variant==9)) cfg.scale_std=0;
+        if (settings.variant==2 || settings.variant==3 || (settings.variant==6 || settings.variant==9)) cfg.cross_axis_std=0;
+        if ((settings.variant>=2 && settings.variant<=4) || settings.variant==6 || settings.variant==9) cfg.alignment_std_rad=0;
     }
     void updateMag(const V3& mag) override {
         auto& f = facade();
@@ -115,16 +112,20 @@ public:
         auto& core = this->filter().mekf();
         ++ticks_;
         bool reject = false;
-        if (settings.variant>=6 && cal.initialized_) {
+        const bool selective = settings.variant==6 || settings.variant==9;
+        if ((selective || settings.variant==7 || settings.variant==8) && cal.initialized_) {
             const M3 rot = cal.rotation_.toRotationMatrix();
             const V3 prediction = rot*cal.x_.head<3>();
-            information_.observe(rot,cal.bias_rotation_,prediction);
-            // Preserve the existing tilt and residual gates. Slow application
-            // until hard iron is supported even with the two gain nuisances.
-            f.cfg_.mag_hi_apply_fraction = static_cast<float>(std::clamp(information_.hard/4.,0.,1.));
-            if (!released_ && information_.scale>=4.) admitScale(cal);
-            reject = cal.valid() && (mag - (cal.matrix_()*prediction+cal.biasBodyUT())).norm()>6.f;
-            if (settings.variant==7 && f.hasRefinedMagReference()) setUncertainty(cal,cal.matrix_()*prediction+cal.biasBodyUT());
+            if (selective) {
+                information_.observe(rot,cal.bias_rotation_,prediction);
+                f.cfg_.mag_hi_apply_fraction = static_cast<float>(std::clamp(information_.hard/4.,0.,1.));
+                if (!released_ && information_.scale>=4.) admitScale(cal);
+            }
+            // V7 uses the affine prior selected on the two development draws.
+            // V8 adds packet quarantine; V9 retains the original selective-plus-R trial.
+            if ((selective || settings.variant==8) && cal.valid())
+                reject = quarantinePacket(mag,cal.matrix_()*prediction+cal.biasBodyUT());
+            if (settings.variant>=7 && f.hasRefinedMagReference()) setUncertainty(cal,cal.matrix_()*prediction+cal.biasBodyUT());
         }
         if (reject) {
             // Consume the elapsed rotation and its process uncertainty only.
@@ -175,16 +176,17 @@ public:
         }
     }
 };
+} // namespace ocean_imu::research
 
 int main(int argc,char** argv) {
     if (argc!=5) { std::cerr<<"usage: magnetic-study CSV VARIANT SCENARIO DIP_DEG\n"; return 2; }
     settings = {argv[3],std::stoi(argv[2]),std::stof(argv[4])};
     const std::set<std::string> cases = {"combined","ideal","known","clean","hard","diagonal","cross",
         "alignment","latency","outlier","burst","weak","turn","dip_error","yaw_kick","tilt_kick","uncoupled"};
-    if (!cases.count(settings.scenario) || settings.variant < -1 || settings.variant>7 ||
+    if (!cases.count(settings.scenario) || settings.variant < -1 || settings.variant>9 ||
         !std::isfinite(settings.dip) || std::abs(settings.dip)>=90.f) return 2;
     std::cout<<std::setprecision(9);
-    auto result = process_wave_file_for_tracker<StudyAdapter>(argv[1],0.005f,true,true,25.f,
+    auto result = process_wave_file_for_tracker<ocean_imu::research::MagneticCalibrationReplay>(argv[1],0.005f,true,true,25.f,
         "_study","_study",w3d_random_seeds_from_env(),false,[](auto& opts) {
             opts.magnetic_inclination_deg = settings.dip;
             opts.mag_sensor = [](const V3& m,MagNoiseModel& n,float dt) { return fixture.sample(m,n,dt); };
@@ -204,6 +206,13 @@ int main(int argc,char** argv) {
     }
     print_validation_metrics(*result,0.005f,900.f,"MAG_STUDY");
     const auto& y = result->errs_yaw;
+    // Optional evaluator-only stream for paired packet transients and phase analysis.
+    if (const char* file=std::getenv("MARINE_MAG_YAW_TRACE")) {
+        std::ofstream trace(file,std::ios::binary);
+        trace.write(reinterpret_cast<const char*>(y.data()),
+                    static_cast<std::streamsize>(sizeof(float)*y.size()));
+        if (!trace) throw std::runtime_error("cannot write yaw diagnostics");
+    }
     for (size_t i=999;i<y.size();i+=1000) {
         double sum=0, sq=0, peak=0;
         for (size_t k=i-999;k<=i;++k) {

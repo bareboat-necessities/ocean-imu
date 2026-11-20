@@ -61,7 +61,6 @@ private:
         return H;
     }
     void initialize_(const Vector3& mag);
-    void transportToPacket_();
     void clearRotation_() { rotation_.setIdentity(); bias_rotation_.setZero(); elapsed_=angle_variance_=0.0f; }
     Config cfg_{};
     State x_ = State::Zero();

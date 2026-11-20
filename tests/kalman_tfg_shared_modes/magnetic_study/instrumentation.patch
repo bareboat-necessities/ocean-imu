@@ -1,0 +1,173 @@
+diff --git a/src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h b/src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h
+index f253bcf13..ceff4c1ef 100644
+--- a/src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h
++++ b/src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h
+@@ -132,6 +132,7 @@
+ #include "lie/SE3Jacobians.h"
+ #include "lie/TangentBiasGroup.h"
+
++namespace ocean_imu::research { class MagneticCalibrationReplay; }
+ namespace ocean_imu::kalman {
+
+ namespace tfg_carma_detail {
+@@ -178,6 +179,7 @@ inline constexpr double kGL5Weights[5] = {
+ // SharedModesMotion has six columns but still models CARMA(4,1).
+ template <typename T = float, int NC = 4, class Motion = void>
+ class Kalman3D_Wave_TFG_CARMA3 {
++    friend class ocean_imu::research::MagneticCalibrationReplay;
+     static constexpr bool kMotion = !std::is_void_v<Motion>;
+     static_assert((!kMotion && NC >= 3 && NC <= 5) || (kMotion && NC == 6),
+                   "Independent CARMA order 3..5, or six-state shared CARMA(4,1)");
+diff --git a/src/kalman_common/ProxyStartupFusion.h b/src/kalman_common/ProxyStartupFusion.h
+index 5461fc4f3..c3f90e0e2 100644
+--- a/src/kalman_common/ProxyStartupFusion.h
++++ b/src/kalman_common/ProxyStartupFusion.h
+@@ -52,6 +52,7 @@
+ // calibrated deployment passes its local gravity (g_cal_local) instead.
+ extern const float g_std;
+
++namespace ocean_imu::research { class MagneticCalibrationReplay; }
+ namespace seastate::common {
+
+ struct ProxyStartupFusionConfig {
+@@ -270,6 +271,7 @@ struct ProxyStartupFusionConfig {
+
+ template <typename Filter, typename Config>
+ class ProxyStartupFusion {
++    friend class ocean_imu::research::MagneticCalibrationReplay;
+ public:
+     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+diff --git a/src/tuner/GyroMagCalibration.h b/src/tuner/GyroMagCalibration.h
+index 778243880..ddf45780c 100644
+--- a/src/tuner/GyroMagCalibration.h
++++ b/src/tuner/GyroMagCalibration.h
+@@ -7,7 +7,9 @@
+ #include "kalman_common/GyroInterval.h"
+ #include <cmath>
+
++namespace ocean_imu::research { class MagneticCalibrationReplay; }
+ class GyroMagCalibration {
++    friend class ocean_imu::research::MagneticCalibrationReplay;
+ public:
+     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+     using Vector3 = Eigen::Vector3f;
+@@ -61,6 +63,7 @@ private:
+         return H;
+     }
+     void initialize_(const Vector3& mag);
++    void transportToPacket_();
+     void clearRotation_() { rotation_.setIdentity(); bias_rotation_.setZero(); elapsed_=angle_variance_=0.0f; }
+     Config cfg_{};
+     State x_ = State::Zero();
+diff --git a/src/tuner/GyroMagCalibrationImpl.h b/src/tuner/GyroMagCalibrationImpl.h
+index 188c3d1f2..bad75a02f 100644
+--- a/src/tuner/GyroMagCalibrationImpl.h
++++ b/src/tuner/GyroMagCalibrationImpl.h
+@@ -39,10 +39,7 @@ OCEAN_IMU_MAG_INLINE void GyroMagCalibration::predict(float dt, const Vector3& g
+         if (elapsed_ > 1.0f) reset();
+     }
+
+-OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
+-        if (!mag.allFinite() || mag.norm() < 1.0e-3f) return false;
+-        if (!initialized_) { initialize_(mag); return false; }
+-        if (!(elapsed_ > 0.0f)) return false; // duplicate mag without IMU time
++OCEAN_IMU_MAG_INLINE void GyroMagCalibration::transportToPacket_() {
+         const float dt = elapsed_;
+         const Matrix3 R = rotation_.toRotationMatrix();
+         x_.head<3>() = R * x_.head<3>();
+@@ -57,6 +54,14 @@ OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
+         P_.block<3,3>(3,3).diagonal().array() += sq_(cfg_.mag_bias_rw_uT) * dt;
+         P_.block<3,3>(6,6).diagonal().array() += sq_(cfg_.gyro_bias_rw_radps) * dt;
+         clearRotation_();
++}
++
++OCEAN_IMU_MAG_INLINE bool GyroMagCalibration::update(const Vector3& mag) {
++        if (!mag.allFinite() || mag.norm() < 1.0e-3f) return false;
++        if (!initialized_) { initialize_(mag); return false; }
++        if (!(elapsed_ > 0.0f)) return false; // duplicate mag without IMU time
++        const float dt = elapsed_;
++        transportToPacket_();
+         const Measurement H = measurement_();
+         const Vector3 residual = mag - (matrix_() * x_.head<3>() + biasBodyUT());
+         const float variance = sq_(cfg_.mag_white_std_uT);
+diff --git a/src/util/W3dSimCommon.cpp b/src/util/W3dSimCommon.cpp
+index 724b37ec4..c2a7c7087 100644
+--- a/src/util/W3dSimCommon.cpp
++++ b/src/util/W3dSimCommon.cpp
+@@ -1170,7 +1170,8 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
+             << "dfilt_ax,dfilt_ay\n";
+     }
+
+-    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical();
++    const Vector3f mag_world_zu = MagSim_WMM::mag_world_nautical(
++        MagSim_WMM::default_declination_deg, options_.magnetic_inclination_deg);
+
+     const float mag_dt = (options_.mag_odr_hz > 0.0f)
+         ? (1.0f / options_.mag_odr_hz)
+@@ -1269,7 +1270,9 @@ std::optional<W3dSimulationRunResult> W3dSimulationRunner::run(const std::string
+                 Vector3f mag_b_enu = C_wb_zu * mag_world_zu;
+
+                 if (options_.add_noise && noise_models_.mag_noise) {
+-                    mag_b_enu = apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
++                    mag_b_enu = options_.mag_sensor
++                        ? options_.mag_sensor(mag_b_enu, *noise_models_.mag_noise, mag_dt)
++                        : apply_mag_noise(mag_b_enu, *noise_models_.mag_noise, mag_dt);
+                 }
+                 if (options_.add_noise) {
+                     for (auto& model : noise_models_.extra_mag_noise_models) {
+diff --git a/src/util/W3dSimCommon.h b/src/util/W3dSimCommon.h
+index 80f73a199..cd32b0c6f 100644
+--- a/src/util/W3dSimCommon.h
++++ b/src/util/W3dSimCommon.h
+@@ -677,6 +677,9 @@ void w3d_report_lever_arm(const std::shared_ptr<W3dLeverArm>& lever_arm);
+ bool w3d_underway_reference_from_env();
+
+ struct W3dSimulationOptions {
++    // Optional host experiment sensor fixture, evaluated before the NED basis map.
++    float magnetic_inclination_deg = MagSim_WMM::default_inclination_deg;
++    std::function<Vector3f(const Vector3f&, MagNoiseModel&, float)> mag_sensor;
+     float dt = 0.005f;
+     bool with_mag = true;
+     bool add_noise = true;
+@@ -818,7 +821,7 @@ void print_validation_metrics(const W3dSimulationRunResult& result,
+ std::vector<std::string> collect_wave_data_files(const std::filesystem::path& directory);
+ bool w3d_any_quality_gate_failed();
+
+-template <typename AdapterT>
++template <typename AdapterT, typename Configure = std::nullptr_t>
+ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const std::string& filename,
+                                                                            float dt,
+                                                                            bool with_mag,
+@@ -827,7 +830,8 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
+                                                                            std::string output_suffix_with_mag = "_fusion",
+                                                                            std::string output_suffix_no_mag = "_fusion_nomag",
+                                                                            W3dRandomSeeds seeds = {},
+-                                                                           bool write_timeseries = true)
++                                                                           bool write_timeseries = true,
++                                                                           Configure configure = nullptr)
+ {
+     const float acc_sigma = 1.51e-3f * g_std;
+     const float gyr_sigma = 0.00157f;
+@@ -876,6 +880,7 @@ inline std::optional<W3dSimulationRunResult> process_wave_file_for_tracker(const
+     // record is done.
+     options.lever_arm = w3d_lever_arm_from_env(dt);
+
++    if constexpr (!std::is_same_v<Configure, std::nullptr_t>) configure(options);
+     W3dSimulationRunner runner(options, std::move(noise_models), adapter);
+     auto result = runner.run(filename);
+     w3d_report_lever_arm(options.lever_arm);
+diff --git a/tests/common/SharedModesReplay.h b/tests/common/SharedModesReplay.h
+index d6a17cf0a..950726399 100644
+--- a/tests/common/SharedModesReplay.h
++++ b/tests/common/SharedModesReplay.h
+@@ -65,7 +65,8 @@ public:
+     void update(float dt, const Vector3f& g, const Vector3f& a, float t) override { impl_.update(dt, g, a, t); }
+     FilterSnapshot snapshot() const override { return impl_.snapshot(); }
+ protected:
+-    auto& filter() { return impl_.fusion().raw(); }
++    auto& facade() { return impl_.fusion(); }
++    auto& filter() { return facade().raw(); }
+ private:
+     CarmaAdapter<4, false, 4, false, Core> impl_;
+ };

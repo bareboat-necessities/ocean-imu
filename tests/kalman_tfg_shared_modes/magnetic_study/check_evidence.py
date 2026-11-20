@@ -1,0 +1,33 @@
+"""Fail closed on missing, unpaired, nonfinite or numerically inconsistent holdout rows."""
+import csv
+import math
+from pathlib import Path
+from statistics import mean
+
+root=Path(__file__).resolve().parents[3]
+with (root/'reports/results/marine_mag/validation.csv').open() as f:
+    rows=list(csv.DictReader(f))
+groups={}
+for row in rows:
+    k=tuple(row[n] for n in ('case','height','seed','scenario','dip'))
+    variant=int(row['variant'])
+    assert variant not in groups.setdefault(k,{})
+    groups[k][variant]=row
+    for field in ('yaw_rms_deg','yaw_mean_deg','centered_deg','disp_3d_rms_m','min_eig'):
+        assert math.isfinite(float(row[field])), (k,variant,field)
+    assert float(row['min_eig'])>=-1e-5
+    assert math.isclose(float(row['yaw_rms_deg'])**2,
+        float(row['yaw_mean_deg'])**2+float(row['centered_deg'])**2,abs_tol=1e-5)
+assert len(groups)==32
+for key,arms in groups.items():
+    assert set(arms)==set(range(-1,9)),key
+    for v in (1,5):
+        for field in ('yaw_rms_deg','yaw_mean_deg','roll_rms_deg','pitch_rms_deg','disp_3d_rms_m','bx_rms'):
+            assert abs(float(arms[0][field])-float(arms[v][field]))<=1e-7,(key,v,field)
+    assert abs(float(arms[0]['matrix_err_rms'])-float(arms[7]['matrix_err_rms']))<1e-7
+with (root/'reports/results/marine_mag/paired.csv').open() as f:
+    scores={int(r['variant']):float(r['delta']) for r in csv.DictReader(f) if r['metric']=='yaw_rms_deg'}
+for v,delta in scores.items():
+    actual=mean(float(g[v]['yaw_rms_deg'])-float(g[0]['yaw_rms_deg']) for g in groups.values())
+    assert abs(actual-delta)<1e-6
+print(f'{len(groups)} complete paired conditions, {len(rows)} finite scores; covariance and control identities pass')

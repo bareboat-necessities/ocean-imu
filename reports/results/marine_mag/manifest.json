@@ -1,0 +1,66 @@
+{
+  "baseline": "f1424f58ef019994a28aef03efc3da0dc5d5ca98",
+  "dataset": "bareboat-necessities/oceanography-waves-lib",
+  "release": "v1.4.0",
+  "archives": {
+    "following": {
+      "archive": "sim-data-files-vessel-rao-28ft-5kn.zip",
+      "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940",
+      "mean_heading_deg": 0.0,
+      "description": "northbound, following seas"
+    },
+    "head": {
+      "archive": "sim-data-files-vessel-rao-28ft-5kn-south.zip",
+      "sha256": "402d5c8366678b40fac015d8f1eb9dc26da71b13ddf6bed1e0f0651a7e64a3be",
+      "mean_heading_deg": 180.0,
+      "description": "southbound, head / bow-quartering seas"
+    }
+  },
+  "reference": "canonical magnetic north, geographic scorer includes simulator declination",
+  "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
+  "cxxflags": "-O3 -std=c++20 -funroll-loops -fno-finite-math-only -march=x86-64-v3",
+  "eigen": "3.4.0",
+  "stages": {
+    "diagnosis": {
+      "rows": 60,
+      "seeds": [
+        0
+      ],
+      "inputs": "diagnosis-inputs.csv"
+    },
+    "development": {
+      "rows": 132,
+      "seeds": [
+        13,
+        29
+      ],
+      "inputs": "development-inputs.csv"
+    },
+    "validation": {
+      "rows": 320,
+      "seeds": [
+        101,
+        307,
+        1009,
+        2027
+      ],
+      "inputs": "validation-inputs.csv"
+    },
+    "stress": {
+      "rows": 140,
+      "seeds": [
+        3037
+      ],
+      "inputs": "stress-inputs.csv"
+    }
+  },
+  "seed_zero": "fixed native W3D startup and sensor stream defaults",
+  "score_window_s": [
+    300,
+    1200
+  ],
+  "sample_rate_hz": 200,
+  "nominal_magnetometer_rate_hz": 25,
+  "confidence_unit": "one independent joint sensor/initialization draw; eight paired conditions per held-out draw",
+  "observability_rows": 960
+}

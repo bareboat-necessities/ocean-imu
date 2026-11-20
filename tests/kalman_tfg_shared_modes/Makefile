@@ -24,10 +24,4 @@ installation-study: installation-study.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -MMD -MP -c $< -o $@
 -include $(wildcard *.d)
 clean:
-	rm -f *.o *.d $(TARGETS) installation-study magnetic-study magnetic_study/*.o magnetic_study/*.d *.exe *.csv
-
-# White-box access is local to this diagnostic TU. No firmware hooks or ABI changes.
-magnetic_study/replay.o: CPPFLAGS += -fno-access-control
-magnetic-study: magnetic_study/replay.o magnetic_study/SelectiveMag.o W3dSimCommon.o
-	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
--include $(wildcard magnetic_study/*.d)
+	rm -f *.o *.d $(TARGETS) installation-study *.exe *.csv

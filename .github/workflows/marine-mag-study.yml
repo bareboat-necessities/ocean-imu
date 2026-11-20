@@ -1,0 +1,25 @@
+name: Marine magnetic calibration research
+on:
+  pull_request:
+    paths:
+      - 'tests/kalman_tfg_shared_modes/magnetic_study/**'
+      - 'tools/marine_mag*'
+      - 'doc/marine_mag/**'
+      - 'reports/results/marine_mag/**'
+      - '.github/workflows/marine-mag-study.yml'
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - run: sudo apt-get update -qq && sudo apt-get install -y libeigen3-dev
+      - uses: ./.github/actions/replay-toolchain
+      - name: Build isolated instrumentation and verify rank checks
+        run: make -j1 -C tests/kalman_tfg_shared_modes/magnetic_study all check
+      - name: Cross-check paired evidence and numerical consistency
+        run: python3 tests/kalman_tfg_shared_modes/magnetic_study/check_evidence.py
+      - name: Reproduce two held-out full-rate navigations
+        run: |
+          python3 tools/sim_dataset.py --dest "$RUNNER_TEMP/magnetic-following"
+          python3 tests/kalman_tfg_shared_modes/magnetic_study/check_replay.py "$RUNNER_TEMP/magnetic-following"

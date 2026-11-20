@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import subprocess
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -14,11 +15,11 @@ from sim_dataset import ROOT, digest, REFERENCE_CSV_SHA256_BY_CASE
 from tfg_shared_modes_degradation import (DIAGNOSTIC_HIGH_HEIGHT_M, DIAGNOSTIC_SOURCE_HEIGHT_M,
     ROUNDTRIP_DURATION_SEC, ROUNDTRIP_WAVE_NAME, make_roundtrip_wave, ov)
 
-BINARY = ROOT / 'tests/kalman_tfg_shared_modes/magnetic-study'
+BINARY = Path(os.environ.get('MARINE_MAG_BINARY', ROOT/'tests/kalman_tfg_shared_modes/magnetic_study/build/magnetic-study'))
 OUT = ROOT / 'reports/results/marine_mag'
 CAL = 't bx by bz px py pz applied_matrix_err matrix_err field_err dip_err accepted missed rejected first_applied info_hard info_scale scale_open bias_cov_trace bias_nees min_eig'.split()
 NAV = 'yaw_rms_deg roll_rms_deg pitch_rms_deg disp_x_rms_m disp_y_rms_m disp_z_rms_m disp_3d_rms_m gyro_bias_3d_rms_radps accel_bias_3d_rms_mps2'.split()
-ARMS = tuple(range(-1,8))
+ARMS = tuple(range(-1,9))
 
 
 def plan(stage):
@@ -32,7 +33,7 @@ def plan(stage):
         if stage=='development':
             for seed in (13,29):
                 for height,s in [('0.270','clean'),('1.500','hard'),('4.000','combined')]:
-                    for v in ARMS:
+                    for v in (*ARMS,9):
                         yield case,'jonswap',height,seed,s,66.5,v
         if stage=='validation':
             for seed in (101,307,1009,2027):
@@ -64,7 +65,7 @@ def special(data,case,cache,scenario):
     folder.mkdir(parents=True,exist_ok=True)
     low=ov.find_default_input(data,'1.500','50.710')
     path=folder/(ROUNDTRIP_WAVE_NAME if scenario=='roundtrip' else low.name)
-    if path.exists():
+    if path.is_file() and (scenario=='roundtrip' or path.with_suffix('.track').is_file()):
         return path
     # underway_reference selected_case() resolves OCEAN_IMU_SIM_CASE at call time
     os.environ['OCEAN_IMU_SIM_CASE']=case
@@ -94,12 +95,17 @@ def special(data,case,cache,scenario):
         values=ov.rebuild_body_imu(columns,values)
         # Score-only correction to W3D's fixed release-track subtraction.
         # Keep p, v, acceleration, attitude and IMU physically consistent in CSV.
-        np.savetxt(path.with_suffix('.track'),(pos-p)[:,:2],fmt='%.12g')
-    ov.write_wave_csv(path,columns,values)
+    with tempfile.TemporaryDirectory(dir=folder) as tmp:
+        staged=Path(tmp)/path.name
+        ov.write_wave_csv(staged,columns,values)
+        if scenario!='roundtrip':
+            np.savetxt(staged.with_suffix('.track'),(pos-p)[:,:2],fmt='%.12g')
+            staged.with_suffix('.track').replace(path.with_suffix('.track'))
+        staged.replace(path)
     return path
 
 
-def parse(stdout):
+def parse(stdout, allow_intervention_failure=False):
     metrics={}
     for line in stdout.splitlines():
         if line.startswith(('VALIDATION_METRICS ','VALIDATION_METRICS_MEANS ')):
@@ -114,7 +120,7 @@ def parse(stdout):
         return np.array([[float(v) for v in line.split()[1:]] for line in stdout.splitlines() if line.startswith(tag+' ')])
     c=rows('CAL')
     y=rows('YAW')
-    if c.shape!=(240,len(CAL)) or y.shape!=(240,4) or not np.all(np.isfinite(c)) or not np.all(np.isfinite(y)):
+    if c.shape!=(239,len(CAL)) or y.shape!=(240,4) or not np.all(np.isfinite(c)) or not np.all(np.isfinite(y)):
         raise ValueError('nonfinite or missing diagnostics')
     fields=dict(zip(CAL,c.T))
     for k in ['bx','by','bz','px','py','pz','applied_matrix_err','matrix_err','field_err','dip_err']:
@@ -127,9 +133,13 @@ def parse(stdout):
     for label,start,end in [('pre',540,600),('event',600,610),('recovery',610,640),('late',1140,1200),
                             ('turn',550,630),('after_turn',630,710)]:
         nav[label+'_yaw_deg']=np.sqrt(np.mean(y[(y[:,0]>start)&(y[:,0]<=end),2]**2))
-    if not np.all(np.isfinite(list(nav.values()))):
-        raise ValueError('nonfinite metrics')
-    return nav,np.column_stack((y,c[:,1:])).tolist()
+    failed=[k for k,v in nav.items() if not np.isfinite(v)]
+    if failed and not allow_intervention_failure:
+        raise ValueError('nonfinite metrics: '+str(failed))
+    for k in failed:
+        nav[k]=None
+    nav['failed_metrics']=','.join(failed)
+    return nav,np.column_stack((y[:len(c)],c[:,1:])).tolist()
 
 
 def main():
@@ -143,7 +153,7 @@ def main():
     identity=digest(BINARY)
     conditions=list(plan(args.stage))
     records={}
-    for case,spectrum,height,seed,scenario,dip,v in conditions:
+    for case,spectrum,height,_seed,scenario,_dip,_variant in conditions:
         key=case,spectrum,height,scenario
         if key in records:
             continue
@@ -172,11 +182,26 @@ def main():
             if scenario=='engine': env['W3D_ENGINE_RPM']='1600'
             run=subprocess.run([BINARY,path,str(v),physical,str(dip)],env=env,capture_output=True,text=True)
             if run.returncode: raise RuntimeError(str(condition)+' '+run.stderr[-1000:]+run.stdout[-800:])
-            scores,trace=parse(run.stdout)
+            try:
+                scores,trace=parse(run.stdout,scenario=="uncoupled")
+            except ValueError as e:
+                (args.cache/(ck+'.failed.log')).write_text(run.stdout)
+                raise ValueError(f'{condition}: {e}') from e
             tmp=checkpoint.with_suffix('.tmp')
             tmp.write_text(json.dumps([scores,trace],allow_nan=False))
             tmp.replace(checkpoint)
         scores,trace=json.loads(checkpoint.read_text())
+        scores.setdefault('failed_metrics','')
+        # Truth-qualified convergence is a scoring outcome only. Clean controls
+        # may qualify immediately even with an identity installation correction.
+        history=np.asarray(trace)
+        def column(k):
+            return history[:,4+CAL[1:].index(k)]
+        hard_error=np.sqrt(sum(column(k)**2 for k in ('bx','by','bz')))
+        usable=(history[:,0]>=180)&(hard_error<=1.)&(column('applied_matrix_err')<=.03)
+        held=np.flatnonzero(np.convolve(usable.astype(int),np.ones(13,dtype=int),'valid')==13)
+        scores['usable_s']=int(history[held[0],0]+60) if len(held) else -1
+        scores['bias_cover_95']=np.mean(column('bias_nees')[60:]<=7.814728) if v!=-1 else None
         print(args.stage,case,height,seed,scenario,v,round(scores['yaw_rms_deg'],4),flush=True)
         return dict(**key,**scores),[dict(**key,**dict(zip(['t','yaw_mean','yaw_rms','peak_step']+CAL[1:],row))) for row in trace]
     with ThreadPoolExecutor(args.jobs) as pool: results=list(pool.map(run,conditions))
