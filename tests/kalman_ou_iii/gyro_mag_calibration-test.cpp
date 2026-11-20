@@ -93,4 +93,30 @@ void legacyStartupOffset() {
     check((tracker.correct(raw)-(raw-fitted)).norm()<1e-5f,
           "legacy magnetic measurement subtracts the total offset exactly once");
 }
-int main(){for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();legacyStartupOffset();return failures?1:0;}
+void screenedInstallation(bool distorted, int samples_per_packet) {
+    seastate::common::ContinuousHardIronTracker tracker;
+    tracker.gyro_calibration_enabled = true;
+    tracker.screen_installation = true;
+    tracker.calibration.setGyroMode(ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate);
+    constexpr float dt = 0.005f;
+    const V field(20.7f, 0.f, 47.7f);
+    const V offset = distorted ? V(3.f, -3.f, 2.f) : V::Zero();
+    Q previous = attitude(0.f, 0.f);
+    float first_release = -1.f;
+    for (int k = 1; k <= 60000; ++k) {
+        const float t = static_cast<float>(k) * dt;
+        const Q q = attitude(t, 0.f);
+        const Eigen::AngleAxisf delta(previous.conjugate() * q);
+        tracker.predict(dt, delta.axis() * (delta.angle() / dt));
+        previous = q;
+        if (k % samples_per_packet) continue;
+        tracker.accumulate(t, dt * static_cast<float>(samples_per_packet), q, q.conjugate() * field + offset);
+        if (tracker.installation_released && first_release < 0.f) first_release = t;
+    }
+    check(distorted ? first_release >= 15.f : first_release < 0.f,
+          "screen waits for persistent installation evidence at the supplied packet rate");
+    tracker.resetApplied();
+    check(!tracker.installation_released && tracker.consecutive_detections == 0,
+          "new acquisition clears the installation decision");
+}
+int main(){for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();legacyStartupOffset();for(int cadence:{4,8})for(bool distorted:{false,true})screenedInstallation(distorted,cadence);return failures?1:0;}

@@ -28,7 +28,7 @@ def replay(task):
     family, case, path, mode = task
     env = {k: v for k, v in os.environ.items() if not k.startswith(("W3D_", "TFG_", "SF_", "OCEAN_IMU_SIM_CASE"))}
     env.update(OCEAN_IMU_SIM_CASE=case, W3D_WRITE_TIMESERIES="0", W3D_COLLECT_ALL_GATES="1",
-               W3D_REFERENCE_MOTION="underway", W3D_MAG_CALIBRATION=mode)
+               W3D_REFERENCE_MOTION="underway", W3D_VALIDATION_WINDOW_SEC="900", W3D_MAG_CALIBRATION=mode)
     binary = ROOT / "tests" / BINARIES[family]
     with tempfile.TemporaryDirectory() as tmp:
         proc = subprocess.run([binary, "--input", path], env=env, cwd=tmp, text=True,
@@ -37,12 +37,14 @@ def replay(task):
             if s.startswith("VALIDATION_METRICS ") and "segment=window" in s]
     if len(rows) != 1 or int(rows[0]["samples"]) != 180000 or proc.returncode not in (0, 1):
         raise RuntimeError(f"{task}: replay failed ({proc.returncode})\n{proc.stdout[-2000:]}")
-    if proc.returncode and not any(s in proc.stdout.lower() for s in ("fail", "exceed", "limit")):
-        raise RuntimeError(proc.stdout[-2000:])
+    gates = [dict(item.split("=", 1) for item in line.split()[1:]) for line in proc.stdout.splitlines()
+             if line.startswith("QUALITY_GATE: PASS=")]
+    if len(gates) != 1 or gates[0]["PASS"] not in ("0", "1") or (proc.returncode and gates[0]["PASS"] == "1"):
+        raise RuntimeError(f"{task}: missing or inconsistent gate result\n{proc.stdout[-2000:]}")
     values = {k: float(rows[0][k]) for k in METRICS}
     if not all(math.isfinite(v) for v in values.values()):
         raise ValueError(f"Nonfinite result: {task}")
-    return dict(family=family, case=case, record=path.name, mode=mode, **values, exit_code=proc.returncode)
+    return dict(family=family, case=case, record=path.name, mode=mode, **values, gate_pass=int(gates[0]["PASS"]), gate_reason=gates[0]["REASON"], exit_code=proc.returncode)
 
 
 def main():
