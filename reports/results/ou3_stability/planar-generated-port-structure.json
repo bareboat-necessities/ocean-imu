@@ -44,7 +44,7 @@
     "src/tuner/ContinuousMagHardIronEstimator.h": "62cda3c6adddafa693720167e497ba2bda15ce74",
     "src/tuner/GyroMagCalibration.cpp": "d20405273b6e39c9e4ebb938971c9c3740ed439c",
     "src/tuner/GyroMagCalibration.h": "3978177b68ed8920404bc2227617b8ddb2c51ce3",
-    "src/tuner/GyroMagCalibrationImpl.h": "0d7d6c1135a19367a5b11c2168ca1fd292920dd0",
+    "src/tuner/GyroMagCalibrationImpl.h": "5f27a29b409536762f92dcb04ad87abc7e22eea1",
     "src/tuner/MagAutoTuner.h": "a1ccc503d3ae0623545e8e005e790d1f90f62a42"
   }
 }

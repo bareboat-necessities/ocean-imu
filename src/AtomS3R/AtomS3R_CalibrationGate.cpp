@@ -31,9 +31,19 @@ void reportCalibration(const char* why, bool wizard, bool have_blob, const ImuCa
 
 void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV5& blob, bool& have_blob,
                               RuntimeCals& runtime, CalibrationWizardFn wizard) {
-  const char* why = calibrationUnusableReason(have_blob, runtime);
-  reportCalibration(why, wizard != nullptr, have_blob, blob, runtime);
-  while (why) {
+  for (;;) {
+    if (have_blob) {
+      // A cancelled wizard may have reconfigured the source. Restore the
+      // saved units and timing before deciding whether the fit is usable.
+      runtime.rebuildFromBlob(blob);
+      if (runtime.mag_source_mismatch) {
+        configureAtomS3RMag(Serial);
+        runtime.rebuildFromBlob(blob);
+      }
+    }
+    const char* why = calibrationUnusableReason(have_blob, runtime);
+    reportCalibration(why, wizard != nullptr, have_blob, blob, runtime);
+    if (!why) return;
     ui.setReadRotation();
     ui.title("STOPPED");
     ui.line("Calibration unusable:");
@@ -59,10 +69,7 @@ void requireUsableCalibration(M5Ui& ui, ImuCalStoreNvs& store, ImuCalBlobV5& blo
     if (wizard(ui, store, saved)) {
       blob = saved;
       have_blob = true;
-      runtime.rebuildFromBlob(blob);
     }
-    why = calibrationUnusableReason(have_blob, runtime);
-    reportCalibration(why, wizard != nullptr, have_blob, blob, runtime);
   }
 }
 

@@ -60,6 +60,31 @@ void recover(float heading, unsigned seed) {
     check(!cal.valid(),"duplicate magnetic packets cannot create calibration information");
     check(!cal.update(V::Constant(std::numeric_limits<float>::quiet_NaN())),"nonfinite magnetic data are rejected");
 }
+// A rejected packet commits only prediction, giving an independent prior
+// for comparing every coefficient of the in-place update to dense Joseph form.
+void checkJosephUpdate() {
+    GyroMagCalibration cal;
+    cal.setGyroMode(ocean_imu::kalman::filter_detail::GyroSampleMode::IntervalRate);
+    const V field(20.f, -4.f, 47.f);
+    cal.update(field);
+    cal.predict(0.025f, V(0.3f, -0.1f, 0.2f));
+    auto prior = cal;
+    check(!prior.update(5.f * field), "outlier leaves the transported prior available");
+    const auto& x = prior.state();
+    Eigen::MatrixXd H = Eigen::MatrixXd::Zero(3, 18);
+    H.leftCols(3).setIdentity();  // initial calibration matrix is identity
+    H.middleCols(3, 3).setIdentity();
+    for (int j = 0; j < 3; ++j) H.middleCols(9 + 3*j, 3).diagonal().setConstant(x[j]);
+    const Eigen::MatrixXd P = prior.covariance().cast<double>();
+    const Eigen::Matrix3d noise = Eigen::Matrix3d::Identity() * 0.8 * 0.8;
+    const Eigen::Matrix3d S = H * P * H.transpose() + noise;
+    const Eigen::MatrixXd K = S.ldlt().solve(H * P).transpose();
+    const Eigen::MatrixXd F = Eigen::MatrixXd::Identity(18, 18) - K * H;
+    const Eigen::MatrixXd expected = F * P * F.transpose() + K * noise * K.transpose();
+    check(cal.update(field + V(.2f, -.1f, .1f)), "inlier applies the covariance correction");
+    check((cal.covariance().cast<double>() - expected).cwiseAbs().maxCoeff() < 2e-6,
+          "in-place covariance agrees with dense double-precision Joseph update");
+}
 void quiet() {
     seastate::common::ContinuousHardIronTracker tracker;
     tracker.gyro_calibration_enabled=true;
@@ -119,4 +144,4 @@ void screenedInstallation(bool distorted, int samples_per_packet) {
     check(!tracker.installation_released && tracker.consecutive_detections == 0,
           "new acquisition clears the installation decision");
 }
-int main(){for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();legacyStartupOffset();for(int cadence:{4,8})for(bool distorted:{false,true})screenedInstallation(distorted,cadence);return failures?1:0;}
+int main(){checkJosephUpdate();for(unsigned seed:{7u,41u,101u})for(float heading:{0.0f,3.14159265f})recover(heading,seed);quiet();legacyStartupOffset();for(int cadence:{4,8})for(bool distorted:{false,true})screenedInstallation(distorted,cadence);return failures?1:0;}

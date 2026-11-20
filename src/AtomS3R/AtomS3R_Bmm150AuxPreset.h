@@ -46,6 +46,39 @@ class Bmm150AuxPreset {
 
   const char* failure() const { return failure_; }
 
+  // M5Unified can finish BMI270 startup with accel/gyro enabled but AUX still
+  // in manual mode if the BMM150 misses its first chip-ID read after reset.
+  // Complete that specific startup sequence only after identifying the chip.
+  bool ensureDataMode() {
+    uint8_t conf, addr, pwr, device;
+    failure_ = "cannot read AUX configuration";
+    if (!dev_ || !rd_(AUX_IF_CONF, conf)) return false;
+    if (!(conf & AUX_MANUAL_EN)) return true;
+    if (!rd_(AUX_DEV_ID, device) || !rd_(PWR_CTRL, pwr) || !rd_(AUX_RD_ADDR, addr)) return false;
+    failure_ = "unexpected AUX manual configuration";
+    if (device != (0x10 << 1) || conf != AUX_MANUAL_EN || (pwr & PWR_AUX_EN) || addr != BMM_CHIP_ID)
+      return false;
+
+    uint8_t id, mode;
+    failure_ = "BMM150 did not answer startup probe";
+    wait_(3);  // allow the BMM150 to finish waking after the driver's reset
+    if (!auxRead_(BMM_CHIP_ID, id) || id != 0x32) return false;
+    failure_ = "BMM150 normal mode not confirmed";
+    if (!auxWrite_(BMM_MODE, 0x38) || !auxRead_(BMM_MODE, mode) || mode != 0x38) {
+      restore_(AUX_RD_ADDR, addr);
+      return false;
+    }
+    // Same FCU/burst configuration, first data register and power sequence
+    // as the successful BMM150 branch in M5Unified's BMI270 driver.
+    if (restore_(AUX_IF_CONF, 0x4F) && restore_(AUX_RD_ADDR, 0x42) &&
+        restore_(PWR_CTRL, uint8_t(pwr | PWR_AUX_EN))) return true;
+    restore_(PWR_CTRL, pwr);
+    restore_(AUX_IF_CONF, conf);
+    restore_(AUX_RD_ADDR, addr);
+    failure_ = "could not resume AUX data polling";
+    return false;
+  }
+
   // Read-only query of the BMM150 configuration (still needs manual AUX mode).
   bool query(Bmm150RegState& out) {
     if (!enter_()) return false;
@@ -160,11 +193,19 @@ class Bmm150AuxPreset {
     return false;
   }
 
+  // Bosch's manual AUX sequence waits for idle before triggering a transfer
+  // and allows 1 ms after writing the address before consuming its result.
+  bool trigger_(uint8_t address_reg, uint8_t address) {
+    if (!waitIdle_() || !wr_(address_reg, address)) return false;
+    wait_(1);
+    return waitIdle_();
+  }
+
   bool auxRead_(uint8_t reg, uint8_t& v) {
-    return wr_(AUX_RD_ADDR, reg) && waitIdle_() && rd_(AUX_DATA, v);
+    return trigger_(AUX_RD_ADDR, reg) && rd_(AUX_DATA, v);
   }
   bool auxWrite_(uint8_t reg, uint8_t v) {
-    return wr_(AUX_WR_DATA, v) && wr_(AUX_WR_ADDR, reg) && waitIdle_();
+    return waitIdle_() && wr_(AUX_WR_DATA, v) && trigger_(AUX_WR_ADDR, reg);
   }
   bool readState_(Bmm150RegState& s) {
     failure_ = "AUX read failed";

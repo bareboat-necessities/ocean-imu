@@ -206,7 +206,7 @@ private:
         if (!mag_present) {
           Serial.println("[MAG] unavailable -> skipping mag calibration");
           mag_out_.ok = false;
-        } else if (!runMagStage_(redo_all)) {
+        } else if (!runMagCaptureStage_(redo_all)) {
           if (redo_all) {
             Serial.println("[WIZ] redo all requested");
             continue;
@@ -454,16 +454,6 @@ private:
     while (true) { Input::update(); if (Input::tapPressed()) break; delay(10); }
   }
 
-  // MAG stage with retry loop. Returns true on success; false with redo_all
-  // set when the user asked to restart, false otherwise on abort.
-  bool runMagStage_(bool& redo_all) {
-    // Calibrate in the same BMM150 setting and units every sketch runs with.
-    // Re-applying is idempotent; on failure the driver values are used, as at
-    // runtime, and the saved calibration records which source it was fitted on.
-    configureAtomS3RMag(Serial);
-    return runMagCaptureStage_(redo_all);
-  }
-
   bool runMagCaptureStage_(bool& redo_all) {
     redo_all = false;
     while (true) {
@@ -674,11 +664,12 @@ private:
   }
 
   bool magAvailable_() {
-    // Actively probe MAG so we can skip calibration cleanly when
-    // magnetometer data is unavailable/stuck.
-    Vector3f m = Vector3f::Zero();
-    bool have_prev = false;
-    Vector3f prev = Vector3f::Zero();
+    // Configure the calibration source before probing it, including on Retry.
+    // The source reader increments its sequence only for distinct acquisitions.
+    configureAtomS3RMag(Serial);
+    Vector3f m;
+    uint32_t first_sequence = 0;
+    bool have_first = false;
     constexpr uint32_t probe_ms = 1200;
     const uint32_t t0 = millis();
 
@@ -692,14 +683,10 @@ private:
         delay(4);
         continue;
       }
-      if (have_prev) {
-        const float dm = (m - prev).norm();
-        if (std::isfinite(dm) && dm >= ImuCalWizardCfg::MAG_MIN_DELTA_uT) {
-          return true;
-        }
-      }
-      prev = m;
-      have_prev = true;
+      const auto& acquisition = atoms3rMagSource().acquisition;
+      if (have_first && acquisition.sequence != first_sequence) return true;
+      first_sequence = acquisition.sequence;
+      have_first = true;
       delay(4);
     }
     return false;
