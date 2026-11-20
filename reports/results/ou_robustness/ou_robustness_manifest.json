@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "46ffb8f16d79fd4316cdb89329dd171a4a82db9d",
+  "git_branch": "research/marine-online-mag-calibration",
+  "git_commit": "a004bd8e5112f59107e89c3f05cff42044ab3826",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -94,8 +94,8 @@
       "sha256": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096"
     },
     "src/kalman_common/MagneticStartupCommon.h": {
-      "bytes": 17483,
-      "sha256": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350"
+      "bytes": 18494,
+      "sha256": "b240b27a641a3de68b653d0ff43b5ccd3d023d32f9b279ecaee72d29fb24c343"
     },
     "src/kalman_common/MarineTurnModel.h": {
       "bytes": 2061,
@@ -118,16 +118,16 @@
       "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba"
     },
     "src/kalman_common/ProxyStartupFusion.h": {
-      "bytes": 47101,
-      "sha256": "752d095f7499830aebe3689d35a6b60a769e66bee5895838dec56e45948bdbb1"
+      "bytes": 48726,
+      "sha256": "4151c57d39afb173dcfc3abe336083b37679e86fa4e25f0dc930a1a03e5d81b7"
     },
     "src/kalman_common/SeaStateAdaptationCommon.h": {
       "bytes": 21011,
       "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee"
     },
     "src/kalman_common/SeaStateFusionDefaults.h": {
-      "bytes": 12331,
-      "sha256": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902"
+      "bytes": 12640,
+      "sha256": "3f37ed8603dd39e5bc511debcfa2c01555f2fb217649d0840dbe5c0e18911395"
     },
     "src/kalman_common/SeaStateFusionFilterCommon.h": {
       "bytes": 19966,
@@ -174,12 +174,12 @@
       "sha256": "6c489eaf6e710432d061aa339d13a0ede5a833c33896f97a76e38739ddc5b18a"
     },
     "src/tuner/GyroMagCalibration.h": {
-      "bytes": 3398,
-      "sha256": "0e94f5046444262d608f4fb8a78386ced2bfcba1c8177728a1d6d665a9123402"
+      "bytes": 3441,
+      "sha256": "302d6cf006e784feb3d0b2525d8c3cfd5d614f135529213ce0b18f9e2a8565dd"
     },
     "src/tuner/GyroMagCalibrationImpl.h": {
-      "bytes": 5870,
-      "sha256": "e64c307b51cb5b35cf4f063d89f3f079d47dae703d91f3bbb173523763834b20"
+      "bytes": 6766,
+      "sha256": "ef1f069b7647f597f8638d60864a38a94f71e3675f7d4e334c1f22e9b367931b"
     },
     "src/tuner/MagAutoTuner.h": {
       "bytes": 23065,
@@ -254,12 +254,16 @@
       "sha256": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558"
     },
     "tests/common/GyroReplayContract.h": {
-      "bytes": 1247,
-      "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9"
+      "bytes": 1402,
+      "sha256": "134b387951b7bfa9c3bbe02c4e869156f23b837deb14be51377b527bf04e9a80"
     },
     "tests/common/HostReplayFlags.mk": {
       "bytes": 831,
       "sha256": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1"
+    },
+    "tests/common/MagneticCalibrationReplayConfig.h": {
+      "bytes": 886,
+      "sha256": "69d6931592541a8621db363288db8662771b4f090934ded061369c5a0b4ff71d"
     },
     "tests/common/RecordReplayLimits.h": {
       "bytes": 2840,
@@ -278,8 +282,8 @@
       "sha256": "62f23a3e4eaa4b215e4fcae96ab70bd3cf1570bd25cd1fb2656e495fb33042ce"
     },
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-      "bytes": 35190,
-      "sha256": "90c29658066912d9a1ba690cf475e5d2cea8f8d63d8028f0dfbc4e66cbd2dbbb"
+      "bytes": 35287,
+      "sha256": "49b49ab077aafa8939b2ced0d21016f1b92fd0056249d863fc7e45e900d7f126"
     }
   },
   "matplotlib": "3.6.3",
@@ -405,8 +409,8 @@
       "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-19T21:04:27+00:00",
-    "git_commit": "46ffb8f16d79fd4316cdb89329dd171a4a82db9d",
+    "generated_at": "2026-11-20T06:35:59+00:00",
+    "git_commit": "a004bd8e5112f59107e89c3f05cff42044ab3826",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -457,8 +461,8 @@
         "size_bytes": 2656
       },
       "src/kalman_common/MagneticStartupCommon.h": {
-        "sha256": "8cabf45c36032d6a8ec037f5267af6ac81debd5540564be468bbda33ff963350",
-        "size_bytes": 17483
+        "sha256": "b240b27a641a3de68b653d0ff43b5ccd3d023d32f9b279ecaee72d29fb24c343",
+        "size_bytes": 18494
       },
       "src/kalman_common/MarineTurnModel.h": {
         "sha256": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
@@ -481,16 +485,16 @@
         "size_bytes": 1500
       },
       "src/kalman_common/ProxyStartupFusion.h": {
-        "sha256": "752d095f7499830aebe3689d35a6b60a769e66bee5895838dec56e45948bdbb1",
-        "size_bytes": 47101
+        "sha256": "4151c57d39afb173dcfc3abe336083b37679e86fa4e25f0dc930a1a03e5d81b7",
+        "size_bytes": 48726
       },
       "src/kalman_common/SeaStateAdaptationCommon.h": {
         "sha256": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
         "size_bytes": 21011
       },
       "src/kalman_common/SeaStateFusionDefaults.h": {
-        "sha256": "d18b0a9d6c232a61a1de0028f2ab975a225c6a472e4bc437b87420efe527b902",
-        "size_bytes": 12331
+        "sha256": "3f37ed8603dd39e5bc511debcfa2c01555f2fb217649d0840dbe5c0e18911395",
+        "size_bytes": 12640
       },
       "src/kalman_common/SeaStateFusionFilterCommon.h": {
         "sha256": "caebc69757336f16646aaae4e7290d5ec7577cd135a9e78aa90dca8d1d6eadc3",
@@ -537,12 +541,12 @@
         "size_bytes": 14956
       },
       "src/tuner/GyroMagCalibration.h": {
-        "sha256": "0e94f5046444262d608f4fb8a78386ced2bfcba1c8177728a1d6d665a9123402",
-        "size_bytes": 3398
+        "sha256": "302d6cf006e784feb3d0b2525d8c3cfd5d614f135529213ce0b18f9e2a8565dd",
+        "size_bytes": 3441
       },
       "src/tuner/GyroMagCalibrationImpl.h": {
-        "sha256": "e64c307b51cb5b35cf4f063d89f3f079d47dae703d91f3bbb173523763834b20",
-        "size_bytes": 5870
+        "sha256": "ef1f069b7647f597f8638d60864a38a94f71e3675f7d4e334c1f22e9b367931b",
+        "size_bytes": 6766
       },
       "src/tuner/MagAutoTuner.h": {
         "sha256": "e09202971f13d73b79020a20105e5ce1fe1e7e0bc02db0d9b8d22ded3d97a0f4",
@@ -617,12 +621,16 @@
         "size_bytes": 8561
       },
       "tests/common/GyroReplayContract.h": {
-        "sha256": "f4ba5f54b0a61a65cd9e3fa88a0fa588288e4decff206a35c1693e26c49c0da9",
-        "size_bytes": 1247
+        "sha256": "134b387951b7bfa9c3bbe02c4e869156f23b837deb14be51377b527bf04e9a80",
+        "size_bytes": 1402
       },
       "tests/common/HostReplayFlags.mk": {
         "sha256": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
         "size_bytes": 831
+      },
+      "tests/common/MagneticCalibrationReplayConfig.h": {
+        "sha256": "69d6931592541a8621db363288db8662771b4f090934ded061369c5a0b4ff71d",
+        "size_bytes": 886
       },
       "tests/common/RecordReplayLimits.h": {
         "sha256": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c",
@@ -641,8 +649,8 @@
         "size_bytes": 750
       },
       "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": {
-        "sha256": "90c29658066912d9a1ba690cf475e5d2cea8f8d63d8028f0dfbc4e66cbd2dbbb",
-        "size_bytes": 35190
+        "sha256": "49b49ab077aafa8939b2ced0d21016f1b92fd0056249d863fc7e45e900d7f126",
+        "size_bytes": 35287
       }
     },
     "input_files": {
@@ -669,8 +677,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44604494460",
-      "workflow": "build"
+      "run_id": "44673536192",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
