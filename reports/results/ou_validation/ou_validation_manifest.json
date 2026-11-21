@@ -19,7 +19,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "44e8f70bcadafde241ee228a8e42ffd47f3069d9",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   | 106939 +++++++++---------\n .../ou_validation/ou_validation_attitude.svg       |    692 +-\n .../ou_validation/ou_validation_covsync.svg        |    704 +-\n .../ou_validation/ou_validation_displacement.svg   |    664 +-\n .../results/ou_validation/ou_validation_macros.tex |      2 +-\n .../ou_validation/ou_validation_paired_effects.csv |   4868 +-\n .../ou_validation/ou_validation_publication.tex    |      4 +-\n .../results/ou_validation/ou_validation_raw.csv    |   1680 +-\n .../ou_validation/ou_validation_summary.csv        |   5280 +-\n .../results/ou_validation/ou_validation_table.tex  |      4 +-\n .../ou_validation/ou_validation_transition.csv     |  13514 +--\n .../ou_validation/ou_validation_transition.svg     |   5988 +-\n .../ou_validation/ou_validation_vertical.svg       |    680 +-\n 13 files changed, 70509 insertions(+), 70510 deletions(-)",
+  "git_commit": "e0d4e5c269de57984cc8cdf7970160f5d5c3c8e4",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |   3 +-\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n .../ou_validation/ou_validation_transition.csv     | 564 ++++++++++-----------\n 3 files changed, 284 insertions(+), 285 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -429,7 +429,7 @@
     }
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "adaptation_modes": [
       "Adaptive",
@@ -572,11 +572,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-20T23:38:18+00:00",
-    "git_commit": "44e8f70bcadafde241ee228a8e42ffd47f3069d9",
+    "generated_at": "2026-11-21T00:26:44+00:00",
+    "git_commit": "e0d4e5c269de57984cc8cdf7970160f5d5c3c8e4",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -875,7 +875,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44832185331",
+      "run_id": "44839360652",
       "workflow": "build"
     }
   },
@@ -921,8 +921,8 @@
       "sha256": "cbe14f5ffb42fd5d4fb878c3de0cea9afbbc53cc0de030f98e864966e9f6d357"
     },
     "ou_validation_transition.csv": {
-      "bytes": 1209065,
-      "sha256": "c1f94eb0f40c5a0625b11c75c65ac7957cd5eb4fba4467c1b6dc084f00ce2957"
+      "bytes": 1209043,
+      "sha256": "4f0f5ba37c575fc469ae1c6c4a8349baa548c5d7ab7dedb7a5d2845f5c1f847a"
     },
     "ou_validation_transition.svg": {
       "bytes": 145368,
