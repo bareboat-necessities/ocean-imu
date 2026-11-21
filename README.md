@@ -22,7 +22,7 @@ The articles describing the math behind the methods:
 
 INS Filters:
 
-- [Shared-mode TFG–CARMA(4,1) method and implementation](docs/tfg-carma-shared-modes.md)
+- [Shared-mode TFG–CARMA(4,1) method and implementation](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_tfg_shared_modes-method.pdf)
 
 - [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_ou-w3d.pdf)
 
