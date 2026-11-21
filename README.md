@@ -24,17 +24,17 @@ INS Filters:
 
 - [Shared-mode TFG–CARMA(4,1) method and implementation](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_tfg_shared_modes-method.pdf)
 
-- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_ou-w3d.pdf)
-
-- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_ou-w3d-stability-study.pdf)
-
-- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_tfg.pdf)
+- [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_carma_shared_modes.pdf)
 
 - [CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_carma.pdf)
 
 - [CARMA(4,1) Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_tfg_carma.pdf)
 
-- [Adaptive Shared-Mode CARMA(4,1) QMEKF](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_carma_shared_modes.pdf)
+- [Two-Frame Lie-Group Filter (TFG)](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_tfg.pdf)
+
+- [3D Wave Kalman with OU](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_ou-w3d.pdf)
+
+- [OU-III stability study](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/kalman_ou-w3d-stability-study.pdf)
 
 - [PII Observer](https://github.com/bareboat-necessities/ocean-imu/releases/download/v2.8.2/pii_observer-model.pdf)
 
