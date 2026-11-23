@@ -16,6 +16,7 @@
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/ImuCalWizardRunner.h"
 #include "AtomS3R/AtomS3R_CompassUI.h"
+#include "AtomS3R/AtomS3R_OutputTiming.h"
 #include "nmea/NmeaCompass.h"
 
 namespace atoms3r_compass {
@@ -25,10 +26,6 @@ using Vector3f = Eigen::Matrix<float, 3, 1>;
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = (uint32_t)(1000000.0f / LOOP_HZ);
-
-static constexpr uint32_t UI_REFRESH_MS = 100;
-static constexpr uint32_t DEBUG_SERIAL_MS = 200;
-static constexpr uint32_t NMEA_SERIAL_MS = 100;
 
 static constexpr float ROT_BIAS_TAU_S = 20.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
@@ -501,7 +498,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     if (tap_count_ > 0) return;
 
     const uint32_t now_ms = millis();
-    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
 
     if (use_graphics_ && compass_ui_ready_) {
@@ -529,9 +526,9 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     const uint32_t now_ms = millis();
 
 #if COMPASS_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
-    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
     last_serial_ms_ = now_ms;
 

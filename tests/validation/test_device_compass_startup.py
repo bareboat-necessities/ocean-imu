@@ -229,14 +229,14 @@ int main() {
             with self.subTest(sketch=path.name), tempfile.TemporaryDirectory() as tmp:
                 sketch = path.read_text()
                 self.assertIn("display_.waitForMenu();", function(sketch, "drawHomePending_"))
-                refresh = re.search(r"static constexpr uint32_t UI_REFRESH_MS\s*= \d+;", sketch)[0]
                 cpp = (Path(__file__).parent / "compass_display_test.cpp.in").read_text()
-                cpp = cpp.replace("/* DISPLAY */", display).replace("/* PERIOD */", refresh)
+                cpp = cpp.replace("/* DISPLAY */", display)
                 cpp = cpp.replace("/* UPDATE */", function(sketch, "updateUI_"))
                 source, exe = Path(tmp) / "redraw.cpp", Path(tmp) / "redraw"
                 source.write_text(cpp)
                 subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
-                                "-Wall", "-Wextra", "-Werror", str(source), "-o", str(exe)], check=True)
+                                "-Wall", "-Wextra", "-Werror", "-I", str(ROOT / "src"),
+                                str(source), "-o", str(exe)], check=True)
                 subprocess.run([str(exe)], check=True)
 
     def test_bmi270_navigation_burst_matches_m5unified(self):

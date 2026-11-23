@@ -42,6 +42,7 @@
   #include "AtomS3R/ImuCalWizardRunner.h"
 #endif
 #include "AtomS3R/AtomS3R_CompassUI.h"
+#include "AtomS3R/AtomS3R_OutputTiming.h"
 #include "nmea/NmeaCompass.h"
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
@@ -80,13 +81,6 @@ extern template void ocean_imu::kalman::Kalman3D_Wave_OU_II<float, true, true>::
 
 static constexpr float    LOOP_HZ        = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
-
-static constexpr uint32_t UI_REFRESH_MS   = 100;
-static constexpr uint32_t DEBUG_SERIAL_MS = 100;
-static constexpr uint32_t NMEA_SERIAL_MS  = 80;
-static constexpr uint32_t NMEA_WAVE_MS    = 2000;
-static constexpr uint32_t NMEA_STATUS_MS  = 5000;
-static constexpr uint32_t NMEA_TEMP_MS    = 500;
 
 static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
@@ -624,7 +618,7 @@ private:
     if (tap_count_ > 0) return;
 #endif
     const uint32_t now_ms = millis();
-    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
 
     if (use_graphics_ && compass_ui_ready_) updateUI_graphics_();
@@ -669,9 +663,9 @@ private:
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
-    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
     last_serial_ms_ = now_ms;
 
@@ -684,7 +678,7 @@ private:
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
 
-    if (now_ms - last_wave_nmea_ms_ >= NMEA_WAVE_MS) {
+    if (now_ms - last_wave_nmea_ms_ >= atoms3r_timing::NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
       nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
       nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
@@ -692,12 +686,12 @@ private:
       nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
     }
 
-    if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
+    if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
       nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
     }
 
-    if (now_ms - last_status_nmea_ms_ >= NMEA_STATUS_MS) {
+    if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
       last_status_nmea_ms_ = now_ms;
       nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
                           valid,
