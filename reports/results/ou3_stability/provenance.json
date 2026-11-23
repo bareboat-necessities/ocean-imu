@@ -215,7 +215,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "3adf6cf6f112d8a675ca1e7187526796596583e4"
+      "git_blob_sha": "577673e6729ec86db86907487acf5e3f11624094"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -887,7 +887,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "b9f37e5fa32d95b00bb4413860dfa7b1956641ce"
+      "git_blob_sha": "8c4a8564ef3c3986b2c5f037a58751b4f16b7ac2"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -2155,6 +2155,25 @@
     "previous_ou3_sketch_git_blob_sha": "8f34f1657989dda195826c201941f43fa3e43382",
     "ou3_sketch_git_blob_sha": "3abddbb5741c347a971392d40203eb9eba074c78",
     "scope": "Firmware display and serial output intervals. The native probe uses identical estimator operations, covariance, input and clocks.",
+    "relaxations_introduced": "None",
+    "replay_performed": false,
+    "theorem_promoted": false
+  },
+  "carma_config_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "failed_run": 45270799476,
+    "runtime_source_commit": "baae5f1a457ed39c03ab9fafdb6791ea9afbf2b5",
+    "compared_to": "956d5c43088c507dd853939732968bf0036321d0",
+    "native_probe": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+    "compiler": "GCC 14.2.0, C++20, -O1, EIGEN_UNROLLING_LIMIT=0, EIGEN_NON_ARDUINO, Eigen 3.4.0",
+    "identical_preprocessed_translation_unit_sha256": "510e9121c32b21c9582280ba7e14e0fd9df32f7ecb6a76f63e3c33f81622cf5b",
+    "shipping_headers_in_compiler_dependency_closure": 48,
+    "changed_src_outside_probe_closure": [
+      "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
+      "src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+    ],
+    "previous_shipping_source_tree_sha256": "cfb713406962cc53dcc86f89b358fbfcee810b4478efcb3735c3d07b1e207bee",
+    "shipping_source_tree_sha256": "aa8919c5c4d4da3c29f0522abf44053298eef13b642c1d8c6959fbd96e77d77e",
     "relaxations_introduced": "None",
     "replay_performed": false,
     "theorem_promoted": false
