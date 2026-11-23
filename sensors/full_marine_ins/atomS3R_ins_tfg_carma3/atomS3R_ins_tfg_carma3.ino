@@ -235,12 +235,9 @@ public:
 #endif
 
     ImuSample sample{};
-    m5::imu_data_t data{};
     const uint32_t sample_us = micros();
-    const uint32_t update_mask = navigation_imu_.update(M5.Imu, data);
-    const uint32_t poll_ms = millis();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample,
-                                          false, &temperature_, mag_gate_.due(poll_ms), &data);
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
 
     if (got_sample) {
       stale_frame_count_ = 0;
