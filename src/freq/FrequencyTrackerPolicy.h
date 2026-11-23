@@ -85,6 +85,10 @@ struct TrackerPolicy<TrackerType::KALMANF> {
         return getFrequencyHz();
     }
 
+    double runFrequencyOnly(float a, float dt) {
+        return t.processFrequencyOnly(static_cast<double>(a) / static_cast<double>(g_std), dt);
+    }
+
     double getFrequencyHz() const { return t.getFrequencyHz(); }
     double getRawFrequencyHz() const { return t.getRawFrequencyHz(); }
     double getConfidence() const { return t.getConfidence(); }

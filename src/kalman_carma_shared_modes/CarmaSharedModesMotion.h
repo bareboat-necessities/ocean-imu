@@ -219,9 +219,35 @@ class SharedModeStep {
     static constexpr int f_order = M - 1 + tail;
     static constexpr int q_order = 2 * (M - 1) + tail + 1;
 
-    template<int N> static T polynomial(const T (&coeff)[N], T x) {
-        T v = coeff[N - 1];
-        for (int k = N - 2; k >= 0; --k) v = coeff[k] + x * v;
+    static constexpr int short_f = std::numeric_limits<T>::digits > 30 ? 13 : 8;
+    static constexpr int short_q = std::numeric_limits<T>::digits > 30 ? 15 : 10;
+
+    // Certify the shortened Horner series once per shape. After factoring out
+    // the leading power, bound the discarded tail and the magnitude of the
+    // full polynomial for every 0 <= x <= radius. An entry with substantial
+    // cancellation keeps the full evaluation by limiting the shared radius.
+    template<int Degree, int N>
+    static bool short_accurate(const T (&coeff)[N], double radius) {
+        int first = 0;
+        while (first < N && coeff[first] == T(0)) ++first;
+        if (first == N) return true;
+        if (first > Degree) return false;
+        double lower = std::abs(double(coeff[first]));
+        double tail = 0.0;
+        double power = 1.0;
+        for (int k = first + 1; k < N; ++k) {
+            power *= radius;
+            const double bound = power * std::abs(double(coeff[k]));
+            lower -= bound;
+            if (k > Degree) tail += bound;
+        }
+        return lower > 0.0 && tail <= lower * (0.0625 * std::numeric_limits<T>::epsilon());
+    }
+
+    template<int Degree, int N> static T polynomial(const T (&coeff)[N], T x) {
+        static_assert(Degree < N);
+        T v = coeff[Degree];
+        for (int k = Degree - 1; k >= 0; --k) v = coeff[k] + x * v;
         return v;
     }
 
@@ -262,6 +288,17 @@ public:
                 else term = (product + product.transpose()) * factor;
             }
         }
+        short_radius_ = T(1);
+        // The full path remains available even for a pathological shape.
+        for (int attempt = 0; attempt < 10; ++attempt) {
+            bool ok = true;
+            for (const auto& row : fc_) ok = ok && short_accurate<short_f>(row, short_radius_);
+            for (const auto& row : rc_) ok = ok && short_accurate<short_q>(row, short_radius_);
+            for (const auto& row : ic_) ok = ok && short_accurate<short_q>(row, short_radius_);
+            if (ok) return;
+            short_radius_ *= T(0.5);
+        }
+        short_radius_ = T(0);
     }
 
     OCEAN_IMU_HOT_LOOP void refresh(T kappa, T h, const Mat& A, const Mat& WR, const Mat& WI) {
@@ -287,30 +324,37 @@ public:
         }
         last_k_ = kappa;
         last_h_ = h;
+        if (x <= short_radius_) evaluate<short_f, short_q>(x);
+        else evaluate<f_order, q_order - 1>(x);
+    }
+
+    const Mat& Phi() const noexcept { return F_; }
+    const Mat& QR() const noexcept { return QR_; }
+    const Mat& QI() const noexcept { return QI_; }
+
+private:
+    template<int DegreeF, int DegreeQ>
+    void evaluate(T x) {
         int symmetric = 0, skew = 0;
         for (int j = 0; j < M; ++j) {
             for (int i = 0; i < M; ++i) {
                 const int index = i + M * j;
-                F_.data()[index] = polynomial(fc_[index], x) *
+                F_.data()[index] = polynomial<DegreeF>(fc_[index], x) *
                     (scale_[i] == scale_[j] ? T(1) : scale_[i] * inverse_[j]);
             }
             for (int i = 0; i <= j; ++i) {
                 const T gain = x * scale_[i] * scale_[j];
-                const T qr = gain * polynomial(rc_[symmetric++], x);
+                const T qr = gain * polynomial<DegreeQ>(rc_[symmetric++], x);
                 QR_.data()[i + M*j] = QR_.data()[j + M*i] = qr;
                 if (i < j) {
-                    const T qi = gain * polynomial(ic_[skew++], x);
+                    const T qi = gain * polynomial<DegreeQ>(ic_[skew++], x);
                     QI_.data()[i + M*j] = qi;
                     QI_.data()[j + M*i] = -qi;
                 }
             }
         }
     }
-    const Mat& Phi() const noexcept { return F_; }
-    const Mat& QR() const noexcept { return QR_; }
-    const Mat& QI() const noexcept { return QI_; }
-
-private:
+    T short_radius_ = T(0);
     T fc_[M*M][f_order + 1];
     T rc_[M*(M+1)/2][q_order];
     T ic_[M*(M-1)/2][q_order];
@@ -318,6 +362,12 @@ private:
     T norm_ = T(0), last_k_ = T(-1), last_h_ = T(-1), scale_k_ = T(-1);
     T scale_[M]{}, inverse_[M]{};
 };
+
+#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+// Keep the coefficient setup and both Horner kernels in the estimator object.
+// A copy in the large sketch can put its startup literals outside L32R reach.
+extern template class SharedModeStep<float,6>;
+#endif
 
 // The polynomials of the complexified C41J at scale kappa: P+(s) = s^2 +
 // b1 s + b0 (the upper-half-plane poles of P), D(s) = s^2 + d1 s + d0 with
@@ -406,6 +456,11 @@ public:
     static constexpr int NB = 6;
     static constexpr int NL = 3 * NB;
     static constexpr int first_colouring = 4;
+    // The colouring subsystem drives the four wave coordinates. Its own
+    // transition depends only on the two colouring columns for every shape.
+    static constexpr int first_transition_column(int row) {
+        return row < first_colouring ? 0 : first_colouring;
+    }
     static constexpr int MAX_ACC_TERMS = 1;
     using Vector3 = Eigen::Matrix<T,3,1>;
     using MatB = Eigen::Matrix<T,NB,NB>;

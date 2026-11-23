@@ -80,21 +80,16 @@ class MagFreshGate {
 
   void reset() { last_ms_ = 0; }
 
+  bool due(uint32_t now_ms) const {
+    return last_ms_ == 0 || (now_ms - last_ms_) >= spacing_ms_;
+  }
+
   bool update(bool mag_ok, uint32_t now_ms) {
     if (!mag_ok) {
-      last_ms_ = 0;
+      reset();
       return false;
     }
-
-    if (last_ms_ == 0) {
-      last_ms_ = now_ms;
-      return true;
-    }
-
-    if ((now_ms - last_ms_) < spacing_ms_) {
-      return false;
-    }
-
+    if (!due(now_ms)) return false;
     last_ms_ = now_ms;
     return true;
   }

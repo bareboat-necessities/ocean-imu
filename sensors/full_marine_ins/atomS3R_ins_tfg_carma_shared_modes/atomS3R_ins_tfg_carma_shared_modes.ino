@@ -240,9 +240,12 @@ public:
 
   void tick() {
     const uint32_t loop_start_us = micros();
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t loop_start_cycles = esp_cpu_get_cycle_count();
+#endif
 
 #if SEA_STATE_ENABLE_WIZARD
-    Input::update();
+    Input::pollButton();
 
     if (Input::tapPressed()) {
       tap_count_++;
@@ -263,11 +266,16 @@ public:
     ImuSample sample{};
     const uint32_t sample_us = micros();
     const uint32_t update_mask = M5.Imu.update();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample);
+    const uint32_t poll_ms = millis();
+    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample,
+                                          false, &temperature_, mag_gate_.due(poll_ms));
 
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t read_done = micros();
+#endif
     if (got_sample) {
       stale_frame_count_ = 0;
-      updateFilter_(sample);
+      updateFilter_(sample, poll_ms);
     } else {
       if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
       if ((stale_frame_count_ % 50u) == 0u) {
@@ -275,10 +283,18 @@ public:
       }
     }
 
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t filter_done = micros();
+#endif
     streamSerial_();
     updateUI_(loop_start_us);
 #if OCEAN_IMU_PROFILE_LOOP
-    recordLoopTiming_(micros() - loop_start_us);
+    const uint32_t end_us = micros();
+    timing_.loop_cycles += esp_cpu_get_cycle_count() - loop_start_cycles;
+    timing_.acquisition_us += read_done - sample_us;
+    timing_.estimation_us += filter_done - read_done;
+    timing_.output_us += end_us - filter_done;
+    recordLoopTiming_(end_us - loop_start_us);
 #endif
     waitForNextLoopTick_(loop_start_us);
   }
@@ -314,10 +330,13 @@ private:
   uint32_t last_temp_nmea_ms_   = 0;
 
   Fusion fusion_{};
+  bool output_dirty_ = false, have_output_ = false;
 
 #if OCEAN_IMU_PROFILE_LOOP
   struct TimingWindow {
-    uint64_t cycles = 0;
+    uint64_t cycles = 0, loop_cycles = 0, work_us = 0;
+    uint64_t acquisition_us = 0, estimation_us = 0, output_us = 0;
+    uint32_t loops = 0;
     uint32_t samples = 0, max_cycles = 0, max_work_us = 0;
     uint32_t overruns = 0, gaps = 0, long_gaps = 0;
     uint32_t min_gap_us = UINT32_MAX, max_gap_us = 0;
@@ -327,22 +346,28 @@ private:
   bool have_timing_sample_ = false;
 
   void recordLoopTiming_(uint32_t work_us) {
+    ++timing_.loops;
+    timing_.work_us += work_us;
     timing_.max_work_us = std::max(timing_.max_work_us, work_us);
     timing_.overruns += work_us > LOOP_PERIOD_US;
     if (timing_.samples < 1000) return;
     Serial.printf("[TIMING] live=%u fusion_cycles_mean=%u fusion_cycles_max=%u "
                   "loop_work_max_us=%u loops_over_5ms=%u sample_gap_min_us=%u sample_gap_max_us=%u "
-                  "jitter_mean_abs_us=%u gaps_over_7_5ms=%u\n",
+                  "jitter_mean_abs_us=%u gaps_over_7_5ms=%u "
+                  "loop_cycles_mean=%u work_us_mean=%u read_us_mean=%u estimator_us_mean=%u output_us_mean=%u\n",
                   unsigned(fusion_.isLive()), unsigned(timing_.cycles / timing_.samples),
                   unsigned(timing_.max_cycles), unsigned(timing_.max_work_us),
                   unsigned(timing_.overruns), unsigned(timing_.gaps ? timing_.min_gap_us : 0),
                   unsigned(timing_.max_gap_us),
                   unsigned(timing_.gaps ? timing_.absolute_jitter_us / timing_.gaps : 0),
-                  unsigned(timing_.long_gaps));
+                  unsigned(timing_.long_gaps), unsigned(timing_.loop_cycles / timing_.loops),
+                  unsigned(timing_.work_us / timing_.loops), unsigned(timing_.acquisition_us / timing_.loops),
+                  unsigned(timing_.estimation_us / timing_.loops), unsigned(timing_.output_us / timing_.loops));
     timing_ = {};
   }
 #endif
 
+  atoms3r_ical::ImuTemperatureCache temperature_{};
   ins::MagFreshGate mag_gate_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -442,6 +467,7 @@ private:
       while (true) delay(100);
     }
 
+    temperature_ = {};
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
@@ -453,6 +479,8 @@ private:
   }
 
   void resetFusion_() {
+    output_dirty_ = false;
+    have_output_ = false;
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
 
@@ -558,6 +586,7 @@ private:
     heading_valid_ = false;
     heading_fused_ = false;
 
+    temperature_ = {};
     mag_gate_.reset();
     mag_ok_           = false;
     mag_fresh_        = false;
@@ -643,7 +672,7 @@ private:
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
-  void updateFilter_(const ImuSample& s) {
+  void updateFilter_(const ImuSample& s, uint32_t poll_ms) {
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
@@ -661,7 +690,7 @@ private:
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
+    mag_fresh_ = mag_gate_.update(mag_ok_, poll_ms);
     if (mag_fresh_) rates_.countMag();
 
 #if OCEAN_IMU_PROFILE_LOOP
@@ -688,6 +717,23 @@ private:
     ++timing_.samples;
 #endif
 
+    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
+    const Vector3f omega = gyro_bias_.corrected(w_cal_);
+    const float world_z = fusion_.isLive()
+        ? fusion_.raw().mekf().state().R.row(2).dot(omega)
+        : ins::quatRotate(fusion_.raw().startupProxyQuat().normalized(), omega).z();
+    rot_.update(world_z, dt_);
+    rates_.update(millis());
+    output_dirty_ = true;
+    if (!have_output_) refreshOutput_();
+  }
+
+  // Formatting angles and deriving wave reports are only needed when an
+  // output consumes them. Serial and graphics can share the same sample.
+  void refreshOutput_() {
+    if (!output_dirty_) return;
+    output_dirty_ = false;
+    have_output_ = true;
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
     // user-facing heading. Once Live, switch to the fused MEKF attitude.
@@ -715,10 +761,6 @@ private:
     updateCompassHeading_(q_compass_tilt, attitude_ok,
         live && fusion_.hasMagNorthLock(), heading_est_deg);
 
-    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
-    const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
-    rot_.update(w_world.z(), dt_);
-
     const Vector3f velocity_ned_mps = fusion_.raw().mekf().get_velocity();
     heave_speed_mps_ = -velocity_ned_mps.z();
 
@@ -736,8 +778,6 @@ private:
     const Vector3f acc_bias_mps2 = fusion_.raw().mekf().get_acc_bias();
     acc_bias_norm_mps2_ = acc_bias_mps2.norm();
     acc_bias_z_mps2_    = acc_bias_mps2.z();
-
-    rates_.update(millis());
 
     heave_raw_m_        = heave_m_;
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
@@ -784,6 +824,7 @@ private:
   }
 
   void updateUI_graphics_() {
+    refreshOutput_();
     ui_.setReadRotation();
     const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
     const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
@@ -791,6 +832,7 @@ private:
   }
 
   void updateUI_text_() {
+    refreshOutput_();
     ui_.setReadRotation();
     ui_.title("COMPASS");
 
@@ -826,6 +868,7 @@ private:
     if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
 #endif
     last_serial_ms_ = now_ms;
+    refreshOutput_();
 
 #if SEA_STATE_SERIAL_NMEA
     const bool valid = fusion_.isLive() && heading_fused_;

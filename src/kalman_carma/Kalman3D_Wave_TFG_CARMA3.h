@@ -258,8 +258,8 @@ public:
     void set_gyro_sample_mode(filter_detail::GyroSampleMode mode) { gyro_interval_.set_mode(mode); }
     void set_gyro_sample_period(T period) { gyro_interval_.set_sample_period(period); }
     void prime_gyro_sample(const Vector3& gyr, T dt) { gyro_interval_.prime(gyr, dt); }
-    void time_update(Vector3 const& gyr, T Ts);
-    void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
+    OCEAN_IMU_SAMPLE_IRAM void time_update(Vector3 const& gyr, T Ts);
+    OCEAN_IMU_SAMPLE_IRAM void measurement_update_acc_only(Vector3 const& acc, T tempC = tempC_ref);
     void measurement_update_mag_only(Vector3 const& mag);
 
     [[nodiscard]] Eigen::Quaternion<T> quaternion() const {
@@ -428,7 +428,7 @@ public:
     // J_r(a) (Full), J_l(-phi) on the attitude block (AttitudeOnly) or I.
     void build_reset_jacobian(const Tangent& a, MatrixNX& J) const;
     // Inject the estimated error a: Xhat <- Exp_G(-a) Xhat.
-    void inject(const Tangent& a);
+    OCEAN_IMU_SAMPLE_IRAM void inject(const Tangent& a);
     // Right-invariant error of this filter's state relative to a reference
     // (the truth), xi = Log_G(Xhat Xref^-1).
     [[nodiscard]] Tangent error_from(const Group& reference) const { return X_.local(reference); }
@@ -697,6 +697,12 @@ private:
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                       const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const;
+    static constexpr int first_transition_column_(int row) {
+        if constexpr (requires { Motion::first_transition_column(row); })
+            return Motion::first_transition_column(row);
+        return 0;
+    }
+    void integrate_gyro_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale) const;
     OCEAN_IMU_HOT_LOOP void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
@@ -705,7 +711,7 @@ private:
     // P_ <- Phi P_ Phi^T + Qd, the sample path's form of apply_phi_() twice
     // and add_noise_(): M = Phi P, then only the upper block triangle of
     // M Phi^T + Qd, mirrored.
-    OCEAN_IMU_HOT_LOOP void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
+    OCEAN_IMU_SAMPLE_IRAM OCEAN_IMU_HOT_LOOP void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
                                const MatC* Qi);
 
     bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) {
@@ -767,13 +773,75 @@ private:
             }
         }
     }
+    // S = Pm^T L D L^T Pm. In whitened sensor coordinates let U = PHt W^T,
+    // W = D^(-1/2) L^(-1) Pm. The unmodified gain is U W. When bias
+    // learning changes three gain rows, the exact Joseph expression is
+    // P - U U^T + deltaU deltaU^T. The last term occupies only the BA block.
+    OCEAN_IMU_SAMPLE_IRAM bool whitened_correction_(const Eigen::LDLT<Matrix3>& ldlt, const MatrixNX3& PHt,
+                              const Vector3& r, bool freeze_ba, Tangent& a, MeasDiag3& diag) {
+        const auto order = (ldlt.transpositionsP() * Eigen::Vector3i(0,1,2)).eval();
+        const Matrix3& ld = ldlt.matrixLDLT();
+        const T il0 = T(1) / std::sqrt(ld(0,0));
+        const T il1 = T(1) / std::sqrt(ld(1,1));
+        const T il2 = T(1) / std::sqrt(ld(2,2));
+        const T l10 = ld(1,0), l20 = ld(2,0), l21 = ld(2,1);
+        const T u0 = r(order[0]), u1 = r(order[1]) - l10 * u0;
+        const T u2 = (r(order[2]) - l20 * u0) - l21 * u1;
+        const Vector3 u(il0 * u0, il1 * u1, il2 * u2);
+        diag.nis = u.squaredNorm();
+        if (!std::isfinite(diag.nis)) diag.nis = std::numeric_limits<T>::quiet_NaN();
+        MatrixNX3& U = K_scratch_;
+        for (int i = 0; i < NX; ++i) {
+            const T b0 = PHt(i,order[0]);
+            const T b1 = PHt(i,order[1]) - l10 * b0;
+            const T b2 = (PHt(i,order[2]) - l20 * b0) - l21 * b1;
+            U(i,0) = b0 * il0;
+            U(i,1) = b1 * il1;
+            U(i,2) = b2 * il2;
+            a(i) = U(i,0) * u(0) + U(i,1) * u(1) + U(i,2) * u(2);
+        }
+        Matrix3 delta = Matrix3::Zero();
+        if (freeze_ba) a.template segment<3>(OFF_BA).setZero();
+        else if (bias_gain_scaling_) {
+            const Matrix3 scale = X_.R * bias_gain_scale_ * X_.R.transpose();
+            a.template segment<3>(OFF_BA) = (scale * a.template segment<3>(OFF_BA)).eval();
+            delta.noalias() = (scale - Matrix3::Identity()) * U.template middleRows<3>(OFF_BA);
+        }
+        if (!a.allFinite()) return false;
+        rank_three_downdate_(U, freeze_ba, delta);
+        return true;
+    }
+
+    OCEAN_IMU_SAMPLE_IRAM OCEAN_IMU_HOT_LOOP void rank_three_downdate_(const MatrixNX3& U, bool freeze_ba, const Matrix3& delta) {
+        static_assert(OFF_BA + 3 == NX);
+        T* const p = P_.data();
+        const T* const u = U.data();
+        for (int j = 0; j < NX; ++j) {
+            const T x = u[j], y = u[j+NX], z = u[j+2*NX];
+            for (int i = 0; i <= std::min(j,OFF_BA-1); ++i) {
+                const T d = u[i]*x + u[i+NX]*y + u[i+2*NX]*z;
+                const T v = p[i+NX*j] - d;
+                p[i+NX*j] = v;
+                p[j+NX*i] = v;
+            }
+        }
+        if (freeze_ba) return;
+        for (int j = OFF_BA; j < NX; ++j) {
+            for (int i = OFF_BA; i <= j; ++i) {
+                const T adjust = delta.row(i-OFF_BA).dot(delta.row(j-OFF_BA));
+                const T v = p[i+NX*j] + (adjust - U.row(i).dot(U.row(j)));
+                p[i+NX*j] = v;
+                p[j+NX*i] = v;
+            }
+        }
+    }
     void freeze_acc_bias_rows_(MatrixNX3& M) const { M.template block<3,3>(OFF_BA, 0).setZero(); }
 
     // Gain, Joseph update, transport and injection shared by both sensors.
     bool correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_scale, bool freeze_ba,
                    MeasDiag3& diag);
     void transport_(const Tangent& a);
-    OCEAN_IMU_HOT_LOOP void transport_two_frame_(const Tangent& a);
+    OCEAN_IMU_SAMPLE_IRAM OCEAN_IMU_HOT_LOOP void transport_two_frame_(const Tangent& a);
 };
 
 // ------------------------------------------------------------------------
@@ -1277,7 +1345,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
 }
 
 TFGC3_TPL
-void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
+void TFGC3_CLS::integrate_gyro_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
                             StepNoise& q, T gyro_noise_scale) const {
     namespace d = tfg_carma_detail;
     // With W = [w]x, s J_l(w s) = int_0^s Exp(w t) dt = s I + a s^2 W + b s^3 W^2,
@@ -1340,9 +1408,46 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
             q.Qpb(i,j) = -Qpb[i][j];
             q.Qbb(i,j) = T(0.5) * Ts * (Qbb[i][j] + Qbb[j][i]);
         }
+}
+
+TFGC3_TPL
+void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
+                            StepNoise& q, T gyro_noise_scale) const {
+    // All three driving matrices are diagonal by construction. For scalar
+    // gyro and bias densities the rotational impulse response integrates in
+    // the end frame using only I, V and V^2, V = [R1 w h]x.
+    const Vector3 angle = w * Ts;
+    const T x = angle.squaredNorm();
+    auto isotropic = [](const Matrix3& m) {
+        return m(0,0) == m(1,1) && m(0,0) == m(2,2);
+    };
+    if (x <= T(0.01) && isotropic(Q_gyro_) && isotropic(Q_bg_)) {
+        const Matrix3 V = lie::skew<T>(b.R1 * angle);
+        const Matrix3 V2 = V * V;
+        // Series in x = theta^2 for (theta-sin(theta))/theta^3,
+        // (cos(theta)-1+x/2)/theta^4 and (1/3-2*a)/x respectively.
+        const T a = T(1.0/6.0) + x*(T(-1.0/120.0) + x*(T(1.0/5040.0) - x*T(1.0/362880.0)));
+        const T c = T(1.0/24.0) + x*(T(-1.0/720.0) + x*(T(1.0/40320.0) - x*T(1.0/3628800.0)));
+        const T d = T(1.0/60.0) + x*(T(-1.0/2520.0) + x*(T(1.0/181440.0) - x*T(1.0/19958400.0)));
+        const T bh = Q_bg_(0,0) * Ts, bh2 = bh * Ts, bh3 = bh2 * Ts;
+        q.Qbb = Matrix3::Identity() * bh;
+        q.Qpb = bh2 * (a * V - c * V2);
+        q.Qpb.diagonal().array() -= bh2 * T(0.5);
+        q.Qpp = (bh3 * d) * V2;
+        q.Qpp.diagonal().array() += Ts * (gyro_noise_scale * Q_gyro_(0,0)) + bh3 / T(3);
+    } else {
+        integrate_gyro_noise_(w, Ts, R0, b, q, gyro_noise_scale);
+    }
     if (acc_bias_updates_enabled_) {
         const T tau_b = std::max(T(1e-3), tau_bacc_);
         const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);
+        if (isotropic(Q_bacc_)) {
+            q.Qaa = Matrix3::Identity() * (qd_scale * Q_bacc_(0,0));
+            return;
+        }
+        namespace d = tfg_carma_detail;
+        T R1a[3][3], Qb[3][3], X[3][3], Y[3][3];
+        d::rows3<T>(b.R1, R1a);
         d::rows3<T>(Q_bacc_, Qb);
         d::mul3<T>(R1a, Qb, false, X);
         d::mul3<T>(X, R1a, true, Y);
@@ -1473,7 +1578,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
         for (int i = 0; i < NC; ++i)
             for (int ax = 0; ax < 3; ++ax) {
                 T s = T(0);
-                for (int j = 0; j < NC; ++j) s += x[ax + 3 * j] * f[i + NC * j];
+                for (int j = first_transition_column_(i); j < NC; ++j) s += x[ax + 3 * j] * f[i + NC * j];
                 o[ax + 3 * i] = s;
             }
     }
@@ -1525,7 +1630,7 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
             T a0 = w[i][1] * f2 - w[i][2] * f1;
             T a1 = w[i][2] * f0 - w[i][0] * f2;
             T a2 = w[i][0] * f1 - w[i][1] * f0;
-            for (int j = 0; j < NC; ++j) {
+            for (int j = first_transition_column_(i); j < NC; ++j) {
                 const T fij = F[i][j];
                 const T* x = pc + OFF_W + 3 * j;
                 a0 += fij * x[0];
@@ -1563,7 +1668,7 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
                 T a0 = w[j][1] * t2 - w[j][2] * t1;
                 T a1 = w[j][2] * t0 - w[j][0] * t2;
                 T a2 = w[j][0] * t1 - w[j][1] * t0;
-                for (int l = 0; l < NC; ++l) {
+                for (int l = first_transition_column_(j); l < NC; ++l) {
                     const T fjl = F[j][l];
                     const T* x = mr + row_stride * (OFF_W + 3 * l);
                     a0 += fjl * x[0];
@@ -1824,26 +1929,35 @@ bool TFGC3_CLS::correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_
         return false;
     }
     diag.S = S;
-    diag.nis = nis3_(ldlt, r);
-    MatrixNX3& K = K_scratch_;
-    gain3_(PHt, ldlt, K);
-    if (freeze_ba) freeze_acc_bias_rows_(K);
-    if (bias_gain_scaling_ && !freeze_ba) {
-        const Matrix3 world_scale=X_.R*bias_gain_scale_*X_.R.transpose();
-        K.template block<3,3>(OFF_BA,0)=(world_scale*K.template block<3,3>(OFF_BA,0)).eval();
-    }
     Tangent a;
-    {
-        const T r0 = r(0), r1 = r(1), r2 = r(2);
-        const T* const k = K.data();
-        T* const av = a.data();
-        for (int i = 0; i < NX; ++i) av[i] = k[i] * r0 + k[i + NX] * r1 + k[i + 2 * NX] * r2;
+    const auto pivots = ldlt.vectorD();
+    if (pivots.minCoeff() > std::max(std::numeric_limits<T>::min(),
+                                     T(8) * std::numeric_limits<T>::epsilon() * pivots.maxCoeff())) {
+        if (!whitened_correction_(ldlt, PHt, r, freeze_ba, a, diag)) {
+            ++skipped_updates_;
+            return false;
+        }
+    } else {
+        diag.nis = nis3_(ldlt, r);
+        MatrixNX3& K = K_scratch_;
+        gain3_(PHt, ldlt, K);
+        if (freeze_ba) freeze_acc_bias_rows_(K);
+        if (bias_gain_scaling_ && !freeze_ba) {
+            const Matrix3 world_scale=X_.R*bias_gain_scale_*X_.R.transpose();
+            K.template block<3,3>(OFF_BA,0)=(world_scale*K.template block<3,3>(OFF_BA,0)).eval();
+        }
+        {
+            const T r0 = r(0), r1 = r(1), r2 = r(2);
+            const T* const k = K.data();
+            T* const av = a.data();
+            for (int i = 0; i < NX; ++i) av[i] = k[i] * r0 + k[i + NX] * r1 + k[i + 2 * NX] * r2;
+        }
+        if (!a.allFinite()) {
+            ++skipped_updates_;
+            return false;
+        }
+        joseph_update_(K, S, PHt);
     }
-    if (!a.allFinite()) {
-        ++skipped_updates_;
-        return false;
-    }
-    joseph_update_(K, S, PHt);
     transport_(a);
     inject(a);
     project_gyro_bias_();

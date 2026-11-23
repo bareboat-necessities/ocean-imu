@@ -75,6 +75,39 @@ void group_and_flow() {
     check("full group reset Jacobian vs finite difference",(J-Jfd).cwiseAbs().maxCoeff(),2e-9);
     f.inject(a);check("left correction Exp(-a) X",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
 }
+// Force the general quadrature with a one-ULP perturbation of a single
+// bias density. Compare each rotational block separately so the much larger
+// wave noise cannot hide a sign or frame error in the cross covariance.
+void isotropic_gyro_reference() {
+    F f = make_filter();
+    f.state() = state();
+    f.set_gyro_noise_density_rad_sqrt_s(V::Zero());
+    const V axis = V(.3, -.8, .4).normalized();
+    double worst = 0;
+    for (double angle : {0., 1e-6, .003, .099999, .100001, .4}) {
+        for (double h : {.005, .04}) {
+            const V gyro = f.state().B.col(0) + axis * (angle / h);
+            MX fast, reference;
+            f.set_Q_bgyro_rw(V::Constant(.25));
+            f.build_process_noise(gyro, h, fast);
+            f.set_Q_bgyro_rw(V(.25, .25, std::nextafter(.25, 1.)));
+            f.build_process_noise(gyro, h, reference);
+            for (int row : {F::OFF_PHI, F::OFF_BG}) {
+                for (int col : {F::OFF_PHI, F::OFF_BG}) {
+                    const auto block = reference.block<3,3>(row, col);
+                    const double error = (fast.block<3,3>(row, col) - block).norm() / block.norm();
+                    if (!std::isfinite(error)) {
+                        check("finite isotropic gyro-bias block error", error, 1e-11);
+                        return;
+                    }
+                    worst = std::max(worst, error);
+                }
+            }
+        }
+    }
+    check("isotropic gyro-bias blocks vs quadrature", worst, 1e-11);
+}
+
 void measurement() {
     F f=make_filter();G x=state();const V g(0,0,grav),bw(18,1.5,43);
     Eigen::Matrix<double,3,27> Ha=Eigen::Matrix<double,3,27>::Zero(),Hm=Ha,Ja,Jm;
@@ -86,16 +119,34 @@ void measurement() {
         Ja.col(j)=(ra(xp)-ra(xm))/(2e-6);Jm.col(j)=(rm(xp)-rm(xm))/(2e-6);}
     check("accelerometer Jacobian vs finite difference",(Ha-Ja).cwiseAbs().maxCoeff(),3e-9);
     check("magnetometer Jacobian vs finite difference",(Hm-Jm).cwiseAbs().maxCoeff(),1e-8);
-    // Dense Joseph + finite-difference reset reference of the actual update.
-    f.state()=x;MX P=MX::Identity()*.001;f.covariance_full()=P;
+    // Explicit Joseph form covers the full, projected and Schmidt-held gains.
+    const TX cross=TX::LinSpaced(27,-.7,.4);
+    const MX P=.001*(MX::Identity()+cross*cross.transpose());
     const V meas=x.R.transpose()*(V(x.X.col(2))-g)+x.B.col(1)+V(.03,-.02,.01);
-    const V r=x.R*(meas-x.B.col(1))-(x.X.col(2)-g);const M3 R=x.R*(M3::Identity()*.0009)*x.R.transpose();
-    const M3 S=Ha*P*Ha.transpose()+R;const Eigen::Matrix<double,27,3>K=P*Ha.transpose()*S.inverse();
-    const TX a=K*r;MX Jr;f.build_reset_jacobian(a,Jr);const MX IKH=MX::Identity()-K*Ha;
-    const MX expected=Jr*(IKH*P*IKH.transpose()+K*R*K.transpose())*Jr.transpose();
-    f.measurement_update_acc_only(meas,35.);
-    check("Joseph and covariance transport vs dense reference",(f.covariance_full()-expected).norm()/expected.norm(),2e-12);
-    check("measurement group injection",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
+    const V r=x.R*(meas-x.B.col(1))-(x.X.col(2)-g);
+    const M3 R=x.R*(M3::Identity()*.0009)*x.R.transpose();
+    const M3 S=Ha*P*Ha.transpose()+R;
+    M3 scale;
+    scale << .7,.1,0, .1,.5,0, 0,0,.8;
+    for (int mode=0;mode<3;++mode) {
+        const bool frozen=mode==2, scaled=mode==1;
+        f.set_schmidt_acc_bias_hold(frozen);
+        f.set_acc_bias_updates_enabled(!frozen);
+        f.set_acc_bias_gain_scale(scale,scaled);
+        f.state()=x;
+        f.covariance_full()=P;
+        Eigen::Matrix<double,27,3> K=P*Ha.transpose()*S.inverse();
+        if (frozen) K.middleRows<3>(F::OFF_BA).setZero();
+        if (scaled) K.middleRows<3>(F::OFF_BA)=(x.R*scale*x.R.transpose()*K.middleRows<3>(F::OFF_BA)).eval();
+        const TX a=K*r;
+        MX Jr;f.build_reset_jacobian(a,Jr);
+        const MX IKH=MX::Identity()-K*Ha;
+        const MX expected=Jr*(IKH*P*IKH.transpose()+K*R*K.transpose())*Jr.transpose();
+        f.measurement_update_acc_only(meas,35.);
+        check("Joseph and covariance transport vs dense reference",(f.covariance_full()-expected).norm()/expected.norm(),2e-12);
+        check("measurement group injection",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
+        check("normalized innovation squared",std::abs(f.lastAccDiag().nis-r.dot(S.ldlt().solve(r))),1e-12);
+    }
 }
 // Continuous invariant model, independent Lyapunov integration. World motion
 // at each RK stage comes from its own Taylor exponential, not the filter.
@@ -238,4 +289,4 @@ void independent_and_float() {
     check("allocation-guarded confidence fallback exercised",ff.coupling().shrink_events>0?0.:1.,0.);
     check("float variable-dt adaptive/outage path finite",bad,0);check("float full covariance symmetry",asym,1e-6);check("float full covariance PSD",std::max(0.,-min_eig),2e-7);
 }
-int main(){static_assert(F::NX==27);group_and_flow();measurement();covariance_reference();recoordinate();equivariance();independent_and_float();std::printf("FAILURES %d\n",fails);return fails?1:0;}
+int main(){static_assert(F::NX==27);group_and_flow();isotropic_gyro_reference();measurement();covariance_reference();recoordinate();equivariance();independent_and_float();std::printf("FAILURES %d\n",fails);return fails?1:0;}

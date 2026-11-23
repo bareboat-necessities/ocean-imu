@@ -360,12 +360,29 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag) {
   return readMagBody_(m5_mag, micros());
 }
 
+// Navigation uses temperature only for slow thermal compensation. The wizard
+// omits this cache and continues to acquire temperature on every sample.
+struct ImuTemperatureCache {
+  float value = NAN;
+  uint32_t last_read_us = 0;
+
+  float read(decltype(M5.Imu)& imu, uint32_t now_us) {
+    if (!std::isfinite(value) || now_us - last_read_us >= 100000u) {
+      value = NAN;
+      imu.getTemp(&value);
+      last_read_us = now_us;
+    }
+    return value;
+  }
+};
+
 // Reads M5.Imu, applies AtomS3R axis mapping and unit conversion, but does NOT calibrate.
 // Estimators receive only frames carrying both a new accelerometer and gyro
 // sample. gyro_only admits gyro-only frames for magnetic timing capture, which
 // does not use acceleration.
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out,
-                                 bool gyro_only = false) {
+                                 bool gyro_only = false, ImuTemperatureCache* temperature = nullptr,
+                                 bool poll_mag = true) {
   out.sample_us = sample_us;
   out.mask = update_mask;
   const uint32_t required = gyro_only ? uint32_t(ATOMS3R_IMU_MASK_GYRO) : kImuMaskAccelGyro;
@@ -373,7 +390,8 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
 
   const auto data = imu.getImuData();
   out.tempC = NAN;
-  (void)imu.getTemp(&out.tempC);
+  if (temperature) out.tempC = temperature->read(imu, sample_us);
+  else imu.getTemp(&out.tempC);
 
   out.a = map_acc_to_body_ned_(data.accel);
   out.w = map_gyr_to_body_ned_(data.gyro);
@@ -382,8 +400,13 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // magnetometer-update bit across deployed builds. Runtime/calibration
   // freshness is therefore determined by the existing cadence/distinct-value
   // gates rather than the update mask.
-  out.m = readMagBody_(data.mag, sample_us);
-  out.mag_timing = atoms3rMagSource().acquisition;
+  auto& src = atoms3rMagSource();
+  if (poll_mag || !src.compensated || !src.acquisition.fresh(millis())) {
+    out.m = readMagBody_(data.mag, sample_us);
+  } else {
+    out.m = src.last_body;
+  }
+  out.mag_timing = src.acquisition;
 
   return true;
 }

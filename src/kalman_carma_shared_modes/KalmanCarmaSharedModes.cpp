@@ -12,6 +12,8 @@
 #include "kalman_carma_shared_modes/KalmanCarmaSharedModes.h"
 #include "kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h"
 
+template class ocean_imu::carma_shared_modes::minimal_detail::SharedModeStep<float,6>;
+
 namespace ocean_imu::kalman {
 template Kalman3D_Wave_CARMA3<
     float, 4, false, 4, false, true, true,

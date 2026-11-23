@@ -210,7 +210,7 @@ public:
     const uint32_t loop_start_us = micros();
 
 #if SEA_STATE_ENABLE_WIZARD
-    Input::update();
+    Input::pollButton();
 
     if (Input::tapPressed()) {
       tap_count_++;
@@ -231,11 +231,13 @@ public:
     ImuSample sample{};
     const uint32_t sample_us = micros();
     const uint32_t update_mask = M5.Imu.update();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample);
+    const uint32_t poll_ms = millis();
+    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample,
+                                          false, &temperature_, mag_gate_.due(poll_ms));
 
     if (got_sample) {
       stale_frame_count_ = 0;
-      updateFilter_(sample);
+      updateFilter_(sample, poll_ms);
     } else {
       if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
       if ((stale_frame_count_ % 50u) == 0u) {
@@ -277,6 +279,7 @@ private:
 
   Fusion fusion_{};
 
+  atoms3r_ical::ImuTemperatureCache temperature_{};
   ins::MagFreshGate mag_gate_{};
 
   Vector3f a_cal_ = Vector3f::Zero();
@@ -374,6 +377,7 @@ private:
       while (true) delay(100);
     }
 
+    temperature_ = {};
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
@@ -480,6 +484,7 @@ private:
     heading_valid_ = false;
     heading_fused_ = false;
 
+    temperature_ = {};
     mag_gate_.reset();
     mag_ok_           = false;
     mag_fresh_        = false;
@@ -561,7 +566,7 @@ private:
         : (heading_mag_ok_ ? heading_mag_deg_ : NAN);
   }
 
-  void updateFilter_(const ImuSample& s) {
+  void updateFilter_(const ImuSample& s, uint32_t poll_ms) {
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
@@ -579,7 +584,7 @@ private:
 
     mag_norm_uT_ = m_cal_.norm();
     mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
-    mag_fresh_ = mag_gate_.update(mag_ok_, millis());
+    mag_fresh_ = mag_gate_.update(mag_ok_, poll_ms);
     if (mag_fresh_) rates_.countMag();
 
     fusion_.update(dt_, w_cal_, a_cal_);

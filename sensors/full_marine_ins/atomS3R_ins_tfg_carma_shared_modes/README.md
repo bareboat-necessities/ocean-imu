@@ -29,16 +29,24 @@ Set `IMU_LEVER_ARM_X_M`, `IMU_LEVER_ARM_Y_M` and `IMU_LEVER_ARM_Z_M` to the sens
 
 The current 27-state filter occupies 16,088 bytes in its single heap allocation on ESP32-S3 (Arduino-ESP32 3.3.11, Xtensa GCC 14.2). Its fixed-size table holds the transition and process-noise coefficients for the tuned wave shape. Each sample uses its measured interval. The default compass renders a new frame when due and transfers it over subsequent IMU polls. Each transfer uses the remaining loop budget for up to 16 rows. Even an over-budget loop sends one row (51.2 µs of pixel data on the 40 MHz bus) so the screen continues to refresh under sustained load.
 
+Navigation acquires accelerometer and gyro data on each accepted frame. The four CARMA sketches read die temperature at 10 Hz and read the compensated BMM150 AUX burst when the magnetic gate is due (35 ms minimum spacing) or the source has expired. Calibration still reads both with every requested frame. The primary sketch computes compass angles and wave reports for the first sample and when a display or serial update needs them. Rate of turn continues to use every gyro sample.
+
+Every accepted accelerometer/gyro sample advances the full 27-state covariance prediction and accelerometer correction. For a well-conditioned three-axis innovation, the filter whitens the residual and applies a symmetric rank-three covariance update. A projected accelerometer-bias gain adds a correction confined to its three bias rows and columns. The original LDLT/Joseph path handles poorly conditioned innovations.
+
+The sketch's `build_opt.h` places recurring estimator and wave-tracking routines in ESP32-S3 instruction RAM. This reduces competition for the 16 KiB flash instruction cache and uses some internal SRAM that would otherwise be available to the heap. Keep this file alongside the sketch when building it.
+
 Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device.
 
 | Field | Measurement |
 |---|---|
 | `fusion_cycles_mean`, `fusion_cycles_max` | CPU cycle counter around the fusion update and any magnetic update due on that sample |
+| `loop_cycles_mean`, `work_us_mean` | Mean cycle-counter delta and elapsed microseconds across all loop passes before pacing |
+| `read_us_mean`, `estimator_us_mean`, `output_us_mean` | Mean time per pass acquiring the sample, processing it (including calibration and rate of turn), and servicing serial and display |
 | `loop_work_max_us`, `loops_over_5ms` | Maximum active loop time before pacing, and number of loops that exceeded the 200 Hz budget |
 | `sample_gap_min_us`, `sample_gap_max_us` | Shortest and longest interval between accepted IMU poll timestamps |
 | `jitter_mean_abs_us`, `gaps_over_7_5ms` | Mean absolute departure from 5,000 µs and count of intervals above 7.5 ms |
 
-Use steady `live=1` windows to assess the operating workload. Keep the clock, graphics and serial settings the same when comparing firmware. At 240 MHz, the whole 5 ms interval is 1.2 million cycles.
+Use steady `live=1` windows to assess the operating workload. Keep the clock, graphics and serial settings the same when comparing firmware. At 240 MHz, the whole 5 ms interval is 1.2 million cycles. Reducing a 7 ms update by half would leave 3.5 ms of work and 1.5 ms of headroom.
 
 ### Earlier static size and stack measurements
 

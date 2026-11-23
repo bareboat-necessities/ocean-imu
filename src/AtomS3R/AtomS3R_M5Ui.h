@@ -27,8 +27,15 @@ static inline float clamp01_(float x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
 // Input: BtnA ONLY + keep-awake (self-contained)
 class Input {
 public:
-  static void update() {
+  // The live compass stays on after begin(). Polling buttons there must
+  // not resend the LCD wake command and two I2C brightness writes.
+  static void pollButton() {
     M5.update();
+    tap_edge_ = M5.BtnA.wasPressed();
+  }
+
+  static void update() {
+    pollButton();
 
     const uint32_t now = millis();
     if ((uint32_t)(now - last_keep_awake_ms_) >= M5UiCfg::KEEP_AWAKE_EVERY_MS) {
@@ -36,7 +43,6 @@ public:
       M5.Display.setBrightness(M5UiCfg::LCD_BRIGHTNESS);
       M5.Display.wakeup();
     }
-    tap_edge_ = M5.BtnA.wasPressed();
   }
 
   static bool tapPressed() { return tap_edge_; }

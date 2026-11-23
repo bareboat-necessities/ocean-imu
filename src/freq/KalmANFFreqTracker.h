@@ -223,6 +223,18 @@ public:
   // y: input sample, in *whatever* units (but tune q,r for that scale)
   // dt: actual sample period (seconds)
   Real process(Real y, Real dt, Real* e_out = nullptr) {
+    return processImpl_<true>(y, dt, e_out);
+  }
+
+  // For consumers that read only the raw frequency. Do not interleave
+  // this mode with callers that need continuous lock/confidence history.
+  Real processFrequencyOnly(Real y, Real dt) {
+    return processImpl_<false>(y, dt, nullptr);
+  }
+
+private:
+  template<bool WithConfidence>
+  Real processImpl_(Real y, Real dt, Real* e_out) {
     if (!std::isfinite(y)) {
       if (e_out) *e_out = last_error;
       return f_est_hz;
@@ -276,10 +288,11 @@ public:
 
     if (e_out) *e_out = e;
 
-    updateConfidenceAndLock_(y, e, f_now, dt);
+    if constexpr (WithConfidence) updateConfidenceAndLock_(y, e, f_now, dt);
     return f_est_hz;
   }
 
+public:
   Real get_phase() const { return res.get_phase(); }
   Real get_a() const     { return res.a; }
   Real get_p_cov() const { return p_cov; }

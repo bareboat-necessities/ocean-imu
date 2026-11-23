@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 #include <algorithm>
 #include <array>
@@ -30,7 +31,7 @@ public:
             cfg_.enabled = false;
         else cfg_.forward_body.normalize();
     }
-    Eigen::Vector3f update(float dt, const Eigen::Vector3f& gyro,
+    OCEAN_IMU_SAMPLE_IRAM Eigen::Vector3f update(float dt, const Eigen::Vector3f& gyro,
                           const Eigen::Vector3f& force, float gravity) {
         if (!cfg_.enabled) return force;
         if (!(dt > 0 && dt <= 0.1f) || !std::isfinite(dt) ||

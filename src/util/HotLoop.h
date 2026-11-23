@@ -8,3 +8,12 @@
 #else
 #define OCEAN_IMU_HOT_LOOP
 #endif
+
+// The AtomS3R release has a 16 KiB instruction cache. These larger loops run
+// together on every sample and otherwise evict each other from flash cache.
+#if defined(OCEAN_IMU_CARMA_SAMPLE_IRAM) && defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+#include <esp_attr.h>
+#define OCEAN_IMU_SAMPLE_IRAM IRAM_ATTR
+#else
+#define OCEAN_IMU_SAMPLE_IRAM
+#endif

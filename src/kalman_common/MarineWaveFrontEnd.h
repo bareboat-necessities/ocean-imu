@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
@@ -222,6 +223,7 @@ protected:
     // requirement than a usable tilt.
     //
     // Runs the acceleration-band tracker on it and returns it.
+    template<bool FrequencyOnly = false>
     float trackAccelBandFrequency_(float dt) {
         const float a_vert_measurement = vertical_accel_comp_.verticalAccelUpMs2();
 
@@ -229,7 +231,13 @@ protected:
         const float a_vert_lp = freq_input_lpf_.step(a_vert_measurement, dt);
 
         // Raw freq from tracker
-        const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
+        const float f_tracker = static_cast<float>([&] {
+            if constexpr (FrequencyOnly && requires { tracker_policy_.runFrequencyOnly(a_vert_lp, dt); }) {
+                return tracker_policy_.runFrequencyOnly(a_vert_lp, dt);
+            } else {
+                return tracker_policy_.run(a_vert_lp, dt);
+            }
+        }());
         f_raw = f_tracker;
 
         // Stillness detector shares the tracker's input, as it always has.
@@ -304,7 +312,7 @@ protected:
     // estimate: the direction branch needs inertial acceleration, so it is
     // corrected before levelling, as the MEKF's acceleration model does.  The
     // period/tuner input above stays independent of that estimate.
-    void updateWavePeriodAndDirection_(float dt,
+    OCEAN_IMU_SAMPLE_IRAM void updateWavePeriodAndDirection_(float dt,
                                        const Eigen::Quaternionf& q_dir,
                                        const Eigen::Vector3f& acc_in,
                                        const Eigen::Vector3f* acc_bias_body)

@@ -1325,7 +1325,18 @@ The CARMA compass redraw fix also changed the whole-tree digest (class E).
 The only changed file under `src/` is the AtomS3R display header. GCC lists
 46 project headers for the native planar secant probe, including none of the
 changed files. The diagnostic retains the same numerical results and open
-proof obligations with its updated source digest.
+proof obligations with its updated source digest. The CARMA covariance and I/O changes also fall outside those headers.
+Three shared front-end headers subsequently gained a CARMA-only frequency
+path. OU-III still instantiates the full tracker. With GCC 14.2 at `-O1`
+and `EIGEN_UNROLLING_LIMIT=0`, a flattened call to the native probe’s
+`MarineWaveFrontEnd<KALMANF>::trackAccelBandFrequency_` produced identical
+relocatable objects on main and this revision (SHA-256
+`3dba759392ef073079667760f1f8fb9dacbb446ded88d5650138bfe6aa2f0fe5`).
+The subsequent ESP32-S3 instruction-RAM attributes expand to nothing in
+the native probe. The preprocessed probe at `10d347b0` and after placement
+has the same SHA-256 after removing blank lines
+(`3782ba69f44bdd0ab2557885bf6ce0783af1d278f8dca9d277edbfb2d6d37f6a`).
+The secant matrices and finite-diagnostic qualifications carry forward.
 
 **E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
 The experimental QMEKF CARMA cores index plain storage in their sample-path
