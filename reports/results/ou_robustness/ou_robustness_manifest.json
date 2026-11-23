@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -41,9 +41,9 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "perf/atoms3r-update-headroom",
-  "git_commit": "ac7c59dd8a1fa8e9a51ccc1f1bb8abd9879700c1",
-  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json   | 32900 +++++++++----------\n .../results/ou_robustness/ou_robustness_macros.tex |     2 +-\n .../ou_robustness/ou_robustness_paired_effects.csv |  1572 +-\n .../results/ou_robustness/ou_robustness_raw.csv    |   620 +-\n .../ou_robustness/ou_robustness_sensitivity.svg    |   968 +-\n .../results/ou_robustness/ou_robustness_stress.svg |   160 +-\n .../ou_robustness/ou_robustness_summary.csv        |  1896 +-\n 7 files changed, 19058 insertions(+), 19060 deletions(-)",
+  "git_branch": "main",
+  "git_commit": "525bbd8a99d208d45c00b5b0fb7fc768c5ddf7a3",
+  "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -303,7 +303,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -414,11 +414,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-23T12:35:22+00:00",
-    "git_commit": "ac7c59dd8a1fa8e9a51ccc1f1bb8abd9879700c1",
+    "generated_at": "2026-11-23T19:07:53+00:00",
+    "git_commit": "525bbd8a99d208d45c00b5b0fb7fc768c5ddf7a3",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -693,8 +693,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "45137512704",
-      "workflow": "ou-full-evidence-branch"
+      "run_id": "45233242580",
+      "workflow": "build"
     }
   },
   "result_files": {
