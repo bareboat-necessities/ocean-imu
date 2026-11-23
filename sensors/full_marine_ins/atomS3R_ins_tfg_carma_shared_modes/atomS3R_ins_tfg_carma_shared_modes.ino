@@ -118,12 +118,12 @@ constexpr float FREQ_GUESS = 0.3f;
 static constexpr float    LOOP_HZ        = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
 
-static constexpr uint32_t UI_REFRESH_MS   = 100;
+static constexpr uint32_t UI_REFRESH_MS   = 250;
 static constexpr uint32_t DEBUG_SERIAL_MS = 100;
 static constexpr uint32_t NMEA_SERIAL_MS  = 80;
-static constexpr uint32_t NMEA_WAVE_MS    = 2000;
+static constexpr uint32_t NMEA_WAVE_MS    = 3000;
 static constexpr uint32_t NMEA_STATUS_MS  = 5000;
-static constexpr uint32_t NMEA_TEMP_MS    = 500;
+static constexpr uint32_t NMEA_TEMP_MS    = 8000;
 
 static constexpr float ROT_BIAS_TAU_S       = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
