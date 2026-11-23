@@ -32,6 +32,12 @@
 */
 
 #include <Arduino.h>
+#ifndef OCEAN_IMU_PROFILE_LOOP
+#define OCEAN_IMU_PROFILE_LOOP 0
+#endif
+#if OCEAN_IMU_PROFILE_LOOP
+#include <esp_cpu.h>
+#endif
 
 #ifndef SEA_STATE_ENABLE_WIZARD
   #define SEA_STATE_ENABLE_WIZARD 1
@@ -256,6 +262,9 @@ public:
 
     updateUI_();
     streamSerial_();
+#if OCEAN_IMU_PROFILE_LOOP
+    recordLoopTiming_(micros() - loop_start_us);
+#endif
     waitForNextLoopTick_(loop_start_us);
   }
 
@@ -290,6 +299,28 @@ private:
   uint32_t last_temp_nmea_ms_   = 0;
 
   Fusion fusion_{};
+
+#if OCEAN_IMU_PROFILE_LOOP
+  struct TimingWindow {
+    uint64_t cycles = 0;
+    uint32_t samples = 0, max_cycles = 0, max_work_us = 0;
+    uint32_t overruns = 0, long_gaps = 0, max_gap_us = 0;
+  } timing_;
+  uint32_t previous_sample_us_ = 0;
+  bool have_timing_sample_ = false;
+
+  void recordLoopTiming_(uint32_t work_us) {
+    timing_.max_work_us = std::max(timing_.max_work_us, work_us);
+    timing_.overruns += work_us > LOOP_PERIOD_US;
+    if (timing_.samples < 1000) return;
+    Serial.printf("[TIMING] live=%u fusion_cycles_mean=%u fusion_cycles_max=%u "
+                  "loop_work_max_us=%u loops_over_5ms=%u sample_gap_max_us=%u gaps_over_7_5ms=%u\n",
+                  unsigned(fusion_.isLive()), unsigned(timing_.cycles / timing_.samples),
+                  unsigned(timing_.max_cycles), unsigned(timing_.max_work_us),
+                  unsigned(timing_.overruns), unsigned(timing_.max_gap_us), unsigned(timing_.long_gaps));
+    timing_ = {};
+  }
+#endif
 
   ins::MagFreshGate mag_gate_{};
 
@@ -393,6 +424,10 @@ private:
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
+#if OCEAN_IMU_PROFILE_LOOP
+    timing_ = {};
+    have_timing_sample_ = false;
+#endif
     imu_spike_.reset();
   }
 
@@ -512,6 +547,10 @@ private:
 
     stale_frame_count_ = 0;
     sample_dt_.reset();
+#if OCEAN_IMU_PROFILE_LOOP
+    timing_ = {};
+    have_timing_sample_ = false;
+#endif
     imu_spike_.reset();
     heave_speed_mps_     = 0.0f;
     heave_raw_m_         = 0.0f;
@@ -604,10 +643,26 @@ private:
     mag_fresh_ = mag_gate_.update(mag_ok_, millis());
     if (mag_fresh_) rates_.countMag();
 
+#if OCEAN_IMU_PROFILE_LOOP
+    if (have_timing_sample_) {
+      const uint32_t gap = s.sample_us - previous_sample_us_;
+      timing_.max_gap_us = std::max(timing_.max_gap_us, gap);
+      timing_.long_gaps += gap > LOOP_PERIOD_US + LOOP_PERIOD_US / 2;
+    }
+    have_timing_sample_ = true;
+    previous_sample_us_ = s.sample_us;
+    const uint32_t start_cycles = esp_cpu_get_cycle_count();
+#endif
     fusion_.update(dt_, w_cal_, a_cal_);
     if (mag_ok_ && mag_fresh_) {
       fusion_.updateMag(m_cal_);
     }
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t cycles = esp_cpu_get_cycle_count() - start_cycles;
+    timing_.cycles += cycles;
+    timing_.max_cycles = std::max(timing_.max_cycles, cycles);
+    ++timing_.samples;
+#endif
 
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
@@ -667,6 +722,7 @@ private:
   }
 
   void drawHomeStatic_() {
+    compass_ui_.cancelFrame();
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
@@ -690,6 +746,7 @@ private:
 #if SEA_STATE_ENABLE_WIZARD
     if (tap_count_ > 0) return;
 #endif
+    if (use_graphics_ && compass_ui_.pushNextStrip()) return;
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
@@ -702,7 +759,7 @@ private:
     ui_.setReadRotation();
     const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
     const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
-    compass_ui_.draw(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
+    compass_ui_.prepareFrame(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
   }
 
   void updateUI_text_() {

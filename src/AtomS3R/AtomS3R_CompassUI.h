@@ -48,6 +48,7 @@ class CompassUI {
       return;
     }
 
+    _nextRow = _h;
     drawBackground();
     _ok = true;
   }
@@ -56,6 +57,16 @@ class CompassUI {
             bool magOk = true,
             float magStrength_uT = NAN,
             bool tiltWarn = false) {
+    prepareFrame(headingDeg, magOk, magStrength_uT, tiltWarn);
+    if (_nextRow == 0) {
+      _frame.pushSprite(&M5.Display, 0, 0);
+      _nextRow = _h;
+    }
+  }
+
+  // Render once. A 128 x 128 RGB565 frame takes 6.55 ms on the 40 MHz
+  // AtomS3R display bus, longer than an entire 200 Hz acquisition interval.
+  void prepareFrame(float headingDeg, bool magOk, float magStrength_uT, bool tiltWarn) {
     if (!_ok) return;
 
     headingDeg = wrap360(headingDeg);
@@ -70,8 +81,21 @@ class CompassUI {
     drawNeedle(headingDeg);
     drawCenterText(headingDeg, magOk, magStrength_uT, tiltWarn);
 
-    // Push explicitly to display (no parent pointer needed)
-    _frame.pushSprite(&M5.Display, 0, 0);
+    _nextRow = 0;
+  }
+
+  // Transfer at most 4096 bytes (0.82 ms on the AtomS3R) between IMU polls.
+  bool pushNextStrip() {
+    if (!_ok || _nextRow >= _h) return false;
+    const int rows = std::min(16, _h - _nextRow);
+    const auto* pixels = static_cast<const lgfx::swap565_t*>(_frame.getBuffer());
+    M5.Display.pushImage(0, _nextRow, _w, rows, pixels + _nextRow * _w);
+    _nextRow += rows;
+    return true;
+  }
+
+  void cancelFrame() {
+    _nextRow = _h;
   }
 
  private:
@@ -212,6 +236,7 @@ class CompassUI {
  private:
   bool _ok = false;
   int _w = 128, _h = 128, _cx = 64, _cy = 64;
+  int _nextRow = 128;
   int _rOuter = 60, _rInner = 50;
 
   M5Canvas _bg;

@@ -517,7 +517,44 @@ void test5_wrapper() {
     check(ec < ea, "position RMS below the independent-axis CARMA3 wrapper's on a coupled sea", ec / ea, 1.0);
 }
 
+// Compare the sample path with the physical-coordinate integrator, including
+// the small position-noise entries and the sign of the quadrature spectrum.
+template<class T>
+static void test_scaled_steps() {
+    csm::SharedModesMotion<T> motion;
+    auto shape = kc::CARMA41_JONSWAP_SHAPE;
+    T worst_transition = 0, worst_noise = 0;
+    bool finite = true;
+    for (double zero : {0., .17}) {
+        shape.fz_hz = zero;
+        finite &= motion.set_shape(shape);
+        for (T k : {T(1), T(.02), T(.48), T(.97), T(1.03), T(4), T(17), T(1)}) {
+            finite &= motion.set_vertical(k, T(.7));
+            for (T h : {T(.005), T(.00375), T(.00625), T(.2), T(.005), T(.005)}) {
+                motion.refresh(h);
+                typename csm::SharedModesMotion<T>::MatB f, r, im;
+                finite &= motion.discretize(h, f, r, im);
+                finite &= motion.block_F().allFinite() && motion.block_QR().allFinite()
+                       && motion.block_QI().allFinite();
+                worst_transition = std::max(worst_transition, (f - motion.block_F()).norm() / f.norm());
+                for (int j = 0; j < 6; ++j)
+                    for (int i = 0; i < 6; ++i) {
+                        const T scale = std::sqrt(r(i,i)) * std::sqrt(r(j,j));
+                        const T error = std::max(std::abs(r(i,j) - motion.block_QR()(i,j)),
+                                                 std::abs(im(i,j) - motion.block_QI()(i,j)));
+                        worst_noise = std::max(worst_noise, error / scale);
+                    }
+            }
+        }
+    }
+    const T tol = T(64) * std::numeric_limits<T>::epsilon();
+    check(finite && worst_transition < tol, "scaled transition agrees with direct integration", worst_transition, tol);
+    check(finite && worst_noise < tol, "both scaled noise integrals agree in correlation units", worst_noise, tol);
+}
+
 int main() {
+    test_scaled_steps<float>();
+    test_scaled_steps<double>();
     test1_structure();
     test2_realization();
     test3_off_a41();

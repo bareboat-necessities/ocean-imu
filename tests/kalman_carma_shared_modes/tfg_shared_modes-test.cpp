@@ -139,6 +139,26 @@ void recoordinate() {
     check("anisotropic latent map attitude shear is nonzero",J.block<6,3>(18,0).norm()>.01?0.:1.,0.);
     check("adaptive coordinate covariance vs nonlinear FD",(f.covariance_full()-ref).norm()/ref.norm(),2e-9);
     check("adaptive coordinate nominal state",f.state().local(y).norm(),1e-12);
+    // A real amplitude commit scales only the two colouring columns. Compare
+    // its sparse transport (including their mutual covariance) to the general
+    // physical-coordinate map through the very same prediction.
+    F fast = make_filter();
+    fast.state() = x;
+    fast.covariance_full() = P;
+    fast.set_vertical_carma(.9, .85);
+    fast.set_horizontal_carma(.9, .15, 1.1);
+    fast.motion().refresh(.005);
+    F dense = fast;
+    M6 colouring[3];
+    const bool pending = dense.motion().take_axis_recoordinatization(colouring);
+    check("nontrivial colouring map pending", pending ? 0. : 1., 0.);
+    if (pending) dense.apply_motion_recoordinatization(colouring);
+    const V rate(.03,-.01,.07);
+    fast.time_update(rate,.005);
+    dense.time_update(rate,.005);
+    check("sparse colouring covariance vs full coordinate map",
+          (fast.covariance_full()-dense.covariance_full()).norm()/dense.covariance_full().norm(), 2e-12);
+    check("sparse colouring state vs full coordinate map", fast.state().local(dense.state()).norm(), 1e-12);
     // Fall back in invariant coordinates; check full PSD and unchanged common block.
     MX A=MX::Random();P=A*A.transpose()+MX::Identity();f.covariance_full()=P;
     check("Schur fallback accepted",f.shrink_motion_vertical_coupling(.0)?0.:1.,0.);

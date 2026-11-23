@@ -661,6 +661,7 @@ private:
   }
 
   void drawHomeStatic_() {
+    compass_ui_.cancelFrame();
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("BLOB: %s\n", have_blob_ ? "YES" : "NO");
@@ -684,6 +685,7 @@ private:
 #if SEA_STATE_ENABLE_WIZARD
     if (tap_count_ > 0) return;
 #endif
+    if (use_graphics_ && compass_ui_.pushNextStrip()) return;
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
@@ -696,7 +698,7 @@ private:
     ui_.setReadRotation();
     const bool tiltWarn = (fabsf(roll_deg_) > 35.0f) || (fabsf(pitch_deg_) > 35.0f);
     const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
-    compass_ui_.draw(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
+    compass_ui_.prepareFrame(hdg_draw, heading_valid_ && mag_ok_, mag_norm_uT_, tiltWarn);
   }
 
   void updateUI_text_() {
