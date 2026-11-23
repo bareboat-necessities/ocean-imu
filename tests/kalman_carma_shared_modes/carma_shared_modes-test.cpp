@@ -51,6 +51,7 @@
 #define PI 3.1415926535897932384626433832795
 #define MR 32
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h"
+#include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
 #if !defined(PI) || MR != 32
 #error "Estimator headers must preserve platform macros"
 #endif
@@ -232,10 +233,27 @@ static double min_corr_eig(const Eigen::Matrix<float,N,N>& Pf) {
 }
 
 // ---------------------------------------------------------------------------
+template<class F, class C>
+concept BeginsWith = requires(F& f, const C& c) { f.begin(c); };
+
 void test1_api() {
     std::printf("[1] public API, state count, determinism, reset\n");
     check(Csm::kStates == 27, "27 error states (3 + 3 + 18 + 3)",
           Csm::kStates, 27);
+    {
+        // The shared-mode TFG defaults live in its Config's constructor, so
+        // begin() must not accept the base struct, which would drop them.
+        using Tfg = csm::SeaStateFusion_TfgCarmaSharedModes;
+        using BaseConfig = ocean_imu::carma::SeaStateFusionConfig_CARMA3;
+        static_assert(BeginsWith<Tfg, Tfg::Config>);
+        static_assert(!BeginsWith<Tfg, BaseConfig>);
+        static_assert(BeginsWith<Csm::Fusion, BaseConfig>);
+        const Tfg::Config tfg{};
+        const BaseConfig base{};
+        check(tfg.mag_hi_slew_tau_sec == 60.0f && tfg.mag_hi_heading_transport_fraction == 0.2f &&
+              base.mag_hi_heading_transport_fraction == 0.0f,
+              "shared-mode TFG Config carries its magnetic defaults; the base does not");
+    }
     Csm a(base_config()), b(base_config());
     Sea sea(30.0);
     run(a, sea, 120.0, 1e9, 3, no_hook);

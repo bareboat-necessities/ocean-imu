@@ -94,9 +94,13 @@ Practical consequences:
 
 **ASan and UBSan run on every PR that triggers the quality workflow.** Each of
 the eight fusion jobs builds the production wrapper with Clang and both
-sanitizers, then feeds it 60 seconds of varying roll and vertical acceleration
-at 200 Hz with 100 Hz magnetic updates. A replay must produce finite positions
-and spend at least 2,000 IMU samples in the live filter. Run one case locally
+sanitizers, then feeds it 600 seconds of a long-crested 7 s sea at 200 Hz with
+100 Hz magnetic updates: horizontal and vertical accelerations in quadrature,
+roll and pitch at the wave frequency and a constant heading. A replay must
+produce finite positions and spend at least half its IMU samples in the live
+filter. The run outlasts the 120 s coupling warm-up, so the shared-mode cores
+(`shared`, `tfg_shared`, `tangent`) must also reach a coupling confidence above
+0.5 with coupling applied to the excitation. Run one case locally
 with `tools/quality_gates.sh sanitizers tfg_shared`. The other fusion cases are
 `ou2`, `ou3`, `tfg`, `carma`, `tfg_carma`, `shared`, and `tangent`.
 

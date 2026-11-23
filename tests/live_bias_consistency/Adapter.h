@@ -122,7 +122,13 @@ public:
         if((o.noise=="all"||o.noise=="all_prior"))cfg.sigma_a=V::Constant(carma3_bench::ACC_SIGMA);
         f.begin(cfg);auto& m=f.raw().mekf();m.exact=o.arm.find("learned")==std::string::npos&&o.arm!="correct_reference";if(m.exact||o.arm=="correct_reference")m.exact_field=B;
         if(o.noise=="prior"||o.noise=="all_prior")m.set_initial_acc_bias_std(.008f*9.80665f/std::sqrt(3.f));
-        if(o.parity) {if(m.exact)throw std::runtime_error("parity requires learned arm");plain=std::make_unique<Plain>();plain->begin(cfg);}
+        if(o.parity) {
+            if(m.exact)throw std::runtime_error("parity requires learned arm");
+            // Parity needs the probe's exact configuration. Plain's Config may
+            // carry core defaults (TransportedMagCarmaConfig) the probe's lacks.
+            typename Plain::Config pc;static_cast<ocean_imu::carma::SeaStateFusionConfig_CARMA3&>(pc)=cfg;
+            plain=std::make_unique<Plain>();plain->begin(pc);
+        }
     }
     Output step(const Input& s,bool diagnostic) override {
         auto& m=f.raw().mekf();
