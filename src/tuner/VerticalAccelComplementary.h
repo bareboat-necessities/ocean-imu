@@ -130,10 +130,9 @@ public:
             initialized_ = true;
         }
 
-        float pitch_deg = 0.0f, roll_deg = 0.0f, yaw_deg = 0.0f;
         ahrs_.update(gyro.x(), gyro.y(), gyro.z(),
                      -acc.x(), -acc.y(), -acc.z(),
-                     &pitch_deg, &roll_deg, &yaw_deg,
+                     nullptr, nullptr, nullptr,
                      dt_sec);
 
         // Third row of R(body->NED); dotting it with the specific force gives

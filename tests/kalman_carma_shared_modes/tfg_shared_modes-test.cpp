@@ -281,6 +281,18 @@ void independent_and_float() {
     decltype(ff)::Config c;c.mode=cs::CouplingMode::External;ff.configureSharedModes(c);
     decltype(ff)::Hermitian source;source.re.setIdentity();source.im.setZero();
     source.im(0,2)=.3f;source.im(2,0)=-.3f;ff.setExternalCoupling(source);
+    {
+        // A 45-degree yaw has a representable cosine whose squared row norm
+        // differs from unity. At zero rate the two endpoint frames coincide.
+        auto probe = ff;
+        const float c45 = std::sqrt(.5f);
+        probe.state().R << c45, -c45, 0, c45, c45, 0, 0, 0, 1;
+        const float row_norm_sq = c45 * c45 + c45 * c45;
+        decltype(ff)::MatrixNX transition;
+        probe.build_transition(probe.state().B.col(0), .005f, transition);
+        check("float gyro-bias transport uses the actual interval frames",
+              std::abs(transition(decltype(ff)::OFF_BG, decltype(ff)::OFF_BG) - row_norm_sq), 0.0);
+    }
     double asym=0,min_eig=1.;int bad=0;
     // Eigen's run-time allocator guard covers all real-time paths, including
     // confidence fallback, variable dt, model commits and magnetic corrections.

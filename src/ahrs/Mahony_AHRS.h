@@ -79,7 +79,13 @@ public:
         integralFBz = T(0);
     }
 
-    // update()  (IMU-only, no magnetometer)
+    // IMU-only update. Callers needing only the quaternion can omit
+    // Euler output by passing null pointers. Keep the same integration
+    // function for both callers: contraction and rounding of the quaternion
+    // recurrence affect the startup observer's gravity gate.
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((noinline))
+#endif
     void update(T gx, T gy, T gz,
                 T ax, T ay, T az,
                 T* pitch, T* roll, T* yaw,
@@ -154,6 +160,8 @@ public:
         q1 *= recipNorm;
         q2 *= recipNorm;
         q3 *= recipNorm;
+
+        if (!pitch || !roll || !yaw) return;
 
         // Euler angles.
         *pitch = std::asin(-T(2) * q1 * q3 + T(2) * q0 * q2);
