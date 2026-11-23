@@ -97,6 +97,7 @@
 #include "nlo/TimeVarGainNLO_Adapter.h"
 #include "nmea/NmeaCompass.h"
 #include "util/AngleUtils.h"
+#include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -216,7 +217,7 @@ class FusionApp {
   }
 
   void tick() {
-    const uint32_t loop_start_us = micros();
+    pacer_.wait();
 
 #if SEA_STATE_ENABLE_WIZARD
     Input::update();
@@ -253,7 +254,6 @@ class FusionApp {
 
     updateUI_();
     streamSerial_();
-    waitForNextLoopTick_(loop_start_us);
   }
 
  private:
@@ -343,12 +343,7 @@ class FusionApp {
   AdaptiveWaveDetrender z_detrender_{};
 
  private:
-  static void waitForNextLoopTick_(uint32_t loop_start_us) {
-    const uint32_t elapsed_us = micros() - loop_start_us;
-    if (elapsed_us < LOOP_PERIOD_US) {
-      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
-    }
-  }
+  SamplePacer pacer_{LOOP_PERIOD_US};
 
   void reloadBlobAndRuntime_() {
     have_blob_ = store_.load(blob_);

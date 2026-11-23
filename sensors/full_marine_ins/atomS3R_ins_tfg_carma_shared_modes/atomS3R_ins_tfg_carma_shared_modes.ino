@@ -111,6 +111,7 @@ constexpr float FREQ_GUESS = 0.3f;
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateFamilyDefaults.h"
 #include "util/AngleUtils.h"
+#include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -235,8 +236,9 @@ public:
   }
 
   void tick() {
-    const uint32_t loop_start_us = micros();
+    pacer_.wait();
 #if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t loop_start_us = micros();
     const uint32_t loop_start_cycles = esp_cpu_get_cycle_count();
 #endif
 
@@ -260,12 +262,9 @@ public:
 #endif
 
     ImuSample sample{};
-    m5::imu_data_t data{};
     const uint32_t sample_us = micros();
-    const uint32_t update_mask = navigation_imu_.update(M5.Imu, data);
-    const uint32_t poll_ms = millis();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample,
-                                          false, &temperature_, mag_gate_.due(poll_ms), &data);
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
 
 #if OCEAN_IMU_PROFILE_LOOP
     const uint32_t read_done = micros();
@@ -293,7 +292,6 @@ public:
     timing_.output_us += end_us - filter_done;
     recordLoopTiming_(end_us - loop_start_us, got_sample);
 #endif
-    waitForNextLoopTick_(loop_start_us);
   }
 
 private:
@@ -337,7 +335,7 @@ private:
     uint32_t samples = 0, max_cycles = 0, max_work_us = 0;
     uint32_t overruns = 0, gaps = 0, long_gaps = 0;
     uint32_t min_gap_us = UINT32_MAX, max_gap_us = 0;
-    uint64_t absolute_jitter_us = 0;
+    uint64_t gap_sum_us = 0, absolute_jitter_us = 0;
   } timing_;
   uint32_t previous_sample_us_ = 0;
   bool have_timing_sample_ = false;
@@ -358,7 +356,7 @@ private:
     timing_.overruns += work_us > LOOP_PERIOD_US;
     if (timing_.samples < 1000) return;
     Serial.printf("[TIMING] live=%u fusion_cycles_mean=%u fusion_cycles_max=%u "
-                  "loop_work_max_us=%u loops_over_5ms=%u sample_gap_min_us=%u sample_gap_max_us=%u "
+                  "loop_work_max_us=%u loops_over_5ms=%u sample_gap_min_us=%u sample_gap_mean_us=%u sample_gap_max_us=%u "
                   "jitter_mean_abs_us=%u gaps_over_7_5ms=%u "
                   "loop_cycles_mean=%u work_us_mean=%u read_us_mean=%u estimator_us_mean=%u output_us_mean=%u "
                   "accepted_work_mean_us=%u accepted_work_max_us=%u accepted_over_4500us=%u "
@@ -367,6 +365,7 @@ private:
                   unsigned(fusion_.isLive()), unsigned(timing_.cycles / timing_.samples),
                   unsigned(timing_.max_cycles), unsigned(timing_.max_work_us),
                   unsigned(timing_.overruns), unsigned(timing_.gaps ? timing_.min_gap_us : 0),
+                  unsigned(timing_.gaps ? (timing_.gap_sum_us + timing_.gaps / 2) / timing_.gaps : 0),
                   unsigned(timing_.max_gap_us),
                   unsigned(timing_.gaps ? timing_.absolute_jitter_us / timing_.gaps : 0),
                   unsigned(timing_.long_gaps), unsigned(timing_.loop_cycles / timing_.loops),
@@ -427,12 +426,7 @@ private:
   float acc_bias_z_mps2_    = NAN;
 
 private:
-  static void waitForNextLoopTick_(uint32_t loop_start_us) {
-    const uint32_t elapsed_us = micros() - loop_start_us;
-    if (elapsed_us < LOOP_PERIOD_US) {
-      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
-    }
-  }
+  SamplePacer pacer_{LOOP_PERIOD_US};
 
   uint32_t magPollMs_() const {
     const float use_hz = 25.0f;
@@ -713,6 +707,7 @@ private:
     if (have_timing_sample_) {
       const uint32_t gap = s.sample_us - previous_sample_us_;
       ++timing_.gaps;
+      timing_.gap_sum_us += gap;
       timing_.min_gap_us = std::min(timing_.min_gap_us, gap);
       timing_.max_gap_us = std::max(timing_.max_gap_us, gap);
       timing_.absolute_jitter_us += (gap >= LOOP_PERIOD_US) ? gap - LOOP_PERIOD_US : LOOP_PERIOD_US - gap;

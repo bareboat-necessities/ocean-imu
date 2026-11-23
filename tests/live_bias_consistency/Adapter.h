@@ -51,10 +51,18 @@ template<class Native,bool TFG> struct Probe:Native {
         const V r=TFG?V(this->get_world_accel()-truth):V(truth-this->get_world_accel());
         auto& P=[&]() -> M& {if constexpr(TFG)return this->P_;else return this->Pext;}();
         typename Native::MatrixNX3 PHt=P*H.transpose();
-        Eigen::Matrix3f S=H*PHt+sigma*sigma*Eigen::Matrix3f::Identity();
+        const Eigen::Matrix3f noise=sigma*sigma*Eigen::Matrix3f::Identity();
+        Eigen::Matrix3f S=H*PHt+noise;
         if constexpr(TFG) {
             typename Native::MeasDiag3 diag;
-            if(!this->correct3_(r,S,PHt,sigma*sigma,false,diag))throw std::runtime_error("oracle correction rejected");
+            bool accepted;
+            if constexpr (requires { this->correct3_(r,S,PHt,noise,false,diag); }) {
+                accepted=this->correct3_(r,S,PHt,noise,false,diag);
+            } else {
+                // The published baseline takes the scalar noise variance.
+                accepted=this->correct3_(r,S,PHt,sigma*sigma,false,diag);
+            }
+            if(!accepted)throw std::runtime_error("oracle correction rejected");
             oracle_nis=diag.nis;
         } else {
             Eigen::LDLT<Eigen::Matrix3f> ldlt(S);

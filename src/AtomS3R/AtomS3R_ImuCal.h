@@ -322,10 +322,11 @@ inline AtomS3RMagSource& atoms3rMagSource() {
 /** @brief Return the body-frame magnetic field in microteslas, or NaNs when stale.
  * Compensated values and source freshness come from the same AUX burst.
  */
-static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us) {
+static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_us,
+                                    const Bmi270AuxBurst* burst = nullptr) {
   auto& src = atoms3rMagSource();
   const uint32_t now = millis();
-  const uint32_t read_start_us = micros();
+  const uint32_t read_start_us = burst ? burst->start_us : micros();
   const Vector3f none(NAN, NAN, NAN);
   if (!src.compensated) {
     const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
@@ -339,7 +340,13 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_u
   }
   uint8_t d[8];
   float sensor[3], body[3];
-  const bool read = src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d));
+  bool read;
+  if (burst) {
+    memcpy(d, burst->bytes, sizeof(d));
+    read = true;
+  } else {
+    read = src.bmi270 && src.bmi270->readRegister(0x04, d, sizeof(d));
+  }
   if (read) { // ignore DRDY/self-test status bits when comparing magnetic payloads
     d[0] &= 0xf8; d[2] &= 0xf8; d[4] &= 0xfe; d[6] &= 0xfc;
   }
@@ -350,7 +357,7 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_u
     src.last_body = Vector3f(body[0], body[1], body[2]);
     memcpy(src.last_aux, d, sizeof(d));
     src.have_last = true;
-    src.acquisition.acquired(now, frame_us, read_start_us, micros());
+    src.acquisition.acquired(now, frame_us, read_start_us, burst ? burst->end_us : micros());
   }
   // Never mix units: until the first compensated reading this is NaN (invalid).
   return src.acquisition.fresh(now) ? src.last_body : none;
@@ -382,7 +389,8 @@ struct ImuTemperatureCache {
 // does not use acceleration.
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out,
                                  bool gyro_only = false, ImuTemperatureCache* temperature = nullptr,
-                                 bool poll_mag = true, const m5::imu_data_t* acquired = nullptr) {
+                                 bool poll_mag = true, const m5::imu_data_t* acquired = nullptr,
+                                 const Bmi270AuxBurst* burst = nullptr) {
   out.sample_us = sample_us;
   out.mask = update_mask;
   const uint32_t required = gyro_only ? uint32_t(ATOMS3R_IMU_MASK_GYRO) : kImuMaskAccelGyro;
@@ -402,7 +410,7 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, ui
   // gates rather than the update mask.
   auto& src = atoms3rMagSource();
   if (poll_mag || !src.compensated || !src.acquisition.fresh(millis())) {
-    out.m = readMagBody_(data.mag, sample_us);
+    out.m = readMagBody_(data.mag, sample_us, burst);
   } else {
     out.m = src.last_body;
   }
@@ -417,9 +425,9 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out, bool gyr
   return readImuMapped(imu, update_mask, sample_us, out, gyro_only);
 }
 
-// Navigation with the compensated BMM150 reads its own coherent AUX burst
-// (including RHALL). Skip the duplicate eight AUX bytes in M5Unified's
-// 20-byte inertial burst. Only the AtomS3R with its stock axis order and
+// Navigation reads 12 inertial bytes on ordinary samples. When a compensated
+// BMM150 observation is due, read AUX (including RHALL) and inertial data as
+// a single contiguous 20-byte burst. Only the AtomS3R with its stock axis order and
 // cleared M5 offsets uses this reader. The wizard uses the regular driver.
 class AtomS3RNavigationImu {
  public:
@@ -436,7 +444,23 @@ class AtomS3RNavigationImu {
     device_->getConvertParam(&scale_);
   }
 
-  uint32_t update(decltype(M5.Imu)& imu, m5::imu_data_t& data) const {
+  template <class MagGate>
+  bool read(decltype(M5.Imu)& imu, uint32_t frame_us, ImuSample& sample, ImuTemperatureCache& temperature,
+            const MagGate& gate, uint32_t& poll_ms) const {
+    m5::imu_data_t data{};
+    Bmi270AuxBurst burst;
+    const uint32_t now = millis();
+    const bool request_aux = gate.due(now) || !atoms3rMagSource().acquisition.fresh(now);
+    const uint32_t mask = update(imu, data, request_aux ? &burst : nullptr);
+    // A poll can become due during the transfer. In that case read AUX here
+    // just as we do when the optimized transfer was unavailable.
+    poll_ms = millis();
+    return readImuMapped(imu, mask, frame_us, sample, false, &temperature,
+                         gate.due(poll_ms), &data, burst.acquired ? &burst : nullptr);
+  }
+
+  uint32_t update(decltype(M5.Imu)& imu, m5::imu_data_t& data, Bmi270AuxBurst* aux = nullptr) const {
+    if (aux) aux->acquired = false;
     if (!device_ || !atoms3rMagSource().compensated) {
       const auto mask = imu.update();
       if ((mask & kImuMaskAccelGyro) == kImuMaskAccelGyro) data = imu.getImuData();
@@ -446,9 +470,20 @@ class AtomS3RNavigationImu {
     // INT_STATUS_1 has clear-on-read ready flags, as in BMI270_Class.
     uint8_t ready = 0;
     if (!device_->readRegister(0x1d, &ready, 1) || !(ready & 0xe0)) return 0;
-    // The six little-endian words begin at ACC_X_LSB on the ESP32-S3.
-    int16_t raw[6];
-    if (!device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), sizeof(raw))) return 0;
+    // AUX_X_LSB (0x04) immediately precedes ACC_X_LSB (0x0c).
+    // If the combined read fails, recover the inertial frame separately.
+    int16_t block[10];
+    int16_t* raw = block + 4;
+    if (aux && (ready & 0xc0) == 0xc0) {
+      aux->start_us = micros();
+      aux->acquired = device_->readRegister(0x04, reinterpret_cast<uint8_t*>(block), sizeof(block));
+      if (aux->acquired) {
+        aux->end_us = micros();
+        memcpy(aux->bytes, block, sizeof(aux->bytes));
+      }
+    }
+    if ((!aux || !aux->acquired) &&
+        !device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), 6 * sizeof(*raw))) return 0;
     const uint32_t mask = ((ready & 0x80) ? ATOMS3R_IMU_MASK_ACCEL : 0u) |
                           ((ready & 0x40) ? ATOMS3R_IMU_MASK_GYRO : 0u) |
                           ((ready & 0x20) ? uint32_t(m5::IMU_Class::sensor_mask_mag) : 0u);

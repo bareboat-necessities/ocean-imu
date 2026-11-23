@@ -2,6 +2,8 @@
 
 The frontend and whole-source hashes in the planar records expired when the turn learner, wave-direction estimator, frequency readout, quaternion-only observer call and startup gravity gate changed (class E). The two native runs at perturbation radii 0.01 and 0.005 reproduced the recorded secant bytes in all 252 directions.
 
+The whole-source digest also covers code outside the native probe. The maintenance changes after 3bc387a expired that digest (class E). All 48 shipping files in the compiler include closure and the complete preprocessed probe match the merged source byte for byte. The new binding therefore retains the original secant words, clocks, corrections, qualifications and open theorem status. The AtomS3R sketch now schedules polls from its previous 5 ms release and timestamps actual sensor reads. The native probe replays a fixed stream. Its preserved results certify neither polling intervals nor deadline compliance on hardware.
+
 - **Structures preserved.** Each fork continued the inherited mean and full covariance over samples 40,000–44,000. The forcing and clocks matched across every perturbation, with 500 accepted magnetic corrections per word. The unperturbed forks matched their parents bit for bit.
 - **Relaxations introduced.** These finite perturbations sample a neighborhood of one trajectory. Reachability of each perturbed starting state and uniform bounds remain open. Neither run produced a shipping counterexample.
 - **Next falsifiable check.** Bound coupled cross-gains on reachable continuations of the measured state and physical forcing, including each prefix of the word.
@@ -1899,8 +1901,9 @@ all promotion flags remain unchanged.
 default-Complementary continuation, fixed inherited auxiliary state and
 delivered history give identical reference/offset executions for finite MEKF
 root variations. The active reverse reference port and its homogeneous word
-work are exactly zero. The Live gravity gate still reads MEKF attitude, but
-its acquisition guard is inactive while lock holds. Refinement uses private
+work are exactly zero. In Live the gravity gate reads MEKF attitude only
+while magnetic acquisition is enabled and the reference is unset. The gate
+stays idle once the reference is set. Refinement uses private
 Mahony; its yaw write remains an actual MEKF jump. Cold/reacquisition,
 watchdog branch qualification and external reconfiguration are not covered
 by deleting that gate. This is a proved causal reduction, not an assumption

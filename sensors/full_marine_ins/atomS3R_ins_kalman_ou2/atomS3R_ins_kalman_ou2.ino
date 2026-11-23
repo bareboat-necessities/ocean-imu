@@ -72,6 +72,7 @@ constexpr float FREQ_GUESS = 0.3f;
 extern template void ocean_imu::kalman::Kalman3D_Wave_OU_II<float, true, true>::time_update(
     const Eigen::Vector3f&, float);
 #include "util/AngleUtils.h"
+#include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -187,7 +188,7 @@ public:
   }
 
   void tick() {
-    const uint32_t loop_start_us = micros();
+    pacer_.wait();
 
 #if SEA_STATE_ENABLE_WIZARD
     Input::update();
@@ -225,7 +226,6 @@ public:
 
     updateUI_();
     streamSerial_();
-    waitForNextLoopTick_(loop_start_us);
   }
 
 private:
@@ -299,12 +299,7 @@ private:
   bool acc_bias_estimating_ = false;
 
 private:
-  static void waitForNextLoopTick_(uint32_t loop_start_us) {
-    const uint32_t elapsed_us = micros() - loop_start_us;
-    if (elapsed_us < LOOP_PERIOD_US) {
-      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
-    }
-  }
+  SamplePacer pacer_{LOOP_PERIOD_US};
 
   uint32_t magPollMs_() const {
     const float use_hz = 25.0f;

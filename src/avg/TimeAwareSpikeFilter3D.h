@@ -40,18 +40,18 @@ class TimeAwareSpikeFilter3D {
       float gx, gy, gz;    // Companion gyro, carried along with the vector
       float magnitude;
       float vertical;
-      float deltaTime; // Time since previous sample
+      float magnitudeRate, verticalRate; // Finite differences from the preceding raw read
     };
 
     Sample *window;      // Circular buffer for previous vectors and time deltas
     int windowSize;      // Size of the moving window
     int currentIndex;    // Current position in the circular buffer
+    int quietCount = 0;  // Consecutive slopes strictly below half their thresholds
     float threshold;     // Magnitude-derivative threshold for spike detection
     int verticalAxis;    // 0/1/2 = x/y/z component also checked; -1 = off
     float verticalThreshold; // Vertical-component derivative threshold
     bool initialized;    // Flag to indicate if filter is initialized
 
-    float *derivatives;
     float *temp;
     int *order;
 
@@ -69,7 +69,6 @@ class TimeAwareSpikeFilter3D {
           verticalAxis((vAxis >= 0 && vAxis <= 2) ? vAxis : -1), verticalThreshold(vThr),
           initialized(false) {
       window = new Sample[windowSize];
-      derivatives = new float[windowSize];
       temp = new float[windowSize];
       order = new int[windowSize];
       currentIndex = 0;
@@ -78,7 +77,6 @@ class TimeAwareSpikeFilter3D {
     ~TimeAwareSpikeFilter3D() {
       delete[] order;
       delete[] temp;
-      delete[] derivatives;
       delete[] window;
     }
 
@@ -124,26 +122,40 @@ class TimeAwareSpikeFilter3D {
       const float vertical = verticalAxis == 0 ? x : (verticalAxis == 1 ? y : z);
 
       if (!initialized) {
-        // Initialize the window with the first vector
+        // The initial window repeats the first vector. Preserve the original
+        // derivative even if a finite, out-of-range input overflowed its norm.
+        const float initialRate = (magnitude - magnitude) / deltaT;
         for (int i = 0; i < windowSize; i++) {
-          window[i] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, deltaT};
+          window[i] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, initialRate, 0.0f};
         }
+        quietCount = 0;
         initialized = true;
         return false;
       }
 
-      // Store the new vector and time delta, then advance the write cursor.
-      // After the advance currentIndex points at the oldest sample, which is
-      // the slot the next call overwrites.
-      int newestIndex = currentIndex;
-      window[newestIndex] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, deltaT};
-      currentIndex = (currentIndex + 1) % windowSize;
+      // Keep the slope with its ending sample. Rejected samples also remain
+      // in the raw history used by the next derivative and median.
+      const Sample &previous = window[currentIndex ? currentIndex - 1 : windowSize - 1];
+      const float magnitudeRate = (magnitude - previous.magnitude) / deltaT;
+      const float verticalRate = verticalAxis >= 0 ? (vertical - previous.vertical) / deltaT : 0.0f;
+      window[currentIndex] = Sample{x, y, z, gx, gy, gz, magnitude, vertical, magnitudeRate, verticalRate};
+      if (++currentIndex == windowSize) currentIndex = 0;
 
-      if (isSpike(&Sample::magnitude, newestIndex, threshold)) {
+      // If every slope has magnitude below half the threshold, their median
+      // does too, so it cannot differ from the newest slope by the threshold.
+      if (fabsf(magnitudeRate) < 0.5f * threshold &&
+          (verticalAxis < 0 || fabsf(verticalRate) < 0.5f * verticalThreshold)) {
+        if (quietCount < windowSize - 1) ++quietCount;
+        if (quietCount == windowSize - 1) return false;
+      } else {
+        quietCount = 0;
+      }
+
+      if (isSpike(&Sample::magnitudeRate, magnitudeRate, threshold)) {
         replaceWithMedian(&Sample::magnitude, x, y, z, gx, gy, gz);
         return true;
       }
-      if (verticalAxis >= 0 && isSpike(&Sample::vertical, newestIndex, verticalThreshold)) {
+      if (verticalAxis >= 0 && isSpike(&Sample::verticalRate, verticalRate, verticalThreshold)) {
         replaceWithMedian(&Sample::vertical, x, y, z, gx, gy, gz);
         return true;
       }
@@ -155,23 +167,15 @@ class TimeAwareSpikeFilter3D {
   private:
     // Derivative of the newest sample's key versus the median key derivative
     // over the window. A window of N samples yields N - 1 derivatives.
-    bool isSpike(float Sample::*key, int newestIndex, float thr) {
-      int derivativeCount = windowSize - 1;
-      for (int i = 0; i < derivativeCount; i++) {
-        int currentIdx = (currentIndex + i + 1) % windowSize;
-        int prevIdx = (currentIndex + i) % windowSize;
-
-        derivatives[i] = (window[currentIdx].*key - window[prevIdx].*key) / window[currentIdx].deltaTime;
+    bool isSpike(float Sample::*rate, float newestRate, float thr) {
+      // The slope entering the oldest sample crosses the window boundary.
+      // Take the remaining N-1 slopes in chronological order.
+      int slot = currentIndex;
+      for (int i = 0; i < windowSize - 1; ++i) {
+        if (++slot == windowSize) slot = 0;
+        temp[i] = window[slot].*rate;
       }
-
-      // Find the median derivative (more robust than average)
-      float medianDerivative = computeMedian(derivatives, derivativeCount);
-
-      int prevIdx = (newestIndex - 1 + windowSize) % windowSize;
-      const Sample &newest = window[newestIndex];
-      float currentDerivative = (newest.*key - window[prevIdx].*key) / newest.deltaTime;
-
-      return fabsf(currentDerivative - medianDerivative) > thr;
+      return fabsf(newestRate - computeMedian(windowSize - 1)) > thr;
     }
 
     // Replace with the window vector whose key is the median (mean of the two
@@ -199,10 +203,7 @@ class TimeAwareSpikeFilter3D {
       }
     }
 
-    float computeMedian(const float *arr, int n) {
-      for (int i = 0; i < n; i++) {
-        temp[i] = arr[i];
-      }
+    float computeMedian(int n) {
       // Insertion sort; n is a small window size
       for (int i = 1; i < n; i++) {
         float key = temp[i];

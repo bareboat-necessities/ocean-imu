@@ -45,7 +45,11 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "d1781e1d71857719e1c7c1fccd802a1b01b78461"
+      "git_blob_sha": "8f34f1657989dda195826c201941f43fa3e43382"
+    },
+    {
+      "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
+      "git_blob_sha": "4e9e16c571bb861176104e5c73405ad4bfebd09e"
     },
     {
       "path": "src/kalman_common/GyroInterval.h",
@@ -171,11 +175,11 @@
   "operation_lemma_sources": [
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-proofs.tex-part",
-      "git_blob_sha": "69a50dd840b787ff3a0d37ee7cfa3b1444cd2756"
+      "git_blob_sha": "2376062ffef2a1d2bc76092eb89863d1823cd597"
     },
     {
       "path": "doc/kalman_ou_iii/kalman_ou-w3d-stability-study.tex",
-      "git_blob_sha": "7e8605398ca24d4b5c082f2733157c00498dba6f"
+      "git_blob_sha": "24d13c48b3f2daf8106a1314474d89dea0eebd5a"
     },
     {
       "path": "docs/ou-gyro-bias-projection.md",
@@ -211,7 +215,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "b0a47e7569d70e1d214d46e62a2c3a592ef699a6"
+      "git_blob_sha": "07c0e8c7c0602463d7c8ae024fc4e313263ead34"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -807,15 +811,15 @@
     },
     {
       "path": "tools/stability/ou3_theorem/planar_generated_port_structure.py",
-      "git_blob_sha": "0ea76dc64dfed49b9d50b26ae31bf1c6d4e40cd6"
+      "git_blob_sha": "0e1877e39e551d38ad101c39f741001b755d5b1d"
     },
     {
       "path": "tests/validation/test_ou3_planar_generated_port_structure.py",
-      "git_blob_sha": "eeaa41e2351fe3589cface018c97ac2b98c60f40"
+      "git_blob_sha": "cdbd670bbd2c0f2ab867d536799959357a71cb5b"
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "9641ca3924098e3ce8bd0e6676769cb1585c0151"
+      "git_blob_sha": "dd45b918e2781b3275b0c05205e45e868903c900"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -883,7 +887,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "d553cc3ff6acb5b10b79d2eb50d6e4b1138a2727"
+      "git_blob_sha": "2fe408a09aad9522c3c10a9de8fa254ae9d596d7"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1015,7 +1019,7 @@
     },
     {
       "path": "docs/ou3-information-shear-strategy.md",
-      "git_blob_sha": "362047b53f3c21bcc689bfe241b5cf8dbbe65346"
+      "git_blob_sha": "23b5fb3791c9d37ee59dc4121ba53887ab371c43"
     },
     {
       "path": "reports/results/ou3_stability/information-shear-word-certificate.json",
@@ -1123,9 +1127,10 @@
       "default_real_reference_norm_bound": "(9/5)*M_mag after actual acquisition/refinement, startup hard iron disabled, initial K=I and applied offset zero",
       "float_reference_accumulation_qualified": false,
       "inherited_auxiliary_root_correlations_discarded": false,
+      "live_gravity_gate_MEKF_read_condition": "with_mag && !mag_ref_set_",
       "live_gravity_gate_controls_locked_refinement_or_slew": false,
-      "live_gravity_gate_reads_MEKF": true,
       "locked_Live_corrected_mag_reverse_MEKF_port": 0,
+      "locked_Live_gravity_gate_reads_MEKF": false,
       "locked_Live_reference_reverse_MEKF_port": 0,
       "proof": "app:locked-live-causal-reference",
       "reference_increment_bound": "|B_ref-B_anchor| <= ||K-K_anchor||*M_mag + |K*b-K_anchor*b_anchor| at the SAME statistics",

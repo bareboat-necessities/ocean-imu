@@ -47,6 +47,25 @@ void test_smooth_wave_passes_through() {
   }
 }
 
+// The newest zero slope is still an outlier after three large equal slopes.
+void test_median_includes_previous_raw_slopes() {
+  TimeAwareSpikeFilter3D filter(5, 2.0f);
+  float z = 1.0f;
+  auto submit = [&](float dt, float rate) {
+    z += dt * rate;
+    float x = 0.0f, y = 0.0f, rawZ = z;
+    return filter.filterWithDelta(x, y, rawZ, dt);
+  };
+  for (int i = 0; i < 10; ++i) require(!submit(1.0f, 0.0f), "quiet window flagged");
+  submit(0.5f, 4.0f);
+  submit(1.0f, 4.0f);
+  submit(0.25f, 4.0f);
+  require(submit(1.0f, 0.0f), "quiet edge lost earlier large raw slopes");
+  require(!submit(1.0f, 0.0f), "exact threshold must pass");
+  filter.reset();
+  require(!submit(1.0f, 0.0f), "reset kept old slopes");
+}
+
 // An isolated magnitude spike is replaced by an observed window vector, and
 // the filter recovers to pass-through once the outlier leaves the window.
 void test_isolated_spike_is_rejected() {
@@ -229,6 +248,7 @@ void test_filter_is_not_copyable() {
 int main() {
   test_rotation_at_constant_magnitude_passes_through();
   test_smooth_wave_passes_through();
+  test_median_includes_previous_raw_slopes();
   test_isolated_spike_is_rejected();
   test_dropout_spike_is_rejected();
   test_non_finite_input_is_ignored();

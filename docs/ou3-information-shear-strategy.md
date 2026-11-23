@@ -293,8 +293,8 @@ The current source-control-flow refinement is
 `app:locked-live-causal-reference`. With magnetic lock and both stages Live,
 fixed inherited auxiliary state and delivered history make the active learned
 reference/offset stream independent of MEKF-root variations, including finite
-ones. The gravity gate's Live MEKF readout only controls reacquisition; it does
-not gate locked refinement/slew. Its feedback is not globally removed.
+ones. In Live the gravity gate reads MEKF attitude only while magnetic acquisition
+is enabled and the reference is unset. Locked refinement and slew run with the gate idle.
 Refinement yaw writes, watchdog/reset branches, source-dependent reference
 changes and endpoint gauge work remain literal. On this qualified lift the
 homogeneous reverse reference work is exactly zero. Default real reference

@@ -4120,12 +4120,11 @@ magnetic input is zero:
 This statement concerns parameter/input derivatives. It does \emph{not} set
 the attitude-dependent magnetic row or innovation derivative to zero.
 
-Here is the source proof, including the apparent reverse gate. In
-\texttt{ProxyStartupFusion::updateTime}, the gravity gate does read
-\texttt{attitudeReferenceQuat\_()}, which returns the MEKF attitude in Live.
-Its \texttt{gravity\_trusted} result, however, guards only the
-\texttt{!mag\_ref\_set\_} acquisition block in \texttt{updateMag}.
-That block is inactive on this continuation. Refinement uses
+In \texttt{ProxyStartupFusion::update}, the gravity gate runs before Live
+using the startup proxy attitude. In Live it reads the MEKF attitude only
+when \texttt{with\_mag} is enabled and \texttt{mag\_ref\_set\_} is false.
+Once the reference is set, the gravity gate stays idle and
+\texttt{updateMag} skips the acquisition block. Refinement uses
 \texttt{impl\_.startupProxyTiltQuat()}, the cached delivered acc/gyro,
 corrected magnetic samples, its own statistics and clocks. The private tilt
 is the measurement-only Mahony state. Refinement's eligibility, reference
@@ -4158,7 +4157,7 @@ the causal form
  +\begin{pmatrix}D_i\\E_i\end{pmatrix}du_i.              \tag{LR2}
 \]
 Here $x$ retains all MEKF coordinates and endogenous switching/reset state;
-$a$ excludes the passive gravity-gate readout while lock holds. These are
+$a$ excludes the idle gravity-gate state while lock holds. These are
 \emph{complete} derivatives of the literal maps, not frozen Riccati factors.
 The zero lower-left block is not a claim that inherited $a_0$ is independent
 of the stored root on every construction-generated lift. Its actual correlated

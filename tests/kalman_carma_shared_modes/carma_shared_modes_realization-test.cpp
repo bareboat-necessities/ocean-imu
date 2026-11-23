@@ -573,6 +573,8 @@ static void test_doubled_steps() {
         finite &= motion.set_vertical(kappa, T(.7));
         for (T h : {T(.00375), T(.005), T(.00625)}) {
             motion.refresh(h);
+            finite &= motion.block_F().allFinite() && motion.block_QR().allFinite()
+                   && motion.block_QI().allFinite();
             Reference f, r, im;
             finite &= csm::minimal_detail::discretize_lti_pair<long double,6>(
                 motion.block_A().template cast<long double>(), motion.block_WR().template cast<long double>(),

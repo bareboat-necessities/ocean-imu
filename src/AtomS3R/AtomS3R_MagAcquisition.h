@@ -15,6 +15,13 @@
 
 namespace atoms3r_ical {
 
+// AUX bytes and register-read bracket from a combined navigation burst.
+struct Bmi270AuxBurst {
+  uint8_t bytes[8];
+  uint32_t start_us, end_us;
+  bool acquired = false;
+};
+
 struct MagAcquisition {
   static constexpr uint32_t MAX_AGE_MS = 200;  // 5 sample periods at 25 Hz
 

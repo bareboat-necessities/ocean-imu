@@ -54,7 +54,7 @@ def locked_live_reference_audit():
     """Source anchors for app:locked-live-causal-reference's control-flow proof.
 
     This checks the proved implementation, not arbitrary edits or global
-    branch retention. In particular the Live gravity gate still reads MEKF.
+    branch retention. The Live gravity gate reads MEKF during acquisition.
     """
     p, m, h = PROXY.read_text(), MAG_COMMON.read_text(), HARD_IRON.read_text()
     g = GYRO_MAG.read_text() + GYRO_MAG_IMPL.read_text()
@@ -77,8 +77,17 @@ def locked_live_reference_audit():
             raise ValueError('reference refinement control flow changed')
     if 'attitudeReferenceQuat_()' in refinement or 'gravity_gate_' in refinement:
         raise ValueError('refinement acquired an unproved MEKF/gate dependency')
-    for anchor in ['gravity_gate_.step(attitudeReferenceQuat_()',
-                   'if (!mag_ref_set_) {',
+    # In Live the attitude read is evaluated only inside the acquisition guard.
+    proxy = ' '.join(p.split())
+    guarded_read = ('if (stage_ != Stage::Live || (cfg_.with_mag && !mag_ref_set_)) { '
+                    'gravity_gate_.step(attitudeReferenceQuat_(),')
+    attitude_source = ('Eigen::Quaternionf attitudeReferenceQuat_() const { '
+                       'if (stage_ != Stage::Live) { return impl_.startupProxyQuat(); } '
+                       'return impl_.mekf().quaternion_boat(); }')
+    if (proxy.count('gravity_gate_.step(') != 1 or guarded_read not in proxy
+            or attitude_source not in proxy):
+        raise ValueError('gravity-gate attitude source or acquisition guard changed')
+    for anchor in ['if (!mag_ref_set_) {',
                    'setMagWorldRef_(learned.field);',
                    'if (cfg_.mag_refine_enabled && !mag_refine_done_) return;',
                    'impl_.startupProxyTiltQuat(), mag_body_ned);',
@@ -120,7 +129,8 @@ def locked_live_reference_audit():
         'locked_Live_corrected_mag_reverse_MEKF_port': 0,
         'same_input_finite_MEKF_root_changes_preserve_reference_execution': True,
         'scope': 'magnetically locked Live continuation, inherited auxiliary state and delivered history fixed; default Complementary path, no Cold/reacquisition/external reconfiguration',
-        'live_gravity_gate_reads_MEKF': True,
+        'live_gravity_gate_MEKF_read_condition': 'with_mag && !mag_ref_set_',
+        'locked_Live_gravity_gate_reads_MEKF': False,
         'live_gravity_gate_controls_locked_refinement_or_slew': False,
         'refinement_yaw_write_remains_actual_estimator_jump': True,
         'source_reference_derivatives_discarded': False,

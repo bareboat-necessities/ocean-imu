@@ -38,6 +38,94 @@ def function(source: str, name: str) -> str:
 
 
 class DeviceCompassStartupTest(unittest.TestCase):
+    def test_sampling_phase_and_overruns(self):
+        # Exercise the same pacer and real timestamp wiring as every marine sketch.
+        other_sketches = ("atomS3R_ins_nlo", "atomS3R_ins_pii_observer")
+        for path in (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / (name + ".ino")
+                                  for name in other_sketches)):
+            tick = function(path.read_text(), "tick")
+            self.assertLess(tick.index("pacer_.wait();"), tick.index("sample_us = micros();"))
+            self.assertNotIn("waitForNextLoopTick_", tick)
+            self.assertIn("sample_dt_.update(s.sample_us)", function(path.read_text(), "updateFilter_"))
+
+        cpp = r'''
+#include <cassert>
+#include <initializer_list>
+#include "AtomS3R/AtomS3R_SamplePacer.h"
+uint64_t clock_us;
+uint64_t last_read;
+uint64_t interrupt_at = UINT64_MAX;
+uint32_t interrupt_us;
+uint32_t micros() {
+    if (clock_us == interrupt_at) clock_us += interrupt_us;
+    last_read = clock_us++;
+    return static_cast<uint32_t>(last_read);
+}
+int main() {
+    constexpr uint32_t period = 5000;
+    atoms3r_ical::SamplePacer pacer(period);
+    const uint64_t start = UINT32_MAX-12000;
+    clock_us = start;
+    uint64_t last_sample = 0;
+    for (unsigned i = 0; i < 1200; ++i) {
+        pacer.wait();
+        assert(last_read == start + i*uint64_t(period));
+        // Button handling precedes the real acquisition timestamp.
+        clock_us += 3;
+        const uint64_t sample = clock_us;
+        if (i != 61) {  // One poll returned no complete sensor frame.
+            if (i) assert(sample-last_sample == (i == 62 ? 2*period : period));
+            last_sample = sample;
+        }
+        // Variable accepted work, followed by 20 us of loopTask overhead.
+        clock_us = last_read + 4300 + i%150 + 20;
+    }
+    const uint64_t nominal = last_read + period;
+    interrupt_at = nominal-1;
+    interrupt_us = 31;
+    pacer.wait();
+    assert(last_read == nominal+30);
+    clock_us = last_read+4300;
+    pacer.wait();
+    assert(last_read == nominal+period); // 30 us of jitter did not accumulate.
+
+    for (unsigned cost : {5020u, 6000u}) {
+        for (int i = 0; i < 1000; ++i) {
+            clock_us = last_read+cost;
+            const auto ready = clock_us;
+            pacer.wait();
+            assert(last_read == ready); // No pad to a later slot under overload.
+        }
+    }
+
+    clock_us = last_read+30000001;
+    const auto resumed = clock_us;
+    pacer.wait();
+    assert(last_read == resumed);
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == resumed+period); // No catch-up poll after a long outage.
+
+    const uint64_t stalled = last_read+period;
+    interrupt_at = stalled-1;
+    interrupt_us = 18001;
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == stalled+18000);
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == stalled+18000+period);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            path, exe = Path(tmp) / "pacer.cpp", Path(tmp) / "pacer"
+            (Path(tmp) / "Arduino.h").write_text("#include <cstdint>\nuint32_t micros();\n")
+            path.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            "-Wall", "-Wextra", "-Werror", "-I", tmp, "-I", str(ROOT / "src"),
+                            str(path), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
+
     def test_psram_build_internal_mekf_allocation_and_fallback(self):
         header = (ROOT / "src/kalman_carma/SeaStateFusionFilter_CARMA3.h").read_text()
         body = header[header.index("    struct MekfDeleter {"):].split("\n#else", 1)[0]
@@ -158,6 +246,13 @@ int main() {
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
+#include "AtomS3R/AtomS3R_MagAcquisition.h"
+#include "AtomS3R/AtomS3R_Bmm150Compensation.h"
+using namespace atoms3r_ical;
+uint32_t clock_us = 10000;
+uint32_t micros() { return clock_us; }
+uint32_t millis() { return clock_us / 1000; }
 namespace m5 {
 enum class board_t { board_M5AtomS3R, other };
 enum imu_t { imu_bmi270, other };
@@ -167,10 +262,20 @@ struct IMU_Base {
     struct imu_convert_param_t { float accel_res, gyro_res; };
     int16_t raw[6]{};
     uint8_t ready = 0;
-    int status_reads = 0, data_reads = 0;
+    uint8_t aux[8]{0x80,1,0x10,2,0x38,3,0x40,4};
+    bool combined_ok = true;
+    int status_reads = 0, data_reads = 0, combined_reads = 0, aux_reads = 0;
     bool status_ok = true, burst_ok = true;
     void getConvertParam(imu_convert_param_t* p) { *p = {8.f/32768, 2000.f/32768}; }
     bool readRegister(uint8_t reg, uint8_t* dst, size_t len) {
+        clock_us += 100;
+        if (reg == 0x04) {
+            if (len == 8) { ++aux_reads; std::memcpy(dst, aux, 8); return true; }
+            assert(len == 20); ++combined_reads;
+            if (!combined_ok) return false;
+            std::memcpy(dst, aux, 8); std::memcpy(dst+8, raw, 12);
+            return true;
+        }
         if (reg == 0x1d) {
             assert(len == 1); ++status_reads;
             if (!status_ok) return false;
@@ -201,8 +306,28 @@ struct {
     m5::board_t getBoard() { return board; }
 } M5;
 constexpr unsigned ATOMS3R_IMU_MASK_ACCEL = 1, ATOMS3R_IMU_MASK_GYRO = 2, kImuMaskAccelGyro = 3;
-struct { bool compensated = true; m5::IMU_Base* bmi270 = &m5::dev; } source;
+struct Vector3f {
+    float x, y, z;
+    Vector3f(float x, float y, float z) : x(x), y(y), z(z) {}
+};
+Vector3f map_mag_to_body_uT_(m5::imu_3d_t m) { return {m.y, m.x, -m.z}; }
+struct {
+    bool compensated = true, have_last = false; m5::IMU_Base* bmi270 = &m5::dev;
+    uint8_t last_aux[8]{}; m5::imu_3d_t last_m5{};
+    Vector3f last_body{NAN,NAN,NAN}; MagAcquisition acquisition; Bmm150Trim trim;
+} source;
 auto& atoms3rMagSource() { return source; }
+''' + function(header, "readMagBody_") + r'''
+struct ImuSample { m5::imu_data_t data; Vector3f mag{NAN,NAN,NAN}; };
+struct ImuTemperatureCache {};
+struct Gate { uint32_t next; bool due(uint32_t ms) const { return ms >= next; } };
+bool readImuMapped(m5::IMU_Class&, unsigned mask, uint32_t frame, ImuSample& s, bool,
+                   ImuTemperatureCache*, bool poll, m5::imu_data_t* data, const Bmi270AuxBurst* burst) {
+    if ((mask & 3u) != 3u) return false;
+    s.data = *data;
+    s.mag = poll || !source.acquisition.fresh(millis()) ? readMagBody_(data->mag, frame, burst) : source.last_body;
+    return true;
+}
 ''' + "class AtomS3RNavigationImu {" + reader + "\n};\n" + r'''
 // Reproduce the pinned M5Unified IMU_Class::getImuData 16.16 arithmetic with
 // unsigned shifts/negation to define Xtensa wrap at the negative full scale.
@@ -235,6 +360,35 @@ int main() {
         const int reads = dev.data_reads;
         assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads);
     }
+    // Inspect the complete transaction and compensated field on a due poll.
+    source.trim.valid = true;
+    source.trim.dig_z1 = source.trim.dig_xyz1 = 10000; source.trim.dig_z2 = -12500;
+    ImuSample s; ImuTemperatureCache temperature; uint32_t poll_ms;
+    auto poll = [&](uint32_t due) {
+        dev.ready = 0xc0;
+        return reader.read(M5.Imu, micros(), s, temperature, Gate{due}, poll_ms);
+    };
+    const uint32_t frame = micros();
+    const int separate = dev.data_reads;
+    assert(poll(0) && dev.combined_reads == 1 && dev.aux_reads == 0 && dev.data_reads == separate);
+    assert(source.acquisition.sequence == 1 && source.acquisition.frame_us == frame);
+    assert(source.acquisition.read_start_us == frame+100 && source.acquisition.read_end_us == frame+200);
+    assert(s.data.accel.x == data.accel.x && s.data.gyro.z == data.gyro.z);
+    float expected[3];
+    assert(bmm150Compensate(Bmm150Raw::fromData(dev.aux), source.trim, expected));
+    assert(s.mag.x == expected[1] && s.mag.y == -expected[0] && s.mag.z == expected[2]);
+    dev.aux[0] ^= 1; // Only a status bit changed
+    assert(poll(0) && source.acquisition.sequence == 1);
+    assert(poll(UINT32_MAX) && dev.combined_reads == 2 && dev.aux_reads == 0 && dev.data_reads == separate+1);
+
+    dev.combined_ok = false; dev.aux[0] ^= 8;
+    assert(poll(0) && dev.combined_reads == 3 && dev.data_reads == separate+2 && dev.aux_reads == 1);
+    assert(source.acquisition.sequence == 2);
+    // Poll becomes due during an ordinary read on the millisecond boundary.
+    clock_us = (millis()+1)*1000-50; dev.aux[0] ^= 8;
+    assert(poll(millis()+1) && dev.aux_reads == 2 && dev.data_reads == separate+3);
+    assert(source.acquisition.sequence == 3);
+
     dev.ready = 0xc0; dev.status_ok = false;
     const int reads = dev.data_reads;
     assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads);
@@ -262,7 +416,7 @@ int main() {
             path, exe = Path(tmp) / "burst.cpp", Path(tmp) / "burst"
             path.write_text(cpp)
             subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
-                            str(path), "-o", str(exe)], check=True)
+                            "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
     def test_navigation_aux_reads_and_wizard_cadence(self):
@@ -275,6 +429,7 @@ int main() {
 #include <cstdint>
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
 using atoms3r_ical::MagAcquisition;
+using atoms3r_ical::Bmi270AuxBurst;
 struct ImuSample { int a, w, m; float tempC; uint32_t mask, sample_us; MagAcquisition mag_timing; };
 struct Data { int accel, gyro, mag; };
 namespace m5 { using imu_data_t = Data; }
@@ -294,7 +449,7 @@ int map_gyr_to_body_ned_(int w) { return w; }
 struct { bool compensated = true; int last_body = 0; MagAcquisition acquisition; } source;
 auto& atoms3rMagSource() { return source; }
 int bursts = 0;
-int readMagBody_(int m, uint32_t time) {
+int readMagBody_(int m, uint32_t time, const Bmi270AuxBurst*) {
     ++bursts;
     source.acquisition.acquired(now_ms, time, time+1, time+2);
     return source.last_body = m;

@@ -78,6 +78,7 @@ constexpr float FREQ_GUESS = 0.3f;
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateFamilyDefaults.h"
 #include "util/AngleUtils.h"
+#include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -202,7 +203,7 @@ public:
   }
 
   void tick() {
-    const uint32_t loop_start_us = micros();
+    pacer_.wait();
 
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
@@ -224,12 +225,9 @@ public:
 #endif
 
     ImuSample sample{};
-    m5::imu_data_t data{};
     const uint32_t sample_us = micros();
-    const uint32_t update_mask = navigation_imu_.update(M5.Imu, data);
-    const uint32_t poll_ms = millis();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample,
-                                          false, &temperature_, mag_gate_.due(poll_ms), &data);
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
 
     if (got_sample) {
       stale_frame_count_ = 0;
@@ -243,7 +241,6 @@ public:
 
     streamSerial_();
     updateUI_();
-    waitForNextLoopTick_(loop_start_us);
   }
 
 private:
@@ -317,12 +314,7 @@ private:
   bool acc_bias_estimating_ = false;
 
 private:
-  static void waitForNextLoopTick_(uint32_t loop_start_us) {
-    const uint32_t elapsed_us = micros() - loop_start_us;
-    if (elapsed_us < LOOP_PERIOD_US) {
-      delayMicroseconds(LOOP_PERIOD_US - elapsed_us);
-    }
-  }
+  SamplePacer pacer_{LOOP_PERIOD_US};
 
   uint32_t magPollMs_() const {
     const float use_hz = 25.0f;

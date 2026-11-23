@@ -91,7 +91,6 @@
 #include "util/ExponentialGain.h"
 #include <algorithm>
 #include <array>
-#include <cstring>
 #include <cmath>
 #include <complex>
 #include <limits>
@@ -176,7 +175,8 @@ public:
         if (!valid_input(a, dt, f_hz)) return;
         const bool same = cfg_.band_frac == monitor.cfg_.band_frac &&
             clamped_frequency(f_hz) == monitor.clamped_frequency(f_hz) &&
-            std::memcmp(&envelope_, &monitor.envelope_, sizeof(envelope_)) == 0;
+            envelope_.phase == monitor.envelope_.phase &&
+            envelope_.y1 == monitor.envelope_.y1 && envelope_.y2 == monitor.envelope_.y2;
         const auto sample = demodulate(a, dt, f_hz);
         accumulate(sample, dt);
         if (same) {
@@ -227,6 +227,11 @@ private:
     T clamped_frequency(T f) const {
         return std::min(std::max(f, cfg_.min_freq_hz), cfg_.max_freq_hz);
     }
+    // Use the same arithmetic for paired and standalone calls. Inlining into
+    // different callers can change FMA contraction in the quadrature product.
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((noinline))
+#endif
     BandSample demodulate(const Vector3& a, T dt, T f_hz) {
         f_last_ = clamped_frequency(f_hz);
         constexpr T k2Pi = T(6.283185307179586476925286766559);
