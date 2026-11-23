@@ -12,11 +12,13 @@ def compare_coupling_off(rows):
     reference = rows["A41@C"]
     coupling_off = rows["CSM:off"]
     rms_metrics = [prefix + axis for prefix in ("rms_", "rmsv_") for axis in "xyz"]
-    nees_metrics = ["nees_" + axis for axis in "xyz"] + ["nees_pos3", "nees_pv6"]
+    axis_nees_metrics = ["nees_" + axis for axis in "xyz"]
     # NEES uses an inverse position/velocity covariance, which amplifies
     # rounding between the two float realizations. The realization test
     # compares the states and covariance directly at 1e-7 in double.
-    for metrics, limit in ((rms_metrics, 1e-4), (nees_metrics, 5e-4)):
+    limits = ((rms_metrics + ["nees_pos3", "nees_pv6"], 1e-4),
+              (axis_nees_metrics, 5e-4))
+    for metrics, limit in limits:
         for metric in metrics:
             baseline = float(reference[metric])
             difference = abs(float(coupling_off[metric]) - baseline) / max(abs(baseline), 1e-12)
