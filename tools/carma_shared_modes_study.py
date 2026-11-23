@@ -56,6 +56,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import carma3_analysis  # noqa: E402  (analytic cost model of the CARMA3 core)
+from carma_shared_modes_smoke import run_smoke
 
 import importlib.util as _ilu  # noqa: E402
 from pathlib import Path as _Path  # noqa: E402
@@ -214,22 +215,8 @@ def tex(t):
 # ---------------------------------------------------------------------------
 
 def stage_smoke(args):
-    if SMOKE.exists():
-        SMOKE.unlink()
-    run_rows([cmd(f"{J29}+T600", 1, "A41@C,CSM,CSM:noconf,CSM:off", 200.0)], SMOKE, 1)
-    rows = {r["filter"]: r for r in read_rows(SMOKE)}
-
-    def rel(a, b, k):
-        x, y = float(rows[a][k]), float(rows[b][k])
-        return abs(x - y) / max(abs(y), 1e-12)
-
-    # Coupling off, the filter IS the CARMA3 baseline in law, through adaptation
-    # (float rounding only: carma_shared_modes_realization-test [3] checks it in double).
-    for k in ("rms_x", "rms_y", "rms_z", "nees_pos3", "nees_pv6"):
-        assert rel("CSM:off", "A41@C", k) < 1e-4, ("CSM:off must reproduce A41@C", k, rel("CSM:off", "A41@C", k))
-    for f in ("CSM", "CSM:noconf"):
-        assert rows[f]["failed"] == "0", f
-    print("smoke ok:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
+    require(BENCH)
+    run_smoke(BENCH, SMOKE)
 
 
 def stage_run(args):
