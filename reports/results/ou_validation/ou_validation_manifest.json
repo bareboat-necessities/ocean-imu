@@ -168,8 +168,8 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "e0d4e5c269de57984cc8cdf7970160f5d5c3c8e4",
-  "git_diff_stat": "reports/results/ou_validation/ou_validation.json   |   3 +-\n .../ou_validation/ou_validation_publication.tex    |   2 +-\n .../ou_validation/ou_validation_transition.csv     | 564 ++++++++++-----------\n 3 files changed, 284 insertions(+), 285 deletions(-)",
+  "git_commit": "537286f90279d395bf1130370491331a484b5879",
+  "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
       "bytes": 19121,
@@ -575,8 +575,8 @@
       "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-21T00:26:44+00:00",
-    "git_commit": "e0d4e5c269de57984cc8cdf7970160f5d5c3c8e4",
+    "generated_at": "2026-11-23T05:01:42+00:00",
+    "git_commit": "537286f90279d395bf1130370491331a484b5879",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -875,7 +875,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "44839360652",
+      "run_id": "45108649966",
       "workflow": "build"
     }
   },
