@@ -652,12 +652,13 @@ private:
                 const Matrix3 shear = lie::skew<T>(after) - gain.asDiagonal() * lie::skew<T>(before);
                 X_.X.col(col) = after;
                 const int offset = world_index(col, 0);
+                constexpr Eigen::Index stride = NX;
                 T* const p = P_.data();
                 for (int i = 0; i < 3; ++i) {
                     const int row = offset + i;
                     const T s = gain(i), x = shear(i,0), y = shear(i,1), z = shear(i,2);
                     for (int j = 0; j < NX; ++j) {
-                        T* const v = p + NX*j;
+                        T* const v = p + stride*j;
                         v[row] = s*v[row] + x*v[0] + y*v[1] + z*v[2];
                     }
                 }
@@ -667,14 +668,14 @@ private:
                     for (int j = i; j < 3; ++j) {
                         const int row = offset + i;
                         const T* const v = p + row;
-                        p[row + NX*(offset+j)] = gain(j)*v[NX*(offset+j)]
-                            + shear(j,0)*v[0] + shear(j,1)*v[NX] + shear(j,2)*v[2*NX];
+                        p[row + stride*(offset+j)] = gain(j)*v[stride*(offset+j)]
+                            + shear(j,0)*v[0] + shear(j,1)*v[stride] + shear(j,2)*v[2*stride];
                     }
                 }
                 for (int i = 0; i < 3; ++i) {
                     const int row = offset + i;
                     for (int j = 0; j < NX; ++j)
-                        if (j < offset || j >= row) p[j + NX*row] = p[row + NX*j];
+                        if (j < offset || j >= row) p[j + stride*row] = p[row + stride*j];
                 }
             }
         } else if constexpr (kMotion) {

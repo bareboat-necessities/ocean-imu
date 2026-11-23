@@ -1899,8 +1899,9 @@ all promotion flags remain unchanged.
 default-Complementary continuation, fixed inherited auxiliary state and
 delivered history give identical reference/offset executions for finite MEKF
 root variations. The active reverse reference port and its homogeneous word
-work are exactly zero. The Live gravity gate still reads MEKF attitude, but
-its acquisition guard is inactive while lock holds. Refinement uses private
+work are exactly zero. In Live the gravity gate reads MEKF attitude only
+while magnetic acquisition is enabled and the reference is unset. The gate
+stays idle once the reference is set. Refinement uses private
 Mahony; its yaw write remains an actual MEKF jump. Cold/reacquisition,
 watchdog branch qualification and external reconfiguration are not covered
 by deleting that gate. This is a proved causal reduction, not an assumption

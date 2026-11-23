@@ -4,7 +4,9 @@
   Copyright (c) 2026 Mikhail Grushinskiy
 */
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#endif
 
 #include <math.h>
 #include "nmea/NmeaChecksum.h"

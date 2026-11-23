@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstdarg>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -14,24 +13,24 @@
 struct {
   std::deque<std::string> writes;
   void write(const uint8_t* p, size_t n) { writes.emplace_back(reinterpret_cast<const char*>(p), n); }
-  void printf(const char* fmt, ...) {
+  template<class... Args>
+  void printf(const char* fmt, Args... args) {
     char line[256];
-    va_list args;
-    va_start(args, fmt);
-    const int n = vsnprintf(line, sizeof(line), fmt, args);
-    va_end(args);
+    const int n = std::snprintf(line, sizeof(line), fmt, args...);
     assert(n >= 0 && static_cast<size_t>(n) < sizeof(line));
     writes.emplace_back(line, n);
   }
 } Serial;
 #include "nmea/NmeaCompass.h"
 
-void expect(bool wholeBody, const char* fmt, ...) {
+template<class... Args>
+void expect(bool wholeBody, const char* fmt, Args... args) {
   char line[103];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(line, wholeBody ? 97 : 82, fmt, args);
-  va_end(args);
+  if constexpr (sizeof...(Args) == 0) {
+    std::snprintf(line, wholeBody ? 97 : 82, "%s", fmt);
+  } else {
+    std::snprintf(line, wholeBody ? 97 : 82, fmt, args...);
+  }
   unsigned cs = 0;
   for (const char* p = line + 1; *p; ++p) {
     if (!wholeBody && (*p == '*' || *p == '\r')) break;
@@ -74,9 +73,9 @@ int main() {
     checkValues(value);
   }
 
-  for (const char* talker : {"II", "ABCDEFG", "I*", "I\r", "",
-                              "a very long talker which makes the HDM buffer truncate the sentence"
-                              " before the measurement"}) {
+  const char* longTalker = "a very long talker which makes the HDM buffer truncate the sentence"
+                           " before the measurement";
+  for (const char* talker : {"II", "ABCDEFG", "I*", "I\r", "", longTalker}) {
     nmea_hdm(talker, -3.0f);
     expect(false, "$%sHDM,357.0,M", talker);
     nmea_xdr_wave_axis_rel(talker, 48.33f, true);
