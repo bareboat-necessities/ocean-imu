@@ -35,7 +35,8 @@ Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 ac
 |---|---|
 | `fusion_cycles_mean`, `fusion_cycles_max` | CPU cycle counter around the fusion update and any magnetic update due on that sample |
 | `loop_work_max_us`, `loops_over_5ms` | Maximum active loop time before pacing, and number of loops that exceeded the 200 Hz budget |
-| `sample_gap_max_us`, `gaps_over_7_5ms` | Maximum interval between accepted IMU poll timestamps and count of intervals above 7.5 ms |
+| `sample_gap_min_us`, `sample_gap_max_us` | Shortest and longest interval between accepted IMU poll timestamps |
+| `jitter_mean_abs_us`, `gaps_over_7_5ms` | Mean absolute departure from 5,000 µs and count of intervals above 7.5 ms |
 
 Use steady `live=1` windows to assess the operating workload. Keep the clock, graphics and serial settings the same when comparing firmware. At 240 MHz, the whole 5 ms interval is 1.2 million cycles.
 

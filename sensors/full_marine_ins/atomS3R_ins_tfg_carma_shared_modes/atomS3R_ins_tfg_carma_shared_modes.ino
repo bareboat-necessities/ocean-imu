@@ -53,7 +53,15 @@
 #ifndef EIGEN_STACK_ALLOCATION_LIMIT
   #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #endif
+// The header-only numerical kernels are instantiated in this sketch on Xtensa.
+#if defined(__XTENSA__) && defined(__GNUC__) && !defined(__clang__) && defined(__OPTIMIZE_SIZE__)
+#pragma GCC push_options
+#pragma GCC optimize ("O3", "unroll-loops")
+#endif
 #include <ArduinoEigenDense.h>
+#if defined(__XTENSA__) && defined(__GNUC__) && !defined(__clang__) && defined(__OPTIMIZE_SIZE__)
+#pragma GCC pop_options
+#endif
 
 #include <ArduinoOceanImu.h>
 
@@ -90,7 +98,14 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
+#if defined(__XTENSA__) && defined(__GNUC__) && !defined(__clang__) && defined(__OPTIMIZE_SIZE__)
+#pragma GCC push_options
+#pragma GCC optimize ("O3", "unroll-loops")
+#endif
 #include "kalman_carma_shared_modes/SeaStateFusionFilter_TfgCarmaSharedModes.h"
+#if defined(__XTENSA__) && defined(__GNUC__) && !defined(__clang__) && defined(__OPTIMIZE_SIZE__)
+#pragma GCC pop_options
+#endif
 // The OU-III sketch's startup settings (ONLINE_TUNE_WARMUP_SEC,
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateFamilyDefaults.h"
@@ -304,7 +319,9 @@ private:
   struct TimingWindow {
     uint64_t cycles = 0;
     uint32_t samples = 0, max_cycles = 0, max_work_us = 0;
-    uint32_t overruns = 0, long_gaps = 0, max_gap_us = 0;
+    uint32_t overruns = 0, gaps = 0, long_gaps = 0;
+    uint32_t min_gap_us = UINT32_MAX, max_gap_us = 0;
+    uint64_t absolute_jitter_us = 0;
   } timing_;
   uint32_t previous_sample_us_ = 0;
   bool have_timing_sample_ = false;
@@ -314,10 +331,14 @@ private:
     timing_.overruns += work_us > LOOP_PERIOD_US;
     if (timing_.samples < 1000) return;
     Serial.printf("[TIMING] live=%u fusion_cycles_mean=%u fusion_cycles_max=%u "
-                  "loop_work_max_us=%u loops_over_5ms=%u sample_gap_max_us=%u gaps_over_7_5ms=%u\n",
+                  "loop_work_max_us=%u loops_over_5ms=%u sample_gap_min_us=%u sample_gap_max_us=%u "
+                  "jitter_mean_abs_us=%u gaps_over_7_5ms=%u\n",
                   unsigned(fusion_.isLive()), unsigned(timing_.cycles / timing_.samples),
                   unsigned(timing_.max_cycles), unsigned(timing_.max_work_us),
-                  unsigned(timing_.overruns), unsigned(timing_.max_gap_us), unsigned(timing_.long_gaps));
+                  unsigned(timing_.overruns), unsigned(timing_.gaps ? timing_.min_gap_us : 0),
+                  unsigned(timing_.max_gap_us),
+                  unsigned(timing_.gaps ? timing_.absolute_jitter_us / timing_.gaps : 0),
+                  unsigned(timing_.long_gaps));
     timing_ = {};
   }
 #endif
@@ -646,7 +667,10 @@ private:
 #if OCEAN_IMU_PROFILE_LOOP
     if (have_timing_sample_) {
       const uint32_t gap = s.sample_us - previous_sample_us_;
+      ++timing_.gaps;
+      timing_.min_gap_us = std::min(timing_.min_gap_us, gap);
       timing_.max_gap_us = std::max(timing_.max_gap_us, gap);
+      timing_.absolute_jitter_us += (gap >= LOOP_PERIOD_US) ? gap - LOOP_PERIOD_US : LOOP_PERIOD_US - gap;
       timing_.long_gaps += gap > LOOP_PERIOD_US + LOOP_PERIOD_US / 2;
     }
     have_timing_sample_ = true;
