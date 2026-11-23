@@ -75,6 +75,34 @@ void group_and_flow() {
     check("full group reset Jacobian vs finite difference",(J-Jfd).cwiseAbs().maxCoeff(),2e-9);
     f.inject(a);check("left correction Exp(-a) X",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
 }
+// Force the general quadrature with a one-ULP perturbation of a single
+// bias density. Compare each rotational block separately so the much larger
+// wave noise cannot hide a sign or frame error in the cross covariance.
+void isotropic_gyro_reference() {
+    F f = make_filter();
+    f.state() = state();
+    f.set_gyro_noise_density_rad_sqrt_s(V::Zero());
+    const V axis = V(.3, -.8, .4).normalized();
+    double worst = 0;
+    for (double angle : {0., 1e-6, .003, .099999, .100001, .4}) {
+        for (double h : {.005, .04}) {
+            const V gyro = f.state().B.col(0) + axis * (angle / h);
+            MX fast, reference;
+            f.set_Q_bgyro_rw(V::Constant(.25));
+            f.build_process_noise(gyro, h, fast);
+            f.set_Q_bgyro_rw(V(.25, .25, std::nextafter(.25, 1.)));
+            f.build_process_noise(gyro, h, reference);
+            for (int row : {F::OFF_PHI, F::OFF_BG}) {
+                for (int col : {F::OFF_PHI, F::OFF_BG}) {
+                    const auto block = reference.block<3,3>(row, col);
+                    worst = std::max(worst, (fast.block<3,3>(row, col) - block).norm() / block.norm());
+                }
+            }
+        }
+    }
+    check("isotropic gyro-bias blocks vs quadrature", worst, 1e-11);
+}
+
 void measurement() {
     F f=make_filter();G x=state();const V g(0,0,grav),bw(18,1.5,43);
     Eigen::Matrix<double,3,27> Ha=Eigen::Matrix<double,3,27>::Zero(),Hm=Ha,Ja,Jm;
@@ -238,4 +266,4 @@ void independent_and_float() {
     check("allocation-guarded confidence fallback exercised",ff.coupling().shrink_events>0?0.:1.,0.);
     check("float variable-dt adaptive/outage path finite",bad,0);check("float full covariance symmetry",asym,1e-6);check("float full covariance PSD",std::max(0.,-min_eig),2e-7);
 }
-int main(){static_assert(F::NX==27);group_and_flow();measurement();covariance_reference();recoordinate();equivariance();independent_and_float();std::printf("FAILURES %d\n",fails);return fails?1:0;}
+int main(){static_assert(F::NX==27);group_and_flow();isotropic_gyro_reference();measurement();covariance_reference();recoordinate();equivariance();independent_and_float();std::printf("FAILURES %d\n",fails);return fails?1:0;}

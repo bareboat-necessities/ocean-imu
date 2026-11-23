@@ -1325,7 +1325,9 @@ The CARMA compass redraw fix also changed the whole-tree digest (class E).
 The only changed file under `src/` is the AtomS3R display header. GCC lists
 46 project headers for the native planar secant probe, including none of the
 changed files. The diagnostic retains the same numerical results and open
-proof obligations with its updated source digest.
+proof obligations with its updated source digest. The subsequent CARMA
+sample-loop changes also affect only files outside those 46 headers. The
+native diagnostic retains its original secant matrices and qualifications.
 
 **E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
 The experimental QMEKF CARMA cores index plain storage in their sample-path

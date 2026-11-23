@@ -697,6 +697,12 @@ private:
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                       const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const;
+    static constexpr int first_transition_column_(int row) {
+        if constexpr (requires { Motion::first_transition_column(row); })
+            return Motion::first_transition_column(row);
+        return 0;
+    }
+    void integrate_gyro_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale) const;
     OCEAN_IMU_HOT_LOOP void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
@@ -1277,7 +1283,7 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
 }
 
 TFGC3_TPL
-void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
+void TFGC3_CLS::integrate_gyro_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
                             StepNoise& q, T gyro_noise_scale) const {
     namespace d = tfg_carma_detail;
     // With W = [w]x, s J_l(w s) = int_0^s Exp(w t) dt = s I + a s^2 W + b s^3 W^2,
@@ -1340,9 +1346,46 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
             q.Qpb(i,j) = -Qpb[i][j];
             q.Qbb(i,j) = T(0.5) * Ts * (Qbb[i][j] + Qbb[j][i]);
         }
+}
+
+TFGC3_TPL
+void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b,
+                            StepNoise& q, T gyro_noise_scale) const {
+    // All three driving matrices are diagonal by construction. For scalar
+    // gyro and bias densities the rotational impulse response integrates in
+    // the end frame using only I, V and V^2, V = [R1 w h]x.
+    const Vector3 angle = w * Ts;
+    const T x = angle.squaredNorm();
+    auto isotropic = [](const Matrix3& m) {
+        return m(0,0) == m(1,1) && m(0,0) == m(2,2);
+    };
+    if (x <= T(0.01) && isotropic(Q_gyro_) && isotropic(Q_bg_)) {
+        const Matrix3 V = lie::skew<T>(b.R1 * angle);
+        const Matrix3 V2 = V * V;
+        // Series in x = theta^2 for (theta-sin(theta))/theta^3,
+        // (cos(theta)-1+x/2)/theta^4 and (1/3-2*a)/x respectively.
+        const T a = T(1.0/6.0) + x*(T(-1.0/120.0) + x*(T(1.0/5040.0) - x*T(1.0/362880.0)));
+        const T c = T(1.0/24.0) + x*(T(-1.0/720.0) + x*(T(1.0/40320.0) - x*T(1.0/3628800.0)));
+        const T d = T(1.0/60.0) + x*(T(-1.0/2520.0) + x*(T(1.0/181440.0) - x*T(1.0/19958400.0)));
+        const T bh = Q_bg_(0,0) * Ts, bh2 = bh * Ts, bh3 = bh2 * Ts;
+        q.Qbb = Matrix3::Identity() * bh;
+        q.Qpb = bh2 * (a * V - c * V2);
+        q.Qpb.diagonal().array() -= bh2 * T(0.5);
+        q.Qpp = (bh3 * d) * V2;
+        q.Qpp.diagonal().array() += Ts * (gyro_noise_scale * Q_gyro_(0,0)) + bh3 / T(3);
+    } else {
+        integrate_gyro_noise_(w, Ts, R0, b, q, gyro_noise_scale);
+    }
     if (acc_bias_updates_enabled_) {
         const T tau_b = std::max(T(1e-3), tau_bacc_);
         const T qd_scale = -T(0.5) * tau_b * std::expm1(-T(2) * Ts / tau_b);
+        if (isotropic(Q_bacc_)) {
+            q.Qaa = Matrix3::Identity() * (qd_scale * Q_bacc_(0,0));
+            return;
+        }
+        namespace d = tfg_carma_detail;
+        T R1a[3][3], Qb[3][3], X[3][3], Y[3][3];
+        d::rows3<T>(b.R1, R1a);
         d::rows3<T>(Q_bacc_, Qb);
         d::mul3<T>(R1a, Qb, false, X);
         d::mul3<T>(X, R1a, true, Y);
@@ -1473,7 +1516,7 @@ void TFGC3_CLS::time_update(Vector3 const& gyr, T Ts) {
         for (int i = 0; i < NC; ++i)
             for (int ax = 0; ax < 3; ++ax) {
                 T s = T(0);
-                for (int j = 0; j < NC; ++j) s += x[ax + 3 * j] * f[i + NC * j];
+                for (int j = first_transition_column_(i); j < NC; ++j) s += x[ax + 3 * j] * f[i + NC * j];
                 o[ax + 3 * i] = s;
             }
     }
@@ -1525,7 +1568,7 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
             T a0 = w[i][1] * f2 - w[i][2] * f1;
             T a1 = w[i][2] * f0 - w[i][0] * f2;
             T a2 = w[i][0] * f1 - w[i][1] * f0;
-            for (int j = 0; j < NC; ++j) {
+            for (int j = first_transition_column_(i); j < NC; ++j) {
                 const T fij = F[i][j];
                 const T* x = pc + OFF_W + 3 * j;
                 a0 += fij * x[0];
@@ -1563,7 +1606,7 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
                 T a0 = w[j][1] * t2 - w[j][2] * t1;
                 T a1 = w[j][2] * t0 - w[j][0] * t2;
                 T a2 = w[j][0] * t1 - w[j][1] * t0;
-                for (int l = 0; l < NC; ++l) {
+                for (int l = first_transition_column_(j); l < NC; ++l) {
                     const T fjl = F[j][l];
                     const T* x = mr + row_stride * (OFF_W + 3 * l);
                     a0 += fjl * x[0];

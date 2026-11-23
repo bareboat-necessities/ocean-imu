@@ -43,6 +43,12 @@ class DeviceCompassStartupTest(unittest.TestCase):
             with self.subTest(sketch=path.name):
                 source = path.read_text()
                 update = function(source, "updateFilter_")
+                if path.stem == "atomS3R_ins_tfg_carma_shared_modes":
+                    for consumer in ("streamSerial_", "updateUI_graphics_", "updateUI_text_"):
+                        self.assertIn("refreshOutput_();", function(source, consumer))
+                    self.assertIn("rot_.update(world_z, dt_);", update)
+                    self.assertIn("if (!have_output_) refreshOutput_();", update)
+                    update += function(source, "refreshOutput_")
                 compass = function(source, "updateCompassHeading_")
                 serial = function(source, "streamSerial_")
                 self.assertIn("m_cal_ = runtime_.applyMag(s.m);", update)
@@ -147,6 +153,77 @@ int main() {
                 subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
                                 str(source), "-o", str(exe)], check=True)
                 subprocess.run([str(exe)], check=True)
+
+    def test_navigation_aux_reads_and_wizard_cadence(self):
+        header = (ROOT / "src/AtomS3R/AtomS3R_ImuCal.h").read_text()
+        cache = header.split("struct ImuTemperatureCache {", 1)[1].split("\n};", 1)[0]
+        gate = (ROOT / "src/util/MagneticHeading.h").read_text().split("class MagFreshGate {", 1)[1].split("\n};", 1)[0]
+        cpp = r'''
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include "AtomS3R/AtomS3R_MagAcquisition.h"
+using atoms3r_ical::MagAcquisition;
+struct ImuSample { int a, w, m; float tempC; uint32_t mask, sample_us; MagAcquisition mag_timing; };
+struct Data { int accel, gyro, mag; };
+struct {
+    struct {
+        int reads = 0, temps = 0;
+        bool temp_ok = true;
+        Data getImuData() { ++reads; return {reads, 2*reads, 3*reads}; }
+        void getTemp(float* t) { ++temps; if (temp_ok) *t = 25.f; }
+    } Imu;
+} M5;
+uint32_t now_ms;
+uint32_t millis() { return now_ms; }
+constexpr unsigned ATOMS3R_IMU_MASK_GYRO = 2, kImuMaskAccelGyro = 3;
+int map_acc_to_body_ned_(int a) { return a; }
+int map_gyr_to_body_ned_(int w) { return w; }
+struct { bool compensated = true; int last_body = 0; MagAcquisition acquisition; } source;
+auto& atoms3rMagSource() { return source; }
+int bursts = 0;
+int readMagBody_(int m, uint32_t time) {
+    ++bursts;
+    source.acquisition.acquired(now_ms, time, time+1, time+2);
+    return source.last_body = m;
+}
+''' + "struct ImuTemperatureCache {" + cache + "\n};\nclass MagFreshGate {" + gate + "\n};\n" + function(header, "readImuMapped") + r'''
+int main() {
+    ImuSample s{};
+    ImuTemperatureCache t;
+    MagFreshGate gate;
+    int accepted_mag = 0;
+    // Cross the micros() rollover during one second of healthy samples.
+    uint32_t start = UINT32_MAX - 50000;
+    for (int i=0; i<200; ++i) {
+        now_ms = 100 + 5*i;
+        assert(readImuMapped(M5.Imu, 3, start+5000u*i, s, false, &t, gate.due(now_ms)));
+        accepted_mag += gate.update(true, now_ms);
+        assert(s.a == i+1 && s.w == 2*(i+1) && s.tempC == 25.f);
+        assert(s.mag_timing.sequence == unsigned(bursts));
+    }
+    assert(accepted_mag == 29 && bursts == 29 && M5.Imu.temps == 10);
+    assert(!readImuMapped(M5.Imu, 2, 0, s) && M5.Imu.reads == 200);
+    now_ms += MagAcquisition::MAX_AGE_MS+1;
+    assert(readImuMapped(M5.Imu, 3, 1200000, s, false, &t, false) && bursts == 30);
+    source.compensated = false;
+    assert(readImuMapped(M5.Imu, 3, 1205000, s, false, &t, false) && bursts == 31);
+    int temps = M5.Imu.temps;
+    assert(readImuMapped(M5.Imu, 2, 1210000, s, true));
+    assert(readImuMapped(M5.Imu, 3, 1215000, s));
+    assert(M5.Imu.temps == temps+2 && bursts == 33);
+    M5.Imu.temp_ok = false;
+    assert(std::isnan(t.read(M5.Imu, 1500000)));
+    M5.Imu.temp_ok = true;
+    assert(t.read(M5.Imu, 1505000) == 25.f);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            path, exe = Path(tmp) / "acquisition.cpp", Path(tmp) / "acquisition"
+            path.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
 
     def test_first_sample_geometry_and_invalid_inputs(self):
         candidates = [Path(os.environ.get("EIGEN_INCLUDE_DIR", "/usr/include/eigen3")),
