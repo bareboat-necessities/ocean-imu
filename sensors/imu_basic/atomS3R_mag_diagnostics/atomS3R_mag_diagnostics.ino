@@ -43,6 +43,7 @@
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
 #include "AtomS3R/AtomS3R_Bmm150AuxPreset.h"
+#include "AtomS3R/AtomS3R_OutputTiming.h"
 #include "imu_calibrate/MagCalSampling.h"
 
 // Local field used only for the checks and verdicts: WMM2025 at Fair Lawn NJ
@@ -819,7 +820,10 @@ void loop() {
       if (advance) enter(Phase::STILL);
       break;
     case Phase::STILL:
-      if (now - last_draw_ms >= 250) { ui.bar01((now - phase_ms) / (float)STILL_MS); last_draw_ms = now; }
+      if (now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS) {
+        ui.bar01((now - phase_ms) / (float)STILL_MS);
+        last_draw_ms = now;
+      }
       if (now - phase_ms >= STILL_MS) { finishStill(); enter(Phase::WAIT_POSES); }
       break;
     case Phase::WAIT_POSES:
@@ -839,14 +843,14 @@ void loop() {
       break;
     case Phase::ROTATE: {
       const bool ready = cap_status == imu_cal::MagCaptureStatus::READY;
-      if (now - last_print_ms >= 5000) {
+      if (now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS) {
         const auto c = capture->coverage();
         Serial.printf("[ROT] t=%.0fs samples=%d/%d cells=%d ratios=(%.2f,%.2f) poses=%d pairs=%d status=%d\n",
                       (now - phase_ms) / 1000.0, magCal.buf.n, cap_cfg.required_samples, c.cells,
                       (double)c.min_ratio, (double)c.mid_ratio, n_poses, n_pairs, (int)cap_status);
         last_print_ms = now;
       }
-      if (now - last_draw_ms >= 250) {
+      if (now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS) {
         ui.bar01(capture->progress(now));
         M5.Display.setCursor(0, 70);
         M5.Display.printf("fit %3d/%d   \nposes %3d   \n%s        ", magCal.buf.n, cap_cfg.required_samples,
@@ -880,7 +884,7 @@ void loop() {
                       r.x(), r.y(), r.z(), d.x(), d.y(), d.z(), dr_raw.sd().x(), dr_raw.sd().y(), dr_raw.sd().z(),
                       headingDeg(a, c), dipDeg(c, a), c.norm(),
                       acosf(fminf(1.0f, fabsf(a.z()) / fmaxf(a.norm(), 1e-6f))) * kRadToDeg);
-        if (now - last_draw_ms >= 1000) {
+        if (now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS) {
           ui.title("DRIFT");
           M5.Display.printf("T %.2f C\n\ndz %+.2f uT\ndx %+.2f\ndy %+.2f\n\ntap: stop\n",
                             (double)temp, (double)d.z(), (double)d.x(), (double)d.y());
@@ -892,27 +896,30 @@ void loop() {
       break;
     case Phase::LIVE: {
       if (advance) { enter(Phase::WAIT_STILL); break; }
-      if (now - last_print_ms >= 250) {
-        float hs = NAN, ds = NAN, ns = NAN, hf = NAN, df = NAN, nf = NAN, ha = NAN, da = NAN, na = NAN;
-        if (saved_ok) liveColumns(saved_model, Matrix3f::Identity(), hs, ds, ns);
-        if (fresh_ok) liveColumns(fresh_model, Matrix3f::Identity(), hf, df, nf);
-        if (fresh_ok && fresh_align.ok) liveColumns(fresh_model, fresh_align.R, ha, da, na);
-        const float roll = atan2f(-a_cal.y(), -a_cal.z()) * kRadToDeg;
-        const float pitch = atan2f(a_cal.x(), sqrtf(a_cal.y() * a_cal.y() + a_cal.z() * a_cal.z())) * kRadToDeg;
+      const bool print_due = now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS;
+      const bool draw_due = now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS;
+      if (!print_due && !draw_due) break;
+      float hs = NAN, ds = NAN, ns = NAN, hf = NAN, df = NAN, nf = NAN, ha = NAN, da = NAN, na = NAN;
+      if (saved_ok) liveColumns(saved_model, Matrix3f::Identity(), hs, ds, ns);
+      if (fresh_ok) liveColumns(fresh_model, Matrix3f::Identity(), hf, df, nf);
+      if (fresh_ok && fresh_align.ok) liveColumns(fresh_model, fresh_align.R, ha, da, na);
+      const float roll = atan2f(-a_cal.y(), -a_cal.z()) * kRadToDeg;
+      const float pitch = atan2f(a_cal.x(), sqrtf(a_cal.y() * a_cal.y() + a_cal.z() * a_cal.z())) * kRadToDeg;
+      if (print_due) {
         Serial.printf("[LIVE] roll=%6.1f pitch=%6.1f | hdg saved=%6.1f fresh=%6.1f aligned=%6.1f | "
                       "dip saved=%5.1f fresh=%5.1f aligned=%5.1f | |m| saved=%5.1f fresh=%5.1f\n",
                       roll, pitch, hs, hf, ha, ds, df, da, ns, nf);
-        if (now - last_draw_ms >= 500) {
-          ui.title("LIVE");
-          M5.Display.printf("R%5.0f P%5.0f\n\n", roll, pitch);
-          M5.Display.printf("saved  %5.1f\n", hs);
-          M5.Display.printf("fresh  %5.1f\n", hf);
-          M5.Display.printf("align  %5.1f\n\n", ha);
-          M5.Display.printf("dip %4.0f/%4.0f\n", ds, df);
-          M5.Display.println("tap: run again");
-          last_draw_ms = now;
-        }
         last_print_ms = now;
+      }
+      if (draw_due) {
+        ui.title("LIVE");
+        M5.Display.printf("R%5.0f P%5.0f\n\n", roll, pitch);
+        M5.Display.printf("saved  %5.1f\n", hs);
+        M5.Display.printf("fresh  %5.1f\n", hf);
+        M5.Display.printf("align  %5.1f\n\n", ha);
+        M5.Display.printf("dip %4.0f/%4.0f\n", ds, df);
+        M5.Display.println("tap: run again");
+        last_draw_ms = now;
       }
       break;
     }

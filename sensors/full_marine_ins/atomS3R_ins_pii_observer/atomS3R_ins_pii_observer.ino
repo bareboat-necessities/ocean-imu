@@ -71,6 +71,7 @@
   #include "AtomS3R/ImuCalWizardRunner.h"
 #endif
 #include "detrend/AdaptiveWaveDetrender.h"
+#include "AtomS3R/AtomS3R_OutputTiming.h"
 #include "nmea/NmeaCompass.h"
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
@@ -112,12 +113,6 @@ static constexpr float APP_FREQ_GUESS = 0.30f;
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = static_cast<uint32_t>(1000000.0f / LOOP_HZ);
-
-static constexpr uint32_t UI_REFRESH_MS = 100;
-static constexpr uint32_t DEBUG_SERIAL_MS = 100;
-static constexpr uint32_t NMEA_SERIAL_MS = 80;
-static constexpr uint32_t NMEA_STATUS_MS = 5000;
-static constexpr uint32_t NMEA_TEMP_MS = 500;
 
 static constexpr float ROT_BIAS_TAU_S = 5.0f;
 static constexpr float ROT_STILL_G_TOL_FRAC = 0.12f;
@@ -700,7 +695,7 @@ class FusionApp {
 #endif
 
     const uint32_t now_ms = millis();
-    if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
+    if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
 
     if (use_graphics_ && compass_ui_ready_) {
@@ -759,9 +754,9 @@ class FusionApp {
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < NMEA_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
-    if (now_ms - last_serial_ms_ < DEBUG_SERIAL_MS) return;
+    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
 
     last_serial_ms_ = now_ms;
@@ -776,12 +771,12 @@ class FusionApp {
     nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
     nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
 
-    if (now_ms - last_temp_nmea_ms_ >= NMEA_TEMP_MS) {
+    if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
       nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
     }
 
-    if (now_ms - last_status_nmea_ms_ >= NMEA_STATUS_MS) {
+    if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
       last_status_nmea_ms_ = now_ms;
       nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
                           heading_valid_,

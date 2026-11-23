@@ -4,6 +4,7 @@
 
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuCommon.h"
+#include "AtomS3R/AtomS3R_OutputTiming.h"
 
 using namespace atoms3r_ical;
 
@@ -136,7 +137,7 @@ void loop()
   row.magCalE = magCal.y();
   row.magCalD = magCal.z();
 
-  if (logState.shouldLogSample(sampleUs))
+  if (logState.shouldLogSample(sampleUs, atoms3r_timing::DEBUG_SERIAL_MS * 1000u))
   {
     printImuLogRow(row);
   }
