@@ -95,7 +95,12 @@ void isotropic_gyro_reference() {
             for (int row : {F::OFF_PHI, F::OFF_BG}) {
                 for (int col : {F::OFF_PHI, F::OFF_BG}) {
                     const auto block = reference.block<3,3>(row, col);
-                    worst = std::max(worst, (fast.block<3,3>(row, col) - block).norm() / block.norm());
+                    const double error = (fast.block<3,3>(row, col) - block).norm() / block.norm();
+                    if (!std::isfinite(error)) {
+                        check("finite isotropic gyro-bias block error", error, 1e-11);
+                        return;
+                    }
+                    worst = std::max(worst, error);
                 }
             }
         }

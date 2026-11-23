@@ -222,6 +222,7 @@ protected:
     // requirement than a usable tilt.
     //
     // Runs the acceleration-band tracker on it and returns it.
+    template<bool FrequencyOnly = false>
     float trackAccelBandFrequency_(float dt) {
         const float a_vert_measurement = vertical_accel_comp_.verticalAccelUpMs2();
 
@@ -229,7 +230,13 @@ protected:
         const float a_vert_lp = freq_input_lpf_.step(a_vert_measurement, dt);
 
         // Raw freq from tracker
-        const float f_tracker = static_cast<float>(tracker_policy_.run(a_vert_lp, dt));
+        const float f_tracker = static_cast<float>([&] {
+            if constexpr (FrequencyOnly && requires { tracker_policy_.runFrequencyOnly(a_vert_lp, dt); }) {
+                return tracker_policy_.runFrequencyOnly(a_vert_lp, dt);
+            } else {
+                return tracker_policy_.run(a_vert_lp, dt);
+            }
+        }());
         f_raw = f_tracker;
 
         // Stillness detector shares the tracker's input, as it always has.

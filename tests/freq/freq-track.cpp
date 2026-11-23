@@ -282,8 +282,28 @@ static TrackerRunSummary run_from_csv(TrackerType tracker,
     return summary;
 }
 
+// The CARMA frequency-only path must retain every resonator and covariance
+// update, including the invalid-sample behavior of the full tracker.
+static bool same_frequency_path() {
+    TrackerPolicy<TrackerType::KALMANF> full, frequency;
+    for (int i = 0; i < 60000; ++i) {
+        const float signal = i % 223 == 0 ? NAN : .41f * std::sin(.011f*i) + .13f * std::cos(.032f*i);
+        const float dt = i % 307 == 0 ? 0.f : .005f * (1.f + .25f * std::sin(.19f*i));
+        const double expected = full.run(signal, dt);
+        const double actual = frequency.runFrequencyOnly(signal, dt);
+        if (!std::isfinite(actual) || actual != expected ||
+            full.t.get_a() != frequency.t.get_a() || full.t.get_p_cov() != frequency.t.get_p_cov() ||
+            full.t.getLastError() != frequency.t.getLastError()) return false;
+    }
+    return true;
+}
+
 // Main
 int main() {
+    if (!same_frequency_path()) {
+        std::fprintf(stderr, "CARMA frequency-only path diverged from the full tracker\n");
+        return 1;
+    }
     init_tracker_backends();
     bool all_quality_ok = true;
 

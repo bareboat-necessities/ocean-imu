@@ -121,7 +121,6 @@ class SeaStateFusionFilter_CARMA3
     using FrontEnd   = seastate::common::MarineWaveFrontEnd<trackerT>;
     using Adaptation = seastate::common::SeaStateAdaptationCommon;
     using FrontEnd::levelVertical_;
-    using FrontEnd::trackAccelBandFrequency_;
     using FrontEnd::updateWavePeriodAndDirection_;
     using FrontEnd::tuner_frequency_hz_;
     using FrontEnd::frontEndStill_;
@@ -248,7 +247,9 @@ private:
                 resetTrackingState_();
             }
         }
-        const float a_vert_measurement = trackAccelBandFrequency_(dt);
+        // Direction consumes the raw tracker frequency. Its separate stillness
+        // detector and smoothers continue to advance on every sample.
+        const float a_vert_measurement = this->template trackAccelBandFrequency_<true>(dt);
         if (enable_tuner_) update_tuner(dt, a_vert_measurement, tuner_frequency_hz_());
         if (drive_mekf) {
             const Eigen::Vector3f acc_bias = mekf_->get_acc_bias_body_at_temperature(tempC);
