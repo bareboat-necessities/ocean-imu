@@ -6,8 +6,11 @@
 #include <cstring>
 #include <vector>
 
+#include "AtomS3R/AtomS3R_OutputTiming.h"
+
 #define SEA_STATE_ENABLE_WIZARD 1
 #define OCEAN_IMU_PROFILE_LOOP 1
+using atoms3r_timing::UI_REFRESH_MS;
 using BaseType_t = int;
 using TaskHandle_t = void*;
 constexpr int portBYTE_ALIGNMENT = 16;
@@ -93,7 +96,6 @@ struct { void println(const char*) {} } Serial;
 uint32_t now_ms;
 uint32_t millis() { return now_ms; }
 struct App {
-  /* PERIOD */
   atoms3r_ical::M5Ui ui;
   atoms3r_ical::MarineCompassDisplay display_{ui};
   int tap_count_ = 0;
@@ -120,7 +122,7 @@ int main() {
     app.updateUI_();
     assert(headings.size() == previous);
     serviceDisplay();
-    if (since_frame >= App::UI_REFRESH_MS) {
+    if (since_frame >= UI_REFRESH_MS) {
       assert(headings.size() == previous + 1 && headings.back() == app.heading_deg_);
       since_frame = 0;
     } else {
@@ -132,18 +134,18 @@ int main() {
   assert(app.display_.stackFreeMinBytes() == 4096);
   size_t previous = headings.size();
   for (int i = 0; i < 3; ++i) {
-    now_ms += App::UI_REFRESH_MS;
+    now_ms += UI_REFRESH_MS;
     app.heading_deg_ = 12.0f + i;
     app.updateUI_();
   }
   serviceDisplay();
   assert(headings.size() == previous + 1 && headings.back() == 14.0f);
 
-  now_ms += App::UI_REFRESH_MS;
+  now_ms += UI_REFRESH_MS;
   app.updateUI_();  // The user taps before the display task picked up the snapshot.
   app.tap_count_ = 1;
   app.display_.waitForMenu();
-  now_ms += App::UI_REFRESH_MS;
+  now_ms += UI_REFRESH_MS;
   app.updateUI_();
   serviceDisplay();
   assert(headings.size() == previous + 1);
