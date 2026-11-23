@@ -1,0 +1,168 @@
+// Host adapter for the shipping AtomS3R compass publisher and display task.
+#include <atomic>
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <vector>
+
+#define SEA_STATE_ENABLE_WIZARD 1
+#define OCEAN_IMU_PROFILE_LOOP 1
+using BaseType_t = int;
+using TaskHandle_t = void*;
+constexpr int portBYTE_ALIGNMENT = 16;
+uint32_t uxTaskGetStackHighWaterMark(TaskHandle_t) { return 4096; }
+using StackType_t = uint8_t;
+struct StaticTask_t {};
+struct StaticSemaphore_t { bool ready = false; };
+struct StaticQueue_t {
+  size_t size;
+  uint8_t* bytes;
+  bool full;
+};
+using QueueHandle_t = StaticQueue_t*;
+using SemaphoreHandle_t = StaticSemaphore_t*;
+constexpr int portNUM_PROCESSORS = 2, tskIDLE_PRIORITY = 0, portMAX_DELAY = -1, pdTRUE = 1;
+int xPortGetCoreID() { return 1; }
+
+QueueHandle_t xQueueCreateStatic(int length, size_t size, uint8_t* bytes, StaticQueue_t* queue) {
+  assert(length == 1);
+  *queue = {size, bytes, false};
+  return queue;
+}
+SemaphoreHandle_t xSemaphoreCreateBinaryStatic(StaticSemaphore_t* semaphore) { return semaphore; }
+void (*worker)(void*);
+void* context;
+bool task_available = true;
+TaskHandle_t xTaskCreateStaticPinnedToCore(void (*entry)(void*), const char*, size_t, void* arg,
+                                   int, StackType_t*, StaticTask_t*, int core) {
+  assert(core != xPortGetCoreID());
+  worker = entry;
+  context = arg;
+  return task_available ? arg : nullptr;
+}
+void xQueueOverwrite(QueueHandle_t queue, const void* message) {
+  std::memcpy(queue->bytes, message, queue->size);
+  queue->full = true;
+}
+struct Blocked {};
+int xQueueReceive(QueueHandle_t queue, void* message, int timeout) {
+  assert(timeout == portMAX_DELAY);
+  if (!queue->full) throw Blocked{};
+  std::memcpy(message, queue->bytes, queue->size);
+  queue->full = false;
+  return pdTRUE;
+}
+bool on_worker;
+void serviceDisplay() {
+  on_worker = true;
+  try { worker(context); } catch (Blocked&) {}
+  on_worker = false;
+}
+void xSemaphoreTake(SemaphoreHandle_t semaphore, int timeout) {
+  assert(timeout == portMAX_DELAY);
+  serviceDisplay();
+  assert(semaphore->ready);
+  semaphore->ready = false;
+}
+void xSemaphoreGive(SemaphoreHandle_t semaphore) { semaphore->ready = true; }
+
+std::vector<float> headings;
+int titles;
+namespace atoms3r_ical {
+struct M5Ui {
+  void title(const char*) { assert(on_worker); ++titles; }
+  void line(const char*) { assert(on_worker); }
+};
+}
+struct CompassUI {
+  bool ready = false;
+  bool ok() { return ready; }
+  void begin() { ready = true; }
+  void draw(float heading, bool, float, bool) {
+    assert(on_worker || !task_available);
+    headings.push_back(heading);
+  }
+};
+struct { struct { void printf(const char*, ...) { assert(on_worker); } } Display; } M5;
+
+struct { void println(const char*) {} } Serial;
+
+/* DISPLAY */
+
+uint32_t now_ms;
+uint32_t millis() { return now_ms; }
+struct App {
+  /* PERIOD */
+  atoms3r_ical::M5Ui ui;
+  atoms3r_ical::MarineCompassDisplay display_{ui};
+  int tap_count_ = 0;
+  uint32_t last_ui_ms_ = 0;
+  float heading_deg_ = 0, heading_mag_deg_ = 0, roll_deg_ = 0, pitch_deg_ = 0, heave_m_ = 0;
+  float mag_norm_uT_ = 0, a_raw_norm_ = 0;
+  bool heading_valid_ = true, heading_mag_ok_ = true, mag_ok_ = true, mag_fresh_ = true;
+  struct { float norm() { return 1; } } a_cal_;
+  struct { bool dir_ok; float dir_deg, axis_deg; int sign_raw; } wave_{};
+  void refreshOutput_() {}
+  /* UPDATE */
+};
+int main() {
+  App app;
+  app.display_.begin(true);
+  // Regular polling takes six milliseconds every time. Cross millis() rollover.
+  now_ms = app.last_ui_ms_ = UINT32_MAX - 300;
+  uint32_t since_frame = 0;
+  for (int step = 1; step <= 300; ++step) {
+    now_ms += 6;
+    since_frame += 6;
+    app.heading_deg_ = static_cast<float>(step);
+    size_t previous = headings.size();
+    app.updateUI_();
+    assert(headings.size() == previous);
+    serviceDisplay();
+    if (since_frame >= App::UI_REFRESH_MS) {
+      assert(headings.size() == previous + 1 && headings.back() == app.heading_deg_);
+      since_frame = 0;
+    } else {
+      assert(headings.size() == previous);
+    }
+  }
+
+  assert(app.display_.completedFrames() == headings.size());
+  assert(app.display_.stackFreeMinBytes() == 4096);
+  size_t previous = headings.size();
+  for (int i = 0; i < 3; ++i) {
+    now_ms += App::UI_REFRESH_MS;
+    app.heading_deg_ = 12.0f + i;
+    app.updateUI_();
+  }
+  serviceDisplay();
+  assert(headings.size() == previous + 1 && headings.back() == 14.0f);
+
+  now_ms += App::UI_REFRESH_MS;
+  app.updateUI_();  // The user taps before the display task picked up the snapshot.
+  app.tap_count_ = 1;
+  app.display_.waitForMenu();
+  now_ms += App::UI_REFRESH_MS;
+  app.updateUI_();
+  serviceDisplay();
+  assert(headings.size() == previous + 1);
+  app.tap_count_ = 0;
+  app.updateUI_();
+  serviceDisplay();
+  assert(headings.size() == previous + 2);
+
+  App text;
+  text.display_.begin(false);
+  text.updateUI_();
+  assert(titles == 0);
+  serviceDisplay();
+  assert(titles == 1);
+
+  App fallback;
+  task_available = false;
+  fallback.display_.begin(true);
+  fallback.updateUI_();
+  assert(fallback.display_.completedFrames() == 1 && fallback.display_.stackFreeMinBytes() == 0);
+  fallback.display_.waitForMenu();
+}

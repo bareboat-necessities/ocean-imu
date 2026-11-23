@@ -789,7 +789,50 @@ void test9_review_fixes() {
           "horizontal baseline correlation applied (|r| < 1 required), cap not binding", m.excitation().re(0,1), 0.04);
 }
 
+// The short monitor can follow different samples or parameters while the
+// coupling is disabled, external, reconfigured or independently reset.
+static void test_paired_spectra() {
+    using Estimator = kc::CarmaCrossSpectrumEstimator<float>;
+    using Source = kc::CarmaCouplingConfig::Source;
+    kc::CarmaCoupling<float> paired, separate;
+    Estimator monitor, reference;
+    auto short_config = monitor.config();
+    short_config.horizon_s = 60;
+    monitor.configure(short_config);
+    reference.configure(short_config);
+    bool equal = true;
+    for (int i=0; i<1200; ++i) {
+        auto config = paired.config();
+        config.source = i<300 || i>=500 ? Source::Estimated : Source::External;
+        paired.set_config(config);
+        separate.set_config(config);
+        if (i == 200 || i == 600) {
+            short_config.band_frac = i == 200 ? .20f : .15f;
+            monitor.configure(short_config);
+            reference.configure(short_config);
+        }
+        if (i == 700) { monitor.reset(); reference.reset(); }
+        if (i == 850) { paired.reset(); separate.reset(); monitor.reset(); reference.reset(); }
+        const float t = .013f*float(i);
+        const V3 a(std::sin(t), std::cos(2*t), std::cos(t+.4f));
+        const float dt = i%3 == 0 ? .006f : .0045f;
+        const float f = .3f + .02f*std::cos(t);
+        paired.observe(a,dt,f,&monitor);
+        separate.observe(a,dt,f);
+        reference.update(a,dt,f);
+        const auto matches = [](const Estimator& x, const Estimator& y) {
+            const auto left=x.cross(), right=y.cross();
+            return left.re.isApprox(right.re,1e-6f) && left.im.isApprox(right.im,1e-6f)
+                && x.elapsed_s()==y.elapsed_s() && x.frequency_hz()==y.frequency_hz()
+                && x.effective_samples()==y.effective_samples();
+        };
+        equal = equal && matches(paired.estimator(),separate.estimator()) && matches(monitor,reference);
+    }
+    check(equal,"paired band spectra retain independent carrier and window history");
+}
+
 int main() {
+    test_paired_spectra();
     test1_api();
     test2_limits();
     test3_shrink();

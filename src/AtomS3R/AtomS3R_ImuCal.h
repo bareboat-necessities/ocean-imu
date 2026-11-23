@@ -327,9 +327,9 @@ static inline Vector3f readMagBody_(const m5::imu_3d_t& m5_mag, uint32_t frame_u
   const uint32_t now = millis();
   const uint32_t read_start_us = micros();
   const Vector3f none(NAN, NAN, NAN);
-  const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
-                       m5_mag.z != src.last_m5.z;
   if (!src.compensated) {
+    const bool changed = !src.have_last || m5_mag.x != src.last_m5.x || m5_mag.y != src.last_m5.y ||
+                         m5_mag.z != src.last_m5.z;
     if (changed) {
       src.last_m5 = m5_mag;
       src.have_last = true;
@@ -382,13 +382,13 @@ struct ImuTemperatureCache {
 // does not use acceleration.
 static inline bool readImuMapped(decltype(M5.Imu)& imu, uint32_t update_mask, uint32_t sample_us, ImuSample& out,
                                  bool gyro_only = false, ImuTemperatureCache* temperature = nullptr,
-                                 bool poll_mag = true) {
+                                 bool poll_mag = true, const m5::imu_data_t* acquired = nullptr) {
   out.sample_us = sample_us;
   out.mask = update_mask;
   const uint32_t required = gyro_only ? uint32_t(ATOMS3R_IMU_MASK_GYRO) : kImuMaskAccelGyro;
   if ((out.mask & required) != required) return false;
 
-  const auto data = imu.getImuData();
+  const auto& data = acquired ? *acquired : imu.getImuData();
   out.tempC = NAN;
   if (temperature) out.tempC = temperature->read(imu, sample_us);
   else imu.getTemp(&out.tempC);
@@ -416,6 +416,63 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out, bool gyr
   const uint32_t update_mask = imu.update();
   return readImuMapped(imu, update_mask, sample_us, out, gyro_only);
 }
+
+// Navigation with the compensated BMM150 reads its own coherent AUX burst
+// (including RHALL). Skip the duplicate eight AUX bytes in M5Unified's
+// 20-byte inertial burst. Only the AtomS3R with its stock axis order and
+// cleared M5 offsets uses this reader. The wizard uses the regular driver.
+class AtomS3RNavigationImu {
+ public:
+  void configure(decltype(M5.Imu)& imu) {
+    device_ = nullptr;
+    auto& src = atoms3rMagSource();
+    if (M5.getBoard() != m5::board_t::board_M5AtomS3R || imu.getType() != m5::imu_bmi270 ||
+        !src.compensated || !src.bmi270 || src.bmi270 != imu.getImuInstancePtr(0) ||
+        imu.getImuInstancePtr(1)) return;
+    for (int i = 0; i < 6; ++i) {
+      if (imu.getOffsetData(i) != 0) return;
+    }
+    device_ = src.bmi270;
+    device_->getConvertParam(&scale_);
+  }
+
+  uint32_t update(decltype(M5.Imu)& imu, m5::imu_data_t& data) const {
+    if (!device_ || !atoms3rMagSource().compensated) {
+      const auto mask = imu.update();
+      if ((mask & kImuMaskAccelGyro) == kImuMaskAccelGyro) data = imu.getImuData();
+      return mask;
+    }
+
+    // INT_STATUS_1 has clear-on-read ready flags, as in BMI270_Class.
+    uint8_t ready = 0;
+    if (!device_->readRegister(0x1d, &ready, 1) || !(ready & 0xe0)) return 0;
+    // The six little-endian words begin at ACC_X_LSB on the ESP32-S3.
+    int16_t raw[6];
+    if (!device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), sizeof(raw))) return 0;
+    const uint32_t mask = ((ready & 0x80) ? ATOMS3R_IMU_MASK_ACCEL : 0u) |
+                          ((ready & 0x40) ? ATOMS3R_IMU_MASK_GYRO : 0u) |
+                          ((ready & 0x20) ? uint32_t(m5::IMU_Class::sensor_mask_mag) : 0u);
+    if ((mask & kImuMaskAccelGyro) == kImuMaskAccelGyro) {
+      data.accel = mapped_(raw, scale_.accel_res);
+      data.gyro = mapped_(raw + 3, scale_.gyro_res);
+    }
+    return mask;
+  }
+
+ private:
+  static m5::imu_3d_t mapped_(const int16_t* raw, float scale) {
+    // M5Unified 0.2.13 / 0.2.23 AtomS3R: Y, -X, Z. Its 16.16
+    // sign change wraps at INT16_MIN on Xtensa.
+    m5::imu_3d_t v;
+    v.x = raw[1] * scale;
+    v.y = static_cast<int16_t>(-raw[0]) * scale;
+    v.z = raw[2] * scale;
+    return v;
+  }
+
+  m5::IMU_Base* device_ = nullptr;
+  m5::IMU_Base::imu_convert_param_t scale_{};
+};
 
 // "No collisions" helper
 // Clears *M5Unified's* internal calibration/offset data, so we can safely apply our own calibration

@@ -117,6 +117,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -714,11 +715,11 @@ private:
     OCEAN_IMU_SAMPLE_IRAM OCEAN_IMU_HOT_LOOP void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
                                const MatC* Qi);
 
-    bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) {
+    bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, const Matrix3& noise) {
         ldlt.compute(S);
         if (ldlt.info() == Eigen::Success) return true;
         ++ldlt_bumps_;
-        const T bump = std::max(std::numeric_limits<T>::epsilon(), T(1e-6) * (noise_scale + T(1)));
+        const T bump = std::max(std::numeric_limits<T>::epsilon(), T(1e-6) * (noise.norm() + T(1)));
         S.diagonal().array() += bump;
         ldlt.compute(S);
         return ldlt.info() == Eigen::Success;
@@ -838,7 +839,7 @@ private:
     void freeze_acc_bias_rows_(MatrixNX3& M) const { M.template block<3,3>(OFF_BA, 0).setZero(); }
 
     // Gain, Joseph update, transport and injection shared by both sensors.
-    bool correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_scale, bool freeze_ba,
+    bool correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, const Matrix3& noise, bool freeze_ba,
                    MeasDiag3& diag);
     void transport_(const Tangent& a);
     OCEAN_IMU_SAMPLE_IRAM OCEAN_IMU_HOT_LOOP void transport_two_frame_(const Tangent& a);
@@ -997,7 +998,7 @@ void TFGC3_CLS::update_horizontal_wave(T dt, const Vector2& boat_axis) requires 
     innovation = (T(0.5) * (innovation + innovation.transpose())).eval();
     MeasDiag3 diag{};
     correct3_(Vector3(-across.dot(wave.template head<2>()), T(0), T(0)),
-              innovation, PHt_scratch_, noise.norm(), false, diag);
+              innovation, PHt_scratch_, noise, false, diag);
 }
 
 TFGC3_TPL
@@ -1314,23 +1315,25 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
     namespace d = tfg_carma_detail;
     const T wh[3] = {w(0) * Ts, w(1) * Ts, w(2) * Ts};
     const T t2 = wh[0] * wh[0] + wh[1] * wh[1] + wh[2] * wh[2];
-    T ea, eb, ja, jb, R0a[3][3], Rinc[3][3], Jh[3][3], R1[3][3], X[3][3], Y[3][3];
+    T ea, eb, ja, jb, R0a[3][3], E[3][3], Jh[3][3], R1[3][3];
     lie::exp_coefficients<T>(t2, ea, eb);
     lie::left_jacobian_coefficients<T>(t2, ja, jb);
     d::rows3<T>(R0, R0a);
-    lie::so3_series<T>(wh, ea, eb, Rinc);            // Exp(w h)
-    lie::so3_series<T>(wh, ja, jb, Jh);              // J_l(w h)
-    d::mul3<T>(R0a, Rinc, false, R1);
-    d::mul3<T>(R1, R0a, true, X);                  // E = R1 R0^T
-    d::mul3<T>(R0a, Jh, false, Y);
-    d::mul3<T>(Y, R0a, true, Jh);                  // R0 J_l R0^T
+    // Rotating the increment once gives both R0 Exp(wh) R0^T and
+    // R0 J_l(wh) R0^T directly in the world frame.
+    T v[3];
+    for (int i = 0; i < 3; ++i)
+        v[i] = R0a[i][0] * wh[0] + R0a[i][1] * wh[1] + R0a[i][2] * wh[2];
+    lie::so3_series<T>(v, ea, eb, E);
+    lie::so3_series<T>(v, ja, jb, Jh);
+    d::mul3<T>(E, R0a, false, R1);
     T* const r1 = b.R1.data();
     T* const e = b.E.data();
     T* const pb = b.Phi_pb.data();
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j) {
             r1[i + 3 * j] = R1[i][j];
-            e[i + 3 * j] = X[i][j];
+            e[i + 3 * j] = E[i][j];
             pb[i + 3 * j] = -(Ts * Jh[i][j]);
         }
     const T* const w1 = W1.data();
@@ -1614,7 +1617,21 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     T* const p = P_.data();
     T* const m = M_scratch_.data();
 
-    // M = Phi P, column by column.
+    // M = Phi P. Only M entries read by the upper-triangular second product
+    // are needed. For a wave source column, remove trailing output wave rows
+    // whose entire remaining transition panel starts after that source.
+    static constexpr auto wave_rows = [] {
+        std::array<int, NBLK> rows{};
+        for (int cb = BLK_BG; cb < NBLK; ++cb) {
+            int count = NC;
+            if (cb >= BLK_W && cb < BLK_BA) {
+                const int source = cb - BLK_W;
+                while (count > 0 && first_transition_column_(count - 1) > source) --count;
+            }
+            rows[cb] = count;
+        }
+        return rows;
+    }();
     for (int c = 0; c < NX; ++c) {
         const T* pc = p + NX * c;
         T* mc = m + NX * c;
@@ -1625,8 +1642,9 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
         mc[OFF_PHI] = pc[OFF_PHI] + f0;
         mc[OFF_PHI + 1] = pc[OFF_PHI + 1] + f1;
         mc[OFF_PHI + 2] = pc[OFF_PHI + 2] + f2;
+        if (c < OFF_BG) continue; // Only the attitude rows read M(:, phi).
         for (int k = 0; k < 3; ++k) mc[OFF_BG + k] = E[k][0] * g0 + E[k][1] * g1 + E[k][2] * g2;
-        for (int i = 0; i < NC; ++i) {
+        for (int i = 0; i < wave_rows[c / 3]; ++i) {
             T a0 = w[i][1] * f2 - w[i][2] * f1;
             T a1 = w[i][2] * f0 - w[i][0] * f2;
             T a2 = w[i][0] * f1 - w[i][1] * f0;
@@ -1641,8 +1659,20 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
             mc[OFF_W + 3 * i + 1] = a1;
             mc[OFF_W + 3 * i + 2] = a2;
         }
+        if (c < OFF_BA) continue; // Bias output rows only read M(ba, ba).
         const T h0 = pc[OFF_BA], h1 = pc[OFF_BA + 1], h2 = pc[OFF_BA + 2];
         for (int k = 0; k < 3; ++k) mc[OFF_BA + k] = Eb[k][0] * h0 + Eb[k][1] * h1 + Eb[k][2] * h2;
+    }
+
+    T Qpp[3][3], Qpb[3][3], Qbb[3][3], Sre[3][3], Sim[3][3];
+    d::rows3<T>(q.Qpp, Qpp);
+    d::rows3<T>(q.Qpb, Qpb);
+    d::rows3<T>(q.Qbb, Qbb);
+    if constexpr (kMotion) {
+        d::rows3<T>(motion_.excitation().re, Sre);
+        d::rows3<T>(motion_.excitation().im, Sim);
+    } else {
+        d::rows3<T>(Sigma_s_, Sre);
     }
 
     // Upper block triangle of M Phi^T, row by row: row r of block rb needs the
@@ -1650,20 +1680,36 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     for (int r = 0; r < NX; ++r) {
         constexpr Eigen::Index row_stride = NX;
         const int rb = r / 3;
+        const int axis = r % 3;
         const T* mr = m + r;                       // M(r, c) = mr[row_stride * c]
         T* pr = p + r;
         if (rb < BLK_BA) {
             const T g0 = mr[row_stride * OFF_BG], g1 = mr[row_stride * (OFF_BG + 1)], g2 = mr[row_stride * (OFF_BG + 2)];
-            const T t0 = g0 * B[0][0] + g1 * B[0][1] + g2 * B[0][2];
-            const T t1 = g0 * B[1][0] + g1 * B[1][1] + g2 * B[1][2];
-            const T t2 = g0 * B[2][0] + g1 * B[2][1] + g2 * B[2][2];
+            // Q_phi,wj = Qpp [w_j]x^T, Q_bg,wj = Qpb^T [w_j]x^T
+            // and Q_wi,wj contains [w_i]x Qpp [w_j]x^T. Add the shared
+            // three-vector before the cross with w_j, once per output row.
+            T noise[3];
+            if (rb == BLK_PHI) {
+                for (int k = 0; k < 3; ++k) noise[k] = Qpp[axis][k];
+            } else if (rb == BLK_BG) {
+                for (int k = 0; k < 3; ++k) noise[k] = Qpb[k][axis];
+            } else {
+                const int i = rb - BLK_W;
+                const int a = (axis + 1) % 3, b_axis = (axis + 2) % 3;
+                for (int k = 0; k < 3; ++k)
+                    noise[k] = w[i][a] * Qpp[b_axis][k] - w[i][b_axis] * Qpp[a][k];
+            }
+            const T t0 = (g0 * B[0][0] + g1 * B[0][1] + g2 * B[0][2]) + noise[0];
+            const T t1 = (g0 * B[1][0] + g1 * B[1][1] + g2 * B[1][2]) + noise[1];
+            const T t2 = (g0 * B[2][0] + g1 * B[2][1] + g2 * B[2][2]) + noise[2];
             if (rb == BLK_PHI) {
                 pr[row_stride * OFF_PHI] = mr[row_stride * OFF_PHI] + t0;
                 pr[row_stride * (OFF_PHI + 1)] = mr[row_stride * (OFF_PHI + 1)] + t1;
                 pr[row_stride * (OFF_PHI + 2)] = mr[row_stride * (OFF_PHI + 2)] + t2;
             }
             if (rb <= BLK_BG)
-                for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BG + k)] = g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2];
+                for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BG + k)] = (g0 * E[k][0] + g1 * E[k][1] + g2 * E[k][2])
+                    + (rb == BLK_PHI ? Qpb[axis][k] : Qbb[axis][k]);
             for (int j = rb > BLK_W ? rb - BLK_W : 0; j < NC; ++j) {
                 T a0 = w[j][1] * t2 - w[j][2] * t1;
                 T a1 = w[j][2] * t0 - w[j][0] * t2;
@@ -1675,6 +1721,20 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
                     a1 += fjl * x[NX];
                     a2 += fjl * x[Eigen::Index(2) * NX];
                 }
+                if (rb >= BLK_W) {
+                    const int index = rb - BLK_W + NC * j;
+                    const T qr = Qc.data()[index];
+                    if constexpr (kMotion) {
+                        const T qi = Qi->data()[index];
+                        a0 += qr * Sre[axis][0] + qi * Sim[axis][0];
+                        a1 += qr * Sre[axis][1] + qi * Sim[axis][1];
+                        a2 += qr * Sre[axis][2] + qi * Sim[axis][2];
+                    } else {
+                        a0 += qr * Sre[axis][0];
+                        a1 += qr * Sre[axis][1];
+                        a2 += qr * Sre[axis][2];
+                    }
+                }
                 T* y = pr + row_stride * (OFF_W + 3 * j);
                 y[0] = a0;
                 y[NX] = a1;
@@ -1685,61 +1745,8 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
         for (int k = 0; k < 3; ++k) pr[row_stride * (OFF_BA + k)] = h0 * Eb[k][0] + h1 * Eb[k][1] + h2 * Eb[k][2];
     }
 
-    // Qd on the same blocks (add_noise_()): a product with [w_j]x^T is a cross
-    // product of every row with w_j.
-    T Qpp[3][3], Qpb[3][3], Qbb[3][3], Qaa[3][3], Sre[3][3], Sim[3][3];
-    d::rows3<T>(q.Qpp, Qpp);
-    d::rows3<T>(q.Qpb, Qpb);
-    d::rows3<T>(q.Qbb, Qbb);
-    d::rows3<T>(q.Qaa, Qaa);
-    if constexpr (kMotion) {
-        d::rows3<T>(motion_.excitation().re, Sre);
-        d::rows3<T>(motion_.excitation().im, Sim);
-    } else {
-        d::rows3<T>(Sigma_s_, Sre);
-    }
-    auto add3 = [p](int r, int c, const T (&M)[3][3]) {
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j) p[r + i + NX * (c + j)] += M[i][j];
-    };
-    // out(r, .) = w x a(r, .), or w x a(., r) when `transposed`.
-    auto cross_rows = [](const T (&a)[3][3], bool transposed, const T* wv, T (&out)[3][3]) {
-        for (int r = 0; r < 3; ++r) {
-            const T x = transposed ? a[0][r] : a[r][0];
-            const T y = transposed ? a[1][r] : a[r][1];
-            const T z = transposed ? a[2][r] : a[r][2];
-            out[r][0] = wv[1] * z - wv[2] * y;
-            out[r][1] = wv[2] * x - wv[0] * z;
-            out[r][2] = wv[0] * y - wv[1] * x;
-        }
-    };
-    add3(OFF_PHI, OFF_PHI, Qpp);
-    add3(OFF_PHI, OFF_BG, Qpb);
-    add3(OFF_BG, OFF_BG, Qbb);
-    add3(OFF_BA, OFF_BA, Qaa);
-    T GQp[NC][3][3], M3[3][3];                     // GQp[i] = [w_i]x Qpp
-    for (int i = 0; i < NC; ++i) {
-        cross_rows(Qpp, false, w[i], M3);          // Qpp [w_i]x^T = GQp[i]^T
-        add3(OFF_PHI, OFF_W + 3 * i, M3);
-        for (int r = 0; r < 3; ++r)
-            for (int c = 0; c < 3; ++c) GQp[i][r][c] = M3[c][r];
-        cross_rows(Qpb, true, w[i], M3);           // Qpb^T [w_i]x^T
-        add3(OFF_BG, OFF_W + 3 * i, M3);
-    }
-    for (int i = 0; i < NC; ++i)
-        for (int j = i; j < NC; ++j) {
-            cross_rows(GQp[i], false, w[j], M3);
-            const T qr = Qc.data()[i + NC * j];
-            if constexpr (kMotion) {
-                const T qi = Qi->data()[i + NC * j];
-                for (int r = 0; r < 3; ++r)
-                    for (int c = 0; c < 3; ++c) M3[r][c] += qr * Sre[r][c] + qi * Sim[r][c];
-            } else {
-                for (int r = 0; r < 3; ++r)
-                    for (int c = 0; c < 3; ++c) M3[r][c] += qr * Sre[r][c];
-            }
-            add3(OFF_W + 3 * i, OFF_W + 3 * j, M3);
-        }
+    for (int r = 0; r < 3; ++r)
+        for (int c = r; c < 3; ++c) p[OFF_BA + r + NX * (OFF_BA + c)] += q.Qaa.data()[r + 3 * c];
 
     for (int c = 1; c < NX; ++c)
         for (int r = 0; r < c; ++r) p[c + NX * r] = p[r + NX * c];
@@ -1921,10 +1928,10 @@ void TFGC3_CLS::inject(const Tangent& a) {
 }
 
 TFGC3_TPL
-bool TFGC3_CLS::correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_scale, bool freeze_ba,
+bool TFGC3_CLS::correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, const Matrix3& noise, bool freeze_ba,
                           MeasDiag3& diag) {
     Eigen::LDLT<Matrix3> ldlt;
-    if (!safe_ldlt3_(S, ldlt, noise_scale)) {
+    if (!safe_ldlt3_(S, ldlt, noise)) {
         diag.S = S;
         return false;
     }
@@ -1980,10 +1987,11 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
     const auto turn = turn_evaluation_();
     Vector3 f_cog = acc_meas - turn.force;
     if (lever) f_cog -= lever_.acceleration();
-    if constexpr (kMotion) motion_.observe(R * (f_cog - ba_term) + g_world);
-    const Vector3 r = R * (f_cog - ba_term) - (Vector3(X_.X.col(IA)) - g_world);
+    const Vector3 world_force = R * (f_cog - ba_term);
+    if constexpr (kMotion) motion_.observe(world_force + g_world);
+    const Vector3 r = world_force - (Vector3(X_.X.col(IA)) - g_world);
     last_acc_diag_.r = r;
-    const Matrix3 Rw = R * Racc_ * R.transpose();
+    const Matrix3 Rw = R * Racc_.diagonal().asDiagonal() * R.transpose();
 
     // Start with H = [ [g]x | 0 | 0 0 -I 0.. | -I ]; append the
     // turn attitude/rate and lever-arm gyro-bias derivatives below.
@@ -1996,12 +2004,16 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         ht[i + NX] = g * p[i + NX * OFF_PHI] - p[i + NX * (OFF_A + 1)] - p[i + NX * (OFF_BA + 1)];
         ht[i + 2 * NX] = -p[i + NX * (OFF_A + 2)] - p[i + NX * (OFF_BA + 2)];
     }
-    const Matrix3 H_turn_phi = -R * turn.down_jacobian * R.transpose() * lie::skew<T>(Vector3::UnitZ());
-    if (marine_turn_.speed != T(0))
+    const bool turning = marine_turn_.speed != T(0);
+    Matrix3 H_turn_phi, H_bg;
+    if (turning) {
+        H_turn_phi = -R * turn.down_jacobian * R.transpose() * lie::skew<T>(Vector3::UnitZ());
         PHt.noalias() += P_.template block<NX,3>(0,OFF_PHI) * H_turn_phi.transpose();
-    Matrix3 H_bg = R * turn.rate_jacobian * R.transpose();
-    if (lever) H_bg -= R * lever_.bias_jacobian() * R.transpose();
-    if (lever || marine_turn_.speed != T(0)) {
+    }
+    if (lever || turning) {
+        Matrix3 rate = turn.rate_jacobian;
+        if (lever) rate -= lever_.bias_jacobian();
+        H_bg = R * rate * R.transpose();
         T Hb[3][3];
         tfg_carma_detail::rows3<T>(H_bg, Hb);
         for (int b = 0; b < 3; ++b)
@@ -2016,9 +2028,9 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
         S(1,b) += g * hb[OFF_PHI] - hb[OFF_A + 1] - hb[OFF_BA + 1];
         S(2,b) += -hb[OFF_A + 2] - hb[OFF_BA + 2];
     }
-    if (marine_turn_.speed != T(0))
+    if (turning)
         S.noalias() += H_turn_phi * PHt.template block<3,3>(OFF_PHI,0);
-    if (lever || marine_turn_.speed != T(0)) {
+    if (lever || turning) {
         for (int a = 0; a < 3; ++a)
             for (int b = 0; b < 3; ++b)
                 S(a,b) += H_bg(a,0) * PHt(OFF_BG, b) + H_bg(a,1) * PHt(OFF_BG + 1, b) +
@@ -2036,7 +2048,7 @@ void TFGC3_CLS::measurement_update_acc_only(Vector3 const& acc_meas, T tempC) {
             for (int i = 0; i < NX; ++i) ht[i + NX * k] += p[i + NX * (OFF_BA + k)];
         freeze_acc_bias_rows_(PHt);
     }
-    correct3_(r, S, PHt, Racc_.norm(), !use_ba, last_acc_diag_);
+    correct3_(r, S, PHt, Racc_, !use_ba, last_acc_diag_);
 }
 
 TFGC3_TPL
@@ -2048,7 +2060,7 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
     const Vector3 r = R * mag_meas - B_w_;
     last_mag_diag_.r = r;
     const Matrix3 Hphi = -lie::skew<T>(B_w_);
-    const Matrix3 Rw = R * Rmag_ * R.transpose();
+    const Matrix3 Rw = R * Rmag_.diagonal().asDiagonal() * R.transpose();
     MatrixNX3& PHt = PHt_scratch_;
     T Hp[3][3];
     tfg_carma_detail::rows3<T>(Hphi, Hp);
@@ -2064,7 +2076,7 @@ void TFGC3_CLS::measurement_update_mag_only(const Vector3& mag_meas) {
             S(a,b) += Hphi(a,0) * PHt(OFF_PHI, b) + Hphi(a,1) * PHt(OFF_PHI + 1, b) + Hphi(a,2) * PHt(OFF_PHI + 2, b);
     const bool freeze = !acc_bias_updates_enabled_;
     if (freeze && !schmidt_acc_bias_hold_) freeze_acc_bias_rows_(PHt);
-    correct3_(r, S, PHt, Rmag_.norm(), freeze, last_mag_diag_);
+    correct3_(r, S, PHt, Rmag_, freeze, last_mag_diag_);
 }
 
 #undef TFGC3_TPL

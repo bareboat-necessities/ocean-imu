@@ -40,21 +40,21 @@ public:
 
     void reset() {
         coefficient_estimate.setZero();
-        P = Eigen::Matrix4f::Identity();
+        p_cc = p_ss = 1.0f;
+        p_cs = 0.0f;
         phase = 0.0f;
         invalidateCurrentAxis();
 
         lastStableAmplitude = 0.0f;
         lastStableConfidence = 0.0f;
         lastStableLinearity = 0.0f;
-        lastStableCovariance = Eigen::Matrix4f::Identity();
+        lastStableVariance = 2.0f;
         lastStableDir = Eigen::Vector2f(1.0f, 0.0f);
 
         have_report_axis = false;
         report_cos_2theta = 1.0f;
         report_sin_2theta = 0.0f;
-        direction_deg_raw = 0.0f;
-        direction_deg_smoothed = 0.0f;
+        raw_double_axis = Eigen::Vector2f::UnitX();
     }
 
     OCEAN_IMU_SAMPLE_IRAM void update(float ax, float ay, float currentOmega, float deltaT) {
@@ -84,30 +84,32 @@ public:
         // z = C cos(phi) + S sin(phi), where C and S are two-dimensional
         // horizontal coefficient vectors. Estimating both quadratures removes
         // a carrier-phase singularity that arises with a cosine-only model.
-        Eigen::Matrix<float, 2, 4> H;
-        H << c, 0.0f, s, 0.0f,
-             0.0f, c, 0.0f, s;
+        // The x and y measurements have independent, identical isotropic
+        // noise. Starting from identity, their two quadrature covariance
+        // blocks stay identical and every cross-axis entry stays zero.
+        const float q = (deltaT / REFERENCE_DT_SEC) * process_noise;
+        const float cc = (p_cc + q) + 1e-10f;
+        const float ss = (p_ss + q) + 1e-10f;
+        const float ch = cc * c + p_cs * s;
+        const float sh = p_cs * c + ss * s;
+        const float innovation_variance = c * ch + s * sh + measurement_noise;
+        const float kc = ch / innovation_variance;
+        const float ks = sh / innovation_variance;
+        const Eigen::Vector2f residual = Eigen::Vector2f(ax, ay)
+            - (c * cosineCoefficients() + s * sineCoefficients());
+        coefficient_estimate.head<2>() += kc * residual;
+        coefficient_estimate.tail<2>() += ks * residual;
 
-        const float q_scale = deltaT / REFERENCE_DT_SEC;
-        Eigen::Matrix4f P_pred =
-            P + std::max(0.0f, q_scale) * Q_reference_sample;
-        P_pred = 0.5f * (P_pred + P_pred.transpose());
-        P_pred += Eigen::Matrix4f::Identity() * 1e-10f;
-
-        const Eigen::Vector2f z(ax, ay);
-        const Eigen::Matrix2f innovation_covariance =
-            H * P_pred * H.transpose() + R;
-        const Eigen::Matrix<float, 4, 2> K =
-            P_pred * H.transpose() *
-            innovation_covariance.ldlt().solve(Eigen::Matrix2f::Identity());
-
-        coefficient_estimate += K * (z - H * coefficient_estimate);
-
-        const Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
-        const Eigen::Matrix4f KH = K * H;
-        P = (I - KH) * P_pred * (I - KH).transpose() +
-            K * R * K.transpose();
-        P = 0.5f * (P + P.transpose());
+        // Joseph correction of the common 2x2 block, on every sample.
+        const float a = 1.0f - kc * c, b = -kc * s;
+        const float d = -ks * c, e = 1.0f - ks * s;
+        const float ac = a * cc + b * p_cs;
+        const float as = a * p_cs + b * ss;
+        const float dc = d * cc + e * p_cs;
+        const float ds = d * p_cs + e * ss;
+        p_cc = ac * a + as * b + kc * measurement_noise * kc;
+        p_cs = ac * d + as * e + kc * measurement_noise * ks;
+        p_ss = dc * d + ds * e + ks * measurement_noise * ks;
 
         updateStableAxis(deltaT);
     }
@@ -135,18 +137,20 @@ public:
     // callers that only consume the scalar angle still fail closed.
     float getAxisDegrees() const {
         return isAxisReliable()
-            ? direction_deg_smoothed
+            ? getLastStableAxisDegrees()
             : std::numeric_limits<float>::quiet_NaN();
     }
 
     float getAxisDegreesRaw() const {
         return isAxisReliable()
-            ? direction_deg_raw
+            ? wrapAxisDegrees(0.5f * std::atan2(raw_double_axis.y(), raw_double_axis.x())
+                              * (180.0f / std::numbers::pi_v<float>))
             : std::numeric_limits<float>::quiet_NaN();
     }
 
     float getLastStableAxisDegrees() const {
-        return direction_deg_smoothed;
+        return wrapAxisDegrees(std::atan2(lastStableDir.y(), lastStableDir.x())
+                               * (180.0f / std::numbers::pi_v<float>));
     }
 
     // Backward-compatible aliases. These return an axis modulo 180 degrees,
@@ -161,17 +165,10 @@ public:
             return 90.0f;
         }
 
-        const Eigen::Vector2f tangent(-lastStableDir.y(), lastStableDir.x());
-        const Eigen::Matrix2f P_cos =
-            lastStableCovariance.block<2, 2>(0, 0);
-        const Eigen::Matrix2f P_sin =
-            lastStableCovariance.block<2, 2>(2, 2);
-        float tangent_variance =
-            tangent.dot((P_cos + P_sin) * tangent);
-        tangent_variance = std::max(0.0f, tangent_variance);
-
+        // The cosine and sine covariances are isotropic in x/y, so
+        // projecting their sum on a unit tangent gives p_cc + p_ss.
         const float angular_std_rad =
-            std::sqrt(tangent_variance) / lastStableAmplitude;
+            std::sqrt(std::max(0.0f, lastStableVariance)) / lastStableAmplitude;
         const float uncertainty_deg =
             2.0f * angular_std_rad *
             (180.0f / std::numbers::pi_v<float>);
@@ -216,21 +213,15 @@ public:
 
     void setProcessNoise(float q) {
         if (!std::isfinite(q) || q < 0.0f) return;
-        Q_reference_sample = Eigen::Matrix4f::Identity() * q;
+        process_noise = q;
     }
 
     void setMeasurementNoise(float r) {
         if (!std::isfinite(r) || !(r > 0.0f)) return;
-        R = Eigen::Matrix2f::Identity() * r;
+        measurement_noise = r;
     }
 
 private:
-    struct AxisMetrics {
-        Eigen::Vector2f representative = Eigen::Vector2f(1.0f, 0.0f);
-        float amplitude = 0.0f;
-        float linearity = 0.0f;
-    };
-
     static constexpr float REFERENCE_DT_SEC = 1.0f / 200.0f;
     static constexpr float AMP_THRESHOLD = 0.08f;
     static constexpr float CONFIDENCE_THRESHOLD = 20.0f;
@@ -268,36 +259,6 @@ private:
         return coefficient_estimate.segment<2>(2);
     }
 
-    AxisMetrics computeAxisMetrics() const {
-        const Eigen::Vector2f c = cosineCoefficients();
-        const Eigen::Vector2f s = sineCoefficients();
-        const Eigen::Matrix2f moment =
-            c * c.transpose() + s * s.transpose();
-
-        const float trace = moment.trace();
-        const float discriminant = std::hypot(
-            moment(0, 0) - moment(1, 1),
-            2.0f * moment(0, 1));
-        const float lambda_max =
-            std::max(0.0f, 0.5f * (trace + discriminant));
-        const float lambda_min =
-            std::max(0.0f, 0.5f * (trace - discriminant));
-
-        const float theta = 0.5f * std::atan2(
-            2.0f * moment(0, 1),
-            moment(0, 0) - moment(1, 1));
-
-        AxisMetrics metrics;
-        metrics.representative =
-            Eigen::Vector2f(std::cos(theta), std::sin(theta));
-        metrics.amplitude = std::sqrt(lambda_max);
-        const float total = lambda_max + lambda_min;
-        metrics.linearity = (total > 1e-12f)
-            ? std::clamp((lambda_max - lambda_min) / total, 0.0f, 1.0f)
-            : 0.0f;
-        return metrics;
-    }
-
     void updatePhase(float deltaT) {
         phase = std::remainder(
             phase + omega * deltaT,
@@ -305,30 +266,29 @@ private:
     }
 
     void updateStableAxis(float deltaT) {
-        const AxisMetrics metrics = computeAxisMetrics();
-        current_amplitude = metrics.amplitude;
-        current_linearity = metrics.linearity;
+        // For a symmetric 2x2 moment matrix, (xx - yy, 2xy) points
+        // along twice the principal-axis angle. Smooth it directly.
+        const Eigen::Vector2f cosine = cosineCoefficients();
+        const Eigen::Vector2f sine = sineCoefficients();
+        const float xx = cosine.x() * cosine.x() + sine.x() * sine.x();
+        const float yy = cosine.y() * cosine.y() + sine.y() * sine.y();
+        const float xy = cosine.x() * cosine.y() + sine.x() * sine.y();
+        const float u = xx - yy, v = 2.0f * xy;
+        const float gap = std::hypot(u, v);
+        const float trace = xx + yy;
+        const float large = std::max(0.0f, 0.5f * (trace + gap));
+        const float small = std::max(0.0f, 0.5f * (trace - gap));
+        current_amplitude = std::sqrt(large);
+        const float total = large + small;
+        current_linearity = (total > 1e-12f)
+            ? std::clamp((large - small) / total, 0.0f, 1.0f) : 0.0f;
+        confidence = current_linearity / (2.0f * (p_cc + p_ss) + 1e-6f);
+        if (!isAxisReliable()) return;
 
-        const float covariance_confidence =
-            1.0f / (P.trace() + 1e-6f);
-        confidence = covariance_confidence * current_linearity;
-
-        Eigen::Vector2f new_axis = metrics.representative;
-        if (lastStableDir.dot(new_axis) < 0.0f) {
-            new_axis = -new_axis;
-        }
-        direction_deg_raw = wrapAxisDegrees(
-            std::atan2(new_axis.y(), new_axis.x()) *
-            (180.0f / std::numbers::pi_v<float>));
-
-        if (!isAxisReliable()) {
-            return;
-        }
-
-        const float theta = std::atan2(new_axis.y(), new_axis.x());
-        const float target_cos_2theta = std::cos(2.0f * theta);
-        const float target_sin_2theta = std::sin(2.0f * theta);
-
+        raw_double_axis = Eigen::Vector2f(u, v);
+        const float target_cos_2theta = u / gap;
+        const float target_sin_2theta = v / gap;
+        bool near_cancellation = false;
         if (!have_report_axis) {
             report_cos_2theta = target_cos_2theta;
             report_sin_2theta = target_sin_2theta;
@@ -344,34 +304,41 @@ private:
             if (norm > 1e-12f) {
                 report_cos_2theta /= norm;
                 report_sin_2theta /= norm;
+            } else {
+                near_cancellation = true;
             }
         }
 
-        const float smoothed_theta = 0.5f * std::atan2(
-            report_sin_2theta, report_cos_2theta);
-        Eigen::Vector2f smoothed_axis(
-            std::cos(smoothed_theta), std::sin(smoothed_theta));
+        // Recover the unit representative with the half-angle identity.
+        // Pick the larger component for the division at either axial pole.
+        Eigen::Vector2f smoothed_axis;
+        if (near_cancellation) {
+            const float theta = 0.5f * std::atan2(report_sin_2theta, report_cos_2theta);
+            smoothed_axis = Eigen::Vector2f(std::cos(theta), std::sin(theta));
+        } else if (report_cos_2theta >= 0.0f) {
+            smoothed_axis.x() = std::sqrt(0.5f * (1.0f + report_cos_2theta));
+            smoothed_axis.y() = report_sin_2theta / (2.0f * smoothed_axis.x());
+        } else {
+            smoothed_axis.y() = std::copysign(std::sqrt(0.5f * (1.0f - report_cos_2theta)),
+                                              report_sin_2theta);
+            smoothed_axis.x() = report_sin_2theta / (2.0f * smoothed_axis.y());
+        }
         if (lastStableDir.dot(smoothed_axis) < 0.0f) {
             smoothed_axis = -smoothed_axis;
         }
 
         lastStableDir = smoothed_axis;
-        direction_deg_smoothed = wrapAxisDegrees(
-            std::atan2(lastStableDir.y(), lastStableDir.x()) *
-            (180.0f / std::numbers::pi_v<float>));
-
         lastStableAmplitude = current_amplitude;
         lastStableConfidence = confidence;
         lastStableLinearity = current_linearity;
-        lastStableCovariance = P;
+        lastStableVariance = p_cc + p_ss;
     }
 
     // State ordering: [C_x, C_y, S_x, S_y].
     Eigen::Vector4f coefficient_estimate = Eigen::Vector4f::Zero();
-    Eigen::Matrix4f P = Eigen::Matrix4f::Identity();
-    Eigen::Matrix4f Q_reference_sample =
-        Eigen::Matrix4f::Identity() * 1e-6f;
-    Eigen::Matrix2f R = Eigen::Matrix2f::Identity() * 0.01f;
+    float p_cc = 1.0f, p_cs = 0.0f, p_ss = 1.0f;
+    float process_noise = 1e-6f;
+    float measurement_noise = 0.01f;
 
     float omega = 0.0f;
     float phase = 0.0f;
@@ -383,15 +350,13 @@ private:
     float lastStableAmplitude = 0.0f;
     float lastStableConfidence = 0.0f;
     float lastStableLinearity = 0.0f;
-    Eigen::Matrix4f lastStableCovariance =
-        Eigen::Matrix4f::Identity();
+    float lastStableVariance = 2.0f;
 
     float direction_report_tau_sec = 2.0f;
     bool have_report_axis = false;
     float report_cos_2theta = 1.0f;
     float report_sin_2theta = 0.0f;
-    float direction_deg_raw = 0.0f;
-    float direction_deg_smoothed = 0.0f;
+    Eigen::Vector2f raw_double_axis = Eigen::Vector2f::UnitX();
 };
 
 #ifdef KALMAN_WAVE_DIRECTION_TEST

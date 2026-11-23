@@ -40,19 +40,19 @@ public:
             return force;
         }
         proxy_.update(dt, gyro, force, gravity);
-        const Eigen::Matrix3f R = proxy_.tiltQuaternion().toRotationMatrix();
-        const Eigen::Vector3f bow = R * cfg_.forward_body;
-        const float horizontal2 = bow.head<2>().squaredNorm();
+        // Express the levelled bow axes in the body frame. Rotating the
+        // observer around world down cancels from every dot product below.
+        const Eigen::Vector3f down = proxy_.quaternion().conjugate() * Eigen::Vector3f::UnitZ();
+        const float bow_down = down.dot(cfg_.forward_body);
+        const float horizontal2 = 1.0f - bow_down*bow_down;
         if (horizontal2 < 0.25f) {
             reset(cfg_);
             return force;
         }
-        Eigen::Vector3f forward(bow.x(), bow.y(), 0);
-        forward /= std::sqrt(horizontal2);
-        const Eigen::Vector3f starboard(-forward.y(), forward.x(), 0);
-        const Eigen::Vector3f omega = R * gyro;
-        const float rate = omega.z() - bow.z() *
-            (omega.x()*bow.x() + omega.y()*bow.y()) / horizontal2;
+        const float inv_horizontal = 1.0f/std::sqrt(horizontal2);
+        const Eigen::Vector3f forward = (cfg_.forward_body - bow_down*down)*inv_horizontal;
+        const Eigen::Vector3f starboard = down.cross(cfg_.forward_body)*inv_horizontal;
+        const float rate = (gyro.dot(down) - bow_down*gyro.dot(cfg_.forward_body))/horizontal2;
         elapsed_ += dt;
         if (!initialized_) {
             previous_force_ = force;
@@ -61,25 +61,35 @@ public:
             initialized_ = true;
             return force;
         }
-        const Eigen::Vector3f jerk = R * ((force-previous_force_)/dt +
-            (0.5f*(gyro+previous_gyro_)).cross(0.5f*(force+previous_force_)));
-        std::array<double,5> sample{{-double(rate)*rate,
-            double(rate-previous_rate_)/dt, forward.dot(jerk), starboard.dot(jerk), rate}};
+        const Eigen::Vector3f jerk = (force-previous_force_)/dt +
+            (0.5f*(gyro+previous_gyro_)).cross(0.5f*(force+previous_force_));
+        std::array<float,5> sample{{-rate*rate,
+            (rate-previous_rate_)/dt, forward.dot(jerk), starboard.dot(jerk), rate}};
         previous_force_ = force;
         previous_gyro_ = gyro;
         previous_rate_ = rate;
-        // Two cascaded Butterworth sections. Double precision is needed at
-        // IMU rates because the learning bandwidth is only 0.035 Hz.
-        const double k = std::tan(3.14159265358979323846 * 0.035 * dt);
+        // At dt <= 0.1 s the prewarp argument is at most 0.011 radians.
+        // Dropping terms after x^3/3 in tan(x) has relative error < 2e-9.
+        const float x = (3.14159265358979323846f * 0.035f) * dt;
+        const float k = x * (1.0f + x*x*(1.0f/3.0f));
+        const float k2 = k*k;
         for (std::size_t section=0; section<2; ++section) {
-            const double q = section == 0 ? 0.541196100146197 : 1.306562964876377;
-            const double norm = 1/(1+k/q+k*k);
-            const double b0=k*k*norm, a1=2*(k*k-1)*norm, a2=(1-k/q+k*k)*norm;
+            const float inv_q = section == 0 ? 1.847759065f : 0.765366865f;
+            const float damping = k*inv_q;
+            const float norm = 1.0f/(1.0f+damping+k2);
+            const float b = k2*norm;
+            const float d = 2.0f*(damping+2.0f*k2)*norm;
+            // Transposed direct-form II, in the fixed coordinates z=s0,
+            // v=s0+s1. Computing d=2+a1 and 4b=1+a1+a2 directly avoids
+            // cancellation near the unit pole at 200 Hz. The transform is
+            // independent of dt, so a jittered sample uses the same states.
             for (std::size_t i=0; i<sample.size(); ++i) {
                 auto& state=lowpass_[section][i];
-                const double y=b0*sample[i]+state[0];
-                state[0]=2*b0*sample[i]-a1*y+state[1];
-                state[1]=b0*sample[i]-a2*y;
+                const float input=sample[i];
+                const float feed=b*input;
+                const float y=state.z+feed;
+                state.z += (state.v-d*y)+4.0f*feed;
+                state.v += (4.0f*b)*(input-y);
                 sample[i]=y;
             }
         }
@@ -87,26 +97,27 @@ public:
         // absorbs the constant jerk from residual gyro/accelerometer bias.
         if (elapsed_ > 60.0f) {
             if (!statistics_initialized_) { mean_=sample; statistics_initialized_=true; }
-            const double a=-std::expm1(-double(dt)/120.0);
-            std::array<double,5> delta{};
+            const float a=decayGain(dt/120.0f);
+            std::array<float,5> delta{};
             for (std::size_t i=0; i<sample.size(); ++i) {
                 delta[i]=sample[i]-mean_[i]; mean_[i]+=a*delta[i];
             }
-            xx_=(1-a)*(xx_+a*(delta[0]*delta[0]+delta[1]*delta[1]));
-            xy_=(1-a)*(xy_+a*(delta[0]*delta[2]+delta[1]*delta[3]));
-            yy_=(1-a)*(yy_+a*(delta[2]*delta[2]+delta[3]*delta[3]));
-            rr_=(1-a)*(rr_+a*delta[4]*delta[4]);
-            double target=0;
+            const float retain=1.0f-a;
+            xx_+=a*(retain*(delta[0]*delta[0]+delta[1]*delta[1])-xx_);
+            xy_+=a*(retain*(delta[0]*delta[2]+delta[1]*delta[3])-xy_);
+            yy_+=a*(retain*(delta[2]*delta[2]+delta[3]*delta[3])-yy_);
+            rr_+=a*(retain*delta[4]*delta[4]-rr_);
+            float target=0;
             // Constant heading gives no information about cruise speed. Do
             // not divide by a noise-only angular-acceleration regressor.
-            if (elapsed_ > 120 && xx_ > 1e-9 && rr_ > 1e-7) {
-                const double speed=xy_/xx_;
-                if (std::abs(speed) >= 0.2 && std::abs(speed) <= 15 &&
-                    xy_*xy_ > 0.015*xx_*yy_) target=speed;
+            if (elapsed_ > 120 && xx_ > 1e-9f && rr_ > 1e-7f) {
+                const float speed=xy_/xx_;
+                if (std::abs(speed) >= 0.2f && std::abs(speed) <= 15 &&
+                    xy_*xy_ > 0.015f*xx_*yy_) target=speed;
             }
-            speed_ += float(-std::expm1(-double(dt)/15.0)*(target-speed_));
+            speed_ += decayGain(dt/15.0f)*(target-speed_);
         }
-        correction_ = R.transpose()*(starboard*(speed_*rate));
+        correction_ = starboard*(speed_*rate);
         return force-correction_;
     }
     // Apply in the estimator's current gravity plane. The nuisance speed is
@@ -126,6 +137,14 @@ public:
     float speedMps() const { return speed_; }
     const Eigen::Vector3f& correctionBodyMs2() const { return correction_; }
 private:
+    // 1-exp(-x), with 0 < x <= 0.1/15. Relative truncation error < 1.3e-8.
+    static float decayGain(float x) {
+        return x*(1.0f+x*(-0.5f+x*(1.0f/6.0f)));
+    }
+
+    struct SectionState {
+        float z=0, v=0;
+    };
     Config cfg_{};
     VerticalAccelComplementary proxy_{0.2f,0.02f,0};
     bool initialized_=false, statistics_initialized_=false;
@@ -133,8 +152,8 @@ private:
     Eigen::Vector3f previous_force_=Eigen::Vector3f::Zero();
     Eigen::Vector3f previous_gyro_=Eigen::Vector3f::Zero();
     Eigen::Vector3f correction_=Eigen::Vector3f::Zero();
-    std::array<std::array<std::array<double,2>,5>,2> lowpass_{};
-    std::array<double,5> mean_{};
-    double xx_=0, xy_=0, yy_=0, rr_=0;
+    std::array<std::array<SectionState,5>,2> lowpass_{};
+    std::array<float,5> mean_{};
+    float xx_=0, xy_=0, yy_=0, rr_=0;
 };
 } // namespace seastate::common

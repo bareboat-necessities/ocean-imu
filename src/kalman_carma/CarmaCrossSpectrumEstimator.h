@@ -89,6 +89,8 @@
 #endif
 
 #include <algorithm>
+#include <array>
+#include <cstring>
 #include <cmath>
 #include <complex>
 #include <limits>
@@ -149,47 +151,51 @@ public:
     const Config& config() const noexcept { return cfg_; }
 
     void reset() {
-        phase_ = T(0);
-        for (int i = 0; i < 3; ++i) { y1_[i] = y2_[i] = std::complex<T>(0); }
-        acc_ = Hermitian3<T>{};
+        envelope_ = {};
+        acc_ = {};
         weight_ = T(0);
         elapsed_ = T(0);
         f_last_ = T(0);
     }
 
     void update(const Vector3& a, T dt, T f_hz) {
-        if (!(dt > T(0)) || !std::isfinite(dt) || !a.allFinite() || !std::isfinite(f_hz)) return;
-        const T f = std::min(std::max(f_hz, cfg_.min_freq_hz), cfg_.max_freq_hz);
-        f_last_ = f;
-        constexpr T k2Pi = T(6.283185307179586476925286766559);
-        phase_ += k2Pi * f * dt;
-        if (phase_ > k2Pi) phase_ -= k2Pi * std::floor(phase_ / k2Pi);
-        const std::complex<T> rot(std::cos(phase_), -std::sin(phase_));
-        const T tau = T(1) / (k2Pi * cfg_.band_frac * f);
-        const T al = -std::expm1(-dt / tau);
-        for (int i = 0; i < 3; ++i) {
-            const std::complex<T> x = a(i) * rot;
-            y1_[i] += al * (x - y1_[i]);
-            y2_[i] += al * (y1_[i] - y2_[i]);
+        if (!valid_input(a, dt, f_hz)) return;
+        accumulate(demodulate(a, dt, f_hz), dt);
+    }
+
+    // The two averaging horizons can consume one instantaneous spectrum when
+    // their demodulators agree. Public reset, configure and independent update
+    // calls can leave different carriers or delay states; keep those histories.
+    void update_with_monitor(const Vector3& a, T dt, T f_hz,
+                             CarmaCrossSpectrumEstimator& monitor) {
+        if (this == &monitor) {
+            update(a, dt, f_hz);
+            return;
         }
-        const T ah = -std::expm1(-dt / std::max(cfg_.horizon_s, dt));
-        for (int i = 0; i < 3; ++i)
-            for (int j = i; j < 3; ++j) {
-                const std::complex<T> v = y2_[i] * std::conj(y2_[j]);
-                acc_.re(i,j) += ah * (v.real() - acc_.re(i,j));
-                acc_.im(i,j) += ah * (v.imag() - acc_.im(i,j));
-                acc_.re(j,i) = acc_.re(i,j);
-                acc_.im(j,i) = -acc_.im(i,j);
-            }
-        weight_ += ah * (T(1) - weight_);
-        elapsed_ += dt;
+        if (!valid_input(a, dt, f_hz)) return;
+        const bool same = cfg_.band_frac == monitor.cfg_.band_frac &&
+            clamped_frequency(f_hz) == monitor.clamped_frequency(f_hz) &&
+            std::memcmp(&envelope_, &monitor.envelope_, sizeof(envelope_)) == 0;
+        const auto sample = demodulate(a, dt, f_hz);
+        accumulate(sample, dt);
+        if (same) {
+            monitor.envelope_ = envelope_;
+            monitor.f_last_ = f_last_;
+            monitor.accumulate(sample, dt);
+        } else {
+            monitor.accumulate(monitor.demodulate(a, dt, f_hz), dt);
+        }
     }
 
     // Start-clean exponentially weighted mean of A A^H.
     Hermitian3<T> cross() const {
-        Hermitian3<T> h = acc_;
-        if (weight_ > T(0)) { h.re /= weight_; h.im /= weight_; }
-        for (int i = 0; i < 3; ++i) h.im(i,i) = T(0);
+        Hermitian3<T> h;
+        const T w = weight_ > T(0) ? weight_ : T(1);
+        for (int i = 0; i < 3; ++i) h.re(i,i) = acc_.power[i] / w;
+        int index = 0;
+        for (int j = 1; j < 3; ++j)
+            for (int i = 0; i < j; ++i, ++index)
+                h.set(i, j, {acc_.re[index] / w, acc_.im[index] / w});
         return h;
     }
     T elapsed_s() const noexcept { return elapsed_; }
@@ -201,10 +207,58 @@ public:
     }
 
 private:
+    struct Envelope {
+        T phase{};
+        std::array<std::complex<T>,3> y1{}, y2{};
+    };
+    struct BandSample {
+        std::array<T,3> power{}, re{}, im{};
+    };
+    static bool valid_input(const Vector3& a, T dt, T f_hz) {
+        return dt > T(0) && std::isfinite(dt) && a.allFinite() && std::isfinite(f_hz);
+    }
+    T clamped_frequency(T f) const {
+        return std::min(std::max(f, cfg_.min_freq_hz), cfg_.max_freq_hz);
+    }
+    BandSample demodulate(const Vector3& a, T dt, T f_hz) {
+        f_last_ = clamped_frequency(f_hz);
+        constexpr T k2Pi = T(6.283185307179586476925286766559);
+        T& phase = envelope_.phase;
+        phase += k2Pi * f_last_ * dt;
+        if (phase > k2Pi) phase -= k2Pi * std::floor(phase / k2Pi);
+        const std::complex<T> rot(std::cos(phase), -std::sin(phase));
+        const T tau = T(1) / (k2Pi * cfg_.band_frac * f_last_);
+        const T al = -std::expm1(-dt / tau);
+        auto& y1 = envelope_.y1;
+        auto& y2 = envelope_.y2;
+        BandSample band;
+        for (int i = 0; i < 3; ++i) {
+            y1[i] += al * (a[i] * rot - y1[i]);
+            y2[i] += al * (y1[i] - y2[i]);
+            band.power[i] = std::norm(y2[i]);
+        }
+        int index = 0;
+        for (int j = 1; j < 3; ++j) {
+            for (int i = 0; i < j; ++i, ++index) {
+                band.re[index] = y2[i].real()*y2[j].real() + y2[i].imag()*y2[j].imag();
+                band.im[index] = y2[i].imag()*y2[j].real() - y2[i].real()*y2[j].imag();
+            }
+        }
+        return band;
+    }
+    void accumulate(const BandSample& band, T dt) {
+        const T ah = -std::expm1(-dt / std::max(cfg_.horizon_s, dt));
+        for (int i = 0; i < 3; ++i) {
+            acc_.power[i] += ah * (band.power[i] - acc_.power[i]);
+            acc_.re[i] += ah * (band.re[i] - acc_.re[i]);
+            acc_.im[i] += ah * (band.im[i] - acc_.im[i]);
+        }
+        weight_ += ah * (T(1) - weight_);
+        elapsed_ += dt;
+    }
     Config cfg_{};
-    T phase_ = T(0);
-    std::complex<T> y1_[3]{}, y2_[3]{};
-    Hermitian3<T> acc_{};
+    Envelope envelope_{};
+    BandSample acc_{};
     T weight_ = T(0);
     T elapsed_ = T(0);
     T f_last_ = T(0);
@@ -256,9 +310,17 @@ public:
     // One accelerometer sample: world-frame acceleration, step, operating
     // frequency.  Only the Estimated source runs the estimator.
     void observe(const Vector3& a_world, T dt, T f_op_hz) {
+        observe(a_world, dt, f_op_hz, nullptr);
+    }
+    void observe(const Vector3& a_world, T dt, T f_op_hz, Estimator* monitor) {
         if (!(dt > T(0)) || !std::isfinite(dt)) return;
         t_ += dt;
-        if (cfg_.source == Config::Source::Estimated) est_.update(a_world, dt, f_op_hz);
+        if (cfg_.source == Config::Source::Estimated) {
+            if (monitor) est_.update_with_monitor(a_world, dt, f_op_hz, *monitor);
+            else est_.update(a_world, dt, f_op_hz);
+        } else if (monitor) {
+            monitor->update(a_world, dt, f_op_hz);
+        }
         if (!frozen_ && t_ >= T(cfg_.freeze_at_s)) freeze_now();
     }
     // Hold the value now in force from here on (World: fixed in NED; Keel:

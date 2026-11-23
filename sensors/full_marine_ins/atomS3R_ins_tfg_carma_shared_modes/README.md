@@ -27,9 +27,9 @@ Set `IMU_LEVER_ARM_X_M`, `IMU_LEVER_ARM_Y_M` and `IMU_LEVER_ARM_Z_M` to the sens
 
 ## Memory and timing
 
-The current 27-state filter occupies 16,088 bytes in its single heap allocation on ESP32-S3 (Arduino-ESP32 3.3.11, Xtensa GCC 14.2). Its fixed-size table holds the transition and process-noise coefficients for the tuned wave shape. Each sample uses its measured interval. The default compass renders a new frame when due and transfers it over subsequent IMU polls. Each transfer uses the remaining loop budget for up to 16 rows. Even an over-budget loop sends one row (51.2 µs of pixel data on the 40 MHz bus) so the screen continues to refresh under sustained load.
+The current 27-state filter occupies 16,088 bytes in its single heap allocation on ESP32-S3 (Arduino-ESP32 3.3.11, Xtensa GCC 14.2). Its fixed-size table holds the transition and process-noise coefficients for the tuned wave shape. Each sample uses its measured interval. At each 250 ms display refresh, the acquisition loop publishes a snapshot to a one-frame queue. A task on the other AtomS3R core renders the newest snapshot and transfers the entire frame over SPI. Text mode uses the same task. Opening the calibration menu waits for any active transfer to finish.
 
-Navigation acquires accelerometer and gyro data on each accepted frame. The four CARMA sketches read die temperature at 10 Hz and read the compensated BMM150 AUX burst when the magnetic gate is due (35 ms minimum spacing) or the source has expired. Calibration still reads both with every requested frame. The primary sketch computes compass angles and wave reports for the first sample and when a display or serial update needs them. Rate of turn continues to use every gyro sample.
+Navigation acquires accelerometer and gyro data on each accepted frame. With Bosch magnetic compensation active on the internal AtomS3R BMI270, the four CARMA sketches read the ready flags and a 12-byte accelerometer/gyro burst. Omitting the eight AUX bytes from this transfer saves 72 I²C clocks per accepted frame. The sketches read die temperature at 10 Hz and read the compensated BMM150 AUX burst when the magnetic gate is due (35 ms minimum spacing) or the source has expired. Calibration still reads both with every requested frame. The primary sketch computes compass angles and wave reports for the first sample and when a display or serial update needs them. Rate of turn continues to use every gyro sample.
 
 Every accepted accelerometer/gyro sample advances the full 27-state covariance prediction and accelerometer correction. For a well-conditioned three-axis innovation, the filter whitens the residual and applies a symmetric rank-three covariance update. A projected accelerometer-bias gain adds a correction confined to its three bias rows and columns. The original LDLT/Joseph path handles poorly conditioned innovations.
 
@@ -43,10 +43,13 @@ Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 ac
 | `loop_cycles_mean`, `work_us_mean` | Mean cycle-counter delta and elapsed microseconds across all loop passes before pacing |
 | `read_us_mean`, `estimator_us_mean`, `output_us_mean` | Mean time per pass acquiring the sample, processing it (including calibration and rate of turn), and servicing serial and display |
 | `loop_work_max_us`, `loops_over_5ms` | Maximum active loop time before pacing, and number of loops that exceeded the 200 Hz budget |
+| `accepted_work_mean_us`, `accepted_work_max_us`, `accepted_over_4500us` | Full active sampling-loop time for the 1,000 accepted samples only, from before the sensor read through output publication. Includes time spent servicing serial. |
+| `mag_samples`, `mag_work_max_us` | Number of accepted samples offering a fresh magnetic observation and maximum complete sampling-loop time among those samples |
+| `lcd_frames_total`, `lcd_stack_free_min_bytes` | Cumulative number of completed compass draws and the worker's stack high-water mark in free bytes (zero before its first draw or in synchronous fallback) |
 | `sample_gap_min_us`, `sample_gap_max_us` | Shortest and longest interval between accepted IMU poll timestamps |
 | `jitter_mean_abs_us`, `gaps_over_7_5ms` | Mean absolute departure from 5,000 µs and count of intervals above 7.5 ms |
 
-Use steady `live=1` windows to assess the operating workload. Keep the clock, graphics and serial settings the same when comparing firmware. At 240 MHz, the whole 5 ms interval is 1.2 million cycles. Reducing a 7 ms update by half would leave 3.5 ms of work and 1.5 ms of headroom.
+Use steady `live=1` windows to assess the operating workload. Keep the clock, graphics and serial settings the same when comparing firmware. At 240 MHz the 4.5 ms target corresponds to 1.08 million sampling-core cycles and leaves 0.5 ms before the next tick. The target is met for a window when `accepted_over_4500us=0`. Check sample gaps and completed draws alongside it. LCD transfer completes asynchronously on the display core.
 
 ### Earlier static size and stack measurements
 

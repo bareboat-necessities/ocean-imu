@@ -548,8 +548,7 @@ public:
     void set_learning_enabled(bool enabled) { learning_enabled_ = enabled; }
     void observe(const Vector3& a_world) {
         if (!learning_enabled_) return;
-        monitor_.update(a_world, dt_, operating_frequency_hz());
-        coupling_.observe(a_world, dt_, operating_frequency_hz());
+        coupling_.observe(a_world, dt_, operating_frequency_hz(), &monitor_);
     }
     Estimator& monitor() noexcept { return monitor_; }
     const Estimator& monitor() const noexcept { return monitor_; }
@@ -671,22 +670,43 @@ private:
     void build_dynamics_(double kappa) {
         dynamics_kappa_ = static_cast<T>(kappa);
         const double g2 = kappa / vmodel_.base_var_a();      // unit-acceleration-variance gain at kappa
-        Eigen::Matrix<double,4,4> A4;
-        kalman::carma::carma_dynamics<4>(vmodel_.shape(), kappa, A4);
-        const double rk = std::sqrt(kappa);
-        Mat6d A = Mat6d::Zero();
-        A.template topLeftCorner<4,4>() = A4;
-        A.template block<1,2>(2, 4) = rk * Cw1_;
-        A.template bottomRightCorner<2,2>() = kappa * Aw1_;
-        Eigen::Matrix<double,6,2> G = Eigen::Matrix<double,6,2>::Zero();
-        G(2,0) = 1.0;
-        G.template bottomRows<2>() = rk * Bw1_;
-        Eigen::Matrix2d J2;
-        J2 << 0.0, -1.0, 1.0, 0.0;
-        A_ = A.template cast<T>();
-        G_ = G.template cast<T>();
-        WR_ = (g2 * G * G.transpose()).template cast<T>();
-        WI_ = (g2 * G * J2 * G.transpose()).template cast<T>();
+        // The physical model has already built this four-state block on a
+        // frequency commit. A shape change can also request the unit model.
+        A_.setZero();
+        if (dynamics_kappa_ == vmodel_.kappa()) {
+            A_.template topLeftCorner<4,4>() = vmodel_.A();
+        } else {
+            Eigen::Matrix<double,4,4> A4;
+            kalman::carma::carma_dynamics<4>(vmodel_.shape(), kappa, A4);
+            A_.template topLeftCorner<4,4>() = A4.template cast<T>();
+        }
+        const double root = std::sqrt(kappa);
+        A_.template block<1,2>(2, 4) = (root * Cw1_).template cast<T>();
+        A_.template bottomRightCorner<2,2>() = (kappa * Aw1_).template cast<T>();
+
+        // G has only three nonzero rows: (1,0), (x,y), (0,z). Expand
+        // g2 G G' and g2 G J G' on that support; an S3 otherwise performs
+        // two dense products in software double on every frequency commit.
+        const double x = root * Bw1_(0,0), y = root * Bw1_(0,1), z = root * Bw1_(1,1);
+        G_.setZero();
+        G_(2,0) = T(1);
+        G_(4,0) = T(x);
+        G_(4,1) = T(y);
+        G_(5,1) = T(z);
+        WR_.setZero();
+        const double gx = g2 * x, gy = g2 * y, gz = g2 * z;
+        WR_(2,2) = T(g2);
+        WR_(2,4) = WR_(4,2) = T(gx);
+        WR_(4,4) = T(gx * x + gy * y);
+        WR_(4,5) = WR_(5,4) = T(gy * z);
+        WR_(5,5) = T(gz * z);
+        WI_.setZero();
+        WI_(2,4) = -T(gy);
+        WI_(2,5) = -T(gz);
+        WI_(4,5) = -T(gx * z);
+        WI_(4,2) = -WI_(2,4);
+        WI_(5,2) = -WI_(2,5);
+        WI_(5,4) = -WI_(4,5);
         g2_ = static_cast<T>(g2);
     }
 
@@ -705,12 +725,13 @@ private:
 
         // Commit re-coordinatization: hold the normalized colouring (file header).
         bool any = false;
+        const double root_g2 = std::sqrt(g2);
         for (int a = 0; a < 3; ++a) {
             colouring_scale_(a) = T(1);
             // An enlarged horizontal prior variance (coupling cap) scales
             // that axis' colouring like a larger sigma; otherwise exactly as
             // before.
-            double s = std::sqrt(g2) * static_cast<double>(sig_(a));
+            double s = root_g2 * static_cast<double>(sig_(a));
             if (a < 2 && h_gain[a] > T(1)) s *= std::sqrt(static_cast<double>(h_gain[a]));
             if (have_prev_ && s != scale_[a] && scale_[a] > 0.0 && s > 0.0) {
                 const T r = static_cast<T>(s / scale_[a]);

@@ -240,9 +240,47 @@ void test_current_confidence_withdraws_stale_axis() {
           "sense detector was not withdrawn with current axis validity");
 }
 
+// Compare the shared quadrature covariance against an independent dense
+// double-precision Joseph filter with noise changes and nonuniform timing.
+static void test_quadrature_covariance() {
+  KalmanWaveDirection axis(2.0f);
+  Eigen::Matrix4d p = Eigen::Matrix4d::Identity();
+  Eigen::Vector4d coeff = Eigen::Vector4d::Zero();
+  for (int i = 0; i < 12000; ++i) {
+    const float dt = 0.005f + 0.001f * std::sin(0.08f * i);
+    const float q = i < 6100 ? 1e-6f : 1e-4f;
+    const float r = i < 5200 ? 0.015f : 0.001f;
+    axis.setProcessNoise(q);
+    axis.setMeasurementNoise(r);
+    const float ax = std::cos(0.011f * i);
+    const float ay = 0.7f * ax + 0.1f * std::sin(0.01f * i);
+    axis.update(ax, ay, 2.0f, dt);
+    const double c = std::cos(double(axis.getPhase())), s = std::sin(double(axis.getPhase()));
+    Eigen::Matrix<double, 2, 4> h;
+    h << c, 0, s, 0,
+         0, c, 0, s;
+    p.diagonal().array() += (dt / 0.005f) * q + 1e-10;
+    const Eigen::Matrix2d noise = double(r) * Eigen::Matrix2d::Identity();
+    const Eigen::Matrix2d innovation = h * p * h.transpose() + noise;
+    const Eigen::Matrix<double, 4, 2> k = p * h.transpose() * innovation.inverse();
+    coeff += k * (Eigen::Vector2d(ax, ay) - h * coeff);
+    const Eigen::Matrix4d a = Eigen::Matrix4d::Identity() - k * h;
+    p = a * p * a.transpose() + k * noise * k.transpose();
+    const Eigen::Vector4d estimated = (Eigen::Vector4d() <<
+        axis.getCosineCoefficients().cast<double>(), axis.getSineCoefficients().cast<double>()).finished();
+    require((estimated - coeff).norm() < 2e-5, "quadrature coefficients disagree with dense Joseph update");
+    if (axis.isAxisReliable()) {
+      const double expected = axis.getAxisLinearity() / (p.trace() + 1e-6);
+      require(std::abs(axis.getConfidence() / expected - 1.0) < 3e-5,
+              "axis covariance disagrees with dense Joseph update");
+    }
+  }
+}
+
 }  // namespace
 
 int main() {
+  test_quadrature_covariance();
   test_all_axes_and_carrier_phases();
   test_axis_sample_rate_invariance();
   test_circular_motion_has_no_axis();
