@@ -119,16 +119,34 @@ void measurement() {
         Ja.col(j)=(ra(xp)-ra(xm))/(2e-6);Jm.col(j)=(rm(xp)-rm(xm))/(2e-6);}
     check("accelerometer Jacobian vs finite difference",(Ha-Ja).cwiseAbs().maxCoeff(),3e-9);
     check("magnetometer Jacobian vs finite difference",(Hm-Jm).cwiseAbs().maxCoeff(),1e-8);
-    // Dense Joseph + finite-difference reset reference of the actual update.
-    f.state()=x;MX P=MX::Identity()*.001;f.covariance_full()=P;
+    // Explicit Joseph form covers the full, projected and Schmidt-held gains.
+    const TX cross=TX::LinSpaced(27,-.7,.4);
+    const MX P=.001*(MX::Identity()+cross*cross.transpose());
     const V meas=x.R.transpose()*(V(x.X.col(2))-g)+x.B.col(1)+V(.03,-.02,.01);
-    const V r=x.R*(meas-x.B.col(1))-(x.X.col(2)-g);const M3 R=x.R*(M3::Identity()*.0009)*x.R.transpose();
-    const M3 S=Ha*P*Ha.transpose()+R;const Eigen::Matrix<double,27,3>K=P*Ha.transpose()*S.inverse();
-    const TX a=K*r;MX Jr;f.build_reset_jacobian(a,Jr);const MX IKH=MX::Identity()-K*Ha;
-    const MX expected=Jr*(IKH*P*IKH.transpose()+K*R*K.transpose())*Jr.transpose();
-    f.measurement_update_acc_only(meas,35.);
-    check("Joseph and covariance transport vs dense reference",(f.covariance_full()-expected).norm()/expected.norm(),2e-12);
-    check("measurement group injection",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
+    const V r=x.R*(meas-x.B.col(1))-(x.X.col(2)-g);
+    const M3 R=x.R*(M3::Identity()*.0009)*x.R.transpose();
+    const M3 S=Ha*P*Ha.transpose()+R;
+    M3 scale;
+    scale << .7,.1,0, .1,.5,0, 0,0,.8;
+    for (int mode=0;mode<3;++mode) {
+        const bool frozen=mode==2, scaled=mode==1;
+        f.set_schmidt_acc_bias_hold(frozen);
+        f.set_acc_bias_updates_enabled(!frozen);
+        f.set_acc_bias_gain_scale(scale,scaled);
+        f.state()=x;
+        f.covariance_full()=P;
+        Eigen::Matrix<double,27,3> K=P*Ha.transpose()*S.inverse();
+        if (frozen) K.middleRows<3>(F::OFF_BA).setZero();
+        if (scaled) K.middleRows<3>(F::OFF_BA)=(x.R*scale*x.R.transpose()*K.middleRows<3>(F::OFF_BA)).eval();
+        const TX a=K*r;
+        MX Jr;f.build_reset_jacobian(a,Jr);
+        const MX IKH=MX::Identity()-K*Ha;
+        const MX expected=Jr*(IKH*P*IKH.transpose()+K*R*K.transpose())*Jr.transpose();
+        f.measurement_update_acc_only(meas,35.);
+        check("Joseph and covariance transport vs dense reference",(f.covariance_full()-expected).norm()/expected.norm(),2e-12);
+        check("measurement group injection",f.state().local(G::Exp_G(TX(-a)).compose(x)).norm(),1e-12);
+        check("normalized innovation squared",std::abs(f.lastAccDiag().nis-r.dot(S.ldlt().solve(r))),1e-12);
+    }
 }
 // Continuous invariant model, independent Lyapunov integration. World motion
 // at each RK stage comes from its own Taylor exponential, not the filter.

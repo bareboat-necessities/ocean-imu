@@ -1,5 +1,6 @@
 #ifndef KALMAN_WAVE_DIRECTION_H
 #define KALMAN_WAVE_DIRECTION_H
+#include "util/HotLoop.h"
 
 /*
   Copyright 2025-2026, Mikhail Grushinskiy
@@ -56,7 +57,7 @@ public:
         direction_deg_smoothed = 0.0f;
     }
 
-    void update(float ax, float ay, float currentOmega, float deltaT) {
+    OCEAN_IMU_SAMPLE_IRAM void update(float ax, float ay, float currentOmega, float deltaT) {
         if (!(deltaT > 0.0f) || !std::isfinite(deltaT) ||
             !std::isfinite(ax) || !std::isfinite(ay)) {
             invalidateCurrentAxis();

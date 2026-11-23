@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
@@ -180,7 +181,7 @@ public:
         band_freq_ratio_ = NAN; cf_ = 0.0f;
     }
 
-    void update(const Inputs& in, const CarmaSensorNoise& n, const CarmaEvidenceConfig& cfg) noexcept {
+    OCEAN_IMU_SAMPLE_IRAM void update(const Inputs& in, const CarmaSensorNoise& n, const CarmaEvidenceConfig& cfg) noexcept {
         if (!(in.dt > 0.0f) || !std::isfinite(in.dt) || !std::isfinite(in.accel)) return;
         if (!(std::isfinite(in.band_low_hz) && std::isfinite(in.band_high_hz) && in.band_high_hz > in.band_low_hz &&
               in.band_low_hz > 0.0f && std::isfinite(in.var_horizon_s) && in.var_horizon_s > 0.0f)) return;

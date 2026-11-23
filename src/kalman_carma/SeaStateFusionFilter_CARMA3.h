@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 
 /*
   Copyright (c) 2025-2026  Mikhail Grushinskiy
@@ -215,7 +216,7 @@ private:
         return acc - lever_.acceleration();
     }
 
-    void updateCore_(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
+    OCEAN_IMU_SAMPLE_IRAM void updateCore_(float dt, const Eigen::Vector3f& gyro, const Eigen::Vector3f& acc,
                      float tempC, bool drive_mekf) {
         if (!mekf_) return;
         // A non-finite sample is dropped whole: the frontend, tuner and
@@ -544,7 +545,7 @@ private:
         mekf_->set_RS_noise(Eigen::Vector3f(rx, ry, rz));
     }
 
-    void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {
+    OCEAN_IMU_SAMPLE_IRAM void update_tuner(float dt, float a_vertical_measurement, float freq_hz_for_tuner) {
         stepVarianceChannel_(dt, a_vertical_measurement, freq_hz_for_tuner);
         // Legacy keeps its cost and its outputs: it reads no evidence.
         if (excitation_mode_ != CarmaExcitationMode::Legacy) update_wave_evidence_(dt, a_vertical_measurement);

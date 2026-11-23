@@ -31,6 +31,10 @@ The current 27-state filter occupies 16,088 bytes in its single heap allocation 
 
 Navigation acquires accelerometer and gyro data on each accepted frame. The four CARMA sketches read die temperature at 10 Hz and read the compensated BMM150 AUX burst when the magnetic gate is due (35 ms minimum spacing) or the source has expired. Calibration still reads both with every requested frame. The primary sketch computes compass angles and wave reports for the first sample and when a display or serial update needs them. Rate of turn continues to use every gyro sample.
 
+Every accepted accelerometer/gyro sample advances the full 27-state covariance prediction and accelerometer correction. For a well-conditioned three-axis innovation, the filter whitens the residual and applies a symmetric rank-three covariance update. A projected accelerometer-bias gain adds a correction confined to its three bias rows and columns. The original LDLT/Joseph path handles poorly conditioned innovations.
+
+The sketch's `build_opt.h` places recurring estimator and wave-tracking routines in ESP32-S3 instruction RAM. This reduces competition for the 16 KiB flash instruction cache and uses some internal SRAM that would otherwise be available to the heap. Keep this file alongside the sketch when building it.
+
 Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device.
 
 | Field | Measurement |

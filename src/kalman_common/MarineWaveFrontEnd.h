@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
@@ -311,7 +312,7 @@ protected:
     // estimate: the direction branch needs inertial acceleration, so it is
     // corrected before levelling, as the MEKF's acceleration model does.  The
     // period/tuner input above stays independent of that estimate.
-    void updateWavePeriodAndDirection_(float dt,
+    OCEAN_IMU_SAMPLE_IRAM void updateWavePeriodAndDirection_(float dt,
                                        const Eigen::Quaternionf& q_dir,
                                        const Eigen::Vector3f& acc_in,
                                        const Eigen::Vector3f* acc_bias_body)

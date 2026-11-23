@@ -1,4 +1,5 @@
 #pragma once
+#include "util/HotLoop.h"
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 // Geometry-independent shared-mode configuration, confidence and fallback.
 // Core supplies the estimator interface, motion() and the coordinate-aware
@@ -241,7 +242,7 @@ private:
         return true;
     }
 
-    void step_confidence_() {
+    OCEAN_IMU_SAMPLE_IRAM void step_confidence_() {
         if (!coupling_adaptation_enabled_ || cfg_.mode == CouplingMode::Off || !(last_dt_ > T(0))) return;
         auto& m = this->motion();
         // The candidate prior (what the coupling would apply at c = 1): the
