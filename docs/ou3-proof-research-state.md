@@ -1324,6 +1324,16 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — CARMA configuration changed the native secant source fingerprint.**
+Main run 45270799476 failed the `shipping_source_tree_sha256` check after
+PR #789 changed two CARMA fusion headers. Both headers are outside the
+48-header native OU-III probe dependency list. Every dependency and the
+preprocessed probe match the last verified source binding at `956d5c4`.
+The source fingerprint refresh carries forward the complete inherited
+OU-III execution and finite secant results under their existing
+qualifications. No new relaxation was introduced. The open receipt/Schur
+sign remains the next mathematical check.
+
 **E — Shared firmware output intervals changed two source fingerprints.**
 The validator rejected the OU-III sketch blob and the native secant
 whole-source digest after the display and serial intervals moved to a
