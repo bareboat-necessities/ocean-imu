@@ -89,9 +89,15 @@ class CompassUI {
   }
 
   // Transfer at most 4096 bytes (0.82 ms on the AtomS3R) between IMU polls.
-  bool pushNextStrip() {
+  bool pushNextStrip(uint32_t remainingUs = stripBudgetUs) {
     if (!_ok || _nextRow >= _h) return false;
-    const int rows = std::min(16, _h - _nextRow);
+    // At 40 MHz one 128-pixel row takes 51.2 us on the wire. Reserve
+    // setup time, but always advance one row even when fusion used the budget.
+    constexpr uint32_t setupUs = 200;
+    constexpr uint32_t rowUs = (128 * 16 + 39) / 40;
+    const uint32_t available = remainingUs > setupUs ? remainingUs - setupUs : 0;
+    const int maxRows = static_cast<int>(std::clamp<uint32_t>(available / rowUs, 1u, 16u));
+    const int rows = std::min(maxRows, _h - _nextRow);
     const auto* pixels = static_cast<const lgfx::swap565_t*>(_frame.getBuffer());
     M5.Display.pushImage(0, _nextRow, _w, rows, pixels + _nextRow * _w);
     _nextRow += rows;

@@ -27,7 +27,7 @@ Set `IMU_LEVER_ARM_X_M`, `IMU_LEVER_ARM_Y_M` and `IMU_LEVER_ARM_Z_M` to the sens
 
 ## Memory and timing
 
-The current 27-state filter occupies 16,088 bytes in its single heap allocation on ESP32-S3 (Arduino-ESP32 3.3.11, Xtensa GCC 14.2). Its fixed-size table holds the transition and process-noise coefficients for the tuned wave shape. Each sample uses its measured interval. The default compass display transfers at most 16 rows per loop and defers graphics when less than 1.2 ms remains in the 5 ms polling interval.
+The current 27-state filter occupies 16,088 bytes in its single heap allocation on ESP32-S3 (Arduino-ESP32 3.3.11, Xtensa GCC 14.2). Its fixed-size table holds the transition and process-noise coefficients for the tuned wave shape. Each sample uses its measured interval. The default compass renders a new frame when due and transfers it over subsequent IMU polls. Each transfer uses the remaining loop budget for up to 16 rows. Even an over-budget loop sends one row (51.2 µs of pixel data on the 40 MHz bus) so the screen continues to refresh under sustained load.
 
 Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device.
 

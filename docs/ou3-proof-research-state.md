@@ -1321,6 +1321,12 @@ comparison and both digests are recorded in `carma_200hz_timing_source_identity`
 in the provenance manifest. This refresh preserves the finite secant results
 and their existing qualifications. The next check is the source-bound evidence validator.
 
+The CARMA compass redraw fix also changed the whole-tree digest (class E).
+The only changed file under `src/` is the AtomS3R display header. GCC lists
+46 project headers for the native planar secant probe, including none of the
+changed files. The diagnostic retains the same numerical results and open
+proof obligations with its updated source digest.
+
 **E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
 The experimental QMEKF CARMA cores index plain storage in their sample-path
 loops (`src/kalman_carma/Kalman3D_Wave_CARMA3.h`, `CarmaCoupledMotion.h`,
