@@ -54,6 +54,7 @@
     (float on the target, double in the analysis tools).
 */
 
+#include "util/ExponentialGain.h"
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -211,7 +212,7 @@ public:
         st_ = Status{};
         st_.state = cfg_.enabled ? CouplingState::WarmUp : CouplingState::Disabled;
         st_.confidence = cfg_.enabled ? T(0.0) : T(1.0);
-        yaw_lp_ = T(0); dlnf_lp_ = T(0); last_lnf_ = std::numeric_limits<T>::quiet_NaN();
+        yaw_lp_ = T(0); dlnf_lp_ = T(0); last_lnf_ = last_f_ = std::numeric_limits<T>::quiet_NaN();
         hold_man_ = hold_sea_ = T(0.0);
         nis_s_ = nis_l_ = std::numeric_limits<T>::quiet_NaN();
         nis_bad_ = false;
@@ -231,14 +232,15 @@ public:
         if (!(dt > T(0.0)) || !std::isfinite(dt)) return;
         if (!cfg_.enabled) { st_.confidence = T(1.0); st_.evidence = T(1.0); st_.state = CouplingState::Disabled; return; }
         // Manoeuvre and sea-change detectors.
-        const T ay = -std::expm1(-dt / std::max(cfg_.yaw_tau_s, dt));
+        const T ay = exponential_gain(dt / std::max(cfg_.yaw_tau_s, dt));
         if (std::isfinite(yaw_rate)) yaw_lp_ += ay * (yaw_rate - yaw_lp_);
         const bool man_now = std::fabs(yaw_lp_) * T(57.2957795) > cfg_.yaw_rate_dps;
         hold_man_ = man_now ? cfg_.hold_s : std::max(T(0.0), hold_man_ - dt);
         if (f_op > T(0.0) && std::isfinite(f_op)) {
-            const T lnf = std::log(f_op);
+            const T lnf = f_op == last_f_ ? last_lnf_ : std::log(f_op);
+            last_f_ = f_op;
             if (std::isfinite(last_lnf_)) {
-                const T af = -std::expm1(-dt / std::max(cfg_.freq_tau_s, dt));
+                const T af = exponential_gain(dt / std::max(cfg_.freq_tau_s, dt));
                 dlnf_lp_ += af * ((lnf - last_lnf_) / dt - dlnf_lp_);
             }
             last_lnf_ = lnf;
@@ -249,7 +251,7 @@ public:
         st_.sea_change = hold_sea_ > T(0.0);
         // Innovation consistency (self-normalized NIS).
         if (std::isfinite(nis) && nis >= T(0.0)) {
-            const T as = -std::expm1(-dt / cfg_.nis_short_tau_s), al = -std::expm1(-dt / cfg_.nis_long_tau_s);
+            const T as = exponential_gain(dt / cfg_.nis_short_tau_s), al = exponential_gain(dt / cfg_.nis_long_tau_s);
             nis_s_ = std::isfinite(nis_s_) ? nis_s_ + as * (nis - nis_s_) : nis;
             nis_l_ = std::isfinite(nis_l_) ? nis_l_ + al * (nis - nis_l_) : nis;
         }
@@ -280,7 +282,7 @@ public:
         st_.state = s;
         if (forced_ >= T(0.0)) { st_.confidence = std::min(T(1.0), forced_); return; }
         const T tau = e < st_.confidence ? cfg_.tau_down_s : cfg_.tau_up_s;
-        st_.confidence += -std::expm1(-dt / std::max(tau, dt)) * (e - st_.confidence);
+        st_.confidence += exponential_gain(dt / std::max(tau, dt)) * (e - st_.confidence);
         st_.confidence = std::min(T(1.0), std::max(T(0.0), st_.confidence));
     }
 
@@ -292,6 +294,7 @@ private:
     Config cfg_{};
     Status st_{};
     T band_frac_ = T(0.15);
+    T last_f_ = std::numeric_limits<T>::quiet_NaN();
     T yaw_lp_ = T(0), dlnf_lp_ = T(0), last_lnf_ = std::numeric_limits<T>::quiet_NaN();
     T hold_man_ = T(0.0), hold_sea_ = T(0.0);
     T nis_s_ = std::numeric_limits<T>::quiet_NaN(), nis_l_ = std::numeric_limits<T>::quiet_NaN();

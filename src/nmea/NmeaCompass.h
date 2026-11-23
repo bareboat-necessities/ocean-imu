@@ -35,7 +35,7 @@ public:
   }
 
   void append(const char* text, size_t maxChars = SIZE_MAX) {
-    while (*text && end_ < limit_ && maxChars) {
+    while (maxChars && end_ < limit_ && *text) {
       *end_++ = *text++;
       --maxChars;
     }

@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "b043d1d2255738f2a3e2979f2a49e11a2a7152ae59bc35042eeb1468c1a24df1",
-    "TFG": "6dfde6140f546db3af075cdd64ebc5e4ed2d77d2549a9ab95c174212463f23b4"
+    "OU_III": "16546e1be895395b501b396eb1a1882a4c2e2c8f0213884bd758a1957829d746",
+    "TFG": "71a9f4ce13ba2ea1d158917198d319a0d2808a696983a2aa3945bf1c25ca4d79"
   },
   "build_environment": {
     "compiler": {
@@ -17,7 +17,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-20T23:03:02+00:00",
-  "git_commit": "44e8f70bcadafde241ee228a8e42ffd47f3069d9",
-  "git_diff_stat": "reports/results/tfg_comparison/paired_summary.json | 3954 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3198 ++++++++--------\n 3 files changed, 3756 insertions(+), 3756 deletions(-)",
+  "generated_utc": "2026-11-23T11:48:38+00:00",
+  "git_commit": "ac7c59dd8a1fa8e9a51ccc1f1bb8abd9879700c1",
+  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   |   40 +-\n reports/results/tfg_comparison/paired_summary.json | 3954 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3218 ++++++++--------\n 4 files changed, 3786 insertions(+), 3786 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -141,20 +141,20 @@
   },
   "result_sha256": {
     "comparison.tex": "667608fc2512d21f867ef6d62f517ce0be49221379cd123078deda4d990a4aa7",
-    "gate_diagnostics.json": "a92145f471cbccc10e9aeb4c94d8a09d24039400bb012095f186f386b4fe6ea7",
-    "paired_summary.json": "655cbe34eaf3960e3116d896dd6410418cf7e9cc566d1d10a77a3b665041c02b",
-    "raw_runs.csv": "3a0aa316756f4fb2317563492220f9bbdb5e24e122057abdbe957cf49da70e20",
-    "raw_runs.json": "1025269bee488e22ec2427e77957f339cdb583fe1e3a836cee78dc624daa0c2c"
+    "gate_diagnostics.json": "444d391a79ba7124acca54a67a68435c8f4860edbe7163c304cae8495faeb576",
+    "paired_summary.json": "8044b0ee59e728888c35e13e1f37eebe0e0e4233533f8276e4c8da6fa108d1cd",
+    "raw_runs.csv": "5666deefc0109953d792c3e717cc36567834a5f4de86a24e1b5ba8003e06d1ba",
+    "raw_runs.json": "44c7ac0377bfc59a56c2b3b2d4bb7ad37efbb4094a3ae1a9ce872da85f60e2ba"
   },
   "schema_version": 1,
   "source_hashes": {
     "src/ahrs/FrameConversions.h": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
-    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
+    "src/ahrs/Mahony_AHRS.h": "a96a2ee3c1a82914a1ef2b473b7434e1e4de69110146ad2ca40fcb97a1b99fd6",
     "src/detrend/AdaptiveWaveDetrender3D.h": "3a09bb3dd470744b5e5e440269741266d60ea97ae3fea4a302f9d91ced2cdfc8",
     "src/freq/AranovskiyFreqTracker.h": "d63e6655315758232239653926c3a3549c44a645e6e319f68743d9e577fa2125",
     "src/freq/FirstOrderIIRSmoother.h": "b7f05229ca3bfccc4d6b2fda87c58d2eef45e1489f999ada70dcdd7dcc4ce7a2",
-    "src/freq/FrequencyTrackerPolicy.h": "008c7d83bf1316762161ca37f9570c84ece244ee847c80533803e738c23955d3",
-    "src/freq/KalmANFFreqTracker.h": "7fa912439bd29734201deaef382c725dad5ca20f81ac11c28e509ca518864fcc",
+    "src/freq/FrequencyTrackerPolicy.h": "6b4471aab7d9045c3f9d57695240d20f28db34bac4e7ed0e9ebde88d11b189cd",
+    "src/freq/KalmANFFreqTracker.h": "2dd536755e6939559af92d3b25484a8a73b2506bc25f50cf9ac076a650a3c8a5",
     "src/freq/PLLFreqTracker.h": "5199262b5dc37ee68c51b6acdc55d4f08bc8e9561349cb87d8e4adbd2165a76e",
     "src/freq/SchmittTriggerZCFreqTracker.h": "18729d2a13fa4779da0d4a32aca1dbc2ca3431192ba5eeb5fe275f3245737ec5",
     "src/kalman_common/AccelVibrationConditioning.h": "5e6c2bc73090485974792f5b98db1cc90a44a3c76167959bc71132586ebd5803",
@@ -162,11 +162,11 @@
     "src/kalman_common/GyroInterval.h": "5b5dd51c1677bbe7325ebe859007bfe2d80f6692d2b114b4bb05cce23618c096",
     "src/kalman_common/MagneticStartupCommon.h": "b240b27a641a3de68b653d0ff43b5ccd3d023d32f9b279ecaee72d29fb24c343",
     "src/kalman_common/MarineTurnModel.h": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
-    "src/kalman_common/MarineTurnSeparator.h": "f13b24124a0ea14b7f3ef7763739260c93e11ada4dd3c78d7227544876b11f1c",
-    "src/kalman_common/MarineWaveFrontEnd.h": "ce0c5bffbbef34fffcbcc3c29cc2254db99bd49806df49105be238891faee2dc",
+    "src/kalman_common/MarineTurnSeparator.h": "a4dbedec333f82cace8aba983cbb907827c365b8a9ceb2eaf54b4e91917950b8",
+    "src/kalman_common/MarineWaveFrontEnd.h": "a13023af886e10800f86d8024c110e13772877d7ee61a2362dbf3ba5564f6cf5",
     "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
-    "src/kalman_common/ProxyStartupFusion.h": "4151c57d39afb173dcfc3abe336083b37679e86fa4e25f0dc930a1a03e5d81b7",
+    "src/kalman_common/ProxyStartupFusion.h": "a4930cbd59c2ef48202d8ec1e2ea395997634446771c8a3a845aee216f2124ac",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
     "src/kalman_common/SeaStateFamilyDefaults.h": "d34949e6088dd49f1acd3c2ea0f8593eef180fdb5ea5813b962bc191c45d2a07",
     "src/kalman_common/SeaStateFusionDefaults.h": "b430c32614fd4af2ebff1c0501d4e00f0121a9718c5bf48ec134addb2c980263",
@@ -190,19 +190,21 @@
     "src/tuner/SeaStateAdaptationLimits.h": "ca823e7966632b485fdc2896ac05727c7da574b96db92cea75349281e46c0286",
     "src/tuner/SeaStateAutoTuner.h": "4deee8a6d81542a81244f158a81d722f7b7a8baa6cc5c127b73139b7c25048ee",
     "src/tuner/SeaStateFusionTunerCommon.h": "5885b5bae144e6db4e0b605ce88c682fbe2c3cfbca32cbfeaf9646ae72323ed5",
-    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/tuner/VerticalAccelComplementary.h": "84f17f90fe12c629db20ea82af9c11738eab54ab005faa6e7ed88b880ab9cf1a",
     "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
     "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
+    "src/util/ExponentialGain.h": "919dc66e9480022110aa7e254fd8731d6efa12dd35d48c01ccc32feeefd9aacf",
+    "src/util/HotLoop.h": "8f0ce12fbe90d4cdad6c4ad0345dfbe764f419835647c77e6dac8f1932e51a5f",
     "src/util/MagneticRotation.h": "1c2cbc7110f5135992a96593a02d7757204373e9ac87d60cdd30d1f4850200a9",
     "src/util/UnderwayReference.h": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422",
     "src/util/W3dSimCommon.cpp": "bba5db9cd9f05e31265ea9540c4d53fbb50b951cdc2fc1d32cebe4e122f08406",
     "src/util/W3dSimCommon.h": "5e3075f40f79c21f7297e80a66b721f57f2cf7ebf232aab1d94823846bb2660d",
     "src/util/WaveFilesSupport.h": "42f452be7a048b0a12e046da62d983fa6a8f8b6fadd47a2d9102cd3b23510d50",
-    "src/wave_dir/KalmanWaveDirection.h": "efa51d7b1ca1da5d5894bdb19ce227203d92882e564ab52345cbd39f0d9ca5eb",
+    "src/wave_dir/KalmanWaveDirection.h": "87a1e7ebcf4b1efef1dd2134e1bbb6b4cb69d0f1e89f3adc2b46b2d5ef861c38",
     "src/wave_dir/VesselRaoEqualizer.h": "11b77b3af39488cd0f038bfe070c53ee815f000a090051a85dbb955546f1fa07",
     "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
-    "src/wave_dir/WaveDirectionFrame.h": "e6f37e2d79d18216e82aef38687879bae1f51490a80861ea00faf208f77225c2",
+    "src/wave_dir/WaveDirectionFrame.h": "0e9c9115fdcabd33ca934cbf0a56f932a89121a29e6f4933cd587dc8bf38c140",
     "tests/common/CurrentReplayLimits.h": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558",
     "tests/common/GyroReplayContract.h": "134b387951b7bfa9c3bbe02c4e869156f23b837deb14be51377b527bf04e9a80",
     "tests/common/HostReplayFlags.mk": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
@@ -224,7 +226,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "44832185331",
-    "workflow": "build"
+    "run_id": "45137512704",
+    "workflow": "ou-full-evidence-branch"
   }
 }

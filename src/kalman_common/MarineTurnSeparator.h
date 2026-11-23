@@ -1,5 +1,6 @@
 #pragma once
 #include "util/HotLoop.h"
+#include "util/ExponentialGain.h"
 // Copyright (c) 2026 Mikhail Grushinskiy. MIT License.
 #include <algorithm>
 #include <array>
@@ -97,7 +98,7 @@ public:
         // absorbs the constant jerk from residual gyro/accelerometer bias.
         if (elapsed_ > 60.0f) {
             if (!statistics_initialized_) { mean_=sample; statistics_initialized_=true; }
-            const float a=decayGain(dt/120.0f);
+            const float a=ocean_imu::exponential_gain(dt/120.0f);
             std::array<float,5> delta{};
             for (std::size_t i=0; i<sample.size(); ++i) {
                 delta[i]=sample[i]-mean_[i]; mean_[i]+=a*delta[i];
@@ -115,7 +116,7 @@ public:
                 if (std::abs(speed) >= 0.2f && std::abs(speed) <= 15 &&
                     xy_*xy_ > 0.015f*xx_*yy_) target=speed;
             }
-            speed_ += decayGain(dt/15.0f)*(target-speed_);
+            speed_ += ocean_imu::exponential_gain(dt/15.0f)*(target-speed_);
         }
         correction_ = starboard*(speed_*rate);
         return force-correction_;
@@ -137,11 +138,6 @@ public:
     float speedMps() const { return speed_; }
     const Eigen::Vector3f& correctionBodyMs2() const { return correction_; }
 private:
-    // 1-exp(-x), with 0 < x <= 0.1/15. Relative truncation error < 1.3e-8.
-    static float decayGain(float x) {
-        return x*(1.0f+x*(-0.5f+x*(1.0f/6.0f)));
-    }
-
     struct SectionState {
         float z=0, v=0;
     };

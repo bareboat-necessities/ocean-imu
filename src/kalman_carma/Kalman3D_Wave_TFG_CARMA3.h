@@ -1319,14 +1319,17 @@ void TFGC3_CLS::step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const Ma
     lie::exp_coefficients<T>(t2, ea, eb);
     lie::left_jacobian_coefficients<T>(t2, ja, jb);
     d::rows3<T>(R0, R0a);
-    // Rotating the increment once gives both R0 Exp(wh) R0^T and
-    // R0 J_l(wh) R0^T directly in the world frame.
+    // Evaluate the integrated attitude/bias coupling in the world frame.
+    // Use the actual R1 R0^T endpoint product for bias transport. This
+    // retains the orthogonality residual of the single-precision frames.
     T v[3];
     for (int i = 0; i < 3; ++i)
         v[i] = R0a[i][0] * wh[0] + R0a[i][1] * wh[1] + R0a[i][2] * wh[2];
-    lie::so3_series<T>(v, ea, eb, E);
+    T Rinc[3][3];
+    lie::so3_series<T>(wh, ea, eb, Rinc);
     lie::so3_series<T>(v, ja, jb, Jh);
-    d::mul3<T>(E, R0a, false, R1);
+    d::mul3<T>(R0a, Rinc, false, R1);
+    d::mul3<T>(R1, R0a, true, E);
     T* const r1 = b.R1.data();
     T* const e = b.E.data();
     T* const pb = b.Phi_pb.data();

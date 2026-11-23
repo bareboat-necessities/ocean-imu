@@ -319,17 +319,16 @@ protected:
     {
         const float omega = 2.0f * static_cast<float>(M_PI) * freq_hz_;
 
-        const auto direction_accel = wave_direction::heading_frame_acceleration<float>(
-            q_dir, acc_in, gravity_mps2_);
+        const Eigen::Vector3f direction_force = acc_bias_body ? acc_in - *acc_bias_body : acc_in;
+        const auto direction_input = wave_direction::heading_frame_acceleration<float>(
+            q_dir, direction_force, gravity_mps2_);
 
+        // The deployed period estimator uses the complementary observer.
+        // Only the leveled-input option needs the uncorrected vertical signal.
+        const auto direction_accel = (acc_bias_body && wave_period_input_ == WavePeriodInputSource::Leveled)
+            ? wave_direction::heading_frame_acceleration<float>(q_dir, acc_in, gravity_mps2_)
+            : direction_input;
         wave_period_.update(dt, wave_period_input_ms2_(direction_accel));
-
-        auto direction_input = direction_accel;
-        if (acc_bias_body) {
-            const Eigen::Vector3f corrected = acc_in - *acc_bias_body;
-            direction_input = wave_direction::heading_frame_acceleration<float>(
-                q_dir, corrected, gravity_mps2_);
-        }
         const auto direction_matched = direction_rao_.step(direction_input, dt);
         dir_filter_.update(direction_matched.forward_ms2,
                            direction_matched.starboard_ms2,

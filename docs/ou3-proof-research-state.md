@@ -1,6 +1,6 @@
 ## OU-III replay with the optimized 200 Hz frontend
 
-The frontend and whole-source hashes in the planar records expired when the turn learner and wave-direction estimator changed (class E). The two native runs at perturbation radii 0.01 and 0.005 reproduced the recorded secant bytes in all 252 directions.
+The frontend and whole-source hashes in the planar records expired when the turn learner, wave-direction estimator, frequency readout, quaternion-only observer call and startup gravity gate changed (class E). The two native runs at perturbation radii 0.01 and 0.005 reproduced the recorded secant bytes in all 252 directions.
 
 - **Structures preserved.** Each fork continued the inherited mean and full covariance over samples 40,000–44,000. The forcing and clocks matched across every perturbation, with 500 accepted magnetic corrections per word. The unperturbed forks matched their parents bit for bit.
 - **Relaxations introduced.** These finite perturbations sample a neighborhood of one trajectory. Reachability of each perturbed starting state and uniform bounds remain open. Neither run produced a shipping counterexample.

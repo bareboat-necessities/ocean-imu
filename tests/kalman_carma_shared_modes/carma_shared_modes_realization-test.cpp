@@ -561,7 +561,40 @@ static void test_scaled_steps() {
     check(finite && worst_noise < tol, "both scaled noise integrals agree in correlation units", worst_noise, tol);
 }
 
+// At high frequency the physical-coordinate float integrator performs many
+// doublings. Use extended precision for its independent reference here.
+template<class T>
+static void test_doubled_steps() {
+    csm::SharedModesMotion<T> motion;
+    using Reference = Eigen::Matrix<long double,6,6>;
+    T worst_f = 0, worst_q = 0;
+    bool finite = true;
+    for (T kappa : {T(4), T(8), T(16)}) {
+        finite &= motion.set_vertical(kappa, T(.7));
+        for (T h : {T(.00375), T(.005), T(.00625)}) {
+            motion.refresh(h);
+            Reference f, r, im;
+            finite &= csm::minimal_detail::discretize_lti_pair<long double,6>(
+                motion.block_A().template cast<long double>(), motion.block_WR().template cast<long double>(),
+                motion.block_WI().template cast<long double>(), h, f, r, im);
+            const T f_error = T((motion.block_F().template cast<long double>() - f).norm() / f.norm());
+            worst_f = std::max(worst_f, f_error);
+            for (int i = 0; i < 6; ++i) for (int j = 0; j < 6; ++j) {
+                const long double scale = std::sqrt(r(i,i) * r(j,j));
+                const long double error = std::max(std::abs(r(i,j) - motion.block_QR()(i,j)),
+                                                   std::abs(im(i,j) - motion.block_QI()(i,j)));
+                worst_q = std::max(worst_q, T(error / scale));
+            }
+        }
+    }
+    const T tol = T(64) * std::numeric_limits<T>::epsilon();
+    check(finite && worst_f < tol && worst_q < tol, "doubled steps agree with extended-precision integration",
+          std::max(worst_f, worst_q), tol);
+}
+
 int main() {
+    test_doubled_steps<float>();
+    test_doubled_steps<double>();
     test_scaled_steps<float>();
     test_scaled_steps<double>();
     test1_structure();

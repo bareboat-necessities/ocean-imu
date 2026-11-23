@@ -79,18 +79,18 @@ public:
         integralFBz = T(0);
     }
 
-    // update()  (IMU-only, no magnetometer)
+    // IMU-only update. Callers needing only the quaternion can omit
+    // Euler output by passing null pointers. Keep the same integration
+    // function for both callers: contraction and rounding of the quaternion
+    // recurrence affect the startup observer's gravity gate.
+#if defined(__GNUC__) || defined(__clang__)
+    __attribute__((noinline))
+#endif
     void update(T gx, T gy, T gz,
                 T ax, T ay, T az,
                 T* pitch, T* roll, T* yaw,
                 T delta_t_sec)
     {
-        updateQuaternion(gx, gy, gz, ax, ay, az, delta_t_sec);
-        eulerAngles(pitch, roll, yaw);
-    }
-
-    // Advance the IMU observer for consumers that read the quaternion directly.
-    void updateQuaternion(T gx, T gy, T gz, T ax, T ay, T az, T delta_t_sec) {
         T recipNorm;
         T halfvx, halfvy, halfvz;
         T halfex, halfey, halfez;
@@ -160,6 +160,19 @@ public:
         q1 *= recipNorm;
         q2 *= recipNorm;
         q3 *= recipNorm;
+
+        if (!pitch || !roll || !yaw) return;
+
+        // Euler angles.
+        *pitch = std::asin(-T(2) * q1 * q3 + T(2) * q0 * q2);
+        *roll  = std::atan2(T(2) * q2 * q3 + T(2) * q0 * q1,
+                            -T(2) * q1 * q1 - T(2) * q2 * q2 + T(1));
+        *yaw   = std::atan2(T(2) * (q1 * q2 + q0 * q3),
+                            q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3);
+
+        *pitch *= kRadToDeg;
+        *roll  *= kRadToDeg;
+        *yaw   *= kRadToDeg;
     }
 
     // updateMag()  (IMU + magnetometer)
@@ -270,11 +283,7 @@ public:
         q2 *= recipNorm;
         q3 *= recipNorm;
 
-        eulerAngles(pitch, roll, yaw);
-    }
-
-private:
-    void eulerAngles(T* pitch, T* roll, T* yaw) const {
+        // Euler angles.
         *pitch = std::asin(-T(2) * q1 * q3 + T(2) * q0 * q2);
         *roll  = std::atan2(T(2) * q2 * q3 + T(2) * q0 * q1,
                             -T(2) * q1 * q1 - T(2) * q2 * q2 + T(1));

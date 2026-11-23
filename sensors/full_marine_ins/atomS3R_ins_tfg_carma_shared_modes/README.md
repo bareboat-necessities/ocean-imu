@@ -35,7 +35,7 @@ Every accepted accelerometer/gyro sample advances the full 27-state covariance p
 
 The sketch's `build_opt.h` places recurring estimator and wave-tracking routines in ESP32-S3 instruction RAM. This reduces competition for the 16 KiB flash instruction cache and uses some internal SRAM that would otherwise be available to the heap. Keep this file alongside the sketch when building it.
 
-Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device.
+Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device. The `mekf_internal` field is 1 when the estimator occupies internal RAM. PSRAM-enabled ESP32-S3 builds request internal RAM for the covariance and its workspace, then use the normal allocator if internal storage is exhausted. The release board profile disables PSRAM.
 
 | Field | Measurement |
 |---|---|

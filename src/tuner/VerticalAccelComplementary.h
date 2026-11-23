@@ -123,15 +123,17 @@ public:
         // Mahony drives the measured vector toward the world z axis expressed
         // in body coordinates.  Here world z is NED down, and a specific force
         // of (0,0,-g) at rest points up, so the observer is fed -acc.
+        const float acc_norm = acc.norm();
         if (!initialized_) {
-            const float acc_norm = acc.norm();
             if (!(acc_norm > 1e-3f)) return;
             seed_from_acc_(acc / acc_norm);
             initialized_ = true;
         }
 
-        ahrs_.updateQuaternion(gyro.x(), gyro.y(), gyro.z(),
-                               -acc.x(), -acc.y(), -acc.z(), dt_sec);
+        ahrs_.update(gyro.x(), gyro.y(), gyro.z(),
+                     -acc.x(), -acc.y(), -acc.z(),
+                     nullptr, nullptr, nullptr,
+                     dt_sec);
 
         // Third row of R(body->NED); dotting it with the specific force gives
         // the down component, and it is also the down axis in body coordinates.

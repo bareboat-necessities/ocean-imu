@@ -56,6 +56,12 @@ void group_and_flow() {
         rt=std::max(rt,(G::Log_G(e)-a).norm());
         assoc=std::max(assoc,e.compose(x).compose(e).local(e.compose(x.compose(e))).norm());}
     check("27-state group inverse",inv,1e-12);check("27-state exp/log",rt,1e-12);check("27-state associativity",assoc,1e-12);
+    // A diagonally dominant, dense prior exercises every input column used
+    // by the triangular predictor, including gyro and accelerometer biases.
+    MX prior;
+    for (int r = 0; r < F::NX; ++r)
+        for (int c = 0; c < F::NX; ++c) prior(r,c) = .001 * std::cos((r + 1) * (c + 1));
+    prior.diagonal().array() += .05;
     for(double h:{.001,.00498,.005,.00501,.023,.2}) {
         MX P,J;f.build_transition(wm,h,P);const G y=flow(x,f.motion().block_A(),wm,h);
         for(int j=0;j<27;++j){TX d=TX::Zero();d(j)=1e-6;
@@ -63,7 +69,11 @@ void group_and_flow() {
                       y.local(flow(G::Exp_G(d).compose(x),f.motion().block_A(),wm,h)))/(2e-6);}
         check("prediction Jacobian vs nonlinear finite difference",(J-P).cwiseAbs().maxCoeff(),2e-8);
         F propagated=f;MX Q;f.build_process_noise(wm,h,Q);
-        const MX prior=MX::Identity()*.01;propagated.covariance_full()=prior;
+        F noise_only = f;
+        noise_only.covariance_full().setZero();
+        noise_only.time_update(wm,h);
+        check("folded process noise vs dense reference",(noise_only.covariance_full()-Q).norm()/Q.norm(),2e-11);
+        propagated.covariance_full()=prior;
         const MX expected=P*prior*P.transpose()+Q;
         propagated.time_update(wm,h);
         check("structured 27-state covariance vs dense reference",(propagated.covariance_full()-expected).norm()/expected.norm(),2e-11);
@@ -271,6 +281,18 @@ void independent_and_float() {
     decltype(ff)::Config c;c.mode=cs::CouplingMode::External;ff.configureSharedModes(c);
     decltype(ff)::Hermitian source;source.re.setIdentity();source.im.setZero();
     source.im(0,2)=.3f;source.im(2,0)=-.3f;ff.setExternalCoupling(source);
+    {
+        // A 45-degree yaw has a representable cosine whose squared row norm
+        // differs from unity. At zero rate the two endpoint frames coincide.
+        auto probe = ff;
+        const float c45 = std::sqrt(.5f);
+        probe.state().R << c45, -c45, 0, c45, c45, 0, 0, 0, 1;
+        const float row_norm_sq = c45 * c45 + c45 * c45;
+        decltype(ff)::MatrixNX transition;
+        probe.build_transition(probe.state().B.col(0), .005f, transition);
+        check("float gyro-bias transport uses the actual interval frames",
+              std::abs(transition(decltype(ff)::OFF_BG, decltype(ff)::OFF_BG) - row_norm_sq), 0.0);
+    }
     double asym=0,min_eig=1.;int bad=0;
     // Eigen's run-time allocator guard covers all real-time paths, including
     // confidence fallback, variable dt, model commits and magnetic corrections.

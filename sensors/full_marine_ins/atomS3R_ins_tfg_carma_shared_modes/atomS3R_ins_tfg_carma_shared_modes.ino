@@ -37,6 +37,7 @@
 #endif
 #if OCEAN_IMU_PROFILE_LOOP
 #include <esp_cpu.h>
+#include <esp_memory_utils.h>
 #endif
 
 #ifndef SEA_STATE_ENABLE_WIZARD
@@ -361,7 +362,8 @@ private:
                   "jitter_mean_abs_us=%u gaps_over_7_5ms=%u "
                   "loop_cycles_mean=%u work_us_mean=%u read_us_mean=%u estimator_us_mean=%u output_us_mean=%u "
                   "accepted_work_mean_us=%u accepted_work_max_us=%u accepted_over_4500us=%u "
-                  "mag_samples=%u mag_work_max_us=%u lcd_frames_total=%u lcd_stack_free_min_bytes=%u\n",
+                  "mag_samples=%u mag_work_max_us=%u lcd_frames_total=%u lcd_stack_free_min_bytes=%u "
+                  "mekf_internal=%u\n",
                   unsigned(fusion_.isLive()), unsigned(timing_.cycles / timing_.samples),
                   unsigned(timing_.max_cycles), unsigned(timing_.max_work_us),
                   unsigned(timing_.overruns), unsigned(timing_.gaps ? timing_.min_gap_us : 0),
@@ -372,7 +374,8 @@ private:
                   unsigned(timing_.estimation_us / timing_.loops), unsigned(timing_.output_us / timing_.loops),
                   unsigned(timing_.accepted_us / timing_.samples), unsigned(timing_.accepted_max_us),
                   unsigned(timing_.over_4500_us), unsigned(timing_.mag_samples), unsigned(timing_.mag_max_us),
-                  unsigned(display_.completedFrames()), unsigned(display_.stackFreeMinBytes()));
+                  unsigned(display_.completedFrames()), unsigned(display_.stackFreeMinBytes()),
+                  unsigned(esp_ptr_internal(&fusion_.raw().mekf())));
     timing_ = {};
   }
 #endif

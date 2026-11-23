@@ -315,11 +315,15 @@ public:
         // still converging toward.  The gate reads the raw accelerometer: it
         // averages over twelve seconds, far below the machinery band the
         // inner filter's vibration guard removes.
-        gravity_gate_.step(attitudeReferenceQuat_(), acc_body_ned, gyro_body_ned, dt,
-                           cfg_.mag_gravity_align_world_tau_sec,
-                           cfg_.mag_gravity_align_world_warmup_sec,
-                           cfg_.mag_gravity_align_max_sin,
-                           cfg_.mag_extreme_gyro_dps);
+        // After startup and north acquisition no consumer reads this gate.
+        // A transition back to Cold resets both the reference and the gate.
+        if (stage_ != Stage::Live || (cfg_.with_mag && !mag_ref_set_)) {
+            gravity_gate_.step(attitudeReferenceQuat_(), acc_body_ned, gyro_body_ned, dt,
+                               cfg_.mag_gravity_align_world_tau_sec,
+                               cfg_.mag_gravity_align_world_warmup_sec,
+                               cfg_.mag_gravity_align_max_sin,
+                               cfg_.mag_extreme_gyro_dps);
+        }
 
         updateDisplacementOutput_(dt);
 
@@ -384,15 +388,11 @@ public:
             mag_init_eligible_t0_ = t_;
         }
 
-        // The first stage accepts the held agreement alone; the branch is
-        // enforced where the tilt is actually committed, at handoff.
-        const bool gravity_trusted =
-            (gravity_gate_.good_sec >= cfg_.mag_gravity_align_hold_sec);
-
-        const bool fallback_ok =
-            ((t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec);
-
         if (!mag_ref_set_) {
+            // The first stage accepts held agreement. The handoff also
+            // checks that the gravity estimate is on the aligned branch.
+            const bool gravity_trusted = gravity_gate_.good_sec >= cfg_.mag_gravity_align_hold_sec;
+            const bool fallback_ok = (t_ - mag_init_eligible_t0_) >= cfg_.mag_tilt_fallback_sec;
             if (!gravity_trusted && !fallback_ok) {
                 return;
             }
