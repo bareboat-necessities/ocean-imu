@@ -46,7 +46,7 @@ class TimeAwareSpikeFilter3D {
     Sample *window;      // Circular buffer for previous vectors and time deltas
     int windowSize;      // Size of the moving window
     int currentIndex;    // Current position in the circular buffer
-    int quietCount;      // Consecutive slopes strictly below half their thresholds
+    int quietCount = 0;  // Consecutive slopes strictly below half their thresholds
     float threshold;     // Magnitude-derivative threshold for spike detection
     int verticalAxis;    // 0/1/2 = x/y/z component also checked; -1 = off
     float verticalThreshold; // Vertical-component derivative threshold

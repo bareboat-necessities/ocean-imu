@@ -1650,6 +1650,7 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     // three spatial components of each source consecutively. Only entries read by the upper-triangular second product
     // are needed. For a wave source column, remove trailing output wave rows
     // whose entire remaining transition panel starts after that source.
+    constexpr Eigen::Index row_stride = NX;
     static constexpr auto wave_rows = [] {
         std::array<int, NBLK> rows{};
         for (int cb = BLK_BG; cb < NBLK; ++cb) {
@@ -1663,29 +1664,29 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
         return rows;
     }();
     for (int c = 0; c < NX; ++c) {
-        const T* pc = p + NX * c;
-        T* mc = m + c; // M(row, c) = mc[NX * row]
+        const T* pc = p + row_stride * c;
+        T* mc = m + c; // M(row, c) = mc[row_stride * row]
         const T g0 = pc[OFF_BG], g1 = pc[OFF_BG + 1], g2 = pc[OFF_BG + 2];
         const T f0 = B[0][0] * g0 + B[0][1] * g1 + B[0][2] * g2;
         const T f1 = B[1][0] * g0 + B[1][1] * g1 + B[1][2] * g2;
         const T f2 = B[2][0] * g0 + B[2][1] * g1 + B[2][2] * g2;
-        mc[NX * OFF_PHI] = pc[OFF_PHI] + f0;
-        mc[NX * (OFF_PHI + 1)] = pc[OFF_PHI + 1] + f1;
-        mc[NX * (OFF_PHI + 2)] = pc[OFF_PHI + 2] + f2;
+        mc[row_stride * OFF_PHI] = pc[OFF_PHI] + f0;
+        mc[row_stride * (OFF_PHI + 1)] = pc[OFF_PHI + 1] + f1;
+        mc[row_stride * (OFF_PHI + 2)] = pc[OFF_PHI + 2] + f2;
         if (c < OFF_BG) continue; // Only the attitude rows read M(:, phi).
-        for (int k = 0; k < 3; ++k) mc[NX * (OFF_BG + k)] = E[k][0] * g0 + E[k][1] * g1 + E[k][2] * g2;
+        for (int k = 0; k < 3; ++k) mc[row_stride * (OFF_BG + k)] = E[k][0] * g0 + E[k][1] * g1 + E[k][2] * g2;
         for (int i = 0; i < wave_rows[c / 3]; ++i) {
             T a0 = w[i][1] * f2 - w[i][2] * f1;
             T a1 = w[i][2] * f0 - w[i][0] * f2;
             T a2 = w[i][0] * f1 - w[i][1] * f0;
             accumulate_wave_row_(i, F[i], pc + OFF_W, a0, a1, a2);
-            mc[NX * (OFF_W + 3*i)] = a0;
-            mc[NX * (OFF_W + 3 * i + 1)] = a1;
-            mc[NX * (OFF_W + 3 * i + 2)] = a2;
+            mc[row_stride * (OFF_W + 3 * i)] = a0;
+            mc[row_stride * (OFF_W + 3 * i + 1)] = a1;
+            mc[row_stride * (OFF_W + 3 * i + 2)] = a2;
         }
         if (c < OFF_BA) continue; // Bias output rows only read M(ba, ba).
         const T h0 = pc[OFF_BA], h1 = pc[OFF_BA + 1], h2 = pc[OFF_BA + 2];
-        for (int k = 0; k < 3; ++k) mc[NX * (OFF_BA + k)] = Eb[k][0] * h0 + Eb[k][1] * h1 + Eb[k][2] * h2;
+        for (int k = 0; k < 3; ++k) mc[row_stride * (OFF_BA + k)] = Eb[k][0] * h0 + Eb[k][1] * h1 + Eb[k][2] * h2;
     }
 
     T Qpp[3][3], Qpb[3][3], Qbb[3][3], Sre[3][3], Sim[3][3];
@@ -1702,7 +1703,6 @@ void TFGC3_CLS::propagate_covariance_(const StepBlocks& b, const StepNoise& q, c
     // Upper block triangle of M Phi^T, row by row: row r of block rb needs the
     // column blocks cb >= rb only.
     for (int r = 0; r < NX; ++r) {
-        constexpr Eigen::Index row_stride = NX;
         const int rb = r / 3;
         const int axis = r % 3;
         const T* mr = m + NX * r;                  // M(r, c) = mr[c]
