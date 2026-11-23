@@ -389,7 +389,19 @@ public:
     // src/kalman_carma_shared_modes): S = blockdiag(I, M_x, M_y, M_z, I).
     void recoordinate_motion_() {
         if constexpr (kMotion) {
-            if constexpr (requires(Motion& m, typename Motion::MatB (&M)[NL / Motion::NB]) {
+            if constexpr (requires(Motion& m, Vector3& g) { m.take_colouring_scale(g); }) {
+                Vector3 gain;
+                if (!motion_.take_colouring_scale(gain)) return;
+                for (int ax = 0; ax < 3; ++ax) {
+                    for (int i = Motion::first_colouring; i < Motion::NB; ++i) {
+                        const int row = OFF_L + ax * Motion::NB + i;
+                        xext(row) *= gain(ax);
+                        Pext.row(row) *= gain(ax);
+                        Pext.col(row) *= gain(ax);
+                    }
+                }
+                symmetrize_Pext_();
+            } else if constexpr (requires(Motion& m, typename Motion::MatB (&M)[NL / Motion::NB]) {
                               m.take_axis_recoordinatization(M); }) {
                 using MB = typename Motion::MatB;
                 constexpr int NB = MB::RowsAtCompileTime;

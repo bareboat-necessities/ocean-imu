@@ -211,7 +211,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "4603ef09be8d94a0368379890c8e8c32b41ef28f"
+      "git_blob_sha": "45029348555d2c1b6f76e1767f5e8327799e93d6"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -883,7 +883,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "464f275d390783c3e845be9c30c03aae42119f07"
+      "git_blob_sha": "251fa3098e8667b5b9a4d66fd57f9a71cfbe5170"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -2119,5 +2119,18 @@
     "next_calculation": "The open stability calculations retain their documented scope. Navigation performance of the TFG-specific option is measured in its own paired panels.",
     "result": "Fresh default OU-III stream, operation audit, Frechet, moving-center, quotient-mean and native secant numerical outputs match the previous artifacts. The structural check verifies zero bearing transport by default. The reproductions have finite-record scope.",
     "theorem_closed": false
+  },
+  "carma_200hz_timing_source_identity": {
+    "runtime_source_commit": "76d85e4b7444aaafb7875f67e35b11079e06771a",
+    "compared_to": "dae087a68e3c6ebd817250a16c40369f51c4d13e",
+    "native_probe": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+    "compiler": "GCC 14.2.0, C++20, -O1, EIGEN_UNROLLING_LIMIT=0, EIGEN_NON_ARDUINO, Eigen 3.4",
+    "identical_preprocessed_translation_unit_sha256": "3c82d3b3bfd0a2dac271e348d67242d08aa7aa67bbd85f2baf105fa196113a17",
+    "shipping_headers_in_compiler_dependency_closure": 46,
+    "changed_headers_in_dependency_closure": [],
+    "previous_shipping_source_tree_sha256": "4b5eacba29ea95c9cfb0d27e8b0ea3c3df978271f4cfcaa3c209fd591ba2ac74",
+    "shipping_source_tree_sha256": "8591936f467f7332c408c0fceee0f0aa74dfad22b51b25946c28f6f07e7c9a59",
+    "replay_performed": false,
+    "theorem_promoted": false
   }
 }

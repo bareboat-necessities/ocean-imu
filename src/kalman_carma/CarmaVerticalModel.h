@@ -571,6 +571,7 @@ public:
         base_var_h_ = P1(IDX_H, IDX_H);
         base_var_v_ = P1(IDX_V, IDX_V);
         base_var_a_ = P1(IDX_A, IDX_A);
+        base_zero_hz_ = std::sqrt(base_var_v_ / base_var_h_) / 6.283185307179586476925286766559;
         base_accel_cross_ = P1.col(IDX_A);
         shape_valid_ = base_var_h_ > 0.0 && base_var_v_ > 0.0 && base_var_a_ > 0.0;
         configured_ = false;
@@ -620,7 +621,7 @@ public:
     // sqrt(m2/m0)/(2 pi) = sqrt(Var v / Var h)/(2 pi).  At scale kappa it is
     // kappa times this value.
     double base_zero_crossing_hz() const noexcept {
-        return std::sqrt(base_var_v_ / base_var_h_) / 6.283185307179586476925286766559;
+        return base_zero_hz_;
     }
     // Stationary variances at kappa = 1 and unit noise gain.
     double base_var_h() const noexcept { return base_var_h_; }
@@ -666,6 +667,7 @@ private:
     double base_var_h_ = 0.0;
     double base_var_v_ = 0.0;
     double base_var_a_ = 0.0;
+    double base_zero_hz_ = std::numeric_limits<double>::quiet_NaN();
     Eigen::Matrix<double,N,1> base_accel_cross_ = Eigen::Matrix<double,N,1>::Zero();
     T kappa_ = T(1);
     T accel_std_ = T(1);

@@ -64,6 +64,7 @@
 #include <cstdint>
 #include <limits>
 
+#include "util/HotLoop.h"
 #include "kalman_carma/CarmaCoupledMotion.h"
 #include "kalman_carma/CarmaCrossSpectrumEstimator.h"
 #include "kalman_carma/CarmaVerticalModel.h"
@@ -205,123 +206,117 @@ inline bool stationary_pair(const kd::Mat<T,M>& A, const kd::Mat<T,M>& WR, const
     return false;
 }
 
-// StepDiscretization (kalman_carma/CarmaVerticalModel.h) for the pair: the
-// same reference step, Taylor neighbourhood and series, with dQ_I/dh =
-// F W_I F^T and Q_I^(k+1) = A Q_I^(k) + Q_I^(k) A^T.
+// The six-state cascade obeys A(k) = k D A(1) D^-1 and
+// W(k) = k D W(1) D^T, D = diag(k^-2, k^-1, 1, k^-1, sqrt(k), sqrt(k)).
+// Tabulate the series of exp(Au) and the two noise integrals at shape setup.
+// A change of frequency, amplitude or sample interval then needs no matrix
+// exponential in the small-step regime. Use the general discretizer outside it.
 template<typename T, int M>
-class StepDiscretizationPair {
-public:
+class SharedModeStep {
     using Mat = kd::Mat<T,M>;
-    static constexpr int KF = (M - 1 > 3) ? M - 1 : 3;
-    static constexpr int KQ = 2 * KF;
+    static_assert(M == 6);
+    static constexpr int tail = std::numeric_limits<T>::digits > 30 ? 19 : 12;
+    static constexpr int f_order = M - 1 + tail;
+    static constexpr int q_order = 2 * (M - 1) + tail + 1;
 
-    bool advance(uint32_t generation, T h) {
-        if (generation != generation_) return false;
-        if (h == h_) return true;
-        if (!ref_ok_) return false;
-        const T d = h - h0_;
-        const T ad = std::abs(d);
-        if (!(ad <= kRange * h0_) || !(norm_s_ * ad <= kRange)) return false;
-        if (!series_ready_) build_series_();
-        evaluate_(d);
-        h_ = h;
-        return true;
+    template<int N> static T polynomial(const T (&coeff)[N], T x) {
+        T v = coeff[N - 1];
+        for (int k = N - 2; k >= 0; --k) v = coeff[k] + x * v;
+        return v;
     }
-    void refresh(const Mat& A, const Mat& WR, const Mat& WI, uint32_t generation, T h) {
-        ref_ok_ = discretize_lti_pair<T,M>(A, WR, WI, h, F_, QR_, QI_) && h > T(0);
-        A_ = A; WR_ = WR; WI_ = WI;
-        Fc_[0] = F_; QRc_[0] = QR_; QIc_[0] = QI_;
-        norm_s_ = scaled_inf_norm_(A, WR, h);
-        h0_ = h; h_ = h;
-        generation_ = generation;
-        series_ready_ = false;
+
+public:
+    void configure(const Mat& A, const Mat& WR, const Mat& WI) {
+        last_h_ = T(-1);
+        // x = k*h*norm. For x <= 1 the dimensionless generator has norm
+        // <= 1 and the Lyapunov operator norm <= 2. Keep the structural
+        // leading orders plus the tail for the working precision.
+        norm_ = kd::inf_norm<T,M>(A);
+        if (!(norm_ > T(0)) || !std::isfinite(norm_)) return;
+        const T step = T(1) / norm_;
+        const Mat generator = A * step;
+        Mat term = Mat::Identity(), product;
+        for (int k = 0; k <= f_order; ++k) {
+            for (int i = 0; i < M*M; ++i) fc_[i][k] = term.data()[i];
+            if (k < f_order) {
+                kd::mul<T,M>(generator, term, product);
+                term = product * (T(1) / T(k + 1));
+            }
+        }
+        // Q(x) = x * sum c[k] x^k. Store only the independent entries.
+        // dQ/dt = W + A Q + Q A^T also holds for the antisymmetric part.
+        for (bool imaginary : {false, true}) {
+            term = (imaginary ? WI : WR) * step;
+            for (int k = 0; k < q_order; ++k) {
+                int entry = 0;
+                for (int j = 0; j < M; ++j)
+                    for (int i = 0; i <= j; ++i) {
+                        if (imaginary && i == j) continue;
+                        (imaginary ? ic_[entry][k] : rc_[entry][k]) = term(i,j);
+                        ++entry;
+                    }
+                if (k + 1 == q_order) break;
+                kd::mul<T,M>(generator, term, product);
+                const T factor = T(1) / T(k + 2);
+                if (imaginary) term = (product - product.transpose()) * factor;
+                else term = (product + product.transpose()) * factor;
+            }
+        }
+    }
+
+    OCEAN_IMU_HOT_LOOP void refresh(T kappa, T h, const Mat& A, const Mat& WR, const Mat& WI) {
+        if (kappa == last_k_ && h == last_h_) return;
+        const T x = kappa * h * norm_;
+        // Outside this range the physical-coordinate integrator avoids large
+        // intermediate scale factors (and remains valid for long sample gaps).
+        if (!(x > T(0) && x <= T(1) && kappa >= T(1.0/16) && kappa <= T(16))) {
+            discretize_lti_pair<T,M>(A, WR, WI, h, F_, QR_, QI_);
+            last_h_ = h;
+            last_k_ = kappa;
+            return;
+        }
+        if (kappa != scale_k_) {
+            scale_k_ = kappa;
+            const T inv = T(1) / kappa;
+            const T root = std::sqrt(kappa);
+            scale_[0] = inv * inv;
+            scale_[1] = scale_[3] = inv;
+            scale_[2] = T(1);
+            scale_[4] = scale_[5] = root;
+            for (int i = 0; i < M; ++i) inverse_[i] = T(1) / scale_[i];
+        }
+        last_k_ = kappa;
+        last_h_ = h;
+        int symmetric = 0, skew = 0;
+        for (int j = 0; j < M; ++j) {
+            for (int i = 0; i < M; ++i) {
+                const int index = i + M * j;
+                F_.data()[index] = polynomial(fc_[index], x) *
+                    (scale_[i] == scale_[j] ? T(1) : scale_[i] * inverse_[j]);
+            }
+            for (int i = 0; i <= j; ++i) {
+                const T gain = x * scale_[i] * scale_[j];
+                const T qr = gain * polynomial(rc_[symmetric++], x);
+                QR_.data()[i + M*j] = QR_.data()[j + M*i] = qr;
+                if (i < j) {
+                    const T qi = gain * polynomial(ic_[skew++], x);
+                    QI_.data()[i + M*j] = qi;
+                    QI_.data()[j + M*i] = -qi;
+                }
+            }
+        }
     }
     const Mat& Phi() const noexcept { return F_; }
     const Mat& QR() const noexcept { return QR_; }
     const Mat& QI() const noexcept { return QI_; }
 
 private:
-    static constexpr T kRange = T(0.0625);
-    static T scaled_inf_norm_(const Mat& A, const Mat& W, T h) {
-        int d[M];
-        kd::noise_distance<T,M>(A, W, d);
-        T hp[2 * M + 1];
-        hp[0] = T(1);
-        for (int i = 1; i <= 2 * M; ++i) hp[i] = hp[i - 1] * h;
-        T m = T(0);
-        for (int i = 0; i < M; ++i) {
-            T r = T(0);
-            for (int j = 0; j < M; ++j) {
-                const int e = d[j] - d[i];
-                r += std::abs(A(i,j)) * ((e >= 0) ? hp[e] : T(1) / hp[-e]);
-            }
-            m = std::max(m, r);
-        }
-        return m;
-    }
-    void build_series_() {
-        Mat X;
-        for (int k = 1; k <= KF; ++k) {
-            kd::mul<T,M>(A_, Fc_[k - 1], X);
-            Fc_[k] = X * (T(1) / T(k));
-        }
-        kd::congruence<T,M>(Fc_[0], WR_, QRc_[1]);
-        congruence_anti<T,M>(Fc_[0], WI_, QIc_[1]);
-        for (int k = 2; k <= KQ; ++k) {
-            const T c = T(1) / T(k);
-            kd::mul<T,M>(A_, QRc_[k - 1], X);
-            for (int i = 0; i < M; ++i)
-                for (int j = i; j < M; ++j) {
-                    const T v = (X(i,j) + X(j,i)) * c;
-                    QRc_[k](i,j) = v; QRc_[k](j,i) = v;
-                }
-            kd::mul<T,M>(A_, QIc_[k - 1], X);
-            for (int i = 0; i < M; ++i) {
-                QIc_[k](i,i) = T(0);
-                for (int j = i + 1; j < M; ++j) {
-                    const T v = (X(i,j) - X(j,i)) * c;
-                    QIc_[k](i,j) = v; QIc_[k](j,i) = -v;
-                }
-            }
-        }
-        series_ready_ = true;
-    }
-    void evaluate_(T d) {
-        // Plain column-major storage (kd::mul).
-        T* const f_out = F_.data();
-        T* const qr_out = QR_.data();
-        T* const qi_out = QI_.data();
-        for (int i = 0; i < M; ++i)
-            for (int j = 0; j < M; ++j) {
-                const int e = i + M * j;
-                T f = Fc_[KF].data()[e];
-                for (int k = KF - 1; k >= 0; --k) f = Fc_[k].data()[e] + d * f;
-                f_out[e] = f;
-            }
-        for (int i = 0; i < M; ++i)
-            for (int j = i; j < M; ++j) {
-                const int e = i + M * j, et = j + M * i;
-                T qr = QRc_[KQ].data()[e], qi = QIc_[KQ].data()[e];
-                for (int k = KQ - 1; k >= 1; --k) {
-                    qr = QRc_[k].data()[e] + d * qr;
-                    qi = QIc_[k].data()[e] + d * qi;
-                }
-                qr = QRc_[0].data()[e] + d * qr;
-                qi = QIc_[0].data()[e] + d * qi;
-                qr_out[e] = qr; qr_out[et] = qr;
-                qi_out[e] = (i == j) ? T(0) : qi;
-                qi_out[et] = (i == j) ? T(0) : -qi;
-            }
-    }
-
+    T fc_[M*M][f_order + 1];
+    T rc_[M*(M+1)/2][q_order];
+    T ic_[M*(M-1)/2][q_order];
     Mat F_ = Mat::Identity(), QR_ = Mat::Zero(), QI_ = Mat::Zero();
-    Mat A_ = Mat::Zero(), WR_ = Mat::Zero(), WI_ = Mat::Zero();
-    Mat Fc_[KF + 1];
-    Mat QRc_[KQ + 1];
-    Mat QIc_[KQ + 1];
-    T norm_s_ = T(0), h0_ = T(-1), h_ = T(-1);
-    uint32_t generation_ = 0xffffffffu;
-    bool ref_ok_ = false, series_ready_ = false;
+    T norm_ = T(0), last_k_ = T(-1), last_h_ = T(-1), scale_k_ = T(-1);
+    T scale_[M]{}, inverse_[M]{};
 };
 
 // The polynomials of the complexified C41J at scale kappa: P+(s) = s^2 +
@@ -410,6 +405,7 @@ public:
     static constexpr bool kUnitReadout = true;   // p, v, a are states
     static constexpr int NB = 6;
     static constexpr int NL = 3 * NB;
+    static constexpr int first_colouring = 4;
     static constexpr int MAX_ACC_TERMS = 1;
     using Vector3 = Eigen::Matrix<T,3,1>;
     using MatB = Eigen::Matrix<T,NB,NB>;
@@ -509,7 +505,7 @@ public:
     void refresh(T Ts) {
         if (Ts > T(0) && std::isfinite(Ts)) dt_ = Ts;
         if (dirty_) rebuild_();
-        if (!disc_.advance(gen_, Ts)) disc_.refresh(A_, WR_, WI_, gen_, Ts);
+        disc_.refresh(vmodel_.kappa(), Ts, A_, WR_, WI_);
     }
 
     void apply_F(const T (&in)[NL], T (&out)[NL]) const {
@@ -546,8 +542,18 @@ public:
     // Re-coordinatization after a commit (file header): x_axis <- M[axis] x_axis
     // on every axis block; false when none is pending.
     bool take_axis_recoordinatization(MatB (&M)[3]) {
+        Vector3 gain;
+        if (!take_colouring_scale(gain)) return false;
+        for (int a = 0; a < 3; ++a) {
+            M[a].setIdentity();
+            M[a].diagonal().template tail<NB - first_colouring>().setConstant(gain(a));
+        }
+        return true;
+    }
+
+    bool take_colouring_scale(Vector3& gain) {
         if (!pending_) return false;
-        for (int a = 0; a < 3; ++a) M[a] = M_[a];
+        gain = colouring_scale_;
         pending_ = false;
         return true;
     }
@@ -601,13 +607,14 @@ private:
         std::complex<double> b1, b0;
         double d1 = 0.0, d0 = 0.0;
         if (!minimal_detail::shared_mode_polys(vmodel_.shape(), 1.0, b1, b0, d1, d0)) return false;
-        return minimal_detail::coinner_input_normal(b1, b0, d1, d0, Aw1_, Bw1_, Cw1_);
+        if (!minimal_detail::coinner_input_normal(b1, b0, d1, d0, Aw1_, Bw1_, Cw1_)) return false;
+        build_dynamics_(1.0);
+        disc_.configure(A_, WR_, WI_);
+        return true;
     }
 
-    void rebuild_() {
-        dirty_ = false;
-        if (!valid_) return;
-        const double kappa = static_cast<double>(vmodel_.kappa());
+    void build_dynamics_(double kappa) {
+        dynamics_kappa_ = static_cast<T>(kappa);
         const double g2 = kappa / vmodel_.base_var_a();      // unit-acceleration-variance gain at kappa
         Eigen::Matrix<double,4,4> A4;
         kalman::carma::carma_dynamics<4>(vmodel_.shape(), kappa, A4);
@@ -626,6 +633,14 @@ private:
         WR_ = (g2 * G * G.transpose()).template cast<T>();
         WI_ = (g2 * G * J2 * G.transpose()).template cast<T>();
         g2_ = static_cast<T>(g2);
+    }
+
+    void rebuild_() {
+        dirty_ = false;
+        if (!valid_) return;
+        const T kappa = vmodel_.kappa();
+        if (kappa != dynamics_kappa_) build_dynamics_(kappa);
+        const double g2 = static_cast<double>(kappa) / vmodel_.base_var_a();
         const std::complex<T> Rr[3] = {T(1), T(1), T(1)};
         T h_gain[2] = {T(1), T(1)};
         Sigma_ = coupling_.excitation(sig_, Rr, h_gain, h_corr_);
@@ -636,7 +651,7 @@ private:
         // Commit re-coordinatization: hold the normalized colouring (file header).
         bool any = false;
         for (int a = 0; a < 3; ++a) {
-            M_[a].setIdentity();
+            colouring_scale_(a) = T(1);
             // An enlarged horizontal prior variance (coupling cap) scales
             // that axis' colouring like a larger sigma; otherwise exactly as
             // before.
@@ -644,15 +659,13 @@ private:
             if (a < 2 && h_gain[a] > T(1)) s *= std::sqrt(static_cast<double>(h_gain[a]));
             if (have_prev_ && s != scale_[a] && scale_[a] > 0.0 && s > 0.0) {
                 const T r = static_cast<T>(s / scale_[a]);
-                M_[a](4,4) = r;
-                M_[a](5,5) = r;
+                colouring_scale_(a) = r;
                 any = true;
             }
             scale_[a] = s;
         }
         have_prev_ = true;
         pending_ = any;
-        ++gen_;
     }
 
     Model vmodel_, hmodel_;
@@ -663,15 +676,15 @@ private:
     MatB A_ = MatB::Zero(), WR_ = MatB::Zero(), WI_ = MatB::Zero();
     Eigen::Matrix<T,NB,2> G_ = Eigen::Matrix<T,NB,2>::Zero();
     T g2_ = T(1);
-    minimal_detail::StepDiscretizationPair<T,NB> disc_;
+    minimal_detail::SharedModeStep<T,NB> disc_;
     // kappa = 1 colouring (double).
     Eigen::Matrix2d Aw1_ = Eigen::Matrix2d::Zero(), Bw1_ = Eigen::Matrix2d::Zero();
     Eigen::RowVector2d Cw1_ = Eigen::RowVector2d::Zero();
     // Commit bookkeeping.
-    MatB M_[3] = {MatB::Identity(), MatB::Identity(), MatB::Identity()};
+    Vector3 colouring_scale_ = Vector3::Ones();
     double scale_[3] = {0.0, 0.0, 0.0};
     bool have_prev_ = false, pending_ = false;
-    uint32_t gen_ = 0;
+    T dynamics_kappa_ = T(-1);
     T dt_ = T(0.005);
     bool dirty_ = true, valid_ = false, quadrature_enabled_ = true;
     Coupling coupling_;

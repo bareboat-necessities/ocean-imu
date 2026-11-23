@@ -18,7 +18,22 @@ namespace ocean_imu::carma_shared_modes {
 template<typename T = float>
 using KalmanTfgCarmaSharedModes = SharedModesEstimator<T,
     kalman::Kalman3D_Wave_TFG_CARMA3<T, 6, SharedModesMotion<T>>>;
+#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+extern template void KalmanTfgCarmaSharedModes<float>::time_update(const Eigen::Vector3f&, float);
+extern template void KalmanTfgCarmaSharedModes<float>::measurement_update_acc_only(const Eigen::Vector3f&, float);
+#endif
 }  // namespace ocean_imu::carma_shared_modes
+
+#if defined(ARDUINO_ARCH_ESP32) && defined(__XTENSA__)
+namespace ocean_imu::kalman {
+extern template void carma_shared_modes::KalmanTfgCarmaSharedModes<float>::Base::time_update(
+    const Eigen::Vector3f&, float);
+extern template void carma_shared_modes::KalmanTfgCarmaSharedModes<float>::Base::measurement_update_acc_only(
+    const Eigen::Vector3f&, float);
+extern template void carma_shared_modes::KalmanTfgCarmaSharedModes<float>::Base::measurement_update_mag_only(
+    const Eigen::Vector3f&);
+}
+#endif
 
 namespace ocean_imu::carma {
 struct TransportedMagCarmaConfig;

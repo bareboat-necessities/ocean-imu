@@ -1,5 +1,6 @@
 #pragma once
 #include "kalman_common/MarineTurnModel.h"
+#include "util/HotLoop.h"
 
 /*
   Copyright (c) 2026 Mikhail Grushinskiy
@@ -638,7 +639,44 @@ private:
 }
 
     void recoordinate_motion_() {
-        if constexpr (kMotion) {
+        if constexpr (requires(Motion& m, Vector3& g) { m.take_colouring_scale(g); }) {
+            Vector3 gain;
+            if (!motion_.take_colouring_scale(gain)) return;
+            for (int col = Motion::first_colouring; col < NC; ++col) {
+                const Vector3 before = X_.X.col(col);
+                const Vector3 after = gain.cwiseProduct(before);
+                // rho' = D rho + ([D w]x - D [w]x) phi for this block.
+                // All other rows of J are identity. Its only source outside
+                // the block is phi, so rows then columns can be done in place.
+                const Matrix3 shear = lie::skew<T>(after) - gain.asDiagonal() * lie::skew<T>(before);
+                X_.X.col(col) = after;
+                const int offset = world_index(col, 0);
+                T* const p = P_.data();
+                for (int i = 0; i < 3; ++i) {
+                    const int row = offset + i;
+                    const T s = gain(i), x = shear(i,0), y = shear(i,1), z = shear(i,2);
+                    for (int j = 0; j < NX; ++j) {
+                        T* const v = p + NX*j;
+                        v[row] = s*v[row] + x*v[0] + y*v[1] + z*v[2];
+                    }
+                }
+                // Cross-block rows already hold the final covariance. Only
+                // the diagonal block needs the second multiplication.
+                for (int i = 0; i < 3; ++i) {
+                    for (int j = i; j < 3; ++j) {
+                        const int row = offset + i;
+                        const T* const v = p + row;
+                        p[row + NX*(offset+j)] = gain(j)*v[NX*(offset+j)]
+                            + shear(j,0)*v[0] + shear(j,1)*v[NX] + shear(j,2)*v[2*NX];
+                    }
+                }
+                for (int i = 0; i < 3; ++i) {
+                    const int row = offset + i;
+                    for (int j = 0; j < NX; ++j)
+                        if (j < offset || j >= row) p[j + NX*row] = p[row + NX*j];
+                }
+            }
+        } else if constexpr (kMotion) {
             MatC maps[3];
             if (motion_.take_axis_recoordinatization(maps)) apply_motion_recoordinatization(maps);
         }
@@ -659,7 +697,7 @@ private:
 
     void step_blocks_(const Vector3& w, T Ts, const Matrix3& R0, const MatC& Fc,
                       const Eigen::Matrix<T,3,NC>& W1, StepBlocks& b) const;
-    void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
+    OCEAN_IMU_HOT_LOOP void step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const StepBlocks& b, StepNoise& q, T gyro_noise_scale = T(1)) const;
     // out = Phi * in (in read transposed when `transposed`).
     void apply_phi_(const MatrixNX& in, bool transposed, const StepBlocks& b, const MatC& Fc,
                     MatrixNX& out) const;
@@ -667,7 +705,7 @@ private:
     // P_ <- Phi P_ Phi^T + Qd, the sample path's form of apply_phi_() twice
     // and add_noise_(): M = Phi P, then only the upper block triangle of
     // M Phi^T + Qd, mirrored.
-    void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
+    OCEAN_IMU_HOT_LOOP void propagate_covariance_(const StepBlocks& b, const StepNoise& q, const MatC& Fc, const MatC& Qc,
                                const MatC* Qi);
 
     bool safe_ldlt3_(Matrix3& S, Eigen::LDLT<Matrix3>& ldlt, T noise_scale) {
@@ -702,7 +740,7 @@ private:
                 k[i + NX * b] = h[i] * Si[0][b] + h[i + NX] * Si[1][b] + h[i + 2 * NX] * Si[2][b];
     }
     // CARMA3's Joseph form P + K S K^T - K PHt^T - PHt K^T, exactly symmetric.
-    void joseph_update_(const MatrixNX3& K, const Matrix3& S, const MatrixNX3& PHt) {
+    OCEAN_IMU_HOT_LOOP void joseph_update_(const MatrixNX3& K, const Matrix3& S, const MatrixNX3& PHt) {
         T Kl[NX][3], G[NX][3], Sl[3][3];
         tfg_carma_detail::rows3<T>(S, Sl);
         const T* const k = K.data();
@@ -735,7 +773,7 @@ private:
     bool correct3_(const Vector3& r, Matrix3& S, MatrixNX3& PHt, T noise_scale, bool freeze_ba,
                    MeasDiag3& diag);
     void transport_(const Tangent& a);
-    void transport_two_frame_(const Tangent& a);
+    OCEAN_IMU_HOT_LOOP void transport_two_frame_(const Tangent& a);
 };
 
 // ------------------------------------------------------------------------

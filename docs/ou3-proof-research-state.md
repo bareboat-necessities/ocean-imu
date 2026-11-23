@@ -1314,6 +1314,13 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — CARMA timing changes invalidated the native-secant whole-source digest.**
+GCC 14.2 produced identical preprocessed native probes at `dae087a6` and
+`76d85e4b`. All 46 project headers in the dependency list match. The
+comparison and both digests are recorded in `carma_200hz_timing_source_identity`
+in the provenance manifest. This refresh preserves the finite secant results
+and their existing qualifications. The next check is the source-bound evidence validator.
+
 **E — QMEKF CARMA sample-path storage access rebound the whole-`src/` digest.**
 The experimental QMEKF CARMA cores index plain storage in their sample-path
 loops (`src/kalman_carma/Kalman3D_Wave_CARMA3.h`, `CarmaCoupledMotion.h`,
