@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "82ada6e3677b8c44218739a5e5379a6677fcf858d99124dd1807f6142ccf4ec1",
+  "replay_fingerprint": "608c99d53a3c626ea6b1e9c5ce5e50b23f9ff2bb7991a20a8e0399a9afdac965",
   "results_file_count": 1919,
   "results_files": [
     {
@@ -2916,7 +2916,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "b8f3f4105c5dcd7cbdcef5a78805c47210f882bfc2263ba120abf1280dc4f54a"
+      "sha256": "17a3dbe76e32104580ef798bb9e168d3e4b8d248cba83426d06b63c9b7e0b93f"
     },
     {
       "kind": "file",
@@ -2971,7 +2971,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "38b63614d3e46b9bec7ff3983277626b7456caa63842324b8ad42147ee80fdd9"
+      "sha256": "5faed97b60ef09b118e561b737484e31fd6202b3239286c92ebe74fea755cca8"
     },
     {
       "kind": "file",
@@ -3081,7 +3081,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "c953487f12497f42d01f6e263a8a7a5b8f060350dbdc8fb83476a2bed938dccf"
+      "sha256": "3c85662db263562acb03b09520cf2ba78e7cfacc0f9daab14879f3fb6678287e"
     },
     {
       "kind": "file",
@@ -3176,7 +3176,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "9478dc7d38fb95fe5a931d2677d40b7f0550013a145f58bfd1ed60253f9a3359"
+      "sha256": "7fb262d2156e6882c80b36731964ad024271f42c462f87e6c88989940bc9347d"
     },
     {
       "kind": "file",
@@ -9599,13 +9599,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "d3fae50ea3dec60f9e40027d776dd24e608ef2905d47a807704099ffa589612a",
+  "results_fingerprint": "6b6b582e61b75e85a7c6821f771e05e84639b9f3cd0e54b602a1e03c61d04f18",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1096,
+  "tracked_replay_file_count": 1097,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -10020,12 +10020,12 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
-      "sha256": "98084055adc4b304f09b007f69d4282596dfdfbbb1b39d272b5532c254d62e0b"
+      "sha256": "0290962a88a1da837a1ee7fd67d5eac1dd71c4caeac3eb8618294f13c23fe4d7"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/atomS3R_ins_carma_shared_modes.ino",
-      "sha256": "88c070258090eaeb8801812285515b174cf49e2755375c00a5c4c44b3dcb0508"
+      "sha256": "dc4cf2d830ceb706a9536d2ecb7269118c0c6161d2092b560ad3b2c19e4dc1c1"
     },
     {
       "mode": "100644",
@@ -10055,12 +10055,12 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "sha256": "5be9083a0ead658592ccc46909cff2368762fdeb8687778a8e13bee199c70d9d"
+      "sha256": "7916f53d4e02d6d54f7894eeb410f909fd5d2046a1aca0924b2a8c2339064021"
     },
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/atomS3R_ins_tfg_carma_shared_modes.ino",
-      "sha256": "adb039f907c274f8cff05f0aaa9624362d4a5031d3ceefb09ed8dcce21834d56"
+      "sha256": "13ba5f3584833d40c17058e5f84b0c5861a31da6b427d14848660d8493f2947a"
     },
     {
       "mode": "100644",
@@ -10110,7 +10110,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassUI.h",
-      "sha256": "e222498552e1b5f6b9db0a49ae8414a81cba2799c55507c5282b31f7352aca08"
+      "sha256": "a7eaf869513d6778db521055d308c9d1e217f76bad8c0697df4abf3f31327121"
     },
     {
       "mode": "100644",
@@ -10325,7 +10325,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/CarmaVerticalModel.h",
-      "sha256": "89f7491c7d5362a394c3affa3e5c72a94c68a0c655167515d0c9a0c41f0e9fe4"
+      "sha256": "4e2568b36721742eda95768c1a8d7734fe68655154f3383119b6f4fa9e48b2dc"
     },
     {
       "mode": "100644",
@@ -10335,12 +10335,12 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_CARMA3.h",
-      "sha256": "a95237f20435f3c0a7049247ec9672f6d436b20a969bf3b685eb6f1db3921d4f"
+      "sha256": "9637d9868f547c959850f54beb074c1608958873f1cd351ffe4ecbfb71952d4c"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma/Kalman3D_Wave_TFG_CARMA3.h",
-      "sha256": "e931cbb3666650b0c230f274b511e0ecbb541e9521d985b6067ef7cbaba6af48"
+      "sha256": "aa1cfc4045e6914287d6ef0b5d301bbb9c7ef1a1e59cdbcdb90c4e28a55bbc8e"
     },
     {
       "mode": "100644",
@@ -10360,12 +10360,12 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma_shared_modes/CarmaSharedModesMotion.h",
-      "sha256": "bde8ead3bdddc7b975feda512cbb02ec52c48045ee944951b68d5bf315fe59af"
+      "sha256": "94d4aef983a611de4bbbb45db60b705695bb4136a434986d2f3efed7cdae9f8e"
     },
     {
       "mode": "100644",
       "path": "src/kalman_carma_shared_modes/KalmanCarmaSharedModes.cpp",
-      "sha256": "4ffc70c4a2dd877860c656b4e435c7918f38dd976664f3a342692cd8f524f4ab"
+      "sha256": "e327ffe4e0dd9a2cf3b9865d87e4c1cbb3bef0433990397fd669e285c59f1250"
     },
     {
       "mode": "100644",
@@ -10380,7 +10380,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h",
-      "sha256": "cb0cf50d6a564601d217b0ceb13ecdee3adece89e19cb6d2fa1211a96d0eed5c"
+      "sha256": "791ccfd029201a7bbfded938d10843a000c5eba579c1cc3972a7c73204b86f98"
     },
     {
       "mode": "100644",
@@ -10676,6 +10676,11 @@
       "mode": "100644",
       "path": "src/util/GPS_to_INS.h",
       "sha256": "bdaf27d11e69d6b2482b74c5fb54e4cfff823f0cb89b41cdf27dbfc930590fd9"
+    },
+    {
+      "mode": "100644",
+      "path": "src/util/HotLoop.h",
+      "sha256": "787ec629cfd85322c9d4f90662c1039128755c95bf70ae7ded126e0e0aff2932"
     },
     {
       "mode": "100644",
@@ -11275,7 +11280,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma_shared_modes/carma_shared_modes_realization-test.cpp",
-      "sha256": "1e540c3a13a010611e3fe32aa9ba617241823c2177e6f469df561aa2a4558ae9"
+      "sha256": "a5cf0db617f820bed2ca53570a101b23ecd0c5420ee197c125bc99916ea463f5"
     },
     {
       "mode": "100644",
@@ -11315,7 +11320,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma_shared_modes/tfg_shared_modes-test.cpp",
-      "sha256": "1e90cbc1c33e187cfa9f57e9dd88f50e98aa4c16c9553b1dc56810a83481ed2a"
+      "sha256": "800c3d9f4e91bf0304f62fbb914d4987d46aa12345c36640a91c2ca2f8b887c4"
     },
     {
       "mode": "100644",
@@ -12180,7 +12185,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_device_compass_startup.py",
-      "sha256": "20ab1606ab238c7b8fee7bb42644ee7ab8ee21169856a6f41e1fa859abbecf6c"
+      "sha256": "2f62d259b3607cfb46e9965f6ecaf219a8d4c2eab450424adfbb57edb881a267"
     },
     {
       "mode": "100644",
