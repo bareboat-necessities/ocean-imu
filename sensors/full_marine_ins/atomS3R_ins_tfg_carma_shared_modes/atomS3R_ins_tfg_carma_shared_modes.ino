@@ -260,8 +260,8 @@ public:
       }
     }
 
-    updateUI_();
     streamSerial_();
+    updateUI_(loop_start_us);
 #if OCEAN_IMU_PROFILE_LOOP
     recordLoopTiming_(micros() - loop_start_us);
 #endif
@@ -742,11 +742,14 @@ private:
     ui_.line("Fusion: TFG-SHARED");
   }
 
-  void updateUI_() {
+  void updateUI_(uint32_t loop_start_us) {
 #if SEA_STATE_ENABLE_WIZARD
     if (tap_count_ > 0) return;
 #endif
-    if (use_graphics_ && compass_ui_.pushNextStrip()) return;
+    if (use_graphics_) {
+      if (micros() - loop_start_us > LOOP_PERIOD_US - CompassUI::stripBudgetUs) return;
+      if (compass_ui_.pushNextStrip()) return;
+    }
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;

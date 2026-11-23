@@ -24,6 +24,9 @@ static inline const char* cardinal8(float deg) {
 
 class CompassUI {
  public:
+  // Allow for the 819 us pixel transfer plus display command/setup time.
+  static constexpr uint32_t stripBudgetUs = 1200;
+
   bool ok() const { return _ok; }
 
   void begin() {
@@ -57,6 +60,7 @@ class CompassUI {
             bool magOk = true,
             float magStrength_uT = NAN,
             bool tiltWarn = false) {
+    if (!_ok) return;
     prepareFrame(headingDeg, magOk, magStrength_uT, tiltWarn);
     if (_nextRow == 0) {
       _frame.pushSprite(&M5.Display, 0, 0);
