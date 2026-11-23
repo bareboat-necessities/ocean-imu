@@ -13,29 +13,7 @@ set -e
 ./carma_shared_modes-test
 ./carma_shared_modes_realization-test
 
-# Paired smoke row (carma3_bench engine): match the historical band-amplitude
-# mapping on BOTH sides of this realization identity. Default normalized
-# behavior is tested by the wrapper tests and full replay below.
-# With the coupling off the filter IS
-# the CARMA3 baseline A41@C in law, through adaptation (equal to float
-# rounding); the deployable CSM and CSM:noconf run without failure.  Timing
-# columns are never compared.
-CSM_BAND_NORMALIZATION=0 ./kalman_carma_shared_modes-bench --header --coupling --level full --scenario "jonswap_fp0.29_hs0.8_g3.3+T600" \
-    --seed 1 --filters A41@C,CSM,CSM:noconf,CSM:off --score-start 200 > smoke_csm.csv
-python3 - <<'PY'
-import csv
-rows = {r["filter"]: r for r in csv.DictReader(open("smoke_csm.csv"))}
-for a in "xyz":
-    for c in ("rms_", "rmsv_", "nees_"):
-        r = float(rows["CSM:off"][c + a]) / float(rows["A41@C"][c + a])
-        assert abs(r - 1.0) < 1e-4, ("CSM:off / A41@C", c + a, r)
-for f in ("CSM", "CSM:noconf", "CSM:off"):
-    assert rows[f]["failed"] == "0", f
-    assert rows[f]["states"] == "27", f
-for a in "xyz":
-    assert 0.0 < float(rows["CSM"]["pct_" + a]) < 25.0, ("CSM", a)
-print("csm smoke:", {f: round(1000 * float(r["rms_h"]), 2) for f, r in rows.items()})
-PY
+python3 ../../tools/carma_shared_modes_smoke.py ./kalman_carma_shared_modes-bench smoke_csm.csv
 
 # Deterministic replay of the eight scored dataset records with the
 # deployable variant CSM against CSM's own regression bars; a record above
