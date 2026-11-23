@@ -750,7 +750,11 @@ public:
     using Config = typename CarmaFusionConfigFor<MekfT>::type;
     using Impl = SeaStateFusionFilter_CARMA3<trackerT, NHC, SH, NZC, SZ, MekfT>;
 
-    void begin(const SeaStateFusionConfig_CARMA3& cfg) {
+    // Config may set core-specific defaults in its constructor
+    // (TransportedMagCarmaConfig). Taking Config rather than the base makes a
+    // base SeaStateFusionConfig_CARMA3 a compile error for such cores instead
+    // of silently dropping those defaults. Other cores use the base itself.
+    void begin(const Config& cfg) {
         this->beginStartup_(cfg, [](Impl& impl, const SeaStateFusionConfig_CARMA3& c) {
             impl.initialize_ext(c.sigma_a, c.sigma_g, c.sigma_m, c.Pq0, c.Pb0, c.b0, c.R_S_noise,
                                 c.gravity_magnitude);

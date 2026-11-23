@@ -1,4 +1,12 @@
 // Bounded host replay for the ASan/UBSan gate. Compile one production wrapper per job.
+//
+// 600 s of one long-crested sea travelling toward 30 degrees, with exact
+// sensor kinematics: horizontal and vertical wave accelerations in quadrature,
+// roll and pitch at the wave frequency, constant heading, 200 Hz IMU and
+// 100 Hz magnetometer. The duration outlasts the shared-mode coupling warm-up
+// (120 s) and monitor horizon (60 s), so for the shared-mode cores the coupling
+// confidence, band regression and excitation-cap paths also run under the
+// sanitizers, and the replay fails unless that coupling engages.
 #define EIGEN_NON_ARDUINO
 #include <Eigen/Dense>
 #include <cmath>
@@ -36,30 +44,61 @@ using Fusion = ocean_imu::carma_shared_modes::SharedModesFusion<
 
 extern const float g_std = 9.80665f;
 
-template<class F> auto position(F& f) {
-    if constexpr (requires { f.raw(); }) return f.raw().mekf().get_position();
-    else return f.mekf().get_position();
+template<class F> auto& core(F& f) {
+    if constexpr (requires { f.raw(); }) return f.raw().mekf();
+    else return f.mekf();
+}
+
+// Shared-mode cores must have engaged their estimated coupling by the end.
+template<class F> bool coupling_engaged(F& f) {
+    const auto& m = core(f);
+    if constexpr (requires { m.couplingConfidence(); }) {
+        const auto st = m.coupling();
+        const float applied = st.applied_coherence_xz + st.applied_coherence_yz;
+        std::printf("Coupling confidence %.3f, applied coherence %.3f\n",
+                    static_cast<double>(m.couplingConfidence()), static_cast<double>(applied));
+        return m.couplingConfidence() > 0.5f && applied > 0.1f;
+    } else {
+        return true;
+    }
 }
 
 int main() {
-    using V = Eigen::Vector3f;
-    constexpr float dt = 0.005f;
+    using V = Eigen::Vector3d;
+    using Eigen::AngleAxisd;
+    constexpr int kSamples = 600 * 200;
+    constexpr double dt = 0.005;
+    constexpr double pi = 3.14159265358979323846;
+    constexpr double w = 2.0 * pi / 7.0;      // 7 s wave period
+    constexpr double heave = 0.5;             // m amplitude
+    constexpr double to_rad = 30.0 * pi / 180.0;
+    constexpr double yaw = 20.0 * pi / 180.0;
+    const V travel(std::cos(to_rad), std::sin(to_rad), 0.0);
+    const V mag_world(18.0, 1.5, 43.0);       // uT, NED
     Fusion filter;
     filter.begin(Fusion::Config{});
     int live_samples = 0;
-    for (int k = 0; k < 12000; ++k) {
-        const float t = k * dt;
-        const float roll = 0.1f * std::sin(t);
-        const Eigen::AngleAxisf to_body(-roll, V::UnitX());
-        const V gyro(0.1f * std::cos(t), 0, 0);
-        const V accel = to_body * V(0, 0, 0.4f * std::sin(t) - g_std);
-        filter.update(dt, gyro, accel, 35.0f);
-        if (k % 2 == 0) filter.updateMag(to_body * V(18, 1.5f, 43));
+    for (int k = 0; k < kSamples; ++k) {
+        const double t = k * dt, s = std::sin(w * t), c = std::cos(w * t);
+        // Linear wave, NED: up-displacement heave*cos(wt), so the downward
+        // acceleration is heave w^2 cos(wt); the horizontal displacement
+        // heave*sin(wt) along the travel direction leads it by a quarter period.
+        const V a_world = -heave * w * w * s * travel + V(0.0, 0.0, heave * w * w * c);
+        const double roll = 0.06 * std::sin(w * t + 0.4), roll_rate = 0.06 * w * std::cos(w * t + 0.4);
+        const double pitch = 0.04 * std::sin(w * t - 0.7), pitch_rate = 0.04 * w * std::cos(w * t - 0.7);
+        const Eigen::Matrix3d R_bw = (AngleAxisd(yaw, V::UnitZ()) * AngleAxisd(pitch, V::UnitY()) *
+                                      AngleAxisd(roll, V::UnitX())).toRotationMatrix();
+        // Body rates of R_bw = Rz(yaw) Ry(pitch) Rx(roll) at constant yaw.
+        const V gyro(roll_rate, pitch_rate * std::cos(roll), -pitch_rate * std::sin(roll));
+        const V accel = R_bw.transpose() * (a_world - V(0.0, 0.0, g_std));
+        filter.update(static_cast<float>(dt), gyro.cast<float>(), accel.cast<float>(), 35.0f);
+        if (k % 2 == 0) filter.updateMag((R_bw.transpose() * mag_world).cast<float>());
         if (filter.isLive()) {
-            if (!position(filter).allFinite()) return 1;
+            if (!core(filter).get_position().allFinite()) return 1;
             ++live_samples;
         }
     }
-    std::printf("Live IMU samples: %d / 12000\n", live_samples);
-    return live_samples >= 2000 ? 0 : 1;
+    std::printf("Live IMU samples: %d / %d\n", live_samples, kSamples);
+    const bool coupled = coupling_engaged(filter);
+    return live_samples >= kSamples / 2 && coupled ? 0 : 1;
 }
