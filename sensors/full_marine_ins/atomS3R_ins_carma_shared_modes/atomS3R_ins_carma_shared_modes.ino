@@ -684,8 +684,9 @@ private:
     if (tap_count_ > 0) return;
 #endif
     if (use_graphics_) {
-      if (micros() - loop_start_us > LOOP_PERIOD_US - CompassUI::stripBudgetUs) return;
-      if (compass_ui_.pushNextStrip()) return;
+      const uint32_t elapsed_us = micros() - loop_start_us;
+      const uint32_t remaining_us = elapsed_us < LOOP_PERIOD_US ? LOOP_PERIOD_US - elapsed_us : 0;
+      if (compass_ui_.pushNextStrip(remaining_us)) return;
     }
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < UI_REFRESH_MS) return;

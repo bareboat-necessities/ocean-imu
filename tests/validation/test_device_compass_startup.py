@@ -78,6 +78,76 @@ class DeviceCompassStartupTest(unittest.TestCase):
                     self.assertIn("updateWaveDirection_(q_bw, 35.0f, dt_);", update)
                     self.assertNotIn("fusion_.update(dt_, w_cal_, a_cal_, tempC);", update)
 
+    def test_carma_compass_redraw_under_sustained_load(self):
+        # Exercise the sketch scheduler and the real row transfer with a fake LCD.
+        ui = (ROOT / "src/AtomS3R/AtomS3R_CompassUI.h").read_text()
+        for path in (p for p in SKETCHES if "carma" in p.name):
+            with self.subTest(sketch=path.name), tempfile.TemporaryDirectory() as tmp:
+                cpp = r'''
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#define SEA_STATE_ENABLE_WIZARD 1
+uint32_t clock_us, clock_ms;
+uint32_t micros() { return clock_us; }
+uint32_t millis() { return clock_ms; }
+namespace lgfx { using swap565_t = uint16_t; }
+uint16_t pixels[128 * 128];
+int next_row, frames, transfers, max_rows;
+struct {
+    struct {
+        void pushImage(int x, int y, int w, int rows, const uint16_t* data) {
+            assert(x == 0 && w == 128 && y == next_row && data == pixels + y * w);
+            assert(rows > 0 && rows <= max_rows && y + rows <= 128);
+            next_row = (y + rows) % 128;
+            frames += next_row == 0;
+            ++transfers;
+        }
+    } Display;
+} M5;
+struct CompassUI {
+    static constexpr uint32_t stripBudgetUs = 1200;
+    bool _ok = true;
+    int _w = 128, _h = 128, _nextRow = 128;
+    struct { void* getBuffer() { return pixels; } } _frame;
+''' + function(ui, "pushNextStrip") + r'''
+};
+struct App {
+    CompassUI compass_ui_;
+    bool use_graphics_ = true, compass_ui_ready_ = true;
+    int tap_count_ = 0;
+    uint32_t last_ui_ms_ = 0;
+    static constexpr uint32_t LOOP_PERIOD_US = 5000, UI_REFRESH_MS = 100;
+    void updateUI_graphics_() { assert(next_row == 0); compass_ui_._nextRow = 0; }
+    void updateUI_text_() { assert(false); }
+''' + function(path.read_text(), "updateUI_") + r'''
+};
+int main() {
+    for (uint32_t used : {3000u, 4500u, 5100u}) {
+        App app;
+        next_row = transfers = frames = 0;
+        max_rows = used == 3000 ? 16 : used == 4500 ? 5 : 1;
+        for (unsigned tick = 0; tick < 300; ++tick) {
+            const uint32_t start = UINT32_MAX - 2500u + tick * 5200u;
+            clock_us = start + used;
+            clock_ms = 100 + tick * 5u;
+            const int previous = transfers;
+            app.tap_count_ = tick == 10;
+            app.updateUI_(start);
+            assert(transfers - previous <= 1);
+            if (app.tap_count_) assert(transfers == previous);
+        }
+        assert(frames >= 2);
+    }
+}
+'''
+                source = Path(tmp) / "redraw.cpp"
+                exe = Path(tmp) / "redraw"
+                source.write_text(cpp)
+                subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                                str(source), "-o", str(exe)], check=True)
+                subprocess.run([str(exe)], check=True)
+
     def test_first_sample_geometry_and_invalid_inputs(self):
         candidates = [Path(os.environ.get("EIGEN_INCLUDE_DIR", "/usr/include/eigen3")),
                       ROOT / "third_party/eigen", ROOT / "vendor/eigen"]
