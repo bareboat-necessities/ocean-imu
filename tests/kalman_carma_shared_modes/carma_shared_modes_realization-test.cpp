@@ -523,7 +523,7 @@ template<class T>
 static void test_scaled_steps() {
     csm::SharedModesMotion<T> motion;
     auto shape = kc::CARMA41_JONSWAP_SHAPE;
-    T worst_transition = 0, worst_noise = 0;
+    T worst_transition = 0, worst_noise = 0, worst_driving_noise = 0;
     bool finite = true;
     for (double zero : {0., .17}) {
         shape.fz_hz = zero;
@@ -532,6 +532,14 @@ static void test_scaled_steps() {
             finite &= motion.set_vertical(k, T(.7));
             for (T h : {T(.005), T(.00375), T(.00625), T(.2), T(.005), T(.005)}) {
                 motion.refresh(h);
+                Eigen::Matrix<T,2,2> rotation;
+                rotation << 0, -1, 1, 0;
+                const auto& g = motion.block_G();
+                const T g2 = motion.noise_gain2();
+                const T driving_error = std::max(
+                    (motion.block_WR() - g2 * g * g.transpose()).norm(),
+                    (motion.block_WI() - g2 * g * rotation * g.transpose()).norm());
+                worst_driving_noise = std::max(worst_driving_noise, driving_error / motion.block_WR().norm());
                 typename csm::SharedModesMotion<T>::MatB f, r, im;
                 finite &= motion.discretize(h, f, r, im);
                 finite &= motion.block_F().allFinite() && motion.block_QR().allFinite()
@@ -548,6 +556,7 @@ static void test_scaled_steps() {
         }
     }
     const T tol = T(64) * std::numeric_limits<T>::epsilon();
+    check(worst_driving_noise < tol, "driving noise agrees with dense noise factors", worst_driving_noise, tol);
     check(finite && worst_transition < tol, "scaled transition agrees with direct integration", worst_transition, tol);
     check(finite && worst_noise < tol, "both scaled noise integrals agree in correlation units", worst_noise, tol);
 }

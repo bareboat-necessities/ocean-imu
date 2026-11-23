@@ -41,17 +41,21 @@ void model_jacobians() {
     assert(zero.force.isZero(0) && zero.down_jacobian.isZero(0) && zero.rate_jacobian.isZero(0));
 }
 
-void run(float speed, float period, bool yaw, bool turned_mount) {
+void run(float speed, float period, bool yaw, bool turned_mount, bool jitter=false) {
     Separator filter;
     const Q mount = turned_mount
         ? Q(Eigen::AngleAxisf(.6f,V::UnitY())) * Q(Eigen::AngleAxisf(1.57079632679f,V::UnitZ()))
         : Q::Identity();
     Separator::Config cfg;cfg.forward_body=mount*V::UnitX();filter.reset(cfg);
     std::mt19937 rng(547);std::normal_distribution<float> noise(0,1);
-    constexpr float dt=.005f,g=9.80665f;
+    constexpr float nominal_dt=.005f,g=9.80665f;
     double error=0,energy=0;int n=0;
     for(int i=0;i<80000;++i) {
-        const float t=float(i)*dt,w=6.28318530718f/period;
+        // Alternating +/- 10 us tests that Butterworth states survive changes
+        // to the per-sample bilinear coefficients at deployment cadence.
+        const float offset=jitter && (i%2) ? .00001f : 0.0f;
+        const float t=float(i)*nominal_dt+offset,w=6.28318530718f/period;
+        const float dt=nominal_dt+(jitter ? ((i%2) ? .00001f : -.00001f) : 0.0f);
         const float phi=.07f*std::sin(.83f*t),theta=.05f*std::cos(1.13f*t);
         const float dphi=.07f*.83f*std::cos(.83f*t),dtheta=-.05f*1.13f*std::sin(1.13f*t);
         const float psi=yaw ? .065f*std::sin(w*t) : .8f;
@@ -89,6 +93,7 @@ int main(){
     model_jacobians();
     run(2.1f,14,true,false);
     run(4.f,28,true,true);
+    run(4.f,28,true,true,true);
     run(-1.5f,55,true,false);
     run(0,20,true,true);
     run(3,20,false,false);

@@ -42,8 +42,8 @@
   "all_time_magnetic_service_verified": false,
   "theorem_closed": false,
   "source_sha256": {
-    "src/ahrs/Mahony_AHRS.h": "f44610f2ac176d243e3e619a7f3c493ef90e4d1455bc8933e624e05825634ef7",
-    "src/tuner/VerticalAccelComplementary.h": "4591fa5f374e498a919d5ebedef66115915b87d07bb39c80e85542fe1053ccf6",
+    "src/ahrs/Mahony_AHRS.h": "cb751a2acc097abb196e2bbb9c4b92bf7c2e21c40c66daf084482d1f90d2239d",
+    "src/tuner/VerticalAccelComplementary.h": "1f7460fe9d4e72544ee53ea6aad9c57acea852fd77588f637948a87c958782c1",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "cd98dac8c8b43c3e1f5dfdb5539b54db6a1d4b2ec7b3cb635058f4681a72a469"
   }
 }

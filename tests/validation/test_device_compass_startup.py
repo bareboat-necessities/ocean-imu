@@ -44,7 +44,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 source = path.read_text()
                 update = function(source, "updateFilter_")
                 if path.stem == "atomS3R_ins_tfg_carma_shared_modes":
-                    for consumer in ("streamSerial_", "updateUI_graphics_", "updateUI_text_"):
+                    for consumer in ("streamSerial_", "updateUI_"):
                         self.assertIn("refreshOutput_();", function(source, consumer))
                     self.assertIn("rot_.update(world_z, dt_);", update)
                     self.assertIn("if (!have_output_) refreshOutput_();", update)
@@ -85,74 +85,136 @@ class DeviceCompassStartupTest(unittest.TestCase):
                     self.assertNotIn("fusion_.update(dt_, w_cal_, a_cal_, tempC);", update)
 
     def test_carma_compass_redraw_under_sustained_load(self):
-        # Exercise the sketch scheduler and the real row transfer with a fake LCD.
-        ui = (ROOT / "src/AtomS3R/AtomS3R_CompassUI.h").read_text()
+        # Run the sketch publisher and display task with a deterministic RTOS/LCD.
+        header = (ROOT / "src/AtomS3R/AtomS3R_MarineCompassDisplay.h").read_text()
+        display = header[header.index("namespace atoms3r_ical {"):]
         for path in (p for p in SKETCHES if "carma" in p.name):
             with self.subTest(sketch=path.name), tempfile.TemporaryDirectory() as tmp:
-                cpp = r'''
-#include <algorithm>
-#include <cassert>
-#include <cstdint>
-#define SEA_STATE_ENABLE_WIZARD 1
-uint32_t clock_us, clock_ms;
-uint32_t micros() { return clock_us; }
-uint32_t millis() { return clock_ms; }
-namespace lgfx { using swap565_t = uint16_t; }
-uint16_t pixels[128 * 128];
-int next_row, frames, transfers, max_rows;
-struct {
-    struct {
-        void pushImage(int x, int y, int w, int rows, const uint16_t* data) {
-            assert(x == 0 && w == 128 && y == next_row && data == pixels + y * w);
-            assert(rows > 0 && rows <= max_rows && y + rows <= 128);
-            next_row = (y + rows) % 128;
-            frames += next_row == 0;
-            ++transfers;
-        }
-    } Display;
-} M5;
-struct CompassUI {
-    static constexpr uint32_t stripBudgetUs = 1200;
-    bool _ok = true;
-    int _w = 128, _h = 128, _nextRow = 128;
-    struct { void* getBuffer() { return pixels; } } _frame;
-''' + function(ui, "pushNextStrip") + r'''
-};
-struct App {
-    CompassUI compass_ui_;
-    bool use_graphics_ = true, compass_ui_ready_ = true;
-    int tap_count_ = 0;
-    uint32_t last_ui_ms_ = 0;
-    static constexpr uint32_t LOOP_PERIOD_US = 5000, UI_REFRESH_MS = 100;
-    void updateUI_graphics_() { assert(next_row == 0); compass_ui_._nextRow = 0; }
-    void updateUI_text_() { assert(false); }
-''' + function(path.read_text(), "updateUI_") + r'''
-};
-int main() {
-    for (uint32_t used : {3000u, 4500u, 5100u}) {
-        App app;
-        next_row = transfers = frames = 0;
-        max_rows = used == 3000 ? 16 : used == 4500 ? 5 : 1;
-        for (unsigned tick = 0; tick < 300; ++tick) {
-            const uint32_t start = UINT32_MAX - 2500u + tick * 5200u;
-            clock_us = start + used;
-            clock_ms = 100 + tick * 5u;
-            const int previous = transfers;
-            app.tap_count_ = tick == 10;
-            app.updateUI_(start);
-            assert(transfers - previous <= 1);
-            if (app.tap_count_) assert(transfers == previous);
-        }
-        assert(frames >= 2);
-    }
-}
-'''
-                source = Path(tmp) / "redraw.cpp"
-                exe = Path(tmp) / "redraw"
+                sketch = path.read_text()
+                self.assertIn("display_.waitForMenu();", function(sketch, "drawHomePending_"))
+                refresh = re.search(r"static constexpr uint32_t UI_REFRESH_MS\s*= \d+;", sketch)[0]
+                cpp = (Path(__file__).parent / "compass_display_test.cpp.in").read_text()
+                cpp = cpp.replace("/* DISPLAY */", display).replace("/* PERIOD */", refresh)
+                cpp = cpp.replace("/* UPDATE */", function(sketch, "updateUI_"))
+                source, exe = Path(tmp) / "redraw.cpp", Path(tmp) / "redraw"
                 source.write_text(cpp)
                 subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
-                                str(source), "-o", str(exe)], check=True)
+                                "-Wall", "-Wextra", "-Werror", str(source), "-o", str(exe)], check=True)
                 subprocess.run([str(exe)], check=True)
+
+    def test_bmi270_navigation_burst_matches_m5unified(self):
+        header = (ROOT / "src/AtomS3R/AtomS3R_ImuCal.h").read_text()
+        reader = header.split("class AtomS3RNavigationImu {", 1)[1].split("\n};", 1)[0]
+        cpp = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+namespace m5 {
+enum class board_t { board_M5AtomS3R, other };
+enum imu_t { imu_bmi270, other };
+struct imu_3d_t { float x, y, z; };
+struct imu_data_t { imu_3d_t accel, gyro, mag; };
+struct IMU_Base {
+    struct imu_convert_param_t { float accel_res, gyro_res; };
+    int16_t raw[6]{};
+    uint8_t ready = 0;
+    int status_reads = 0, data_reads = 0;
+    bool status_ok = true, burst_ok = true;
+    void getConvertParam(imu_convert_param_t* p) { *p = {8.f/32768, 2000.f/32768}; }
+    bool readRegister(uint8_t reg, uint8_t* dst, size_t len) {
+        if (reg == 0x1d) {
+            assert(len == 1); ++status_reads;
+            if (!status_ok) return false;
+            *dst = ready; ready = 0;
+            return true;
+        }
+        assert(reg == 0x0c && len == 12); ++data_reads;
+        if (!burst_ok) return false;
+        std::memcpy(dst, raw, len);
+        return true;
+    }
+} dev;
+struct IMU_Class {
+    enum { sensor_mask_mag = 4 };
+    imu_t type = imu_bmi270;
+    IMU_Base* secondary = nullptr;
+    int offset = 0, updates = 0, data_reads = 0;
+    imu_t getType() { return type; }
+    IMU_Base* getImuInstancePtr(int i) { return i == 0 ? &dev : secondary; }
+    int getOffsetData(int i) { return i == 5 ? offset : 0; }
+    unsigned update() { ++updates; return 7; }
+    imu_data_t getImuData() { ++data_reads; return {{1,2,3},{4,5,6},{7,8,9}}; }
+};
+}
+struct {
+    m5::IMU_Class Imu;
+    m5::board_t board = m5::board_t::board_M5AtomS3R;
+    m5::board_t getBoard() { return board; }
+} M5;
+constexpr unsigned ATOMS3R_IMU_MASK_ACCEL = 1, ATOMS3R_IMU_MASK_GYRO = 2, kImuMaskAccelGyro = 3;
+struct { bool compensated = true; m5::IMU_Base* bmi270 = &m5::dev; } source;
+auto& atoms3rMagSource() { return source; }
+''' + "class AtomS3RNavigationImu {" + reader + "\n};\n" + r'''
+// Reproduce the pinned M5Unified IMU_Class::getImuData 16.16 arithmetic with
+// unsigned shifts/negation to define Xtensa wrap at the negative full scale.
+float reference(int16_t sample, bool invert, float scale) {
+    uint32_t fixed = uint32_t(sample) << 16;
+    if (invert) fixed = 0u - fixed;
+    return int32_t(fixed) * (scale / 65536.f);
+}
+int main() {
+    auto& dev = m5::dev;
+    AtomS3RNavigationImu reader;
+    reader.configure(M5.Imu);
+    m5::imu_data_t data{};
+    for (int i = INT16_MIN; i <= INT16_MAX; ++i) {
+        for (int j = 0; j < 6; ++j) dev.raw[j] = int16_t(i + 577*j);
+        dev.ready = 0xe0;
+        assert(reader.update(M5.Imu, data) == 7);
+        for (int j = 0; j <= 1; ++j) {
+            const auto& got = j ? data.gyro : data.accel;
+            const int16_t* raw = dev.raw + 3*j;
+            const float scale = (j ? 2000.f : 8.f) / 32768.f;
+            assert(got.x == reference(raw[1], false, scale));
+            assert(got.y == reference(raw[0], true, scale));
+            assert(got.z == reference(raw[2], false, scale));
+        }
+    }
+    for (unsigned mask = 0; mask <= 7; ++mask) {
+        dev.ready = (mask&1 ? 0x80 : 0) | (mask&2 ? 0x40 : 0) | (mask&4 ? 0x20 : 0);
+        assert(reader.update(M5.Imu, data) == mask);
+        const int reads = dev.data_reads;
+        assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads);
+    }
+    dev.ready = 0xc0; dev.status_ok = false;
+    const int reads = dev.data_reads;
+    assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads);
+    dev.status_ok = true; dev.burst_ok = false;
+    assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads+1);
+    assert(M5.Imu.updates == 0);
+    auto fallback = [&]() {
+        int calls = M5.Imu.updates;
+        assert(reader.update(M5.Imu, data) == 7);
+        assert(M5.Imu.updates == calls+1 && M5.Imu.data_reads == calls+1);
+        assert(data.accel.x == 1 && data.gyro.y == 5 && data.mag.z == 9);
+    };
+    source.compensated = false; fallback();
+    source.compensated = true;
+    M5.board = m5::board_t::other; reader.configure(M5.Imu); fallback();
+    M5.board = m5::board_t::board_M5AtomS3R;
+    M5.Imu.type = m5::other; reader.configure(M5.Imu); fallback();
+    M5.Imu.type = m5::imu_bmi270;
+    M5.Imu.secondary = &dev; reader.configure(M5.Imu); fallback();
+    M5.Imu.secondary = nullptr;
+    M5.Imu.offset = 7; reader.configure(M5.Imu); fallback();
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            path, exe = Path(tmp) / "burst.cpp", Path(tmp) / "burst"
+            path.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            str(path), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
 
     def test_navigation_aux_reads_and_wizard_cadence(self):
         header = (ROOT / "src/AtomS3R/AtomS3R_ImuCal.h").read_text()
@@ -166,6 +228,7 @@ int main() {
 using atoms3r_ical::MagAcquisition;
 struct ImuSample { int a, w, m; float tempC; uint32_t mask, sample_us; MagAcquisition mag_timing; };
 struct Data { int accel, gyro, mag; };
+namespace m5 { using imu_data_t = Data; }
 struct {
     struct {
         int reads = 0, temps = 0;
@@ -216,6 +279,12 @@ int main() {
     assert(std::isnan(t.read(M5.Imu, 1500000)));
     M5.Imu.temp_ok = true;
     assert(t.read(M5.Imu, 1505000) == 25.f);
+    const Data acquired{901, 902, 0};
+    int reads = M5.Imu.reads;
+    source.compensated = true;
+    assert(readImuMapped(M5.Imu, 3, 1510000, s, false, &t, false, &acquired));
+    assert(s.a == 901 && s.w == 902 && s.sample_us == 1510000 && s.tempC == 25.f);
+    assert(M5.Imu.reads == reads && bursts == 33);
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:
