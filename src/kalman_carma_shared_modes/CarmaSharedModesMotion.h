@@ -304,9 +304,10 @@ public:
     OCEAN_IMU_HOT_LOOP void refresh(T kappa, T h, const Mat& A, const Mat& WR, const Mat& WI) {
         if (kappa == last_k_ && h == last_h_) return;
         const T x = kappa * h * norm_;
-        // Outside this range the physical-coordinate integrator avoids large
-        // intermediate scale factors (and remains valid for long sample gaps).
-        if (!(x > T(0) && x <= T(1) && kappa >= T(1.0/16) && kappa <= T(16))) {
+        // Evaluate the certified unit-step polynomial over a subinterval.
+        // Shorter waves or a late IMU sample can need up to three doublings.
+        // Keep the physical-coordinate path for large gaps or extreme scales.
+        if (!(x > T(0) && x <= T(8) && kappa >= T(1.0/16) && kappa <= T(16))) {
             discretize_lti_pair<T,M>(A, WR, WI, h, F_, QR_, QI_);
             last_h_ = h;
             last_k_ = kappa;
@@ -324,8 +325,11 @@ public:
         }
         last_k_ = kappa;
         last_h_ = h;
-        if (x <= short_radius_) evaluate<short_f, short_q>(x);
-        else evaluate<f_order, q_order - 1>(x);
+        T substep = x;
+        while (substep > T(1)) substep *= T(0.5);
+        if (substep <= short_radius_) evaluate<short_f, short_q>(substep);
+        else evaluate<f_order, q_order - 1>(substep);
+        if (substep != x) double_to_interval_(substep, x);
     }
 
     const Mat& Phi() const noexcept { return F_; }
@@ -333,6 +337,19 @@ public:
     const Mat& QI() const noexcept { return QI_; }
 
 private:
+    void double_to_interval_(T substep, T x) {
+        Mat product;
+        while (substep < x) {
+            kd::congruence<T,M>(F_, QR_, product);
+            QR_ += product;
+            congruence_anti<T,M>(F_, QI_, product);
+            QI_ += product;
+            kd::mul<T,M>(F_, F_, product);
+            F_ = product;
+            substep *= T(2);
+        }
+    }
+
     template<int DegreeF, int DegreeQ>
     void evaluate(T x) {
         int symmetric = 0, skew = 0;

@@ -85,6 +85,10 @@ int main() {
     expect(false, "$%sXDR,A,%.1f,D,PTCH", talker, -0.0);
     expect(false, "$%sXDR,A,%.1f,D,ROLL", talker, -1.25);
   }
+  // %.2s accepts a two-byte talker with no terminating zero.
+  const char boundedTalker[2] = {'I', 'N'};
+  nmea_xdr_wave_direction_rel(boundedTalker, 42.0f, true);
+  expect(true, "$INXDR,A,42.0,D,WAVDIR");
   nmea_xdr_freq("BB", 3.112f);
   expect(false, "$BBXDR,F,%.4f,H,FRT1", 3.112f);
   nmea_xdr_imu_temp("II", 35.1f);

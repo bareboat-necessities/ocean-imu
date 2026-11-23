@@ -52,7 +52,7 @@ inline HeadingFrameAcceleration<Real> heading_frame_acceleration(
       !std::isfinite(static_cast<double>(gravity_ms2))) {
     return result;
   }
-  q.normalize();
+  q.coeffs() /= q_norm;
 
   const Eigen::Matrix<Real, 3, 1> gravity_world_ned(
       Real(0), Real(0), gravity_ms2);

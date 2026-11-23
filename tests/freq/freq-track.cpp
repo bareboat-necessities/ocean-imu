@@ -298,9 +298,25 @@ static bool same_frequency_path() {
     return true;
 }
 
+// Check both sides of the near-DC acos transition and the smallest
+// distinguishable frequency. Zero input keeps the initialized notch fixed.
+static bool accurate_notch_frequency() {
+    for (int i=0; i<=53; ++i) {
+        const double a = 2.0 - std::ldexp(1.0, -i);
+        KalmANFFreqTracker<double> tracker;
+        tracker.init(.995, 1e-5, 1000., 1., 0., 0., a);
+        const double dt = .0047;
+        const double reference = std::acos(a/2.0)/(2.0*M_PI*dt);
+        const double actual = tracker.processFrequencyOnly(0.0, dt);
+        if (std::abs(actual-reference) > 5*std::numeric_limits<double>::epsilon()*reference)
+            return false;
+    }
+    return true;
+}
+
 // Main
 int main() {
-    if (!same_frequency_path()) {
+    if (!accurate_notch_frequency() || !same_frequency_path()) {
         std::fprintf(stderr, "CARMA frequency-only path diverged from the full tracker\n");
         return 1;
     }

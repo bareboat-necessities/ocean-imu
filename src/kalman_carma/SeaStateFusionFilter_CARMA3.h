@@ -95,6 +95,10 @@
 #include <limits>
 #include <memory>
 #include <numbers>
+#include <utility>
+#if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_IDF_TARGET_ESP32S3) && defined(BOARD_HAS_PSRAM)
+#include <esp_heap_caps.h>
+#endif
 
 #include "kalman_carma/CarmaWaveEvidence.h"
 #include "kalman_carma/Kalman3D_Wave_CARMA3.h"
@@ -151,7 +155,7 @@ public:
                     const Eigen::Vector3f& sigma_m) {
         lever_.reset_kinematics();
         this->resetFrontendGyroHistory();
-        mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m);
+        allocateMekf_(sigma_a, sigma_g, sigma_m);
         applyGyroSampling_();
         seastate::common::finalizeInitialization(
             mekf_, [this]() { enterCold_(); }, [this]() { apply_tune_(); });
@@ -163,7 +167,7 @@ public:
         gravity_mps2_ = gravity_magnitude;
         lever_.reset_kinematics();  // a restart may follow a gap in the samples
         this->resetFrontendGyroHistory();
-        mekf_ = std::make_unique<Mekf>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,
+        allocateMekf_(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise,
                                        gravity_magnitude);
         applyGyroSampling_();
         seastate::common::finalizeInitialization(
@@ -684,7 +688,39 @@ private:
         mekf_->set_gyro_sample_mode(core_gyro_sample_mode_);
         mekf_->set_gyro_sample_period(core_gyro_sample_period_);
     }
+#if defined(ARDUINO_ARCH_ESP32) && defined(CONFIG_IDF_TARGET_ESP32S3) && defined(BOARD_HAS_PSRAM)
+    struct MekfDeleter {
+        bool in_caps_storage = false;
+        void operator()(Mekf* filter) const {
+            if (in_caps_storage) {
+                filter->~Mekf();
+                heap_caps_free(filter);
+            } else {
+                delete filter;
+            }
+        }
+    };
+    std::unique_ptr<Mekf, MekfDeleter> mekf_;
+    template<class... Args> void allocateMekf_(Args&&... args) {
+        // Arduino can prefer PSRAM for allocations over 4 KiB. Both the
+        // covariance and its multiplication workspace live inside this object.
+        std::unique_ptr<void, decltype(&heap_caps_free)> block(
+            heap_caps_aligned_alloc(std::max(alignof(Mekf), alignof(void*)), sizeof(Mekf),
+                                    MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT), heap_caps_free);
+        if (block) {
+            auto* filter = ::new (block.get()) Mekf(std::forward<Args>(args)...);
+            block.release();
+            mekf_ = {filter, MekfDeleter{true}};
+        } else {
+            mekf_ = {new Mekf(std::forward<Args>(args)...), MekfDeleter{}};
+        }
+    }
+#else
     std::unique_ptr<Mekf> mekf_;
+    template<class... Args> void allocateMekf_(Args&&... args) {
+        mekf_ = std::make_unique<Mekf>(std::forward<Args>(args)...);
+    }
+#endif
 };
 
 struct SeaStateFusionConfig_CARMA3 : seastate::common::ProxyStartupFusionConfig {

@@ -275,8 +275,15 @@ private:
     p_cov = std::max(p_cov, Real(1e-12));
 
     // 8. frequency estimate
-    const Real omega_hat = std::acos(a / Real(2));  // rad/sample
-    Real f_now = (omega_hat / delta_t) / (Real(2) * Real(M_PI)); // Hz
+    const Real d = Real(2) - a;
+    // At 200 Hz, marine frequencies are very close to the upper acos
+    // endpoint. Use 2 asin(sqrt(d)/2) there; the omitted term in this
+    // series is below 1.1e-16 relative for d <= 1/1024.
+    const Real omega_hat = (d >= Real(0) && d <= Real(1.0/1024.0))
+        ? std::sqrt(d) * (Real(1) + d*(Real(1.0/24.0) +
+          d*(Real(3.0/640.0) + d*Real(5.0/7168.0))))
+        : std::acos(a / Real(2));
+    Real f_now = (omega_hat * Real(1.0 / (2.0*M_PI))) / delta_t;
     if (!(std::isfinite(f_now) && f_now >= Real(0))) {
       f_now = Real(0);
     }

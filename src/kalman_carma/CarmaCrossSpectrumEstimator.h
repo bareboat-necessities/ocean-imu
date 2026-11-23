@@ -88,6 +88,7 @@
 #include <ArduinoEigenDense.h>
 #endif
 
+#include "util/ExponentialGain.h"
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -191,11 +192,17 @@ public:
     Hermitian3<T> cross() const {
         Hermitian3<T> h;
         const T w = weight_ > T(0) ? weight_ : T(1);
-        for (int i = 0; i < 3; ++i) h.re(i,i) = acc_.power[i] / w;
+        const T inverse = T(1) / w;
+        // A subnormal weight can overflow the reciprocal even when its
+        // ratios are finite. Use direct division for that startup case.
+        const auto normalize = [w,inverse](T x) {
+            return std::isfinite(inverse) ? x * inverse : x / w;
+        };
+        for (int i = 0; i < 3; ++i) h.re(i,i) = normalize(acc_.power[i]);
         int index = 0;
         for (int j = 1; j < 3; ++j)
             for (int i = 0; i < j; ++i, ++index)
-                h.set(i, j, {acc_.re[index] / w, acc_.im[index] / w});
+                h.set(i, j, {normalize(acc_.re[index]), normalize(acc_.im[index])});
         return h;
     }
     T elapsed_s() const noexcept { return elapsed_; }
@@ -228,7 +235,7 @@ private:
         if (phase > k2Pi) phase -= k2Pi * std::floor(phase / k2Pi);
         const std::complex<T> rot(std::cos(phase), -std::sin(phase));
         const T tau = T(1) / (k2Pi * cfg_.band_frac * f_last_);
-        const T al = -std::expm1(-dt / tau);
+        const T al = exponential_gain(dt / tau);
         auto& y1 = envelope_.y1;
         auto& y2 = envelope_.y2;
         BandSample band;
@@ -247,7 +254,7 @@ private:
         return band;
     }
     void accumulate(const BandSample& band, T dt) {
-        const T ah = -std::expm1(-dt / std::max(cfg_.horizon_s, dt));
+        const T ah = exponential_gain(dt / std::max(cfg_.horizon_s, dt));
         for (int i = 0; i < 3; ++i) {
             acc_.power[i] += ah * (band.power[i] - acc_.power[i]);
             acc_.re[i] += ah * (band.re[i] - acc_.re[i]);

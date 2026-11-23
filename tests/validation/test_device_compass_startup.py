@@ -38,6 +38,55 @@ def function(source: str, name: str) -> str:
 
 
 class DeviceCompassStartupTest(unittest.TestCase):
+    def test_psram_build_internal_mekf_allocation_and_fallback(self):
+        header = (ROOT / "src/kalman_carma/SeaStateFusionFilter_CARMA3.h").read_text()
+        body = header[header.index("    struct MekfDeleter {"):].split("\n#else", 1)[0]
+        cpp = r'''
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+#include <memory>
+#include <utility>
+constexpr unsigned MALLOC_CAP_INTERNAL=1, MALLOC_CAP_8BIT=2;
+bool allow_internal = true;
+unsigned allocated = 0, freed = 0, destroyed = 0, ordinary_deletes = 0;
+void* heap_caps_aligned_alloc(size_t align, size_t bytes, unsigned caps) {
+    assert(caps == 3 && align == 64);
+    if (!allow_internal) return nullptr;
+    ++allocated;
+    return std::aligned_alloc(align, bytes);
+}
+void heap_caps_free(void* p) { ++freed; std::free(p); }
+struct alignas(64) Mekf {
+    explicit Mekf(int value) { if (!value) throw value; }
+    ~Mekf() { ++destroyed; }
+    static void operator delete(void* p) { ++ordinary_deletes; ::operator delete(p, std::align_val_t(64)); }
+};
+template<class Mekf> struct Owner {
+''' + body + r'''
+};
+int main() {
+    {
+        Owner<Mekf> owner;
+        owner.allocateMekf_(1);
+        assert(allocated == 1 && !freed && !destroyed);
+        auto* first = owner.mekf_.get();
+        try { owner.allocateMekf_(0); assert(false); } catch(int) {}
+        assert(owner.mekf_.get() == first && allocated == 2 && freed == 1 && !destroyed);
+        allow_internal = false;
+        owner.allocateMekf_(1);
+        assert(freed == 2 && destroyed == 1 && ordinary_deletes == 0);
+    }
+    assert(destroyed == 2 && ordinary_deletes == 1);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            path, exe = Path(tmp) / "allocation.cpp", Path(tmp) / "allocation"
+            path.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            str(path), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
+
     def test_startup_compass_then_fused_live_output(self):
         for path in SKETCHES:
             with self.subTest(sketch=path.name):
