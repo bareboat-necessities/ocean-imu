@@ -38,6 +38,94 @@ def function(source: str, name: str) -> str:
 
 
 class DeviceCompassStartupTest(unittest.TestCase):
+    def test_sampling_phase_and_overruns(self):
+        # Exercise the same pacer and real timestamp wiring as every marine sketch.
+        other_sketches = ("atomS3R_ins_nlo", "atomS3R_ins_pii_observer")
+        for path in (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / (name + ".ino")
+                                  for name in other_sketches)):
+            tick = function(path.read_text(), "tick")
+            self.assertLess(tick.index("pacer_.wait();"), tick.index("sample_us = micros();"))
+            self.assertNotIn("waitForNextLoopTick_", tick)
+            self.assertIn("sample_dt_.update(s.sample_us)", function(path.read_text(), "updateFilter_"))
+
+        cpp = r'''
+#include <cassert>
+#include <initializer_list>
+#include "AtomS3R/AtomS3R_SamplePacer.h"
+uint64_t clock_us;
+uint64_t last_read;
+uint64_t interrupt_at = UINT64_MAX;
+uint32_t interrupt_us;
+uint32_t micros() {
+    if (clock_us == interrupt_at) clock_us += interrupt_us;
+    last_read = clock_us++;
+    return static_cast<uint32_t>(last_read);
+}
+int main() {
+    constexpr uint32_t period = 5000;
+    atoms3r_ical::SamplePacer pacer(period);
+    const uint64_t start = UINT32_MAX-12000;
+    clock_us = start;
+    uint64_t last_sample = 0;
+    for (unsigned i = 0; i < 1200; ++i) {
+        pacer.wait();
+        assert(last_read == start + i*uint64_t(period));
+        // Button handling precedes the real acquisition timestamp.
+        clock_us += 3;
+        const uint64_t sample = clock_us;
+        if (i != 61) {  // One poll returned no complete sensor frame.
+            if (i) assert(sample-last_sample == (i == 62 ? 2*period : period));
+            last_sample = sample;
+        }
+        // Variable accepted work, followed by 20 us of loopTask overhead.
+        clock_us = last_read + 4300 + i%150 + 20;
+    }
+    const uint64_t nominal = last_read + period;
+    interrupt_at = nominal-1;
+    interrupt_us = 31;
+    pacer.wait();
+    assert(last_read == nominal+30);
+    clock_us = last_read+4300;
+    pacer.wait();
+    assert(last_read == nominal+period); // 30 us of jitter did not accumulate.
+
+    for (unsigned cost : {5020u, 6000u}) {
+        for (int i = 0; i < 1000; ++i) {
+            clock_us = last_read+cost;
+            const auto ready = clock_us;
+            pacer.wait();
+            assert(last_read == ready); // No pad to a later slot under overload.
+        }
+    }
+
+    clock_us = last_read+30000001;
+    const auto resumed = clock_us;
+    pacer.wait();
+    assert(last_read == resumed);
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == resumed+period); // No catch-up poll after a long outage.
+
+    const uint64_t stalled = last_read+period;
+    interrupt_at = stalled-1;
+    interrupt_us = 18001;
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == stalled+18000);
+    clock_us = last_read+100;
+    pacer.wait();
+    assert(last_read == stalled+18000+period);
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            path, exe = Path(tmp) / "pacer.cpp", Path(tmp) / "pacer"
+            (Path(tmp) / "Arduino.h").write_text("#include <cstdint>\nuint32_t micros();\n")
+            path.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            "-Wall", "-Wextra", "-Werror", "-I", tmp, "-I", str(ROOT / "src"),
+                            str(path), "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
+
     def test_psram_build_internal_mekf_allocation_and_fallback(self):
         header = (ROOT / "src/kalman_carma/SeaStateFusionFilter_CARMA3.h").read_text()
         body = header[header.index("    struct MekfDeleter {"):].split("\n#else", 1)[0]

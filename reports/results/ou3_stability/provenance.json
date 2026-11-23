@@ -45,7 +45,11 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "d1781e1d71857719e1c7c1fccd802a1b01b78461"
+      "git_blob_sha": "8f34f1657989dda195826c201941f43fa3e43382"
+    },
+    {
+      "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
+      "git_blob_sha": "4e9e16c571bb861176104e5c73405ad4bfebd09e"
     },
     {
       "path": "src/kalman_common/GyroInterval.h",
@@ -211,7 +215,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "85580d9b4639ff71ac18ce3696b904826ff892f4"
+      "git_blob_sha": "07c0e8c7c0602463d7c8ae024fc4e313263ead34"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -883,7 +887,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "9d0a97413244df2687c8c8ad7d61d85d6436bb4e"
+      "git_blob_sha": "2fe408a09aad9522c3c10a9de8fa254ae9d596d7"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
