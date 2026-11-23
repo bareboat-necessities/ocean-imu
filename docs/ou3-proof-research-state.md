@@ -1324,6 +1324,16 @@ provenance pin is updated (classification E: stale binding, not mathematics).
 
 ## Evidence
 
+**E — Shared firmware output intervals changed two source fingerprints.**
+The validator rejected the OU-III sketch blob and the native secant
+whole-source digest after the display and serial intervals moved to a
+shared header. All 48 project headers used by the native probe and its
+preprocessed translation unit match `e586935f` byte for byte. The refresh
+in `shared_firmware_output_timing_source_identity` carries forward the
+finite secant results and their qualifications. Run the source-bound
+evidence validator against the refreshed fingerprints. The open
+receipt/Schur calculation remains the next mathematical check.
+
 **E — CARMA timing changes invalidated the native-secant whole-source digest.**
 GCC 14.2 produced identical preprocessed native probes at `dae087a6` and
 `76d85e4b`. All 46 project headers in the dependency list match. The

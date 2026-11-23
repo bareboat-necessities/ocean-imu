@@ -45,7 +45,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "8f34f1657989dda195826c201941f43fa3e43382"
+      "git_blob_sha": "3abddbb5741c347a971392d40203eb9eba074c78"
     },
     {
       "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
@@ -215,7 +215,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "07c0e8c7c0602463d7c8ae024fc4e313263ead34"
+      "git_blob_sha": "3adf6cf6f112d8a675ca1e7187526796596583e4"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -887,7 +887,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "2fe408a09aad9522c3c10a9de8fa254ae9d596d7"
+      "git_blob_sha": "b9f37e5fa32d95b00bb4413860dfa7b1956641ce"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -2135,6 +2135,27 @@
     "changed_headers_in_dependency_closure": [],
     "previous_shipping_source_tree_sha256": "4b5eacba29ea95c9cfb0d27e8b0ea3c3df978271f4cfcaa3c209fd591ba2ac74",
     "shipping_source_tree_sha256": "8591936f467f7332c408c0fceee0f0aa74dfad22b51b25946c28f6f07e7c9a59",
+    "replay_performed": false,
+    "theorem_promoted": false
+  },
+  "shared_firmware_output_timing_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "6d833731bea5ec6259ab82a87aa13ba580546af9",
+    "compared_to": "e586935ff19700a1627b45cdc4b04b6cf4e4e5ae",
+    "native_probe": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+    "compiler": "GCC 14.2.0, C++20, -O1, EIGEN_UNROLLING_LIMIT=0, EIGEN_NON_ARDUINO, Eigen 3.4.0",
+    "identical_preprocessed_translation_unit_sha256": "ddd449e3505e5ed29e67a0c2e1b643636946fb9d7fdb83823a66f8e90103599d",
+    "shipping_headers_in_compiler_dependency_closure": 48,
+    "changed_src_outside_probe_closure": [
+      "src/AtomS3R/AtomS3R_CompassAppBase.h",
+      "src/AtomS3R/AtomS3R_OutputTiming.h"
+    ],
+    "previous_shipping_source_tree_sha256": "b632ed0727d1d9002de891873482fe4e851bef52313763ea3b6c89ada36cda9f",
+    "shipping_source_tree_sha256": "cfb713406962cc53dcc86f89b358fbfcee810b4478efcb3735c3d07b1e207bee",
+    "previous_ou3_sketch_git_blob_sha": "8f34f1657989dda195826c201941f43fa3e43382",
+    "ou3_sketch_git_blob_sha": "3abddbb5741c347a971392d40203eb9eba074c78",
+    "scope": "Firmware display and serial output intervals. The native probe uses identical estimator operations, covariance, input and clocks.",
+    "relaxations_introduced": "None",
     "replay_performed": false,
     "theorem_promoted": false
   }
