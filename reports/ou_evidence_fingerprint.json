@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "30bc124f10f13f5b9aa6ab676b11f42f51dbe3ef9377c13d867fdc540107861d",
+  "replay_fingerprint": "03fe0853536041c5553f8ed80270dd7013371380551902c52b896c9d9afb2ef1",
   "results_file_count": 1919,
   "results_files": [
     {
@@ -2916,7 +2916,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "7a0bdfaa82f1497b92e8e97fb5ae8a2e806cbcce29265f940e113eb0602c9f50"
+      "sha256": "a8cf54c7a2fd800fc14fb7384207297a47229f5c7a1fb49f160b71f1199c19b6"
     },
     {
       "kind": "file",
@@ -2971,7 +2971,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "4f4bcb7b2dab5f10789809f1f1d4755fa0f78fd6d9a7ab9084547c1c74c29907"
+      "sha256": "b9199e12ec57051e6130e0087e41a0bb5ac49eac59302b8d8382d32a9ac2d05b"
     },
     {
       "kind": "file",
@@ -3081,7 +3081,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "faebde984a03f59cb19b090fc4e44a5d61209c111d353c5b143d04db74c18e3f"
+      "sha256": "366e61c386270fb7e437daf3515198d999130c75a2cac0d9f86c0e73ad8a0b1c"
     },
     {
       "kind": "file",
@@ -3176,7 +3176,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f233ca5b70625d4e5d51470b03f478491080386ea822faec6795c3a925b2254c"
+      "sha256": "01235d40614c8db2223e43d19e50ff2087d02372593af6028e1b5db5c67de3b6"
     },
     {
       "kind": "file",
@@ -9599,13 +9599,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "c5e08de9b0c327468eedd8de555897c87a6d298bd3a43e566a669608b99fd75d",
+  "results_fingerprint": "ed02254794cbcc2b5060b6366849e46af38d71e23f0b877f210faeb81cb3c0ff",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1105,
+  "tracked_replay_file_count": 1106,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -10365,7 +10365,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma/SeaStateFusionFilter_CARMA3.h",
-      "sha256": "8afc1031e8e64e575c55f5fe08b27e97bc7ab0ba5f3776e6345fad9f553148fd"
+      "sha256": "2fbf06523fe987e12e48a515b4e2b26c0e9761f2950d3dff8047d7d4797258f5"
     },
     {
       "mode": "100644",
@@ -10405,7 +10405,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_carma_shared_modes/SeaStateFusionFilter_CarmaSharedModes.h",
-      "sha256": "e17c5529e073223f556996627a867480c800f81bd5a4004d6a753284e887da84"
+      "sha256": "6099211271a8ad1d776424f4d834592807e0abb9804fe69d004da4d0b39c08bb"
     },
     {
       "mode": "100644",
@@ -11300,7 +11300,7 @@
     {
       "mode": "100644",
       "path": "tests/kalman_carma_shared_modes/carma_shared_modes-test.cpp",
-      "sha256": "6efd4cc205e66987b7e5198d0eaf96d0d5129d3318c025a05bf747fa12e94281"
+      "sha256": "10cc4d8b43f73db165b98f5ac5e1e0af4932c7db86259a1a6e1c3e1479047af2"
     },
     {
       "mode": "100644",
@@ -11335,7 +11335,7 @@
     {
       "mode": "100755",
       "path": "tests/kalman_carma_shared_modes/run_tests.sh",
-      "sha256": "70c672234a1809c67b39dfb83d3162aff9afc8e1c611c2b844ff79bdf4664be2"
+      "sha256": "d67cfb524de1c465cfa876dff3dc08a8dc26fe080e1bafd6911eec1b4f103e3a"
     },
     {
       "mode": "100644",
@@ -11820,7 +11820,7 @@
     {
       "mode": "100644",
       "path": "tests/live_bias_consistency/Adapter.h",
-      "sha256": "e82c4b450bb9722ca7e5cd5ef1f24c884d3c1930680f15601c1dfd751469c7aa"
+      "sha256": "89ccb8408ada4af1f8c762735a9ff63fe1c9fbc06f9a0d4cf0b1be78e8a64570"
     },
     {
       "mode": "100644",
@@ -13384,8 +13384,13 @@
     },
     {
       "mode": "100644",
+      "path": "tools/carma_shared_modes_smoke.py",
+      "sha256": "f534e7de372942ada45b6d8f92e38a7226b5c215fdb2682b7ac5cc45ccf37669"
+    },
+    {
+      "mode": "100644",
       "path": "tools/carma_shared_modes_study.py",
-      "sha256": "a8f38bb7e75bb16a83c5952105e043c8f7c55a892ba7ac8c66cff348ce73acda"
+      "sha256": "f91d6b6aee1799d964de9c34b0d2dd288aa31df07bc1587889a85381bd87374e"
     },
     {
       "mode": "100644",
@@ -13705,7 +13710,7 @@
     {
       "mode": "100644",
       "path": "tools/quality/fusion_smoke.cpp",
-      "sha256": "68b6cfad61349e6d63a78bb7bc828170c544b51970017c4cc6d8a08ba2e347a1"
+      "sha256": "8f7e2a0c3d31f6bf4ea91639b80365c3142da35512c176d2a7a3a9436368dd63"
     },
     {
       "mode": "100755",

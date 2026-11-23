@@ -168,7 +168,7 @@
     }
   },
   "git_branch": "main",
-  "git_commit": "525bbd8a99d208d45c00b5b0fb7fc768c5ddf7a3",
+  "git_commit": "e88694da1d61e87b18b9307e7a9b2375005635ed",
   "git_diff_stat": "reports/results/ou_validation/ou_validation.json            | 3 +--\n reports/results/ou_validation/ou_validation_publication.tex | 2 +-\n 2 files changed, 2 insertions(+), 3 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -583,8 +583,8 @@
       "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-23T19:07:53+00:00",
-    "git_commit": "525bbd8a99d208d45c00b5b0fb7fc768c5ddf7a3",
+    "generated_at": "2026-11-23T23:50:30+00:00",
+    "git_commit": "e88694da1d61e87b18b9307e7a9b2375005635ed",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -891,7 +891,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "45233242580",
+      "run_id": "45284373661",
       "workflow": "build"
     }
   },
