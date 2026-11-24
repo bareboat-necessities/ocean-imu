@@ -1,6 +1,6 @@
 ## Full-rate OU covariance kernels
 
-The optimized OU-III prediction and Joseph correction changed the shipping header and invalidated its source bindings (class E). The finite planar replay reproduced the committed operation stream and the native secant bytes at both perturbation radii. The construction mean observer reproduced its trace byte for byte. The collinear acceleration-tracking witness changed from 0.000402855 to 0.000402836 rad maximum attitude error. Its audit passed with the original thresholds.
+The optimized OU-III prediction and Joseph correction changed the shipping header and invalidated its source bindings (class E). The finite planar replay reproduced the committed operation stream and the native secant bytes at both perturbation radii. The construction mean observer reproduced its trace byte for byte. All four AG readout profiles reproduced the previous native event bytes and matched the untapped filter at their endpoints. The collinear acceleration-tracking witness changed from 0.000402855 to 0.000402836 rad maximum attitude error. Its audit passed with the original thresholds.
 
 - **Structures preserved.** All 21 state components, cross-axis covariances, constrained gain rows, sensor deliveries, correction clocks and tuner history participate in the same physical execution.
 - **Relaxations introduced.** None. Prediction skips zero transition coefficients. Correction reuses products within a gain row and accumulates the nine terms in the original order.
