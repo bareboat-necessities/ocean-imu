@@ -34,7 +34,8 @@ For OU-II and OU-III, compare `sample_gap_min_us`, `sample_gap_max_us`, and
 `jitter_mean_abs_us` to see alternating short and long intervals even
 when the mean is 5,000 µs. `gaps_over_7_5ms` counts unusually long intervals. Each OU sketch timestamps the poll that found the
 complete BMI270 frame. It can start another readiness check within 300 µs of
-the scheduled poll if either ready flag is still missing.
+the scheduled poll if either ready flag is still missing. A successful retry anchors
+the next 5 ms wait to the observed ready poll so a slower sensor clock can shift the phase.
 
 ## Hardware
 

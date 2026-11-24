@@ -51,6 +51,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
             if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3"):
                 self.assertLess(tick.index("updateFilter_(sample"), tick.index("Input::pollButton();"))
                 self.assertIn("AtomS3RNavigationImu::kReadyWindowUs", tick)
+                self.assertIn("pacer_.followReadyPoll(sample_us, sample.sample_us)", tick)
                 self.assertIn("timing_.finish(sample.sample_us,", tick)
             self.assertIn("display_.waitForMenu();", function(path.read_text(), "drawHomePending_"))
             if path.stem in other_sketches:
@@ -126,6 +127,32 @@ int main() {
     clock_us = last_read+100;
     pacer.wait();
     assert(last_read == stalled+18000+period);
+
+    // Independent host and sensor clocks. A bounded retry alone eventually
+    // misses a slot as the sensor's ready edge drifts through the polling phase.
+    for (bool follow : {false, true}) {
+        atoms3r_ical::SamplePacer drift(period);
+        clock_us = start;
+        uint64_t ready_at = start, previous = start, max_gap = 0;
+        unsigned empty_slots = 0;
+        for (unsigned i = 0; i < 2000; ++i) {
+            drift.wait();
+            const uint64_t first = last_read;
+            uint64_t poll = first;
+            while (poll < ready_at && poll-first < 200) poll += 100;
+            if (poll >= ready_at) {
+                if (follow) drift.followReadyPoll(uint32_t(first), uint32_t(poll));
+                if (poll-previous > max_gap) max_gap = poll-previous;
+                previous = poll;
+                do { ready_at += 5006; } while (ready_at <= poll);
+            } else {
+                ++empty_slots;
+            }
+            clock_us = poll + 4300;
+        }
+        if (follow) assert(empty_slots == 0 && max_gap == 5100);
+        else assert(empty_slots == 3 && max_gap == 9800);
+    }
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:

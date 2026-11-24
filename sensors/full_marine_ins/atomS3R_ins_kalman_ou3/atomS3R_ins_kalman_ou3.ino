@@ -193,6 +193,7 @@ public:
                                                  AtomS3RNavigationImu::kReadyWindowUs);
 
     if (got_sample) {
+      pacer_.followReadyPoll(sample_us, sample.sample_us);
       stale_frame_count_ = 0;
       updateFilter_(sample, poll_ms);
     } else {
