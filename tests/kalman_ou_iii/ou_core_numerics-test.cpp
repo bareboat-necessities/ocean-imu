@@ -17,6 +17,7 @@
 // projection accepted diag(-1,1,1,1,1,1) because its LDLT "succeeded".
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "kalman_ou_common/OUJosephUpdate.h"
 
 #include <unsupported/Eigen/MatrixFunctions>
 
@@ -356,9 +357,29 @@ void test_psd_regularizer() {
     }
 }
 
+// Dense Joseph reference with a constrained gain and cross-axis correlations.
+template<int N>
+void test_constrained_joseph() {
+    const Eigen::MatrixXf A = Eigen::MatrixXf::Random(N,N);
+    const Eigen::MatrixXf H = Eigen::MatrixXf::Random(3,N);
+    const Eigen::Matrix3f R = Eigen::Vector3f(0.2f, 0.4f, 0.3f).asDiagonal();
+    Eigen::Matrix<float,N,N> P = A * A.transpose();
+    Eigen::Matrix<float,N,3> K = Eigen::MatrixXf::Random(N,3);
+    K.template bottomRows<3>().setZero();
+    const Eigen::Matrix<float,N,3> PCt = P * H.transpose();
+    const Eigen::Matrix3f S = H * PCt + R;
+    const Eigen::MatrixXf J = Eigen::MatrixXf::Identity(N,N) - K * H;
+    const Eigen::MatrixXf expected = J * P * J.transpose() + K * R * K.transpose();
+    detail::joseph_update3(P, K, S, PCt);
+    check(P == P.transpose(), "Joseph covariance must be symmetric");
+    check(P.isApprox(expected, 2e-6f), "constrained Joseph covariance");
+}
+
 } // namespace
 
 int main() {
+    test_constrained_joseph<18>();
+    test_constrained_joseph<21>();
     test_so3_integrals<float>("float");
     test_so3_integrals<double>("double");
 
