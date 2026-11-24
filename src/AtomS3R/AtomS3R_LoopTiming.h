@@ -14,12 +14,14 @@ class LoopTiming {
 #endif
   }
 
-  void finish(uint32_t sample_us, bool accepted, uint32_t period_us, float estimator_dt_s = 0) {
+  void finish(uint32_t sample_us, bool accepted, uint32_t period_us,
+              float estimator_dt_s = 0, bool used_host_time = false) {
 #if defined(OCEAN_IMU_PROFILE_LOOP) && OCEAN_IMU_PROFILE_LOOP
     const uint32_t work = micros() - start_us_;
     ++polls_;
     if (accepted) {
       if (estimator_dt_s > 0) {
+        host_steps_ += used_host_time;
         if (!max_dt_s_ || estimator_dt_s < min_dt_s_) min_dt_s_ = estimator_dt_s;
         if (estimator_dt_s > max_dt_s_) max_dt_s_ = estimator_dt_s;
       }
@@ -48,8 +50,10 @@ class LoopTiming {
                     unsigned(gaps_ ? (gap_sum_ + gaps_/2)/gaps_ : 0), unsigned(max_gap_), unsigned(gaps_ ? jitter_sum_/gaps_ : 0), unsigned(long_gaps_),
                     unsigned(samples_ ? work_sum_/samples_ : 0), unsigned(max_work_), unsigned(over_target_), unsigned(overruns_));
       if (max_dt_s_ > 0) {
-        Serial.printf("[ESTIMATOR] dt_min_ms=%.3f dt_max_ms=%.3f\n", 1000.0 * min_dt_s_, 1000.0 * max_dt_s_);
+        Serial.printf("[ESTIMATOR] dt_min_ms=%.3f dt_max_ms=%.3f host_steps=%u\n",
+                      1000.0 * min_dt_s_, 1000.0 * max_dt_s_, unsigned(host_steps_));
         min_dt_s_ = max_dt_s_ = 0;
+        host_steps_ = 0;
       }
       polls_ = samples_ = gaps_ = long_gaps_ = max_gap_ = max_work_ = over_target_ = overruns_ = 0;
       gap_sum_ = jitter_sum_ = work_sum_ = 0;
@@ -60,12 +64,14 @@ class LoopTiming {
     (void)accepted;
     (void)period_us;
     (void)estimator_dt_s;
+    (void)used_host_time;
 #endif
   }
 
  private:
 #if defined(OCEAN_IMU_PROFILE_LOOP) && OCEAN_IMU_PROFILE_LOOP
   float min_dt_s_ = 0, max_dt_s_ = 0;
+  uint32_t host_steps_ = 0;
   uint64_t gap_sum_ = 0, jitter_sum_ = 0, work_sum_ = 0;
   uint32_t start_us_ = 0, previous_us_ = 0, polls_ = 0, samples_ = 0, gaps_ = 0;
   uint32_t long_gaps_ = 0, min_gap_ = UINT32_MAX, max_gap_ = 0, max_work_ = 0, over_target_ = 0, overruns_ = 0;

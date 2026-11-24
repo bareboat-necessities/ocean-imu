@@ -531,9 +531,10 @@ class MeasurementFrameTests(unittest.TestCase):
                      'k = std::fma(-t2, T(1)/T(48), k);',
                      'k = std::fma( t4, T(1)/T(3840), k);', 'q.normalize();'):
             self.assertIn(text, core)
-        for text in ('F_AA.template block<3,3>(0,3) = Bstep;',
+        for text in ('rot_and_B_from_wt_(w, Ts, Rstep, Bstep);',
+                     'F_AA.template block<3,3>(0,3) = Bstep;',
                      'Qbg = Qbase.template bottomRightCorner<3,3>();',
-                     'I_BB = simpson_B_Q_BT_(w, Ts, Qbg);'):
+                     'I_BB = simpson_B_Q_BT_(w, Ts, Qbg, Bstep);'):
             self.assertIn(text, shipping)
 
     def setUp(self):

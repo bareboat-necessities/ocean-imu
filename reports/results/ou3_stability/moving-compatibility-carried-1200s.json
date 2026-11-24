@@ -6,7 +6,7 @@
   "all_time_magnetic_service_verified": false,
   "compiler": "g++ (Debian 14.2.0-19) 14.2.0",
   "full_shipping_counterexample_admitted": false,
-  "instrumented_header_sha256": "88a2b1c9b7a268388ebf584ba5104f45e91c0905016d9ae01a9adc52655b6636",
+  "instrumented_header_sha256": "360ad2f88f81d6f92f77cf33d256b063b94259467cde86b36480623a184006bc",
   "native": {
     "Kaw_fro_max": 0.09002780341209089,
     "R_S": 0.41333234310150146,
@@ -79,6 +79,6 @@
   "same_as_world_frame_fixture": false,
   "service_window_coverage": "disjoint one-second sampled-root windows after BA activation plus 17 s; additionally every IMU-sample root over the final 20-s source phase cycle",
   "shipping_behavior_changed": false,
-  "shipping_header_sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
+  "shipping_header_sha256": "e4ee4428eb6c798cdf148928bb21c2a6982599367d53229332d422a56c128f9c",
   "theorem_closed": false
 }
