@@ -9,7 +9,7 @@
     },
     {
       "path": "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h",
-      "git_blob_sha": "ac8c00ec6908e5ea3abaeab634cc32c3b093c016"
+      "git_blob_sha": "94bb45feafa1db021aa08078b654eaa662e640ce"
     },
     {
       "path": "src/kalman_common/SeaStateTuning.h",
@@ -45,7 +45,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "3abddbb5741c347a971392d40203eb9eba074c78"
+      "git_blob_sha": "e4834889b933c3f764a8690aa36b7f658ae68646"
     },
     {
       "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
@@ -57,7 +57,7 @@
     },
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.cpp",
-      "git_blob_sha": "508971cd677fca0e7053f427bb5c27542e682685"
+      "git_blob_sha": "318147e3c8a199cdf349a3a837b682f2c6fc7554"
     },
     {
       "path": "src/kalman_common/MarineTurnModel.h",
@@ -90,6 +90,14 @@
     {
       "path": "src/kalman_ou_iii/HorizontalWaveBand.h",
       "git_blob_sha": "c653880ae852b924510f48464be8f7e21ff9910e"
+    },
+    {
+      "path": "src/util/FilterStorage.h",
+      "git_blob_sha": "c613aa6274826f6559d44c6559c4a4661c76fc78"
+    },
+    {
+      "path": "src/AtomS3R/AtomS3R_FilterOptimization.h",
+      "git_blob_sha": "e2c0c756bcead782cc31ae06168ed5128f3ac252"
     }
   ],
   "semantic_bindings": {
@@ -215,7 +223,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "577673e6729ec86db86907487acf5e3f11624094"
+      "git_blob_sha": "279dc5355248c149f2210f1b5b2afb5f6a79e0b0"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -819,7 +827,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-generated-port-structure.json",
-      "git_blob_sha": "dd45b918e2781b3275b0c05205e45e868903c900"
+      "git_blob_sha": "75641e16a95c9dc588612150d63a27aa50b55be7"
     },
     {
       "path": "reports/results/ou3_stability/theorem-status.json",
@@ -887,7 +895,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "8c4a8564ef3c3986b2c5f037a58751b4f16b7ac2"
+      "git_blob_sha": "1350288264828bc40f3695f717ff7a1d5ecef47e"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1308,7 +1316,7 @@
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
     "certificate": "measurement-frame-loss-certificate.json",
-    "result_type": "PROVED — analytical identities and qualified uniform operation inequalities",
+    "result_type": "PROVED \u2014 analytical identities and qualified uniform operation inequalities",
     "complete_21_state_frame_and_mask_congruence": true,
     "moving_frame_derivative_retained": true,
     "radial_magnetic_feedback_and_square_charge_retained": true,
