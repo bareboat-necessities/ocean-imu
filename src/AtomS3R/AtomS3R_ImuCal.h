@@ -437,6 +437,8 @@ struct PollMagEveryFrame {
 // cleared M5 offsets uses this reader. The wizard uses the regular driver.
 class AtomS3RNavigationImu {
  public:
+  // Permit a short readiness check within the 500 us of nominal OU loop headroom.
+  static constexpr uint32_t kReadyWindowUs = 300;
   void configure(decltype(M5.Imu)& imu) {
     device_ = nullptr;
     auto& src = atoms3rMagSource();
@@ -452,12 +454,12 @@ class AtomS3RNavigationImu {
 
   template <class MagGate>
   bool read(decltype(M5.Imu)& imu, uint32_t frame_us, ImuSample& sample, ImuTemperatureCache& temperature,
-            const MagGate& gate, uint32_t& poll_ms) const {
+            const MagGate& gate, uint32_t& poll_ms, uint32_t ready_window_us = 0) const {
     m5::imu_data_t data{};
     Bmi270AuxBurst burst;
     const uint32_t now = millis();
     const bool request_aux = gate.due(now) || !atoms3rMagSource().acquisition.fresh(now);
-    const uint32_t mask = update(imu, data, request_aux ? &burst : nullptr);
+    const uint32_t mask = update_(imu, data, request_aux ? &burst : nullptr, frame_us, ready_window_us);
     // A poll can become due during the transfer. In that case read AUX here
     // just as we do when the optimized transfer was unavailable.
     poll_ms = millis();
@@ -466,6 +468,13 @@ class AtomS3RNavigationImu {
   }
 
   uint32_t update(decltype(M5.Imu)& imu, m5::imu_data_t& data, Bmi270AuxBurst* aux = nullptr) const {
+    uint32_t unused_us = 0;
+    return update_(imu, data, aux, unused_us, 0);
+  }
+
+ private:
+  uint32_t update_(decltype(M5.Imu)& imu, m5::imu_data_t& data, Bmi270AuxBurst* aux,
+                   uint32_t& frame_us, uint32_t ready_window_us) const {
     if (aux) aux->acquired = false;
     if (!device_ || !atoms3rMagSource().compensated) {
       const auto mask = imu.update();
@@ -475,7 +484,21 @@ class AtomS3RNavigationImu {
 
     // INT_STATUS_1 has clear-on-read ready flags, as in BMI270_Class.
     uint8_t ready = 0;
-    if (!device_->readRegister(0x1d, &ready, 1) || !(ready & 0xe0)) return 0;
+    if (!device_->readRegister(0x1d, &ready, 1)) return 0;
+    if (ready_window_us && (ready & 0xc0) != 0xc0) {
+      // The sensor and host clocks are independent. If this slot starts just
+      // before DRDY, collect both flags within this slot before reading XYZ.
+      const uint32_t start_us = frame_us;
+      do {
+        const uint32_t next_us = micros();
+        if (next_us - start_us >= ready_window_us) return 0;
+        uint8_t status;
+        if (!device_->readRegister(0x1d, &status, 1)) return 0;
+        ready |= status;
+        frame_us = next_us;
+      } while ((ready & 0xc0) != 0xc0);
+    }
+    if (!(ready & 0xe0)) return 0;
     // AUX_X_LSB (0x04) immediately precedes ACC_X_LSB (0x0c).
     // If the combined read fails, recover the inertial frame separately.
     int16_t block[10];
@@ -500,7 +523,6 @@ class AtomS3RNavigationImu {
     return mask;
   }
 
- private:
   static m5::imu_3d_t mapped_(const int16_t* raw, float scale) {
     // M5Unified 0.2.13 / 0.2.23 AtomS3R: Y, -X, Z. Its 16.16
     // sign change wraps at INT16_MIN on Xtensa.

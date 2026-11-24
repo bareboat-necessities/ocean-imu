@@ -32,6 +32,7 @@
 #include <algorithm>
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
+#include "kalman_ou_common/OUJosephUpdate.h"
 
 namespace ocean_imu::kalman {
 
@@ -141,6 +142,7 @@ class Kalman3D_Wave_OU_III {
     [[nodiscard]] Eigen::Quaternion<T> quaternion_boat() const {
         // Internal quaternion() = B'→W (un-heeled frame to world)
         const Eigen::Quaternion<T> q_WBprime = quaternion();
+        if (wind_heel_rad_ == T(0)) return q_WBprime;
 
         // q_B'B = rotation that maps physical body B to un-heeled frame B'
         // Roll of -wind_heel about X: B'←B ("un-heel").
@@ -924,57 +926,7 @@ class Kalman3D_Wave_OU_III {
                                 const Matrix3& S,
                                 const Eigen::Matrix<T,NX,3>& PCt)
     {
-        // We use that:
-        //  • PCt = P Cᵀ  (N×3)
-        //  • CP ≈ (PCt)ᵀ since P ≈ Pᵀ
-        //
-        // So:
-        //   KCP(i,j) = Σ_l K(i,l) * CP(l,j) ≈ Σ_l K(i,l) * PCt(j,l)
-        //   (KCP)ᵀ(j,i) = KCP(j,i)
-        //
-        // And K S Kᵀ is symmetric because S is symmetric.
-
-        for (int i = 0; i < NX; ++i) {
-            for (int j = i; j < NX; ++j) {
-
-                // KCP_ij = (K C P)(i,j)
-                T KCP_ij = T(0);
-                T KCP_ji = T(0);
-                for (int l = 0; l < 3; ++l) {
-                    const T Ki_l = K(i,l);
-                    const T Kj_l = K(j,l);
-                    const T Pj_l = PCt(j,l); // CP(l,j) ≈ PCt(j,l)
-                    const T Pi_l = PCt(i,l); // CP(l,i) ≈ PCt(i,l)
-
-                    KCP_ij += Ki_l * Pj_l;
-                    if (j != i) {
-                        KCP_ji += Kj_l * Pi_l;
-                    }
-                }
-                if (j == i) {
-                    KCP_ji = KCP_ij;
-                }
-
-                // K S Kᵀ (i,j)
-                T KSK_ij = T(0);
-                for (int a = 0; a < 3; ++a) {
-                    const T Kia = K(i,a);
-                    for (int b = 0; b < 3; ++b) {
-                        const T Kjb = K(j,b);
-                        KSK_ij += Kia * S(a,b) * Kjb;
-                    }
-                }
-                const T delta = - (KCP_ij + KCP_ji) + KSK_ij;
-
-                // Apply symmetric update
-                Pext(i,j) += delta;
-                if (j != i) {
-                    Pext(j,i) = Pext(i,j);
-                }
-            }
-        }
-        // Final symmetry clean-up (cheap but good hygiene)
-        symmetrize_Pext_();
+        ou_detail::joseph_update3(Pext, K, S, PCt);
     }
 
     void zero_AL_cross_cov_once_() {
@@ -1815,13 +1767,11 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     Matrix12& F_LL = F_LL_scratch_; F_LL.setZero();
     Matrix12& Q_LL = Q_LL_scratch_; Q_LL.setZero();
 
-    // Build F_LL per axis
+    // The OU transition is identical on all three axes.
+    const T tau = std::max(T(1e-6), tau_aw);
+    Eigen::Matrix<T,4,4> Phi_axis;
+    PhiAxis4x1_analytic(tau, Ts, Phi_axis);
     for (int axis = 0; axis < 3; ++axis) {
-        const T tau = std::max(T(1e-6), tau_aw);
-
-        Eigen::Matrix<T,4,4> Phi_axis;
-        PhiAxis4x1_analytic(tau, Ts, Phi_axis);
-
         const int idx[4] = {0,3,6,9}; // [v,p,S,a] offsets
         for (int i = 0; i < 4; ++i)
             for (int j = 0; j < 4; ++j)
@@ -1854,11 +1804,12 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     } else {
         // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
         const int idx[4] = {0,3,6,9};
+        // Equal stationary variances have identical discretizations within this step.
+        Eigen::Matrix<T,4,4> Qd_axis;
         for (int axis = 0; axis < 3; ++axis) {
-            const T tau    = std::max(T(1e-6), tau_aw);
             const T sigma2 = Sigma_aw_stat(axis, axis);
-            Eigen::Matrix<T,4,4> Qd_axis;
-            QdAxis4x1_analytic(tau, Ts, sigma2, Qd_axis);
+            if (axis == 0 || sigma2 != Sigma_aw_stat(axis - 1, axis - 1))
+                QdAxis4x1_analytic(tau, Ts, sigma2, Qd_axis);
             for (int i = 0; i < 4; ++i)
                 for (int j = 0; j < 4; ++j)
                     Q_LL(idx[i] + axis, idx[j] + axis) = Qd_axis(i,j);
@@ -1866,6 +1817,8 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         Q_LL = T(0.5) * (Q_LL + Q_LL.transpose());
     }
 
+    // F_LL couples only like axes: each row has entries at k = row % 3 (mod 3).
+    // Cross-axis covariance remains dense.
     // Mean propagation for [v,p,S,a_w]
     Vector12& x_lin_prev = x_lin_prev_scratch_;
     x_lin_prev.template segment<3>(0)  = xext.template segment<3>(OFF_V);
@@ -1878,7 +1831,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     // of an Eigen 12x12 expression to avoid cc1plus OOM on Arduino builds.
     for (int i = 0; i < 12; ++i) {
         T sum = T(0);
-        for (int k = 0; k < 12; ++k) {
+        for (int k = i % 3; k < 12; k += 3) {
             sum += F_LL(i,k) * x_lin_prev(k);
         }
         x_lin_next(i) = sum;
@@ -1898,7 +1851,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     for (int i = 0; i < NL; ++i) {
         for (int j = 0; j < NL; ++j) {
             T sum = T(0);
-            for (int k = 0; k < NL; ++k) {
+            for (int k = i % 3; k < NL; k += 3) {
                 sum += F_LL(i,k) * Pext(OFF_V + k, OFF_V + j);
             }
             tmpLL(i,j) = sum;
@@ -1907,7 +1860,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     for (int i = 0; i < NL; ++i) {
         for (int j = i; j < NL; ++j) {
             T sum = Q_LL(i,j);
-            for (int k = 0; k < NL; ++k) {
+            for (int k = j % 3; k < NL; k += 3) {
                 sum += tmpLL(i,k) * F_LL(j,k);
             }
             Pext(OFF_V + i, OFF_V + j) = sum;
@@ -1929,7 +1882,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     for (int i = 0; i < NA; ++i) {
         for (int j = 0; j < NL; ++j) {
             T sum = T(0);
-            for (int k = 0; k < NL; ++k) {
+            for (int k = j % 3; k < NL; k += 3) {
                 sum += tmpAL(i,k) * F_LL(j,k);
             }
             Pext(i, OFF_V + j) = sum;
@@ -1974,7 +1927,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         for (int i = 0; i < NL; ++i) {
             for (int j = 0; j < NB; ++j) {
                 T sum = T(0);
-                for (int k = 0; k < NL; ++k) {
+                for (int k = i % 3; k < NL; k += 3) {
                     sum += F_LL(i,k) * Pext(OFF_V + k, OFF_BA + j);
                 }
                 tmpLB(i,j) = sum;

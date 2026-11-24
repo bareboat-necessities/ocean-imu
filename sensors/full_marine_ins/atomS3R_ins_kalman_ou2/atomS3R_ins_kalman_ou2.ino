@@ -185,6 +185,23 @@ public:
     pacer_.wait();
     timing_.begin();
 
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms,
+                                                 AtomS3RNavigationImu::kReadyWindowUs);
+
+    if (got_sample) {
+      pacer_.followReadyPoll(sample_us, sample.sample_us);
+      stale_frame_count_ = 0;
+      updateFilter_(sample, poll_ms);
+    } else {
+      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
+      if ((stale_frame_count_ % 50u) == 0u) {
+        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
+      }
+    }
+
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
 
@@ -204,24 +221,9 @@ public:
     }
 #endif
 
-    ImuSample sample{};
-    const uint32_t sample_us = micros();
-    uint32_t poll_ms;
-    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
-
-    if (got_sample) {
-      stale_frame_count_ = 0;
-      updateFilter_(sample, poll_ms);
-    } else {
-      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
-      if ((stale_frame_count_ % 50u) == 0u) {
-        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
-      }
-    }
-
     updateUI_();
     streamSerial_();
-    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US);
   }
 
 private:
@@ -256,7 +258,8 @@ private:
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
   Vector3f m_cal_ = Vector3f::Constant(NAN);
-  float    a_raw_norm_ = 0.0f;
+  Vector3f display_raw_accel_ = Vector3f::Zero();
+  Vector3f previous_raw_mag_ = Vector3f::Constant(NAN);
 
   float dt_               = 0.0f;
   float roll_deg_         = 0.0f;
@@ -346,6 +349,7 @@ private:
 
     navigation_imu_.configure(M5.Imu);
     temperature_ = {};
+    previous_raw_mag_.setConstant(NAN);
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
@@ -529,15 +533,19 @@ private:
     Vector3f a_raw = s.a;
     Vector3f w_raw = s.w;
 
-    a_raw_norm_ = a_raw.norm();
+    display_raw_accel_ = a_raw;
     imu_spike_.apply(a_raw, w_raw, dt_);
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
-    m_cal_ = runtime_.applyMag(s.m);
-
-    mag_norm_uT_ = m_cal_.norm();
-    mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    // The AUX field is held between magnetic reads. Reuse the calibration
+    // while its input is identical; delivery to the filter still follows the gate.
+    if (s.m != previous_raw_mag_) {
+      previous_raw_mag_ = s.m;
+      m_cal_ = runtime_.applyMag(s.m);
+      mag_norm_uT_ = m_cal_.norm();
+      mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    }
     mag_fresh_ = mag_gate_.update(mag_ok_, poll_ms);
     if (mag_fresh_) rates_.countMag();
 
@@ -638,7 +646,7 @@ private:
     refreshOutput_();
     display_.publish({heading_deg_, heading_mag_deg_, roll_deg_, pitch_deg_, heave_m_,
                       wave_.dir_ok ? wave_.dir_deg : wave_.axis_deg, mag_norm_uT_,
-                      a_raw_norm_, a_cal_.norm(), wave_.sign_raw, heading_valid_,
+                      display_raw_accel_.norm(), a_cal_.norm(), wave_.sign_raw, heading_valid_,
                       heading_mag_ok_, mag_ok_, mag_fresh_});
   }
 

@@ -27,6 +27,13 @@ class SamplePacer {
     started_ = true;
   }
 
+  // Only a successful DRDY retry is evidence that the host slot was early.
+  // Anchor the next wait to that poll so a slightly slower sensor clock can
+  // move the release phase without eventually losing a whole sample.
+  void followReadyPoll(uint32_t first_us, uint32_t ready_us) {
+    if (ready_us != first_us) phase_us_ = ready_us;
+  }
+
  private:
   const uint32_t period_us_;
   uint32_t phase_us_ = 0;

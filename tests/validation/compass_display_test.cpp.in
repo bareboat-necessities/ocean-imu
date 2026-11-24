@@ -103,7 +103,7 @@ struct App {
   float heading_deg_ = 0, heading_mag_deg_ = 0, roll_deg_ = 0, pitch_deg_ = 0, heave_m_ = 0;
   float mag_norm_uT_ = 0, a_raw_norm_ = 0;
   bool heading_valid_ = true, heading_mag_ok_ = true, mag_ok_ = true, mag_fresh_ = true;
-  struct { float norm() { return 1; } } a_cal_;
+  struct { float norm() { return 1; } } a_cal_, display_raw_accel_;
   struct { bool dir_ok; float dir_deg, axis_deg; int sign_raw; } wave_{};
   void refreshOutput_() {}
   /* UPDATE */
