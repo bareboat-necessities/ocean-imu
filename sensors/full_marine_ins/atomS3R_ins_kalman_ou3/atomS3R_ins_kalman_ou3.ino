@@ -45,7 +45,7 @@ ATOMS3R_END_FILTER_MATH
 #endif
 #include "AtomS3R/AtomS3R_MarineCompassDisplay.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
@@ -226,7 +226,7 @@ public:
 
     updateUI_();
     streamSerial_();
-    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());
   }
 
 private:
@@ -247,9 +247,12 @@ private:
 
   uint32_t last_ui_ms_          = 0;
   uint32_t last_serial_ms_      = 0;
+#if SEA_STATE_SERIAL_NMEA
+  atoms3r_ical::MarineNmeaBatch nmea_batch_{};
   uint32_t last_wave_nmea_ms_   = 0;
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_   = 0;
+#endif
 
   Fusion fusion_{};
   bool output_dirty_ = false, have_output_ = false;
@@ -364,6 +367,9 @@ private:
   }
 
   void resetFusion_() {
+#if SEA_STATE_SERIAL_NMEA
+    nmea_batch_.reset();
+#endif
     output_dirty_ = false;
     have_output_ = false;
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
@@ -663,6 +669,7 @@ private:
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
+    if (nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
     if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
     if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
@@ -676,36 +683,22 @@ private:
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_); // startup proxy attitude until Live
-    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+    nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), valid);
 
     if (now_ms - last_wave_nmea_ms_ >= atoms3r_timing::NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
-      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
-      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
-      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_.sign_raw, wave_.sign_polarity, wave_.sign_ok);
-      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
+      nmea_batch_.addWave(wave_, fusion_.isLive());
     }
-
     if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
-      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+      nmea_batch_.addTemperature(imu_temp_c_);
     }
-
     if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
       last_status_nmea_ms_ = now_ms;
-      nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
-                          valid,
-                          fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
-                          fusion_.hasMagNorthLock(),
-                          gyro_bias_.learning(),
-                          acc_bias_estimating_,
-                          rates_.imuHz(),
-                          rates_.magHz());
+      nmea_batch_.addStatus({fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
+                             fusion_.hasMagNorthLock(), gyro_bias_.learning(), acc_bias_estimating_,
+                             rates_.imuHz(), rates_.magHz()});
     }
-
-    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), valid);
 #else
   #if ARDUINO_PLOTTER
     Serial.printf(

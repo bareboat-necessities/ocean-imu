@@ -30,21 +30,26 @@ from the end of the pacing wait through output publication. A steady 200 Hz wind
 has mean sample spacing near 5,000 µs. `accepted_over_4500us=0` means every accepted
 update in the window had at least 0.5 ms of processing headroom. The profile prints
 one summary per window to keep per-sample serial writes out of the measurement.
-For OU-II and OU-III, compare `sample_gap_min_us`, `sample_gap_max_us`, and
-`jitter_mean_abs_us` to see alternating short and long intervals even
-when the mean is 5,000 µs. `gaps_over_7_5ms` counts unusually long intervals. Each OU sketch timestamps the poll that found the
-complete BMI270 frame. It can start another readiness check within 300 µs of
-the scheduled poll if either ready flag is still missing. A successful retry anchors
-the next 5 ms wait to the observed ready poll so a slower sensor clock can shift the phase.
+OU-II, OU-III and plain TFG timestamp the host poll that found a complete BMI270 frame.
+Compare `sample_gap_min_us`, `sample_gap_max_us` and `jitter_mean_abs_us` to
+see variation even when the mean is 5,000 µs. `gaps_over_7_5ms` counts host gaps
+longer than 7.5 ms. An early poll can retry within 300 µs. A successful retry
+anchors the next 5 ms wait to the observed ready poll.
 
-On OU-II and OU-III, `[IMU] estimator clock: BMI270 200 Hz` at startup means
-the filter uses the frame number from the sensor clock captured in the same I²C
-burst as acceleration and angular rate. Consecutive frames contribute 5 ms each.
-A jump of two frames contributes 10 ms, and a repeat is discarded. The
-`[TIMING]` gap fields continue to measure host poll spacing. The accompanying
-`[ESTIMATOR]` line gives the minimum and maximum filter step in milliseconds. If the direct
-reader or matching 200 Hz accelerometer and gyro configuration is unavailable,
-the startup line reports `host micros` and the filter uses elapsed host time.
+On these three sketches, the startup message `[IMU] estimator clock: BMI270 200 Hz`
+means the reader verified both inertial output rates and captures the sensor clock
+in the same I²C burst as acceleration and angular rate. This works with both
+M5 raw and Bosch-compensated magnetic calibrations. Consecutive frames pass
+5 ms to the estimator, a two-frame advance passes 10 ms, and a repeated frame
+is discarded. If the stock reader or matching rates are unavailable, startup
+reports `host micros`. The profile line `[ESTIMATOR] dt_min_ms=5.000 dt_max_ms=5.000 host_steps=0`
+identifies a window of 5 ms estimator steps. A nonzero `host_steps` counts
+accepted intervals timed from the host, including recovery from a sensor-clock discontinuity.
+
+The three sketches publish NMEA heading and tilt on the 80 ms output deadline.
+Heave, wave, status, temperature and rate-of-turn sentences follow over the next
+sampling slots using values captured at the same deadline. This spreads serial work
+across the cycle while keeping the inertial and covariance updates at full rate.
 
 ## Hardware
 

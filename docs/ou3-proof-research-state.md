@@ -1,10 +1,11 @@
-## BMI270 frame timing in the OU-III sketch
+## BMI270 frame timing and OU-III gyro-bias prediction
 
-The firmware clock change expired the sketch and whole-source bindings (class E). The native planar replay reproduced all 252 secant columns at both radii with the original finite-word results.
+The OU-III sketch can use the BMI270 frame clock with either saved M5 raw or Bosch-compensated magnetic calibration on a supported 200 Hz configuration. Previously a saved raw calibration forced host-read timing even when the sensor clock was available. The gyro-bias prediction also skips an attitude transition that the same step overwrote and reuses the full-step gyro-bias integral in the process noise quadrature. The acquisition defect and expired source bindings are class E.
 
-- **Structures preserved.** The replay retains its timestamped input, full state, covariance, bias, tuner and magnetic service history. The deployed OU sketch now derives its integration interval from the observed 200 Hz BMI270 frame count when available.
-- **Relaxations introduced.** The fixed-input replay covers the estimator. A separate register-level timing test covers host jitter, missed and duplicate frames, fallback and counter wrap.
-- **Scope and next check.** The finite tests produced no counterexample. Physical sensor and host timing together remain to be checked with the firmware timing profile on an AtomS3R.
+- **Structures preserved.** The native replay carries the timestamped input, full state, covariance, biases, tuner and magnetic service history. The sketch keeps consecutive, repeated and missed sensor frames distinct.
+- **Relaxations introduced.** The planar replay uses fixed input timestamps. The register-level regression models sensor and host clocks independently. Neither exercises physical bus or display latency.
+- **Retained results and counterexamples.** Both radii reproduced all 252 native secant columns with their previous numerical results. Before/after native predictions also produced byte-identical states and covariances. The gyro-bias branch overwrote the removed block before any covariance read. The Simpson endpoint now consumes the same full-step integral evaluated with the same angular rate and interval. For each carried-history diagnostic, applying the shipping edit before or after inserting its observer produced identical header bytes. The prior finite results retain their scopes. The finite runs yielded no shipping counterexample. The sampling-fidelity bound still requires deployment qualification.
+- **Next falsifiable check.** With raw and compensated calibrations on the same AtomS3R, compare the accepted sensor-frame intervals, host-read gaps and host-timed step count while serial and compass output are active.
 
 ## Full-rate OU covariance kernels
 

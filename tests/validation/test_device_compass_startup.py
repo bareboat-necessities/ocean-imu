@@ -48,11 +48,12 @@ class DeviceCompassStartupTest(unittest.TestCase):
             self.assertNotIn("waitForNextLoopTick_", tick)
             self.assertIn("navigation_imu_.read(", tick)
             self.assertIn("Input::pollButton();", tick)
-            if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3"):
+            if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_tfg"):
                 self.assertLess(tick.index("updateFilter_(sample"), tick.index("Input::pollButton();"))
                 self.assertIn("AtomS3RNavigationImu::kReadyWindowUs", tick)
                 self.assertIn("pacer_.followReadyPoll(sample_us, sample.sample_us)", tick)
-                self.assertIn("timing_.finish(sample.sample_us,", tick)
+                self.assertIn("navigation_imu_.configure(M5.Imu, true);", function(path.read_text(), "reinitImu_"))
+                self.assertIn("timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());", tick)
                 self.assertIn("sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_)", tick)
                 self.assertIn("fusion_.update(dt_,", function(path.read_text(), "updateFilter_"))
             else:
@@ -218,12 +219,11 @@ int main() {
             with self.subTest(sketch=path.name):
                 source = path.read_text()
                 update = function(source, "updateFilter_")
-                if path.stem != "atomS3R_ins_tfg":
-                    for consumer in ("streamSerial_", "updateUI_"):
-                        self.assertIn("refreshOutput_();", function(source, consumer))
-                    self.assertIn("rot_.update(world_z, dt_);", update)
-                    self.assertIn("if (!have_output_) refreshOutput_();", update)
-                    update += function(source, "refreshOutput_")
+                for consumer in ("streamSerial_", "updateUI_"):
+                    self.assertIn("refreshOutput_();", function(source, consumer))
+                self.assertIn("rot_.update(world_z, dt_);", update)
+                self.assertIn("if (!have_output_) refreshOutput_();", update)
+                update += function(source, "refreshOutput_")
                 compass = function(source, "updateCompassHeading_")
                 serial = function(source, "streamSerial_")
                 self.assertIn("m_cal_ = runtime_.applyMag(s.m);", update)
@@ -299,7 +299,7 @@ enum imu_t { imu_bmi270, other };
 struct imu_3d_t { float x, y, z; };
 struct imu_data_t { imu_3d_t accel, gyro, mag; };
 struct IMU_Base {
-    struct imu_convert_param_t { float accel_res, gyro_res; };
+    struct imu_convert_param_t { float accel_res, gyro_res, mag_res; };
     int16_t raw[6]{};
     uint8_t ready = 0, next_ready = 0;
     uint8_t aux[8]{0x80,1,0x10,2,0x38,3,0x40,4};
@@ -309,7 +309,7 @@ struct IMU_Base {
     bool combined_ok = true;
     int status_reads = 0, data_reads = 0, combined_reads = 0, aux_reads = 0;
     bool status_ok = true, burst_ok = true;
-    void getConvertParam(imu_convert_param_t* p) { *p = {8.f/32768, 2000.f/32768}; }
+    void getConvertParam(imu_convert_param_t* p) { *p = {8.f/32768, 2000.f/32768, 10.f*4912/32760}; }
     bool readRegister(uint8_t reg, uint8_t* dst, size_t len) {
         clock_us += 100;
         if (reg == 0x40) {
@@ -347,10 +347,11 @@ struct IMU_Class {
     enum { sensor_mask_mag = 4 };
     imu_t type = imu_bmi270;
     IMU_Base* secondary = nullptr;
-    int offset = 0, updates = 0, data_reads = 0;
+    int offsets[9]{}, updates = 0, data_reads = 0;
     imu_t getType() { return type; }
     IMU_Base* getImuInstancePtr(int i) { return i == 0 ? &dev : secondary; }
-    int getOffsetData(int i) { return i == 5 ? offset : 0; }
+    int getOffsetData(int i) { return offsets[i]; }
+    void getTemp(float* t) { *t = 25.f; }
     unsigned update() { ++updates; return 7; }
     imu_data_t getImuData() { ++data_reads; return {{1,2,3},{4,5,6},{7,8,9}}; }
 };
@@ -365,7 +366,13 @@ struct Vector3f {
     float x, y, z;
     Vector3f(float x, float y, float z) : x(x), y(y), z(z) {}
 };
-Vector3f map_mag_to_body_uT_(m5::imu_3d_t m) { return {m.y, m.x, -m.z}; }
+Vector3f map_sensor_xyz_to_body_ned_(float x, float y, float z, float scale) {
+    return {y*scale, x*scale, -z*scale};
+}
+// Leave inertial axes in M5 coordinates here to compare with its conversion.
+m5::imu_3d_t map_acc_to_body_ned_(m5::imu_3d_t a) { return a; }
+m5::imu_3d_t map_gyr_to_body_ned_(m5::imu_3d_t w) { return w; }
+''' + function(header, "map_mag_to_body_uT_") + r'''
 struct {
     bool compensated = true, have_last = false; m5::IMU_Base* bmi270 = &m5::dev;
     uint8_t last_aux[8]{}; m5::imu_3d_t last_m5{};
@@ -373,18 +380,17 @@ struct {
 } source;
 auto& atoms3rMagSource() { return source; }
 ''' + function(header, "readMagBody_") + r'''
-struct ImuSample { int32_t bmi270_frame = -1; uint32_t sample_us; m5::imu_data_t data; Vector3f mag{NAN,NAN,NAN}; };
-struct ImuTemperatureCache {};
+struct ImuSample {
+    int32_t bmi270_frame = -1;
+    uint32_t sample_us, mask;
+    m5::imu_3d_t a, w;
+    Vector3f m{NAN,NAN,NAN};
+    float tempC;
+    MagAcquisition mag_timing;
+};
+struct ImuTemperatureCache { float read(m5::IMU_Class&, uint32_t) { return 25.f; } };
 struct Gate { uint32_t next; bool due(uint32_t ms) const { return ms >= next; } };
-bool readImuMapped(m5::IMU_Class&, unsigned mask, uint32_t frame, ImuSample& s, bool,
-                   ImuTemperatureCache*, bool poll, m5::imu_data_t* data, const Bmi270AuxBurst* burst) {
-    if ((mask & 3u) != 3u) return false;
-    s.sample_us = frame;
-    s.data = *data;
-    s.mag = poll || !source.acquisition.fresh(millis()) ? readMagBody_(data->mag, frame, burst) : source.last_body;
-    return true;
-}
-''' + "class AtomS3RNavigationImu {" + reader + "\n};\n" + r'''
+''' + function(header, "readImuMapped") + "\nclass AtomS3RNavigationImu {" + reader + "\n};\n" + r'''
 // Reproduce the pinned M5Unified IMU_Class::getImuData 16.16 arithmetic with
 // unsigned shifts/negation to define Xtensa wrap at the negative full scale.
 float reference(int16_t sample, bool invert, float scale) {
@@ -429,10 +435,10 @@ int main() {
     assert(poll(0) && dev.combined_reads == 1 && dev.aux_reads == 0 && dev.data_reads == separate);
     assert(source.acquisition.sequence == 1 && source.acquisition.frame_us == frame);
     assert(source.acquisition.read_start_us == frame+100 && source.acquisition.read_end_us == frame+200);
-    assert(s.data.accel.x == data.accel.x && s.data.gyro.z == data.gyro.z);
+    assert(s.a.x == data.accel.x && s.w.z == data.gyro.z);
     float expected[3];
     assert(bmm150Compensate(Bmm150Raw::fromData(dev.aux), source.trim, expected));
-    assert(s.mag.x == expected[1] && s.mag.y == -expected[0] && s.mag.z == expected[2]);
+    assert(s.m.x == expected[1] && s.m.y == -expected[0] && s.m.z == expected[2]);
     dev.aux[0] ^= 1; // Only a status bit changed
     assert(poll(0) && source.acquisition.sequence == 1);
     assert(poll(UINT32_MAX) && dev.combined_reads == 2 && dev.aux_reads == 0 && dev.data_reads == separate+1);
@@ -488,7 +494,7 @@ int main() {
     const int failed_status = dev.status_reads;
     assert(!read_window() && dev.status_reads == failed_status+1);
 
-    // Exercise the same XYZ/AUX bursts and timing admission used by both OU sketches.
+    // Exercise the actual clock and shipping reader used by OU2, OU3 and plain TFG.
     dev.status_ok = true;
     reader.configure(M5.Imu, true);
     Bmi270FrameClock clock;
@@ -505,6 +511,7 @@ int main() {
     assert(sample(host, 0xffff00+5, true)); near(.005f);
     assert(sample(host+5200, 0xffff80+10, false)); near(.005f);
     assert(sample(host+9900, 2, true)); near(.005f);
+    assert(!clock.usedHostTime());
     assert(!sample(host+10200, 9, false)); // a new ready flag for the same XYZ slot
     dev.combined_ok = false; // retry with an inertial + clock burst
     assert(sample(host+20000, 256+5, true)); near(.010f);
@@ -513,17 +520,22 @@ int main() {
     assert(sample(host+35100, 640+9, false)); near(.015f);
     assert(s.bmi270_frame == 5 && dev.clock_bursts >= 6);
     assert(sample(host+40300, 0, false)); near(.0052f); // unexpected counter reset
+    assert(clock.usedHostTime());
     assert(sample(host+45100, 128, false)); near(.005f);
+    assert(!clock.usedHostTime());
     assert(sample(host+400045100, 256, false)); near(400.f); // ambiguous long hiatus
 
+    assert(clock.usedHostTime());
+
     clock.reset();
+    assert(!clock.usedHostTime());
     dev.gyro_odr = 8; // mixed ODR: ordinary bursts and measured host intervals
     reader.configure(M5.Imu, true);
     const int previous_clock_bursts = dev.clock_bursts;
     assert(sample(1000, 80, true)); near(.005f);
     assert(sample(6200, 140, false)); near(.0052f);
     assert(sample(10900, 260, false)); near(.0047f);
-    assert(s.bmi270_frame == -1 && dev.clock_bursts == previous_clock_bursts);
+    assert(clock.usedHostTime() && s.bmi270_frame == -1 && dev.clock_bursts == previous_clock_bursts);
 
     dev.ready = 0xc0; dev.status_ok = false;
     const int reads = dev.data_reads;
@@ -532,20 +544,109 @@ int main() {
     assert(reader.update(M5.Imu, data) == 0 && dev.data_reads == reads+1);
     assert(M5.Imu.updates == 0);
     auto fallback = [&]() {
-        int calls = M5.Imu.updates;
+        const int calls = M5.Imu.updates, data_calls = M5.Imu.data_reads;
         assert(reader.update(M5.Imu, data) == 7);
-        assert(M5.Imu.updates == calls+1 && M5.Imu.data_reads == calls+1);
+        assert(M5.Imu.updates == calls+1 && M5.Imu.data_reads == data_calls+1);
         assert(data.accel.x == 1 && data.gyro.y == 5 && data.mag.z == 9);
     };
-    source.compensated = false; fallback();
-    source.compensated = true;
-    M5.board = m5::board_t::other; reader.configure(M5.Imu); fallback();
-    M5.board = m5::board_t::board_M5AtomS3R;
-    M5.Imu.type = m5::other; reader.configure(M5.Imu); fallback();
-    M5.Imu.type = m5::imu_bmi270;
-    M5.Imu.secondary = &dev; reader.configure(M5.Imu); fallback();
+    source.compensated = false;
+    fallback(); // A source change after configure cannot reuse compensated reads.
+    reader.configure(M5.Imu);
+    fallback(); // Non-opt-in sketches continue to use M5Unified with raw calibration.
+    reader.configure(M5.Imu, true);
+    assert(!reader.frameClockEnabled()); // GYR_CONF is still 100 Hz
+    fallback();
+
+    dev.gyro_odr = 9;
+    dev.burst_ok = true;
+    for (bool trim_available : {true, false}) {
+        // The first case models a saved calibration fitted in M5 raw units.
+        // In the second case reading BMM150 factory trim failed at startup.
+        source.bmi270 = trim_available ? &dev : nullptr;
+        source.have_last = false;
+        source.acquisition = {};
+        reader.configure(M5.Imu, true);
+        assert(reader.frameClockEnabled());
+        const int m5_updates = M5.Imu.updates;
+        const int mag_reads = dev.combined_reads;
+        auto read_raw = [&](uint32_t host, uint32_t frame_id, uint8_t ready) {
+            clock_us = host;
+            dev.sensor_ticks = (frame_id << 7) | (frame_id % 127);
+            dev.ready = ready;
+            return read_window();
+        };
+        auto check_body = [&](float m5_x, float m5_y, float m5_z) {
+            assert(s.m.x == m5_y * .1f && s.m.y == m5_x * .1f && s.m.z == -m5_z * .1f);
+        };
+
+        assert(read_raw(10000, 2, 0xc0));
+        check_body(7, 8, 9); // Use M5's held field until the first AUX-ready event.
+        assert(dev.combined_reads == mag_reads);
+        const float mag_res = 10.f*4912/32760;
+        for (int i = INT16_MIN; i <= INT16_MAX; ++i) {
+            const int16_t words[] = {int16_t(i), int16_t(i+555), int16_t(i+999), 0};
+            std::memcpy(dev.aux, words, sizeof(words));
+            assert(read_raw(clock_us+5000, uint32_t(i-INT16_MIN+3), 0xe0));
+            // BMI270_Class's raw X/Y are signed values after dropping two bits.
+            // Z retains all but bit 0, including the INT16_MIN wrap on inversion.
+            check_body(reference(words[0] >> 2, true, mag_res),
+                       reference(words[1] >> 2, false, mag_res),
+                       reference(int16_t(words[2] & 0xfffe), true, mag_res));
+        }
+        const auto held = s.m;
+        const uint32_t seq = s.mag_timing.sequence;
+        std::memset(dev.aux, 0, sizeof(dev.aux));
+        assert(read_raw(clock_us+5000, 10, 0xc0)); // AUX byte change without DRDY
+        assert(s.mag_timing.sequence == seq && s.m.x == held.x && s.m.y == held.y && s.m.z == held.z);
+        dev.combined_ok = false;
+        assert(read_raw(clock_us+5000, 11, 0xe0)); // Recover XYZ/time, hold the previous field
+        assert(s.bmi270_frame == 11 && s.mag_timing.sequence == seq);
+        assert(s.m.x == held.x && s.m.y == held.y && s.m.z == held.z);
+        dev.combined_ok = true;
+        assert(!read_raw(clock_us+5000, 12, 0x20)); // Mag-only update is held for next full frame
+        assert(read_raw(clock_us+5000, 13, 0xc0));
+        check_body(0, 0, 0);
+        assert(s.mag_timing.sequence == seq+1);
+
+        // Replay 1000 consecutive 200 Hz frames. Host delta cycles through
+        // 5200, 4700 and 5100 us. Include a genuinely missed slot and a
+        // duplicate, neither of which becomes an ordinary 5 ms update.
+        clock.reset();
+        const uint32_t phases[] = {150, 350, 50};
+        constexpr uint32_t missing = 420;
+        const uint32_t base = UINT32_MAX - 12000;
+        for (uint32_t i = 0; i < 1000; ++i) {
+            const uint32_t host_us = base + i*5000 + phases[i%3];
+            const bool got = read_raw(host_us, i, i == missing ? 0 : (i%5 ? 0xc0 : 0xe0));
+            assert(got == (i != missing));
+            if (!got) continue;
+            assert(s.sample_us == host_us && s.bmi270_frame == int32_t(i));
+            assert(clock.advance(s.sample_us, s.bmi270_frame, dt));
+            assert(dt == (i == missing+1 ? .010f : .005f) && !clock.usedHostTime());
+            if (i == 501) {
+                assert(read_raw(host_us+300, i, 0xc0));
+                assert(!clock.advance(s.sample_us, s.bmi270_frame, dt));
+            }
+        }
+        assert(M5.Imu.updates == m5_updates);
+    }
+
+    source.bmi270 = &dev;
+    // True fallbacks retain M5's offsets, devices and measured host intervals.
+    M5.Imu.offsets[8] = 7; reader.configure(M5.Imu, true);
+    assert(!reader.frameClockEnabled()); fallback();
+    M5.Imu.offsets[8] = 0;
+    M5.Imu.secondary = &dev; reader.configure(M5.Imu, true);
+    assert(!reader.frameClockEnabled()); fallback();
     M5.Imu.secondary = nullptr;
-    M5.Imu.offset = 7; reader.configure(M5.Imu); fallback();
+    source.compensated = true;
+    M5.board = m5::board_t::other; reader.configure(M5.Imu, true); fallback();
+    M5.board = m5::board_t::board_M5AtomS3R;
+    M5.Imu.type = m5::other; reader.configure(M5.Imu, true); fallback();
+    M5.Imu.type = m5::imu_bmi270;
+    M5.Imu.secondary = &dev; reader.configure(M5.Imu, true); fallback();
+    M5.Imu.secondary = nullptr;
+    M5.Imu.offsets[5] = 7; reader.configure(M5.Imu, true); fallback();
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:

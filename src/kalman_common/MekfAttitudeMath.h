@@ -195,12 +195,11 @@ inline Eigen::Matrix<T,3,3> simpson_R_Q_RT(const Eigen::Matrix<T,3,1>& w, T step
 
 template<typename T>
 inline Eigen::Matrix<T,3,3> simpson_B_Q_BT(const Eigen::Matrix<T,3,1>& w, T step,
-                                            const Eigen::Matrix<T,3,3>& Q) {
+                                            const Eigen::Matrix<T,3,3>& Q, const Eigen::Matrix<T,3,3>& B1) {
     using Matrix3 = Eigen::Matrix<T,3,3>;
-    Matrix3 Rtmp, B0, Bm, B1;
+    Matrix3 Rtmp, B0, Bm;
     rot_and_B_from_wt(w, T(0), Rtmp, B0);
     rot_and_B_from_wt(w, T(0.5)*step, Rtmp, Bm);
-    rot_and_B_from_wt(w, step, Rtmp, B1);
     return (step/T(6)) * (B0*Q*B0.transpose() + T(4)*Bm*Q*Bm.transpose() + B1*Q*B1.transpose());
 }
 

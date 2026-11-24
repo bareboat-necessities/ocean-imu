@@ -432,10 +432,10 @@ struct PollMagEveryFrame {
   bool due(uint32_t) const { return true; }
 };
 
-// Navigation reads 12 inertial bytes on ordinary samples. When a compensated
-// BMM150 observation is due, read AUX (including RHALL) and inertial data as
-// a single contiguous 20-byte burst. Only the AtomS3R with its stock axis order and
-// cleared M5 offsets uses this reader. The wizard uses the regular driver.
+// Read XYZ, optional BMM150 AUX, and optional sensor time in one burst.
+// Compensated magnetic reads follow the polling gate. Raw magnetic reads
+// follow M5Unified's AUX-ready flag and retain the last converted field.
+// This reader assumes the stock AtomS3R axis order and cleared M5 offsets.
 class AtomS3RNavigationImu {
  public:
   // Permit a short readiness check within the 500 us of nominal OU loop headroom.
@@ -443,20 +443,31 @@ class AtomS3RNavigationImu {
   void configure(decltype(M5.Imu)& imu, bool request_frame_clock = false) {
     device_ = nullptr;
     frame_clock_enabled_ = false;
+    raw_frame_path_ = false;
     auto& src = atoms3rMagSource();
+    auto* primary = imu.getImuInstancePtr(0);
     if (M5.getBoard() != m5::board_t::board_M5AtomS3R || imu.getType() != m5::imu_bmi270 ||
-        !src.compensated || !src.bmi270 || src.bmi270 != imu.getImuInstancePtr(0) ||
-        imu.getImuInstancePtr(1)) return;
-    for (int i = 0; i < 6; ++i) {
+        !primary || imu.getImuInstancePtr(1)) return;
+    // A saved raw-field calibration and a failed BMM150 trim read both select
+    // M5 magnetic units. The 200 Hz inertial clock belongs to the primary BMI270.
+    if ((src.compensated && src.bmi270 != primary) ||
+        (!src.compensated && !request_frame_clock)) return;
+    const int offset_count = src.compensated ? 6 : 9;
+    for (int i = 0; i < offset_count; ++i) {
       if (imu.getOffsetData(i) != 0) return;
     }
-    device_ = src.bmi270;
-    device_->getConvertParam(&scale_);
     if (request_frame_clock) {
       uint8_t config[3];  // ACC_CONF, ACC_RANGE, GYR_CONF
-      frame_clock_enabled_ = device_->readRegister(0x40, config, sizeof(config)) &&
+      frame_clock_enabled_ = primary->readRegister(0x40, config, sizeof(config)) &&
                              (config[0] & 0x0f) == 9 && (config[2] & 0x0f) == 9;
     }
+    if (!src.compensated) {
+      if (!frame_clock_enabled_) return;
+      raw_mag_ = imu.getImuData().mag;
+      raw_frame_path_ = true;
+    }
+    device_ = primary;
+    device_->getConvertParam(&scale_);
   }
 
   bool frameClockEnabled() const { return frame_clock_enabled_; }
@@ -487,7 +498,8 @@ class AtomS3RNavigationImu {
   uint32_t update_(decltype(M5.Imu)& imu, m5::imu_data_t& data, Bmi270AuxBurst* aux,
                    uint32_t& frame_us, uint32_t ready_window_us, int32_t* frame = nullptr) const {
     if (aux) aux->acquired = false;
-    if (!device_ || !atoms3rMagSource().compensated) {
+    const bool raw_mag = !atoms3rMagSource().compensated;
+    if (!device_ || (raw_mag && !raw_frame_path_)) {
       const auto mask = imu.update();
       if ((mask & kImuMaskAccelGyro) == kImuMaskAccelGyro) data = imu.getImuData();
       return mask;
@@ -502,7 +514,11 @@ class AtomS3RNavigationImu {
       const uint32_t start_us = frame_us;
       do {
         const uint32_t next_us = micros();
-        if (next_us - start_us >= ready_window_us) return 0;
+        if (next_us - start_us >= ready_window_us) {
+          // M5 retains a magnetic-only update for the next inertial frame.
+          if (raw_mag && (ready & 0x20)) break;
+          return 0;
+        }
         uint8_t status;
         if (!device_->readRegister(0x1d, &status, 1)) return 0;
         ready |= status;
@@ -517,15 +533,27 @@ class AtomS3RNavigationImu {
     int16_t block[12];
     const size_t xyz_bytes = 12 + (frame ? 3 : 0);
     int16_t* raw = block + 4;
-    if (aux && (ready & 0xc0) == 0xc0) {
+    bool have_xyz = false;
+    if (raw_mag) {
+      if (ready & 0x20) {
+        have_xyz = device_->readRegister(0x04, reinterpret_cast<uint8_t*>(block), 8 + xyz_bytes);
+        if (have_xyz) raw_mag_ = mappedRawMag_(block, scale_.mag_res);
+        else {
+          ready &= ~0x20u;
+          if (!(ready & 0xc0)) return 0;
+        }
+      }
+      data.mag = raw_mag_;
+    } else if (aux && (ready & 0xc0) == 0xc0) {
       aux->start_us = micros();
       aux->acquired = device_->readRegister(0x04, reinterpret_cast<uint8_t*>(block), 8 + xyz_bytes);
+      have_xyz = aux->acquired;
       if (aux->acquired) {
         aux->end_us = micros();
         memcpy(aux->bytes, block, sizeof(aux->bytes));
       }
     }
-    if ((!aux || !aux->acquired) &&
+    if (!have_xyz &&
         !device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), xyz_bytes)) return 0;
     const uint32_t mask = ((ready & 0x80) ? ATOMS3R_IMU_MASK_ACCEL : 0u) |
                           ((ready & 0x40) ? ATOMS3R_IMU_MASK_GYRO : 0u) |
@@ -552,6 +580,20 @@ class AtomS3RNavigationImu {
     return v;
   }
 
+  // BMI270_Class::getImuRawData followed by IMU_Class::getImuData on
+  // AtomS3R: X/Y shift by two, Z clears bit zero, axes are -X, +Y, -Z.
+  // The 16.16 sign flip wraps at INT16_MIN, just as for the gyro above.
+  static m5::imu_3d_t mappedRawMag_(const int16_t* raw, float scale) {
+    m5::imu_3d_t v;
+    v.x = -(raw[0] >> 2) * scale;
+    v.y = (raw[1] >> 2) * scale;
+    const int16_t z = static_cast<int16_t>(raw[2] & 0xfffe);
+    v.z = static_cast<int16_t>(-z) * scale;
+    return v;
+  }
+
+  mutable m5::imu_3d_t raw_mag_{};
+  bool raw_frame_path_ = false;
   bool frame_clock_enabled_ = false;
   m5::IMU_Base* device_ = nullptr;
   m5::IMU_Base::imu_convert_param_t scale_{};

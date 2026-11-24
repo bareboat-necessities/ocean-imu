@@ -21,7 +21,7 @@ struct {
     writes.emplace_back(line, n);
   }
 } Serial;
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 
 template<class... Args>
 void expect(bool wholeBody, const char* fmt, Args... args) {
@@ -53,7 +53,60 @@ void checkValues(float value) {
   assert(Serial.writes.empty());
 }
 
+// The OU sketches send heading and tilt immediately. Compare everything that
+// follows to the old synchronous publisher, including filtered startup waves.
+void checkMarineNmeaBatch() {
+  atoms3r_ical::MarineNmeaBatch batch;
+  for (unsigned flags = 0; flags < 32; ++flags) {
+    const bool wave_due = flags & 1;
+    const bool temp_due = flags & 2;
+    const bool status_due = flags & 4;
+    const bool live = flags & 8;
+    const bool heading_valid = live && (flags & 16);
+    auto wave = wave_direction::WaveDirectionReport::from(48.3f, BACKWARD, live);
+    const float temp = live ? 38.5f : NAN;
+
+    nmea_xdr_heave("II", -0.0546f);
+    nmea_xdr_heave_speed("II", 1.103f);
+    if (wave_due) {
+      nmea_xdr_wave_axis_rel("II", wave.axis_deg, wave.axis_ok);
+      nmea_xdr_wave_direction_rel("II", wave.dir_deg, wave.dir_ok);
+      nmea_txt_wave_direction_sign("II", wave.sign_raw, wave.sign_polarity, wave.sign_ok);
+      nmea_txt_wave_direction_confidence("II", wave.conf_pct, live);
+    }
+    if (temp_due) nmea_xdr_imu_temp("II", temp);
+    if (status_due) nmea_txt_ins_status("II", heading_valid, live, false, true, false, 199.8f, 24.9f);
+    nmea_rot("II", -16.3f, heading_valid);
+    std::deque<std::string> expected;
+    expected.swap(Serial.writes);
+
+    batch.begin(-0.0546f, 1.103f, -16.3f, heading_valid);
+    if (wave_due) batch.addWave(wave, live);
+    if (temp_due) batch.addTemperature(temp);
+    if (status_due) batch.addStatus({live, false, true, false, 199.8f, 24.9f});
+    wave = {}; // A new IMU sample may arrive before the next sentence is sent.
+
+    size_t previous_size = 0;
+    unsigned slots = 0;
+    while (batch.sendNext("II")) {
+      assert(++slots <= 5);
+      assert(Serial.writes.size() - previous_size <= 2);
+      previous_size = Serial.writes.size();
+    }
+    assert(Serial.writes == expected);
+    Serial.writes.clear();
+  }
+
+  batch.begin(0.0f, 1.0f, 2.0f, true);
+  assert(batch.sendNext("II"));
+  batch.reset();
+  assert(!batch.sendNext("II"));
+  assert(Serial.writes.size() == 2);
+  Serial.writes.clear();
+}
+
 int main() {
+  checkMarineNmeaBatch();
   // Exactly halfway, either side, signed zero, nonfinite and large inputs.
   for (float x : {0.0f, -0.0f, 2.5f, -2.5f, 127.5f, 0.25f, -31.25f, 0.12345f,
                   0.1235f, 83.35f, 838860.75f, std::numeric_limits<float>::max()}) {

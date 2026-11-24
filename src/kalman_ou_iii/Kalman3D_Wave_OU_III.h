@@ -811,8 +811,8 @@ class Kalman3D_Wave_OU_III {
     }
 
     // Simpson’s rule for ∫_0^T B(s) Q B(s)^T ds
-    EIGEN_STRONG_INLINE Matrix3 simpson_B_Q_BT_(const Vector3& w, T step, const Matrix3& Q) const {
-        return ocean_imu::kalman::ou_detail::simpson_B_Q_BT(w, step, Q);
+    EIGEN_STRONG_INLINE Matrix3 simpson_B_Q_BT_(const Vector3& w, T step, const Matrix3& Q, const Matrix3& Bstep) const {
+        return ocean_imu::kalman::ou_detail::simpson_B_Q_BT(w, step, Q, Bstep);
     }
 
     EIGEN_STRONG_INLINE bool is_isotropic3_(const Matrix3& S, T tol = T(1e-9)) const {
@@ -1659,28 +1659,16 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
     qref.normalize();
 
     // Attitude block F_AA, Q_AA
-    Matrix3 I = Matrix3::Identity();
     const Vector3 w = last_gyr_bias_corrected;
-    const T omega = w.norm();
-    const T theta = omega * Ts;
-
     MatrixBaseN& F_AA = F_AA_scratch_;
     F_AA.setIdentity();
-
-    if (theta < T(1e-5)) {
-        Matrix3 Wx = skew_symmetric_matrix(w);
-        F_AA.template topLeftCorner<3,3>() = I - Wx*Ts + (Wx*Wx)*(Ts*Ts/T(2));
-    } else {
-        Matrix3 W = skew_symmetric_matrix(w / (omega + std::numeric_limits<T>::epsilon()));
-        const T s = std::sin(theta), c = std::cos(theta);
-        F_AA.template topLeftCorner<3,3>() = I - s*W + (T(1)-c)*(W*W);
-    }
+    [[maybe_unused]] Matrix3 Bstep;
     if constexpr (with_gyro_bias) {
-		Matrix3 Rstep, Bstep;
-		rot_and_B_from_wt_(w, Ts, Rstep, Bstep);
+        Matrix3 Rstep;
+        rot_and_B_from_wt_(w, Ts, Rstep, Bstep);
 
-		// exact discrete attitude error transition
-		F_AA.template topLeftCorner<3,3>() = Rstep;
+        // exact discrete attitude error transition
+        F_AA.template topLeftCorner<3,3>() = Rstep;
 
         // Left-multiplicative WORLD->BODY' attitude error:
         //   δθ̇ = -[ω]× δθ + δb_g + ...
@@ -1688,7 +1676,19 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         //   Φ_{θb} = +∫_0^Ts exp(-[ω]× s) ds
         // whose small-angle limit is
         //   +I*Ts - 1/2 [ω]× Ts² + ...
-		F_AA.template block<3,3>(0,3) = Bstep;
+        F_AA.template block<3,3>(0,3) = Bstep;
+    } else {
+        const Matrix3 I = Matrix3::Identity();
+        const T omega = w.norm();
+        const T theta = omega * Ts;
+        if (theta < T(1e-5)) {
+            Matrix3 Wx = skew_symmetric_matrix(w);
+            F_AA.template topLeftCorner<3,3>() = I - Wx*Ts + (Wx*Wx)*(Ts*Ts/T(2));
+        } else {
+            Matrix3 W = skew_symmetric_matrix(w / (omega + std::numeric_limits<T>::epsilon()));
+            const T s = std::sin(theta), c = std::cos(theta);
+            F_AA.template topLeftCorner<3,3>() = I - s*W + (T(1)-c)*(W*W);
+        }
     }
 
     MatrixBaseN& Q_AA = Q_AA_scratch_;
@@ -1717,7 +1717,7 @@ void Kalman3D_Wave_OU_III<T, with_gyro_bias, with_accel_bias>::time_update(
         // ∫ B(s) Qbg B(s)^T ds  (Simpson)
         Matrix3 I_BB = Matrix3::Zero();
         if constexpr (with_gyro_bias) {
-            I_BB = simpson_B_Q_BT_(w, Ts, Qbg);
+            I_BB = simpson_B_Q_BT_(w, Ts, Qbg, Bstep);
         }
 
         // Q_{θθ} = I_R + I_BB

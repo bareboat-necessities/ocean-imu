@@ -5,7 +5,7 @@
   "authoritative_shipping_sources": [
     {
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "git_blob_sha": "8323202961b61dcf7a3b24a65b27373e06077455"
+      "git_blob_sha": "18f9d19bec00e9b4de972bc11a61293ffae44689"
     },
     {
       "path": "src/kalman_ou_common/OUJosephUpdate.h",
@@ -49,15 +49,15 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "8fe0b6eab9da0c7f633563ba40aa6df8a354155a"
+      "git_blob_sha": "5f172649a0b2640867ef9fc1e16e6b24eb21b246"
     },
     {
       "path": "src/AtomS3R/AtomS3R_Bmi270FrameClock.h",
-      "git_blob_sha": "21c4727bd70ebb48644dc1a9ae3d46095fa5964d"
+      "git_blob_sha": "76675a018855689b03a0c3e23e8feb5c6e1448df"
     },
     {
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "git_blob_sha": "22578863f18208efa6fe469d83df0b7fb02d341f"
+      "git_blob_sha": "e48dfd861607ad56e81523a0aebdc20d17dd5054"
     },
     {
       "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "62e518a6d14dcbcfdccfc588b0192930dba97475"
+      "git_blob_sha": "1aba3b4293a8f100862971f7aefabe48ef7f4979"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -267,7 +267,7 @@
     },
     {
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "git_blob_sha": "bf33259ad4af39d0289addc8ad037aefcf1bcac8"
+      "git_blob_sha": "dedba283ab5faa1636b2d8af166669bb568bff67"
     },
     {
       "path": "reports/results/ou3_stability/aggregate-floor-certificate.json",
@@ -283,7 +283,7 @@
     },
     {
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "git_blob_sha": "0d8d76948561c8d09ef087a62e70524ba69c47c7"
+      "git_blob_sha": "9ba2890a892ded72d57a98c6b0c9a7095263bf2c"
     },
     {
       "path": "reports/results/ou3_stability/construction-history-feasibility.json",
@@ -291,11 +291,11 @@
     },
     {
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "git_blob_sha": "156e3bbf77428755324f5b1511a9c05645e36d6c"
+      "git_blob_sha": "cd6e87594f8ecf402c1fcdf4d64831019cde2b2b"
     },
     {
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "git_blob_sha": "f532816b0022559095ffef9f2dfba51255a2d0b5"
+      "git_blob_sha": "89b38ac55a7c16a292c0482867b0915821fb1641"
     },
     {
       "path": "reports/results/ou3_stability/lemma-manifest.json",
@@ -307,7 +307,7 @@
     },
     {
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "git_blob_sha": "83c8f6fd65228bed2ef0008e848514f9a1821746"
+      "git_blob_sha": "4f89e11d6267bd2bc8ceebdcc569dd6c8862b9f2"
     },
     {
       "path": "reports/results/ou3_stability/regime-certificate.json",
@@ -319,11 +319,11 @@
     },
     {
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "git_blob_sha": "f6a60e3cb575cb1662ba0a8a41c4de2be32082eb"
+      "git_blob_sha": "0da0c310cce056e5fc94fca7f450fc7685ba8c12"
     },
     {
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "git_blob_sha": "2ee6d2d3146807a04e086450bfe41268b8da41ef"
+      "git_blob_sha": "549c5ab0663a3937f2e7aa54539499b03fbe9daa"
     },
     {
       "path": "reports/results/ou3_stability/signed-injection-certificate.json",
@@ -347,7 +347,7 @@
     },
     {
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "git_blob_sha": "7fb8974d66d8418f948a0e9b2e9dc413ba278f72"
+      "git_blob_sha": "8b29df5aa51c037e80b73501a9308681615f853b"
     },
     {
       "path": "src/kalman_common/SeaStateFusionFilterCommon.h",
@@ -359,7 +359,7 @@
     },
     {
       "path": "src/kalman_common/MekfAttitudeMath.h",
-      "git_blob_sha": "90957c984e4149ee7cf6ea5e4c2fb8b0df94682d"
+      "git_blob_sha": "1c6c906d48472ff959725eaebf87188bb8d33f32"
     },
     {
       "path": "src/kalman_common/CovarianceProjection.h",
@@ -907,7 +907,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "e4e9d535bfdcfdd6bca73cb699b6c68883b3b831"
+      "git_blob_sha": "7cc17dd3a4b08837eaffe6d7f2b9231219bdf69f"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -923,7 +923,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "git_blob_sha": "295a64e166291f5339d8ca062a815e642bd9be11"
+      "git_blob_sha": "381c0778d251112c2533229c8d139eed45daa210"
     },
     {
       "path": "tests/validation/test_ou3_compatibility_quotient.py",
@@ -1051,7 +1051,7 @@
     },
     {
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "git_blob_sha": "10f764869840a16a15eaffa15f8e9f74fd83075e"
+      "git_blob_sha": "be663ee9e4cd3c26ba32b4b06ebc95b2e4f54927"
     },
     {
       "path": "docs/ou3-measurement-frame-loss.md",

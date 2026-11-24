@@ -74,7 +74,7 @@ ATOMS3R_END_FILTER_MATH
 #endif
 #include "AtomS3R/AtomS3R_MarineCompassDisplay.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
@@ -106,6 +106,7 @@ ATOMS3R_END_FILTER_MATH
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "AtomS3R/AtomS3R_LoopTiming.h"
+#include "AtomS3R/AtomS3R_Bmi270FrameClock.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -185,6 +186,24 @@ public:
     pacer_.wait();
     timing_.begin();
 
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms,
+                                                 AtomS3RNavigationImu::kReadyWindowUs) &&
+                            sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_);
+
+    if (got_sample) {
+      pacer_.followReadyPoll(sample_us, sample.sample_us);
+      stale_frame_count_ = 0;
+      updateFilter_(sample, poll_ms);
+    } else {
+      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
+      if ((stale_frame_count_ % 50u) == 0u) {
+        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
+      }
+    }
+
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
 
@@ -204,24 +223,9 @@ public:
     }
 #endif
 
-    ImuSample sample{};
-    const uint32_t sample_us = micros();
-    uint32_t poll_ms;
-    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
-
-    if (got_sample) {
-      stale_frame_count_ = 0;
-      updateFilter_(sample, poll_ms);
-    } else {
-      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
-      if ((stale_frame_count_ % 50u) == 0u) {
-        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
-      }
-    }
-
     updateUI_();
     streamSerial_();
-    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());
   }
 
 private:
@@ -242,11 +246,17 @@ private:
 
   uint32_t last_ui_ms_          = 0;
   uint32_t last_serial_ms_      = 0;
+#if SEA_STATE_SERIAL_NMEA
+  atoms3r_ical::MarineNmeaBatch nmea_batch_{};
   uint32_t last_wave_nmea_ms_   = 0;
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_   = 0;
+#endif
 
   Fusion fusion_{};
+  bool output_dirty_ = false, have_output_ = false;
+  Eigen::Quaternionf output_attitude_ = Eigen::Quaternionf::Identity();
+  bool output_attitude_valid_ = false;
 
   // Application-level companions to the filter.  The OU wrapper owns these;
   // TFG has no wrapper, so they live here and are driven from updateFilter_().
@@ -265,7 +275,8 @@ private:
   Vector3f a_cal_ = Vector3f::Zero();
   Vector3f w_cal_ = Vector3f::Zero();
   Vector3f m_cal_ = Vector3f::Constant(NAN);
-  float    a_raw_norm_ = 0.0f;
+  Vector3f display_raw_accel_ = Vector3f::Zero();
+  Vector3f previous_raw_mag_ = Vector3f::Constant(NAN);
 
   float dt_               = 0.0f;
   float roll_deg_         = 0.0f;
@@ -294,7 +305,7 @@ private:
   bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
-  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  Bmi270FrameClock sample_dt_{};
   ImuSpikeFilter imu_spike_{};
   ins::SampleRateMeter rates_{};
 
@@ -380,8 +391,11 @@ private:
       while (true) delay(100);
     }
 
-    navigation_imu_.configure(M5.Imu);
+    navigation_imu_.configure(M5.Imu, true);
+    Serial.printf("[IMU] estimator clock: %s\n",
+                  navigation_imu_.frameClockEnabled() ? "BMI270 200 Hz" : "host micros");
     temperature_ = {};
+    previous_raw_mag_.setConstant(NAN);
     mag_gate_.reset();
     rates_.reset(millis());
     sample_dt_.reset();
@@ -389,6 +403,11 @@ private:
   }
 
   void resetFusion_() {
+#if SEA_STATE_SERIAL_NMEA
+    nmea_batch_.reset();
+#endif
+    output_dirty_ = false;
+    have_output_ = false;
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
 
@@ -603,7 +622,6 @@ private:
   }
 
   void updateFilter_(const ImuSample& s, uint32_t poll_ms) {
-    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
@@ -611,15 +629,19 @@ private:
     Vector3f a_raw = s.a;
     Vector3f w_raw = s.w;
 
-    a_raw_norm_ = a_raw.norm();
+    display_raw_accel_ = a_raw;
     imu_spike_.apply(a_raw, w_raw, dt_);
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
-    m_cal_ = runtime_.applyMag(s.m);
-
-    mag_norm_uT_ = m_cal_.norm();
-    mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    // The AUX field is held between magnetic reads. Reuse its calibration
+    // while the field is unchanged, keeping the acquisition gate at full rate.
+    if (s.m != previous_raw_mag_) {
+      previous_raw_mag_ = s.m;
+      m_cal_ = runtime_.applyMag(s.m);
+      mag_norm_uT_ = m_cal_.norm();
+      mag_ok_ = std::isfinite(mag_norm_uT_) && (mag_norm_uT_ > 5.0f) && (mag_norm_uT_ < 200.0f);
+    }
     mag_fresh_ = mag_gate_.update(mag_ok_, poll_ms);
     if (mag_fresh_) rates_.countMag();
 
@@ -637,7 +659,7 @@ private:
 
     // During startup the MEKF is deliberately held. Publish the Mahony proxy
     // attitude instead; switch atomically to the fused attitude at Live.
-    Eigen::Quaternionf q_bw;
+    Eigen::Quaternionf q_bw = Eigen::Quaternionf::Identity();
     bool have_attitude = false;
     if (!fusion_.isLive() &&
         fusion_.startupInitPolicy() == Fusion::StartupInitPolicy::MahonyProxy) {
@@ -647,35 +669,39 @@ private:
       have_attitude = q_bw.coeffs().allFinite();
     }
 
-    float roll_est_deg = roll_deg_;
-    float pitch_est_deg = pitch_deg_;
-    float heading_est_deg = heading_deg_;
-    const bool attitude_ok = have_attitude &&
-        ins::rollPitchHeadingFromQuatBw(q_bw, roll_est_deg, pitch_est_deg, heading_est_deg);
-    if (attitude_ok) {
-      q_bw.normalize();
-      roll_deg_  = roll_est_deg;
-      pitch_deg_ = pitch_est_deg;
-    }
-
-    updateCompassHeading_(q_bw, attitude_ok,
-        fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
+    const float q_norm = q_bw.norm();
+    output_attitude_valid_ = have_attitude && std::isfinite(q_norm) && q_norm > 1e-6f;
+    if (output_attitude_valid_) q_bw.coeffs() /= q_norm;
+    output_attitude_ = q_bw;
 
     gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
-    const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
-    rot_.update(w_world.z(), dt_);
+    const float world_z = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_)).z();
+    rot_.update(world_z, dt_);
 
-    const Vector3f velocity_ned_mps = fusion_.mekf().get_velocity();
-    heave_speed_mps_ = -velocity_ned_mps.z();
-
-    wave_hz_         = waveFrequencyHz_();
-    wave_envelope_m_ = displacementScaleM_();
-
+    wave_hz_ = waveFrequencyHz_();
     // Direction uses the same calibrated accelerometer, so query only the
     // residual bias at the MEKF reference temperature as well.
     updateWaveDirection_(q_bw, 35.0f, dt_);
     updateDisplacement_(dt_);
+    rates_.update(millis());
 
+    output_dirty_ = true;
+    if (!have_output_) refreshOutput_();
+  }
+
+  void refreshOutput_() {
+    if (!output_dirty_) return;
+    output_dirty_ = false;
+    have_output_ = true;
+
+    float heading_est_deg = NAN;
+    const bool attitude_ok = output_attitude_valid_ &&
+        ins::rollPitchHeadingFromQuatBw(output_attitude_, roll_deg_, pitch_deg_, heading_est_deg);
+    updateCompassHeading_(output_attitude_, attitude_ok,
+        fusion_.isLive() && fusion_.mekf().has_magnetic_reference(), heading_est_deg);
+
+    heave_speed_mps_ = -fusion_.mekf().get_velocity().z();
+    wave_envelope_m_ = displacementScaleM_();
     // Raw integrated position can carry a large DC/random-walk component.
     // The device HEV channel is wave heave, matching the NMEA output and OU
     // sketches; retain raw position only in the diagnostic heave_raw_m_ field.
@@ -683,8 +709,6 @@ private:
 
     wave_ = WaveDirectionReport::from(dir_filter_.getAxisDegrees(), wave_sign_, fusion_.isLive());
     acc_bias_estimating_ = fusion_.isLive();
-
-    rates_.update(millis());
 
     heave_raw_m_        = displacement_up_m_.z();
     heave_baseline_m_   = displacement_det_out_.baseline_slow.z();
@@ -719,9 +743,10 @@ private:
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
+    refreshOutput_();
     display_.publish({heading_deg_, heading_mag_deg_, roll_deg_, pitch_deg_, heave_m_,
                       wave_.dir_ok ? wave_.dir_deg : wave_.axis_deg, mag_norm_uT_,
-                      a_raw_norm_, a_cal_.norm(), wave_.sign_raw, heading_valid_,
+                      display_raw_accel_.norm(), a_cal_.norm(), wave_.sign_raw, heading_valid_,
                       heading_mag_ok_, mag_ok_, mag_fresh_});
   }
 
@@ -729,11 +754,13 @@ private:
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
+    if (nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
     if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
     if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
     last_serial_ms_ = now_ms;
+    refreshOutput_();
 
 #if SEA_STATE_SERIAL_NMEA
     // A startup magnetic compass is usable HDM, but is not a ready INS.
@@ -742,36 +769,22 @@ private:
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
     nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_); // startup proxy attitude until Live
-    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+    nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), valid);
 
     if (now_ms - last_wave_nmea_ms_ >= atoms3r_timing::NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
-      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
-      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
-      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_.sign_raw, wave_.sign_polarity, wave_.sign_ok);
-      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
+      nmea_batch_.addWave(wave_, fusion_.isLive());
     }
-
     if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
-      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+      nmea_batch_.addTemperature(imu_temp_c_);
     }
-
     if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
       last_status_nmea_ms_ = now_ms;
-      nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
-                          valid,
-                          fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
-                          fusion_.magReferenceLearned(),
-                          gyro_bias_.learning(),
-                          acc_bias_estimating_,
-                          rates_.imuHz(),
-                          rates_.magHz());
+      nmea_batch_.addStatus({fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
+                             fusion_.magReferenceLearned(), gyro_bias_.learning(), acc_bias_estimating_,
+                             rates_.imuHz(), rates_.magHz()});
     }
-
-    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), valid);
 #else
   #if ARDUINO_PLOTTER
     Serial.printf(
