@@ -185,6 +185,22 @@ public:
     pacer_.wait();
     timing_.begin();
 
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms,
+                                                 AtomS3RNavigationImu::kReadyWindowUs);
+
+    if (got_sample) {
+      stale_frame_count_ = 0;
+      updateFilter_(sample, poll_ms);
+    } else {
+      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
+      if ((stale_frame_count_ % 50u) == 0u) {
+        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
+      }
+    }
+
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
 
@@ -204,24 +220,9 @@ public:
     }
 #endif
 
-    ImuSample sample{};
-    const uint32_t sample_us = micros();
-    uint32_t poll_ms;
-    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
-
-    if (got_sample) {
-      stale_frame_count_ = 0;
-      updateFilter_(sample, poll_ms);
-    } else {
-      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
-      if ((stale_frame_count_ % 50u) == 0u) {
-        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
-      }
-    }
-
     updateUI_();
     streamSerial_();
-    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US);
   }
 
 private:

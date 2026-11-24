@@ -48,6 +48,10 @@ class DeviceCompassStartupTest(unittest.TestCase):
             self.assertNotIn("waitForNextLoopTick_", tick)
             self.assertIn("navigation_imu_.read(", tick)
             self.assertIn("Input::pollButton();", tick)
+            if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3"):
+                self.assertLess(tick.index("updateFilter_(sample"), tick.index("Input::pollButton();"))
+                self.assertIn("AtomS3RNavigationImu::kReadyWindowUs", tick)
+                self.assertIn("timing_.finish(sample.sample_us,", tick)
             self.assertIn("display_.waitForMenu();", function(path.read_text(), "drawHomePending_"))
             if path.stem in other_sketches:
                 self.assertIn("PollMagEveryFrame{}", tick)
@@ -252,6 +256,7 @@ int main() {
 #include <cstring>
 #include <cmath>
 #include "AtomS3R/AtomS3R_MagAcquisition.h"
+#include <initializer_list>
 #include "AtomS3R/AtomS3R_Bmm150Compensation.h"
 using namespace atoms3r_ical;
 uint32_t clock_us = 10000;
@@ -265,7 +270,7 @@ struct imu_data_t { imu_3d_t accel, gyro, mag; };
 struct IMU_Base {
     struct imu_convert_param_t { float accel_res, gyro_res; };
     int16_t raw[6]{};
-    uint8_t ready = 0;
+    uint8_t ready = 0, next_ready = 0;
     uint8_t aux[8]{0x80,1,0x10,2,0x38,3,0x40,4};
     bool combined_ok = true;
     int status_reads = 0, data_reads = 0, combined_reads = 0, aux_reads = 0;
@@ -283,7 +288,7 @@ struct IMU_Base {
         if (reg == 0x1d) {
             assert(len == 1); ++status_reads;
             if (!status_ok) return false;
-            *dst = ready; ready = 0;
+            *dst = ready; ready = next_ready; next_ready = 0;
             return true;
         }
         assert(reg == 0x0c && len == 12); ++data_reads;
@@ -322,12 +327,13 @@ struct {
 } source;
 auto& atoms3rMagSource() { return source; }
 ''' + function(header, "readMagBody_") + r'''
-struct ImuSample { m5::imu_data_t data; Vector3f mag{NAN,NAN,NAN}; };
+struct ImuSample { uint32_t sample_us; m5::imu_data_t data; Vector3f mag{NAN,NAN,NAN}; };
 struct ImuTemperatureCache {};
 struct Gate { uint32_t next; bool due(uint32_t ms) const { return ms >= next; } };
 bool readImuMapped(m5::IMU_Class&, unsigned mask, uint32_t frame, ImuSample& s, bool,
                    ImuTemperatureCache*, bool poll, m5::imu_data_t* data, const Bmi270AuxBurst* burst) {
     if ((mask & 3u) != 3u) return false;
+    s.sample_us = frame;
     s.data = *data;
     s.mag = poll || !source.acquisition.fresh(millis()) ? readMagBody_(data->mag, frame, burst) : source.last_body;
     return true;
@@ -392,6 +398,49 @@ int main() {
     clock_us = (millis()+1)*1000-50; dev.aux[0] ^= 8;
     assert(poll(millis()+1) && dev.aux_reads == 2 && dev.data_reads == separate+3);
     assert(source.acquisition.sequence == 3);
+
+    // A just-late frame is accepted in this slot, even across micros() wrap.
+    // These flags clear on read; both sensor halves must have arrived in this slot.
+    const uint32_t start = UINT32_MAX-49;
+    dev.combined_ok = true;
+    clock_us = start;
+    auto read_window = [&]() {
+        return reader.read(M5.Imu, micros(), s, temperature, Gate{UINT32_MAX}, poll_ms,
+                           AtomS3RNavigationImu::kReadyWindowUs);
+    };
+    dev.ready = 0x80; dev.next_ready = 0x40;
+    const int before = dev.data_reads + dev.combined_reads;
+    assert(read_window() && s.sample_us == uint32_t(start+100));
+    assert(dev.data_reads + dev.combined_reads == before+1);
+    // Repeat one delayed frame between two on-time releases, like a 200 Hz loop.
+    for (uint32_t window : {0u, AtomS3RNavigationImu::kReadyWindowUs}) {
+        uint32_t previous = 0;
+        for (unsigned i = 0; i < 3; ++i) {
+            clock_us = start + 5000*i;
+            dev.ready = i == 1 ? 0 : 0xc0;
+            dev.next_ready = i == 1 ? 0xc0 : 0;
+            bool ok = reader.read(M5.Imu, micros(), s, temperature, Gate{UINT32_MAX}, poll_ms, window);
+            assert(ok == (i != 1 || window != 0));
+            if (!ok) continue;
+            if (i == 1) assert(s.sample_us - previous == 5100);
+            if (i == 2) assert(s.sample_us - previous == (window ? 4900u : 10000u));
+            previous = s.sample_us;
+        }
+    }
+    const int complete = dev.data_reads + dev.combined_reads;
+    // A wholly missing or incomplete frame cannot leak into the next slot.
+    const int statuses = dev.status_reads;
+    dev.ready = 0x80;
+    assert(!read_window() && dev.status_reads == statuses+3);
+    clock_us += 4700;
+    dev.ready = 0x40;
+    assert(!read_window() && dev.data_reads + dev.combined_reads == complete);
+    dev.ready = 0; dev.next_ready = 0xc0;
+    const auto next_slot = micros();
+    assert(read_window() && s.sample_us == next_slot+100);
+    dev.status_ok = false;
+    const int failed_status = dev.status_reads;
+    assert(!read_window() && dev.status_reads == failed_status+1);
 
     dev.ready = 0xc0; dev.status_ok = false;
     const int reads = dev.data_reads;
