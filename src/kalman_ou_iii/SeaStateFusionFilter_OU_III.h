@@ -70,7 +70,7 @@
 
 #include <cmath>
 #include <numbers>
-#include <memory>
+#include "util/FilterStorage.h"
 #include <algorithm>
 #include <limits>
 
@@ -146,7 +146,7 @@ public:
                     const Eigen::Vector3f& sigma_m)
     {
         this->resetFrontendGyroHistory();
-        mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
+        mekf_ = ocean_imu::makeFilter<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -162,7 +162,7 @@ public:
     {
         gravity_mps2_ = gravity_magnitude;
         this->resetFrontendGyroHistory();
-        mekf_ = std::make_unique<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
+        mekf_ = ocean_imu::makeFilter<kalman::Kalman3D_Wave_OU_III<float>>(sigma_a, sigma_g, sigma_m, Pq0, Pb0, b0, R_S_noise, gravity_magnitude);
         seastate::common::finalizeInitialization(
             mekf_,
             [this]() { enterCold_(); },
@@ -1136,7 +1136,7 @@ private:
     float tau_coeff_    = 1.0f;
     float sigma_coeff_  = 0.9f;
 
-    std::unique_ptr<kalman::Kalman3D_Wave_OU_III<float>>  mekf_;
+    ocean_imu::FilterPtr<kalman::Kalman3D_Wave_OU_III<float>>  mekf_;
 };
 
 // Deployed OU-III front end: proxy bootstrap, two-stage magnetic acquisition,

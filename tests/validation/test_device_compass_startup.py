@@ -46,6 +46,13 @@ class DeviceCompassStartupTest(unittest.TestCase):
             tick = function(path.read_text(), "tick")
             self.assertLess(tick.index("pacer_.wait();"), tick.index("sample_us = micros();"))
             self.assertNotIn("waitForNextLoopTick_", tick)
+            self.assertIn("navigation_imu_.read(", tick)
+            self.assertIn("Input::pollButton();", tick)
+            self.assertIn("display_.waitForMenu();", function(path.read_text(), "drawHomePending_"))
+            if path.stem in other_sketches:
+                self.assertIn("PollMagEveryFrame{}", tick)
+            else:
+                self.assertIn("mag_gate_, poll_ms", tick)
             self.assertIn("sample_dt_.update(s.sample_us)", function(path.read_text(), "updateFilter_"))
 
         cpp = r'''
@@ -127,8 +134,6 @@ int main() {
             subprocess.run([str(exe)], check=True)
 
     def test_psram_build_internal_mekf_allocation_and_fallback(self):
-        header = (ROOT / "src/kalman_carma/SeaStateFusionFilter_CARMA3.h").read_text()
-        body = header[header.index("    struct MekfDeleter {"):].split("\n#else", 1)[0]
         cpp = r'''
 #include <algorithm>
 #include <cassert>
@@ -150,29 +155,28 @@ struct alignas(64) Mekf {
     ~Mekf() { ++destroyed; }
     static void operator delete(void* p) { ++ordinary_deletes; ::operator delete(p, std::align_val_t(64)); }
 };
-template<class Mekf> struct Owner {
-''' + body + r'''
-};
+#include "util/FilterStorage.h"
 int main() {
     {
-        Owner<Mekf> owner;
-        owner.allocateMekf_(1);
+        auto owner = ocean_imu::makeFilter<Mekf>(1);
         assert(allocated == 1 && !freed && !destroyed);
-        auto* first = owner.mekf_.get();
-        try { owner.allocateMekf_(0); assert(false); } catch(int) {}
-        assert(owner.mekf_.get() == first && allocated == 2 && freed == 1 && !destroyed);
+        auto* first = owner.get();
+        try { owner = ocean_imu::makeFilter<Mekf>(0); assert(false); } catch(int) {}
+        assert(owner.get() == first && allocated == 2 && freed == 1 && !destroyed);
         allow_internal = false;
-        owner.allocateMekf_(1);
+        owner = ocean_imu::makeFilter<Mekf>(1);
         assert(freed == 2 && destroyed == 1 && ordinary_deletes == 0);
     }
     assert(destroyed == 2 && ordinary_deletes == 1);
 }
 '''
         with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "esp_heap_caps.h").touch()
             path, exe = Path(tmp) / "allocation.cpp", Path(tmp) / "allocation"
             path.write_text(cpp)
             subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
-                            str(path), "-o", str(exe)], check=True)
+                             "-DARDUINO_ARCH_ESP32", "-DCONFIG_IDF_TARGET_ESP32S3", "-DBOARD_HAS_PSRAM",
+                            "-I", tmp, "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
     def test_startup_compass_then_fused_live_output(self):
@@ -180,7 +184,7 @@ int main() {
             with self.subTest(sketch=path.name):
                 source = path.read_text()
                 update = function(source, "updateFilter_")
-                if path.stem == "atomS3R_ins_tfg_carma_shared_modes":
+                if path.stem != "atomS3R_ins_tfg":
                     for consumer in ("streamSerial_", "updateUI_"):
                         self.assertIn("refreshOutput_();", function(source, consumer))
                     self.assertIn("rot_.update(world_z, dt_);", update)
@@ -221,11 +225,11 @@ int main() {
                     self.assertIn("updateWaveDirection_(q_bw, 35.0f, dt_);", update)
                     self.assertNotIn("fusion_.update(dt_, w_cal_, a_cal_, tempC);", update)
 
-    def test_carma_compass_redraw_under_sustained_load(self):
+    def test_kalman_compass_redraw_under_sustained_load(self):
         # Run the sketch publisher and display task with a deterministic RTOS/LCD.
         header = (ROOT / "src/AtomS3R/AtomS3R_MarineCompassDisplay.h").read_text()
         display = header[header.index("namespace atoms3r_ical {"):]
-        for path in (p for p in SKETCHES if "carma" in p.name):
+        for path in SKETCHES:
             with self.subTest(sketch=path.name), tempfile.TemporaryDirectory() as tmp:
                 sketch = path.read_text()
                 self.assertIn("display_.waitForMenu();", function(sketch, "drawHomePending_"))

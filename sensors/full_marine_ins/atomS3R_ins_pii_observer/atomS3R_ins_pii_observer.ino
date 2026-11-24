@@ -58,11 +58,13 @@
 #ifndef EIGEN_STACK_ALLOCATION_LIMIT
   #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #endif
-#include <ArduinoEigenDense.h>
-
 #include <ArduinoOceanImu.h>
+#include "AtomS3R/AtomS3R_FilterOptimization.h"
+ATOMS3R_BEGIN_FILTER_MATH
+#include <ArduinoEigenDense.h>
+ATOMS3R_END_FILTER_MATH
 
-#include "AtomS3R/AtomS3R_CompassUI.h"
+#include "AtomS3R/AtomS3R_MarineCompassDisplay.h"
 #include "AtomS3R/AtomS3R_CalibrationGate.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuSpikeFilter.h"
@@ -75,9 +77,12 @@
 #include "nmea/NmeaCompass.h"
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
+#include "AtomS3R/AtomS3R_LoopTiming.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
+ATOMS3R_BEGIN_FILTER_MATH
 #include "pii_observer/AdaptiveVerticalPIIMahony.h"
+ATOMS3R_END_FILTER_MATH
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
@@ -154,12 +159,7 @@ class FusionApp {
 
     ui_.begin();
 
-    if (use_graphics_) {
-      ui_.setReadRotation();
-      compass_ui_.begin();
-      compass_ui_ready_ = compass_ui_.ok();
-      if (!compass_ui_ready_) use_graphics_ = false;
-    }
+    display_.begin(SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
 
     reloadBlobAndRuntime_();
 
@@ -185,9 +185,10 @@ class FusionApp {
 
   void tick() {
     pacer_.wait();
+    timing_.begin();
 
 #if SEA_STATE_ENABLE_WIZARD
-    Input::update();
+    Input::pollButton();
 
     if (Input::tapPressed()) {
       tap_count_++;
@@ -209,29 +210,31 @@ class FusionApp {
 
     ImuSample sample{};
     const uint32_t sample_us = micros();
-    const uint32_t update_mask = M5.Imu.update();
-    const bool got_sample = readImuMapped(M5.Imu, update_mask, sample_us, sample);
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, PollMagEveryFrame{}, poll_ms);
 
     if (got_sample) {
       stale_frame_count_ = 0;
-      updateFilter_(sample);
+      updateFilter_(sample, poll_ms);
     } else if (stale_frame_count_ < 0xFFFFu) {
       stale_frame_count_++;
     }
 
     updateUI_();
     streamSerial_();
+    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
   }
 
  private:
   using UI = atoms3r_ical::M5Ui;
   using Fusion = marine_obs::AdaptiveVerticalPIIMahony<float, true, TrackerType::PLL>;
-
-  bool use_graphics_ = (SEA_STATE_UI_DEFAULT_GRAPHICS != 0);
-
-  CompassUI compass_ui_{};
-  bool compass_ui_ready_ = false;
   UI ui_{};
+  struct DisplayFrame {
+    float heading, magneticHeading, roll, pitch, magNorm, rawAccelNorm, accelNorm;
+    float yaw, heave, envelope;
+    bool headingValid, magPresent, magSane, magUsed, seeded;
+  };
+  CompassDisplayTask<DisplayFrame> display_{ui_, drawFrame_};
 
   ImuCalStoreNvs store_{};
   bool have_blob_ = false;
@@ -250,6 +253,8 @@ class FusionApp {
 
   Fusion fusion_{};
 
+  AtomS3RNavigationImu navigation_imu_{};
+  ImuTemperatureCache temperature_{};
   ins::MagFreshGate mag_gate_{MAG_UPDATE_SPACING_MS};
   uint32_t last_mag_correction_ms_ = 0;
 
@@ -365,6 +370,7 @@ class FusionApp {
     return true;
   }
 
+  LoopTiming timing_;
   SamplePacer pacer_{LOOP_PERIOD_US};
 
   void reloadBlobAndRuntime_() {
@@ -400,6 +406,8 @@ class FusionApp {
       while (true) delay(100);
     }
 
+    navigation_imu_.configure(M5.Imu);
+    temperature_ = {};
     mag_gate_.reset();
     last_mag_correction_ms_ = 0;
     rates_.reset(millis());
@@ -506,6 +514,7 @@ class FusionApp {
   }
 
   void drawHomePending_() {
+    display_.waitForMenu();
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("Tap count: %d\n", tap_count_);
@@ -526,8 +535,7 @@ class FusionApp {
   }
 #endif
 
-  void updateFilter_(const ImuSample& s) {
-    const uint32_t now_ms = millis();
+  void updateFilter_(const ImuSample& s, uint32_t now_ms) {
 
     dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
@@ -697,57 +705,52 @@ class FusionApp {
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
+    display_.publish({heading_deg_, heading_mag_deg_, roll_deg_, pitch_deg_, mag_norm_uT_,
+                      a_raw_norm_, a_cal_.norm(), yaw_mahony_deg_, heave_raw_m_, wave_envelope_m_,
+                      heading_valid_, mag_present_, mag_field_sane_, mag_used_,
+                      mahony_seeded_});
+  }
 
-    if (use_graphics_ && compass_ui_ready_) {
-      ui_.setReadRotation();
-
-      const bool tiltWarn =
-          (fabsf(roll_deg_) > 35.0f) ||
-          (fabsf(pitch_deg_) > 35.0f);
-
-      const float hdg_draw = heading_valid_ ? heading_deg_ : 0.0f;
-
-      compass_ui_.draw(hdg_draw,
-                       heading_valid_ && mag_used_,
-                       mag_norm_uT_,
-                       tiltWarn);
+  static void drawFrame_(const DisplayFrame& frame, CompassUI& compass, UI& ui) {
+    if (compass.ok()) {
+      const bool tilt = fabsf(frame.roll) > 35.0f || fabsf(frame.pitch) > 35.0f;
+      compass.draw(frame.headingValid ? frame.heading : 0.0f,
+                   frame.headingValid && frame.magUsed, frame.magNorm, tilt);
       return;
     }
-
-    ui_.setReadRotation();
-    ui_.title("COMPASS");
+    ui.title("COMPASS");
 
 #if SEA_STATE_OUTPUT_TRUE_HEADING
     M5.Display.printf("HDG:%7.1f T %s\n",
-                      static_cast<double>(heading_deg_),
-                      heading_valid_ ? "deg" : "WAIT");
+                      static_cast<double>(frame.heading),
+                      frame.headingValid ? "deg" : "WAIT");
     M5.Display.printf("MAG:%7.1f M\n",
-                      static_cast<double>(heading_mag_deg_));
+                      static_cast<double>(frame.magneticHeading));
 #else
     M5.Display.printf("HDG:%7.1f M %s\n",
-                      static_cast<double>(heading_mag_deg_),
-                      heading_valid_ ? "deg" : "WAIT");
+                      static_cast<double>(frame.magneticHeading),
+                      frame.headingValid ? "deg" : "WAIT");
 #endif
 
-    M5.Display.printf("YAW:%7.1f deg\n", static_cast<double>(yaw_mahony_deg_));
-    M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(roll_deg_));
-    M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(pitch_deg_));
+    M5.Display.printf("YAW:%7.1f deg\n", static_cast<double>(frame.yaw));
+    M5.Display.printf("ROL:%7.1f deg\n", static_cast<double>(frame.roll));
+    M5.Display.printf("PIT:%7.1f deg\n", static_cast<double>(frame.pitch));
 
-    M5.Display.printf("SEED:%s\n", mahony_seeded_ ? "YES" : "NO");
+    M5.Display.printf("SEED:%s\n", frame.seeded ? "YES" : "NO");
 
-    M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(heave_raw_m_));
-    M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(wave_envelope_m_));
+    M5.Display.printf("HEV:%7.3f m\n", static_cast<double>(frame.heave));
+    M5.Display.printf("ENV:%7.3f m\n", static_cast<double>(frame.envelope));
     //M5.Display.printf("FRQ:%7.3f Hz\n", static_cast<double>(wave_hz_));
 
     M5.Display.printf("MAG:%s %s %s\n",
-                      mag_present_ ? "OK " : "BAD",
-                      mag_field_sane_ ? "FIELD" : "DIST",
-                      mag_used_ ? "USE" : "SKIP");
+                      frame.magPresent ? "OK " : "BAD",
+                      frame.magSane ? "FIELD" : "DIST",
+                      frame.magUsed ? "USE" : "SKIP");
 
-    M5.Display.printf("|m|:%7.1f uT\n", static_cast<double>(mag_norm_uT_));
+    M5.Display.printf("|m|:%7.1f uT\n", static_cast<double>(frame.magNorm));
     M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n",
-                      static_cast<double>(a_raw_norm_),
-                      static_cast<double>(a_cal_.norm()));
+                      static_cast<double>(frame.rawAccelNorm),
+                      static_cast<double>(frame.accelNorm));
   }
 
   void streamSerial_() {

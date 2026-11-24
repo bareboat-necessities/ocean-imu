@@ -12,17 +12,13 @@
 
 namespace atoms3r_ical {
 
-class MarineCompassDisplay {
+// Frames cross cores by value. The renderer has access only to its saved
+// frame and the display. Menus synchronize through waitForMenu().
+template <class Frame>
+class CompassDisplayTask {
 public:
-  // Values are copied as a unit. The display task never reads live filter state.
-  struct Frame {
-    float heading, magneticHeading, roll, pitch, heave, waveDirection;
-    float magNorm, rawAccelNorm, accelNorm;
-    int waveSign;
-    bool headingValid, magneticHeadingValid, magOk, magFresh;
-  };
-
-  explicit MarineCompassDisplay(M5Ui& ui) : ui_(ui) {}
+  using Renderer = void (*)(const Frame&, CompassUI&, M5Ui&);
+  CompassDisplayTask(M5Ui& ui, Renderer render) : ui_(ui), render_(render) {}
 
   void begin(bool graphics) {
     if (graphics) compass_.begin();
@@ -67,7 +63,7 @@ private:
   };
 
   static void run(void* context) {
-    auto& self = *static_cast<MarineCompassDisplay*>(context);
+    auto& self = *static_cast<CompassDisplayTask*>(context);
     for (;;) {
       Message msg;
       if (xQueueReceive(self.queue_, &msg, portMAX_DELAY) != pdTRUE) continue;
@@ -83,35 +79,14 @@ private:
   }
 
   void draw(const Frame& frame) {
-    if (compass_.ok()) {
-      const bool tilt = fabsf(frame.roll) > 35.0f || fabsf(frame.pitch) > 35.0f;
-      compass_.draw(frame.headingValid ? frame.heading : 0.0f,
-                    frame.headingValid && frame.magOk, frame.magNorm, tilt);
-    } else {
-      drawText(frame);
-    }
+    render_(frame, compass_, ui_);
 #if defined(OCEAN_IMU_PROFILE_LOOP) && OCEAN_IMU_PROFILE_LOOP
     ++completed_;
 #endif
   }
 
-  void drawText(const Frame& frame) {
-    ui_.title("COMPASS");
-    if (frame.headingValid) M5.Display.printf("HDG: %6.1f deg\n", frame.heading);
-    else                    M5.Display.printf("HDG:   --- WAIT\n");
-    M5.Display.printf("HDM: %6.1f %s\n", frame.magneticHeading,
-                      frame.magneticHeadingValid ? "MAG" : "---");
-    M5.Display.printf("ROL: %6.1f deg\n", frame.roll);
-    M5.Display.printf("PIT: %6.1f deg\n", frame.pitch);
-    M5.Display.printf("HEV: %6.3f m\n", frame.heave);
-    M5.Display.printf("WAV: %6.1f s=%d\n", frame.waveDirection, frame.waveSign);
-    M5.Display.printf("MAG: %s %s\n", frame.magOk ? "OK " : "BAD", frame.magFresh ? "NEW" : "OLD");
-    M5.Display.printf("|m|: %6.1f uT\n", frame.magNorm);
-    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n", frame.rawAccelNorm, frame.accelNorm);
-    ui_.line("");
-  }
-
   M5Ui& ui_;
+  Renderer render_;
   CompassUI compass_;
   StaticTask_t taskStorage_;
   // Match the default Arduino-ESP32 loop stack for M5GFX and float printf.
@@ -125,6 +100,46 @@ private:
 #if defined(OCEAN_IMU_PROFILE_LOOP) && OCEAN_IMU_PROFILE_LOOP
   std::atomic<uint32_t> completed_{0}, stackFree_{0};
 #endif
+};
+
+struct MarineCompassFrame {
+  float heading, magneticHeading, roll, pitch, heave, waveDirection;
+  float magNorm, rawAccelNorm, accelNorm;
+  int waveSign;
+  bool headingValid, magneticHeadingValid, magOk, magFresh;
+};
+
+class MarineCompassDisplay : public CompassDisplayTask<MarineCompassFrame> {
+public:
+  using Frame = MarineCompassFrame;
+  explicit MarineCompassDisplay(M5Ui& ui) : CompassDisplayTask(ui, drawFrame) {}
+
+private:
+  static void drawFrame(const Frame& frame, CompassUI& compass, M5Ui& ui) {
+    if (compass.ok()) {
+      const bool tilt = fabsf(frame.roll) > 35.0f || fabsf(frame.pitch) > 35.0f;
+      compass.draw(frame.headingValid ? frame.heading : 0.0f,
+                    frame.headingValid && frame.magOk, frame.magNorm, tilt);
+    } else {
+      drawText(frame, ui);
+    }
+  }
+
+  static void drawText(const Frame& frame, M5Ui& ui) {
+    ui.title("COMPASS");
+    if (frame.headingValid) M5.Display.printf("HDG: %6.1f deg\n", frame.heading);
+    else                    M5.Display.printf("HDG:   --- WAIT\n");
+    M5.Display.printf("HDM: %6.1f %s\n", frame.magneticHeading,
+                      frame.magneticHeadingValid ? "MAG" : "---");
+    M5.Display.printf("ROL: %6.1f deg\n", frame.roll);
+    M5.Display.printf("PIT: %6.1f deg\n", frame.pitch);
+    M5.Display.printf("HEV: %6.3f m\n", frame.heave);
+    M5.Display.printf("WAV: %6.1f s=%d\n", frame.waveDirection, frame.waveSign);
+    M5.Display.printf("MAG: %s %s\n", frame.magOk ? "OK " : "BAD", frame.magFresh ? "NEW" : "OLD");
+    M5.Display.printf("|m|: %6.1f uT\n", frame.magNorm);
+    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n", frame.rawAccelNorm, frame.accelNorm);
+    ui.line("");
+  }
 };
 
 }  // namespace atoms3r_ical
