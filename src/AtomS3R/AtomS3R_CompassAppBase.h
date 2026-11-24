@@ -15,7 +15,9 @@
 
 #include "AtomS3R/AtomS3R_ImuCalWizard.h"
 #include "AtomS3R/ImuCalWizardRunner.h"
-#include "AtomS3R/AtomS3R_CompassUI.h"
+#include "AtomS3R/AtomS3R_MarineCompassDisplay.h"
+#include "AtomS3R/AtomS3R_SamplePacer.h"
+#include "AtomS3R/AtomS3R_LoopTiming.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
 #include "nmea/NmeaCompass.h"
 
@@ -285,12 +287,7 @@ class CompassAppBase {
 
     ui_.begin();
 
-    if (use_graphics_) {
-      ui_.setReadRotation();
-      compass_ui_.begin();
-      compass_ui_ready_ = compass_ui_.ok();
-      if (!compass_ui_ready_) use_graphics_ = false;
-    }
+    display_.begin(COMPASS_UI_DEFAULT_GRAPHICS != 0);
 
     if (!M5.Imu.isEnabled()) {
       Serial.println("[BOOT] IMU not found / not enabled");
@@ -324,31 +321,13 @@ class CompassAppBase {
     drawHomeStatic_();
 
     start_us_ = micros();
-    next_tick_us_ = micros();
     last_update_us_ = 0;
   }
 
   void tick() {
-    // Wait until next scheduled tick.
-    while (true) {
-    const uint32_t now_us = micros();
-    const int32_t wait_us = (int32_t)(next_tick_us_ - now_us);
-    if (wait_us <= 0) break;
-
-    if (wait_us > 1000)
-      delayMicroseconds(500);
-    else
-      delayMicroseconds((uint32_t)wait_us);
-    }
-
-    // Advance schedule. If we fell far behind, resync cleanly.
-    const uint32_t now_us2 = micros();
-    if ((int32_t)(now_us2 - next_tick_us_) > (int32_t)(4 * LOOP_PERIOD_US))
-    next_tick_us_ = now_us2 + LOOP_PERIOD_US;
-    else
-    next_tick_us_ += LOOP_PERIOD_US;
-      
-    Input::update();
+    pacer_.wait();
+    timing_.begin();
+    Input::pollButton();
 
     if (Input::tapPressed()) {
       tap_count_++;
@@ -369,12 +348,13 @@ class CompassAppBase {
 
     ImuSample s;
     const uint32_t sample_us = micros();
-    const uint32_t update_mask = M5.Imu.update();
-    if (readImuMapped(M5.Imu, update_mask, sample_us, s))
-      updateOutputs_(s);
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, s, temperature_, PollMagEveryFrame{}, poll_ms);
+    if (got_sample) updateOutputs_(s, poll_ms);
 
     updateUI_();
     streamSerial_();
+    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
   }
 
  protected:
@@ -421,6 +401,8 @@ class CompassAppBase {
   }
 
   void resetPipeline_() {
+    navigation_imu_.configure(M5.Imu);
+    temperature_ = {};
     backend_->reset();
     mag_gate_.reset();
     rot_.reset();
@@ -430,7 +412,7 @@ class CompassAppBase {
     imu_spike_.reset();
   }
 
-CalibratedSample makeCalibratedSample_(const ImuSample& s) {
+CalibratedSample makeCalibratedSample_(const ImuSample& s, uint32_t poll_ms) {
   CalibratedSample out{};
   out.a_raw_norm = s.a.norm();
 
@@ -455,16 +437,13 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
 
   if (out.mag_ok && out.mag_norm_uT > 1e-6f) out.m_unit = out.m_cal / out.mag_norm_uT;
 
-  // M5Unified's update mask is the freshness authority. The 200 Hz loop sees
-  // cached BMM150 values between real AUX updates; never manufacture magnetic
-  // observations from elapsed wall time.
-  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, millis());
-  
+  out.mag_fresh = mag_gate_.update(out.m_cal, out.mag_ok, poll_ms);
+
   return out;
 }
 
-  void updateOutputs_(const ImuSample& s) {
-    sample_ = makeCalibratedSample_(s);
+  void updateOutputs_(const ImuSample& s, uint32_t poll_ms) {
+    sample_ = makeCalibratedSample_(s, poll_ms);
     backend_->step(sample_, outputs_.att);
     outputs_.rot_dpm = rot_.update(sample_.dt, sample_.a_cal, sample_.w_cal, outputs_.att);
   }
@@ -480,6 +459,7 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   }
 
   void drawHomePending_() {
+    display_.waitForMenu();
     ui_.setReadRotation();
     ui_.title("COMPASS");
     M5.Display.printf("Tap count: %d\n", tap_count_);
@@ -501,25 +481,33 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
     if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
 
-    if (use_graphics_ && compass_ui_ready_) {
-      ui_.setReadRotation();
-      const bool tilt_warn = (fabsf(outputs_.att.roll_deg) > 35.0f) || (fabsf(outputs_.att.pitch_deg) > 35.0f);
-      compass_ui_.draw(outputs_.att.heading_deg, sample_.mag_ok, sample_.mag_norm_uT, tilt_warn);
-    } else {
-      ui_.setReadRotation();
-      ui_.title("COMPASS");
+    display_.publish({outputs_.att.heading_deg, outputs_.att.roll_deg, outputs_.att.pitch_deg,
+                      sample_.mag_norm_uT, sample_.a_raw_norm, sample_.a_cal.norm(),
+                      sample_.mag_ok, sample_.mag_fresh, runtime_.acc.ok, runtime_.gyr.ok,
+                      runtime_.mag.ok, have_blob_});
+  }
 
-      M5.Display.printf("HDG: %6.1f deg\n", (double)outputs_.att.heading_deg);
-      M5.Display.printf("ROL: %6.1f deg\n", (double)outputs_.att.roll_deg);
-      M5.Display.printf("PIT: %6.1f deg\n", (double)outputs_.att.pitch_deg);
+  struct DisplayFrame {
+    float heading, roll, pitch, magNorm, rawAccelNorm, accelNorm;
+    bool magOk, magFresh, accCal, gyroCal, magCal, haveBlob;
+  };
 
-      M5.Display.printf("MAG: %s %s\n", sample_.mag_ok ? "OK " : "BAD", sample_.mag_fresh ? "NEW" : "OLD");
-      M5.Display.printf("|m|: %6.1f uT\n", (double)sample_.mag_norm_uT);
-      M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n", (double)sample_.a_raw_norm, (double)sample_.a_cal.norm());
-      ui_.line("");
-      M5.Display.printf("A:%d G:%d M:%d  B:%s\n", (int)runtime_.acc.ok, (int)runtime_.gyr.ok, (int)runtime_.mag.ok,
-                        have_blob_ ? "YES" : "NO");
+  static void drawFrame_(const DisplayFrame& frame, CompassUI& compass, M5Ui& ui) {
+    if (compass.ok()) {
+      const bool tilt = fabsf(frame.roll) > 35.0f || fabsf(frame.pitch) > 35.0f;
+      compass.draw(frame.heading, frame.magOk, frame.magNorm, tilt);
+      return;
     }
+    ui.title("COMPASS");
+    M5.Display.printf("HDG: %6.1f deg\n", frame.heading);
+    M5.Display.printf("ROL: %6.1f deg\n", frame.roll);
+    M5.Display.printf("PIT: %6.1f deg\n", frame.pitch);
+    M5.Display.printf("MAG: %s %s\n", frame.magOk ? "OK " : "BAD", frame.magFresh ? "NEW" : "OLD");
+    M5.Display.printf("|m|: %6.1f uT\n", frame.magNorm);
+    M5.Display.printf("|aR|:%5.2f |aC|:%5.2f\n", frame.rawAccelNorm, frame.accelNorm);
+    ui.line("");
+    M5.Display.printf("A:%d G:%d M:%d  B:%s\n", int(frame.accCal), int(frame.gyroCal), int(frame.magCal),
+                      frame.haveBlob ? "YES" : "NO");
   }
 
   void streamSerial_() {
@@ -554,7 +542,9 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   ImuCalStoreNvs store_{};
   ImuCalWizard wizard_;
   RuntimeCals runtime_{};
-  CompassUI compass_ui_{};
+  CompassDisplayTask<DisplayFrame> display_{ui_, drawFrame_};
+  AtomS3RNavigationImu navigation_imu_{};
+  ImuTemperatureCache temperature_{};
 
   std::unique_ptr<IAttitudeBackend> backend_;
   MagGate mag_gate_;
@@ -564,13 +554,11 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s) {
   bool have_blob_ = false;
   ImuCalBlobV5 blob_{};
 
-  bool use_graphics_ = (COMPASS_UI_DEFAULT_GRAPHICS != 0);
-  bool compass_ui_ready_ = false;
-
   int tap_count_ = 0;
   uint32_t tap_deadline_ms_ = 0;
   uint32_t start_us_ = 0;
-  uint32_t next_tick_us_ = 0;
+  LoopTiming timing_;
+  SamplePacer pacer_{LOOP_PERIOD_US};
   uint32_t last_update_us_ = 0;
   uint32_t last_ui_ms_ = 0;
   uint32_t last_serial_ms_ = 0;

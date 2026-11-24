@@ -18,6 +18,19 @@ The examples intentionally form a progression. Start with the basic IMU sketch t
 | [Compass / AHRS](compass_ahrs/README.md) | Tilt-compensated heading with Mahony or quaternion MEKF, display UI, NMEA output | Heading and attitude |
 | [Full marine INS](full_marine_ins/README.md) | Adaptive marine motion estimation with OU-II, OU-III, TFG, PII observer, or NLO | Vessel motion / wave estimation |
 
+## Checking the 200 Hz cycle on an AtomS3R
+
+The speed-optimized marine sketches use GCC level-1 debug information to keep function names and source lines for device backtraces and bound assembler memory use.
+
+Build the navigation or compass sketch with `-DOCEAN_IMU_PROFILE_LOOP=1` and capture
+`[TIMING]` lines after startup, with the usual LCD and serial output enabled.
+`sample_gap_mean_us` and `sample_gap_max_us` measure elapsed time between accepted
+IMU frames. `accepted_work_mean_us` and `accepted_work_max_us` measure processing
+from the end of the pacing wait through output publication. A steady 200 Hz window
+has mean sample spacing near 5,000 µs. `accepted_over_4500us=0` means every accepted
+update in the window had at least 0.5 ms of processing headroom. The profile prints
+one summary per window to keep per-sample serial writes out of the measurement.
+
 ## Hardware
 
 The sensor sketches are written for the M5Stack AtomS3R and use `M5Unified` for board and IMU access. Connect the AtomS3R over USB-C for power, programming, and serial output.

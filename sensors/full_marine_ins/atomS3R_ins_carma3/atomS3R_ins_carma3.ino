@@ -36,9 +36,11 @@
 #ifndef EIGEN_STACK_ALLOCATION_LIMIT
   #define EIGEN_STACK_ALLOCATION_LIMIT 0
 #endif
-#include <ArduinoEigenDense.h>
-
 #include <ArduinoOceanImu.h>
+#include "AtomS3R/AtomS3R_FilterOptimization.h"
+ATOMS3R_BEGIN_FILTER_MATH
+#include <ArduinoEigenDense.h>
+ATOMS3R_END_FILTER_MATH
 
 #include "AtomS3R/AtomS3R_CalibrationGate.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
@@ -74,12 +76,15 @@ constexpr float FREQ_GUESS = 0.3f;
 #define ZERO_CROSSINGS_DEBOUNCE_TIME  0.12f
 #define ZERO_CROSSINGS_STEEPNESS_TIME 0.21f
 
+ATOMS3R_BEGIN_FILTER_MATH
 #include "kalman_carma/SeaStateFusionFilter_CARMA3.h"
+ATOMS3R_END_FILTER_MATH
 // The OU-III sketch's startup settings (ONLINE_TUNE_WARMUP_SEC,
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateFamilyDefaults.h"
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
+#include "AtomS3R/AtomS3R_LoopTiming.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -198,6 +203,7 @@ public:
 
   void tick() {
     pacer_.wait();
+    timing_.begin();
 
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
@@ -235,6 +241,7 @@ public:
 
     streamSerial_();
     updateUI_();
+    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
   }
 
 private:
@@ -262,6 +269,7 @@ private:
   uint32_t last_temp_nmea_ms_   = 0;
 
   Fusion fusion_{};
+  bool output_dirty_ = false, have_output_ = false;
 
   atoms3r_ical::AtomS3RNavigationImu navigation_imu_{};
   atoms3r_ical::ImuTemperatureCache temperature_{};
@@ -308,6 +316,7 @@ private:
   bool acc_bias_estimating_ = false;
 
 private:
+  LoopTiming timing_;
   SamplePacer pacer_{LOOP_PERIOD_US};
 
   uint32_t magPollMs_() const {
@@ -366,6 +375,8 @@ private:
   }
 
   void resetFusion_() {
+    output_dirty_ = false;
+    have_output_ = false;
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
     constexpr float MAG_TUNE_REF_HZ = 25.0f;
 
@@ -574,6 +585,20 @@ private:
       fusion_.updateMag(m_cal_);
     }
 
+    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
+    const Eigen::Quaternionf q_bw = fusion_.isLive()
+        ? fusion_.attitudeQuat() : fusion_.raw().startupProxyQuat();
+    const float world_z = ins::quatRotate(q_bw.normalized(), gyro_bias_.corrected(w_cal_)).z();
+    rot_.update(world_z, dt_);
+    rates_.update(millis());
+    output_dirty_ = true;
+    if (!have_output_) refreshOutput_();
+  }
+
+  void refreshOutput_() {
+    if (!output_dirty_) return;
+    output_dirty_ = false;
+    have_output_ = true;
     // Keep startup attitude and startup compass tilt explicitly on the
     // yaw-free Mahony proxy. Its yaw is unobservable and must never become a
     // user-facing heading. Once Live, switch to the fused MEKF attitude.
@@ -601,10 +626,6 @@ private:
     updateCompassHeading_(q_compass_tilt, attitude_ok,
         live && fusion_.hasMagNorthLock(), heading_est_deg);
 
-    gyro_bias_.update(w_cal_, a_cal_, g_local, dt_);
-    const Vector3f w_world = ins::quatRotate(q_bw, gyro_bias_.corrected(w_cal_));
-    rot_.update(w_world.z(), dt_);
-
     const Vector3f velocity_ned_mps = fusion_.raw().mekf().get_velocity();
     heave_speed_mps_ = -velocity_ned_mps.z();
 
@@ -619,8 +640,6 @@ private:
                                       fusion_.raw().getDirSignState(),
                                       fusion_.isLive());
     acc_bias_estimating_ = fusion_.isLive();
-
-    rates_.update(millis());
 
     heave_raw_m_        = heave_m_;
     heave_baseline_m_   = displacement_det_out.baseline_slow.z();
@@ -655,6 +674,7 @@ private:
     const uint32_t now_ms = millis();
     if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
+    refreshOutput_();
     display_.publish({heading_deg_, heading_mag_deg_, roll_deg_, pitch_deg_, heave_m_,
                       wave_.dir_ok ? wave_.dir_deg : wave_.axis_deg, mag_norm_uT_,
                       a_raw_norm_, a_cal_.norm(), wave_.sign_raw, heading_valid_,
@@ -670,6 +690,7 @@ private:
     if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
     last_serial_ms_ = now_ms;
+    refreshOutput_();
 
 #if SEA_STATE_SERIAL_NMEA
     const bool valid = fusion_.isLive() && heading_fused_;

@@ -1,3 +1,12 @@
+## OU-III AtomS3R cycle timing
+
+The internal-SRAM allocator and the firmware sampling and display changes expired the OU-III source bindings (class E). The native probe reproduced the existing secant bytes at both perturbation radii, 0.01 and 0.005. The frontend and generated-port certificates also reproduced with the updated source hashes.
+
+- **Structures preserved.** Every fork inherited the full 21-state mean, covariance, references, sensor history and scheduler. Both unperturbed forks matched their parents bit for bit. All 252 directions retained identical forcing and clocks, with 500 magnetic corrections on each 20-second word.
+- **Relaxations introduced.** The fixed-input host replay covers two finite perturbation radii. It does not exercise ESP32-S3 memory placement, bus latency or the LCD.
+- **Counterexamples and scope.** Neither replay yielded a shipping counterexample. Uniform cross-gains and all-prefix retention remain open.
+- **Next falsifiable check.** Measure accepted-frame work and spacing on the physical AtomS3R with the compass and serial outputs enabled.
+
 ## OU-III replay with the optimized 200 Hz frontend
 
 The frontend and whole-source hashes in the planar records expired when the turn learner, wave-direction estimator, frequency readout, quaternion-only observer call and startup gravity gate changed (class E). The two native runs at perturbation radii 0.01 and 0.005 reproduced the recorded secant bytes in all 252 directions.

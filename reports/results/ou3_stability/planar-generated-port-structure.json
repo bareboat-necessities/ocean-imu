@@ -41,7 +41,7 @@
     "src/kalman_common/ProxyStartupFusion.h": "4ad560cc0d2ae05d8e2c13eebb5fb79b4e2d8efb",
     "src/kalman_common/SeaStateFusionDefaults.h": "31b57c1e89df91c7cc8084bf79f3a9947e8a63fd",
     "src/kalman_common/WaveStartup.h": "ba4179db9c41375a589706bb0d647c756946418c",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "ac8c00ec6908e5ea3abaeab634cc32c3b093c016",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "94bb45feafa1db021aa08078b654eaa662e640ce",
     "src/tuner/ContinuousMagHardIronEstimator.h": "62cda3c6adddafa693720167e497ba2bda15ce74",
     "src/tuner/GyroMagCalibration.cpp": "d20405273b6e39c9e4ebb938971c9c3740ed439c",
     "src/tuner/GyroMagCalibration.h": "3978177b68ed8920404bc2227617b8ddb2c51ce3",

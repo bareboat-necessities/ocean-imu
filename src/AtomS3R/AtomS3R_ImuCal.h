@@ -425,6 +425,12 @@ static inline bool readImuMapped(decltype(M5.Imu)& imu, ImuSample& out, bool gyr
   return readImuMapped(imu, update_mask, sample_us, out, gyro_only);
 }
 
+// Continuous magnetic feedback (Mahony, NLO) consumes the latest field on
+// every inertial sample. Request the AUX bytes in the same bus transaction.
+struct PollMagEveryFrame {
+  bool due(uint32_t) const { return true; }
+};
+
 // Navigation reads 12 inertial bytes on ordinary samples. When a compensated
 // BMM150 observation is due, read AUX (including RHALL) and inertial data as
 // a single contiguous 20-byte burst. Only the AtomS3R with its stock axis order and

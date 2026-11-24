@@ -1785,13 +1785,13 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
     Matrix9& F_LL = F_LL_scratch_; F_LL.setZero();
     Matrix9& Q_LL = Q_LL_scratch_; Q_LL.setZero();
 
-    // Build F_LL per axis
+    // All three axes use the same scalar transition.
+    const T tau = std::max(T(1e-6), tau_aw);
+
+    Eigen::Matrix<T,3,3> Phi_axis;
+    PhiAxis3x1_analytic(tau, Ts, Phi_axis);
+
     for (int axis = 0; axis < 3; ++axis) {
-        const T tau = std::max(T(1e-6), tau_aw);
-
-        Eigen::Matrix<T,3,3> Phi_axis;
-        PhiAxis3x1_analytic(tau, Ts, Phi_axis);
-
         const int idx[3] = {0,3,6}; // [v,p,a] offsets
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
@@ -1823,7 +1823,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
         const int idx[3] = {0,3,6};
         for (int axis = 0; axis < 3; ++axis) {
-            const T tau    = std::max(T(1e-6), tau_aw);
             const T sigma2 = Sigma_aw_stat(axis, axis);
             Eigen::Matrix<T,3,3> Qd_axis;
             QdAxis3x1_analytic(tau, Ts, sigma2, Qd_axis);

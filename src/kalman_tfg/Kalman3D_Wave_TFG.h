@@ -390,14 +390,14 @@ class Kalman3D_Wave_TFG {
             }
         }
 
-        // rho_dot = A rho - [x(t)]x R(t) delta_b_g.  Integrate the actual
-        // time-varying nominal x(t) and R(t), rather than replacing them by
-        // their start-of-step values.  D maps a physical body bias to the
-        // final world-error columns; Level 2 converts beta_g(0) back to that
-        // physical body-bias coordinate with R0^T.
-        Eigen::Matrix<T,12,3> D;
-        integrate_world_bias_impulse_(T(0), Ts, omega, D);
-        Phi.template block<12,3>(OFF_V, OFF_BG) = -D * bg0_to_body;
+        // The OU transition mixes world columns with scalar coefficients.
+        // By the semigroup law, transporting [x(t)]x to h gives [x(h)]x.
+        // The remaining integral of R(t) over the step is Fh.
+        const Eigen::Matrix<T,3,4> X_end = X_.X * Phi_axis.transpose();
+        const Matrix3 bias_to_attitude = -Fh * bg0_to_body;
+        for (int i = 0; i < 4; ++i)
+            Phi.template block<3,3>(OFF_V + 3*i, OFF_BG).noalias() =
+                ocean_imu::lie::skew<T>(Vector3(X_end.col(i))) * bias_to_attitude;
     }
 
     void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd, T gyro_noise_scale = T(1)) const {
@@ -407,15 +407,9 @@ class Kalman3D_Wave_TFG {
         const Matrix3 R0 = X_.R;
         const Vector3 omega = gyro_meas - X_.B.col(0);
         const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
-        const Matrix3 Fh =
-            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
-
-        // Five-point Gauss--Legendre quadrature of the *complete structured
-        // impulse response* of the stated continuous invariant error model.
-        // For gyro white noise an impulse at s enters phi through R(s) and all
-        // world columns through [x(s)]x R(s), followed by the remaining OU
-        // chain.  A gyro-bias RW impulse persists from s to h, therefore also
-        // drives phi and every world column for the rest of the sample.
+        // All gyro-driven world errors at the endpoint are [x_i(h)]x times
+        // the attitude impulse. Integrate its 3x3 covariance and its cross
+        // covariance with the end bias once, then lift into the full state.
         static constexpr double nodes[5] = {
             -0.9061798459386640, -0.5384693101056831, 0.0,
              0.5384693101056831,  0.9061798459386640
@@ -425,45 +419,51 @@ class Kalman3D_Wave_TFG {
             0.4786286704993665, 0.2369268850561891
         };
 
+        // Retain the sampled attitude impulse and separate white-noise and bias
+        // noise sums. Their float accumulation matters over long replays.
+        const Matrix3 Fh = R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
+        const Matrix3 E = two_frame_bias ? R_end : Matrix3::Identity();
+        const Matrix3 bias_covariance = (E * Q_bg_) * E.transpose();
+        const Matrix3 gyro_noise = Q_gyro_ * gyro_noise_scale;
+        Matrix3 Qtt = Matrix3::Zero(), Qtb = Matrix3::Zero(), Qbb = Matrix3::Zero();
         for (int q = 0; q < 5; ++q) {
             const T s = T(0.5) * Ts * (T(1) + T(nodes[q]));
             const T wq = T(0.5) * Ts * T(weights[q]);
-            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * s));
+            const Vector3 angle = omega * s;
+            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(angle);
+            const Matrix3 Fs = R0 * (s * ocean_imu::lie::left_jacobian<T>(angle));
+            const Matrix3 B = Fs - Fh;
+            const Matrix3 GQ = R_s * gyro_noise;
+            const Matrix3 BQ = B * Q_bg_;
+            Qtt += wq * (GQ * R_s.transpose()).eval();
+            Qtt += wq * (BQ * B.transpose()).eval();
+            Qtb += wq * (BQ * E.transpose()).eval();
+            Qbb += wq * bias_covariance;
+        }
+        Qd.template block<3,3>(OFF_PHI, OFF_PHI) = Qtt;
+        Qd.template block<3,3>(OFF_PHI, OFF_BG) = Qtb;
+        Qd.template block<3,3>(OFF_BG, OFF_PHI) = Qtb.transpose();
+        Qd.template block<3,3>(OFF_BG, OFF_BG) = Qbb;
 
-            Eigen::Matrix<T,4,4> Phi_s, Phi_rem;
-            world_transition_(s, Phi_s);
-            world_transition_(Ts - s, Phi_rem);
-            const Eigen::Matrix<T,3,4> X_s = X_.X * Phi_s.transpose();
-
-            Eigen::Matrix<T,NX,3> Lg = Eigen::Matrix<T,NX,3>::Zero();
-            Lg.template block<3,3>(OFF_PHI, 0) = R_s;
-            for (int i = 0; i < 4; ++i) {
-                Matrix3 M = Matrix3::Zero();
-                for (int j = 0; j < 4; ++j) {
-                    if (Phi_rem(i,j) == T(0)) continue;
-                    M.noalias() += Phi_rem(i,j) *
-                        (ocean_imu::lie::skew<T>(Vector3(X_s.col(j))) * R_s);
-                }
-                Lg.template block<3,3>(OFF_V + 3*i, 0) = M;
+        Eigen::Matrix<T,4,4> Phi_axis;
+        world_transition_(Ts, Phi_axis);
+        const Eigen::Matrix<T,3,4> X_end = X_.X * Phi_axis.transpose();
+        Matrix3 skew_end[4];
+        for (int i = 0; i < 4; ++i) {
+            const int row = OFF_V + 3*i;
+            skew_end[i] = ocean_imu::lie::skew<T>(Vector3(X_end.col(i)));
+            const Matrix3 world_att = skew_end[i] * Qtt;
+            const Matrix3 world_bg = skew_end[i] * Qtb;
+            Qd.template block<3,3>(row, OFF_PHI) = world_att;
+            Qd.template block<3,3>(OFF_PHI, row) = world_att.transpose();
+            Qd.template block<3,3>(row, OFF_BG) = world_bg;
+            Qd.template block<3,3>(OFF_BG, row) = world_bg.transpose();
+            for (int j = 0; j <= i; ++j) {
+                const int col = OFF_V + 3*j;
+                const Matrix3 block = world_att * skew_end[j].transpose();
+                Qd.template block<3,3>(row, col) = block;
+                if (j != i) Qd.template block<3,3>(col, row) = block.transpose();
             }
-            q_scratch_nx3_.noalias() = Lg * (Q_gyro_ * gyro_noise_scale);
-            q_scratch_nn_.noalias() = q_scratch_nx3_ * Lg.transpose();
-            Qd.noalias() += wq * q_scratch_nn_;
-
-            Eigen::Matrix<T,NX,3> Lb = Eigen::Matrix<T,NX,3>::Zero();
-            const Matrix3 Fs =
-                R0 * (s * ocean_imu::lie::left_jacobian<T>(Vector3(omega * s)));
-            const Matrix3 C = Fh - Fs;  // int_s^h R(t) dt
-            Lb.template block<3,3>(OFF_PHI, 0) = -C;
-            Lb.template block<3,3>(OFF_BG, 0) =
-                two_frame_bias ? R_end : Matrix3::Identity();
-
-            Eigen::Matrix<T,12,3> D;
-            integrate_world_bias_impulse_(s, Ts, omega, D);
-            Lb.template block<12,3>(OFF_V, 0) = -D;
-            q_scratch_nx3_.noalias() = Lb * Q_bg_;
-            q_scratch_nn_.noalias() = q_scratch_nx3_ * Lb.transpose();
-            Qd.noalias() += wq * q_scratch_nn_;
         }
 
         // The OU acceleration driving noise is already available in exact
@@ -764,45 +764,6 @@ class Kalman3D_Wave_TFG {
             ou_detail::IntegratedOUChain<T,3>::transition(tau_aw_, dt, Phi);
     }
 
-    // D(s,h) = int_s^h Phi_A(h-t) [x(t)]x R(t) dt.  It is the physical
-    // body-gyro-bias impulse map into [rho_v rho_p rho_S rho_a] at h.  Keeping
-    // it in body-bias coordinates makes the same function valid for Level 1
-    // and Level 2; only the endpoint bias coordinate differs.
-    void integrate_world_bias_impulse_(T s, T h, const Vector3& omega,
-                                       Eigen::Matrix<T,12,3>& D) const {
-        D.setZero();
-        if (!(h > s)) return;
-        static constexpr double nodes[5] = {
-            -0.9061798459386640, -0.5384693101056831, 0.0,
-             0.5384693101056831,  0.9061798459386640
-        };
-        static constexpr double weights[5] = {
-            0.2369268850561891, 0.4786286704993665, 0.5688888888888889,
-            0.4786286704993665, 0.2369268850561891
-        };
-
-        const T span = h - s;
-        for (int q = 0; q < 5; ++q) {
-            const T t = s + T(0.5) * span * (T(1) + T(nodes[q]));
-            const T wq = T(0.5) * span * T(weights[q]);
-            Eigen::Matrix<T,4,4> Phi_t, Phi_rem;
-            world_transition_(t, Phi_t);
-            world_transition_(h - t, Phi_rem);
-            const Eigen::Matrix<T,3,4> X_t = X_.X * Phi_t.transpose();
-            const Matrix3 R_t = X_.R * ocean_imu::lie::Exp<T>(Vector3(omega * t));
-
-            for (int i = 0; i < 4; ++i) {
-                Matrix3 M = Matrix3::Zero();
-                for (int j = 0; j < 4; ++j) {
-                    if (Phi_rem(i,j) == T(0)) continue;
-                    M.noalias() += Phi_rem(i,j) *
-                        (ocean_imu::lie::skew<T>(Vector3(X_t.col(j))) * R_t);
-                }
-                D.template block<3,3>(3*i, 0).noalias() += wq * M;
-            }
-        }
-    }
-
     [[nodiscard]] Vector3 accel_bias_at_(T tempC) const {
         if constexpr (with_accel_bias)
             return X_.B.col(1) + k_a_ * (tempC-kTempRefC);
@@ -1017,12 +978,6 @@ class Kalman3D_Wave_TFG {
     MatrixNX scratch_c_{MatrixNX::Zero()};
     Eigen::Matrix<T,NX,3> scratch_nx3_a_{Eigen::Matrix<T,NX,3>::Zero()};
     Eigen::Matrix<T,NX,3> scratch_nx3_b_{Eigen::Matrix<T,NX,3>::Zero()};
-
-    // build_process_noise() is const and runs inside time_update() while slots
-    // a and b are live, so its quadrature temporaries get their own mutable
-    // slots rather than sharing the pool.
-    mutable MatrixNX q_scratch_nn_{MatrixNX::Zero()};
-    mutable Eigen::Matrix<T,NX,3> q_scratch_nx3_{Eigen::Matrix<T,NX,3>::Zero()};
 
     T gravity_magnitude_;
     Group X_{};
