@@ -332,7 +332,7 @@
             "kappa_covariance": 569.7,
             "kappa_information": 569.7,
             "kappa_information_exceeds": null,
-            "relative_difference": 5.01e-06,
+            "relative_difference": 2.108e-06,
             "slow_marginal": 569.7
           },
           "exact_margin": 0.1058,
@@ -343,7 +343,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 1.515e-14,
+            "diffuse_scale_relative_difference": 1.66e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 570.5,
@@ -353,7 +353,7 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.001049,
-            "kappa_nu": 462.3,
+            "kappa_nu": 462.4,
             "kernel_rotation_rad": 0.00945,
             "kernel_set_invariant": true,
             "margin_mu_equals_inverse_c": 0.002163,
@@ -404,7 +404,7 @@
             "kappa_covariance": 37.48,
             "kappa_information": 37.48,
             "kappa_information_exceeds": null,
-            "relative_difference": 1.289e-06,
+            "relative_difference": 5.404e-07,
             "slow_marginal": 37.48
           },
           "exact_margin": 0.3435,
@@ -415,7 +415,7 @@
           },
           "joint_reader_C": {
             "diffuse_scale_converged_1e-6": true,
-            "diffuse_scale_relative_difference": 1.515e-14,
+            "diffuse_scale_relative_difference": 1.66e-14,
             "dominates_P0_within_1e-3": true,
             "k": 0.0,
             "kappa": 37.59,
@@ -425,12 +425,12 @@
           },
           "kernel_bounded_diameter": {
             "c_nu": 0.001049,
-            "kappa_nu": 35.3,
+            "kappa_nu": 35.31,
             "kernel_rotation_rad": 0.005123,
             "kernel_set_invariant": true,
-            "margin_mu_equals_inverse_c": 0.02833,
+            "margin_mu_equals_inverse_c": 0.02832,
             "next_root_kernel_ceiling": 0.001018,
-            "propagated_next_kernel_variance": 9.354e-05,
+            "propagated_next_kernel_variance": 9.355e-05,
             "tilt_premise_rad2": "1e-3"
           },
           "rank_one_kernel": {
@@ -934,7 +934,7 @@
     }
   ],
   "driver_sha256": "ef3e961053be3602b1377c8ae6376ff8fd8b03520889a1e2753e11b56bda5f76",
-  "header_sha256": "1a902c6294710659bb2aa160433308cf3d5fee58b99d7d164c2d654734f9af1a",
+  "header_sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
   "history_s": 64,
   "kernel_set_invariant_on_every_word": true,
   "kill_criterion": {

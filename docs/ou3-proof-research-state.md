@@ -1,3 +1,12 @@
+## Full-rate OU covariance kernels
+
+The optimized OU-III prediction and Joseph correction changed the shipping header and invalidated its source bindings (class E). The finite planar replay reproduced the committed operation stream and the native secant bytes at both perturbation radii. The construction mean observer reproduced its trace byte for byte. The collinear acceleration-tracking witness changed from 0.000402855 to 0.000402836 rad maximum attitude error. Its audit passed with the original thresholds.
+
+- **Structures preserved.** All 21 state components, cross-axis covariances, constrained gain rows, sensor deliveries, correction clocks and tuner history participate in the same physical execution.
+- **Relaxations introduced.** None. Prediction skips zero transition coefficients. Correction reuses products within a gain row and accumulates the nine terms in the original order.
+- **Counterexamples and scope.** These finite comparisons provide no all-prefix retention or uniform small-gain result. No shipping counterexample was observed.
+- **Next falsifiable check.** Compare the accepted-frame work and gap distributions on the AtomS3R with the same serial and display workload as the baseline.
+
 ## OU-III AtomS3R cycle timing
 
 The internal-SRAM allocator and the firmware sampling and display changes expired the OU-III source bindings (class E). The native probe reproduced the existing secant bytes at both perturbation radii, 0.01 and 0.005. The frontend and generated-port certificates also reproduced with the updated source hashes.

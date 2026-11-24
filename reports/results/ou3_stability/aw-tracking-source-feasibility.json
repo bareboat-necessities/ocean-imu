@@ -7,7 +7,7 @@
     "0",
     "72"
   ],
-  "header_sha256": "1a902c6294710659bb2aa160433308cf3d5fee58b99d7d164c2d654734f9af1a",
+  "header_sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
   "literal_over_injection_free_min": 1.0000088801271634,
   "magnetic_service_certified": false,
   "onset_s": 160,
@@ -24,8 +24,8 @@
         "1",
         "0"
       ],
-      "attitude_error_max_rad": 0.000402855,
-      "corollary_A_star_ratio": 3.93111e-05,
+      "attitude_error_max_rad": 0.000402836,
+      "corollary_A_star_ratio": 3.93104e-05,
       "literal_array": {
         "A_tilde_minus_I_max": 0.000319571,
         "G0_floor_service_gap_1s": 0.0839933,
@@ -33,7 +33,7 @@
         "literal_sigma_min": 219.818,
         "nominal_rate_max_rad_s": 0.005,
         "word_nominal_force_L1": 1.01701,
-        "word_nominal_transverse_mean_mps2": 2.84344e-05,
+        "word_nominal_transverse_mean_mps2": 2.84336e-05,
         "word_s": [
           2.0,
           102.0
@@ -53,7 +53,7 @@
       },
       "nominal_16s_mean_max_mps2": 0.000366099,
       "nominal_force_L1_max": 1.01702,
-      "nominal_transverse_mean_max_mps2": 7.7102e-05,
+      "nominal_transverse_mean_max_mps2": 7.71006e-05,
       "pointwise_aw_error_sup_mps2": 0.242306,
       "pointwise_ratio_to_corollary_A": 0.215607,
       "recorded_accelerometer_rows": 56001,
