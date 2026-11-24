@@ -20,6 +20,8 @@ The examples intentionally form a progression. Start with the basic IMU sketch t
 
 ## Checking the 200 Hz cycle on an AtomS3R
 
+The speed-optimized marine sketches use GCC level-1 debug information to keep function names and source lines for device backtraces and bound assembler memory use.
+
 Build the navigation or compass sketch with `-DOCEAN_IMU_PROFILE_LOOP=1` and capture
 `[TIMING]` lines after startup, with the usual LCD and serial output enabled.
 `sample_gap_mean_us` and `sample_gap_max_us` measure elapsed time between accepted

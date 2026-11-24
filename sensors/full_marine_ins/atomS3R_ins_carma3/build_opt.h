@@ -1,2 +1,3 @@
 -DOCEAN_IMU_CARMA_SAMPLE_IRAM=1
 -mtext-section-literals
+-g1

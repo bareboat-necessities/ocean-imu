@@ -51,7 +51,7 @@
 #include <limits>
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
-#include "lie/SE3Jacobians.h"
+#include "lie/SO3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
 
 namespace ocean_imu::kalman {
@@ -419,25 +419,31 @@ class Kalman3D_Wave_TFG {
             0.4786286704993665, 0.2369268850561891
         };
 
-        Matrix3 Qtt = Matrix3::Zero(), Qtb_body = Matrix3::Zero();
+        // Retain the sampled attitude impulse and separate white-noise and bias
+        // noise sums. Their float accumulation matters over long replays.
+        const Matrix3 Fh = R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
+        const Matrix3 E = two_frame_bias ? R_end : Matrix3::Identity();
+        const Matrix3 bias_covariance = (E * Q_bg_) * E.transpose();
+        const Matrix3 gyro_noise = Q_gyro_ * gyro_noise_scale;
+        Matrix3 Qtt = Matrix3::Zero(), Qtb = Matrix3::Zero(), Qbb = Matrix3::Zero();
         for (int q = 0; q < 5; ++q) {
             const T s = T(0.5) * Ts * (T(1) + T(nodes[q]));
             const T wq = T(0.5) * Ts * T(weights[q]);
-            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * s));
-            const T rem = Ts - s;
-            const Matrix3 C = R_s * (rem * ocean_imu::lie::left_jacobian<T>(Vector3(omega * rem)));
-            const Matrix3 CQbg = C * Q_bg_;
-            Qtt.noalias() += wq * (gyro_noise_scale * R_s * Q_gyro_ * R_s.transpose()
-                                  + CQbg * C.transpose());
-            Qtb_body -= wq * CQbg;
+            const Vector3 angle = omega * s;
+            const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(angle);
+            const Matrix3 Fs = R0 * (s * ocean_imu::lie::left_jacobian<T>(angle));
+            const Matrix3 B = Fs - Fh;
+            const Matrix3 GQ = R_s * gyro_noise;
+            const Matrix3 BQ = B * Q_bg_;
+            Qtt += wq * (GQ * R_s.transpose()).eval();
+            Qtt += wq * (BQ * B.transpose()).eval();
+            Qtb += wq * (BQ * E.transpose()).eval();
+            Qbb += wq * bias_covariance;
         }
-
-        const Matrix3 E = two_frame_bias ? R_end : Matrix3::Identity();
-        const Matrix3 Qtb = Qtb_body * E.transpose();
         Qd.template block<3,3>(OFF_PHI, OFF_PHI) = Qtt;
         Qd.template block<3,3>(OFF_PHI, OFF_BG) = Qtb;
         Qd.template block<3,3>(OFF_BG, OFF_PHI) = Qtb.transpose();
-        Qd.template block<3,3>(OFF_BG, OFF_BG).noalias() = Ts * E * Q_bg_ * E.transpose();
+        Qd.template block<3,3>(OFF_BG, OFF_BG) = Qbb;
 
         Eigen::Matrix<T,4,4> Phi_axis;
         world_transition_(Ts, Phi_axis);
@@ -557,15 +563,14 @@ class Kalman3D_Wave_TFG {
         const Vector3 phi = correction.template segment<3>(OFF_PHI);
         const Matrix3 Jr = ocean_imu::lie::left_jacobian<T>(Vector3(-phi));
         J.template block<3,3>(OFF_PHI, OFF_PHI) = Jr;
-        const ocean_imu::lie::RightJacobianCross<T> cross(phi);
         for (int c = 0; c < 4; ++c)
-            set_reset_vector_block_(J, OFF_V + 3*c, cross,
+            set_reset_vector_block_(J, OFF_V + 3*c, phi,
                                     correction.template segment<3>(OFF_V + 3*c), Jr);
         if constexpr (two_frame_bias) {
-            set_reset_vector_block_(J, OFF_BG, cross,
+            set_reset_vector_block_(J, OFF_BG, phi,
                                     correction.template segment<3>(OFF_BG), Jr);
             if constexpr (with_accel_bias)
-                set_reset_vector_block_(J, OFF_BA, cross,
+                set_reset_vector_block_(J, OFF_BA, phi,
                                         correction.template segment<3>(OFF_BA), Jr);
         }
     }
@@ -766,6 +771,30 @@ class Kalman3D_Wave_TFG {
         return Vector3::Zero();
     }
 
+    // Off-diagonal vector/attitude block of the full group right Jacobian.
+    // For ad_xi = [Omega 0; Z Omega], J_r = sum (-ad)^n/(n+1)!.
+    static Matrix3 reset_cross_block_(const Vector3& phi, const Vector3& z) {
+        const Matrix3 Omega = ocean_imu::lie::skew<T>(phi);
+        const Matrix3 Z = ocean_imu::lie::skew<T>(z);
+        Matrix3 D = Matrix3::Identity();
+        Matrix3 L = Matrix3::Zero();
+        Matrix3 Q = Matrix3::Zero();
+        T coeff = T(1);
+        const T tol = T(8) * std::numeric_limits<T>::epsilon();
+        for (int n = 1; n <= 32; ++n) {
+            const Matrix3 Lnext = L * Omega + D * Z;
+            const Matrix3 Dnext = D * Omega;
+            L = Lnext;
+            D = Dnext;
+            coeff *= -T(1) / T(n+1);
+            const Matrix3 term = coeff * L;
+            Q += term;
+            if (n >= 5 && term.cwiseAbs().maxCoeff() <=
+                              tol * (T(1) + Q.cwiseAbs().maxCoeff())) break;
+        }
+        return Q;
+    }
+
     // In-place form of  M = T(0.5) * (M + M.transpose()).eval().
     //
     // Bit-identical to the expression rather than merely equivalent: the
@@ -789,13 +818,10 @@ class Kalman3D_Wave_TFG {
     }
 
     static void set_reset_vector_block_(MatrixNX& J, int off,
-                                        const ocean_imu::lie::RightJacobianCross<T>& cross, const Vector3& z,
+                                        const Vector3& phi, const Vector3& z,
                                         const Matrix3& Jr) {
         J.template block<3,3>(off, off) = Jr;
-        T block[3][3];
-        cross(z.data(), block);
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j) J(off+i, OFF_PHI+j) = block[i][j];
+        J.template block<3,3>(off, OFF_PHI) = reset_cross_block_(phi, z);
     }
 
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
