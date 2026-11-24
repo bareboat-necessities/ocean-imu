@@ -79,6 +79,7 @@ extern template void ocean_imu::kalman::Kalman3D_Wave_OU_II<float, true, true>::
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "AtomS3R/AtomS3R_LoopTiming.h"
+#include "AtomS3R/AtomS3R_Bmi270FrameClock.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
 #include "util/QuaternionUtils.h"
@@ -189,7 +190,8 @@ public:
     const uint32_t sample_us = micros();
     uint32_t poll_ms;
     const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms,
-                                                 AtomS3RNavigationImu::kReadyWindowUs);
+                                                 AtomS3RNavigationImu::kReadyWindowUs) &&
+                            sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_);
 
     if (got_sample) {
       pacer_.followReadyPoll(sample_us, sample.sample_us);
@@ -223,7 +225,7 @@ public:
 
     updateUI_();
     streamSerial_();
-    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_);
   }
 
 private:
@@ -287,7 +289,7 @@ private:
   bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
-  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  Bmi270FrameClock sample_dt_{};
   ins::SampleRateMeter rates_{};
 
   ImuSpikeFilter imu_spike_{};
@@ -347,7 +349,9 @@ private:
       while (true) delay(100);
     }
 
-    navigation_imu_.configure(M5.Imu);
+    navigation_imu_.configure(M5.Imu, true);
+    Serial.printf("[IMU] estimator clock: %s\n",
+                  navigation_imu_.frameClockEnabled() ? "BMI270 200 Hz" : "host micros");
     temperature_ = {};
     previous_raw_mag_.setConstant(NAN);
     mag_gate_.reset();
@@ -525,7 +529,6 @@ private:
   }
 
   void updateFilter_(const ImuSample& s, uint32_t poll_ms) {
-    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();

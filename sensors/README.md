@@ -37,6 +37,15 @@ complete BMI270 frame. It can start another readiness check within 300 µs of
 the scheduled poll if either ready flag is still missing. A successful retry anchors
 the next 5 ms wait to the observed ready poll so a slower sensor clock can shift the phase.
 
+On OU-II and OU-III, `[IMU] estimator clock: BMI270 200 Hz` at startup means
+the filter uses the frame number from the sensor clock captured in the same I²C
+burst as acceleration and angular rate. Consecutive frames contribute 5 ms each.
+A jump of two frames contributes 10 ms, and a repeat is discarded. The
+`[TIMING]` gap fields continue to measure host poll spacing. The accompanying
+`[ESTIMATOR]` line gives the minimum and maximum filter step in milliseconds. If the direct
+reader or matching 200 Hz accelerometer and gyro configuration is unavailable,
+the startup line reports `host micros` and the filter uses elapsed host time.
+
 ## Hardware
 
 The sensor sketches are written for the M5Stack AtomS3R and use `M5Unified` for board and IMU access. Connect the AtomS3R over USB-C for power, programming, and serial output.

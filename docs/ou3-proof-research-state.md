@@ -1,3 +1,11 @@
+## BMI270 frame timing in the OU-III sketch
+
+The firmware clock change expired the sketch and whole-source bindings (class E). The native planar replay reproduced all 252 secant columns at both radii with the original finite-word results.
+
+- **Structures preserved.** The replay retains its timestamped input, full state, covariance, bias, tuner and magnetic service history. The deployed OU sketch now derives its integration interval from the observed 200 Hz BMI270 frame count when available.
+- **Relaxations introduced.** The fixed-input replay covers the estimator. A separate register-level timing test covers host jitter, missed and duplicate frames, fallback and counter wrap.
+- **Scope and next check.** The finite tests produced no counterexample. Physical sensor and host timing together remain to be checked with the firmware timing profile on an AtomS3R.
+
 ## Full-rate OU covariance kernels
 
 The optimized OU-III prediction and Joseph correction changed the shipping header and invalidated its source bindings (class E). The finite planar replay reproduced the committed operation stream and the native secant bytes at both perturbation radii. The construction mean observer reproduced its trace byte for byte. All four AG readout profiles reproduced the previous native event bytes and matched the untapped filter at their endpoints. The collinear acceleration-tracking witness changed from 0.000402855 to 0.000402836 rad maximum attitude error. Its audit passed with the original thresholds.
