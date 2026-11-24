@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "16546e1be895395b501b396eb1a1882a4c2e2c8f0213884bd758a1957829d746",
-    "TFG": "71a9f4ce13ba2ea1d158917198d319a0d2808a696983a2aa3945bf1c25ca4d79"
+    "OU_III": "acd3d14c25b52274be622eea81caaea47656b42eeb95e3332b8643216f26c5bf",
+    "TFG": "c1e30a8d943f073eb6edd48d40350b73bccc4276bc12167b2035d5e9e09f54b0"
   },
   "build_environment": {
     "compiler": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-23T11:48:38+00:00",
-  "git_commit": "ac7c59dd8a1fa8e9a51ccc1f1bb8abd9879700c1",
-  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   |   40 +-\n reports/results/tfg_comparison/paired_summary.json | 3954 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  360 +-\n reports/results/tfg_comparison/raw_runs.json       | 3218 ++++++++--------\n 4 files changed, 3786 insertions(+), 3786 deletions(-)",
+  "generated_utc": "2026-11-24T18:57:34+00:00",
+  "git_commit": "2eabb2443242c8537bef05fef1a9d62123382d8a",
+  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    2 +-\n reports/results/tfg_comparison/paired_summary.json | 3774 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  180 +-\n reports/results/tfg_comparison/raw_runs.json       | 1614 ++++-----\n 4 files changed, 2785 insertions(+), 2785 deletions(-)",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -140,11 +140,11 @@
     "window_sec": 900.0
   },
   "result_sha256": {
-    "comparison.tex": "667608fc2512d21f867ef6d62f517ce0be49221379cd123078deda4d990a4aa7",
+    "comparison.tex": "636f49a225200df46a079705514c86878367339c95b9cedefd8091a5315a75d9",
     "gate_diagnostics.json": "444d391a79ba7124acca54a67a68435c8f4860edbe7163c304cae8495faeb576",
-    "paired_summary.json": "8044b0ee59e728888c35e13e1f37eebe0e0e4233533f8276e4c8da6fa108d1cd",
-    "raw_runs.csv": "5666deefc0109953d792c3e717cc36567834a5f4de86a24e1b5ba8003e06d1ba",
-    "raw_runs.json": "44c7ac0377bfc59a56c2b3b2d4bb7ad37efbb4094a3ae1a9ce872da85f60e2ba"
+    "paired_summary.json": "b4af97fcc384382d11162428e06a2b00437698e6937f4b5f74a8e8bc41fc8c5f",
+    "raw_runs.csv": "ee5cc15a145b7b035576d059ff79c4c7d33c5942befc76d0e0c239676a33a240",
+    "raw_runs.json": "6d3bc1fb0d9f68c5d8c21689016cc6553a1ebbea7fa1f4fbc7aaad91ff08cb39"
   },
   "schema_version": 1,
   "source_hashes": {
@@ -174,10 +174,11 @@
     "src/kalman_common/SeaStateTuning.h": "5854b6af1c122eb6c4f058c1935ec9807e243545a01f0b5bc016650f33845f22",
     "src/kalman_common/WaveStartup.h": "711515874c2b7dad847926e4df1602bb284f4e09f4920907ff91828cb90c342b",
     "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
+    "src/kalman_ou_common/OUJosephUpdate.h": "78ffc9526e72ba867417e069afb1bf0fcb2a31e071a9ca99c0e2ebd38d31e025",
     "src/kalman_ou_iii/HorizontalWaveBand.h": "2870c5866240128bf5df406dff18eb06f7ec38ded75470be10d1cf7993a3d51d",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "1a902c6294710659bb2aa160433308cf3d5fee58b99d7d164c2d654734f9af1a",
-    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "cd98dac8c8b43c3e1f5dfdb5539b54db6a1d4b2ec7b3cb635058f4681a72a469",
-    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "bd4f2e719fb76d6ac5d4d473cc101065e8eca20546661e01d8c717486e2c16fa",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
+    "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "0d88f3d992615338a559df718c0eea7bed79181e4462876501714f41a533b901",
+    "src/kalman_tfg/Kalman3D_Wave_TFG.h": "3f18bd731faecc77a6f34fd3d82c3f89c1234080d450f3264c6534c916403126",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "2a53da8dac4eeb8c0f9bd377a2fd5a562ca3b62d2acefd05961a428cc185ec26",
     "src/lie/SO3Jacobians.h": "7decb64f3c59e826603be8c1dc6e71fb8bd3066bfc885f1544a5346712d24c2d",
     "src/lie/TwoFrameGroup.h": "45a10bacade109dd82169b699e30e420d9fa410ba0eb83185caa55ca4b15cc72",
@@ -194,6 +195,7 @@
     "src/tuner/WavePeriodEstimator.h": "5eb2b71263014d9573fa190e5c7dd0ed50ad1768a97373bcf000cca393012ca5",
     "src/util/CsvTimestamp.h": "312b165172792103c94d301809474d91d2aba6e332e5b7ed2e82be903569e721",
     "src/util/ExponentialGain.h": "919dc66e9480022110aa7e254fd8731d6efa12dd35d48c01ccc32feeefd9aacf",
+    "src/util/FilterStorage.h": "ab2a5a4b722de76e041590042ee2a5c0b9c25ec3f12495dfc7cfcf73b2286510",
     "src/util/HotLoop.h": "8f0ce12fbe90d4cdad6c4ad0345dfbe764f419835647c77e6dac8f1932e51a5f",
     "src/util/MagneticRotation.h": "1c2cbc7110f5135992a96593a02d7757204373e9ac87d60cdd30d1f4850200a9",
     "src/util/UnderwayReference.h": "4ec5baa5fb69e684bb4a941b755f08eff84538da1905b9fbc395946cee9eb422",
@@ -226,7 +228,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "45137512704",
-    "workflow": "ou-full-evidence-branch"
+    "run_id": "45457074564",
+    "workflow": "build"
   }
 }
