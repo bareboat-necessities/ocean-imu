@@ -1823,7 +1823,6 @@ void Kalman3D_Wave_OU_II<T, with_gyro_bias, with_accel_bias>::time_update(
         // Independent axes (no cross-correlation) — per-axis Qd on the diagonal
         const int idx[3] = {0,3,6};
         for (int axis = 0; axis < 3; ++axis) {
-            const T tau    = std::max(T(1e-6), tau_aw);
             const T sigma2 = Sigma_aw_stat(axis, axis);
             Eigen::Matrix<T,3,3> Qd_axis;
             QdAxis3x1_analytic(tau, Ts, sigma2, Qd_axis);
