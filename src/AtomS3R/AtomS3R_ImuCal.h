@@ -276,6 +276,7 @@ struct ImuSample {
   float tempC;    // deg C
   uint32_t mask;  // M5.Imu.update() mask
   uint32_t sample_us; // micros() timestamp captured at imu.update()
+  int32_t bmi270_frame = -1; // 200 Hz sensor slot, when captured with XYZ
   MagAcquisition mag_timing; // first host observation and AUX read bracket
 };
 
@@ -439,8 +440,9 @@ class AtomS3RNavigationImu {
  public:
   // Permit a short readiness check within the 500 us of nominal OU loop headroom.
   static constexpr uint32_t kReadyWindowUs = 300;
-  void configure(decltype(M5.Imu)& imu) {
+  void configure(decltype(M5.Imu)& imu, bool request_frame_clock = false) {
     device_ = nullptr;
+    frame_clock_enabled_ = false;
     auto& src = atoms3rMagSource();
     if (M5.getBoard() != m5::board_t::board_M5AtomS3R || imu.getType() != m5::imu_bmi270 ||
         !src.compensated || !src.bmi270 || src.bmi270 != imu.getImuInstancePtr(0) ||
@@ -450,7 +452,14 @@ class AtomS3RNavigationImu {
     }
     device_ = src.bmi270;
     device_->getConvertParam(&scale_);
+    if (request_frame_clock) {
+      uint8_t config[3];  // ACC_CONF, ACC_RANGE, GYR_CONF
+      frame_clock_enabled_ = device_->readRegister(0x40, config, sizeof(config)) &&
+                             (config[0] & 0x0f) == 9 && (config[2] & 0x0f) == 9;
+    }
   }
+
+  bool frameClockEnabled() const { return frame_clock_enabled_; }
 
   template <class MagGate>
   bool read(decltype(M5.Imu)& imu, uint32_t frame_us, ImuSample& sample, ImuTemperatureCache& temperature,
@@ -459,7 +468,9 @@ class AtomS3RNavigationImu {
     Bmi270AuxBurst burst;
     const uint32_t now = millis();
     const bool request_aux = gate.due(now) || !atoms3rMagSource().acquisition.fresh(now);
-    const uint32_t mask = update_(imu, data, request_aux ? &burst : nullptr, frame_us, ready_window_us);
+    sample.bmi270_frame = -1;
+    const uint32_t mask = update_(imu, data, request_aux ? &burst : nullptr, frame_us, ready_window_us,
+                                  frame_clock_enabled_ ? &sample.bmi270_frame : nullptr);
     // A poll can become due during the transfer. In that case read AUX here
     // just as we do when the optimized transfer was unavailable.
     poll_ms = millis();
@@ -474,7 +485,7 @@ class AtomS3RNavigationImu {
 
  private:
   uint32_t update_(decltype(M5.Imu)& imu, m5::imu_data_t& data, Bmi270AuxBurst* aux,
-                   uint32_t& frame_us, uint32_t ready_window_us) const {
+                   uint32_t& frame_us, uint32_t ready_window_us, int32_t* frame = nullptr) const {
     if (aux) aux->acquired = false;
     if (!device_ || !atoms3rMagSource().compensated) {
       const auto mask = imu.update();
@@ -501,22 +512,30 @@ class AtomS3RNavigationImu {
     if (!(ready & 0xe0)) return 0;
     // AUX_X_LSB (0x04) immediately precedes ACC_X_LSB (0x0c).
     // If the combined read fails, recover the inertial frame separately.
-    int16_t block[10];
+    // Registers 0x18..0x1a shadow the sensor clock at the start of the same
+    // burst as XYZ. A separate clock read can belong to the next frame.
+    int16_t block[12];
+    const size_t xyz_bytes = 12 + (frame ? 3 : 0);
     int16_t* raw = block + 4;
     if (aux && (ready & 0xc0) == 0xc0) {
       aux->start_us = micros();
-      aux->acquired = device_->readRegister(0x04, reinterpret_cast<uint8_t*>(block), sizeof(block));
+      aux->acquired = device_->readRegister(0x04, reinterpret_cast<uint8_t*>(block), 8 + xyz_bytes);
       if (aux->acquired) {
         aux->end_us = micros();
         memcpy(aux->bytes, block, sizeof(aux->bytes));
       }
     }
     if ((!aux || !aux->acquired) &&
-        !device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), 6 * sizeof(*raw))) return 0;
+        !device_->readRegister(0x0c, reinterpret_cast<uint8_t*>(raw), xyz_bytes)) return 0;
     const uint32_t mask = ((ready & 0x80) ? ATOMS3R_IMU_MASK_ACCEL : 0u) |
                           ((ready & 0x40) ? ATOMS3R_IMU_MASK_GYRO : 0u) |
                           ((ready & 0x20) ? uint32_t(m5::IMU_Class::sensor_mask_mag) : 0u);
     if ((mask & kImuMaskAccelGyro) == kImuMaskAccelGyro) {
+      if (frame) {
+        const uint8_t* t = reinterpret_cast<const uint8_t*>(block) + 20;
+        const uint32_t ticks = uint32_t(t[0]) | (uint32_t(t[1]) << 8) | (uint32_t(t[2]) << 16);
+        *frame = int32_t(ticks >> 7);
+      }
       data.accel = mapped_(raw, scale_.accel_res);
       data.gyro = mapped_(raw + 3, scale_.gyro_res);
     }
@@ -533,6 +552,7 @@ class AtomS3RNavigationImu {
     return v;
   }
 
+  bool frame_clock_enabled_ = false;
   m5::IMU_Base* device_ = nullptr;
   m5::IMU_Base::imu_convert_param_t scale_{};
 };
