@@ -74,9 +74,10 @@ ATOMS3R_END_FILTER_MATH
 #endif
 #include "detrend/AdaptiveWaveDetrender.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 #include "util/AngleUtils.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
+#include "AtomS3R/AtomS3R_Bmi270FrameClock.h"
 #include "AtomS3R/AtomS3R_LoopTiming.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
@@ -187,6 +188,23 @@ class FusionApp {
     pacer_.wait();
     timing_.begin();
 
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, PollMagEveryFrame{}, poll_ms,
+                                                 AtomS3RNavigationImu::kReadyWindowUs) &&
+                            sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_);
+
+    if (got_sample) {
+      pacer_.followReadyPoll(sample_us, sample.sample_us);
+      // Keep the observer restart rule for a long, unverified host interval.
+      if (sample_dt_.usedHostTime() && dt_ > 0.05f) dt_ = 1.0f / LOOP_HZ;
+      stale_frame_count_ = 0;
+      updateFilter_(sample, poll_ms);
+    } else if (stale_frame_count_ < 0xFFFFu) {
+      stale_frame_count_++;
+    }
+
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
 
@@ -205,24 +223,13 @@ class FusionApp {
       tap_count_ = 0;
       tap_deadline_ms_ = 0;
       drawHomeStatic_();
+      return;
     }
 #endif
 
-    ImuSample sample{};
-    const uint32_t sample_us = micros();
-    uint32_t poll_ms;
-    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, PollMagEveryFrame{}, poll_ms);
-
-    if (got_sample) {
-      stale_frame_count_ = 0;
-      updateFilter_(sample, poll_ms);
-    } else if (stale_frame_count_ < 0xFFFFu) {
-      stale_frame_count_++;
-    }
-
     updateUI_();
     streamSerial_();
-    timing_.finish(sample_us, got_sample, LOOP_PERIOD_US);
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime(), sample_dt_.missedFrames());
   }
 
  private:
@@ -250,6 +257,9 @@ class FusionApp {
   uint32_t last_serial_ms_ = 0;
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_ = 0;
+#if SEA_STATE_SERIAL_NMEA
+  MarineNmeaBatch nmea_batch_{};
+#endif
 
   Fusion fusion_{};
 
@@ -262,7 +272,8 @@ class FusionApp {
   Vector3f w_cal_ = Vector3f::Zero();
   Vector3f m_cal_ = Vector3f::Constant(NAN);
 
-  float a_raw_norm_ = 0.0f;
+  Vector3f display_raw_accel_ = Vector3f::Zero();
+  Vector3f previous_raw_mag_ = Vector3f::Constant(NAN);
 
   float dt_ = 0.0f;
 
@@ -276,7 +287,6 @@ class FusionApp {
 
   float heave_m_ = 0.0f;
   float heave_speed_mps_ = 0.0f;
-  float wave_envelope_m_ = 0.0f;
   float wave_hz_ = APP_FREQ_GUESS;
 
   float heave_raw_m_ = 0.0f;
@@ -292,7 +302,7 @@ class FusionApp {
   float imu_temp_c_ = NAN;
 
   uint16_t stale_frame_count_ = 0;
-  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ, 0.05f};
+  Bmi270FrameClock sample_dt_{};
   ImuSpikeFilter imu_spike_{};
 
   ins::StillGyroBiasEma gyro_bias_{ROT_BIAS_TAU_S, ROT_STILL_G_TOL_FRAC, ROT_STILL_GYRO_RAD_S};
@@ -406,7 +416,9 @@ class FusionApp {
       while (true) delay(100);
     }
 
-    navigation_imu_.configure(M5.Imu);
+    navigation_imu_.configure(M5.Imu, true);
+    Serial.printf("[IMU] estimator clock: %s\n",
+                  navigation_imu_.frameClockEnabled() ? "BMI270 200 Hz" : "host micros");
     temperature_ = {};
     mag_gate_.reset();
     last_mag_correction_ms_ = 0;
@@ -416,6 +428,10 @@ class FusionApp {
   }
 
   void resetFusion_() {
+    previous_raw_mag_ = Vector3f::Constant(NAN);
+#if SEA_STATE_SERIAL_NMEA
+    nmea_batch_.reset();
+#endif
     Fusion::Config cfg{};
 
     /*
@@ -481,7 +497,6 @@ class FusionApp {
 
     heave_m_ = 0.0f;
     heave_speed_mps_ = 0.0f;
-    wave_envelope_m_ = 0.0f;
     wave_hz_ = APP_FREQ_GUESS;
 
     heave_raw_m_ = 0.0f;
@@ -537,7 +552,6 @@ class FusionApp {
 
   void updateFilter_(const ImuSample& s, uint32_t now_ms) {
 
-    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
@@ -545,24 +559,28 @@ class FusionApp {
     Vector3f a_raw = s.a;
     Vector3f w_raw = s.w;
 
-    a_raw_norm_ = a_raw.norm();
+    display_raw_accel_ = a_raw;
     imu_spike_.apply(a_raw, w_raw, dt_);
 
     a_cal_ = runtime_.applyAccel(a_raw, tempC);
     w_cal_ = runtime_.applyGyro(w_raw, tempC);
-    m_cal_ = runtime_.applyMag(s.m);
+    // The magnetic field is held between AUX conversions. Keep feedback at IMU rate.
+    if (s.m != previous_raw_mag_) {
+      previous_raw_mag_ = s.m;
+      m_cal_ = runtime_.applyMag(s.m);
 
-    mag_norm_uT_ = m_cal_.norm();
+      mag_norm_uT_ = m_cal_.norm();
 
-    mag_present_ =
-        std::isfinite(mag_norm_uT_) &&
-        mag_norm_uT_ >= MAG_PRESENT_MIN_UT &&
-        mag_norm_uT_ <= MAG_PRESENT_MAX_UT;
+      mag_present_ =
+          std::isfinite(mag_norm_uT_) &&
+          mag_norm_uT_ >= MAG_PRESENT_MIN_UT &&
+          mag_norm_uT_ <= MAG_PRESENT_MAX_UT;
 
-    mag_field_sane_ =
-        std::isfinite(mag_norm_uT_) &&
-        mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
-        mag_norm_uT_ <= MAG_FIELD_MAX_UT;
+      mag_field_sane_ =
+          std::isfinite(mag_norm_uT_) &&
+          mag_norm_uT_ >= MAG_FIELD_MIN_UT &&
+          mag_norm_uT_ <= MAG_FIELD_MAX_UT;
+    }
 
     mag_fresh_ = mag_gate_.update(mag_present_, now_ms);
     if (mag_fresh_) rates_.countMag();
@@ -624,8 +642,6 @@ class FusionApp {
     gyro_bias_.update(w_cal_, a_cal_, APP_G_LOCAL, dt_);
     rot_.update(gyro_bias_.corrected(w_cal_).z(), dt_);
 
-    const auto hs = fusion_.snapshot();
-
     heave_m_ = fusion_.displacement();
     heave_speed_mps_ = fusion_.velocity();
     heave_raw_m_ = heave_m_;
@@ -640,15 +656,7 @@ class FusionApp {
         env_freq_hz > 1e-6f) {
       wave_hz_ = env_freq_hz;
     } else {
-      wave_hz_ = hs.core.accel_freq_hz;
-    }
-
-    /*
-      Use the core-owned envelope estimate.
-    */
-    wave_envelope_m_ = fusion_.displacementScale();
-    if (!(std::isfinite(wave_envelope_m_) && wave_envelope_m_ >= 0.0f)) {
-      wave_envelope_m_ = 0.0f;
+      wave_hz_ = fusion_.accelFrequencyHz();
     }
 
     const auto z_det =
@@ -659,6 +667,11 @@ class FusionApp {
     heave_wave_clean_m_ = z_det.wave_clean;
 
     rates_.update(now_ms);
+  }
+
+  float waveEnvelopeM_() const {
+    const float envelope = fusion_.displacementScale();
+    return std::isfinite(envelope) && envelope >= 0.0f ? envelope : 0.0f;
   }
 
   void drawHomeStatic_() {
@@ -706,7 +719,7 @@ class FusionApp {
     if (now_ms - last_ui_ms_ < atoms3r_timing::UI_REFRESH_MS) return;
     last_ui_ms_ = now_ms;
     display_.publish({heading_deg_, heading_mag_deg_, roll_deg_, pitch_deg_, mag_norm_uT_,
-                      a_raw_norm_, a_cal_.norm(), yaw_mahony_deg_, heave_raw_m_, wave_envelope_m_,
+                      display_raw_accel_.norm(), a_cal_.norm(), yaw_mahony_deg_, heave_raw_m_, waveEnvelopeM_(),
                       heading_valid_, mag_present_, mag_field_sane_, mag_used_,
                       mahony_seeded_});
   }
@@ -757,7 +770,13 @@ class FusionApp {
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
+    if (!nmea_batch_.pending() && now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
+    if (!Serial) {
+      nmea_batch_.reset();
+      last_serial_ms_ = now_ms;
+      return;
+    }
+    if (Serial.availableForWrite() < 2 * 101 || nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
 #else
     if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
 #endif
@@ -770,13 +789,12 @@ class FusionApp {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_);
     }
 
-    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_);
-    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+    nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), heading_valid_);
+    nmea_batch_.addTilt(pitch_deg_, roll_deg_);
 
     if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
-      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+      nmea_batch_.addTemperature(imu_temp_c_);
     }
 
     if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
@@ -791,8 +809,6 @@ class FusionApp {
                           rates_.magHz());
     }
 
-    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), heading_valid_);
 
 #else
 
@@ -800,7 +816,7 @@ class FusionApp {
 
     Serial.printf("HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\n",
                   static_cast<double>(heave_raw_m_ * 100.0f),
-                  static_cast<double>(wave_envelope_m_ * 100.0f),
+                  static_cast<double>(waveEnvelopeM_() * 100.0f),
                   static_cast<double>(heave_wave_clean_m_ * 100.0f));
 
   #else
@@ -820,7 +836,7 @@ class FusionApp {
         static_cast<int>(mag_field_sane_),
         static_cast<int>(mag_fresh_),
         static_cast<double>(heave_m_),
-        static_cast<double>(wave_envelope_m_),
+        static_cast<double>(waveEnvelopeM_()),
         static_cast<double>(wave_hz_),
         static_cast<int>(fusion_.envelopeReady()),
         static_cast<double>(fusion_.envelopeAccelVariance()),

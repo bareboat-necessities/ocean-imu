@@ -51,7 +51,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
             self.assertIn("navigation_imu_.read(", tick)
             self.assertIn("Input::pollButton();", tick)
             if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_tfg",
-                             "atomS3R_ins_tfg_carma_shared_modes"):
+                             "atomS3R_ins_tfg_carma_shared_modes", *other_sketches):
                 self.assertLess(tick.index("updateFilter_(sample"), tick.index("Input::pollButton();"))
                 self.assertIn("AtomS3RNavigationImu::kReadyWindowUs", tick)
                 self.assertIn("pacer_.followReadyPoll(sample_us, sample.sample_us)", tick)
@@ -60,13 +60,17 @@ class DeviceCompassStartupTest(unittest.TestCase):
                 if path.stem == "atomS3R_ins_tfg_carma_shared_modes":
                     self.assertIn("timing_.host_steps += sample_dt_.usedHostTime();", update)
                     self.assertIn("timing_.missed_sensor_frames += sample_dt_.missedFrames();", update)
-                elif path.stem == "atomS3R_ins_tfg":
+                elif path.stem in ("atomS3R_ins_tfg", *other_sketches):
                     self.assertIn("dt_, sample_dt_.usedHostTime(), sample_dt_.missedFrames());", tick)
                 else:
                     self.assertIn("timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());", tick)
                 self.assertIn("sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_)", tick)
                 self.assertNotIn("dt_ =", update)
-                self.assertIn("fusion_.update(dt_,", update)
+                if path.stem == "atomS3R_ins_pii_observer":
+                    for method in ("updateIMU", "updateIMUMag"):
+                        self.assertRegex(update, rf"fusion_\.{method}\([^;]+dt_\);")
+                else:
+                    self.assertIn("fusion_.update(dt_,", update)
             else:
                 self.assertIn("sample_dt_.update(s.sample_us)", update)
             self.assertIn("display_.waitForMenu();", function(source, "drawHomePending_"))
@@ -268,23 +272,24 @@ int main() {
                             "-I", tmp, "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
-    def test_shared_tfg_serial_recovery(self):
+    def test_serial_recovery(self):
         here = Path(__file__).resolve().parent
-        sketch = ROOT / "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes"
-        sketch_source = (sketch / f"{sketch.name}.ino").read_text()
-        fixture = (here / "shared_tfg_serial_test.cpp.in").read_text()
-        fixture = fixture.replace("@STREAM_SERIAL@", function(sketch_source, "streamSerial_"))
-        fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch_source, "writeDebugChunk_"))
-        with tempfile.TemporaryDirectory() as tmp:
-            source, exe = Path(tmp) / "serial.cpp", Path(tmp) / "serial"
-            source.write_text(fixture)
-            for nmea, plotter in ((1, 0), (0, 0), (0, 1)):
-                with self.subTest(nmea=nmea, plotter=plotter):
-                    subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
-                                    "-Wall", "-Wextra", "-Werror", f"-DSEA_STATE_SERIAL_NMEA={nmea}",
-                                    f"-DARDUINO_PLOTTER={plotter}", "-I", str(ROOT / "src"),
-                                    str(source), "-o", str(exe)], check=True)
-                    subprocess.run([str(exe)], check=True)
+        template = (here / "shared_tfg_serial_test.cpp.in").read_text()
+        for name in ("atomS3R_ins_tfg_carma_shared_modes", "atomS3R_ins_pii_observer", "atomS3R_ins_nlo"):
+            sketch = (ROOT / "sensors/full_marine_ins" / name / f"{name}.ino").read_text()
+            shared = name == "atomS3R_ins_tfg_carma_shared_modes"
+            fixture = template.replace("@STREAM_SERIAL@", function(sketch, "streamSerial_"))
+            fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch, "writeDebugChunk_") if shared else "")
+            with tempfile.TemporaryDirectory() as tmp:
+                source, exe = Path(tmp) / "serial.cpp", Path(tmp) / "serial"
+                source.write_text(fixture)
+                for nmea, plotter in (((1, 0), (0, 0), (0, 1)) if shared else ((1, 0),)):
+                    with self.subTest(sketch=name, nmea=nmea, plotter=plotter):
+                        subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                                        "-Wall", "-Wextra", "-Werror", f"-DSEA_STATE_SERIAL_NMEA={nmea}",
+                                        f"-DARDUINO_PLOTTER={plotter}", "-I", str(ROOT / "src"),
+                                        str(source), "-o", str(exe)], check=True)
+                        subprocess.run([str(exe)], check=True)
 
     def test_startup_compass_then_fused_live_output(self):
         for path in SKETCHES:
