@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "2eabb2443242c8537bef05fef1a9d62123382d8a",
+  "git_commit": "66e270623dd501ebe231ab14c66d4f16eb56626e",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -110,8 +110,8 @@
       "sha256": "a13023af886e10800f86d8024c110e13772877d7ee61a2362dbf3ba5564f6cf5"
     },
     "src/kalman_common/MekfAttitudeMath.h": {
-      "bytes": 10440,
-      "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234"
+      "bytes": 10426,
+      "sha256": "4c8a271b53eb5b511681032841c6319bce5fb421a5bc1f501e04a8f658a14573"
     },
     "src/kalman_common/PeriodicSchedule.h": {
       "bytes": 1500,
@@ -158,8 +158,8 @@
       "sha256": "2870c5866240128bf5df406dff18eb06f7ec38ded75470be10d1cf7993a3d51d"
     },
     "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-      "bytes": 98185,
-      "sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5"
+      "bytes": 98341,
+      "sha256": "e4ee4428eb6c798cdf148928bb21c2a6982599367d53229332d422a56c128f9c"
     },
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
       "bytes": 52803,
@@ -311,7 +311,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -422,11 +422,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-24T19:24:28+00:00",
-    "git_commit": "2eabb2443242c8537bef05fef1a9d62123382d8a",
+    "generated_at": "2026-11-25T00:36:44+00:00",
+    "git_commit": "66e270623dd501ebe231ab14c66d4f16eb56626e",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -493,8 +493,8 @@
         "size_bytes": 20323
       },
       "src/kalman_common/MekfAttitudeMath.h": {
-        "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
-        "size_bytes": 10440
+        "sha256": "4c8a271b53eb5b511681032841c6319bce5fb421a5bc1f501e04a8f658a14573",
+        "size_bytes": 10426
       },
       "src/kalman_common/PeriodicSchedule.h": {
         "sha256": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
@@ -541,8 +541,8 @@
         "size_bytes": 2772
       },
       "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": {
-        "sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
-        "size_bytes": 98185
+        "sha256": "e4ee4428eb6c798cdf148928bb21c2a6982599367d53229332d422a56c128f9c",
+        "size_bytes": 98341
       },
       "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": {
         "sha256": "0d88f3d992615338a559df718c0eea7bed79181e4462876501714f41a533b901",
@@ -709,7 +709,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "45457074564",
+      "run_id": "45504933094",
       "workflow": "build"
     }
   },

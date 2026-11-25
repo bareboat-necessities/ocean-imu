@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "0880867dc3bf02da961b3e09a3fa266dc6a36ccf37f3010e0a355f04b0236059",
+  "replay_fingerprint": "bba2954979529a42a1b886da96c42abe8f5ab8a8b84282a6bb2dbb56a5630a9a",
   "results_file_count": 1919,
   "results_files": [
     {
@@ -2706,7 +2706,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/ag-readout-source-feasibility.json",
-      "sha256": "eb7fd93997bb31e0b3f2820ef3c179537a6d77b116de07049ef815cd1a44ee2c"
+      "sha256": "458bfcd097059cb2e6297209a612a03dcc487992b5de0ea413336b655f85040d"
     },
     {
       "kind": "file",
@@ -2726,7 +2726,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/aw-tracking-source-feasibility.json",
-      "sha256": "6b5df0a21c1cdd5a49cb0c612d976c505db0f22ad1a38cfb63eb0e5315ea6515"
+      "sha256": "b720a27a49168db25e09b9979a2212debd02788ef7d496d92ca47390e89ead56"
     },
     {
       "kind": "file",
@@ -2746,7 +2746,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/construction-mean-action.json",
-      "sha256": "0641068feb34487be638b609ab8b946dc0be72144fc4f569487e7075da4c0835"
+      "sha256": "86c6e4fd6a9594904fa4fce113a26fb5ebe8efe87d1eeed0c9edbb19ddaa74b5"
     },
     {
       "kind": "file",
@@ -2791,7 +2791,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/information-ratio-source-feasibility.json",
-      "sha256": "d4fb161da11274234265a2629dcddf21c8669ee222b321774eaa4f3416a0b281"
+      "sha256": "4dd6c75df5793ce36746d921367dd51f69db5adbb25cb733575f2a37f993be52"
     },
     {
       "kind": "file",
@@ -2831,12 +2831,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried-1200s.json",
-      "sha256": "ae652ec086fccbd829180b35689199ba3a0fc27d8e6ec164f5eaa4cbbe0ea12c"
+      "sha256": "9f4db63354958c8888c0708b253557779c021dab5bb9c8735f4823d2c707dab8"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-compatibility-carried.json",
-      "sha256": "d9c021af9f33de18aca07d00ce705dcbd127a58f3c8b4e63fb7877200446340a"
+      "sha256": "69c064105a67b23573ae27912b92eca0d66c6f42bf0431f0fd59190d0f598b3c"
     },
     {
       "kind": "file",
@@ -2851,12 +2851,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-quiet-compatibility-certificate.json",
-      "sha256": "5753c8265cd8b5380749242f72693c675fdf79996581d45f9d33cf6c8cdb8f92"
+      "sha256": "fac2b5313bb674926859b8cbb46ca0da489dac20c1ce70c9776bdb42daf71dcf"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/moving-transport-source-feasibility.json",
-      "sha256": "343406ce5cd195d18b566aed521e440b1b9402e9295701c19483153846ca0768"
+      "sha256": "42a24c28a8cff5bd91cc69e42172c807c8c1fa264c8602f7226dc6e8a8462850"
     },
     {
       "kind": "file",
@@ -2916,7 +2916,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "1172104c78ec7d223605f5590e5c1ffa9473e91d66d898a661930aeacb30121d"
+      "sha256": "cd9dfca01ac112b92fd5657846293491ff86ce425d55bd2e777ffce07d8721fb"
     },
     {
       "kind": "file",
@@ -2961,7 +2961,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-service-stream-diagnostic.json",
-      "sha256": "3b3160d0fca7f8bb896930a698d3cb9df86b22e5925595fbf937ad04d4379dd2"
+      "sha256": "a46e5d7a97a9297e9b5ea5ac9565493dd3f3a7ca04bb91463a732862dffcb472"
     },
     {
       "kind": "file",
@@ -2971,7 +2971,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "d482806102ade6f884d6e4970407798280afeea07fd987835c84490f733afb07"
+      "sha256": "8c65a3778011a1fc9009b7c2cffc41facaa4dc2cfa7831492156a78833a8f47a"
     },
     {
       "kind": "file",
@@ -3006,12 +3006,12 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-adjoint-diagnostic.json",
-      "sha256": "ff7ecedefc7dfd6c8707cad539a0c52dc18d6e55ac6f37d7d376e6cb8d918745"
+      "sha256": "282cb1239f1f50e94255ed0c65d61a76cd8c4fea47fffa902a39152e6b47b216"
     },
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/signed-balance-diagnostic.json",
-      "sha256": "a2ec7d81128407efffd0bb7e785935f558edb14ac1a261adbd27c554666f44e6"
+      "sha256": "f43380d58a582053688db1c2c6c2222c12725aac1e431ad556d55e5c05edceee"
     },
     {
       "kind": "file",
@@ -3061,7 +3061,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/world-frame-source-feasibility.json",
-      "sha256": "f8bdf34ebc9bab7733253f37258abfce19d5a3895a2a44d68e5cbc79557a31c5"
+      "sha256": "af8375ca084e0faa6e252a3c9242465e3ac23f4aa28155b7ee07577fa7625540"
     },
     {
       "kind": "file",
@@ -3081,7 +3081,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "ad8fd7c3d1a521feb3252285c0399d92c458605a7523b4744ba6a13556545565"
+      "sha256": "7135ff41d32d5b1553f81340a6f0e7b30d2aa82feebf4ca32e579305776d0289"
     },
     {
       "kind": "file",
@@ -3151,57 +3151,57 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation.json",
-      "sha256": "e7657eb302dc9a54253f7f43fdf41f49a29991671f2b34353bba278a1d39e04d"
+      "sha256": "0c3df455dd4ccaaaf173a7274e58200a60bb2f6670b0f3e2b82156b975e5b0d9"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_attitude.svg",
-      "sha256": "9ec8dfc5e44d6e3768fbeb732c6ea31beef007e51ccf3ab0ca31c1e86b4e8d59"
+      "sha256": "b8754d85312b2c0f62838a3a92e2242c25c58553588d47c05a2e02b1cb05e26f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_covsync.svg",
-      "sha256": "5932407f1594d9ca2ea8773f7fbb7a2223010fa5f9d95e514ad4e088643c531f"
+      "sha256": "1158e7a9cfb059028556cb5c43e1bf0c7c2898c0447d111129f1590a3b39fd25"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_displacement.svg",
-      "sha256": "13141f76dab57480e6c3a9e6d8f6fcac4f42e4cd261279e8f2d5ef08f031cacd"
+      "sha256": "8147906e5195742a16c717d44e93a37823be131bb8228faa0afa394be6eddf5c"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_macros.tex",
-      "sha256": "a1bec3236ddc6d6ba2da2615d55f8ec4d348f9bee5c2c86a15cc2d84559d3fb9"
+      "sha256": "671ffe134acc11255d31244e75f4fcedfd1d69b371a9e8890e7e06a6bd3401a1"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "f644ec13be4756d2a0e77faf299b8234c8eb0702c828db87a85405a7f6dab08b"
+      "sha256": "3deef29ea20873274025e67e5c8fbd92d04a2db1dc0d93cad522487679ac935f"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_paired_effects.csv",
-      "sha256": "bf4303d052cfea25114d6cc6c68aad8a68b7f3c7e94b83a0df3d6758d69a8798"
+      "sha256": "acb31d9db25275beb724de1925fb1f73759f3bb58721e55c35b18eb59c84d6d6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_publication.tex",
-      "sha256": "7f957dbf6f3d08467f7276f2dcbad98b7898edff3e6d2899da3629363415d5df"
+      "sha256": "417c61c93bdc4011668aac2b6d64c27f58a412f324fcc1684d01d38ae506af97"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_raw.csv",
-      "sha256": "16f4d75f458848d985ecde536b1ec47697ba47cd330be8f86541624dc632d060"
+      "sha256": "7b5d33d402ca2bf13dc15878d3ac2142865f08fedeccf289efa60f83c52ec0fc"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_summary.csv",
-      "sha256": "570dcce0aceff6870632ad19e8ab2d0dff46571f4f3c16b8628537ea0072e7e9"
+      "sha256": "7f7a188a736acac506c1b2c3a72da101a5b47492d4ef7c39064f58eb533265e6"
     },
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_table.tex",
-      "sha256": "4bc65f1347e8dd2ea3538db0093c6309a75bdce255169d9e2c39b18876ed537b"
+      "sha256": "cbe14f5ffb42fd5d4fb878c3de0cea9afbbc53cc0de030f98e864966e9f6d357"
     },
     {
       "kind": "file",
@@ -3221,7 +3221,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_vertical.svg",
-      "sha256": "490de231fadd1cf0c92e04d82994764d7a536452ee17c2b5cad5be0e506af917"
+      "sha256": "4201a576e394e0dde83009d202bb80ee48dabdf776cd1a454b53658a96a08ff5"
     },
     {
       "kind": "file",
@@ -9091,7 +9091,7 @@
     {
       "kind": "file",
       "path": "reports/results/tfg_comparison/manifest.json",
-      "sha256": "38d77bca6d71f8cd3c2fce7e16ade0f53e8d6b92a0b60231b64f7f7f47a1fbce"
+      "sha256": "d9ff9dc5e21588db292b5f074aa90fae1540b96165f488fc5d212fd7ed2b0ab5"
     },
     {
       "kind": "file",
@@ -9599,13 +9599,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "eb9f6264ed0622af9bdee81b671bbcb5cdec3b955d17ac77aeadbf8aa3260244",
+  "results_fingerprint": "43f25bbe16a4e4294e26c1f3f58f2bb17b1685161dd23b72de722ae9e7389ac5",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1118,
+  "tracked_replay_file_count": 1120,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -10040,7 +10040,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "22753616e84dab83762fbac710d63ed7514f3287b0d8d2ed8e64b3f9bfe21f0c"
+      "sha256": "f8287c0633a10e07992c09d2cbc30a4a4df85663f78f973cf05d9ecbe14d5ff9"
     },
     {
       "mode": "100644",
@@ -10050,7 +10050,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "4f9d99affc6e273d7d82b353e03797c49c834558d53fa13b0487d5b4035d428b"
+      "sha256": "fc9d2eb8c3de11e29c92e345d650d4012479c858452fd502c90a8fb147ccf146"
     },
     {
       "mode": "100644",
@@ -10080,7 +10080,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "8fced44389ae9961d473e061c01d259bf471571feee2e8bbf9fd35df08379005"
+      "sha256": "8b070730e525eed8ec8be56565749ea73a6ea4a4d15faf7b519418e21e9c371e"
     },
     {
       "mode": "100644",
@@ -10121,6 +10121,11 @@
       "mode": "100644",
       "path": "src/ArduinoOceanImu.h",
       "sha256": "6a5739ec013cff9f2e538356a1afe064e8dee822ee2be3ca776d258303a69cfb"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_Bmi270FrameClock.h",
+      "sha256": "6d143a328873c77497742a23129ea235f63d3ac525b2f0428ff78db382ac9c40"
     },
     {
       "mode": "100644",
@@ -10170,7 +10175,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
-      "sha256": "e5b5b83714ae22c68aad27dbfb276bc7bb19e478d4e80fe6a84bbd1ecf18a186"
+      "sha256": "69fd82891f59ea6e8bd35c38ec558db8beb08b724c23e819deb16887c39aac30"
     },
     {
       "mode": "100644",
@@ -10200,7 +10205,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_LoopTiming.h",
-      "sha256": "dc0b5720c0fe7efd4ff7334fb472b1fe5778ebbb5fa52f47d716f10c50833652"
+      "sha256": "e12b483b3e3ffb2c74433c46cc9783c70d559cbd3287324e68ebf6a09ee370c3"
     },
     {
       "mode": "100644",
@@ -10221,6 +10226,11 @@
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_MarineCompassDisplay.h",
       "sha256": "d2008614b440dd4f0816cb8bb2a5d8e11ba3840ae8eadf7e453a2b3d29264af9"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_MarineNmeaBatch.h",
+      "sha256": "c4ecd8833d23073e376144cc27c382ea7016cad68096b6b90d05db0edcdc83df"
     },
     {
       "mode": "100644",
@@ -10520,7 +10530,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_common/MekfAttitudeMath.h",
-      "sha256": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234"
+      "sha256": "4c8a271b53eb5b511681032841c6319bce5fb421a5bc1f501e04a8f658a14573"
     },
     {
       "mode": "100644",
@@ -10580,7 +10590,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_ou_ii/Kalman3D_Wave_OU_II.h",
-      "sha256": "51517e38b920d77483b50a13cfc9ff8ccc934669711689c2007a37ff61126ef4"
+      "sha256": "40311ed801ba0c257e4a8b60d847142a3710baa07cd54ec9870ea825143859a4"
     },
     {
       "mode": "100644",
@@ -10600,7 +10610,7 @@
     {
       "mode": "100644",
       "path": "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h",
-      "sha256": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5"
+      "sha256": "e4ee4428eb6c798cdf148928bb21c2a6982599367d53229332d422a56c128f9c"
     },
     {
       "mode": "100644",
@@ -12215,7 +12225,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/nmea_output_test.cpp",
-      "sha256": "9e931b246a4ab9d1dfcac4ca92d89d29038770555d58209d9a0c00314f2e7a31"
+      "sha256": "df70ae35a142ca33523c55fd8c5e08dac745b35310514e629d8e65ac9c9da572"
     },
     {
       "mode": "100644",
@@ -12280,7 +12290,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_device_compass_startup.py",
-      "sha256": "f6fcaed4816e1f79bc7c847ace08a2367e6101c8a29da590a9aba819f28a1e43"
+      "sha256": "d740aad7fb17fd965a7336140a848556c3d19d8f1c7830571412cfa831bf2698"
     },
     {
       "mode": "100644",
@@ -12705,7 +12715,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_ou3_measurement_frame.py",
-      "sha256": "33978f39c76c4b68bcc8bba78a5b844556dba56b93d0de2cb246df66ef67b7f5"
+      "sha256": "a2cdf83e3dce1b007e32b56f8b1893765046e1d590d46c5269ed15fc7c7d2d56"
     },
     {
       "mode": "100644",

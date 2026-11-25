@@ -1,6 +1,6 @@
 {
   "binary_sha256": {
-    "OU_III": "acd3d14c25b52274be622eea81caaea47656b42eeb95e3332b8643216f26c5bf",
+    "OU_III": "063a73c412bbca94d6988d6a2c75e82539117fd6090f169340faa987f4ef7b41",
     "TFG": "c1e30a8d943f073eb6edd48d40350b73bccc4276bc12167b2035d5e9e09f54b0"
   },
   "build_environment": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-24T18:57:34+00:00",
-  "git_commit": "2eabb2443242c8537bef05fef1a9d62123382d8a",
-  "git_diff_stat": "reports/results/tfg_comparison/comparison.tex      |    2 +-\n reports/results/tfg_comparison/paired_summary.json | 3774 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  180 +-\n reports/results/tfg_comparison/raw_runs.json       | 1614 ++++-----\n 4 files changed, 2785 insertions(+), 2785 deletions(-)",
+  "generated_utc": "2026-11-25T00:05:21+00:00",
+  "git_commit": "66e270623dd501ebe231ab14c66d4f16eb56626e",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -164,7 +164,7 @@
     "src/kalman_common/MarineTurnModel.h": "a74f1ffb1dc8dbc5f4e73bec942e6dbac301a0e01d46dbafea952e68f979244a",
     "src/kalman_common/MarineTurnSeparator.h": "a4dbedec333f82cace8aba983cbb907827c365b8a9ceb2eaf54b4e91917950b8",
     "src/kalman_common/MarineWaveFrontEnd.h": "a13023af886e10800f86d8024c110e13772877d7ee61a2362dbf3ba5564f6cf5",
-    "src/kalman_common/MekfAttitudeMath.h": "414514374ee7e5cb555a1a9e8d77edc0fcfc71857596f6e14e2a7cb9ce1b4234",
+    "src/kalman_common/MekfAttitudeMath.h": "4c8a271b53eb5b511681032841c6319bce5fb421a5bc1f501e04a8f658a14573",
     "src/kalman_common/PeriodicSchedule.h": "5d493b85f5572847285de59a987da4a85538b7a663a0a82a030a22796f8b18ba",
     "src/kalman_common/ProxyStartupFusion.h": "a4930cbd59c2ef48202d8ec1e2ea395997634446771c8a3a845aee216f2124ac",
     "src/kalman_common/SeaStateAdaptationCommon.h": "9332dbc1196eac43ee10655b7a231dc31f13ee3b50ee2de2c6e1d4f6bfc0fdee",
@@ -176,7 +176,7 @@
     "src/kalman_ou_common/KalmanOUCoreMath.h": "d52a5b827a90da94dabba00678798a3a6497571b781f56247be38b1111bd6701",
     "src/kalman_ou_common/OUJosephUpdate.h": "78ffc9526e72ba867417e069afb1bf0fcb2a31e071a9ca99c0e2ebd38d31e025",
     "src/kalman_ou_iii/HorizontalWaveBand.h": "2870c5866240128bf5df406dff18eb06f7ec38ded75470be10d1cf7993a3d51d",
-    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "cd33a5525ef61ea1f5ced95841fde4dca7881645acbfd20f96fa3732746adee5",
+    "src/kalman_ou_iii/Kalman3D_Wave_OU_III.h": "e4ee4428eb6c798cdf148928bb21c2a6982599367d53229332d422a56c128f9c",
     "src/kalman_ou_iii/SeaStateFusionFilter_OU_III.h": "0d88f3d992615338a559df718c0eea7bed79181e4462876501714f41a533b901",
     "src/kalman_tfg/Kalman3D_Wave_TFG.h": "3f18bd731faecc77a6f34fd3d82c3f89c1234080d450f3264c6534c916403126",
     "src/kalman_tfg/SeaStateFusionFilter_TFG.h": "2a53da8dac4eeb8c0f9bd377a2fd5a562ca3b62d2acefd05961a428cc185ec26",
@@ -228,7 +228,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "45457074564",
+    "run_id": "45504933094",
     "workflow": "build"
   }
 }
