@@ -104,17 +104,17 @@ inline constexpr W3dFailureLimits tcsm{
 };
 
 inline constexpr W3dFailureLimits tfg{
-    .err_limit_percent_z_jonswap = 5.89668f,
-    .err_limit_percent_z_pmstokes = 5.59053f,
-    .err_limit_yaw_deg = 1.05004f,
-    .err_limit_roll_deg = 0.52459f,
-    .err_limit_pitch_deg = 0.23708f,
-    .err_limit_percent_3d_jonswap = 13.76960f,
-    .err_limit_percent_3d_pmstokes = 13.69601f,
+    .err_limit_percent_z_jonswap = 5.89671f,
+    .err_limit_percent_z_pmstokes = 5.59054f,
+    .err_limit_yaw_deg = 1.04999f,
+    .err_limit_roll_deg = 0.52454f,
+    .err_limit_pitch_deg = 0.23720f,
+    .err_limit_percent_3d_jonswap = 13.76956f,
+    .err_limit_percent_3d_pmstokes = 13.69616f,
     .acc_z_bias_percent = 4.32357f,
-    .bias_3d_percent = 105.61445f,
-    .gyro_bias_3d_percent = 10.38427f,
-    .err_limit_y_rms_m = 0.35967f,
+    .bias_3d_percent = 105.60239f,
+    .gyro_bias_3d_percent = 10.38477f,
+    .err_limit_y_rms_m = 0.35968f,
 };
 
 inline constexpr W3dFailureLimits tfg_legacy{
@@ -232,17 +232,17 @@ inline constexpr W3dFailureLimits tcsm{
 };
 
 inline constexpr W3dFailureLimits tfg{
-    .err_limit_percent_z_jonswap = 5.89746f,
-    .err_limit_percent_z_pmstokes = 5.59119f,
-    .err_limit_yaw_deg = 1.10412f,
-    .err_limit_roll_deg = 0.52482f,
-    .err_limit_pitch_deg = 0.24160f,
-    .err_limit_percent_3d_jonswap = 13.76650f,
-    .err_limit_percent_3d_pmstokes = 13.69096f,
-    .acc_z_bias_percent = 4.39713f,
-    .bias_3d_percent = 105.21647f,
-    .gyro_bias_3d_percent = 10.42628f,
-    .err_limit_y_rms_m = 0.35700f,
+    .err_limit_percent_z_jonswap = 5.89749f,
+    .err_limit_percent_z_pmstokes = 5.59122f,
+    .err_limit_yaw_deg = 1.10411f,
+    .err_limit_roll_deg = 0.52502f,
+    .err_limit_pitch_deg = 0.24169f,
+    .err_limit_percent_3d_jonswap = 13.76653f,
+    .err_limit_percent_3d_pmstokes = 13.69099f,
+    .acc_z_bias_percent = 4.39736f,
+    .bias_3d_percent = 105.27275f,
+    .gyro_bias_3d_percent = 10.42608f,
+    .err_limit_y_rms_m = 0.35703f,
 };
 } // namespace interval
 } // namespace ocean_imu::sim::current_limits

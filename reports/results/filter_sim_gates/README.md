@@ -7,6 +7,10 @@ The steering-separated native baseline updates every horizontal profile and
 adds an independent Y cap for each of its 272 cases. See
 [`heading_limit_update.md`](heading_limit_update.md) for the new ceilings,
 per-record Y examples and explicitly disclosed bias/attitude cap increases.
+The 32 OU-III cells and the 32 plain-TFG default/interval cells are locked from
+later per-family receipts recorded under `source_provenance.updated_families`
+in `baseline_*.json`; the TFG receipts measure its structured covariance
+arithmetic with the pinned replay compiler.
 
 The other JSON/CSV bundles in this folder retain their original v1.3.1 inputs,
 executables and experimental scope: stationary/underway comparisons, stillness
