@@ -137,8 +137,8 @@ class Kalman3D_Wave_OU_II {
     // Boat attitude in the *physical* heeled frame B → W (NED).
     [[nodiscard]] Eigen::Quaternion<T> quaternion_boat() const {
         // Internal quaternion() = B'→W (un-heeled frame to world)
-        if (wind_heel_rad_ == T(0)) return quaternion();
         const Eigen::Quaternion<T> q_WBprime = quaternion();
+        if (wind_heel_rad_ == T(0)) return q_WBprime;
 
         // q_B'B = rotation that maps physical body B to un-heeled frame B'
         // Roll of -wind_heel about X: B'←B ("un-heel").
