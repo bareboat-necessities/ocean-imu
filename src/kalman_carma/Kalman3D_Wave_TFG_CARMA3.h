@@ -127,6 +127,7 @@
 #include "kalman_common/ImuLeverArm.h"
 #include "kalman_common/GyroInterval.h"
 #include "kalman_common/MekfAttitudeMath.h"
+#include "kalman_common/TfgGyroNoise.h"
 #include "kalman_common/ConditionalCovariance.h"
 #include "kalman_carma/CarmaVerticalModel.h"
 #include "lie/SO3Jacobians.h"
@@ -1454,19 +1455,8 @@ void TFGC3_CLS::step_noise_(const Vector3& w, T Ts, const Matrix3& R0, const Ste
         return m(0,0) == m(1,1) && m(0,0) == m(2,2);
     };
     if (x <= T(0.01) && isotropic(Q_gyro_) && isotropic(Q_bg_)) {
-        const Matrix3 V = lie::skew<T>(b.R1 * angle);
-        const Matrix3 V2 = V * V;
-        // Series in x = theta^2 for (theta-sin(theta))/theta^3,
-        // (cos(theta)-1+x/2)/theta^4 and (1/3-2*a)/x respectively.
-        const T a = T(1.0/6.0) + x*(T(-1.0/120.0) + x*(T(1.0/5040.0) - x*T(1.0/362880.0)));
-        const T c = T(1.0/24.0) + x*(T(-1.0/720.0) + x*(T(1.0/40320.0) - x*T(1.0/3628800.0)));
-        const T d = T(1.0/60.0) + x*(T(-1.0/2520.0) + x*(T(1.0/181440.0) - x*T(1.0/19958400.0)));
-        const T bh = Q_bg_(0,0) * Ts, bh2 = bh * Ts, bh3 = bh2 * Ts;
-        q.Qbb = Matrix3::Identity() * bh;
-        q.Qpb = bh2 * (a * V - c * V2);
-        q.Qpb.diagonal().array() -= bh2 * T(0.5);
-        q.Qpp = (bh3 * d) * V2;
-        q.Qpp.diagonal().array() += Ts * (gyro_noise_scale * Q_gyro_(0,0)) + bh3 / T(3);
+        tfg_detail::isotropic_gyro_noise<T>(Ts, x, b.R1 * angle,
+            gyro_noise_scale * Q_gyro_(0,0), Q_bg_(0,0), q.Qpp, q.Qpb, q.Qbb);
     } else {
         integrate_gyro_noise_(w, Ts, R0, b, q, gyro_noise_scale);
     }

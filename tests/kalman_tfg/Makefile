@@ -66,6 +66,12 @@ tfg_device_heave-test: tfg_device_heave-test.o
 tfg_device_tempcomp-test: tfg_device_tempcomp-test.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+# Optional scalar host benchmark for the AtomS3R estimator workload.
+tfg_update_bench: tfg_update_bench.o
+	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+tfg_update_bench.o: CXXFLAGS = $(BASEFLAGS) -DNDEBUG -DEIGEN_DONT_VECTORIZE -fno-tree-vectorize -fno-tree-slp-vectorize
+
 # Need W3dSimCommon for the shared runner, scoring and record loading.
 kalman_tfg-sim: kalman_tfg-sim.o W3dSimCommon.o
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -81,4 +87,4 @@ kalman_tfg-legacy-sim: kalman_tfg-legacy-sim.o W3dSimCommon.o
 -include $(wildcard *.d)
 
 clean:
-	rm -f *.o *.d $(TARGETS) *.exe *.csv
+	rm -f *.o *.d $(TARGETS) tfg_update_bench *.exe *.csv

@@ -21,19 +21,8 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
-def replace_between(text: str, start: str, end: str, new: str, label: str) -> str:
-    i = text.find(start)
-    if i < 0:
-        raise RuntimeError(f"{label}: start marker not found")
-    j = text.find(end, i)
-    if j < 0:
-        raise RuntimeError(f"{label}: end marker not found")
-    j += len(end)
-    return text[:i] + new + text[j:]
-
-
 def patch_joseph_only(text: str) -> str:
-    old = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        symmetrize_in_place_(P_);\n"""
+    old = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        transport_reset_(Jreset, Pj);\n"""
     new = """        // Ablation: old Joseph-only covariance handling.  The nominal\n        // state is still retracted, but P is intentionally left in the\n        // pre-reset tangent coordinates.\n        inject(Tangent(-correction));\n        P_ = Pj;\n        symmetrize_in_place_(P_);\n"""
     return replace_once(text, old, new, "Joseph-only reset ablation")
 
@@ -45,34 +34,27 @@ def patch_old_mag_lock(text: str) -> str:
 
 
 def patch_old_bias_qd(text: str) -> str:
-    # 1) Residual accelerometer bias mean: OU -> historical random walk.
-    old_mean = """\n        if constexpr (with_accel_bias) {\n            if (acc_bias_updates_enabled_) {\n                X_.B.col(1) *= std::exp(-Ts / tau_ba_);\n            }\n        }\n"""
-    new_mean = """\n        // Ablation: historical accelerometer-bias random walk has constant mean.\n"""
-    text = replace_once(text, old_mean, new_mean, "accelerometer-bias mean RW ablation")
+    # A random-walk bias has constant mean and perturbation magnitude. Keep
+    # the existing endpoint rotation of the Level-2 bias coordinates.
+    text = replace_once(text, "X_.B.col(1) *= std::exp(-Ts / tau_ba_);",
+                        "// Historical random walk: constant bias.",
+                        "standalone bias mean")
+    text = replace_once(text,
+                        "s.alpha_ba = with_accel_bias && acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);",
+                        "s.alpha_ba = T(1);", "propagated bias mean and transition")
+    text = replace_once(text,
+                        "const T qint = T(0.5) * tau_ba_ * (-std::expm1(T(-2)*Ts/tau_ba_));",
+                        "const T qint = Ts;", "bias random-walk covariance")
 
-    # 2) Residual accelerometer bias transition: remove OU contraction, retain
-    #    the Level-2 coordinate rotation beta = R delta_b.
-    old_transition = """        const Matrix3 Rw_step = ocean_imu::lie::Exp<T>(Vector3(X_.R * omega * Ts));\n        if constexpr (two_frame_bias) {\n            Phi.template block<3,3>(OFF_BG, OFF_BG) = Rw_step;\n        }\n        if constexpr (with_accel_bias) {\n            const T alpha_ba = acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);\n            if constexpr (two_frame_bias)\n                Phi.template block<3,3>(OFF_BA, OFF_BA) = alpha_ba * Rw_step;\n            else\n                Phi.template block<3,3>(OFF_BA, OFF_BA) = alpha_ba * Matrix3::Identity();\n        }\n"""
-    new_transition = """        const Matrix3 Rw_step = ocean_imu::lie::Exp<T>(Vector3(X_.R * omega * Ts));\n        if constexpr (two_frame_bias) {\n            Phi.template block<3,3>(OFF_BG, OFF_BG) = Rw_step;\n            if constexpr (with_accel_bias)\n                Phi.template block<3,3>(OFF_BA, OFF_BA) = Rw_step;\n        }\n        // Level 1 keeps Phi_ba,ba = I: historical random-walk model.\n"""
-    text = replace_once(text, old_transition, new_transition,
-                        "accelerometer-bias transition RW ablation")
-
-    # 3) Gyro-bias Qd: restore the historical constant-rotation h^2/2,h^3/3
-    #    approximation.  This is deliberately the code under test, not a claim
-    #    that the approximation is exact.
-    start = "        const Matrix3 R0 = X_.R;\n"
-    end = "        Qd.template block<3,3>(OFF_BG, OFF_BG) = Bfinal * Q_bg_ * Bfinal.transpose() * Ts;\n"
-    old_qd = """        const Matrix3 Rhat = X_.R;\n        const Matrix3 R_end =\n            two_frame_bias\n                ? Matrix3(Rhat * ocean_imu::lie::Exp<T>(\n                      Vector3((gyro_meas - X_.B.col(0)) * Ts)))\n                : Rhat;\n        const Matrix3 W  = Rhat * Q_gyro_ * Rhat.transpose();\n        const Matrix3 Wb = Rhat * Q_bg_   * Rhat.transpose();\n\n        const T h2 = Ts * Ts;\n        const T h3 = h2 * Ts;\n        const Matrix3 Q_bias_own = two_frame_bias\n            ? Matrix3(R_end * Q_bg_ * R_end.transpose()) : Q_bg_;\n        const Matrix3 Q_bias_cross = two_frame_bias\n            ? Matrix3(Rhat * Q_bg_ * R_end.transpose()) : Matrix3(Rhat * Q_bg_);\n\n        Qd.template block<3,3>(OFF_PHI, OFF_PHI) = W * Ts + Wb * (h3 / T(3));\n        Qd.template block<3,3>(OFF_PHI, OFF_BG) = -Q_bias_cross * (h2 / T(2));\n        Qd.template block<3,3>(OFF_BG, OFF_PHI) =\n            Qd.template block<3,3>(OFF_PHI, OFF_BG).transpose();\n        Qd.template block<3,3>(OFF_BG, OFF_BG) = Q_bias_own * Ts;\n"""
-    text = replace_between(text, start, end, old_qd, "historical gyro-bias Qd ablation")
-
-    # 4) Residual accelerometer bias process covariance: exact OU integral ->
-    #    historical random-walk Q h.  Keep the hardened warm-up freeze gate so
-    #    this arm changes the stochastic model, not startup policy.
-    old_ba_q = """        if constexpr (with_accel_bias) {\n            if (acc_bias_updates_enabled_) {\n                const T qint = T(0.5) * tau_ba_ * (-std::expm1(T(-2)*Ts/tau_ba_));\n                Qd.template block<3,3>(OFF_BA, OFF_BA) =\n                    (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * qint;\n            }\n        }\n"""
-    new_ba_q = """        if constexpr (with_accel_bias) {\n            if (acc_bias_updates_enabled_) {\n                Qd.template block<3,3>(OFF_BA, OFF_BA) =\n                    (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * Ts;\n            }\n        }\n"""
-    text = replace_once(text, old_ba_q, new_ba_q,
-                        "accelerometer-bias process RW ablation")
-    return text
+    # Historical constant-rotation h^2/2 and h^3/3 gyro-bias integrals.
+    historical_noise = """        const Matrix3 Wb = X_.R * Q_bg_ * X_.R.transpose();
+        const Matrix3 E = two_frame_bias ? step.R_end : Matrix3::Identity();
+        Qtt = (X_.R * (gyro_noise_scale * Q_gyro_) * X_.R.transpose()) * Ts
+            + Wb * (Ts * Ts * Ts / T(3));
+        Qtb = -(X_.R * Q_bg_ * E.transpose()) * (Ts * Ts / T(2));
+        Qbb = (E * Q_bg_ * E.transpose()) * Ts;"""
+    return replace_once(text, "        gyro_noise_(Ts, step, gyro_noise_scale, Qtt, Qtb, Qbb);",
+                        historical_noise, "historical gyro-bias process covariance")
 
 
 def main() -> int:

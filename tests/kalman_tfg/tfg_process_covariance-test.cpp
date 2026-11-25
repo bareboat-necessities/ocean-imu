@@ -134,10 +134,35 @@ void test_full_gyro_and_bias_covariance() {
     check(rho_rho > T(1e-9),
           "gyro/gyro-bias driving noise did not reach world covariance");
 }
+
+void test_isotropic_integral_matches_quadrature() {
+    using Level2 = ocean_imu::kalman::Kalman3D_Wave_TFG<T, true, false, true>;
+    Level2 scalar;
+    scalar.initialize_from_truth(
+        Eigen::Quaternion<T>(Eigen::AngleAxis<T>(T(.7), Vector3::UnitY())),
+        Vector3(.5,-2.,.3), Vector3(.7,-.8,1.), Vector3(.5,.2,.1), Vector3(.2,.4,.6));
+    scalar.set_aw_stationary_std(Vector3::Zero());
+    scalar.set_gyro_noise_density_rad_sqrt_s(T(.007));
+    constexpr T q = .012;
+    scalar.set_Q_bgyro_rw(Vector3::Constant(q));
+    auto quadrature = scalar;
+    // One ULP of anisotropy selects the general 5-node integral.
+    quadrature.set_Q_bgyro_rw(Vector3(q, std::nextafter(q, T(1)), q));
+    const Vector3 axis = Vector3(.2,-.4,.9).normalized();
+    constexpr T dt = .05;
+    for (T angle : {T(0), T(.005), T(.05), T(.099)}) {
+        Level2::MatrixNX closed, integrated;
+        scalar.build_process_noise(dt, axis*(angle/dt), closed, T(1.5));
+        quadrature.build_process_noise(dt, axis*(angle/dt), integrated, T(1.5));
+        check((closed-integrated).cwiseAbs().maxCoeff() < T(2e-12) * integrated.cwiseAbs().maxCoeff(),
+              "two-frame small-angle gyro covariance differs from quadrature");
+    }
+}
 } // namespace
 
 int main() {
     test_full_gyro_and_bias_covariance();
+    test_isotropic_integral_matches_quadrature();
     if (failures) {
         std::cerr << failures << " TFG process-covariance check(s) failed\n";
         return 1;

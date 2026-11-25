@@ -47,27 +47,23 @@ Every value the application publishes therefore means what it means in the OU-II
 - **No IMU lever-arm knob.** `Kalman3D_Wave_TFG` has no off-centre-of-gravity correction, so there is no `IMU_LEVER_ARM_*_M` block. Mount the device as close to the vessel centre of gravity as the installation allows, or use [OU-III](../atomS3R_ins_kalman_ou3/README.md) where the offset is large enough to matter.
 - **Gyroscope noise is a density, not a per-axis sigma.** `Config::gyro_noise_density` replaces OU-III's `sigma_g` vector, and the sample-rate scaling the accelerometer and magnetometer get must not be applied to it a second time.
 - **One frequency tracker.** TFG reports a wave period from the canonical estimator; there is no `TrackerType` choice and no `ZERO_CROSSINGS_*` tuning block.
-- **It needs a bigger loop-task stack.** `Kalman3D_Wave_TFG` runs a 21-state covariance through `Phi P Phi^T` and a Joseph update, and Eigen builds each triple product through full 21×21 temporaries. The named locals are member scratch buffers, which cuts one live fusion step from ~27 kB of stack to ~19 kB without changing a single output bit, but the expression temporaries stay: removing them would change Eigen's GEMM path and with it the filter's arithmetic. Painted-stack high-water mark over a 400 s host run of the whole sketch-level step:
-
-  | | `-O2` | `-Os` |
-  | --- | --- | --- |
-  | before | 27.2 kB | 27.2 kB |
-  | after | 18.9 kB | 15.3 kB |
-
-  The Arduino-ESP32 loop task gets 8 kB by default, so the sketch still raises it, with `SET_LOOP_TASK_STACK_SIZE(32 * 1024)`. Without that the filter overflows the stack the moment it leaves `Cold` and starts running the MEKF — tens of seconds after boot, not at startup, so it would not look like a stack problem. Lower the value only against a fresh measurement on the device.
+- **Loop-task stack.** The sketch allocates 32 KiB for the estimator, wave direction, displacement filtering, output and calibration UI. The covariance workspaces are members of the filter. Peak stack usage for the current kernels still needs a measurement on the AtomS3R.
 - **Vibration guard is exposed instead of the OU clamp knobs.** `ACC_VIBRATION_GUARD_HZ` near the top of the sketch sets the front-end corner; zero removes the guard and restores the unconditioned measurement path.
 
-## Footprint on the device
+## Checking the 5 ms budget
 
-Measured by the `build-MCU` job for the `esp32:esp32:m5stack_atoms3` target, compiled with `-funroll-loops -fno-finite-math-only` as CI builds it:
+Build with `-DOCEAN_IMU_PROFILE_LOOP=1` and keep the normal LCD and serial outputs enabled. In Live operation, `missed_sensor_frames` counts missing BMI270 frames and `host_steps` counts intervals measured from host time. The `[TIMING]` line reports processing time and the number of accepted updates that exceeded 4.5 ms or the 5 ms period.
 
-| Sketch | Program storage | Global variables | Free for locals |
-| --- | --- | --- | --- |
-| `atomS3R_ins_tfg` | 873,615 B (66%) | 40,540 B (12%) | 287,140 B |
-| `atomS3R_ins_kalman_ou3` | 897,759 B (68%) | 30,828 B (9%) | 296,852 B |
-| `atomS3R_ins_pii_observer` | 623,359 B (47%) | 29,644 B (9%) | 298,036 B |
+The estimator propagates the full covariance using the sparse transition, applies the three-channel Joseph update at each accepted accelerometer correction, and transports covariance through the finite group reset. It reuses OU coefficients only when the interval, model parameters and linear-block state match. The optional host benchmark exercises the firmware fusion settings with a 200 Hz IMU and 25 Hz magnetic service. It checks that all scheduled corrections were accepted.
 
-TFG is the smaller of the two full Kalman sketches in flash and the larger in RAM: its filter is less code than OU-III's, and the ~9.7 kB of extra globals is the covariance scratch pool that keeps the same work off the stack. The 32 kB loop-task stack is taken from the 287 kB left for locals, so both fit with room to spare.
+```sh
+make -C tests/kalman_tfg tfg_update_bench
+tests/kalman_tfg/tfg_update_bench
+```
+
+## Memory on the AtomS3R
+
+The 21-state filter holds three 21 × 21 and two 21 × 3 single-precision workspaces in the filter object. Together they occupy 5,796 bytes and are reused by prediction and correction. The firmware build reports the complete sketch's flash and global RAM usage in the `build-MCU (full_marine_ins)` job.
 
 ## Install and upload
 

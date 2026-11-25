@@ -257,6 +257,40 @@ bool is_psd(const MatrixNX& M, T tol) {
     return es.eigenvalues().minCoeff() >= -tol;
 }
 
+template<class F>
+void test_sparse_prediction_against_dense() {
+    using S = typename F::Scalar;
+    using Mat = typename F::MatrixNX;
+    using Vec = typename F::Vector3;
+    F f;
+    f.initialize_from_truth(Eigen::Quaternion<S>(Eigen::AngleAxis<S>(S(.6), Vec::UnitY())),
+        Vec(S(.4), S(.1), S(-.5)), Vec(S(.3), S(-.2), S(.1)),
+        Vec(S(-.1), S(.2), S(.8)), Vec(S(.4), S(-.6), S(.5)));
+    Mat factor;
+    for (int i = 0; i < F::NX; ++i)
+        for (int j = 0; j < F::NX; ++j)
+            factor(i,j) = S(std::sin(1. + i + 2.*j)) / S(F::NX);
+    f.covariance_full() = Mat::Identity() + factor * factor.transpose();
+    const Vec gyro(S(.35), S(-.4), S(.1));
+    for (int n = 0; n < 16; ++n) {
+        const S dt = n == 4 ? S(.01) : S(.005);
+        if (n == 2) f.set_aw_stationary_std(Vec(S(.3), S(.5), S(.7)));
+        if (n == 6) f.set_aw_time_constant(S(.21));
+        if (n == 8) f.set_aw_stationary_cov_full(
+            Vec::Ones() * Vec::Ones().transpose() + F::Matrix3::Identity());
+        if (n == 10 || n == 12) f.set_linear_block_enabled(n == 12);
+        if (n == 13 || n == 14) f.set_acc_bias_updates_enabled(n == 14);
+        Mat phi, q;
+        f.build_transition(dt, gyro, phi);
+        f.build_process_noise(dt, gyro, q);
+        const Mat expected = (phi * f.covariance_full() * phi.transpose()).eval() + q;
+        f.time_update(gyro, dt);
+        check((expected - f.covariance_full()).cwiseAbs().maxCoeff() <
+              S(24) * std::numeric_limits<S>::epsilon() * expected.cwiseAbs().maxCoeff(),
+              "full sparse prediction disagrees with dense uncached Phi P Phi^T + Q");
+    }
+}
+
 void test_covariance_stays_psd_and_symmetric() {
     Filter f = make_filter();
     f.set_initial_linear_uncertainty(T(0.3), T(1.0), T(3.0), T(0.5));
@@ -382,6 +416,8 @@ void test_float_instantiation() {
 } // namespace
 
 int main() {
+    test_sparse_prediction_against_dense<Filter>();
+    test_sparse_prediction_against_dense<ocean_imu::kalman::Kalman3D_Wave_TFG<float>>();
     test_inject_error_roundtrip();
     test_attitude_bias_block_is_exact_at_rest();
     test_transition_matches_finite_differences();

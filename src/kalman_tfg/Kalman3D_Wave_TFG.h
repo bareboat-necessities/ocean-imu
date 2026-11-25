@@ -1,6 +1,7 @@
 #pragma once
 #include "kalman_common/MarineTurnModel.h"
 #include "kalman_common/GyroInterval.h"
+#include "kalman_common/TfgGyroNoise.h"
 
 /*
     Copyright (c) 2025-2026  Mikhail Grushinskiy
@@ -27,10 +28,10 @@
     propagation by the time-varying coordinate map beta = R delta_b.
 
     The world OU chain is discretized with IntegratedOUChain. The deterministic
-    gyro-bias/world coupling and the gyro/gyro-bias process covariance use a
-    full structured Gauss--Legendre discretization of the invariant error
-    dynamics. This transports each noise source through attitude and every
-    world column instead of applying zero-rate or first-order leakage formulas.
+    gyro-bias/world coupling uses the integrated rotation. The gyro and
+    gyro-bias covariance uses the small-angle isotropic integral when its
+    conditions hold, and five-point Gauss--Legendre quadrature otherwise.
+    Each noise source is transported through attitude and every world column.
 
     After every finite measurement correction a=K r, covariance is transported
     into the post-injection tangent coordinates by the full retraction Jacobian
@@ -52,6 +53,7 @@
 
 #include "kalman_ou_common/KalmanOUCoreMath.h"
 #include "lie/SO3Jacobians.h"
+#include "lie/SE3Jacobians.h"
 #include "lie/TwoFrameGroup.h"
 
 namespace ocean_imu::kalman {
@@ -347,40 +349,71 @@ class Kalman3D_Wave_TFG {
     }
 
     void build_transition(T Ts, const Vector3& gyro_meas, MatrixNX& Phi) const {
+        if (!(Ts > T(0)) || !std::isfinite(Ts)) { Phi.setIdentity(); return; }
+        Eigen::Matrix<T,4,4> axis;
+        world_transition_(Ts, axis);
+        fill_transition_(prediction_step_(Ts, gyro_meas, axis), axis, Phi);
+    }
+
+    void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd, T gyro_noise_scale = T(1)) const {
+        if (!(Ts > T(0)) || !std::isfinite(Ts)) { Qd.setZero(); return; }
+        OuStep ou;
+        discretize_ou_step_(Ts, ou);
+        fill_process_noise_(Ts, prediction_step_(Ts, gyro_meas, ou.axis), Qd, gyro_noise_scale, ou);
+    }
+
+  private:
+    struct OuStep {
+        using Matrix4 = Eigen::Matrix<T,4,4>;
+        Matrix4 axis = Matrix4::Identity();
+        // A correlated model uses one unit-variance covariance, while a
+        // diagonal model retains the separately regularized three marginals.
+        Matrix4 Q_axis[3] = {Matrix4::Zero(), Matrix4::Zero(), Matrix4::Zero()};
+        bool correlated = false;
+    };
+
+    // Transition, driving covariance and nominal propagation share one endpoint.
+    struct PredictionStep {
+        Vector3 omega, angle;
+        Matrix3 R_end, Fh;
+        Eigen::Matrix<T,3,4> X_end;
+        T alpha_ba;
+    };
+
+    PredictionStep prediction_step_(T Ts, const Vector3& gyro_meas, const Eigen::Matrix<T,4,4>& axis) const {
+        PredictionStep s;
+        s.omega = gyro_meas - X_.B.col(0);
+        s.angle = s.omega * Ts;
+        s.R_end.noalias() = X_.R * ocean_imu::lie::Exp<T>(s.angle);
+        // Fh = int_0^h R(t) dt for constant body angular rate.
+        s.Fh.noalias() = X_.R * (Ts * ocean_imu::lie::left_jacobian<T>(s.angle));
+        s.X_end.noalias() = X_.X * axis.transpose();
+        s.alpha_ba = with_accel_bias && acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);
+        return s;
+    }
+
+    void fill_transition_(const PredictionStep& s, const Eigen::Matrix<T,4,4>& Phi_axis, MatrixNX& Phi) const {
         Phi.setIdentity();
-        if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-
-        const Matrix3 R0 = X_.R;
-        const Vector3 omega = gyro_meas - X_.B.col(0);
-        const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
-
-        // beta_g is world-referred at Level 2 and additive body-referred at
-        // Level 1.  Fh = int_0^h R(t) dt maps a physical body-bias error into
-        // the right-invariant attitude error exactly for constant measured
-        // angular rate over the sample.
-        const Matrix3 Fh =
-            R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
+        const Matrix3& R0 = X_.R;
         const Matrix3 bg0_to_body =
             two_frame_bias ? Matrix3(R0.transpose()) : Matrix3::Identity();
-        Phi.template block<3,3>(OFF_PHI, OFF_BG) = -Fh * bg0_to_body;
+        const Matrix3 bias_to_attitude = -s.Fh * bg0_to_body;
+        Phi.template block<3,3>(OFF_PHI, OFF_BG) = bias_to_attitude;
         if constexpr (two_frame_bias)
-            Phi.template block<3,3>(OFF_BG, OFF_BG) = R_end * R0.transpose();
+            Phi.template block<3,3>(OFF_BG, OFF_BG) = s.R_end * R0.transpose();
 
         if constexpr (with_accel_bias) {
-            const T alpha_ba = acc_bias_updates_enabled_ ? std::exp(-Ts/tau_ba_) : T(1);
             if constexpr (two_frame_bias)
                 Phi.template block<3,3>(OFF_BA, OFF_BA) =
-                    alpha_ba * R_end * R0.transpose();
+                    s.alpha_ba * s.R_end * R0.transpose();
             else
                 Phi.template block<3,3>(OFF_BA, OFF_BA) =
-                    alpha_ba * Matrix3::Identity();
+                    s.alpha_ba * Matrix3::Identity();
         }
 
         // Exact OU-chain state transition for the active linear block; when
         // it is gated off the physical world columns are frozen and the world
         // transition is identity.
-        Eigen::Matrix<T,4,4> Phi_axis;
-        world_transition_(Ts, Phi_axis);
         Phi.template block<12,12>(OFF_V, OFF_V).setZero();
         for (int i = 0; i < 4; ++i) {
             for (int j = 0; j < 4; ++j) {
@@ -393,23 +426,23 @@ class Kalman3D_Wave_TFG {
         // The OU transition mixes world columns with scalar coefficients.
         // By the semigroup law, transporting [x(t)]x to h gives [x(h)]x.
         // The remaining integral of R(t) over the step is Fh.
-        const Eigen::Matrix<T,3,4> X_end = X_.X * Phi_axis.transpose();
-        const Matrix3 bias_to_attitude = -Fh * bg0_to_body;
         for (int i = 0; i < 4; ++i)
             Phi.template block<3,3>(OFF_V + 3*i, OFF_BG).noalias() =
-                ocean_imu::lie::skew<T>(Vector3(X_end.col(i))) * bias_to_attitude;
+                ocean_imu::lie::skew<T>(Vector3(s.X_end.col(i))) * bias_to_attitude;
     }
 
-    void build_process_noise(T Ts, const Vector3& gyro_meas, MatrixNX& Qd, T gyro_noise_scale = T(1)) const {
-        Qd.setZero();
-        if (!(Ts > T(0)) || !std::isfinite(Ts)) return;
-
-        const Matrix3 R0 = X_.R;
-        const Vector3 omega = gyro_meas - X_.B.col(0);
-        const Matrix3 R_end = R0 * ocean_imu::lie::Exp<T>(Vector3(omega * Ts));
-        // All gyro-driven world errors at the endpoint are [x_i(h)]x times
-        // the attitude impulse. Integrate its 3x3 covariance and its cross
-        // covariance with the end bias once, then lift into the full state.
+    void gyro_noise_(T Ts, const PredictionStep& step, T gyro_noise_scale,
+                     Matrix3& Qtt, Matrix3& Qtb, Matrix3& Qbb) const {
+        if constexpr (two_frame_bias) {
+            const T x = step.angle.squaredNorm();
+            if (x <= T(0.01) && Q_bg_(0,0) == Q_bg_(1,1) && Q_bg_(0,0) == Q_bg_(2,2)) {
+                // The public gyro-density setter always produces a scalar Q_gyro.
+                tfg_detail::isotropic_gyro_noise<T>(Ts, x, step.R_end * step.angle,
+                    gyro_noise_scale * Q_gyro_(0,0), Q_bg_(0,0), Qtt, Qtb, Qbb);
+                return;
+            }
+        }
+        const Matrix3& R0 = X_.R;
         static constexpr double nodes[5] = {
             -0.9061798459386640, -0.5384693101056831, 0.0,
              0.5384693101056831,  0.9061798459386640
@@ -421,18 +454,17 @@ class Kalman3D_Wave_TFG {
 
         // Retain the sampled attitude impulse and separate white-noise and bias
         // noise sums. Their float accumulation matters over long replays.
-        const Matrix3 Fh = R0 * (Ts * ocean_imu::lie::left_jacobian<T>(Vector3(omega * Ts)));
-        const Matrix3 E = two_frame_bias ? R_end : Matrix3::Identity();
+        const Matrix3 E = two_frame_bias ? step.R_end : Matrix3::Identity();
         const Matrix3 bias_covariance = (E * Q_bg_) * E.transpose();
         const Matrix3 gyro_noise = Q_gyro_ * gyro_noise_scale;
-        Matrix3 Qtt = Matrix3::Zero(), Qtb = Matrix3::Zero(), Qbb = Matrix3::Zero();
+        Qtt.setZero(); Qtb.setZero(); Qbb.setZero();
         for (int q = 0; q < 5; ++q) {
             const T s = T(0.5) * Ts * (T(1) + T(nodes[q]));
             const T wq = T(0.5) * Ts * T(weights[q]);
-            const Vector3 angle = omega * s;
+            const Vector3 angle = step.omega * s;
             const Matrix3 R_s = R0 * ocean_imu::lie::Exp<T>(angle);
             const Matrix3 Fs = R0 * (s * ocean_imu::lie::left_jacobian<T>(angle));
-            const Matrix3 B = Fs - Fh;
+            const Matrix3 B = Fs - step.Fh;
             const Matrix3 GQ = R_s * gyro_noise;
             const Matrix3 BQ = B * Q_bg_;
             Qtt += wq * (GQ * R_s.transpose()).eval();
@@ -440,18 +472,22 @@ class Kalman3D_Wave_TFG {
             Qtb += wq * (BQ * E.transpose()).eval();
             Qbb += wq * bias_covariance;
         }
+    }
+
+    void fill_process_noise_(T Ts, const PredictionStep& step, MatrixNX& Qd, T gyro_noise_scale,
+                             const OuStep& ou) const {
+        Qd.setZero();
+        Matrix3 Qtt, Qtb, Qbb;
+        gyro_noise_(Ts, step, gyro_noise_scale, Qtt, Qtb, Qbb);
         Qd.template block<3,3>(OFF_PHI, OFF_PHI) = Qtt;
         Qd.template block<3,3>(OFF_PHI, OFF_BG) = Qtb;
         Qd.template block<3,3>(OFF_BG, OFF_PHI) = Qtb.transpose();
         Qd.template block<3,3>(OFF_BG, OFF_BG) = Qbb;
 
-        Eigen::Matrix<T,4,4> Phi_axis;
-        world_transition_(Ts, Phi_axis);
-        const Eigen::Matrix<T,3,4> X_end = X_.X * Phi_axis.transpose();
         Matrix3 skew_end[4];
         for (int i = 0; i < 4; ++i) {
             const int row = OFF_V + 3*i;
-            skew_end[i] = ocean_imu::lie::skew<T>(Vector3(X_end.col(i)));
+            skew_end[i] = ocean_imu::lie::skew<T>(Vector3(step.X_end.col(i)));
             const Matrix3 world_att = skew_end[i] * Qtt;
             const Matrix3 world_bg = skew_end[i] * Qtb;
             Qd.template block<3,3>(row, OFF_PHI) = world_att;
@@ -469,7 +505,7 @@ class Kalman3D_Wave_TFG {
         // The OU acceleration driving noise is already available in exact
         // discrete form for the linear chain and is independent of gyro and
         // gyro-bias driving noise.
-        if (linear_block_enabled_) add_ou_process_noise_(Ts, Qd);
+        if (linear_block_enabled_) add_ou_process_noise_(ou, Qd);
 
         if constexpr (with_accel_bias) {
             if (acc_bias_updates_enabled_) {
@@ -478,14 +514,31 @@ class Kalman3D_Wave_TFG {
                 // decayed body increment, so the scalar OU integral is exact.
                 const T qint = T(0.5) * tau_ba_ * (-std::expm1(T(-2)*Ts/tau_ba_));
                 Qd.template block<3,3>(OFF_BA, OFF_BA) +=
-                    (two_frame_bias ? Matrix3(R_end * Q_ba_ * R_end.transpose()) : Q_ba_) * qint;
+                    (two_frame_bias ? Matrix3(step.R_end * Q_ba_ * step.R_end.transpose()) : Q_ba_) * qint;
             }
         }
 
-        symmetrize_in_place_(Qd);
         ou_detail::project_psd_ou_iii<T,NX>(Qd);
     }
 
+    // Each transition row couples at most the gyro bias and four same-axis
+    // OU coordinates. Accumulate only its nonzero columns. Both sweeps read
+    // consecutive covariance entries and propagate every cross-covariance.
+    static void multiply_sparse_transition_(const MatrixNX& source, const MatrixNX& Phi,
+                                            MatrixNX& out) {
+        out.setZero();
+        for (int j = 0; j < NX; ++j) {
+            T* dst = out.data() + j * NX;
+            for (int k = 0; k < NX; ++k) {
+                const T f = Phi.data()[j + k * NX];
+                if (f == T(0)) continue;
+                const T* src = source.data() + k * NX;
+                for (int i = 0; i < NX; ++i) dst[i] += f * src[i];
+            }
+        }
+    }
+
+  public:
     [[nodiscard]] Tangent error_from(const Kalman3D_Wave_TFG& reference) const {
         Tangent xi;
         xi.setZero();
@@ -522,13 +575,33 @@ class Kalman3D_Wave_TFG {
         if (!interval.predict) return;
         MatrixNX& Phi = scratch_a_;
         MatrixNX& Qd  = scratch_b_;
-        build_transition(Ts, interval.rate, Phi);
-        build_process_noise(Ts, interval.rate, Qd, interval.noise_scale);
-        propagate_mean(interval.rate, Ts);
-        P_ = (Phi * P_ * Phi.transpose()).eval();
-        P_ += Qd;
-        apply_pending_aw_covariance_inflation_();
+        const OuStep& ou = cached_ou_step_(Ts);
+        const PredictionStep step = prediction_step_(Ts, interval.rate, ou.axis);
+        fill_transition_(step, ou.axis, Phi);
+        fill_process_noise_(Ts, step, Qd, interval.noise_scale, ou);
+        last_omega_ = step.omega;
+        X_.R = step.R_end;
+        reorthonormalize_();
+        if (linear_block_enabled_) X_.X = step.X_end;
+        if constexpr (with_accel_bias) {
+            if (acc_bias_updates_enabled_) X_.B.col(1) *= step.alpha_ba;
+        }
+        // Right multiplication visits complete columns. Transposing between
+        // passes produces the transpose of Phi P Phi^T, then symmetrization
+        // below averages the same pair of entries even for asymmetric input.
+        MatrixNX& intermediate = scratch_c_;
+        multiply_sparse_transition_(P_, Phi, intermediate);
+        intermediate.transposeInPlace();
+        multiply_sparse_transition_(intermediate, Phi, P_);
+        // Restore symmetry of the transported covariance before adding the
+        // independent, symmetric driving noise. Each mirrored pair then
+        // receives the same rounded noise increment.
         symmetrize_in_place_(P_);
+        P_ += Qd;
+        if (aw_cov_floor_pending_ && linear_block_enabled_) {
+            apply_pending_aw_covariance_inflation_();
+            symmetrize_in_place_(P_);
+        }
     }
 
     void inject(const Tangent& xi) {
@@ -562,16 +635,17 @@ class Kalman3D_Wave_TFG {
         J.setIdentity();
         const Vector3 phi = correction.template segment<3>(OFF_PHI);
         const Matrix3 Jr = ocean_imu::lie::left_jacobian<T>(Vector3(-phi));
+        const ocean_imu::lie::RightJacobianCross<T> cross(phi);
         J.template block<3,3>(OFF_PHI, OFF_PHI) = Jr;
-        for (int c = 0; c < 4; ++c)
-            set_reset_vector_block_(J, OFF_V + 3*c, phi,
-                                    correction.template segment<3>(OFF_V + 3*c), Jr);
-        if constexpr (two_frame_bias) {
-            set_reset_vector_block_(J, OFF_BG, phi,
-                                    correction.template segment<3>(OFF_BG), Jr);
-            if constexpr (with_accel_bias)
-                set_reset_vector_block_(J, OFF_BA, phi,
-                                        correction.template segment<3>(OFF_BA), Jr);
+        for (int off = 3; off < NX; off += 3) {
+            if constexpr (!two_frame_bias)
+                if (off == OFF_BG || off == OFF_BA) continue;
+            T Q[3][3];
+            cross(correction.data() + off, Q);
+            J.template block<3,3>(off, off) = Jr;
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                    J(off + i, OFF_PHI + j) = Q[i][j];
         }
     }
 
@@ -771,30 +845,6 @@ class Kalman3D_Wave_TFG {
         return Vector3::Zero();
     }
 
-    // Off-diagonal vector/attitude block of the full group right Jacobian.
-    // For ad_xi = [Omega 0; Z Omega], J_r = sum (-ad)^n/(n+1)!.
-    static Matrix3 reset_cross_block_(const Vector3& phi, const Vector3& z) {
-        const Matrix3 Omega = ocean_imu::lie::skew<T>(phi);
-        const Matrix3 Z = ocean_imu::lie::skew<T>(z);
-        Matrix3 D = Matrix3::Identity();
-        Matrix3 L = Matrix3::Zero();
-        Matrix3 Q = Matrix3::Zero();
-        T coeff = T(1);
-        const T tol = T(8) * std::numeric_limits<T>::epsilon();
-        for (int n = 1; n <= 32; ++n) {
-            const Matrix3 Lnext = L * Omega + D * Z;
-            const Matrix3 Dnext = D * Omega;
-            L = Lnext;
-            D = Dnext;
-            coeff *= -T(1) / T(n+1);
-            const Matrix3 term = coeff * L;
-            Q += term;
-            if (n >= 5 && term.cwiseAbs().maxCoeff() <=
-                              tol * (T(1) + Q.cwiseAbs().maxCoeff())) break;
-        }
-        return Q;
-    }
-
     // In-place form of  M = T(0.5) * (M + M.transpose()).eval().
     //
     // Bit-identical to the expression rather than merely equivalent: the
@@ -817,11 +867,54 @@ class Kalman3D_Wave_TFG {
         }
     }
 
-    static void set_reset_vector_block_(MatrixNX& J, int off,
-                                        const Vector3& phi, const Vector3& z,
-                                        const Matrix3& Jr) {
-        J.template block<3,3>(off, off) = Jr;
-        J.template block<3,3>(off, OFF_PHI) = reset_cross_block_(phi, z);
+    // Each reset block-row has at most two nonzero 3x3 blocks: its
+    // diagonal and its attitude column. Both sides of J P J^T retain
+    // every cross covariance, including additive Level-1 bias coordinates.
+    void transport_reset_(const MatrixNX& J, const MatrixNX& Pj) {
+        for (int i = 0; i < NX; i += 3) {
+            const Matrix3 D = J.template block<3,3>(i,i);
+            const Matrix3 C = J.template block<3,3>(i,OFF_PHI);
+            Matrix3 left_phi = D * Pj.template block<3,3>(i,OFF_PHI);
+            if (i != OFF_PHI)
+                left_phi.noalias() += C * Pj.template topLeftCorner<3,3>();
+            for (int j = i; j < NX; j += 3) {
+                Matrix3 left;
+                if (j == OFF_PHI) left = left_phi;
+                else {
+                    left.noalias() = D * Pj.template block<3,3>(i,j);
+                    if (i != OFF_PHI)
+                        left.noalias() += C * Pj.template block<3,3>(OFF_PHI,j);
+                }
+                Matrix3 block = left * J.template block<3,3>(j,j).transpose();
+                if (j != OFF_PHI)
+                    block.noalias() += left_phi * J.template block<3,3>(j,OFF_PHI).transpose();
+                if (i == j) block = T(0.5) * (block + block.transpose()).eval();
+                P_.template block<3,3>(i,j) = block;
+                if (i != j) P_.template block<3,3>(j,i) = block.transpose();
+            }
+        }
+    }
+
+    using MatrixNX3 = Eigen::Matrix<T,NX,3>;
+
+    // result = base - left * right^T. The three contiguous columns fit
+    // this rank-three update without packing a general GEMM.
+    static void subtract_product3_(const MatrixNX& base, const MatrixNX3& left,
+                                   const MatrixNX3& right, MatrixNX& result) {
+        for (int j = 0; j < NX; ++j)
+            result.col(j) = base.col(j) - (left.col(0) * right(j,0) +
+                                           left.col(1) * right(j,1) +
+                                           left.col(2) * right(j,2));
+    }
+
+    // The sensor Jacobians only touch attitude and their observed states.
+    // Accumulate along contiguous covariance columns; generic dense H is valid too.
+    static void multiply_measurement_transpose_(const MatrixNX& P,
+            const Eigen::Matrix<T,3,NX>& H, MatrixNX3& result) {
+        result.setZero();
+        for (int a = 0; a < 3; ++a)
+            for (int i = 0; i < NX; ++i)
+                if (H(a,i) != T(0)) result.col(a) += H(a,i) * P.col(i);
     }
 
     bool apply_update3_(const Vector3& r, const Eigen::Matrix<T,3,NX>& H,
@@ -831,7 +924,7 @@ class Kalman3D_Wave_TFG {
         if (!r.allFinite() || !H.allFinite() || !Rw.allFinite()) return false;
 
         Eigen::Matrix<T,NX,3>& PHt = scratch_nx3_a_;
-        PHt.noalias() = P_ * H.transpose();
+        multiply_measurement_transpose_(P_, H, PHt);
         Matrix3 S = H * PHt + Rw;
         S = T(0.5) * (S + S.transpose()).eval();
         diag.S = S;
@@ -869,21 +962,22 @@ class Kalman3D_Wave_TFG {
         if (!K.allFinite()) return false;
 
         const Tangent correction = K * r;
-        // I - K H, accumulated in place.  Eigen folds the -1 into the packed
-        // operand, and negation is exact, so this matches the expression form
-        // coefficient for coefficient.
-        MatrixNX& IKH = scratch_a_;
-        IKH.setIdentity();
-        IKH.noalias() -= K * H;
-
+        // Full Joseph covariance for the gain actually applied (including
+        // protected rows). With A = I - KH and symmetric P, AP = P - K PHt^T
+        // and AP A^T + K R K^T = AP - (AP H^T - K R) K^T.
+        MatrixNX& AP = scratch_a_;
+        subtract_product3_(P_, K, PHt, AP);
+        MatrixNX3& feedback = PHt;  // PHt is no longer needed after AP.
+        multiply_measurement_transpose_(AP, H, feedback);
+        feedback.noalias() -= K * Rw;
         MatrixNX& Pj = scratch_b_;
-        Pj = (IKH * P_ * IKH.transpose() + K * Rw * K.transpose()).eval();
+        subtract_product3_(AP, feedback, K, Pj);
+        symmetrize_in_place_(Pj);
 
         MatrixNX& Jreset = scratch_c_;
         build_reset_jacobian(correction, Jreset);
         inject(Tangent(-correction));
-        P_ = (Jreset * Pj * Jreset.transpose()).eval();
-        symmetrize_in_place_(P_);
+        transport_reset_(Jreset, Pj);
 
         diag.accepted = true;
         return true;
@@ -917,13 +1011,42 @@ class Kalman3D_Wave_TFG {
         P_.template block<3,3>(OFF_AW, OFF_AW) += Delta;
     }
 
-    void add_ou_process_noise_(T Ts, MatrixNX& Qd) const {
-        const bool correlated = !ou_detail::is_isotropic3<T>(Sigma_aw_) &&
-                                !is_diagonal_(Sigma_aw_);
-        if (correlated) {
-            Eigen::Matrix<T,4,4> Q_unit;
+    void discretize_ou_step_(T Ts, OuStep& ou) const {
+        world_transition_(Ts, ou.axis);
+        if (!linear_block_enabled_) return;
+        ou.correlated = !ou_detail::is_isotropic3<T>(Sigma_aw_) && !is_diagonal_(Sigma_aw_);
+        if (ou.correlated) {
+            auto& Q_unit = ou.Q_axis[0];
             ou_detail::IntegratedOUChain<T,3>::process_covariance(tau_aw_, Ts, T(1), Q_unit);
             Q_unit = T(0.5) * (Q_unit + Q_unit.transpose()).eval();
+        } else {
+            for (int axis = 0; axis < 3; ++axis) {
+                if (axis && Sigma_aw_(axis,axis) == Sigma_aw_(axis-1,axis-1))
+                    ou.Q_axis[axis] = ou.Q_axis[axis-1];
+                else
+                    ou_detail::IntegratedOUChain<T,3>::process_covariance(
+                        tau_aw_, Ts, Sigma_aw_(axis,axis), ou.Q_axis[axis]);
+            }
+        }
+    }
+
+    const OuStep& cached_ou_step_(T Ts) {
+        // The tuner can change tau and any entry of Sigma at a commit. A
+        // missed frame also changes the integration interval. Match exactly.
+        if (Ts != cached_dt_ || linear_block_enabled_ != cached_linear_ ||
+            tau_aw_ != cached_tau_ || Sigma_aw_ != cached_Sigma_) {
+            discretize_ou_step_(Ts, cached_ou_);
+            cached_dt_ = Ts;
+            cached_linear_ = linear_block_enabled_;
+            cached_tau_ = tau_aw_;
+            cached_Sigma_ = Sigma_aw_;
+        }
+        return cached_ou_;
+    }
+
+    void add_ou_process_noise_(const OuStep& ou, MatrixNX& Qd) const {
+        if (ou.correlated) {
+            const auto& Q_unit = ou.Q_axis[0];
             const Matrix3 Sig = T(0.5) * (Sigma_aw_ + Sigma_aw_.transpose());
             for (int i = 0; i < 4; ++i)
                 for (int j = 0; j < 4; ++j)
@@ -931,9 +1054,7 @@ class Kalman3D_Wave_TFG {
                         += Sig * Q_unit(i,j);
         } else {
             for (int axis = 0; axis < 3; ++axis) {
-                Eigen::Matrix<T,4,4> Q_axis;
-                ou_detail::IntegratedOUChain<T,3>::process_covariance(
-                    tau_aw_, Ts, Sigma_aw_(axis,axis), Q_axis);
+                const auto& Q_axis = ou.Q_axis[axis];
                 for (int i = 0; i < 4; ++i)
                     for (int j = 0; j < 4; ++j)
                         Qd(OFF_V + 3*i + axis, OFF_V + 3*j + axis) += Q_axis(i,j);
@@ -960,18 +1081,9 @@ class Kalman3D_Wave_TFG {
     // needs.
     //
     //     slot     time_update()   apply_update3_()   apply_world_yaw_gauge()
-    //     a        Phi             IKH                G
+    //     a        Phi             AP                 G
     //     b        Qd              Pj                 --
-    //     c        --              Jreset             --
-    //
-    // WHAT IS DELIBERATELY NOT DONE HERE.  The triple products stay written as
-    // single expressions.  Splitting P = Phi P Phi^T into two assignments
-    // through a third slot would save another temporary, but it is not
-    // bit-identical: Eigen picks a different GEMM path for the outer product
-    // when its right operand is a Transpose<> of a named matrix than when the
-    // same product is a nested node, and the summation order changes with it.
-    // Preserve the expression structure to retain the floating-point
-    // evaluation order.
+    //     c        intermediate    Jreset             --
     // ---------------------------------------------------------------------
     MatrixNX scratch_a_{MatrixNX::Zero()};
     MatrixNX scratch_b_{MatrixNX::Zero()};
@@ -988,6 +1100,10 @@ class Kalman3D_Wave_TFG {
     bool protect_integral_attitude_{true};
     bool match_horizontal_after_bias_release_{false};
     Matrix3 Sigma_aw_{Matrix3::Identity()};
+    OuStep cached_ou_{};
+    Matrix3 cached_Sigma_{Matrix3::Zero()};
+    T cached_dt_ = T(0), cached_tau_ = T(0);
+    bool cached_linear_ = false;
     Matrix3 aw_cov_floor_target_{Matrix3::Identity()};
     bool aw_cov_floor_pending_{false};
     ocean_imu::kalman::filter_detail::GyroInterval<Vector3> gyro_interval_;

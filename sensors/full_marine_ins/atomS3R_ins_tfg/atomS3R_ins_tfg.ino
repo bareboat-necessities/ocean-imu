@@ -225,7 +225,7 @@ public:
 
     updateUI_();
     streamSerial_();
-    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());
+    timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime(), sample_dt_.missedFrames());
   }
 
 private:
@@ -830,36 +830,9 @@ private:
 };
 
 // ---------------------------------------------------------------------------
-// Loop-task stack.
-//
-// This is not a safety margin, it is a requirement.  Kalman3D_Wave_TFG runs a
-// 21-state covariance through Phi P Phi^T and a Joseph update, and Eigen
-// builds each of those triple products through full NX x NX temporaries --
-// 1764 bytes apiece at NX = 21.  The named locals that used to sit alongside
-// them are now member scratch buffers (see src/kalman_tfg/Kalman3D_Wave_TFG.h),
-// which took one live fusion step from ~27 kB of stack down to ~19 kB, but the
-// expression temporaries remain: removing those would change Eigen's GEMM path
-// and with it the filter's arithmetic, which is not something a stack budget
-// gets to decide.
-//
-// Measured peak, painted-stack high-water mark over a 400 s host run of the
-// whole sketch-level step (filter + detrender + direction chain):
-//
-//                       -O2        -Os
-//     before          27.2 kB    27.2 kB
-//     after           18.9 kB    15.3 kB
-//
-// The Arduino-ESP32 loop task gets 8 kB by default, so this still has to be
-// raised.  32 kB leaves ~13 kB over the worst measurement for the sketch's own
-// frames, the UI and the NMEA formatting, and for the xtensa/-funroll-loops
-// build differing from the host one.
-//
-// On the device this is affordable: the build-MCU job reports 40,540 bytes of
-// globals for this sketch and 287,140 bytes left for locals, against 30,828
-// and 296,852 for the OU-III sketch.  The extra globals are the filter's
-// scratch pool; the loop stack comes out of what is left.
-//
-// Lower it only against a fresh measurement on the device.
+// The loop task runs the fusion update, wave-direction and displacement filters,
+// serial output and calibration UI. Keep the 32 KiB budget until the high-water
+// mark has been measured on the target across startup, Live and calibration.
 //
 // WHY THIS IS AT THE BOTTOM OF THE FILE.  SET_LOOP_TASK_STACK_SIZE expands to
 // a definition of getArduinoLoopTaskStackSize(), so it is a function

@@ -12,7 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 KALMAN = ROOT / "src/kalman_tfg/Kalman3D_Wave_TFG.h"
 
-BASE = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        symmetrize_in_place_(P_);\n"""
+BASE = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        inject(Tangent(-correction));\n        transport_reset_(Jreset, Pj);\n"""
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -23,7 +23,7 @@ def replace_once(text: str, old: str, new: str, label: str) -> str:
 
 
 def patch_diagonal_only(text: str) -> str:
-    new = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        // Ablation: retain the per-3D-block right-Jacobian terms but remove\n        // every semidirect-product vector<-attitude cross block.\n        for (int off = OFF_BG; off < NX; off += 3)\n            Jreset.template block<3,3>(off, OFF_PHI).setZero();\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        symmetrize_in_place_(P_);\n"""
+    new = """        MatrixNX& Jreset = scratch_c_;\n        build_reset_jacobian(correction, Jreset);\n        // Ablation: retain the per-3D-block right-Jacobian terms but remove\n        // every semidirect-product vector<-attitude cross block.\n        for (int off = OFF_BG; off < NX; off += 3)\n            Jreset.template block<3,3>(off, OFF_PHI).setZero();\n        inject(Tangent(-correction));\n        transport_reset_(Jreset, Pj);\n"""
     return replace_once(text, BASE, new, "diagonal-only reset ablation")
 
 
@@ -33,7 +33,7 @@ def patch_inverse(text: str) -> str:
 
 
 def patch_opposite_sign(text: str) -> str:
-    new = """        MatrixNX& Jreset = scratch_c_;\n        // Ablation: evaluate the same full group Jacobian at -a rather than\n        // +a.  Nominal injection remains -a in every arm.\n        build_reset_jacobian(Tangent(-correction), Jreset);\n        inject(Tangent(-correction));\n        P_ = (Jreset * Pj * Jreset.transpose()).eval();\n        symmetrize_in_place_(P_);\n"""
+    new = """        MatrixNX& Jreset = scratch_c_;\n        // Ablation: evaluate the same full group Jacobian at -a rather than\n        // +a.  Nominal injection remains -a in every arm.\n        build_reset_jacobian(Tangent(-correction), Jreset);\n        inject(Tangent(-correction));\n        transport_reset_(Jreset, Pj);\n"""
     return replace_once(text, BASE, new, "opposite-sign reset ablation")
 
 

@@ -37,6 +37,8 @@ The sketch's `build_opt.h` places recurring estimator and wave-tracking routines
 
 Build with `-DOCEAN_IMU_PROFILE_LOOP=1` to emit a `[TIMING]` line every 1,000 accepted samples on the actual device. The `mekf_internal` field is 1 when the estimator occupies internal RAM. PSRAM-enabled ESP32-S3 builds request internal RAM for the covariance and its workspace, then use the normal allocator if internal storage is exhausted. The release board profile disables PSRAM.
 
+When startup reports `[IMU] estimator clock: BMI270 200 Hz`, the estimator advances by 5 ms for each elapsed BMI270 frame. A repeated frame is discarded and a two-frame advance contributes 10 ms. The accompanying `[ESTIMATOR]` line reports the smallest and largest step in milliseconds, the number of host-timed intervals, and the number of skipped frames confirmed by sensor counts. An uninterrupted window reports `dt_min_ms=5.000 dt_max_ms=5.000 host_steps=0 missed_sensor_frames=0`.
+
 | Field | Measurement |
 |---|---|
 | `fusion_cycles_mean`, `fusion_cycles_max` | CPU cycle counter around the fusion update and any magnetic update due on that sample |
@@ -67,7 +69,7 @@ These figures come from `tests/kalman_carma_shared_modes/arduino/csm_size_probe/
 1. Complete the common [`sensors/` Arduino setup](../../README.md#arduino-installation).
 2. Verify [Basic IMU](../../imu_basic/atomS3R_imu_m5_basic/README.md) and a [Compass / AHRS](../../compass_ahrs/README.md) example first when commissioning new hardware.
 3. Open `atomS3R_ins_tfg_carma_shared_modes.ino`.
-4. Select the AtomS3R-compatible board profile and USB port, compile, and upload.
+4. Install the Espressif Arduino-ESP32 3.3.11 core used by the release firmware. Select the AtomS3R board and USB port, compile, and upload. This core recovers the hardware CDC transmit interrupt when a host temporarily stops reading or reconnects. [Espressif USB serial fix](https://github.com/espressif/arduino-esp32/pull/12606)
 5. Evaluate startup and magnetic north lock in the intended mounting orientation and away from strong transient magnetic disturbances.
 
 Releases published after this sketch was added also carry a prebuilt ZIP; see the [AtomS3R command-line flashing guide](../../../docs/atoms3r-release-flashing.md) and select `atomS3R_ins_tfg_carma_shared_modes`.
