@@ -42,6 +42,9 @@ CheckOptions:
   # The filter estimators legitimately carry wide state structs.
   - key: bugprone-exception-escape.IgnoredExceptions
     value: ''
+  # Fixed-size Eigen quaternions have no move cheaper than their copy.
+  - key: performance-no-automatic-move.AllowedTypes
+    value: '::Eigen::Quaternion'
 
 # Notes on the disabled checks, so the next person does not have to re-measure:
 #
@@ -95,3 +98,11 @@ CheckOptions:
 #     Kalman3D_Wave_OU_II.h, which re-derive each other's cached terms by
 #     design. It is a structural observation, not a defect, and the file is
 #     inside the frozen replay closure in any case.
+#
+#   performance-no-automatic-move (AllowedTypes: ::Eigen::Quaternion)
+#     Two findings: the zero-heel early return of a const local in
+#     quaternion_boat() in the OU-II and OU-III headers. An Eigen fixed-size
+#     quaternion is four scalars whose move is its copy, so dropping the
+#     const saves nothing, while editing the shipping header would expire
+#     the OU-III proof source bindings. The check stays on for every other
+#     type.
