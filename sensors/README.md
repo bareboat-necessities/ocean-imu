@@ -30,13 +30,13 @@ from the end of the pacing wait through output publication. A steady 200 Hz wind
 has mean sample spacing near 5,000 µs. `accepted_over_4500us=0` means every accepted
 update in the window had at least 0.5 ms of processing headroom. The profile prints
 one summary per window to keep per-sample serial writes out of the measurement.
-OU-II, OU-III, plain TFG and shared-mode TFG–CARMA timestamp the host poll that found a complete BMI270 frame.
+PII, NLO, OU-II, OU-III, plain TFG and shared-mode TFG–CARMA timestamp the host poll that found a complete BMI270 frame.
 Compare `sample_gap_min_us`, `sample_gap_max_us` and `jitter_mean_abs_us` to
 see variation even when the mean is 5,000 µs. `gaps_over_7_5ms` counts host gaps
 longer than 7.5 ms. An early poll can retry within 300 µs. A successful retry
 anchors the next 5 ms wait to the observed ready poll.
 
-On these four sketches, the startup message `[IMU] estimator clock: BMI270 200 Hz`
+On these six sketches, the startup message `[IMU] estimator clock: BMI270 200 Hz`
 means the reader verified both inertial output rates and captures the sensor clock
 in the same I²C burst as acceleration and angular rate. This works with both
 M5 raw and Bosch-compensated magnetic calibrations. Consecutive frames pass
@@ -45,14 +45,21 @@ is discarded. If the stock reader or matching rates are unavailable, startup
 reports `host micros`. The profile line `[ESTIMATOR] dt_min_ms=5.000 dt_max_ms=5.000 host_steps=0`
 identifies a window of 5 ms estimator steps. A nonzero `host_steps` counts
 accepted intervals timed from the host, including recovery from a sensor-clock discontinuity.
-Plain TFG and shared-mode TFG–CARMA also report `missed_sensor_frames`, the number
+PII, NLO, plain TFG and shared-mode TFG–CARMA also report `missed_sensor_frames`, the number
 of unprocessed sensor frames confirmed by successive frame counts. A jump of four
-frames adds three. Duplicate polls and host-timed intervals add zero.
+frames adds three. Duplicate polls and host-timed intervals add zero. PII and NLO
+retain their 5 ms restart step for unverified host intervals longer than 50 ms.
+NLO subdivides genuine multi-frame gaps into integration steps of at most 5 ms.
 
 OU-II, OU-III and plain TFG publish NMEA heading and tilt on the 80 ms output deadline.
 Shared-mode TFG–CARMA publishes heading first and sends the pitch and roll sentences
 in the next available slot. All four sketches take heave, wave, status, temperature
 and rate-of-turn values from the same snapshot and send them over subsequent slots.
+
+PII and NLO publish heading and any due status sentence first. They queue tilt,
+heave, temperature and rate of turn from that snapshot and send up to two
+sentences per sampling slot. Both observers use the held magnetic field on every
+accepted IMU frame and repeat magnetic calibration only when the raw field changes.
 
 ## Hardware
 

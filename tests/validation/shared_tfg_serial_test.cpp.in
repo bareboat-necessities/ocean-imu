@@ -43,7 +43,7 @@ struct {
 #define SEA_STATE_NMEA_TALKER "II"
 
 struct Publisher {
-  struct { bool isLive() const { return true; } bool hasMagNorthLock() const { return true; } } fusion_;
+  struct { bool envelopeReady() const { return true; } bool isLive() const { return true; } bool hasMagNorthLock() const { return true; } } fusion_;
   struct { bool learning() const { return true; } } gyro_bias_;
   struct { float dpm() const { return -8; } } rot_;
   struct { float imuHz() const { return 200; } float magHz() const { return 25; } } rates_;
@@ -53,7 +53,7 @@ struct Publisher {
   wave_direction::WaveDirectionReport wave_ = wave_direction::WaveDirectionReport::from(48.3f, BACKWARD, true);
   uint32_t last_serial_ms_ = 0, last_temp_nmea_ms_ = 0, last_wave_nmea_ms_ = 0, last_status_nmea_ms_ = 0;
   bool acc_bias_estimating_ = true, heading_valid_ = true, heading_fused_ = true, heading_mag_ok_ = true;
-  bool mag_ok_ = true, mag_fresh_ = true;
+  bool mag_ok_ = true, mag_fresh_ = true, mag_used_ = true, nlo_initialized_ = true;
   float pitch_deg_ = -1, roll_deg_ = 2, heading_deg_ = 37, heading_mag_deg_ = 38, dt_ = 0.005f;
   float heave_wave_clean_m_ = 0.5f, heave_speed_mps_ = 1, imu_temp_c_ = 26, mag_norm_uT_ = 50;
   float heave_raw_m_ = 0.6f, wave_envelope_m_ = 1, acc_bias_norm_mps2_ = 0.1f, acc_bias_z_mps2_ = 0.1f;
@@ -74,7 +74,7 @@ void checkRecovery(int capacity, size_t max_write) {
     // Run the first and last sections at line rate. Pause the host for 10 s,
     // reopen the serial port, and check that publication resumes every time.
     if (slot == 2500 || slot == 4000) {
-      publisher.heading_deg_ = slot == 2500 ? 123 : 246;
+      publisher.heading_mag_deg_ = publisher.heading_deg_ = slot == 2500 ? 123 : 246;
       publisher.heave_raw_m_ = slot == 2500 ? 1.23f : 2.46f;
     }
     Serial.connected = slot < 3500 || slot >= 4000;
