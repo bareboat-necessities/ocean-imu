@@ -89,7 +89,8 @@ void checkMarineNmeaBatch() {
     size_t previous_size = 0;
     unsigned slots = 0;
     while (batch.sendNext("II")) {
-      assert(++slots <= 5);
+      ++slots;
+      assert(slots <= 5);
       assert(Serial.writes.size() - previous_size <= 2);
       previous_size = Serial.writes.size();
     }
