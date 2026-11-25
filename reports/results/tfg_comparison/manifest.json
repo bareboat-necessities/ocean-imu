@@ -1,7 +1,7 @@
 {
   "binary_sha256": {
-    "OU_III": "063a73c412bbca94d6988d6a2c75e82539117fd6090f169340faa987f4ef7b41",
-    "TFG": "566c06cb06c213f54307d1ac655d18af03df7cc24a93877ac449437078c2bd68"
+    "OU_III": "241b697b46f3bce43958dc6b7ad9895e079fcafedca0e1040be3a5f743ca3306",
+    "TFG": "5d3264d313d75ac914d4d8e737fdc46c55cb2427a45c13ca24945bbbea45d40f"
   },
   "build_environment": {
     "compiler": {
@@ -17,7 +17,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1018-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "dataset": {
@@ -42,9 +42,9 @@
     "release": "v1.4.0",
     "speed_kn": 5.0
   },
-  "generated_utc": "2026-11-25T03:01:41+00:00",
-  "git_commit": "36433850fc03392f7b01dfe9b21d1d1ddd18f349",
-  "git_diff_stat": ".../results/tfg_comparison/gate_diagnostics.json   |   40 +-\n reports/results/tfg_comparison/paired_summary.json | 3778 ++++++++++----------\n reports/results/tfg_comparison/raw_runs.csv        |  200 +-\n reports/results/tfg_comparison/raw_runs.json       | 1658 ++++-----\n 4 files changed, 2838 insertions(+), 2838 deletions(-)",
+  "generated_utc": "2026-11-25T19:25:32+00:00",
+  "git_commit": "718a768eff0556204d689e0c451657bbdd16a5ff",
+  "git_diff_stat": "",
   "protocol": {
     "bootstrap_resamples": 10000,
     "dt_sec": 0.005,
@@ -209,12 +209,12 @@
     "src/wave_dir/VesselRaoNoiseWeighting.h": "b2efa3dd28c1750e95264a7c7f62291b067a0cc51aeda55a3b0d9e726c2c4d10",
     "src/wave_dir/WaveDirectionDetector.h": "e62f83bb058dcf142cf145db9dc749923632ce1577c2a201cfb10a33d9374dd6",
     "src/wave_dir/WaveDirectionFrame.h": "0e9c9115fdcabd33ca934cbf0a56f932a89121a29e6f4933cd587dc8bf38c140",
-    "tests/common/CurrentReplayLimits.h": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558",
+    "tests/common/CurrentReplayLimits.h": "cd96e652d2552f6f9c7f185330fb18ca2901bc2ce8e45346ee38debad95d7141",
     "tests/common/GyroReplayContract.h": "134b387951b7bfa9c3bbe02c4e869156f23b837deb14be51377b527bf04e9a80",
     "tests/common/HostReplayFlags.mk": "545de2e85defd04398247f40315811206e22e1d2bbd6f00e805f2f60dbd442a1",
     "tests/common/MagneticCalibrationReplayConfig.h": "69d6931592541a8621db363288db8662771b4f090934ded061369c5a0b4ff71d",
     "tests/common/RecordReplayLimits.h": "511057f3fbddb3b73f2944c21f3daf47b420eb1a719184a094992a98efabcc7c",
-    "tests/common/RecordReplayLimits.inc": "02e9d78d2d69796ee6935d7a63222f475f435c419b557c3ea62f9d2e9d772ce5",
+    "tests/common/RecordReplayLimits.inc": "5ca2d2b8ebbc14084461e383b07be88172c71d6feb74037848142210322d78f1",
     "tests/common/RecordW3dLimits.h": "1ed1a6a3f33c1260c7fbf79d848fbfc0c04becebda14c8d0ba822f58e30a1406",
     "tests/kalman_ou_iii/Makefile": "3043f9e85a3e86b74eecee533df0f7c849ba3601cca84ee66d187510ad50691d",
     "tests/kalman_ou_iii/kalman_ou_iii-sim.cpp": "49b49ab077aafa8939b2ced0d21016f1b92fd0056249d863fc7e45e900d7f126",
@@ -230,7 +230,7 @@
   "workflow": {
     "job": "tfg_companion",
     "run_attempt": "1",
-    "run_id": "45527346908",
+    "run_id": "45681664950",
     "workflow": "build"
   }
 }

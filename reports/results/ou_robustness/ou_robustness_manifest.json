@@ -23,7 +23,7 @@
       "version": "3.4.0"
     },
     "numpy": "1.26.4",
-    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
     "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
   },
   "command": [
@@ -42,7 +42,7 @@
     "reports/results/ou_robustness"
   ],
   "git_branch": "main",
-  "git_commit": "ffbbec5d7c38e3dbdbb2ddd862ac854e79fa5bbd",
+  "git_commit": "718a768eff0556204d689e0c451657bbdd16a5ff",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -267,7 +267,7 @@
     },
     "tests/common/CurrentReplayLimits.h": {
       "bytes": 8561,
-      "sha256": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558"
+      "sha256": "cd96e652d2552f6f9c7f185330fb18ca2901bc2ce8e45346ee38debad95d7141"
     },
     "tests/common/GyroReplayContract.h": {
       "bytes": 1402,
@@ -287,7 +287,7 @@
     },
     "tests/common/RecordReplayLimits.inc": {
       "bytes": 102430,
-      "sha256": "02e9d78d2d69796ee6935d7a63222f475f435c419b557c3ea62f9d2e9d772ce5"
+      "sha256": "5ca2d2b8ebbc14084461e383b07be88172c71d6feb74037848142210322d78f1"
     },
     "tests/common/RecordW3dLimits.h": {
       "bytes": 1782,
@@ -311,7 +311,7 @@
     "tau_s": 3.56596017
   },
   "numpy": "1.26.4",
-  "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+  "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
   "protocol": {
     "bootstrap_resamples": 10000,
     "duration_sec": 1200.0,
@@ -422,11 +422,11 @@
         "version": "3.4.0"
       },
       "numpy": "1.26.4",
-      "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
+      "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-25T06:42:16+00:00",
-    "git_commit": "ffbbec5d7c38e3dbdbb2ddd862ac854e79fa5bbd",
+    "generated_at": "2026-11-25T19:52:12+00:00",
+    "git_commit": "718a768eff0556204d689e0c451657bbdd16a5ff",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -649,7 +649,7 @@
         "size_bytes": 2772
       },
       "tests/common/CurrentReplayLimits.h": {
-        "sha256": "1c5bb0bc150ffc883b335c6c0da9dae9475640d5240a075fe720ed17e790d558",
+        "sha256": "cd96e652d2552f6f9c7f185330fb18ca2901bc2ce8e45346ee38debad95d7141",
         "size_bytes": 8561
       },
       "tests/common/GyroReplayContract.h": {
@@ -669,7 +669,7 @@
         "size_bytes": 2840
       },
       "tests/common/RecordReplayLimits.inc": {
-        "sha256": "02e9d78d2d69796ee6935d7a63222f475f435c419b557c3ea62f9d2e9d772ce5",
+        "sha256": "5ca2d2b8ebbc14084461e383b07be88172c71d6feb74037848142210322d78f1",
         "size_bytes": 102430
       },
       "tests/common/RecordW3dLimits.h": {
@@ -709,7 +709,7 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "45556148579",
+      "run_id": "45681664950",
       "workflow": "build"
     }
   },
