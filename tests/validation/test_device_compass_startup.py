@@ -43,22 +43,33 @@ class DeviceCompassStartupTest(unittest.TestCase):
         other_sketches = ("atomS3R_ins_nlo", "atomS3R_ins_pii_observer")
         for path in (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / (name + ".ino")
                                   for name in other_sketches)):
-            tick = function(path.read_text(), "tick")
+            source = path.read_text()
+            tick = function(source, "tick")
+            update = function(source, "updateFilter_")
             self.assertLess(tick.index("pacer_.wait();"), tick.index("sample_us = micros();"))
             self.assertNotIn("waitForNextLoopTick_", tick)
             self.assertIn("navigation_imu_.read(", tick)
             self.assertIn("Input::pollButton();", tick)
-            if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_tfg"):
+            if path.stem in ("atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_tfg",
+                             "atomS3R_ins_tfg_carma_shared_modes"):
                 self.assertLess(tick.index("updateFilter_(sample"), tick.index("Input::pollButton();"))
                 self.assertIn("AtomS3RNavigationImu::kReadyWindowUs", tick)
                 self.assertIn("pacer_.followReadyPoll(sample_us, sample.sample_us)", tick)
-                self.assertIn("navigation_imu_.configure(M5.Imu, true);", function(path.read_text(), "reinitImu_"))
-                self.assertIn("timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());", tick)
+                self.assertIn("navigation_imu_.configure(M5.Imu, true);", function(source, "reinitImu_"))
+                self.assertIn("sample_dt_.reset();", function(source, "resetFusion_"))
+                if path.stem == "atomS3R_ins_tfg_carma_shared_modes":
+                    self.assertIn("timing_.host_steps += sample_dt_.usedHostTime();", update)
+                    self.assertIn("timing_.missed_sensor_frames += sample_dt_.missedFrames();", update)
+                elif path.stem == "atomS3R_ins_tfg":
+                    self.assertIn("dt_, sample_dt_.usedHostTime(), sample_dt_.missedFrames());", tick)
+                else:
+                    self.assertIn("timing_.finish(sample.sample_us, got_sample, LOOP_PERIOD_US, dt_, sample_dt_.usedHostTime());", tick)
                 self.assertIn("sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_)", tick)
-                self.assertIn("fusion_.update(dt_,", function(path.read_text(), "updateFilter_"))
+                self.assertNotIn("dt_ =", update)
+                self.assertIn("fusion_.update(dt_,", update)
             else:
-                self.assertIn("sample_dt_.update(s.sample_us)", function(path.read_text(), "updateFilter_"))
-            self.assertIn("display_.waitForMenu();", function(path.read_text(), "drawHomePending_"))
+                self.assertIn("sample_dt_.update(s.sample_us)", update)
+            self.assertIn("display_.waitForMenu();", function(source, "drawHomePending_"))
             if path.stem in other_sketches:
                 self.assertIn("PollMagEveryFrame{}", tick)
             else:
@@ -168,6 +179,49 @@ int main() {
                             str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
+    def test_estimator_profile_counts_sensor_gaps(self):
+        # A repeated frame after a gap must not count the previous gap twice.
+        cpp = r'''
+#include <cstdint>
+#include "AtomS3R/AtomS3R_Bmi270FrameClock.h"
+#include "AtomS3R/AtomS3R_LoopTiming.h"
+uint32_t host;
+uint32_t micros() { return host; }
+Console Serial;
+int main() {
+    atoms3r_ical::LoopTiming timing;
+    atoms3r_ical::Bmi270FrameClock clock;
+    const uint32_t phases[] = {150,350,50};
+    uint32_t frame = 0;
+    float dt = 0;
+    for (int i=0; i<4000; ++i) {
+        if (i == 1001) frame += 4;
+        else if (i != 1002) ++frame;
+        host = frame*5000 + phases[i%3];
+        const bool accepted = clock.advance(host, i<2000 ? int32_t(frame) : -1, dt);
+        timing.begin();
+        if (i<3000) timing.finish(host, accepted, 5000, dt, clock.usedHostTime(), clock.missedFrames());
+        else timing.finish(host, accepted, 5000, dt, clock.usedHostTime());
+    }
+}
+'''
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "Arduino.h").write_text(
+                "#pragma once\n#include <cstdio>\n#include <cstdint>\nuint32_t micros();\n"
+                "struct Console { decltype(&std::printf) printf = &std::printf; };\nextern Console Serial;\n")
+            source, exe = Path(tmp) / "profile.cpp", Path(tmp) / "profile"
+            source.write_text(cpp)
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17", "-Wall",
+                            "-Wextra", "-Werror", "-DOCEAN_IMU_PROFILE_LOOP=1", "-I", tmp,
+                            "-I", str(ROOT / "src"), str(source), "-o", str(exe)], check=True)
+            output = subprocess.check_output([str(exe)], text=True)
+        self.assertEqual([line for line in output.splitlines() if line.startswith("[ESTIMATOR]")], [
+            "[ESTIMATOR] dt_min_ms=5.000 dt_max_ms=5.000 host_steps=0 missed_sensor_frames=0",
+            "[ESTIMATOR] dt_min_ms=5.000 dt_max_ms=20.000 host_steps=0 missed_sensor_frames=3",
+            "[ESTIMATOR] dt_min_ms=4.700 dt_max_ms=5.200 host_steps=1000 missed_sensor_frames=0",
+            "[ESTIMATOR] dt_min_ms=4.700 dt_max_ms=5.200 host_steps=1000",
+        ])
+
     def test_psram_build_internal_mekf_allocation_and_fallback(self):
         cpp = r'''
 #include <algorithm>
@@ -213,6 +267,24 @@ int main() {
                              "-DARDUINO_ARCH_ESP32", "-DCONFIG_IDF_TARGET_ESP32S3", "-DBOARD_HAS_PSRAM",
                             "-I", tmp, "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
+
+    def test_shared_tfg_serial_recovery(self):
+        here = Path(__file__).resolve().parent
+        sketch = ROOT / "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes"
+        sketch_source = (sketch / f"{sketch.name}.ino").read_text()
+        fixture = (here / "shared_tfg_serial_test.cpp.in").read_text()
+        fixture = fixture.replace("@STREAM_SERIAL@", function(sketch_source, "streamSerial_"))
+        fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch_source, "writeDebugChunk_"))
+        with tempfile.TemporaryDirectory() as tmp:
+            source, exe = Path(tmp) / "serial.cpp", Path(tmp) / "serial"
+            source.write_text(fixture)
+            for nmea, plotter in ((1, 0), (0, 0), (0, 1)):
+                with self.subTest(nmea=nmea, plotter=plotter):
+                    subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                                    "-Wall", "-Wextra", "-Werror", f"-DSEA_STATE_SERIAL_NMEA={nmea}",
+                                    f"-DARDUINO_PLOTTER={plotter}", "-I", str(ROOT / "src"),
+                                    str(source), "-o", str(exe)], check=True)
+                    subprocess.run([str(exe)], check=True)
 
     def test_startup_compass_then_fused_live_output(self):
         for path in SKETCHES:
@@ -494,7 +566,7 @@ int main() {
     const int failed_status = dev.status_reads;
     assert(!read_window() && dev.status_reads == failed_status+1);
 
-    // Exercise the actual clock and shipping reader used by OU2, OU3 and plain TFG.
+    // Exercise the frame clock with the shipping BMI270 reader.
     dev.status_ok = true;
     reader.configure(M5.Imu, true);
     Bmi270FrameClock clock;
@@ -623,6 +695,7 @@ int main() {
             assert(s.sample_us == host_us && s.bmi270_frame == int32_t(i));
             assert(clock.advance(s.sample_us, s.bmi270_frame, dt));
             assert(dt == (i == missing+1 ? .010f : .005f) && !clock.usedHostTime());
+            assert(clock.missedFrames() == (i == missing+1 ? 1u : 0u));
             if (i == 501) {
                 assert(read_raw(host_us+300, i, 0xc0));
                 assert(!clock.advance(s.sample_us, s.bmi270_frame, dt));

@@ -1,0 +1,123 @@
+// Exercise the sketch's streamSerial_() against a finite, nonblocking HWCDC ring.
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+#include "AtomS3R/AtomS3R_OutputTiming.h"
+
+static uint32_t now_ms;
+uint32_t millis() { return now_ms; }
+struct {
+  int room = 4096;
+  bool connected = true;
+  size_t max_write = SIZE_MAX;
+  unsigned writes = 0;
+  std::string partial;
+  std::vector<std::string> packets;
+  explicit operator bool() const { return connected; }
+  int availableForWrite() const { return room; }
+  size_t write(const uint8_t* p, size_t len) {
+    assert(connected && static_cast<int>(len) <= room);
+    len = std::min(len, max_write);
+    room -= static_cast<int>(len);
+    ++writes;
+    partial.append(reinterpret_cast<const char*>(p), len);
+    if (partial.back() == '\n') {
+      assert(partial.find('\n') == partial.size() - 1);
+      packets.push_back(partial);
+      partial.clear();
+    }
+    return len;
+  }
+  template<class... Args> void printf(const char* fmt, Args... args) {
+    char line[1024];
+    const int len = snprintf(line, sizeof(line), fmt, args...);
+    assert(len > 0 && static_cast<size_t>(len) < sizeof(line));
+    write(reinterpret_cast<const uint8_t*>(line), static_cast<size_t>(len));
+  }
+} Serial;
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
+#define SEA_STATE_NMEA_TALKER "II"
+
+struct Publisher {
+  struct { bool isLive() const { return true; } bool hasMagNorthLock() const { return true; } } fusion_;
+  struct { bool learning() const { return true; } } gyro_bias_;
+  struct { float dpm() const { return -8; } } rot_;
+  struct { float imuHz() const { return 200; } float magHz() const { return 25; } } rates_;
+  struct Vec { float x() const { return 1; } float y() const { return 2; } float z() const { return 3; } };
+  Vec a_cal_, w_cal_, m_cal_;
+  atoms3r_ical::MarineNmeaBatch nmea_batch_;
+  wave_direction::WaveDirectionReport wave_ = wave_direction::WaveDirectionReport::from(48.3f, BACKWARD, true);
+  uint32_t last_serial_ms_ = 0, last_temp_nmea_ms_ = 0, last_wave_nmea_ms_ = 0, last_status_nmea_ms_ = 0;
+  bool acc_bias_estimating_ = true, heading_valid_ = true, heading_fused_ = true, heading_mag_ok_ = true;
+  bool mag_ok_ = true, mag_fresh_ = true;
+  float pitch_deg_ = -1, roll_deg_ = 2, heading_deg_ = 37, heading_mag_deg_ = 38, dt_ = 0.005f;
+  float heave_wave_clean_m_ = 0.5f, heave_speed_mps_ = 1, imu_temp_c_ = 26, mag_norm_uT_ = 50;
+  float heave_raw_m_ = 0.6f, wave_envelope_m_ = 1, acc_bias_norm_mps2_ = 0.1f, acc_bias_z_mps2_ = 0.1f;
+  void refreshOutput_() {}
+  char debug_line_[1024]{};
+  size_t debug_sent_ = 0, debug_size_ = 0;
+  @WRITE_DEBUG_CHUNK@
+  @STREAM_SERIAL@
+};
+
+void checkRecovery(int capacity, size_t max_write) {
+  Serial.packets.clear();
+  Serial.partial.clear();
+  Serial.max_write = max_write;
+  Publisher publisher;
+  now_ms = UINT32_MAX - 2500;
+  for (unsigned slot = 0; slot < 5000; ++slot, now_ms += 5) {
+    // Run the first and last sections at line rate. Pause the host for 10 s,
+    // reopen the serial port, and check that publication resumes every time.
+    if (slot == 2500 || slot == 4000) {
+      publisher.heading_deg_ = slot == 2500 ? 123 : 246;
+      publisher.heave_raw_m_ = slot == 2500 ? 1.23f : 2.46f;
+    }
+    Serial.connected = slot < 3500 || slot >= 4000;
+    if (slot < 500 || (slot >= 2500 && slot < 3500) || slot >= 4000) Serial.room = capacity;
+    if (slot == 2500 || slot == 4000) Serial.packets.clear();
+    const auto before = Serial.packets.size();
+    const auto writes = Serial.writes;
+    publisher.streamSerial_();
+    assert(Serial.writes - writes <= (SEA_STATE_SERIAL_NMEA ? 2u : 1u));
+    if (slot == 500) Serial.packets.clear();
+    if (slot >= 1500 && slot < 2500) assert(Serial.packets.size() == before);
+    if (slot == 2499) assert(Serial.room < (SEA_STATE_SERIAL_NMEA ? 202 : 1));
+    // Both a freed TX ring and a reopened port must produce a fresh report
+    // within one output interval plus the time needed to drain the line.
+    if (slot == 2530 || slot == 4030) {
+      const char* marker = SEA_STATE_SERIAL_NMEA
+          ? (slot == 2530 ? "$IIHDM,123.0,M" : "$IIHDM,246.0,M")
+          : ARDUINO_PLOTTER ? (slot == 2530 ? "HrawCm:+123.000" : "HrawCm:+246.000")
+                            : (slot == 2530 ? "hdg=123.00" : "hdg=246.00");
+      bool found = false;
+      for (const auto& line : Serial.packets) found |= line.find(marker) == 0;
+      assert(found);
+    }
+    if (slot == 3499 || slot == 4999) {
+      assert(Serial.packets.size() >= 40);
+      for (const std::string& line : Serial.packets) {
+        assert(line.back() == '\n');
+        if (SEA_STATE_SERIAL_NMEA) {
+          assert(line.front() == '$' && line.substr(line.size() - 2) == "\r\n");
+          assert(line[line.size() - 5] == '*');
+          char expected[3];
+          snprintf(expected, sizeof(expected), "%02X", nmea0183_checksum(line.c_str()));
+          assert(line.compare(line.size() - 4, 2, expected) == 0);
+        }
+      }
+    }
+    if (!Serial.connected) assert(before == Serial.packets.size());
+  }
+}
+
+int main() {
+  checkRecovery(4096, SIZE_MAX);
+  // The release core falls back to 256 bytes when the requested ring can't
+  // be allocated. Debug lines may also have to resume after short writes.
+  checkRecovery(256, SEA_STATE_SERIAL_NMEA ? SIZE_MAX : 64);
+}

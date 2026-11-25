@@ -75,7 +75,7 @@
 #endif
 #include "AtomS3R/AtomS3R_MarineCompassDisplay.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 
 #ifndef SEA_STATE_UI_DEFAULT_GRAPHICS
   #define SEA_STATE_UI_DEFAULT_GRAPHICS 1
@@ -112,6 +112,7 @@ constexpr float FREQ_GUESS = 0.3f;
 // ACC_NOISE_FLOOR_SIGMA_DEFAULT), which this sketch carries over unchanged.
 #include "kalman_common/SeaStateFamilyDefaults.h"
 #include "util/AngleUtils.h"
+#include "AtomS3R/AtomS3R_Bmi270FrameClock.h"
 #include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "util/ImuLoopHelpers.h"
 #include "util/MagneticHeading.h"
@@ -236,6 +237,30 @@ public:
     const uint32_t loop_start_cycles = esp_cpu_get_cycle_count();
 #endif
 
+    ImuSample sample{};
+    const uint32_t sample_us = micros();
+    uint32_t poll_ms;
+    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms,
+                                                 AtomS3RNavigationImu::kReadyWindowUs) &&
+                            sample_dt_.advance(sample.sample_us, sample.bmi270_frame, dt_);
+
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t read_done = micros();
+#endif
+    if (got_sample) {
+      pacer_.followReadyPoll(sample_us, sample.sample_us);
+      stale_frame_count_ = 0;
+      updateFilter_(sample, poll_ms);
+    } else {
+      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
+      if ((stale_frame_count_ % 50u) == 0u) {
+        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
+      }
+    }
+
+#if OCEAN_IMU_PROFILE_LOOP
+    const uint32_t filter_done = micros();
+#endif
 #if SEA_STATE_ENABLE_WIZARD
     Input::pollButton();
 
@@ -252,29 +277,8 @@ public:
       tap_count_ = 0;
       tap_deadline_ms_ = 0;
       drawHomeStatic_();
+      return;  // The wizard reset the estimator and timing window after this sample.
     }
-#endif
-
-    ImuSample sample{};
-    const uint32_t sample_us = micros();
-    uint32_t poll_ms;
-    const bool got_sample = navigation_imu_.read(M5.Imu, sample_us, sample, temperature_, mag_gate_, poll_ms);
-
-#if OCEAN_IMU_PROFILE_LOOP
-    const uint32_t read_done = micros();
-#endif
-    if (got_sample) {
-      stale_frame_count_ = 0;
-      updateFilter_(sample, poll_ms);
-    } else {
-      if (stale_frame_count_ < 0xFFFFu) stale_frame_count_++;
-      if ((stale_frame_count_ % 50u) == 0u) {
-        Serial.printf("[IMU] waiting: stale=%u\n", static_cast<unsigned>(stale_frame_count_));
-      }
-    }
-
-#if OCEAN_IMU_PROFILE_LOOP
-    const uint32_t filter_done = micros();
 #endif
     streamSerial_();
     updateUI_();
@@ -311,9 +315,15 @@ private:
 
   uint32_t last_ui_ms_          = 0;
   uint32_t last_serial_ms_      = 0;
+#if SEA_STATE_SERIAL_NMEA
+  atoms3r_ical::MarineNmeaBatch nmea_batch_{};
   uint32_t last_wave_nmea_ms_   = 0;
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_   = 0;
+#else
+  char debug_line_[1024]{};
+  size_t debug_sent_ = 0, debug_size_ = 0;
+#endif
 
   Fusion fusion_{};
   bool output_dirty_ = false, have_output_ = false;
@@ -330,6 +340,8 @@ private:
     uint32_t overruns = 0, gaps = 0, long_gaps = 0;
     uint32_t min_gap_us = UINT32_MAX, max_gap_us = 0;
     uint64_t gap_sum_us = 0, absolute_jitter_us = 0;
+    float min_dt_s = 0, max_dt_s = 0;
+    uint32_t host_steps = 0, missed_sensor_frames = 0;
   } timing_;
   uint32_t previous_sample_us_ = 0;
   bool have_timing_sample_ = false;
@@ -369,6 +381,9 @@ private:
                   unsigned(timing_.over_4500_us), unsigned(timing_.mag_samples), unsigned(timing_.mag_max_us),
                   unsigned(display_.completedFrames()), unsigned(display_.stackFreeMinBytes()),
                   unsigned(esp_ptr_internal(&fusion_.raw().mekf())));
+    Serial.printf("[ESTIMATOR] dt_min_ms=%.3f dt_max_ms=%.3f host_steps=%u missed_sensor_frames=%u\n",
+                  1000.0 * timing_.min_dt_s, 1000.0 * timing_.max_dt_s, unsigned(timing_.host_steps),
+                  unsigned(timing_.missed_sensor_frames));
     timing_ = {};
   }
 #endif
@@ -408,7 +423,7 @@ private:
   bool  heading_mag_ok_  = false;
 
   uint16_t stale_frame_count_ = 0;
-  ins::SampleDtTracker sample_dt_{1.0f / LOOP_HZ};
+  Bmi270FrameClock sample_dt_{};
   ins::SampleRateMeter rates_{};
 
   ImuSpikeFilter imu_spike_{};
@@ -469,7 +484,9 @@ private:
       while (true) delay(100);
     }
 
-    navigation_imu_.configure(M5.Imu);
+    navigation_imu_.configure(M5.Imu, true);
+    Serial.printf("[IMU] estimator clock: %s\n",
+                  navigation_imu_.frameClockEnabled() ? "BMI270 200 Hz" : "host micros");
     temperature_ = {};
     mag_gate_.reset();
     rates_.reset(millis());
@@ -482,6 +499,11 @@ private:
   }
 
   void resetFusion_() {
+#if SEA_STATE_SERIAL_NMEA
+    nmea_batch_.reset();
+#else
+    debug_sent_ = debug_size_ = 0;
+#endif
     output_dirty_ = false;
     have_output_ = false;
     constexpr float IMU_TUNE_REF_HZ = 200.0f;
@@ -677,7 +699,6 @@ private:
   }
 
   void updateFilter_(const ImuSample& s, uint32_t poll_ms) {
-    dt_ = sample_dt_.update(s.sample_us);
     const float tempC = s.tempC;
     imu_temp_c_ = tempC;
     rates_.countImu();
@@ -698,6 +719,10 @@ private:
     if (mag_fresh_) rates_.countMag();
 
 #if OCEAN_IMU_PROFILE_LOOP
+    if (timing_.samples == 0 || dt_ < timing_.min_dt_s) timing_.min_dt_s = dt_;
+    timing_.max_dt_s = std::max(timing_.max_dt_s, dt_);
+    timing_.host_steps += sample_dt_.usedHostTime();
+    timing_.missed_sensor_frames += sample_dt_.missedFrames();
     if (have_timing_sample_) {
       const uint32_t gap = s.sample_us - previous_sample_us_;
       ++timing_.gaps;
@@ -824,13 +849,45 @@ private:
                       heading_mag_ok_, mag_ok_, mag_fresh_});
   }
 
+#if !SEA_STATE_SERIAL_NMEA
+  void writeDebugChunk_(int room) {
+    const size_t count = std::min(static_cast<size_t>(room), debug_size_ - debug_sent_);
+    if (count) {
+      debug_sent_ += Serial.write(reinterpret_cast<const uint8_t*>(debug_line_) + debug_sent_, count);
+    }
+  }
+#endif
+
   void streamSerial_() {
     const uint32_t now_ms = millis();
 
 #if SEA_STATE_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
+    if (!nmea_batch_.pending() && now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
 #else
-    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
+    const bool pending = debug_sent_ < debug_size_;
+    if (!pending && now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
+#endif
+    // HWCDC's connection check also wakes the TX interrupt on reconnect.
+    if (!Serial) {
+#if SEA_STATE_SERIAL_NMEA
+      nmea_batch_.reset();
+#else
+      debug_sent_ = debug_size_ = 0;
+#endif
+      last_serial_ms_ = now_ms;
+      return;
+    }
+    const int room = Serial.availableForWrite();
+#if SEA_STATE_SERIAL_NMEA
+    // Two complete records fit in 202 bytes, including checksum and CRLF.
+    // HWCDC's fallback TX ring is 256 bytes if the requested 4 KiB is unavailable.
+    if (room < 2 * 101 || nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
+#else
+    if (room <= 0) return;
+    if (pending) {
+      writeDebugChunk_(room);
+      return;
+    }
 #endif
     last_serial_ms_ = now_ms;
     refreshOutput_();
@@ -840,40 +897,26 @@ private:
     if (heading_valid_) {
       nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
     }
-    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_); // startup proxy attitude until Live
-    nmea_xdr_heave(SEA_STATE_NMEA_TALKER, heave_wave_clean_m_);
-    nmea_xdr_heave_speed(SEA_STATE_NMEA_TALKER, heave_speed_mps_);
+    nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), valid);
+    nmea_batch_.addTilt(pitch_deg_, roll_deg_);
 
     if (now_ms - last_wave_nmea_ms_ >= atoms3r_timing::NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
-      nmea_xdr_wave_axis_rel(SEA_STATE_NMEA_TALKER, wave_.axis_deg, wave_.axis_ok);
-      nmea_xdr_wave_direction_rel(SEA_STATE_NMEA_TALKER, wave_.dir_deg, wave_.dir_ok);
-      nmea_txt_wave_direction_sign(SEA_STATE_NMEA_TALKER, wave_.sign_raw, wave_.sign_polarity, wave_.sign_ok);
-      nmea_txt_wave_direction_confidence(SEA_STATE_NMEA_TALKER, wave_.conf_pct, fusion_.isLive());
+      nmea_batch_.addWave(wave_, fusion_.isLive());
     }
-
     if (now_ms - last_temp_nmea_ms_ >= atoms3r_timing::NMEA_TEMP_MS) {
       last_temp_nmea_ms_ = now_ms;
-      nmea_xdr_imu_temp(SEA_STATE_NMEA_TALKER, imu_temp_c_);
+      nmea_batch_.addTemperature(imu_temp_c_);
     }
-
     if (now_ms - last_status_nmea_ms_ >= atoms3r_timing::NMEA_STATUS_MS) {
       last_status_nmea_ms_ = now_ms;
-      nmea_txt_ins_status(SEA_STATE_NMEA_TALKER,
-                          valid,
-                          fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
-                          fusion_.hasMagNorthLock(),
-                          gyro_bias_.learning(),
-                          acc_bias_estimating_,
-                          rates_.imuHz(),
-                          rates_.magHz());
+      nmea_batch_.addStatus({fusion_.isLive() && std::isfinite(heave_wave_clean_m_),
+                             fusion_.hasMagNorthLock(), gyro_bias_.learning(), acc_bias_estimating_,
+                             rates_.imuHz(), rates_.magHz()});
     }
-
-    //nmea_xdr_freq(SEA_STATE_NMEA_TALKER, wave_hz_);
-    nmea_rot(SEA_STATE_NMEA_TALKER, rot_.dpm(), valid);
 #else
   #if ARDUINO_PLOTTER
-    Serial.printf(
+    const int length = snprintf(debug_line_, sizeof(debug_line_),
       "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\tWavAxisDeg:%+.2f\tWavDirDeg:%+.2f\tWavSign:%d\tAccBiasNormCmS2:%+.3f\tAccBiasZCmS2:%+.3f\n",
       static_cast<double>(heave_raw_m_ * 100.0f),
       static_cast<double>(wave_envelope_m_ * 100.0f),
@@ -884,7 +927,7 @@ private:
       static_cast<double>(acc_bias_norm_mps2_ * 100.0f),
       static_cast<double>(acc_bias_z_mps2_ * 100.0f));
   #else
-    Serial.printf(
+    const int length = snprintf(debug_line_, sizeof(debug_line_),
       "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
       " | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
@@ -913,6 +956,10 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
   #endif
+    debug_sent_ = 0;
+    debug_size_ = length > 0 && static_cast<size_t>(length) < sizeof(debug_line_)
+                    ? static_cast<size_t>(length) : 0;
+    writeDebugChunk_(room);
 #endif
   }
 };

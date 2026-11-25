@@ -220,6 +220,33 @@ void test_update_covariance_uses_full_reset() {
           "test correction is too small to distinguish a real reset from Joseph-only covariance");
 }
 
+void test_protected_integral_joseph_with_additive_biases() {
+    L1 f;
+    configure(f);
+    f.set_integral_velocity_weight(T(0.4), true, true);
+    const MatrixNX P0 = seed_covariance(T(0.008));
+    f.covariance_full() = P0;
+    Vector3 r;
+    Eigen::Matrix<T,3,NX> H;
+    Matrix3 R;
+    f.integral_residual(r, H, R);
+    const Eigen::Matrix<T,NX,3> PHt = P0 * H.transpose();
+    const Matrix3 S = H * PHt + R;
+    Eigen::Matrix<T,NX,3> K = PHt * S.inverse();
+    // The protected attitude and gyro-bias rows use only horizontal observations.
+    K.template topRows<6>().setZero();
+    K.template block<6,2>(0,0) = PHt.template block<6,2>(0,0) *
+                                  S.template topLeftCorner<2,2>().inverse();
+    const MatrixNX A = MatrixNX::Identity() - K * H;
+    const MatrixNX Pj = A * P0 * A.transpose() + K * R * K.transpose();
+    MatrixNX J;
+    f.build_reset_jacobian(K * r, J);
+    const MatrixNX expected = J * Pj * J.transpose();
+    check(f.applyIntegralZeroPseudoMeas(), "protected integral observation was rejected");
+    check((f.covariance_full() - expected).cwiseAbs().maxCoeff() < T(1e-12),
+          "protected integral/full Joseph covariance differs for additive biases");
+}
+
 // ---------------------------------------------------------------------------
 // Accelerometer-bias OU parity with current OU-III.
 // ---------------------------------------------------------------------------
@@ -381,6 +408,7 @@ int main() {
     test_levels_remain_equivalent_under_propagation();
     test_reset_jacobian_against_definition();
     test_update_covariance_uses_full_reset();
+    test_protected_integral_joseph_with_additive_biases();
     test_accel_bias_ou_mean_and_covariance();
     test_gyro_bias_process_noise_against_high_rate_oracle();
     test_world_yaw_gauge_rotates_state_and_covariance();

@@ -88,6 +88,7 @@ vertical_accel_drift_*.csv
 # Compiled test executables (extensionless, so not covered by the rules above)
 tests/*/*-sim
 tests/*/*-test
+tests/kalman_tfg/tfg_update_bench
 tests/freq/freq-track
 tests/imu_calibrate/accel_cal-replay
 tests/pii_observer/pii_observer-adaptive

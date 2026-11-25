@@ -5,8 +5,7 @@
 
 namespace atoms3r_ical {
 
-// Heading and tilt are sent at the publication deadline. Hold the remaining
-// values from that same sample so later IMU ticks can send them in wire order.
+// Hold publication-time values while later IMU ticks send them in wire order.
 class MarineNmeaBatch {
  public:
   struct Status {
@@ -21,6 +20,13 @@ class MarineNmeaBatch {
     valid_ = valid;
     phase_ = Phase::Heave;
     wave_due_ = temp_due_ = status_due_ = false;
+  }
+
+  // Defer the two tilt sentences when the transport needs smaller bursts.
+  void addTilt(float pitch_deg, float roll_deg) {
+    pitch_deg_ = pitch_deg;
+    roll_deg_ = roll_deg;
+    phase_ = Phase::Tilt;
   }
 
   void addWave(const wave_direction::WaveDirectionReport& wave, bool live) {
@@ -39,6 +45,7 @@ class MarineNmeaBatch {
     status_due_ = true;
   }
 
+  bool pending() const { return phase_ != Phase::Idle; }
   void reset() { phase_ = Phase::Idle; }
 
   // Called once per sampling slot. Send at most two sentences per call.
@@ -46,6 +53,10 @@ class MarineNmeaBatch {
     switch (phase_) {
       case Phase::Idle:
         return false;
+      case Phase::Tilt:
+        nmea_xdr_pitch_roll(talker, pitch_deg_, roll_deg_);
+        phase_ = Phase::Heave;
+        break;
       case Phase::Heave:
         nmea_xdr_heave(talker, heave_m_);
         nmea_xdr_heave_speed(talker, speed_mps_);
@@ -79,12 +90,13 @@ class MarineNmeaBatch {
   }
 
  private:
-  enum class Phase { Idle, Heave, WaveAngles, WaveQuality, TemperatureAndStatus, Turn };
+  enum class Phase { Idle, Tilt, Heave, WaveAngles, WaveQuality, TemperatureAndStatus, Turn };
   Phase afterWave() const {
     return temp_due_ || status_due_ ? Phase::TemperatureAndStatus : Phase::Turn;
   }
 
   Phase phase_ = Phase::Idle;
+  float pitch_deg_ = 0, roll_deg_ = 0;
   float heave_m_ = 0, speed_mps_ = 0, rot_dpm_ = 0, temp_c_ = NAN;
   bool valid_ = false, live_ = false;
   bool wave_due_ = false, temp_due_ = false, status_due_ = false;

@@ -11,9 +11,12 @@ class Bmi270FrameClock {
   void reset() {
     started_ = false;
     used_host_time_ = false;
+    missed_frames_ = 0;
   }
 
   bool usedHostTime() const { return used_host_time_; }
+  // Number of skipped sensor slots in the last accepted, verified frame delta.
+  uint32_t missedFrames() const { return missed_frames_; }
 
   bool advance(uint32_t poll_us, int32_t frame, float& dt) {
     constexpr uint32_t period_us = 5000;
@@ -21,6 +24,7 @@ class Bmi270FrameClock {
     const uint32_t elapsed = poll_us - last_poll_us_;
     bool use_host = started_ && elapsed != 0;
     uint32_t step_us = use_host ? elapsed : period_us;
+    uint32_t missed = 0;
     if (started_ && frame >= 0 && last_frame_ >= 0 &&
         elapsed < frame_modulus * period_us / 2) {
       const uint32_t frames = uint32_t(frame - last_frame_) & (frame_modulus - 1);
@@ -32,10 +36,12 @@ class Bmi270FrameClock {
       if (difference <= period_us + elapsed / 8) {
         step_us = sensor_us;
         use_host = false;
+        missed = frames - 1;
       }
     }
     started_ = true;
     used_host_time_ = use_host;
+    missed_frames_ = missed;
     last_poll_us_ = poll_us;
     last_frame_ = frame;
     dt = float(step_us) * 1.0e-6f;
@@ -47,6 +53,7 @@ class Bmi270FrameClock {
   bool used_host_time_ = false;
   int32_t last_frame_ = -1;
   uint32_t last_poll_us_ = 0;
+  uint32_t missed_frames_ = 0;
 };
 
 }  // namespace atoms3r_ical

@@ -258,7 +258,7 @@ This uploads the **separate release images**, not the merged `_firmware.bin`.
 It does not compile source. The Arduino ESP32 core supplies its own upload tool
 and `boot_app0.bin`, so Arduino IDE, ESP-IDF, and sketch libraries are unnecessary.
 
-For archives produced by the current workflow, install **`esp32:esp32@3.3.7`**
+For archives produced by the current workflow, install **`esp32:esp32@3.3.11`**
 and use exactly this board configuration:
 
 ```text
@@ -303,7 +303,7 @@ URL avoids changing an existing Arduino configuration:
 
 ```text
 arduino-cli core update-index --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-arduino-cli core install esp32:esp32@3.3.7 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+arduino-cli core install esp32:esp32@3.3.11 --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 arduino-cli core list
 arduino-cli board list
 ```
@@ -335,7 +335,7 @@ arduino-cli upload --fqbn 'esp32:esp32:m5stack_atoms3:CDCOnBoot=cdc,USBMode=hwcd
 
 `--input-file` identifies the application and its companion files unambiguously;
 do not point it at `_firmware.bin` (Arduino's application offset is `0x10000`,
-not `0x0`). The [ESP32 upload recipe](https://github.com/espressif/arduino-esp32/blob/3.3.7/platform.txt)
+not `0x0`). The [ESP32 upload recipe](https://github.com/espressif/arduino-esp32/blob/3.3.11/platform.txt)
 writes bootloader, partition table, `boot_app0.bin`, and application separately.
 With an unchanged partition layout and no full erase, this avoids overwriting
 the NVS gap as the merged raw image does. It is not a guarantee of calibration

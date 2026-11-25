@@ -53,7 +53,7 @@
     },
     {
       "path": "src/AtomS3R/AtomS3R_Bmi270FrameClock.h",
-      "git_blob_sha": "76675a018855689b03a0c3e23e8feb5c6e1448df"
+      "git_blob_sha": "79a7873abb6e176138ab0c8919f7903405a25a80"
     },
     {
       "path": "src/AtomS3R/AtomS3R_ImuCal.h",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "1aba3b4293a8f100862971f7aefabe48ef7f4979"
+      "git_blob_sha": "cb418cf333d866d946367e7ad18a2d0815551d95"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -907,7 +907,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "7cc17dd3a4b08837eaffe6d7f2b9231219bdf69f"
+      "git_blob_sha": "52adf4e356f4938ca7abbdb54b6e42b07b9536e0"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
