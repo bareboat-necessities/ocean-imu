@@ -1,6 +1,6 @@
 {
   "algorithm": "sha256-framed-v1",
-  "replay_fingerprint": "2ff065a2dac3029053059ab1e891257bc611cea0981fbc2ab1b5e19fd2c91475",
+  "replay_fingerprint": "17bdc17926da644add57275d06cd8e9a2cd270c36354b28530a72e129a43f506",
   "results_file_count": 1919,
   "results_files": [
     {
@@ -2916,7 +2916,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "sha256": "be83af1e9050a79aa9b2f8533fea8819b1b17935da92d73870be5beba506c58a"
+      "sha256": "be25fe8a8c346e6ae35e1f7dea27038593c9ca3626c5cfeaf1e722ad73ecbd7c"
     },
     {
       "kind": "file",
@@ -2971,7 +2971,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou3_stability/provenance.json",
-      "sha256": "5560fc507cfae4abbea1df6eff772d1fcf895646dc01addbddb4f93fec4b8857"
+      "sha256": "023920eee76f33bd2d8ff0ae7bfe91ecbcf91d6d34e333f7f5a1bb743055549a"
     },
     {
       "kind": "file",
@@ -3081,7 +3081,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_robustness/ou_robustness_manifest.json",
-      "sha256": "675c4085b85880b3dbd6a9669a3c8e2a1cbcd66026a76695842babeb46cf6f64"
+      "sha256": "75d191ac19d7bbe45f12988a454c10d4ac48e585d6a0b66d0cd645685b0e48a4"
     },
     {
       "kind": "file",
@@ -3176,7 +3176,7 @@
     {
       "kind": "file",
       "path": "reports/results/ou_validation/ou_validation_manifest.json",
-      "sha256": "ff8664a824bd21aa5678884fca933abb2f4f7c0192a74afbf43576fc868ae05c"
+      "sha256": "2e3f685d30cc286676f1d4ce7c9caebd2d6910030027bb955ee47ffa33bff205"
     },
     {
       "kind": "file",
@@ -9599,13 +9599,13 @@
       "sha256": "5c7c35b56a388cafdba0ac0ca2b0664383a6fdf44817e1929f53fd9ae2747258"
     }
   ],
-  "results_fingerprint": "f94f846274ae5d8d18b0a9b4ab7cb3222f7abc742d4093292ebba92329b26a51",
+  "results_fingerprint": "b2d0b92f240dcb4dd0be5cc826acdbad217684e06c9a0e46f50930112a379506",
   "schema_version": 3,
   "simulation_data": {
     "file": "sim-data-files-vessel-rao-28ft-5kn.zip",
     "sha256": "95f7af50842aec50d6f1f023f8453d7a5cf1e71414c89ad59c9de13a3e63a940"
   },
-  "tracked_replay_file_count": 1123,
+  "tracked_replay_file_count": 1126,
   "tracked_replay_files": [
     {
       "mode": "100644",
@@ -10020,7 +10020,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
-      "sha256": "e55d3606f45447aef3e2c9e07d94a76f0b0001dcbe0918e6330ecc9768ea1680"
+      "sha256": "6ac3796273affacb52297b0c2b43bfdd89973ef565138c230d94d83383da792f"
     },
     {
       "mode": "100644",
@@ -10030,7 +10030,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/atomS3R_ins_carma_shared_modes.ino",
-      "sha256": "434cb45e517fc3d4190d14228e6d4b9e7d5527c7da6498c9de333bbe75b0f2e9"
+      "sha256": "aa46067ea4f4f689f6b8ce142749dc9b888e18e24daffac323430dcdc4c375f4"
     },
     {
       "mode": "100644",
@@ -10040,7 +10040,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-      "sha256": "f8287c0633a10e07992c09d2cbc30a4a4df85663f78f973cf05d9ecbe14d5ff9"
+      "sha256": "0b338981ca9b9128f89faeee49af4797463c7d1f8a0171f86f594bc47f96c966"
     },
     {
       "mode": "100644",
@@ -10050,7 +10050,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "sha256": "fc9d2eb8c3de11e29c92e345d650d4012479c858452fd502c90a8fb147ccf146"
+      "sha256": "43f4c43c5fa40a4a0fb1b322be9d8daaefac5dead21612dbd5218860e225d794"
     },
     {
       "mode": "100644",
@@ -10060,7 +10060,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-      "sha256": "ff847c2a2eda041050dd1af9275531f5dd8da61c2dfd23ada599d8c08cb8eeb8"
+      "sha256": "5c85abbbd914f1a1f2ef535e0936469a49df7eb42df46cb73c89eaf5ab397b86"
     },
     {
       "mode": "100644",
@@ -10070,7 +10070,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
-      "sha256": "beef75ddec4ec20d3884dc5a2a9ec9c3407a36236b72ab4f370d17b0407a74b9"
+      "sha256": "d4f141d64b1e3f7877d68b23b0b8d9824b9b8b64fa1170422b0ef59e5d29e9e1"
     },
     {
       "mode": "100644",
@@ -10080,7 +10080,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-      "sha256": "c036df8485a7f0686f357dc3c2b7e98ee4e806ace947e289bada7b62dddd0625"
+      "sha256": "8f67770c8e579a21eaff1365353cae4b45c71c6eae173fe693acd037067c19d5"
     },
     {
       "mode": "100644",
@@ -10090,7 +10090,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-      "sha256": "cfd89abd59930e5dde4df35f04049ea9516d1716b6f88ced17be9d3909eb41f0"
+      "sha256": "fb2c8c46e3020420cbd34f7f2a9eede201cbef899cb41c04f15f8e503aa24b57"
     },
     {
       "mode": "100644",
@@ -10100,7 +10100,7 @@
     {
       "mode": "100644",
       "path": "sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/atomS3R_ins_tfg_carma_shared_modes.ino",
-      "sha256": "5b169a9194878332ba2fb092f5171eaf89e9309d98a480b848316a52a1a11fc7"
+      "sha256": "55869fd36de3c772576a57c32aa0a054e1315692688dee1bd640a18f782d2fe9"
     },
     {
       "mode": "100644",
@@ -10110,12 +10110,12 @@
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino",
-      "sha256": "acd5b6cc443e6472a99c5909d720b3d730cc049561eb3fdf1f80a3589032c652"
+      "sha256": "44d9b43a26955abbc657057cfd42f8b5ea2a2ae6aed57f8d6cfea8602ce2408e"
     },
     {
       "mode": "100644",
       "path": "sensors/imu_basic/atomS3R_mag_diagnostics/atomS3R_mag_diagnostics.ino",
-      "sha256": "9f25c55a4847c1669dc6c03574ccff116cd1d00fdd6232e68c7fa9b8a6632f80"
+      "sha256": "6c845b2175d158fba1b24a222418d90a2587eead77458a6426050ae24c9123d1"
     },
     {
       "mode": "100644",
@@ -10155,12 +10155,17 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassAppBase.h",
-      "sha256": "ae30b3e4ad807fa7fe945a6fee3834b7ad666c34d1dfb50bc1e167eeba320b6b"
+      "sha256": "d5b43877280e5eb0ce5fd246d4610683d1424ca6ef95a0383d53808d77298091"
     },
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_CompassUI.h",
       "sha256": "a7eaf869513d6778db521055d308c9d1e217f76bad8c0697df4abf3f31327121"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_DiagnosticSerial.h",
+      "sha256": "6219d546f1e17802aa49288131924169abbf391538de99c4ed91a0046b8c129b"
     },
     {
       "mode": "100644",
@@ -10190,7 +10195,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_ImuCommon.h",
-      "sha256": "1d822f5311fe7091ca840df5ec958d437ec3524d5b93ba808b6b6d9926d02097"
+      "sha256": "d64f6cc265b3e1bdbc4b74127f90ee940b70ad85b1a4c6ddd2fc51d60560fbef"
     },
     {
       "mode": "100644",
@@ -10230,7 +10235,7 @@
     {
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_MarineNmeaBatch.h",
-      "sha256": "a6c64ede731054acab75da6279b6beae9b6840e3943f0d5aa9f6d2aaa4cbac94"
+      "sha256": "3f6fff599ce9d323ba4e957340d520590c4f33780bf7cfab70fedefb1b20b607"
     },
     {
       "mode": "100644",
@@ -10241,6 +10246,11 @@
       "mode": "100644",
       "path": "src/AtomS3R/AtomS3R_SamplePacer.h",
       "sha256": "327c3807ac55046483a65bc8d0afecdfc59d50cda8fe5c8d0e18755cf06683c2"
+    },
+    {
+      "mode": "100644",
+      "path": "src/AtomS3R/AtomS3R_SerialBuffer.h",
+      "sha256": "3676e8e5ef683da550b584c2092f7e370175f32a04e07d4400d1894efa0a6c01"
     },
     {
       "mode": "100644",
@@ -10670,7 +10680,7 @@
     {
       "mode": "100644",
       "path": "src/nmea/NmeaCompass.h",
-      "sha256": "01e33afa271a4c0ec15183a0175357ad37b0e522cefabef15e312929b2178a2e"
+      "sha256": "9fc10f63fcb0b1bb1f988c695b6a5cf56a6e774f9d28c88810a957b2089c0e51"
     },
     {
       "mode": "100644",
@@ -12234,6 +12244,11 @@
     },
     {
       "mode": "100644",
+      "path": "tests/validation/diagnostic_serial_test.cpp.in",
+      "sha256": "6d564ebd1dbea652d9083fb1a77581a69bd60d5461856cc16dddd52eb73b9d10"
+    },
+    {
+      "mode": "100644",
       "path": "tests/validation/nmea_output_test.cpp",
       "sha256": "d51e255cbe05b2df007f5378b347b4c24fdd519f3ff4c10db42d1a288f8b2767"
     },
@@ -12245,7 +12260,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/shared_tfg_serial_test.cpp.in",
-      "sha256": "013d715187b2468680e8b492b6a0cfb62e4479303fdf89b334032982e0613299"
+      "sha256": "5e872156b3ffed3aa6e8620b9baf02ad8926ff510d4bb99907cce37c5eea6888"
     },
     {
       "mode": "100644",
@@ -12305,7 +12320,7 @@
     {
       "mode": "100644",
       "path": "tests/validation/test_device_compass_startup.py",
-      "sha256": "052c3e67c64cdc710ca3fa77c55238e709958ad9ef5182cb7e2e5fb07cba377a"
+      "sha256": "63ee7e8a30b3fdabd518dceee2d5f6a47fdedc1ef1f6195740aa203d31ef3525"
     },
     {
       "mode": "100644",
