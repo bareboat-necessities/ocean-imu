@@ -15,7 +15,7 @@ struct Print {
     assert(n >= 0 && static_cast<size_t>(n) < sizeof(line));
     return write(reinterpret_cast<const uint8_t*>(line), n);
   }
-  size_t println() { return printf("\r\n"); }
+  size_t println() { return printf("%s", "\r\n"); }
 };
 
 struct : Print {
