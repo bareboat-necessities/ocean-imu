@@ -284,9 +284,10 @@ int main() {
             (includes / "freertos").mkdir()
             (includes / "freertos/ringbuf.h").touch()
             exe = includes / "diagnostic_serial"
-            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17", "-Wall", "-Wextra", "-Werror",
-                            "-I", tmp, "-I", str(ROOT / "src"), str(Path(__file__).with_name("diagnostic_serial_test.cpp")),
-                            "-o", str(exe)], check=True)
+            fixture = Path(__file__).with_name("diagnostic_serial_test.cpp.in")
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
+                            "-Wall", "-Wextra", "-Wpedantic", "-Werror", "-I", tmp, "-I", str(ROOT / "src"),
+                            "-x", "c++", str(fixture), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
     def test_serial_recovery(self):
