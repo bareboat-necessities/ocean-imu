@@ -39,6 +39,7 @@
 #include <M5Unified.h>
 #include <ArduinoOceanImu.h>
 
+#include "AtomS3R/AtomS3R_DiagnosticSerial.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_M5Ui.h"
 #include "AtomS3R/AtomS3R_MagDiagnostics.h"
@@ -59,6 +60,8 @@
 
 using namespace atoms3r_ical;
 using namespace atoms3r_magdiag;
+
+static DiagnosticSerial<8192> diagnostic_log;
 
 static constexpr float LOOP_HZ = 200.0f;
 static constexpr uint32_t LOOP_PERIOD_US = (uint32_t)(1000000.0f / LOOP_HZ);
@@ -165,7 +168,7 @@ static const char* magLabel() {
 static void waitMs(uint32_t ms) { delay(ms); }
 
 static void printMagState(const char* tag, const Bmm150RegState& r) {
-  Serial.printf("[MAGCFG] %s: chip=0x%02X power=0x%02X mode=0x%02X rep_xy=%u (n=%u) rep_z=%u (n=%u)\n", tag,
+  diagnostic_log.printf("[MAGCFG] %s: chip=0x%02X power=0x%02X mode=0x%02X rep_xy=%u (n=%u) rep_z=%u (n=%u)\n", tag,
                 r.chip_id, r.power, r.mode, r.rep_xy, r.nXY(), r.rep_z, r.nZ());
 }
 
@@ -173,14 +176,14 @@ static void printMagState(const char* tag, const Bmm150RegState& r) {
 static void magCommand(char cmd) {
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
   if (M5.Imu.getType() != m5::imu_bmi270 || !imu0) {
-    Serial.println("[MAGCFG] not a BMI270 + AUX BMM150 board; nothing done");
+    diagnostic_log.println("[MAGCFG] not a BMI270 + AUX BMM150 board; nothing done");
     return;
   }
   Bmm150AuxPreset<m5::IMU_Base> aux(imu0, waitMs);
   Bmm150RegState before, after;
   if (cmd == 'q') {
     if (aux.query(before)) printMagState("current", before);
-    else Serial.printf("[MAGCFG] query failed: %s\n", aux.failure());
+    else diagnostic_log.printf("[MAGCFG] query failed: %s\n", aux.failure());
     return;
   }
   const bool low = cmd == 'p';
@@ -192,10 +195,10 @@ static void magCommand(char cmd) {
     printMagState("after", after);
     snprintf(mag_mode, sizeof(mag_mode), "%s (%u/%u reps, 30 Hz)", low ? "low-noise" : "driver default",
              after.nXY(), after.nZ());
-    Serial.printf("[MAGCFG] %s setting active (driver default lasts until reboot); rerun STILL and ROTATE to compare\n",
+    diagnostic_log.printf("[MAGCFG] %s setting active (driver default lasts until reboot); rerun STILL and ROTATE to compare\n",
                   low ? "low-noise" : "driver default");
   } else {
-    Serial.printf("[MAGCFG] change FAILED: %s (previous setting kept)\n", aux.failure());
+    diagnostic_log.printf("[MAGCFG] change FAILED: %s (previous setting kept)\n", aux.failure());
   }
 }
 
@@ -204,26 +207,26 @@ static void magCommand(char cmd) {
 // source it was fitted on; the choice here is kept, not switched back to it.
 static void toggleCompensation() {
   const bool on = !atoms3rMagSource().compensated;
-  if (configureAtomS3RMag(Serial, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  if (configureAtomS3RMag(diagnostic_log, on)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
   magSourceFollower() = nullptr;
   cals.rebuildFromBlob(blob);
   saved_ok = cals.mag.ok;
   saved_model.A = cals.mag.A;
   saved_model.b = cals.mag.b;
   have_m = false;
-  Serial.printf("[MAGCFG] magnetometer now: %s; saved mag calibration %s\n", magLabel(),
+  diagnostic_log.printf("[MAGCFG] magnetometer now: %s; saved mag calibration %s\n", magLabel(),
                 saved_ok ? "applies" : (cals.mag_source_mismatch ? "NOT applied (fitted on the other source)" : "not available"));
 }
 
 static void printMat(const char* tag, const Matrix3f& A) {
-  Serial.printf("%s [%.5f %.5f %.5f; %.5f %.5f %.5f; %.5f %.5f %.5f]\n", tag,
+  diagnostic_log.printf("%s [%.5f %.5f %.5f; %.5f %.5f %.5f; %.5f %.5f %.5f]\n", tag,
                 A(0,0), A(0,1), A(0,2), A(1,0), A(1,1), A(1,2), A(2,0), A(2,1), A(2,2));
 }
 
 static void bootReport() {
-  Serial.println();
-  Serial.println("[DIAG] ===== AtomS3R magnetometer diagnostics =====");
-  Serial.printf("[DIAG] imu_type=%d (bmi270=%d) expected_dip=%.1f deg\n",
+  diagnostic_log.println();
+  diagnostic_log.println("[DIAG] ===== AtomS3R magnetometer diagnostics =====");
+  diagnostic_log.printf("[DIAG] imu_type=%d (bmi270=%d) expected_dip=%.1f deg\n",
                 (int)M5.Imu.getType(), (int)m5::imu_bmi270, (double)DIAG_EXPECTED_DIP_DEG);
 
   auto* imu0 = M5.Imu.getImuInstancePtr(0);
@@ -238,7 +241,7 @@ static void bootReport() {
     imu0->readRegister(0x7D, &pwr, 1);
     const int odr = aux_conf & 0x0F;
     const float aux_hz = (odr >= 1 && odr <= 11) ? 100.0f / powf(2.0f, (float)(8 - odr)) : NAN;
-    Serial.printf("[DIAG] BMI270 addr=0x%02X AUX_CONF=0x%02X (aux poll %.2f Hz) AUX_DEV_ID=0x%02X (i2c 0x%02X) "
+    diagnostic_log.printf("[DIAG] BMI270 addr=0x%02X AUX_CONF=0x%02X (aux poll %.2f Hz) AUX_DEV_ID=0x%02X (i2c 0x%02X) "
                   "AUX_IF_CONF=0x%02X (%s) AUX_RD_ADDR=0x%02X PWR_CTRL=0x%02X\n",
                   imu0->getAddress(), aux_conf, (double)aux_hz, aux_dev, aux_dev >> 1, aux_if,
                   (aux_if & 0x80) ? "manual" : "data mode", aux_rd, pwr);
@@ -252,26 +255,26 @@ static void bootReport() {
     mag1->readRegister(0x4C, &mode, 1);
     mag1->readRegister(0x51, &rxy, 1);
     mag1->readRegister(0x52, &rz, 1);
-    Serial.printf("[DIAG] BMM150 on main bus addr=0x%02X id=0x%02X power=0x%02X mode=0x%02X rep_xy=%u(n=%u) rep_z=%u(n=%u)\n",
+    diagnostic_log.printf("[DIAG] BMM150 on main bus addr=0x%02X id=0x%02X power=0x%02X mode=0x%02X rep_xy=%u(n=%u) rep_z=%u(n=%u)\n",
                   mag1->getAddress(), id, pw, mode, rxy, 2u * rxy + 1u, rz, rz + 1u);
   } else {
-    Serial.println("[DIAG] BMM150 main-bus instance: NONE (magnetometer is only behind the BMI270 AUX bus)");
+    diagnostic_log.println("[DIAG] BMM150 main-bus instance: NONE (magnetometer is only behind the BMI270 AUX bus)");
   }
   for (uint8_t addr = 0x10; addr <= 0x13; ++addr) {
     uint8_t v = 0;
     const bool ack = M5.In_I2C.readRegister(addr, 0x40, &v, 1, 400000);
-    Serial.printf("[DIAG] main-bus probe 0x%02X: %s%s\n", addr, ack ? "ACK" : "no ack",
+    diagnostic_log.printf("[DIAG] main-bus probe 0x%02X: %s%s\n", addr, ack ? "ACK" : "no ack",
                   ack ? (v == 0x32 ? " chip_id=0x32 (BMM150)" : "") : "");
   }
 
   if (have_blob) {
-    Serial.println("[DIAG] saved calibration:");
-    printBlobSummary(Serial, blob);
-    printBlobDetail(Serial, blob);
+    diagnostic_log.println("[DIAG] saved calibration:");
+    printBlobSummary(diagnostic_log, blob);
+    printBlobDetail(diagnostic_log, blob);
   } else {
-    Serial.println("[DIAG] no saved calibration in NVS");
+    diagnostic_log.println("[DIAG] no saved calibration in NVS");
   }
-  Serial.printf("[DIAG] saved mag calibration applied at runtime: %s\n", cals.mag.ok ? "YES" : "NO");
+  diagnostic_log.printf("[DIAG] saved mag calibration applied at runtime: %s\n", cals.mag.ok ? "YES" : "NO");
 }
 
 static double expectedVertical() { return DIAG_EXPECTED_FIELD_UT * sin(DIAG_EXPECTED_DIP_DEG / kRadToDeg); }
@@ -308,7 +311,7 @@ static void poseSample(const V3& a, const V3* m_cal, float gyro_rad_s, uint32_t 
   p.a = qw_acc.avg(); p.a_sd = qw_acc.sd(); p.m = qw_mag.avg(); p.m_sd = qw_mag.sd();
   double vert = 0, horiz = 0;
   fieldVsReference(p.m, p.a, vert, horiz);
-  Serial.printf("[POSE] %2d %-5s |a|-g=%+.4f m/s^2 a_sd=[%.4f %.4f %.4f] | m=[%6.2f %6.2f %6.2f] |m|-F=%+5.2f "
+  diagnostic_log.printf("[POSE] %2d %-5s |a|-g=%+.4f m/s^2 a_sd=[%.4f %.4f %.4f] | m=[%6.2f %6.2f %6.2f] |m|-F=%+5.2f "
                 "V=%5.2f (%+5.2f) H=%5.2f (%+5.2f) dip=%.1f m_sd=[%.2f %.2f %.2f] n=%d\n",
                 n_qposes, poseFace(p.a), p.a.norm() - ImuCalCfg::g_cal_local, p.a_sd.x(), p.a_sd.y(), p.a_sd.z(),
                 p.m.x(), p.m.y(), p.m.z(), p.m.norm() - DIAG_EXPECTED_FIELD_UT, vert, vert - expectedVertical(),
@@ -321,11 +324,11 @@ static void poseSample(const V3& a, const V3* m_cal, float gyro_rad_s, uint32_t 
 
 static void printPoseFit(const char* tag, const ScaleBiasFit& f, const char* unit, double k_mul, const char* k_unit) {
   if (!f.ok) {
-    Serial.printf("[QUAL] %s fit: NOT DETERMINED (%d equations; visit every face, both signs of each axis)\n", tag,
+    diagnostic_log.printf("[QUAL] %s fit: NOT DETERMINED (%d equations; visit every face, both signs of each axis)\n", tag,
                   f.equations);
     return;
   }
-  Serial.printf("[QUAL] %s scale error [%+.3f %+.3f %+.3f] +- [%.3f %.3f %.3f] %s, residual bias [%+.4f %+.4f %+.4f] "
+  diagnostic_log.printf("[QUAL] %s scale error [%+.3f %+.3f %+.3f] +- [%.3f %.3f %.3f] %s, residual bias [%+.4f %+.4f %+.4f] "
                 "+- [%.4f %.4f %.4f] %s, rms %.4f %s\n", tag,
                 f.k.x() * k_mul, f.k.y() * k_mul, f.k.z() * k_mul, f.k_sd.x() * k_mul, f.k_sd.y() * k_mul,
                 f.k_sd.z() * k_mul, k_unit, f.b.x(), f.b.y(), f.b.z(), f.b_sd.x(), f.b_sd.y(), f.b_sd.z(), unit,
@@ -333,11 +336,11 @@ static void printPoseFit(const char* tag, const ScaleBiasFit& f, const char* uni
 }
 
 static void finishPoses() {
-  Serial.println("[QUAL] ------------------------------------------------");
-  Serial.printf("[QUAL] still poses: %d; magnetometer: %s\n", n_qposes, magLabel());
+  diagnostic_log.println("[QUAL] ------------------------------------------------");
+  diagnostic_log.printf("[QUAL] still poses: %d; magnetometer: %s\n", n_qposes, magLabel());
   if (n_qposes == 0) {
-    Serial.println("[QUAL] no poses captured (hold each still 3 s, turn between them)");
-    Serial.println("[QUAL] ------------------------------------------------");
+    diagnostic_log.println("[QUAL] no poses captured (hold each still 3 s, turn between them)");
+    diagnostic_log.println("[QUAL] ------------------------------------------------");
     return;
   }
   V3 a[MAX_QPOSES], m[MAX_QPOSES];
@@ -351,16 +354,16 @@ static void finishPoses() {
     if (strcmp(f, "tilt") && !strstr(faces, f)) { strcat(faces, f); strcat(faces, " "); }
   }
   const V3 a_sd = (a_var / n_qposes).cwiseSqrt().cast<float>(), m_sd = (m_var / n_qposes).cwiseSqrt().cast<float>();
-  Serial.printf("[QUAL] faces visited: %s\n", faces[0] ? faces : "none");
+  diagnostic_log.printf("[QUAL] faces visited: %s\n", faces[0] ? faces : "none");
   const float g = ImuCalCfg::g_cal_local;
   const ScaleBiasFit fa = scaleBiasFit(a, a, n_qposes, g, 0.0f, false);
-  Serial.printf("[QUAL] accel noise sd [%.4f %.4f %.4f] m/s^2 (single sample); |a|-g mean %+.4f sd %.4f m/s^2 over poses "
+  diagnostic_log.printf("[QUAL] accel noise sd [%.4f %.4f %.4f] m/s^2 (single sample); |a|-g mean %+.4f sd %.4f m/s^2 over poses "
                 "(g=%.5f)\n", a_sd.x(), a_sd.y(), a_sd.z(), fa.norm_err_mean, fa.norm_err_sd, (double)g);
   printPoseFit("accel", fa, "m/s^2", 1000.0, "ppt");
   const float F = DIAG_EXPECTED_FIELD_UT, V = float(expectedVertical());
   const ScaleBiasFit fm = scaleBiasFit(m, a, n_qposes, F, V, false);
   const ScaleBiasFit fmv = scaleBiasFit(m, a, n_qposes, F, V, true);
-  Serial.printf("[QUAL] mag noise sd [%.3f %.3f %.3f] uT (single reading); |m|-F mean %+.2f sd %.2f uT over poses "
+  diagnostic_log.printf("[QUAL] mag noise sd [%.3f %.3f %.3f] uT (single reading); |m|-F mean %+.2f sd %.2f uT over poses "
                 "(F=%.1f); vertical-V mean %+.2f sd %.2f uT (V=%.2f)\n", m_sd.x(), m_sd.y(), m_sd.z(), fm.norm_err_mean,
                 fm.norm_err_sd, (double)F, fmv.vert_err_mean, fmv.vert_err_sd, (double)V);
   printPoseFit("mag |m|", fm, "uT", 100.0, "%");
@@ -370,7 +373,7 @@ static void finishPoses() {
   const ScaleBiasFit& fb = fmv.ok ? fmv : fm;
   if (fb.ok) {
     const float common = fb.k.mean();
-    Serial.printf("[QUAL] mag common scale %+.1f%% (calibrated field %.1f uT vs local %.1f uT)\n", 100.0f * common,
+    diagnostic_log.printf("[QUAL] mag common scale %+.1f%% (calibrated field %.1f uT vs local %.1f uT)\n", 100.0f * common,
                   (double)(F * (1.0f + common)), (double)F);
     // Against the median axis, so one wrong axis does not mark the other two.
     int order[3] = {0, 1, 2};
@@ -379,11 +382,11 @@ static void finishPoses() {
     for (int j = 0; j < 3; ++j) {
       const float rel = fb.k(j) - fb.k(med);
       const float sd = j == med ? 0.0f : std::hypot(fb.k_sd(j), fb.k_sd(med));
-      Serial.printf("[QUAL] mag %c scale vs median axis %+.1f%% +- %.1f%%%s\n", "xyz"[j], 100.0f * rel, 100.0f * sd,
+      diagnostic_log.printf("[QUAL] mag %c scale vs median axis %+.1f%% +- %.1f%%%s\n", "xyz"[j], 100.0f * rel, 100.0f * sd,
                     fabsf(rel) > 0.03f && !(fabsf(rel) < 3.0f * sd) ? " (SCALE MISMATCH)" : "");
     }
   }
-  Serial.println("[QUAL] ------------------------------------------------");
+  diagnostic_log.println("[QUAL] ------------------------------------------------");
 }
 
 static void drawWait(const char* t, const char* a, const char* b, const char* c) {
@@ -402,13 +405,13 @@ static void enter(Phase p) {
   switch (p) {
     case Phase::WAIT_STILL:
       drawWait("STILL", "Lay flat, screen up", "away from metal,", "then tap: 10 s");
-      Serial.println("[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.");
-      Serial.println("[DIAG] (serial: 'q' read mag setting, 'o' driver default, 'p' low-noise, 'd' drift monitor)");
+      diagnostic_log.println("[DIAG] next: STILL. Lay the board flat, screen up, away from metal; tap and do not touch.");
+      diagnostic_log.println("[DIAG] (serial: 'q' read mag setting, 'o' driver default, 'p' low-noise, 'd' drift monitor)");
       break;
     case Phase::STILL:
       st_raw = Stats3{}; st_cal = Stats3{}; st_acc = Stats3{}; st_gyr = Stats3{}; st_dip = Stats3{};
       st_hdg_c = st_hdg_s = 0;
-      Serial.printf("[STILL] magnetometer mode: %s\n", magLabel());
+      diagnostic_log.printf("[STILL] magnetometer mode: %s\n", magLabel());
       st_intervals = 0; st_int_min = UINT32_MAX; st_int_max = 0; st_int_sum = 0;
       mask_ag = mask_g_only = mask_a_only = mask_none = mask_mag = 0;
       ui.title("STILL");
@@ -416,14 +419,14 @@ static void enter(Phase p) {
       break;
     case Phase::WAIT_POSES:
       drawWait("POSES", "Set down still 3 s", "on each face + tilts", "done: tap screen up");
-      Serial.println("[DIAG] next: POSES. Tap, then set the board down still for 3 s on each of its 6 faces and a few tilts,");
-      Serial.println("[DIAG] at different headings, away from metal. Each pose prints [POSE]; finish with [QUAL] by a tap");
-      Serial.println("[DIAG] while the board lies still screen up (screen-down presses are ignored), or send 'n'.");
+      diagnostic_log.println("[DIAG] next: POSES. Tap, then set the board down still for 3 s on each of its 6 faces and a few tilts,");
+      diagnostic_log.println("[DIAG] at different headings, away from metal. Each pose prints [POSE]; finish with [QUAL] by a tap");
+      diagnostic_log.println("[DIAG] while the board lies still screen up (screen-down presses are ignored), or send 'n'.");
       break;
     case Phase::POSES:
       n_qposes = 0;
       qw_acc = Stats3{}; qw_mag = Stats3{}; qw_start_ms = millis(); qw_moved = true;
-      Serial.printf("[POSE] reference: g=%.5f m/s^2, field %.1f uT, dip %.1f deg (H %.2f, V %.2f uT); mag mode: %s\n",
+      diagnostic_log.printf("[POSE] reference: g=%.5f m/s^2, field %.1f uT, dip %.1f deg (H %.2f, V %.2f uT); mag mode: %s\n",
                     (double)ImuCalCfg::g_cal_local, (double)DIAG_EXPECTED_FIELD_UT, (double)DIAG_EXPECTED_DIP_DEG,
                     expectedHorizontal(), expectedVertical(), magLabel());
       ui.title("POSES");
@@ -431,7 +434,7 @@ static void enter(Phase p) {
       break;
     case Phase::WAIT_ROTATE:
       drawWait("ROTATE", "Tap, then SLOWLY", "turn + tilt ALL ways:", "upside down, edges");
-      Serial.println("[DIAG] next: ROTATE. Turn and tilt slowly (under ~45 deg/s) through every direction, including upside down.");
+      diagnostic_log.println("[DIAG] next: ROTATE. Turn and tilt slowly (under ~45 deg/s) through every direction, including upside down.");
       break;
     case Phase::ROTATE:
       magCal.clear();
@@ -460,7 +463,7 @@ static void enter(Phase p) {
       ui.line("Working...");
       break;
     case Phase::LIVE:
-      Serial.println("[DIAG] LIVE: hold level and tilt +-20 deg at E/W/N/S; compare hdg columns. Tap to run again.");
+      diagnostic_log.println("[DIAG] LIVE: hold level and tilt +-20 deg at E/W/N/S; compare hdg columns. Tap to run again.");
       break;
     case Phase::DRIFT:
       dr_raw = Stats3{}; dr_acc = Stats3{}; dr_temp_sum = 0; dr_temp_n = 0; dr_have_first = false;
@@ -469,7 +472,7 @@ static void enter(Phase p) {
       ui.line("Do not touch");
       ui.line("for 3+ minutes");
       ui.line("tap or 'd' to stop");
-      Serial.printf("[DRIFT] monitoring the untouched board every %u s (magnetometer mode: %s); tap or 'd' to stop\n",
+      diagnostic_log.printf("[DRIFT] monitoring the untouched board every %u s (magnetometer mode: %s); tap or 'd' to stop\n",
                     (unsigned)(DRIFT_PERIOD_MS / 1000), magLabel());
       break;
   }
@@ -484,46 +487,46 @@ static void liveColumns(const MagModel& model, const Matrix3f& R, float& hdg, fl
 }
 
 static void analyzeTask(void*) {
-  Serial.printf("[FIT] fitting fresh calibration (magnetometer mode: %s)...\n", magLabel());
+  diagnostic_log.printf("[FIT] fitting fresh calibration (magnetometer mode: %s)...\n", magLabel());
   fresh = imu_cal::MagCalibration<float>{};
   fresh_ok = magCal.fit(fresh, 3, 0.15f, 1e-6f, &fresh_reason);
   const auto& q = magCal.quality;
-  Serial.printf("[FIT] ok=%d reason=%s gate=%s rms=%.4f p95=%.4f inliers=%d/%d cells=%d field=%.2f\n",
+  diagnostic_log.printf("[FIT] ok=%d reason=%s gate=%s rms=%.4f p95=%.4f inliers=%d/%d cells=%d field=%.2f\n",
                 (int)fresh_ok, imu_cal::fitFailStr(fresh_reason), imu_cal::magFitGateText(q.gate),
                 q.rms, q.p95, q.inliers, q.samples, q.cells, (double)fresh.field_uT);
   fresh_model.A = fresh.A; fresh_model.b = fresh.b;
   if (fresh_ok) {
     printMat("[FIT] fresh A", fresh.A);
-    Serial.printf("[FIT] fresh b [%.3f %.3f %.3f]\n", fresh.b.x(), fresh.b.y(), fresh.b.z());
+    diagnostic_log.printf("[FIT] fresh b [%.3f %.3f %.3f]\n", fresh.b.x(), fresh.b.y(), fresh.b.z());
   }
   if (saved_ok) {
     printMat("[FIT] saved A", saved_model.A);
-    Serial.printf("[FIT] saved b [%.3f %.3f %.3f]\n", saved_model.b.x(), saved_model.b.y(), saved_model.b.z());
+    diagnostic_log.printf("[FIT] saved b [%.3f %.3f %.3f]\n", saved_model.b.x(), saved_model.b.y(), saved_model.b.z());
     if (fresh_ok) {
-      Serial.printf("[FIT] saved-vs-fresh: |dA|/|A|=%.3f |db|=%.2f\n",
+      diagnostic_log.printf("[FIT] saved-vs-fresh: |dA|/|A|=%.3f |db|=%.2f\n",
                     (double)((saved_model.A - fresh_model.A).norm() / fresh_model.A.norm()),
                     (double)(saved_model.b - fresh_model.b).norm());
     }
   }
 
   if (fresh_ok && prev_ok) {
-    Serial.printf("[FIT] previous-run-vs-fresh: |dA|/|A|=%.3f |db|=%.2f b_prev=[%.2f %.2f %.2f] temp %.1f -> %.1f C\n",
+    diagnostic_log.printf("[FIT] previous-run-vs-fresh: |dA|/|A|=%.3f |db|=%.2f b_prev=[%.2f %.2f %.2f] temp %.1f -> %.1f C\n",
                   (double)((prev_model.A - fresh_model.A).norm() / fresh_model.A.norm()),
                   (double)(prev_model.b - fresh_model.b).norm(), prev_model.b.x(), prev_model.b.y(), prev_model.b.z(),
                   (double)prev_temp_c, (double)last_temp_c);
   }
-  Serial.printf("[FIELD] poses collected: %d (each a %u ms window turning slower than 57 deg/s)\n", n_poses,
+  diagnostic_log.printf("[FIELD] poses collected: %d (each a %u ms window turning slower than 57 deg/s)\n", n_poses,
                 (unsigned)POSE_WINDOW_MS);
   FieldStats fs_saved, fs_fresh;
   if (saved_ok) {
     fs_saved = fieldStats(poses, n_poses, saved_model);
-    Serial.printf("[FIELD] saved: |m| mean=%.2f sd=%.2f min=%.2f max=%.2f spread=%.1f%% dip mean=%.1f sd=%.1f\n",
+    diagnostic_log.printf("[FIELD] saved: |m| mean=%.2f sd=%.2f min=%.2f max=%.2f spread=%.1f%% dip mean=%.1f sd=%.1f\n",
                   fs_saved.norm_mean, fs_saved.norm_sd, fs_saved.norm_min, fs_saved.norm_max,
                   100.0 * fs_saved.spread(), fs_saved.dip_mean, fs_saved.dip_sd);
   }
   if (fresh_ok) {
     fs_fresh = fieldStats(poses, n_poses, fresh_model);
-    Serial.printf("[FIELD] fresh: |m| mean=%.2f sd=%.2f min=%.2f max=%.2f spread=%.1f%% dip mean=%.1f sd=%.1f\n",
+    diagnostic_log.printf("[FIELD] fresh: |m| mean=%.2f sd=%.2f min=%.2f max=%.2f spread=%.1f%% dip mean=%.1f sd=%.1f\n",
                   fs_fresh.norm_mean, fs_fresh.norm_sd, fs_fresh.norm_min, fs_fresh.norm_max,
                   100.0 * fs_fresh.spread(), fs_fresh.dip_mean, fs_fresh.dip_sd);
   }
@@ -535,7 +538,7 @@ static void analyzeTask(void*) {
                               headingDeg(poses[i].a, fresh_model.apply(poses[i].m_raw))) / kRadToDeg;
       if (std::isfinite(d)) { sc += cos(d); ss += sin(d); }
     }
-    Serial.printf("[FIELD] mean heading difference saved-minus-fresh over poses: %.1f deg\n", atan2(ss, sc) * kRadToDeg);
+    diagnostic_log.printf("[FIELD] mean heading difference saved-minus-fresh over poses: %.1f deg\n", atan2(ss, sc) * kRadToDeg);
   }
 
   // Axis test needs offsets removed; prefer the fresh fit made here.
@@ -544,7 +547,7 @@ static void analyzeTask(void*) {
                                         DIAG_EXPECTED_DIP_DEG >= 0.0f);
   char best_txt[16];
   permutationText(ax.best, best_txt);
-  Serial.printf("[AXIS] model=%s pairs=%d best=%s rms=%.3f current-mapping rms=%.3f runner-up rms=%.3f dip_with_best=%.1f\n",
+  diagnostic_log.printf("[AXIS] model=%s pairs=%d best=%s rms=%.3f current-mapping rms=%.3f runner-up rms=%.3f dip_with_best=%.1f\n",
                 fresh_ok ? "fresh" : (saved_ok ? "saved" : "none"), ax.pairs, best_txt, ax.best_rms,
                 ax.identity_rms, ax.second_rms, ax.best_dip);
 
@@ -553,64 +556,64 @@ static void analyzeTask(void*) {
   if (saved_ok) al_saved = solveAlignment(poses, n_poses, saved_model);
   if (fresh_align.ok) {
     const Matrix3f Rerr = fresh_align.R.transpose();
-    Serial.printf("[ALIGN] fresh: mag->accel rotation [%.2f %.2f %.2f] deg (|%.2f|) dip=%.1f sd %.2f -> %.2f\n",
+    diagnostic_log.printf("[ALIGN] fresh: mag->accel rotation [%.2f %.2f %.2f] deg (|%.2f|) dip=%.1f sd %.2f -> %.2f\n",
                   fresh_align.rotvec_deg.x(), fresh_align.rotvec_deg.y(), fresh_align.rotvec_deg.z(),
                   fresh_align.rotvec_deg.norm(), fresh_align.dip_deg, fresh_align.dip_sd_before,
                   fresh_align.dip_sd_after);
-    Serial.printf("[ALIGN] heading error this rotation causes: level %.1f deg, at 20 deg tilt %.1f deg\n",
+    diagnostic_log.printf("[ALIGN] heading error this rotation causes: level %.1f deg, at 20 deg tilt %.1f deg\n",
                   headingErrorDeg(Rerr, fresh_align.dip_deg, 0.0f), headingErrorDeg(Rerr, fresh_align.dip_deg, 20.0f));
   }
   if (al_saved.ok) {
-    Serial.printf("[ALIGN] saved: rotation [%.2f %.2f %.2f] deg dip=%.1f sd %.2f -> %.2f\n",
+    diagnostic_log.printf("[ALIGN] saved: rotation [%.2f %.2f %.2f] deg dip=%.1f sd %.2f -> %.2f\n",
                   al_saved.rotvec_deg.x(), al_saved.rotvec_deg.y(), al_saved.rotvec_deg.z(),
                   al_saved.dip_deg, al_saved.dip_sd_before, al_saved.dip_sd_after);
   }
 
   // Verdicts.
-  Serial.println("[VERDICT] ------------------------------------------------");
-  Serial.printf("[VERDICT] magnetometer setting during this run: %s\n", magLabel());
+  diagnostic_log.println("[VERDICT] ------------------------------------------------");
+  diagnostic_log.printf("[VERDICT] magnetometer setting during this run: %s\n", magLabel());
   if (ax.pairs < 50) {
-    Serial.printf("[VERDICT] axes: INCONCLUSIVE (%d rotating pairs; turn more during ROTATE)\n", ax.pairs);
+    diagnostic_log.printf("[VERDICT] axes: INCONCLUSIVE (%d rotating pairs; turn more during ROTATE)\n", ax.pairs);
   } else if (ax.best == 0 && ax.identity_rms < 0.5f * ax.second_rms) {
-    Serial.printf("[VERDICT] axes: OK, magnetometer axes agree with the gyro (rms %.3f vs %.3f)\n",
+    diagnostic_log.printf("[VERDICT] axes: OK, magnetometer axes agree with the gyro (rms %.3f vs %.3f)\n",
                   ax.identity_rms, ax.second_rms);
   } else {
-    Serial.printf("[VERDICT] axes: MISMATCH, gyro agrees with mag axes (%s) of the current mapping (rms %.3f vs current %.3f)\n",
+    diagnostic_log.printf("[VERDICT] axes: MISMATCH, gyro agrees with mag axes (%s) of the current mapping (rms %.3f vs current %.3f)\n",
                   best_txt, ax.best_rms, ax.identity_rms);
   }
   auto fits = [](const FieldStats& f) { return f.n >= 20 && f.spread() < 0.10f && f.dip_sd < 3.0f; };
   auto verdict = [&](const FieldStats& f) { return f.n < 20 ? "INCONCLUSIVE (too few poses)" : (fits(f) ? "FITS" : "DOES NOT FIT"); };
   if (saved_ok) {
-    Serial.printf("[VERDICT] saved calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f, expected %.1f)\n",
+    diagnostic_log.printf("[VERDICT] saved calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f, expected %.1f)\n",
                   verdict(fs_saved), 100.0 * fs_saved.spread(), fs_saved.dip_mean,
                   fs_saved.dip_sd, (double)DIAG_EXPECTED_DIP_DEG);
   } else {
-    Serial.println("[VERDICT] saved calibration here: NONE / not applied");
+    diagnostic_log.println("[VERDICT] saved calibration here: NONE / not applied");
   }
   if (fresh_ok) {
-    Serial.printf("[VERDICT] fresh calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f)\n",
+    diagnostic_log.printf("[VERDICT] fresh calibration here: %s (|m| spread %.1f%%, dip %.1f+-%.1f)\n",
                   verdict(fs_fresh), 100.0 * fs_fresh.spread(), fs_fresh.dip_mean,
                   fs_fresh.dip_sd);
   } else {
-    Serial.printf("[VERDICT] fresh calibration here: FIT FAILED (%s); capture more directions\n",
+    diagnostic_log.printf("[VERDICT] fresh calibration here: FIT FAILED (%s); capture more directions\n",
                   imu_cal::fitFailStr(fresh_reason));
   }
   if (fresh_align.ok) {
     const float err20 = headingErrorDeg(fresh_align.R.transpose(), fresh_align.dip_deg, 20.0f);
-    Serial.printf("[VERDICT] mag/accel frame misalignment: %.1f deg -> about %.1f deg heading error at 20 deg tilt%s\n",
+    diagnostic_log.printf("[VERDICT] mag/accel frame misalignment: %.1f deg -> about %.1f deg heading error at 20 deg tilt%s\n",
                   fresh_align.rotvec_deg.norm(), err20, err20 > 3.0f ? " (SIGNIFICANT)" : "");
-    Serial.printf("[VERDICT] dip after alignment %.1f vs expected %.1f%s\n", fresh_align.dip_deg,
+    diagnostic_log.printf("[VERDICT] dip after alignment %.1f vs expected %.1f%s\n", fresh_align.dip_deg,
                   (double)DIAG_EXPECTED_DIP_DEG,
                   fabsf(fresh_align.dip_deg - DIAG_EXPECTED_DIP_DEG) > 5.0f ? " (CHECK local field / nearby metal)" : "");
   }
   if (fs_fresh.n < 20) {
-    Serial.println("[VERDICT] => field checks need more poses: turn more slowly during ROTATE.");
+    diagnostic_log.println("[VERDICT] => field checks need more poses: turn more slowly during ROTATE.");
   } else if (saved_ok && fresh_ok && fits(fs_fresh) && !fits(fs_saved)) {
-    Serial.println("[VERDICT] => the saved calibration is stale for this place/mounting; rerun the wizard here.");
+    diagnostic_log.println("[VERDICT] => the saved calibration is stale for this place/mounting; rerun the wizard here.");
   } else if (fresh_ok && !fits(fs_fresh)) {
-    Serial.println("[VERDICT] => even a fresh fit does not describe this sensor; capture/fit or sensor problem.");
+    diagnostic_log.println("[VERDICT] => even a fresh fit does not describe this sensor; capture/fit or sensor problem.");
   }
-  Serial.println("[VERDICT] ------------------------------------------------");
+  diagnostic_log.println("[VERDICT] ------------------------------------------------");
   if (fresh_ok) { prev_model = fresh_model; prev_ok = true; prev_temp_c = last_temp_c; }
   analysis_done = true;
   vTaskDelete(nullptr);
@@ -717,17 +720,17 @@ static void finishStill() {
   const V3 mc = st_cal.avg();
   const float ms = st_intervals ? (float)st_int_sum / st_intervals / 1000.0f : NAN;
   const uint32_t polls = mask_ag + mask_g_only + mask_a_only + mask_none;
-  Serial.printf("[STILL] polls=%lu accel+gyro=%lu gyro-only=%lu accel-only=%lu none=%lu mag-bit=%lu\n",
+  diagnostic_log.printf("[STILL] polls=%lu accel+gyro=%lu gyro-only=%lu accel-only=%lu none=%lu mag-bit=%lu\n",
                 (unsigned long)polls, (unsigned long)mask_ag, (unsigned long)mask_g_only,
                 (unsigned long)mask_a_only, (unsigned long)mask_none, (unsigned long)mask_mag);
-  Serial.printf("[STILL] distinct mag readings=%d interval mean=%.1f ms min=%.1f max=%.1f ms (=> %.1f Hz)\n",
+  diagnostic_log.printf("[STILL] distinct mag readings=%d interval mean=%.1f ms min=%.1f max=%.1f ms (=> %.1f Hz)\n",
                 st_raw.n, (double)ms, st_intervals ? st_int_min / 1000.0 : NAN,
                 st_intervals ? st_int_max / 1000.0 : NAN, (double)(ms > 0 ? 1000.0f / ms : NAN));
-  Serial.printf("[STILL] raw mag mean [%.2f %.2f %.2f] noise sd [%.2f %.2f %.2f]\n",
+  diagnostic_log.printf("[STILL] raw mag mean [%.2f %.2f %.2f] noise sd [%.2f %.2f %.2f]\n",
                 st_raw.avg().x(), st_raw.avg().y(), st_raw.avg().z(), nr.x(), nr.y(), nr.z());
-  Serial.printf("[STILL] cal mag mean [%.2f %.2f %.2f] noise sd [%.2f %.2f %.2f] |m|=%.2f\n",
+  diagnostic_log.printf("[STILL] cal mag mean [%.2f %.2f %.2f] noise sd [%.2f %.2f %.2f] |m|=%.2f\n",
                 mc.x(), mc.y(), mc.z(), nc.x(), nc.y(), nc.z(), mc.norm());
-  Serial.printf("[STILL] accel mean [%.3f %.3f %.3f] |a|=%.3f tilt=%.1f deg; gyro mean [%.3f %.3f %.3f] deg/s\n",
+  diagnostic_log.printf("[STILL] accel mean [%.3f %.3f %.3f] |a|=%.3f tilt=%.1f deg; gyro mean [%.3f %.3f %.3f] deg/s\n",
                 am.x(), am.y(), am.z(), am.norm(),
                 acosf(fminf(1.0f, fabsf(am.z()) / fmaxf(am.norm(), 1e-6f))) * kRadToDeg,
                 st_gyr.avg().x() * kRadToDeg, st_gyr.avg().y() * kRadToDeg, st_gyr.avg().z() * kRadToDeg);
@@ -735,16 +738,16 @@ static void finishStill() {
   double vert = 0, horiz = 0;
   fieldVsReference(mc, am, vert, horiz);
   const V3 na = st_acc.sd();
-  Serial.printf("[STILL] accel noise sd [%.4f %.4f %.4f] m/s^2, |a|-g=%+.4f m/s^2 (g=%.5f)\n", na.x(), na.y(), na.z(),
+  diagnostic_log.printf("[STILL] accel noise sd [%.4f %.4f %.4f] m/s^2, |a|-g=%+.4f m/s^2 (g=%.5f)\n", na.x(), na.y(), na.z(),
                 am.norm() - ImuCalCfg::g_cal_local, (double)ImuCalCfg::g_cal_local);
-  Serial.printf("[STILL] cal field vs local: |m|=%.2f (F %.1f, %+.1f%%) vertical=%.2f (%.2f, %+.1f%%) "
+  diagnostic_log.printf("[STILL] cal field vs local: |m|=%.2f (F %.1f, %+.1f%%) vertical=%.2f (%.2f, %+.1f%%) "
                 "horizontal=%.2f (%.2f, %+.1f%%)\n", mc.norm(), (double)DIAG_EXPECTED_FIELD_UT,
                 100.0 * (mc.norm() / DIAG_EXPECTED_FIELD_UT - 1.0), vert, expectedVertical(),
                 100.0 * (vert / expectedVertical() - 1.0), horiz, expectedHorizontal(),
                 100.0 * (horiz / expectedHorizontal() - 1.0));
-  Serial.printf("[STILL] single-reading scatter with saved cal: heading sd=%.1f deg, dip sd=%.1f deg; temp=%.1f C\n",
+  diagnostic_log.printf("[STILL] single-reading scatter with saved cal: heading sd=%.1f deg, dip sd=%.1f deg; temp=%.1f C\n",
                 R > 0 ? sqrt(-2.0 * log(R)) * kRadToDeg : NAN, st_dip.sd().x(), (double)last_temp_c);
-  Serial.printf("[STILL] dip with saved cal=%.1f (expected %.1f), heading=%.1f; accel D is %s (screen %s)\n",
+  diagnostic_log.printf("[STILL] dip with saved cal=%.1f (expected %.1f), heading=%.1f; accel D is %s (screen %s)\n",
                 dipDeg(mc, am), (double)DIAG_EXPECTED_DIP_DEG, headingDeg(am, mc),
                 am.z() < 0 ? "negative" : "positive", am.z() < 0 ? "up" : "down");
 }
@@ -754,13 +757,14 @@ void setup() {
   Serial.setTxBufferSize(8192);
   Serial.begin(115200);
   Serial.setTxTimeoutMs(0);
+  diagnostic_log.begin();
   delay(800);
 
   auto cfg = M5.config();
   M5.begin(cfg);
   clearM5UnifiedImuCalibration();
-  if (configureAtomS3RMag(Serial)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
-  Serial.printf("[DIAG] magnetometer: %s\n", magLabel());
+  if (configureAtomS3RMag(diagnostic_log)) snprintf(mag_mode, sizeof(mag_mode), "low-noise (47/41 reps, 30 Hz)");
+  diagnostic_log.printf("[DIAG] magnetometer: %s\n", magLabel());
   delay(250);
   ui.begin();
 
@@ -772,10 +776,13 @@ void setup() {
   saved_model.b = cals.mag.b;
 
   if (!M5.Imu.isEnabled()) {
-    Serial.println("[DIAG] IMU not found");
+    diagnostic_log.println("[DIAG] IMU not found");
     ui.title("IMU");
     ui.line("Not found");
-    while (true) delay(100);
+    while (true) {
+      diagnostic_log.service();
+      delay(100);
+    }
   }
   bootReport();
   enter(Phase::WAIT_STILL);
@@ -787,6 +794,7 @@ void loop() {
   next_tick_us += LOOP_PERIOD_US;
   if ((int32_t)(micros() - next_tick_us) > (int32_t)(4 * LOOP_PERIOD_US)) next_tick_us = micros() + LOOP_PERIOD_US;
 
+  diagnostic_log.service();
   Input::update();
   const bool tapped = Input::tapPressed();
   bool advance = tapped;
@@ -797,11 +805,11 @@ void loop() {
     const bool idle = phase == Phase::WAIT_STILL || phase == Phase::WAIT_ROTATE || phase == Phase::LIVE;
     const char lc = char(tolower(c));
     if ((lc == 'p' || lc == 'q' || lc == 'o' || lc == 'c') && !idle)
-      Serial.println("[MAGCFG] busy; send 'p'/'o'/'q'/'c' while waiting for a tap or in LIVE");
+      diagnostic_log.println("[MAGCFG] busy; send 'p'/'o'/'q'/'c' while waiting for a tap or in LIVE");
     else if (lc == 'p' || lc == 'q' || lc == 'o') magCommand(lc);
     else if (lc == 'c') toggleCompensation();
     else if ((c == 'd' || c == 'D') && phase == Phase::DRIFT) enter(dr_return);
-    else if (c == 'd' || c == 'D') { dr_return = idle ? phase : Phase::WAIT_STILL; if (idle) enter(Phase::DRIFT); else Serial.println("[DRIFT] busy; send 'd' while waiting for a tap or in LIVE"); }
+    else if (c == 'd' || c == 'D') { dr_return = idle ? phase : Phase::WAIT_STILL; if (idle) enter(Phase::DRIFT); else diagnostic_log.println("[DRIFT] busy; send 'd' while waiting for a tap or in LIVE"); }
   }
 
   const uint32_t sample_us = micros();
@@ -834,7 +842,7 @@ void loop() {
       // finishes only while the board lies still screen up; 'n' always does.
       if (tapped && !(a_cal.z() < -0.9f * ImuCalCfg::g_cal_local && w_cal.norm() < QPOSE_MOVED_RAD_S)) {
         advance = false;
-        Serial.println("[POSE] press ignored (not lying still screen up); tap screen up, or send 'n', to finish");
+        diagnostic_log.println("[POSE] press ignored (not lying still screen up); tap screen up, or send 'n', to finish");
       }
       if (advance) { finishPoses(); enter(Phase::WAIT_ROTATE); }
       break;
@@ -843,9 +851,9 @@ void loop() {
       break;
     case Phase::ROTATE: {
       const bool ready = cap_status == imu_cal::MagCaptureStatus::READY;
-      if (now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS) {
+      if (now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS && diagnostic_log.readyForSample()) {
         const auto c = capture->coverage();
-        Serial.printf("[ROT] t=%.0fs samples=%d/%d cells=%d ratios=(%.2f,%.2f) poses=%d pairs=%d status=%d\n",
+        diagnostic_log.printf("[ROT] t=%.0fs samples=%d/%d cells=%d ratios=(%.2f,%.2f) poses=%d pairs=%d status=%d\n",
                       (now - phase_ms) / 1000.0, magCal.buf.n, cap_cfg.required_samples, c.cells,
                       (double)c.min_ratio, (double)c.mid_ratio, n_poses, n_pairs, (int)cap_status);
         last_print_ms = now;
@@ -859,7 +867,7 @@ void loop() {
       }
       const bool stale = cap_status == imu_cal::MagCaptureStatus::STALE;
       if ((ready && n_poses >= 60) || advance || stale || now - phase_ms >= ROTATE_MAX_MS) {
-        Serial.printf("[ROT] done: status=%d samples=%d poses=%d pairs=%d%s\n", (int)cap_status, magCal.buf.n,
+        diagnostic_log.printf("[ROT] done: status=%d samples=%d poses=%d pairs=%d%s\n", (int)cap_status, magCal.buf.n,
                       n_poses, n_pairs, stale ? " (magnetometer stream STALE)" : "");
         enter(Phase::ANALYZE);
         analysis_done = false;
@@ -878,12 +886,14 @@ void loop() {
         const float temp = dr_temp_n ? float(dr_temp_sum / dr_temp_n) : NAN;
         if (!dr_have_first) { dr_first_raw = r; dr_first_temp = temp; dr_have_first = true; }
         const V3 d = r - dr_first_raw;
-        Serial.printf("[DRIFT] t=%5.0fs temp=%.2f C (d%+.2f) raw=[%7.2f %7.2f %7.2f] d=[%+6.2f %+6.2f %+6.2f] "
-                      "noise=[%.2f %.2f %.2f] hdg=%.1f dip=%.1f |m|=%.2f tilt=%.1f\n",
-                      (now - dr_start_ms) / 1000.0, (double)temp, (double)(temp - dr_first_temp),
-                      r.x(), r.y(), r.z(), d.x(), d.y(), d.z(), dr_raw.sd().x(), dr_raw.sd().y(), dr_raw.sd().z(),
-                      headingDeg(a, c), dipDeg(c, a), c.norm(),
-                      acosf(fminf(1.0f, fabsf(a.z()) / fmaxf(a.norm(), 1e-6f))) * kRadToDeg);
+        if (diagnostic_log.readyForSample()) {
+          diagnostic_log.printf("[DRIFT] t=%5.0fs temp=%.2f C (d%+.2f) raw=[%7.2f %7.2f %7.2f] d=[%+6.2f %+6.2f %+6.2f] "
+                        "noise=[%.2f %.2f %.2f] hdg=%.1f dip=%.1f |m|=%.2f tilt=%.1f\n",
+                        (now - dr_start_ms) / 1000.0, (double)temp, (double)(temp - dr_first_temp),
+                        r.x(), r.y(), r.z(), d.x(), d.y(), d.z(), dr_raw.sd().x(), dr_raw.sd().y(), dr_raw.sd().z(),
+                        headingDeg(a, c), dipDeg(c, a), c.norm(),
+                        acosf(fminf(1.0f, fabsf(a.z()) / fmaxf(a.norm(), 1e-6f))) * kRadToDeg);
+        }
         if (now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS) {
           ui.title("DRIFT");
           M5.Display.printf("T %.2f C\n\ndz %+.2f uT\ndx %+.2f\ndy %+.2f\n\ntap: stop\n",
@@ -896,7 +906,7 @@ void loop() {
       break;
     case Phase::LIVE: {
       if (advance) { enter(Phase::WAIT_STILL); break; }
-      const bool print_due = now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS;
+      const bool print_due = now - last_print_ms >= atoms3r_timing::DEBUG_SERIAL_MS && diagnostic_log.readyForSample();
       const bool draw_due = now - last_draw_ms >= atoms3r_timing::UI_REFRESH_MS;
       if (!print_due && !draw_due) break;
       float hs = NAN, ds = NAN, ns = NAN, hf = NAN, df = NAN, nf = NAN, ha = NAN, da = NAN, na = NAN;
@@ -906,7 +916,7 @@ void loop() {
       const float roll = atan2f(-a_cal.y(), -a_cal.z()) * kRadToDeg;
       const float pitch = atan2f(a_cal.x(), sqrtf(a_cal.y() * a_cal.y() + a_cal.z() * a_cal.z())) * kRadToDeg;
       if (print_due) {
-        Serial.printf("[LIVE] roll=%6.1f pitch=%6.1f | hdg saved=%6.1f fresh=%6.1f aligned=%6.1f | "
+        diagnostic_log.printf("[LIVE] roll=%6.1f pitch=%6.1f | hdg saved=%6.1f fresh=%6.1f aligned=%6.1f | "
                       "dip saved=%5.1f fresh=%5.1f aligned=%5.1f | |m| saved=%5.1f fresh=%5.1f\n",
                       roll, pitch, hs, hf, ha, ds, df, da, ns, nf);
         last_print_ms = now;

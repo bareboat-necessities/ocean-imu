@@ -10,6 +10,7 @@
 
 static uint32_t now_ms;
 uint32_t millis() { return now_ms; }
+uint32_t micros() { return now_ms * 1000; }
 struct {
   int room = 4096;
   bool connected = true;
@@ -24,11 +25,12 @@ struct {
     len = std::min(len, max_write);
     room -= static_cast<int>(len);
     ++writes;
-    partial.append(reinterpret_cast<const char*>(p), len);
-    if (partial.back() == '\n') {
-      assert(partial.find('\n') == partial.size() - 1);
-      packets.push_back(partial);
-      partial.clear();
+    for (size_t i = 0; i < len; ++i) {
+      partial += static_cast<char>(p[i]);
+      if (p[i] == '\n') {
+        packets.push_back(partial);
+        partial.clear();
+      }
     }
     return len;
   }
@@ -41,9 +43,18 @@ struct {
 } Serial;
 #include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 #define SEA_STATE_NMEA_TALKER "II"
+#define COMPASS_NMEA_TALKER "II"
 
 struct Publisher {
-  struct { bool envelopeReady() const { return true; } bool isLive() const { return true; } bool hasMagNorthLock() const { return true; } } fusion_;
+  struct {
+    bool envelopeReady() const { return true; }
+    float envelopeAccelVariance() const { return 0.5f; }
+    float envelopeSigmaApplied() const { return 1; }
+    float envelopeTauApplied() const { return 1; }
+    bool isLive() const { return true; }
+    bool magReferenceLearned() const { return true; }
+    bool hasMagNorthLock() const { return true; }
+  } fusion_;
   struct { bool learning() const { return true; } } gyro_bias_;
   struct { float dpm() const { return -8; } } rot_;
   struct { float imuHz() const { return 200; } float magHz() const { return 25; } } rates_;
@@ -58,9 +69,20 @@ struct Publisher {
   float heave_wave_clean_m_ = 0.5f, heave_speed_mps_ = 1, imu_temp_c_ = 26, mag_norm_uT_ = 50;
   float heave_raw_m_ = 0.6f, wave_envelope_m_ = 1, acc_bias_norm_mps2_ = 0.1f, acc_bias_z_mps2_ = 0.1f;
   void refreshOutput_() {}
-  char debug_line_[1024]{};
-  size_t debug_sent_ = 0, debug_size_ = 0;
-  @WRITE_DEBUG_CHUNK@
+  atoms3r_ical::SerialBuffer<1024> debug_line_;
+  float waveEnvelopeM_() const { return 1; }
+  float wave_hz_ = 1, heave_m_ = 1, heave_baseline_m_ = 0;
+  float yaw_deg_ = 37, yaw_mahony_deg_ = 37, nlo_theta_ = 0, gyro_bias_norm_ = 0, heave_accel_mps2_ = 0, wave_conf_ = 1;
+  bool mag_field_sane_ = true, mahony_seeded_ = true, nlo_bootstrapping_ = false, wave_locked_ = true;
+  uint32_t start_us_ = 0;
+  struct { struct { float heading_deg = 37, roll_deg = 2, pitch_deg = -1; } att; float rot_dpm = -8; } outputs_;
+  struct {
+    bool mag_ok = true, mag_fresh = true;
+    float mag_norm_uT = 50, a_raw_norm = 1;
+    struct : Vec { float norm() const { return 1; } } a_cal, w_cal;
+  } sample_;
+  struct Backend { bool isValid() const { return true; } } backend;
+  Backend* backend_ = &backend;
   @STREAM_SERIAL@
 };
 
@@ -74,28 +96,31 @@ void checkRecovery(int capacity, size_t max_write) {
     // Run the first and last sections at line rate. Pause the host for 10 s,
     // reopen the serial port, and check that publication resumes every time.
     if (slot == 2500 || slot == 4000) {
-      publisher.heading_mag_deg_ = publisher.heading_deg_ = slot == 2500 ? 123 : 246;
+      publisher.outputs_.att.heading_deg = publisher.heading_mag_deg_ = publisher.heading_deg_ = slot == 2500 ? 123 : 246;
       publisher.heave_raw_m_ = slot == 2500 ? 1.23f : 2.46f;
     }
+    if (slot == 3500) Serial.partial.clear();  // New host session on reopen.
     Serial.connected = slot < 3500 || slot >= 4000;
     if (slot < 500 || (slot >= 2500 && slot < 3500) || slot >= 4000) Serial.room = capacity;
     if (slot == 2500 || slot == 4000) Serial.packets.clear();
     const auto before = Serial.packets.size();
     const auto writes = Serial.writes;
+    const bool full = Serial.room == 0;
     publisher.streamSerial_();
-    assert(Serial.writes - writes <= (SEA_STATE_SERIAL_NMEA ? 2u : 1u));
+    assert(Serial.writes - writes <= 1);
     if (slot == 500) Serial.packets.clear();
-    if (slot >= 1500 && slot < 2500) assert(Serial.packets.size() == before);
-    if (slot == 2499) assert(Serial.room < (SEA_STATE_SERIAL_NMEA ? 202 : 1));
+    if (full) assert(Serial.writes == writes);
+    if (slot == 2499) assert(Serial.room == 0);
     // Both a freed TX ring and a reopened port must produce a fresh report
     // within one output interval plus the time needed to drain the line.
     if (slot == 2530 || slot == 4030) {
       const char* marker = SEA_STATE_SERIAL_NMEA
           ? (slot == 2530 ? "$IIHDM,123.0,M" : "$IIHDM,246.0,M")
           : ARDUINO_PLOTTER ? (slot == 2530 ? "HrawCm:+123.000" : "HrawCm:+246.000")
+                            : COMPASS_APP ? (slot == 2530 ? "HDG: 123.0" : "HDG: 246.0")
                             : (slot == 2530 ? "hdg=123.00" : "hdg=246.00");
       bool found = false;
-      for (const auto& line : Serial.packets) found |= line.find(marker) == 0;
+      for (const auto& line : Serial.packets) found |= line.find(marker) != std::string::npos;
       assert(found);
     }
     if (slot == 3499 || slot == 4999) {
@@ -115,9 +140,64 @@ void checkRecovery(int capacity, size_t max_write) {
   }
 }
 
+#if SEA_STATE_SERIAL_NMEA
+void checkNmeaShortWrites() {
+  // Make wave, temperature and status due together. Capture one healthy batch.
+  Publisher reference;
+  now_ms = 8000;
+  Serial.max_write = SIZE_MAX;
+  Serial.packets.clear();
+  Serial.partial.clear();
+  for (unsigned slot = 0; slot < 16; ++slot, now_ms += 5) {
+    Serial.room = 4096;
+    reference.streamSerial_();
+  }
+  const auto expected = Serial.packets;
+  assert(expected.size() >= 4);
+
+  Publisher publisher;
+  now_ms = 8000;
+  Serial.packets.clear();
+  for (unsigned slot = 0; slot < 1024 && Serial.packets.size() < expected.size(); ++slot, now_ms += 5) {
+    Serial.room = 9;
+    Serial.max_write = slot % 2 ? 7 : 0;
+    publisher.streamSerial_();
+  }
+  assert(Serial.packets == expected);
+}
+#else
+void checkDebugShortWrites() {
+  now_ms = atoms3r_timing::DEBUG_SERIAL_MS;
+  Serial.room = 4096;
+  Serial.max_write = SIZE_MAX;
+  Serial.packets.clear();
+  Serial.partial.clear();
+  Publisher reference;
+  reference.streamSerial_();
+  assert(Serial.packets.size() == 1);
+  const std::string expected = Serial.packets.front();
+
+  Publisher publisher;
+  Serial.packets.clear();
+  // availableForWrite can succeed even if write subsequently returns zero.
+  for (size_t n = 0; n < expected.size(); ++n, now_ms += 5) {
+    Serial.room = 256;
+    Serial.max_write = n % 2 ? 7 : 0;
+    publisher.streamSerial_();
+    if (!Serial.packets.empty()) break;
+  }
+  assert(Serial.packets.size() == 1 && Serial.packets.front() == expected);
+}
+#endif
+
 int main() {
+#if SEA_STATE_SERIAL_NMEA
+  checkNmeaShortWrites();
+#else
+  checkDebugShortWrites();
+#endif
   checkRecovery(4096, SIZE_MAX);
   // The release core falls back to 256 bytes when the requested ring can't
   // be allocated. Debug lines may also have to resume after short writes.
-  checkRecovery(256, SEA_STATE_SERIAL_NMEA ? SIZE_MAX : 64);
+  checkRecovery(256, 64);
 }

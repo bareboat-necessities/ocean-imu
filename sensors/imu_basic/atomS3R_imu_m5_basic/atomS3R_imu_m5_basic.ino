@@ -2,11 +2,14 @@
 #include <M5Unified.h>
 #include <ArduinoOceanImu.h>
 
+#include "AtomS3R/AtomS3R_DiagnosticSerial.h"
 #include "AtomS3R/AtomS3R_ImuCal.h"
 #include "AtomS3R/AtomS3R_ImuCommon.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
 
 using namespace atoms3r_ical;
+
+static DiagnosticSerial<1024> diagnostic_log;
 
 constexpr float kImuOdrHz = kDefaultImuOdrHz;
 constexpr uint32_t kLoopPeriodUs = loopPeriodUsFromHz(kImuOdrHz);
@@ -36,29 +39,30 @@ void setup()
   Serial.setTxBufferSize(4096);
   Serial.begin(115200);
   Serial.setTxTimeoutMs(0);
+  diagnostic_log.begin();
   delay(1000);
-  Serial.println("M5Stack AtomS3R IMU basic demo (M5Unified IMU API path)");
+  diagnostic_log.println("M5Stack AtomS3R IMU basic demo (M5Unified IMU API path)");
 
   auto cfg = M5.config();
   M5.begin(cfg);
   M5.Imu.begin();
 
   clearM5UnifiedImuCalibration();
-  configureAtomS3RMag(Serial);
+  configureAtomS3RMag(diagnostic_log);
   delay(250);
 
   hasSavedCalibration = calStore.load(calBlob);
   if (hasSavedCalibration)
   {
     runtimeCals.rebuildFromBlob(calBlob);
-    Serial.println("Loaded IMU calibration from NVS; magnetometer output will include calibrated values.");
+    diagnostic_log.println("Loaded IMU calibration from NVS; magnetometer output will include calibrated values.");
   }
   else
   {
     runtimeCals.mag.ok = true;
     runtimeCals.mag.A = Matrix3f::Identity();
     runtimeCals.mag.b = Vector3f::Zero();
-    Serial.println("No IMU calibration in NVS; assuming zero mag calibration (A=I, b=0).");
+    diagnostic_log.println("No IMU calibration in NVS; assuming zero mag calibration (A=I, b=0).");
   }
 }
 
@@ -84,6 +88,7 @@ void loop()
   const uint32_t sampleUs = micros();
   loopTickUs = sampleUs;
 
+  diagnostic_log.service();
   const uint32_t updateMask = M5.Imu.update();
 
   ImuSample sample{};
@@ -91,9 +96,9 @@ void loop()
   {
     logState.markReadFailure();
     const uint32_t nowUs = micros();
-    if (logState.shouldLogNoSample(nowUs))
+    if (logState.shouldLogNoSample(nowUs) && diagnostic_log.readyForSample())
     {
-      Serial.printf("Waiting for IMU sample (failures=%lu): update_mask=0x%08lx\n",
+      diagnostic_log.printf("Waiting for IMU sample (failures=%lu): update_mask=0x%08lx\n",
                     static_cast<unsigned long>(logState.consecutiveReadFailures),
                     static_cast<unsigned long>(updateMask));
     }
@@ -137,8 +142,8 @@ void loop()
   row.magCalE = magCal.y();
   row.magCalD = magCal.z();
 
-  if (logState.shouldLogSample(sampleUs, atoms3r_timing::DEBUG_SERIAL_MS * 1000u))
+  if (logState.shouldLogSample(sampleUs, atoms3r_timing::DEBUG_SERIAL_MS * 1000u) && diagnostic_log.readyForSample())
   {
-    printImuLogRow(row);
+    printImuLogRow(row, diagnostic_log);
   }
 }

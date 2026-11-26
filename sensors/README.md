@@ -51,14 +51,19 @@ frames adds three. Duplicate polls and host-timed intervals add zero. PII and NL
 retain their 5 ms restart step for unverified host intervals longer than 50 ms.
 NLO subdivides genuine multi-frame gaps into integration steps of at most 5 ms.
 
-OU-II, OU-III and plain TFG publish NMEA heading and tilt on the 80 ms output deadline.
-Shared-mode TFG–CARMA publishes heading first and sends the pitch and roll sentences
-in the next available slot. All four sketches take heave, wave, status, temperature
-and rate-of-turn values from the same snapshot and send them over subsequent slots.
+All marine INS and compass sketches publish heading on the 80 ms NMEA
+schedule and send pitch and roll in a later sampling slot. The INS sketches
+also send heave and rate of turn from that snapshot. PII and NLO include any
+due status sentence with heading. Each sampling slot attempts at most one
+telemetry write. A short write retains the remaining bytes for the next slot.
+Reopening USB starts a fresh snapshot. Debug and plotter lines use the same
+partial-write handling.
 
-PII and NLO publish heading and any due status sentence first. They queue tilt,
-heave, temperature and rate of turn from that snapshot and send up to two
-sentences per sampling slot. Both observers use the held magnetic field on every
+The basic IMU and magnetometer diagnostic sketches skip periodic rows while
+USB is busy. A bounded queue holds command replies and diagnostic reports.
+A sustained stall can exhaust that queue.
+
+PII and NLO use the held magnetic field on every
 accepted IMU frame and repeat magnetic calibration only when the raw field changes.
 
 ## Hardware

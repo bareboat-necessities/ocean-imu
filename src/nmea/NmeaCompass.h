@@ -29,6 +29,8 @@ namespace nmea_detail {
 
 // The original HDM/ROT/XDR buffers allow 81 bytes including '$'. The
 // WAV and status buffers allow 95 body bytes, plus the leading '$'.
+constexpr size_t kMaxSentenceBytes = 96 + 5;
+
 class Sentence {
 public:
   explicit Sentence(bool shortTalker = false)
@@ -75,7 +77,8 @@ public:
     append(buf);
   }
 
-  void send() {
+  template<class Out>
+  void send(Out& out) {
     *end_ = '\0';
     const uint8_t checksum = wholeBody_ ? nmeaChecksumBody_(data_ + 1) : nmea0183_checksum(data_);
     static constexpr char hex[] = "0123456789ABCDEF";
@@ -84,24 +87,25 @@ public:
     *end_++ = hex[checksum & 15];
     *end_++ = '\r';
     *end_++ = '\n';
-    Serial.write(reinterpret_cast<const uint8_t*>(data_), end_ - data_);
+    out.write(reinterpret_cast<const uint8_t*>(data_), end_ - data_);
   }
 
 private:
-  char data_[96 + 5];
+  char data_[kMaxSentenceBytes];
   char* end_;
   char* limit_;
   bool wholeBody_;
 };
 
-inline void sendValue(const char* talker, const char* prefix, float value, unsigned precision,
+template<class Out>
+inline void sendValue(Out& out, const char* talker, const char* prefix, float value, unsigned precision,
                       const char* suffix, bool shortTalker = false) {
   Sentence sentence(shortTalker);
   sentence.append(talker, shortTalker ? 2 : SIZE_MAX);
   sentence.append(prefix);
   sentence.decimal(value, precision);
   sentence.append(suffix);
-  sentence.send();
+  sentence.send(out);
 }
 
 }  // namespace nmea_detail
@@ -113,90 +117,103 @@ static inline float wrap360f_(float deg) {
 }
 
 // $--HDM,xxx.x,M*hh  (magnetic heading)
-static inline void nmea_hdm(const char* talker2, float heading_deg) {
-  nmea_detail::sendValue(talker2, "HDM,", wrap360f_(heading_deg), 1, ",M");
+template<class Out = decltype(Serial)>
+static inline void nmea_hdm(const char* talker2, float heading_deg, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "HDM,", wrap360f_(heading_deg), 1, ",M");
 }
 
 // $--ROT,x.x,A*hh  (rate of turn, degrees per minute; A=valid, V=invalid)
-static inline void nmea_rot(const char* talker2, float rot_deg_per_min, bool valid) {
-  nmea_detail::sendValue(talker2, "ROT,", rot_deg_per_min, 1, valid ? ",A" : ",V");
+template<class Out = decltype(Serial)>
+static inline void nmea_rot(const char* talker2, float rot_deg_per_min, bool valid, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "ROT,", rot_deg_per_min, 1, valid ? ",A" : ",V");
 }
 
 // $--XDR,A,x.x,D,PTCH*hh  (angular displacement in degrees)
 // $--XDR,A,x.x,D,ROLL*hh
-static inline void nmea_xdr_pitch_roll(const char* talker2, float pitch_deg, float roll_deg) {
-  nmea_detail::sendValue(talker2, "XDR,A,", pitch_deg, 1, ",D,PTCH");
-  nmea_detail::sendValue(talker2, "XDR,A,", roll_deg, 1, ",D,ROLL");
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_pitch_roll(const char* talker2, float pitch_deg, float roll_deg, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "XDR,A,", pitch_deg, 1, ",D,PTCH");
+  nmea_detail::sendValue(out, talker2, "XDR,A,", roll_deg, 1, ",D,ROLL");
 }
 
 // $--XDR,D,x.x,M,DRT1*hh  (heave / vertical displacement, meters)
-static inline void nmea_xdr_heave(const char* talker2, float heave_m) {
-  nmea_detail::sendValue(talker2, "XDR,D,", heave_m, 4, ",M,DRT1");
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_heave(const char* talker2, float heave_m, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "XDR,D,", heave_m, 4, ",M,DRT1");
 }
 
 // $--XDR,F,x.x,H,FRT1*hh  (dominant wave frequency, Hz)
-static inline void nmea_xdr_freq(const char* talker2, float freq_hz) {
-  nmea_detail::sendValue(talker2, "XDR,F,", freq_hz, 4, ",H,FRT1");
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_freq(const char* talker2, float freq_hz, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "XDR,F,", freq_hz, 4, ",H,FRT1");
 }
 
 // $--XDR,V,x.xxx,M,VHSPD*hh  (vertical heave speed, meters/second, up-positive)
-static inline void nmea_xdr_heave_speed(const char* talker2, float heave_speed_mps) {
-  nmea_detail::sendValue(talker2, "XDR,V,", heave_speed_mps, 3, ",M,VHSPD");
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_heave_speed(const char* talker2, float heave_speed_mps, Out& out = Serial) {
+  nmea_detail::sendValue(out, talker2, "XDR,V,", heave_speed_mps, 3, ",M,VHSPD");
 }
 
 // $--XDR,C,x.x,C,IMUT*hh  (IMU chip temperature, degrees C)
-static inline void nmea_xdr_imu_temp(const char* talker2, float temp_c) {
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_imu_temp(const char* talker2, float temp_c, Out& out = Serial) {
   if (!std::isfinite(temp_c)) return;
-  nmea_detail::sendValue(talker2, "XDR,C,", temp_c, 1, ",C,IMUT");
+  nmea_detail::sendValue(out, talker2, "XDR,C,", temp_c, 1, ",C,IMUT");
 }
 
-static inline void nmeaPrintBody_(const char* body) {
+template<class Out = decltype(Serial)>
+static inline void nmeaPrintBody_(const char* body, Out& out = Serial) {
   if (strlen(body) <= 95) {
     nmea_detail::Sentence sentence(true);
     sentence.append(body);
-    sentence.send();
+    sentence.send(out);
     return;
   }
   const uint8_t cs = nmeaChecksumBody_(body);
-  Serial.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
+  out.printf("$%s*%02X\r\n", body, static_cast<unsigned>(cs));
 }
 
-static inline void nmea_xdr_wave_axis_rel(const char* talker, float wave_axis_deg, bool valid)
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_wave_axis_rel(const char* talker, float wave_axis_deg, bool valid, Out& out = Serial)
 {
   if (!valid || !std::isfinite(wave_axis_deg)) {
     return;
   }
-  nmea_detail::sendValue(talker, "XDR,A,", wave_axis_deg, 1, ",D,WAVAXIS", true);
+  nmea_detail::sendValue(out, talker, "XDR,A,", wave_axis_deg, 1, ",D,WAVAXIS", true);
 }
 
-static inline void nmea_xdr_wave_direction_rel(const char* talker, float wave_dir_deg, bool valid)
+template<class Out = decltype(Serial)>
+static inline void nmea_xdr_wave_direction_rel(const char* talker, float wave_dir_deg, bool valid, Out& out = Serial)
 {
   if (!valid || !std::isfinite(wave_dir_deg)) {
     return;
   }
-  nmea_detail::sendValue(talker, "XDR,A,", wave_dir_deg, 1, ",D,WAVDIR", true);
+  nmea_detail::sendValue(out, talker, "XDR,A,", wave_dir_deg, 1, ",D,WAVDIR", true);
 }
 
-static inline void nmea_txt_wave_direction_sign(const char* talker, int raw_sign, int polarity, bool valid)
+template<class Out = decltype(Serial)>
+static inline void nmea_txt_wave_direction_sign(const char* talker, int raw_sign, int polarity, bool valid, Out& out = Serial)
 {
   if (!valid) {
     return;
   }
   char body[96];
   snprintf(body, sizeof(body), "%.2sTXT,01,01,00,WAVSGN=%d POL=%d", talker, raw_sign, polarity);
-  nmeaPrintBody_(body);
+  nmeaPrintBody_(body, out);
 }
 
-static inline void nmea_txt_wave_direction_confidence(const char* talker, float confidence_pct, bool valid)
+template<class Out = decltype(Serial)>
+static inline void nmea_txt_wave_direction_confidence(const char* talker, float confidence_pct, bool valid, Out& out = Serial)
 {
   if (!valid || !std::isfinite(confidence_pct)) {
     return;
   }
   if (confidence_pct < 0.0f) confidence_pct = 0.0f;
   if (confidence_pct > 100.0f) confidence_pct = 100.0f;
-  nmea_detail::sendValue(talker, "TXT,01,01,00,WAVCONF=", confidence_pct, 0, "", true);
+  nmea_detail::sendValue(out, talker, "TXT,01,01,00,WAVCONF=", confidence_pct, 0, "", true);
 }
 
+template<class Out = decltype(Serial)>
 static inline void nmea_txt_ins_status(const char* talker,
                                        bool attitude_good,
                                        bool heave_good,
@@ -204,7 +221,7 @@ static inline void nmea_txt_ins_status(const char* talker,
                                        bool gyro_bias_learning,
                                        bool acc_bias_estimating,
                                        float imu_hz,
-                                       float mag_hz)
+                                       float mag_hz, Out& out = Serial)
 {
   nmea_detail::Sentence sentence(true);
   sentence.append(talker, 2);
@@ -217,5 +234,5 @@ static inline void nmea_txt_ins_status(const char* talker,
   sentence.decimal(imu_hz, 1);
   sentence.append(" MHz=");
   sentence.decimal(mag_hz, 1);
-  sentence.send();
+  sentence.send(out);
 }

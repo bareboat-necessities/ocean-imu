@@ -101,9 +101,9 @@ struct ImuLoopLogState
   }
 };
 
-inline void printImuLogRow(const ImuLogRow& row)
+inline void printImuLogRow(const ImuLogRow& row, Print& out = Serial)
 {
-  Serial.printf(
+  out.printf(
     "dt_imu_ms=%.2f | "
     "mag_valid=%u mag_updated=%u | mag_age_ms=%.2f | mag_step_ms=%.2f | last_mag_dt_ms=%.2f | "
     "acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f | "
