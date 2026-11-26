@@ -51,8 +51,9 @@ frames adds three. Duplicate polls and host-timed intervals add zero. PII and NL
 retain their 5 ms restart step for unverified host intervals longer than 50 ms.
 NLO subdivides genuine multi-frame gaps into integration steps of at most 5 ms.
 
-OU-II, OU-III and plain TFG publish NMEA heading and tilt on the 80 ms output deadline.
-Shared-mode TFG–CARMA publishes heading first and sends the pitch and roll sentences
+OU-II and OU-III publish NMEA heading and tilt on the 80 ms output deadline.
+Plain TFG and shared-mode TFG–CARMA check USB connection and transmit space before
+sending each batch phase. They publish heading first and send the pitch and roll sentences
 in the next available slot. All four sketches take heave, wave, status, temperature
 and rate-of-turn values from the same snapshot and send them over subsequent slots.
 

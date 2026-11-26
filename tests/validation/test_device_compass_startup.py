@@ -275,15 +275,16 @@ int main() {
     def test_serial_recovery(self):
         here = Path(__file__).resolve().parent
         template = (here / "shared_tfg_serial_test.cpp.in").read_text()
-        for name in ("atomS3R_ins_tfg_carma_shared_modes", "atomS3R_ins_pii_observer", "atomS3R_ins_nlo"):
+        for name in ("atomS3R_ins_tfg", "atomS3R_ins_tfg_carma_shared_modes",
+                     "atomS3R_ins_pii_observer", "atomS3R_ins_nlo"):
             sketch = (ROOT / "sensors/full_marine_ins" / name / f"{name}.ino").read_text()
-            shared = name == "atomS3R_ins_tfg_carma_shared_modes"
+            tfg = name in ("atomS3R_ins_tfg", "atomS3R_ins_tfg_carma_shared_modes")
             fixture = template.replace("@STREAM_SERIAL@", function(sketch, "streamSerial_"))
-            fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch, "writeDebugChunk_") if shared else "")
+            fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch, "writeDebugChunk_") if tfg else "")
             with tempfile.TemporaryDirectory() as tmp:
                 source, exe = Path(tmp) / "serial.cpp", Path(tmp) / "serial"
                 source.write_text(fixture)
-                for nmea, plotter in (((1, 0), (0, 0), (0, 1)) if shared else ((1, 0),)):
+                for nmea, plotter in (((1, 0), (0, 0), (0, 1)) if tfg else ((1, 0),)):
                     with self.subTest(sketch=name, nmea=nmea, plotter=plotter):
                         subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
                                         "-Wall", "-Wextra", "-Werror", f"-DSEA_STATE_SERIAL_NMEA={nmea}",

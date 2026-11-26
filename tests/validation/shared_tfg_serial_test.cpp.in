@@ -25,7 +25,7 @@ struct {
     room -= static_cast<int>(len);
     ++writes;
     partial.append(reinterpret_cast<const char*>(p), len);
-    if (partial.back() == '\n') {
+    if (len && partial.back() == '\n') {
       assert(partial.find('\n') == partial.size() - 1);
       packets.push_back(partial);
       partial.clear();
@@ -43,7 +43,12 @@ struct {
 #define SEA_STATE_NMEA_TALKER "II"
 
 struct Publisher {
-  struct { bool envelopeReady() const { return true; } bool isLive() const { return true; } bool hasMagNorthLock() const { return true; } } fusion_;
+  struct {
+    bool envelopeReady() const { return true; }
+    bool isLive() const { return true; }
+    bool magReferenceLearned() const { return true; }
+    bool hasMagNorthLock() const { return true; }
+  } fusion_;
   struct { bool learning() const { return true; } } gyro_bias_;
   struct { float dpm() const { return -8; } } rot_;
   struct { float imuHz() const { return 200; } float magHz() const { return 25; } } rates_;
@@ -115,7 +120,35 @@ void checkRecovery(int capacity, size_t max_write) {
   }
 }
 
+#if !SEA_STATE_SERIAL_NMEA
+void checkDebugShortWrites() {
+  now_ms = atoms3r_timing::DEBUG_SERIAL_MS;
+  Serial.room = 4096;
+  Serial.max_write = SIZE_MAX;
+  Serial.packets.clear();
+  Serial.partial.clear();
+  Publisher reference;
+  reference.streamSerial_();
+  assert(Serial.packets.size() == 1);
+  const std::string expected = Serial.packets.front();
+
+  Publisher publisher;
+  Serial.packets.clear();
+  // availableForWrite can succeed even if write subsequently returns zero.
+  for (size_t n = 0; n < expected.size(); ++n, now_ms += 5) {
+    Serial.room = 256;
+    Serial.max_write = n % 2 ? 7 : 0;
+    publisher.streamSerial_();
+    if (!Serial.packets.empty()) break;
+  }
+  assert(Serial.packets.size() == 1 && Serial.packets.front() == expected);
+}
+#endif
+
 int main() {
+#if !SEA_STATE_SERIAL_NMEA
+  checkDebugShortWrites();
+#endif
   checkRecovery(4096, SIZE_MAX);
   // The release core falls back to 256 bytes when the requested ring can't
   // be allocated. Debug lines may also have to resume after short writes.
