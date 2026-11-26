@@ -49,7 +49,7 @@
     },
     {
       "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-      "git_blob_sha": "5f172649a0b2640867ef9fc1e16e6b24eb21b246"
+      "git_blob_sha": "7055f3e4999ec33f54cf708e7c37d31fcf30c20d"
     },
     {
       "path": "src/AtomS3R/AtomS3R_Bmi270FrameClock.h",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/ou3-proof-research-state.md",
-      "git_blob_sha": "cb418cf333d866d946367e7ad18a2d0815551d95"
+      "git_blob_sha": "dacb625acdb327e9a1b835cc4a1afcf79f29189d"
     },
     {
       "path": "docs/ou3-quiet-inner-entry-obstruction.md",
@@ -907,7 +907,7 @@
     },
     {
       "path": "reports/results/ou3_stability/planar-native-secants-diagnostic.json",
-      "git_blob_sha": "52adf4e356f4938ca7abbdb54b6e42b07b9536e0"
+      "git_blob_sha": "85bc470787180c53a50ba3dea6dc96543016e5a0"
     },
     {
       "path": "reports/results/ou3_stability/planar-quotient-mean-diagnostic.json",
@@ -1328,7 +1328,7 @@
   "measurement_frame_loss_audit": {
     "proof_note": "docs/ou3-measurement-frame-loss.md",
     "certificate": "measurement-frame-loss-certificate.json",
-    "result_type": "PROVED \u2014 analytical identities and qualified uniform operation inequalities",
+    "result_type": "PROVED — analytical identities and qualified uniform operation inequalities",
     "complete_21_state_frame_and_mask_congruence": true,
     "moving_frame_derivative_retained": true,
     "radial_magnetic_feedback_and_square_charge_retained": true,
@@ -2195,6 +2195,22 @@
     "previous_shipping_source_tree_sha256": "cfb713406962cc53dcc86f89b358fbfcee810b4478efcb3735c3d07b1e207bee",
     "shipping_source_tree_sha256": "aa8919c5c4d4da3c29f0522abf44053298eef13b642c1d8c6959fbd96e77d77e",
     "relaxations_introduced": "None",
+    "replay_performed": false,
+    "theorem_promoted": false
+  },
+  "serial_output_source_identity": {
+    "classification": "E_IMPLEMENTATION_DIAGNOSTIC_FAILURE",
+    "runtime_source_commit": "867e8a35460ff191edf5e6da6eca04727c3700f9",
+    "compared_to": "c27900af8188a5180a3f8181712412365abeecf1",
+    "native_probe": "tools/stability/ou3_theorem/planar_native_secant_probe.cpp",
+    "compiler": "14.2.0 (GCC), C++20, -O1, EIGEN_UNROLLING_LIMIT=0, EIGEN_NON_ARDUINO, Eigen 3.4.0",
+    "identical_preprocessed_translation_unit_sha256": "1a973dcc057642388ee0742724f63408afd0e825efd9eae327f51e682083fc4e",
+    "shipping_headers_in_compiler_dependency_closure": 50,
+    "changed_headers_in_dependency_closure": [],
+    "previous_shipping_source_tree_sha256": "4fa8291012cc36d456c0593f515b4d662fc228531924b8d004ed78c6e28c36fb",
+    "shipping_source_tree_sha256": "5bca8eb8101393667c76d9bfddb780ec486238572e464bf5f572a8dc3b69ba17",
+    "previous_ou3_sketch_blob": "5f172649a0b2640867ef9fc1e16e6b24eb21b246",
+    "ou3_sketch_blob": "7055f3e4999ec33f54cf708e7c37d31fcf30c20d",
     "replay_performed": false,
     "theorem_promoted": false
   }

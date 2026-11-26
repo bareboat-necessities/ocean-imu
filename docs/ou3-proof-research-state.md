@@ -1363,6 +1363,17 @@ OU-III execution and finite secant results under their existing
 qualifications. No new relaxation was introduced. The open receipt/Schur
 sign remains the next mathematical check.
 
+**E — USB publication changed the OU-III sketch and whole-source fingerprints.**
+PR #798 changed the sketch blob from `5f172649` to `7055f3e4` and the
+native secant source digest from `4fa82910` to `5bca8eb8`. The previous
+fingerprints no longer identify the shipping files. The IMU loop, filter
+update and output refresh functions match main at `c27900af`. GCC 14.2
+preprocessed the native probe identically at both revisions, and all 50
+project dependencies matched byte for byte. The existing finite results
+retain their original scope and introduce no relaxation. The provenance
+validator checks the refreshed fingerprints. The open receipt/Schur sign
+remains the next mathematical check.
+
 **E — Shared firmware output intervals changed two source fingerprints.**
 The validator rejected the OU-III sketch blob and the native secant
 whole-source digest after the display and serial intervals moved to a
