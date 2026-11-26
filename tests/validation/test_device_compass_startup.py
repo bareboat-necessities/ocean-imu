@@ -272,23 +272,42 @@ int main() {
                             "-I", tmp, "-I", str(ROOT / "src"), str(path), "-o", str(exe)], check=True)
             subprocess.run([str(exe)], check=True)
 
+    def test_diagnostic_serial(self):
+        for path in (ROOT / "sensors/imu_basic").glob("*/*.ino"):
+            loop = function(path.read_text(), "loop")
+            self.assertIn("diagnostic_log.service();", loop)
+            self.assertIn("diagnostic_log.readyForSample()", loop)
+            self.assertNotRegex(loop, r"\bSerial\.print")
+        with tempfile.TemporaryDirectory() as tmp:
+            includes = Path(tmp)
+            (includes / "Arduino.h").touch()
+            (includes / "freertos").mkdir()
+            (includes / "freertos/ringbuf.h").touch()
+            exe = includes / "diagnostic_serial"
+            subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                            "-I", tmp, "-I", str(ROOT / "src"), str(Path(__file__).with_name("diagnostic_serial_test.cpp")),
+                            "-o", str(exe)], check=True)
+            subprocess.run([str(exe)], check=True)
+
     def test_serial_recovery(self):
         here = Path(__file__).resolve().parent
         template = (here / "shared_tfg_serial_test.cpp.in").read_text()
-        for name in ("atomS3R_ins_tfg", "atomS3R_ins_tfg_carma_shared_modes",
-                     "atomS3R_ins_pii_observer", "atomS3R_ins_nlo"):
-            sketch = (ROOT / "sensors/full_marine_ins" / name / f"{name}.ino").read_text()
-            tfg = name in ("atomS3R_ins_tfg", "atomS3R_ins_tfg_carma_shared_modes")
-            fixture = template.replace("@STREAM_SERIAL@", function(sketch, "streamSerial_"))
-            fixture = fixture.replace("@WRITE_DEBUG_CHUNK@", function(sketch, "writeDebugChunk_") if tfg else "")
+        observers = ("atomS3R_ins_pii_observer", "atomS3R_ins_nlo")
+        compass = ROOT / "src/AtomS3R/AtomS3R_CompassAppBase.h"
+        paths = (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / f"{name}.ino" for name in observers), compass)
+        for path in paths:
+            fixture = template.replace("@STREAM_SERIAL@", function(path.read_text(), "streamSerial_"))
             with tempfile.TemporaryDirectory() as tmp:
                 source, exe = Path(tmp) / "serial.cpp", Path(tmp) / "serial"
                 source.write_text(fixture)
-                for nmea, plotter in (((1, 0), (0, 0), (0, 1)) if tfg else ((1, 0),)):
-                    with self.subTest(sketch=name, nmea=nmea, plotter=plotter):
+                for nmea, plotter in ((1, 0), (0, 0), (0, 1)):
+                    if path == compass and plotter:
+                        continue
+                    with self.subTest(sketch=path.stem, nmea=nmea, plotter=plotter):
                         subprocess.run([*shlex.split(os.environ.get("CXX", "c++")), "-std=c++17",
                                         "-Wall", "-Wextra", "-Werror", f"-DSEA_STATE_SERIAL_NMEA={nmea}",
-                                        f"-DARDUINO_PLOTTER={plotter}", "-I", str(ROOT / "src"),
+                                        f"-DARDUINO_PLOTTER={plotter}", f"-DCOMPASS_SERIAL_NMEA={nmea}",
+                                        f"-DCOMPASS_APP={int(path == compass)}", "-I", str(ROOT / "src"),
                                         str(source), "-o", str(exe)], check=True)
                         subprocess.run([str(exe)], check=True)
 

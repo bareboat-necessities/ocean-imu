@@ -20,7 +20,9 @@
   #define SEA_STATE_ENABLE_WIZARD 1
 #endif
 
-#define ARDUINO_PLOTTER 1
+#ifndef ARDUINO_PLOTTER
+  #define ARDUINO_PLOTTER 1
+#endif
 
 #include <M5Unified.h>
 #include <cmath>
@@ -252,6 +254,8 @@ private:
   uint32_t last_wave_nmea_ms_   = 0;
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_   = 0;
+#else
+  atoms3r_ical::SerialBuffer<1024> debug_line_;
 #endif
 
   Fusion fusion_{};
@@ -369,6 +373,8 @@ private:
   void resetFusion_() {
 #if SEA_STATE_SERIAL_NMEA
     nmea_batch_.reset();
+#else
+    debug_line_.reset();
 #endif
     output_dirty_ = false;
     have_output_ = false;
@@ -667,23 +673,21 @@ private:
 
   void streamSerial_() {
     const uint32_t now_ms = millis();
-
 #if SEA_STATE_SERIAL_NMEA
-    if (nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
-    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
+    if (!nmea_batch_.readyForSnapshot(Serial, SEA_STATE_NMEA_TALKER, now_ms, last_serial_ms_)) return;
 #else
-    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
-#endif
+    if (!debug_line_.ready(Serial, now_ms - last_serial_ms_ >= atoms3r_timing::DEBUG_SERIAL_MS)) return;
     last_serial_ms_ = now_ms;
+#endif
     refreshOutput_();
 
 #if SEA_STATE_SERIAL_NMEA
     const bool valid = fusion_.isLive() && heading_fused_;
     if (heading_valid_) {
-      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_);
+      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_deg_, nmea_batch_.output());
     }
-    nmea_xdr_pitch_roll(SEA_STATE_NMEA_TALKER, pitch_deg_, roll_deg_); // startup proxy attitude until Live
     nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), valid);
+    nmea_batch_.addTilt(pitch_deg_, roll_deg_);
 
     if (now_ms - last_wave_nmea_ms_ >= atoms3r_timing::NMEA_WAVE_MS) {
       last_wave_nmea_ms_ = now_ms;
@@ -699,9 +703,10 @@ private:
                              fusion_.hasMagNorthLock(), gyro_bias_.learning(), acc_bias_estimating_,
                              rates_.imuHz(), rates_.magHz()});
     }
+    nmea_batch_.output().drain(Serial);
 #else
   #if ARDUINO_PLOTTER
-    Serial.printf(
+    debug_line_.printf(
       "HrawCm:%+.3f\tHwaveEnvelopeCm:%+.3f\tHwaveCleanCm:%+.3f\tWavAxisDeg:%+.2f\tWavDirDeg:%+.2f\tWavSign:%d\tAccBiasNormCmS2:%+.3f\tAccBiasZCmS2:%+.3f\n",
       static_cast<double>(heave_raw_m_ * 100.0f),
       static_cast<double>(wave_envelope_m_ * 100.0f),
@@ -712,7 +717,7 @@ private:
       static_cast<double>(acc_bias_norm_mps2_ * 100.0f),
       static_cast<double>(acc_bias_z_mps2_ * 100.0f));
   #else
-    Serial.printf(
+    debug_line_.printf(
       "hdg=%s%.2f | hdg_mag=%s%.2f | wav_axis=%.2f | wav_dir=%s%.2f | wav_sign=%d pol=%d"
       " | dt_imu_ms=%.2f | mag_ok=%u | mag_fresh=%u | |m|=%.2f"
       " | acc_ned[m/s^2] N=%.3f E=%.3f D=%.3f"
@@ -741,6 +746,7 @@ private:
       static_cast<double>(m_cal_.y()),
       static_cast<double>(m_cal_.z()));
   #endif
+    debug_line_.drain(Serial);
 #endif
   }
 };

@@ -19,7 +19,7 @@
 #include "AtomS3R/AtomS3R_SamplePacer.h"
 #include "AtomS3R/AtomS3R_LoopTiming.h"
 #include "AtomS3R/AtomS3R_OutputTiming.h"
-#include "nmea/NmeaCompass.h"
+#include "AtomS3R/AtomS3R_MarineNmeaBatch.h"
 
 namespace atoms3r_compass {
 
@@ -401,6 +401,11 @@ class CompassAppBase {
   }
 
   void resetPipeline_() {
+#if COMPASS_SERIAL_NMEA
+    nmea_batch_.reset();
+#else
+    debug_line_.reset();
+#endif
     navigation_imu_.configure(M5.Imu);
     temperature_ = {};
     backend_->reset();
@@ -512,28 +517,22 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, uint32_t poll_ms) {
 
   void streamSerial_() {
     const uint32_t now_ms = millis();
-
 #if COMPASS_SERIAL_NMEA
-    if (now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
+    if (!nmea_batch_.readyForSnapshot(Serial, COMPASS_NMEA_TALKER, now_ms, last_serial_ms_)) return;
+    nmea_hdm(COMPASS_NMEA_TALKER, outputs_.att.heading_deg, nmea_batch_.output());
+    nmea_batch_.beginCompass(outputs_.att.pitch_deg, outputs_.att.roll_deg, outputs_.rot_dpm, backend_->isValid());
+    nmea_batch_.output().drain(Serial);
 #else
-    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
-#endif
+    if (!debug_line_.ready(Serial, now_ms - last_serial_ms_ >= atoms3r_timing::DEBUG_SERIAL_MS)) return;
     last_serial_ms_ = now_ms;
-
-#if COMPASS_SERIAL_NMEA
-    nmea_hdm(COMPASS_NMEA_TALKER, outputs_.att.heading_deg);
-    nmea_xdr_pitch_roll(COMPASS_NMEA_TALKER, outputs_.att.pitch_deg, outputs_.att.roll_deg);
-    nmea_rot(COMPASS_NMEA_TALKER, outputs_.rot_dpm, backend_->isValid());
-#else
     const float t = (micros() - start_us_) * 1e-6f;
-    Serial.printf("t=%.2f ", (double)t);
-    Serial.printf("HDG:%6.1f ", (double)outputs_.att.heading_deg);
-    Serial.printf("ROLL:%6.1f PITCH:%6.1f ", (double)outputs_.att.roll_deg, (double)outputs_.att.pitch_deg);
-    Serial.printf("mag:%s/%s |m|=%.1f ", sample_.mag_ok ? "OK" : "BAD", sample_.mag_fresh ? "NEW" : "OLD",
-                  (double)sample_.mag_norm_uT);
-    Serial.printf("|a_raw|=%.4f |a_cal|=%.4f ", (double)sample_.a_raw_norm, (double)sample_.a_cal.norm());
-    Serial.printf("wC:%+.4f,%+.4f,%+.4f ", (double)sample_.w_cal.x(), (double)sample_.w_cal.y(), (double)sample_.w_cal.z());
-    Serial.println();
+    debug_line_.printf("t=%.2f HDG:%6.1f ROLL:%6.1f PITCH:%6.1f mag:%s/%s |m|=%.1f "
+                       "|a_raw|=%.4f |a_cal|=%.4f wC:%+.4f,%+.4f,%+.4f \r\n",
+                       (double)t, (double)outputs_.att.heading_deg, (double)outputs_.att.roll_deg,
+                       (double)outputs_.att.pitch_deg, sample_.mag_ok ? "OK" : "BAD", sample_.mag_fresh ? "NEW" : "OLD",
+                       (double)sample_.mag_norm_uT, (double)sample_.a_raw_norm, (double)sample_.a_cal.norm(),
+                       (double)sample_.w_cal.x(), (double)sample_.w_cal.y(), (double)sample_.w_cal.z());
+    debug_line_.drain(Serial);
 #endif
   }
 
@@ -562,6 +561,11 @@ CalibratedSample makeCalibratedSample_(const ImuSample& s, uint32_t poll_ms) {
   uint32_t last_update_us_ = 0;
   uint32_t last_ui_ms_ = 0;
   uint32_t last_serial_ms_ = 0;
+#if COMPASS_SERIAL_NMEA
+  atoms3r_ical::MarineNmeaBatch nmea_batch_{};
+#else
+  atoms3r_ical::SerialBuffer<1024> debug_line_;
+#endif
 
   CalibratedSample sample_;
   CompassOutputs outputs_;

@@ -71,7 +71,9 @@
   #define SEA_STATE_ENABLE_WIZARD 1
 #endif
 
-#define ARDUINO_PLOTTER 1
+#ifndef ARDUINO_PLOTTER
+  #define ARDUINO_PLOTTER 1
+#endif
 
 #include <M5Unified.h>
 #include <algorithm>
@@ -289,10 +291,12 @@ class FusionApp {
 
   uint32_t last_ui_ms_ = 0;
   uint32_t last_serial_ms_ = 0;
+#if SEA_STATE_SERIAL_NMEA
+  atoms3r_ical::MarineNmeaBatch nmea_batch_{};
   uint32_t last_status_nmea_ms_ = 0;
   uint32_t last_temp_nmea_ms_ = 0;
-#if SEA_STATE_SERIAL_NMEA
-  MarineNmeaBatch nmea_batch_{};
+#else
+  atoms3r_ical::SerialBuffer<1024> debug_line_;
 #endif
 
   Fusion fusion_{};
@@ -407,6 +411,8 @@ class FusionApp {
     previous_raw_mag_ = Vector3f::Constant(NAN);
 #if SEA_STATE_SERIAL_NMEA
     nmea_batch_.reset();
+#else
+    debug_line_.reset();
 #endif
     auto& cfg = fusion_.config();
 
@@ -779,25 +785,16 @@ class FusionApp {
 
   void streamSerial_() {
     const uint32_t now_ms = millis();
-
 #if SEA_STATE_SERIAL_NMEA
-    if (!nmea_batch_.pending() && now_ms - last_serial_ms_ < atoms3r_timing::NMEA_SERIAL_MS) return;
-    if (!Serial) {
-      nmea_batch_.reset();
-      last_serial_ms_ = now_ms;
-      return;
-    }
-    if (Serial.availableForWrite() < 2 * 101 || nmea_batch_.sendNext(SEA_STATE_NMEA_TALKER)) return;
+    if (!nmea_batch_.readyForSnapshot(Serial, SEA_STATE_NMEA_TALKER, now_ms, last_serial_ms_)) return;
 #else
-    if (now_ms - last_serial_ms_ < atoms3r_timing::DEBUG_SERIAL_MS) return;
+    if (!debug_line_.ready(Serial, now_ms - last_serial_ms_ >= atoms3r_timing::DEBUG_SERIAL_MS)) return;
+    last_serial_ms_ = now_ms;
 #endif
 
-    last_serial_ms_ = now_ms;
-
 #if SEA_STATE_SERIAL_NMEA
-
     if (heading_valid_) {
-      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_);
+      nmea_hdm(SEA_STATE_NMEA_TALKER, heading_mag_deg_, nmea_batch_.output());
     }
 
     nmea_batch_.begin(heave_wave_clean_m_, heave_speed_mps_, rot_.dpm(), heading_valid_);
@@ -823,15 +820,13 @@ class FusionApp {
                           // still startup.
                           false,
                           rates_.imuHz(),
-                          rates_.magHz());
+                          rates_.magHz(), nmea_batch_.output());
     }
-
-
+    nmea_batch_.output().drain(Serial);
 #else
-
   #if ARDUINO_PLOTTER
 
-    Serial.printf("HrawCm:%+.3f\tHbaselineCm:%+.3f\tHwaveCleanCm:%+.3f\tFreqmHz:%+.3f\tTheta:%+.3f\n",
+    debug_line_.printf("HrawCm:%+.3f\tHbaselineCm:%+.3f\tHwaveCleanCm:%+.3f\tFreqmHz:%+.3f\tTheta:%+.3f\n",
                   static_cast<double>(heave_raw_m_ * 100.0f),
                   static_cast<double>(heave_baseline_m_ * 100.0f),
                   static_cast<double>(heave_wave_clean_m_ * 100.0f),
@@ -840,7 +835,7 @@ class FusionApp {
 
   #else
 
-    Serial.printf(
+    debug_line_.printf(
         "hdg=%.2f yaw=%.2f valid=%d init=%d boot=%d roll=%.2f pitch=%.2f "
         "|m|=%.1f magUsed=%d magField=%d magFresh=%d "
         "heave=%.3f heaveClean=%.3f vz=%.3f az=%.3f "
@@ -868,7 +863,7 @@ class FusionApp {
         static_cast<double>(dt_ * 1000.0f));
 
   #endif
-
+    debug_line_.drain(Serial);
 #endif
   }
 };
