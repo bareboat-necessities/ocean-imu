@@ -31,8 +31,8 @@ def main():
  record=dict(platform='esp32:esp32@3.3.7',on_device_timing=False,
              cli=inventory(['version','--format','json']),installed_cores=cores,
              installed_libraries=libs,builds=[])
- variants=[('qmekf','sensors/full_marine_ins/atomS3R_ins_carma_shared_modes',''),
-           ('tfg','sensors/full_marine_ins/atomS3R_ins_carma_shared_modes','-DOCEAN_IMU_TFG_SHARED_MODES=1'),
+ variants=[('qmekf','sensors/full_marine_ins-legacy/atomS3R_ins_carma_shared_modes',''),
+           ('tfg','sensors/full_marine_ins-legacy/atomS3R_ins_carma_shared_modes','-DOCEAN_IMU_TFG_SHARED_MODES=1'),
            ('probe','tests/kalman_carma_shared_modes/arduino/tfg_shared_runtime_probe','-DPROBE_VARIANT=3')]
  for name,sketch,extra in variants:
   dest=args.build_root.resolve()/name;dest.mkdir(parents=True,exist_ok=True)

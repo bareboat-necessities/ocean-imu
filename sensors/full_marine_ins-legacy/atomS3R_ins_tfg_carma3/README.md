@@ -1,6 +1,6 @@
 # AtomS3R marine INS — TFG-CARMA3 (experimental)
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_tfg_carma3**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins-legacy](../README.md) / **atomS3R_ins_tfg_carma3**
 
 This sketch runs the **experimental** TFG-CARMA3 Kalman filter, **SeaStateFusion TFG-CARMA3**, on the M5Stack AtomS3R. It is the [CARMA3 sketch](../atomS3R_ins_carma3/README.md) with the estimator replaced: the same CARMA(4,1) motion priors on X, Y and Z (no `S` states), carried on the right-invariant two-frame Lie group of [`src/lie/TwoFrameGroup.h`](../../../src/lie/TwoFrameGroup.h) instead of CARMA3's quaternion MEKF error. The fusion wrapper, startup, magnetometer handling and adaptation are CARMA3's code, so the two sketches differ only in the error geometry ([`docs/tfg-carma3-research.md`](../../../docs/tfg-carma3-research.md)).
 
@@ -10,7 +10,7 @@ This sketch runs the **experimental** TFG-CARMA3 Kalman filter, **SeaStateFusion
 
 Open the sketch: [`atomS3R_ins_tfg_carma3.ino`](atomS3R_ins_tfg_carma3.ino).
 
-> **Independent-axis research sketch.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's mixed-sea weakness); attitude and bias are somewhat better where the CARMA prior misfits. Like the CARMA3 sketch it drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom of the benchmarked floor-driven configuration. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
+> **Independent-axis research sketch.** The TFG-CARMA3 results are simulation-only; there is no hardware, on-target timing or sea-trial evidence and no stability analysis. Translation matches CARMA3 (including CARMA3's mixed-sea weakness); attitude and bias are somewhat better where the CARMA prior misfits. Like the CARMA3 sketch it drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom of the benchmarked floor-driven configuration. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## What it does
 

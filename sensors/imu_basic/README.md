@@ -22,6 +22,6 @@ Follow the common [Arduino installation instructions](../README.md#arduino-insta
 Once raw/mapped sensing looks reasonable:
 
 - continue to [Compass / AHRS](../compass_ahrs/README.md) for roll, pitch, and heading;
-- continue to [Full marine INS](../full_marine_ins/README.md) for vessel motion and wave estimation.
+- continue to [Full marine INS](../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) for vessel motion and wave estimation.
 
 [Back to all sensor examples](../README.md)

@@ -45,7 +45,7 @@ class JointRootCovarianceTests(unittest.TestCase):
             r['AG_precision_upper'],r['LIN_precision_inf_upper'],r['BA_precision_upper']))
 
     def test_source_gyro_floor_uses_deployed_density_not_old_simulation_value(self):
-        source=(ROOT/'sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino').read_text()
+        source=(ROOT/'sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino').read_text()
         self.assertIn('gyr_sigma_ref_rps  = 0.00135f',source)
         ag,ba=process_floors()
         self.assertGreater(ag,0)

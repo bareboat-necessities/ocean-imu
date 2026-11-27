@@ -27,6 +27,6 @@ Heading quality depends on magnetometer calibration and installation environment
 
 ## Next step
 
-For heave, 3-D displacement, sea-state adaptation, and wave-motion outputs, continue to [Full marine INS](../full_marine_ins/README.md).
+For heave, 3-D displacement, sea-state adaptation, and wave-motion outputs, continue to [Full marine INS](../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 [Back to all sensor examples](../README.md)

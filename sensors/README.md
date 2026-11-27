@@ -16,7 +16,8 @@ The examples intentionally form a progression. Start with the basic IMU sketch t
 | --- | --- | --- |
 | [IMU basics](imu_basic/README.md) | M5Unified IMU access, body-to-NED mapping, saved calibration, serial diagnostics | First hardware bring-up |
 | [Compass / AHRS](compass_ahrs/README.md) | Tilt-compensated heading with Mahony or quaternion MEKF, display UI, NMEA output | Heading and attitude |
-| [Full marine INS](full_marine_ins/README.md) | Adaptive marine motion estimation with OU-II, OU-III, TFG, or PII observer | Vessel motion / wave estimation |
+| [Full marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) | Primary marine INS: shared-mode TFG–CARMA(4,1) | Vessel motion / wave estimation |
+| [Legacy full marine INS](full_marine_ins-legacy/README.md) | Alternative estimators: OU-II, OU-III, CARMA3, TFG, TFG-CARMA3, shared-modes QMEKF, PII observer | Comparisons and research |
 
 ## Checking the 200 Hz cycle on an AtomS3R
 
@@ -85,7 +86,7 @@ If you are bringing up a new board or a new installation, use [`imu_basic/atomS3
 
 1. [Basic AtomS3R IMU](imu_basic/atomS3R_imu_m5_basic/README.md); if a compass later reads wrong headings, run [magnetometer diagnostics](imu_basic/atomS3R_mag_diagnostics/README.md)
 2. [Mahony compass](compass_ahrs/atomS3R_compass_mahony/README.md) or [qMEKF compass](compass_ahrs/atomS3R_compass_qmekf/README.md)
-3. For full marine navigation, start with [shared-mode TFG–CARMA marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md). The [full marine INS guide](full_marine_ins/README.md) compares the alternative estimators.
+3. For full marine navigation, start with [shared-mode TFG–CARMA marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md). The [legacy full marine INS guide](full_marine_ins-legacy/README.md) compares the alternative estimators.
 
 ## Coordinate convention
 

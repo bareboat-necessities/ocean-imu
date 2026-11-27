@@ -671,7 +671,7 @@ for an `S`.  `P` is a dense symmetric `NX x NX` float matrix.
   the wrapper takes OU-III's tuning envelope, `r_S` law constants and
   `TuneState` from `src/kalman_common/SeaStateTuning.h`.  No CARMA header
   includes an OU header.
-* `sensors/full_marine_ins/atomS3R_ins_carma3/`: an experimental AtomS3R
+* `sensors/full_marine_ins-legacy/atomS3R_ins_carma3/`: an experimental AtomS3R
   research sketch running recommendation B (CARMA(4,1) x/y/z, no `S`) with
   the OU-III sketch's I/O, calibration and wrapper settings, minus the
   pseudo-update cadence, which has no CARMA counterpart; its lever arm is the

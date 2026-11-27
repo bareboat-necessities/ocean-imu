@@ -3,12 +3,12 @@ name: device-compass
 on:
   pull_request:
     paths:
-      - sensors/full_marine_ins/atomS3R_ins_tfg/**
-      - sensors/full_marine_ins/atomS3R_ins_kalman_ou3/**
-      - sensors/full_marine_ins/atomS3R_ins_kalman_ou2/**
-      - sensors/full_marine_ins/atomS3R_ins_carma3/**
-      - sensors/full_marine_ins/atomS3R_ins_tfg_carma3/**
-      - sensors/full_marine_ins/atomS3R_ins_carma_shared_modes/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_tfg/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou3/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou2/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_carma3/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_tfg_carma3/**
+      - sensors/full_marine_ins-legacy/atomS3R_ins_carma_shared_modes/**
       - sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/**
       - src/**
       - tests/kalman_tfg/tfg_orchestrator-test.cpp

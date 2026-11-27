@@ -1,6 +1,6 @@
 # AtomS3R marine INS — Kalman CARMA3 (experimental)
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_carma3**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins-legacy](../README.md) / **atomS3R_ins_carma3**
 
 This sketch runs the **experimental** three-axis CARMA Kalman filter, **SeaStateFusion CARMA3**, on the M5Stack AtomS3R. It replaces OU-III's per-axis integrated-OU wave chains with CARMA(4,1) motion priors on X, Y and Z (no `S` states), the research candidate recommended in [`docs/carma-three-axis.md`](../../../docs/carma-three-axis.md). Attitude, bias, magnetometer handling, startup and adaptation are OU-III's.
 
@@ -10,7 +10,7 @@ This sketch runs the **experimental** three-axis CARMA Kalman filter, **SeaState
 
 Open the sketch: [`atomS3R_ins_carma3.ino`](atomS3R_ins_carma3.ino).
 
-> **Independent-axis research sketch.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. The sketch drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom motion and heave startup transient of the benchmarked floor-driven configuration; heave on mixed swell + wind seas remains worse than OU-III's. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
+> **Independent-axis research sketch.** The CARMA3 results are simulation-only; there is no hardware or sea-trial evidence and no stability analysis. The sketch drives the CARMA prior from measured wave evidence ([`docs/carma-wave-excitation.md`](../../../docs/carma-wave-excitation.md)), which in simulation removes the still-IMU phantom motion and heave startup transient of the benchmarked floor-driven configuration; heave on mixed swell + wind seas remains worse than OU-III's. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## What it does
 

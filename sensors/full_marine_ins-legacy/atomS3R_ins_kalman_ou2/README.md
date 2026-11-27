@@ -1,6 +1,6 @@
 # AtomS3R marine INS — Kalman OU-II
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_kalman_ou2**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins-legacy](../README.md) / **atomS3R_ins_kalman_ou2**
 
 This sketch runs the adaptive **SeaStateFusion OU-II** marine estimator on the M5Stack AtomS3R.
 
@@ -41,7 +41,7 @@ The top-of-file switches control the calibration wizard, graphics UI, NMEA outpu
 
 ## Compare
 
-- [Shared-mode TFG–CARMA marine INS](../atomS3R_ins_tfg_carma_shared_modes/README.md) — primary marine INS estimator
+- [Shared-mode TFG–CARMA marine INS](../../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) — primary marine INS estimator
 - [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — 21-state OU filter with higher-order integral regularization
 - [TFG marine INS](../atomS3R_ins_tfg/README.md) — same state and wave model on a two-frame Lie group
 - [PII observer](../atomS3R_ins_pii_observer/README.md) — lighter observer-based alternative
