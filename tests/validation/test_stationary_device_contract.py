@@ -9,7 +9,7 @@ class StationaryDeviceContract(unittest.TestCase):
     def test_deployed_pseudo_cadence(self):
         for family in ("ou2", "ou3", "tfg"):
             directory = f"atomS3R_ins_kalman_{family}" if family != "tfg" else "atomS3R_ins_tfg"
-            text = (ROOT / "sensors/full_marine_ins" / directory / f"{directory}.ino").read_text()
+            text = (ROOT / "sensors/full_marine_ins-legacy" / directory / f"{directory}.ino").read_text()
             # OU sketches use the fixed 15 ms cadence; TFG keeps the tau-scaled one.
             call = ("ff.setTauScaledPseudoUpdateCadence(false);" if family != "tfg"
                     else "fusion_.setTauScaledPseudoCadence(true);")

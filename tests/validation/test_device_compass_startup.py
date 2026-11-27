@@ -14,7 +14,15 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-SKETCHES = tuple(ROOT / "sensors/full_marine_ins" / name / (name + ".ino") for name in (
+PRIMARY_SKETCH = "atomS3R_ins_tfg_carma_shared_modes"
+
+
+def sketch_path(name: str) -> Path:
+    family = "full_marine_ins" if name == PRIMARY_SKETCH else "full_marine_ins-legacy"
+    return ROOT / "sensors" / family / name / (name + ".ino")
+
+
+SKETCHES = tuple(sketch_path(name) for name in (
     "atomS3R_ins_kalman_ou2", "atomS3R_ins_kalman_ou3", "atomS3R_ins_carma3", "atomS3R_ins_tfg_carma3",
     "atomS3R_ins_carma_shared_modes", "atomS3R_ins_tfg_carma_shared_modes",
     "atomS3R_ins_tfg",
@@ -41,8 +49,7 @@ class DeviceCompassStartupTest(unittest.TestCase):
     def test_sampling_phase_and_overruns(self):
         # Exercise the same pacer and real timestamp wiring as every marine sketch.
         other_sketches = ("atomS3R_ins_pii_observer",)
-        for path in (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / (name + ".ino")
-                                  for name in other_sketches)):
+        for path in (*SKETCHES, *(sketch_path(name) for name in other_sketches)):
             source = path.read_text()
             tick = function(source, "tick")
             update = function(source, "updateFilter_")
@@ -295,7 +302,7 @@ int main() {
         template = (here / "shared_tfg_serial_test.cpp.in").read_text()
         observers = ("atomS3R_ins_pii_observer",)
         compass = ROOT / "src/AtomS3R/AtomS3R_CompassAppBase.h"
-        paths = (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / f"{name}.ino" for name in observers), compass)
+        paths = (*SKETCHES, *(sketch_path(name) for name in observers), compass)
         for path in paths:
             fixture = template.replace("@STREAM_SERIAL@", function(path.read_text(), "streamSerial_"))
             with tempfile.TemporaryDirectory() as tmp:

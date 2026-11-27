@@ -3,7 +3,7 @@
 
 # AtomS3R marine INS — Two-Frame Lie-Group (TFG)
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_tfg**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins-legacy](../README.md) / **atomS3R_ins_tfg**
 
 This sketch runs the **right-invariant two-frame Lie-group** estimator, `SeaStateFusionFilter_TFG`, on the M5Stack AtomS3R. It carries the same 21-dimensional state and the same OU wave model as OU-III, but attitude, the world-frame kinematic states and the body-frame biases live on one group, so an attitude correction rotates velocity, position, integral displacement and wave acceleration coherently instead of leaving them behind.
 
@@ -63,7 +63,7 @@ tests/kalman_tfg/tfg_update_bench
 
 ## Memory on the AtomS3R
 
-The 21-state filter holds three 21 × 21 and two 21 × 3 single-precision workspaces in the filter object. Together they occupy 5,796 bytes and are reused by prediction and correction. The firmware build reports the complete sketch's flash and global RAM usage in the `build-MCU (full_marine_ins)` job.
+The 21-state filter holds three 21 × 21 and two 21 × 3 single-precision workspaces in the filter object. Together they occupy 5,796 bytes and are reused by prediction and correction. The firmware build reports the complete sketch's flash and global RAM usage in the `build-MCU (full_marine_ins-legacy)` job.
 
 ## Install and upload
 

@@ -1,8 +1,8 @@
-# Full marine INS examples
+# Legacy full marine INS examples
 
-[ocean-imu](../../README.md) / [sensors](../README.md) / **full_marine_ins**
+[ocean-imu](../../README.md) / [sensors](../README.md) / **full_marine_ins-legacy**
 
-These are the most complete AtomS3R applications in the repository. They combine calibrated IMU input, attitude/heading estimation, marine-motion processing, on-device UI, and serial/NMEA output.
+These AtomS3R applications are alternatives and research comparisons to the primary marine INS estimator, [shared-mode TFG–CARMA(4,1)](../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md), which lives in [`full_marine_ins/`](../full_marine_ins/). They are among the most complete AtomS3R applications in the repository. They combine calibrated IMU input, attitude/heading estimation, marine-motion processing, on-device UI, and serial/NMEA output.
 
 <p align="center">
   <img src="../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
@@ -14,7 +14,7 @@ They are intended for **marine motion estimation**, where accelerometer measurem
 
 | Example | Method | Main character |
 | --- | --- | --- |
-| [atomS3R_ins_tfg_carma_shared_modes](atomS3R_ins_tfg_carma_shared_modes/README.md) | Shared-mode TFG–CARMA(4,1) INS | **Primary marine INS estimator.** 27 error states, shared directional modes and confidence-weighted coupling. Accuracy evaluated in simulation. |
+| [atomS3R_ins_tfg_carma_shared_modes](../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) | Shared-mode TFG–CARMA(4,1) INS | **Primary marine INS estimator.** 27 error states, shared directional modes and confidence-weighted coupling. Accuracy evaluated in simulation. |
 | [atomS3R_ins_kalman_ou2](atomS3R_ins_kalman_ou2/README.md) | Adaptive OU-II Kalman INS | More direct integral-drift correction; responsive sea-state adaptation |
 | [atomS3R_ins_kalman_ou3](atomS3R_ins_kalman_ou3/README.md) | Adaptive OU-III Kalman INS | Higher-order integral regularization; OU-family 3-D navigation implementation |
 | [atomS3R_ins_carma3](atomS3R_ins_carma3/README.md) | Experimental three-axis CARMA Kalman INS | OU-III with CARMA(4,1) motion priors on X/Y/Z; research sketch, simulation evidence only |
