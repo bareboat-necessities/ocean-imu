@@ -48,7 +48,7 @@
       "git_blob_sha": "c80ba72d34db8ce133a1a0f8dc0e58276b1aaf23"
     },
     {
-      "path": "sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
+      "path": "sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
       "git_blob_sha": "7055f3e4999ec33f54cf708e7c37d31fcf30c20d"
     },
     {
@@ -503,7 +503,7 @@
     },
     {
       "path": "tests/validation/test_ou3_root_covariance_certificate.py",
-      "git_blob_sha": "4f2cbbb3d55892e8888937e9718c87a692c5f240"
+      "git_blob_sha": "e5a087025cb4a041f103b1208815706e68531fb3"
     },
     {
       "path": "tests/validation/test_ou3_same_cell_groups.py",
