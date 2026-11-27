@@ -1412,7 +1412,6 @@ void testGravityConvention(std::ostream& rep) {
                             "/../../sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
                             "/../../sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
                             "/../../sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
                             "/../../sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
                             "/../../sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino"}) {
       std::ifstream f(dir + rel);

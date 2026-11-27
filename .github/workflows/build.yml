@@ -593,7 +593,7 @@ jobs:
     needs: classify
     if: needs.classify.outputs.run_build == 'true'
     runs-on: ubuntu-latest
-    # The full marine image job compiles nine ESP32 sketches in sequence.
+    # The full marine image job compiles eight ESP32 sketches in sequence.
     timeout-minutes: ${{ matrix.ino_dir == 'full_marine_ins' && 75 || 45 }}
     strategy:
       fail-fast: false

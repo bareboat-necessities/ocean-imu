@@ -41,8 +41,8 @@
     "--output-dir",
     "reports/results/ou_robustness"
   ],
-  "git_branch": "main",
-  "git_commit": "7e747480afab1e73cf27b3cc934080f83e0aeba7",
+  "git_branch": "claude/beautiful-goodall-51xt50",
+  "git_commit": "8cdd7802d906fcc6f7db9d7a2eb3bea48b7c50d8",
   "git_diff_stat": "reports/results/ou_robustness/ou_robustness.json | 2 --\n 1 file changed, 2 deletions(-)",
   "implementation_files": {
     "src/ahrs/FrameConversions.h": {
@@ -425,8 +425,8 @@
       "platform": "Linux-7.0.0-1018-aws-x86_64-with-glibc2.39",
       "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"
     },
-    "generated_at": "2026-11-26T18:14:06+00:00",
-    "git_commit": "7e747480afab1e73cf27b3cc934080f83e0aeba7",
+    "generated_at": "2026-11-27T20:22:15+00:00",
+    "git_commit": "8cdd7802d906fcc6f7db9d7a2eb3bea48b7c50d8",
     "implementation_files": {
       "src/ahrs/FrameConversions.h": {
         "sha256": "89d80112e4c228b0a4271afd4c69263236561efc261edf9826df4087d4dcb1ac",
@@ -709,8 +709,8 @@
     "workflow_run": {
       "job": "commit",
       "run_attempt": "1",
-      "run_id": "45849178411",
-      "workflow": "build"
+      "run_id": "46057341611",
+      "workflow": "ou-full-evidence-branch"
     }
   },
   "result_files": {
