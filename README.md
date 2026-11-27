@@ -109,7 +109,6 @@ Arduino .ino sketches for esp32s3 (on atomS3R):
 - Reduced tangent-bias shared-mode CARMA research, 27 states: [implementation and reproducible comparison](tests/kalman_tangent_shared_modes/README.md), [standalone article](doc/kalman_tangent_shared_modes/kalman_tangent_shared_modes.tex). The geometry and conditional bias-gain veto remain opt-in; the study does not establish an adoption advantage or implement the full 30-state TG-INS.
 - Two-Frame Lie-Group (TFG): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg
 - PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_pii_observer
-- Non-Linear Observer NLO: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_nlo
 
 ## Overview
 

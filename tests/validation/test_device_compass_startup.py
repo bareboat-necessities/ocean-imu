@@ -40,7 +40,7 @@ def function(source: str, name: str) -> str:
 class DeviceCompassStartupTest(unittest.TestCase):
     def test_sampling_phase_and_overruns(self):
         # Exercise the same pacer and real timestamp wiring as every marine sketch.
-        other_sketches = ("atomS3R_ins_nlo", "atomS3R_ins_pii_observer")
+        other_sketches = ("atomS3R_ins_pii_observer",)
         for path in (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / (name + ".ino")
                                   for name in other_sketches)):
             source = path.read_text()
@@ -293,7 +293,7 @@ int main() {
     def test_serial_recovery(self):
         here = Path(__file__).resolve().parent
         template = (here / "shared_tfg_serial_test.cpp.in").read_text()
-        observers = ("atomS3R_ins_pii_observer", "atomS3R_ins_nlo")
+        observers = ("atomS3R_ins_pii_observer",)
         compass = ROOT / "src/AtomS3R/AtomS3R_CompassAppBase.h"
         paths = (*SKETCHES, *(ROOT / "sensors/full_marine_ins" / name / f"{name}.ino" for name in observers), compass)
         for path in paths:
