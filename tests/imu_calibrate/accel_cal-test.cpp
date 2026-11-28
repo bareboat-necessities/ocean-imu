@@ -1407,13 +1407,12 @@ void testGravityConvention(std::ostream& rep) {
                             "/../../src/AtomS3R/AtomS3R_CompassAppBase.h", "/../../src/AtomS3R/ImuCalWizardRunner.h",
                             "/../../sensors/compass_ahrs/atomS3R_compass_mahony/atomS3R_compass_mahony.ino",
                             "/../../sensors/compass_ahrs/atomS3R_compass_qmekf/atomS3R_compass_qmekf.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_nlo/atomS3R_ins_nlo.ino",
-                            "/../../sensors/full_marine_ins/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou2/atomS3R_ins_kalman_ou2.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou3/atomS3R_ins_kalman_ou3.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_carma3/atomS3R_ins_carma3.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_tfg_carma3/atomS3R_ins_tfg_carma3.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_tfg/atomS3R_ins_tfg.ino",
+                            "/../../sensors/full_marine_ins-legacy/atomS3R_ins_pii_observer/atomS3R_ins_pii_observer.ino",
                             "/../../sensors/imu_basic/atomS3R_imu_m5_basic/atomS3R_imu_m5_basic.ino"}) {
       std::ifstream f(dir + rel);
       check(f.good(), std::string("gravity scan source readable: ") + rel);

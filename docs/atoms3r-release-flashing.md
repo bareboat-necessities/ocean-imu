@@ -39,7 +39,6 @@ Expand **Assets** and choose the ZIP for exactly one sketch:
 | `atomS3R_ins_carma_shared_modes` | Experimental shared-modes CARMA QMEKF marine INS |
 | `atomS3R_ins_tfg` | Two-frame Lie-group marine INS |
 | `atomS3R_ins_pii_observer` | PII marine motion observer |
-| `atomS3R_ins_nlo` | Time-varying-gain nonlinear observer |
 
 Asset names have the form `atomS3R_ins_tfg_carma_shared_modes_bin-YYYY-MM-DD.zip`.
 Use the **actual filename in Assets**, not today's date. The rolling release

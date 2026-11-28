@@ -1,6 +1,5 @@
-// Device configuration of the NLO (no GNSS, 3D magnetometer, as the
-// atomS3R_ins_nlo sketch runs it) on a bench history the wave simulator does
-// not exercise: a gyro residual bias of 0.3 deg/s per axis, an accelerometer
+// Device configuration of the NLO (no GNSS, 3D magnetometer) on a bench
+// history the wave simulator does not exercise: a gyro residual bias of 0.3 deg/s per axis, an accelerometer
 // bias, and the body yawing. Checks both startups the adapter sees:
 //
 //   still boot : the device lies still while the bootstrap runs, so the

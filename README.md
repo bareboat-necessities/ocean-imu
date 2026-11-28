@@ -101,15 +101,14 @@ There are several versions of Kalman INS filters and two filters (PII observer a
 Arduino .ino sketches for esp32s3 (on atomS3R):
 
 - [Shared-mode TFG–CARMA(4,1), 27 states](sensors/full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/)
-- Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou2
-- Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_kalman_ou3
-- Kalman CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_carma3
-- Kalman TFG-CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg_carma3
-- Shared-modes CARMA QMEKF, 27 states (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_carma_shared_modes
+- Kalman OU_II: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou2
+- Kalman OU_III: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_kalman_ou3
+- Kalman CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_carma3
+- Kalman TFG-CARMA3 (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_tfg_carma3
+- Shared-modes CARMA QMEKF, 27 states (experimental): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_carma_shared_modes
 - Reduced tangent-bias shared-mode CARMA research, 27 states: [implementation and reproducible comparison](tests/kalman_tangent_shared_modes/README.md), [standalone article](doc/kalman_tangent_shared_modes/kalman_tangent_shared_modes.tex). The geometry and conditional bias-gain veto remain opt-in; the study does not establish an adoption advantage or implement the full 30-state TG-INS.
-- Two-Frame Lie-Group (TFG): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_tfg
-- PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_pii_observer
-- Non-Linear Observer NLO: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins/atomS3R_ins_nlo
+- Two-Frame Lie-Group (TFG): https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_tfg
+- PII observer: https://github.com/bareboat-necessities/ocean-imu/tree/main/sensors/full_marine_ins-legacy/atomS3R_ins_pii_observer
 
 ## Overview
 

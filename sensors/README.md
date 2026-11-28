@@ -16,7 +16,8 @@ The examples intentionally form a progression. Start with the basic IMU sketch t
 | --- | --- | --- |
 | [IMU basics](imu_basic/README.md) | M5Unified IMU access, body-to-NED mapping, saved calibration, serial diagnostics | First hardware bring-up |
 | [Compass / AHRS](compass_ahrs/README.md) | Tilt-compensated heading with Mahony or quaternion MEKF, display UI, NMEA output | Heading and attitude |
-| [Full marine INS](full_marine_ins/README.md) | Adaptive marine motion estimation with OU-II, OU-III, TFG, PII observer, or NLO | Vessel motion / wave estimation |
+| [Full marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md) | Primary marine INS: shared-mode TFG–CARMA(4,1) | Vessel motion / wave estimation |
+| [Legacy full marine INS](full_marine_ins-legacy/README.md) | Alternative estimators: OU-II, OU-III, CARMA3, TFG, TFG-CARMA3, shared-modes QMEKF, PII observer | Comparisons and research |
 
 ## Checking the 200 Hz cycle on an AtomS3R
 
@@ -30,13 +31,13 @@ from the end of the pacing wait through output publication. A steady 200 Hz wind
 has mean sample spacing near 5,000 µs. `accepted_over_4500us=0` means every accepted
 update in the window had at least 0.5 ms of processing headroom. The profile prints
 one summary per window to keep per-sample serial writes out of the measurement.
-PII, NLO, OU-II, OU-III, plain TFG and shared-mode TFG–CARMA timestamp the host poll that found a complete BMI270 frame.
+PII, OU-II, OU-III, plain TFG and shared-mode TFG–CARMA timestamp the host poll that found a complete BMI270 frame.
 Compare `sample_gap_min_us`, `sample_gap_max_us` and `jitter_mean_abs_us` to
 see variation even when the mean is 5,000 µs. `gaps_over_7_5ms` counts host gaps
 longer than 7.5 ms. An early poll can retry within 300 µs. A successful retry
 anchors the next 5 ms wait to the observed ready poll.
 
-On these six sketches, the startup message `[IMU] estimator clock: BMI270 200 Hz`
+On these five sketches, the startup message `[IMU] estimator clock: BMI270 200 Hz`
 means the reader verified both inertial output rates and captures the sensor clock
 in the same I²C burst as acceleration and angular rate. This works with both
 M5 raw and Bosch-compensated magnetic calibrations. Consecutive frames pass
@@ -45,15 +46,14 @@ is discarded. If the stock reader or matching rates are unavailable, startup
 reports `host micros`. The profile line `[ESTIMATOR] dt_min_ms=5.000 dt_max_ms=5.000 host_steps=0`
 identifies a window of 5 ms estimator steps. A nonzero `host_steps` counts
 accepted intervals timed from the host, including recovery from a sensor-clock discontinuity.
-PII, NLO, plain TFG and shared-mode TFG–CARMA also report `missed_sensor_frames`, the number
+PII, plain TFG and shared-mode TFG–CARMA also report `missed_sensor_frames`, the number
 of unprocessed sensor frames confirmed by successive frame counts. A jump of four
-frames adds three. Duplicate polls and host-timed intervals add zero. PII and NLO
-retain their 5 ms restart step for unverified host intervals longer than 50 ms.
-NLO subdivides genuine multi-frame gaps into integration steps of at most 5 ms.
+frames adds three. Duplicate polls and host-timed intervals add zero. PII
+retains its 5 ms restart step for unverified host intervals longer than 50 ms.
 
 All marine INS and compass sketches publish heading on the 80 ms NMEA
 schedule and send pitch and roll in a later sampling slot. The INS sketches
-also send heave and rate of turn from that snapshot. PII and NLO include any
+also send heave and rate of turn from that snapshot. PII includes any
 due status sentence with heading. Each sampling slot attempts at most one
 telemetry write. A short write retains the remaining bytes for the next slot.
 Reopening USB starts a fresh snapshot. Debug and plotter lines use the same
@@ -63,7 +63,7 @@ The basic IMU and magnetometer diagnostic sketches skip periodic rows while
 USB is busy. A bounded queue holds command replies and diagnostic reports.
 A sustained stall can exhaust that queue.
 
-PII and NLO use the held magnetic field on every
+PII uses the held magnetic field on every
 accepted IMU frame and repeat magnetic calibration only when the raw field changes.
 
 ## Hardware
@@ -86,7 +86,7 @@ If you are bringing up a new board or a new installation, use [`imu_basic/atomS3
 
 1. [Basic AtomS3R IMU](imu_basic/atomS3R_imu_m5_basic/README.md); if a compass later reads wrong headings, run [magnetometer diagnostics](imu_basic/atomS3R_mag_diagnostics/README.md)
 2. [Mahony compass](compass_ahrs/atomS3R_compass_mahony/README.md) or [qMEKF compass](compass_ahrs/atomS3R_compass_qmekf/README.md)
-3. For full marine navigation, start with [shared-mode TFG–CARMA marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md). The [full marine INS guide](full_marine_ins/README.md) compares the alternative estimators.
+3. For full marine navigation, start with [shared-mode TFG–CARMA marine INS](full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md). The [legacy full marine INS guide](full_marine_ins-legacy/README.md) compares the alternative estimators.
 
 ## Coordinate convention
 

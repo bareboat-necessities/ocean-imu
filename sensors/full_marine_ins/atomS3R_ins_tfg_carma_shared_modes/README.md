@@ -1,8 +1,8 @@
 # AtomS3R marine INS — shared-mode TFG–CARMA(4,1)
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_tfg_carma_shared_modes**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / full_marine_ins / **atomS3R_ins_tfg_carma_shared_modes**
 
-This sketch runs the project’s primary marine INS estimator, the 27-state shared-mode TFG–CARMA(4,1) filter [`KalmanTfgCarmaSharedModes`](../../../src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h), on the M5Stack AtomS3R. It is [atomS3R_ins_tfg_carma3](../atomS3R_ins_tfg_carma3/README.md) with the three independent CARMA(4,1) motion priors replaced by **shared directional stochastic modes**. Each axis carries one complexified CARMA(4,1) mode in its six-state minimal realization, the axes share its dynamics, and a Hermitian excitation is estimated from the filter's own world-frame acceleration. A **coupling confidence** withdraws the coupling and falls back toward the independent-axis prior when it cannot be trusted. The error state lives on the right-invariant two-frame Lie group of [`src/lie/TwoFrameGroup.h`](../../../src/lie/TwoFrameGroup.h) ([design](../../../docs/tfg-carma-shared-modes.md)).
+This sketch runs the project’s primary marine INS estimator, the 27-state shared-mode TFG–CARMA(4,1) filter [`KalmanTfgCarmaSharedModes`](../../../src/kalman_carma_shared_modes/KalmanTfgCarmaSharedModes.h), on the M5Stack AtomS3R. It is [atomS3R_ins_tfg_carma3](../../full_marine_ins-legacy/atomS3R_ins_tfg_carma3/README.md) with the three independent CARMA(4,1) motion priors replaced by **shared directional stochastic modes**. Each axis carries one complexified CARMA(4,1) mode in its six-state minimal realization, the axes share its dynamics, and a Hermitian excitation is estimated from the filter's own world-frame acceleration. A **coupling confidence** withdraws the coupling and falls back toward the independent-axis prior when it cannot be trusted. The error state lives on the right-invariant two-frame Lie group of [`src/lie/TwoFrameGroup.h`](../../../src/lie/TwoFrameGroup.h) ([design](../../../docs/tfg-carma-shared-modes.md)).
 
 <p align="center">
   <img src="../../../img/devices/AtomS3R_device.svg" width="140" alt="M5Stack AtomS3R">
@@ -19,7 +19,7 @@ Open the sketch: [`atomS3R_ins_tfg_carma_shared_modes.ino`](atomS3R_ins_tfg_carm
 - The sketch uses the saved magnetometer calibration by default. Build with `-DOCEAN_IMU_SCREEN_MAG_INSTALLATION=1` to enable gyro-aided residual calibration. When enabled, the learner checks for distortion every five seconds. Three consecutive detections allow the live filter to apply the correction gradually once magnetic refinement and excitation checks pass. [Screening and replay results](../../../doc/marine_mag/README.md#production-replay-results)
 - The display shows `Fusion: TFG-SHARED`.
 
-Its quaternion counterpart is [atomS3R_ins_carma_shared_modes](../atomS3R_ins_carma_shared_modes/README.md), which runs the same shared modes on the CARMA3 quaternion MEKF error.
+Its quaternion counterpart is [atomS3R_ins_carma_shared_modes](../../full_marine_ins-legacy/atomS3R_ins_carma_shared_modes/README.md), which runs the same shared modes on the CARMA3 quaternion MEKF error.
 
 ## Mounting away from the centre of gravity
 
@@ -78,8 +78,8 @@ The compile-time controls at the top of the sketch include calibration-wizard en
 
 ## Compare
 
-- [TFG-CARMA3 marine INS](../atomS3R_ins_tfg_carma3/README.md) — the same geometry and wrapper with independent-axis priors
-- [Shared-modes QMEKF marine INS](../atomS3R_ins_carma_shared_modes/README.md) — the same shared modes with a quaternion MEKF error
-- [OU-III marine INS](../atomS3R_ins_kalman_ou3/README.md) — OU-family alternative with integral drift regularization
+- [TFG-CARMA3 marine INS](../../full_marine_ins-legacy/atomS3R_ins_tfg_carma3/README.md) — the same geometry and wrapper with independent-axis priors
+- [Shared-modes QMEKF marine INS](../../full_marine_ins-legacy/atomS3R_ins_carma_shared_modes/README.md) — the same shared modes with a quaternion MEKF error
+- [OU-III marine INS](../../full_marine_ins-legacy/atomS3R_ins_kalman_ou3/README.md) — OU-family alternative with integral drift regularization
 
-[Back to Full marine INS](../README.md) · [All sensor examples](../../README.md)
+[Legacy marine INS estimators](../../full_marine_ins-legacy/README.md) · [All sensor examples](../../README.md)

@@ -1,12 +1,12 @@
 # AtomS3R marine INS — shared-modes QMEKF (experimental)
 
-[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins](../README.md) / **atomS3R_ins_carma_shared_modes**
+[ocean-imu](../../../README.md) / [sensors](../../README.md) / [full_marine_ins-legacy](../README.md) / **atomS3R_ins_carma_shared_modes**
 
 This sketch runs the **experimental** standalone shared-modes QMEKF, [`KalmanCarmaSharedModes`](../../../src/kalman_carma_shared_modes/KalmanCarmaSharedModes.h), on the M5Stack AtomS3R. It is [atomS3R_ins_carma3](../atomS3R_ins_carma3/README.md) with one change: the three independent CARMA(4,1) motion priors are replaced by **shared directional stochastic modes**. Each axis carries one complexified CARMA(4,1) mode in its six-state minimal realization, the axes share its dynamics, and a Hermitian excitation is estimated from the filter's own world-frame acceleration. The model can therefore represent the horizontal-vertical quadrature of waves. A **coupling confidence** withdraws the coupling and falls back toward the independent-axis prior when the coupling cannot be trusted: a prior inconsistent with recent data, little wave energy, manoeuvring, abrupt sea-state changes or inconsistent innovations ([design](../../../docs/kalman-carma-shared-modes.md)).
 
 Open the sketch: [`atomS3R_ins_carma_shared_modes.ino`](atomS3R_ins_carma_shared_modes.ino).
 
-> **Research sketch with simulation evidence only.** Validation results are in [`docs/kalman-carma-shared-modes.md`](../../../docs/kalman-carma-shared-modes.md) and [`doc/kalman_carma_shared_modes`](../../../doc/kalman_carma_shared_modes). There is no sea trial, no stability analysis of the adaptive filter, and no measured stack high-water mark. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../atomS3R_ins_tfg_carma_shared_modes/README.md).
+> **Research sketch with simulation evidence only.** Validation results are in [`docs/kalman-carma-shared-modes.md`](../../../docs/kalman-carma-shared-modes.md) and [`doc/kalman_carma_shared_modes`](../../../doc/kalman_carma_shared_modes). There is no sea trial, no stability analysis of the adaptive filter, and no measured stack high-water mark. For the primary marine INS firmware, use [shared-mode TFG–CARMA(4,1)](../../full_marine_ins/atomS3R_ins_tfg_carma_shared_modes/README.md).
 
 ## Differences from atomS3R_ins_carma3
 

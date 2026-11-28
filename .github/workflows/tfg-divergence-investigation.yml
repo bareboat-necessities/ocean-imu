@@ -20,8 +20,8 @@ jobs:
           mkdir -p /tmp/tfg-investigation
           git archive --format=tar.gz HEAD > /tmp/tfg-investigation/source.tar.gz
           git log -40 --format='%H %P %s' > /tmp/tfg-investigation/history.txt
-          git diff 59118d19 HEAD -- src/kalman_tfg sensors/full_marine_ins/atomS3R_ins_tfg > /tmp/tfg-investigation/recent-tfg.patch
-          git archive --format=tar.gz 59118d19 src/kalman_tfg sensors/full_marine_ins/atomS3R_ins_tfg > /tmp/tfg-investigation/baseline-tfg.tar.gz
+          git diff 59118d19 HEAD -- src/kalman_tfg sensors/full_marine_ins-legacy/atomS3R_ins_tfg > /tmp/tfg-investigation/recent-tfg.patch
+          git archive --format=tar.gz 59118d19 src/kalman_tfg sensors/full_marine_ins-legacy/atomS3R_ins_tfg > /tmp/tfg-investigation/baseline-tfg.tar.gz
           tar -czf /tmp/tfg-investigation/eigen.tar.gz -C /usr/include eigen3
           git rev-parse HEAD > /tmp/tfg-investigation/SOURCE_SHA
       - uses: actions/upload-artifact@v6
